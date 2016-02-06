@@ -1949,106 +1949,64 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__polymerList = [];
-        this.__bufferList = [];
-
-    },
-
-    prepare: function( callback ){
-
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
-
-        if( this.structureView.atomCount === 0 ){
-            callback();
-            return;
-        }
-
-        var scope = this;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 4 ) return;
-            scope.__polymerList.push( polymer );
-
-        }, this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var polymer = polymerList[ i ];
-                    var spline = new NGL.Spline( polymer, scope.arrows );
-
-                    var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
-                    );
-                    var subOri = spline.getSubdividedOrientation(
-                        scope.subdiv, scope.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
-                    );
-                    var subSize = spline.getSubdividedSize(
-                        scope.subdiv, scope.radius, scope.scale
-                    );
-
-                    var rp = polymer.structure.getResidueProxy();
-                    rp.index = polymer.residueIndexStart;
-                    // console.log( rp.qualifiedName(), polymer.residueCount, subPos.position.length, subOri.normal.length, subCol.color.length, subSize.size.length );
-
-                    var rx = 1.0 * scope.aspectRatio;
-                    var ry = 1.0;
-
-                    if( polymer.isCg() ){
-                        ry = rx;
-                    }
-
-                    scope.__bufferList.push(
-                        new NGL.TubeMeshBuffer(
-                            subPos.position,
-                            subOri.normal,
-                            subOri.binormal,
-                            subOri.tangent,
-                            subCol.color,
-                            subSize.size,
-                            subCol.pickingColor,
-                            scope.getBufferParams( {
-                                radialSegments: scope.radialSegments,
-                                rx: rx,
-                                ry: ry,
-                                capped: scope.capped,
-                                dullInterior: true
-                            } )
-                        )
-                    );
-
-                }
-
-            },
-
-            callback,
-
-            50
-
-        );
-
     },
 
     create: function(){
 
-        var n = this.__polymerList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
+        if( this.structureView.atomCount === 0 ){
+            return;
         }
+
+        this.structure.eachPolymer( function( polymer ){
+
+            if( polymer.residueCount < 4 ) return;
+            this.polymerList.push( polymer );
+
+            var spline = new NGL.Spline( polymer, this.arrows );
+
+            var subPos = spline.getSubdividedPosition(
+                this.subdiv, this.tension
+            );
+            var subOri = spline.getSubdividedOrientation(
+                this.subdiv, this.tension
+            );
+            var subCol = spline.getSubdividedColor(
+                this.subdiv, this.getColorParams()
+            );
+            var subSize = spline.getSubdividedSize(
+                this.subdiv, this.radius, this.scale
+            );
+
+            var rp = polymer.structure.getResidueProxy();
+            rp.index = polymer.residueIndexStart;
+
+            var rx = 1.0 * this.aspectRatio;
+            var ry = 1.0;
+
+            if( polymer.isCg() ){
+                ry = rx;
+            }
+
+            this.bufferList.push(
+                new NGL.TubeMeshBuffer(
+                    subPos.position,
+                    subOri.normal,
+                    subOri.binormal,
+                    subOri.tangent,
+                    subCol.color,
+                    subSize.size,
+                    subCol.pickingColor,
+                    this.getBufferParams( {
+                        radialSegments: this.radialSegments,
+                        rx: rx,
+                        ry: ry,
+                        capped: this.capped,
+                        dullInterior: true
+                    } )
+                )
+            );
+
+        }.bind( this ), this.selection, true );
 
     },
 
@@ -2218,88 +2176,46 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__polymerList = [];
-        this.__bufferList = [];
-
-    },
-
-    prepare: function( callback ){
-
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
-
-        if( this.structureView.atomCount === 0 ){
-            callback();
-            return;
-        }
-
-        var scope = this;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 4 ) return;
-            scope.__polymerList.push( polymer );
-
-        }, this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var polymer = polymerList[ i ];
-
-                    var spline = new NGL.Spline( polymer );
-                    var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
-                    );
-                    var subOri = spline.getSubdividedOrientation(
-                        scope.subdiv, scope.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
-                    );
-                    var subSize = spline.getSubdividedSize(
-                        scope.subdiv, scope.radius, scope.scale
-                    );
-
-                    scope.__bufferList.push(
-                        new NGL.RibbonBuffer(
-                            subPos.position,
-                            subOri.binormal,
-                            subOri.normal,
-                            subCol.color,
-                            subSize.size,
-                            subCol.pickingColor,
-                            scope.getBufferParams()
-                        )
-                    );
-
-                }
-
-            },
-
-            callback,
-
-            50
-
-        );
-
     },
 
     create: function(){
 
-        var n = this.__polymerList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
+        if( this.structureView.atomCount === 0 ){
+            return;
         }
+
+        this.structure.eachPolymer( function( polymer ){
+
+            if( polymer.residueCount < 4 ) return;
+            this.polymerList.push( polymer );
+
+            var spline = new NGL.Spline( polymer );
+            var subPos = spline.getSubdividedPosition(
+                this.subdiv, this.tension
+            );
+            var subOri = spline.getSubdividedOrientation(
+                this.subdiv, this.tension
+            );
+            var subCol = spline.getSubdividedColor(
+                this.subdiv, this.getColorParams()
+            );
+            var subSize = spline.getSubdividedSize(
+                this.subdiv, this.radius, this.scale
+            );
+
+            this.bufferList.push(
+                new NGL.RibbonBuffer(
+                    subPos.position,
+                    subOri.binormal,
+                    subOri.normal,
+                    subCol.color,
+                    subSize.size,
+                    subCol.pickingColor,
+                    this.getBufferParams()
+                )
+            );
+
+        }.bind( this ), this.selection, true );
 
     },
 
@@ -2424,74 +2340,36 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
-        this.__polymerList = [];
-        this.__bufferList = [];
-
     },
 
-    prepare: function( callback ){
-
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
+    create: function(){
 
         if( this.structureView.atomCount === 0 ){
-            callback();
             return;
         }
 
         this.structure.eachPolymer( function( polymer ){
 
             if( polymer.residueCount < 4 ) return;
-            this.__polymerList.push( polymer );
+            this.polymerList.push( polymer );
+
+            var spline = new NGL.Spline( polymer );
+            var subPos = spline.getSubdividedPosition(
+                this.subdiv, this.tension
+            );
+            var subCol = spline.getSubdividedColor(
+                this.subdiv, this.getColorParams()
+            );
+
+            this.bufferList.push(
+                new NGL.TraceBuffer(
+                    subPos.position,
+                    subCol.color,
+                    this.getBufferParams()
+                )
+            );
 
         }.bind( this ), this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var spline = new NGL.Spline( polymerList[ i ] );
-                    var subPos = spline.getSubdividedPosition(
-                        this.subdiv, this.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        this.subdiv, this.getColorParams()
-                    );
-
-                    this.__bufferList.push(
-                        new NGL.TraceBuffer(
-                            subPos.position,
-                            subCol.color,
-                            this.getBufferParams()
-                        )
-                    );
-
-                }
-
-            }.bind( this ),
-
-            callback,
-
-            50
-
-        );
-
-    },
-
-    create: function(){
-
-        var n = this.__bufferList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
-        }
 
     },
 
@@ -2540,9 +2418,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         var what = {};
 
         if( params && params[ "tension" ] ){
-
             what[ "position" ] = true;
-
         }
 
         NGL.StructureRepresentation.prototype.setParameters.call(
