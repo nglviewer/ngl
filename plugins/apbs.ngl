@@ -6,6 +6,7 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
     var isolevel = p.isolevel !== undefined ? p.isolevel : 0.4;
     var isosurfOpacity = p.isosurfOpacity !== undefined ? p.isosurfOpacity : 0.6;
     var molsurfOpacity = p.molsurfOpacity !== undefined ? p.molsurfOpacity : 1.0;
+    var molsurfColor = p.molsurfColor !== undefined ? p.molsurfColor : 3;
 
     // pqr
 
@@ -22,10 +23,11 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
     } );
 
     var molsurfRepr = pqrComp.addRepresentation( "surface", {
-        surfaceType: "ms",
-        colorScheme: "bfactor",
+        volume: dxComp.surface,
+        surfaceType: "sas",
+        colorScheme: "volume",
         colorScale: "rwb",
-        colorDomain: [ -1, 0, 1 ],
+        colorDomain: [ -molsurfColor, 0, molsurfColor ],
         opacity: molsurfOpacity,
     } );
 
@@ -109,6 +111,7 @@ var ApbsWidget = function( pqrComp, dxComp ){
     var isolevel = 0.5;
     var isosurfOpacity = 0.6;
     var molsurfOpacity = 1.0;
+    var molsurfColor = 3;
 
     var container = new UI.Panel();
 
@@ -116,7 +119,8 @@ var ApbsWidget = function( pqrComp, dxComp ){
         pqrComp, dxComp, {
             isolevel: isolevel,
             isosurfOpacity: isosurfOpacity,
-            molsurfOpacity: molsurfOpacity
+            molsurfOpacity: molsurfOpacity,
+            molsurfColor: molsurfColor
         }
     );
 
@@ -142,6 +146,14 @@ var ApbsWidget = function( pqrComp, dxComp ){
             } );
         } );
 
+    var molsurfColorRange = new UI.Range( 0, 10, molsurfColor, 0.1 )
+        .onInput( function(){
+            var value = molsurfColorRange.getValue();
+            apbsPreset.setMolsurfParams( {
+                colorDomain: [ -value, 0, value ]
+            } );
+        } );
+
     container.add(
         new UI.Text( "isolevel" ).setMarginRight( "10px" ),
         isolevelNumber,
@@ -152,6 +164,9 @@ var ApbsWidget = function( pqrComp, dxComp ){
         new UI.Break(),
         new UI.Text( "molsurf opacity" ).setMarginRight( "10px" ),
         molsurfOpacityRange,
+        new UI.Break(),
+        new UI.Text( "molsurf color" ).setMarginRight( "10px" ),
+        molsurfColorRange,
         new UI.Break(),
         uiVisibilityButton(
             "electrostatic isosurface", apbsPreset.isosurfRepr
@@ -175,7 +190,10 @@ var ApbsWidget = function( pqrComp, dxComp ){
 };
 
 
-function loadApbs( pqr, dx ){
+function loadApbs( pqr, dx, isBinary ){
+
+    var fileInfo = NGL.getDataInfo( dx );
+    var dxExt = ( isBinary || fileInfo.ext === "dxbin" ) ? "dxbin" : "dx";
 
     var infoText = new UI.Text( "loading..." );
     panel.add( infoText );
@@ -188,7 +206,7 @@ function loadApbs( pqr, dx ){
 
     var promiseList = [
         stage.loadFile( pqr, { ext: "pqr" } ).then( initComp ),
-        stage.loadFile( dx, { ext: "dx" } ).then( initComp )
+        stage.loadFile( dx, { ext: dxExt } ).then( initComp )
     ];
 
     return Promise.all( promiseList ).then( function( compList ){
@@ -234,7 +252,7 @@ var ApbsLoader = function(){
 
         loadApbs(
             "data://1crn_apbs.pqr",
-            "data://1crn_apbs_pot.dx.gz"
+            "data://1crn_apbs_pot.dxbin"
         );
 
     }
@@ -270,9 +288,15 @@ function apbsLoader(){
 
     var pqr = NGL.GET( "pqr" );
     var dx = NGL.GET( "dx" );
+    var dxbin = NGL.GET( "dxbin" );
+    var isBinary = false;
+    if( dxbin ){
+        dx = dxbin;
+        isBinary = true;
+    }
 
     if( pqr, dx ){
-        loadApbs( pqr, dx );
+        loadApbs( pqr, dx, isBinary );
     }else{
         var apbsLoader = new ApbsLoader();
         panel.add( apbsLoader );

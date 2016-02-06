@@ -3436,6 +3436,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         filterSele: {
             type: "text"
         },
+        volume: {
+            type: "hidden"
+        },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -3460,6 +3463,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
+        this.volume = p.volume || undefined;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -3573,11 +3577,25 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             what[ "index" ] = true;
         }
 
+        if( params && params[ "volume" ] !== undefined ){
+            what[ "color" ] = true;
+        }
+
         NGL.StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
 
         return this;
+
+    },
+
+    getColorParams: function(){
+
+        var p = NGL.StructureRepresentation.prototype.getColorParams.call( this );
+
+        p.volume = this.volume;
+
+        return p;
 
     },
 
