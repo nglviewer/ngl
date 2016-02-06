@@ -102,7 +102,7 @@ NGL.Loader = function( src, params ){
 
     var p = Object.assign( {}, params );
 
-    var binaryExtList = [ "msgpack", "dcd", "mrc", "ccp4", "map" ];
+    var binaryExtList = [ "msgpack", "dcd", "mrc", "ccp4", "map", "dxbin" ];
     var binary = binaryExtList.indexOf( p.ext ) !== -1;
 
     this.compressed = p.compressed || false;
