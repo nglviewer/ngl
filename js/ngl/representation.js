@@ -770,7 +770,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
             // async to appease Chrome
 
-            requestAnimationFrame( function(){
+            // requestAnimationFrame( function(){
 
                 if( instanceList.length >= 1 ){
                     viewer.add( buffer, instanceList );
@@ -782,7 +782,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
                     callback();
                 }
 
-            } );
+            // } );
 
         } );
 
