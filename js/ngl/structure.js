@@ -1599,9 +1599,10 @@ NGL.Structure.prototype = {
 
     },
 
-    eachAtom: function( callback, selection ){
+    getAtomSet3: function( selection ){
 
-        var ap = this.getAtomProxy();
+        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet3" );
+
         var as = this.atomSet;
 
         if( selection && selection.test ){
@@ -1612,7 +1613,18 @@ NGL.Structure.prototype = {
             }
         }
 
-        if( as ){
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet3" );
+
+        return as;
+
+    },
+
+    eachAtom: function( callback, selection ){
+
+        var ap = this.getAtomProxy();
+        var as = this.getAtomSet3( selection );
+
+        if( as && as.size() < this.atomStore.count ){
             as.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
