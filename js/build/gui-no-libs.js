@@ -376,7 +376,7 @@ UI.Text.prototype.setName = function ( value ) {
 };
 // Input
 
-UI.Input = function () {
+UI.Input = function ( value ) {
 
     UI.Element.call( this );
 
@@ -394,6 +394,7 @@ UI.Input = function () {
     }, false );
 
     this.dom = dom;
+    this.setValue( value || "" );
 
     return this;
 
@@ -3253,15 +3254,13 @@ NGL.ViewportWidget = function( stage ){
         e.stopPropagation();
         e.preventDefault();
 
-        async.eachLimit(
-            e.dataTransfer.files,
-            4,
-            function( file, callback ){
-                stage.loadFile( file, {
-                    defaultRepresentation: true
-                } ).then( function(){ callback(); } );
-            }
-        );
+        var fn = function( file, callback ){
+            stage.loadFile( file, {
+                defaultRepresentation: true
+            } ).then( function(){ callback(); } );
+        }
+        var queue = new NGL.Queue( fn, e.dataTransfer.files );
+
 
     }, false );
 
@@ -3329,7 +3328,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    // container.add( statsPanel );
+    if( NGL.debug ) container.add( statsPanel );
 
     return container;
 
@@ -3370,19 +3369,17 @@ NGL.MenubarFileWidget = function( stage ){
         "mrc", "ccp4", "map", "cube", "dx",
         "obj", "ply",
         "ngl",
-        "gz", "lzma", "bz2", "zip"
+        "gz"
     ];
     var fileTypesImport = fileTypesOpen;
 
     function fileInputOnChange( e ){
-        async.eachLimit(
-            e.target.files, 4,
-            function( file, callback ){
-                stage.loadFile( file, {
-                    defaultRepresentation: true
-                } ).then( function(){ callback(); } );
-            }
-        );
+        var fn = function( file, callback ){
+            stage.loadFile( file, {
+                defaultRepresentation: true
+            } ).then( function(){ callback(); } );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
     }
 
     var fileInput = document.createElement("input");
@@ -3631,7 +3628,7 @@ NGL.MenubarHelpWidget = function( stage ){
     // event handlers
 
     function onDocOptionClick () {
-        window.open( NGL.assetsDirectory + 'doc/index.html', '_blank' );
+        window.open( NGL.documentationUrl, '_blank' );
     }
 
     function onPreferencesOptionClick () {
@@ -3777,11 +3774,10 @@ NGL.OverviewWidget = function( stage ){
             "</ul>"
         ) );
 
-    var docUrl = NGL.assetsDirectory + "doc/index.html";
     listingPanel
         .add( new UI.Panel().add( new UI.Html(
             "For more information please visit the " +
-            "<a href='" + docUrl + "' target='_blank'>documentation pages</a>."
+            "<a href='" + NGL.documentationUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
     var overview = stage.preferences.getKey( "overview" );
@@ -4361,17 +4357,15 @@ NGL.StructureComponentWidget = function( component, stage ){
     var trajExt = [ "dcd", "dcd.gz" ];
 
     function fileInputOnChange( e ){
-        async.eachLimit(
-            e.target.files, 4,
-            function( file, callback ){
-                var framesPromise = NGL.autoLoad( file )
-                    .then( function( frames ){
-                        callback();
-                        return frames;  // pass through
-                    } );
-                component.addTrajectory( framesPromise );
-            }
-        );
+        var fn = function( file, callback ){
+            var framesPromise = NGL.autoLoad( file )
+                .then( function( frames ){
+                    callback();
+                    return frames;  // pass through
+                } );
+            component.addTrajectory( framesPromise );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
     }
 
     var fileInput = document.createElement("input");
