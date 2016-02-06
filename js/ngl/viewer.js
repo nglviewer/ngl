@@ -851,7 +851,7 @@ NGL.Stats.prototype = {
  * @class
  * @param {String} eid
  */
-NGL.Viewer = function( eid ){
+NGL.Viewer = function( eid, params ){
 
     var SIGNALS = signals;
 
@@ -879,6 +879,8 @@ NGL.Viewer = function( eid ){
     this.aspect = this.width / this.height;
 
     this.initParams();
+    this.holdRendering = true;
+
     this.initCamera();
     this.initScene();
     this.initRenderer();
@@ -938,6 +940,8 @@ NGL.Viewer.prototype = {
             lightIntensity: 1.0,
             ambientColor: new THREE.Color( 0xdddddd ),
             ambientIntensity: 0.2,
+
+            holdRendering: false
 
         };
 
@@ -1172,7 +1176,7 @@ NGL.Viewer.prototype = {
         this.rotationGroup.updateMatrixWorld();
         if( NGL.debug ) this.updateHelper();
 
-        this.requestRender();
+        // this.requestRender();
 
         // NGL.timeEnd( "Viewer.add" );
 
@@ -1533,7 +1537,7 @@ NGL.Viewer.prototype = {
 
     requestRender: function(){
 
-        if( this._renderPending ){
+        if( this._renderPending || this.holdRendering ){
             // NGL.info( "there is still a 'render' call pending" );
             return;
         }
