@@ -1933,7 +1933,10 @@ NGL.Structure.prototype = {
             atomSet: this.atomSet.toJSON(),
 
             atomSetDict: {},
-            atomSetCache: {}
+            atomSetCache: {},
+
+            atomMap: this.atomMap.toJSON(),
+            residueMap: this.residueMap.toJSON()
 
         };
 
@@ -1993,6 +1996,9 @@ NGL.Structure.prototype = {
             var as = new TypedFastBitSet();
             this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
         }
+
+        this.atomMap.fromJSON( input.atomMap );
+        this.residueMap.fromJSON( input.residueMap );
 
         NGL.GidPool.updateObject( this );
 

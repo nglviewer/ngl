@@ -384,6 +384,7 @@ NGL.ProteinType = 3;
 NGL.RnaType = 4;
 NGL.DnaType = 5;
 
+// backbone types
 NGL.UnknownBackboneType = 0;
 NGL.ProteinBackboneType = 1;
 NGL.RnaBackboneType = 2;
@@ -2283,6 +2284,15 @@ NGL.ResidueType.prototype = {
             this.bonds = NGL.calculateResidueBonds( r );
         }
         return this.bonds;
+    },
+
+    toJSON: function(){
+        var output = {
+            resname: this.resname,
+            atomTypeIdList: this.atomTypeIdList,
+            hetero: this.hetero
+        };
+        return output;
     }
 
 };
@@ -2323,5 +2333,31 @@ NGL.ResidueMap = function( structure ){
 
     this.list = typeList;
     this.dict = idDict;
+
+    this.toJSON = function(){
+        var output = {
+            metadata: {
+                version: 0.1,
+                type: 'ResidueMap',
+                generator: 'ResidueMapExporter'
+            },
+            idDict: idDict,
+            typeList: typeList.map( function( residueType ){
+                return residueType.toJSON();
+            } )
+        };
+        return output;
+    };
+
+    this.fromJSON = function( input ){
+        idDict = input.idDict;
+        typeList = input.typeList.map( function( input ){
+            return new NGL.ResidueType(
+                structure, input.resname, input.atomTypeIdList, input.hetero
+            );
+        } );
+        this.list = typeList;
+        this.dict = idDict;
+    };
 
 }
