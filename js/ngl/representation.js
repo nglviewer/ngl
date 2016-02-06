@@ -239,11 +239,7 @@ NGL.Representation.prototype = {
 
     },
 
-    prepare: function( callback ){
-
-        callback();
-
-    },
+    prepare: false,
 
     create: function(){
 
@@ -258,6 +254,16 @@ NGL.Representation.prototype = {
     },
 
     build: function( params ){
+
+        if( !this.prepare ){
+            if( !params ){
+                params = this.getParameters();
+                delete params.quality;
+            }
+            this.tasks.increment();
+            this.make( params, function(){} );
+            return;
+        }
 
         // don't let tasks accumulate
         if( this.queue.length() > 0 ){
@@ -288,41 +294,35 @@ NGL.Representation.prototype = {
             this.init( params );
         }
 
-        this.prepare( function(){
+        var _make = function(){
 
             if( params.__update ){
-
                 this.update( params.__update );
                 this.viewer.requestRender();
-
                 this.tasks.decrement();
                 callback();
-
             }else{
-
                 this.clear();
                 this.create();
-
                 if( !this.manualAttach && !this.disposed ){
-
                     if( NGL.debug ) NGL.time( "NGL.Representation.attach " + this.type );
-
                     this.attach( function(){
-
                         if( NGL.debug ) NGL.timeEnd( "NGL.Representation.attach " + this.type );
-
                         this.tasks.decrement();
                         callback();
-
                     }.bind( this ) );
-
                 }
-
             }
 
             if( NGL.debug ) NGL.timeEnd( "NGL.Representation.make " + this.type );
 
-        }.bind( this ) );
+        }.bind( this );
+
+        if( this.prepare ){
+            this.prepare( _make );
+        }else{
+            _make();
+        }
 
     },
 
