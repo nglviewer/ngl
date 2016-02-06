@@ -1790,13 +1790,13 @@ NGL.Structure.prototype = {
             var y = ap.y;
             var z = ap.z;
 
-            minX = Math.min( minX, x );
-            minY = Math.min( minY, y );
-            minZ = Math.min( minZ, z );
+            if( x < minX ) minX = x;
+            if( y < minY ) minY = y;
+            if( z < minZ ) minZ = z;
 
-            maxX = Math.max( maxX, x );
-            maxY = Math.max( maxY, y );
-            maxZ = Math.max( maxZ, z );
+            if( x > maxX ) maxX = x;
+            if( y > maxY ) maxY = y;
+            if( z > maxZ ) maxZ = z;
 
         }, selection );
 
