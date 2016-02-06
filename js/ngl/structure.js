@@ -1362,9 +1362,16 @@ NGL.Structure.prototype = {
 
     },
 
-    getResidueProxy: function( index ){
+    getResidueProxy: function( index, tmp ){
 
-        return new NGL.ResidueProxy( this, index );
+        if( tmp ){
+            if( this.__tmpResidueProxy === undefined ){
+                this.__tmpResidueProxy = new NGL.ResidueProxy( this, index );
+            }
+            return this.__tmpResidueProxy;
+        }else{
+            return new NGL.ResidueProxy( this, index );
+        }
 
     },
 
