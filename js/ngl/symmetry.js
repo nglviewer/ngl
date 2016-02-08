@@ -38,9 +38,7 @@ NGL.Unitcell = function( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
 
     //
 
-    this.cartToFrac = cartToFrac;
-
-    if( this.cartToFrac === undefined ){
+    if( cartToFrac === undefined ){
 
         var cStar = ( this.a * this.b * sinGamma ) / this.volume;
         var cosAlphaStar = (
@@ -48,18 +46,20 @@ NGL.Unitcell = function( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
             ( sinBeta * sinGamma )
         );
 
-        this.cartToFrac = new THREE.Matrix4().set(
+        this.fracToCart = new THREE.Matrix4().set(
             this.a, 0, 0, 0,
             this.b * cosGamma, this.b * sinGamma, 0, 0,
             this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
             0, 0, 0, 1
         );
+        this.cartToFrac = new THREE.Matrix4().getInverse( this.fracToCart );
+
+    }else{
+
+        this.cartToFrac = cartToFrac;
+        this.fracToCart = new THREE.Matrix4().getInverse( this.cartToFrac );
 
     }
-
-    this.fracToCart = new THREE.Matrix4().getInverse(
-        this.cartToFrac
-    );
 
 };
 

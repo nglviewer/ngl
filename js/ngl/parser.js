@@ -1133,9 +1133,10 @@ NGL.StructureParser.prototype = NGL.createObject(
         if( s.helices.length > 0 || s.sheets.length > 0 ){
             NGL.assignSecondaryStructure( s );
         }
-        NGL.buildUnitcellAssembly( s );
 
         this._postProcess();
+
+        NGL.buildUnitcellAssembly( s );
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
         if( NGL.debug ) NGL.log( this[ this.__objName ] );
@@ -1596,9 +1597,6 @@ NGL.PdbParser.prototype = NGL.createObject(
         } );
 
         sb.finalize();
-
-        if( NGL.debug ) console.log( atomMap );
-        if( NGL.debug ) console.log( s.residueMap );
 
         s.unitcell = new NGL.Unitcell(
             unitcellDict.a,
@@ -2273,9 +2271,6 @@ NGL.CifParser.prototype = NGL.createObject(
         } );
 
         sb.finalize();
-
-        if( NGL.debug ) console.log( atomMap );
-        if( NGL.debug ) console.log( s.residueMap );
 
         if( cif.struct && cif.struct.title ){
             s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
