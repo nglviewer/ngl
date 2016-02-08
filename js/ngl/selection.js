@@ -774,6 +774,8 @@ NGL.Selection.prototype = {
 
     makeAtomTest: function( atomOnly ){
 
+        var helixTypes = [ "h", "g", "i" ];
+        var sheetTypes = [ "e", "b" ];
         var kwd = NGL.Selection.Keywords;
 
         var selection;
