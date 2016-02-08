@@ -564,6 +564,7 @@ NGL.AtomProxy.prototype = {
         return this.residueStore.chainIndex[ this.residueIndex ];
     },
     get residue () {
+        console.warn("residue")
         return this.structure.getResidueProxy( this.residueIndex, false );
     },
 
@@ -703,6 +704,38 @@ NGL.AtomProxy.prototype = {
             backboneType === NGL.CgRnaBackboneType ||
             backboneType === NGL.CgDnaBackboneType
         );
+    },
+
+    isHetero: function(){
+        return this.residueType.hetero === 1;
+    },
+
+    isProtein: function(){
+        return this.residueType.moleculeType === NGL.ProteinType;
+    },
+
+    isNucleic: function(){
+        var moleculeType = this.residueType.moleculeType;
+        return (
+            moleculeType === NGL.RnaType ||
+            moleculeType === NGL.DnaType
+        );
+    },
+
+    isRna: function(){
+        return this.residueType.moleculeType === NGL.RnaType;
+    },
+
+    isDna: function(){
+        return this.residueType.moleculeType === NGL.DnaType;
+    },
+
+    isWater: function(){
+        return this.residueType.moleculeType === NGL.WaterType;
+    },
+
+    isIon: function(){
+        return this.residueType.moleculeType === NGL.IonType;
     },
 
     distanceTo: function( atom ){
@@ -960,6 +993,15 @@ NGL.ResidueProxy.prototype = {
 
     //
 
+    get modelIndex () {
+        return this.chainStore.modelIndex[ this.chainIndex ];
+    },
+    get chainname () {
+        return this.chainStore.getChainname( this.chainIndex );
+    },
+
+    //
+
     get resno () {
         return this.residueStore.resno[ this.index ];
     },
@@ -1083,7 +1125,12 @@ NGL.ResidueProxy.prototype = {
     },
 
     isCg: function(){
-        return this.residueType.isCg();
+        var backboneType = this.residueType.backboneType;
+        return (
+            backboneType === NGL.CgProteinBackboneType ||
+            backboneType === NGL.CgRnaBackboneType ||
+            backboneType === NGL.CgDnaBackboneType
+        );
     },
 
     isPolymer: function(){
@@ -1096,7 +1143,7 @@ NGL.ResidueProxy.prototype = {
     },
 
     isHetero: function(){
-        return this.residueType.isHetero();
+        return this.residueType.hetero === 1;
     },
 
     isWater: function(){
