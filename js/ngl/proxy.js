@@ -1917,7 +1917,7 @@ NGL.AtomType = function( structure, atomname, element ){
 
     this.structure = structure;
 
-    element = element !== undefined ? element : NGL.guessElement( atomname );
+    element = element || NGL.guessElement( atomname );
 
     this.atomname = atomname;
     this.element = element;
