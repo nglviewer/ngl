@@ -1691,6 +1691,11 @@ NGL.ChainProxy.prototype = {
 
     //
 
+    qualifiedName: function(){
+        var name = ":" + this.chainname + "/" + this.modelIndex;
+        return name;
+    },
+
     clone: function(){
 
         return new this.constructor( this.structure, this.index );
@@ -1890,6 +1895,11 @@ NGL.ModelProxy.prototype = {
     },
 
     //
+
+    qualifiedName: function(){
+        var name = "/" + this.index;
+        return name;
+    },
 
     clone: function(){
 
