@@ -1657,11 +1657,11 @@ NGL.GroParser.prototype = NGL.createObject(
 
         // http://manual.gromacs.org/current/online/gro.html
 
-        var __timeName = "NGL.GroParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.GroParser._parse " + this.name );
 
         var s = this.structure;
+        var sb = this.structureBuilder;
+
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
         var cAlphaOnly = this.cAlphaOnly;
@@ -1670,12 +1670,6 @@ NGL.GroParser.prototype = NGL.createObject(
         var boxes = s.boxes;
         var doFrames = false;
         var currentFrame, currentCoord;
-
-        var atoms = s.atoms;
-
-        var guessElem = NGL.guessElement;
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
 
         var firstLines = this.streamer.peekLines( 3 );
 
@@ -1695,12 +1689,9 @@ NGL.GroParser.prototype = NGL.createObject(
         var atomCount = parseInt( firstLines[ 1 ] );
         var modelLineCount = atomCount + 3;
 
-        var atomArray;
-        var lineCount = this.streamer.lineCount();
-        if( lineCount > NGL.useAtomArrayThreshold ){
-            atomArray = new NGL.AtomArray( lineCount );
-            s.atomArray = atomArray;
-        }
+        var atomMap = s.atomMap;
+        var atomStore = s.atomStore;
+        atomStore.resize( atomCount );
 
         var idx = 0;
         var modelIdx = 0;
@@ -1774,57 +1765,20 @@ NGL.GroParser.prototype = NGL.createObject(
                     }
 
                     resname = line.substr( 5, 5 ).trim();
-                    element = guessElem( atomname );
                     resno = parseInt( line.substr( 0, 5 ) );
                     serial = parseInt( line.substr( 15, 5 ) );
 
-                    var a;
+                    atomStore.growIfFull();
+                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname );
 
-                    if( atomArray ){
+                    atomStore.x[ idx ] = x;
+                    atomStore.y[ idx ] = y;
+                    atomStore.z[ idx ] = z;
+                    atomStore.serial[ idx ] = serial;
 
-                        a = new NGL.ProxyAtom( atomArray, idx );
-
-                        atomArray.setResname( idx, resname );
-                        atomArray.x[ idx ] = x;
-                        atomArray.y[ idx ] = y;
-                        atomArray.z[ idx ] = z;
-                        atomArray.setElement( idx, element );
-                        atomArray.setChainname( idx, '' );
-                        atomArray.resno[ idx ] = resno;
-                        atomArray.serial[ idx ] = serial;
-                        atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
-                        atomArray.setAltloc( idx, '' );
-                        atomArray.vdw[ idx ] = vdwRadii[ element ];
-                        atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = modelIdx;
-
-                        atomArray.usedLength += 1;
-
-                    }else{
-
-                        a = new NGL.Atom();
-                        a.index = idx;
-
-                        a.resname = resname;
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.chainname = '';
-                        a.resno = resno;
-                        a.serial = serial;
-                        a.atomname = atomname;
-                        a.ss = 'l';
-                        a.altloc = '';
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
-
-                    }
+                    sb.addAtom( modelIdx, "", resname, resno, 0, "l" );
 
                     idx += 1;
-                    atoms.push( a );
 
                 }
 
@@ -1832,18 +1786,14 @@ NGL.GroParser.prototype = NGL.createObject(
 
         }
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        sb.finalize();
 
-            function(){
-
-                NGL.timeEnd( __timeName );
-                callback();
-
-            }
-
-        );
+        if( NGL.debug ) NGL.timeEnd( "NGL.GroParser._parse " + this.name );
+        callback();
 
     }
 
