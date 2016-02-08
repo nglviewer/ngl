@@ -4231,7 +4231,7 @@ NGL.TextParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        this.text.data = this.streamer.data;
+        this.text.data = this.streamer.asText();
 
         callback();
 
@@ -4336,9 +4336,7 @@ NGL.JsonParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        var text = NGL.Uint8ToString( this.streamer.data );
-
-        this.json.data = JSON.parse( text );
+        this.json.data = JSON.parse( this.streamer.asText() );
 
         callback();
 
@@ -4378,8 +4376,6 @@ NGL.XmlParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        var text = NGL.Uint8ToString( this.streamer.data );
-
         // https://github.com/segmentio/xml-parser
         // MIT license
 
@@ -4393,124 +4389,95 @@ NGL.XmlParser.prototype = NGL.createObject(
             return document();
 
             function document(){
-
                 return {
                     declaration: declaration(),
                     root: tag()
                 }
-
             }
 
             function declaration(){
-
                 var m = match(/^<\?xml\s*/);
                 if (!m) return;
-
                 // tag
                 var node = {
                     attributes: {}
                 };
-
                 // attributes
                 while (!(eos() || is('?>'))) {
                     var attr = attribute();
                     if (!attr) return node;
                     node.attributes[attr.name] = attr.value;
                 }
-
                 match(/\?>\s*/);
                 return node;
-
             }
 
             function tag(){
-
                 var m = match(/^<([\w-:.]+)\s*/);
                 if (!m) return;
-
                 // name
                 var node = {
                     name: m[1],
                     attributes: {},
                     children: []
                 };
-
                 // attributes
                 while (!(eos() || is('>') || is('?>') || is('/>'))) {
                     var attr = attribute();
                     if (!attr) return node;
                     node.attributes[attr.name] = attr.value;
                 }
-
                 // self closing tag
                 if (match(/^\s*\/>\s*/)) {
                     return node;
                 }
-
                 match(/\??>\s*/);
-
                 // content
                 node.content = content();
-
                 // children
                 var child;
                 while (child = tag()) {
                     node.children.push(child);
                 }
-
                 // closing
                 match(/^<\/[\w-:.]+>\s*/);
-
                 return node;
-
             }
 
             function content(){
-
                 var m = match(/^([^<]*)/);
                 if (m) return m[1];
                 return '';
-
             }
 
             function attribute(){
-
                 var m = match(/([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/);
                 if (!m) return;
                 return { name: m[1], value: strip(m[2]) }
-
             }
 
             function strip( val ){
-
                 return val.replace(/^['"]|['"]$/g, '');
-
             }
 
             function match( re ){
-
                 var m = xml.match(re);
                 if (!m) return;
                 xml = xml.slice(m[0].length);
                 return m;
-
             }
 
             function eos(){
-
                 return 0 == xml.length;
-
             }
 
             function is( prefix ){
-
                 return 0 == xml.indexOf(prefix);
-
             }
 
         }
 
-        this.xml.data = parse( text );
+        this.xml.data = parse( this.streamer.asText() );
 
         callback();
 

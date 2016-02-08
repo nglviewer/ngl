@@ -171,7 +171,11 @@ NGL.Streamer.prototype = {
 
     asText: function(){
 
-        return NGL.Uint8ToString( this.data );
+        if( this.binary || this.compressed ){
+            return NGL.Uint8ToString( this.data );
+        }else{
+            return this.data;
+        }
 
     },
 
