@@ -208,7 +208,6 @@ NGL.assignSecondaryStructure = function( structure ){
         var n = helices.length;
         if( n === 0 ) return;
         var helix = helices[ i ];
-        helix[ 4 ] = helix[ 4 ].charCodeAt( 0 );
         var helixRun = false;
         var done = false;
 
@@ -248,7 +247,6 @@ NGL.assignSecondaryStructure = function( structure ){
                                 // j = offset - 1;
                                 --j;
                                 helix = helices[ i ];
-                                helix[ 4 ] = helix[ 4 ].charCodeAt( 0 );
                                 chainChange = cp.chainname !== helix[ 0 ];
                             }else{
                                 done = true;
@@ -1404,7 +1402,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
                     var helixType = parseInt( line.substr( 39, 1 ) );
-                    helixType = helixTypes[ helixType ] || helixTypes[""];
+                    helixType = ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 );
                     helices.push([ startChain, startResi, endChain, endResi, helixType ]);
 
                 }else if( recordName === 'SHEET ' ){
@@ -2289,7 +2287,7 @@ NGL.CifParser.prototype = NGL.createObject(
                             parseInt( sc.beg_auth_seq_id[ i ] ),
                             asymIdDict[ sc.end_label_asym_id[ i ] ],
                             parseInt( sc.end_auth_seq_id[ i ] ),
-                            helixTypes[ helixType ] || helixTypes[""]
+                            ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 )
                         ] );
                     }
                 }
