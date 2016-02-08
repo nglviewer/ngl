@@ -690,7 +690,7 @@ NGL.Selection.prototype = {
 
                 }else{
 
-                    if( s.keyword!==undefined && s.keyword===k.ALL ){
+                    if( s.keyword===k.ALL ){
                         if( and ){ continue; }else{ return t; }
                     }
 
@@ -762,6 +762,7 @@ NGL.Selection.prototype = {
             // e.g. when traversing a structure would also need
             // to change
             return selection;
+            // return filtered;
 
         }else{
 
@@ -773,6 +774,8 @@ NGL.Selection.prototype = {
 
     makeAtomTest: function( atomOnly ){
 
+        var kwd = NGL.Selection.Keywords;
+
         var selection;
 
         if( atomOnly ){
@@ -780,7 +783,7 @@ NGL.Selection.prototype = {
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined ) return true;
+                if( s.keyword!==undefined && s.keyword!==kwd.BACKBONE ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
@@ -799,8 +802,28 @@ NGL.Selection.prototype = {
 
             // returning -1 means the rule is not applicable
             if( s.atomname===undefined && s.element===undefined &&
-                    s.altloc===undefined && s.atomindex===undefined
+                    s.altloc===undefined && s.atomindex===undefined &&
+                    // s.keyword!==kwd.BACKBONE &&
+                    s.keyword===undefined &&
+                    s.resname===undefined && s.sstruc===undefined &&
+                    s.resno===undefined && s.chainname===undefined &&
+                    s.model===undefined
             ) return -1;
+
+            if( s.keyword!==undefined ){
+                if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) return false;
+
+                if( s.keyword===kwd.HETERO && !a.isHetero() ) return false;
+                if( s.keyword===kwd.PROTEIN && !a.isProtein() ) return false;
+                if( s.keyword===kwd.NUCLEIC && !a.isNucleic() ) return false;
+                if( s.keyword===kwd.RNA && !a.isRna() ) return false;
+                if( s.keyword===kwd.DNA && !a.isDna() ) return false;
+                if( s.keyword===kwd.POLYMER && !a.isPolymer() ) return false;
+                if( s.keyword===kwd.WATER && !a.isWater() ) return false;
+                if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.sstruc )===-1 ) return false;
+                if( s.keyword===kwd.SHEET && sheetTypes.indexOf( a.sstruc )===-1 ) return false;
+                if( s.keyword===kwd.ION && !a.isIon() ) return false;
+            }
 
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
             if( s.element!==undefined && s.element!==a.element ) return false;
@@ -809,6 +832,19 @@ NGL.Selection.prototype = {
             if( s.atomindex!==undefined &&
                     NGL.binarySearchIndexOf( s.atomindex, a.index ) < 0
             ) return false;
+
+            if( s.resname!==undefined && s.resname!==a.resname ) return false;
+            if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) return false;
+            if( s.resno!==undefined ){
+                if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) return false;
+                }else{
+                    if( s.resno!==a.resno ) return false;
+                }
+            }
+
+            if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
+            if( s.model!==undefined && s.model!==a.modelIndex ) return false;
 
             return true;
 
@@ -831,6 +867,7 @@ NGL.Selection.prototype = {
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
+                if( s.keyword===kwd.BACKBONE ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
@@ -850,7 +887,8 @@ NGL.Selection.prototype = {
 
             // returning -1 means the rule is not applicable
             if( s.resname===undefined && s.resno===undefined &&
-                    s.sstruc===undefined && s.keyword===undefined
+                    s.sstruc===undefined && ( s.keyword===undefined || s.keyword===kwd.BACKBONE ) &&
+                    s.model===undefined && s.chainname===undefined
             ) return -1;
 
             if( s.keyword!==undefined ){
@@ -868,7 +906,6 @@ NGL.Selection.prototype = {
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) return false;
-
             if( s.resno!==undefined ){
                 if( Array.isArray( s.resno ) && s.resno.length===2 ){
                     if( s.resno[0]>r.resno || s.resno[1]<r.resno ) return false;
@@ -876,6 +913,9 @@ NGL.Selection.prototype = {
                     if( s.resno!==r.resno ) return false;
                 }
             }
+
+            if( s.chainname!==undefined && s.chainname!==r.chainname ) return false;
+            if( s.model!==undefined && s.model!==r.modelIndex ) return false;
 
             return true;
 
@@ -895,7 +935,7 @@ NGL.Selection.prototype = {
 
             selection = this._filter( function( s ){
                 if( s.keyword!==undefined ) return true;
-                if( s.model!==undefined ) return true;
+                // if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
@@ -918,6 +958,8 @@ NGL.Selection.prototype = {
             if( s.chainname===undefined && s.model===undefined ) return -1;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
+
+            if( s.model!==undefined && s.model!==c.modelIndex ) return false;
 
             return true;
 

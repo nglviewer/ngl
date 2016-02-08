@@ -98,6 +98,18 @@ function setupNGL(){
 
 var kwd = NGL.Selection.Keywords;
 
+
+function getNthSelectedAtom( structure, nth ){
+    var i = 0;
+    var atomProxy = structure.getAtomProxy();
+    structure.eachAtom( function( ap ){
+        if( i === nth ) atomProxy.index = ap.index;
+        ++i;
+    } );
+    return atomProxy;
+}
+
+
 ////////////////////
 // Selection parse
 //
@@ -932,7 +944,7 @@ QUnit.test( "backbone", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap = sview.getAtomProxy( 0 );
+        var ap = getNthSelectedAtom( sview, 0 );
 
         assert.equal( sview.atomCount, 184, "Passed!" );
         assert.equal( ap.atomname, "N", "Passed!" );
@@ -956,7 +968,7 @@ QUnit.test( ".CA", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap = sview.getAtomProxy( 30 );
+        var ap = getNthSelectedAtom( sview, 30 );
 
         assert.equal( sview.atomCount, 46, "Passed!" );
         assert.equal( ap.atomname, "CA", "Passed!" );
@@ -1002,7 +1014,7 @@ QUnit.test( "not backbone", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap = sview.getAtomProxy( 0 );
+        var ap = getNthSelectedAtom( sview, 0 );
 
         assert.equal( sview.atomCount, 143, "Passed!" );
         assert.equal( ap.atomname, "CB", "Passed!" );
@@ -1026,8 +1038,8 @@ QUnit.test( "not backbone or .CA", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap1 = sview.getAtomProxy( 0 );
-        var ap2 = sview.getAtomProxy( 1 );
+        var ap1 = getNthSelectedAtom( sview, 0 );
+        var ap2 = getNthSelectedAtom( sview, 1 );
 
         assert.equal( sview.atomCount, 189, "Passed!" );
         assert.equal( ap1.atomname, "CA", "Passed!" );
@@ -1098,8 +1110,8 @@ QUnit.test( "/1 PDB", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap1 = sview.getAtomProxy( 0 );
-        var ap2 = sview.getAtomProxy( sview.atomCount - 1 );
+        var ap1 = getNthSelectedAtom( sview, 0 );
+        var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
 
         assert.equal( ap1.modelIndex, 1, "Passed!" );
         assert.equal( ap2.modelIndex, 1, "Passed!" );
@@ -1123,8 +1135,8 @@ QUnit.test( "/1 CIF", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap1 = sview.getAtomProxy( 0 );
-        var ap2 = sview.getAtomProxy( sview.atomCount - 1 );
+        var ap1 = getNthSelectedAtom( sview, 0 );
+        var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
 
         assert.equal( ap1.modelIndex, 1, "Passed!" );
         assert.equal( ap2.modelIndex, 1, "Passed!" );
@@ -1148,9 +1160,9 @@ QUnit.test( "atomindex ", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var sview = structure.getView( selection );
-        var ap1 = sview.getAtomProxy( 0 );
-        var ap2 = sview.getAtomProxy( 1 );
-        var ap3 = sview.getAtomProxy( 2 );
+        var ap1 = getNthSelectedAtom( sview, 0 );
+        var ap2 = getNthSelectedAtom( sview, 1 );
+        var ap3 = getNthSelectedAtom( sview, 2 );
 
         assert.equal( sview.atomCount, 3, "Passed!" );
 
@@ -1281,33 +1293,6 @@ QUnit.test( "structure polymer no chains", function( assert ) {
     } );
 
 });
-
-
-QUnit.test( "structure fiber no chains padded", function( assert ) {
-
-    setupNGL();
-    var done = assert.async();
-
-    var path = "data://BaceCgProteinAtomistic.pdb";
-
-    NGL.autoLoad( path ).then( function( structure ){
-
-        var i = 0;
-
-        structure.eachFiber( function( f ){
-
-            i += 1;
-
-        }, undefined, true );
-
-        assert.equal( i, 3, "Passed!" );
-
-        done();
-
-    } );
-
-});
-
 
 
 ////////
