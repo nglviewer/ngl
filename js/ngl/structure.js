@@ -1362,12 +1362,12 @@ NGL.Structure.prototype = {
 
         this.atomSetCache = {};
 
-        this.atomSet = this.getAtomSet( this.selection );
+        this.atomSet = this.getAtomSet2( this.selection );
         this.bondSet = this.getBondSet();
 
         for( var name in this.atomSetDict ){
             var as = this.atomSetDict[ name ];
-            var as2 = this.getAtomSet( false );
+            var as2 = this.getAtomSet2( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
 
@@ -1646,9 +1646,9 @@ NGL.Structure.prototype = {
 
         if( selection && selection.test ){
             if( as ){
-                as = as.new_intersection( this.getAtomSet( selection ) );
+                as = as.new_intersection( this.getAtomSet2( selection ) );
             }else{
-                as = this.getAtomSet( selection );
+                as = this.getAtomSet2( selection );
             }
         }
 
@@ -2154,6 +2154,10 @@ NGL.StructureView = function( structure, selection ){
         }
     } );
 
+    this._ap = this.getAtomProxy();
+    this._rp = this.getResidueProxy();
+    this._cp = this.getChainProxy();
+
     // to allow creating an empty object to call .fromJSON onto
     if( !structure && !selection ) return;
 
@@ -2189,7 +2193,7 @@ NGL.StructureView.prototype = NGL.createObject(
 
         this.atomSetCache = {};
 
-        this.atomSet = this.getAtomSet( this.selection );
+        this.atomSet = this.getAtomSet2( this.selection );
         if( this.structure.atomSet ){
             if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#atomSet.intersection" );
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );

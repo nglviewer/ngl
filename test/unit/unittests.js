@@ -96,6 +96,7 @@ function setupNGL(){
 
 };
 
+var kwd = NGL.Selection.Keywords;
 
 ////////////////////
 // Selection parse
@@ -208,7 +209,7 @@ QUnit.test( "parens", function( assert ) {
             {
                 "operator": "AND",
                 "rules": [
-                    { "keyword": "BACKBONE" },
+                    { "keyword": kwd.BACKBONE },
                     {
                         "operator": "OR",
                         "rules": [
@@ -239,7 +240,7 @@ QUnit.test( "no parens", function( assert ) {
             {
                 "operator": "AND",
                 "rules": [
-                    { "keyword": "BACKBONE" },
+                    { "keyword": kwd.BACKBONE },
                     { "resno": [ 30, 35 ] }
                 ]
             },
@@ -262,7 +263,7 @@ QUnit.test( "outer parens", function( assert ) {
         "operator": "OR",
         "rules": [
             { "resno": [ 10, 15 ] },
-            { "keyword": "BACKBONE" }
+            { "keyword": kwd.BACKBONE }
         ]
     };
 
@@ -574,7 +575,7 @@ QUnit.test( "not backbone or .CA", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "keyword": "BACKBONE" }
+                    { "keyword": kwd.BACKBONE }
                 ]
             },
             { "atomname": "CA" }
@@ -600,7 +601,7 @@ QUnit.test( ".CA or not backbone", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "keyword": "BACKBONE" }
+                    { "keyword": kwd.BACKBONE }
                 ]
             }
         ]
@@ -775,7 +776,7 @@ QUnit.test( "MET or sidechain", function( assert ) {
         "operator": "OR",
         "rules": [
             { "resname": "MET" },
-            { "keyword": "SIDECHAIN" }
+            { "keyword": kwd.SIDECHAIN }
         ]
     };
 
@@ -798,7 +799,7 @@ QUnit.test( "MET or not sidechain", function( assert ) {
                 "operator": undefined,
                 "negate": true,
                 "rules": [
-                    { "keyword": "SIDECHAIN" }
+                    { "keyword": kwd.SIDECHAIN }
                 ]
             }
         ]
@@ -886,7 +887,7 @@ QUnit.test( "atomindex @1,13,2 OR protein", function( assert ) {
         "operator": "OR",
         "rules": [
             { "atomindex": [ 1, 2, 13 ] },
-            { "keyword": "PROTEIN" }
+            { "keyword": kwd.PROTEIN }
         ]
     };
 
@@ -930,38 +931,11 @@ QUnit.test( "backbone", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
+        var ap = sview.getAtomProxy( 0 );
 
-        assert.equal( atomSet.atomCount, 184, "Passed!" );
-        assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
-
-        done();
-
-    } );
-
-});
-
-
-QUnit.test( "backbone [atomArray]", function( assert ) {
-
-    setupNGL();
-    var done = assert.async();
-
-    var _useAtomArrayThreshold = NGL.useAtomArrayThreshold;
-    NGL.useAtomArrayThreshold = 100;
-
-    var sele = "backbone";
-    var selection = new NGL.Selection( sele );
-    var path = "data://1crn.pdb";
-
-    NGL.autoLoad( path ).then( function( structure ){
-
-        var atomSet = new NGL.AtomSet( structure, selection );
-
-        assert.equal( atomSet.atomCount, 184, "Passed!" );
-        assert.equal( atomSet.atoms[ 0 ].atomname, "N", "Passed!" );
-
-        NGL.useAtomArrayThreshold = _useAtomArrayThreshold;
+        assert.equal( sview.atomCount, 184, "Passed!" );
+        assert.equal( ap.atomname, "N", "Passed!" );
 
         done();
 
@@ -981,10 +955,11 @@ QUnit.test( ".CA", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
+        var ap = sview.getAtomProxy( 30 );
 
-        assert.equal( atomSet.atomCount, 46, "Passed!" );
-        assert.equal( atomSet.atoms[ 30 ].atomname, "CA", "Passed!" );
+        assert.equal( sview.atomCount, 46, "Passed!" );
+        assert.equal( ap.atomname, "CA", "Passed!" );
 
         done();
 
@@ -1004,9 +979,9 @@ QUnit.test( "ARG or .N", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
 
-        assert.equal( atomSet.atomCount, 22 + 46 - 2, "Passed!" );
+        assert.equal( sview.atomCount, 22 + 46 - 2, "Passed!" );
 
         done();
 
@@ -1026,10 +1001,11 @@ QUnit.test( "not backbone", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
+        var ap = sview.getAtomProxy( 0 );
 
-        assert.equal( atomSet.atomCount, 143, "Passed!" );
-        assert.equal( atomSet.atoms[ 0 ].atomname, "CB", "Passed!" );
+        assert.equal( sview.atomCount, 143, "Passed!" );
+        assert.equal( ap.atomname, "CB", "Passed!" );
 
         done();
 
@@ -1049,11 +1025,13 @@ QUnit.test( "not backbone or .CA", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
+        var ap1 = sview.getAtomProxy( 0 );
+        var ap2 = sview.getAtomProxy( 1 );
 
-        assert.equal( atomSet.atomCount, 189, "Passed!" );
-        assert.equal( atomSet.atoms[ 0 ].atomname, "CA", "Passed!" );
-        assert.equal( atomSet.atoms[ 1 ].atomname, "CB", "Passed!" );
+        assert.equal( sview.atomCount, 189, "Passed!" );
+        assert.equal( ap1.atomname, "CA", "Passed!" );
+        assert.equal( ap2.atomname, "CB", "Passed!" );
 
         done();
 
@@ -1073,10 +1051,10 @@ QUnit.test( "TYR vs not not TYR", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet1 = new NGL.AtomSet( structure, selection1 );
-        var atomSet2 = new NGL.AtomSet( structure, selection2 );
+        var sview1 = structure.getView( selection1 );
+        var sview2 = structure.getView( selection2 );
 
-        assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
+        assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
 
         done();
 
@@ -1096,10 +1074,10 @@ QUnit.test( "not ( 12 and .CA ) vs not ( 12.CA )", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet1 = new NGL.AtomSet( structure, selection1 );
-        var atomSet2 = new NGL.AtomSet( structure, selection2 );
+        var sview1 = structure.getView( selection1 );
+        var sview2 = structure.getView( selection2 );
 
-        assert.equal( atomSet1.atomCount, atomSet2.atomCount, "Passed!" );
+        assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
 
         done();
 
@@ -1119,11 +1097,12 @@ QUnit.test( "/1 PDB", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
-        var n = atomSet.atoms.length - 1;
+        var sview = structure.getView( selection );
+        var ap1 = sview.getAtomProxy( 0 );
+        var ap2 = sview.getAtomProxy( sview.atomCount - 1 );
 
-        assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
-        assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
+        assert.equal( ap1.modelIndex, 1, "Passed!" );
+        assert.equal( ap2.modelIndex, 1, "Passed!" );
 
         done();
 
@@ -1143,11 +1122,12 @@ QUnit.test( "/1 CIF", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
-        var n = atomSet.atoms.length - 1;
+        var sview = structure.getView( selection );
+        var ap1 = sview.getAtomProxy( 0 );
+        var ap2 = sview.getAtomProxy( sview.atomCount - 1 );
 
-        assert.equal( atomSet.atoms[ 0 ].modelindex, 1, "Passed!" );
-        assert.equal( atomSet.atoms[ n ].modelindex, 1, "Passed!" );
+        assert.equal( ap1.modelIndex, 1, "Passed!" );
+        assert.equal( ap2.modelIndex, 1, "Passed!" );
 
         done();
 
@@ -1167,13 +1147,16 @@ QUnit.test( "atomindex ", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
+        var ap1 = sview.getAtomProxy( 0 );
+        var ap2 = sview.getAtomProxy( 1 );
+        var ap3 = sview.getAtomProxy( 2 );
 
-        assert.equal( atomSet.atoms.length, 3, "Passed!" );
+        assert.equal( sview.atomCount, 3, "Passed!" );
 
-        assert.equal( atomSet.atoms[ 0 ].index, 1, "Passed!" );
-        assert.equal( atomSet.atoms[ 1 ].index, 8, "Passed!" );
-        assert.equal( atomSet.atoms[ 2 ].index, 12, "Passed!" );
+        assert.equal( ap1.index, 1, "Passed!" );
+        assert.equal( ap2.index, 8, "Passed!" );
+        assert.equal( ap3.index, 12, "Passed!" );
 
         done();
 
@@ -1188,7 +1171,7 @@ QUnit.test( "atomindex ", function( assert ) {
 QUnit.module( "structure" );
 
 
-QUnit.test( "structure subset", function( assert ) {
+QUnit.test( "structure view", function( assert ) {
 
     setupNGL();
     var done = assert.async();
@@ -1197,12 +1180,11 @@ QUnit.test( "structure subset", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var subset = new NGL.StructureSubset(
-            structure, new NGL.Selection( "10-30" )
-        );
+        var selection = new NGL.Selection( "10-30" );
+        var sview = structure.getView( selection );
 
-        assert.equal( structure.atomCount, 774, "Passed!" );
-        assert.equal( subset.atomCount, 211, "Passed!" );
+        assert.equal( structure.atomStore.count, 774, "Passed!" );
+        assert.equal( sview.atomCount, 211, "Passed!" );
 
         done();
 
@@ -1211,7 +1193,7 @@ QUnit.test( "structure subset", function( assert ) {
 });
 
 
-QUnit.test( "structure subset not", function( assert ) {
+QUnit.test( "structure view not", function( assert ) {
 
     setupNGL();
     var done = assert.async();
@@ -1220,12 +1202,11 @@ QUnit.test( "structure subset not", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var subset = new NGL.StructureSubset(
-            structure, new NGL.Selection( "not 10-30" )
-        );
+        var selection = new NGL.Selection( "not 10-30" );
+        var sview = structure.getView( selection );
 
-        assert.equal( structure.atomCount, 774, "Passed!" );
-        assert.equal( subset.atomCount, 563, "Passed!" );
+        assert.equal( structure.atomStore.count, 774, "Passed!" );
+        assert.equal( sview.atomCount, 563, "Passed!" );
 
         done();
 
@@ -1234,7 +1215,7 @@ QUnit.test( "structure subset not", function( assert ) {
 });
 
 
-QUnit.test( "structure subset autoChainName", function( assert ) {
+QUnit.test( "structure view autoChainName", function( assert ) {
 
     setupNGL();
     var done = assert.async();
@@ -1243,12 +1224,11 @@ QUnit.test( "structure subset autoChainName", function( assert ) {
 
     NGL.autoLoad( path ).then( function( structure ){
 
-        var subset = new NGL.StructureSubset(
-            structure, new NGL.Selection( ":A" )
-        );
+        var selection = new NGL.Selection( ":A" );
+        var sview = structure.getView( selection );
 
-        assert.equal( structure.atomCount, 52661, "Passed!" );
-        assert.equal( subset.atomCount, 258, "Passed!" );
+        assert.equal( structure.atomStore.count, 52661, "Passed!" );
+        assert.equal( sview.atomCount, 258, "Passed!" );
 
         done();
 
@@ -1257,7 +1237,7 @@ QUnit.test( "structure subset autoChainName", function( assert ) {
 });
 
 
-QUnit.test( "structure subset atomset chain", function( assert ) {
+QUnit.test( "structure view chain", function( assert ) {
 
     setupNGL();
     var done = assert.async();
@@ -1267,12 +1247,10 @@ QUnit.test( "structure subset atomset chain", function( assert ) {
     NGL.autoLoad( path ).then( function( structure ){
 
         var selection = new NGL.Selection( "30-341:R or 384-394:A" );
-        var subset = new NGL.StructureSubset( structure, selection );
-        var atomSet = new NGL.AtomSet( structure, selection );
+        var sview = structure.getView( selection );
 
-        assert.equal( structure.atomCount, 10274, "Passed!" );
-        assert.equal( subset.atomCount, 2292, "Passed!" );
-        assert.equal( subset.atomCount, atomSet.atomCount, "Passed!" );
+        assert.equal( structure.atomStore.count, 10274, "Passed!" );
+        assert.equal( sview.atomCount, 2292, "Passed!" );
 
         done();
 
@@ -1281,7 +1259,7 @@ QUnit.test( "structure subset atomset chain", function( assert ) {
 });
 
 
-QUnit.test( "structure fiber no chains", function( assert ) {
+QUnit.test( "structure polymer no chains", function( assert ) {
 
     setupNGL();
     var done = assert.async();
@@ -1292,10 +1270,8 @@ QUnit.test( "structure fiber no chains", function( assert ) {
 
         var i = 0;
 
-        structure.eachFiber( function( f ){
-
+        structure.eachPolymer( function( p ){
             i += 1;
-
         } );
 
         assert.equal( i, 3, "Passed!" );

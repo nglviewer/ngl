@@ -674,6 +674,7 @@ NGL.AtomProxy.prototype = {
 
     isBackbone: function(){
         var backboneIndexList = this.residueType.backboneIndexList;
+        // console.log(backboneIndexList)
         if( backboneIndexList.length > 0 ){
             var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
             return backboneIndexList.indexOf( this.index - atomOffset ) !== -1;
@@ -1013,11 +1014,11 @@ NGL.ResidueProxy.prototype = {
         var ap = this.structure.getAtomProxy();
         var end = offset + count;
 
-        if( selection && selection.test ){
-            var test = selection.test;
+        if( selection && selection.atomOnlyTest ){
+            var atomOnlyTest = selection.atomOnlyTest;
             for( var i = offset; i < end; ++i ){
                 ap.index = i;
-                if( test( ap ) ) callback( ap );
+                if( atomOnlyTest( ap ) ) callback( ap );
             }
         }else{
             for( var i = offset; i < end; ++i ){
@@ -1035,11 +1036,11 @@ NGL.ResidueProxy.prototype = {
         var ap = this.structure._ap;
         var end = offset + count;
 
-        if( selection && selection.test ){
-            var test = selection.test;
+        if( selection && selection.atomOnlyTest ){
+            var atomOnlyTest = selection.atomOnlyTest;
             for( var i = offset; i < end; ++i ){
                 ap.index = i;
-                if( test( ap ) ) callback( ap );
+                if( atomOnlyTest( ap ) ) callback( ap );
             }
         }else{
             for( var i = offset; i < end; ++i ){
@@ -1619,7 +1620,7 @@ NGL.ChainProxy.prototype = {
     eachPolymer: function( callback, selection ){
 
         var rStartIndex, rNextIndex;
-        var test = selection ? selection.test : undefined;
+        var test = selection ? selection.residueOnlyTest : undefined;
         var structure = this.model.structure;
 
         var count = this.residueCount;
@@ -1669,7 +1670,7 @@ NGL.ChainProxy.prototype = {
             }
 
             if( !ap1 || !ap2 || !ap1.connectedTo( ap2 ) ||
-                ( test && ( !test( ap1 ) || !test( ap2 ) ) ) ){
+                ( test && ( !test( rp1 ) || !test( rp2 ) ) ) ){
                 if( rp1.index - rStartIndex > 1 ){
                     // console.log("FOO2",rStartIndex, rp1.index)
                     callback( new NGL.Polymer( structure, rStartIndex, rp1.index ) );
