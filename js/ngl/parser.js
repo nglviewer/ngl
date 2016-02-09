@@ -1136,6 +1136,14 @@ NGL.StructureParser.prototype = NGL.createObject(
 
         this._postProcess();
 
+        if( s.unitcell === undefined ){
+            var bbSize = s.boundingBox.size();
+            s.unitcell = new NGL.Unitcell(
+                bbSize.x, bbSize.y, bbSize.z,
+                90, 90, 90, "P 1"
+            );
+        }
+
         NGL.buildUnitcellAssembly( s );
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
@@ -1575,7 +1583,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                     boxes.push( box );
 
                     if( modelIdx === 0 ){
-
                         unitcellDict.a = a;
                         unitcellDict.b = b;
                         unitcellDict.c = c;
@@ -1583,7 +1590,6 @@ NGL.PdbParser.prototype = NGL.createObject(
                         unitcellDict.beta = beta;
                         unitcellDict.gamma = gamma;
                         unitcellDict.spacegroup = sGroup;
-
                     }
 
                 }
@@ -1598,16 +1604,15 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         sb.finalize();
 
-        s.unitcell = new NGL.Unitcell(
-            unitcellDict.a,
-            unitcellDict.b,
-            unitcellDict.c,
-            unitcellDict.alpha,
-            unitcellDict.beta,
-            unitcellDict.gamma,
-            unitcellDict.spacegroup,
-            unitcellDict.scale
-        );
+        if( unitcellDict.a !== undefined ){
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a, unitcellDict.b, unitcellDict.c,
+                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
+                unitcellDict.spacegroup, unitcellDict.scale
+            );
+        }else{
+            s.unitcell = undefined;
+        }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
         callback();
@@ -1789,6 +1794,11 @@ NGL.GroParser.prototype = NGL.createObject(
         } );
 
         sb.finalize();
+
+        s.unitcell = new NGL.Unitcell(
+            boxes[ 0 ][ 0 ], boxes[ 0 ][ 4 ], boxes[ 0 ][ 8 ],
+            90, 90, 90, "P 1"
+        );
 
         if( NGL.debug ) NGL.timeEnd( "NGL.GroParser._parse " + this.name );
         callback();
@@ -2576,16 +2586,15 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        s.unitcell = new NGL.Unitcell(
-            unitcellDict.a,
-            unitcellDict.b,
-            unitcellDict.c,
-            unitcellDict.alpha,
-            unitcellDict.beta,
-            unitcellDict.gamma,
-            unitcellDict.spacegroup,
-            unitcellDict.scale
-        );
+        if( unitcellDict.a !== undefined ){
+            s.unitcell = new NGL.Unitcell(
+                unitcellDict.a, unitcellDict.b, unitcellDict.c,
+                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
+                unitcellDict.spacegroup, unitcellDict.scale
+            );
+        }else{
+            s.unitcell = undefined;
+        }
 
         // add connections
         var sc = cif.struct_conn;
