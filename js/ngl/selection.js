@@ -12,9 +12,7 @@ NGL.Selection = function( string ){
     var SIGNALS = signals;
 
     this.signals = {
-
         stringChanged: new SIGNALS.Signal(),
-
     };
 
     this.setString( string );
@@ -51,14 +49,10 @@ NGL.Selection.prototype = {
         //
 
         try{
-
             this.parse( string );
-
         }catch( e ){
-
             // NGL.error( e.stack );
             this.selection = { "error": e.message };
-
         }
 
         this.string = string;
@@ -741,16 +735,11 @@ NGL.Selection.prototype = {
         for( var i = 0; i < n; ++i ){
 
             var s = selection.rules[ i ];
-
             if( s.hasOwnProperty( "operator" ) ){
-
                 var fs = this._filter( fn, s );
                 if( fs !== null ) filtered.rules.push( fs );
-
             }else if( !fn( s ) ){
-
                 filtered.rules.push( s );
-
             }
 
         }
