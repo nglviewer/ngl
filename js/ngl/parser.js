@@ -1731,9 +1731,9 @@ NGL.GroParser.prototype = NGL.createObject(
 
                     var str = line.trim().split( /\s+/ );
                     var box = new Float32Array( 9 );
-                    box[ 0 ] = parseFloat( box[ 0 ] ) * 10;
-                    box[ 4 ] = parseFloat( box[ 1 ] ) * 10;
-                    box[ 8 ] = parseFloat( box[ 2 ] ) * 10;
+                    box[ 0 ] = parseFloat( str[ 0 ] ) * 10;
+                    box[ 4 ] = parseFloat( str[ 1 ] ) * 10;
+                    box[ 8 ] = parseFloat( str[ 2 ] ) * 10;
                     boxes.push( box );
 
                     if( firstModelOnly ){
