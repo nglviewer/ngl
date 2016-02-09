@@ -102,7 +102,7 @@ NGL.Loader = function( src, params ){
 
     var p = Object.assign( {}, params );
 
-    var binaryExtList = [ "msgpack", "dcd", "mrc", "ccp4", "map", "dxbin" ];
+    var binaryExtList = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ];
     var binary = binaryExtList.indexOf( p.ext ) !== -1;
 
     this.compressed = p.compressed || false;
@@ -195,7 +195,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
             "sdf": NGL.SdfParser,
             "mol2": NGL.Mol2Parser,
 
-            "msgpack": NGL.MsgpackParser,
+            "mmtf": NGL.MmtfParser,
 
             "dcd": NGL.DcdParser,
 
@@ -332,7 +332,7 @@ NGL.loaderMap = {
     "sdf": NGL.ParserLoader,
     "mol2": NGL.ParserLoader,
 
-    "msgpack":  NGL.ParserLoader,
+    "mmtf":  NGL.ParserLoader,
 
     "dcd": NGL.ParserLoader,
 

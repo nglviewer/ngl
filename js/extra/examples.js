@@ -1419,7 +1419,7 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
-    "msgpack": function( stage ){
+    "mmtf": function( stage ){
 
         console.time( "load-to-render" );
         // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4V99", {
@@ -1433,13 +1433,13 @@ NGL.ExampleRegistry.addDict( {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/1D66", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3SN6", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4CUP", {
-        stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3J3Q", {
+        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3J3Q", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4V5A", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/1D66", {
-        // stage.loadFile( "data://perf/4V5A.msgpack", {
-        // stage.loadFile( "data://perf/3J3Q.msgpack", {
-        // stage.loadFile( "data://perf/3SN6.msgpack", {
-            ext: "msgpack"
+        // stage.loadFile( "data://perf/4V5A.mmtf", {
+        stage.loadFile( "data://perf/3J3Q.mmtf", {
+        // stage.loadFile( "data://perf/3SN6.mmtf", {
+            ext: "mmtf"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon", { color: "chainindex", quality: "custom", subdiv: 1 } );
             o.addRepresentation( "backbone", { color: "lightgreen", scale: 1.0, lineOnly: true } );

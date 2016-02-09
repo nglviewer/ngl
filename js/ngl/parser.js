@@ -3183,7 +3183,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 } );
 
 
-NGL.MsgpackParser = function( streamer, params ){
+NGL.MmtfParser = function( streamer, params ){
 
     NGL.StructureParser.call( this, streamer, params );
 
@@ -3193,17 +3193,17 @@ NGL.MsgpackParser = function( streamer, params ){
 
 };
 
-NGL.MsgpackParser.prototype = NGL.createObject(
+NGL.MmtfParser.prototype = NGL.createObject(
 
     NGL.StructureParser.prototype, {
 
-    constructor: NGL.MsgpackParser,
+    constructor: NGL.MmtfParser,
 
-    type: "msgpack",
+    type: "mmtf",
 
     _parse: function( callback ){
 
-        if( NGL.debug ) NGL.time( "NGL.MsgpackParser._parse " + this.name );
+        if( NGL.debug ) NGL.time( "NGL.MmtfParser._parse " + this.name );
 
         var s = this.structure;
         var sd = decodeStructure( this.streamer.data );
@@ -3276,7 +3276,7 @@ NGL.MsgpackParser.prototype = NGL.createObject(
 
         //
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.MsgpackParser._parse " + this.name );
+        if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
         callback();
 
     }
