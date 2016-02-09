@@ -1368,14 +1368,14 @@ NGL.ExampleRegistry.addDict( {
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "hyperball" );
             // o.addRepresentation( "ball+stick", { color: "sstruc", sele: "backbone and 230-250:A" } );
-            o.addRepresentation( "cartoon", { sele: ":A and sheet", color: "sstruc" } );
+            // o.addRepresentation( "cartoon", { sele: ":A and sheet", color: "sstruc" } );
             // o.addRepresentation( "ribbon", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { color: "sstruc", linewidth: 5, sele: "230-240:A" } );
             // o.addRepresentation( "cartoon", { color: "sstruc", linewidth: 5, sele: "240-250:A" } );
-            // o.addRepresentation( "cartoon", { color: "sstruc" } );
+            o.addRepresentation( "cartoon", { color: "sstruc" } );
             // o.addRepresentation( "tube", { color: "sstruc" } );
             // o.addRepresentation( "cartoon", { sele: "polymer" } );
-            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
+            // o.addRepresentation( "ball+stick", { sele: "30-341:R or 384-394:A" } );
             // o.centerView( true, "330-341:R" );
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
@@ -1389,9 +1389,11 @@ NGL.ExampleRegistry.addDict( {
     "biomol": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://perf/1RB8.cif.gz" ).then( function( o ){
-            o.addRepresentation( "cartoon", { sele: "polymer" } );
-            o.addRepresentation( "ball+stick", { sele: "hetero" } );
+        stage.loadFile( "data://4opj.pdb" ).then( function( o ){
+        // stage.loadFile( "data://4opj.cif" ).then( function( o ){
+            o.addRepresentation( "cartoon", { assembly: "AU", opacity: 0.5, side: THREE.BackSide } );
+            o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0 } );
+            // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
             stage.tasks.onZeroOnce( function(){
                 console.timeEnd( "load-to-render" );
@@ -1431,16 +1433,16 @@ NGL.ExampleRegistry.addDict( {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/1D66", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3SN6", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4CUP", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3J3Q", {
+        stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3J3Q", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4V5A", {
         // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/1D66", {
         // stage.loadFile( "data://perf/4V5A.msgpack", {
-        stage.loadFile( "data://perf/3J3Q.msgpack", {
+        // stage.loadFile( "data://perf/3J3Q.msgpack", {
         // stage.loadFile( "data://perf/3SN6.msgpack", {
             ext: "msgpack"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon", { color: "chainindex", quality: "custom", subdiv: 1 } );
-            o.addRepresentation( "backbone", { color: "chainindex", scale: 1.0, lineOnly: true } );
+            o.addRepresentation( "backbone", { color: "lightgreen", scale: 1.0, lineOnly: true } );
             // o.addRepresentation( "tube" );
             // o.addRepresentation( "cartoon", { color: "chainindex" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );

@@ -879,7 +879,7 @@ NGL.Viewer = function( eid, params ){
     this.aspect = this.width / this.height;
 
     this.initParams();
-    this.holdRendering = true;
+    // this.holdRendering = true;
 
     this.initCamera();
     this.initScene();
