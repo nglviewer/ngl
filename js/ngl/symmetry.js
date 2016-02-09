@@ -40,6 +40,8 @@ NGL.Unitcell = function( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
 
     if( cartToFrac === undefined ){
 
+        // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
+
         var cStar = ( this.a * this.b * sinGamma ) / this.volume;
         var cosAlphaStar = (
             ( cosBeta * cosGamma - cosAlpha ) /
@@ -51,7 +53,7 @@ NGL.Unitcell = function( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
             this.b * cosGamma, this.b * sinGamma, 0, 0,
             this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
             0, 0, 0, 1
-        );
+        ).transpose();
         this.cartToFrac = new THREE.Matrix4().getInverse( this.fracToCart );
 
     }else{
