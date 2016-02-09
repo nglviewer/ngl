@@ -1515,7 +1515,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     elms[ 4 * 2 + row ] = parseFloat( ls[ 4 ] );
                     elms[ 4 * 3 + row ] = parseFloat( ls[ 5 ] );
 
-                }else if( recordName === 'ORIGX ' ){
+                }else if( line.substr( 0, 5 ) === 'ORIGX' ){
 
                     if( !unitcellDict.origx ){
                         unitcellDict.origx = new THREE.Matrix4();
@@ -1530,7 +1530,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
                     elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
 
-                }else if( recordName === 'SCALE ' ){
+                }else if( line.substr( 0, 5 ) === 'SCALE' ){
 
                     if( !unitcellDict.scale ){
                         unitcellDict.scale = new THREE.Matrix4();
