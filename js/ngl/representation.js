@@ -2357,16 +2357,15 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ){
-            return;
-        }
+        var bufferList = [];
+        var polymerList = [];
 
         this.structure.eachPolymer( function( polymer ){
 
             if( polymer.residueCount < 4 ) return;
-            this.polymerList.push( polymer );
+            polymerList.push( polymer );
 
             var spline = new NGL.Spline( polymer );
             var subPos = spline.getSubdividedPosition(
@@ -2376,7 +2375,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                 this.subdiv, this.getColorParams()
             );
 
-            this.bufferList.push(
+            bufferList.push(
                 new NGL.TraceBuffer(
                     subPos.position,
                     subCol.color,
@@ -2384,28 +2383,26 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                 )
             );
 
-        }.bind( this ), this.selection, true );
+        }.bind( this ), sview.getSelection() );
+
+        return {
+            bufferList: bufferList,
+            polymerList: polymerList
+        };
 
     },
 
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+    updateData: function( what, data ){
 
         what = what || {};
 
         var i = 0;
-        var n = this.polymerList.length;
+        var n = data.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var polymer = this.polymerList[ i ]
-
-            if( polymer.residueCount < 4 ) return;
-
             var bufferData = {};
-            var spline = new NGL.Spline( polymer );
+            var spline = new NGL.Spline( data.polymerList[ i ] );
 
             if( what[ "position" ] ){
                 var subPos = spline.getSubdividedPosition(
@@ -2421,7 +2418,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
                 bufferData[ "color" ] = subCol.color;
             }
 
-            this.bufferList[ i ].setAttributes( bufferData );
+            data.bufferList[ i ].setAttributes( bufferData );
 
         };
 
