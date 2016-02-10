@@ -823,7 +823,7 @@ NGL.buildUnitcellAssembly = function( structure ){
     }
 
     var unitcellAssembly = new NGL.Assembly( "UNITCELL" );
-    unitcellAssembly.add( new NGL.AssemblyPart( getMatrixList() ) );
+    unitcellAssembly.addPart( getMatrixList() );
 
     var vec = new THREE.Vector3();
     var supercellAssembly = new NGL.Assembly( "SUPERCELL" );
@@ -860,7 +860,7 @@ NGL.buildUnitcellAssembly = function( structure ){
         getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
         getMatrixList( vec.set( -1,  1,  0 ) )   // 465
     );
-    supercellAssembly.add( new NGL.AssemblyPart( supercellMatrixList ) );
+    supercellAssembly.addPart( supercellMatrixList );
 
     structure.biomolDict[ "UNITCELL" ] = unitcellAssembly;
     structure.biomolDict[ "SUPERCELL" ] = supercellAssembly;
@@ -882,8 +882,10 @@ NGL.Assembly.prototype = {
     constructor: NGL.Assembly,
     type: "Assembly",
 
-    add: function( part ){
+    addPart: function( matrixList, chainList ){
+        var part = new NGL.AssemblyPart( matrixList, chainList );
         this.partList.push( part );
+        return part;
     }
 
 };
@@ -926,7 +928,7 @@ NGL.AssemblyPart.prototype = {
             instanceList.push( {
                 id: j + 1,
                 name: j,
-                assembly: name,
+                // assembly: name,
                 matrix: this.matrixList[ j ]
             } );
         }
@@ -1522,8 +1524,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                     ){
 
                         if( line.substr( 11, 5 ) === 'APPLY' ){
-                            currentPart = new NGL.AssemblyPart();
-                            currentBiomol.partList.push( currentPart );
+                            currentPart = currentBiomol.addPart();
                         }
 
                         line.substr( 41, 30 ).split( "," ).forEach( function( v ){
