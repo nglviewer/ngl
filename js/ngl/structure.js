@@ -2380,6 +2380,7 @@ NGL.StructureView.prototype = NGL.createObject(
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
 
+        this.signals.refreshed.dispatch();
     },
 
     getSelection: function(){
