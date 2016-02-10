@@ -788,65 +788,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
-    // attach: function( callback ){
-
-    //     var viewer = this.viewer;
-    //     var structure = this.structure;
-    //     var assembly = this.assembly;
-
-    //     if( assembly === "" ){
-    //         assembly = structure.defaultAssembly;
-    //     }
-
-    //     // NGL.log( structure.biomolDict );
-
-    //     var instanceList = [];
-
-    //     if( structure.biomolDict && structure.biomolDict[ assembly ] ){
-
-    //         var matrixDict = structure.biomolDict[ assembly ].matrixDict;
-
-    //         Object.keys( matrixDict ).forEach( function( name, i ){
-
-    //             instanceList.push( {
-
-    //                 id: i + 1,
-    //                 name: name,
-    //                 assembly: assembly,
-    //                 matrix: matrixDict[ name ]
-
-    //             } );
-
-    //         } );
-
-    //     }
-
-    //     this.bufferList.forEach( function( buffer, i, list ){
-
-    //         // async to appease Chrome
-
-    //         // requestAnimationFrame( function(){
-
-    //             if( instanceList.length >= 1 ){
-    //                 viewer.add( buffer, instanceList );
-    //             }else{
-    //                 viewer.add( buffer );
-    //             }
-
-    //             if( i === list.length - 1 ){
-    //                 callback();
-    //             }
-
-    //         // } );
-
-    //     } );
-
-    //     this.setVisibility( this.visible );
-
-    //     if( this.bufferList.length === 0 ) callback();
-
-    // },
-
     clear: function(){
 
         this.dataList.length = 0;
@@ -2096,7 +2037,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     updateData: function( what, data ){
 
-        if( NGL.debug ) NGL.time( "cartoon repr update" );
+        if( NGL.debug ) NGL.time( this.type + " repr update" );
 
         what = what || {};
 
@@ -2141,7 +2082,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "cartoon repr update" );
+        if( NGL.debug ) NGL.timeEnd( this.type + " repr update" );
 
     },
 
