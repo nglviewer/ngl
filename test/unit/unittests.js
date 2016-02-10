@@ -1026,6 +1026,30 @@ QUnit.test( "not backbone", function( assert ) {
 });
 
 
+QUnit.test( "sidechain", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
+
+    var sele = "sidechain";
+    var selection = new NGL.Selection( sele );
+    var path = "data://1crn.pdb";
+
+    NGL.autoLoad( path ).then( function( structure ){
+
+        var sview = structure.getView( selection );
+        var ap = getNthSelectedAtom( sview, 0 );
+
+        assert.equal( sview.atomCount, 143, "Passed!" );
+        assert.equal( ap.atomname, "CB", "Passed!" );
+
+        done();
+
+    } );
+
+});
+
+
 QUnit.test( "not backbone or .CA", function( assert ) {
 
     setupNGL();

@@ -774,7 +774,9 @@ NGL.Selection.prototype = {
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined && s.keyword!==kwd.BACKBONE ) return true;
+                if( s.keyword!==undefined &&
+                        s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN
+                ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
@@ -794,7 +796,7 @@ NGL.Selection.prototype = {
             // returning -1 means the rule is not applicable
             if( s.atomname===undefined && s.element===undefined &&
                     s.altloc===undefined && s.atomindex===undefined &&
-                    // s.keyword!==kwd.BACKBONE &&
+                    // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
                     s.keyword===undefined &&
                     s.resname===undefined && s.sstruc===undefined &&
                     s.resno===undefined && s.chainname===undefined &&
@@ -803,6 +805,7 @@ NGL.Selection.prototype = {
 
             if( s.keyword!==undefined ){
                 if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) return false;
+                if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) return false;
 
                 if( s.keyword===kwd.HETERO && !a.isHetero() ) return false;
                 if( s.keyword===kwd.PROTEIN && !a.isProtein() ) return false;
@@ -858,7 +861,7 @@ NGL.Selection.prototype = {
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword===kwd.BACKBONE ) return true;
+                if( s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
@@ -878,8 +881,8 @@ NGL.Selection.prototype = {
 
             // returning -1 means the rule is not applicable
             if( s.resname===undefined && s.resno===undefined &&
-                    s.sstruc===undefined && ( s.keyword===undefined || s.keyword===kwd.BACKBONE ) &&
-                    s.model===undefined && s.chainname===undefined
+                    s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
+                    ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
             ) return -1;
 
             if( s.keyword!==undefined ){
