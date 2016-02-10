@@ -1608,6 +1608,12 @@ NGL.Structure.prototype = {
 
     },
 
+    getStructure: function(){
+
+        return this;
+
+    },
+
     setDefaultAssembly: function( value ){
 
         this.defaultAssembly = value;
@@ -1824,7 +1830,7 @@ NGL.Structure.prototype = {
     getAtomData: function( params ){
 
         var p = Object.assign( {}, params );
-        if( p.colorParams ) p.colorParams.this = this;
+        if( p.colorParams ) p.colorParams.structure = this.getStructure();
 
         var what = p.what;
         var atomSet = p.atomSet || this.atomSet;
@@ -1881,7 +1887,7 @@ NGL.Structure.prototype = {
     getBondData: function( params ){
 
         var p = Object.assign( {}, params );
-        if( p.colorParams ) p.colorParams.structure = this;
+        if( p.colorParams ) p.colorParams.structure = this.getStructure();
 
         var what = p.what;
         var bondSet = p.bondSet || this.bondSet;
@@ -2387,6 +2393,12 @@ NGL.StructureView.prototype = NGL.createObject(
         }else{
             return this.selection;
         }
+
+    },
+
+    getStructure: function(){
+
+        return this.structure.getStructure();
 
     },
 
