@@ -280,13 +280,13 @@ NGL.ToolbarWidget = function( stage ){
 
             msg = "Picked atom: " +
                 d.atom.qualifiedName() +
-                " (" + d.atom.residue.chain.model.structure.name + ")";
+                " (" + d.atom.structure.name + ")";
 
         }else if( d.bond ){
 
             msg = "Picked bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-                " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
+                " (" + d.bond.structure.name + ")";
 
         }else if( d.volume ){
 
