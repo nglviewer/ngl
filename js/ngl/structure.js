@@ -1751,7 +1751,7 @@ NGL.Structure.prototype = {
 
     },
 
-    eachPolymer: function( callback, selection, padded ){
+    eachPolymer: function( callback, selection ){
 
         if( selection && selection.modelOnlyTest ){
 
@@ -1759,14 +1759,14 @@ NGL.Structure.prototype = {
 
             this.eachModel( function( mp ){
                 if( modelOnlyTest( mp ) ){
-                    mp.eachPolymer( callback, selection, padded );
+                    mp.eachPolymer( callback, selection );
                 }
             } );
 
         }else{
 
             this.eachModel( function( mp ){
-                mp.eachPolymer( callback, selection, padded );
+                mp.eachPolymer( callback, selection );
             } );
 
         }

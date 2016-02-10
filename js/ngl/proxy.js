@@ -1898,7 +1898,7 @@ NGL.ModelProxy.prototype = {
 
     },
 
-    eachPolymer: function( callback, selection, padded ){
+    eachPolymer: function( callback, selection ){
 
         if( selection && selection.chainOnlyTest ){
 
@@ -1906,14 +1906,14 @@ NGL.ModelProxy.prototype = {
 
             this.eachChain( function( cp ){
                 if( chainOnlyTest( cp ) ){
-                    cp.eachPolymer( callback, selection, padded );
+                    cp.eachPolymer( callback, selection );
                 }
             } );
 
         }else{
 
             this.eachChain( function( cp ){
-                cp.eachPolymer( callback, selection, padded );
+                cp.eachPolymer( callback, selection );
             } );
 
         }
