@@ -688,7 +688,8 @@ NGL.AtomProxy.prototype = {
         var moleculeType = this.residueType.moleculeType;
         return (
             moleculeType === NGL.ProteinType ||
-            moleculeType === NGL.NucleicType ||
+            moleculeType === NGL.RnaType ||
+            moleculeType === NGL.DnaType ||
             moleculeType === NGL.CgType
         );
     },
