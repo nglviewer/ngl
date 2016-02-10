@@ -1437,9 +1437,8 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     createData: function( sview ){
 
-        var bondData = sview.getBondData(
-            this.getBondParams( { position: true, color: true } )
-        );
+        var what = { position: true, color: true };
+        var bondData = sview.getBondData( this.getBondParams( what ) );
 
         var lineBuffer = new NGL.LineBuffer(
             bondData.position1,

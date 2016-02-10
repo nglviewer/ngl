@@ -2342,12 +2342,6 @@ NGL.StructureView.prototype = NGL.createObject(
     constructor: NGL.StructureView,
     type: "StructureView",
 
-    // getView: function(){
-
-    //     NGL.warning( "You can not get a view from a StructureView." );
-
-    // },
-
     refresh: function(){
 
         if( NGL.debug ) NGL.time( "NGL.StructureView.refresh" );
