@@ -615,15 +615,28 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
+        if( this.structureView.atomCount === 0 ) return;
+
         var name = this.assembly || this.structure.defaultAssembly;
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
             assembly.partList.forEach( function( part ){
-                this.dataList.push( this.createData( part ) );
+                var sview = part.getView( this.structureView );
+                if( sview.atomCount === 0 ) return;
+                var data = this.createData( sview );
+                if( data ){
+                    data.sview = sview;
+                    data.instanceList = part.getInstanceList();
+                    this.dataList.push( data );
+                }
             }, this );
         }else{
-            this.dataList.push( this.createData() );
+            var data = this.createData( this.structureView );
+            if( data ){
+                data.sview = this.structureView;
+                this.dataList.push( data );
+            }
         }
 
     },
@@ -637,7 +650,9 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
     update: function( what ){
 
         this.dataList.forEach( function( data ){
-            this.updateData( what, data );
+            if( data.bufferList.length > 0 ){
+                this.updateData( what, data );
+            }
         }, this );
 
     },
@@ -748,10 +763,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
             }
         }
 
-        if( params && params[ "assembly" ] !== undefined ){
-            this.setSelection( undefined, this.getAssemblySele( params[ "assembly" ] ) );
-        }
-
         NGL.Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -766,10 +777,9 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var bufferList = this.bufferList;
 
         this.dataList.forEach( function( data ){
-            var instanceList = data.part ? data.part.getInstanceList() : undefined;
             data.bufferList.forEach( function( buffer ){
                 bufferList.push( buffer );
-                viewer.add( buffer, instanceList );
+                viewer.add( buffer, data.instanceList );
             } )
         } );
 
@@ -1269,6 +1279,33 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     },
 
+    createData: function( part ){
+
+        if( this.structureView.atomCount === 0 ) return;
+
+        var sview = part.getView( this.structureView );
+        if( sview.atomCount === 0 ) return;
+
+        var bondData = sview.getBondData(
+            this.getBondParams( { position: true, color: true } )
+        );
+
+        var lineBuffer = new NGL.LineBuffer(
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            this.getBufferParams()
+        );
+
+        return {
+            part: part,
+            sview: sview,
+            bufferList: [ lineBuffer ]
+        };
+
+    },
+
     create: function(){
 
         if( this.structureView.atomCount === 0 ) return;
@@ -1457,30 +1494,7 @@ NGL.LineRepresentation.prototype = NGL.createObject(
 
     },
 
-    // create: function(){
-
-    //     if( this.structureView.atomCount === 0 ) return;
-
-    //     var bondData = this.getBondData( { position: true, color: true } );
-
-    //     this.lineBuffer = new NGL.LineBuffer(
-    //         bondData.position1,
-    //         bondData.position2,
-    //         bondData.color1,
-    //         bondData.color2,
-    //         this.getBufferParams()
-    //     );
-
-    //     this.bufferList.push( this.lineBuffer );
-
-    // },
-
-    createData: function( part ){
-
-        if( this.structureView.atomCount === 0 ) return;
-
-        var sview = part.getView( this.structureView );
-        if( sview.atomCount === 0 ) return;
+    createData: function( sview ){
 
         var bondData = sview.getBondData(
             this.getBondParams( { position: true, color: true } )
@@ -1495,16 +1509,12 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         );
 
         return {
-            part: part,
-            sview: sview,
             bufferList: [ lineBuffer ]
         };
 
     },
 
     updateData: function( what, data ){
-
-        if( data.bufferList.length === 0 ) return;
 
         var bondData = data.sview.getBondData( this.getBondParams( what ) );
         var lineData = {};
@@ -1522,28 +1532,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
         data.bufferList[ 0 ].setAttributes( lineData );
 
     }
-
-    // update: function( what ){
-
-    //     if( this.structureView.atomCount === 0 ) return;
-    //     if( this.bufferList.length === 0 ) return;
-
-    //     var bondData = this.getBondData( what );
-    //     var lineData = {};
-
-    //     if( !what || what[ "position" ] ){
-    //         lineData[ "from" ] = bondData.position1;
-    //         lineData[ "to" ] = bondData.position2;
-    //     }
-
-    //     if( !what || what[ "color" ] ){
-    //         lineData[ "color" ] = bondData.color1;
-    //         lineData[ "color2" ] = bondData.color2;
-    //     }
-
-    //     this.lineBuffer.setAttributes( lineData );
-
-    // }
 
 } );
 
@@ -2043,22 +2031,11 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     },
 
-    createData: function( part ){
-
-        if( this.structureView.atomCount === 0 ){
-            return;
-        }
+    createData: function( sview ){
 
         var bufferList = [];
         var polymerList = [];
-        var selection = part ? part.getSelection() : new NGL.Selection( "" );
 
-        var s = new NGL.Selection(
-            "( " + this.selection.string + ") and " +
-            "( " + selection.string + ")"
-        );
-
-        // svPart.eachPolymer( function( polymer ){
         this.structure.eachPolymer( function( polymer ){
 
             if( polymer.residueCount < 4 ) return;
@@ -2108,38 +2085,30 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                 )
             );
 
-        }.bind( this ), s, true );
+        }.bind( this ), sview.getSelection() );
 
         return {
-            part: part,
             bufferList: bufferList,
             polymerList: polymerList
         };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        NGL.time( "cartoon repr update" );
+        if( NGL.debug ) NGL.time( "cartoon repr update" );
 
         what = what || {};
 
         var i = 0;
-        var n = this.polymerList.length;
+        var n = data.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var polymer = this.polymerList[ i ];
-
-            if( polymer.residueCount < 4 ) return;
-
             var bufferData = {};
-            var spline = new NGL.Spline( polymer, this.arrows );
+            var spline = new NGL.Spline( data.polymerList[ i ], this.arrows );
 
-            this.bufferList[ i ].rx = this.aspectRatio;
+            data.bufferList[ i ].rx = this.aspectRatio;
 
             if( what[ "position" ] || what[ "radius" ] ){
 
@@ -2168,11 +2137,11 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             }
 
-            this.bufferList[ i ].setAttributes( bufferData );
+            data.bufferList[ i ].setAttributes( bufferData );
 
         }
 
-        NGL.timeEnd( "cartoon repr update" );
+        if( NGL.debug ) NGL.timeEnd( "cartoon repr update" );
 
     },
 
@@ -2286,20 +2255,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     },
 
-    createData: function( part ){
-
-        if( this.structureView.atomCount === 0 ){
-            return;
-        }
+    createData: function( sview ){
 
         var bufferList = [];
         var polymerList = [];
-        var selection = part ? part.getSelection() : new NGL.Selection( "" );
-
-        var s = new NGL.Selection(
-            "( " + this.selection.string + ") and " +
-            "( " + selection.string + ")"
-        );
 
         this.structure.eachPolymer( function( polymer ){
 
@@ -2332,34 +2291,26 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                 )
             );
 
-        }.bind( this ), s, true );
+        }.bind( this ), sview.getSelection() );
 
         return {
-            part: part,
             bufferList: bufferList,
             polymerList: polymerList
         };
 
     },
 
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+    updateData: function( what, data ){
 
         what = what || {};
 
         var i = 0;
-        var n = this.polymerList.length;
+        var n = data.polymerList.length;
 
         for( i = 0; i < n; ++i ){
 
-            var polymer = this.polymerList[ i ]
-
-            if( polymer.residueCount < 4 ) return;
-
             var bufferData = {};
-            var spline = new NGL.Spline( polymer );
+            var spline = new NGL.Spline( data.polymerList[ i ] );
 
             if( what[ "position" ] ){
                 var subPos = spline.getSubdividedPosition(
@@ -2387,7 +2338,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
                 bufferData[ "color" ] = subCol.color;
             }
 
-            this.bufferList[ i ].setAttributes( bufferData );
+            data.bufferList[ i ].setAttributes( bufferData );
 
         };
 
