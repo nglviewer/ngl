@@ -1815,6 +1815,156 @@ NGL.Structure.prototype = {
 
     //
 
+    getAtomData: function( params ){
+
+        var p = Object.assign( {}, params );
+        if( p.colorParams ) p.colorParams.this = this;
+
+        var what = p.what;
+        var atomSet = p.atomSet || this.atomSet;
+
+        var radiusFactory, colorMaker, pickingColorMaker;
+        var position, color, pickingColor, radius;
+
+        var atomData = {};
+        var ap = this.getAtomProxy();
+        var atomCount = atomSet.size();
+
+        if( !what || what[ "position" ] ){
+            position = new Float32Array( atomCount * 3 );
+            atomData[ "position" ] = position;
+        }
+        if( !what || what[ "color" ] ){
+            color = new Float32Array( atomCount * 3 );
+            atomData[ "color" ] = color;
+            colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
+        }
+        if( !what || what[ "pickingColor" ] ){
+            pickingColor = new Float32Array( atomCount * 3 );
+            atomData[ "pickingColor" ] = pickingColor;
+            var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
+            pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
+        }
+        if( !what || what[ "radius" ] ){
+            radius = new Float32Array( atomCount );
+            atomData[ "radius" ] = radius;
+            radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+        }
+
+        atomSet.forEach( function( index, i ){
+            var i3 = i * 3;
+            ap.index = index;
+            if( position ){
+                ap.positionToArray( position, i3 );
+            }
+            if( color ){
+                colorMaker.atomColorToArray( ap, color, i3 );
+            }
+            if( pickingColor ){
+                pickingColorMaker.atomColorToArray( ap, pickingColor, i3 );
+            }
+            if( radius ){
+                radius[ i ] = radiusFactory.atomRadius( ap );
+            }
+        } );
+
+        return atomData;
+
+    },
+
+    getBondData: function( params ){
+
+        var p = Object.assign( {}, params );
+        if( p.colorParams ) p.colorParams.structure = this;
+
+        var what = p.what;
+        var bondSet = p.bondSet || this.bondSet;
+
+        var radiusFactory, colorMaker, pickingColorMaker;
+        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
+
+        var bondData = {};
+        var bp = this.getBondProxy();
+        if( p.bondStore ) bp.bondStore = p.bondStore;
+        var ap1 = this.getAtomProxy();
+        var ap2 = this.getAtomProxy();
+        var bondCount = bondSet.size();
+
+        if( !what || what[ "position" ] ){
+            position1 = new Float32Array( bondCount * 3 );
+            position2 = new Float32Array( bondCount * 3 );
+            bondData[ "position1" ] = position1;
+            bondData[ "position2" ] = position2;
+        }
+        if( !what || what[ "color" ] ){
+            color1 = new Float32Array( bondCount * 3 );
+            color2 = new Float32Array( bondCount * 3 );
+            bondData[ "color1" ] = color1;
+            bondData[ "color2" ] = color2;
+            colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
+        }
+        if( !what || what[ "pickingColor" ] ){
+            pickingColor1 = new Float32Array( bondCount * 3 );
+            pickingColor2 = new Float32Array( bondCount * 3 );
+            bondData[ "pickingColor1" ] = pickingColor1;
+            bondData[ "pickingColor2" ] = pickingColor2;
+            var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
+            pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
+        }
+        if( !what || what[ "radius" ] ){
+            radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+        }
+        if( !what || what[ "radius" ] ){
+            radius1 = new Float32Array( bondCount );
+            if( p.radius2 ){
+                radius2 = new Float32Array( bondCount );
+                bondData[ "radius1" ] = radius1;
+                bondData[ "radius2" ] = radius2;
+            }else{
+                bondData[ "radius" ] = radius1;
+            }
+        }
+
+        bondSet.forEach( function( index, i ){
+            var i3 = i * 3;
+            bp.index = index
+            ap1.index = bp.atomIndex1;
+            ap2.index = bp.atomIndex2;
+            if( position1 ){
+                ap1.positionToArray( position1, i3 );
+                ap2.positionToArray( position2, i3 );
+            }
+            if( color1 ){
+                colorMaker.bondColorToArray( bp, 1, color1, i3 );
+                colorMaker.bondColorToArray( bp, 0, color2, i3 );
+            }
+            if( pickingColor1 ){
+                pickingColorMaker.bondColorToArray( bp, 1, pickingColor1, i3 );
+                pickingColorMaker.bondColorToArray( bp, 0, pickingColor2, i3 );
+            }
+            if( radius1 ){
+                radius1[ i ] = radiusFactory.atomRadius( ap1 );
+            }
+            if( radius2 ){
+                radius2[ i ] = radiusFactory.atomRadius( ap2 );
+            }
+        } );
+
+        return bondData;
+
+    },
+
+    getData: function( what ){
+
+        return {
+            "atom": this.getAtomData( what ),
+            "bond": this.getBondData( what )
+        };
+
+    },
+
+    //
+
     getView: function( selection ){
 
         return new NGL.StructureView( this, selection );
@@ -2121,6 +2271,11 @@ NGL.Structure.prototype = {
 
 NGL.StructureView = function( structure, selection ){
 
+    var SIGNALS = signals;
+    this.signals = {
+        refreshed: new SIGNALS.Signal(),
+    };
+
     this.structure = structure;
     this.selection = selection;
 
@@ -2181,11 +2336,11 @@ NGL.StructureView.prototype = NGL.createObject(
     constructor: NGL.StructureView,
     type: "StructureView",
 
-    getView: function(){
+    // getView: function(){
 
-        NGL.warning( "You can not get a view from a StructureView." );
+    //     NGL.warning( "You can not get a view from a StructureView." );
 
-    },
+    // },
 
     refresh: function(){
 

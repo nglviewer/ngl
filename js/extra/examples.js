@@ -1392,7 +1392,8 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://4opj.pdb" ).then( function( o ){
         // stage.loadFile( "data://4opj.cif" ).then( function( o ){
             o.addRepresentation( "cartoon", { assembly: "AU", opacity: 0.5, side: THREE.BackSide } );
-            o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0 } );
+            o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0, visible: false } );
+            o.addRepresentation( "line", { assembly: "BU1" } );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();
             stage.tasks.onZeroOnce( function(){

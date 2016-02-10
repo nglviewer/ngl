@@ -774,7 +774,6 @@ NGL.buildUnitcellAssembly = function( structure ){
     if( NGL.debug ) NGL.time( "NGL.buildUnitcellAssembly" );
 
     var uc = structure.unitcell;
-    var biomolDict = structure.biomolDict;
 
     var centerFrac = structure.center.clone().applyMatrix4( uc.cartToFrac );
     var symopDict = NGL.getSymmetryOperations( uc.spacegroup );
@@ -790,10 +789,9 @@ NGL.buildUnitcellAssembly = function( structure ){
     if( centerFrac.z > 1 ) positionFrac.z -= 1;
     if( centerFrac.z < 0 ) positionFrac.z += 1;
 
-    function getOpDict( shift, suffix ){
+    function getMatrixList( shift ){
 
-        suffix = suffix || "";
-        var opDict = {};
+        var matrixList = [];
 
         Object.keys( symopDict ).forEach( function( name ){
 
@@ -816,59 +814,124 @@ NGL.buildUnitcellAssembly = function( structure ){
             m.multiplyMatrices( uc.fracToCart, m );
             m.multiply( uc.cartToFrac );
 
-            opDict[ name + suffix ] = m;
+            matrixList.push( m );
 
         } );
 
-        return opDict;
+        return matrixList;
 
     }
 
-    biomolDict[ "UNITCELL" ] = {
-        matrixDict: getOpDict(),
-        chainList: undefined
-    };
+    var unitcellAssembly = new NGL.Assembly( "UNITCELL" );
+    unitcellAssembly.add( new NGL.AssemblyPart( getMatrixList() ) );
 
     var vec = new THREE.Vector3();
+    var supercellAssembly = new NGL.Assembly( "SUPERCELL" );
+    var supercellMatrixList = Array.prototype.concat.call(
+        getMatrixList(),                         // 555
+        getMatrixList( vec.set(  1,  1,  1 ) ),  // 666
+        getMatrixList( vec.set( -1, -1, -1 ) ),  // 444
 
-    biomolDict[ "SUPERCELL" ] = {
-        matrixDict: Object.assign( {},
-            getOpDict(),
-            getOpDict( vec.set(  1,  1,  1 ), "_666" ),
-            getOpDict( vec.set( -1, -1, -1 ), "_444" ),
+        getMatrixList( vec.set(  1,  0,  0 ) ),  // 655
+        getMatrixList( vec.set(  1,  1,  0 ) ),  // 665
+        getMatrixList( vec.set(  1,  0,  1 ) ),  // 656
+        getMatrixList( vec.set(  0,  1,  0 ) ),  // 565
+        getMatrixList( vec.set(  0,  1,  1 ) ),  // 566
+        getMatrixList( vec.set(  0,  0,  1 ) ),  // 556
 
-            getOpDict( vec.set(  1,  0,  0 ), "_655" ),
-            getOpDict( vec.set(  1,  1,  0 ), "_665" ),
-            getOpDict( vec.set(  1,  0,  1 ), "_656" ),
-            getOpDict( vec.set(  0,  1,  0 ), "_565" ),
-            getOpDict( vec.set(  0,  1,  1 ), "_566" ),
-            getOpDict( vec.set(  0,  0,  1 ), "_556" ),
+        getMatrixList( vec.set( -1,  0,  0 ) ),  // 455
+        getMatrixList( vec.set( -1, -1,  0 ) ),  // 445
+        getMatrixList( vec.set( -1,  0, -1 ) ),  // 454
+        getMatrixList( vec.set(  0, -1,  0 ) ),  // 545
+        getMatrixList( vec.set(  0, -1, -1 ) ),  // 544
+        getMatrixList( vec.set(  0,  0, -1 ) ),  // 554
 
-            getOpDict( vec.set( -1,  0,  0 ), "_455" ),
-            getOpDict( vec.set( -1, -1,  0 ), "_445" ),
-            getOpDict( vec.set( -1,  0, -1 ), "_454" ),
-            getOpDict( vec.set(  0, -1,  0 ), "_545" ),
-            getOpDict( vec.set(  0, -1, -1 ), "_544" ),
-            getOpDict( vec.set(  0,  0, -1 ), "_554" ),
+        getMatrixList( vec.set(  1, -1, -1 ) ),  // 644
+        getMatrixList( vec.set(  1,  1, -1 ) ),  // 664
+        getMatrixList( vec.set(  1, -1,  1 ) ),  // 646
+        getMatrixList( vec.set( -1,  1,  1 ) ),  // 466
+        getMatrixList( vec.set( -1, -1,  1 ) ),  // 446
+        getMatrixList( vec.set( -1,  1, -1 ) ),  // 464
 
-            getOpDict( vec.set(  1, -1, -1 ), "_644" ),
-            getOpDict( vec.set(  1,  1, -1 ), "_664" ),
-            getOpDict( vec.set(  1, -1,  1 ), "_646" ),
-            getOpDict( vec.set( -1,  1,  1 ), "_466" ),
-            getOpDict( vec.set( -1, -1,  1 ), "_446" ),
-            getOpDict( vec.set( -1,  1, -1 ), "_464" ),
+        getMatrixList( vec.set(  0,  1, -1 ) ),  // 564
+        getMatrixList( vec.set(  0, -1,  1 ) ),  // 546
+        getMatrixList( vec.set(  1,  0, -1 ) ),  // 654
+        getMatrixList( vec.set( -1,  0,  1 ) ),  // 456
+        getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
+        getMatrixList( vec.set( -1,  1,  0 ) )   // 465
+    );
+    supercellAssembly.add( new NGL.AssemblyPart( supercellMatrixList ) );
 
-            getOpDict( vec.set(  0,  1, -1 ), "_564" ),
-            getOpDict( vec.set(  0, -1,  1 ), "_546" ),
-            getOpDict( vec.set(  1,  0, -1 ), "_654" ),
-            getOpDict( vec.set( -1,  0,  1 ), "_456" ),
-            getOpDict( vec.set(  1, -1,  0 ), "_645" ),
-            getOpDict( vec.set( -1,  1,  0 ), "_465" )
-        ),
-        chainList: undefined
-    };
+    structure.biomolDict[ "UNITCELL" ] = unitcellAssembly;
+    structure.biomolDict[ "SUPERCELL" ] = supercellAssembly;
 
     if( NGL.debug ) NGL.timeEnd( "NGL.buildUnitcellAssembly" );
+
+};
+
+
+NGL.Assembly = function( name ){
+
+    this.name = name || "";
+    this.partList = []
+
+};
+
+NGL.Assembly.prototype = {
+
+    constructor: NGL.Assembly,
+    type: "Assembly",
+
+    add: function( part ){
+        this.partList.push( part );
+    }
+
+};
+
+
+NGL.AssemblyPart = function( matrixList, chainList ){
+
+    this.matrixList = matrixList || [];
+    this.chainList = chainList || [];
+
+};
+
+NGL.AssemblyPart.prototype = {
+
+    constructor: NGL.AssemblyPart,
+    type: "AssemblyPart",
+
+    getSelection: function(){
+        if( this.chainList.length > 0 ){
+            var sele = ":" + this.chainList.join( " OR :" );
+            return new NGL.Selection( sele );
+        }else{
+            return new NGL.Selection( "" );
+            // return null;
+        }
+    },
+
+    getView: function( structure ){
+        var selection = this.getSelection();
+        if( selection ){
+            return structure.getView( selection );
+        }else{
+            return structure;
+        }
+    },
+
+    getInstanceList: function(){
+        var instanceList = [];
+        for ( var j = 0, jl = this.matrixList.length; j < jl; ++j ){
+            instanceList.push( {
+                id: j + 1,
+                name: j,
+                assembly: name,
+                matrix: this.matrixList[ j ]
+            } );
+        }
+        return instanceList;
+    }
 
 };
 
@@ -1230,6 +1293,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var sheets = s.sheets;
         var biomolDict = s.biomolDict;
         var currentBiomol;
+        var currentPart;
+        var currentMatrix;
 
         var guessElem = NGL.guessElement;
         var covRadii = NGL.CovalentRadii;
@@ -1429,11 +1494,8 @@ NGL.PdbParser.prototype = NGL.createObject(
                         var name = line.substr( 23 ).trim();
                         if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
-                        biomolDict[ name ] = {
-                            matrixDict: {},
-                            chainList: []
-                        };
-                        currentBiomol = biomolDict[ name ];
+                        currentBiomol = new NGL.Assembly( name );
+                        biomolDict[ name ] = currentBiomol;
 
                     }else if( line.substr( 13, 5 ) === "BIOMT" ){
 
@@ -1443,10 +1505,11 @@ NGL.PdbParser.prototype = NGL.createObject(
                         var mat = ls[ 3 ].trim();
 
                         if( row === 0 ){
-                            currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                            currentMatrix = new THREE.Matrix4();
+                            currentPart.matrixList.push( currentMatrix );
                         }
 
-                        var elms = currentBiomol.matrixDict[ mat ].elements;
+                        var elms = currentMatrix.elements;
 
                         elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
                         elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
@@ -1458,13 +1521,14 @@ NGL.PdbParser.prototype = NGL.createObject(
                         line.substr( 11, 30 ) === '                   AND CHAINS:'
                     ){
 
+                        if( line.substr( 11, 5 ) === 'APPLY' ){
+                            currentPart = new NGL.AssemblyPart();
+                            currentBiomol.partList.push( currentPart );
+                        }
+
                         line.substr( 41, 30 ).split( "," ).forEach( function( v ){
-
                             var c = v.trim();
-                            if( c ){
-                                currentBiomol.chainList.push( c )
-                            }
-
+                            if( c ) currentPart.chainList.push( c );
                         } );
 
                     }
