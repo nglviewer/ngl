@@ -426,7 +426,7 @@ NGL.AA3 = Object.keys( NGL.AA1 );
 
 NGL.RnaBases = [ "A", "C", "T", "G", "U" ];
 
-NGL.DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY" ];
+NGL.DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
 NGL.WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
 
