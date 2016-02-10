@@ -852,13 +852,11 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        var atomData = sview.getAtomData( this.getAtomParams() );
 
-        var atomData = this.getAtomData();
-
-        this.sphereBuffer = new NGL.SphereBuffer(
+        var sphereBuffer = new NGL.SphereBuffer(
             atomData.position,
             atomData.color,
             atomData.radius,
@@ -870,16 +868,15 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.bufferList.push( this.sphereBuffer );
+        return {
+            bufferList: [ sphereBuffer ]
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        var atomData = this.getAtomData( what );
+        var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var sphereData = {};
 
         if( !what || what[ "position" ] ){
@@ -894,7 +891,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             sphereData[ "radius" ] = atomData.radius;
         }
 
-        this.sphereBuffer.setAttributes( sphereData );
+        data.bufferList[ 0 ].setAttributes( sphereData );
 
     }
 
@@ -966,13 +963,12 @@ NGL.PointRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        var what = { position: true, color: true };
+        var atomData = sview.getAtomData( this.getAtomParams( what ) );
 
-        var atomData = this.getAtomData( { position: true, color: true } );
-
-        this.pointBuffer = new NGL.PointBuffer(
+        var pointBuffer = new NGL.PointBuffer(
             atomData.position,
             atomData.color,
             this.getBufferParams( {
@@ -986,16 +982,15 @@ NGL.PointRepresentation.prototype = NGL.createObject(
             } )
         );
 
-        this.bufferList.push( this.pointBuffer );
+        return {
+            bufferList: [ pointBuffer ]
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        var atomData = this.getAtomData( what );
+        var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var pointData = {};
 
         if( !what || what[ "position" ] ){
@@ -1006,7 +1001,7 @@ NGL.PointRepresentation.prototype = NGL.createObject(
             pointData[ "color" ] = atomData.color;
         }
 
-        this.pointBuffer.setAttributes( pointData );
+        data.bufferList[ 0 ].setAttributes( pointData );
 
     }
 
@@ -1086,23 +1081,20 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        var what = { position: true, color: true, radius: true };
+        var atomData = sview.getAtomData( this.getAtomParams( what ) );
 
         var text = [];
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
         );
-
-        var atomData = this.getAtomData( {
-            position: true, color: true, radius: true
-        } );
-        this.structureView.eachAtom( function( ap ){
+        sview.eachAtom( function( ap ){
             text.push( labelFactory.atomLabel( ap ) );
         } );
 
-        this.textBuffer = new NGL.TextBuffer(
+        var textBuffer = new NGL.TextBuffer(
             atomData.position,
             atomData.radius,
             atomData.color,
@@ -1115,16 +1107,15 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             } )
         );
 
-        this.bufferList.push( this.textBuffer );
+        return {
+            bufferList: [ textBuffer ]
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        var atomData = this.getAtomData( what );
+        var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var textData = {};
 
         if( !what || what[ "position" ] ){
@@ -1139,7 +1130,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
             textData[ "color" ] = atomData.color;
         }
 
-        this.textBuffer.setAttributes( textData );
+        data.bufferList[ 0 ].setAttributes( textData );
 
     }
 
