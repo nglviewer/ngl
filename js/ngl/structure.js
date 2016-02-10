@@ -1966,12 +1966,24 @@ NGL.Structure.prototype = {
 
     },
 
-    getData: function( what ){
+    getBackboneAtomData: function( params ){
 
-        return {
-            "atom": this.getAtomData( what ),
-            "bond": this.getBondData( what )
-        };
+        params = Object.assign( {
+            atomSet: this.atomSetCache[ "__backbone" ],
+        }, params );
+
+        return this.getAtomData( params );
+
+    },
+
+    getBackboneBondData: function( params ){
+
+        params = Object.assign( {
+            bondSet: this.getBackboneBondSet(),
+            bondStore: this.backboneBondStore
+        }, params );
+
+        return this.getBondData( params );
 
     },
 
@@ -2381,6 +2393,7 @@ NGL.StructureView.prototype = NGL.createObject(
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
 
         this.signals.refreshed.dispatch();
+
     },
 
     getSelection: function(){
