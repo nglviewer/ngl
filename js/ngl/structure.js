@@ -1602,6 +1602,12 @@ NGL.Structure.prototype = {
 
     },
 
+    getSelection: function(){
+
+        return this.selection;
+
+    },
+
     setDefaultAssembly: function( value ){
 
         this.defaultAssembly = value;
@@ -2373,6 +2379,20 @@ NGL.StructureView.prototype = NGL.createObject(
         this.center = this.boundingBox.center();
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
+
+    },
+
+    getSelection: function(){
+
+        var parentSelection = this.structure.getSelection();
+        if( parentSelection ){
+            return new NGL.Selection(
+                "( " + parentSelection.string + " ) AND " +
+                "( " + this.selection.string + " )"
+            );
+        }else{
+            return this.selection;
+        }
 
     },
 
