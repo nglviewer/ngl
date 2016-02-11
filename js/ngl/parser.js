@@ -45,10 +45,10 @@ NGL.reorderAtoms = function( structure ){
 NGL.StructureBuilder = function( structure ){
 
     var currentModelindex = null;
-    var currentChainname;
-    var currentResname;
-    var currentResno;
-    var currentHetero;
+    var currentChainname = null;
+    var currentResname = null;
+    var currentResno = null;
+    var currentHetero = null;
 
     var previousResname;
     var previousHetero
