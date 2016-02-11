@@ -2800,11 +2800,15 @@ NGL.SdfParser.prototype = NGL.createObject(
         // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
         // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
 
-        var headerLines = this.streamer.peekLines( 2 );
+        if( NGL.debug ) NGL.time( "NGL.SdfParser._parse " + this.name );
 
         var s = this.structure;
+        var sb = this.structureBuilder;
+
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
+
+        var headerLines = this.streamer.peekLines( 2 );
 
         s.id = headerLines[ 0 ].trim();
         s.title = headerLines[ 1 ].trim();
@@ -2814,18 +2818,12 @@ NGL.SdfParser.prototype = NGL.createObject(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var atoms = s.atoms;
-        var bondSet = s.bondSet;
+        var atomMap = s.atomMap;
+        var atomStore = s.atomStore;
+        atomStore.resize( Math.round( this.streamer.data.length / 50 ) );
 
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
-
-        var atomArray;
-        var lineCount = this.streamer.lineCount();
-        if( lineCount > NGL.useAtomArrayThreshold ){
-            atomArray = new NGL.AtomArray( lineCount );
-            s.atomArray = atomArray;
-        }
+        var ap1 = s.getAtomProxy();
+        var ap2 = s.getAtomProxy();
 
         var idx = 0;
         var lineNo = 0;
@@ -2844,7 +2842,7 @@ NGL.SdfParser.prototype = NGL.createObject(
 
                     lineNo = -1;
                     ++modelIdx;
-                    modelAtomIdxStart = atoms.length;
+                    modelAtomIdxStart = atomStore.count;
 
                 }
 
@@ -2895,54 +2893,17 @@ NGL.SdfParser.prototype = NGL.createObject(
                     var element = line.substr( 31, 3 ).trim();
                     var atomname = element + ( idx + 1 );
 
-                    var a;
+                    atomStore.growIfFull();
+                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname, element );
 
-                    if( atomArray ){
+                    atomStore.x[ idx ] = x;
+                    atomStore.y[ idx ] = y;
+                    atomStore.z[ idx ] = z;
+                    atomStore.serial[ idx ] = idx;
 
-                        a = new NGL.ProxyAtom( atomArray, idx );
-
-                        atomArray.setResname( idx, "HET" );
-                        atomArray.x[ idx ] = x;
-                        atomArray.y[ idx ] = y;
-                        atomArray.z[ idx ] = z;
-                        atomArray.setElement( idx, element );
-                        atomArray.setChainname( idx, '' );
-                        atomArray.resno[ idx ] = 1;
-                        atomArray.serial[ idx ] = idx;
-                        atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
-                        atomArray.setAltloc( idx, '' );
-                        atomArray.vdw[ idx ] = vdwRadii[ element ];
-                        atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = modelIdx;
-
-                        atomArray.usedLength += 1;
-
-                    }else{
-
-                        a = new NGL.Atom();
-                        a.index = idx;
-
-                        a.resname = "HET";
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.hetero = 1
-                        a.chainname = '';
-                        a.resno = 1;
-                        a.serial = idx;
-                        a.atomname = atomname;
-                        a.ss = 'l';
-                        a.altloc = '';
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
-
-                    }
+                    sb.addAtom( modelIdx, "", "HET", 1, 1 );
 
                     idx += 1;
-                    atoms.push( a );
 
                 }
 
@@ -2951,11 +2912,11 @@ NGL.SdfParser.prototype = NGL.createObject(
                     if( firstModelOnly && modelIdx > 0 ) continue;
                     if( asTrajectory && modelIdx > 0 ) continue;
 
-                    var from = parseInt( line.substr( 0, 3 ) ) - 1 + modelAtomIdxStart;
-                    var to = parseInt( line.substr( 3, 3 ) ) - 1 + modelAtomIdxStart;
+                    ap1.index = parseInt( line.substr( 0, 3 ) ) - 1 + modelAtomIdxStart;
+                    ap2.index = parseInt( line.substr( 3, 3 ) ) - 1 + modelAtomIdxStart;
                     var order = parseInt( line.substr( 6, 3 ) );
 
-                    bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
+                    s.bondStore.addBond( ap1, ap2, order );
 
                 }
 
@@ -2965,18 +2926,17 @@ NGL.SdfParser.prototype = NGL.createObject(
 
         };
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        sb.finalize();
 
-            function(){
+        s._dontAutoBond = true;
+        s.unitcell = undefined;  // triggers use of bounding box
 
-                s._dontAutoBond = true;
-                callback();
-
-            }
-
-        );
+        if( NGL.debug ) NGL.timeEnd( "NGL.SdfParser._parse " + this.name );
+        callback();
 
     }
 
@@ -3001,9 +2961,13 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
         // http://www.tripos.com/data/support/mol2.pdf
 
+        if( NGL.debug ) NGL.time( "NGL.Mol2Parser._parse " + this.name );
+
         var reWhitespace = /\s+/;
 
         var s = this.structure;
+        var sb = this.structureBuilder;
+
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
 
@@ -3012,18 +2976,9 @@ NGL.Mol2Parser.prototype = NGL.createObject(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var atoms = s.atoms;
-        var bondSet = s.bondSet;
-
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
-
-        var atomArray;
-        var lineCount = this.streamer.lineCount();
-        if( lineCount > NGL.useAtomArrayThreshold ){
-            atomArray = new NGL.AtomArray( lineCount );
-            s.atomArray = atomArray;
-        }
+        var atomMap = s.atomMap;
+        var atomStore = s.atomStore;
+        atomStore.resize( Math.round( this.streamer.data.length / 60 ) );
 
         var idx = 0;
         var moleculeLineNo = 0;
@@ -3035,6 +2990,9 @@ NGL.Mol2Parser.prototype = NGL.createObject(
         var moleculeRecordType = 1;
         var atomRecordType = 2;
         var bondRecordType = 3;
+
+        var ap1 = s.getAtomProxy();
+        var ap2 = s.getAtomProxy();
 
         var bondTypes = {
             "1": 1,
@@ -3067,7 +3025,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     }else if( line === "@<TRIPOS>ATOM" ){
 
                         currentRecordType = atomRecordType;
-                        modelAtomIdxStart = atoms.length;
+                        modelAtomIdxStart = atomStore.count;
 
                         if( asTrajectory ){
 
@@ -3158,56 +3116,18 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     var resname = ls[ 7 ] ? ls[ 7 ] : "";
                     var bfactor = ls[ 8 ] ? parseFloat( ls[ 8 ] ) : 0.0;
 
-                    var a;
+                    atomStore.growIfFull();
+                    atomStore.atomTypeId[ idx ] = atomMap.add( atomname, element );
 
-                    if( atomArray ){
+                    atomStore.x[ idx ] = x;
+                    atomStore.y[ idx ] = y;
+                    atomStore.z[ idx ] = z;
+                    atomStore.serial[ idx ] = serial;
+                    atomStore.bfactor[ idx ] = bfactor;
 
-                        a = new NGL.ProxyAtom( atomArray, idx );
-
-                        atomArray.setResname( idx, resname );
-                        atomArray.x[ idx ] = x;
-                        atomArray.y[ idx ] = y;
-                        atomArray.z[ idx ] = z;
-                        atomArray.setElement( idx, element );
-                        atomArray.setChainname( idx, '' );
-                        atomArray.resno[ idx ] = resno;
-                        atomArray.serial[ idx ] = idx;
-                        atomArray.setAtomname( idx, atomname );
-                        atomArray.ss[ idx ] = 'l'.charCodeAt( 0 );
-                        atomArray.setAltloc( idx, '' );
-                        atomArray.bfactor[ idx ] = bfactor;
-                        atomArray.vdw[ idx ] = vdwRadii[ element ];
-                        atomArray.covalent[ idx ] = covRadii[ element ];
-                        atomArray.modelindex[ idx ] = modelIdx;
-
-                        atomArray.usedLength += 1;
-
-                    }else{
-
-                        a = new NGL.Atom();
-                        a.index = idx;
-
-                        a.resname = resname;
-                        a.x = x;
-                        a.y = y;
-                        a.z = z;
-                        a.element = element;
-                        a.hetero = 1
-                        a.chainname = '';
-                        a.resno = resno;
-                        a.serial = idx;
-                        a.atomname = atomname;
-                        a.ss = 'l';
-                        a.altloc = '';
-                        a.bfactor = bfactor;
-                        a.vdw = vdwRadii[ element ];
-                        a.covalent = covRadii[ element ];
-                        a.modelindex = modelIdx;
-
-                    }
+                    sb.addAtom( modelIdx, "", resname, resno, 1 );
 
                     idx += 1;
-                    atoms.push( a );
 
                 }else if( currentRecordType === bondRecordType ){
 
@@ -3217,11 +3137,11 @@ NGL.Mol2Parser.prototype = NGL.createObject(
                     var ls = line.split( reWhitespace );
 
                     // ls[ 0 ] is bond id
-                    var from = parseInt( ls[ 1 ] ) - 1 + modelAtomIdxStart;
-                    var to = parseInt( ls[ 2 ] ) - 1 + modelAtomIdxStart;
+                    ap1.index = parseInt( ls[ 1 ] ) - 1 + modelAtomIdxStart;
+                    ap2.index = parseInt( ls[ 2 ] ) - 1 + modelAtomIdxStart;
                     var order = bondTypes[ ls[ 3 ] ];
 
-                    bondSet.addBond( atoms[ from ], atoms[ to ], false, order );
+                    s.bondStore.addBond( ap1, ap2, order );
 
                 }
 
@@ -3229,18 +3149,17 @@ NGL.Mol2Parser.prototype = NGL.createObject(
 
         };
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        sb.finalize();
 
-            function(){
+        s._dontAutoBond = true;
+        s.unitcell = undefined;  // triggers use of bounding box
 
-                s._dontAutoBond = true;
-                callback();
-
-            }
-
-        );
+        if( NGL.debug ) NGL.timeEnd( "NGL.Mol2Parser._parse " + this.name );
+        callback();
 
     }
 
