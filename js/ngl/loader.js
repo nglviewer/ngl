@@ -50,8 +50,12 @@ NGL.getDataInfo = function( src ){
     var info = NGL.getFileInfo( src );
     var datasource = NGL.DatasourceRegistry.get( info.protocol );
     var url = datasource.getUrl( info.src );
+    var info2 = NGL.getFileInfo( url );
+    if( !info2.ext && datasource.getExt ){
+        info2.ext = datasource.getExt( src );
+    }
 
-    return NGL.getFileInfo( url );
+    return info2;
 
 };
 
@@ -71,21 +75,33 @@ NGL.StaticDatasource = function( baseUrl ){
 NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://www.rcsb.org/pdb/files/";
+    var mmtfBaseUrl = "http://132.249.213.68:8080/servemessagepack/";
 
     this.getUrl = function( src ){
         // valid path are
-        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz
-        // XXXX defaults to XXXX.cif.gz
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf
+        // XXXX defaults to XXXX.mmtf
         var info = NGL.getFileInfo( src );
         var file;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
             ( info.compressed === false || info.compressed === "gz" )
         ){
-            file = info.path;
+            return baseUrl + info.path;
+        }else if( info.ext === "mmtf" ){
+            return mmtfBaseUrl + info.name;
+        }else if( !info.ext ){
+            return mmtfBaseUrl + info.name + ".mmtf";
         }else{
-            file = info.name + ".cif.gz";
+            console.warn( "unsupported ext", info.ext );
+            return mmtfBaseUrl + info.name;
         }
-        return baseUrl + file;
+    };
+
+    this.getExt = function( src ){
+        var info = NGL.getFileInfo( src );
+        if( info.ext === "mmtf" || !info.ext ){
+            return "mmtf";
+        }
     };
 
 };
@@ -145,13 +161,9 @@ NGL.Loader.prototype = {
             this.streamer.onerror = reject;
 
             try{
-
                 this._load( resolve, reject );
-
             }catch( e ){
-
                 reject( e );
-
             }
 
         }.bind( this ) );
