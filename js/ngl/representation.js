@@ -1198,53 +1198,35 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
     },
 
-    getData: function( what ){
+    getAtomParams: function( what, params ){
 
-        var atomDataParams = {
+        params = Object.assign( {
             radiusParams: { "radius": this.radius, "scale": this.scale * this.aspectRatio }
-        };
+        }, params );
 
-        return {
-            "atom": this.getAtomData( what, atomDataParams ),
-            "bond": this.getBondData( what )
-        };
+        return NGL.StructureRepresentation.prototype.getAtomParams.call( this, what, params );
 
     },
 
-    createData: function( part ){
+    getAtomData: function( sview, what, params ){
 
-        if( this.structureView.atomCount === 0 ) return;
-
-        var sview = part.getView( this.structureView );
-        if( sview.atomCount === 0 ) return;
-
-        var bondData = sview.getBondData(
-            this.getBondParams( { position: true, color: true } )
-        );
-
-        var lineBuffer = new NGL.LineBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            this.getBufferParams()
-        );
-
-        return {
-            part: part,
-            sview: sview,
-            bufferList: [ lineBuffer ]
-        };
+        return sview.getAtomData( this.getAtomParams( what, params ) );
 
     },
 
-    create: function(){
+    getBondData: function( sview, what, params ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        return sview.getBondData( this.getBondParams( what, params ) );
+
+    },
+
+    createData: function( sview ){
+
+        var bufferList = [];
 
         if( this.lineOnly ){
 
-            var bondData = this.getBondData();
+            var bondData = this.getBondData( sview );
 
             this.lineBuffer = new NGL.LineBuffer(
                 bondData.position1,
@@ -1254,17 +1236,18 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 this.getBufferParams()
             );
 
-            this.bufferList.push( this.lineBuffer );
+            bufferList.push( this.lineBuffer );
 
         }else{
 
-            var data = this.getData();
+            var atomData = this.getAtomData( sview );
+            var bondData = this.getBondData( sview );
 
-            this.sphereBuffer = new NGL.SphereBuffer(
-                data.atom.position,
-                data.atom.color,
-                data.atom.radius,
-                data.atom.pickingColor,
+            var sphereBuffer = new NGL.SphereBuffer(
+                atomData.position,
+                atomData.color,
+                atomData.radius,
+                atomData.pickingColor,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
                     dullInterior: true
@@ -1272,16 +1255,16 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 this.disableImpostor
             );
 
-            this.__center = new Float32Array( this.structureView.bondCount * 3 );
+            this.__center = new Float32Array( sview.bondCount * 3 );
 
-            this.cylinderBuffer = new NGL.CylinderBuffer(
-                data.bond.position1,
-                data.bond.position2,
-                data.bond.color1,
-                data.bond.color2,
-                data.bond.radius,
-                data.bond.pickingColor1,
-                data.bond.pickingColor2,
+            var cylinderBuffer = new NGL.CylinderBuffer(
+                bondData.position1,
+                bondData.position2,
+                bondData.color1,
+                bondData.color2,
+                bondData.radius,
+                bondData.pickingColor1,
+                bondData.pickingColor2,
                 this.getBufferParams( {
                     shift: 0,
                     cap: true,
@@ -1291,45 +1274,68 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 this.disableImpostor
             );
 
-            this.bufferList.push( this.sphereBuffer, this.cylinderBuffer );
+            bufferList.push( sphereBuffer, cylinderBuffer );
 
         }
+
+        return {
+            bufferList: bufferList
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+        if( this.lineOnly ){
 
-        var data = this.getData( what );
-        var sphereData = {};
-        var cylinderData = {};
+            var bondData = this.getBondData( data.sview, what );
+            var lineData = {};
 
-        if( !what || what[ "position" ] ){
-            sphereData[ "position" ] = data.atom.position;
-            var from = data.bond.position1;
-            var to = data.bond.position2;
-            cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to, this.__center
-            );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
+            if( !what || what[ "position" ] ){
+                lineData[ "from" ] = bondData.position1;
+                lineData[ "to" ] = bondData.position2;
+            }
+
+            if( !what || what[ "color" ] ){
+                lineData[ "color" ] = bondData.color1;
+                lineData[ "color2" ] = bondData.color2;
+            }
+
+            data.bufferList[ 0 ].setAttributes( lineData );
+
+        }else{
+
+            var atomData = this.getAtomData( data.sview, what );
+            var bondData = this.getBondData( data.sview, what );
+            var sphereData = {};
+            var cylinderData = {};
+
+            if( !what || what[ "position" ] ){
+                sphereData[ "position" ] = atomData.position;
+                var from = bondData.position1;
+                var to = bondData.position2;
+                cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                    from, to, this.__center
+                );
+                cylinderData[ "position1" ] = from;
+                cylinderData[ "position2" ] = to;
+            }
+
+            if( !what || what[ "color" ] ){
+                sphereData[ "color" ] = atomData.color;
+                cylinderData[ "color" ] = bondData.color1;
+                cylinderData[ "color2" ] = bondData.color2;
+            }
+
+            if( !what || what[ "radius" ] ){
+                sphereData[ "radius" ] = atomData.radius;
+                cylinderData[ "radius" ] = bondData.radius;
+            }
+
+            data.bufferList[ 0 ].setAttributes( sphereData );
+            data.bufferList[ 1 ].setAttributes( cylinderData );
+
         }
-
-        if( !what || what[ "color" ] ){
-            sphereData[ "color" ] = data.atom.color;
-            cylinderData[ "color" ] = data.bond.color1;
-            cylinderData[ "color2" ] = data.bond.color2;
-        }
-
-        if( !what || what[ "radius" ] ){
-            sphereData[ "radius" ] = data.atom.radius;
-            cylinderData[ "radius" ] = data.bond.radius;
-        }
-
-        this.sphereBuffer.setAttributes( sphereData );
-        this.cylinderBuffer.setAttributes( cylinderData );
 
     },
 
@@ -1505,32 +1511,26 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
 
     },
 
-    getData: function( what ){
-
-        var bondParams;
+    getBondParams: function( what, params ){
 
         if( !what || what[ "radius" ] ){
-            bondParams = { radius2: true };
+            params = Object.assign( { radius2: true }, params );
         }
 
-        return {
-            "atom": this.getAtomData( what ),
-            "bond": this.getBondData( what, bondParams )
-        };
+        return NGL.LicoriceRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        var atomData = sview.getAtomData( this.getAtomParams() );
+        var bondData = sview.getBondData( this.getBondParams() );
 
-        var data = this.getData();
-
-        this.sphereBuffer = new NGL.SphereBuffer(
-            data.atom.position,
-            data.atom.color,
-            data.atom.radius,
-            data.atom.pickingColor,
+        var sphereBuffer = new NGL.SphereBuffer(
+            atomData.position,
+            atomData.color,
+            atomData.radius,
+            atomData.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true
@@ -1538,17 +1538,17 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.__center = new Float32Array( this.structureView.bondCount * 3 );
+        this.__center = new Float32Array( sview.bondCount * 3 );
 
-        this.stickBuffer = new NGL.HyperballStickBuffer(
-            data.bond.position1,
-            data.bond.position2,
-            data.bond.color1,
-            data.bond.color2,
-            data.bond.radius1,
-            data.bond.radius2,
-            data.bond.pickingColor1,
-            data.bond.pickingColor2,
+        var stickBuffer = new NGL.HyperballStickBuffer(
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            bondData.radius1,
+            bondData.radius2,
+            bondData.pickingColor1,
+            bondData.pickingColor2,
             this.getBufferParams( {
                 shrink: this.shrink,
                 radiusSegments: this.radiusSegments,
@@ -1557,23 +1557,23 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.bufferList.push( this.sphereBuffer, this.stickBuffer );
+        return {
+            bufferList: [ sphereBuffer, stickBuffer ]
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        var data = this.getData( what );
+        var atomData = data.sview.getAtomData( this.getAtomParams() );
+        var bondData = data.sview.getBondData( this.getBondParams() );
         var sphereData = {};
         var stickData = {};
 
         if( !what || what[ "position" ] ){
-            sphereData[ "position" ] = data.atom.position;
-            var from = data.bond.position1;
-            var to = data.bond.position2;
+            sphereData[ "position" ] = atomData.position;
+            var from = bondData.position1;
+            var to = bondData.position2;
             stickData[ "position" ] = NGL.Utils.calculateCenterArray(
                 from, to, this.__center
             );
@@ -1582,19 +1582,19 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
         }
 
         if( !what || what[ "color" ] ){
-            sphereData[ "color" ] = data.atom.color;
-            stickData[ "color" ] = data.bond.color1;
-            stickData[ "color2" ] = data.bond.color2;
+            sphereData[ "color" ] = atomData.color;
+            stickData[ "color" ] = bondData.color1;
+            stickData[ "color2" ] = bondData.color2;
         }
 
         if( !what || what[ "radius" ] ){
-            sphereData[ "radius" ] = data.atom.radius;
-            stickData[ "radius" ] = data.bond.radius1;
-            stickData[ "radius2" ] = data.bond.radius2;
+            sphereData[ "radius" ] = atomData.radius;
+            stickData[ "radius" ] = bondData.radius1;
+            stickData[ "radius2" ] = bondData.radius2;
         }
 
-        this.sphereBuffer.setAttributes( sphereData );
-        this.stickBuffer.setAttributes( stickData );
+        data.bufferList[ 0 ].setAttributes( sphereData );
+        data.bufferList[ 1 ].setAttributes( stickData );
 
     },
 
@@ -1630,31 +1630,15 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     },
 
-    getAtomData: function( what ){
+    getAtomData: function( sview, what, params ){
 
-        var sphereScale = this.scale * this.aspectRatio;
-
-        var atomDataParams = {
-            atomSet: this.structureView.atomSetCache[ "__backbone" ],
-            radiusParams: { "radius": this.radius, "scale": sphereScale }
-        };
-
-        return NGL.BallAndStickRepresentation.prototype.getAtomData.call(
-            this, what, atomDataParams
-        );
+        return sview.getBackboneAtomData( this.getAtomParams( what, params ) );
 
     },
 
-    getBondData: function( what ){
+    getBondData: function( sview, what, params ){
 
-        var bondDataParams = {
-            bondSet: this.structureView.getBackboneBondSet(),
-            bondStore: this.structure.backboneBondStore
-        };
-
-        return NGL.BallAndStickRepresentation.prototype.getBondData.call(
-            this, what, bondDataParams
-        );
+        return sview.getBackboneBondData( this.getBondParams( what, params ) );
 
     }
 
