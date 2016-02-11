@@ -271,7 +271,9 @@ TypedFastBitSet.prototype.forEach = function(fnc) {
     var w = this.words[k];
     while (w != 0) {
       var t = w & -w;
-      fnc((k << 5) + this.hammingWeight((t - 1) | 0),i);
+      var index = (k << 5) + this.hammingWeight((t - 1) | 0);
+      // FIXME workaround, it should not be requiered to check the length
+      if(index < this.length) fnc(index,i);
       w ^= t;
       i += 1;
     }
