@@ -1954,7 +1954,7 @@ NGL.Structure.prototype = {
         var i = 0;
 
         this.eachAtom( function( ap ){
-            ap.positionToArray( position, i );
+            ap.positionFromArray( position, i );
             i += 3;
         } );
 
