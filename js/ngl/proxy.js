@@ -2011,12 +2011,11 @@ NGL.AtomMap = function( structure ){
     var typeList = [];
 
     function getHash( atomname, element ){
-        var hash = atomname;
-        if( element !== undefined ) hash += "|" + element;
-        return hash;
+        return atomname + "|" + element;
     }
 
     function add( atomname, element ){
+        element = element || NGL.guessElement( atomname );
         var hash = getHash( atomname, element );
         var id = idDict[ hash ];
         if( id === undefined ){
