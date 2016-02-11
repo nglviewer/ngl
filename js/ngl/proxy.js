@@ -2362,8 +2362,7 @@ NGL.ResidueMap = function( structure ){
     var typeList = [];
 
     function getHash( resname, atomTypeIdList, hetero ){
-        var hash = resname + "|" + atomTypeIdList.join( "," ) + "|" + ( hetero ? 1 : 0 );
-        return hash;
+        return resname + "|" + atomTypeIdList.join( "," ) + "|" + ( hetero ? 1 : 0 );
     }
 
     function add( resname, atomTypeIdList, hetero ){

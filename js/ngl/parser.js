@@ -975,7 +975,6 @@ NGL.Parser = function( streamer, params ){
 NGL.Parser.prototype = {
 
     constructor: NGL.Parser,
-
     type: "",
 
     __objName: "",
@@ -1164,7 +1163,6 @@ NGL.StructureParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.StructureParser,
-
     type: "structure",
 
     __objName: "structure",
@@ -1262,7 +1260,6 @@ NGL.PdbParser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.PdbParser,
-
     type: "pdb",
 
     _parse: function( callback ){
@@ -1695,7 +1692,6 @@ NGL.PqrParser.prototype = NGL.createObject(
     NGL.PdbParser.prototype, {
 
     constructor: NGL.PqrParser,
-
     type: "pqr",
 
 } );
@@ -1715,7 +1711,6 @@ NGL.GroParser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.GroParser,
-
     type: "gro",
 
     _parse: function( callback ){
@@ -1881,7 +1876,6 @@ NGL.CifParser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.CifParser,
-
     type: "cif",
 
 
@@ -2792,7 +2786,6 @@ NGL.SdfParser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.SdfParser,
-
     type: "sdf",
 
     _parse: function( callback ){
@@ -2954,7 +2947,6 @@ NGL.Mol2Parser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.Mol2Parser,
-
     type: "mol2",
 
     _parse: function( callback ){
@@ -3181,7 +3173,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
     NGL.StructureParser.prototype, {
 
     constructor: NGL.MmtfParser,
-
     type: "mmtf",
 
     _parse: function( callback ){
@@ -3287,7 +3278,6 @@ NGL.TrajectoryParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.TrajectoryParser,
-
     type: "trajectory",
 
     __objName: "frames"
@@ -3308,7 +3298,6 @@ NGL.DcdParser.prototype = NGL.createObject(
     NGL.TrajectoryParser.prototype, {
 
     constructor: NGL.DcdParser,
-
     type: "dcd",
 
     _parse: function( callback ){
@@ -3335,9 +3324,7 @@ NGL.DcdParser.prototype = NGL.createObject(
         // Z(I), I=1,NATOM
         // ==========================================================================
 
-        var __timeName = "NGL.DcdParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.DcdParser._parse " + this.name );
 
         var bin = this.streamer.data;
         if( bin instanceof Uint8Array ){
@@ -3480,11 +3467,8 @@ NGL.DcdParser.prototype = NGL.createObject(
         // console.log( header.TITLE );
         // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
-        NGL.timeEnd( __timeName );
-
+        if( NGL.debug ) NGL.timeEnd( "NGL.DcdParser._parse " + this.name );
         callback();
-
-        return;
 
     },
 
@@ -3509,7 +3493,6 @@ NGL.VolumeParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.VolumeParser,
-
     type: "volume",
 
     __objName: "volume",
@@ -3540,7 +3523,6 @@ NGL.MrcParser.prototype = NGL.createObject(
     NGL.VolumeParser.prototype, {
 
     constructor: NGL.MrcParser,
-
     type: "mrc",
 
     _parse: function( callback ){
@@ -3556,9 +3538,7 @@ NGL.MrcParser.prototype = NGL.createObject(
         // MRC format does not use the skew transformation header records (words 25-37)
         // CCP4 format does not use the ORIGIN header records (words 50-52)
 
-        var __timeName = "NGL.MrcParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.MrcParser._parse " + this.name );
 
         var bin = this.streamer.data;
 
@@ -3690,8 +3670,7 @@ NGL.MrcParser.prototype = NGL.createObject(
 
         v.setData( data, header.NX, header.NY, header.NZ );
 
-        NGL.timeEnd( __timeName );
-
+        if( NGL.debug ) NGL.timeEnd( "NGL.MrcParser._parse " + this.name );
         callback();
 
     },
@@ -4069,16 +4048,13 @@ NGL.DxbinParser.prototype = NGL.createObject(
     NGL.DxParser.prototype, {
 
     constructor: NGL.DxbinParser,
-
     type: "dxbin",
 
     _parse: function( callback ){
 
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
-        var __timeName = "NGL.DxbinParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.DxbinParser._parse " + this.name );
 
         var bin = this.streamer.data;
         if( bin instanceof Uint8Array ){
@@ -4100,7 +4076,7 @@ NGL.DxbinParser.prototype = NGL.createObject(
 
         this.volume.setData( data, header.nz, header.ny, header.nx );
 
-        NGL.timeEnd( __timeName );
+        if( NGL.debug ) NGL.timeEnd( "NGL.DxbinParser._parse " + this.name );
 
         callback();
 
@@ -4128,7 +4104,6 @@ NGL.SurfaceParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.SurfaceParser,
-
     type: "surface",
 
     __objName: "surface",
@@ -4162,7 +4137,6 @@ NGL.PlyParser.prototype = NGL.createObject(
     NGL.SurfaceParser.prototype, {
 
     constructor: NGL.PlyParser,
-
     type: "ply"
 
 } );
@@ -4183,7 +4157,6 @@ NGL.ObjParser.prototype = NGL.createObject(
     NGL.SurfaceParser.prototype, {
 
     constructor: NGL.ObjParser,
-
     type: "obj"
 
 } );
@@ -4213,7 +4186,6 @@ NGL.TextParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.TextParser,
-
     type: "text",
 
     __objName: "text",
@@ -4254,7 +4226,6 @@ NGL.CsvParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.CsvParser,
-
     type: "csv",
 
     __objName: "table",
@@ -4318,13 +4289,13 @@ NGL.JsonParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.JsonParser,
-
     type: "json",
 
     __objName: "json",
 
     _parse: function( callback ){
 
+        // FIXME set xhr.responseType in streamer to "json"
         this.json.data = JSON.parse( this.streamer.asText() );
 
         callback();
@@ -4358,7 +4329,6 @@ NGL.XmlParser.prototype = NGL.createObject(
     NGL.Parser.prototype, {
 
     constructor: NGL.XmlParser,
-
     type: "xml",
 
     __objName: "xml",

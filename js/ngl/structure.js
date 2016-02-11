@@ -1532,14 +1532,14 @@ NGL.Structure.prototype = {
 
         var ap = this.getAtomProxy();
         var as = this.getAtomSet3( selection );
+        var n = this.atomStore.count;
 
-        if( as && as.size() < this.atomStore.count ){
+        if( as && as.size() < n ){
             as.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
             } );
         }else{
-            var n = this.atomStore.count;
             for( var i = 0; i < n; ++i ){
                 ap.index = i;
                 callback( ap );
