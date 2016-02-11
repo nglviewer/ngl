@@ -1269,10 +1269,10 @@ NGL.PdbParser.prototype = NGL.createObject(
 
         // http://www.wwpdb.org/documentation/file-format.php
 
+        if( NGL.debug ) NGL.time( "NGL.PdbParser._parse " + this.name );
+
         var isPqr = this.type === "pqr";
         var reWhitespace = /\s+/;
-
-        if( NGL.debug ) NGL.time( "NGL.PdbParser._parse " + this.name );
 
         var s = this.structure;
         var sb = this.structureBuilder;
@@ -1298,9 +1298,6 @@ NGL.PdbParser.prototype = NGL.createObject(
         var currentPart;
         var currentMatrix;
 
-        var guessElem = NGL.guessElement;
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
@@ -1910,9 +1907,6 @@ NGL.CifParser.prototype = NGL.createObject(
         var atoms = s.atoms;
         var bondSet = s.bondSet;
 
-        var guessElem = NGL.guessElement;
-        var covRadii = NGL.CovalentRadii;
-        var vdwRadii = NGL.VdwRadii;
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
