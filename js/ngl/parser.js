@@ -3761,16 +3761,13 @@ NGL.CubeParser.prototype = NGL.createObject(
     NGL.VolumeParser.prototype, {
 
     constructor: NGL.CubeParser,
-
     type: "cube",
 
     _parse: function( callback ){
 
         // http://paulbourke.net/dataformats/cube/
 
-        var __timeName = "NGL.CubeParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.CubeParser._parse " + this.name );
 
         var v = this.volume;
         var headerLines = this.streamer.peekLines( 6 );
@@ -3822,20 +3819,15 @@ NGL.CubeParser.prototype = NGL.createObject(
 
         };
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        v.header = header;
+        v.setData( data, header.NVZ, header.NVY, header.NVX );
 
-            function(){
-
-                v.header = header;
-                v.setData( data, header.NVZ, header.NVY, header.NVX );
-                NGL.timeEnd( __timeName );
-                callback();
-
-            }
-
-        );
+        if( NGL.debug ) NGL.timeEnd( "NGL.CubeParser._parse " + this.name );
+        callback();
 
     },
 
@@ -3878,16 +3870,13 @@ NGL.DxParser.prototype = NGL.createObject(
     NGL.VolumeParser.prototype, {
 
     constructor: NGL.DxParser,
-
     type: "dx",
 
     _parse: function( callback ){
 
         // http://www.poissonboltzmann.org/docs/file-format-info/
 
-        var __timeName = "NGL.DxParser._parse " + this.name;
-
-        NGL.time( __timeName );
+        if( NGL.debug ) NGL.time( "NGL.DxParser._parse " + this.name );
 
         var v = this.volume;
         var headerLines = this.streamer.peekLines( 30 );
@@ -3928,19 +3917,14 @@ NGL.DxParser.prototype = NGL.createObject(
 
         };
 
-        this.streamer.eachChunkOfLinesAsync(
+        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+            _parseChunkOfLines( 0, lines.length, lines );
+        } );
 
-            _parseChunkOfLines,
+        v.setData( data, header.nz, header.ny, header.nx );
 
-            function(){
-
-                v.setData( data, header.nz, header.ny, header.nx );
-                NGL.timeEnd( __timeName );
-                callback();
-
-            }
-
-        );
+        if( NGL.debug ) NGL.timeEnd( "NGL.DxParser._parse " + this.name );
+        callback();
 
     },
 

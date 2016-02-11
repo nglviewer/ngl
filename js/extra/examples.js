@@ -852,11 +852,11 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://acrolein1gs.cube.gz" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                visible: false, isolevel: 0.1, wireframe: true
+                visible: true, isolevel: 0.1, wireframe: true
             } );
-            o.addRepresentation( "dot", {
-                visible: true, minValue: 0.1
-            } );
+            // o.addRepresentation( "dot", {
+            //     visible: true, minValue: 0.1
+            // } );
             o.centerView();
 
         } );
@@ -1101,19 +1101,20 @@ NGL.ExampleRegistry.addDict( {
         } );
 
         stage.loadFile( "data://1crn_apbs_pot.dx.gz" ).then( function( o ){
+        // stage.loadFile( "data://1crn_apbs_pot.dxbin" ).then( function( o ){
 
-            o.addRepresentation( "dot", {
-                thresholdType: "value",
-                thresholdMin: -5,
-                thresholdMax: 5,
-                thresholdOut: true,
-                dotType: "sphere",
-                radius: "abs-value",
-                scale: 0.001,
-                visible: true,
-                colorScheme: "value",
-                colorScale: "rwb"
-            } );
+            // o.addRepresentation( "dot", {
+            //     thresholdType: "value",
+            //     thresholdMin: -5,
+            //     thresholdMax: 5,
+            //     thresholdOut: true,
+            //     dotType: "sphere",
+            //     radius: "abs-value",
+            //     scale: 0.001,
+            //     visible: true,
+            //     colorScheme: "value",
+            //     colorScale: "rwb"
+            // } );
 
             o.addRepresentation( "surface", {
                 isolevelType: "value",
@@ -1391,10 +1392,11 @@ NGL.ExampleRegistry.addDict( {
         console.time( "load-to-render" );
         stage.loadFile( "data://4opj.pdb" ).then( function( o ){
         // stage.loadFile( "data://4opj.cif" ).then( function( o ){
-            o.addRepresentation( "cartoon", { assembly: "AU", opacity: 0.5, side: THREE.BackSide } );
+            o.addRepresentation( "cartoon", { assembly: "BU1", opacity: 0.5, side: THREE.BackSide } );
             o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0, visible: false } );
             // o.addRepresentation( "hyperball", { sele: "sidechainAttached", assembly: "BU1" } );
             o.addRepresentation( "backbone", { assembly: "AU" } );
+            o.addRepresentation( "surface", { assembly: "BU2" } );
             // o.addRepresentation( "spacefill" );
             // o.addRepresentation( "label" );
             // o.addRepresentation( "ball+stick", { sele: "hetero" } );
