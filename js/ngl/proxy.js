@@ -1150,11 +1150,6 @@ NGL.ResidueProxy.prototype = {
         return this.residueType.moleculeType === NGL.IonType;
     },
 
-    hasBackbone: function( position ){
-        console.warn("hasBackbone")
-        return this.residueType.hasBackbone( position );
-    },
-
     getAtomType: function( index ){
         return this.atomMap.get( this.atomStore.atomTypeId[ index ] );
     },

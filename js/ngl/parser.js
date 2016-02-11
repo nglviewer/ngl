@@ -646,7 +646,7 @@ NGL.calculateResidueBonds = function( r ){
     if( count > 50 ){
 
         var kdtree = new NGL.Kdtree( r, true );
-        var radius = r.hasBackbone() ? 1.2 : 2.3;
+        var radius = r.isCg() ? 1.2 : 2.3;
 
         for( var i = offset; i < end1; ++i ){
             a1.index = i;
