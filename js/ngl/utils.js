@@ -233,7 +233,7 @@ NGL.unicodeHelper = function(){
 
 NGL.getFileInfo = function( file ){
 
-    var compressedExtList = [ "gz", "zip", "lzma", "bz2" ];
+    var compressedExtList = [ "gz" ];
 
     var path, compressed, protocol;
 
