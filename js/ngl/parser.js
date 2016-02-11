@@ -2488,6 +2488,11 @@ NGL.CifParser.prototype = NGL.createObject(
 
                 }
 
+                var matrixList = [];
+                for( var k in md ){
+                    matrixList.push( md[ k ] );
+                }
+
                 var name = id;
                 if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
@@ -2496,10 +2501,10 @@ NGL.CifParser.prototype = NGL.createObject(
                     chainList[ j ] = asymIdDict[ chainList[ j ] ];
                 }
 
-                biomolDict[ name ] = {
-                    matrixDict: md,
-                    chainList: chainList
-                };
+                if( biomolDict[ name ] === undefined ){
+                    biomolDict[ name ] = new NGL.Assembly( name );
+                }
+                biomolDict[ name ].addPart( matrixList, chainList );
 
             } );
 
