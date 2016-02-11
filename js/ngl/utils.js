@@ -246,8 +246,8 @@ NGL.getFileInfo = function( file ){
     var name = path.replace( /^.*[\\\/]/, '' );
     var base = name.substring( 0, name.lastIndexOf( '.' ) );
 
-    var pathSplit = path.split( '.' );
-    var ext = pathSplit.length > 1 ? pathSplit.pop().toLowerCase() : "";
+    var nameSplit = name.split( '.' );
+    var ext = nameSplit.length > 1 ? nameSplit.pop().toLowerCase() : "";
 
     var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
     if( protocolMatch ){
