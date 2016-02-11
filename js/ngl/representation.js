@@ -1605,7 +1605,10 @@ NGL.BackboneRepresentation.prototype = NGL.createObject(
 
     getBondData: function( sview, what, params ){
 
-        return sview.getBackboneBondData( this.getBondParams( what, params ) );
+        var p = this.getBondParams( what, params );
+        p.colorParams.backbone = true;
+
+        return sview.getBackboneBondData( p );
 
     }
 

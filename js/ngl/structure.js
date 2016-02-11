@@ -20,7 +20,7 @@ NGL.GidPool = {
     getBaseObject: function( object ){
 
         if( object.type === "StructureView" ){
-            object = object.structure;
+            object = object.getStructure();
         }
 
         return object;
@@ -96,7 +96,11 @@ NGL.GidPool = {
         var count = 0;
 
         if( object.type === "Structure" ){
-            count = object.atomStore.count + object.bondStore.count;
+            count = (
+                object.atomStore.count +
+                object.bondStore.count +
+                object.backboneBondStore.count
+            );
         }else if( object.type === "Volume" ){
             count = object.__data.length;
         }else{
@@ -175,20 +179,34 @@ NGL.GidPool = {
 
                 if( gid < o.atomStore.count ){
 
-                    o.eachAtom( function( a ){
-                        if( NGL.GidPool.getGid( o, a.index ) === gid ){
-                            entity = a.clone();
+                    o.eachAtom( function( ap ){
+                        if( NGL.GidPool.getGid( o, ap.index ) === gid ){
+                            entity = ap.clone();
                         }
                     } );
 
                 }else if( gid < o.atomStore.count + o.bondStore.count ){
 
                     gid -= o.atomStore.count;
-                    o.eachBond( function( b ){
-                        if( NGL.GidPool.getGid( o, b.index ) === gid ){
-                            entity = b.clone();
+                    o.eachBond( function( bp ){
+                        if( NGL.GidPool.getGid( o, bp.index ) === gid ){
+                            entity = bp.clone();
                         }
                     } );
+
+                }else if( gid < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
+
+                    gid -= ( o.atomStore.count + o.bondStore.count );
+                    var n = o.backboneBondStore.count;
+                    var bp = o.getBondProxy();
+                    bp.bondStore = o.backboneBondStore;
+                    for( var j = 0; j < n; ++j ){
+                        if( NGL.GidPool.getGid( o, j ) === gid ){
+                            bp.index = j;
+                            entity = bp.clone();
+                            entity.bondStore = bp.bondStore;
+                        }
+                    }
 
                 }else{
 
@@ -622,6 +640,12 @@ NGL.PickingColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
 
+    var offset = this.structure.atomStore.count;
+    if( params.backbone ){
+        console.log("MOIN")
+        offset += this.structure.bondStore.count;
+    }
+
     this.atomColor = function( a ){
 
         return NGL.GidPool.getGid( this.structure, a.index );
@@ -630,8 +654,7 @@ NGL.PickingColorMaker = function( params ){
 
     this.bondColor = function( b, fromTo ){
 
-        var index = this.structure.atomStore.count + b.index;
-        return NGL.GidPool.getGid( this.structure, index );
+        return NGL.GidPool.getGid( this.structure, offset + b.index );
 
     };
 
