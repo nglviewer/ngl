@@ -930,12 +930,7 @@ NGL.Residue = {
             backboneEnd: [ "C3'", "C3*", "C2'" ],
         };
 
-        // workaround for missing CA only type
-        atomnames[ NGL.UnknownType ] = {
-            trace: "CA",
-            backboneStart: "CA",
-            backboneEnd: "CA",
-        };
+        atomnames[ NGL.UnknownBackboneType ] = {};
 
         return atomnames;
 

@@ -692,39 +692,6 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
-    getAtomData: function( what, params ){
-
-        var atomDataParams = Object.assign( {
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { "radius": this.radius, "scale": this.scale }
-        }, params );
-
-        return NGL.getAtomData( this.structureView, atomDataParams );
-
-    },
-
-    getBondData: function( what, params, sview ){
-
-        var bondDataParams = Object.assign( {
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { "radius": this.radius, "scale": this.scale }
-        }, params );
-
-        return NGL.getBondData( sview || this.structureView, bondDataParams );
-
-    },
-
-    getData: function( what ){
-
-        return {
-            "atom": this.getAtomData( what ),
-            "bond": this.getBondData( what )
-        };
-
-    },
-
     setSelection: function( string, silent ){
 
         this.selection.setString( string, silent );
