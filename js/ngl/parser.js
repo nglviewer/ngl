@@ -1673,7 +1673,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;
+            s.unitcell = undefined;  // triggers use of bounding box
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
@@ -2657,7 +2657,7 @@ NGL.CifParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;
+            s.unitcell = undefined;  // triggers use of bounding box
         }
 
         // add connections
@@ -3339,6 +3339,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
         if( NGL.debug ) console.timeEnd( "process map data" );
 
         //
+
+        s.unitcell = undefined;  // triggers use of bounding box
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
         callback();
