@@ -3250,7 +3250,15 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         //
 
-        s.unitcell = undefined;  // triggers use of bounding box
+        if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
+            s.unitcell = new NGL.Unitcell(
+                sd.unitCell[ 0 ], sd.unitCell[ 1 ], sd.unitCell[ 2 ],
+                sd.unitCell[ 3 ], sd.unitCell[ 4 ], sd.unitCell[ 5 ],
+                sd.spaceGroup
+            );
+        }else{
+            s.unitcell = undefined;  // triggers use of bounding box
+        }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
         callback();
