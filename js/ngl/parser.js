@@ -3252,10 +3252,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         if( sd.bioAssembly ){
             for( var k in sd.bioAssembly ){
-                var tDict = {};
-                var ba = sd.bioAssembly[ k ];
-                for( var tk in ba.transforms ){
-                    var t = ba.transforms[ tk ];
+                var tDict = {};  // assembly parts hashed by transformation matrix
+                var bioAssem = sd.bioAssembly[ k ];
+                for( var tk in bioAssem.transforms ){
+                    var t = bioAssem.transforms[ tk ];
                     var part = tDict[ t.transformation ];
                     if( !part ){
                         part = {
@@ -3267,7 +3267,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         part.chainList.push( t.chainId );
                     }
                 }
-                var cDict = {};
+                var cDict = {};  // matrix lists hashed by chain list
                 for( var pk in tDict ){
                     var p = tDict[ pk ];
                     var matrixList = cDict[ p.chainList ];
@@ -3281,8 +3281,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 for( var ck in cDict ){
                     var matrixList = cDict[ ck ];
                     var chainList = ck.split( "," );
-                    var assembly = new NGL.Assembly( ba.id );
-                    s.biomolDict[ "BU" + ba.id ] = assembly;
+                    var assembly = new NGL.Assembly( bioAssem.id );
+                    s.biomolDict[ "BU" + bioAssem.id ] = assembly;
                     assembly.addPart( matrixList, chainList );
                 }
             }
