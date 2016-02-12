@@ -3250,6 +3250,44 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         //
 
+        if( sd.bioAssembly ){
+            for( var k in sd.bioAssembly ){
+                var tDict = {};
+                var ba = sd.bioAssembly[ k ];
+                for( var tk in ba.transforms ){
+                    var t = ba.transforms[ tk ];
+                    var part = tDict[ t.transformation ];
+                    if( !part ){
+                        part = {
+                            matrix: new THREE.Matrix4().fromArray( t.transformation ),
+                            chainList: [ t.chainId ]
+                        };
+                        tDict[ t.transformation ] = part;
+                    }else{
+                        part.chainList.push( t.chainId );
+                    }
+                }
+                var cDict = {};
+                for( var pk in tDict ){
+                    var p = tDict[ pk ];
+                    var matrixList = cDict[ p.chainList ];
+                    if( !matrixList ){
+                        matrixList = [ p.matrix ];
+                        cDict[ p.chainList ] = matrixList;
+                    }else{
+                        matrixList.push( p.matrix );
+                    }
+                }
+                for( var ck in cDict ){
+                    var matrixList = cDict[ ck ];
+                    var chainList = ck.split( "," );
+                    var assembly = new NGL.Assembly( ba.id );
+                    s.biomolDict[ "BU" + ba.id ] = assembly;
+                    assembly.addPart( matrixList, chainList );
+                }
+            }
+        }
+
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
             s.unitcell = new NGL.Unitcell(
                 sd.unitCell[ 0 ], sd.unitCell[ 1 ], sd.unitCell[ 2 ],
