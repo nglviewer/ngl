@@ -570,37 +570,108 @@ NGL.calculateChainnames = function( structure ){
         var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         var n = names.length;
 
-        structure.eachModel( function( mp ){
+        var modelStore = structure.modelStore;
+        var chainStore = structure.chainStore;
+        var residueStore = structure.residueStore;
 
-            var i = 0;
+        function addChain( mIndex, chainname, rOffset, rCount ){
+            var ci = chainStore.count;
+            for( var i = 0; i < rCount; ++i ){
+                residueStore.chainIndex[ rOffset + i ] = ci;
+            }
+            chainStore.growIfFull();
+            chainStore.modelIndex[ ci ] = mIndex;
+            chainStore.setChainname( ci, chainname );
+            chainStore.residueOffset[ ci ] = rOffset;
+            chainStore.residueCount[ ci ] = rCount;
+            chainStore.count += 1;
+            modelStore.chainCount[ mIndex ] += 1;
+        }
 
-            mp.eachPolymer( function( p ){
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
 
+        var i = 0;
+        var mi = 0;
+        var rStart = 0;
+        var rEnd = 0;
+        var chainData = [];
+
+        structure.eachResidueN( 2, function( rp1, rp2 ){
+
+            var newChain = false;
+
+            var bbType1 = rp1.backboneType;
+            var bbType2 = rp2.backboneType;
+            var bbTypeUnk = NGL.UnknownBackboneType;
+
+            rEnd = rp1.index;
+
+            if( rp1.modelIndex !== rp2.modelIndex ){
+                newChain = true;
+            }else if( rp1.moleculeType !== rp2.moleculeType ){
+                newChain = true;
+            }else if( bbType1 !== bbTypeUnk && bbType1 === bbType2 ){
+                ap1.index = rp1.backboneEndAtomIndex;
+                ap2.index = rp2.backboneStartAtomIndex;
+                if( !ap1.connectedTo( ap2 ) ){
+                    newChain = true;
+                }
+            }
+
+            if( rp2.index === residueStore.count - 1 ){
+                newChain = true;
+                rEnd = rp2.index;
+            }
+
+            if( newChain ){
                 var j = i;
                 var k = 0;
-                var name = names[ j % n ];
+                var chainname = names[ j % n ];
 
                 while( j >= n ){
                     j = Math.floor( j / n );
-                    name += names[ j % n ];
+                    chainname += names[ j % n ];
                     k += 1;
                 }
 
-                // TODO create entries in residueStore, chainStore
-
-                p.eachAtom( function( a ){
-                    a.chainname = name;
+                chainData.push( {
+                    mIndex: mi,
+                    chainname: chainname,
+                    rStart: rStart,
+                    rCount: rEnd - rStart + 1
                 } );
 
                 i += 1;
+
+                if( rp1.modelIndex !== rp2.modelIndex ){
+                    i = 0;
+                    mi += 1;
+                }
 
                 if( k >= 5 ){
                     NGL.warn( "out of chain names" );
                     i = 0;
                 }
 
-            } )
+                rStart = rp2.index;
+                rEnd = rp2.index;
 
+            }
+
+        } );
+
+        //
+
+        chainStore.count = 0;
+        chainData.forEach( function( d ){
+            addChain( d.mIndex, d.chainname, d.rStart, d.rCount );
+        } );
+
+        var chainOffset = 0;
+        structure.eachModel( function( mp ){
+            modelStore.chainOffset[ mp.index ] = chainOffset;
+            chainOffset += modelStore.chainCount[ mp.index ];
         } );
 
     }
