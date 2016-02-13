@@ -1270,6 +1270,7 @@ NGL.ResidueProxy.prototype = {
 NGL.Polymer = function( structure, residueIndexStart, residueIndexEnd ){
 
     this.structure = structure;
+    this.chainStore = structure.chainStore;
     this.residueStore = structure.residueStore;
     this.atomStore = structure.atomStore;
 
@@ -1302,6 +1303,19 @@ NGL.Polymer.prototype = {
     residueIndexStart: undefined,
     residueIndexEnd: undefined,
     residueCount: undefined,
+
+    //
+
+    get chainIndex () {
+        return this.residueStore.chainIndex[ this.residueIndexStart ];
+    },
+    get modelIndex () {
+        return this.chainStore.modelIndex[ this.chainIndex ];
+    },
+
+    get chainname () {
+        return this.chainStore.getChainname( this.chainIndex );
+    },
 
     //
 
