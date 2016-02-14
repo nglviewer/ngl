@@ -362,96 +362,80 @@ NGL.calculateSecondaryStructure = function(){
     // TM-align: a protein structure alignment algorithm based on the Tm-score
     // (2005) NAR, 33(7) 2302-2309
 
-    var zhangSkolnickSS = function(){
+    var zhangSkolnickSS = function( polymer, i, distances, delta ){
 
-        var d;
+        var structure = polymer.structure;
+        var offset = polymer.residueIndexStart;
+        var rp1 = structure.getResidueProxy();
+        var rp2 = structure.getResidueProxy();
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
 
-        var ca1 = new THREE.Vector3();
-        var ca2 = new THREE.Vector3();
+        for( var j = Math.max( 0, i - 2 ); j <= i; ++j ){
 
-        return function( fiber, i, distances, delta ){
+            for( var k = 2;  k < 5; ++k ){
 
-            for( var j = Math.max( 0, i - 2 ); j <= i; ++j ){
-
-                for( var k = 2;  k < 5; ++k ){
-
-                    if( j + k >= fiber.residueCount ){
-                        continue;
-                    }
-
-                    ca1.copy( fiber.residues[ j ].getTraceAtom() );
-                    ca2.copy( fiber.residues[ j + k ].getTraceAtom() );
-
-                    d = ca1.distanceTo( ca2 );
-                    // NGL.log( d )
-
-                    if( Math.abs( d - distances[ k - 2 ] ) > delta ){
-                        return false;
-                    }
-
+                if( j + k >= polymer.residueCount ){
+                    continue;
                 }
 
-            }
+                rp1.index = offset + j;
+                rp2.index = offset + j + k;
+                ap1.index = rp1.traceAtomIndex;
+                ap2.index = rp2.traceAtomIndex;
 
-            return true;
+                d = ap1.distanceTo( ap2 );
+                // NGL.log( d )
 
-        };
-
-    }();
-
-    var isHelical = function( fiber, i ){
-
-        var helixDistances = [ 5.45, 5.18, 6.37 ];
-        var helixDelta = 2.1;
-
-        return zhangSkolnickSS( fiber, i, helixDistances, helixDelta );
-
-    };
-
-    var isSheet = function( fiber, i ){
-
-        var sheetDistances = [ 6.1, 10.4, 13.0 ];
-        var sheetDelta = 1.42;
-
-        return zhangSkolnickSS( fiber, i, sheetDistances, sheetDelta );
-
-    };
-
-    var proteinFiber = function( f ){
-
-        var i;
-
-        var n = f.residueCount;
-
-        for( i = 0; i < n; ++i ){
-
-            if( isHelical( f, i ) ){
-
-                f.residues[ i ].ss = "h";
-
-            }else if( isSheet( f, i ) ){
-
-                f.residues[ i ].ss = "s";
-
-            }else{
-
-                f.residues[ i ].ss = "c";
+                if( Math.abs( d - distances[ k - 2 ] ) > delta ){
+                    return false;
+                }
 
             }
 
         }
 
+        return true;
+
+    };
+
+    var isHelical = function( polymer, i ){
+        var helixDistances = [ 5.45, 5.18, 6.37 ];
+        var helixDelta = 2.1;
+        return zhangSkolnickSS( polymer, i, helixDistances, helixDelta );
+    };
+
+    var isSheet = function( polymer, i ){
+        var sheetDistances = [ 6.1, 10.4, 13.0 ];
+        var sheetDelta = 1.42;
+        return zhangSkolnickSS( polymer, i, sheetDistances, sheetDelta );
+    };
+
+    var proteinPolymer = function( p ){
+        var residueStore = p.residueStore;
+        var offset = p.residueIndexStart;
+        for( var i = 0, il = p.residueCount; i < il; ++i ){
+            var sstruc = "c";
+            if( isHelical( p, i ) ){
+                sstruc = "h";
+            }else if( isSheet( p, i ) ){
+                sstruc = "s";
+            }
+            residueStore.sstruc[ offset + i ] = sstruc.charCodeAt( 0 );
+        }
     }
 
-    var cgFiber = function( f ){
+    var cgPolymer = function( p ){
+
+        // FIXME helixbundle broken for polymers
 
         var localAngle = 20;
         var centerDist = 2.0;
 
-        var helixbundle = new NGL.Helixbundle( f );
+        var helixbundle = new NGL.Helixbundle( p );
 
         var pos = helixbundle.position;
-        var res = helixbundle.fiber.residues;
+        var res = helixbundle.polymer.residues;
 
         var n = helixbundle.size;
 
@@ -464,20 +448,15 @@ NGL.calculateSecondaryStructure = function(){
 
             r = res[ i ];
             r2 = res[ i + 1 ];
-
             c.fromArray( pos.center, i * 3 );
             c2.fromArray( pos.center, i * 3 + 3 );
-
             d = c.distanceTo( c2 );
 
             // NGL.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
 
-            if( d < centerDist && d > 1.0 &&
-                    pos.bending[ i ] < localAngle ){
-
+            if( d < centerDist && d > 1.0 && pos.bending[ i ] < localAngle ){
                 r.ss = "h";
                 r2.ss = "h";
-
             }
 
         }
@@ -488,61 +467,33 @@ NGL.calculateSecondaryStructure = function(){
 
         if( NGL.debug ) NGL.time( "NGL.Structure.autoSS" );
 
-        // assign secondary structure
+        structure.eachPolymer( function( p ){
 
-        structure.eachFiber( function( f ){
-
-            if( f.residueCount < 4 ) return;
-
-            if( f.isProtein() ){
-
-                proteinFiber( f );
-
-            }else if( f.isCg() ){
-
-                cgFiber( f );
-
+            // assign secondary structure
+            if( p.residueCount < 4 ) return;
+            if( p.isCg() ){
+                cgPolymer( p );
+            }else if( p.isProtein() ){
+                proteinPolymer( p );
+            }else{
+                return;
             }
 
-        } );
-
-        // set lone secondary structure assignments to "c"
-
-        structure.eachFiber( function( f ){
-
-            if( !f.isProtein() && !f.isCg ) return;
-
-            var r;
-            var ssType = undefined;
-            var ssCount = 0;
-
-            f.eachResidueN( 2, function( r1, r2 ){
-
-                if( r1.ss===r2.ss ){
-
-                    ssCount += 1;
-
+            // set lone secondary structure assignments to "c"
+            var prevSstruc = undefined;
+            var sstrucCount = 0;
+            p.eachResidue( function( r ){
+                if( r.sstruc === prevSstruc ){
+                    sstrucCount += 1;
                 }else{
-
-                    if( ssCount===1 ){
-
-                        r1.ss = "c";
-
+                    if( sstrucCount === 1 ){
+                        r.index -= 1;
+                        r.sstruc = "c";
                     }
-
-                    ssCount = 1;
-
+                    sstrucCount = 1;
+                    prevSstruc = r.sstruc;
                 }
-
-                r = r2;
-
             } );
-
-            if( ssCount===1 ){
-
-                r.ss = "c";
-
-            }
 
         } );
 
@@ -1260,9 +1211,9 @@ NGL.StructureParser.prototype = NGL.createObject(
 
         // TODO
         // check for secondary structure
-        // if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
-        //     NGL.calculateSecondaryStructure( s );
-        // }
+        if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
+            NGL.calculateSecondaryStructure( s );
+        }
 
         if( s.helices.length > 0 || s.sheets.length > 0 ){
             NGL.assignSecondaryStructure( s );
