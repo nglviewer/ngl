@@ -103,17 +103,13 @@ NGL.Frames.prototype = {
 // TODO params handling in constructor and getParameters method
 NGL.Trajectory = function( trajPath, structure, selectionString ){
 
-    var scope = this;
-
     var SIGNALS = signals;
 
     this.signals = {
-
         gotNumframes: new SIGNALS.Signal(),
         frameChanged: new SIGNALS.Signal(),
         selectionChanged: new SIGNALS.Signal(),
         playerChanged: new SIGNALS.Signal(),
-
     };
 
     this.params = {
@@ -129,11 +125,9 @@ NGL.Trajectory = function( trajPath, structure, selectionString ){
     );
 
     this.selection.signals.stringChanged.add( function( string ){
-
-        scope.makeIndices();
-        scope.resetCache();
-
-    } );
+        this.makeIndices();
+        this.resetCache();
+    }, this );
 
     // should come after this.selection is set
     this.setStructure( structure );
@@ -881,17 +875,17 @@ NGL.StructureTrajectory.prototype = NGL.createObject(
     makeAtomIndices: function(){
 
         var structure = this.structure;
+        var atomSet = structure.atomSet;
+        var count = atomSet.size();
 
-        if( structure instanceof NGL.StructureSubset ){
-
-            this.atomIndices = structure.structure.atomIndex(
-                structure.selection
-            );
-
+        if( count < structure.atomStore.count ){
+            var atomIndices = new Int32Array( count );
+            atomSet.forEach( function( index, i ){
+                atomIndices[ i ] = index;
+            } );
+            this.atomIndices = atomIndices;
         }else{
-
             this.atomIndices = null;
-
         }
 
     },
