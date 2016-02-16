@@ -2169,51 +2169,13 @@ NGL.StructureView = function( structure, selection ){
     this.structure = structure;
     this.selection = selection;
 
-    Object.defineProperties( this, {
-        atomSetDict: {
-            get: function(){ return this.structure.atomSetDict }
-        },
-        bondStore: {
-            get: function(){ return this.structure.bondStore }
-        },
-        backboneBondStore: {
-            get: function(){ return this.structure.backboneBondStore }
-        },
-        atomStore: {
-            get: function(){ return this.structure.atomStore }
-        },
-        residueStore: {
-            get: function(){ return this.structure.residueStore }
-        },
-        chainStore: {
-            get: function(){ return this.structure.chainStore }
-        },
-        modelStore: {
-            get: function(){ return this.structure.modelStore }
-        },
-        atomMap: {
-            get: function(){ return this.structure.atomMap }
-        },
-        residueMap: {
-            get: function(){ return this.structure.residueMap }
-        }
-    } );
-
-    this._ap = this.getAtomProxy();
-    this._rp = this.getResidueProxy();
-    this._cp = this.getChainProxy();
+    this.center = new THREE.Vector3();
+    this.boundingBox = new THREE.Box3();
 
     // to allow creating an empty object to call .fromJSON onto
     if( !structure && !selection ) return;
 
-    this.selection.signals.stringChanged.add( function( string ){
-        this.refresh();
-    }, this );
-
-    this.structure.signals.refreshed.add( this.refresh, this );
-
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.init();
 
     this.refresh();
 
@@ -2225,6 +2187,53 @@ NGL.StructureView.prototype = NGL.createObject(
 
     constructor: NGL.StructureView,
     type: "StructureView",
+
+    init: function(){
+
+        Object.defineProperties( this, {
+            atomSetDict: {
+                get: function(){ return this.structure.atomSetDict }
+            },
+            bondStore: {
+                get: function(){ return this.structure.bondStore }
+            },
+            backboneBondStore: {
+                get: function(){ return this.structure.backboneBondStore }
+            },
+            atomStore: {
+                get: function(){ return this.structure.atomStore }
+            },
+            residueStore: {
+                get: function(){ return this.structure.residueStore }
+            },
+            chainStore: {
+                get: function(){ return this.structure.chainStore }
+            },
+            modelStore: {
+                get: function(){ return this.structure.modelStore }
+            },
+            atomMap: {
+                get: function(){ return this.structure.atomMap }
+            },
+            residueMap: {
+                get: function(){ return this.structure.residueMap }
+            }
+        } );
+
+        this._ap = this.getAtomProxy();
+        this._rp = this.getResidueProxy();
+        this._cp = this.getChainProxy();
+
+        // FIXME should selection be serializable?
+        if( this.selection ){
+            this.selection.signals.stringChanged.add( function( string ){
+                this.refresh();
+            }, this );
+        }
+
+        this.structure.signals.refreshed.add( this.refresh, this );
+
+    },
 
     refresh: function(){
 
@@ -2293,6 +2302,7 @@ NGL.StructureView.prototype = NGL.createObject(
             },
 
             structure: this.structure.toJSON(),
+            // selection: this.selection.toJSON(),
 
             atomSet: this.atomSet.toJSON(),
             bondSet: this.bondSet.toJSON(),
@@ -2314,7 +2324,11 @@ NGL.StructureView.prototype = NGL.createObject(
 
     fromJSON: function( input ){
 
-        this.structure = new NGL.Structure().fromJSON( input.structure );
+        if( input.structure.metadata.type === "Structure" ){
+            this.structure = new NGL.Structure().fromJSON( input.structure );
+        }else if( input.structure.metadata.type === "StructureView" ){
+            this.structure = new NGL.StructureView().fromJSON( input.structure );
+        }
 
         this.atomSet = new TypedFastBitSet().fromJSON( input.atomSet );
         this.bondSet = new TypedFastBitSet().fromJSON( input.bondSet );
@@ -2327,6 +2341,8 @@ NGL.StructureView.prototype = NGL.createObject(
             var as = new TypedFastBitSet();
             this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
         }
+
+        this.init();
 
         return this;
 
