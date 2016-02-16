@@ -384,7 +384,7 @@ NGL.calculateSecondaryStructure = function(){
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;
 
-                d = ap1.distanceTo( ap2 );
+                var d = ap1.distanceTo( ap2 );
                 // NGL.log( d )
 
                 if( Math.abs( d - distances[ k - 2 ] ) > delta ){
@@ -525,7 +525,7 @@ NGL.calculateChainnames = function( structure ){
         var chainStore = structure.chainStore;
         var residueStore = structure.residueStore;
 
-        function addChain( mIndex, chainname, rOffset, rCount ){
+        var addChain = function( mIndex, chainname, rOffset, rCount ){
             var ci = chainStore.count;
             for( var i = 0; i < rCount; ++i ){
                 residueStore.chainIndex[ rOffset + i ] = ci;
