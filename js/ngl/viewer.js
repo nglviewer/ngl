@@ -1648,7 +1648,7 @@ NGL.Viewer.prototype = {
                 camera.projectionMatrix
             ).transpose();
 
-            group.traverse( function ( o ){
+            group.traverse( function( o ){
 
                 var m = o.material;
                 if( !m ) return;
@@ -1904,7 +1904,6 @@ NGL.TiledRenderer.prototype = {
     init: function(){
 
         if( this.antialias ) this.factor *= 2;
-
         this.n = this.factor * this.factor;
 
         // canvas
@@ -1914,15 +1913,11 @@ NGL.TiledRenderer.prototype = {
         document.body.appendChild( canvas );
 
         if( this.antialias ){
-
             canvas.width = this.viewer.width * this.factor / 2;
             canvas.height = this.viewer.height * this.factor / 2;
-
         }else{
-
             canvas.width = this.viewer.width * this.factor;
             canvas.height = this.viewer.height * this.factor;
-
         }
 
         this.ctx = canvas.getContext( '2d' );
@@ -1979,19 +1974,13 @@ NGL.TiledRenderer.prototype = {
 
     renderTile: function( i ){
 
-        this.viewer.renderer.setPixelRatio(
-            window.devicePixelRatio * this.factor
-        );
-
         this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
-
         this.viewer.render( null, null, true );
 
         var x = ( i % this.factor ) * this.viewer.width;
         var y = Math.floor( i / this.factor ) * this.viewer.height;
 
         if( this.antialias ){
-
             this.ctx.drawImage(
                 this.renderer.domElement,
                 Math.floor( x / 2 ),
@@ -1999,9 +1988,7 @@ NGL.TiledRenderer.prototype = {
                 Math.ceil( this.viewer.width / 2 ),
                 Math.ceil( this.viewer.height / 2 )
             );
-
         }else{
-
             this.ctx.drawImage(
                 this.renderer.domElement,
                 Math.floor( x ),
@@ -2009,20 +1996,13 @@ NGL.TiledRenderer.prototype = {
                 Math.ceil( this.viewer.width ),
                 Math.ceil( this.viewer.height )
             );
-
         }
 
         this.camera.updateProjectionMatrix();
 
         if( typeof this.onProgress === "function" ){
-
             this.onProgress( i + 1, this.n, false );
-
         }
-
-        this.viewer.renderer.setPixelRatio(
-            window.devicePixelRatio
-        );
 
     },
 
@@ -2031,21 +2011,13 @@ NGL.TiledRenderer.prototype = {
         var n = this.n;
 
         for( var i = 0; i <= n; ++i ){
-
             if( i === n ){
-
                 if( typeof this.onFinish === "function" ){
-
                     this.onFinish( i + 1, n, false );
-
                 }
-
             }else{
-
                 this.renderTile( i );
-
             }
-
         }
 
     },
@@ -2057,25 +2029,15 @@ NGL.TiledRenderer.prototype = {
         var onFinish = this.onFinish;
 
         for( var i = 0; i <= n; ++i ){
-
             setTimeout( function( i ){
-
                 if( i === n ){
-
                     if( typeof onFinish === "function" ){
-
                         onFinish( i + 1, n, false );
-
                     }
-
                 }else{
-
                     renderTile( i );
-
                 }
-
             }, 0, i );
-
         }
 
     },
@@ -2107,14 +2069,22 @@ NGL.screenshot = function( viewer, params ){
     var originalClearAlpha = renderer.getClearAlpha();
     var backgroundColor = renderer.getClearColor();
 
+    function setLinewidth( invert ){
+        var _factor = factor;
+        if( antialias ) _factor *= 2;
+        if( invert ) _factor = 1 / _factor;
+        viewer.scene.traverse( function( o ){
+            if( o.material && o.material.linewidth ){
+                o.material.linewidth *= _factor;
+            }
+        } );
+    }
+
     if( transparent ){
-
         renderer.setClearAlpha( 0 );
-
     }
 
     var tiledRenderer = new NGL.TiledRenderer(
-
         renderer, camera, viewer,
         {
             factor: factor,
@@ -2122,35 +2092,27 @@ NGL.screenshot = function( viewer, params ){
             onProgress: onProgress,
             onFinish: onFinish
         }
-
     );
 
+    setLinewidth();
     tiledRenderer.renderAsync();
+    // tiledRenderer.render();
 
     //
 
     function onProgress( i, n, finished ){
-
         if( typeof p.onProgress === "function" ){
-
             p.onProgress( i, n, finished );
-
         }
-
     }
 
     function onFinish( i, n ){
-
         save( n );
-
         if( transparent ){
-
             renderer.setClearAlpha( originalClearAlpha );
-
         }
-
+        setLinewidth( true );
         viewer.requestRender();
-
     }
 
     function save( n ){
@@ -2159,33 +2121,23 @@ NGL.screenshot = function( viewer, params ){
         var ext = type.split( "/" )[ 1 ];
 
         if( trim ){
-
             var bg = backgroundColor;
             var r = ( bg.r * 255 ) | 0;
             var g = ( bg.g * 255 ) | 0;
             var b = ( bg.b * 255 ) | 0;
             var a = transparent ? 0 : 255;
-
             canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
-
         }else{
-
             canvas = tiledRenderer.canvas;
-
         }
 
         canvas.toBlob(
-
             function( blob ){
-
                 NGL.download( blob, "screenshot." + ext );
                 onProgress( n, n, true );
-
                 tiledRenderer.dispose();
-
             },
             type, quality
-
         );
 
     }
