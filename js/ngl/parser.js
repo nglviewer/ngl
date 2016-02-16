@@ -908,6 +908,34 @@ NGL.Assembly.prototype = {
         var part = new NGL.AssemblyPart( matrixList, chainList );
         this.partList.push( part );
         return part;
+    },
+
+    toJSON: function(){
+
+        var output = {
+            name: this.name,
+            partList: new Array( this.partList.length )
+        };
+
+        this.partList.forEach( function( part, i ){
+            output.partList[ i ] = part.toJSON()
+        } );
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.name = input.name;
+        this.partList = input.partList;
+
+        this.partList.forEach( function( part, i ){
+            this.partList[ i ] = new NGL.AssemblyPart().fromJSON( part );
+        }.bind( this ) );
+
+        return this;
+
     }
 
 };
@@ -955,6 +983,26 @@ NGL.AssemblyPart.prototype = {
             } );
         }
         return instanceList;
+    },
+
+    toJSON: function(){
+
+        var output = {
+            matrixList: this.matrixList,
+            chainList: this.chainList
+        };
+
+        return output;
+
+    },
+
+    fromJSON: function( input ){
+
+        this.matrixList = input.matrixList;
+        this.chainList = input.chainList;
+
+        return this;
+
     }
 
 };

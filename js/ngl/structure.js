@@ -1979,7 +1979,7 @@ NGL.Structure.prototype = {
             title: this.title,
             id: this.id,
 
-            biomolDict: this.biomolDict,
+            biomolDict: {},
             helices: this.helices,
             sheets: this.sheets,
             unitcell: this.unitcell.toJSON(),
@@ -2011,6 +2011,9 @@ NGL.Structure.prototype = {
 
         };
 
+        for( var name in this.biomolDict ){
+            output.biomolDict[ name ] = this.biomolDict[ name ].toJSON()
+        }
         for( var name in this.atomSetDict ){
             output.atomSetDict[ name ] = this.atomSetDict[ name ].toJSON()
         }
@@ -2057,6 +2060,11 @@ NGL.Structure.prototype = {
         this.bondSet.fromJSON( input.bondSet );
         this.atomSet.fromJSON( input.atomSet );
 
+        this.biomolDict = {};
+        for( var name in input.biomolDict ){
+            var assembly = new NGL.Assembly();
+            this.biomolDict[ name ] = assembly.fromJSON( input.biomolDict[ name ] );
+        }
         this.atomSetDict = {};
         for( var name in input.atomSetDict ){
             var as = new TypedFastBitSet();
