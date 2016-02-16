@@ -3427,7 +3427,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     },
 
-    prepareData: function( sview, i ){
+    prepareData: function( sview, i, callback ){
 
         var info = this.__infoList[ i ];
         if( !info ){
@@ -3441,24 +3441,61 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             info.molsurf = new NGL.MolecularSurface( sview );
 
             var p = this.getSurfaceParams();
-            // var afterWorker = function( surface ){
-            //     info.surface = surface;
-            //     callback();
-            // };
-            // info.molsurf.getSurfaceWorker( p, afterWorker );
-            info.surface = info.molsurf.getSurface( p );
+            var afterWorker = function( surface ){
+                info.surface = surface;
+                callback( i );
+            };
+            info.molsurf.getSurfaceWorker( p, afterWorker );
+            // info.surface = info.molsurf.getSurface( p );
 
         }else{
 
-            // callback();
+            callback( i );
 
+        }
+
+    },
+
+    prepare: function( callback ){
+
+        if( this.__forceNewMolsurf || this.__sele !== this.selection.string ){
+            this.__infoList.forEach( function( info, i ){
+                info.molsurf.dispose();
+            }.bind( this ) );
+            this.__infoList.length = 0;
+        }
+
+        if( this.structureView.atomCount === 0 ){
+            callback();
+            return
+        }
+
+        var after = function(){
+            this.__sele = this.selection.string;
+            this.__surfaceParams = JSON.stringify( this.getSurfaceParams() );
+            this.__forceNewMolsurf = false;
+            callback()
+        }.bind( this );
+
+        var name = this.assembly || this.structure.defaultAssembly;
+        var assembly = this.structure.biomolDict[ name ];
+
+        if( assembly ){
+            assembly.partList.forEach( function( part, i ){
+                var sview = part.getView( this.structureView );
+                this.prepareData( sview, i, function( _i ){
+                    if( _i === assembly.partList.length - 1 ) after();
+                }.bind( this ) );
+            }, this );
+        }else{
+            this.prepareData( this.structureView, 0, after );
         }
 
     },
 
     createData: function( sview, i ){
 
-        this.prepareData( sview, i );
+        // this.prepareData( sview, i );
         var info = this.__infoList[ i ];
 
         var surfaceBuffer = new NGL.SurfaceBuffer(
@@ -3484,12 +3521,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     create: function(){
 
-        if( this.__forceNewMolsurf || this.__sele !== this.selection.string ){
-            this.__infoList.forEach( function( info, i ){
-                info.molsurf.dispose();
-            }.bind( this ) );
-            this.__infoList.length = 0;
-        }
+
 
         NGL.StructureRepresentation.prototype.create.call( this );
 

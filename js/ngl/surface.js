@@ -2455,17 +2455,22 @@ NGL.WorkerRegistry.add( "molsurf", function( e, callback ){
 
     if( d.structure ){
 
-        self.molsurf = new NGL.MolecularSurface(
-            new NGL.StructureView().fromJSON( d.structure )
-        );
+        if( d.structure.metadata.type === "Structure" ){
+            self.molsurf = new NGL.MolecularSurface(
+                new NGL.Structure().fromJSON( d.structure )
+            );
+        }else if( d.structure.metadata.type === "StructureView" ){
+            self.molsurf = new NGL.MolecularSurface(
+                new NGL.StructureView().fromJSON( d.structure )
+            );
+        }else{
+            console.error( "wrong type" );
+        }
 
     }
 
     var molsurf = self.molsurf;
-
-    var surface = molsurf.getSurface(
-        p.type, p.probeRadius, p.scaleFactor, p.smooth, p.lowRes, p.cutoff
-    );
+    var surface = molsurf.getSurface( p );
 
     if( NGL.debug ) NGL.timeEnd( "WORKER molsurf" );
 
