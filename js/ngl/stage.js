@@ -176,16 +176,18 @@ NGL.Stage.prototype = {
 
         if( object instanceof NGL.StructureComponent ){
 
+            object.setSelection( "/0" );
+
             if( object.structure.atomStore.count > 100000 ){
 
                 object.addRepresentation( "line" );
-                object.centerView( true );
+                this.centerView();
 
             }else{
 
-                object.addRepresentation( "cartoon", { sele: "*" } );
+                object.addRepresentation( "cartoon" );
                 object.addRepresentation( "licorice", { sele: "hetero" } );
-                object.centerView( true );
+                this.centerView();
 
             }
 
@@ -195,7 +197,7 @@ NGL.Stage.prototype = {
         }else if( object instanceof NGL.SurfaceComponent ){
 
             object.addRepresentation( "surface" );
-            object.centerView();
+            this.centerView();
 
         }
 
