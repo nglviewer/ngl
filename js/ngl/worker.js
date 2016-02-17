@@ -78,6 +78,7 @@ NGL.Worker = function( name ){
         aMessage = aMessage || {};
         aMessage.__name = name;
         aMessage.__postId = postCount;
+        aMessage.__debug = NGL.debug;
 
         NGL.time( "NGL.Worker.postMessage " + name + " #" + postCount );
 
@@ -204,6 +205,7 @@ if( typeof importScripts === 'function' ){
 
         var name = e.data.__name;
         var postId = e.data.__postId;
+        NGL.debug = e.data.__debug;
 
         if( name === undefined ){
 
