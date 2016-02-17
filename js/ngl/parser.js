@@ -3263,12 +3263,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.atomStore.count = sd.atomCount;
         s.atomStore.residueIndex = sd.atomStore.groupIndex;
         s.atomStore.atomTypeId = new Uint16Array( sd.atomCount );
-        s.atomStore.x = sd.atomStore.x;
-        s.atomStore.y = sd.atomStore.y;
-        s.atomStore.z = sd.atomStore.z;
-        s.atomStore.serial = sd.atomStore.serial;
-        s.atomStore.bfactor = sd.atomStore.bfactor;
-        s.atomStore.altloc = sd.atomStore.altloc;
+        s.atomStore.x = sd.atomStore.xCoord;
+        s.atomStore.y = sd.atomStore.yCoord;
+        s.atomStore.z = sd.atomStore.zCoord;
+        s.atomStore.serial = sd.atomStore.atomId;
+        s.atomStore.bfactor = sd.atomStore.bFactor;
+        s.atomStore.altloc = sd.atomStore.altLabel;
 
         s.residueStore.length = sd.groupCount;
         s.residueStore.count = sd.groupCount;
@@ -3276,15 +3276,15 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
         s.residueStore.atomOffset = sd.groupStore.atomOffset;
         s.residueStore.atomCount = sd.groupStore.atomCount;
-        s.residueStore.resno = sd.groupStore.resno;
-        s.residueStore.sstruc = sd.groupStore.sstruc;
+        s.residueStore.resno = sd.groupStore.groupNum;
+        s.residueStore.sstruc = sd.groupStore.secStruct;
 
         s.chainStore.length = sd.chainCount;
         s.chainStore.count = sd.chainCount;
         s.chainStore.modelIndex = sd.chainStore.modelIndex;
         s.chainStore.residueOffset = sd.chainStore.groupOffset;
         s.chainStore.residueCount = sd.chainStore.groupCount;
-        s.chainStore.chainname = sd.chainStore.chainname;
+        s.chainStore.chainname = sd.chainStore.chainName;
 
         s.modelStore.length = sd.modelCount;
         s.modelStore.count = sd.modelCount;
@@ -3330,11 +3330,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     if( !part ){
                         part = {
                             matrix: new THREE.Matrix4().fromArray( t.transformation ),
-                            chainList: [ t.chainId ]
+                            chainList: t.chainId
                         };
                         tDict[ t.transformation ] = part;
                     }else{
-                        part.chainList.push( t.chainId );
+                        // console.warn("chainList.concat");
+                        part.chainList = part.chainList.concat( t.chainId );
                     }
                 }
                 var cDict = {};  // matrix lists hashed by chain list
