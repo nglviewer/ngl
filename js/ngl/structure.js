@@ -466,6 +466,10 @@ NGL.ColorMaker = function( params ){
     this.volume = p.volume;
     this.surface = p.surface;
 
+    if( this.structure ){
+        this.atomProxy = this.structure.getAtomProxy();
+    }
+
 };
 
 NGL.ColorMaker.prototype = {
@@ -520,7 +524,8 @@ NGL.ColorMaker.prototype = {
 
     bondColor: function( b, fromTo ){
 
-        return this.atomColor( fromTo ? b.atom1 : b.atom2 );
+        this.atomProxy.index = fromTo ? b.atomIndex1 : b.atomIndex2;
+        return this.atomColor( this.atomProxy );
 
     },
 
