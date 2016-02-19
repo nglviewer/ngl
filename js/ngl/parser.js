@@ -3250,19 +3250,19 @@ NGL.MmtfParser.prototype = NGL.createObject(
         if( NGL.debug ) NGL.time( "NGL.MmtfParser._parse " + this.name );
 
         var s = this.structure;
-        var sd = decodeStructure( this.streamer.data );
+        var sd = decodeMmtf( this.streamer.data );
         // console.log(sd)
 
         s.bondStore.length = sd.bondStore.bondOrder.length;
-        s.bondStore.count = sd.bondCount;
+        s.bondStore.count = sd.numBonds;
         s.bondStore.atomIndex1 = sd.bondStore.atomIndex1;
         s.bondStore.atomIndex2 = sd.bondStore.atomIndex2;
         s.bondStore.bondOrder = sd.bondStore.bondOrder;
 
-        s.atomStore.length = sd.atomCount;
-        s.atomStore.count = sd.atomCount;
+        s.atomStore.length = sd.numAtoms;
+        s.atomStore.count = sd.numAtoms;
         s.atomStore.residueIndex = sd.atomStore.groupIndex;
-        s.atomStore.atomTypeId = new Uint16Array( sd.atomCount );
+        s.atomStore.atomTypeId = new Uint16Array( sd.numAtoms );
         s.atomStore.x = sd.atomStore.xCoord;
         s.atomStore.y = sd.atomStore.yCoord;
         s.atomStore.z = sd.atomStore.zCoord;
@@ -3270,8 +3270,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.atomStore.bfactor = sd.atomStore.bFactor;
         s.atomStore.altloc = sd.atomStore.altLabel;
 
-        s.residueStore.length = sd.groupCount;
-        s.residueStore.count = sd.groupCount;
+        s.residueStore.length = sd.numGroups;
+        s.residueStore.count = sd.numGroups;
         s.residueStore.chainIndex = sd.groupStore.chainIndex;
         s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
         s.residueStore.atomOffset = sd.groupStore.atomOffset;
@@ -3279,15 +3279,15 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.resno = sd.groupStore.groupNum;
         s.residueStore.sstruc = sd.groupStore.secStruct;
 
-        s.chainStore.length = sd.chainCount;
-        s.chainStore.count = sd.chainCount;
+        s.chainStore.length = sd.numChains;
+        s.chainStore.count = sd.numChains;
         s.chainStore.modelIndex = sd.chainStore.modelIndex;
         s.chainStore.residueOffset = sd.chainStore.groupOffset;
         s.chainStore.residueCount = sd.chainStore.groupCount;
         s.chainStore.chainname = sd.chainStore.chainName;
 
-        s.modelStore.length = sd.modelCount;
-        s.modelStore.count = sd.modelCount;
+        s.modelStore.length = sd.numModels;
+        s.modelStore.count = sd.numModels;
         s.modelStore.chainOffset = sd.modelStore.chainOffset;
         s.modelStore.chainCount = sd.modelStore.chainCount;
 
