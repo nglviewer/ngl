@@ -3293,6 +3293,18 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         if( NGL.debug ) console.time( "process map data" );
 
+        var sstrucMap = {
+            "0": "i".charCodeAt( 0 ),  // pi helix
+            "1": "s".charCodeAt( 0 ),  // bend
+            "2": "h".charCodeAt( 0 ),  // alpha helix
+            "3": "e".charCodeAt( 0 ),  // extended
+            "4": "g".charCodeAt( 0 ),  // 3-10 helix
+            "5": "b".charCodeAt( 0 ),  // bridge
+            "6": "t".charCodeAt( 0 ),  // turn
+            "7": "l".charCodeAt( 0 ),  // coil
+            "-1": "".charCodeAt( 0 )   // NA
+        };
+
         var groupTypeIdList = Object.keys( sd.groupMap )
             .map( function( id ){ return parseInt( id ); } )
             .sort( function( a, b ){ return a - b; } );
@@ -3317,6 +3329,11 @@ NGL.MmtfParser.prototype = NGL.createObject(
         }
 
         if( NGL.debug ) console.timeEnd( "process map data" );
+
+        for( var i = 0, il = s.residueStore.count; i < il; ++i ){
+            var sstruc = sstrucMap[ s.residueStore.sstruc[ i ] ];
+            if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
+        }
 
         //
 
