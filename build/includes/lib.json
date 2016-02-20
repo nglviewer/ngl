@@ -6,5 +6,5 @@
     "js/lib/sprintf.min.js",
     "js/lib/svd.min.js",
     "js/lib/TypedFastBitSet.js",
-    "js/lib/structure-decoder.js"
+    "js/lib/mmtf-decode.js"
 ]
