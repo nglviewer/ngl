@@ -378,7 +378,8 @@ NGL.Buffer.prototype = {
                 if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                     wireframeIndex = this.wireframeIndex;
                 }else{
-                    var TypedArray = this.position / 3 > 65535 ? Uint32Array : Uint16Array;
+                    var count = this.geometry.attributes.position.count;
+                    var TypedArray = count > 65535 ? Uint32Array : Uint16Array;
                     wireframeIndex = new TypedArray( n * 2 );
                 }
 
