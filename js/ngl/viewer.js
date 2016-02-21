@@ -1563,7 +1563,8 @@ NGL.Viewer.prototype = {
 
         // clipping
 
-        var cDist = camera.position.length();
+        var cDist = this.distVector.copy( camera.position )
+                        .sub( this.controls.target ).length();
         // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
