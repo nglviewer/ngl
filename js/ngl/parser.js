@@ -765,6 +765,10 @@ NGL.calculateBondsBetween = function( structure ){
     var ap1 = structure.getAtomProxy();
     var ap2 = structure.getAtomProxy();
 
+    if( backboneBondStore.count === 0 ){
+        backboneBondStore.resize( structure.residueStore.count );
+    }
+
     structure.eachResidueN( 2, function( rp1, rp2 ){
 
         var bbType1 = rp1.backboneType;
@@ -3252,6 +3256,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
         // console.log(sd)
+
+        if( sd.numBonds === undefined ){
+            sd.numBonds = 0;
+        }
 
         s.bondStore.length = sd.bondStore.bondOrder.length;
         s.bondStore.count = sd.numBonds;
