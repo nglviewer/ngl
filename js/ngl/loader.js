@@ -264,10 +264,8 @@ NGL.ScriptLoader.prototype = NGL.createObject(
 
         this.streamer.read( function(){
 
-            var text = NGL.Uint8ToString( this.streamer.data );
-
+            var text = this.streamer.asText();
             var script = new NGL.Script( text, this.name, this.path );
-
             resolve( script );
 
         }.bind( this ) );
@@ -300,7 +298,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
         this.streamer.read( function(){
 
-            var manifest = JSON.parse( this.streamer.data );
+            var manifest = JSON.parse( this.streamer.asText() );
             var promiseList = [];
 
             manifest.files.map( function( name ){
