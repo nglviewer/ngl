@@ -1100,6 +1100,16 @@ NGL.Viewer.prototype = {
 
     initControls: function(){
 
+        function preventDefault( e ){
+            e.preventDefault();
+        }
+        this.renderer.domElement.addEventListener(
+            'mousewheel', preventDefault, false
+        );
+        this.renderer.domElement.addEventListener(  // firefox
+            'MozMousePixelScroll', preventDefault, false
+        );
+
         this.controls = new THREE.TrackballControls(
             this.camera, this.renderer.domElement
         );
