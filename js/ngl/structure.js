@@ -1201,7 +1201,6 @@ NGL.Structure = function( name, path ){
 
     this.atomSet = this.getAtomSet( this.selection );
     this.bondSet = this.getBondSet();
-    this.backboneAtomSet = this.getAtomSet( false );
 
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
