@@ -36,26 +36,14 @@
  */
 'use strict';
 
-function isIterable(obj) {
-  if (obj == null) {
-    return false;
-  }
-  return obj[Symbol.iterator] !== undefined;
-}
 // you can provide an iterable
 // an exception is thrown if typed arrays are not supported
 // - added size argument, ASR
 // - added flip argument, ASR
-function TypedFastBitSet(iterableOrSize, flip) {
+function TypedFastBitSet(size, flip) {
   this.count = 0 | 0;
   this.words = new Uint32Array(8);
-  if (isIterable(iterableOrSize)) {
-    for (var key of iterableOrSize) {
-      this.add(key);
-    }
-  } else if (Number.isInteger(iterableOrSize)) {
-    this.resize(iterableOrSize);
-  }
+  this.resize(size);
   if (flip) {
     this.flip_all();
   }
