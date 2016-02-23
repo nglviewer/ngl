@@ -3458,7 +3458,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     prepare: function( callback ){
 
-        if( this.__forceNewMolsurf || this.__sele !== this.selection.string ){
+        if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
+                this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
             this.__infoList.forEach( function( info, i ){
                 info.molsurf.dispose();
             }.bind( this ) );
@@ -3495,7 +3496,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
 
     createData: function( sview, i ){
 
-        // this.prepareData( sview, i );
         var info = this.__infoList[ i ];
 
         var surfaceBuffer = new NGL.SurfaceBuffer(
@@ -3516,18 +3516,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             bufferList: [ doubleSidedBuffer ],
             info: info
         };
-
-    },
-
-    create: function(){
-
-
-
-        NGL.StructureRepresentation.prototype.create.call( this );
-
-        this.__sele = this.selection.string;
-        this.__surfaceParams = JSON.stringify( this.getSurfaceParams() );
-        this.__forceNewMolsurf = false;
 
     },
 
