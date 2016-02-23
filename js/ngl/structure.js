@@ -99,7 +99,8 @@ NGL.GidPool = {
             count = (
                 object.atomStore.count +
                 object.bondStore.count +
-                object.backboneBondStore.count
+                object.backboneBondStore.count +
+                object.rungBondStore.count
             );
         }else if( object.type === "Volume" ){
             count = object.__data.length;
@@ -193,6 +194,12 @@ NGL.GidPool = {
                     offset -= ( o.atomStore.count + o.bondStore.count );
                     entity = o.getBondProxy( offset );
                     entity.bondStore = o.backboneBondStore;
+
+                }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
+
+                    offset -= ( o.atomStore.count + o.bondStore.count + o.backboneBondStore.count );
+                    entity = o.getBondProxy( offset );
+                    entity.bondStore = o.rungBondStore;
 
                 }else{
 
@@ -626,6 +633,9 @@ NGL.PickingColorMaker = function( params ){
     var offset = this.structure.atomStore.count;
     if( params.backbone ){
         offset += this.structure.bondStore.count;
+    }else if( params.rung ){
+        offset += this.structure.bondStore.count;
+        offset += this.structure.backboneBondStore.count;
     }
 
     this.atomColor = function( a ){
@@ -1191,6 +1201,7 @@ NGL.Structure = function( name, path ){
 
     this.bondStore = new NGL.BondStore( 0 );
     this.backboneBondStore = new NGL.BondStore( 0 );
+    this.rungBondStore = new NGL.BondStore( 0 );
     this.atomStore = new NGL.AtomStore( 0 );
     this.residueStore = new NGL.ResidueStore( 0 );
     this.chainStore = new NGL.ChainStore( 0 );
@@ -1346,6 +1357,38 @@ NGL.Structure.prototype = {
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getBackboneBondSet" );
+
+        return bs;
+
+    },
+
+    getRungBondSet: function( selection ){
+
+        if( NGL.debug ) NGL.time( "NGL.Structure.getRungBondSet" );
+
+        var n = this.rungBondStore.count;
+        var bs = new TypedFastBitSet( n );
+        var as = this.atomSetCache[ "__rung" ];
+
+        if( as ){
+
+            var bp = this.getBondProxy();
+            bp.bondStore = this.rungBondStore;
+
+            for( var i = 0; i < n; ++i ){
+                bp.index = i;
+                if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
+                    bs.add_unsafe( bp.index );
+                }
+            }
+
+        }else{
+
+            bs.set_all( true );
+
+        }
+
+        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getRungBondSet" );
 
         return bs;
 
@@ -1849,6 +1892,27 @@ NGL.Structure.prototype = {
 
     },
 
+    getRungAtomData: function( params ){
+
+        params = Object.assign( {
+            atomSet: this.atomSetCache[ "__rung" ],
+        }, params );
+
+        return this.getAtomData( params );
+
+    },
+
+    getRungBondData: function( params ){
+
+        params = Object.assign( {
+            bondSet: this.getRungBondSet(),
+            bondStore: this.rungBondStore
+        }, params );
+
+        return this.getBondData( params );
+
+    },
+
     //
 
     getView: function( selection ){
@@ -1999,6 +2063,7 @@ NGL.Structure.prototype = {
 
             bondStore: this.bondStore.toJSON(),
             backboneBondStore: this.backboneBondStore.toJSON(),
+            rungBondStore: this.rungBondStore.toJSON(),
             atomStore: this.atomStore.toJSON(),
             residueStore: this.residueStore.toJSON(),
             chainStore: this.chainStore.toJSON(),
@@ -2056,6 +2121,7 @@ NGL.Structure.prototype = {
 
         this.bondStore.fromJSON( input.bondStore );
         this.backboneBondStore.fromJSON( input.backboneBondStore );
+        this.rungBondStore.fromJSON( input.rungBondStore );
         this.atomStore.fromJSON( input.atomStore );
         this.residueStore.fromJSON( input.residueStore );
         this.chainStore.fromJSON( input.chainStore );
@@ -2097,6 +2163,7 @@ NGL.Structure.prototype = {
 
         transferable.concat( this.bondStore.getTransferable() );
         transferable.concat( this.backboneBondStore.getTransferable() );
+        transferable.concat( this.rungBondStore.getTransferable() );
         transferable.concat( this.atomStore.getTransferable() );
         transferable.concat( this.residueStore.getTransferable() );
         transferable.concat( this.chainStore.getTransferable() );
@@ -2140,6 +2207,7 @@ NGL.Structure.prototype = {
 
         this.bondStore.dispose();
         this.backboneBondStore.dispose();
+        this.rungBondStore.dispose();
         this.atomStore.dispose();
         this.residueStore.dispose();
         this.chainStore.dispose();
@@ -2203,6 +2271,9 @@ NGL.StructureView.prototype = NGL.createObject(
             },
             backboneBondStore: {
                 get: function(){ return this.structure.backboneBondStore }
+            },
+            rungBondStore: {
+                get: function(){ return this.structure.rungBondStore }
             },
             atomStore: {
                 get: function(){ return this.structure.atomStore }

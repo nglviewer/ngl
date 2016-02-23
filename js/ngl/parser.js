@@ -718,6 +718,8 @@ NGL.calculateBondsWithin = function( structure ){
     if( NGL.debug ) NGL.time( "NGL.calculateBondsWithin" );
 
     var bondStore = structure.bondStore;
+    var rungBondStore = structure.rungBondStore;
+    var rungAtomSet = structure.getAtomSet( false );
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
 
@@ -748,7 +750,20 @@ NGL.calculateBondsWithin = function( structure ){
             bondStore.addBond( a1, a2 );
         }
 
+        // get RNA/DNA rung pseudo bonds
+        var traceAtomIndex = r.residueType.traceAtomIndex;
+        var rungEndAtomIndex = r.residueType.rungEndAtomIndex;
+        if( traceAtomIndex !== -1 && rungEndAtomIndex !== -1 ){
+            a1.index = r.traceAtomIndex;
+            a2.index = r.rungEndAtomIndex;
+            rungBondStore.addBond( a1, a2 );
+            rungAtomSet.add_unsafe( a1.index );
+            rungAtomSet.add_unsafe( a2.index );
+        }
+
     } );
+
+    structure.atomSetDict[ "rung" ] = rungAtomSet;
 
     if( NGL.debug ) NGL.timeEnd( "NGL.calculateBondsWithin" );
 

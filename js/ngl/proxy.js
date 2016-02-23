@@ -428,6 +428,8 @@ NGL.RnaBases = [ "A", "C", "T", "G", "U" ];
 
 NGL.DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
+NGL.PurinBases = [ "A", "G", "DA", "DG" ];
+
 NGL.WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
 
 NGL.IonNames = [
@@ -1050,6 +1052,9 @@ NGL.ResidueProxy.prototype = {
     },
     get backboneEndAtomIndex () {
         return this.residueType.backboneEndAtomIndex + this.atomOffset;
+    },
+    get rungEndAtomIndex () {
+        return this.residueType.rungEndAtomIndex + this.atomOffset;
     },
 
     //
@@ -2116,6 +2121,14 @@ NGL.ResidueType = function( structure, resname, atomTypeIdList, hetero ){
 
     var bbEndIndex = this.getAtomIndexByName( atomnamesEnd.backboneEnd );
     this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
+
+    var rungEndIndex;
+    if( NGL.PurinBases.indexOf( resname ) !== -1 ){
+        rungEndIndex = this.getAtomIndexByName( "N1" );
+    }else{
+        rungEndIndex = this.getAtomIndexByName( "N3" );
+    }
+    this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
 
 };
 
