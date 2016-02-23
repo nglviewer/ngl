@@ -488,7 +488,13 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
     if( ext === "gz" ){
 
-        binData = pako.ungzip( data );
+        try{
+            binData = pako.ungzip( data );
+        }catch( e ){
+            if( NGL.debug ) NGL.warn( e );
+            // assume it is already uncompressed
+            binData = data;
+        }
 
     }else{
 
