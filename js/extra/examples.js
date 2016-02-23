@@ -761,11 +761,11 @@ NGL.ExampleRegistry.addDict( {
                 visible: true,
                 boxSize: 10
             } );
-            o.addRepresentation( "dot", {
-                dotType: "sphere",
-                radius: 0.3,
-                visible: false
-            } );
+            // o.addRepresentation( "dot", {
+            //     dotType: "sphere",
+            //     radius: 0.3,
+            //     visible: false
+            // } );
             o.centerView();
 
             // var sphereBuffer = new NGL.SphereBuffer(
