@@ -76,6 +76,7 @@ NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://www.rcsb.org/pdb/files/";
     var mmtfBaseUrl = "http://132.249.213.68:8080/servemessagepack/";
+    var bbMmtfBaseUrl = "http://132.249.213.68:8080/servemessagecalpha/";
 
     this.getUrl = function( src ){
         // valid path are
@@ -88,7 +89,11 @@ NGL.RcsbDatasource = function(){
         ){
             return baseUrl + info.path;
         }else if( info.ext === "mmtf" ){
-            return mmtfBaseUrl + info.name;
+            if( info.base.endsWith( ".bb" ) ){
+                return bbMmtfBaseUrl + info.name;
+            }else{
+                return mmtfBaseUrl + info.name;
+            }
         }else if( !info.ext ){
             return mmtfBaseUrl + info.name + ".mmtf";
         }else{
