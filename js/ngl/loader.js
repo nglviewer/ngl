@@ -80,7 +80,7 @@ NGL.RcsbDatasource = function(){
 
     this.getUrl = function( src ){
         // valid path are
-        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf
+        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
         // XXXX defaults to XXXX.mmtf
         var info = NGL.getFileInfo( src );
         var file;
