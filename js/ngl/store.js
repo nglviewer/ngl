@@ -86,7 +86,7 @@ NGL.Store.prototype = {
 
         // NGL.time( "NGL.Store.resize" );
 
-        this.length = size;
+        this.length = Math.round( size || 0 );
         this.count = Math.min( this.count, this.length );
 
         for( var i = 0, il = this.__fields.length; i < il; ++i ){
