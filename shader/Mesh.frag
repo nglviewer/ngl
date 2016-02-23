@@ -36,7 +36,7 @@ void main(){
 
     #elif defined( NOLIGHT )
 
-        gl_FragColor = vec4( vColor, 1.0 );
+        gl_FragColor = vec4( vColor, opacity );
 
     #else
 
