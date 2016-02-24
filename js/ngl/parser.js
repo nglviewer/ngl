@@ -428,6 +428,7 @@ NGL.calculateSecondaryStructure = function(){
     var cgPolymer = function( p ){
 
         // FIXME helixbundle broken for polymers
+        return;
 
         var localAngle = 20;
         var centerDist = 2.0;
