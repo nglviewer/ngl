@@ -4273,6 +4273,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         forceTransparent: {
             type: "boolean", buffer: true
         },
+        edgeBleach: {
+            type: "range", step: 0.001, max: 1, min: 0, buffer: true
+        },
 
     }, NGL.Representation.prototype.parameters, {
 
@@ -4323,6 +4326,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
         this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
         this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
+        this.edgeBleach = p.edgeBleach !== undefined ? p.edgeBleach : 0.0;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -4398,7 +4402,8 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                     sortParticles: this.sortParticles,
                     useTexture: this.useTexture,
                     alphaTest: this.alphaTest,
-                    forceTransparent: this.forceTransparent
+                    forceTransparent: this.forceTransparent,
+                    edgeBleach: this.edgeBleach
                 } )
             );
 
