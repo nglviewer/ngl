@@ -1200,6 +1200,7 @@ NGL.Viewer.prototype = {
         mesh.userData[ "buffer" ] = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
+            mesh.userData[ "instance" ] = instance;
         }
         buffer.group.add( mesh );
 
@@ -1211,6 +1212,7 @@ NGL.Viewer.prototype = {
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
+            wireframeMesh.userData[ "instance" ] = instance;
         }
         buffer.wireframeGroup.add( wireframeMesh );
 
