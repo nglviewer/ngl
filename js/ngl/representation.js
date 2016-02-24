@@ -1629,7 +1629,7 @@ NGL.BaseRepresentation.prototype = NGL.createObject(
 
     type: "base",
 
-    defaultSize: 0.2,
+    defaultSize: 0.3,
 
     parameters: Object.assign( {
 
