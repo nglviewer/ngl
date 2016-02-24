@@ -1797,10 +1797,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         what = what || {};
 
-        var i = 0;
-        var n = data.polymerList.length;
-
-        for( i = 0; i < n; ++i ){
+        for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
             var spline = new NGL.Spline( data.polymerList[ i ], this.arrows );
