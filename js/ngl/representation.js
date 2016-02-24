@@ -2226,38 +2226,35 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    createData: function( sview ){
 
-        if( this.structureView.atomCount === 0 ) return;
-
-        var scope = this;
-
-        // TODO reduce buffer count as in e.g. rocket repr
+        var bufferList = [];
+        var polymerList = [];
 
         this.structure.eachPolymer( function( polymer ){
 
-            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
+            if( polymer.residueCount < 4 ) return;
+            polymerList.push( polymer );
 
             var helixorient = new NGL.Helixorient( polymer );
             var position = helixorient.getPosition();
-            var color = helixorient.getColor( scope.getColorParams() );
-            var size = helixorient.getSize( scope.radius, scope.scale );
+            var color = helixorient.getColor( this.getColorParams() );
+            var size = helixorient.getSize( this.radius, this.scale );
 
-            scope.bufferList.push(
+            bufferList.push(
+
                 new NGL.SphereBuffer(
                     position.center,
                     color.color,
                     size.size,
                     color.pickingColor,
-                    scope.getBufferParams( {
-                        sphereDetail: scope.sphereDetail,
+                    this.getBufferParams( {
+                        sphereDetail: this.sphereDetail,
                         dullInterior: true
                     } ),
-                    scope.disableImpostor
-                )
-            );
+                    this.disableImpostor
+                ),
 
-            scope.bufferList.push(
                 new NGL.VectorBuffer(
                     position.center,
                     position.axis,
@@ -2265,10 +2262,8 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         color: "skyblue",
                         scale: 1
                     }
-                )
-            );
+                ),
 
-            scope.bufferList.push(
                 new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
@@ -2277,36 +2272,31 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                         scale: 1
                     }
                 )
+
             );
 
-            scope.polymerList.push( polymer );
 
-        }, this.selection );
+        }.bind( this ), sview.getSelection() );
+
+        return {
+            bufferList: bufferList,
+            polymerList: polymerList
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        // NGL.time( "helixorient repr update" );
+        if( NGL.debug ) NGL.time( this.type + " repr update" );
 
         what = what || {};
 
-        var j;
-        var i = 0;
-        var n = this.polymerList.length;
+        for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
-        for( i = 0; i < n; ++i ){
-
-            j = i * 3;
-
-            var polymer = this.polymerList[ i ]
-
-            if( polymer.residueCount < 4 ) return;
+            var j = i * 3;
 
             var bufferData = {};
+            var polymer = data.polymerList[ i ]
             var helixorient = new NGL.Helixorient( polymer );
 
             if( what[ "position" ] ){
@@ -2315,22 +2305,22 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
                 bufferData[ "position" ] = position.center;
 
-                this.bufferList[ j + 1 ].setAttributes( {
+                data.bufferList[ j + 1 ].setAttributes( {
                     "position": position.center,
                     "vector": position.axis,
                 } );
-                this.bufferList[ j + 2 ].setAttributes( {
+                data.bufferList[ j + 2 ].setAttributes( {
                     "position": position.center,
                     "vector": position.resdir,
                 } );
 
             }
 
-            this.bufferList[ j ].setAttributes( bufferData );
+            data.bufferList[ j ].setAttributes( bufferData );
 
         }
 
-        // NGL.timeEnd( "helixorient repr update" );
+        if( NGL.debug ) NGL.timeEnd( this.type + " repr update" );
 
     }
 

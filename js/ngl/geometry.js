@@ -614,28 +614,31 @@ NGL.Helixorient.prototype = {
 
     getColor: function( params ){
 
-        var n = this.size;
-        var fiber = this.fiber;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+        var residueIndexStart = polymer.residueIndexStart;
 
         var col = new Float32Array( n * 3 );
         var pcol = new Float32Array( n * 3 );
 
         var p = params || {};
-        p.structure = fiber.structure;
+        p.structure = structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
-        var trace = fiber.computedAtoms[ "trace" ];
+        var rp = structure.getResidueProxy();
+        var ap = structure.getAtomProxy();
 
         for( var i = 0; i < n; ++i ){
 
-            var a = trace[ i ];
-            var i3 = i * 3;
+            rp.index = residueIndexStart + i;
+            ap.index = rp.traceAtomIndex;
 
-            colorMaker.atomColorToArray( a, col, i3 );
-            pickingColorMaker.atomColorToArray( a, pcol, i3 );
+            var i3 = i * 3;
+            colorMaker.atomColorToArray( ap, col, i3 );
+            pickingColorMaker.atomColorToArray( ap, pcol, i3 );
 
         }
 
@@ -648,19 +651,22 @@ NGL.Helixorient.prototype = {
 
     getSize: function( type, scale ){
 
-        var n = this.size;
-        var fiber = this.fiber;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+        var residueIndexStart = polymer.residueIndexStart;
 
         var size = new Float32Array( n );
-
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
-        var trace = fiber.computedAtoms[ "trace" ];
+        var rp = structure.getResidueProxy();
+        var ap = structure.getAtomProxy();
 
         for( var i = 0; i < n; ++i ){
 
-            size[ i ] = radiusFactory.atomRadius( trace[ i ] );
+            rp.index = residueIndexStart + i;
+            ap.index = rp.traceAtomIndex;
+            size[ i ] = radiusFactory.atomRadius( ap );
 
         }
 
@@ -672,8 +678,10 @@ NGL.Helixorient.prototype = {
 
     getPosition: function(){
 
-        var i = 0;
-        var n = this.size;
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+        var n3 = n - 3;
 
         var center = new Float32Array( 3 * n );
         var axis = new Float32Array( 3 * n );
@@ -684,7 +692,6 @@ NGL.Helixorient.prototype = {
         var resdir = new Float32Array( 3 * n );
 
         var tmp, j;
-        var a1, a2, a3, a4;
         var diff13Length, diff24Length;
 
         var r12 = new THREE.Vector3();
@@ -704,7 +711,18 @@ NGL.Helixorient.prototype = {
         var _crossdir = new THREE.Vector3();
         var _center = new THREE.Vector3( 0, 0, 0 );
 
-        this.fiber.eachAtomN( 4, function( a1, a2, a3, a4 ){
+        var type = "trace";
+        var a1 = structure.getAtomProxy();
+        var a2 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, type ) );
+        var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
+        var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 2, type ) );
+
+        for( var i = 0; i < n3; ++i ){
+
+            a1.index = a2.index;
+            a2.index = a3.index;
+            a3.index = a4.index;
+            a4.index = polymer.getAtomIndexByType( i + 3, type );
 
             j = 3 * i;
 
@@ -755,22 +773,21 @@ NGL.Helixorient.prototype = {
             _resdir.subVectors( a1, _center );
             _resdir.toArray( resdir, j );
 
-            i += 1;
             _prevAxis.copy( _axis );
             _center.copy( v1 );
 
-        }, "trace" );
+        }
 
         //
-
-        var res = this.fiber.residues;
 
         // calc axis as dir of second and third center pos
         // project first traceAtom onto axis to get first center pos
         v1.fromArray( center, 3 );
         v2.fromArray( center, 6 );
         _axis.subVectors( v1, v2 ).normalize();
-        _center.copy( res[ 0 ].getTraceAtom() );
+        // _center.copy( res[ 0 ].getTraceAtom() );
+        a1.index = polymer.getAtomIndexByType( 0, type );
+        _center.copy( a1 );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         v1.toArray( center, 0 );
 
@@ -783,15 +800,19 @@ NGL.Helixorient.prototype = {
         v1.fromArray( center, 3 * n - 6 );
         v2.fromArray( center, 3 * n - 9 );
         _axis.subVectors( v1, v2 ).normalize();
-        _center.copy( res[ n - 1 ].getTraceAtom() );
+        // _center.copy( res[ n - 1 ].getTraceAtom() );
+        a1.index = polymer.getAtomIndexByType( n - 1, type );
+        _center.copy( a1 );
         v1 = NGL.Utils.pointVectorIntersection( _center, v1, _axis );
         v1.toArray( center, 3 * n - 3 );
 
         // calc last three resdir
-        for( i = n - 3; i < n; ++i ){
+        for( var i = n - 3; i < n; ++i ){
 
             v1.fromArray( center, 3 * i );
-            _center.copy( res[ i ].getTraceAtom() );
+            // _center.copy( res[ i ].getTraceAtom() );
+            a1.index = polymer.getAtomIndexByType( i, type );
+            _center.copy( a1 );
 
             _resdir.subVectors( _center, v1 );
             _resdir.toArray( resdir, 3 * i );
@@ -809,7 +830,7 @@ NGL.Helixorient.prototype = {
         resTwist[ 1 ] = twist[ 0 ];
         resRise[ 1 ] = radius[ 0 ];
 
-        for( i = 2; i < n - 2; i++ ){
+        for( var i = 2; i < n - 2; ++i ){
 
             resRadius[ i ] = 0.5 * ( radius[ i - 2 ] + radius[ i - 1 ] );
             resTwist[ i ] = 0.5 * ( twist[ i - 2 ] + twist[ i - 1 ] );
@@ -832,7 +853,7 @@ NGL.Helixorient.prototype = {
         NGL.Utils.copyArray( axis, resAxis, 0, 0, 3 );
         NGL.Utils.copyArray( axis, resAxis, 0, 3, 3 );
 
-        for( i = 2; i < n - 2; i++ ){
+        for( var i = 2; i < n - 2; ++i ){
 
             v1.fromArray( axis, 3 * ( i - 2 ) );
             v2.fromArray( axis, 3 * ( i - 1 ) );
