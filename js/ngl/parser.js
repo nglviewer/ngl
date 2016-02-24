@@ -2298,6 +2298,14 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             sb.addAtom( modelIdx, chainname, resname, resno, hetero );
 
+                            if( NGL.debug ){
+                                // check if one-to-many (chainname-asymId) relationship is
+                                // actually a many-to-many mapping
+                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ]
+                                if( assignedChainname !== undefined && assignedChainname !== chainname ){
+                                    NGL.warn( assignedChainname, chainname );
+                                }
+                            }
                             // chainname mapping: label_asym_id -> auth_asym_id
                             asymIdDict[ ls[ label_asym_id ] ] = chainname;
 
