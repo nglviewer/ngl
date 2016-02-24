@@ -1422,7 +1422,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                         if( asTrajectory ){
 
                             if( doFrames ){
-                                currentFrame = new Float32Array( atoms.length * 3 );
+                                currentFrame = new Float32Array( atomStore.count * 3 );
                                 frames.push( currentFrame );
                             }else{
                                 currentFrame = [];
@@ -2235,7 +2235,7 @@ NGL.CifParser.prototype = NGL.createObject(
                                         frames.push( new Float32Array( currentFrame ) );
                                     }
 
-                                    currentFrame = new Float32Array( atoms.length * 3 );
+                                    currentFrame = new Float32Array( atomStore.count * 3 );
                                     frames.push( currentFrame );
                                     currentCoord = 0;
 
