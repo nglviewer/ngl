@@ -630,12 +630,15 @@ NGL.PickingColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
 
-    var offset = this.structure.atomStore.count;
-    if( params.backbone ){
-        offset += this.structure.bondStore.count;
-    }else if( params.rung ){
-        offset += this.structure.bondStore.count;
-        offset += this.structure.backboneBondStore.count;
+    var offset;
+    if( this.structure ){
+        offset = this.structure.atomStore.count;
+        if( params.backbone ){
+            offset += this.structure.bondStore.count;
+        }else if( params.rung ){
+            offset += this.structure.bondStore.count;
+            offset += this.structure.backboneBondStore.count;
+        }
     }
 
     this.atomColor = function( a ){
