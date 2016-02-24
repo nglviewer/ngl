@@ -3374,7 +3374,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         };
                         tDict[ t.transformation ] = part;
                     }else{
-                        // console.warn("chainList.concat");
                         part.chainList = part.chainList.concat( t.chainId );
                     }
                 }
@@ -3389,12 +3388,14 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         matrixList.push( p.matrix );
                     }
                 }
-                for( var ck in cDict ){
-                    var matrixList = cDict[ ck ];
-                    var chainList = ck.split( "," );
+                if( Object.keys( cDict ).length > 0 ){
                     var assembly = new NGL.Assembly( bioAssem.id );
                     s.biomolDict[ "BU" + bioAssem.id ] = assembly;
-                    assembly.addPart( matrixList, chainList );
+                    for( var ck in cDict ){
+                        var matrixList = cDict[ ck ];
+                        var chainList = ck.split( "," );
+                        assembly.addPart( matrixList, chainList );
+                    }
                 }
             }
         }

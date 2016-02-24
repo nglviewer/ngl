@@ -932,7 +932,7 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
-    "biomol": function( stage ){
+    "biomolSimple": function( stage ){
 
         stage.loadFile( "data://1U19.cif" ).then( function( o ){
 
@@ -1393,7 +1393,8 @@ NGL.ExampleRegistry.addDict( {
     "biomol": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://4opj.pdb" ).then( function( o ){
+        // stage.loadFile( "data://4opj.pdb" ).then( function( o ){
+        stage.loadFile( "rcsb://4opj.mmtf" ).then( function( o ){
         // stage.loadFile( "data://4opj.cif" ).then( function( o ){
             o.addRepresentation( "cartoon", { assembly: "BU1", opacity: 0.5, side: THREE.BackSide } );
             o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0, visible: false } );
