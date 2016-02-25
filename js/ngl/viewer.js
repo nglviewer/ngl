@@ -2121,8 +2121,21 @@ NGL.screenshot = function( viewer, params ){
         if( antialias ) _factor *= 2;
         if( invert ) _factor = 1 / _factor;
         viewer.scene.traverse( function( o ){
-            if( o.material && o.material.linewidth ){
-                o.material.linewidth *= _factor;
+            var m = o.material;
+            if( m && m.linewidth ){
+                m.linewidth *= _factor;
+            }
+            if( m && m.uniforms && m.uniforms.size ){
+                if( m.uniforms.size[ "__seen" ] === undefined ){
+                    m.uniforms.size.value *= _factor;
+                    m.uniforms.size[ "__seen" ] = true;
+                }
+            }
+        } );
+        viewer.scene.traverse( function( o ){
+            var m = o.material;
+            if( m && m.uniforms && m.uniforms.size ){
+                delete m.uniforms.size[ "__seen" ];
             }
         } );
     }
