@@ -428,6 +428,7 @@ NGL.calculateSecondaryStructure = function(){
     var cgPolymer = function( p ){
 
         // FIXME helixbundle broken for polymers
+        return;
 
         var localAngle = 20;
         var centerDist = 2.0;
@@ -2297,6 +2298,14 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             sb.addAtom( modelIdx, chainname, resname, resno, hetero );
 
+                            if( NGL.debug ){
+                                // check if one-to-many (chainname-asymId) relationship is
+                                // actually a many-to-many mapping
+                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ]
+                                if( assignedChainname !== undefined && assignedChainname !== chainname ){
+                                    NGL.warn( assignedChainname, chainname );
+                                }
+                            }
                             // chainname mapping: label_asym_id -> auth_asym_id
                             asymIdDict[ ls[ label_asym_id ] ] = chainname;
 
@@ -3374,7 +3383,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         };
                         tDict[ t.transformation ] = part;
                     }else{
-                        // console.warn("chainList.concat");
                         part.chainList = part.chainList.concat( t.chainId );
                     }
                 }
@@ -3389,12 +3397,14 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         matrixList.push( p.matrix );
                     }
                 }
-                for( var ck in cDict ){
-                    var matrixList = cDict[ ck ];
-                    var chainList = ck.split( "," );
+                if( Object.keys( cDict ).length > 0 ){
                     var assembly = new NGL.Assembly( bioAssem.id );
                     s.biomolDict[ "BU" + bioAssem.id ] = assembly;
-                    assembly.addPart( matrixList, chainList );
+                    for( var ck in cDict ){
+                        var matrixList = cDict[ ck ];
+                        var chainList = ck.split( "," );
+                        assembly.addPart( matrixList, chainList );
+                    }
                 }
             }
         }

@@ -763,11 +763,11 @@ NGL.ExampleRegistry.addDict( {
                 visible: true,
                 boxSize: 10
             } );
-            // o.addRepresentation( "dot", {
-            //     dotType: "sphere",
-            //     radius: 0.3,
-            //     visible: false
-            // } );
+            o.addRepresentation( "dot", {
+                dotType: "sphere",
+                radius: 0.3,
+                visible: false
+            } );
             o.centerView();
 
             // var sphereBuffer = new NGL.SphereBuffer(
@@ -857,9 +857,9 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "surface", {
                 visible: true, isolevel: 0.1, wireframe: true
             } );
-            // o.addRepresentation( "dot", {
-            //     visible: true, minValue: 0.1
-            // } );
+            o.addRepresentation( "dot", {
+                visible: true, minValue: 0.1
+            } );
             o.centerView();
 
         } );
@@ -932,7 +932,7 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
-    "biomol": function( stage ){
+    "biomolSimple": function( stage ){
 
         stage.loadFile( "data://1U19.cif" ).then( function( o ){
 
@@ -1106,18 +1106,18 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://1crn_apbs_pot.dx.gz" ).then( function( o ){
         // stage.loadFile( "data://1crn_apbs_pot.dxbin" ).then( function( o ){
 
-            // o.addRepresentation( "dot", {
-            //     thresholdType: "value",
-            //     thresholdMin: -5,
-            //     thresholdMax: 5,
-            //     thresholdOut: true,
-            //     dotType: "sphere",
-            //     radius: "abs-value",
-            //     scale: 0.001,
-            //     visible: true,
-            //     colorScheme: "value",
-            //     colorScale: "rwb"
-            // } );
+            o.addRepresentation( "dot", {
+                thresholdType: "value",
+                thresholdMin: -5,
+                thresholdMax: 5,
+                thresholdOut: true,
+                dotType: "sphere",
+                radius: "abs-value",
+                scale: 0.001,
+                visible: true,
+                colorScheme: "value",
+                colorScale: "rwb"
+            } );
 
             o.addRepresentation( "surface", {
                 isolevelType: "value",
@@ -1393,7 +1393,8 @@ NGL.ExampleRegistry.addDict( {
     "biomol": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://4opj.pdb" ).then( function( o ){
+        // stage.loadFile( "data://4opj.pdb" ).then( function( o ){
+        stage.loadFile( "rcsb://4opj.mmtf" ).then( function( o ){
         // stage.loadFile( "data://4opj.cif" ).then( function( o ){
             o.addRepresentation( "cartoon", { assembly: "BU1", opacity: 0.5, side: THREE.BackSide } );
             o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0, visible: false } );

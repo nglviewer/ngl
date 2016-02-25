@@ -1440,7 +1440,7 @@ NGL.StructureComponentWidget = function( component, stage ){
     // SS calculate
 
     var ssButton = new UI.Button( "calculate" ).onClick( function(){
-        component.structure.autoSS();
+        NGL.calculateSecondaryStructure( component.structure );
         component.rebuildRepresentations();
         componentPanel.setMenuDisplay( "none" );
     } );
