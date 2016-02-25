@@ -2116,7 +2116,7 @@ NGL.screenshot = function( viewer, params ){
     var originalClearAlpha = renderer.getClearAlpha();
     var backgroundColor = renderer.getClearColor();
 
-    function setLinewidth( invert ){
+    function setLineWidthAndPixelSize( invert ){
         var _factor = factor;
         if( antialias ) _factor *= 2;
         if( invert ) _factor = 1 / _factor;
@@ -2154,7 +2154,7 @@ NGL.screenshot = function( viewer, params ){
         }
     );
 
-    setLinewidth();
+    setLineWidthAndPixelSize();
     tiledRenderer.renderAsync();
     // tiledRenderer.render();
 
@@ -2171,7 +2171,7 @@ NGL.screenshot = function( viewer, params ){
         if( transparent ){
             renderer.setClearAlpha( originalClearAlpha );
         }
-        setLinewidth( true );
+        setLineWidthAndPixelSize( true );
         viewer.requestRender();
     }
 
