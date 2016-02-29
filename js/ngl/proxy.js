@@ -1216,6 +1216,11 @@ NGL.ResidueProxy.prototype = {
             if( this.connectedTo( rpNext ) ){
                 return rpNext;
             }
+        }else if( nextIndex === rOffset + rCount ){  // cyclic
+            var rpFirst = this.structure.getResidueProxy( rOffset );
+            if( this.connectedTo( rpFirst ) ){
+                return rpFirst;
+            }
         }
         return undefined;
     },
@@ -1227,6 +1232,12 @@ NGL.ResidueProxy.prototype = {
             var rpPrev = this.structure.getResidueProxy( prevIndex );
             if( rpPrev.connectedTo( this ) ){
                 return rpPrev;
+            }
+        }else if( prevIndex === rOffset - 1 ){  // cyclic
+            var rCount = this.chainStore.residueCount[ this.chainIndex ];
+            var rpLast = this.structure.getResidueProxy( rOffset + rCount - 1 );
+            if( rpLast.connectedTo( this ) ){
+                return rpLast;
             }
         }
         return undefined;
@@ -1289,6 +1300,7 @@ NGL.Polymer = function( structure, residueIndexStart, residueIndexEnd ){
     var rpNext = rpEnd.getNextConnectedResidue();
     this.isNextConnected = rpNext !== undefined;
     this.isNextNextConnected = this.isNextConnected && rpNext.getNextConnectedResidue() !== undefined;
+    this.isCyclic = rpEnd.connectedTo( rpStart );
 
     this.__residueProxy = this.structure.getResidueProxy();
 
@@ -1353,9 +1365,17 @@ NGL.Polymer.prototype = {
 
         // TODO pre-calculate, add to residueStore???
 
-        if( index === -1 && !this.isPrevConnected ) index += 1;
-        if( index === this.residueCount && !this.isNextNextConnected ) index -= 1;
-        // if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
+        if( this.isCyclic ){
+            if( index === -1 ){
+                index = this.residueCount - 1
+            }else if( index === this.residueCount ){
+                index = 0
+            }
+        }else{
+            if( index === -1 && !this.isPrevConnected ) index += 1;
+            if( index === this.residueCount && !this.isNextNextConnected ) index -= 1;
+            // if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
+        }
 
         var rp = this.__residueProxy;
         rp.index = this.residueIndexStart + index;

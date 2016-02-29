@@ -47,9 +47,11 @@ NGL.Spline.prototype = {
 
         var n = polymer.residueCount;
         var n1 = n - 1;
+        var nCol = n1 * m * 3 + 3;
+        if( polymer.isCyclic ) nCol += m * 3;
 
-        var col = new Float32Array( n1 * m * 3 + 3 );
-        var pcol = new Float32Array( n1 * m * 3 + 3 );
+        var col = new Float32Array( nCol );
+        var pcol = new Float32Array( nCol );
 
         var p = params || {};
         p.structure = structure;
@@ -88,13 +90,37 @@ NGL.Spline.prototype = {
 
         }
 
-        col[ n1 * m * 3 + 0 ] = col[ n1 * m * 3 - 3 ];
-        col[ n1 * m * 3 + 1 ] = col[ n1 * m * 3 - 2 ];
-        col[ n1 * m * 3 + 2 ] = col[ n1 * m * 3 - 1 ];
+        if( polymer.isCyclic ){
 
-        pcol[ n1 * m * 3 + 0 ] = pcol[ n1 * m * 3 - 3 ];
-        pcol[ n1 * m * 3 + 1 ] = pcol[ n1 * m * 3 - 2 ];
-        pcol[ n1 * m * 3 + 2 ] = pcol[ n1 * m * 3 - 1 ];
+            rp.index = residueIndexStart;
+            ap1.index = ap2.index;
+            ap2.index = rp.traceAtomIndex;
+
+            var mh = Math.ceil( m / 2 );
+
+            for( var j = 0; j < mh; ++j ){
+                var l = k + j * 3;
+                colorMaker.atomColorToArray( ap1, col, l );
+                pickingColorMaker.atomColorToArray( ap1, pcol, l );
+            }
+
+            for( var j = mh; j < m; ++j ){
+                var l = k + j * 3;
+                colorMaker.atomColorToArray( ap2, col, l );
+                pickingColorMaker.atomColorToArray( ap2, pcol, l );
+            }
+
+            k += 3 * m;
+
+        }
+
+        col[ nCol - 3 ] = col[ nCol - 6 ];
+        col[ nCol - 2 ] = col[ nCol - 5 ];
+        col[ nCol - 1 ] = col[ nCol - 4 ];
+
+        pcol[ nCol - 3 ] = pcol[ nCol - 6 ];
+        pcol[ nCol - 2 ] = pcol[ nCol - 5 ];
+        pcol[ nCol - 1 ] = pcol[ nCol - 4 ];
 
         return {
             "color": col,
@@ -140,9 +166,11 @@ NGL.Spline.prototype = {
 
         var n = polymer.residueCount;
         var n1 = n - 1;
+        var nSize = n1 * m + 1;
+        if( polymer.isCyclic ) nSize += m;
         var arrows = this.arrows;
 
-        var size = new Float32Array( n1 * m + 1 );
+        var size = new Float32Array( nSize );
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         var k = 0;
@@ -154,6 +182,51 @@ NGL.Spline.prototype = {
         for( var i = 0; i < n1; ++i ){
 
             rp.index = residueIndexStart + i + 1;
+            ap1.index = ap2.index;
+            ap2.index = rp.traceAtomIndex;
+
+            var s1 = radiusFactory.atomRadius( ap1 );
+            var s2 = radiusFactory.atomRadius( ap2 );
+
+            if( arrows && (
+                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
+                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
+                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
+                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
+                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
+                )
+            ){
+
+                s1 *= 1.7;
+                var m2 = Math.ceil( m / 2 );
+
+                for( var j = 0; j < m2; ++j ){
+                    // linear interpolation
+                    var t = j / m2;
+                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
+                }
+
+                for( j = m2; j < m; ++j ){
+                    size[ k + j ] = s2;
+                }
+
+            }else{
+
+                for( var j = 0; j < m; ++j ){
+                    // linear interpolation
+                    var t = j / m;
+                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
+                }
+
+            }
+
+            k += m;
+
+        }
+
+        if( polymer.isCyclic ){
+
+            rp.index = residueIndexStart;
             ap1.index = ap2.index;
             ap2.index = rp.traceAtomIndex;
 
@@ -214,8 +287,10 @@ NGL.Spline.prototype = {
 
         var n = polymer.residueCount;
         var n1 = n - 1;
+        var nPos = n1 * m * 3 + 3
+        if( polymer.isCyclic ) nPos += m * 3;
 
-        var pos = new Float32Array( n1 * m * 3 + 3 );
+        var pos = new Float32Array( nPos );
 
         var k = 0;
         var dt = 1.0 / m;
@@ -254,6 +329,28 @@ NGL.Spline.prototype = {
 
         }
 
+        if( polymer.isCyclic ){
+
+            a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
+            a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
+            a3.index = polymer.getAtomIndexByType( 0, type );
+            a4.index = polymer.getAtomIndexByType( 1, type );
+
+            for( var j = 0; j < m; ++j ){
+
+                var l = k + j * 3;
+                var d = dt * j
+
+                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
+                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
+                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d, tension );
+
+            }
+
+            k += 3 * m;
+
+        }
+
         a3.positionToArray( pos, k );
 
         return pos;
@@ -273,8 +370,10 @@ NGL.Spline.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
+        var nTan = n1 * m * 3 + 3
+        if( polymer.isCyclic ) nTan += m * 3;
 
-        var tan = new Float32Array( n1 * m * 3 + 3 );
+        var tan = new Float32Array( nTan );
 
         var k = 0;
         var dt = 1.0 / m;
@@ -292,6 +391,41 @@ NGL.Spline.prototype = {
             a2.index = a3.index;
             a3.index = a4.index;
             a4.index = polymer.getAtomIndexByType( i + 2, type );
+
+            for( var j = 0; j < m; ++j ){
+
+                var d = dt * j
+                var d1 = d - delta;
+                var d2 = d + delta;
+                var l = k + j * 3;
+
+                // capping as a precation
+                if ( d1 < 0 ) d1 = 0;
+                if ( d2 > 1 ) d2 = 1;
+
+                p1.x = interpolate( a1.x, a2.x, a3.x, a4.x, d1, tension );
+                p1.y = interpolate( a1.y, a2.y, a3.y, a4.y, d1, tension );
+                p1.z = interpolate( a1.z, a2.z, a3.z, a4.z, d1, tension );
+
+                p2.x = interpolate( a1.x, a2.x, a3.x, a4.x, d2, tension );
+                p2.y = interpolate( a1.y, a2.y, a3.y, a4.y, d2, tension );
+                p2.z = interpolate( a1.z, a2.z, a3.z, a4.z, d2, tension );
+
+                p2.sub( p1 ).normalize();
+                p2.toArray( tan, l );
+
+            }
+
+            k += 3 * m;
+
+        }
+
+        if( polymer.isCyclic ){
+
+            a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
+            a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
+            a3.index = polymer.getAtomIndexByType( 0, type );
+            a4.index = polymer.getAtomIndexByType( 1, type );
 
             for( var j = 0; j < m; ++j ){
 
@@ -340,9 +474,11 @@ NGL.Spline.prototype = {
 
         var n = this.size;
         var n1 = n - 1;
+        var nNorm = n1 * m * 3 + 3
+        if( polymer.isCyclic ) nNorm += m * 3;
 
-        var norm = new Float32Array( n1 * m * 3 + 3 );
-        var bin = new Float32Array( n1 * m * 3 + 3 );
+        var norm = new Float32Array( nNorm );
+        var bin = new Float32Array( nNorm );
 
         var p1 = new THREE.Vector3();
         var p2 = new THREE.Vector3();
@@ -400,6 +536,112 @@ NGL.Spline.prototype = {
                 _d2a2.index = _d2a3.index;
                 _d2a3.index = _d2a4.index;
                 _d2a4.index = polymer.getAtomIndexByType( i + 2, "direction2" );
+
+                if( first ){
+
+                    first = false;
+
+                    d1a1.copy( _d1a1 );
+                    d1a2.copy( _d1a2 );
+                    d1a3.copy( _d1a3 );
+
+                    d2a1.copy( _d2a1 );
+                    d2a2.copy( _d2a2 );
+                    d2a3.copy( _d2a3 );
+
+                    vSub1.subVectors( d2a1, d1a1 );
+                    vSub2.subVectors( d2a2, d1a2 );
+                    if( vSub1.dot( vSub2 ) < 0 ){
+                        vSub2.multiplyScalar( -1 );
+                        d2a2.addVectors( d1a2, vSub2 );
+                    }
+
+                    vSub3.subVectors( d2a3, d1a3 );
+                    if( vSub2.dot( vSub3 ) < 0 ){
+                        vSub3.multiplyScalar( -1 );
+                        d2a3.addVectors( d1a3, vSub3 );
+                    }
+
+                }else{
+
+                    d1a1.copy( d1a2 );
+                    d1a2.copy( d1a3 );
+                    d1a3.copy( d1a4 );
+
+                    d2a1.copy( d2a2 );
+                    d2a2.copy( d2a3 );
+                    d2a3.copy( d2a4 );
+
+                    vSub3.copy( vSub4 );
+
+                }
+
+                d1a4.copy( _d1a4 );
+                d2a4.copy( _d2a4 );
+
+                vSub4.subVectors( d2a4, d1a4 );
+                if( vSub3.dot( vSub4 ) < 0 ){
+                    vSub4.multiplyScalar( -1 );
+                    d2a4.addVectors( d1a4, vSub4 );
+                }
+
+            }
+
+            for( var j = 0; j < m; ++j ){
+
+                var l = k + j * 3;
+
+                if( isCg ){
+
+                    vDir.copy( vNorm );
+
+                }else{
+
+                    if( isProtein ){
+                        // shift half a residue
+                        l += m2 * 3;
+                    }
+                    var d = dt * j
+
+                    p1.x = interpolate( d1a1.x, d1a2.x, d1a3.x, d1a4.x, d, tension );
+                    p1.y = interpolate( d1a1.y, d1a2.y, d1a3.y, d1a4.y, d, tension );
+                    p1.z = interpolate( d1a1.z, d1a2.z, d1a3.z, d1a4.z, d, tension );
+
+                    p2.x = interpolate( d2a1.x, d2a2.x, d2a3.x, d2a4.x, d, tension );
+                    p2.y = interpolate( d2a1.y, d2a2.y, d2a3.y, d2a4.y, d, tension );
+                    p2.z = interpolate( d2a1.z, d2a2.z, d2a3.z, d2a4.z, d, tension );
+
+                    vDir.subVectors( p2, p1 ).normalize();
+
+                }
+
+                vTan.fromArray( tan, l );
+
+                vBin.crossVectors( vDir, vTan ).normalize();
+                vBin.toArray( bin, l );
+
+                vNorm.crossVectors( vTan, vBin ).normalize();
+                vNorm.toArray( norm, l );
+
+            }
+
+            k += 3 * m;
+
+        }
+
+        if( polymer.isCyclic ){
+
+            if( !isCg ){
+
+                _d1a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, "direction1" );
+                _d1a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, "direction1" );
+                _d1a3.index = polymer.getAtomIndexByType( 0, "direction1" );
+                _d1a4.index = polymer.getAtomIndexByType( 1, "direction1" );
+
+                _d2a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, "direction2" );
+                _d2a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, "direction2" );
+                _d2a3.index = polymer.getAtomIndexByType( 0, "direction2" );
+                _d2a4.index = polymer.getAtomIndexByType( 1, "direction2" );
 
                 if( first ){
 

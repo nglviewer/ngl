@@ -785,11 +785,9 @@ NGL.calculateBondsBetween = function( structure ){
         backboneBondStore.resize( structure.residueStore.count );
     }
 
-    structure.eachResidueN( 2, function( rp1, rp2 ){
-
+    function addBondIfConnected( rp1, rp2 ){
         var bbType1 = rp1.backboneType;
         var bbType2 = rp2.backboneType;
-
         if( bbType1 !== NGL.UnknownBackboneType && bbType1 === bbType2 ){
             ap1.index = rp1.backboneEndAtomIndex;
             ap2.index = rp2.backboneStartAtomIndex;
@@ -801,7 +799,18 @@ NGL.calculateBondsBetween = function( structure ){
                 backboneAtomSet.add_unsafe( ap2.index );
             }
         }
+    }
 
+    structure.eachResidueN( 2, addBondIfConnected );
+
+    var rp1 = structure.getResidueProxy();
+    var rp2 = structure.getResidueProxy();
+
+    // check for cyclic chains
+    structure.eachChain( function( cp ){
+        rp1.index = cp.residueOffset;
+        rp2.index = cp.residueOffset + cp.residueCount - 1;
+        addBondIfConnected( rp2, rp1 );
     } );
 
     structure.atomSetDict[ "backbone" ] = backboneAtomSet;
