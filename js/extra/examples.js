@@ -1445,23 +1445,20 @@ NGL.ExampleRegistry.addDict( {
     "mmtf": function( stage ){
 
         console.time( "load-to-render" );
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4V99", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/1CRN", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/3SN6", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4POH", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4CUP", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/2L6N", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/4V5A", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/3J3Q", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagepack/1D66", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3SN6", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4CUP", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/3J3Q", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/4V5A", {
-        // stage.loadFile( "http://132.249.213.68:8080/servemessagecalpha/1D66", {
-        // stage.loadFile( "data://perf/4V5A.mmtf", {
-        stage.loadFile( "data://perf/3J3Q.mmtf", {
-        // stage.loadFile( "data://perf/3SN6.mmtf", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/4V99", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/1CRN", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/3SN6", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/4POH", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/4CUP", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/2L6N", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/4V5A", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/3J3Q", {
+        // stage.loadFile( "http://mmtf.rcsb.org/full/1D66", {
+        // stage.loadFile( "http://mmtf.rcsb.org/backbone/3SN6", {
+        // stage.loadFile( "http://mmtf.rcsb.org/backbone/4CUP", {
+        stage.loadFile( "http://mmtf.rcsb.org/backbone/3J3Q", {
+        // stage.loadFile( "http://mmtf.rcsb.org/backbone/4V5A", {
+        // stage.loadFile( "http://mmtf.rcsb.org/backbone/1D66", {
             ext: "mmtf"
         } ).then( function( o ){
             // o.addRepresentation( "ribbon", { color: "chainindex", quality: "custom", subdiv: 1 } );
