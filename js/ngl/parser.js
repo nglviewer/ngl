@@ -178,6 +178,10 @@ NGL.assignSecondaryStructure = function( structure ){
 
     var helices = structure.helices || [];
 
+    helices = helices.filter( function( h ){
+        return NGL.binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
+    } );
+
     // helices.sort( function( h1, h2 ){
 
     //     var c1 = h1[ 0 ];
@@ -199,7 +203,6 @@ NGL.assignSecondaryStructure = function( structure ){
 
     // } );
 
-    // var rp = structure.getResidueProxy();
     var residueStore = structure.residueStore;
 
     structure.eachModel( function( mp ){
@@ -223,20 +226,15 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    // rp.index = j;
-
                     if( residueStore.resno[ j ] === helix[ 1 ] ){  // resnoBeg
-                    // if( rp.resno === helix[ 1 ] ){  // resnoBeg
                         helixRun = true;
                     }
 
                     if( helixRun ){
 
                         residueStore.sstruc[ j ] = helix[ 4 ];
-                        // rp.sstruc = helix[ 4 ];
 
                         if( residueStore.resno[ j ] === helix[ 3 ] ){  // resnoEnd
-                        // if( rp.resno === helix[ 3 ] ){  // resnoEnd
 
                             helixRun = false
                             i += 1;
@@ -269,6 +267,10 @@ NGL.assignSecondaryStructure = function( structure ){
     // sheet assignment
 
     var sheets = structure.sheets || [];
+
+    sheets = sheets.filter( function( s ){
+        return NGL.binarySearchIndexOf( chainnamesSorted, s[ 0 ] ) >= 0;
+    } );
 
     sheets.sort( function( s1, s2 ){
 
@@ -304,20 +306,15 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    // rp.index = j;
-
                     if( residueStore.resno[ j ] === sheet[ 1 ] ){  // resnoBeg
-                    // if( rp.resno === sheet[ 1 ] ){  // resnoBeg
                         sheetRun = true;
                     }
 
                     if( sheetRun ){
 
                         residueStore.sstruc[ j ] = strandCharCode;
-                        // rp.sstruc = "e";
 
                         if( residueStore.resno[ j ] === sheet[ 3 ] ){  // resnoEnd
-                        // if( rp.resno === sheet[ 3 ] ){  // resnoEnd
 
                             sheetRun = false
                             i += 1;
