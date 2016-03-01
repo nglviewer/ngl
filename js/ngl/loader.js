@@ -75,8 +75,8 @@ NGL.StaticDatasource = function( baseUrl ){
 NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://www.rcsb.org/pdb/files/";
-    var mmtfBaseUrl = "http://132.249.213.68:8080/servemessagepack/";
-    var bbMmtfBaseUrl = "http://132.249.213.68:8080/servemessagecalpha/";
+    var mmtfBaseUrl = "http://mmtf.rcsb.org/full/";
+    var bbMmtfBaseUrl = "http://mmtf.rcsb.org/backbone/";
 
     this.getUrl = function( src ){
         // valid path are
