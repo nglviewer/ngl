@@ -3288,13 +3288,13 @@ NGL.ToolbarWidget = function( stage ){
 
             msg = "Picked atom: " +
                 d.atom.qualifiedName() +
-                " (" + d.atom.residue.chain.model.structure.name + ")";
+                " (" + d.atom.structure.name + ")";
 
         }else if( d.bond ){
 
             msg = "Picked bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-                " (" + d.bond.atom1.residue.chain.model.structure.name + ")";
+                " (" + d.bond.structure.name + ")";
 
         }else if( d.volume ){
 
@@ -3366,6 +3366,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
         "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
+        "mmtf",
         "mrc", "ccp4", "map", "cube", "dx", "dxbin",
         "obj", "ply",
         "ngl",
@@ -4447,20 +4448,8 @@ NGL.StructureComponentWidget = function( component, stage ){
     // SS calculate
 
     var ssButton = new UI.Button( "calculate" ).onClick( function(){
-        component.structure.autoSS();
+        NGL.calculateSecondaryStructure( component.structure );
         component.rebuildRepresentations();
-        componentPanel.setMenuDisplay( "none" );
-    } );
-
-    // duplicate structure
-
-    var duplicateButton = new UI.Button( "duplicate" ).onClick( function(){
-        stage.addComponent(
-            new NGL.StructureComponent(
-                stage,
-                component.structure.clone()
-            )
-        );
         componentPanel.setMenuDisplay( "none" );
     } );
 
@@ -4474,7 +4463,6 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "Assembly", assembly )
         .addMenuEntry( "Superpose", superpose )
         .addMenuEntry( "SS", ssButton )
-        .addMenuEntry( "Structure", duplicateButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
