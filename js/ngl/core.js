@@ -93,6 +93,34 @@ if( typeof importScripts === 'function' ){
 }
 
 
+NGL.GET = function( id ){
+
+    var a = new RegExp( id + "=([^&#=]*)" );
+    var m = a.exec( window.location.search );
+
+    if( m ){
+        return decodeURIComponent( m[1] );
+    }else{
+        return undefined;
+    }
+
+};
+
+
+( function(){
+
+    var debug = NGL.GET( "debug" );
+    if( debug !== undefined ) NGL.debug = debug;
+
+    var useWorker = NGL.GET( "useWorker" );
+    if( useWorker !== undefined ) NGL.useWorker = useWorker;
+
+    var disableImpostor = NGL.GET( "disableImpostor" );
+    if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+
+} )();
+
+
 // Registry
 
 NGL.PluginRegistry = {

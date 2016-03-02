@@ -69,6 +69,9 @@
         <script src="../js/lib/ui/ui.ngl.js"></script>
         <script src="../js/ngl/gui.js"></script>
 
+        <!-- DEV -->
+        <script src="../js/ngl/dev.js"></script>
+
         <!-- EXTRA -->
         <script src="../js/extra/mdsrv.js"></script>
         <script src="../js/extra/examples.js"></script>
@@ -107,19 +110,16 @@
             function onInit(){
                 stage = new NGL.Stage();
                 NGL.StageWidget( stage );
-
                 var example = NGL.GET( "example" );
                 if( example ) NGL.ExampleRegistry.load( example, stage );
-
                 var load = NGL.GET( "load" );
                 if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-
                 var plugin = NGL.GET( "plugin" );
                 if( plugin ) NGL.PluginRegistry.load( plugin, stage );
             }
 
             document.addEventListener( "DOMContentLoaded", function(){
-                NGL.init( onInit );
+                NGL.initDevResources( onInit );
             } );
 
         </script>

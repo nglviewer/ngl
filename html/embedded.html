@@ -13,14 +13,14 @@
     <body>
 
         <script src="../js/build/ngl.embedded.min.js"></script>
-        <!-- <script src="../js/three/Detector.js"></script> -->
+        <script src="../js/three/Detector.js"></script>
 
         <!-- EXTRA -->
         <script src="../js/extra/examples.js"></script>
 
         <script>
 
-            // if( !Detector.webgl ) Detector.addGetWebGLMessage();
+            if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
             NGL.mainScriptFilePath = "../js/build/ngl.embedded.min.js";
 
@@ -30,7 +30,7 @@
                 "data", new NGL.StaticDatasource( "../data/" )
             );
 
-            function onInit(){
+            document.addEventListener( "DOMContentLoaded", function(){
                 var stage = new NGL.Stage( "viewport" );
                 stage.viewer.container.addEventListener( "dblclick", function(){
                     stage.toggleFullscreen();
@@ -41,10 +41,6 @@
                 if( load ) stage.loadFile( load, { defaultRepresentation: true } );
                 var plugin = NGL.GET( "plugin" );
                 if( plugin ) NGL.PluginRegistry.load( plugin, stage );
-            }
-
-            document.addEventListener( "DOMContentLoaded", function(){
-                NGL.init( onInit );
             } );
 
         </script>

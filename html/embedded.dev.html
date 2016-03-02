@@ -14,7 +14,7 @@
 
         <!-- THREE -->
         <script src="../js/three/three.js"></script>
-        <!-- <script src="../js/three/Detector.js"></script> -->
+        <script src="../js/three/Detector.js"></script>
         <script src="../js/three/TypedArrayUtils.js"></script>
         <script src="../js/three/controls/TrackballControls.js"></script>
         <script src="../js/three/loaders/OBJLoader.js"></script>
@@ -55,12 +55,15 @@
         <script src="../js/ngl/representation.js"></script>
         <script src="../js/ngl/stage.js"></script>
 
+        <!-- DEV -->
+        <script src="../js/ngl/dev.js"></script>
+
         <!-- EXTRA -->
         <script src="../js/extra/examples.js"></script>
 
         <script>
 
-            // if( !Detector.webgl ) Detector.addGetWebGLMessage();
+            if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
             var stage;  // global, for development
 
@@ -86,7 +89,7 @@
             }
 
             document.addEventListener( "DOMContentLoaded", function(){
-                NGL.init( onInit );
+                NGL.initDevResources( onInit );
             } );
 
         </script>

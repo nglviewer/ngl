@@ -25,16 +25,11 @@
 
             if( !Detector.webgl ) Detector.addGetWebGLMessage();
 
-            function onInit(){
+            document.addEventListener( "DOMContentLoaded", function(){
                 var stage = new NGL.Stage();
                 NGL.StageWidget( stage );
-
                 var load = NGL.GET( "load" );
                 if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-            }
-
-            document.addEventListener( "DOMContentLoaded", function(){
-                NGL.init( onInit );
             } );
 
         </script>

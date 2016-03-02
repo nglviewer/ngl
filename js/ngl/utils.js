@@ -57,20 +57,6 @@ NGL.browser = function(){
 }();
 
 
-NGL.GET = function( id ){
-
-    var a = new RegExp( id + "=([^&#=]*)" );
-    var m = a.exec( window.location.search );
-
-    if( m ){
-        return decodeURIComponent( m[1] );
-    }else{
-        return undefined;
-    }
-
-};
-
-
 NGL.getAbsolutePath = function( relativePath ){
 
     var loc = window.location;
@@ -394,6 +380,17 @@ NGL.binarySearchIndexOf = function(){
         return -low - 1;
     }
 }();
+
+
+NGL.dataURItoImage = function( dataURI ){
+
+    if( typeof importScripts !== 'function' ){
+        var img = document.createElement( "img" );
+        img.src = dataURI;
+        return img;
+    }
+
+};
 
 
 // String/arraybuffer conversion
