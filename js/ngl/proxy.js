@@ -2111,7 +2111,7 @@ NGL.ResidueType = function( structure, resname, atomTypeIdList, hetero ){
 
     this.resname = resname;
     this.atomTypeIdList = atomTypeIdList;
-    this.hetero = hetero;
+    this.hetero = hetero ? 1 : 0;
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
