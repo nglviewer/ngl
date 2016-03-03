@@ -243,16 +243,9 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
-            var _disableImpostor = NGL.disableImpostor;
-
-            NGL.disableImpostor = true;
-            //o.addRepresentation( "spacefill", { sele: ":A" } );
-            o.addRepresentation( "ball+stick", { sele: "16" } );
-            // NGL.disableImpostor = _disableImpostor;
-            // o.addRepresentation( "spacefill", { sele: ":B" } );
-            // o.addRepresentation( "ball+stick", { sele: ":B" } );
-
-            o.centerView();
+            o.addRepresentation( "ball+stick", { sele: "16", disableImpostor: true } );
+            o.addRepresentation( "ball+stick", { sele: "not 16" } );
+            o.centerView( true, "16" );
 
         } );
 
