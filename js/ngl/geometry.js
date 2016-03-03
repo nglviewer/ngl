@@ -1431,8 +1431,6 @@ NGL.Helixbundle = function( polymer ){
     this.helixorient = new NGL.Helixorient( polymer );
     this.position = this.helixorient.getPosition();
 
-    this.size = polymer.residueCount;
-
 };
 
 NGL.Helixbundle.prototype = {
