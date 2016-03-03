@@ -1422,8 +1422,6 @@ NGL.Helix.prototype = {
 ////////////////
 // Helixbundle
 
-// FIXME not adapted for polymer or store
-
 NGL.Helixbundle = function( polymer ){
 
     this.polymer = polymer;
