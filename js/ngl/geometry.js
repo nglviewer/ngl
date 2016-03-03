@@ -1569,10 +1569,6 @@ NGL.Helixbundle.prototype = {
             "residueCount": residueCount
         };
 
-    },
-
-    getPosition: function(){
-
     }
 
 };
