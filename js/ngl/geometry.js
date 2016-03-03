@@ -767,8 +767,6 @@ NGL.Spline.prototype = {
 ////////////////
 // Helixorient
 
-// FIXME not adapted for polymer and store
-
 NGL.Helixorient = function( polymer ){
 
     this.polymer = polymer;
@@ -782,6 +780,8 @@ NGL.Helixorient.prototype = {
     constructor: NGL.Helixorient,
 
     getPolymer: function( smooth, padded ){
+
+        // FIXME not adapted for polymer and store
 
         var center = this.getPosition().center;
 
