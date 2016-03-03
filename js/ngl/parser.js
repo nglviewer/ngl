@@ -424,37 +424,27 @@ NGL.calculateSecondaryStructure = function(){
 
     var cgPolymer = function( p ){
 
-        // FIXME helixbundle broken for polymers
-        return;
-
         var localAngle = 20;
         var centerDist = 2.0;
 
+        var residueStore = p.residueStore;
+        var offset = p.residueIndexStart;
+
         var helixbundle = new NGL.Helixbundle( p );
-
         var pos = helixbundle.position;
-        var res = helixbundle.polymer.residues;
 
-        var n = helixbundle.size;
-
-        var c = new THREE.Vector3();
+        var c1 = new THREE.Vector3();
         var c2 = new THREE.Vector3();
 
-        var i, d, r, r2;
+        for( var i = 0, il = p.residueCount; i < il; ++i ){
 
-        for( i = 0; i < n - 1; ++i ){
-
-            r = res[ i ];
-            r2 = res[ i + 1 ];
-            c.fromArray( pos.center, i * 3 );
+            c1.fromArray( pos.center, i * 3 );
             c2.fromArray( pos.center, i * 3 + 3 );
-            d = c.distanceTo( c2 );
-
-            // NGL.log( r.ss, r2.ss, c.distanceTo( c2 ), pos.bending[ i ] )
+            var d = c1.distanceTo( c2 );
 
             if( d < centerDist && d > 1.0 && pos.bending[ i ] < localAngle ){
-                r.ss = "h";
-                r2.ss = "h";
+                residueStore.sstruc[ offset + i ] = "h".charCodeAt( 0 );
+                residueStore.sstruc[ offset + i + 1 ] = "h".charCodeAt( 0 );
             }
 
         }
