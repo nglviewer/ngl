@@ -1439,40 +1439,29 @@ NGL.Helixbundle.prototype = {
 
     constructor: NGL.Helixbundle,
 
-    getFiber: function( smooth ){
-
-    },
-
-    getColor: function( type ){
-
-    },
-
-    getSize: function( type, scale ){
-
-    },
-
     getAxis: function( localAngle, centerDist, ssBorder, colorParams, radius, scale ){
 
         localAngle = localAngle || 30;
         centerDist = centerDist || 2.5;
         ssBorder = ssBorder === undefined ? false : ssBorder;
 
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+        var residueIndexStart = polymer.residueIndexStart;
+
         var pos = this.position;
 
         var cp = colorParams || {};
-        cp.structure = this.fiber.structure;
+        cp.structure = structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( cp );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( cp );
 
         var radiusFactory = new NGL.RadiusFactory( radius, scale );
 
-        var i, r, r2, a;
         var j = 0;
         var k = 0;
-        var n = this.size;
-
-        var res = this.fiber.residues;
 
         var axis = [];
         var center = [];
@@ -1481,7 +1470,8 @@ NGL.Helixbundle.prototype = {
         var col = [];
         var pcol = [];
         var size = [];
-        var residue = [];
+        var residueOffset = [];
+        var residueCount = [];
 
         var tmpAxis = [];
         var tmpCenter = [];
@@ -1490,26 +1480,30 @@ NGL.Helixbundle.prototype = {
         var _beg = new THREE.Vector3();
         var _end = new THREE.Vector3();
 
-        var c = new THREE.Vector3();
+        var rp1 = structure.getResidueProxy();
+        var rp2 = structure.getResidueProxy();
+        var ap = structure.getAtomProxy();
+
+        var c1 = new THREE.Vector3();
         var c2 = new THREE.Vector3();
 
         var split = false;
 
-        for( i = 0; i < n; ++i ){
+        for( var i = 0; i < n; ++i ){
 
-            r = res[ i ];
-            c.fromArray( pos.center, i * 3 );
+            rp1.index = residueIndexStart + i;
+            c1.fromArray( pos.center, i * 3 );
 
             if( i === n - 1 ){
                 split = true;
             }else{
 
-                r2 = res[ i + 1 ];
+                rp2.index = residueIndexStart + i + 1;
                 c2.fromArray( pos.center, i * 3 + 3 );
 
-                if( ssBorder && r.ss !== r2.ss ){
+                if( ssBorder && rp1.sstruc !== rp2.sstruc ){
                     split = true;
-                }else if( c.distanceTo( c2 ) > centerDist ){
+                }else if( c1.distanceTo( c2 ) > centerDist ){
                     split = true;
                 }else if( pos.bending[ i ] > localAngle ){
                     split = true;
@@ -1520,14 +1514,12 @@ NGL.Helixbundle.prototype = {
             if( split ){
 
                 if( i - j < 4 ){
-
                     j = i;
                     split = false;
                     continue;
-
                 }
 
-                a = r.getTraceAtom();
+                ap.index = rp1.traceAtomIndex;
 
                 // ignore first and last axis
                 tmpAxis = pos.axis.subarray( j * 3 + 3, i * 3 );
@@ -1549,12 +1541,13 @@ NGL.Helixbundle.prototype = {
                 _beg.toArray( beg, k );
                 _end.toArray( end, k );
 
-                colorMaker.atomColorToArray( a, col, k );
-                pickingColorMaker.atomColorToArray( a, pcol, k );
+                colorMaker.atomColorToArray( ap, col, k );
+                pickingColorMaker.atomColorToArray( ap, pcol, k );
 
-                size.push( radiusFactory.atomRadius( a ) );
+                size.push( radiusFactory.atomRadius( ap ) );
 
-                residue.push( res.slice( j, i + 1 ) );
+                residueOffset.push( residueIndexStart + j );
+                residueCount.push( residueIndexStart + i + 1 - j );
 
                 k += 3;
                 j = i;
@@ -1572,7 +1565,8 @@ NGL.Helixbundle.prototype = {
             "color": new Float32Array( col ),
             "pickingColor": new Float32Array( pcol ),
             "size": new Float32Array( size ),
-            "residue": residue,
+            "residueOffset": residueOffset,
+            "residueCount": residueCount
         };
 
     },

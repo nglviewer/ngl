@@ -2387,14 +2387,11 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
-
-        if( this.structureView.atomCount === 0 ) return;
-
-        var scope = this;
+    createData: function( sview ){
 
         var length = 0;
         var axisList = [];
+        var helixbundleList = [];
 
         this.structure.eachPolymer( function( polymer ){
 
@@ -2402,17 +2399,17 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
             var helixbundle = new NGL.Helixbundle( polymer );
             var axis = helixbundle.getAxis(
-                scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.getColorParams(), scope.radius, scope.scale
+                this.localAngle, this.centerDist, this.ssBorder,
+                this.getColorParams(), this.radius, this.scale
             );
 
             length += axis.size.length;
             axisList.push( axis );
-            scope.helixbundleList.push( helixbundle );
+            helixbundleList.push( helixbundle );
 
-        }, this.selection );
+        }.bind( this ), sview.getSelection() );
 
-        this.axisData = {
+        var axisData = {
             begin: new Float32Array( length * 3 ),
             end: new Float32Array( length * 3 ),
             size: new Float32Array( length ),
@@ -2420,29 +2417,25 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             pickingColor: new Float32Array( length * 3 ),
         };
 
-        var ad = this.axisData;
         var offset = 0;
 
         axisList.forEach( function( axis ){
-
-            ad.begin.set( axis.begin, offset * 3 );
-            ad.end.set( axis.end, offset * 3 );
-            ad.size.set( axis.size, offset );
-            ad.color.set( axis.color, offset * 3 );
-            ad.pickingColor.set( axis.pickingColor, offset * 3 );
-
+            axisData.begin.set( axis.begin, offset * 3 );
+            axisData.end.set( axis.end, offset * 3 );
+            axisData.size.set( axis.size, offset );
+            axisData.color.set( axis.color, offset * 3 );
+            axisData.pickingColor.set( axis.pickingColor, offset * 3 );
             offset += axis.size.length;
-
         } );
 
-        this.cylinderBuffer = new NGL.CylinderBuffer(
-            ad.begin,
-            ad.end,
-            ad.color,
-            ad.color,
-            ad.size,
-            ad.pickingColor,
-            ad.pickingColor,
+        var cylinderBuffer = new NGL.CylinderBuffer(
+            axisData.begin,
+            axisData.end,
+            axisData.color,
+            axisData.color,
+            axisData.size,
+            axisData.pickingColor,
+            axisData.pickingColor,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -2452,67 +2445,58 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.bufferList.push( this.cylinderBuffer );
+        return {
+            bufferList: [ cylinderBuffer ],
+            axisList: axisList,
+            helixbundleList: helixbundleList,
+            axisData: axisData
+        };
 
     },
 
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+    updateData: function( what, data ){
 
         what = what || {};
-
-        var scope = this;
-
-        var cylinderData = {};
 
         if( what[ "position" ] ){
             this.build();
             return;
         }
 
-        if( what[ "color" ] || what[ "radius" ] || what[ "scale" ] ){
+        var cylinderData = {};
+
+        if( what[ "color" ] || what[ "radius" ] ){
 
             var offset = 0;
-            var ad = this.axisData;
 
-            this.helixbundleList.forEach( function( helixbundle ){
+            data.helixbundleList.forEach( function( helixbundle ){
 
                 var axis = helixbundle.getAxis(
-                    scope.localAngle, scope.centerDist, scope.ssBorder,
-                    scope.getColorParams(), scope.radius, scope.scale
+                    this.localAngle, this.centerDist, this.ssBorder,
+                    this.getColorParams(), this.radius, this.scale
                 );
                 if( what[ "color" ] ){
-                    ad.color.set( axis.color, offset * 3 );
+                    data.axisData.color.set( axis.color, offset * 3 );
                 }
                 if( what[ "radius" ] || what[ "scale" ] ){
-                    ad.size.set( axis.size, offset );
+                    data.axisData.size.set( axis.size, offset );
                 }
                 offset += axis.size.length;
 
-            } );
+            }.bind( this ) );
 
             if( what[ "color" ] ){
-                cylinderData[ "color" ] = ad.color;
-                cylinderData[ "color2" ] = ad.color;
+                cylinderData[ "color" ] = data.axisData.color;
+                cylinderData[ "color2" ] = data.axisData.color;
             }
 
             if( what[ "radius" ] || what[ "scale" ] ){
-                cylinderData[ "radius" ] = ad.size;
+                cylinderData[ "radius" ] = data.axisData.size;
             }
 
         }
 
-        this.cylinderBuffer.setAttributes( cylinderData );
-
-    },
-
-    clear: function(){
-
-        this.helixbundleList.length = 0;
-
-        NGL.StructureRepresentation.prototype.clear.call( this );
+        data.bufferList[ 0 ].setAttributes( cylinderData );
 
     }
 

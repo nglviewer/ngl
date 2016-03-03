@@ -621,25 +621,14 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
-        stage.loadFile( "data://1CRN.cif.zip" ).then( function( o ){
+    },
 
-            o.addRepresentation( "licorice" );
-            o.centerView();
+    "rocket": function( stage ){
 
-        } );
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
 
-        stage.loadFile( "data://1CRN.cif.lzma" ).then( function( o ){
-
-            o.addRepresentation( "rocket", {
-                opacity: 0.5
-            } );
-            o.centerView();
-
-        } );
-
-        stage.loadFile( "data://1CRN.cif.bz2" ).then( function( o ){
-
-            o.addRepresentation( "rope", { scale: 0.3 } );
+            o.addRepresentation( "cartoon" );
+            o.addRepresentation( "rocket" );
             o.centerView();
 
         } );
