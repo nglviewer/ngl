@@ -2353,10 +2353,18 @@ NGL.StructureView.prototype = NGL.createObject(
 
         var parentSelection = this.structure.getSelection();
         if( parentSelection ){
-            return new NGL.Selection(
-                "( " + parentSelection.string + " ) AND " +
-                "( " + this.selection.string + " )"
-            );
+            if( parentSelection.string && this.selection.string ){
+                return new NGL.Selection(
+                    "( " + parentSelection.string + " ) AND " +
+                    "( " + this.selection.string + " )"
+                );
+            }else if( parentSelection.string ){
+                return new NGL.Selection( parentSelection.string );
+            }else if( this.selection.string ){
+                return new NGL.Selection( this.selection.string );
+            }else{
+                return new NGL.Selection( "" );
+            }
         }else{
             return this.selection;
         }
