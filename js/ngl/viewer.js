@@ -839,6 +839,9 @@ NGL.Viewer.prototype = {
             clipFar: 100,
             clipDist: 10,
 
+            spinAxis: null,
+            spinAngle: 0.01,
+
             lightColor: new THREE.Color( 0xdddddd ),
             lightIntensity: 1.0,
             ambientColor: new THREE.Color( 0xdddddd ),
@@ -1301,6 +1304,15 @@ NGL.Viewer.prototype = {
 
     },
 
+    setSpin: function( axis, angle ){
+
+        var p = this.params;
+
+        if( axis !== undefined ) p.spinAxis = axis;
+        if( angle !== undefined ) p.spinAngle = angle;
+
+    },
+
     handleResize: function(){
 
         if( this.container === document ){
@@ -1370,12 +1382,55 @@ NGL.Viewer.prototype = {
 
     },
 
+    rotate: function(){
+
+        var eye = new THREE.Vector3();
+        var quaternion = new THREE.Quaternion();
+        var eyeDirection = new THREE.Vector3();
+        var upDirection = new THREE.Vector3();
+        var sidewaysDirection = new THREE.Vector3();
+        var moveDirection = new THREE.Vector3();
+
+        return function( axis, angle ){
+
+            eye.copy( this.camera.position ).sub( this.controls.target );
+            eyeDirection.copy( eye ).normalize();
+            upDirection.copy( this.camera.up ).normalize();
+            sidewaysDirection.crossVectors( upDirection, eyeDirection ).normalize();
+
+            eyeDirection.setLength( axis.z );
+            upDirection.setLength( axis.y );
+            sidewaysDirection.setLength( axis.x );
+            moveDirection.copy( sidewaysDirection.sub( upDirection ).add( eyeDirection ) );
+
+            quaternion.setFromAxisAngle( moveDirection.normalize(), angle );
+            eye.applyQuaternion( quaternion );
+
+            this.camera.up.applyQuaternion( quaternion );
+            this.camera.position.addVectors( this.controls.target, eye );
+            this.camera.lookAt( this.controls.target );
+
+        }
+
+    }(),
+
     animate: function(){
 
         requestAnimationFrame( this.animate.bind( this ) );
 
         this.controls.update();
         this.stats.update();
+
+        // spin
+
+        var p = this.params;
+
+        if( p.spinAxis && p.spinAngle ){
+
+            this.rotate( p.spinAxis, p.spinAngle );
+            this.requestRender();
+
+        }
 
     },
 

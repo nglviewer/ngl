@@ -439,6 +439,16 @@ NGL.Stage.prototype = {
 
     },
 
+    setSpin: function( axis, angle ){
+
+        if( Array.isArray( axis ) ){
+            axis = new THREE.Vector3().fromArray( axis );
+        }
+
+        this.viewer.setSpin( axis, angle );
+
+    },
+
     setOrientation: function( orientation ){
 
         this.tasks.onZeroOnce( function(){

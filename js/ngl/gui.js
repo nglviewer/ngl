@@ -531,6 +531,14 @@ NGL.MenubarViewWidget = function( stage ){
         stage.centerView();
     }
 
+    function onSpinOnClick(){
+        stage.setSpin( [ 0, 1, 0 ], 0.01 );
+    }
+
+    function onSpinOffClick(){
+        stage.setSpin( null, null );
+    }
+
     function onGetOrientationClick(){
         window.prompt(
             "Orientation",
@@ -558,6 +566,9 @@ NGL.MenubarViewWidget = function( stage ){
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
+        createDivider(),
+        createOption( 'Spin on', onSpinOnClick ),
+        createOption( 'Spin off', onSpinOffClick ),
         createDivider(),
         createOption( 'Orientation', onGetOrientationClick ),
     ];
