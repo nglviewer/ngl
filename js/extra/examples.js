@@ -1343,7 +1343,8 @@ NGL.ExampleRegistry.addDict( {
     "nmr": function( stage ){
 
         console.time( "load-to-render" );
-        stage.loadFile( "data://perf/2L6N.cif.gz" ).then( function( o ){
+        // stage.loadFile( "data://perf/2L6N.cif.gz" ).then( function( o ){
+        stage.loadFile( "rcsb://2L6N.mmtf" ).then( function( o ){
             o.addRepresentation( "cartoon", { sele: "polymer" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
             stage.centerView();

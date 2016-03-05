@@ -3374,7 +3374,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     var part = tDict[ t.transformation ];
                     if( !part ){
                         part = {
-                            matrix: new THREE.Matrix4().fromArray( t.transformation ),
+                            matrix: new THREE.Matrix4().fromArray( t.transformation ).transpose(),
                             chainList: t.chainId
                         };
                         tDict[ t.transformation ] = part;
