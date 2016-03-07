@@ -1270,20 +1270,16 @@ NGL.Viewer.prototype = {
 
     },
 
-    setCamera: function( type, fov, near, far ){
+    setCamera: function( type, fov ){
 
         var p = this.params;
 
         if( type!==null ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
-        if( near ) p.cameraNear = near;
-        if( far ) p.cameraFar = far;
 
         this.camera = this.perspectiveCamera;
 
         this.perspectiveCamera.fov = p.cameraFov;
-        this.perspectiveCamera.near = p.cameraNear;
-        this.perspectiveCamera.far = p.cameraFar;
 
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
