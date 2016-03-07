@@ -1264,7 +1264,8 @@ NGL.Viewer.prototype = {
         if( color ) p.backgroundColor.set( color );
 
         this.setFog( p.backgroundColor );
-        this.renderer.setClearColor( p.backgroundColor, 1 );
+        this.renderer.setClearColor( p.backgroundColor, 0 );
+        this.renderer.domElement.style.backgroundColor = p.backgroundColor.getStyle();
 
         this.requestRender();
 
@@ -2061,10 +2062,6 @@ NGL.screenshot = function( viewer, params ){
     var p = params || {};
 
     var trim = p.trim!==undefined ? p.trim : false;
-    var type = p.type!==undefined ? p.type : "image/png";
-    var quality = p.quality!==undefined ? p.quality : 1.0;
-    var transparent = p.transparent!==undefined ? p.transparent : false;
-
     var factor = p.factor!==undefined ? p.factor : false;
     var antialias = p.antialias!==undefined ? p.antialias : false;
 
@@ -2098,10 +2095,6 @@ NGL.screenshot = function( viewer, params ){
         } );
     }
 
-    if( transparent ){
-        renderer.setClearAlpha( 0 );
-    }
-
     var tiledRenderer = new NGL.TiledRenderer(
         renderer, camera, viewer,
         {
@@ -2126,9 +2119,6 @@ NGL.screenshot = function( viewer, params ){
 
     function onFinish( i, n ){
         save( n );
-        if( transparent ){
-            renderer.setClearAlpha( originalClearAlpha );
-        }
         setLineWidthAndPixelSize( true );
         viewer.requestRender();
     }
@@ -2136,14 +2126,13 @@ NGL.screenshot = function( viewer, params ){
     function save( n ){
 
         var canvas;
-        var ext = type.split( "/" )[ 1 ];
 
         if( trim ){
             var bg = backgroundColor;
             var r = ( bg.r * 255 ) | 0;
             var g = ( bg.g * 255 ) | 0;
             var b = ( bg.b * 255 ) | 0;
-            var a = transparent ? 0 : 255;
+            var a = 0;
             canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
         }else{
             canvas = tiledRenderer.canvas;
@@ -2151,11 +2140,11 @@ NGL.screenshot = function( viewer, params ){
 
         canvas.toBlob(
             function( blob ){
-                NGL.download( blob, "screenshot." + ext );
+                NGL.download( blob, "screenshot.png" );
                 onProgress( n, n, true );
                 tiledRenderer.dispose();
             },
-            type, quality
+            "image/png"
         );
 
     }

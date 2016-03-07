@@ -437,10 +437,8 @@ NGL.MenubarFileWidget = function( stage ){
 
         stage.viewer.screenshot( {
             factor: 1,
-            type: "image/png",
             quality: 1.0,
             antialias: true,
-            transparent: false,
             trim: false
         } );
 
@@ -924,27 +922,8 @@ NGL.ExportImageWidget = function( stage ){
         } )
         .setValue( "4" );
 
-    var typeSelect = new UI.Select()
-        .setOptions( {
-            "image/png": "PNG",
-            "image/jpeg": "JPEG",
-            // "image/webp": "WebP"
-        } )
-        .setValue( "image/png" );
-
-    var qualitySelect = new UI.Select()
-        .setOptions( {
-            "0.1": "0.1", "0.2": "0.2", "0.3": "0.3", "0.4": "0.4",
-            "0.5": "0.5", "0.6": "0.6", "0.7": "0.7", "0.8": "0.8",
-            "0.9": "0.9", "1.0": "1.0"
-        } )
-        .setValue( "1.0" );
-
     var antialiasCheckbox = new UI.Checkbox()
         .setValue( true );
-
-    var transparentCheckbox = new UI.Checkbox()
-        .setValue( false );
 
     var trimCheckbox = new UI.Checkbox()
         .setValue( false );
@@ -964,7 +943,6 @@ NGL.ExportImageWidget = function( stage ){
 
                     parseInt( factorSelect.getValue() ),
                     antialiasCheckbox.getValue(),
-                    transparentCheckbox.getValue(),
                     trimCheckbox.getValue(),
 
                     function( i, n, finished ){
@@ -998,10 +976,7 @@ NGL.ExportImageWidget = function( stage ){
     }
 
     addEntry( "scale", factorSelect );
-    // addEntry( "type", typeSelect ); // commented out to always use png
-    // addEntry( "quality", qualitySelect ); // not available for png
     addEntry( "antialias", antialiasCheckbox );
-    addEntry( "transparent", transparentCheckbox ); // not available for jpeg
     addEntry( "trim", trimCheckbox );
 
     listingPanel.add(

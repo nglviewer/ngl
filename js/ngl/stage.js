@@ -465,7 +465,7 @@ NGL.Stage.prototype = {
 
     },
 
-    exportImage: function( factor, antialias, transparent, trim, onProgress ){
+    exportImage: function( factor, antialias, trim, onProgress ){
 
         var reprParamsList = [];
 
@@ -474,10 +474,7 @@ NGL.Stage.prototype = {
             this.viewer.screenshot( {
 
                 factor: factor,
-                type: "image/png",
-                quality: 1.0,
                 antialias: antialias,
-                transparent: transparent,
                 trim: trim,
 
                 onProgress: function( i, n, finished ){
