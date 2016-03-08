@@ -1847,10 +1847,13 @@ NGL.Viewer.prototype = {
                     // TODO take extent of the towards the camera into account
 
                     this.boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z ) * 1.0;
+                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                    var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    var objSize = maxSize + ( minSize / 2 );
                     var fov = THREE.Math.degToRad( this.camera.fov );
 
-                    zoom = maxSize / 2 / this.camera.aspect / Math.tan( fov / 2 );
+                    zoom = ( objSize ) / 2 / this.camera.aspect / Math.tan( fov / 2 );
 
                 }
 
