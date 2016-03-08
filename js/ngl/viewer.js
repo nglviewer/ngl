@@ -1410,6 +1410,26 @@ NGL.Viewer.prototype = {
 
     }(),
 
+    zoom: function(){
+
+        var eye = new THREE.Vector3();
+        var eyeDirection = new THREE.Vector3();
+
+        return function( distance ){
+
+            eye.copy( this.camera.position ).sub( this.controls.target );
+            eyeDirection.copy( eye ).normalize();
+
+            eyeDirection.setLength( distance );
+            eye.add( eyeDirection );
+
+            this.camera.position.addVectors( this.controls.target, eye );
+            this.camera.lookAt( this.controls.target );
+
+        }
+
+    }(),
+
     animate: function(){
 
         requestAnimationFrame( this.animate.bind( this ) );
