@@ -540,7 +540,11 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( ( c.length >= 1 && c.length <= 4 ) &&
+            if( c[0] === "[" && c[c.length-1] === "]" ){
+                sele.resname = c.substr( 1, c.length-2 ).toUpperCase();
+                pushRule( sele );
+                continue;
+            }else if( ( c.length >= 1 && c.length <= 4 ) &&
                     c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
