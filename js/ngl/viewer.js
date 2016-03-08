@@ -1821,6 +1821,9 @@ NGL.Viewer.prototype = {
     centerView: function(){
 
         var t = new THREE.Vector3();
+        var eye = new THREE.Vector3();
+        var eyeDirection = new THREE.Vector3();
+        var bbSize = new THREE.Vector3();
 
         return function( zoom, center ){
 
@@ -1830,7 +1833,10 @@ NGL.Viewer.prototype = {
             this.controls.object.position.sub( this.controls.target );
             this.controls.target.copy( this.controls.target0 );
 
+            // center
             t.copy( center ).multiplyScalar( -1 );
+            this.rotationGroup.position.copy( t );
+            this.rotationGroup.updateMatrixWorld();
 
             if( zoom ){
 
@@ -1838,22 +1844,27 @@ NGL.Viewer.prototype = {
 
                     // automatic zoom that shows
                     // everything inside the bounding box
+                    // TODO take extent of the towards the camera into account
 
-                    zoom = this.boundingBox.size().length() /
-                        2 / Math.tan( Math.PI * this.camera.fov / 360 );
+                    this.boundingBox.size( bbSize );
+                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z ) * 1.0;
+                    var fov = THREE.Math.degToRad( this.camera.fov );
+
+                    zoom = maxSize / 2 / this.camera.aspect / Math.tan( fov / 2 );
 
                 }
 
                 zoom = Math.max( zoom, 1.2 * this.params.clipDist );
 
-                this.camera.position.multiplyScalar(
-                    zoom / this.camera.position.length()
-                );
+                eye.copy( this.camera.position ).sub( this.controls.target );
+                eyeDirection.copy( eye ).normalize();
+
+                eyeDirection.setLength( zoom );
+                eye.copy( eyeDirection );
+
+                this.camera.position.addVectors( this.controls.target, eye );
 
             }
-
-            this.rotationGroup.position.copy( t );
-            this.rotationGroup.updateMatrixWorld();
 
             this.requestRender();
 
