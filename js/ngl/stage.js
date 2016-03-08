@@ -77,6 +77,9 @@ NGL.Stage.prototype = {
         quality: {
             type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
         },
+        antialiasLevel: {
+            type: "range", step: 1, max: 5, min: 0
+        },
         impostor: {
             type: "boolean"
         },
@@ -147,6 +150,7 @@ NGL.Stage.prototype = {
         // apply parameters
         if( p.theme !== undefined ) this.setTheme( p.theme );
         if( p.quality !== undefined ) this.setQuality( p.quality );
+        if( p.antialiasLevel !== undefined ) this.viewer.msaaRenderPass.sampleLevel = p.antialiasLevel;
         if( p.impostor !== undefined ) this.setImpostor( p.impostor );
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
@@ -855,6 +859,7 @@ NGL.Preferences = function( id, defaultParams ){
     this.storage = {
         impostor: true,
         quality: "medium",
+        antialiasLevel: 2,
         theme: "dark",
         overview: true,
         rotateSpeed: 2.0,
@@ -865,6 +870,7 @@ NGL.Preferences = function( id, defaultParams ){
         clipDist: 10,
         fogNear: 50,
         fogFar: 100,
+        cameraFov: 40,
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
