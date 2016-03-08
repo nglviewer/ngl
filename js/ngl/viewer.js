@@ -875,12 +875,16 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer( {
             preserveDrawingBuffer: true,
             alpha: true,
-            antialias: true
+            antialias: false
         } );
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;
         this.renderer.sortObjects = true;
+
+        // var gl = this.renderer.getContext();
+        // console.log( gl.getContextAttributes().antialias );
+        // console.log( gl.getParameter(gl.SAMPLES) );
 
         NGL.extensionFragDepth = this.renderer.extensions.get( "EXT_frag_depth" );
         NGL.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
@@ -911,6 +915,32 @@ NGL.Viewer.prototype = {
             }
         );
         this.pickingTarget.texture.generateMipmaps = false;
+
+        // post processing
+
+        this.composer = new THREE.EffectComposer( this.renderer );
+        this.msaaRenderPass = new THREE.ManualMSAARenderPass( this.modelGroup,  this.camera );
+        this.msaaRenderPass.sampleLevel = 2;
+        this.composer.addPass( this.msaaRenderPass );
+        this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
+        this.copyPass.renderToScreen = true;
+        this.composer.addPass( this.copyPass );
+
+        this.msaaRenderPass.fn = function(){
+            var p = this.params;
+            var camera = this.camera;
+
+            // camera
+
+            camera.updateMatrix();
+            camera.updateMatrixWorld( true );
+            camera.matrixWorldInverse.getInverse( camera.matrixWorld );
+            camera.updateProjectionMatrix();
+
+            this.updateMaterialUniforms( this.scene, camera );
+            this.sortProjectedPosition( this.scene, camera );
+
+        }.bind( this );
 
     },
 
@@ -1336,9 +1366,18 @@ NGL.Viewer.prototype = {
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
 
+        this.composer.setSize(
+            Math.floor( this.width * window.devicePixelRatio ),
+            Math.floor( this.height * window.devicePixelRatio )
+        );
+        this.msaaRenderPass.setSize(
+            Math.floor( this.width * window.devicePixelRatio ),
+            Math.floor( this.height * window.devicePixelRatio )
+        );
+
         this.pickingTarget.setSize(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio
+            Math.floor( this.width * window.devicePixelRatio ),
+            Math.floor( this.height * window.devicePixelRatio )
         );
 
         this.controls.handleResize();
@@ -1613,16 +1652,18 @@ NGL.Viewer.prototype = {
 
             this.renderer.clear();
 
-            this.renderer.render( this.backgroundGroup, camera );
-            this.renderer.clearDepth();
-            this.updateInfo();
+            // this.renderer.render( this.backgroundGroup, camera );
+            // this.renderer.clearDepth();
+            // this.updateInfo();
 
-            this.renderer.render( this.modelGroup, camera );
-            this.updateInfo();
+            // this.renderer.render( this.modelGroup, camera );
+            // this.updateInfo();
 
-            if( NGL.debug ){
-                this.renderer.render( this.helperGroup, camera );
-            }
+            // if( NGL.debug ){
+            //     this.renderer.render( this.helperGroup, camera );
+            // }
+
+            this.composer.render();
 
         }
 
