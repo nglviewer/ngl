@@ -1301,20 +1301,16 @@ NGL.Viewer.prototype = {
 
     },
 
-    setCamera: function( type, fov, near, far ){
+    setCamera: function( type, fov ){
 
         var p = this.params;
 
         if( type!==null ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
-        if( near ) p.cameraNear = near;
-        if( far ) p.cameraFar = far;
 
         this.camera = this.perspectiveCamera;
 
         this.perspectiveCamera.fov = p.cameraFov;
-        this.perspectiveCamera.near = p.cameraNear;
-        this.perspectiveCamera.far = p.cameraFar;
 
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
@@ -1447,6 +1443,26 @@ NGL.Viewer.prototype = {
             eye.applyQuaternion( quaternion );
 
             this.camera.up.applyQuaternion( quaternion );
+            this.camera.position.addVectors( this.controls.target, eye );
+            this.camera.lookAt( this.controls.target );
+
+        }
+
+    }(),
+
+    zoom: function(){
+
+        var eye = new THREE.Vector3();
+        var eyeDirection = new THREE.Vector3();
+
+        return function( distance ){
+
+            eye.copy( this.camera.position ).sub( this.controls.target );
+            eyeDirection.copy( eye ).normalize();
+
+            eyeDirection.setLength( distance );
+            eye.add( eyeDirection );
+
             this.camera.position.addVectors( this.controls.target, eye );
             this.camera.lookAt( this.controls.target );
 
@@ -1847,6 +1863,9 @@ NGL.Viewer.prototype = {
     centerView: function(){
 
         var t = new THREE.Vector3();
+        var eye = new THREE.Vector3();
+        var eyeDirection = new THREE.Vector3();
+        var bbSize = new THREE.Vector3();
 
         return function( zoom, center ){
 
@@ -1856,7 +1875,10 @@ NGL.Viewer.prototype = {
             this.controls.object.position.sub( this.controls.target );
             this.controls.target.copy( this.controls.target0 );
 
+            // center
             t.copy( center ).multiplyScalar( -1 );
+            this.rotationGroup.position.copy( t );
+            this.rotationGroup.updateMatrixWorld();
 
             if( zoom ){
 
@@ -1864,22 +1886,30 @@ NGL.Viewer.prototype = {
 
                     // automatic zoom that shows
                     // everything inside the bounding box
+                    // TODO take extent of the towards the camera into account
 
-                    zoom = this.boundingBox.size().length() /
-                        2 / Math.tan( Math.PI * this.camera.fov / 360 );
+                    this.boundingBox.size( bbSize );
+                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                    var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    var objSize = maxSize + ( minSize / 2 );
+                    var fov = THREE.Math.degToRad( this.camera.fov );
+
+                    zoom = ( objSize ) / 2 / this.camera.aspect / Math.tan( fov / 2 );
 
                 }
 
                 zoom = Math.max( zoom, 1.2 * this.params.clipDist );
 
-                this.camera.position.multiplyScalar(
-                    zoom / this.camera.position.length()
-                );
+                eye.copy( this.camera.position ).sub( this.controls.target );
+                eyeDirection.copy( eye ).normalize();
+
+                eyeDirection.setLength( zoom );
+                eye.copy( eyeDirection );
+
+                this.camera.position.addVectors( this.controls.target, eye );
 
             }
-
-            this.rotationGroup.position.copy( t );
-            this.rotationGroup.updateMatrixWorld();
 
             this.requestRender();
 

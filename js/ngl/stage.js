@@ -107,6 +107,9 @@ NGL.Stage.prototype = {
         fogFar: {
             type: "range", step: 1, max: 100, min: 0
         },
+        cameraFov: {
+            type: "range", step: 1, max: 120, min: 15
+        },
         lightColor: {
             type: "color"
         },
@@ -150,6 +153,7 @@ NGL.Stage.prototype = {
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
+        viewer.setCamera( undefined, p.cameraFov );
         viewer.setLight(
             p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
         );

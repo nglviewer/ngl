@@ -204,6 +204,7 @@ NGL.ParserLoader.prototype = NGL.createObject(
 
             "gro": NGL.GroParser,
             "pdb": NGL.PdbParser,
+            "pdb1": NGL.PdbParser,
             "ent": NGL.PdbParser,
             "pqr": NGL.PqrParser,
             "cif": NGL.CifParser,
@@ -339,6 +340,7 @@ NGL.loaderMap = {
 
     "gro": NGL.ParserLoader,
     "pdb": NGL.ParserLoader,
+    "pdb1": NGL.ParserLoader,
     "ent": NGL.ParserLoader,
     "pqr": NGL.ParserLoader,
     "cif": NGL.ParserLoader,
