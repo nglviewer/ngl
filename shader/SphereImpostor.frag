@@ -9,6 +9,10 @@ uniform float opacity;
 uniform float nearClip;
 uniform mat4 projectionMatrix;
 
+// uniform vec3 specular;
+// uniform float shininess;
+
+
 varying float vRadius;
 varying vec3 vPoint;
 varying vec3 vViewPosition;
@@ -23,6 +27,7 @@ varying vec3 vViewPosition;
     #include bsdfs
     #include ambient_pars
     #include lights_pars
+    // #include lights_phong_pars_fragment
     #include lights_standard_pars_fragment
 #endif
 
@@ -105,6 +110,10 @@ bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
 
 void main(void){
 
+    // vec3 specular = vec3( 1.0, 1.0, 1.0 );
+    // float specularStrength = 1.0;
+    // float shininess = 1.0;
+
     bool flag = Impostor( cameraPos, cameraNormal );
 
     #ifdef NEAR_CLIP
@@ -145,6 +154,35 @@ void main(void){
 
     #else
 
+        // vec3 specColor = vColor;  // vec3( 1.0, 1.0, 1.0 );
+        // vec3 lightDir = vec3( 0.0, 0.0, 1.0 );
+        // vec3 vNormal = cameraNormal;
+
+        // float lambertian = max(dot(lightDir,vNormal), 0.0);
+        // float specular = 0.0;
+
+        // if(lambertian > 0.0) {
+
+        //     vec3 reflectDir = reflect(-lightDir, vNormal);
+        //     vec3 viewDir = normalize(-cameraPos);
+
+        //     float specAngle = max(dot(reflectDir, viewDir), 0.0);
+        //     specular = pow(specAngle, 4.0);
+
+        //     // the exponent controls the shininess (try mode 2)
+        //     specular = pow(specAngle, 16.0);
+
+        //     // according to the rendering equation we would need to multiply
+        //     // with the the "lambertian", but this has little visual effect
+        //     specular *= lambertian;
+
+
+        // }
+
+        // gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );
+
+        //
+
         vec3 vNormal = cameraNormal;
 
         vec4 diffuseColor = vec4( diffuse, opacity );
@@ -159,15 +197,18 @@ void main(void){
             normal = vec3( 0.0, 0.0, 0.4 );
         }
 
+        // #include lights_phong_fragment
         #include lights_standard_fragment
         #include lights_template
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
 
-        #include linear_to_gamma_fragment
-        #include fog_fragment
-
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+
+        #include premultiplied_alpha_fragment
+        #include tonemapping_fragment
+        #include encodings_fragment
+        #include fog_fragment
 
     #endif
 

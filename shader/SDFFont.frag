@@ -35,9 +35,11 @@ void main(){
 
     vec3 outgoingLight = vColor;
 
-    #include linear_to_gamma_fragment
-    #include fog_fragment
-
     gl_FragColor = vec4( outgoingLight, a );
+
+    #include premultiplied_alpha_fragment
+    #include tonemapping_fragment
+    #include encodings_fragment
+    #include fog_fragment
 
 }

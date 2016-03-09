@@ -11,11 +11,11 @@ void main(){
 
     #include nearclip_fragment
 
-    vec3 outgoingLight = vColor;
+    gl_FragColor = vec4( vColor, opacity );
 
-    #include linear_to_gamma_fragment
+    #include premultiplied_alpha_fragment
+    #include tonemapping_fragment
+    #include encodings_fragment
     #include fog_fragment
-
-    gl_FragColor = vec4( outgoingLight, opacity );
 
 }

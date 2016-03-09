@@ -22,6 +22,6 @@
 
 	#endif
 
-	outgoingLight = mix( outgoingLight, fogColor, fogFactor );
+	gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
 
 #endif
