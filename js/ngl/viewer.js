@@ -1605,7 +1605,7 @@ NGL.Viewer.prototype = {
         this.cDist = cDist;
 
         var bRadius = Math.max( 10, this.boundingBox.size( this.distVector ).length() * 0.5 );
-        if( bRadius === Infinity || bRadius === -Infinity || bRadius === NaN ){
+        if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
         }
