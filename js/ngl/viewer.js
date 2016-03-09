@@ -930,7 +930,7 @@ NGL.Viewer.prototype = {
         this.copyPass.renderToScreen = true;
         this.composer.addPass( this.copyPass );
 
-        this.msaaRenderPass.fn = this.updateCamera.bind( this );
+        this.msaaRenderPass.fn = this.__updateCamera.bind( this );
 
     },
 
@@ -1464,7 +1464,7 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 100 && !this.still ){
+        if( performance.now() - this.stats.startTime > 60 && !this.still && this.msaaRenderPass.sampleLevel < 2 ){
             var prevSampleLevel = this.msaaRenderPass.sampleLevel;
             this.msaaRenderPass.sampleLevel = 2;
             this._renderPending = true;
@@ -1579,7 +1579,7 @@ NGL.Viewer.prototype = {
         }
 
         this._renderPending = true;
-        // requestAnimationFrame( this._render );
+
         requestAnimationFrame( function(){
             this.render();
             this.stats.update();
@@ -1587,7 +1587,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateClipping: function(){
+    __updateClipping: function(){
 
         var p = this.params;
         var camera = this.camera;
@@ -1630,7 +1630,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateCamera: function( tileing ){
+    __updateCamera: function( tileing ){
 
         var camera = this.camera;
 
@@ -1644,7 +1644,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    updateLights: function(){
+    __updateLights: function(){
 
         var p = this.params;
         var camera = this.camera;
@@ -1658,6 +1658,40 @@ NGL.Viewer.prototype = {
         var ambientLight = this.ambientLight;
         ambientLight.color.set( p.ambientColor );
         ambientLight.intensity = p.ambientIntensity;
+
+    },
+
+    __renderPickingGroup: function(){
+
+        this.renderer.clearTarget( this.pickingTarget );
+        this.renderer.render(
+            this.pickingGroup, this.camera, this.pickingTarget
+        );
+        this.updateInfo();
+        this.renderer.setRenderTarget();  // back to standard render target
+
+        if( NGL.debug ){
+            this.renderer.clear();
+            this.renderer.render( this.pickingGroup, this.camera );
+            this.renderer.render( this.helperGroup, this.camera );
+        }
+
+    },
+
+    __renderModelGroup: function(){
+
+        this.renderer.clear();
+
+        this.renderer.render( this.backgroundGroup, this.camera );
+        this.renderer.clearDepth();
+        this.updateInfo();
+
+        this.renderer.render( this.modelGroup, this.camera );
+        this.updateInfo();
+
+        if( NGL.debug ){
+            this.renderer.render( this.helperGroup, this.camera );
+        }
 
     },
 
@@ -1675,9 +1709,9 @@ NGL.Viewer.prototype = {
         // var p = this.params;
         var camera = this.camera;
 
-        this.updateClipping();
-        this.updateCamera();
-        this.updateLights();
+        this.__updateClipping();
+        this.__updateCamera();
+        this.__updateLights();
 
         // render
 
@@ -1685,34 +1719,11 @@ NGL.Viewer.prototype = {
 
         if( picking ){
 
-            this.renderer.clearTarget( this.pickingTarget );
-            this.renderer.render(
-                this.pickingGroup, camera, this.pickingTarget
-            );
-            this.updateInfo();
-            this.renderer.setRenderTarget();  // back to standard render target
-
-            if( NGL.debug ){
-                this.renderer.clear();
-                this.renderer.render( this.pickingGroup, camera );
-                this.renderer.render( this.helperGroup, camera );
-            }
+            this.__renderPickingGroup();
 
         }else{
 
-            // this.renderer.clear();
-
-            // this.renderer.render( this.backgroundGroup, camera );
-            // this.renderer.clearDepth();
-            // this.updateInfo();
-
-            // this.renderer.render( this.modelGroup, camera );
-            // this.updateInfo();
-
-            // if( NGL.debug ){
-            //     this.renderer.render( this.helperGroup, camera );
-            // }
-
+            // this.__renderModelGroup();
             this.composer.render();
 
         }

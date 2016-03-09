@@ -157,7 +157,7 @@ NGL.Representation.prototype = {
         this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.wireframe = p.wireframe || false;
-        this.linewidth = p.linewidth || 1;
+        this.linewidth = p.linewidth || 2;
 
         this.setColor( p.color, p );
 
