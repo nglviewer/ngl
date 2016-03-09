@@ -693,9 +693,14 @@ NGL.Stats = function(){
 
     this.maxDuration = -Infinity;
     this.minDuration = Infinity;
+    this.avgDuration = 14;
     this.lastDuration = Infinity;
 
+    this.prevFpsTime = 0;
     this.lastFps = Infinity;
+    this.lastFrames = 1;
+    this.frames = 0;
+    this.count = 0;
 
 }
 
@@ -704,40 +709,35 @@ NGL.Stats.prototype = {
     update: function(){
 
         this.startTime = this.end();
-
         this.signals.updated.dispatch();
 
     },
 
     begin: function(){
 
-        this.startTime = Date.now();
-        this.prevFpsTime = this.startTime;
+        this.startTime = performance.now();
+        this.lastFrames = this.frames;
 
     },
 
     end: function(){
 
-        var time = Date.now();
+        var time = performance.now();
 
-        this.lastDuration = time - this.startTime;
-
-        this.minDuration = Math.min( this.minDuration, this.lastDuration );
-        this.maxDuration = Math.max( this.maxDuration, this.lastDuration );
-
+        this.count += 1;
         this.frames += 1;
 
+        this.lastDuration = time - this.startTime;
+        this.minDuration = Math.min( this.minDuration, this.lastDuration );
+        this.maxDuration = Math.max( this.maxDuration, this.lastDuration );
+        this.avgDuration -= this.avgDuration / 20;
+        this.avgDuration += this.lastDuration / 20;
+
         if( time > this.prevFpsTime + 1000 ) {
-
-            this.lastFps = Math.round(
-                ( this.frames * 1000 ) / ( time - this.startTime )
-            );
-
+            this.lastFps = this.frames;
             this.prevFpsTime = time;
-
+            this.frames = 0;
         }
-
-        this.frames = 0;
 
         return time;
 
@@ -790,6 +790,9 @@ NGL.Viewer = function( eid, params ){
     this.initControls();
     this.initStats();
     if( NGL.debug ) this.initHelper();
+
+    this._render = this.render.bind( this );
+    this._animate = this.animate.bind( this );
 
     // fog & background
     this.setBackground();
@@ -875,7 +878,7 @@ NGL.Viewer.prototype = {
         this.renderer = new THREE.WebGLRenderer( {
             preserveDrawingBuffer: true,
             alpha: true,
-            antialias: false
+            antialias: true
         } );
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
@@ -901,6 +904,7 @@ NGL.Viewer.prototype = {
         // picking texture
 
         this.renderer.extensions.get( 'OES_texture_float' );
+        this.renderer.extensions.get( 'OES_texture_half_float' );
         this.renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         this.pickingTarget = new THREE.WebGLRenderTarget(
@@ -926,21 +930,7 @@ NGL.Viewer.prototype = {
         this.copyPass.renderToScreen = true;
         this.composer.addPass( this.copyPass );
 
-        this.msaaRenderPass.fn = function(){
-            var p = this.params;
-            var camera = this.camera;
-
-            // camera
-
-            camera.updateMatrix();
-            camera.updateMatrixWorld( true );
-            camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-            camera.updateProjectionMatrix();
-
-            this.updateMaterialUniforms( this.scene, camera );
-            this.sortProjectedPosition( this.scene, camera );
-
-        }.bind( this );
+        this.msaaRenderPass.fn = this.updateCamera.bind( this );
 
     },
 
@@ -1472,21 +1462,35 @@ NGL.Viewer.prototype = {
 
     animate: function(){
 
-        requestAnimationFrame( this.animate.bind( this ) );
-
         this.controls.update();
-        this.stats.update();
+
+        if( performance.now() - this.stats.startTime > 100 && !this.still ){
+            var prevSampleLevel = this.msaaRenderPass.sampleLevel;
+            this.msaaRenderPass.sampleLevel = 2;
+            this._renderPending = true;
+            this.render();
+            this.still = true;
+            this.msaaRenderPass.sampleLevel = prevSampleLevel;
+            console.log("still")
+        }else if( this.stats.avgDuration > 30 && this.msaaRenderPass.sampleLevel > 0 ){
+            this.msaaRenderPass.sampleLevel = Math.max( 0, this.msaaRenderPass.sampleLevel - 1 );
+            console.log("down", this.msaaRenderPass.sampleLevel)
+        }else if( this.stats.avgDuration < 17 && this.msaaRenderPass.sampleLevel < 2 && this.stats.count > 20 ){
+            this.msaaRenderPass.sampleLevel = Math.min( 2, this.msaaRenderPass.sampleLevel + 1 );
+            console.log("up", this.msaaRenderPass.sampleLevel)
+            this.stats.count = 0;
+        }
 
         // spin
 
         var p = this.params;
 
         if( p.spinAxis && p.spinAngle ){
-
             this.rotate( p.spinAxis, p.spinAngle );
             this.requestRender();
-
         }
+
+        requestAnimationFrame( this._animate );
 
     },
 
@@ -1568,21 +1572,22 @@ NGL.Viewer.prototype = {
             return;
         }
 
+        if( performance.now() - this.stats.startTime > 22 ){
+        // if( this.still ){
+            this.stats.begin();
+            this.still = false;
+        }
+
         this._renderPending = true;
-        requestAnimationFrame( this.render.bind( this ) );
+        // requestAnimationFrame( this._render );
+        requestAnimationFrame( function(){
+            this.render();
+            this.stats.update();
+        }.bind( this ) );
 
     },
 
-    render: function( e, picking, tileing ){
-
-        // NGL.time( "Viewer.render" );
-
-        if( this._rendering ){
-            NGL.warn( "tried to call 'render' from within 'render'" );
-            return;
-        }
-
-        this._rendering = true;
+    updateClipping: function(){
 
         var p = this.params;
         var camera = this.camera;
@@ -1599,8 +1604,8 @@ NGL.Viewer.prototype = {
         }
         this.cDist = cDist;
 
-        var bRadius = Math.max( 10, this.boundingBox.size().length() * 0.5 );
-        if( bRadius === Infinity || bRadius === -Infinity ){
+        var bRadius = Math.max( 10, this.boundingBox.size( this.distVector ).length() * 0.5 );
+        if( bRadius === Infinity || bRadius === -Infinity || bRadius === NaN ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
         }
@@ -1623,7 +1628,11 @@ NGL.Viewer.prototype = {
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
-        // camera
+    },
+
+    updateCamera: function( tileing ){
+
+        var camera = this.camera;
 
         camera.updateMatrix();
         camera.updateMatrixWorld( true );
@@ -1633,7 +1642,12 @@ NGL.Viewer.prototype = {
         this.updateMaterialUniforms( this.scene, camera );
         this.sortProjectedPosition( this.scene, camera );
 
-        // light
+    },
+
+    updateLights: function(){
+
+        var p = this.params;
+        var camera = this.camera;
 
         var pointLight = this.pointLight;
         pointLight.position.copy( camera.position ).multiplyScalar( 100 );
@@ -1644,6 +1658,26 @@ NGL.Viewer.prototype = {
         var ambientLight = this.ambientLight;
         ambientLight.color.set( p.ambientColor );
         ambientLight.intensity = p.ambientIntensity;
+
+    },
+
+    render: function( e, picking, tileing ){
+
+        if( this._rendering ){
+            NGL.warn( "tried to call 'render' from within 'render'" );
+            return;
+        }
+
+        // NGL.time( "Viewer.render" );
+
+        this._rendering = true;
+
+        // var p = this.params;
+        var camera = this.camera;
+
+        this.updateClipping();
+        this.updateCamera();
+        this.updateLights();
 
         // render
 
@@ -1666,7 +1700,7 @@ NGL.Viewer.prototype = {
 
         }else{
 
-            this.renderer.clear();
+            // this.renderer.clear();
 
             // this.renderer.render( this.backgroundGroup, camera );
             // this.renderer.clearDepth();

@@ -22,29 +22,6 @@ THREE.ManualMSAARenderPass = function ( scene, camera, params ) {
 	this.params.maxFilter = THREE.NearestFilter;
 	this.enabled = true;
 
-	this.sampleRenderTarget = new THREE.WebGLRenderTarget(
-		1024,
-		1024,
-		{
-			minFilter: THREE.NearestFilter,
-			magFilter: THREE.NearestFilter,
-			format: THREE.RGBAFormat,
-			type: THREE.FloatType
-		}
-	);
-
-	this.holdRenderTarget = new THREE.WebGLRenderTarget(
-		1024,
-		1024,
-		{
-			minFilter: THREE.NearestFilter,
-			magFilter: THREE.NearestFilter,
-			format: THREE.RGBAFormat,
-			type: THREE.FloatType
-		}
-	);
-	this.holdRenderTarget.texture.generateMipmaps = false;
-
 	this.needsSwap = true;
 
 	if ( THREE.CompositeShader === undefined ) {
@@ -91,15 +68,21 @@ THREE.ManualMSAARenderPass.prototype = {
 			this.sampleRenderTarget.dispose();
 			this.sampleRenderTarget = null;
 
+			this.holdRenderTarget.dispose();
+			this.holdRenderTarget = null;
+
 		}
 
 	},
 
-
 	setSize: function ( width, height ) {
 
-		this.sampleRenderTarget.setSize( width, height );
-		this.holdRenderTarget.setSize( width, height );
+		if( this.sampleRenderTarget ){
+
+			this.sampleRenderTarget.setSize( width || 1, height || 1 );
+			this.holdRenderTarget.setSize( width || 1, height || 1 );
+
+		}
 
 	},
 
@@ -115,12 +98,32 @@ THREE.ManualMSAARenderPass.prototype = {
 
 		}
 
-		// if ( ! this.sampleRenderTarget ) {
+		if( !this.sampleRenderTarget ){
 
-		// 	console.log(readBuffer.width, readBuffer.height, this.params)
-		// 	this.sampleRenderTarget = new THREE.WebGLRenderTarget( readBuffer.width, readBuffer.height, this.params );
+			var size = renderer.getSize();
 
-		// }
+			this.sampleRenderTarget = new THREE.WebGLRenderTarget(
+				writeBuffer.width || 1,
+				writeBuffer.height || 1,
+				{
+					minFilter: THREE.NearestFilter,
+					magFilter: THREE.NearestFilter,
+					format: THREE.RGBAFormat,
+				}
+			);
+
+			this.holdRenderTarget = new THREE.WebGLRenderTarget(
+				writeBuffer.width || 1,
+				writeBuffer.height || 1,
+				{
+					minFilter: THREE.NearestFilter,
+					magFilter: THREE.NearestFilter,
+					format: THREE.RGBAFormat,
+					type: THREE.HalfFloatType
+				}
+			);
+
+		}
 
 		var clearColor = renderer.getClearColor().clone();
 		var clearAlpha = renderer.getClearAlpha();

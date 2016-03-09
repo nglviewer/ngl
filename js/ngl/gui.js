@@ -312,7 +312,7 @@ NGL.ToolbarWidget = function( stage ){
             .clear()
             .add(
                 new UI.Text(
-                    stage.viewer.stats.lastDuration + " ms | " +
+                    stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
                     stage.viewer.stats.lastFps + " fps"
                 )
             );
