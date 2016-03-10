@@ -770,8 +770,8 @@ NGL.Stats.prototype = {
         this.lastDuration = time - this.startTime;
         this.minDuration = Math.min( this.minDuration, this.lastDuration );
         this.maxDuration = Math.max( this.maxDuration, this.lastDuration );
-        this.avgDuration -= this.avgDuration / 20;
-        this.avgDuration += this.lastDuration / 20;
+        this.avgDuration -= this.avgDuration / 30;
+        this.avgDuration += this.lastDuration / 30;
 
         if( time > this.prevFpsTime + 1000 ) {
             this.lastFps = this.frames;
@@ -1572,6 +1572,7 @@ NGL.Viewer.prototype = {
             if( this.stats.avgDuration > 30 ){
                 this.sampleLevel = Math.max( 0, this.sampleLevel - 1 );
                 if( NGL.debug ) NGL.log( "sample level down", this.sampleLevel );
+                this.stats.count = 0;
             }else if( this.stats.avgDuration < 17 && this.stats.count > 20 ){
                 this.sampleLevel = Math.min( 5, this.sampleLevel + 1 );
                 if( NGL.debug ) NGL.log( "sample level up", this.sampleLevel );
@@ -1585,7 +1586,7 @@ NGL.Viewer.prototype = {
         var p = this.params;
 
         if( p.spinAxis && p.spinAngle ){
-            this.rotate( p.spinAxis, p.spinAngle );
+            this.rotate( p.spinAxis, p.spinAngle * this.stats.lastDuration / 16 );
             this.requestRender();
         }
 
