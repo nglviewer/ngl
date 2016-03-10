@@ -1007,22 +1007,9 @@ NGL.Viewer.prototype = {
         } );
 
         this.compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-        this.compositeScene = new THREE.Scene();
-        this.compositeScene.add( new THREE.Mesh(
+        this.compositeScene = new THREE.Scene().add( new THREE.Mesh(
             new THREE.PlaneGeometry( 2, 2 ), this.compositeMaterial
         ) );
-
-        // post processing
-
-        // this.composer = new THREE.EffectComposer( this.renderer );
-        // this.msaaRenderPass = new THREE.ManualMSAARenderPass( this.modelGroup,  this.camera );
-        // this.msaaRenderPass.sampleLevel = 2;
-        // this.composer.addPass( this.msaaRenderPass );
-        // this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
-        // this.copyPass.renderToScreen = true;
-        // this.composer.addPass( this.copyPass );
-
-        // this.msaaRenderPass.fn = this.__updateCamera.bind( this );
 
     },
 
@@ -1470,6 +1457,10 @@ NGL.Viewer.prototype = {
 
         this.controls.handleResize();
 
+        if( this.params.sampleLevel === -1 ){
+            this.sampleLevel = 0;
+        }
+
         this.requestRender();
 
     },
@@ -1566,7 +1557,7 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 60 && !this.still && this.sampleLevel < 3 ){
+        if( performance.now() - this.stats.startTime > 200 && !this.still && this.sampleLevel < 3 ){
 
             var currentSampleLevel = this.sampleLevel;
             this.sampleLevel = 3;
@@ -1900,7 +1891,7 @@ NGL.Viewer.prototype = {
 
             this.__renderPickingGroup();
 
-        }else if( this.sampleLevel > 0 ){
+        }else if( this.sampleLevel > 0 && !tileing ){
 
             this.__renderMultiSample();
 
