@@ -891,7 +891,7 @@ NGL.Viewer.prototype = {
             ambientIntensity: 0.2,
 
             holdRendering: false,
-            sampleLevel: -1
+            sampleLevel: 0
 
         };
 
@@ -1573,7 +1573,7 @@ NGL.Viewer.prototype = {
                 this.sampleLevel = Math.max( 0, this.sampleLevel - 1 );
                 if( NGL.debug ) NGL.log( "sample level down", this.sampleLevel );
                 this.stats.count = 0;
-            }else if( this.stats.avgDuration < 17 && this.stats.count > 20 ){
+            }else if( this.stats.avgDuration < 17 && this.stats.count > 60 ){
                 this.sampleLevel = Math.min( 5, this.sampleLevel + 1 );
                 if( NGL.debug ) NGL.log( "sample level up", this.sampleLevel );
                 this.stats.count = 0;
