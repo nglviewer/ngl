@@ -407,6 +407,9 @@ NGL.Stage.prototype = {
             this.handleResize();
             this.signals.fullscreenChanged.dispatch( true );
 
+            // workaround for Safari
+            setTimeout( function(){ self.handleResize() }, 100 );
+
         }else{
 
             if( document.exitFullscreen ){
