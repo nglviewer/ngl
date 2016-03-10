@@ -1,11 +1,11 @@
+varying vec2 vUv;
 
-precision mediump float;
-precision mediump int;
+uniform sampler2D tForeground;
+uniform float scale;
 
-uniform sampler2D diffuse;
-varying vec2 texCoord;
+void main() {
 
-void main(void) {
-    vec4 color = texture2D(diffuse, texCoord);
-    gl_FragColor = vec4(color.rgb, color.a);
+    vec4 foreground = texture2D( tForeground, vUv );
+    gl_FragColor = foreground * scale;
+
 }

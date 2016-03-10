@@ -26,8 +26,8 @@ NGL.Resources = {
     // 'shader/ParticleSprite.frag': null,
     'shader/Point.vert': null,
     'shader/Point.frag': null,
-    // 'shader/Quad.vert': null,
-    // 'shader/Quad.frag': null,
+    'shader/Quad.vert': null,
+    'shader/Quad.frag': null,
     'shader/Ribbon.vert': null,
     'shader/SDFFont.vert': null,
     'shader/SDFFont.frag': null,
@@ -676,6 +676,46 @@ NGL.trimCanvas = function( canvas, r, g, b, a ){
 }
 
 
+NGL.JitterVectors = [
+    [
+        [ 0, 0 ]
+    ],
+    [
+        [ 4, 4 ], [ - 4, - 4 ]
+    ],
+    [
+        [ - 2, - 6 ], [ 6, - 2 ], [ - 6, 2 ], [ 2, 6 ]
+    ],
+    [
+        [ 1, - 3 ], [ - 1, 3 ], [ 5, 1 ], [ - 3, - 5 ],
+        [ - 5, 5 ], [ - 7, - 1 ], [ 3, 7 ], [ 7, - 7 ]
+    ],
+    [
+        [ 1, 1 ], [ - 1, - 3 ], [ - 3, 2 ], [ 4, - 1 ],
+        [ - 5, - 2 ], [ 2, 5 ], [ 5, 3 ], [ 3, - 5 ],
+        [ - 2, 6 ], [ 0, - 7 ], [ - 4, - 6 ], [ - 6, 4 ],
+        [ - 8, 0 ], [ 7, - 4 ], [ 6, 7 ], [ - 7, - 8 ]
+    ],
+    [
+        [ - 4, - 7 ], [ - 7, - 5 ], [ - 3, - 5 ], [ - 5, - 4 ],
+        [ - 1, - 4 ], [ - 2, - 2 ], [ - 6, - 1 ], [ - 4, 0 ],
+        [ - 7, 1 ], [ - 1, 2 ], [ - 6, 3 ], [ - 3, 3 ],
+        [ - 7, 6 ], [ - 3, 6 ], [ - 5, 7 ], [ - 1, 7 ],
+        [ 5, - 7 ], [ 1, - 6 ], [ 6, - 5 ], [ 4, - 4 ],
+        [ 2, - 3 ], [ 7, - 2 ], [ 1, - 1 ], [ 4, - 1 ],
+        [ 2, 1 ], [ 6, 2 ], [ 0, 4 ], [ 4, 4 ],
+        [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
+    ]
+];
+NGL.JitterVectors.forEach( function( offsetList ){
+    offsetList.forEach( function( offset ){
+        // 0.0625 = 1 / 16
+        offset[ 0 ] *= 0.0625;
+        offset[ 1 ] *= 0.0625;
+    } );
+} );
+
+
 //////////
 // Stats
 
@@ -850,7 +890,8 @@ NGL.Viewer.prototype = {
             ambientColor: new THREE.Color( 0xdddddd ),
             ambientIntensity: 0.2,
 
-            holdRendering: false
+            holdRendering: false,
+            sampleLevel: -1
 
         };
 
@@ -920,17 +961,68 @@ NGL.Viewer.prototype = {
         );
         this.pickingTarget.texture.generateMipmaps = false;
 
+        // msaa textures
+
+        this.sampleLevel = 0;
+
+        this.sampleTarget = new THREE.WebGLRenderTarget(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+            }
+        );
+
+        this.holdTarget = new THREE.WebGLRenderTarget(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.HalfFloatType
+            }
+        );
+
+        this.compositeUniforms = {
+            "tForeground": { type: "t", value: null },
+            "scale": { type: "f", value: 1.0 }
+        };
+
+        this.compositeMaterial = new THREE.ShaderMaterial( {
+            uniforms: this.compositeUniforms,
+            vertexShader: NGL.getShader( "Quad.vert" ),
+            fragmentShader: NGL.getShader( "Quad.frag" ),
+            transparent: true,
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.OneFactor,
+            blendDst: THREE.OneFactor,
+            blendSrcAlpha: THREE.OneFactor,
+            blendDstAlpha: THREE.OneFactor,
+            blendEquation: THREE.AddEquation,
+            depthTest: false,
+            depthWrite: false
+        } );
+
+        this.compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+        this.compositeScene = new THREE.Scene();
+        this.compositeScene.add( new THREE.Mesh(
+            new THREE.PlaneGeometry( 2, 2 ), this.compositeMaterial
+        ) );
+
         // post processing
 
-        this.composer = new THREE.EffectComposer( this.renderer );
-        this.msaaRenderPass = new THREE.ManualMSAARenderPass( this.modelGroup,  this.camera );
-        this.msaaRenderPass.sampleLevel = 2;
-        this.composer.addPass( this.msaaRenderPass );
-        this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
-        this.copyPass.renderToScreen = true;
-        this.composer.addPass( this.copyPass );
+        // this.composer = new THREE.EffectComposer( this.renderer );
+        // this.msaaRenderPass = new THREE.ManualMSAARenderPass( this.modelGroup,  this.camera );
+        // this.msaaRenderPass.sampleLevel = 2;
+        // this.composer.addPass( this.msaaRenderPass );
+        // this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
+        // this.copyPass.renderToScreen = true;
+        // this.composer.addPass( this.copyPass );
 
-        this.msaaRenderPass.fn = this.__updateCamera.bind( this );
+        // this.msaaRenderPass.fn = this.__updateCamera.bind( this );
 
     },
 
@@ -1291,6 +1383,17 @@ NGL.Viewer.prototype = {
 
     },
 
+    setSampling: function( level ){
+
+        if( level !== undefined ){
+            this.params.sampleLevel = level;
+            this.sampleLevel = level;
+        }
+
+        this.requestRender();
+
+    },
+
     setCamera: function( type, fov ){
 
         var p = this.params;
@@ -1352,18 +1455,17 @@ NGL.Viewer.prototype = {
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
 
-        this.composer.setSize(
-            Math.floor( this.width * window.devicePixelRatio ),
-            Math.floor( this.height * window.devicePixelRatio )
-        );
-        this.msaaRenderPass.setSize(
-            Math.floor( this.width * window.devicePixelRatio ),
-            Math.floor( this.height * window.devicePixelRatio )
-        );
-
         this.pickingTarget.setSize(
-            Math.floor( this.width * window.devicePixelRatio ),
-            Math.floor( this.height * window.devicePixelRatio )
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio
+        );
+        this.sampleTarget.setSize(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio
+        );
+        this.holdTarget.setSize(
+            this.width * window.devicePixelRatio,
+            this.height * window.devicePixelRatio
         );
 
         this.controls.handleResize();
@@ -1464,21 +1566,27 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 60 && !this.still && this.msaaRenderPass.sampleLevel < 2 ){
-            var prevSampleLevel = this.msaaRenderPass.sampleLevel;
-            this.msaaRenderPass.sampleLevel = 2;
+        if( performance.now() - this.stats.startTime > 60 && !this.still && this.sampleLevel < 3 ){
+
+            var currentSampleLevel = this.sampleLevel;
+            this.sampleLevel = 3;
             this._renderPending = true;
             this.render();
             this.still = true;
-            this.msaaRenderPass.sampleLevel = prevSampleLevel;
-            console.log("still")
-        }else if( this.stats.avgDuration > 30 && this.msaaRenderPass.sampleLevel > 0 ){
-            this.msaaRenderPass.sampleLevel = Math.max( 0, this.msaaRenderPass.sampleLevel - 1 );
-            console.log("down", this.msaaRenderPass.sampleLevel)
-        }else if( this.stats.avgDuration < 17 && this.msaaRenderPass.sampleLevel < 2 && this.stats.count > 20 ){
-            this.msaaRenderPass.sampleLevel = Math.min( 2, this.msaaRenderPass.sampleLevel + 1 );
-            console.log("up", this.msaaRenderPass.sampleLevel)
-            this.stats.count = 0;
+            this.sampleLevel = currentSampleLevel;
+            if( NGL.debug ) NGL.log( "rendered still frame" );
+
+        }else if( this.params.sampleLevel === -1 ){
+
+            if( this.stats.avgDuration > 30 ){
+                this.sampleLevel = Math.max( 0, this.sampleLevel - 1 );
+                if( NGL.debug ) NGL.log( "sample level down", this.sampleLevel );
+            }else if( this.stats.avgDuration < 17 && this.stats.count > 20 ){
+                this.sampleLevel = Math.min( 5, this.sampleLevel + 1 );
+                if( NGL.debug ) NGL.log( "sample level up", this.sampleLevel );
+                this.stats.count = 0;
+            }
+
         }
 
         // spin
@@ -1572,8 +1680,8 @@ NGL.Viewer.prototype = {
             return;
         }
 
+        // start gathering stats anew after inactivity
         if( performance.now() - this.stats.startTime > 22 ){
-        // if( this.still ){
             this.stats.begin();
             this.still = false;
         }
@@ -1668,7 +1776,7 @@ NGL.Viewer.prototype = {
             this.pickingGroup, this.camera, this.pickingTarget
         );
         this.updateInfo();
-        this.renderer.setRenderTarget();  // back to standard render target
+        this.renderer.setRenderTarget( null );  // back to standard render target
 
         if( NGL.debug ){
             this.renderer.clear();
@@ -1678,19 +1786,90 @@ NGL.Viewer.prototype = {
 
     },
 
-    __renderModelGroup: function(){
+    __renderModelGroup: function( renderTarget ){
 
-        this.renderer.clear();
+        if( renderTarget ){
+            this.renderer.clearTarget( renderTarget );
+        }else{
+            this.renderer.clear();
+        }
 
-        this.renderer.render( this.backgroundGroup, this.camera );
-        this.renderer.clearDepth();
+        this.renderer.render( this.backgroundGroup, this.camera, renderTarget );
+        if( renderTarget ){
+            this.renderer.clearTarget( renderTarget, undefined, true, undefined );
+        }else{
+            this.renderer.clearDepth();
+        }
         this.updateInfo();
 
-        this.renderer.render( this.modelGroup, this.camera );
+        this.renderer.render( this.modelGroup, this.camera, renderTarget );
         this.updateInfo();
 
         if( NGL.debug ){
-            this.renderer.render( this.helperGroup, this.camera );
+            this.renderer.render( this.helperGroup, this.camera, renderTarget );
+        }
+
+    },
+
+    __renderMultiSample: function(){
+
+        // based on the Manual Multi-Sample Anti-Aliasing Render Pass
+        // contributed to three.js
+        // by bhouston / http://clara.io/
+        //
+        // This manual approach to MSAA re-renders the scene ones for
+        // each sample with camera jitter and accumulates the results.
+        // References: https://en.wikipedia.org/wiki/Multisample_anti-aliasing
+
+        var camera = this.camera;
+        var offsetList = NGL.JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
+
+        this.compositeUniforms[ "scale" ].value = 1.0 / offsetList.length;
+        this.compositeUniforms[ "tForeground" ].value = this.sampleTarget;
+        this.compositeUniforms[ "tForeground" ].needsUpdate = true;
+        this.compositeMaterial.needsUpdate = true;
+
+        // this.renderer.setRenderTarget( this.sampleTarget );
+        var width = this.sampleTarget.width;
+        var height = this.sampleTarget.height;
+
+        // render the scene multiple times, each slightly jitter offset
+        // from the last and accumulate the results.
+        for ( var i = 0; i < offsetList.length; ++i ){
+
+            // only jitters perspective cameras.
+            // TODO: add support for jittering orthogonal cameras
+            var offset = offsetList[ i ];
+            if( camera.setViewOffset ){
+                camera.setViewOffset(
+                    width, height, offset[ 0 ], offset[ 1 ], width, height
+                );
+            }
+            this.__updateCamera();
+
+            this.__renderModelGroup( this.sampleTarget );
+            this.renderer.render(
+                this.compositeScene, this.compositeCamera, this.holdTarget, ( i === 0 )
+            );
+
+        }
+
+        this.renderer.setRenderTarget( null );
+
+        this.compositeUniforms[ "scale" ].value = 1.0;
+        this.compositeUniforms[ "tForeground" ].value = this.holdTarget;
+        this.compositeUniforms[ "tForeground" ].needsUpdate = true;
+        this.compositeMaterial.needsUpdate = true;
+
+        this.renderer.clear();
+        this.renderer.render( this.compositeScene, this.compositeCamera );
+
+        // reset jitter to nothing.
+        // TODO: add support for orthogonal cameras
+        if ( camera.setViewOffset ){
+            camera.setViewOffset(
+                undefined, undefined, undefined, undefined, undefined, undefined
+            );
         }
 
     },
@@ -1710,7 +1889,7 @@ NGL.Viewer.prototype = {
         var camera = this.camera;
 
         this.__updateClipping();
-        this.__updateCamera();
+        this.__updateCamera( tileing );
         this.__updateLights();
 
         // render
@@ -1721,10 +1900,13 @@ NGL.Viewer.prototype = {
 
             this.__renderPickingGroup();
 
+        }else if( this.sampleLevel > 0 ){
+
+            this.__renderMultiSample();
+
         }else{
 
-            // this.__renderModelGroup();
-            this.composer.render();
+            this.__renderModelGroup();
 
         }
 

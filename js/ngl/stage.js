@@ -77,8 +77,8 @@ NGL.Stage.prototype = {
         quality: {
             type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
         },
-        antialiasLevel: {
-            type: "range", step: 1, max: 5, min: 0
+        sampleLevel: {
+            type: "range", step: 1, max: 5, min: -1
         },
         impostor: {
             type: "boolean"
@@ -150,7 +150,6 @@ NGL.Stage.prototype = {
         // apply parameters
         if( p.theme !== undefined ) this.setTheme( p.theme );
         if( p.quality !== undefined ) this.setQuality( p.quality );
-        if( p.antialiasLevel !== undefined ) this.viewer.msaaRenderPass.sampleLevel = p.antialiasLevel;
         if( p.impostor !== undefined ) this.setImpostor( p.impostor );
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
@@ -158,6 +157,7 @@ NGL.Stage.prototype = {
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( undefined, p.cameraFov );
+        viewer.setSampling( p.sampleLevel );
         viewer.setLight(
             p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
         );
@@ -859,7 +859,7 @@ NGL.Preferences = function( id, defaultParams ){
     this.storage = {
         impostor: true,
         quality: "medium",
-        antialiasLevel: 2,
+        sampleLevel: 0,
         theme: "dark",
         overview: true,
         rotateSpeed: 2.0,
