@@ -1420,20 +1420,10 @@ NGL.Viewer.prototype = {
 
     },
 
-    handleResize: function(){
+    setSize: function( width, height ){
 
-        if( this.container === document ){
-
-            this.width = window.innerWidth;
-            this.height = window.innerHeight;
-
-        }else{
-
-            var box = this.container.getBoundingClientRect();
-            this.width = box.width;
-            this.height = box.height;
-
-        }
+        this.width = width;
+        this.height = height;
 
         this.aspect = this.width / this.height;
         this.perspectiveCamera.aspect = this.aspect;
@@ -1462,6 +1452,21 @@ NGL.Viewer.prototype = {
         }
 
         this.requestRender();
+
+    },
+
+    handleResize: function(){
+
+        if( this.container === document ){
+
+            this.setSize( window.innerWidth, window.innerHeight );
+
+        }else{
+
+            var box = this.container.getBoundingClientRect();
+            this.setSize( box.width, box.height );
+
+        }
 
     },
 
