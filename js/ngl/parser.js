@@ -701,7 +701,7 @@ NGL.calculateResidueBonds = function( r ){
 };
 
 
-NGL.calculateBondsWithin = function( structure ){
+NGL.calculateBondsWithin = function( structure, onlyAddRung ){
 
     if( NGL.debug ) NGL.time( "NGL.calculateBondsWithin" );
 
@@ -713,29 +713,33 @@ NGL.calculateBondsWithin = function( structure ){
 
     structure.eachResidue( function( r ){
 
-        var count = r.atomCount;
-        var offset = r.atomOffset;
-        var end = offset + count;
-        var end1 = end - 1;
+        if( !onlyAddRung ){
 
-        if( count > 500 ){
-            NGL.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
-            return;
-        }
+            var count = r.atomCount;
+            var offset = r.atomOffset;
+            var end = offset + count;
+            var end1 = end - 1;
 
-        var resname = r.resname;
-        var equalAtomnames = false;
+            if( count > 500 ){
+                NGL.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
+                return;
+            }
 
-        var bonds = r.getBonds();
+            var resname = r.resname;
+            var equalAtomnames = false;
 
-        var atomIndices1 = bonds.atomIndices1;
-        var atomIndices2 = bonds.atomIndices2;
-        var nn = atomIndices1.length;
+            var bonds = r.getBonds();
 
-        for( var i = 0; i < nn; ++i ){
-            a1.index = atomIndices1[ i ] + offset;
-            a2.index = atomIndices2[ i ] + offset;
-            bondStore.addBond( a1, a2 );
+            var atomIndices1 = bonds.atomIndices1;
+            var atomIndices2 = bonds.atomIndices2;
+            var nn = atomIndices1.length;
+
+            for( var i = 0; i < nn; ++i ){
+                a1.index = atomIndices1[ i ] + offset;
+                a2.index = atomIndices2[ i ] + offset;
+                bondStore.addBond( a1, a2 );
+            }
+
         }
 
         // get RNA/DNA rung pseudo bonds
@@ -758,7 +762,7 @@ NGL.calculateBondsWithin = function( structure ){
 };
 
 
-NGL.calculateBondsBetween = function( structure ){
+NGL.calculateBondsBetween = function( structure, onlyAddBackbone ){
 
     if( NGL.debug ) NGL.time( "NGL.calculateBondsBetween" );
 
@@ -778,7 +782,10 @@ NGL.calculateBondsBetween = function( structure ){
         if( bbType1 !== NGL.UnknownBackboneType && bbType1 === bbType2 ){
             ap1.index = rp1.backboneEndAtomIndex;
             ap2.index = rp2.backboneStartAtomIndex;
-            if( bondStore.addBondIfConnected( ap1, ap2 ) ){
+            if( ap1.connectedTo( ap2 ) ){
+                if( !onlyAddBackbone ){
+                    bondStore.addBond( ap1, ap2 );
+                }
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;
                 backboneBondStore.addBond( ap1, ap2 );
@@ -3257,7 +3264,7 @@ NGL.MmtfParser = function( streamer, params ){
     NGL.StructureParser.call( this, streamer, params );
 
     this.dontAutoBond = true;
-    this.autoBondBetween = true;
+    this.autoBondBetween = false;
     this.doAutoSS = false;
 
 };
@@ -3416,6 +3423,13 @@ NGL.MmtfParser.prototype = NGL.createObject(
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
+
+        // calculate backbone bonds
+        NGL.calculateBondsBetween( s, true );
+
+        // calculate rung bonds
+        NGL.calculateBondsWithin( s, true );
+
         callback();
 
     }
