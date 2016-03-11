@@ -23,6 +23,5 @@
 	#endif
 
 	gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
-	gl_FragColor.a = 1.0 - fogFactor * gl_FragColor.a;
 
 #endif
