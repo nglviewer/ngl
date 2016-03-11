@@ -492,17 +492,52 @@ NGL.Selection.prototype = {
                 sele = {
                     operator: "OR",
                     rules: [
+                        { keyword: kwd.SIDECHAIN },
+                        {
+                            operator: "AND",
+                            negate: false,
+                            rules: [
+                                { keyword: kwd.PROTEIN },
+                                {
+                                    operator: "OR",
+                                    negate: false,
+                                    rules: [
+                                        { atomname: "CA" },
+                                        { atomname: "BB" }
+                                    ]
+                                }
+                            ]
+                        },
                         {
                             operator: "AND",
                             negate: false,
                             rules: [
                                 { resname: "PRO" },
-                                { atomname: "N" },
+                                { atomname: "N" }
                             ]
                         },
-                        { keyword: kwd.SIDECHAIN },
-                        { atomname: "CA" },
-                        { atomname: "BB" }
+                        {
+                            operator: "AND",
+                            negate: false,
+                            rules: [
+                                { keyword: kwd.NUCLEIC },
+                                {
+                                    operator: "OR",
+                                    negate: true,
+                                    rules: [
+                                        { atomname: "P" },
+                                        { atomname: "OP1" },
+                                        { atomname: "OP2" },
+                                        { atomname: "O3'" },
+                                        { atomname: "O3*" },
+                                        { atomname: "O5'" },
+                                        { atomname: "O5*" },
+                                        { atomname: "C5'" },
+                                        { atomname: "C5*" }
+                                    ]
+                                }
+                            ]
+                        }
                     ]
                 };
                 pushRule( sele );
