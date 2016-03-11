@@ -829,7 +829,7 @@ NGL.Viewer = function( eid, params ){
     this.initRenderer();
     this.initControls();
     this.initStats();
-    if( NGL.debug ) this.initHelper();
+    this.initHelper();
 
     this._render = this.render.bind( this );
     this._animate = this.animate.bind( this );
@@ -1035,11 +1035,9 @@ NGL.Viewer.prototype = {
         this.backgroundGroup.name = "backgroundGroup";
         this.rotationGroup.add( this.backgroundGroup );
 
-        if( NGL.debug ){
-            this.helperGroup = new THREE.Group();
-            this.helperGroup.name = "helperGroup";
-            this.rotationGroup.add( this.helperGroup );
-        }
+        this.helperGroup = new THREE.Group();
+        this.helperGroup.name = "helperGroup";
+        this.rotationGroup.add( this.helperGroup );
 
         // fog
 
@@ -1070,7 +1068,7 @@ NGL.Viewer.prototype = {
         var bbGeometry = new THREE.BufferGeometry();
         bbGeometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
         bbGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-        var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue" } );
+        var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
 
         this.boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
         this.helperGroup.add( this.boundingBoxMesh );

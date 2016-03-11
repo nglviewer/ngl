@@ -629,32 +629,36 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // event handlers
 
-    function onDocOptionClick () {
-        window.open( NGL.documentationUrl, '_blank' );
-    }
-
-    function onPreferencesOptionClick () {
-
-        preferencesWidget
-            .setOpacity( "0.9" )
-            .setLeft( "50px" )
-            .setTop( "80px" )
-            .setDisplay( "block" );
-
-        return;
-
-    }
-
     function onOverviewOptionClick () {
-
         overviewWidget
             .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
+    }
 
-        return;
+    function onDocOptionClick () {
+        window.open( NGL.documentationUrl, '_blank' );
+    }
 
+    function onDebugOnClick(){
+        NGL.debug = true;
+        stage.viewer.updateHelper();
+        stage.viewer.requestRender();
+    }
+
+    function onDebugOffClick(){
+        NGL.debug = false;
+        stage.viewer.updateHelper();
+        stage.viewer.requestRender();
+    }
+
+    function onPreferencesOptionClick () {
+        preferencesWidget
+            .setOpacity( "0.9" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
     }
 
     // export image
@@ -681,6 +685,9 @@ NGL.MenubarHelpWidget = function( stage ){
     var menuConfig = [
         createOption( 'Overview', onOverviewOptionClick ),
         createOption( 'Documentation', onDocOptionClick ),
+        createDivider(),
+        createOption( 'Debug on', onDebugOnClick ),
+        createOption( 'Debug off', onDebugOffClick ),
         createDivider(),
         createOption( 'Prefereces', onPreferencesOptionClick, 'sliders' )
     ];
