@@ -2425,7 +2425,7 @@ NGL.screenshot = function( viewer, params ){
             var r = ( bg.r * 255 ) | 0;
             var g = ( bg.g * 255 ) | 0;
             var b = ( bg.b * 255 ) | 0;
-            var a = 0;
+            var a = 0 | 0;
             canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
         }else{
             canvas = tiledRenderer.canvas;
