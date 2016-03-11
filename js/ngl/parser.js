@@ -3304,7 +3304,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
         s.residueStore.atomOffset = sd.groupStore.atomOffset;
         s.residueStore.atomCount = sd.groupStore.atomCount;
-        s.residueStore.resno = sd.groupStore.groupNum;
+        s.residueStore.resno = sd.groupStore.groupId;
         s.residueStore.sstruc = sd.groupStore.secStruct;
 
         s.chainStore.length = sd.numChains;
