@@ -3320,7 +3320,7 @@ NGL.ToolbarWidget = function( stage ){
             .clear()
             .add(
                 new UI.Text(
-                    stage.viewer.stats.lastDuration + " ms | " +
+                    stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
                     stage.viewer.stats.lastFps + " fps"
                 )
             );
@@ -3365,7 +3365,7 @@ NGL.MenubarWidget = function( stage ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
-        "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
+        "pdb", "pdb1", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
         "mmtf",
         "mrc", "ccp4", "map", "cube", "dx", "dxbin",
         "obj", "ply",
@@ -3445,11 +3445,9 @@ NGL.MenubarFileWidget = function( stage ){
 
         stage.viewer.screenshot( {
             factor: 1,
-            type: "image/png",
-            quality: 1.0,
             antialias: true,
-            transparent: false,
-            trim: false
+            trim: false,
+            transparent: false
         } );
 
     }
@@ -3539,6 +3537,14 @@ NGL.MenubarViewWidget = function( stage ){
         stage.centerView();
     }
 
+    function onSpinOnClick(){
+        stage.setSpin( [ 0, 1, 0 ], 0.01 );
+    }
+
+    function onSpinOffClick(){
+        stage.setSpin( null, null );
+    }
+
     function onGetOrientationClick(){
         window.prompt(
             "Orientation",
@@ -3566,6 +3572,9 @@ NGL.MenubarViewWidget = function( stage ){
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
+        createDivider(),
+        createOption( 'Spin on', onSpinOnClick ),
+        createOption( 'Spin off', onSpinOffClick ),
         createDivider(),
         createOption( 'Orientation', onGetOrientationClick ),
     ];
@@ -3628,32 +3637,36 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // event handlers
 
-    function onDocOptionClick () {
-        window.open( NGL.documentationUrl, '_blank' );
-    }
-
-    function onPreferencesOptionClick () {
-
-        preferencesWidget
-            .setOpacity( "0.9" )
-            .setLeft( "50px" )
-            .setTop( "80px" )
-            .setDisplay( "block" );
-
-        return;
-
-    }
-
     function onOverviewOptionClick () {
-
         overviewWidget
             .setOpacity( "0.9" )
             .setLeft( "50px" )
             .setTop( "80px" )
             .setDisplay( "block" );
+    }
 
-        return;
+    function onDocOptionClick () {
+        window.open( NGL.documentationUrl, '_blank' );
+    }
 
+    function onDebugOnClick(){
+        NGL.debug = true;
+        stage.viewer.updateHelper();
+        stage.viewer.requestRender();
+    }
+
+    function onDebugOffClick(){
+        NGL.debug = false;
+        stage.viewer.updateHelper();
+        stage.viewer.requestRender();
+    }
+
+    function onPreferencesOptionClick () {
+        preferencesWidget
+            .setOpacity( "0.9" )
+            .setLeft( "50px" )
+            .setTop( "80px" )
+            .setDisplay( "block" );
     }
 
     // export image
@@ -3680,6 +3693,9 @@ NGL.MenubarHelpWidget = function( stage ){
     var menuConfig = [
         createOption( 'Overview', onOverviewOptionClick ),
         createOption( 'Documentation', onDocOptionClick ),
+        createDivider(),
+        createOption( 'Debug on', onDebugOnClick ),
+        createOption( 'Debug off', onDebugOffClick ),
         createDivider(),
         createOption( 'Prefereces', onPreferencesOptionClick, 'sliders' )
     ];
@@ -3921,29 +3937,13 @@ NGL.ExportImageWidget = function( stage ){
         } )
         .setValue( "4" );
 
-    var typeSelect = new UI.Select()
-        .setOptions( {
-            "image/png": "PNG",
-            "image/jpeg": "JPEG",
-            // "image/webp": "WebP"
-        } )
-        .setValue( "image/png" );
-
-    var qualitySelect = new UI.Select()
-        .setOptions( {
-            "0.1": "0.1", "0.2": "0.2", "0.3": "0.3", "0.4": "0.4",
-            "0.5": "0.5", "0.6": "0.6", "0.7": "0.7", "0.8": "0.8",
-            "0.9": "0.9", "1.0": "1.0"
-        } )
-        .setValue( "1.0" );
-
     var antialiasCheckbox = new UI.Checkbox()
         .setValue( true );
 
-    var transparentCheckbox = new UI.Checkbox()
+    var trimCheckbox = new UI.Checkbox()
         .setValue( false );
 
-    var trimCheckbox = new UI.Checkbox()
+    var transparentCheckbox = new UI.Checkbox()
         .setValue( false );
 
     var progress = new UI.Progress()
@@ -3961,8 +3961,8 @@ NGL.ExportImageWidget = function( stage ){
 
                     parseInt( factorSelect.getValue() ),
                     antialiasCheckbox.getValue(),
-                    transparentCheckbox.getValue(),
                     trimCheckbox.getValue(),
+                    transparentCheckbox.getValue(),
 
                     function( i, n, finished ){
                         if( i === 1 ){
@@ -3995,11 +3995,9 @@ NGL.ExportImageWidget = function( stage ){
     }
 
     addEntry( "scale", factorSelect );
-    // addEntry( "type", typeSelect ); // commented out to always use png
-    // addEntry( "quality", qualitySelect ); // not available for png
     addEntry( "antialias", antialiasCheckbox );
-    addEntry( "transparent", transparentCheckbox ); // not available for jpeg
     addEntry( "trim", trimCheckbox );
+    addEntry( "transparent", transparentCheckbox );
 
     listingPanel.add(
         new UI.Break(),
