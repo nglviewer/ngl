@@ -2357,6 +2357,7 @@ NGL.screenshot = function( viewer, params ){
     var trim = p.trim!==undefined ? p.trim : false;
     var factor = p.factor!==undefined ? p.factor : false;
     var antialias = p.antialias!==undefined ? p.antialias : false;
+    var transparent = p.transparent!==undefined ? p.transparent : false;
 
     var renderer = viewer.renderer;
     var camera = viewer.camera;
@@ -2398,6 +2399,7 @@ NGL.screenshot = function( viewer, params ){
         }
     );
 
+    renderer.setClearAlpha( transparent ? 0 : 1 );
     setLineWidthAndPixelSize();
     tiledRenderer.renderAsync();
     // tiledRenderer.render();
@@ -2412,6 +2414,7 @@ NGL.screenshot = function( viewer, params ){
 
     function onFinish( i, n ){
         save( n );
+        renderer.setClearAlpha( originalClearAlpha );
         setLineWidthAndPixelSize( true );
         viewer.requestRender();
     }
@@ -2422,10 +2425,10 @@ NGL.screenshot = function( viewer, params ){
 
         if( trim ){
             var bg = backgroundColor;
-            var r = ( bg.r * 255 ) | 0;
-            var g = ( bg.g * 255 ) | 0;
-            var b = ( bg.b * 255 ) | 0;
-            var a = 0 | 0;
+            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
+            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
+            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
+            var a = ( transparent ? 0 : 255 ) | 0;
             canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
         }else{
             canvas = tiledRenderer.canvas;

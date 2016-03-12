@@ -437,9 +437,9 @@ NGL.MenubarFileWidget = function( stage ){
 
         stage.viewer.screenshot( {
             factor: 1,
-            quality: 1.0,
             antialias: true,
-            trim: false
+            trim: false,
+            transparent: false
         } );
 
     }
@@ -935,6 +935,9 @@ NGL.ExportImageWidget = function( stage ){
     var trimCheckbox = new UI.Checkbox()
         .setValue( false );
 
+    var transparentCheckbox = new UI.Checkbox()
+        .setValue( false );
+
     var progress = new UI.Progress()
         .setDisplay( "none" );
 
@@ -951,6 +954,7 @@ NGL.ExportImageWidget = function( stage ){
                     parseInt( factorSelect.getValue() ),
                     antialiasCheckbox.getValue(),
                     trimCheckbox.getValue(),
+                    transparentCheckbox.getValue(),
 
                     function( i, n, finished ){
                         if( i === 1 ){
@@ -985,6 +989,7 @@ NGL.ExportImageWidget = function( stage ){
     addEntry( "scale", factorSelect );
     addEntry( "antialias", antialiasCheckbox );
     addEntry( "trim", trimCheckbox );
+    addEntry( "transparent", transparentCheckbox );
 
     listingPanel.add(
         new UI.Break(),
