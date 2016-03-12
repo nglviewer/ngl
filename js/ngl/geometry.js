@@ -1746,13 +1746,13 @@ NGL.Kdtree.prototype = {
 ////////////
 // Contact
 
-NGL.Contact = function( atomSet1, atomSet2 ){
+NGL.Contact = function( sview1, sview2 ){
 
-    this.atomSet1 = atomSet1;
-    this.atomSet2 = atomSet2;
+    this.sview1 = sview1;
+    this.sview2 = sview2;
 
-    this.kdtree1 = new NGL.Kdtree( atomSet1 );
-    this.kdtree2 = new NGL.Kdtree( atomSet2 );
+    this.kdtree1 = new NGL.Kdtree( sview1 );
+    this.kdtree2 = new NGL.Kdtree( sview2 );
 
 }
 
@@ -1762,48 +1762,49 @@ NGL.Contact.prototype = {
 
         NGL.time( "NGL.Contact within" );
 
-        var atomSet = new NGL.AtomSet();
-        var bondSet = new NGL.BondSet();
-
         var kdtree1 = this.kdtree1;
         var kdtree2 = this.kdtree2;
 
-        var atoms = this.atomSet1.atoms;
+        var ap2 = this.sview1.getAtomProxy();
+        var atomSet = this.sview1.getAtomSet( false );
+        var bondStore = new NGL.BondStore();
 
-        for( var i = 0, n = atoms.length; i < n; ++i ){
+        this.sview1.eachAtom( function( ap1 ){
 
-            var atom1 = atoms[ i ];
             var found = false;
             var contacts = kdtree2.nearest(
-                atom1, Infinity, maxDistance
+                ap1, Infinity, maxDistance
             );
 
             for( var j = 0, m = contacts.length; j < m; ++j ){
 
                 var d = contacts[ j ];
-                var atom2 = d.atom;
-                var dist = d.distance;
+                ap2.index = d.index;
 
-                if( atom1.residue !== atom2.residue &&
-                    ( !minDistance || dist > minDistance ) ){
+                if( ap1.residueIndex !== ap2.residueIndex &&
+                    ( !minDistance || d.distance > minDistance ) ){
                     found = true;
-                    atomSet.addAtom( atom2 );
-                    bondSet.addBond( atom1, atom2, true );
+                    atomSet.add_unsafe( ap2.index );
+                    bondStore.addBond( ap1, ap2, 1 );
                 }
 
             }
 
             if( found ){
-                atomSet.addAtom( atom1 );
+                atomSet.add_unsafe( ap1.index );
             }
 
-        }
+        } );
+
+        var bondSet = new TypedFastBitSet( bondStore.count );
+        bondSet.set_all( true );
 
         NGL.timeEnd( "NGL.Contact within" );
 
         return {
             atomSet: atomSet,
-            bondSet: bondSet
+            bondSet: bondSet,
+            bondStore: bondStore
         };
 
     }
@@ -1841,16 +1842,19 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
         "( PROTEIN and .O )"
     );
 
-    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
-    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+    var donorView = structure.getView( donorSelection );
+    var acceptorView = structure.getView( acceptorSelection );
 
-    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var contact = new NGL.Contact( donorView, acceptorView );
     var data = contact.within( maxDistance );
+    var bondStore = data.bondStore;
 
-    data.atomSet.structure = structure;
-    data.bondSet.structure = structure;
-
-    var bondSet = new NGL.BondSet();
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+    var atomCA = structure.getAtomProxy();
+    var atomC = structure.getAtomProxy();
+    var rp = structure.getResidueProxy();
+    var rpPrev = structure.getResidueProxy();
     var v1 = new THREE.Vector3();
     var v2 = new THREE.Vector3();
 
@@ -1866,7 +1870,8 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
             atomN = atom1;
         }
 
-        var atomC = atomO.residue.getAtomByName( cName );
+        rp.index = atomO.residueIndex;
+        var atomC = rp.getAtomIndexByName( cName ) + rp.atomOffset;
 
         v1.subVectors( atomC, atomO );
         v2.subVectors( atomC, atomN );
@@ -1875,74 +1880,67 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
 
     }
 
-    data.bondSet.eachBond( function( b ){
+    for( var i = 0, il = bondStore.count; i < il; ++i ){
 
-        var a1 = b.atom1;
-        var a2 = b.atom2;
+        ap1.index = bondStore.atomIndex1[ i ];
+        ap2.index = bondStore.atomIndex2[ i ];
 
-        if( ( a1.atomname === "O" && a2.atomname === "N" ) ||
-            ( a1.atomname === "N" && a2.atomname === "O" )
+        if( ( ap1.atomname === "O" && ap2.atomname === "N" ) ||
+            ( ap1.atomname === "N" && ap2.atomname === "O" )
         ){
 
             // ignore backbone to backbone contacts
-            return;
+            data.bondSet.flip_unsafe( i );
+            continue;
 
-        }else if( a1.atomname === "N" || a2.atomname === "N" ){
+        }else if( ap1.atomname === "N" || ap2.atomname === "N" ){
 
             var atomN, atomX;
 
-            if( a1.atomname === "N" ){
-                atomN = a1;
-                atomX = a2;
+            if( ap1.atomname === "N" ){
+                atomN = ap1;
+                atomX = ap2;
             }else{
-                atomN = a2;
-                atomX = a1;
+                atomN = ap2;
+                atomX = ap1;
             }
 
-            var atomCA = atomN.residue.getAtomByName( "CA" );
-            if( !atomCA ) return;
+            rp.index = atomN.residueIndex;
+            atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+            if( atomCA.index === undefined ) continue;
 
-            var prevRes = atomN.residue.getPreviousConnectedResidue();
-            if( !prevRes ) return;
+            var prevRes = rp.getPreviousConnectedResidue( rpPrev );
+            if( prevRes === undefined ) continue;
 
-            var atomC = prevRes.getAtomByName( "C" );
-            if( !atomC ) return;
+            atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+            if( atomC.index === undefined ) continue;
 
             v1.subVectors( atomN, atomC );
             v2.subVectors( atomN, atomCA );
             v1.add( v2 ).multiplyScalar( 0.5 );
             v2.subVectors( atomX, atomN );
 
-            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
-                bondSet.addBond( a1, a2, true );
+            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+                data.bondSet.flip_unsafe( i );
             }
 
         }else if(
-            ( a1.atomname === "OH" && a1.resname === "TYR" ) ||
-            ( a2.atomname === "OH" && a2.resname === "TYR" )
+            ( ap1.atomname === "OH" && ap1.resname === "TYR" ) ||
+            ( ap2.atomname === "OH" && ap2.resname === "TYR" )
         ){
 
-            if( checkAngle( a1, a2, "OH", "CZ" ) ){
-                bondSet.addBond( a1, a2, true );
+            if( !checkAngle( ap1, ap2, "OH", "CZ" ) ){
+                data.bondSet.flip_unsafe( i );
             }
-
-        }else{
-
-            bondSet.addBond( a1, a2, true );
 
         }
 
-    } );
-
-    bondSet.structure = structure;
-
-    data.bondSet.dispose();
-    donAtomSet.dispose();
-    accAtomSet.dispose();
+    }
 
     return {
         atomSet: data.atomSet,
-        bondSet: bondSet
+        bondSet: data.bondSet,
+        bondStore: data.bondStore
     };
 
 }
@@ -1961,42 +1959,47 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
         "( PROTEIN and .O )"
     );
 
-    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
-    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+    var donorView = structure.getView( donorSelection );
+    var acceptorView = structure.getView( acceptorSelection );
 
-    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var contact = new NGL.Contact( donorView, acceptorView );
     var data = contact.within( maxDistance );
+    var bondStore = data.bondStore;
 
-    data.atomSet.structure = structure;
-    data.bondSet.structure = structure;
-
-    var bondSet = new NGL.BondSet();
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+    var atomCA = structure.getAtomProxy();
+    var atomC = structure.getAtomProxy();
+    var rp = structure.getResidueProxy();
+    var rpPrev = structure.getResidueProxy();
     var v1 = new THREE.Vector3();
     var v2 = new THREE.Vector3();
 
-    data.bondSet.eachBond( function( b ){
+    for( var i = 0, il = bondStore.count; i < il; ++i ){
 
-        var a1 = b.atom1;
-        var a2 = b.atom2;
+        ap1.index = bondStore.atomIndex1[ i ];
+        ap2.index = bondStore.atomIndex2[ i ];
 
         var atomN, atomO;
 
-        if( a1.atomname === "N" ){
-            atomN = a1;
-            atomO = a2;
+        if( ap1.atomname === "N" ){
+            atomN = ap1;
+            atomO = ap2;
         }else{
-            atomN = a2;
-            atomO = a1;
+            atomN = ap2;
+            atomO = ap1;
         }
 
-        var atomCA = atomN.residue.getAtomByName( "CA" );
-        if( !atomCA ) return;
+        rp.index = atomN.residueIndex;
 
-        var prevRes = atomN.residue.getPreviousConnectedResidue();
-        if( !prevRes ) return;
+        atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+        if( atomCA.index === undefined ) continue;
 
-        var atomC = prevRes.getAtomByName( "C" );
-        if( !atomC ) return;
+        var prevRes = rp.getPreviousConnectedResidue( rpPrev );
+        if( prevRes === undefined ) continue;
+
+        atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+        if( atomC.index === undefined ) continue;
 
         v1.subVectors( atomN, atomC );
         v2.subVectors( atomN, atomCA );
@@ -2005,21 +2008,16 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
 
         // NGL.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
 
-        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
-            bondSet.addBond( a1, a2, true );
+        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+            data.bondSet.flip_unsafe( i );
         }
 
-    } );
-
-    bondSet.structure = structure;
-
-    data.bondSet.dispose();
-    donAtomSet.dispose();
-    accAtomSet.dispose();
+    }
 
     return {
         atomSet: data.atomSet,
-        bondSet: bondSet
+        bondSet: data.bondSet,
+        bondStore: data.bondStore
     };
 
 }

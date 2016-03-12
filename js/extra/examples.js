@@ -704,11 +704,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", {
                 colorScheme: "sstruc", flatShaded: true
             } );
-            o.addRepresentation( "ribbon", {
-                colorScheme: "sstruc", flatShaded: true
-            } );
             o.addRepresentation( "contact", { contactType: "polarBackbone" } );
-            o.addRepresentation( "trace" );
             o.addRepresentation( "line" );
             o.centerView();
 

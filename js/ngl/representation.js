@@ -2996,13 +2996,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
-
-        if( this.structureView.atomCount === 0 ) return;
-
-        var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection
-        );
+    getBondData: function( sview, what, params ){
 
         var contactsFnDict = {
             "polar": NGL.polarContacts,
@@ -3010,25 +3004,30 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         };
 
         var contactData = contactsFnDict[ this.contactType ](
-            structureSubset, this.maxDistance, this.maxAngle
+            sview, this.maxDistance, this.maxAngle
         );
 
-        this.contactAtomSet = contactData.atomSet;
-        this.contactBondSet = contactData.bondSet;
+        params = Object.assign( {
+            bondSet: contactData.bondSet,
+            bondStore: contactData.bondStore
+        }, this.getBondParams( what, params ) );
 
-        var atomSet = this.contactAtomSet;
-        var bondSet = this.contactBondSet;
+        return sview.getBondData( params );
 
-        if( atomSet.atomCount === 0 ) return;
+    },
 
-        this.cylinderBuffer = new NGL.CylinderBuffer(
-            bondSet.bondPosition( null, 0 ),
-            bondSet.bondPosition( null, 1 ),
-            bondSet.bondColor( null, 0, this.getColorParams() ),
-            bondSet.bondColor( null, 1, this.getColorParams() ),
-            bondSet.bondRadius( null, 0, this.radius, this.scale ),
-            bondSet.bondPickingColor( null, 0 ),
-            bondSet.bondPickingColor( null, 1 ),
+    createData: function( sview ){
+
+        var bondData = this.getBondData( sview );
+
+        var cylinderBuffer = new NGL.CylinderBuffer(
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            bondData.radius,
+            bondData.pickingColor1,
+            bondData.pickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -3038,79 +3037,37 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             this.disableImpostor
         );
 
-        this.bufferList.push( this.cylinderBuffer );
-
-        structureSubset.dispose();
+        return {
+            bufferList: [ cylinderBuffer ]
+        };
 
     },
 
     update: function( what ){
 
-        if( what[ "position" ] ){
-
-            // FIXME
-            this.build();
-            return;
-
-        }
-
-        //
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        what = what || {};
-
-        var atomSet = this.contactAtomSet;
-        var bondSet = this.contactBondSet;
-
-        if( atomSet.atomCount === 0 ) return;
-
-        var sphereData = {};
+        var bondData = this.getBondData( sview );
         var cylinderData = {};
 
-        if( what[ "position" ] ){
-
-            var from = bondSet.bondPosition( null, 0 );
-            var to = bondSet.bondPosition( null, 1 );
-
+        if( !what || what[ "position" ] ){
+            var from = bondData.position1;
+            var to = bondData.position2;
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to
+                from, to, this.__center
             );
             cylinderData[ "position1" ] = from;
             cylinderData[ "position2" ] = to;
-
         }
 
-        if( what[ "color" ] ){
-
-            cylinderData[ "color" ] = bondSet.bondColor(
-                null, 0, this.getColorParams()
-            );
-            cylinderData[ "color2" ] = bondSet.bondColor(
-                null, 1, this.getColorParams()
-            );
-
+        if( !what || what[ "color" ] ){
+            cylinderData[ "color" ] = bondData.color1;
+            cylinderData[ "color2" ] = bondData.color2;
         }
 
-        if( what[ "radius" ] || what[ "scale" ] ){
-
-            cylinderData[ "radius" ] = bondSet.bondRadius(
-                null, 0, this.radius, this.scale
-            );
-
+        if( !what || what[ "radius" ] ){
+            cylinderData[ "radius" ] = bondData.radius;
         }
 
-        this.cylinderBuffer.setAttributes( cylinderData );
-
-    },
-
-    clear: function(){
-
-        if( this.contactAtomSet ) this.contactAtomSet.dispose();
-        if( this.contactBondSet ) this.contactBondSet.dispose();
-
-        NGL.StructureRepresentation.prototype.clear.call( this );
+        data.bufferList[ 0 ].setAttributes( cylinderData );
 
     }
 
