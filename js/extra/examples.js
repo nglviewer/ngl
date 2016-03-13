@@ -649,49 +649,6 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
-    "kdtree": function( stage ){
-
-        // stage.loadFile( "data://3SN6.cif" ).then( function( o ){
-        // stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
-        // stage.loadFile( "data://3l5q.pdb" ).then( function( o ){
-        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
-
-            var centerSele = "@10";
-            var centerSelection = new NGL.Selection( centerSele );
-
-            o.addRepresentation( "cartoon", {
-                color: "chainindex"
-            } );
-            o.addRepresentation( "line" );
-            o.centerView( true, centerSele );
-
-            var kdtree = new NGL.Kdtree( o.structure );
-            var nearest = kdtree.nearest(
-                o.structure.getAtoms( centerSelection, true ), Infinity, 4
-            )
-
-            // NGL.log( kdtree );
-            // NGL.log( nearest );
-
-            var names = [];
-            nearest.forEach( function( atomDist ){
-                // names.push( atomDist.atom.qualifiedName( true ) );
-                names.push( "@" + atomDist.atom.globalindex );
-            } );
-
-            var contactSele = names.join( " OR " );
-            o.addRepresentation( "licorice", {
-                sele: contactSele
-            } );
-
-            o.addRepresentation( "spacefill", {
-                sele: centerSele, opacity: 0.5
-            } );
-
-        } );
-
-    },
-
     "contact": function( stage ){
 
         // stage.loadFile( "data://3SN6.cif" ).then( function( o ){

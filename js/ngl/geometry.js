@@ -1646,7 +1646,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( entity, useSquaredDist ){
 
-    // NGL.time( "NGL.Kdtree build" );
+    NGL.time( "NGL.Kdtree build" );
 
     if( useSquaredDist ){
 
@@ -1672,23 +1672,17 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var i = 0;
 
     entity.eachAtom( function( ap ){
-
-        var i3 = i * 3;
-        var i4 = i * 4;
-
-        points[ i4 + 0 ] = ap.x;
-        points[ i4 + 1 ] = ap.y;
-        points[ i4 + 2 ] = ap.z;
-        points[ i4 + 3 ] = ap.index;
-
-        i += 1;
-
+        points[ i + 0 ] = ap.x;
+        points[ i + 1 ] = ap.y;
+        points[ i + 2 ] = ap.z;
+        points[ i + 3 ] = ap.index;
+        i += 4;
     } );
 
     this.points = points;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4, 3 );
 
-    // NGL.timeEnd( "NGL.Kdtree build" );
+    NGL.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -1751,7 +1745,7 @@ NGL.Contact = function( sview1, sview2 ){
     this.sview1 = sview1;
     this.sview2 = sview2;
 
-    this.kdtree1 = new NGL.Kdtree( sview1 );
+    // this.kdtree1 = new NGL.Kdtree( sview1 );
     this.kdtree2 = new NGL.Kdtree( sview2 );
 
 }
