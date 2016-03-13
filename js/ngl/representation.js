@@ -2998,6 +2998,14 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     getBondData: function( sview, what, params ){
 
+        params = this.getBondParams( what, params );
+
+        return sview.getBondData( params );
+
+    },
+
+    createData: function( sview ){
+
         var contactsFnDict = {
             "polar": NGL.polarContacts,
             "polarBackbone": NGL.polarBackboneContacts
@@ -3007,18 +3015,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             sview, this.maxDistance, this.maxAngle
         );
 
-        params = Object.assign( {
+        var params = {
             bondSet: contactData.bondSet,
             bondStore: contactData.bondStore
-        }, this.getBondParams( what, params ) );
+        };
 
-        return sview.getBondData( params );
-
-    },
-
-    createData: function( sview ){
-
-        var bondData = this.getBondData( sview );
+        var bondData = this.getBondData( sview, undefined, params );
 
         var cylinderBuffer = new NGL.CylinderBuffer(
             bondData.position1,
@@ -3038,14 +3040,20 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         );
 
         return {
-            bufferList: [ cylinderBuffer ]
+            bufferList: [ cylinderBuffer ],
+            contactData: contactData
         };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        var bondData = this.getBondData( sview );
+        var params = {
+            bondSet: data.contactData.bondSet,
+            bondStore: data.contactData.bondStore
+        };
+
+        var bondData = this.getBondData( data.sview, what, params );
         var cylinderData = {};
 
         if( !what || what[ "position" ] ){
