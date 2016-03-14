@@ -1109,19 +1109,15 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     var SIGNALS = signals;
 
     this.signals = {
-
         startedRunning: new SIGNALS.Signal(),
-        haltedRunning: new SIGNALS.Signal(),
-
+        haltedRunning: new SIGNALS.Signal()
     };
 
-    var scope = this;
-
     traj.signals.playerChanged.add( function( player ){
-        if( player !== scope ){
-            scope.pause();
+        if( player !== this ){
+            this.pause();
         }
-    } );
+    }, this );
 
     this.traj = traj;
     this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
@@ -1182,9 +1178,7 @@ NGL.TrajectoryPlayer.prototype = {
             }
 
             if( !this.interpolateType ){
-
                 this.traj.setFrame( i );
-
             }
 
         }
@@ -1236,19 +1230,12 @@ NGL.TrajectoryPlayer.prototype = {
             var deltaTime = Math.round( this.timeout * d );
 
             this.traj.setFrameInterpolated(
-
                 i, ip, ipp, ippp, t, this.interpolateType,
-
                 function(){
-
                     setTimeout( function(){
-
                         this._interpolate( i, ip, ipp, ippp, d, t );
-
                     }.bind( this ), deltaTime );
-
                 }.bind( this )
-
             );
 
         }else{
@@ -1321,4 +1308,3 @@ NGL.TrajectoryPlayer.prototype = {
     }
 
 };
-
