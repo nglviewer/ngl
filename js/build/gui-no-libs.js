@@ -1353,7 +1353,7 @@ UI.Html.prototype.setValue = function ( value ) {
 
 UI.Form = function () {
 
-    UI.Element.call( this );
+    UI.Panel.call( this );
 
     var dom = document.createElement( 'form' );
     dom.className = 'Form';
@@ -3367,7 +3367,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
         "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
-        "mrc", "ccp4", "map", "cube", "dx",
+        "mrc", "ccp4", "map", "cube", "dx", "dxbin",
         "obj", "ply",
         "ngl",
         "gz", "lzma", "bz2", "zip"
