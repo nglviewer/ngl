@@ -41,7 +41,7 @@ UI.Html.prototype.setValue = function ( value ) {
 
 UI.Form = function () {
 
-    UI.Element.call( this );
+    UI.Panel.call( this );
 
     var dom = document.createElement( 'form' );
     dom.className = 'Form';

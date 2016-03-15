@@ -90,7 +90,7 @@ NGL.PdbWriter = function( structure, params ){
                 records.push( sprintf(
                     formatString,
 
-                    a.serial,
+                    serial,
                     atomname,
                     a.resname,
                     DEF( a.chainname, " " ),
