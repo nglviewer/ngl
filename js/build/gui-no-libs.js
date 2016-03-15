@@ -3329,7 +3329,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    // container.add( statsPanel );
+    if( NGL.debug ) container.add( statsPanel );
 
     return container;
 
@@ -3631,7 +3631,7 @@ NGL.MenubarHelpWidget = function( stage ){
     // event handlers
 
     function onDocOptionClick () {
-        window.open( NGL.assetsDirectory + 'doc/index.html', '_blank' );
+        window.open( NGL.documentationUrl, '_blank' );
     }
 
     function onPreferencesOptionClick () {
@@ -3777,11 +3777,10 @@ NGL.OverviewWidget = function( stage ){
             "</ul>"
         ) );
 
-    var docUrl = NGL.assetsDirectory + "doc/index.html";
     listingPanel
         .add( new UI.Panel().add( new UI.Html(
             "For more information please visit the " +
-            "<a href='" + docUrl + "' target='_blank'>documentation pages</a>."
+            "<a href='" + NGL.documentationUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
     var overview = stage.preferences.getKey( "overview" );
