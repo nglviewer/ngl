@@ -1270,6 +1270,8 @@ NGL.Viewer.prototype = {
 
         function updateGeometry( geometry, matrix ){
 
+            if( geometry.attributes.position.count === 0 ) return;
+
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
