@@ -1217,7 +1217,7 @@ NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    var p = params || p;
+    var p = params || {};
 
     // Moves the cylinder in camera space to get, for example,
     // one of multiple shifted screen-aligned cylinders.
@@ -1303,7 +1303,7 @@ NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 
 NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    var p = params || p;
+    var p = params || {};
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
