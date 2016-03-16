@@ -705,27 +705,31 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.centerView();
 
-            // var sphereBuffer = new NGL.SphereBuffer(
-            //     new Float32Array( [ 0, 0, 0 ] ),
-            //     new Float32Array( [ 1, 0, 0 ] ),
-            //     new Float32Array( [ 1 ] ),
-            //     undefined,
-            //     { flatShaded: true },
-            //     true
-            // );
-            // o.addBufferRepresentation( sphereBuffer );
+            var position = new THREE.Vector3();
+            function getCenterArray(){
+                var target = stage.viewer.controls.target;
+                var group = stage.viewer.rotationGroup.position;
+                position.copy( group ).negate().add( target );
+                return position.toArray()
+            }
 
-            // var position = new THREE.Vector3();
-            // stage.viewer.controls.addEventListener(
-            //     'change', function(){
-            //         var target = stage.viewer.controls.target;
-            //         var group = stage.viewer.rotationGroup.position;
-            //         position.copy( group ).negate().add( target );
-            //         sphereBuffer.setAttributes( {
-            //             "position": position.toArray(),
-            //         } );
-            //     }
-            // );
+            var sphereBuffer = new NGL.SphereBuffer(
+                new Float32Array( getCenterArray() ),
+                new Float32Array( [ 1, 0, 0 ] ),
+                new Float32Array( [ 1 ] ),
+                undefined,
+                { flatShaded: true },
+                true
+            );
+            o.addBufferRepresentation( sphereBuffer );
+
+            stage.viewer.controls.addEventListener(
+                'change', function(){
+                    sphereBuffer.setAttributes( {
+                        "position": getCenterArray(),
+                    } );
+                }
+            );
 
         } );
 
