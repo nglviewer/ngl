@@ -309,6 +309,29 @@ if ( Function.prototype.name === undefined && Object.defineProperty !== undefine
 }
 
 
+if ( self.performance === undefined ) {
+
+    self.performance = {};
+
+}
+
+if ( self.performance.now === undefined ) {
+
+    ( function () {
+
+        var start = Date.now();
+
+        self.performance.now = function () {
+
+            return Date.now() - start;
+
+        }
+
+    } )();
+
+}
+
+
 ////////////////
 // Workarounds
 
