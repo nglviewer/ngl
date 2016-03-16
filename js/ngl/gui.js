@@ -122,6 +122,12 @@ NGL.StageWidget = function( stage ){
 
     //
 
+    document.body.addEventListener(
+        'touchmove', function( e ){ e.preventDefault(); }, false
+    );
+
+    //
+
     stage.handleResize();
     // FIXME hack for ie11
     setTimeout( function(){ stage.handleResize(); }, 500 );
