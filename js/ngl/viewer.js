@@ -1058,6 +1058,9 @@ NGL.Viewer.prototype = {
         this.renderer.domElement.addEventListener(  // firefox
             'MozMousePixelScroll', preventDefault, false
         );
+        this.renderer.domElement.addEventListener(
+            'touchmove', preventDefault, false
+        );
 
         this.controls = new THREE.TrackballControls(
             this.camera, this.renderer.domElement
@@ -1079,7 +1082,6 @@ NGL.Viewer.prototype = {
             this.controls.update.bind( this.controls ),
             false
         );
-
         document.addEventListener(
             'touchmove',
             this.controls.update.bind( this.controls ),
