@@ -802,6 +802,7 @@ NGL.calculateBondsBetween = function( structure, onlyAddBackbone ){
 
     // check for cyclic chains
     structure.eachChain( function( cp ){
+        if( cp.residueCount === 0 ) return;
         rp1.index = cp.residueOffset;
         rp2.index = cp.residueOffset + cp.residueCount - 1;
         addBondIfConnected( rp2, rp1 );
