@@ -1646,7 +1646,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( entity, useSquaredDist ){
 
-    NGL.time( "NGL.Kdtree build" );
+    if( NGL.debug ) NGL.time( "NGL.Kdtree build" );
 
     if( useSquaredDist ){
 
@@ -1682,7 +1682,7 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     this.points = points;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4, 3 );
 
-    NGL.timeEnd( "NGL.Kdtree build" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.Kdtree build" );
 
 };
 
