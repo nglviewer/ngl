@@ -759,10 +759,12 @@ NGL.AtomProxy.prototype = {
         var aaa = atom.atomStore;
         var ti = this.index;
         var ai = atom.index;
-        var ta = taa.altloc[ ti ];  // use Uint8 value to compare
-        var aa = aaa.altloc[ ai ];  // no need to convert to char
 
-        if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+        if( taa.altloc && aaa.altloc ){
+            var ta = taa.altloc[ ti ];  // use Uint8 value to compare
+            var aa = aaa.altloc[ ai ];  // no need to convert to char
+            if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+        }
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
