@@ -2645,29 +2645,16 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        // cell
+        // cell & symmetry
         var unitcellDict = {};
 
         if( cif.cell ){
 
             var cell = cif.cell;
-            var symmetry = cif.symmetry || {};
 
             var a = parseFloat( cell.length_a );
             var b = parseFloat( cell.length_b );
             var c = parseFloat( cell.length_c );
-
-            var alpha = parseFloat( cell.angle_alpha );
-            var beta = parseFloat( cell.angle_beta );
-            var gamma = parseFloat( cell.angle_gamma );
-
-            var sGroup = symmetry[ "space_group_name_H-M" ];
-            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-                ( sGroup[0] === "'" || sGroup[0] === '"' )
-            ){
-                sGroup = sGroup.substring( 1, sGroup.length-1 );
-            }
-            var z = parseInt( cell.Z_PDB );
 
             var box = new Float32Array( 9 );
             box[ 0 ] = a;
@@ -2678,9 +2665,23 @@ NGL.CifParser.prototype = NGL.createObject(
             unitcellDict.a = a;
             unitcellDict.b = b;
             unitcellDict.c = c;
-            unitcellDict.alpha = alpha;
-            unitcellDict.beta = beta;
-            unitcellDict.gamma = gamma;
+            unitcellDict.alpha = parseFloat( cell.angle_alpha );
+            unitcellDict.beta = parseFloat( cell.angle_beta );
+            unitcellDict.gamma = parseFloat( cell.angle_gamma );
+
+        }
+
+        if( cif.symmetry ){
+
+            var symmetry = cif.symmetry;
+
+            var sGroup = symmetry[ "space_group_name_H-M" ];
+            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+                ( sGroup[0] === "'" || sGroup[0] === '"' )
+            ){
+                sGroup = sGroup.substring( 1, sGroup.length-1 );
+            }
+
             unitcellDict.spacegroup = sGroup;
 
         }
