@@ -107,18 +107,22 @@ NGL.GET = function( id ){
 };
 
 
-( function(){
+if( typeof importScripts !== 'function' ){
 
-    var debug = NGL.GET( "debug" );
-    if( debug !== undefined ) NGL.debug = debug;
+    ( function(){
 
-    var useWorker = NGL.GET( "useWorker" );
-    if( useWorker !== undefined ) NGL.useWorker = useWorker;
+        var debug = NGL.GET( "debug" );
+        if( debug !== undefined ) NGL.debug = debug;
 
-    var disableImpostor = NGL.GET( "disableImpostor" );
-    if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+        var useWorker = NGL.GET( "useWorker" );
+        if( useWorker !== undefined ) NGL.useWorker = useWorker;
 
-} )();
+        var disableImpostor = NGL.GET( "disableImpostor" );
+        if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+
+    } )();
+
+}
 
 
 // Registry
