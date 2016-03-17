@@ -2322,9 +2322,9 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
-                            }/*else if( currentLoopIndex > loopPointers.length ){
+                            }else if( currentLoopIndex + nn > loopPointers.length ){
                                 NGL.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
-                            }*/
+                            }
 
                             for( var j = 0; j < nn; ++j ){
                                 loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
