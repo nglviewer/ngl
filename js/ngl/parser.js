@@ -2046,7 +2046,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                 line = lines[i].trim();
 
-                if( ( !line && !pendingString ) || line[0]==="#" ){
+                if( ( !line && !pendingString && !pendingLoop ) || line[0]==="#" ){
 
                     // NGL.log( "NEW BLOCK" );
 
@@ -2186,7 +2186,11 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         // NGL.log( "LOOP VALUE", line );
 
-                        if( currentCategory==="atom_site" ){
+                        if( !line ){
+
+                            continue;
+
+                        }else if( currentCategory==="atom_site" ){
 
                             var nn = pointerNames.length;
 
@@ -2322,9 +2326,9 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
-                            }else if( currentLoopIndex + nn > loopPointers.length ){
+                            }/*else if( currentLoopIndex + nn > loopPointers.length ){
                                 NGL.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
-                            }
+                            }*/
 
                             for( var j = 0; j < nn; ++j ){
                                 loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
