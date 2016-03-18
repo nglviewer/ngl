@@ -3321,7 +3321,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.chainStore.modelIndex = sd.chainStore.modelIndex;
         s.chainStore.residueOffset = sd.chainStore.groupOffset;
         s.chainStore.residueCount = sd.chainStore.groupCount;
-        s.chainStore.chainname = sd.chainStore.chainName;
+        s.chainStore.chainname = sd.chainStore.chainId;
 
         s.modelStore.length = sd.numModels;
         s.modelStore.count = sd.numModels;
@@ -3384,7 +3384,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     if( !part ){
                         part = {
                             matrix: new THREE.Matrix4().fromArray( t.transformation ).transpose(),
-                            chainList: t.chainId
+                            chainList: t.chainIdList
                         };
                         tDict[ t.transformation ] = part;
                     }else{
@@ -3404,7 +3404,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 }
                 if( Object.keys( cDict ).length > 0 ){
                     var assembly = new NGL.Assembly( bioAssem.id );
-                    s.biomolDict[ "BU" + bioAssem.id ] = assembly;
+                    s.biomolDict[ "BU" + k ] = assembly;
                     for( var ck in cDict ){
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
