@@ -722,13 +722,27 @@ NGL.AtomindexColorMaker = function( params ){
         this.scale = "roygb";
     }
     if( !params.domain ){
-        this.domain = [ 0, this.structure.atomStore.count ];
-    }
-    var atomindexScale = this.getScale();
 
-    this.atomColor = function( a ){
-        return atomindexScale( a.index );
-    };
+        var scalePerModel = {};
+
+        this.structure.eachModel( function( mp ){
+            this.domain = [ mp.atomOffset, mp.atomEnd ];
+            scalePerModel[ mp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            return scalePerModel[ a.modelIndex ]( a.index );
+        };
+
+    }else{
+
+        var atomindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return atomindexScale( a.index );
+        };
+
+    }
 
 };
 
