@@ -1815,6 +1815,8 @@ NGL.ModelProxy = function( structure, index ){
 
     this.structure = structure;
     this.modelStore = structure.modelStore;
+    this.chainStore = structure.chainStore;
+    this.residueStore = structure.residueStore;
     this.index = index;
 
 };
@@ -1840,6 +1842,36 @@ NGL.ModelProxy.prototype = {
     },
     set chainCount ( value ) {
         this.modelStore.chainCount[ this.index ] = value;
+    },
+
+    get residueOffset () {
+        return this.chainStore.residueOffset[ this.chainOffset ];
+    },
+    get atomOffset () {
+        return this.residueStore.atomOffset[ this.residueOffset ];
+    },
+
+    get chainEnd () {
+        return this.chainOffset + this.chainCount - 1;
+    },
+    get residueEnd () {
+        return (
+            this.chainStore.residueOffset[ this.chainEnd ] +
+            this.chainStore.residueCount[ this.chainEnd ] - 1
+        );
+    },
+    get atomEnd () {
+        return (
+            this.residueStore.atomOffset[ this.residueEnd ] +
+            this.residueStore.atomCount[ this.residueEnd ] - 1
+        );
+    },
+
+    get residueCount () {
+        return this.residueEnd - this.residueOffset + 1;
+    },
+    get atomCount () {
+        return this.atomEnd - this.atomOffset + 1;
     },
 
     //
