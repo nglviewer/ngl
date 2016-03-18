@@ -186,15 +186,42 @@ NGL.Stage.prototype = {
 
             object.setSelection( "/0" );
 
-            if( object.structure.atomStore.count > 100000 ){
+            if( object.structure.atomStore.count > 1000000 ){
 
-                object.addRepresentation( "line" );
+                object.addRepresentation( "backbone", {
+                    lineOnly: true,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu"
+                } );
+                this.centerView();
+
+            }else if( object.structure.atomStore.count > 100000 ){
+
+                object.addRepresentation( "backbone", {
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
                 this.centerView();
 
             }else{
 
-                object.addRepresentation( "cartoon" );
-                object.addRepresentation( "licorice", { sele: "hetero" } );
+                object.addRepresentation( "cartoon", {
+                    color: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 0.7,
+                    aspectRatio: 5
+                } );
+                object.addRepresentation( "base", {
+                    color: "atomindex",
+                    colorScale: "RdYlBu"
+                } );
+                object.addRepresentation( "ball+stick", {
+                    sele: "hetero and not ( water or ion )",
+                    colorScheme: "element",
+                    scale: 2.5,
+                    aspectRatio: 1.3
+                } );
                 this.centerView();
 
             }
