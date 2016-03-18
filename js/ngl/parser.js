@@ -2005,7 +2005,7 @@ NGL.CifParser.prototype = NGL.createObject(
         //
 
         var reWhitespace = /\s+/;
-        var reQuotedWhitespace = /'(.*?)'|"(.*?)"|(\S+)/g;
+        var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
         var reDoubleQuote = /"/g;
 
         var cif = {};
