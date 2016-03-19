@@ -1549,6 +1549,7 @@ NGL.ChainProxy = function( structure, index ){
 
     this.structure = structure;
     this.chainStore = structure.chainStore;
+    this.residueStore = structure.residueStore;
     this.index = index;
 
 };
@@ -1585,6 +1586,23 @@ NGL.ChainProxy.prototype = {
     },
     set residueCount ( value ) {
         this.chainStore.residueCount[ this.index ] = value;
+    },
+
+    get residueEnd () {
+        return this.residueOffset + this.residueCount - 1;
+    },
+
+    get atomOffset () {
+        return this.residueStore.atomOffset[ this.residueOffset ];
+    },
+    get atomEnd () {
+        return (
+            this.residueStore.atomOffset[ this.residueEnd ] +
+            this.residueStore.atomCount[ this.residueEnd ] - 1
+        );
+    },
+    get atomCount () {
+        return this.atomEnd - this.atomOffset + 1;
     },
 
     //
