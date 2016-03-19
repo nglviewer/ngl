@@ -311,6 +311,29 @@ if ( Function.prototype.name === undefined && Object.defineProperty !== undefine
 }
 
 
+if ( self.performance === undefined ) {
+
+    self.performance = {};
+
+}
+
+if ( self.performance.now === undefined ) {
+
+    ( function () {
+
+        var start = Date.now();
+
+        self.performance.now = function () {
+
+            return Date.now() - start;
+
+        }
+
+    } )();
+
+}
+
+
 ////////////////
 // Workarounds
 
@@ -538,18 +561,22 @@ NGL.GET = function( id ){
 };
 
 
-( function(){
+if( typeof importScripts !== 'function' ){
 
-    var debug = NGL.GET( "debug" );
-    if( debug !== undefined ) NGL.debug = debug;
+    ( function(){
 
-    var useWorker = NGL.GET( "useWorker" );
-    if( useWorker !== undefined ) NGL.useWorker = useWorker;
+        var debug = NGL.GET( "debug" );
+        if( debug !== undefined ) NGL.debug = debug;
 
-    var disableImpostor = NGL.GET( "disableImpostor" );
-    if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+        var useWorker = NGL.GET( "useWorker" );
+        if( useWorker !== undefined ) NGL.useWorker = useWorker;
 
-} )();
+        var disableImpostor = NGL.GET( "disableImpostor" );
+        if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+
+    } )();
+
+}
 
 
 // Registry
@@ -2354,10 +2381,12 @@ NGL.AtomProxy.prototype = {
         var aaa = atom.atomStore;
         var ti = this.index;
         var ai = atom.index;
-        var ta = taa.altloc[ ti ];  // use Uint8 value to compare
-        var aa = aaa.altloc[ ai ];  // no need to convert to char
 
-        if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+        if( taa.altloc && aaa.altloc ){
+            var ta = taa.altloc[ ti ];  // use Uint8 value to compare
+            var aa = aaa.altloc[ ai ];  // no need to convert to char
+            if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+        }
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
         var y = taa.y[ ti ] - aaa.y[ ai ];
@@ -2820,19 +2849,21 @@ NGL.ResidueProxy.prototype = {
         return undefined;
     },
 
-    getPreviousConnectedResidue: function(){
+    getPreviousConnectedResidue: function( rp ){
         var rOffset = this.chainStore.residueOffset[ this.chainIndex ];
         var prevIndex = this.index - 1;
         if( prevIndex >= rOffset ){
-            var rpPrev = this.structure.getResidueProxy( prevIndex );
-            if( rpPrev.connectedTo( this ) ){
-                return rpPrev;
+            if( rp === undefined ) rp = this.structure.getResidueProxy();
+            rp.index = prevIndex;
+            if( rp.connectedTo( this ) ){
+                return rp;
             }
         }else if( prevIndex === rOffset - 1 ){  // cyclic
+            if( rp === undefined ) rp = this.structure.getResidueProxy();
             var rCount = this.chainStore.residueCount[ this.chainIndex ];
-            var rpLast = this.structure.getResidueProxy( rOffset + rCount - 1 );
-            if( rpLast.connectedTo( this ) ){
-                return rpLast;
+            rp.index = rOffset + rCount - 1;
+            if( rp.connectedTo( this ) ){
+                return rp;
             }
         }
         return undefined;
@@ -3140,6 +3171,7 @@ NGL.ChainProxy = function( structure, index ){
 
     this.structure = structure;
     this.chainStore = structure.chainStore;
+    this.residueStore = structure.residueStore;
     this.index = index;
 
 };
@@ -3176,6 +3208,23 @@ NGL.ChainProxy.prototype = {
     },
     set residueCount ( value ) {
         this.chainStore.residueCount[ this.index ] = value;
+    },
+
+    get residueEnd () {
+        return this.residueOffset + this.residueCount - 1;
+    },
+
+    get atomOffset () {
+        return this.residueStore.atomOffset[ this.residueOffset ];
+    },
+    get atomEnd () {
+        return (
+            this.residueStore.atomOffset[ this.residueEnd ] +
+            this.residueStore.atomCount[ this.residueEnd ] - 1
+        );
+    },
+    get atomCount () {
+        return this.atomEnd - this.atomOffset + 1;
     },
 
     //
@@ -3406,6 +3455,8 @@ NGL.ModelProxy = function( structure, index ){
 
     this.structure = structure;
     this.modelStore = structure.modelStore;
+    this.chainStore = structure.chainStore;
+    this.residueStore = structure.residueStore;
     this.index = index;
 
 };
@@ -3431,6 +3482,36 @@ NGL.ModelProxy.prototype = {
     },
     set chainCount ( value ) {
         this.modelStore.chainCount[ this.index ] = value;
+    },
+
+    get residueOffset () {
+        return this.chainStore.residueOffset[ this.chainOffset ];
+    },
+    get atomOffset () {
+        return this.residueStore.atomOffset[ this.residueOffset ];
+    },
+
+    get chainEnd () {
+        return this.chainOffset + this.chainCount - 1;
+    },
+    get residueEnd () {
+        return (
+            this.chainStore.residueOffset[ this.chainEnd ] +
+            this.chainStore.residueCount[ this.chainEnd ] - 1
+        );
+    },
+    get atomEnd () {
+        return (
+            this.residueStore.atomOffset[ this.residueEnd ] +
+            this.residueStore.atomCount[ this.residueEnd ] - 1
+        );
+    },
+
+    get residueCount () {
+        return this.residueEnd - this.residueOffset + 1;
+    },
+    get atomCount () {
+        return this.atomEnd - this.atomOffset + 1;
     },
 
     //
@@ -12039,7 +12120,7 @@ NGL.HelixCrossing.prototype = {
 
 NGL.Kdtree = function( entity, useSquaredDist ){
 
-    // NGL.time( "NGL.Kdtree build" );
+    if( NGL.debug ) NGL.time( "NGL.Kdtree build" );
 
     if( useSquaredDist ){
 
@@ -12065,23 +12146,17 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var i = 0;
 
     entity.eachAtom( function( ap ){
-
-        var i3 = i * 3;
-        var i4 = i * 4;
-
-        points[ i4 + 0 ] = ap.x;
-        points[ i4 + 1 ] = ap.y;
-        points[ i4 + 2 ] = ap.z;
-        points[ i4 + 3 ] = ap.index;
-
-        i += 1;
-
+        points[ i + 0 ] = ap.x;
+        points[ i + 1 ] = ap.y;
+        points[ i + 2 ] = ap.z;
+        points[ i + 3 ] = ap.index;
+        i += 4;
     } );
 
     this.points = points;
     this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4, 3 );
 
-    // NGL.timeEnd( "NGL.Kdtree build" );
+    if( NGL.debug ) NGL.timeEnd( "NGL.Kdtree build" );
 
 };
 
@@ -12139,13 +12214,13 @@ NGL.Kdtree.prototype = {
 ////////////
 // Contact
 
-NGL.Contact = function( atomSet1, atomSet2 ){
+NGL.Contact = function( sview1, sview2 ){
 
-    this.atomSet1 = atomSet1;
-    this.atomSet2 = atomSet2;
+    this.sview1 = sview1;
+    this.sview2 = sview2;
 
-    this.kdtree1 = new NGL.Kdtree( atomSet1 );
-    this.kdtree2 = new NGL.Kdtree( atomSet2 );
+    // this.kdtree1 = new NGL.Kdtree( sview1 );
+    this.kdtree2 = new NGL.Kdtree( sview2 );
 
 }
 
@@ -12155,48 +12230,49 @@ NGL.Contact.prototype = {
 
         NGL.time( "NGL.Contact within" );
 
-        var atomSet = new NGL.AtomSet();
-        var bondSet = new NGL.BondSet();
-
         var kdtree1 = this.kdtree1;
         var kdtree2 = this.kdtree2;
 
-        var atoms = this.atomSet1.atoms;
+        var ap2 = this.sview1.getAtomProxy();
+        var atomSet = this.sview1.getAtomSet( false );
+        var bondStore = new NGL.BondStore();
 
-        for( var i = 0, n = atoms.length; i < n; ++i ){
+        this.sview1.eachAtom( function( ap1 ){
 
-            var atom1 = atoms[ i ];
             var found = false;
             var contacts = kdtree2.nearest(
-                atom1, Infinity, maxDistance
+                ap1, Infinity, maxDistance
             );
 
             for( var j = 0, m = contacts.length; j < m; ++j ){
 
                 var d = contacts[ j ];
-                var atom2 = d.atom;
-                var dist = d.distance;
+                ap2.index = d.index;
 
-                if( atom1.residue !== atom2.residue &&
-                    ( !minDistance || dist > minDistance ) ){
+                if( ap1.residueIndex !== ap2.residueIndex &&
+                    ( !minDistance || d.distance > minDistance ) ){
                     found = true;
-                    atomSet.addAtom( atom2 );
-                    bondSet.addBond( atom1, atom2, true );
+                    atomSet.add_unsafe( ap2.index );
+                    bondStore.addBond( ap1, ap2, 1 );
                 }
 
             }
 
             if( found ){
-                atomSet.addAtom( atom1 );
+                atomSet.add_unsafe( ap1.index );
             }
 
-        }
+        } );
+
+        var bondSet = new TypedFastBitSet( bondStore.count );
+        bondSet.set_all( true );
 
         NGL.timeEnd( "NGL.Contact within" );
 
         return {
             atomSet: atomSet,
-            bondSet: bondSet
+            bondSet: bondSet,
+            bondStore: bondStore
         };
 
     }
@@ -12234,16 +12310,19 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
         "( PROTEIN and .O )"
     );
 
-    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
-    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+    var donorView = structure.getView( donorSelection );
+    var acceptorView = structure.getView( acceptorSelection );
 
-    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var contact = new NGL.Contact( donorView, acceptorView );
     var data = contact.within( maxDistance );
+    var bondStore = data.bondStore;
 
-    data.atomSet.structure = structure;
-    data.bondSet.structure = structure;
-
-    var bondSet = new NGL.BondSet();
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+    var atomCA = structure.getAtomProxy();
+    var atomC = structure.getAtomProxy();
+    var rp = structure.getResidueProxy();
+    var rpPrev = structure.getResidueProxy();
     var v1 = new THREE.Vector3();
     var v2 = new THREE.Vector3();
 
@@ -12259,7 +12338,8 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
             atomN = atom1;
         }
 
-        var atomC = atomO.residue.getAtomByName( cName );
+        rp.index = atomO.residueIndex;
+        var atomC = rp.getAtomIndexByName( cName ) + rp.atomOffset;
 
         v1.subVectors( atomC, atomO );
         v2.subVectors( atomC, atomN );
@@ -12268,74 +12348,67 @@ NGL.polarContacts = function( structure, maxDistance, maxAngle ){
 
     }
 
-    data.bondSet.eachBond( function( b ){
+    for( var i = 0, il = bondStore.count; i < il; ++i ){
 
-        var a1 = b.atom1;
-        var a2 = b.atom2;
+        ap1.index = bondStore.atomIndex1[ i ];
+        ap2.index = bondStore.atomIndex2[ i ];
 
-        if( ( a1.atomname === "O" && a2.atomname === "N" ) ||
-            ( a1.atomname === "N" && a2.atomname === "O" )
+        if( ( ap1.atomname === "O" && ap2.atomname === "N" ) ||
+            ( ap1.atomname === "N" && ap2.atomname === "O" )
         ){
 
             // ignore backbone to backbone contacts
-            return;
+            data.bondSet.flip_unsafe( i );
+            continue;
 
-        }else if( a1.atomname === "N" || a2.atomname === "N" ){
+        }else if( ap1.atomname === "N" || ap2.atomname === "N" ){
 
             var atomN, atomX;
 
-            if( a1.atomname === "N" ){
-                atomN = a1;
-                atomX = a2;
+            if( ap1.atomname === "N" ){
+                atomN = ap1;
+                atomX = ap2;
             }else{
-                atomN = a2;
-                atomX = a1;
+                atomN = ap2;
+                atomX = ap1;
             }
 
-            var atomCA = atomN.residue.getAtomByName( "CA" );
-            if( !atomCA ) return;
+            rp.index = atomN.residueIndex;
+            atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+            if( atomCA.index === undefined ) continue;
 
-            var prevRes = atomN.residue.getPreviousConnectedResidue();
-            if( !prevRes ) return;
+            var prevRes = rp.getPreviousConnectedResidue( rpPrev );
+            if( prevRes === undefined ) continue;
 
-            var atomC = prevRes.getAtomByName( "C" );
-            if( !atomC ) return;
+            atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+            if( atomC.index === undefined ) continue;
 
             v1.subVectors( atomN, atomC );
             v2.subVectors( atomN, atomCA );
             v1.add( v2 ).multiplyScalar( 0.5 );
             v2.subVectors( atomX, atomN );
 
-            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
-                bondSet.addBond( a1, a2, true );
+            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+                data.bondSet.flip_unsafe( i );
             }
 
         }else if(
-            ( a1.atomname === "OH" && a1.resname === "TYR" ) ||
-            ( a2.atomname === "OH" && a2.resname === "TYR" )
+            ( ap1.atomname === "OH" && ap1.resname === "TYR" ) ||
+            ( ap2.atomname === "OH" && ap2.resname === "TYR" )
         ){
 
-            if( checkAngle( a1, a2, "OH", "CZ" ) ){
-                bondSet.addBond( a1, a2, true );
+            if( !checkAngle( ap1, ap2, "OH", "CZ" ) ){
+                data.bondSet.flip_unsafe( i );
             }
-
-        }else{
-
-            bondSet.addBond( a1, a2, true );
 
         }
 
-    } );
-
-    bondSet.structure = structure;
-
-    data.bondSet.dispose();
-    donAtomSet.dispose();
-    accAtomSet.dispose();
+    }
 
     return {
         atomSet: data.atomSet,
-        bondSet: bondSet
+        bondSet: data.bondSet,
+        bondStore: data.bondStore
     };
 
 }
@@ -12354,42 +12427,47 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
         "( PROTEIN and .O )"
     );
 
-    var donAtomSet = new NGL.AtomSet( structure, donorSelection );
-    var accAtomSet = new NGL.AtomSet( structure, acceptorSelection );
+    var donorView = structure.getView( donorSelection );
+    var acceptorView = structure.getView( acceptorSelection );
 
-    var contact = new NGL.Contact( donAtomSet, accAtomSet );
+    var contact = new NGL.Contact( donorView, acceptorView );
     var data = contact.within( maxDistance );
+    var bondStore = data.bondStore;
 
-    data.atomSet.structure = structure;
-    data.bondSet.structure = structure;
-
-    var bondSet = new NGL.BondSet();
+    var ap1 = structure.getAtomProxy();
+    var ap2 = structure.getAtomProxy();
+    var atomCA = structure.getAtomProxy();
+    var atomC = structure.getAtomProxy();
+    var rp = structure.getResidueProxy();
+    var rpPrev = structure.getResidueProxy();
     var v1 = new THREE.Vector3();
     var v2 = new THREE.Vector3();
 
-    data.bondSet.eachBond( function( b ){
+    for( var i = 0, il = bondStore.count; i < il; ++i ){
 
-        var a1 = b.atom1;
-        var a2 = b.atom2;
+        ap1.index = bondStore.atomIndex1[ i ];
+        ap2.index = bondStore.atomIndex2[ i ];
 
         var atomN, atomO;
 
-        if( a1.atomname === "N" ){
-            atomN = a1;
-            atomO = a2;
+        if( ap1.atomname === "N" ){
+            atomN = ap1;
+            atomO = ap2;
         }else{
-            atomN = a2;
-            atomO = a1;
+            atomN = ap2;
+            atomO = ap1;
         }
 
-        var atomCA = atomN.residue.getAtomByName( "CA" );
-        if( !atomCA ) return;
+        rp.index = atomN.residueIndex;
 
-        var prevRes = atomN.residue.getPreviousConnectedResidue();
-        if( !prevRes ) return;
+        atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+        if( atomCA.index === undefined ) continue;
 
-        var atomC = prevRes.getAtomByName( "C" );
-        if( !atomC ) return;
+        var prevRes = rp.getPreviousConnectedResidue( rpPrev );
+        if( prevRes === undefined ) continue;
+
+        atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+        if( atomC.index === undefined ) continue;
 
         v1.subVectors( atomN, atomC );
         v2.subVectors( atomN, atomCA );
@@ -12398,21 +12476,16 @@ NGL.polarBackboneContacts = function( structure, maxDistance, maxAngle ){
 
         // NGL.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
 
-        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle ){
-            bondSet.addBond( a1, a2, true );
+        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+            data.bondSet.flip_unsafe( i );
         }
 
-    } );
-
-    bondSet.structure = structure;
-
-    data.bondSet.dispose();
-    donAtomSet.dispose();
-    accAtomSet.dispose();
+    }
 
     return {
         atomSet: data.atomSet,
-        bondSet: bondSet
+        bondSet: data.bondSet,
+        bondStore: data.bondStore
     };
 
 }
@@ -14535,13 +14608,27 @@ NGL.AtomindexColorMaker = function( params ){
         this.scale = "roygb";
     }
     if( !params.domain ){
-        this.domain = [ 0, this.structure.atomStore.count ];
-    }
-    var atomindexScale = this.getScale();
 
-    this.atomColor = function( a ){
-        return atomindexScale( a.index );
-    };
+        var scalePerModel = {};
+
+        this.structure.eachModel( function( mp ){
+            this.domain = [ mp.atomOffset, mp.atomEnd ];
+            scalePerModel[ mp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            return scalePerModel[ a.modelIndex ]( a.index );
+        };
+
+    }else{
+
+        var atomindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return atomindexScale( a.index );
+        };
+
+    }
 
 };
 
@@ -17391,19 +17478,15 @@ NGL.TrajectoryPlayer = function( traj, step, timeout, start, end ){
     var SIGNALS = signals;
 
     this.signals = {
-
         startedRunning: new SIGNALS.Signal(),
-        haltedRunning: new SIGNALS.Signal(),
-
+        haltedRunning: new SIGNALS.Signal()
     };
 
-    var scope = this;
-
     traj.signals.playerChanged.add( function( player ){
-        if( player !== scope ){
-            scope.pause();
+        if( player !== this ){
+            this.pause();
         }
-    } );
+    }, this );
 
     this.traj = traj;
     this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
@@ -17464,9 +17547,7 @@ NGL.TrajectoryPlayer.prototype = {
             }
 
             if( !this.interpolateType ){
-
                 this.traj.setFrame( i );
-
             }
 
         }
@@ -17518,19 +17599,12 @@ NGL.TrajectoryPlayer.prototype = {
             var deltaTime = Math.round( this.timeout * d );
 
             this.traj.setFrameInterpolated(
-
                 i, ip, ipp, ippp, t, this.interpolateType,
-
                 function(){
-
                     setTimeout( function(){
-
                         this._interpolate( i, ip, ipp, ippp, d, t );
-
                     }.bind( this ), deltaTime );
-
                 }.bind( this )
-
             );
 
         }else{
@@ -17603,7 +17677,6 @@ NGL.TrajectoryPlayer.prototype = {
     }
 
 };
-
 
 // File:js/ngl/surface.js
 
@@ -23214,6 +23287,7 @@ NGL.calculateBondsBetween = function( structure, onlyAddBackbone ){
 
     // check for cyclic chains
     structure.eachChain( function( cp ){
+        if( cp.residueCount === 0 ) return;
         rp1.index = cp.residueOffset;
         rp2.index = cp.residueOffset + cp.residueCount - 1;
         addBondIfConnected( rp2, rp1 );
@@ -23345,6 +23419,30 @@ NGL.Assembly.prototype = {
         return part;
     },
 
+    getAtomCount: function( structure ){
+
+        var atomCount = 0;
+
+        this.partList.forEach( function( part ){
+            atomCount += part.getAtomCount( structure );
+        } );
+
+        return atomCount;
+
+    },
+
+    getInstanceCount: function(){
+
+        var instanceCount = 0;
+
+        this.partList.forEach( function( part ){
+            instanceCount += part.matrixList.length;
+        } );
+
+        return instanceCount;
+
+    },
+
     toJSON: function(){
 
         var output = {
@@ -23387,6 +23485,21 @@ NGL.AssemblyPart.prototype = {
 
     constructor: NGL.AssemblyPart,
     type: "AssemblyPart",
+
+    getAtomCount: function( structure ){
+
+        var atomCount = 0;
+        var chainList = this.chainList;
+
+        structure.eachChain( function( cp ){
+            if( chainList.indexOf( cp.chainname ) != -1 ){
+                atomCount += cp.atomCount;
+            }
+        } );
+
+        return this.matrixList.length * atomCount;
+
+    },
 
     getSelection: function(){
         if( this.chainList.length > 0 ){
@@ -24416,7 +24529,7 @@ NGL.CifParser.prototype = NGL.createObject(
         //
 
         var reWhitespace = /\s+/;
-        var reQuotedWhitespace = /'(.*?)'|"(.*?)"|(\S+)/g;
+        var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
         var reDoubleQuote = /"/g;
 
         var cif = {};
@@ -24457,7 +24570,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                 line = lines[i].trim();
 
-                if( ( !line && !pendingString ) || line[0]==="#" ){
+                if( ( !line && !pendingString && !pendingLoop ) || line[0]==="#" ){
 
                     // NGL.log( "NEW BLOCK" );
 
@@ -24597,7 +24710,11 @@ NGL.CifParser.prototype = NGL.createObject(
 
                         // NGL.log( "LOOP VALUE", line );
 
-                        if( currentCategory==="atom_site" ){
+                        if( !line ){
+
+                            continue;
+
+                        }else if( currentCategory==="atom_site" ){
 
                             var nn = pointerNames.length;
 
@@ -24733,7 +24850,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
-                            }/*else if( currentLoopIndex > loopPointers.length ){
+                            }/*else if( currentLoopIndex + nn > loopPointers.length ){
                                 NGL.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
                             }*/
 
@@ -25057,29 +25174,16 @@ NGL.CifParser.prototype = NGL.createObject(
 
         }
 
-        // cell
+        // cell & symmetry
         var unitcellDict = {};
 
         if( cif.cell ){
 
             var cell = cif.cell;
-            var symmetry = cif.symmetry || {};
 
             var a = parseFloat( cell.length_a );
             var b = parseFloat( cell.length_b );
             var c = parseFloat( cell.length_c );
-
-            var alpha = parseFloat( cell.angle_alpha );
-            var beta = parseFloat( cell.angle_beta );
-            var gamma = parseFloat( cell.angle_gamma );
-
-            var sGroup = symmetry[ "space_group_name_H-M" ];
-            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-                ( sGroup[0] === "'" || sGroup[0] === '"' )
-            ){
-                sGroup = sGroup.substring( 1, sGroup.length-1 );
-            }
-            var z = parseInt( cell.Z_PDB );
 
             var box = new Float32Array( 9 );
             box[ 0 ] = a;
@@ -25090,9 +25194,23 @@ NGL.CifParser.prototype = NGL.createObject(
             unitcellDict.a = a;
             unitcellDict.b = b;
             unitcellDict.c = c;
-            unitcellDict.alpha = alpha;
-            unitcellDict.beta = beta;
-            unitcellDict.gamma = gamma;
+            unitcellDict.alpha = parseFloat( cell.angle_alpha );
+            unitcellDict.beta = parseFloat( cell.angle_beta );
+            unitcellDict.gamma = parseFloat( cell.angle_gamma );
+
+        }
+
+        if( cif.symmetry ){
+
+            var symmetry = cif.symmetry;
+
+            var sGroup = symmetry[ "space_group_name_H-M" ];
+            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+                ( sGroup[0] === "'" || sGroup[0] === '"' )
+            ){
+                sGroup = sGroup.substring( 1, sGroup.length-1 );
+            }
+
             unitcellDict.spacegroup = sGroup;
 
         }
@@ -25731,7 +25849,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.chainStore.modelIndex = sd.chainStore.modelIndex;
         s.chainStore.residueOffset = sd.chainStore.groupOffset;
         s.chainStore.residueCount = sd.chainStore.groupCount;
-        s.chainStore.chainname = sd.chainStore.chainName;
+        s.chainStore.chainname = sd.chainStore.chainId;
 
         s.modelStore.length = sd.numModels;
         s.modelStore.count = sd.numModels;
@@ -25794,7 +25912,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     if( !part ){
                         part = {
                             matrix: new THREE.Matrix4().fromArray( t.transformation ).transpose(),
-                            chainList: t.chainId
+                            chainList: t.chainIdList
                         };
                         tDict[ t.transformation ] = part;
                     }else{
@@ -25814,7 +25932,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 }
                 if( Object.keys( cDict ).length > 0 ){
                     var assembly = new NGL.Assembly( bioAssem.id );
-                    s.biomolDict[ "BU" + bioAssem.id ] = assembly;
+                    s.biomolDict[ "BU" + k ] = assembly;
                     for( var ck in cDict ){
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
@@ -28679,6 +28797,9 @@ NGL.Viewer.prototype = {
         this.renderer.domElement.addEventListener(  // firefox
             'MozMousePixelScroll', preventDefault, false
         );
+        this.renderer.domElement.addEventListener(
+            'touchmove', preventDefault, false
+        );
 
         this.controls = new THREE.TrackballControls(
             this.camera, this.renderer.domElement
@@ -28700,7 +28821,6 @@ NGL.Viewer.prototype = {
             this.controls.update.bind( this.controls ),
             false
         );
-
         document.addEventListener(
             'touchmove',
             this.controls.update.bind( this.controls ),
@@ -28836,6 +28956,8 @@ NGL.Viewer.prototype = {
         var bb = this.boundingBox;
 
         function updateGeometry( geometry, matrix ){
+
+            if( geometry.attributes.position.count === 0 ) return;
 
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
@@ -31235,7 +31357,7 @@ NGL.SphereImpostorBuffer.prototype.constructor = NGL.SphereImpostorBuffer;
 
 NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    var p = params || p;
+    var p = params || {};
 
     // Moves the cylinder in camera space to get, for example,
     // one of multiple shifted screen-aligned cylinders.
@@ -31321,7 +31443,7 @@ NGL.CylinderImpostorBuffer.prototype.getMaterial = function( type ){
 
 NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    var p = params || p;
+    var p = params || {};
 
     var shrink = p.shrink !== undefined ? p.shrink : 0.14;
 
@@ -32866,9 +32988,11 @@ NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disableImpostor ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         return new NGL.SphereGeometryBuffer(
             position, color, radius, pickingColor, params
@@ -32885,9 +33009,11 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disa
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params, disableImpostor ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         // FIXME cap support missing
 
@@ -32908,9 +33034,11 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pi
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params, disableImpostor ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,
@@ -33936,28 +34064,14 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
-        // FIXME move specific parts to subclasses
         var params = {
-
             visible: this.visible,
-            sele: this.selection ? this.selection.string : undefined,
-            disableImpostor: this.disableImpostor,
             quality: this.quality
-
         };
 
         Object.keys( this.parameters ).forEach( function( name ){
-
             params[ name ] = this[ name ];
-
         }, this );
-
-        // if( typeof this.radius === "string" ){
-
-        //     params[ "radiusType" ] = this.radius;
-        //     delete params[ "radius" ];
-
-        // }
 
         return params;
 
@@ -34048,13 +34162,15 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
+    var p = params || {};
+
     this.dataList = [];
 
     this.structure = structure;
-    this.selection = new NGL.Selection( params.sele );
+    this.selection = new NGL.Selection( p.sele );
     this.structureView = this.structure.getView( this.selection );
 
-    NGL.Representation.call( this, structure, viewer, params );
+    NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
         var biomolOptions = { "__AU": "AU" };
@@ -34251,6 +34367,19 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
     },
 
+    getParameters: function(){
+
+        var params = Object.assign(
+            NGL.Representation.prototype.getParameters.call( this ),
+            {
+                sele: this.selection ? this.selection.string : undefined
+            }
+        );
+
+        return params;
+
+    },
+
     attach: function( callback ){
 
         var viewer = this.viewer;
@@ -34308,6 +34437,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -34315,8 +34447,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        this.disableImpostor = p.disableImpostor || false;
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -34327,6 +34457,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
         }else{
             this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -34641,6 +34772,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
@@ -34655,8 +34789,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
@@ -34670,6 +34802,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.aspectRatio = p.aspectRatio || 2.0;
         this.lineOnly = p.lineOnly || false;
@@ -34730,9 +34863,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 atomData.pickingColor,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: true
-                } ),
-                this.disableImpostor
+                } )
             );
 
             this.__center = new Float32Array( sview.bondCount * 3 );
@@ -34749,6 +34882,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                     shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: true
                 } ),
                 this.disableImpostor
@@ -35013,9 +35147,9 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             atomData.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         this.__center = new Float32Array( sview.bondCount * 3 );
@@ -35726,16 +35860,34 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        sphereDetail: {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        }
+
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.colorScheme = params.colorScheme || "sstruc";
-        params.radius = params.radius || 0.15;
-        params.scale = params.scale || 1.0;
+        var p = params || {};
+        p.colorScheme = p.colorScheme || "sstruc";
+        p.radius = p.radius || 0.15;
+        p.scale = p.scale || 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        if( p.quality === "low" ){
+            this.sphereDetail = 0;
+        }else if( p.quality === "medium" ){
+            this.sphereDetail = 1;
+        }else if( p.quality === "high" ){
+            this.sphereDetail = 2;
+        }else{
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+        }
+        this.disableImpostor = p.disableImpostor || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -35763,9 +35915,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     color.pickingColor,
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,
+                        disableImpostor: this.disableImpostor,
                         dullInterior: true
-                    } ),
-                    this.disableImpostor
+                    } )
                 ),
 
                 new NGL.VectorBuffer(
@@ -35869,6 +36021,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -35880,8 +36035,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         p.radius = p.radius || 1.5;
         p.scale = p.scale || 1.0;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
@@ -35891,6 +36044,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.localAngle = p.localAngle || 30;
         this.centerDist = p.centerDist || 2.5;
@@ -35953,9 +36107,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {
@@ -36280,6 +36434,9 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
         helixDist: {
             type: "number", precision: 1, max: 30, min: 0, rebuild: true
         },
@@ -36288,7 +36445,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         },
         download: {
             type: "button", methodName: "download"
-        },
+        }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
@@ -36299,8 +36456,6 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         p.radius = p.radius || 0.7;
         p.scale = p.scale || 1.0;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
@@ -36310,6 +36465,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.localAngle = p.localAngle || 30;
         this.centerDist = p.centerDist || 2.5;
@@ -36355,9 +36511,9 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
+                        disableImpostor: this.disableImpostor,
                         dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                    } )
                 )
 
             );
@@ -36480,6 +36636,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         },
         maxAngle: {
             type: "integer", max: 180, min: 0, rebuild: true
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -36489,17 +36651,16 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
-            this.sphereDetail = 0;
+            this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
-            this.sphereDetail = 1;
+            this.radiusSegments = 10;
         }else if( p.quality === "high" ){
-            this.sphereDetail = 2;
+            this.radiusSegments = 20;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.contactType = p.contactType || "polar";
         this.maxDistance = p.maxDistance || 3.5;
@@ -36509,13 +36670,15 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     },
 
-    create: function(){
+    getBondData: function( sview, what, params ){
 
-        if( this.structureView.atomCount === 0 ) return;
+        params = this.getBondParams( what, params );
 
-        var structureSubset = new NGL.StructureSubset(
-            this.structure, this.selection
-        );
+        return sview.getBondData( params );
+
+    },
+
+    createData: function( sview ){
 
         var contactsFnDict = {
             "polar": NGL.polarContacts,
@@ -36523,107 +36686,70 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         };
 
         var contactData = contactsFnDict[ this.contactType ](
-            structureSubset, this.maxDistance, this.maxAngle
+            sview, this.maxDistance, this.maxAngle
         );
 
-        this.contactAtomSet = contactData.atomSet;
-        this.contactBondSet = contactData.bondSet;
+        var params = {
+            bondSet: contactData.bondSet,
+            bondStore: contactData.bondStore
+        };
 
-        var atomSet = this.contactAtomSet;
-        var bondSet = this.contactBondSet;
+        var bondData = this.getBondData( sview, undefined, params );
 
-        if( atomSet.atomCount === 0 ) return;
-
-        this.cylinderBuffer = new NGL.CylinderBuffer(
-            bondSet.bondPosition( null, 0 ),
-            bondSet.bondPosition( null, 1 ),
-            bondSet.bondColor( null, 0, this.getColorParams() ),
-            bondSet.bondColor( null, 1, this.getColorParams() ),
-            bondSet.bondRadius( null, 0, this.radius, this.scale ),
-            bondSet.bondPickingColor( null, 0 ),
-            bondSet.bondPickingColor( null, 1 ),
+        var cylinderBuffer = new NGL.CylinderBuffer(
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            bondData.radius,
+            bondData.pickingColor1,
+            bondData.pickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
-        this.bufferList.push( this.cylinderBuffer );
-
-        structureSubset.dispose();
+        return {
+            bufferList: [ cylinderBuffer ],
+            contactData: contactData
+        };
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( what[ "position" ] ){
+        var params = {
+            bondSet: data.contactData.bondSet,
+            bondStore: data.contactData.bondStore
+        };
 
-            // FIXME
-            this.build();
-            return;
-
-        }
-
-        //
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        what = what || {};
-
-        var atomSet = this.contactAtomSet;
-        var bondSet = this.contactBondSet;
-
-        if( atomSet.atomCount === 0 ) return;
-
-        var sphereData = {};
+        var bondData = this.getBondData( data.sview, what, params );
         var cylinderData = {};
 
-        if( what[ "position" ] ){
-
-            var from = bondSet.bondPosition( null, 0 );
-            var to = bondSet.bondPosition( null, 1 );
-
+        if( !what || what[ "position" ] ){
+            var from = bondData.position1;
+            var to = bondData.position2;
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to
+                from, to, this.__center
             );
             cylinderData[ "position1" ] = from;
             cylinderData[ "position2" ] = to;
-
         }
 
-        if( what[ "color" ] ){
-
-            cylinderData[ "color" ] = bondSet.bondColor(
-                null, 0, this.getColorParams()
-            );
-            cylinderData[ "color2" ] = bondSet.bondColor(
-                null, 1, this.getColorParams()
-            );
-
+        if( !what || what[ "color" ] ){
+            cylinderData[ "color" ] = bondData.color1;
+            cylinderData[ "color2" ] = bondData.color2;
         }
 
-        if( what[ "radius" ] || what[ "scale" ] ){
-
-            cylinderData[ "radius" ] = bondSet.bondRadius(
-                null, 0, this.radius, this.scale
-            );
-
+        if( !what || what[ "radius" ] ){
+            cylinderData[ "radius" ] = bondData.radius;
         }
 
-        this.cylinderBuffer.setAttributes( cylinderData );
-
-    },
-
-    clear: function(){
-
-        if( this.contactAtomSet ) this.contactAtomSet.dispose();
-        if( this.contactBondSet ) this.contactBondSet.dispose();
-
-        NGL.StructureRepresentation.prototype.clear.call( this );
+        data.bufferList[ 0 ].setAttributes( cylinderData );
 
     }
 
@@ -36942,6 +37068,9 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -36950,8 +37079,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
-
-        this.disableImpostor = p.disableImpostor || false;
 
         if( p.quality === "low" ){
             this.radiusSegments = 5;
@@ -36962,6 +37089,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.font = p.font || 'LatoBlack';
         this.labelSize = p.labelSize || 1.0;
@@ -37058,9 +37186,9 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         this.bufferList.push( this.textBuffer, this.cylinderBuffer );
@@ -37751,6 +37879,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
 
         pointSize: {
             type: "number", precision: 1, max: 100, min: 0, buffer: true
@@ -37797,8 +37928,6 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         p.colorScheme = p.colorScheme || "uniform";
         p.colorValue = p.colorValue || 0xDDDDDD;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.sphereDetail = 0;
         }else if( p.quality === "medium" ){
@@ -37808,6 +37937,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         }else{
             this.sphereDetail = p.sphereDetail || 1;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
         this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
@@ -37883,9 +38013,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 pickingColor,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: false
-                } ),
-                this.disableImpostor
+                } )
             );
 
         }else{
@@ -38271,18 +38401,86 @@ NGL.Stage.prototype = {
 
             object.setSelection( "/0" );
 
-            if( object.structure.atomStore.count > 100000 ){
+            var atomCount, instanceCount;
+            var structure = object.structure;
 
-                object.addRepresentation( "line" );
-                this.centerView();
+            if( structure.biomolDict[ "BU1" ] ){
+                var assembly = structure.biomolDict[ "BU1" ];
+                atomCount = assembly.getAtomCount( structure );
+                instanceCount = assembly.getInstanceCount();
+            }else{
+                atomCount = structure.getModelProxy( 0 ).atomCount;
+                instanceCount = 1;
+            }
+
+            if( NGL.debug ) console.log( atomCount, instanceCount );
+
+            if( instanceCount > 10 && atomCount > 15000 ){
+
+                object.addRepresentation( "surface", {
+                    sele: "polymer",
+                    surfaceType: "sas",
+                    probeRadius: 0.1,
+                    scaleFactor: 0.4,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu"
+                } );
+
+            }else if( atomCount > 1000000 ){
+
+                object.addRepresentation( "backbone", {
+                    lineOnly: true,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu"
+                } );
+
+            }else if( atomCount > 250000 ){
+
+                object.addRepresentation( "backbone", {
+                    quality: "low",
+                    disableImpostor: true,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
+
+            }else if( atomCount > 100000 ){
+
+                object.addRepresentation( "backbone", {
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
 
             }else{
 
-                object.addRepresentation( "cartoon" );
-                object.addRepresentation( "licorice", { sele: "hetero" } );
-                this.centerView();
+                var quality = atomCount < 15000 ? "high" : "medium";
+
+                object.addRepresentation( "cartoon", {
+                    color: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 0.7,
+                    aspectRatio: 5,
+                    quality: quality
+                } );
+                if( atomCount < 50000 ){
+                    object.addRepresentation( "base", {
+                        color: "atomindex",
+                        colorScale: "RdYlBu",
+                        quality: quality
+                    } );
+                }
+                object.addRepresentation( "ball+stick", {
+                    sele: "hetero and not ( water or ion )",
+                    colorScheme: "element",
+                    scale: 2.5,
+                    aspectRatio: 1.3,
+                    quality: quality
+                } );
 
             }
+
+            this.centerView();
 
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
