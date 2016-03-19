@@ -2848,9 +2848,11 @@ NGL.SurfaceBuffer.prototype.constructor = NGL.SurfaceBuffer;
 ///////////////////
 // API Primitives
 
-NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disableImpostor ){
+NGL.SphereBuffer = function( position, color, radius, pickingColor, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         return new NGL.SphereGeometryBuffer(
             position, color, radius, pickingColor, params
@@ -2867,9 +2869,11 @@ NGL.SphereBuffer = function( position, color, radius, pickingColor, params, disa
 };
 
 
-NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params, disableImpostor ){
+NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         // FIXME cap support missing
 
@@ -2890,9 +2894,11 @@ NGL.CylinderBuffer = function( from, to, color, color2, radius, pickingColor, pi
 };
 
 
-NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params, disableImpostor ){
+NGL.HyperballStickBuffer = function( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
-    if( !NGL.extensionFragDepth || disableImpostor ){
+    var p = params || {};
+
+    if( !NGL.extensionFragDepth || p.disableImpostor ){
 
         return new NGL.CylinderGeometryBuffer(
             from, to, color, color2,

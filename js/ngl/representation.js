@@ -423,27 +423,14 @@ NGL.Representation.prototype = {
 
     getParameters: function(){
 
-        // FIXME move specific parts to subclasses
         var params = {
-
             visible: this.visible,
-            sele: this.selection ? this.selection.string : undefined,
             quality: this.quality
-
         };
 
         Object.keys( this.parameters ).forEach( function( name ){
-
             params[ name ] = this[ name ];
-
         }, this );
-
-        // if( typeof this.radius === "string" ){
-
-        //     params[ "radiusType" ] = this.radius;
-        //     delete params[ "radius" ];
-
-        // }
 
         return params;
 
@@ -534,13 +521,15 @@ NGL.BufferRepresentation.prototype = NGL.createObject(
 
 NGL.StructureRepresentation = function( structure, viewer, params ){
 
+    var p = params || {};
+
     this.dataList = [];
 
     this.structure = structure;
-    this.selection = new NGL.Selection( params.sele );
+    this.selection = new NGL.Selection( p.sele );
     this.structureView = this.structure.getView( this.selection );
 
-    NGL.Representation.call( this, structure, viewer, params );
+    NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
         var biomolOptions = { "__AU": "AU" };
@@ -734,6 +723,19 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         );
 
         return this;
+
+    },
+
+    getParameters: function(){
+
+        var params = Object.assign(
+            NGL.Representation.prototype.getParameters.call( this ),
+            {
+                sele: this.selection ? this.selection.string : undefined
+            }
+        );
+
+        return params;
 
     },
 
@@ -1220,9 +1222,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 atomData.pickingColor,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: true
-                } ),
-                this.disableImpostor
+                } )
             );
 
             this.__center = new Float32Array( sview.bondCount * 3 );
@@ -1239,6 +1241,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                     shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: true
                 } ),
                 this.disableImpostor
@@ -1503,9 +1506,9 @@ NGL.HyperballRepresentation.prototype = NGL.createObject(
             atomData.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         this.__center = new Float32Array( sview.bondCount * 3 );
@@ -2271,9 +2274,9 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                     color.pickingColor,
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,
+                        disableImpostor: this.disableImpostor,
                         dullInterior: true
-                    } ),
-                    this.disableImpostor
+                    } )
                 ),
 
                 new NGL.VectorBuffer(
@@ -2463,9 +2466,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {
@@ -2867,9 +2870,9 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
+                        disableImpostor: this.disableImpostor,
                         dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                    } )
                 )
 
             );
@@ -3064,9 +3067,9 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {
@@ -3542,9 +3545,9 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
                 shift: 0,
                 cap: true,
                 radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         this.bufferList.push( this.textBuffer, this.cylinderBuffer );
@@ -4235,6 +4238,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
 
         pointSize: {
             type: "number", precision: 1, max: 100, min: 0, buffer: true
@@ -4281,8 +4287,6 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         p.colorScheme = p.colorScheme || "uniform";
         p.colorValue = p.colorValue || 0xDDDDDD;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.sphereDetail = 0;
         }else if( p.quality === "medium" ){
@@ -4292,6 +4296,7 @@ NGL.DotRepresentation.prototype = NGL.createObject(
         }else{
             this.sphereDetail = p.sphereDetail || 1;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
         this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
@@ -4367,9 +4372,9 @@ NGL.DotRepresentation.prototype = NGL.createObject(
                 pickingColor,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
+                    disableImpostor: this.disableImpostor,
                     dullInterior: false
-                } ),
-                this.disableImpostor
+                } )
             );
 
         }else{
