@@ -934,6 +934,18 @@ NGL.Assembly.prototype = {
         return part;
     },
 
+    getAtomCount: function( structure ){
+
+        var atomCount = 0;
+
+        this.partList.forEach( function( part, i ){
+            atomCount += part.getAtomCount( structure );
+        } );
+
+        return atomCount;
+
+    },
+
     toJSON: function(){
 
         var output = {
@@ -976,6 +988,21 @@ NGL.AssemblyPart.prototype = {
 
     constructor: NGL.AssemblyPart,
     type: "AssemblyPart",
+
+    getAtomCount: function( structure ){
+
+        var atomCount = 0;
+        var chainList = this.chainList;
+
+        structure.eachChain( function( cp ){
+            if( chainList.indexOf( cp.chainname ) != -1 ){
+                atomCount += cp.atomCount;
+            }
+        } );
+
+        return this.matrixList.length * atomCount;
+
+    },
 
     getSelection: function(){
         if( this.chainList.length > 0 ){
