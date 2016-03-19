@@ -428,7 +428,6 @@ NGL.Representation.prototype = {
 
             visible: this.visible,
             sele: this.selection ? this.selection.string : undefined,
-            disableImpostor: this.disableImpostor,
             quality: this.quality
 
         };
@@ -795,6 +794,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
 
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -802,8 +804,6 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        this.disableImpostor = p.disableImpostor || false;
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -814,6 +814,7 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
         }else{
             this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1128,6 +1129,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
@@ -1142,8 +1146,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.sphereDetail = 0;
             this.radiusSegments = 5;
@@ -1157,6 +1159,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
             this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.aspectRatio = p.aspectRatio || 2.0;
         this.lineOnly = p.lineOnly || false;
@@ -2213,16 +2216,34 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
+        sphereDetail: {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        }
+
     }, NGL.StructureRepresentation.prototype.parameters ),
 
     init: function( params ){
 
-        params = params || {};
-        params.colorScheme = params.colorScheme || "sstruc";
-        params.radius = params.radius || 0.15;
-        params.scale = params.scale || 1.0;
+        var p = params || {};
+        p.colorScheme = p.colorScheme || "sstruc";
+        p.radius = p.radius || 0.15;
+        p.scale = p.scale || 1.0;
 
-        NGL.StructureRepresentation.prototype.init.call( this, params );
+        if( p.quality === "low" ){
+            this.sphereDetail = 0;
+        }else if( p.quality === "medium" ){
+            this.sphereDetail = 1;
+        }else if( p.quality === "high" ){
+            this.sphereDetail = 2;
+        }else{
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+        }
+        this.disableImpostor = p.disableImpostor || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
@@ -2356,6 +2377,9 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2367,8 +2391,6 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         p.radius = p.radius || 1.5;
         p.scale = p.scale || 1.0;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
@@ -2378,6 +2400,7 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.localAngle = p.localAngle || 30;
         this.centerDist = p.centerDist || 2.5;
@@ -2767,6 +2790,9 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        },
         helixDist: {
             type: "number", precision: 1, max: 30, min: 0, rebuild: true
         },
@@ -2775,7 +2801,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         },
         download: {
             type: "button", methodName: "download"
-        },
+        }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
 
@@ -2786,8 +2812,6 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         p.radius = p.radius || 0.7;
         p.scale = p.scale || 1.0;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
             this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
@@ -2797,6 +2821,7 @@ NGL.CrossingRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.localAngle = p.localAngle || 30;
         this.centerDist = p.centerDist || 2.5;
@@ -2967,6 +2992,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         },
         maxAngle: {
             type: "integer", max: 180, min: 0, rebuild: true
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -2976,17 +3007,16 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
 
-        this.disableImpostor = p.disableImpostor || false;
-
         if( p.quality === "low" ){
-            this.sphereDetail = 0;
+            this.radiusSegments = 5;
         }else if( p.quality === "medium" ){
-            this.sphereDetail = 1;
+            this.radiusSegments = 10;
         }else if( p.quality === "high" ){
-            this.sphereDetail = 2;
+            this.radiusSegments = 20;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.contactType = p.contactType || "polar";
         this.maxDistance = p.maxDistance || 3.5;
@@ -3394,6 +3424,9 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         },
         radiusSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -3402,8 +3435,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.radius = p.radius || this.defaultSize;
-
-        this.disableImpostor = p.disableImpostor || false;
 
         if( p.quality === "low" ){
             this.radiusSegments = 5;
@@ -3414,6 +3445,7 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }else{
             this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
         }
+        this.disableImpostor = p.disableImpostor || false;
 
         this.font = p.font || 'LatoBlack';
         this.labelSize = p.labelSize || 1.0;
