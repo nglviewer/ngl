@@ -186,45 +186,86 @@ NGL.Stage.prototype = {
 
             object.setSelection( "/0" );
 
-            if( object.structure.atomStore.count > 1000000 ){
+            var atomCount, instanceCount;
+            var structure = object.structure;
+
+            if( structure.biomolDict[ "BU1" ] ){
+                var assembly = structure.biomolDict[ "BU1" ];
+                atomCount = assembly.getAtomCount( structure );
+                instanceCount = assembly.getInstanceCount();
+            }else{
+                atomCount = structure.getModelProxy( 0 ).atomCount;
+                instanceCount = 1;
+            }
+
+            if( NGL.debug ) console.log( atomCount, instanceCount );
+
+            if( instanceCount > 10 && atomCount > 15000 ){
+
+                object.addRepresentation( "surface", {
+                    sele: "polymer",
+                    surfaceType: "sas",
+                    probeRadius: 0.1,
+                    scaleFactor: 0.4,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu"
+                } );
+
+            }else if( atomCount > 1000000 ){
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
                     colorScheme: "atomindex",
                     colorScale: "RdYlBu"
                 } );
-                this.centerView();
 
-            }else if( object.structure.atomStore.count > 100000 ){
+            }else if( atomCount > 250000 ){
+
+                object.addRepresentation( "backbone", {
+                    quality: "low",
+                    disableImpostor: true,
+                    colorScheme: "atomindex",
+                    colorScale: "RdYlBu",
+                    scale: 2.0
+                } );
+
+            }else if( atomCount > 100000 ){
 
                 object.addRepresentation( "backbone", {
                     colorScheme: "atomindex",
                     colorScale: "RdYlBu",
                     scale: 2.0
                 } );
-                this.centerView();
 
             }else{
+
+                var quality = atomCount < 15000 ? "high" : "medium";
 
                 object.addRepresentation( "cartoon", {
                     color: "atomindex",
                     colorScale: "RdYlBu",
                     scale: 0.7,
-                    aspectRatio: 5
+                    aspectRatio: 5,
+                    quality: quality
                 } );
-                object.addRepresentation( "base", {
-                    color: "atomindex",
-                    colorScale: "RdYlBu"
-                } );
+                if( atomCount < 50000 ){
+                    object.addRepresentation( "base", {
+                        color: "atomindex",
+                        colorScale: "RdYlBu",
+                        quality: quality
+                    } );
+                }
                 object.addRepresentation( "ball+stick", {
                     sele: "hetero and not ( water or ion )",
                     colorScheme: "element",
                     scale: 2.5,
-                    aspectRatio: 1.3
+                    aspectRatio: 1.3,
+                    quality: quality
                 } );
-                this.centerView();
 
             }
+
+            this.centerView();
 
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
