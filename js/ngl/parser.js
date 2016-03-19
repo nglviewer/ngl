@@ -938,11 +938,23 @@ NGL.Assembly.prototype = {
 
         var atomCount = 0;
 
-        this.partList.forEach( function( part, i ){
+        this.partList.forEach( function( part ){
             atomCount += part.getAtomCount( structure );
         } );
 
         return atomCount;
+
+    },
+
+    getInstanceCount: function(){
+
+        var instanceCount = 0;
+
+        this.partList.forEach( function( part ){
+            instanceCount += part.matrixList.length;
+        } );
+
+        return instanceCount;
 
     },
 
