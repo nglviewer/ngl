@@ -25883,7 +25883,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 var atomname = groupType.atomInfo[ j + 1 ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
-            s.residueMap.add( groupType.groupName, atomTypeIdList, groupType.hetFlag );
+            var hetFlag = groupType.chemCompType === "NON-POLYMER";
+            s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
         for( var i = 0, il = s.atomStore.count; i < il; ++i ){
@@ -29249,7 +29250,7 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 200 && !this.still && this.sampleLevel < 3 ){
+        if( performance.now() - this.stats.startTime > 500 && !this.still && this.sampleLevel < 3 ){
 
             var currentSampleLevel = this.sampleLevel;
             this.sampleLevel = 3;
@@ -38411,6 +38412,10 @@ NGL.Stage.prototype = {
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
                 instanceCount = 1;
+            }
+
+            if( typeof window.orientation !== 'undefined' ){
+                atomCount *= 4;
             }
 
             if( NGL.debug ) console.log( atomCount, instanceCount );
