@@ -1564,7 +1564,7 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 200 && !this.still && this.sampleLevel < 3 ){
+        if( performance.now() - this.stats.startTime > 500 && !this.still && this.sampleLevel < 3 ){
 
             var currentSampleLevel = this.sampleLevel;
             this.sampleLevel = 3;

@@ -198,6 +198,10 @@ NGL.Stage.prototype = {
                 instanceCount = 1;
             }
 
+            if( typeof window.orientation !== 'undefined' ){
+                atomCount *= 4;
+            }
+
             if( NGL.debug ) console.log( atomCount, instanceCount );
 
             if( instanceCount > 10 && atomCount > 15000 ){
