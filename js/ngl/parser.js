@@ -3398,7 +3398,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 var atomname = groupType.atomInfo[ j + 1 ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
-            s.residueMap.add( groupType.groupName, atomTypeIdList, groupType.hetFlag );
+            var hetFlag = groupType.chemCompType === "NON-POLYMER";
+            s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
         for( var i = 0, il = s.atomStore.count; i < il; ++i ){
