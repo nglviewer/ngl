@@ -25874,6 +25874,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
             .map( function( id ){ return parseInt( id ); } )
             .sort( function( a, b ){ return a - b; } );
 
+        var hetCompList = [
+            "non-polymer", "other", "saccharide", "l-saccharide", "d-saccharide",
+            "l-saccharide 1,4 and 1,4 linking", "l-saccharide 1,4 and 1,6 linking",
+            "d-saccharide 1,4 and 1,4 linking", "d-saccharide 1,4 and 1,6 linking"
+        ];
+
         for( var i = 0, il = groupTypeIdList.length; i < il; ++i ){
             var groupTypeId = groupTypeIdList[ i ];
             var groupType = sd.groupMap[ groupTypeId ];
@@ -25883,7 +25889,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 var atomname = groupType.atomInfo[ j + 1 ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
-            var hetFlag = groupType.chemCompType === "NON-POLYMER";
+            var hetFlag = hetCompList.indexOf( groupType.chemCompType.toLowerCase() ) !== -1;
             s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
