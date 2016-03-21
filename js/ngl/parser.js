@@ -187,26 +187,26 @@ NGL.assignSecondaryStructure = function( structure ){
         return NGL.binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
     } );
 
-    // helices.sort( function( h1, h2 ){
+    helices.sort( function( h1, h2 ){
 
-    //     var c1 = h1[ 0 ];
-    //     var c2 = h2[ 0 ];
-    //     var r1 = h1[ 1 ];
-    //     var r2 = h2[ 1 ];
+        var c1 = h1[ 0 ];
+        var c2 = h2[ 0 ];
+        var r1 = h1[ 1 ];
+        var r2 = h2[ 1 ];
 
-    //     if( c1 === c2 ){
-    //         if( r1 === r2 ){
-    //             return 0;
-    //         }else{
-    //             return r1 < r2 ? -1 : 1;
-    //         }
-    //     }else{
-    //         var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
-    //         var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
-    //         return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
-    //     }
+        if( c1 === c2 ){
+            if( r1 === r2 ){
+                return 0;
+            }else{
+                return r1 < r2 ? -1 : 1;
+            }
+        }else{
+            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+        }
 
-    // } );
+    } );
 
     var residueStore = structure.residueStore;
 
@@ -251,8 +251,7 @@ NGL.assignSecondaryStructure = function( structure ){
                             if( i < n ){
                                 // must look at previous residues as
                                 // residues may not be ordered by resno
-                                // j = offset - 1;
-                                --j;
+                                j = offset - 1;
                                 helix = helices[ i ];
                                 chainChange = cp.chainname !== helix[ 0 ];
                             }else{
