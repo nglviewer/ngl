@@ -2204,6 +2204,9 @@ NGL.AtomProxy.prototype = {
     get sstruc () {
         return this.residueStore.getSstruc( this.residueIndex );
     },
+    get inscode () {
+        return this.residueStore.getInscode( this.residueIndex );
+    },
     get resno () {
         return this.residueStore.resno[ this.residueIndex ];
     },
@@ -2279,6 +2282,13 @@ NGL.AtomProxy.prototype = {
     },
     set bfactor ( value ) {
         this.atomStore.bfactor[ this.index ] = value;
+    },
+
+    get occupancy () {
+        return this.atomStore.occupancy[ this.index ];
+    },
+    set occupancy ( value ) {
+        this.atomStore.occupancy[ this.index ] = value;
     },
 
     // get bonds () {
@@ -2413,8 +2423,10 @@ NGL.AtomProxy.prototype = {
 
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
+        if( this.inscode ) name += "^" + this.inscode;
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
+        if( this.altloc ) name += "%" + this.altloc;
         if( this.modelIndex ) name += "/" + this.modelIndex;
 
         return name;
@@ -2636,6 +2648,13 @@ NGL.ResidueProxy.prototype = {
     },
     set sstruc ( value ) {
         this.residueStore.setSstruc( this.index, value );
+    },
+
+    get inscode () {
+        return this.residueStore.getInscode( this.index );
+    },
+    set inscode ( value ) {
+        this.residueStore.getInscode( this.index, value );
     },
 
     //
@@ -2879,9 +2898,10 @@ NGL.ResidueProxy.prototype = {
         var name = "";
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
-        if( this.chain ) name += ":" + this.chain.chainname;
-        if( this.chain && this.chain.model ){
-            name += "/" + this.chain.model.index;
+        if( this.inscode ) name += "^" + this.inscode;
+        if( this.chain ) name += ":" + this.chainname;
+        if( this.modelIndex ){
+            name += "/" + this.modelIndex;
         }
         return name;
     },
@@ -4511,21 +4531,18 @@ NGL.AtomStore.prototype = NGL.createObject(
         [ "z", 1, "float32" ],
         [ "serial", 1, "int32" ],
         [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ]
+        [ "altloc", 1, "uint8" ],
+        [ "occupancy", 1, "float32" ]
 
     ],
 
     setAltloc: function( i, str ){
-
         this.altloc[ i ] = str.charCodeAt( 0 );
-
     },
 
     getAltloc: function( i ){
-
         var code = this.altloc[ i ];
         return code ? String.fromCharCode( code ) : "";
-
     }
 
 } );
@@ -4556,21 +4573,27 @@ NGL.ResidueStore.prototype = NGL.createObject(
         [ "residueTypeId", 1, "uint16" ],
 
         [ "resno", 1, "int32" ],
-        [ "sstruc", 1, "uint8" ]
+        [ "sstruc", 1, "uint8" ],
+        [ "inscode", 1, "uint8" ]
 
     ],
 
     setSstruc: function( i, str ){
-
         this.sstruc[ i ] = str.charCodeAt( 0 );
-
     },
 
     getSstruc: function( i ){
-
         var code = this.sstruc[ i ];
         return code ? String.fromCharCode( code ) : "";
+    },
 
+    setInscode: function( i, str ){
+        this.inscode[ i ] = str.charCodeAt( 0 );
+    },
+
+    getInscode: function( i ){
+        var code = this.inscode[ i ];
+        return code ? String.fromCharCode( code ) : "";
     }
 
 } );
@@ -12595,7 +12618,7 @@ NGL.Selection.prototype = {
         var all = [ "*", "", "ALL" ];
 
         var c, sele, i, error, not;
-        var atomname, chain, resno, resname, model, resi;
+        var atomname, chain, resno, resname, model, resi, altloc, inscode;
         var j = 0;
 
         var createNewContext = function( operator ){
@@ -13063,18 +13086,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( c.charAt( 0 ) === "~" ){
-                sele.altloc = c.substr( 1 );
-                pushRule( sele );
-                continue;
-            }
-
             if( c[0] === "[" && c[c.length-1] === "]" ){
                 sele.resname = c.substr( 1, c.length-2 ).toUpperCase();
                 pushRule( sele );
                 continue;
             }else if( ( c.length >= 1 && c.length <= 4 ) &&
-                    c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
+                    c[0] !== "^" && c[0] !== ":" && c[0] !== "." && c[0] !== "%" && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
                 sele.resname = c.toUpperCase();
@@ -13101,7 +13118,14 @@ NGL.Selection.prototype = {
                 } );
             }
 
-            atomname = model[0].split(".");
+            altloc = model[0].split("%");
+            if( altloc.length > 1 ){
+                sele.rules.push( {
+                    altloc: altloc[1]
+                } );
+            }
+
+            atomname = altloc[0].split(".");
             if( atomname.length > 1 && atomname[1] ){
                 if( atomname[1].length > 4 ){
                     throw new Error( "atomname must be one to four characters" );
@@ -13118,8 +13142,15 @@ NGL.Selection.prototype = {
                 } );
             }
 
-            if( chain[0] ){
-                resi = chain[0].split("-");
+            inscode = chain[0].split("^");
+            if( inscode.length > 1 ){
+                sele.rules.push( {
+                    inscode: inscode[1]
+                } );
+            }
+
+            if( inscode[0] ){
+                resi = inscode[0].split("-");
                 if( resi.length === 1 ){
                     resi = parseInt( resi[0] );
                     if( isNaN( resi ) ){
@@ -13330,7 +13361,7 @@ NGL.Selection.prototype = {
             if( s.atomname===undefined && s.element===undefined &&
                     s.altloc===undefined && s.atomindex===undefined &&
                     // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
-                    s.keyword===undefined &&
+                    s.keyword===undefined && s.inscode===undefined &&
                     s.resname===undefined && s.sstruc===undefined &&
                     s.resno===undefined && s.chainname===undefined &&
                     s.model===undefined
@@ -13369,6 +13400,7 @@ NGL.Selection.prototype = {
                     if( s.resno!==a.resno ) return false;
                 }
             }
+            if( s.inscode!==undefined && s.inscode!==a.inscode ) return false;
 
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.model!==undefined && s.model!==a.modelIndex ) return false;
@@ -13413,7 +13445,7 @@ NGL.Selection.prototype = {
         var fn = function( r, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.resname===undefined && s.resno===undefined &&
+            if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
                     ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
             ) return -1;
@@ -13440,6 +13472,7 @@ NGL.Selection.prototype = {
                     if( s.resno!==r.resno ) return false;
                 }
             }
+            if( s.inscode!==undefined && s.inscode!==r.inscode ) return false;
 
             if( s.chainname!==undefined && s.chainname!==r.chainname ) return false;
             if( s.model!==undefined && s.model!==r.modelIndex ) return false;
@@ -13469,6 +13502,7 @@ NGL.Selection.prototype = {
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
+                if( s.inscode!==undefined ) return true;
                 if( s.atomindex!==undefined ) return true;
                 return false;
             } );
@@ -13513,6 +13547,7 @@ NGL.Selection.prototype = {
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
+                if( s.inscode!==undefined ) return true;
                 if( s.atomindex!==undefined ) return true;
                 return false;
             } );
@@ -14839,6 +14874,31 @@ NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
 NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
 
 
+NGL.OccupancyColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "PuBu";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0.0, 1.0 ];
+    }
+
+    var occupancyScale = this.getScale();
+
+    this.atomColor = function( a ){
+        return occupancyScale( a.occupancy );
+    };
+
+};
+
+NGL.OccupancyColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.OccupancyColorMaker.prototype.constructor = NGL.OccupancyColorMaker;
+
+
 NGL.HydrophobicityColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
@@ -14905,6 +14965,7 @@ NGL.ColorMakerRegistry.types = {
     "hydrophobicity": NGL.HydrophobicityColorMaker,
     "value": NGL.ValueColorMaker,
     "volume": NGL.VolumeColorMaker,
+    "occupancy": NGL.OccupancyColorMaker
 
 };
 
@@ -22533,6 +22594,7 @@ NGL.StructureBuilder = function( structure ){
     var currentChainname = null;
     var currentResname = null;
     var currentResno = null;
+    var currentInscode = null;
     var currentHetero = null;
 
     var previousResname;
@@ -22562,7 +22624,7 @@ NGL.StructureBuilder = function( structure ){
         );
     }
 
-    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc ){
+    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc, inscode ){
 
         var addModel = false;
         var addChain = false;
@@ -22580,7 +22642,7 @@ NGL.StructureBuilder = function( structure ){
             addResidue = true;
             ci += 1;
             ri += 1;
-        }else if( currentResno !== resno || currentResname !== resname ){
+        }else if( currentResno !== resno || currentResname !== resname || currentInscode !== inscode ){
             addResidue = true;
             ri += 1;
         }
@@ -22614,6 +22676,9 @@ NGL.StructureBuilder = function( structure ){
             if( sstruc !== undefined ){
                 residueStore.sstruc[ ri ] = sstruc.charCodeAt( 0 );
             }
+            if( inscode !== undefined ){
+                residueStore.inscode[ ri ] = inscode.charCodeAt( 0 );
+            }
             residueStore.atomOffset[ ri ] = ai;
             residueStore.atomCount[ ri ] = 0;
             residueStore.count += 1;
@@ -22629,6 +22694,7 @@ NGL.StructureBuilder = function( structure ){
         currentChainname = chainname;
         currentResname = resname;
         currentResno = resno;
+        currentInscode = inscode;
         currentHetero = hetero;
 
     };
@@ -22711,15 +22777,19 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    if( residueStore.resno[ j ] === helix[ 1 ] ){  // resnoBeg
+                    if( residueStore.resno[ j ] === helix[ 1 ] &&  // resnoBeg
+                        residueStore.getInscode( j ) === helix[ 2 ]   // inscodeBeg
+                    ){
                         helixRun = true;
                     }
 
                     if( helixRun ){
 
-                        residueStore.sstruc[ j ] = helix[ 4 ];
+                        residueStore.sstruc[ j ] = helix[ 6 ];
 
-                        if( residueStore.resno[ j ] === helix[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === helix[ 4 ] &&  // resnoEnd
+                            residueStore.getInscode( j ) === helix[ 5 ]   // inscodeEnd
+                        ){
 
                             helixRun = false
                             i += 1;
@@ -22791,7 +22861,9 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    if( residueStore.resno[ j ] === sheet[ 1 ] ){  // resnoBeg
+                    if( residueStore.resno[ j ] === sheet[ 1 ] &&  // resnoBeg
+                        residueStore.getInscode( j ) === sheet[ 2 ]   // inscodeBeg
+                    ){
                         sheetRun = true;
                     }
 
@@ -22799,7 +22871,9 @@ NGL.assignSecondaryStructure = function( structure ){
 
                         residueStore.sstruc[ j ] = strandCharCode;
 
-                        if( residueStore.resno[ j ] === sheet[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === sheet[ 4 ] &&  // resnoEnd
+                            residueStore.getInscode( j ) === sheet[ 5 ]   // inscodeEnd
+                        ){
 
                             sheetRun = false
                             i += 1;
@@ -23916,8 +23990,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var serial, chainname, resno, resname,
-            atomname, element, hetero, bfactor, altloc;
+        var serial, chainname, resno, resname, occupancy,
+            inscode, atomname, element, hetero, bfactor, altloc;
 
         var serialDict = {};
         var unitcellDict = {};
@@ -24026,10 +24100,11 @@ NGL.PdbParser.prototype = NGL.createObject(
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
                         resno = parseInt( line.substr( 22, 4 ) );
-                        // icode = line[ 26 ];  // FIXME currently not supported
+                        inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
-                        bfactor = parseFloat( line.substr( 60, 8 ) );
+                        bfactor = parseFloat( line.substr( 60, 6 ) );
                         altloc = line[ 16 ].trim();
+                        occupancy = parseFloat( line.substr( 54, 6 ) );
 
                     }
 
@@ -24042,8 +24117,9 @@ NGL.PdbParser.prototype = NGL.createObject(
                     atomStore.serial[ idx ] = serial;
                     atomStore.bfactor[ idx ] = bfactor;
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
+                    atomStore.occupancy[ idx ] = occupancy;
 
-                    sb.addAtom( modelIdx, chainname, resname, resno, hetero );
+                    sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
 
@@ -24087,19 +24163,30 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     var startChain = line[ 19 ].trim();
                     var startResi = parseInt( line.substr( 21, 4 ) );
+                    var startIcode = line[ 25 ].trim();
                     var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
+                    var endIcode = line[ 37 ].trim();
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 );
-                    helices.push([ startChain, startResi, endChain, endResi, helixType ]);
+                    helices.push( [
+                        startChain, startResi, startIcode,
+                        endChain, endResi, endIcode,
+                        helixType
+                    ] );
 
                 }else if( recordName === 'SHEET ' ){
 
                     var startChain = line[ 21 ].trim();
                     var startResi = parseInt( line.substr( 22, 4 ) );
+                    var startIcode = line[ 26 ].trim();
                     var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
-                    sheets.push([ startChain, startResi, endChain, endResi ]);
+                    var endIcode = line[ 37 ].trim();
+                    sheets.push( [
+                        startChain, startResi, startIcode,
+                        endChain, endResi, endIcode
+                    ] );
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -24178,22 +24265,20 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var mat = ls[ 1 ].trim();
 
                     if( line[ 5 ] === "1" && mat === "1" ){
-
-                        biomolDict[ "NCS" ] = {
-                            matrixDict: {},
-                            chainList: undefined
-                        };
-                        currentBiomol = biomolDict[ "NCS" ];
-
+                        var name = "NCS";
+                        currentBiomol = new NGL.Assembly( name );
+                        biomolDict[ name ] = currentBiomol;
+                        currentPart = currentBiomol.addPart();
                     }
 
                     var row = parseInt( line[ 5 ] ) - 1;
 
                     if( row === 0 ){
-                        currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                        currentMatrix = new THREE.Matrix4();
+                        currentPart.matrixList.push( currentMatrix );
                     }
 
-                    var elms = currentBiomol.matrixDict[ mat ].elements;
+                    var elms = currentMatrix.elements;
 
                     elms[ 4 * 0 + row ] = parseFloat( ls[ 2 ] );
                     elms[ 4 * 1 + row ] = parseFloat( ls[ 3 ] );
@@ -24522,7 +24607,8 @@ NGL.CifParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var altloc, serial, elem, chainname, resno, resname, atomname, element;
+        var altloc, serial, elem, chainname, resno, resname,
+            atomname, element, inscode;
 
         s.hasConnect = false;
 
@@ -24548,8 +24634,8 @@ NGL.CifParser.prototype = NGL.createObject(
 
         var auth_asym_id, auth_seq_id,
             label_atom_id, label_comp_id, label_asym_id, label_alt_id,
-            group_PDB, id, type_symbol, pdbx_PDB_model_num,
-            Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv;
+            group_PDB, id, type_symbol, pdbx_PDB_model_num, pdbx_PDB_ins_code,
+            Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv, occupancy;
 
         var asymIdDict = {};
         this.asymIdDict = asymIdDict;
@@ -24727,7 +24813,8 @@ NGL.CifParser.prototype = NGL.createObject(
                                     "auth_asym_id", "auth_seq_id",
                                     "label_atom_id", "label_comp_id", "label_asym_id", "label_alt_id",
                                     "group_PDB", "id", "type_symbol", "pdbx_PDB_model_num",
-                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv"
+                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
+                                    "pdbx_PDB_ins_code", "occupancy"
                                 ];
 
                                 auth_asym_id = pointerNames.indexOf( "auth_asym_id" );
@@ -24744,6 +24831,9 @@ NGL.CifParser.prototype = NGL.createObject(
                                 group_PDB = pointerNames.indexOf( "group_PDB" );
                                 B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
                                 pdbx_PDB_model_num = pointerNames.indexOf( "pdbx_PDB_model_num" );
+
+                                pdbx_PDB_ins_code = pointerNames.indexOf( "pdbx_PDB_ins_code" );
+                                occupancy = pointerNames.indexOf( "occupancy" );
 
                                 first = false;
 
@@ -24809,6 +24899,8 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             var resname = ls[ label_comp_id ];
                             var resno = parseInt( ls[ auth_seq_id ] );
+                            var inscode = ls[ pdbx_PDB_ins_code ];
+                            inscode = ( inscode === '?' ) ? '' : inscode;
                             var chainname = ls[ auth_asym_id ];
                             var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
@@ -24826,9 +24918,10 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.z[ idx ] = z;
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
                             atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
+                            atomStore.occupancy[ idx ] = parseFloat( ls[ occupancy ] );
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
-                            sb.addAtom( modelIdx, chainname, resname, resno, hetero );
+                            sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
                             if( NGL.debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
@@ -24923,11 +25016,15 @@ NGL.CifParser.prototype = NGL.createObject(
                 for( var i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
                     var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
                     if( !Number.isNaN( helixType ) ){
+                        var begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
+                        var endIcode = sc.pdbx_end_PDB_ins_code[ i ];
                         helices.push( [
                             asymIdDict[ sc.beg_label_asym_id[ i ] ],
                             parseInt( sc.beg_auth_seq_id[ i ] ),
+                            begIcode === "?" ? "" : begIcode,
                             asymIdDict[ sc.end_label_asym_id[ i ] ],
                             parseInt( sc.end_auth_seq_id[ i ] ),
+                            endIcode === "?" ? "" : endIcode,
                             ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 )
                         ] );
                     }
@@ -24946,12 +25043,15 @@ NGL.CifParser.prototype = NGL.createObject(
                 _ensureArray( ssr, "id" );
 
                 for( var i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+                    var begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
+                    var endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
                     sheets.push( [
                         asymIdDict[ ssr.beg_label_asym_id[ i ] ],
                         parseInt( ssr.beg_auth_seq_id[ i ] ),
+                        begIcode === "?" ? "" : begIcode,
                         asymIdDict[ ssr.end_label_asym_id[ i ] ],
-                        parseInt( ssr.end_auth_seq_id[ i ] )
-
+                        parseInt( ssr.end_auth_seq_id[ i ] ),
+                        endIcode === "?" ? "" : endIcode
                     ] );
                 }
 
@@ -25136,14 +25236,9 @@ NGL.CifParser.prototype = NGL.createObject(
             // ensure data is in lists
             _ensureArray( op, "id" );
 
-            var md = {};
-
-            biomolDict[ "NCS" ] = {
-
-                matrixDict: md,
-                chainList: undefined
-
-            };
+            var ncsName = "NCS";
+            biomolDict[ ncsName ] = new NGL.Assembly( ncsName );
+            var ncsPart = biomolDict[ ncsName ].addPart();
 
             op.id.forEach( function( id, i ){
 
@@ -25168,7 +25263,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                 m.transpose();
 
-                md[ id ] = m;
+                ncsPart.matrixList.push( m );
 
             } );
 
@@ -25326,10 +25421,14 @@ NGL.CifParser.prototype = NGL.createObject(
                 // metalc - metal coordination
                 // modres - covalent residue modification
 
+                var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
+                var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
                 var sele1 = (
-                    sc.ptnr1_auth_seq_id[ i ] + ":" +
-                    asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
-                    sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                    sc.ptnr1_auth_seq_id[ i ] +
+                    ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
+                    ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
+                    "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                    ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
                 );
                 var atomIndices1 = atomIndicesCache[ sele1 ];
                 if( !atomIndices1 ){
@@ -25342,10 +25441,14 @@ NGL.CifParser.prototype = NGL.createObject(
                     atomIndicesCache[ sele1 ] = atomIndices1;
                 }
 
+                var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
+                var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
                 var sele2 = (
-                    sc.ptnr2_auth_seq_id[ i ] + ":" +
-                    asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
-                    sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                    sc.ptnr2_auth_seq_id[ i ] +
+                    ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
+                    ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
+                    "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                    ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
                 );
                 var atomIndices2 = atomIndicesCache[ sele2 ];
                 if( !atomIndices2 ){
@@ -25812,7 +25915,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
-        // console.log(sd)
+        console.log(sd)
 
         if( sd.numBonds === undefined ){
             sd.numBonds = 0;
@@ -25834,6 +25937,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.atomStore.serial = sd.atomStore.atomId;
         s.atomStore.bfactor = sd.atomStore.bFactor;
         s.atomStore.altloc = sd.atomStore.altLabel;
+        s.atomStore.occupancy = sd.atomStore.occupancy;
 
         s.residueStore.length = sd.numGroups;
         s.residueStore.count = sd.numGroups;
@@ -25843,6 +25947,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.atomCount = sd.groupStore.atomCount;
         s.residueStore.resno = sd.groupStore.groupId;
         s.residueStore.sstruc = sd.groupStore.secStruct;
+        s.residueStore.inscode = new Uint8Array( sd.numGroups );
 
         s.chainStore.length = sd.numChains;
         s.chainStore.count = sd.numChains;
@@ -25898,6 +26003,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var atomOffset = s.residueStore.atomOffset[ residueIndex ];
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
+            s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
         }
 
         if( NGL.debug ) console.timeEnd( "process map data" );
