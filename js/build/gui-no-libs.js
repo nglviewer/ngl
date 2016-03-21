@@ -1353,7 +1353,7 @@ UI.Html.prototype.setValue = function ( value ) {
 
 UI.Form = function () {
 
-    UI.Element.call( this );
+    UI.Panel.call( this );
 
     var dom = document.createElement( 'form' );
     dom.className = 'Form';
@@ -3129,6 +3129,12 @@ NGL.StageWidget = function( stage ){
 
     //
 
+    document.body.addEventListener(
+        'touchmove', function( e ){ e.preventDefault(); }, false
+    );
+
+    //
+
     stage.handleResize();
     // FIXME hack for ie11
     setTimeout( function(){ stage.handleResize(); }, 500 );
@@ -3329,7 +3335,7 @@ NGL.ToolbarWidget = function( stage ){
     } );
 
     container.add( messagePanel );
-    // container.add( statsPanel );
+    if( NGL.debug ) container.add( statsPanel );
 
     return container;
 
@@ -3367,7 +3373,7 @@ NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = [
         "pdb", "ent", "pqr", "gro", "cif", "mcif", "mmcif", "sdf", "mol2",
-        "mrc", "ccp4", "map", "cube", "dx",
+        "mrc", "ccp4", "map", "cube", "dx", "dxbin",
         "obj", "ply",
         "ngl",
         "gz", "lzma", "bz2", "zip"
@@ -3631,7 +3637,7 @@ NGL.MenubarHelpWidget = function( stage ){
     // event handlers
 
     function onDocOptionClick () {
-        window.open( NGL.assetsDirectory + 'doc/index.html', '_blank' );
+        window.open( NGL.documentationUrl, '_blank' );
     }
 
     function onPreferencesOptionClick () {
@@ -3777,11 +3783,10 @@ NGL.OverviewWidget = function( stage ){
             "</ul>"
         ) );
 
-    var docUrl = NGL.assetsDirectory + "doc/index.html";
     listingPanel
         .add( new UI.Panel().add( new UI.Html(
             "For more information please visit the " +
-            "<a href='" + docUrl + "' target='_blank'>documentation pages</a>."
+            "<a href='" + NGL.documentationUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
     var overview = stage.preferences.getKey( "overview" );
