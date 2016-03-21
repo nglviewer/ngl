@@ -366,21 +366,18 @@ NGL.AtomStore.prototype = NGL.createObject(
         [ "z", 1, "float32" ],
         [ "serial", 1, "int32" ],
         [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ]
+        [ "altloc", 1, "uint8" ],
+        [ "occupancy", 1, "float32" ]
 
     ],
 
     setAltloc: function( i, str ){
-
         this.altloc[ i ] = str.charCodeAt( 0 );
-
     },
 
     getAltloc: function( i ){
-
         var code = this.altloc[ i ];
         return code ? String.fromCharCode( code ) : "";
-
     }
 
 } );
@@ -411,21 +408,27 @@ NGL.ResidueStore.prototype = NGL.createObject(
         [ "residueTypeId", 1, "uint16" ],
 
         [ "resno", 1, "int32" ],
-        [ "sstruc", 1, "uint8" ]
+        [ "sstruc", 1, "uint8" ],
+        [ "inscode", 1, "uint8" ]
 
     ],
 
     setSstruc: function( i, str ){
-
         this.sstruc[ i ] = str.charCodeAt( 0 );
-
     },
 
     getSstruc: function( i ){
-
         var code = this.sstruc[ i ];
         return code ? String.fromCharCode( code ) : "";
+    },
 
+    setInscode: function( i, str ){
+        this.inscode[ i ] = str.charCodeAt( 0 );
+    },
+
+    getInscode: function( i ){
+        var code = this.inscode[ i ];
+        return code ? String.fromCharCode( code ) : "";
     }
 
 } );

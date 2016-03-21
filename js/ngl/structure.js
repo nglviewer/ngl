@@ -953,6 +953,31 @@ NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
 NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
 
 
+NGL.OccupancyColorMaker = function( params ){
+
+    NGL.ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "PuBu";
+    }
+
+    if( !params.domain ){
+        this.domain = [ 0.0, 1.0 ];
+    }
+
+    var occupancyScale = this.getScale();
+
+    this.atomColor = function( a ){
+        return occupancyScale( a.occupancy );
+    };
+
+};
+
+NGL.OccupancyColorMaker.prototype = NGL.ColorMaker.prototype;
+
+NGL.OccupancyColorMaker.prototype.constructor = NGL.OccupancyColorMaker;
+
+
 NGL.HydrophobicityColorMaker = function( params ){
 
     NGL.ColorMaker.call( this, params );
@@ -1019,6 +1044,7 @@ NGL.ColorMakerRegistry.types = {
     "hydrophobicity": NGL.HydrophobicityColorMaker,
     "value": NGL.ValueColorMaker,
     "volume": NGL.VolumeColorMaker,
+    "occupancy": NGL.OccupancyColorMaker
 
 };
 

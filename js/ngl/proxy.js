@@ -582,6 +582,9 @@ NGL.AtomProxy.prototype = {
     get sstruc () {
         return this.residueStore.getSstruc( this.residueIndex );
     },
+    get inscode () {
+        return this.residueStore.getInscode( this.residueIndex );
+    },
     get resno () {
         return this.residueStore.resno[ this.residueIndex ];
     },
@@ -657,6 +660,13 @@ NGL.AtomProxy.prototype = {
     },
     set bfactor ( value ) {
         this.atomStore.bfactor[ this.index ] = value;
+    },
+
+    get occupancy () {
+        return this.atomStore.occupancy[ this.index ];
+    },
+    set occupancy ( value ) {
+        this.atomStore.occupancy[ this.index ] = value;
     },
 
     // get bonds () {
@@ -791,8 +801,10 @@ NGL.AtomProxy.prototype = {
 
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
+        if( this.inscode ) name += "^" + this.inscode;
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
+        if( this.altloc ) name += "%" + this.altloc;
         if( this.modelIndex ) name += "/" + this.modelIndex;
 
         return name;
@@ -1014,6 +1026,13 @@ NGL.ResidueProxy.prototype = {
     },
     set sstruc ( value ) {
         this.residueStore.setSstruc( this.index, value );
+    },
+
+    get inscode () {
+        return this.residueStore.getInscode( this.index );
+    },
+    set inscode ( value ) {
+        this.residueStore.getInscode( this.index, value );
     },
 
     //
@@ -1257,9 +1276,10 @@ NGL.ResidueProxy.prototype = {
         var name = "";
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
         if( this.resno ) name += this.resno;
-        if( this.chain ) name += ":" + this.chain.chainname;
-        if( this.chain && this.chain.model ){
-            name += "/" + this.chain.model.index;
+        if( this.inscode ) name += "^" + this.inscode;
+        if( this.chain ) name += ":" + this.chainname;
+        if( this.modelIndex ){
+            name += "/" + this.modelIndex;
         }
         return name;
     },

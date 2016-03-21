@@ -192,7 +192,7 @@ QUnit.test( "modelindex", function( assert ) {
 
 QUnit.test( "altloc", function( assert ) {
 
-    var sele = "~A";
+    var sele = "%A";
 
     var selection = new NGL.Selection( sele );
 
@@ -200,6 +200,24 @@ QUnit.test( "altloc", function( assert ) {
         "operator": undefined,
         "rules": [
             { "altloc": "A" }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
+
+
+QUnit.test( "inscode", function( assert ) {
+
+    var sele = "^C";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": undefined,
+        "rules": [
+            { "inscode": "C" }
         ]
     };
 
@@ -943,6 +961,28 @@ QUnit.test( "[123]", function( assert ) {
 
 });
 
+
+QUnit.test( "15^C:A.N%A/0", function( assert ) {
+
+    var sele = "15^C:A.N%A/0";
+
+    var selection = new NGL.Selection( sele );
+
+    var selectionObj = {
+        "operator": "AND",
+        "rules": [
+            { "model": 0 },
+            { "altloc": "A" },
+            { "atomname": "N" },
+            { "chainname": "A" },
+            { "inscode": "C" },
+            { "resno": 15 }
+        ]
+    };
+
+    assert.deepEqual( selection.selection, selectionObj, "Passed!" );
+
+});
 
 ///////////////////
 // Selection test

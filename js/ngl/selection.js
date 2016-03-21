@@ -101,7 +101,7 @@ NGL.Selection.prototype = {
         var all = [ "*", "", "ALL" ];
 
         var c, sele, i, error, not;
-        var atomname, chain, resno, resname, model, resi;
+        var atomname, chain, resno, resname, model, resi, altloc, inscode;
         var j = 0;
 
         var createNewContext = function( operator ){
@@ -569,18 +569,12 @@ NGL.Selection.prototype = {
                 continue;
             }
 
-            if( c.charAt( 0 ) === "~" ){
-                sele.altloc = c.substr( 1 );
-                pushRule( sele );
-                continue;
-            }
-
             if( c[0] === "[" && c[c.length-1] === "]" ){
                 sele.resname = c.substr( 1, c.length-2 ).toUpperCase();
                 pushRule( sele );
                 continue;
             }else if( ( c.length >= 1 && c.length <= 4 ) &&
-                    c[0] !== ":" && c[0] !== "." && c[0] !== "/" &&
+                    c[0] !== "^" && c[0] !== ":" && c[0] !== "." && c[0] !== "%" && c[0] !== "/" &&
                     isNaN( parseInt( c ) ) ){
 
                 sele.resname = c.toUpperCase();
@@ -607,7 +601,14 @@ NGL.Selection.prototype = {
                 } );
             }
 
-            atomname = model[0].split(".");
+            altloc = model[0].split("%");
+            if( altloc.length > 1 ){
+                sele.rules.push( {
+                    altloc: altloc[1]
+                } );
+            }
+
+            atomname = altloc[0].split(".");
             if( atomname.length > 1 && atomname[1] ){
                 if( atomname[1].length > 4 ){
                     throw new Error( "atomname must be one to four characters" );
@@ -624,8 +625,15 @@ NGL.Selection.prototype = {
                 } );
             }
 
-            if( chain[0] ){
-                resi = chain[0].split("-");
+            inscode = chain[0].split("^");
+            if( inscode.length > 1 ){
+                sele.rules.push( {
+                    inscode: inscode[1]
+                } );
+            }
+
+            if( inscode[0] ){
+                resi = inscode[0].split("-");
                 if( resi.length === 1 ){
                     resi = parseInt( resi[0] );
                     if( isNaN( resi ) ){
@@ -836,7 +844,7 @@ NGL.Selection.prototype = {
             if( s.atomname===undefined && s.element===undefined &&
                     s.altloc===undefined && s.atomindex===undefined &&
                     // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
-                    s.keyword===undefined &&
+                    s.keyword===undefined && s.inscode===undefined &&
                     s.resname===undefined && s.sstruc===undefined &&
                     s.resno===undefined && s.chainname===undefined &&
                     s.model===undefined
@@ -875,6 +883,7 @@ NGL.Selection.prototype = {
                     if( s.resno!==a.resno ) return false;
                 }
             }
+            if( s.inscode!==undefined && s.inscode!==a.inscode ) return false;
 
             if( s.chainname!==undefined && s.chainname!==a.chainname ) return false;
             if( s.model!==undefined && s.model!==a.modelIndex ) return false;
@@ -919,7 +928,7 @@ NGL.Selection.prototype = {
         var fn = function( r, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.resname===undefined && s.resno===undefined &&
+            if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
                     ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
             ) return -1;
@@ -946,6 +955,7 @@ NGL.Selection.prototype = {
                     if( s.resno!==r.resno ) return false;
                 }
             }
+            if( s.inscode!==undefined && s.inscode!==r.inscode ) return false;
 
             if( s.chainname!==undefined && s.chainname!==r.chainname ) return false;
             if( s.model!==undefined && s.model!==r.modelIndex ) return false;
@@ -975,6 +985,7 @@ NGL.Selection.prototype = {
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
+                if( s.inscode!==undefined ) return true;
                 if( s.atomindex!==undefined ) return true;
                 return false;
             } );
@@ -1019,6 +1030,7 @@ NGL.Selection.prototype = {
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
+                if( s.inscode!==undefined ) return true;
                 if( s.atomindex!==undefined ) return true;
                 return false;
             } );

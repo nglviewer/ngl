@@ -48,6 +48,7 @@ NGL.StructureBuilder = function( structure ){
     var currentChainname = null;
     var currentResname = null;
     var currentResno = null;
+    var currentInscode = null;
     var currentHetero = null;
 
     var previousResname;
@@ -77,7 +78,7 @@ NGL.StructureBuilder = function( structure ){
         );
     }
 
-    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc ){
+    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc, inscode ){
 
         var addModel = false;
         var addChain = false;
@@ -95,7 +96,7 @@ NGL.StructureBuilder = function( structure ){
             addResidue = true;
             ci += 1;
             ri += 1;
-        }else if( currentResno !== resno || currentResname !== resname ){
+        }else if( currentResno !== resno || currentResname !== resname || currentInscode !== inscode ){
             addResidue = true;
             ri += 1;
         }
@@ -129,6 +130,9 @@ NGL.StructureBuilder = function( structure ){
             if( sstruc !== undefined ){
                 residueStore.sstruc[ ri ] = sstruc.charCodeAt( 0 );
             }
+            if( inscode !== undefined ){
+                residueStore.inscode[ ri ] = inscode.charCodeAt( 0 );
+            }
             residueStore.atomOffset[ ri ] = ai;
             residueStore.atomCount[ ri ] = 0;
             residueStore.count += 1;
@@ -144,6 +148,7 @@ NGL.StructureBuilder = function( structure ){
         currentChainname = chainname;
         currentResname = resname;
         currentResno = resno;
+        currentInscode = inscode;
         currentHetero = hetero;
 
     };
@@ -1431,8 +1436,8 @@ NGL.PdbParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var serial, chainname, resno, resname,
-            atomname, element, hetero, bfactor, altloc;
+        var serial, chainname, resno, resname, occupancy,
+            inscode, atomname, element, hetero, bfactor, altloc;
 
         var serialDict = {};
         var unitcellDict = {};
@@ -1541,10 +1546,11 @@ NGL.PdbParser.prototype = NGL.createObject(
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
                         resno = parseInt( line.substr( 22, 4 ) );
-                        // icode = line[ 26 ];  // FIXME currently not supported
+                        inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
-                        bfactor = parseFloat( line.substr( 60, 8 ) );
+                        bfactor = parseFloat( line.substr( 60, 6 ) );
                         altloc = line[ 16 ].trim();
+                        occupancy = parseFloat( line.substr( 54, 6 ) );
 
                     }
 
@@ -1557,8 +1563,9 @@ NGL.PdbParser.prototype = NGL.createObject(
                     atomStore.serial[ idx ] = serial;
                     atomStore.bfactor[ idx ] = bfactor;
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
+                    atomStore.occupancy[ idx ] = occupancy;
 
-                    sb.addAtom( modelIdx, chainname, resname, resno, hetero );
+                    sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
 
@@ -2037,7 +2044,8 @@ NGL.CifParser.prototype = NGL.createObject(
         var helixTypes = NGL.HelixTypes;
 
         var line, recordName;
-        var altloc, serial, elem, chainname, resno, resname, atomname, element;
+        var altloc, serial, elem, chainname, resno, resname,
+            atomname, element, inscode;
 
         s.hasConnect = false;
 
@@ -2063,8 +2071,8 @@ NGL.CifParser.prototype = NGL.createObject(
 
         var auth_asym_id, auth_seq_id,
             label_atom_id, label_comp_id, label_asym_id, label_alt_id,
-            group_PDB, id, type_symbol, pdbx_PDB_model_num,
-            Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv;
+            group_PDB, id, type_symbol, pdbx_PDB_model_num, pdbx_PDB_ins_code,
+            Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv, occupancy;
 
         var asymIdDict = {};
         this.asymIdDict = asymIdDict;
@@ -2242,7 +2250,8 @@ NGL.CifParser.prototype = NGL.createObject(
                                     "auth_asym_id", "auth_seq_id",
                                     "label_atom_id", "label_comp_id", "label_asym_id", "label_alt_id",
                                     "group_PDB", "id", "type_symbol", "pdbx_PDB_model_num",
-                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv"
+                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
+                                    "pdbx_PDB_ins_code", "occupancy"
                                 ];
 
                                 auth_asym_id = pointerNames.indexOf( "auth_asym_id" );
@@ -2259,6 +2268,9 @@ NGL.CifParser.prototype = NGL.createObject(
                                 group_PDB = pointerNames.indexOf( "group_PDB" );
                                 B_iso_or_equiv = pointerNames.indexOf( "B_iso_or_equiv" );
                                 pdbx_PDB_model_num = pointerNames.indexOf( "pdbx_PDB_model_num" );
+
+                                pdbx_PDB_ins_code = pointerNames.indexOf( "pdbx_PDB_ins_code" );
+                                occupancy = pointerNames.indexOf( "occupancy" );
 
                                 first = false;
 
@@ -2324,6 +2336,8 @@ NGL.CifParser.prototype = NGL.createObject(
 
                             var resname = ls[ label_comp_id ];
                             var resno = parseInt( ls[ auth_seq_id ] );
+                            var inscode = ls[ pdbx_PDB_ins_code ];
+                            inscode = ( inscode === '?' ) ? '' : inscode;
                             var chainname = ls[ auth_asym_id ];
                             var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
@@ -2341,9 +2355,10 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.z[ idx ] = z;
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
                             atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
+                            atomStore.occupancy[ idx ] = parseFloat( ls[ occupancy ] );
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
-                            sb.addAtom( modelIdx, chainname, resname, resno, hetero );
+                            sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
                             if( NGL.debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
@@ -3327,7 +3342,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
-        // console.log(sd)
+        console.log(sd)
 
         if( sd.numBonds === undefined ){
             sd.numBonds = 0;
@@ -3349,6 +3364,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.atomStore.serial = sd.atomStore.atomId;
         s.atomStore.bfactor = sd.atomStore.bFactor;
         s.atomStore.altloc = sd.atomStore.altLabel;
+        s.atomStore.occupancy = sd.atomStore.occupancy;
 
         s.residueStore.length = sd.numGroups;
         s.residueStore.count = sd.numGroups;
@@ -3358,6 +3374,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.atomCount = sd.groupStore.atomCount;
         s.residueStore.resno = sd.groupStore.groupId;
         s.residueStore.sstruc = sd.groupStore.secStruct;
+        s.residueStore.inscode = new Uint8Array( sd.numGroups );
 
         s.chainStore.length = sd.numChains;
         s.chainStore.count = sd.numChains;
@@ -3413,6 +3430,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var atomOffset = s.residueStore.atomOffset[ residueIndex ];
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
+            s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
         }
 
         if( NGL.debug ) console.timeEnd( "process map data" );
