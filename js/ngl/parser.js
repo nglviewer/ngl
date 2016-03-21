@@ -1719,22 +1719,20 @@ NGL.PdbParser.prototype = NGL.createObject(
                     var mat = ls[ 1 ].trim();
 
                     if( line[ 5 ] === "1" && mat === "1" ){
-
-                        biomolDict[ "NCS" ] = {
-                            matrixDict: {},
-                            chainList: undefined
-                        };
-                        currentBiomol = biomolDict[ "NCS" ];
-
+                        var name = "NCS";
+                        currentBiomol = new NGL.Assembly( name );
+                        biomolDict[ name ] = currentBiomol;
+                        currentPart = currentBiomol.addPart();
                     }
 
                     var row = parseInt( line[ 5 ] ) - 1;
 
                     if( row === 0 ){
-                        currentBiomol.matrixDict[ mat ] = new THREE.Matrix4();
+                        currentMatrix = new THREE.Matrix4();
+                        currentPart.matrixList.push( currentMatrix );
                     }
 
-                    var elms = currentBiomol.matrixDict[ mat ].elements;
+                    var elms = currentMatrix.elements;
 
                     elms[ 4 * 0 + row ] = parseFloat( ls[ 2 ] );
                     elms[ 4 * 1 + row ] = parseFloat( ls[ 3 ] );
@@ -2692,14 +2690,9 @@ NGL.CifParser.prototype = NGL.createObject(
             // ensure data is in lists
             _ensureArray( op, "id" );
 
-            var md = {};
-
-            biomolDict[ "NCS" ] = {
-
-                matrixDict: md,
-                chainList: undefined
-
-            };
+            var ncsName = "NCS";
+            biomolDict[ ncsName ] = new NGL.Assembly( ncsName );
+            var ncsPart = biomolDict[ ncsName ].addPart();
 
             op.id.forEach( function( id, i ){
 
@@ -2724,7 +2717,7 @@ NGL.CifParser.prototype = NGL.createObject(
 
                 m.transpose();
 
-                md[ id ] = m;
+                ncsPart.matrixList.push( m );
 
             } );
 
