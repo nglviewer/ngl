@@ -231,15 +231,19 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    if( residueStore.resno[ j ] === helix[ 1 ] ){  // resnoBeg
+                    if( residueStore.resno[ j ] === helix[ 1 ] &&  // resnoBeg
+                        residueStore.getInscode( j ) === helix[ 2 ]   // inscodeBeg
+                    ){
                         helixRun = true;
                     }
 
                     if( helixRun ){
 
-                        residueStore.sstruc[ j ] = helix[ 4 ];
+                        residueStore.sstruc[ j ] = helix[ 6 ];
 
-                        if( residueStore.resno[ j ] === helix[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === helix[ 4 ] &&  // resnoEnd
+                            residueStore.getInscode( j ) === helix[ 5 ]   // inscodeEnd
+                        ){
 
                             helixRun = false
                             i += 1;
@@ -311,7 +315,9 @@ NGL.assignSecondaryStructure = function( structure ){
 
                 for( var j = offset; j < end; ++j ){
 
-                    if( residueStore.resno[ j ] === sheet[ 1 ] ){  // resnoBeg
+                    if( residueStore.resno[ j ] === sheet[ 1 ] &&  // resnoBeg
+                        residueStore.getInscode( j ) === sheet[ 2 ]   // inscodeBeg
+                    ){
                         sheetRun = true;
                     }
 
@@ -319,7 +325,9 @@ NGL.assignSecondaryStructure = function( structure ){
 
                         residueStore.sstruc[ j ] = strandCharCode;
 
-                        if( residueStore.resno[ j ] === sheet[ 3 ] ){  // resnoEnd
+                        if( residueStore.resno[ j ] === sheet[ 4 ] &&  // resnoEnd
+                            residueStore.getInscode( j ) === sheet[ 5 ]   // inscodeEnd
+                        ){
 
                             sheetRun = false
                             i += 1;
@@ -1609,19 +1617,30 @@ NGL.PdbParser.prototype = NGL.createObject(
 
                     var startChain = line[ 19 ].trim();
                     var startResi = parseInt( line.substr( 21, 4 ) );
+                    var startIcode = line[ 25 ].trim();
                     var endChain = line[ 31 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
+                    var endIcode = line[ 37 ].trim();
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 );
-                    helices.push([ startChain, startResi, endChain, endResi, helixType ]);
+                    helices.push( [
+                        startChain, startResi, startIcode,
+                        endChain, endResi, endIcode,
+                        helixType
+                    ] );
 
                 }else if( recordName === 'SHEET ' ){
 
                     var startChain = line[ 21 ].trim();
                     var startResi = parseInt( line.substr( 22, 4 ) );
+                    var startIcode = line[ 26 ].trim();
                     var endChain = line[ 32 ].trim();
                     var endResi = parseInt( line.substr( 33, 4 ) );
-                    sheets.push([ startChain, startResi, endChain, endResi ]);
+                    var endIcode = line[ 37 ].trim();
+                    sheets.push( [
+                        startChain, startResi, startIcode,
+                        endChain, endResi, endIcode
+                    ] );
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
@@ -2453,11 +2472,15 @@ NGL.CifParser.prototype = NGL.createObject(
                 for( var i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
                     var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
                     if( !Number.isNaN( helixType ) ){
+                        var begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
+                        var endIcode = sc.pdbx_end_PDB_ins_code[ i ];
                         helices.push( [
                             asymIdDict[ sc.beg_label_asym_id[ i ] ],
                             parseInt( sc.beg_auth_seq_id[ i ] ),
+                            begIcode === "?" ? "" : begIcode,
                             asymIdDict[ sc.end_label_asym_id[ i ] ],
                             parseInt( sc.end_auth_seq_id[ i ] ),
+                            endIcode === "?" ? "" : endIcode,
                             ( helixTypes[ helixType ] || helixTypes[""] ).charCodeAt( 0 )
                         ] );
                     }
@@ -2476,12 +2499,15 @@ NGL.CifParser.prototype = NGL.createObject(
                 _ensureArray( ssr, "id" );
 
                 for( var i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+                    var begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
+                    var endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
                     sheets.push( [
                         asymIdDict[ ssr.beg_label_asym_id[ i ] ],
                         parseInt( ssr.beg_auth_seq_id[ i ] ),
+                        begIcode === "?" ? "" : begIcode,
                         asymIdDict[ ssr.end_label_asym_id[ i ] ],
-                        parseInt( ssr.end_auth_seq_id[ i ] )
-
+                        parseInt( ssr.end_auth_seq_id[ i ] ),
+                        endIcode === "?" ? "" : endIcode
                     ] );
                 }
 
@@ -2856,10 +2882,14 @@ NGL.CifParser.prototype = NGL.createObject(
                 // metalc - metal coordination
                 // modres - covalent residue modification
 
+                var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
+                var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
                 var sele1 = (
-                    sc.ptnr1_auth_seq_id[ i ] + ":" +
-                    asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] + "." +
-                    sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                    sc.ptnr1_auth_seq_id[ i ] +
+                    ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
+                    ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
+                    "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                    ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
                 );
                 var atomIndices1 = atomIndicesCache[ sele1 ];
                 if( !atomIndices1 ){
@@ -2872,10 +2902,14 @@ NGL.CifParser.prototype = NGL.createObject(
                     atomIndicesCache[ sele1 ] = atomIndices1;
                 }
 
+                var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
+                var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
                 var sele2 = (
-                    sc.ptnr2_auth_seq_id[ i ] + ":" +
-                    asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] + "." +
-                    sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' )
+                    sc.ptnr2_auth_seq_id[ i ] +
+                    ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
+                    ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
+                    "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                    ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
                 );
                 var atomIndices2 = atomIndicesCache[ sele2 ];
                 if( !atomIndices2 ){
