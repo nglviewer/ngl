@@ -9,6 +9,7 @@
 <body>
 
     <script src="../../../js/build/ngl.embedded.min.js"></script>
+    <script src="../../../js/three/Detector.js"></script>
 
     <script>
 
@@ -22,30 +23,26 @@
             var input = document.getElementById( "input" );
             var button = document.getElementById( "btn" );
 
-            NGL.init( function(){
+            var stage = new NGL.Stage( "viewport" );
+            stage.setTheme( "light" );
+            stage.viewer.setBackground( 0xfff7ed );
+            stage.loadFile( "../doc/files/1d66.pdb" ).then( function( o ){
+                licorice = o.addRepresentation( "licorice" );
+                cartoon = o.addRepresentation( "cartoon" );
+                o.centerView();
+            } );
 
-                var stage = new NGL.Stage( "viewport" );
-                stage.setTheme( "light" );
-                stage.viewer.setBackground( 0xfff7ed );
-                stage.loadFile( "../doc/files/1d66.pdb" ).then( function( o ){
-                    licorice = o.addRepresentation( "licorice" );
-                    cartoon = o.addRepresentation( "cartoon" );
-                    o.centerView();
-                } );
-
-                input.addEventListener( "keypress", function( e ){
-                    if( e.keyCode === 13 ){
-                        e.preventDefault();
-                        licorice.setSelection( input.value );
-                        cartoon.setSelection( input.value );
-                    }
-                } );
-
-                button.addEventListener( "click", function( e ){
+            input.addEventListener( "keypress", function( e ){
+                if( e.keyCode === 13 ){
+                    e.preventDefault();
                     licorice.setSelection( input.value );
                     cartoon.setSelection( input.value );
-                } );
+                }
+            } );
 
+            button.addEventListener( "click", function( e ){
+                licorice.setSelection( input.value );
+                cartoon.setSelection( input.value );
             } );
 
         } );

@@ -9,6 +9,7 @@
 	<body>
 
 		<script src="../../../js/build/ngl.embedded.min.js"></script>
+		<script src="../../../js/three/Detector.js"></script>
 
 		<script>
 
@@ -16,13 +17,9 @@
 
 			NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
 
-			function onInit(){
+			document.addEventListener( "DOMContentLoaded", function() {
 				var stage = new NGL.Stage( "viewport" );
 				stage.loadFile( "rcsb://1crn", { defaultRepresentation: true } );
-			}
-
-			document.addEventListener( "DOMContentLoaded", function() {
-				NGL.init( onInit );
 			} );
 
 		</script>
@@ -56,13 +53,9 @@
 
 				NGL.mainScriptFilePath = "path/to/ngl.embedded.min.js";
 
-				function onInit(){
+				document.addEventListener( "DOMContentLoaded", function() {
 					var stage = new NGL.Stage( "viewport" );
 					stage.loadFile( "rcsb://1crn", { defaultRepresentation: true } );
-				}
-
-				document.addEventListener( "DOMContentLoaded", function() {
-					NGL.init( onInit );
 				} );
 
 			&lt;/script&gt;

@@ -9,6 +9,7 @@
 <body>
 
     <script src="../../../js/build/ngl.embedded.min.js"></script>
+    <script src="../../../js/three/Detector.js"></script>
 
     <script>
 
@@ -18,18 +19,12 @@
         var types = Object.keys( NGL.representationTypes );
         var reprDict = {};
 
-        function onInit(){
-            var stage = new NGL.Stage( "viewport" );
-            stage.setTheme( "light" );
-            stage.viewer.setBackground( 0xfff7ed );
-            stage.loadFile( "../doc/files/1crn.pdb" )
-                .then( initStructure );
-        }
-
         function initStructure( o ){
             types.forEach( function( name ){
                 if( !name ) return;
-                if( name === "label" ){
+                if( [ "crossing", "rope", "distance" ].indexOf( name ) !== -1 ){
+                    return;  // currently broken, ignore
+                }else if( name === "label" ){
                     reprDict[ name ] = o.addRepresentation(
                         name, { visible: false, colorScheme: "element", sele: ".C" }
                     );
@@ -64,7 +59,11 @@
                 button.textContent = name;
                 buttons.appendChild( button );
             } );
-            NGL.init( onInit );
+            var stage = new NGL.Stage( "viewport" );
+            stage.setTheme( "light" );
+            stage.viewer.setBackground( 0xfff7ed );
+            stage.loadFile( "../doc/files/1crn.pdb" )
+                .then( initStructure );
         } );
 
     </script>
