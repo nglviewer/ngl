@@ -2514,7 +2514,7 @@ NGL.MolecularSurface.prototype = {
 
         var p = Object.assign( {}, params );
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
+        if( ( p.useWorker || NGL.useWorker ) && typeof Worker !== "undefined" &&
             typeof importScripts !== 'function'
         ){
 
