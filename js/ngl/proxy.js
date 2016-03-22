@@ -439,6 +439,9 @@ NGL.IonNames = [
     "V", "Y1", "YT3", "ZN"
 ];
 
+// ligands that are wrongly detected as protein or rna/dna based on atom names
+NGL.LigandNames = [ "FOL" ];
+
 
 NGL.ProteinBackboneAtoms = [
     "CA", "C", "N", "O", "O1", "O2", "OC1", "OC2",
@@ -2296,7 +2299,8 @@ NGL.ResidueType.prototype = {
 
     isProtein: function(){
         return (
-            this.hasAtomWithName( "CA", "C", "N" ) ||
+            ( this.hasAtomWithName( "CA", "C", "N" ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
             NGL.AA3.indexOf( this.resname ) !== -1
         );
     },
@@ -2315,11 +2319,20 @@ NGL.ResidueType.prototype = {
     },
 
     isRna: function(){
-        return NGL.RnaBases.indexOf( this.resname ) !== -1;
+        return (
+            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
+            NGL.RnaBases.indexOf( this.resname ) !== -1
+        );
     },
 
     isDna: function(){
-        return NGL.DnaBases.indexOf( this.resname ) !== -1;
+        return (
+            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
+                !this.hasAtomWithName( [ "O2'", "O2*" ] ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
+            NGL.DnaBases.indexOf( this.resname ) !== -1
+        );
     },
 
     isPolymer: function(){
