@@ -262,8 +262,8 @@ NGL.Stage.prototype = {
                 object.addRepresentation( "ball+stick", {
                     sele: "hetero and not ( water or ion )",
                     colorScheme: "element",
-                    scale: 2.5,
-                    aspectRatio: 1.3,
+                    scale: 2.0,
+                    aspectRatio: 1.5,
                     quality: quality
                 } );
 
