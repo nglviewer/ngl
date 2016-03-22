@@ -204,15 +204,16 @@ NGL.Stage.prototype = {
 
             if( NGL.debug ) console.log( atomCount, instanceCount );
 
-            if( instanceCount > 10 && atomCount > 15000 ){
+            if( instanceCount > 5 && atomCount > 15000 ){
 
                 object.addRepresentation( "surface", {
                     sele: "polymer",
                     surfaceType: "sas",
                     probeRadius: 0.1,
-                    scaleFactor: 0.4,
+                    scaleFactor: Math.min( 1.5, Math.max( 0.1, ( atomCount / instanceCount ) / 5000 ) ),
                     colorScheme: "atomindex",
-                    colorScale: "RdYlBu"
+                    colorScale: "RdYlBu",
+                    useWorker: false
                 } );
 
             }else if( atomCount > 1000000 ){
