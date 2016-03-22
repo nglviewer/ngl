@@ -1708,7 +1708,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
 
         if( p.quality === "low" ){
@@ -1725,7 +1726,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             this.radialSegments = p.radialSegments || 10;
         }
 
-        this.aspectRatio = p.aspectRatio || 3.0;
+        this.scale = p.scale || 0.7;
+        this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.arrows = p.arrows || false;
@@ -1891,6 +1893,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.aspectRatio = 1.0;
+        p.scale = p.scale || 2.0;
 
         NGL.CartoonRepresentation.prototype.init.call( this, p );
 
@@ -1935,9 +1938,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
-        p.scale = p.scale || 3.0;
+        p.scale = p.scale || 4.0;
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -2098,7 +2102,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -2566,7 +2571,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
