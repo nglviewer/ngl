@@ -3453,7 +3453,9 @@ NGL.MmtfParser.prototype = NGL.createObject(
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var atomOffset = s.residueStore.atomOffset[ residueIndex ];
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
-            s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
+            if( sd.atomStore.insCode ){
+                s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
+            }
         }
 
         for( var i = 0, il = s.residueStore.count; i < il; ++i ){
@@ -3501,6 +3503,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     }
                 }
             }
+        }
+
+        if( !sd.atomStore.insCode ){
+            s.biomolDict = {};
         }
 
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
