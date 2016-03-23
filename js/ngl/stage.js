@@ -216,7 +216,7 @@ NGL.Stage.prototype = {
                     useWorker: false
                 } );
 
-            }else if( atomCount > 1000000 ){
+            }else if( atomCount > 250000 ){
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
@@ -224,7 +224,7 @@ NGL.Stage.prototype = {
                     colorScale: "RdYlBu"
                 } );
 
-            }else if( atomCount > 250000 ){
+            }else if( atomCount > 100000 ){
 
                 object.addRepresentation( "backbone", {
                     quality: "low",
@@ -234,7 +234,7 @@ NGL.Stage.prototype = {
                     scale: 2.0
                 } );
 
-            }else if( atomCount > 100000 ){
+            }else if( atomCount > 80000 ){
 
                 object.addRepresentation( "backbone", {
                     colorScheme: "atomindex",
