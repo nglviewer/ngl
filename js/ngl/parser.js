@@ -1163,7 +1163,7 @@ NGL.Parser.prototype = {
 
                 function( e ){
 
-                    console.warn(
+                    NGL.warn(
                         "NGL.Parser.parseWorker error - trying without worker", e
                     );
                     worker.terminate();
@@ -3368,7 +3368,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
-        console.log(sd)
 
         if( sd.numBonds === undefined ){
             sd.numBonds = 0;
@@ -3414,8 +3413,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.modelStore.chainOffset = sd.modelStore.chainOffset;
         s.modelStore.chainCount = sd.modelStore.chainCount;
 
-        if( NGL.debug ) console.time( "process map data" );
-
         var sstrucMap = {
             "0": "i".charCodeAt( 0 ),  // pi helix
             "1": "s".charCodeAt( 0 ),  // bend
@@ -3458,8 +3455,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
             s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
         }
-
-        if( NGL.debug ) console.timeEnd( "process map data" );
 
         for( var i = 0, il = s.residueStore.count; i < il; ++i ){
             var sstruc = sstrucMap[ s.residueStore.sstruc[ i ] ];
