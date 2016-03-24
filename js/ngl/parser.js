@@ -156,7 +156,7 @@ NGL.StructureBuilder = function( structure ){
     this.finalize = function(){
         previousResname = currentResname;
         previousHetero = currentHetero;
-        addResidueType( ri );
+        if( ri > -1 ) addResidueType( ri );
     };
 
 };
