@@ -3458,9 +3458,13 @@ NGL.MmtfParser.prototype = NGL.createObject(
             }
         }
 
-        for( var i = 0, il = s.residueStore.count; i < il; ++i ){
-            var sstruc = sstrucMap[ s.residueStore.sstruc[ i ] ];
-            if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
+        if( sd.groupStore.secStruct ){
+            var secStructLength = sd.groupStore.secStruct.length;
+            for( var i = 0, il = s.residueStore.count; i < il; ++i ){
+                // with ( i % secStructLength ) secStruct entries are reused
+                var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
+                if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
+            }
         }
 
         //
