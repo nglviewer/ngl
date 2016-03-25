@@ -476,7 +476,9 @@ var NGL = {
     mainScriptFilePath: "../js/build/ngl.full.min.js",
     cssDirectory: "../css/",
     assetsDirectory: "../",
-    documentationUrl: "../doc/index.html"
+    documentationUrl: "../doc/index.html",
+
+    webglErrorMessage: "<div style=\"display:flex; align-items:center; justify-content:center; height:100%;\"><p style=\"padding:15px; text-align:center;\">Your browser/graphics card does not seem to support <a target=\"_blank\" href=\"https://en.wikipedia.org/wiki/WebGL\">WebGL</a>.<br /><br />Find out how to get it <a target=\"_blank\" href=\"http://get.webgl.org/\">here</a>.</p></div>"
 
 };
 
@@ -2060,6 +2062,9 @@ NGL.IonNames = [
     "K", "LI", "MG", "MN", "MN3", "NA", "ND4", "NH4", "NI", "OH", "RB", "SR",
     "V", "Y1", "YT3", "ZN"
 ];
+
+// ligands that are wrongly detected as protein or rna/dna based on atom names
+NGL.LigandNames = [ "FOL" ];
 
 
 NGL.ProteinBackboneAtoms = [
@@ -3918,7 +3923,8 @@ NGL.ResidueType.prototype = {
 
     isProtein: function(){
         return (
-            this.hasAtomWithName( "CA", "C", "N" ) ||
+            ( this.hasAtomWithName( "CA", "C", "N" ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
             NGL.AA3.indexOf( this.resname ) !== -1
         );
     },
@@ -3937,11 +3943,20 @@ NGL.ResidueType.prototype = {
     },
 
     isRna: function(){
-        return NGL.RnaBases.indexOf( this.resname ) !== -1;
+        return (
+            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
+            NGL.RnaBases.indexOf( this.resname ) !== -1
+        );
     },
 
     isDna: function(){
-        return NGL.DnaBases.indexOf( this.resname ) !== -1;
+        return (
+            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
+                !this.hasAtomWithName( [ "O2'", "O2*" ] ) &&
+                NGL.LigandNames.indexOf( this.resname ) === -1 ) ||
+            NGL.DnaBases.indexOf( this.resname ) !== -1
+        );
     },
 
     isPolymer: function(){
@@ -20257,7 +20272,7 @@ NGL.MolecularSurface.prototype = {
 
         var p = Object.assign( {}, params );
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
+        if( ( p.useWorker || NGL.useWorker ) && typeof Worker !== "undefined" &&
             typeof importScripts !== 'function'
         ){
 
@@ -22702,7 +22717,7 @@ NGL.StructureBuilder = function( structure ){
     this.finalize = function(){
         previousResname = currentResname;
         previousHetero = currentHetero;
-        addResidueType( ri );
+        if( ri > -1 ) addResidueType( ri );
     };
 
 };
@@ -22733,26 +22748,26 @@ NGL.assignSecondaryStructure = function( structure ){
         return NGL.binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
     } );
 
-    // helices.sort( function( h1, h2 ){
+    helices.sort( function( h1, h2 ){
 
-    //     var c1 = h1[ 0 ];
-    //     var c2 = h2[ 0 ];
-    //     var r1 = h1[ 1 ];
-    //     var r2 = h2[ 1 ];
+        var c1 = h1[ 0 ];
+        var c2 = h2[ 0 ];
+        var r1 = h1[ 1 ];
+        var r2 = h2[ 1 ];
 
-    //     if( c1 === c2 ){
-    //         if( r1 === r2 ){
-    //             return 0;
-    //         }else{
-    //             return r1 < r2 ? -1 : 1;
-    //         }
-    //     }else{
-    //         var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
-    //         var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
-    //         return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
-    //     }
+        if( c1 === c2 ){
+            if( r1 === r2 ){
+                return 0;
+            }else{
+                return r1 < r2 ? -1 : 1;
+            }
+        }else{
+            var idx1 = NGL.binarySearchIndexOf( chainnamesSorted, c1 );
+            var idx2 = NGL.binarySearchIndexOf( chainnamesSorted, c2 );
+            return chainnamesIndex[ idx1 ] < chainnamesIndex[ idx2 ] ? -1 : 1;
+        }
 
-    // } );
+    } );
 
     var residueStore = structure.residueStore;
 
@@ -22797,8 +22812,7 @@ NGL.assignSecondaryStructure = function( structure ){
                             if( i < n ){
                                 // must look at previous residues as
                                 // residues may not be ordered by resno
-                                // j = offset - 1;
-                                --j;
+                                j = offset - 1;
                                 helix = helices[ i ];
                                 chainChange = cp.chainname !== helix[ 0 ];
                             }else{
@@ -23710,7 +23724,7 @@ NGL.Parser.prototype = {
 
                 function( e ){
 
-                    console.warn(
+                    NGL.warn(
                         "NGL.Parser.parseWorker error - trying without worker", e
                     );
                     worker.terminate();
@@ -25915,7 +25929,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
-        console.log(sd)
 
         if( sd.numBonds === undefined ){
             sd.numBonds = 0;
@@ -25961,8 +25974,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.modelStore.chainOffset = sd.modelStore.chainOffset;
         s.modelStore.chainCount = sd.modelStore.chainCount;
 
-        if( NGL.debug ) console.time( "process map data" );
-
         var sstrucMap = {
             "0": "i".charCodeAt( 0 ),  // pi helix
             "1": "s".charCodeAt( 0 ),  // bend
@@ -26003,14 +26014,18 @@ NGL.MmtfParser.prototype = NGL.createObject(
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var atomOffset = s.residueStore.atomOffset[ residueIndex ];
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
-            s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
+            if( sd.atomStore.insCode ){
+                s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
+            }
         }
 
-        if( NGL.debug ) console.timeEnd( "process map data" );
-
-        for( var i = 0, il = s.residueStore.count; i < il; ++i ){
-            var sstruc = sstrucMap[ s.residueStore.sstruc[ i ] ];
-            if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
+        if( sd.groupStore.secStruct ){
+            var secStructLength = sd.groupStore.secStruct.length;
+            for( var i = 0, il = s.residueStore.count; i < il; ++i ){
+                // with ( i % secStructLength ) secStruct entries are reused
+                var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
+                if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
+            }
         }
 
         //
@@ -26053,6 +26068,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     }
                 }
             }
+        }
+
+        if( !sd.atomStore.insCode ){
+            s.biomolDict = {};
         }
 
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
@@ -27480,7 +27499,8 @@ NGL.StaticDatasource = function( baseUrl ){
 
 NGL.RcsbDatasource = function(){
 
-    var baseUrl = "http://www.rcsb.org/pdb/files/";
+    var baseUrl = "http://files.rcsb.org/download/";
+    // var baseUrl = "http://www.rcsb.org/pdb/files/";
     var mmtfBaseUrl = "http://mmtf.rcsb.org/full/";
     var bbMmtfBaseUrl = "http://mmtf.rcsb.org/backbone/";
 
@@ -28620,13 +28640,13 @@ NGL.Viewer = function( eid, params ){
     this.aspect = this.width / this.height;
 
     this.initParams();
+    this.initStats();
     // this.holdRendering = true;
 
     this.initCamera();
     this.initScene();
-    this.initRenderer();
+    if( this.initRenderer() === false ) return;
     this.initControls();
-    this.initStats();
     this.initHelper();
 
     this._render = this.render.bind( this );
@@ -28714,11 +28734,16 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer( {
-            preserveDrawingBuffer: true,
-            alpha: true,
-            antialias: true
-        } );
+        try{
+            this.renderer = new THREE.WebGLRenderer( {
+                preserveDrawingBuffer: true,
+                alpha: true,
+                antialias: true
+            } );
+        }catch( e ){
+            this.container.innerHTML = NGL.webglErrorMessage;
+            return false;
+        }
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;
@@ -35462,7 +35487,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
 
         if( p.quality === "low" ){
@@ -35479,7 +35505,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             this.radialSegments = p.radialSegments || 10;
         }
 
-        this.aspectRatio = p.aspectRatio || 3.0;
+        this.scale = p.scale || 0.7;
+        this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
         this.arrows = p.arrows || false;
@@ -35645,6 +35672,7 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         var p = params || {};
         p.aspectRatio = 1.0;
+        p.scale = p.scale || 2.0;
 
         NGL.CartoonRepresentation.prototype.init.call( this, p );
 
@@ -35689,9 +35717,10 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
-        p.scale = p.scale || 3.0;
+        p.scale = p.scale || 4.0;
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -35852,7 +35881,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
+        p.colorScale = p.colorScale || "RdYlBu";
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -36320,7 +36350,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
+        p.colorScheme = p.colorScheme || "atomindex";
         p.radius = p.radius || this.defaultSize;
 
         if( p.quality === "low" ){
@@ -36932,6 +36962,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         volume: {
             type: "hidden"
         },
+        useWorker: {
+            type: "boolean", rebuild: true
+        }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -36957,6 +36990,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -37104,7 +37138,8 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             scaleFactor: this.scaleFactor,
             smooth: this.smooth,
             lowRes: this.lowResolution,
-            cutoff: this.cutoff
+            cutoff: this.cutoff,
+            useWorker: this.useWorker
         }, params );
 
         return p;
@@ -38386,6 +38421,7 @@ NGL.Stage = function( eid, params ){
     //
 
     this.viewer = new NGL.Viewer( eid );
+    if( !this.viewer.renderer ) return;
     this.setParameters( p );
     this.initFileDragDrop();
     this.viewer.animate();
@@ -38532,18 +38568,29 @@ NGL.Stage.prototype = {
 
             if( NGL.debug ) console.log( atomCount, instanceCount );
 
-            if( instanceCount > 10 && atomCount > 15000 ){
+            if( instanceCount > 5 && atomCount > 15000 ){
+
+                var scaleFactor = (
+                    Math.min(
+                        1.5,
+                        Math.max(
+                            0.1,
+                            2000 / ( atomCount / instanceCount )
+                        )
+                    )
+                );
 
                 object.addRepresentation( "surface", {
                     sele: "polymer",
                     surfaceType: "sas",
                     probeRadius: 0.1,
-                    scaleFactor: 0.4,
+                    scaleFactor: scaleFactor,
                     colorScheme: "atomindex",
-                    colorScale: "RdYlBu"
+                    colorScale: "RdYlBu",
+                    useWorker: false
                 } );
 
-            }else if( atomCount > 1000000 ){
+            }else if( atomCount > 250000 ){
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
@@ -38551,7 +38598,7 @@ NGL.Stage.prototype = {
                     colorScale: "RdYlBu"
                 } );
 
-            }else if( atomCount > 250000 ){
+            }else if( atomCount > 100000 ){
 
                 object.addRepresentation( "backbone", {
                     quality: "low",
@@ -38561,7 +38608,7 @@ NGL.Stage.prototype = {
                     scale: 2.0
                 } );
 
-            }else if( atomCount > 100000 ){
+            }else if( atomCount > 80000 ){
 
                 object.addRepresentation( "backbone", {
                     colorScheme: "atomindex",
@@ -38590,8 +38637,8 @@ NGL.Stage.prototype = {
                 object.addRepresentation( "ball+stick", {
                     sele: "hetero and not ( water or ion )",
                     colorScheme: "element",
-                    scale: 2.5,
-                    aspectRatio: 1.3,
+                    scale: 2.0,
+                    aspectRatio: 1.5,
                     quality: quality
                 } );
 

@@ -3240,10 +3240,8 @@ NGL.ViewportWidget = function( stage ){
     var renderer = viewer.renderer;
 
     var container = new UI.Panel();
+    container.dom = viewer.container;
     container.setPosition( 'absolute' );
-
-    viewer.container = container.dom;
-    container.dom.appendChild( renderer.domElement );
 
     // event handlers
 
