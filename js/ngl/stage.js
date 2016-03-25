@@ -58,6 +58,7 @@ NGL.Stage = function( eid, params ){
     //
 
     this.viewer = new NGL.Viewer( eid );
+    if( !this.viewer.renderer ) return;
     this.setParameters( p );
     this.initFileDragDrop();
     this.viewer.animate();

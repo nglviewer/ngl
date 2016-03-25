@@ -822,13 +822,13 @@ NGL.Viewer = function( eid, params ){
     this.aspect = this.width / this.height;
 
     this.initParams();
+    this.initStats();
     // this.holdRendering = true;
 
     this.initCamera();
     this.initScene();
-    this.initRenderer();
+    if( this.initRenderer() === false ) return;
     this.initControls();
-    this.initStats();
     this.initHelper();
 
     this._render = this.render.bind( this );
@@ -916,11 +916,16 @@ NGL.Viewer.prototype = {
 
     initRenderer: function(){
 
-        this.renderer = new THREE.WebGLRenderer( {
-            preserveDrawingBuffer: true,
-            alpha: true,
-            antialias: true
-        } );
+        try{
+            this.renderer = new THREE.WebGLRenderer( {
+                preserveDrawingBuffer: true,
+                alpha: true,
+                antialias: true
+            } );
+        }catch( e ){
+            this.container.innerHTML = NGL.webglErrorMessage;
+            return false;
+        }
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( this.width, this.height );
         this.renderer.autoClear = false;

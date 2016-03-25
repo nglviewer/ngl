@@ -22,7 +22,9 @@ var NGL = {
     mainScriptFilePath: "../js/build/ngl.full.min.js",
     cssDirectory: "../css/",
     assetsDirectory: "../",
-    documentationUrl: "../doc/index.html"
+    documentationUrl: "../doc/index.html",
+
+    webglErrorMessage: "<div style=\"display:flex; align-items:center; justify-content:center; height:100%;\"><p style=\"padding:15px; text-align:center;\">Your browser/graphics card does not seem to support <a target=\"_blank\" href=\"https://en.wikipedia.org/wiki/WebGL\">WebGL</a>.<br /><br />Find out how to get it <a target=\"_blank\" href=\"http://get.webgl.org/\">here</a>.</p></div>"
 
 };
 
