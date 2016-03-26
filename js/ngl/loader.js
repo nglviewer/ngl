@@ -144,7 +144,9 @@ NGL.Loader = function( src, params ){
         binary: this.binary
     };
 
-    if( src instanceof File || src instanceof Blob ){
+    if( ( self.File && src instanceof File ) ||
+        ( self.Blob && src instanceof self.Blob )
+    ){
         this.streamer = new NGL.FileStreamer( src, streamerParams );
     }else{
         this.streamer = new NGL.NetworkStreamer( src, streamerParams );
