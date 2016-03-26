@@ -1,3 +1,5 @@
+uniform float nearClip;
+
 varying vec3 vViewPosition;
 
 #include color_pars_vertex
@@ -9,5 +11,7 @@ void main(){
     #include project_vertex
 
     vViewPosition = -mvPosition.xyz;
+
+    #include nearclip_vertex
 
 }

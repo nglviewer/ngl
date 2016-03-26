@@ -1,6 +1,10 @@
 #define STANDARD
 
-varying vec3 vViewPosition;
+uniform float nearClip;
+
+#if defined( NEAR_CLIP ) || !defined( PICKING )
+    varying vec3 vViewPosition;
+#endif
 
 attribute vec3 dir;
 attribute float size;
@@ -31,8 +35,15 @@ void main(void){
     #endif
 
     #include begin_vertex
+
     transformed += normalize( dir ) * size;
+
     #include project_vertex
-    vViewPosition = -mvPosition.xyz;
+
+    #if defined( NEAR_CLIP ) || !defined( PICKING )
+        vViewPosition = -mvPosition.xyz;
+    #endif
+
+    #include nearclip_vertex
 
 }

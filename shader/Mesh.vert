@@ -1,12 +1,17 @@
 #define STANDARD
 
+uniform float nearClip;
+
+#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+    varying vec3 vViewPosition;
+#endif
+
 #if defined( PICKING )
     attribute vec3 pickingColor;
     varying vec3 vPickingColor;
 #elif defined( NOLIGHT )
     varying vec3 vColor;
 #else
-    varying vec3 vViewPosition;
     #include color_pars_vertex
     #ifndef FLAT_SHADED
         varying vec3 vNormal;
@@ -33,7 +38,10 @@ void main(){
     #include begin_vertex
     #include project_vertex
 
-    #if !defined( PICKING ) && !defined( NOLIGHT )
+    #if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
         vViewPosition = -mvPosition.xyz;
     #endif
+
+    #include nearclip_vertex
+
 }

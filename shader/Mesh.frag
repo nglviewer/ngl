@@ -7,13 +7,16 @@ uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
 
+#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+    varying vec3 vViewPosition;
+#endif
+
 #if defined( PICKING )
     uniform float objectId;
     varying vec3 vPickingColor;
 #elif defined( NOLIGHT )
     varying vec3 vColor;
 #else
-    varying vec3 vViewPosition;
     #ifndef FLAT_SHADED
         varying vec3 vNormal;
     #endif
