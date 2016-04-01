@@ -3399,7 +3399,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.residueStore.atomCount = sd.groupStore.atomCount;
         s.residueStore.resno = sd.groupStore.groupId;
         s.residueStore.sstruc = sd.groupStore.secStruct;
-        s.residueStore.inscode = new Uint8Array( sd.numGroups );
+        s.residueStore.inscode = sd.groupStore.insCode;
 
         s.chainStore.length = sd.numChains;
         s.chainStore.count = sd.numChains;
@@ -3453,9 +3453,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var atomOffset = s.residueStore.atomOffset[ residueIndex ];
             s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
-            if( sd.atomStore.insCode ){
-                s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
-            }
         }
 
         if( sd.groupStore.secStruct ){
@@ -3469,12 +3466,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         //
 
-        if( sd.bioAssembly ){
-            for( var k in sd.bioAssembly ){
+        if( sd.bioAssemblyList ){
+            sd.bioAssemblyList.forEach( function( bioAssem, k ){
                 var tDict = {};  // assembly parts hashed by transformation matrix
-                var bioAssem = sd.bioAssembly[ k ];
-                for( var tk in bioAssem.transforms ){
-                    var t = bioAssem.transforms[ tk ];
+                bioAssem.transforms.forEach( function( t, tk ){
                     var part = tDict[ t.transformation ];
                     if( !part ){
                         part = {
@@ -3483,9 +3478,9 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         };
                         tDict[ t.transformation ] = part;
                     }else{
-                        part.chainList = part.chainList.concat( t.chainId );
+                        part.chainList = part.chainList.concat( t.chainIdList );
                     }
-                }
+                } );
                 var cDict = {};  // matrix lists hashed by chain list
                 for( var pk in tDict ){
                     var p = tDict[ pk ];
@@ -3498,19 +3493,16 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     }
                 }
                 if( Object.keys( cDict ).length > 0 ){
-                    var assembly = new NGL.Assembly( bioAssem.id );
-                    s.biomolDict[ "BU" + k ] = assembly;
+                    var id = k + 1;
+                    var assembly = new NGL.Assembly( id );
+                    s.biomolDict[ "BU" + id ] = assembly;
                     for( var ck in cDict ){
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
                         assembly.addPart( matrixList, chainList );
                     }
                 }
-            }
-        }
-
-        if( !sd.atomStore.insCode ){
-            s.biomolDict = {};
+            } );
         }
 
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
