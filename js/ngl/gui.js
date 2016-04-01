@@ -451,7 +451,7 @@ NGL.MenubarFileWidget = function( stage ){
     function onPdbInputKeyDown ( e ) {
 
         if( e.keyCode === 13 ){
-            stage.loadFile( "rcsb://" + e.target.value, {
+            stage.loadFile( "rcsb://" + e.target.value.trim(), {
                 defaultRepresentation: true
             } );
             e.target.value = "";
