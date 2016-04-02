@@ -3369,49 +3369,144 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
 
-        if( sd.numBonds === undefined ){
-            sd.numBonds = 0;
+        // bondStore
+        var bAtomIndex1 = new Uint32Array( sd.numBonds + sd.numGroups );  // add numGroups
+        var bAtomIndex2 = new Uint32Array( sd.numBonds + sd.numGroups );  // to have space
+        var bBondOrder = new Uint8Array( sd.numBonds + sd.numGroups );    // for polymer bonds
+
+        var aGroupIndex = new Uint32Array( sd.numAtoms );
+
+        var gChainIndex = new Uint32Array( sd.numGroups );
+        var gAtomOffset = new Uint32Array( sd.numGroups );
+        var gAtomCount = new Uint16Array( sd.numGroups );
+
+        var cModelIndex = new Uint16Array( sd.numChains );
+        var cGroupOffset = new Uint32Array( sd.numChains );
+        var cGroupCount = new Uint32Array( sd.numChains );
+
+        var mChainOffset = new Uint32Array( sd.numModels );
+        var mChainCount = new Uint32Array( sd.numModels );
+
+        // set-up model-chain relations
+        var chainsPerModel = sd.chainsPerModel;
+        var modelChainCount;
+        var chainOffset = 0;
+        for( var i = 0, il = sd.numModels; i < il; ++i ){
+            modelChainCount = chainsPerModel[ i ];
+            mChainOffset[ i ] = chainOffset;
+            mChainCount[ i ] = modelChainCount;
+            for( var j = 0; j < modelChainCount; ++j ){
+                cModelIndex[ j + chainOffset ] = i;
+            }
+            chainOffset += modelChainCount;
         }
 
-        s.bondStore.length = sd.bondStore.bondOrder.length;
+        // set-up chain-residue relations
+        var groupsPerChain = sd.groupsPerChain;
+        var chainGroupCount;
+        var groupOffset = 0;
+        for( var i = 0, il = sd.numChains; i < il; ++i ){
+            chainGroupCount = groupsPerChain[ i ];
+            cGroupOffset[ i ] = groupOffset;
+            cGroupCount[ i ] = chainGroupCount;
+            for( var j = 0; j < chainGroupCount; ++j ){
+                gChainIndex[ j + groupOffset ] = i;
+            }
+            groupOffset += chainGroupCount;
+        }
+
+        //////
+        // get data from group map
+
+        var atomOffset = 0;
+        var bondOffset = 0;
+
+        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+
+            var groupData = sd.groupMap[ sd.groupTypeList[ i ] ];
+            var atomInfo = groupData.atomInfo;
+            var groupAtomCount = atomInfo.length / 2;
+
+            var bondIndices = groupData.bondIndices;
+            var bondOrders = groupData.bondOrders;
+
+            for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
+                bAtomIndex1[ bondOffset ] = atomOffset + bondIndices[ j * 2 ];
+                bAtomIndex2[ bondOffset ] = atomOffset + bondIndices[ j * 2 + 1 ];
+                bBondOrder[ bondOffset ] = bondOrders[ j ];
+                bondOffset += 1;
+            }
+
+            //
+
+            gAtomOffset[ i ] = atomOffset;
+            gAtomCount[ i ] = groupAtomCount;
+
+            for( var j = 0; j < groupAtomCount; ++j ){
+                aGroupIndex[ atomOffset ] = i;
+                atomOffset += 1;
+            }
+
+        }
+
+        // extra bonds
+
+        var bondAtomList = sd.bondAtomList;
+        if( bondAtomList ){
+
+            if( sd.bondOrderList ){
+                bBondOrder.set( sd.bondOrderList, bondOffset );
+            }
+
+            for( var i = 0, il = bondAtomList.length; i < il; i += 2 ){
+                bAtomIndex1[ bondOffset ] = bondAtomList[ i ];
+                bAtomIndex2[ bondOffset ] = bondAtomList[ i + 1 ];
+                bondOffset += 1;
+            }
+
+        }
+
+        //
+
+        s.bondStore.length = bBondOrder.length;
         s.bondStore.count = sd.numBonds;
-        s.bondStore.atomIndex1 = sd.bondStore.atomIndex1;
-        s.bondStore.atomIndex2 = sd.bondStore.atomIndex2;
-        s.bondStore.bondOrder = sd.bondStore.bondOrder;
+        s.bondStore.atomIndex1 = bAtomIndex1;
+        s.bondStore.atomIndex2 = bAtomIndex2;
+        s.bondStore.bondOrder = bBondOrder;
 
         s.atomStore.length = sd.numAtoms;
         s.atomStore.count = sd.numAtoms;
-        s.atomStore.residueIndex = sd.atomStore.groupIndex;
+        s.atomStore.residueIndex = aGroupIndex;
         s.atomStore.atomTypeId = new Uint16Array( sd.numAtoms );
-        s.atomStore.x = sd.atomStore.xCoord;
-        s.atomStore.y = sd.atomStore.yCoord;
-        s.atomStore.z = sd.atomStore.zCoord;
-        s.atomStore.serial = sd.atomStore.atomId;
-        s.atomStore.bfactor = sd.atomStore.bFactor;
-        s.atomStore.altloc = sd.atomStore.altLabel;
-        s.atomStore.occupancy = sd.atomStore.occupancy;
+        s.atomStore.x = sd.xCoordList;
+        s.atomStore.y = sd.yCoordList;
+        s.atomStore.z = sd.zCoordList;
+        s.atomStore.serial = sd.atomIdList;
+        s.atomStore.bfactor = sd.bFactorList;
+        s.atomStore.altloc = sd.altLabelList;
+        s.atomStore.occupancy = sd.occList;
 
         s.residueStore.length = sd.numGroups;
         s.residueStore.count = sd.numGroups;
-        s.residueStore.chainIndex = sd.groupStore.chainIndex;
-        s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
-        s.residueStore.atomOffset = sd.groupStore.atomOffset;
-        s.residueStore.atomCount = sd.groupStore.atomCount;
-        s.residueStore.resno = sd.groupStore.groupId;
-        s.residueStore.sstruc = sd.groupStore.secStruct;
-        s.residueStore.inscode = sd.groupStore.insCode;
+        s.residueStore.chainIndex = gChainIndex;
+        s.residueStore.residueTypeId = sd.groupTypeList;
+        s.residueStore.atomOffset = gAtomOffset;
+        s.residueStore.atomCount = gAtomCount;
+        s.residueStore.resno = sd.groupIdList;
+        s.residueStore.sstruc = sd.secStructList;
+        s.residueStore.inscode = sd.insCodeList;
 
         s.chainStore.length = sd.numChains;
         s.chainStore.count = sd.numChains;
-        s.chainStore.modelIndex = sd.chainStore.modelIndex;
-        s.chainStore.residueOffset = sd.chainStore.groupOffset;
-        s.chainStore.residueCount = sd.chainStore.groupCount;
-        s.chainStore.chainname = sd.chainStore.chainId;
+        s.chainStore.modelIndex = cModelIndex;
+        s.chainStore.residueOffset = cGroupOffset;
+        s.chainStore.residueCount = cGroupCount;
+        s.chainStore.chainname = sd.chainIdList;
 
         s.modelStore.length = sd.numModels;
         s.modelStore.count = sd.numModels;
-        s.modelStore.chainOffset = sd.modelStore.chainOffset;
-        s.modelStore.chainCount = sd.modelStore.chainCount;
+        s.modelStore.chainOffset = mChainOffset;
+        s.modelStore.chainCount = mChainCount;
 
         var sstrucMap = {
             "0": "i".charCodeAt( 0 ),  // pi helix
@@ -3451,12 +3546,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
         for( var i = 0, il = s.atomStore.count; i < il; ++i ){
             var residueIndex = s.atomStore.residueIndex[ i ];
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
-            var atomOffset = s.residueStore.atomOffset[ residueIndex ];
-            s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
+            var resAtomOffset = s.residueStore.atomOffset[ residueIndex ];
+            s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - resAtomOffset ];
         }
 
-        if( sd.groupStore.secStruct ){
-            var secStructLength = sd.groupStore.secStruct.length;
+        if( sd.secStructList ){
+            var secStructLength = sd.secStructList.length;
             for( var i = 0, il = s.residueStore.count; i < il; ++i ){
                 // with ( i % secStructLength ) secStruct entries are reused
                 var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
