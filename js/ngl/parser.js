@@ -1472,6 +1472,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
                     // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+                    // PQR: Field_name Atom_number Atom_name Residue_name Chain_ID Residue_number X Y Z Charge Radius
 
                     if( pendingStart ){
 
@@ -1539,12 +1540,16 @@ NGL.PdbParser.prototype = NGL.createObject(
                     if( isPqr ){
 
                         serial = parseInt( ls[ 1 ] );
+                        element = "";
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = dd ? "" : ls[ 4 ];
                         resno = parseInt( ls[ 5 - dd ] );
+                        inscode = "";
                         resname = ls[ 3 ];
                         bfactor = parseFloat( ls[ 9 - dd ] );  // charge FIXME should be its own field
                         altloc = "";
+                        occupancy = 0.0;
+                        // FIXME radius field not supported
 
                     }else{
 
@@ -1840,6 +1845,8 @@ NGL.PdbParser.prototype = NGL.createObject(
 NGL.PqrParser = function( streamer, params ){
 
     NGL.StructureParser.call( this, streamer, params );
+
+    // http://www.poissonboltzmann.org/docs/file-format-info/
 
 };
 
