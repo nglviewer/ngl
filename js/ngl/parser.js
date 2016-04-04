@@ -1568,9 +1568,9 @@ NGL.PdbParser.prototype = NGL.createObject(
                     atomStore.y[ idx ] = y;
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = serial;
-                    atomStore.bfactor[ idx ] = bfactor;
+                    atomStore.bfactor[ idx ] = isNaN( bfactor ) ? 0 : bfactor;
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
-                    atomStore.occupancy[ idx ] = occupancy;
+                    atomStore.occupancy[ idx ] = isNaN( occupancy ) ? 0 : occupancy;
 
                     sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
@@ -2360,6 +2360,8 @@ NGL.CifParser.prototype = NGL.createObject(
                             //
 
                             var element = ls[ type_symbol ];
+                            var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
+                            var occ = parseFloat( ls[ occupancy ] );
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
@@ -2370,8 +2372,8 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.y[ idx ] = y;
                             atomStore.z[ idx ] = z;
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
-                            atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
-                            atomStore.occupancy[ idx ] = parseFloat( ls[ occupancy ] );
+                            atomStore.bfactor[ idx ] = isNaN( bfactor ) ? 0 : bfactor;
+                            atomStore.occupancy[ idx ] = isNaN( occ ) ? 0 : occ;
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
                             sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
