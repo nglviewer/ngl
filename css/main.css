@@ -94,7 +94,7 @@ input[type=range]:focus:after {
 .deleteInfo:after {
     position: absolute;
     transform: translate(-50%,-250% );
-    content: "click again to delete";
+    content: "double-click to delete";
     font-size: 10px;
     display: block;
 }
