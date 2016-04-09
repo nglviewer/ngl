@@ -792,7 +792,7 @@ NGL.AtomProxy.prototype = {
 
         var d = this.covalent + atom.covalent;
         var d1 = d + 0.3;
-        var d2 = d - 0.3;
+        var d2 = d - 0.5;
 
         return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
