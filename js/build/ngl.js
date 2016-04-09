@@ -1122,7 +1122,9 @@ NGL.getFileInfo = function( file ){
 
     var path, compressed, protocol;
 
-    if( file instanceof File || file instanceof Blob ){
+    if( ( self.File && file instanceof File ) ||
+        ( self.Blob && file instanceof self.Blob )
+    ){
         path = file.name || "";
     }else{
         path = file
@@ -2416,7 +2418,7 @@ NGL.AtomProxy.prototype = {
 
         var d = this.covalent + atom.covalent;
         var d1 = d + 0.3;
-        var d2 = d - 0.3;
+        var d2 = d - 0.5;
 
         return distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 );
 
@@ -23183,6 +23185,7 @@ NGL.calculateChainnames = function( structure ){
         var chainOffset = 0;
         structure.eachModel( function( mp ){
             modelStore.chainOffset[ mp.index ] = chainOffset;
+            modelStore.chainCount[ mp.index ] -= 1;
             chainOffset += modelStore.chainCount[ mp.index ];
         } );
 
@@ -24033,6 +24036,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                 if( recordName === 'ATOM  ' || recordName === 'HETATM' ){
 
                     // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+                    // PQR: Field_name Atom_number Atom_name Residue_name Chain_ID Residue_number X Y Z Charge Radius
 
                     if( pendingStart ){
 
@@ -24100,12 +24104,16 @@ NGL.PdbParser.prototype = NGL.createObject(
                     if( isPqr ){
 
                         serial = parseInt( ls[ 1 ] );
+                        element = "";
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = dd ? "" : ls[ 4 ];
                         resno = parseInt( ls[ 5 - dd ] );
+                        inscode = "";
                         resname = ls[ 3 ];
                         bfactor = parseFloat( ls[ 9 - dd ] );  // charge FIXME should be its own field
                         altloc = "";
+                        occupancy = 0.0;
+                        // FIXME radius field not supported
 
                     }else{
 
@@ -24129,9 +24137,9 @@ NGL.PdbParser.prototype = NGL.createObject(
                     atomStore.y[ idx ] = y;
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = serial;
-                    atomStore.bfactor[ idx ] = bfactor;
+                    atomStore.bfactor[ idx ] = isNaN( bfactor ) ? 0 : bfactor;
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
-                    atomStore.occupancy[ idx ] = occupancy;
+                    atomStore.occupancy[ idx ] = isNaN( occupancy ) ? 0 : occupancy;
 
                     sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
 
@@ -24401,6 +24409,8 @@ NGL.PdbParser.prototype = NGL.createObject(
 NGL.PqrParser = function( streamer, params ){
 
     NGL.StructureParser.call( this, streamer, params );
+
+    // http://www.poissonboltzmann.org/docs/file-format-info/
 
 };
 
@@ -24921,6 +24931,8 @@ NGL.CifParser.prototype = NGL.createObject(
                             //
 
                             var element = ls[ type_symbol ];
+                            var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
+                            var occ = parseFloat( ls[ occupancy ] );
                             var altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
@@ -24931,8 +24943,8 @@ NGL.CifParser.prototype = NGL.createObject(
                             atomStore.y[ idx ] = y;
                             atomStore.z[ idx ] = z;
                             atomStore.serial[ idx ] = parseInt( ls[ id ] );
-                            atomStore.bfactor[ idx ] = parseFloat( ls[ B_iso_or_equiv ] );
-                            atomStore.occupancy[ idx ] = parseFloat( ls[ occupancy ] );
+                            atomStore.bfactor[ idx ] = isNaN( bfactor ) ? 0 : bfactor;
+                            atomStore.occupancy[ idx ] = isNaN( occ ) ? 0 : occ;
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
                             sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
@@ -25930,49 +25942,144 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var s = this.structure;
         var sd = decodeMmtf( this.streamer.data );
 
-        if( sd.numBonds === undefined ){
-            sd.numBonds = 0;
+        // bondStore
+        var bAtomIndex1 = new Uint32Array( sd.numBonds + sd.numGroups );  // add numGroups
+        var bAtomIndex2 = new Uint32Array( sd.numBonds + sd.numGroups );  // to have space
+        var bBondOrder = new Uint8Array( sd.numBonds + sd.numGroups );    // for polymer bonds
+
+        var aGroupIndex = new Uint32Array( sd.numAtoms );
+
+        var gChainIndex = new Uint32Array( sd.numGroups );
+        var gAtomOffset = new Uint32Array( sd.numGroups );
+        var gAtomCount = new Uint16Array( sd.numGroups );
+
+        var cModelIndex = new Uint16Array( sd.numChains );
+        var cGroupOffset = new Uint32Array( sd.numChains );
+        var cGroupCount = new Uint32Array( sd.numChains );
+
+        var mChainOffset = new Uint32Array( sd.numModels );
+        var mChainCount = new Uint32Array( sd.numModels );
+
+        // set-up model-chain relations
+        var chainsPerModel = sd.chainsPerModel;
+        var modelChainCount;
+        var chainOffset = 0;
+        for( var i = 0, il = sd.numModels; i < il; ++i ){
+            modelChainCount = chainsPerModel[ i ];
+            mChainOffset[ i ] = chainOffset;
+            mChainCount[ i ] = modelChainCount;
+            for( var j = 0; j < modelChainCount; ++j ){
+                cModelIndex[ j + chainOffset ] = i;
+            }
+            chainOffset += modelChainCount;
         }
 
-        s.bondStore.length = sd.bondStore.bondOrder.length;
+        // set-up chain-residue relations
+        var groupsPerChain = sd.groupsPerChain;
+        var chainGroupCount;
+        var groupOffset = 0;
+        for( var i = 0, il = sd.numChains; i < il; ++i ){
+            chainGroupCount = groupsPerChain[ i ];
+            cGroupOffset[ i ] = groupOffset;
+            cGroupCount[ i ] = chainGroupCount;
+            for( var j = 0; j < chainGroupCount; ++j ){
+                gChainIndex[ j + groupOffset ] = i;
+            }
+            groupOffset += chainGroupCount;
+        }
+
+        //////
+        // get data from group map
+
+        var atomOffset = 0;
+        var bondOffset = 0;
+
+        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+
+            var groupData = sd.groupMap[ sd.groupTypeList[ i ] ];
+            var atomInfo = groupData.atomInfo;
+            var groupAtomCount = atomInfo.length / 2;
+
+            var bondIndices = groupData.bondIndices;
+            var bondOrders = groupData.bondOrders;
+
+            for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
+                bAtomIndex1[ bondOffset ] = atomOffset + bondIndices[ j * 2 ];
+                bAtomIndex2[ bondOffset ] = atomOffset + bondIndices[ j * 2 + 1 ];
+                bBondOrder[ bondOffset ] = bondOrders[ j ];
+                bondOffset += 1;
+            }
+
+            //
+
+            gAtomOffset[ i ] = atomOffset;
+            gAtomCount[ i ] = groupAtomCount;
+
+            for( var j = 0; j < groupAtomCount; ++j ){
+                aGroupIndex[ atomOffset ] = i;
+                atomOffset += 1;
+            }
+
+        }
+
+        // extra bonds
+
+        var bondAtomList = sd.bondAtomList;
+        if( bondAtomList ){
+
+            if( sd.bondOrderList ){
+                bBondOrder.set( sd.bondOrderList, bondOffset );
+            }
+
+            for( var i = 0, il = bondAtomList.length; i < il; i += 2 ){
+                bAtomIndex1[ bondOffset ] = bondAtomList[ i ];
+                bAtomIndex2[ bondOffset ] = bondAtomList[ i + 1 ];
+                bondOffset += 1;
+            }
+
+        }
+
+        //
+
+        s.bondStore.length = bBondOrder.length;
         s.bondStore.count = sd.numBonds;
-        s.bondStore.atomIndex1 = sd.bondStore.atomIndex1;
-        s.bondStore.atomIndex2 = sd.bondStore.atomIndex2;
-        s.bondStore.bondOrder = sd.bondStore.bondOrder;
+        s.bondStore.atomIndex1 = bAtomIndex1;
+        s.bondStore.atomIndex2 = bAtomIndex2;
+        s.bondStore.bondOrder = bBondOrder;
 
         s.atomStore.length = sd.numAtoms;
         s.atomStore.count = sd.numAtoms;
-        s.atomStore.residueIndex = sd.atomStore.groupIndex;
+        s.atomStore.residueIndex = aGroupIndex;
         s.atomStore.atomTypeId = new Uint16Array( sd.numAtoms );
-        s.atomStore.x = sd.atomStore.xCoord;
-        s.atomStore.y = sd.atomStore.yCoord;
-        s.atomStore.z = sd.atomStore.zCoord;
-        s.atomStore.serial = sd.atomStore.atomId;
-        s.atomStore.bfactor = sd.atomStore.bFactor;
-        s.atomStore.altloc = sd.atomStore.altLabel;
-        s.atomStore.occupancy = sd.atomStore.occupancy;
+        s.atomStore.x = sd.xCoordList;
+        s.atomStore.y = sd.yCoordList;
+        s.atomStore.z = sd.zCoordList;
+        s.atomStore.serial = sd.atomIdList;
+        s.atomStore.bfactor = sd.bFactorList;
+        s.atomStore.altloc = sd.altLabelList;
+        s.atomStore.occupancy = sd.occList;
 
         s.residueStore.length = sd.numGroups;
         s.residueStore.count = sd.numGroups;
-        s.residueStore.chainIndex = sd.groupStore.chainIndex;
-        s.residueStore.residueTypeId = sd.groupStore.groupTypeId;
-        s.residueStore.atomOffset = sd.groupStore.atomOffset;
-        s.residueStore.atomCount = sd.groupStore.atomCount;
-        s.residueStore.resno = sd.groupStore.groupId;
-        s.residueStore.sstruc = sd.groupStore.secStruct;
-        s.residueStore.inscode = new Uint8Array( sd.numGroups );
+        s.residueStore.chainIndex = gChainIndex;
+        s.residueStore.residueTypeId = sd.groupTypeList;
+        s.residueStore.atomOffset = gAtomOffset;
+        s.residueStore.atomCount = gAtomCount;
+        s.residueStore.resno = sd.groupIdList;
+        s.residueStore.sstruc = sd.secStructList;
+        s.residueStore.inscode = sd.insCodeList;
 
         s.chainStore.length = sd.numChains;
         s.chainStore.count = sd.numChains;
-        s.chainStore.modelIndex = sd.chainStore.modelIndex;
-        s.chainStore.residueOffset = sd.chainStore.groupOffset;
-        s.chainStore.residueCount = sd.chainStore.groupCount;
-        s.chainStore.chainname = sd.chainStore.chainId;
+        s.chainStore.modelIndex = cModelIndex;
+        s.chainStore.residueOffset = cGroupOffset;
+        s.chainStore.residueCount = cGroupCount;
+        s.chainStore.chainname = sd.chainIdList;
 
         s.modelStore.length = sd.numModels;
         s.modelStore.count = sd.numModels;
-        s.modelStore.chainOffset = sd.modelStore.chainOffset;
-        s.modelStore.chainCount = sd.modelStore.chainCount;
+        s.modelStore.chainOffset = mChainOffset;
+        s.modelStore.chainCount = mChainCount;
 
         var sstrucMap = {
             "0": "i".charCodeAt( 0 ),  // pi helix
@@ -26012,15 +26119,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
         for( var i = 0, il = s.atomStore.count; i < il; ++i ){
             var residueIndex = s.atomStore.residueIndex[ i ];
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
-            var atomOffset = s.residueStore.atomOffset[ residueIndex ];
-            s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - atomOffset ];
-            if( sd.atomStore.insCode ){
-                s.residueStore.inscode[ residueIndex ] = sd.atomStore.insCode[ i ];
-            }
+            var resAtomOffset = s.residueStore.atomOffset[ residueIndex ];
+            s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - resAtomOffset ];
         }
 
-        if( sd.groupStore.secStruct ){
-            var secStructLength = sd.groupStore.secStruct.length;
+        if( sd.secStructList ){
+            var secStructLength = sd.secStructList.length;
             for( var i = 0, il = s.residueStore.count; i < il; ++i ){
                 // with ( i % secStructLength ) secStruct entries are reused
                 var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
@@ -26030,12 +26134,10 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         //
 
-        if( sd.bioAssembly ){
-            for( var k in sd.bioAssembly ){
+        if( sd.bioAssemblyList ){
+            sd.bioAssemblyList.forEach( function( bioAssem, k ){
                 var tDict = {};  // assembly parts hashed by transformation matrix
-                var bioAssem = sd.bioAssembly[ k ];
-                for( var tk in bioAssem.transforms ){
-                    var t = bioAssem.transforms[ tk ];
+                bioAssem.transforms.forEach( function( t, tk ){
                     var part = tDict[ t.transformation ];
                     if( !part ){
                         part = {
@@ -26044,9 +26146,9 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         };
                         tDict[ t.transformation ] = part;
                     }else{
-                        part.chainList = part.chainList.concat( t.chainId );
+                        part.chainList = part.chainList.concat( t.chainIdList );
                     }
-                }
+                } );
                 var cDict = {};  // matrix lists hashed by chain list
                 for( var pk in tDict ){
                     var p = tDict[ pk ];
@@ -26059,19 +26161,16 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     }
                 }
                 if( Object.keys( cDict ).length > 0 ){
-                    var assembly = new NGL.Assembly( bioAssem.id );
-                    s.biomolDict[ "BU" + k ] = assembly;
+                    var id = k + 1;
+                    var assembly = new NGL.Assembly( id );
+                    s.biomolDict[ "BU" + id ] = assembly;
                     for( var ck in cDict ){
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
                         assembly.addPart( matrixList, chainList );
                     }
                 }
-            }
-        }
-
-        if( !sd.atomStore.insCode ){
-            s.biomolDict = {};
+            } );
         }
 
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
@@ -27502,7 +27601,7 @@ NGL.RcsbDatasource = function(){
     var baseUrl = "http://files.rcsb.org/download/";
     // var baseUrl = "http://www.rcsb.org/pdb/files/";
     var mmtfBaseUrl = "http://mmtf.rcsb.org/full/";
-    var bbMmtfBaseUrl = "http://mmtf.rcsb.org/backbone/";
+    var bbMmtfBaseUrl = "http://mmtf.rcsb.org/reduced/";
 
     this.getUrl = function( src ){
         // valid path are
@@ -27569,7 +27668,9 @@ NGL.Loader = function( src, params ){
         binary: this.binary
     };
 
-    if( src instanceof File || src instanceof Blob ){
+    if( ( self.File && src instanceof File ) ||
+        ( self.Blob && src instanceof self.Blob )
+    ){
         this.streamer = new NGL.FileStreamer( src, streamerParams );
     }else{
         this.streamer = new NGL.NetworkStreamer( src, streamerParams );
@@ -36990,7 +37091,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -40331,7 +40432,7 @@ NGL.Resources[ 'shader/HyperballStickImpostor.frag' ] = "#define STANDARD\n#defi
 
 // File:shader/Line.vert
 
-NGL.Resources[ 'shader/Line.vert' ] = "varying vec3 vViewPosition;\n\n#include color_pars_vertex\n\nvoid main(){\n\n    #include color_vertex\n    #include begin_vertex\n    #include project_vertex\n\n    vViewPosition = -mvPosition.xyz;\n\n}";
+NGL.Resources[ 'shader/Line.vert' ] = "uniform float nearClip;\n\nvarying vec3 vViewPosition;\n\n#include color_pars_vertex\n\nvoid main(){\n\n    #include color_vertex\n    #include begin_vertex\n    #include project_vertex\n\n    vViewPosition = -mvPosition.xyz;\n\n    #include nearclip_vertex\n\n}";
 
 // File:shader/Line.frag
 
@@ -40339,11 +40440,11 @@ NGL.Resources[ 'shader/Line.frag' ] = "uniform float opacity;\nuniform float nea
 
 // File:shader/Mesh.vert
 
-NGL.Resources[ 'shader/Mesh.vert' ] = "#define STANDARD\n\n#if defined( PICKING )\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#elif defined( NOLIGHT )\n    varying vec3 vColor;\n#else\n    varying vec3 vViewPosition;\n    #include color_pars_vertex\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n#endif\n\n#include common\n\nvoid main(){\n\n    #if defined( PICKING )\n        vPickingColor = pickingColor;\n    #elif defined( NOLIGHT )\n        vColor = color;\n    #else\n        #include color_vertex\n        #include beginnormal_vertex\n        #include defaultnormal_vertex\n        #ifndef FLAT_SHADED  // Normal computed with derivatives when FLAT_SHADED\n            vNormal = normalize( transformedNormal );\n        #endif\n    #endif\n\n    #include begin_vertex\n    #include project_vertex\n\n    #if !defined( PICKING ) && !defined( NOLIGHT )\n        vViewPosition = -mvPosition.xyz;\n    #endif\n}";
+NGL.Resources[ 'shader/Mesh.vert' ] = "#define STANDARD\n\nuniform float nearClip;\n\n#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\n    varying vec3 vViewPosition;\n#endif\n\n#if defined( PICKING )\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#elif defined( NOLIGHT )\n    varying vec3 vColor;\n#else\n    #include color_pars_vertex\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n#endif\n\n#include common\n\nvoid main(){\n\n    #if defined( PICKING )\n        vPickingColor = pickingColor;\n    #elif defined( NOLIGHT )\n        vColor = color;\n    #else\n        #include color_vertex\n        #include beginnormal_vertex\n        #include defaultnormal_vertex\n        #ifndef FLAT_SHADED  // Normal computed with derivatives when FLAT_SHADED\n            vNormal = normalize( transformedNormal );\n        #endif\n    #endif\n\n    #include begin_vertex\n    #include project_vertex\n\n    #if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\n        vViewPosition = -mvPosition.xyz;\n    #endif\n\n    #include nearclip_vertex\n\n}";
 
 // File:shader/Mesh.frag
 
-NGL.Resources[ 'shader/Mesh.frag' ] = "#define STANDARD\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\n\n#if defined( PICKING )\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#elif defined( NOLIGHT )\n    varying vec3 vColor;\n#else\n    varying vec3 vViewPosition;\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n    #include common\n    #include color_pars_fragment\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_standard_pars_fragment\n#endif\n\nvoid main(){\n\n    #include nearclip_fragment\n\n    #if defined( PICKING )\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #elif defined( NOLIGHT )\n\n        gl_FragColor = vec4( vColor, opacity );\n\n    #else\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        #include normal_fragment\n\n        #include dull_interior_fragment\n\n        #include lights_standard_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n        #include opaque_back_fragment\n\n    #endif\n\n}";
+NGL.Resources[ 'shader/Mesh.frag' ] = "#define STANDARD\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\n\n#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\n    varying vec3 vViewPosition;\n#endif\n\n#if defined( PICKING )\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#elif defined( NOLIGHT )\n    varying vec3 vColor;\n#else\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n    #include common\n    #include color_pars_fragment\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_standard_pars_fragment\n#endif\n\nvoid main(){\n\n    #include nearclip_fragment\n\n    #if defined( PICKING )\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #elif defined( NOLIGHT )\n\n        gl_FragColor = vec4( vColor, opacity );\n\n    #else\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        #include normal_fragment\n\n        #include dull_interior_fragment\n\n        #include lights_standard_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n        #include opaque_back_fragment\n\n    #endif\n\n}";
 
 // File:shader/Point.vert
 
@@ -40363,7 +40464,7 @@ NGL.Resources[ 'shader/Quad.frag' ] = "varying vec2 vUv;\n\nuniform sampler2D tF
 
 // File:shader/Ribbon.vert
 
-NGL.Resources[ 'shader/Ribbon.vert' ] = "#define STANDARD\n\nvarying vec3 vViewPosition;\n\nattribute vec3 dir;\nattribute float size;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    #include color_pars_vertex\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n#endif\n\n#include common\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        #include color_vertex\n        #include beginnormal_vertex\n        #include defaultnormal_vertex\n        #ifndef FLAT_SHADED  // Normal computed with derivatives when FLAT_SHADED\n            vNormal = normalize( transformedNormal );\n        #endif\n    #endif\n\n    #include begin_vertex\n    transformed += normalize( dir ) * size;\n    #include project_vertex\n    vViewPosition = -mvPosition.xyz;\n\n}";
+NGL.Resources[ 'shader/Ribbon.vert' ] = "#define STANDARD\n\nuniform float nearClip;\n\n#if defined( NEAR_CLIP ) || !defined( PICKING )\n    varying vec3 vViewPosition;\n#endif\n\nattribute vec3 dir;\nattribute float size;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    #include color_pars_vertex\n    #ifndef FLAT_SHADED\n        varying vec3 vNormal;\n    #endif\n#endif\n\n#include common\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        #include color_vertex\n        #include beginnormal_vertex\n        #include defaultnormal_vertex\n        #ifndef FLAT_SHADED  // Normal computed with derivatives when FLAT_SHADED\n            vNormal = normalize( transformedNormal );\n        #endif\n    #endif\n\n    #include begin_vertex\n\n    transformed += normalize( dir ) * size;\n\n    #include project_vertex\n\n    #if defined( NEAR_CLIP ) || !defined( PICKING )\n        vViewPosition = -mvPosition.xyz;\n    #endif\n\n    #include nearclip_vertex\n\n}";
 
 // File:shader/SDFFont.vert
 
@@ -40391,11 +40492,11 @@ NGL.Resources[ 'shader/chunk/fog_fragment.glsl' ] = "#ifdef USE_FOG\n\n	// #if d
 
 // File:shader/chunk/nearclip_fragment.glsl
 
-NGL.Resources[ 'shader/chunk/nearclip_fragment.glsl' ] = "#ifdef NEAR_CLIP\n    if( dot( vec4( vViewPosition, 1.0 ), vec4( 0.0, 0.0, -1.0, nearClip ) ) > 0.0 )\n        discard;\n#endif";
+NGL.Resources[ 'shader/chunk/nearclip_fragment.glsl' ] = "#ifdef NEAR_CLIP\n    if( vViewPosition.z < nearClip )\n        discard;\n#endif";
 
 // File:shader/chunk/nearclip_vertex.glsl
 
-NGL.Resources[ 'shader/chunk/nearclip_vertex.glsl' ] = "#ifdef NEAR_CLIP\n    // move out of viewing frustum for custom clipping\n    if( dot( vec4( vViewPosition, 1.0 ), vec4( 0.0, 0.0, -1.0, nearClip ) ) > 0.0 )\n        gl_Position.w = -10.0;\n#endif";
+NGL.Resources[ 'shader/chunk/nearclip_vertex.glsl' ] = "#ifdef NEAR_CLIP\n    if( vViewPosition.z < nearClip )\n        gl_Position.z = 2.0 * gl_Position.w;  // move out of [ -w, +w ]\n#endif";
 
 // File:shader/chunk/opaque_back_fragment.glsl
 

@@ -3459,7 +3459,7 @@ NGL.MenubarFileWidget = function( stage ){
     function onPdbInputKeyDown ( e ) {
 
         if( e.keyCode === 13 ){
-            stage.loadFile( "rcsb://" + e.target.value, {
+            stage.loadFile( "rcsb://" + e.target.value.trim(), {
                 defaultRepresentation: true
             } );
             e.target.value = "";
@@ -4215,7 +4215,7 @@ NGL.SidebarWidget = function( stage ){
 NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
 
     signals.requestGuiVisibility.add( function( value ){
 
@@ -4282,7 +4282,7 @@ NGL.ComponentWidget = function( component, stage ){
 NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
@@ -4494,7 +4494,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
 
     var reprContainer = new UI.Panel();
 
@@ -4559,7 +4559,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "file" );
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
 
@@ -4637,7 +4637,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var signals = component.signals;
 
-    var container = new UI.CollapsibleIconPanel( "bookmark" )
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
         .setMarginLeft( "20px" );
 
     signals.requestGuiVisibility.add( function( value ){
@@ -4758,7 +4758,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var signals = component.signals;
     var traj = component.trajectory;
 
-    var container = new UI.CollapsibleIconPanel( "database" )
+    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
         .setMarginLeft( "20px" );
 
     var reprContainer = new UI.Panel();
