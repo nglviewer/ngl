@@ -622,6 +622,7 @@ NGL.calculateChainnames = function( structure ){
         var chainOffset = 0;
         structure.eachModel( function( mp ){
             modelStore.chainOffset[ mp.index ] = chainOffset;
+            modelStore.chainCount[ mp.index ] -= 1;
             chainOffset += modelStore.chainCount[ mp.index ];
         } );
 
