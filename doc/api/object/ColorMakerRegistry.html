@@ -41,21 +41,21 @@
 
 		} );
 		// apply colorscheme to an existing representation
-		repr.setParameters( { color: myScheme } );
+		repr.setParameters( { colorScheme: myScheme } );
 		// set colorscheme when creating a new representation
-		component.addRepresentation( "cartoon", { color: myScheme } );
+		component.addRepresentation( "cartoon", { colorScheme: myScheme } );
 		</code>
 
 		<h3>.addSelectionScheme( pairList, [ label ] )</h3>
 		<div>Returns an *id* like <strong>.addScheme</strong>. Creates a coloring scheme based on *color*, *selection* pairs in *pairList*, where *selection* is a [page:Selection-language selection string] and *color* is either a color name, a hexadecimal RGB value or a CSS color string.</div>
 		<code>// color residues 1 to 100 in red, 101-200 in blue and the remaining in white
 		var mySelectionScheme = NGL.ColorMakerRegistry.addSelectionScheme( [
-			[ "red": "1-100" ],
-			[ "blue": "101-200" ],
-			[ "white": "*" ]
+			[ "red", "1-100" ],
+			[ "blue", "101-200" ],
+			[ "white", "*" ]
 		] );
 		// apply colorscheme to an existing representation
-		repr.setParameters( { color: mySelectionScheme } );
+		repr.setParameters( { colorScheme: mySelectionScheme } );
 		</code>
 
 		<h3>.removeScheme( id )</h3>
