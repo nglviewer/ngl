@@ -194,6 +194,7 @@ NGL.Stage.prototype = {
                 var assembly = structure.biomolDict[ "BU1" ];
                 atomCount = assembly.getAtomCount( structure );
                 instanceCount = assembly.getInstanceCount();
+                structure.setDefaultAssembly( "BU1" );
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
                 instanceCount = 1;

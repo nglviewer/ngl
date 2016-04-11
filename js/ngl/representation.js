@@ -532,11 +532,10 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
-        var biomolOptions = { "__AU": "AU" };
+        var biomolOptions = { "": "AU" };
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
-        biomolOptions[ "" ] = "";
         this.parameters.assembly = {
             type: "select",
             options: biomolOptions,
