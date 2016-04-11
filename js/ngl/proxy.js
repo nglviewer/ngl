@@ -798,22 +798,6 @@ NGL.AtomProxy.prototype = {
 
     },
 
-    qualifiedName: function( noResname ){
-
-        var name = "";
-
-        if( this.resname && !noResname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
-        if( this.inscode ) name += "^" + this.inscode;
-        if( this.chainname ) name += ":" + this.chainname;
-        if( this.atomname ) name += "." + this.atomname;
-        if( this.altloc ) name += "%" + this.altloc;
-        if( this.modelIndex ) name += "/" + this.modelIndex;
-
-        return name;
-
-    },
-
     positionFromArray: function( array, offset ){
 
         if( offset === undefined ) offset = 0;
@@ -862,6 +846,18 @@ NGL.AtomProxy.prototype = {
     },
 
     //
+
+    qualifiedName: function( noResname ){
+        var name = "";
+        if( this.resname && !noResname ) name += "[" + this.resname + "]";
+        if( this.resno !== undefined ) name += this.resno;
+        if( this.inscode ) name += "^" + this.inscode;
+        if( this.chainname ) name += ":" + this.chainname;
+        if( this.atomname ) name += "." + this.atomname;
+        if( this.altloc ) name += "%" + this.altloc;
+        name += "/" + this.modelIndex;
+        return name;
+    },
 
     clone: function(){
 
@@ -1278,12 +1274,10 @@ NGL.ResidueProxy.prototype = {
     qualifiedName: function( noResname ){
         var name = "";
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
+        if( this.resno !== undefined ) name += this.resno;
         if( this.inscode ) name += "^" + this.inscode;
         if( this.chain ) name += ":" + this.chainname;
-        if( this.modelIndex ){
-            name += "/" + this.modelIndex;
-        }
+        name += "/" + this.modelIndex;
         return name;
     },
 
