@@ -96,7 +96,8 @@ NGL.RcsbDatasource = function(){
                 return mmtfBaseUrl + info.name;
             }
         }else if( !info.ext ){
-            return mmtfBaseUrl + info.name + ".mmtf";
+            return baseUrl + info.name + ".cif";
+            // return mmtfBaseUrl + info.name + ".mmtf";
         }else{
             console.warn( "unsupported ext", info.ext );
             return mmtfBaseUrl + info.name;
