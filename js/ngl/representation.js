@@ -532,7 +532,7 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
-        var biomolOptions = { "": "AU" };
+        var biomolOptions = { "default": "default", "": "AU" };
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
@@ -594,7 +594,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
-        this.assembly = p.assembly || "";
+        this.assembly = p.assembly === undefined ? "default" : p.assembly;
+        this.defaultAssembly = p.defaultAssembly || "";
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -604,7 +605,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var name = this.assembly || this.structure.defaultAssembly;
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
@@ -730,7 +731,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var params = Object.assign(
             NGL.Representation.prototype.getParameters.call( this ),
             {
-                sele: this.selection ? this.selection.string : undefined
+                sele: this.selection ? this.selection.string : undefined,
+                defaultAssembly: this.defaultAssembly
             }
         );
 

@@ -1274,7 +1274,7 @@ NGL.ComponentWidget = function( component, stage ){
 NGL.StructureComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
@@ -1291,6 +1291,10 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     signals.trajectoryAdded.add( function( traj ){
         trajContainer.add( new NGL.TrajectoryComponentWidget( traj, stage ) );
+    } );
+
+    signals.defaultAssemblyChanged.add( function(){
+        assembly.setValue( component.defaultAssembly );
     } );
 
     // Selection
@@ -1339,11 +1343,10 @@ NGL.StructureComponentWidget = function( component, stage ){
             return assemblyOptions;
         })() )
         .setValue(
-            component.structure.defaultAssembly
+            component.defaultAssembly
         )
         .onChange( function(){
-            component.structure.setDefaultAssembly( assembly.getValue() );
-            component.rebuildRepresentations();
+            component.setDefaultAssembly( assembly.getValue() );
             componentPanel.setMenuDisplay( "none" );
         } );
 

@@ -1233,7 +1233,6 @@ NGL.Structure = function( name, path ){
     this.atomSetCache = {};
     this.atomSetDict = {};
     this.biomolDict = {};
-    this.defaultAssembly = "";
     this.helices = [];
     this.sheets = [];
     this.unitcell = new NGL.Unitcell();
@@ -1559,12 +1558,6 @@ NGL.Structure.prototype = {
     getStructure: function(){
 
         return this;
-
-    },
-
-    setDefaultAssembly: function( value ){
-
-        this.defaultAssembly = value;
 
     },
 

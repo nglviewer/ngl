@@ -194,7 +194,7 @@ NGL.Stage.prototype = {
                 var assembly = structure.biomolDict[ "BU1" ];
                 atomCount = assembly.getAtomCount( structure );
                 instanceCount = assembly.getInstanceCount();
-                structure.setDefaultAssembly( "BU1" );
+                object.setDefaultAssembly( "BU1" );
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
                 instanceCount = 1;
@@ -1253,10 +1253,7 @@ NGL.StructureComponent = function( stage, structure, params ){
     this.structure = structure;
     this.trajList = [];
     this.initSelection( p.sele );
-
-    if( p.assembly !== undefined ){
-        this.structure.setDefaultAssembly( p.assembly );
-    }
+    this.setDefaultAssembly( p.assembly || "" );
 
 };
 
@@ -1271,7 +1268,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
     signals: Object.assign( {
 
         trajectoryAdded: null,
-        trajectoryRemoved: null
+        trajectoryRemoved: null,
+        defaultAssemblyChanged: null
 
     }, NGL.Component.prototype.signals ),
 
@@ -1306,11 +1304,22 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
+    setDefaultAssembly: function( value ){
+
+        this.defaultAssembly = value;
+        this.rebuildRepresentations();
+        this.signals.defaultAssemblyChanged.dispatch( value );
+
+    },
+
     rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
 
-            repr.build( repr.getParameters() );
+            var p = repr.getParameters();
+            p.defaultAssembly = this.defaultAssembly;
+
+            repr.build( p );
 
         }, this );
 
@@ -1328,8 +1337,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
+        var p = params || {};
+        p.defaultAssembly = this.defaultAssembly;
+
         return NGL.Component.prototype.addRepresentation.call(
-            this, type, this.structure, params
+            this, type, this.structure, p
         );
 
     },
