@@ -2424,22 +2424,6 @@ NGL.AtomProxy.prototype = {
 
     },
 
-    qualifiedName: function( noResname ){
-
-        var name = "";
-
-        if( this.resname && !noResname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
-        if( this.inscode ) name += "^" + this.inscode;
-        if( this.chainname ) name += ":" + this.chainname;
-        if( this.atomname ) name += "." + this.atomname;
-        if( this.altloc ) name += "%" + this.altloc;
-        if( this.modelIndex ) name += "/" + this.modelIndex;
-
-        return name;
-
-    },
-
     positionFromArray: function( array, offset ){
 
         if( offset === undefined ) offset = 0;
@@ -2488,6 +2472,18 @@ NGL.AtomProxy.prototype = {
     },
 
     //
+
+    qualifiedName: function( noResname ){
+        var name = "";
+        if( this.resname && !noResname ) name += "[" + this.resname + "]";
+        if( this.resno !== undefined ) name += this.resno;
+        if( this.inscode ) name += "^" + this.inscode;
+        if( this.chainname ) name += ":" + this.chainname;
+        if( this.atomname ) name += "." + this.atomname;
+        if( this.altloc ) name += "%" + this.altloc;
+        name += "/" + this.modelIndex;
+        return name;
+    },
 
     clone: function(){
 
@@ -2904,12 +2900,10 @@ NGL.ResidueProxy.prototype = {
     qualifiedName: function( noResname ){
         var name = "";
         if( this.resname && !noResname ) name += "[" + this.resname + "]";
-        if( this.resno ) name += this.resno;
+        if( this.resno !== undefined ) name += this.resno;
         if( this.inscode ) name += "^" + this.inscode;
         if( this.chain ) name += ":" + this.chainname;
-        if( this.modelIndex ){
-            name += "/" + this.modelIndex;
-        }
+        name += "/" + this.modelIndex;
         return name;
     },
 
@@ -15171,7 +15165,6 @@ NGL.Structure = function( name, path ){
     this.atomSetCache = {};
     this.atomSetDict = {};
     this.biomolDict = {};
-    this.defaultAssembly = "BU1";
     this.helices = [];
     this.sheets = [];
     this.unitcell = new NGL.Unitcell();
@@ -15497,12 +15490,6 @@ NGL.Structure.prototype = {
     getStructure: function(){
 
         return this;
-
-    },
-
-    setDefaultAssembly: function( value ){
-
-        this.defaultAssembly = value;
 
     },
 
@@ -27620,7 +27607,8 @@ NGL.RcsbDatasource = function(){
                 return mmtfBaseUrl + info.name;
             }
         }else if( !info.ext ){
-            return mmtfBaseUrl + info.name + ".mmtf";
+            return baseUrl + info.name + ".cif";
+            // return mmtfBaseUrl + info.name + ".mmtf";
         }else{
             console.warn( "unsupported ext", info.ext );
             return mmtfBaseUrl + info.name;
@@ -34412,11 +34400,10 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
-        var biomolOptions = { "__AU": "AU" };
+        var biomolOptions = { "default": "default", "": "AU" };
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
-        biomolOptions[ "" ] = "";
         this.parameters.assembly = {
             type: "select",
             options: biomolOptions,
@@ -34475,7 +34462,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         this.radius = p.radius || "vdw";
         this.scale = p.scale || 1.0;
-        this.assembly = p.assembly || "";
+        this.assembly = p.assembly === undefined ? "default" : p.assembly;
+        this.defaultAssembly = p.defaultAssembly || "";
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -34485,7 +34473,7 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var name = this.assembly || this.structure.defaultAssembly;
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
@@ -34611,7 +34599,8 @@ NGL.StructureRepresentation.prototype = NGL.createObject(
         var params = Object.assign(
             NGL.Representation.prototype.getParameters.call( this ),
             {
-                sele: this.selection ? this.selection.string : undefined
+                sele: this.selection ? this.selection.string : undefined,
+                defaultAssembly: this.defaultAssembly
             }
         );
 
@@ -38658,6 +38647,7 @@ NGL.Stage.prototype = {
                 var assembly = structure.biomolDict[ "BU1" ];
                 atomCount = assembly.getAtomCount( structure );
                 instanceCount = assembly.getInstanceCount();
+                object.setDefaultAssembly( "BU1" );
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
                 instanceCount = 1;
@@ -39716,10 +39706,7 @@ NGL.StructureComponent = function( stage, structure, params ){
     this.structure = structure;
     this.trajList = [];
     this.initSelection( p.sele );
-
-    if( p.assembly !== undefined ){
-        this.structure.setDefaultAssembly( p.assembly );
-    }
+    this.setDefaultAssembly( p.assembly || "" );
 
 };
 
@@ -39734,7 +39721,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
     signals: Object.assign( {
 
         trajectoryAdded: null,
-        trajectoryRemoved: null
+        trajectoryRemoved: null,
+        defaultAssemblyChanged: null
 
     }, NGL.Component.prototype.signals ),
 
@@ -39769,11 +39757,22 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     },
 
+    setDefaultAssembly: function( value ){
+
+        this.defaultAssembly = value;
+        this.rebuildRepresentations();
+        this.signals.defaultAssemblyChanged.dispatch( value );
+
+    },
+
     rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
 
-            repr.build( repr.getParameters() );
+            var p = repr.getParameters();
+            p.defaultAssembly = this.defaultAssembly;
+
+            repr.build( p );
 
         }, this );
 
@@ -39791,8 +39790,11 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     addRepresentation: function( type, params ){
 
+        var p = params || {};
+        p.defaultAssembly = this.defaultAssembly;
+
         return NGL.Component.prototype.addRepresentation.call(
-            this, type, this.structure, params
+            this, type, this.structure, p
         );
 
     },
