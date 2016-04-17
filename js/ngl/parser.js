@@ -4107,13 +4107,13 @@ NGL.MrcParser.prototype = NGL.createObject(
 
         );
 
-        matrix.multiply(
-            new THREE.Matrix4().makeTranslation(
-                h.NXSTART + h.originX,
-                h.NYSTART + h.originY,
-                h.NZSTART + h.originZ
-            )
-        );
+        matrix.setPosition( new THREE.Vector3(
+            h.originX, h.originY, h.originZ
+        ) );
+
+        matrix.multiply( new THREE.Matrix4().makeTranslation(
+            h.NXSTART, h.NYSTART, h.NZSTART
+        ) );
 
         return matrix;
 
