@@ -7,6 +7,112 @@
 ///////////
 // Spline
 
+NGL.Interpolator = function( m, tension ){
+
+    var dt = 1.0 / m;
+
+    function interpolate( p0, p1, p2, p3, t ) {
+        var v0 = ( p2 - p0 ) * tension;
+        var v1 = ( p3 - p1 ) * tension;
+        var t2 = t * t;
+        var t3 = t * t2;
+        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+               ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+               v0 * t + p1;
+    }
+
+    function interpolateToArr( v0, v1, v2, v3, t, arr, offset ){
+        arr[ offset + 0 ] = interpolate( v0.x, v1.x, v2.x, v3.x, t );
+        arr[ offset + 1 ] = interpolate( v0.y, v1.y, v2.y, v3.y, t );
+        arr[ offset + 2 ] = interpolate( v0.z, v1.z, v2.z, v3.z, t );
+    }
+
+    function interpolateToVec( v0, v1, v2, v3, t, vec ){
+        vec.x = interpolate( v0.x, v1.x, v2.x, v3.x, t );
+        vec.y = interpolate( v0.y, v1.y, v2.y, v3.y, t );
+        vec.z = interpolate( v0.z, v1.z, v2.z, v3.z, t );
+    }
+
+    this.position = function( v0, v1, v2, v3, pos, offset ){
+        for( var j = 0; j < m; ++j ){
+            var l = offset + j * 3;
+            var d = dt * j
+            interpolateToArr( v0, v1, v2, v3, d, pos, l );
+        }
+    };
+
+    var delta = 0.0001;
+    var vec1 = new THREE.Vector3();
+    var vec2 = new THREE.Vector3();
+
+    this.tangent = function( v0, v1, v2, v3, tan, offset ){
+        for( var j = 0; j < m; ++j ){
+            var d = dt * j
+            var d1 = d - delta;
+            var d2 = d + delta;
+            var l = offset + j * 3;
+            // capping as a precation
+            if ( d1 < 0 ) d1 = 0;
+            if ( d2 > 1 ) d2 = 1;
+            //
+            interpolateToVec( v0, v1, v2, v3, d1, vec1 );
+            interpolateToVec( v0, v1, v2, v3, d2, vec2 );
+            //
+            vec2.sub( vec1 ).normalize();
+            vec2.toArray( tan, l );
+        }
+    };
+
+    var vDir = new THREE.Vector3();
+    var vTan = new THREE.Vector3();
+    var vNorm = new THREE.Vector3().set( 0, 0, 1 );
+    var vBin = new THREE.Vector3();
+
+    var m2 = Math.ceil( m / 2 );
+
+    this.normal = function( u0, u1, u2, u3, v0, v1, v2, v3, tan, norm, bin, offset, shift, noDir ){
+        for( var j = 0; j < m; ++j ){
+            var l = offset + j * 3;
+            if( noDir ){
+                vDir.copy( vNorm );
+            }else{
+                if( shift ) l += m2 * 3;
+                var d = dt * j
+                interpolateToVec( u0, u1, u2, u3, d, vec1 );
+                interpolateToVec( v0, v1, v2, v3, d, vec2 );
+                vDir.subVectors( vec2, vec1 ).normalize();
+            }
+            vTan.fromArray( tan, l );
+            vBin.crossVectors( vDir, vTan ).normalize();
+            vBin.toArray( bin, l );
+            vNorm.crossVectors( vTan, vBin ).normalize();
+            vNorm.toArray( norm, l );
+        }
+    };
+
+    this.normalFixLast = function( bin, norm, offset, shift ){
+        if( shift ){
+            // FIXME shift requires data from one more preceeding residue
+            vBin.fromArray( bin, m2 * 3 );
+            vNorm.fromArray( norm, m2 * 3 );
+            for( j = 0; j < m2; ++j ){
+                vBin.toArray( bin, j * 3 );
+                vNorm.toArray( norm, j * 3 );
+            }
+        }else{
+            vBin.toArray( bin, offset );
+            vNorm.toArray( norm, offset );
+        }
+    }
+
+};
+
+
+
+
+
+// TODO make independent of store/proxy
+
 NGL.Spline = function( polymer, arrows ){
 
     this.arrows = arrows || false;
@@ -22,23 +128,8 @@ NGL.Spline.prototype = {
 
     constructor: NGL.Spline,
 
-    // from THREE.js
-    // ASR added tension
-    interpolate: function( p0, p1, p2, p3, t, tension ) {
-
-        var v0 = ( p2 - p0 ) * tension;
-        var v1 = ( p3 - p1 ) * tension;
-        var t2 = t * t;
-        var t3 = t * t2;
-        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-               ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-               v0 * t + p1;
-
-    },
-
     getSubdividedColor: function( m, params ){
 
-        var interpolate = this.interpolate;
         var polymer = this.polymer;
         var structure = polymer.structure;
         var residueStore = structure.residueStore;
@@ -281,7 +372,6 @@ NGL.Spline.prototype = {
 
         if( isNaN( tension ) ) tension = this.tension;
 
-        var interpolate = this.interpolate;
         var polymer = this.polymer;
         var structure = this.polymer.structure;
 
@@ -291,15 +381,8 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-
         var k = 0;
-        var dt = 1.0 / m;
-
-        // var rpStart = structure.getResidueProxy( polymer.residueIndexStart );
-        // var rpEnd = structure.getResidueProxy( polymer.residueIndexEnd );
-        // var rpPrev = rpStart.getPreviousConnectedResidue();
-        // var rpNext = rpEnd.getNextConnectedResidue();
-        // console.log(rpStart.qualifiedName() ,rpEnd.qualifiedName())
+        var interpolator = new NGL.Interpolator( m, tension );
 
         var type = atomname || "trace";
         var a1 = structure.getAtomProxy();
@@ -308,47 +391,21 @@ NGL.Spline.prototype = {
         var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
 
         for( var i = 0; i < n1; ++i ){
-
             a1.index = a2.index;
             a2.index = a3.index;
             a3.index = a4.index;
             a4.index = polymer.getAtomIndexByType( i + 2, type );
-
-            for( var j = 0; j < m; ++j ){
-
-                var l = k + j * 3;
-                var d = dt * j
-
-                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
-                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
-                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d, tension );
-
-            }
-
+            interpolator.position( a1, a2, a3, a4, pos, k );
             k += 3 * m;
-
         }
 
         if( polymer.isCyclic ){
-
             a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
             a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
             a3.index = polymer.getAtomIndexByType( 0, type );
             a4.index = polymer.getAtomIndexByType( 1, type );
-
-            for( var j = 0; j < m; ++j ){
-
-                var l = k + j * 3;
-                var d = dt * j
-
-                pos[ l + 0 ] = interpolate( a1.x, a2.x, a3.x, a4.x, d, tension );
-                pos[ l + 1 ] = interpolate( a1.y, a2.y, a3.y, a4.y, d, tension );
-                pos[ l + 2 ] = interpolate( a1.z, a2.z, a3.z, a4.z, d, tension );
-
-            }
-
+            interpolator.position( a1, a2, a3, a4, pos, k );
             k += 3 * m;
-
         }
 
         a3.positionToArray( pos, k );
@@ -361,12 +418,8 @@ NGL.Spline.prototype = {
 
         if( isNaN( tension ) ) tension = this.tension;
 
-        var interpolate = this.interpolate;
         var polymer = this.polymer;
         var structure = this.polymer.structure;
-
-        var p1 = new THREE.Vector3();
-        var p2 = new THREE.Vector3();
 
         var n = this.size;
         var n1 = n - 1;
@@ -374,10 +427,8 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-
         var k = 0;
-        var dt = 1.0 / m;
-        var delta = 0.0001;
+        var interpolator = new NGL.Interpolator( m, tension );
 
         var type = atomname || "trace";
         var a1 = structure.getAtomProxy();
@@ -386,79 +437,24 @@ NGL.Spline.prototype = {
         var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
 
         for( var i = 0; i < n1; ++i ){
-
             a1.index = a2.index;
             a2.index = a3.index;
             a3.index = a4.index;
             a4.index = polymer.getAtomIndexByType( i + 2, type );
-
-            for( var j = 0; j < m; ++j ){
-
-                var d = dt * j
-                var d1 = d - delta;
-                var d2 = d + delta;
-                var l = k + j * 3;
-
-                // capping as a precation
-                if ( d1 < 0 ) d1 = 0;
-                if ( d2 > 1 ) d2 = 1;
-
-                p1.x = interpolate( a1.x, a2.x, a3.x, a4.x, d1, tension );
-                p1.y = interpolate( a1.y, a2.y, a3.y, a4.y, d1, tension );
-                p1.z = interpolate( a1.z, a2.z, a3.z, a4.z, d1, tension );
-
-                p2.x = interpolate( a1.x, a2.x, a3.x, a4.x, d2, tension );
-                p2.y = interpolate( a1.y, a2.y, a3.y, a4.y, d2, tension );
-                p2.z = interpolate( a1.z, a2.z, a3.z, a4.z, d2, tension );
-
-                p2.sub( p1 ).normalize();
-                p2.toArray( tan, l );
-
-            }
-
+            interpolator.tangent( a1, a2, a3, a4, tan, k );
             k += 3 * m;
-
         }
 
         if( polymer.isCyclic ){
-
             a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
             a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
             a3.index = polymer.getAtomIndexByType( 0, type );
             a4.index = polymer.getAtomIndexByType( 1, type );
-
-            for( var j = 0; j < m; ++j ){
-
-                var d = dt * j
-                var d1 = d - delta;
-                var d2 = d + delta;
-                var l = k + j * 3;
-
-                // capping as a precation
-                if ( d1 < 0 ) d1 = 0;
-                if ( d2 > 1 ) d2 = 1;
-
-                p1.x = interpolate( a1.x, a2.x, a3.x, a4.x, d1, tension );
-                p1.y = interpolate( a1.y, a2.y, a3.y, a4.y, d1, tension );
-                p1.z = interpolate( a1.z, a2.z, a3.z, a4.z, d1, tension );
-
-                p2.x = interpolate( a1.x, a2.x, a3.x, a4.x, d2, tension );
-                p2.y = interpolate( a1.y, a2.y, a3.y, a4.y, d2, tension );
-                p2.z = interpolate( a1.z, a2.z, a3.z, a4.z, d2, tension );
-
-                p2.sub( p1 ).normalize();
-                p2.toArray( tan, l );
-
-            }
-
+            interpolator.tangent( a1, a2, a3, a4, tan, k );
             k += 3 * m;
-
         }
 
-        p2.toArray( tan, k );
-
-        // var o = n1 * m * 3;
-        // NGL.Utils.copyArray( tan, tan, o - 3, o, 3 );
+        NGL.Utils.copyArray( tan, tan, k - 3, k, 3 );
 
         return tan;
 
@@ -466,7 +462,6 @@ NGL.Spline.prototype = {
 
     getNormals: function( m, tension, tan ){
 
-        var interpolate = this.interpolate;
         var polymer = this.polymer;
         var isCg = polymer.isCg();
         var isProtein = polymer.isProtein();
@@ -492,7 +487,6 @@ NGL.Spline.prototype = {
         var vTan = new THREE.Vector3();
         var vNorm = new THREE.Vector3().set( 0, 0, 1 );
         var vBin = new THREE.Vector3();
-        var vBinPrev = new THREE.Vector3();
 
         var d1a1 = new THREE.Vector3();
         var d1a2 = new THREE.Vector3();
@@ -505,6 +499,8 @@ NGL.Spline.prototype = {
         var d2a4 = new THREE.Vector3();
 
         var k = 0;
+        var interpolator = new NGL.Interpolator( m, tension );
+
         var dt = 1.0 / m;
         var first = true;
         var m2 = Math.ceil( m / 2 );
@@ -587,43 +583,11 @@ NGL.Spline.prototype = {
 
             }
 
-            for( var j = 0; j < m; ++j ){
-
-                var l = k + j * 3;
-
-                if( isCg ){
-
-                    vDir.copy( vNorm );
-
-                }else{
-
-                    if( isProtein ){
-                        // shift half a residue
-                        l += m2 * 3;
-                    }
-                    var d = dt * j
-
-                    p1.x = interpolate( d1a1.x, d1a2.x, d1a3.x, d1a4.x, d, tension );
-                    p1.y = interpolate( d1a1.y, d1a2.y, d1a3.y, d1a4.y, d, tension );
-                    p1.z = interpolate( d1a1.z, d1a2.z, d1a3.z, d1a4.z, d, tension );
-
-                    p2.x = interpolate( d2a1.x, d2a2.x, d2a3.x, d2a4.x, d, tension );
-                    p2.y = interpolate( d2a1.y, d2a2.y, d2a3.y, d2a4.y, d, tension );
-                    p2.z = interpolate( d2a1.z, d2a2.z, d2a3.z, d2a4.z, d, tension );
-
-                    vDir.subVectors( p2, p1 ).normalize();
-
-                }
-
-                vTan.fromArray( tan, l );
-
-                vBin.crossVectors( vDir, vTan ).normalize();
-                vBin.toArray( bin, l );
-
-                vNorm.crossVectors( vTan, vBin ).normalize();
-                vNorm.toArray( norm, l );
-
-            }
+            interpolator.normal(
+                d1a1, d1a2, d1a3, d1a4,
+                d2a1, d2a2, d2a3, d2a4,
+                tan, norm, bin, k, isProtein, isCg
+            );
 
             k += 3 * m;
 
@@ -693,66 +657,17 @@ NGL.Spline.prototype = {
 
             }
 
-            for( var j = 0; j < m; ++j ){
-
-                var l = k + j * 3;
-
-                if( isCg ){
-
-                    vDir.copy( vNorm );
-
-                }else{
-
-                    if( isProtein ){
-                        // shift half a residue
-                        l += m2 * 3;
-                    }
-                    var d = dt * j
-
-                    p1.x = interpolate( d1a1.x, d1a2.x, d1a3.x, d1a4.x, d, tension );
-                    p1.y = interpolate( d1a1.y, d1a2.y, d1a3.y, d1a4.y, d, tension );
-                    p1.z = interpolate( d1a1.z, d1a2.z, d1a3.z, d1a4.z, d, tension );
-
-                    p2.x = interpolate( d2a1.x, d2a2.x, d2a3.x, d2a4.x, d, tension );
-                    p2.y = interpolate( d2a1.y, d2a2.y, d2a3.y, d2a4.y, d, tension );
-                    p2.z = interpolate( d2a1.z, d2a2.z, d2a3.z, d2a4.z, d, tension );
-
-                    vDir.subVectors( p2, p1 ).normalize();
-
-                }
-
-                vTan.fromArray( tan, l );
-
-                vBin.crossVectors( vDir, vTan ).normalize();
-                vBin.toArray( bin, l );
-
-                vNorm.crossVectors( vTan, vBin ).normalize();
-                vNorm.toArray( norm, l );
-
-            }
+            interpolator.normal(
+                d1a1, d1a2, d1a3, d1a4,
+                d2a1, d2a2, d2a3, d2a4,
+                tan, norm, bin, k, isProtein, isCg
+            );
 
             k += 3 * m;
 
         }
 
-        if( isProtein ){
-
-            // FIXME shift requires data from one more preceeding residue
-
-            vBin.fromArray( bin, m2 * 3 );
-            vNorm.fromArray( norm, m2 * 3 );
-
-            for( j = 0; j < m2; ++j ){
-                vBin.toArray( bin, j * 3 );
-                vNorm.toArray( norm, j * 3 );
-            }
-
-        }else{
-
-            vBin.toArray( bin, k );
-            vNorm.toArray( norm, k );
-
-        }
+        interpolator.normalFixLast( bin, norm, k, isProtein )
 
         return {
             "normal": norm,
