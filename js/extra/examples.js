@@ -718,8 +718,7 @@ NGL.ExampleRegistry.addDict( {
                 new Float32Array( [ 1, 0, 0 ] ),
                 new Float32Array( [ 1 ] ),
                 undefined,
-                { flatShaded: true },
-                true
+                { flatShaded: true, disableImpostor: true }
             );
             o.addBufferRepresentation( sphereBuffer );
 
