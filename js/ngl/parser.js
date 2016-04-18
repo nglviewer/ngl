@@ -3377,7 +3377,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         if( NGL.debug ) NGL.time( "NGL.MmtfParser._parse " + this.name );
 
         var s = this.structure;
-        var sd = decodeMmtf( this.streamer.data );
+        var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
         // bondStore
         var bAtomIndex1 = new Uint32Array( sd.numBonds + sd.numGroups );  // add numGroups
@@ -3433,17 +3433,16 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         for( var i = 0, il = sd.numGroups; i < il; ++i ){
 
-            var groupData = sd.groupMap[ sd.groupTypeList[ i ] ];
-            var atomInfo = groupData.atomInfo;
-            var groupAtomCount = atomInfo.length / 2;
+            var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
+            var groupAtomCount = groupData.atomNameList.length;
 
-            var bondIndices = groupData.bondIndices;
-            var bondOrders = groupData.bondOrders;
+            var bondAtomList = groupData.bondAtomList;
+            var bondOrderList = groupData.bondOrderList;
 
-            for( var j = 0, jl = bondOrders.length; j < jl; ++j ){
-                bAtomIndex1[ bondOffset ] = atomOffset + bondIndices[ j * 2 ];
-                bAtomIndex2[ bondOffset ] = atomOffset + bondIndices[ j * 2 + 1 ];
-                bBondOrder[ bondOffset ] = bondOrders[ j ];
+            for( var j = 0, jl = bondOrderList.length; j < jl; ++j ){
+                bAtomIndex1[ bondOffset ] = atomOffset + bondAtomList[ j * 2 ];
+                bAtomIndex2[ bondOffset ] = atomOffset + bondAtomList[ j * 2 + 1 ];
+                bBondOrder[ bondOffset ] = bondOrderList[ j ];
                 bondOffset += 1;
             }
 
@@ -3493,8 +3492,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.atomStore.z = sd.zCoordList;
         s.atomStore.serial = sd.atomIdList;
         s.atomStore.bfactor = sd.bFactorList;
-        s.atomStore.altloc = sd.altLabelList;
-        s.atomStore.occupancy = sd.occList;
+        s.atomStore.altloc = sd.altLocList;
+        s.atomStore.occupancy = sd.occupancyList;
 
         s.residueStore.length = sd.numGroups;
         s.residueStore.count = sd.numGroups;
@@ -3511,7 +3510,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
-        s.chainStore.chainname = sd.chainIdList;
+        s.chainStore.chainname = sd.chainNameList;
 
         s.modelStore.length = sd.numModels;
         s.modelStore.count = sd.numModels;
@@ -3530,23 +3529,18 @@ NGL.MmtfParser.prototype = NGL.createObject(
             "-1": "".charCodeAt( 0 )   // NA
         };
 
-        var groupTypeIdList = Object.keys( sd.groupMap )
-            .map( function( id ){ return parseInt( id ); } )
-            .sort( function( a, b ){ return a - b; } );
-
         var hetCompList = [
             "non-polymer", "other", "saccharide", "l-saccharide", "d-saccharide",
             "l-saccharide 1,4 and 1,4 linking", "l-saccharide 1,4 and 1,6 linking",
             "d-saccharide 1,4 and 1,4 linking", "d-saccharide 1,4 and 1,6 linking"
         ];
 
-        for( var i = 0, il = groupTypeIdList.length; i < il; ++i ){
-            var groupTypeId = groupTypeIdList[ i ];
-            var groupType = sd.groupMap[ groupTypeId ];
+        for( var i = 0, il = sd.groupList.length; i < il; ++i ){
+            var groupType = sd.groupList[ i ];
             var atomTypeIdList = [];
-            for( var j = 0, jl = groupType.atomInfo.length; j < jl; j+=2 ){
-                var element = groupType.atomInfo[ j ].toUpperCase();
-                var atomname = groupType.atomInfo[ j + 1 ];
+            for( var j = 0, jl = groupType.atomNameList.length; j < jl; ++j ){
+                var element = groupType.elementList[ j ].toUpperCase();
+                var atomname = groupType.atomNameList[ j ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var hetFlag = hetCompList.indexOf( groupType.chemCompType.toLowerCase() ) !== -1;
@@ -3572,18 +3566,19 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         if( sd.bioAssemblyList ){
+            var cp = s.getChainProxy();
             sd.bioAssemblyList.forEach( function( bioAssem, k ){
                 var tDict = {};  // assembly parts hashed by transformation matrix
-                bioAssem.transforms.forEach( function( t, tk ){
+                bioAssem.transformList.forEach( function( t, tk ){
                     var part = tDict[ t.transformation ];
                     if( !part ){
                         part = {
-                            matrix: new THREE.Matrix4().fromArray( t.transformation ).transpose(),
-                            chainList: t.chainIdList
+                            matrix: new THREE.Matrix4().fromArray( t.matrix ).transpose(),
+                            chainList: t.chainIndexList
                         };
-                        tDict[ t.transformation ] = part;
+                        tDict[ t.matrix ] = part;
                     }else{
-                        part.chainList = part.chainList.concat( t.chainIdList );
+                        part.chainList = part.chainList.concat( t.chainIndexList );
                     }
                 } );
                 var cDict = {};  // matrix lists hashed by chain list
@@ -3604,7 +3599,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
                     for( var ck in cDict ){
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
-                        assembly.addPart( matrixList, chainList );
+                        var chainDict = {};
+                        chainList.forEach( function( chainIndex, i ){
+                            cp.index = parseInt( chainIndex );
+                            chainDict[ cp.chainname ] = true;
+                        } );
+                        assembly.addPart( matrixList, Object.keys( chainDict ) );
                     }
                 }
             } );

@@ -9,4 +9,5 @@ var ColorPicker;
 var VirtualList
 var Tether;
 var TypedFastBitSet;
+var decodeMsgpack;
 var decodeMmtf;
