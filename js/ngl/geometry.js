@@ -115,6 +115,8 @@ NGL.Interpolator = function( m, tension ){
         NGL.Utils.copyArray( array, array, k - 3, k, 3 );
     }
 
+    //
+
     var vDir = new THREE.Vector3();
     var vTan = new THREE.Vector3();
     var vNorm = new THREE.Vector3();
@@ -163,11 +165,94 @@ NGL.Interpolator = function( m, tension ){
             interpolateNormal( vDir, tan, norm, bin, k );
             k += 3 * m;
         }
-        if( false && shift ){
+        vBin.toArray( bin, k );
+        vNorm.toArray( norm, k );
+    };
+
+    this.getNormalDir = function( iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift ){
+        var vSub1 = new THREE.Vector3();
+        var vSub2 = new THREE.Vector3();
+        var vSub3 = new THREE.Vector3();
+        var vSub4 = new THREE.Vector3();
+        //
+        var d1v1 = new THREE.Vector3();
+        var d1v2 = new THREE.Vector3().copy( iterDir1.next() );
+        var d1v3 = new THREE.Vector3().copy( iterDir1.next() );
+        var d1v4 = new THREE.Vector3().copy( iterDir1.next() );
+        var d2v1 = new THREE.Vector3();
+        var d2v2 = new THREE.Vector3().copy( iterDir2.next() );
+        var d2v3 = new THREE.Vector3().copy( iterDir2.next() );
+        var d2v4 = new THREE.Vector3().copy( iterDir2.next() );
+        //
+        vNorm.set( 0, 0, 1 );
+        var n = iterDir1.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            d1v1.copy( d1v2 );
+            d1v2.copy( d1v3 );
+            d1v3.copy( d1v4 );
+            d1v4.copy( iterDir1.next() );
+            d2v1.copy( d2v2 );
+            d2v2.copy( d2v3 );
+            d2v3.copy( d2v4 );
+            d2v4.copy( iterDir2.next() );
+            //
+            if( i === 0 ){
+                vSub1.subVectors( d2v1, d1v1 );
+                vSub2.subVectors( d2v2, d1v2 );
+                if( vSub1.dot( vSub2 ) < 0 ){
+                    vSub2.multiplyScalar( -1 );
+                    d2v2.addVectors( d1v2, vSub2 );
+                }
+                vSub3.subVectors( d2v3, d1v3 );
+                if( vSub2.dot( vSub3 ) < 0 ){
+                    vSub3.multiplyScalar( -1 );
+                    d2v3.addVectors( d1v3, vSub3 );
+                }
+            }else{
+                vSub3.copy( vSub4 );
+            }
+            vSub4.subVectors( d2v4, d1v4 );
+            if( vSub3.dot( vSub4 ) < 0 ){
+                vSub4.multiplyScalar( -1 );
+                d2v4.addVectors( d1v4, vSub4 );
+            }
+            interpolateNormalDir(
+                d1v1, d1v2, d1v3, d1v4,
+                d2v1, d2v2, d2v3, d2v4,
+                tan, norm, bin, k, shift
+            );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            d1v1.copy( iterDir1.get( n - 2 ) );
+            d1v2.copy( iterDir1.get( n - 1 ) );
+            d1v3.copy( iterDir1.get( 0 ) );
+            d1v4.copy( iterDir1.get( 1 ) );
+            d2v1.copy( iterDir2.get( n - 2 ) );
+            d2v2.copy( iterDir2.get( n - 1 ) );
+            d2v3.copy( iterDir2.get( 0 ) );
+            d2v4.copy( iterDir2.get( 1 ) );
+            //
+            vSub3.copy( vSub4 );
+            vSub4.subVectors( d2v4, d1v4 );
+            if( vSub3.dot( vSub4 ) < 0 ){
+                vSub4.multiplyScalar( -1 );
+                d2v4.addVectors( d1v4, vSub4 );
+            }
+            interpolateNormalDir(
+                d1v1, d1v2, d1v3, d1v4,
+                d2v1, d2v2, d2v3, d2v4,
+                tan, norm, bin, k, shift
+            );
+            k += 3 * m;
+        }
+        if( shift ){
             // FIXME shift requires data from one more preceeding residue
             vBin.fromArray( bin, m2 * 3 );
             vNorm.fromArray( norm, m2 * 3 );
-            for( j = 0; j < m2; ++j ){
+            for( var j = 0; j < m2; ++j ){
                 vBin.toArray( bin, j * 3 );
                 vNorm.toArray( norm, j * 3 );
             }
@@ -200,35 +285,40 @@ NGL.Spline.prototype = {
 
     constructor: NGL.Spline,
 
-    getPositionIterator: function( type ){
+    getAtomIterator: function( type ){
 
         var polymer = this.polymer;
         var structure = polymer.structure;
         var n = polymer.residueCount;
 
-        return function(){
-            var i = 0;
-            var j = -1;
-            var cache = [
-                structure.getAtomProxy(),
-                structure.getAtomProxy(),
-                structure.getAtomProxy(),
-                structure.getAtomProxy()
-            ];
-            this.next = function(){
-                var atomProxy = this.get( j );
-                j += 1;
-                return atomProxy;
-            };
-            this.get = function( idx ){
-                var atomProxy = cache[ i % 4 ];
-                atomProxy.index = polymer.getAtomIndexByType( idx, type );
-                i += 1;
-                return atomProxy;
-            };
-            this.size = n;
-            return this;
-        }();
+        var i = 0;
+        var j = -1;
+
+        var cache = [
+            structure.getAtomProxy(),
+            structure.getAtomProxy(),
+            structure.getAtomProxy(),
+            structure.getAtomProxy()
+        ];
+
+        function next(){
+            var atomProxy = this.get( j );
+            j += 1;
+            return atomProxy;
+        }
+
+        function get( idx ){
+            var atomProxy = cache[ i % 4 ];
+            atomProxy.index = polymer.getAtomIndexByType( idx, type );
+            i += 1;
+            return atomProxy;
+        }
+
+        return {
+            next: next,
+            get: get,
+            size: n
+        };
 
     },
 
@@ -485,7 +575,7 @@ NGL.Spline.prototype = {
         var pos = new Float32Array( nPos );
         var interpolator = new NGL.Interpolator( m, tension );
         var type = atomname || "trace";
-        var positionIterator = this.getPositionIterator( type );
+        var positionIterator = this.getAtomIterator( type );
 
         interpolator.getPosition(
             positionIterator, pos, 0, polymer.isCyclic
@@ -508,7 +598,7 @@ NGL.Spline.prototype = {
         var tan = new Float32Array( nTan );
         var interpolator = new NGL.Interpolator( m, tension );
         var type = atomname || "trace";
-        var positionIterator = this.getPositionIterator( type );
+        var positionIterator = this.getAtomIterator( type );
 
         interpolator.getTangent(
             positionIterator, tan, 0, polymer.isCyclic
@@ -523,7 +613,6 @@ NGL.Spline.prototype = {
         var polymer = this.polymer;
         var isCg = polymer.isCg();
         var isProtein = polymer.isProtein();
-        var structure = polymer.structure;
 
         var n = this.size;
         var n1 = n - 1;
@@ -533,205 +622,18 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( nNorm );
         var bin = new Float32Array( nNorm );
 
-        var p1 = new THREE.Vector3();
-        var p2 = new THREE.Vector3();
-
-        var vSub1 = new THREE.Vector3();
-        var vSub2 = new THREE.Vector3();
-        var vSub3 = new THREE.Vector3();
-        var vSub4 = new THREE.Vector3();
-
-        var vDir = new THREE.Vector3();
-        var vTan = new THREE.Vector3();
-        var vNorm = new THREE.Vector3().set( 0, 0, 1 );
-        var vBin = new THREE.Vector3();
-
-        var d1a1 = new THREE.Vector3();
-        var d1a2 = new THREE.Vector3();
-        var d1a3 = new THREE.Vector3();
-        var d1a4 = new THREE.Vector3();
-
-        var d2a1 = new THREE.Vector3();
-        var d2a2 = new THREE.Vector3();
-        var d2a3 = new THREE.Vector3();
-        var d2a4 = new THREE.Vector3();
-
-        var k = 0;
         var interpolator = new NGL.Interpolator( m, tension );
+        var iterDir1 = this.getAtomIterator( "direction1" );
+        var iterDir2 = this.getAtomIterator( "direction2" );
 
-        var dt = 1.0 / m;
-        var first = true;
-        var m2 = Math.ceil( m / 2 );
-
-        interpolator.getNormal(
-            n, tan, norm, bin, 0, polymer.isCyclic, isProtein
-        );
-
-        return {
-            "normal": norm,
-            "binormal": bin
-        }
-
-        if( !isCg ){
-
-            var _d1a1 = structure.getAtomProxy();
-            var _d1a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, "direction1" ) );
-            var _d1a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, "direction1" ) );
-            var _d1a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, "direction1" ) );
-
-            var _d2a1 = structure.getAtomProxy();
-            var _d2a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, "direction2" ) );
-            var _d2a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, "direction2" ) );
-            var _d2a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, "direction2" ) );
-
-        }
-
-        for( var i = 0; i < n1; ++i ){
-
-            if( !isCg ){
-
-                _d1a1.index = _d1a2.index;
-                _d1a2.index = _d1a3.index;
-                _d1a3.index = _d1a4.index;
-                _d1a4.index = polymer.getAtomIndexByType( i + 2, "direction1" );
-
-                _d2a1.index = _d2a2.index;
-                _d2a2.index = _d2a3.index;
-                _d2a3.index = _d2a4.index;
-                _d2a4.index = polymer.getAtomIndexByType( i + 2, "direction2" );
-
-                if( first ){
-
-                    first = false;
-
-                    d1a1.copy( _d1a1 );
-                    d1a2.copy( _d1a2 );
-                    d1a3.copy( _d1a3 );
-
-                    d2a1.copy( _d2a1 );
-                    d2a2.copy( _d2a2 );
-                    d2a3.copy( _d2a3 );
-
-                    vSub1.subVectors( d2a1, d1a1 );
-                    vSub2.subVectors( d2a2, d1a2 );
-                    if( vSub1.dot( vSub2 ) < 0 ){
-                        vSub2.multiplyScalar( -1 );
-                        d2a2.addVectors( d1a2, vSub2 );
-                    }
-
-                    vSub3.subVectors( d2a3, d1a3 );
-                    if( vSub2.dot( vSub3 ) < 0 ){
-                        vSub3.multiplyScalar( -1 );
-                        d2a3.addVectors( d1a3, vSub3 );
-                    }
-
-                }else{
-
-                    d1a1.copy( d1a2 );
-                    d1a2.copy( d1a3 );
-                    d1a3.copy( d1a4 );
-
-                    d2a1.copy( d2a2 );
-                    d2a2.copy( d2a3 );
-                    d2a3.copy( d2a4 );
-
-                    vSub3.copy( vSub4 );
-
-                }
-
-                d1a4.copy( _d1a4 );
-                d2a4.copy( _d2a4 );
-
-                vSub4.subVectors( d2a4, d1a4 );
-                if( vSub3.dot( vSub4 ) < 0 ){
-                    vSub4.multiplyScalar( -1 );
-                    d2a4.addVectors( d1a4, vSub4 );
-                }
-
-            }
-
-            interpolator.normal(
-                d1a1, d1a2, d1a3, d1a4,
-                d2a1, d2a2, d2a3, d2a4,
-                tan, norm, bin, k, isProtein, isCg
+        if( isCg ){
+            interpolator.getNormal(
+                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
-
-            k += 3 * m;
-
-        }
-
-        if( polymer.isCyclic ){
-
-            if( !isCg ){
-
-                _d1a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, "direction1" );
-                _d1a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, "direction1" );
-                _d1a3.index = polymer.getAtomIndexByType( 0, "direction1" );
-                _d1a4.index = polymer.getAtomIndexByType( 1, "direction1" );
-
-                _d2a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, "direction2" );
-                _d2a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, "direction2" );
-                _d2a3.index = polymer.getAtomIndexByType( 0, "direction2" );
-                _d2a4.index = polymer.getAtomIndexByType( 1, "direction2" );
-
-                if( first ){
-
-                    first = false;
-
-                    d1a1.copy( _d1a1 );
-                    d1a2.copy( _d1a2 );
-                    d1a3.copy( _d1a3 );
-
-                    d2a1.copy( _d2a1 );
-                    d2a2.copy( _d2a2 );
-                    d2a3.copy( _d2a3 );
-
-                    vSub1.subVectors( d2a1, d1a1 );
-                    vSub2.subVectors( d2a2, d1a2 );
-                    if( vSub1.dot( vSub2 ) < 0 ){
-                        vSub2.multiplyScalar( -1 );
-                        d2a2.addVectors( d1a2, vSub2 );
-                    }
-
-                    vSub3.subVectors( d2a3, d1a3 );
-                    if( vSub2.dot( vSub3 ) < 0 ){
-                        vSub3.multiplyScalar( -1 );
-                        d2a3.addVectors( d1a3, vSub3 );
-                    }
-
-                }else{
-
-                    d1a1.copy( d1a2 );
-                    d1a2.copy( d1a3 );
-                    d1a3.copy( d1a4 );
-
-                    d2a1.copy( d2a2 );
-                    d2a2.copy( d2a3 );
-                    d2a3.copy( d2a4 );
-
-                    vSub3.copy( vSub4 );
-
-                }
-
-                d1a4.copy( _d1a4 );
-                d2a4.copy( _d2a4 );
-
-                vSub4.subVectors( d2a4, d1a4 );
-                if( vSub3.dot( vSub4 ) < 0 ){
-                    vSub4.multiplyScalar( -1 );
-                    d2a4.addVectors( d1a4, vSub4 );
-                }
-
-            }
-
-            interpolator.normal(
-                d1a1, d1a2, d1a3, d1a4,
-                d2a1, d2a2, d2a3, d2a4,
-                tan, norm, bin, k, isProtein, isCg
+        }else{
+            interpolator.getNormalDir(
+                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
-
-            k += 3 * m;
-
         }
 
         return {
