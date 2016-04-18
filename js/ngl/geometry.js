@@ -117,33 +117,53 @@ NGL.Interpolator = function( m, tension ){
 
     var vDir = new THREE.Vector3();
     var vTan = new THREE.Vector3();
-    var vNorm = new THREE.Vector3().set( 0, 0, 1 );
+    var vNorm = new THREE.Vector3();
     var vBin = new THREE.Vector3();
 
     var m2 = Math.ceil( m / 2 );
 
-    this.normal = function( u0, u1, u2, u3, v0, v1, v2, v3, tan, norm, bin, offset, shift, noDir ){
+    function interpolateNormalDir( u0, u1, u2, u3, v0, v1, v2, v3, tan, norm, bin, offset, shift ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
-            if( noDir ){
-                vDir.copy( vNorm );
-            }else{
-                if( shift ) l += m2 * 3;
-                var d = dt * j
-                interpolateToVec( u0, u1, u2, u3, d, vec1 );
-                interpolateToVec( v0, v1, v2, v3, d, vec2 );
-                vDir.subVectors( vec2, vec1 ).normalize();
-            }
+            if( shift ) l += m2 * 3;
+            var d = dt * j
+            interpolateToVec( u0, u1, u2, u3, d, vec1 );
+            interpolateToVec( v0, v1, v2, v3, d, vec2 );
+            vDir.subVectors( vec2, vec1 ).normalize();
             vTan.fromArray( tan, l );
             vBin.crossVectors( vDir, vTan ).normalize();
             vBin.toArray( bin, l );
             vNorm.crossVectors( vTan, vBin ).normalize();
             vNorm.toArray( norm, l );
         }
-    };
+    }
 
-    this.normalFixLast = function( bin, norm, offset, shift ){
-        if( shift ){
+    function interpolateNormal( vDir, tan, norm, bin, offset ){
+        for( var j = 0; j < m; ++j ){
+            var l = offset + j * 3;
+            vDir.copy( vNorm );
+            vTan.fromArray( tan, l );
+            vBin.crossVectors( vDir, vTan ).normalize();
+            vBin.toArray( bin, l );
+            vNorm.crossVectors( vTan, vBin ).normalize();
+            vNorm.toArray( norm, l );
+        }
+    }
+
+    this.getNormal = function( size, tan, norm, bin, offset, isCyclic, shift ){
+        vNorm.set( 0, 0, 1 );
+        var n = size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            interpolateNormal( vDir, tan, norm, bin, k );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            interpolateNormal( vDir, tan, norm, bin, k );
+            k += 3 * m;
+        }
+        if( false && shift ){
             // FIXME shift requires data from one more preceeding residue
             vBin.fromArray( bin, m2 * 3 );
             vNorm.fromArray( norm, m2 * 3 );
@@ -152,10 +172,10 @@ NGL.Interpolator = function( m, tension ){
                 vNorm.toArray( norm, j * 3 );
             }
         }else{
-            vBin.toArray( bin, offset );
-            vNorm.toArray( norm, offset );
+            vBin.toArray( bin, k );
+            vNorm.toArray( norm, k );
         }
-    }
+    };
 
 };
 
@@ -543,6 +563,15 @@ NGL.Spline.prototype = {
         var first = true;
         var m2 = Math.ceil( m / 2 );
 
+        interpolator.getNormal(
+            n, tan, norm, bin, 0, polymer.isCyclic, isProtein
+        );
+
+        return {
+            "normal": norm,
+            "binormal": bin
+        }
+
         if( !isCg ){
 
             var _d1a1 = structure.getAtomProxy();
@@ -704,8 +733,6 @@ NGL.Spline.prototype = {
             k += 3 * m;
 
         }
-
-        interpolator.normalFixLast( bin, norm, k, isProtein )
 
         return {
             "normal": norm,
