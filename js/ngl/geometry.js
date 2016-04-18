@@ -33,13 +33,43 @@ NGL.Interpolator = function( m, tension ){
         vec.z = interpolate( v0.z, v1.z, v2.z, v3.z, t );
     }
 
-    this.position = function( v0, v1, v2, v3, pos, offset ){
+    function subdividePoints( v0, v1, v2, v3, pos, offset ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
             var d = dt * j
             interpolateToArr( v0, v1, v2, v3, d, pos, l );
         }
     };
+
+    this.getSubdividedPoints = function( iterator, array, offset, isCyclic ){
+        var v0;
+        var v1 = iterator.next();
+        var v2 = iterator.next();
+        var v3 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            v0 = v1;
+            v1 = v2;
+            v2 = v3;
+            v3 = iterator.next();
+            subdividePoints( v0, v1, v2, v3, array, k );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            v0 = iterator.get( n - 2 );
+            v1 = iterator.get( n - 1 );
+            v2 = iterator.get( 0 );
+            v3 = iterator.get( 1 );
+            subdividePoints( v0, v1, v2, v3, array, k );
+            k += 3 * m;
+        }
+        array[ k     ] = v2.x;
+        array[ k + 1 ] = v2.y;
+        array[ k + 2 ] = v2.z;
+    }
 
     var delta = 0.0001;
     var vec1 = new THREE.Vector3();
@@ -381,34 +411,36 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-        var k = 0;
         var interpolator = new NGL.Interpolator( m, tension );
-
         var type = atomname || "trace";
-        var a1 = structure.getAtomProxy();
-        var a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, type ) );
-        var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, type ) );
-        var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
 
-        for( var i = 0; i < n1; ++i ){
-            a1.index = a2.index;
-            a2.index = a3.index;
-            a3.index = a4.index;
-            a4.index = polymer.getAtomIndexByType( i + 2, type );
-            interpolator.position( a1, a2, a3, a4, pos, k );
-            k += 3 * m;
-        }
+        var positionIterator = function(){
+            var i = 0;
+            var j = -1;
+            var cache = [
+                structure.getAtomProxy(),
+                structure.getAtomProxy(),
+                structure.getAtomProxy(),
+                structure.getAtomProxy()
+            ];
+            this.next = function(){
+                var atomProxy = this.get( j );
+                j += 1;
+                return atomProxy;
+            };
+            this.get = function( idx ){
+                var atomProxy = cache[ i % 4 ];
+                atomProxy.index = polymer.getAtomIndexByType( idx, type );
+                i += 1;
+                return atomProxy;
+            };
+            this.size = n;
+            return this;
+        }();
 
-        if( polymer.isCyclic ){
-            a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
-            a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
-            a3.index = polymer.getAtomIndexByType( 0, type );
-            a4.index = polymer.getAtomIndexByType( 1, type );
-            interpolator.position( a1, a2, a3, a4, pos, k );
-            k += 3 * m;
-        }
-
-        a3.positionToArray( pos, k );
+        interpolator.getSubdividedPoints(
+            positionIterator, pos, 0, polymer.isCyclic
+        );
 
         return pos;
 
