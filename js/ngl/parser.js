@@ -3535,6 +3535,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
             "d-saccharide 1,4 and 1,4 linking", "d-saccharide 1,4 and 1,6 linking"
         ];
 
+        var groupTypeDict = {};
         for( var i = 0, il = sd.groupList.length; i < il; ++i ){
             var groupType = sd.groupList[ i ];
             var atomTypeIdList = [];
@@ -3544,7 +3545,11 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var hetFlag = hetCompList.indexOf( groupType.chemCompType.toLowerCase() ) !== -1;
-            s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
+            groupTypeDict[ i ] = s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
+        }
+
+        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+            s.residueStore.residueTypeId[ i ] = groupTypeDict[ s.residueStore.residueTypeId[ i ] ];
         }
 
         for( var i = 0, il = s.atomStore.count; i < il; ++i ){
