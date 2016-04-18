@@ -10,6 +10,10 @@
 NGL.Interpolator = function( m, tension ){
 
     var dt = 1.0 / m;
+    var delta = 0.0001;
+
+    var vec1 = new THREE.Vector3();
+    var vec2 = new THREE.Vector3();
 
     function interpolate( p0, p1, p2, p3, t ) {
         var v0 = ( p2 - p0 ) * tension;
@@ -33,49 +37,15 @@ NGL.Interpolator = function( m, tension ){
         vec.z = interpolate( v0.z, v1.z, v2.z, v3.z, t );
     }
 
-    function subdividePoints( v0, v1, v2, v3, pos, offset ){
+    function interpolatePosition( v0, v1, v2, v3, pos, offset ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
             var d = dt * j
             interpolateToArr( v0, v1, v2, v3, d, pos, l );
         }
-    };
-
-    this.getSubdividedPoints = function( iterator, array, offset, isCyclic ){
-        var v0;
-        var v1 = iterator.next();
-        var v2 = iterator.next();
-        var v3 = iterator.next();
-        //
-        var n = iterator.size;
-        var n1 = n - 1;
-        var k = offset || 0;
-        for( var i = 0; i < n1; ++i ){
-            v0 = v1;
-            v1 = v2;
-            v2 = v3;
-            v3 = iterator.next();
-            subdividePoints( v0, v1, v2, v3, array, k );
-            k += 3 * m;
-        }
-        if( isCyclic ){
-            v0 = iterator.get( n - 2 );
-            v1 = iterator.get( n - 1 );
-            v2 = iterator.get( 0 );
-            v3 = iterator.get( 1 );
-            subdividePoints( v0, v1, v2, v3, array, k );
-            k += 3 * m;
-        }
-        array[ k     ] = v2.x;
-        array[ k + 1 ] = v2.y;
-        array[ k + 2 ] = v2.z;
     }
 
-    var delta = 0.0001;
-    var vec1 = new THREE.Vector3();
-    var vec2 = new THREE.Vector3();
-
-    this.tangent = function( v0, v1, v2, v3, tan, offset ){
+    function interpolateTangent( v0, v1, v2, v3, tan, offset ){
         for( var j = 0; j < m; ++j ){
             var d = dt * j
             var d1 = d - delta;
@@ -91,7 +61,59 @@ NGL.Interpolator = function( m, tension ){
             vec2.sub( vec1 ).normalize();
             vec2.toArray( tan, l );
         }
-    };
+    }
+
+    function vectorSubdivide( interpolationFn, iterator, array, offset, isCyclic ){
+        var v0;
+        var v1 = iterator.next();
+        var v2 = iterator.next();
+        var v3 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            v0 = v1;
+            v1 = v2;
+            v2 = v3;
+            v3 = iterator.next();
+            interpolationFn( v0, v1, v2, v3, array, k );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            v0 = iterator.get( n - 2 );
+            v1 = iterator.get( n - 1 );
+            v2 = iterator.get( 0 );
+            v3 = iterator.get( 1 );
+            interpolationFn( v0, v1, v2, v3, array, k );
+            k += 3 * m;
+        }
+    }
+
+    //
+
+    this.getPosition = function( iterator, array, offset, isCyclic ){
+        vectorSubdivide(
+            interpolatePosition, iterator, array, offset, isCyclic
+        );
+        var n1 = iterator.size - 1;
+        var k = n1 * m * 3;
+        if( isCyclic ) k += m * 3;
+        var v = iterator.get( isCyclic ? 0 : n1 );
+        array[ k     ] = v.x;
+        array[ k + 1 ] = v.y;
+        array[ k + 2 ] = v.z;
+    }
+
+    this.getTangent = function( iterator, array, offset, isCyclic ){
+        vectorSubdivide(
+            interpolateTangent, iterator, array, offset, isCyclic
+        );
+        var n1 = iterator.size - 1;
+        var k = n1 * m * 3;
+        if( isCyclic ) k += m * 3;
+        NGL.Utils.copyArray( array, array, k - 3, k, 3 );
+    }
 
     var vDir = new THREE.Vector3();
     var vTan = new THREE.Vector3();
@@ -157,6 +179,38 @@ NGL.Spline = function( polymer, arrows ){
 NGL.Spline.prototype = {
 
     constructor: NGL.Spline,
+
+    getPositionIterator: function( type ){
+
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+
+        return function(){
+            var i = 0;
+            var j = -1;
+            var cache = [
+                structure.getAtomProxy(),
+                structure.getAtomProxy(),
+                structure.getAtomProxy(),
+                structure.getAtomProxy()
+            ];
+            this.next = function(){
+                var atomProxy = this.get( j );
+                j += 1;
+                return atomProxy;
+            };
+            this.get = function( idx ){
+                var atomProxy = cache[ i % 4 ];
+                atomProxy.index = polymer.getAtomIndexByType( idx, type );
+                i += 1;
+                return atomProxy;
+            };
+            this.size = n;
+            return this;
+        }();
+
+    },
 
     getSubdividedColor: function( m, params ){
 
@@ -403,8 +457,6 @@ NGL.Spline.prototype = {
         if( isNaN( tension ) ) tension = this.tension;
 
         var polymer = this.polymer;
-        var structure = this.polymer.structure;
-
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nPos = n1 * m * 3 + 3
@@ -413,32 +465,9 @@ NGL.Spline.prototype = {
         var pos = new Float32Array( nPos );
         var interpolator = new NGL.Interpolator( m, tension );
         var type = atomname || "trace";
+        var positionIterator = this.getPositionIterator( type );
 
-        var positionIterator = function(){
-            var i = 0;
-            var j = -1;
-            var cache = [
-                structure.getAtomProxy(),
-                structure.getAtomProxy(),
-                structure.getAtomProxy(),
-                structure.getAtomProxy()
-            ];
-            this.next = function(){
-                var atomProxy = this.get( j );
-                j += 1;
-                return atomProxy;
-            };
-            this.get = function( idx ){
-                var atomProxy = cache[ i % 4 ];
-                atomProxy.index = polymer.getAtomIndexByType( idx, type );
-                i += 1;
-                return atomProxy;
-            };
-            this.size = n;
-            return this;
-        }();
-
-        interpolator.getSubdividedPoints(
+        interpolator.getPosition(
             positionIterator, pos, 0, polymer.isCyclic
         );
 
@@ -451,42 +480,19 @@ NGL.Spline.prototype = {
         if( isNaN( tension ) ) tension = this.tension;
 
         var polymer = this.polymer;
-        var structure = this.polymer.structure;
-
         var n = this.size;
         var n1 = n - 1;
         var nTan = n1 * m * 3 + 3
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-        var k = 0;
         var interpolator = new NGL.Interpolator( m, tension );
-
         var type = atomname || "trace";
-        var a1 = structure.getAtomProxy();
-        var a2 = structure.getAtomProxy( polymer.getAtomIndexByType( -1, type ) );
-        var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 0, type ) );
-        var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
+        var positionIterator = this.getPositionIterator( type );
 
-        for( var i = 0; i < n1; ++i ){
-            a1.index = a2.index;
-            a2.index = a3.index;
-            a3.index = a4.index;
-            a4.index = polymer.getAtomIndexByType( i + 2, type );
-            interpolator.tangent( a1, a2, a3, a4, tan, k );
-            k += 3 * m;
-        }
-
-        if( polymer.isCyclic ){
-            a1.index = polymer.getAtomIndexByType( polymer.residueCount - 2, type );
-            a2.index = polymer.getAtomIndexByType( polymer.residueCount - 1, type );
-            a3.index = polymer.getAtomIndexByType( 0, type );
-            a4.index = polymer.getAtomIndexByType( 1, type );
-            interpolator.tangent( a1, a2, a3, a4, tan, k );
-            k += 3 * m;
-        }
-
-        NGL.Utils.copyArray( tan, tan, k - 3, k, 3 );
+        interpolator.getTangent(
+            positionIterator, tan, 0, polymer.isCyclic
+        );
 
         return tan;
 
