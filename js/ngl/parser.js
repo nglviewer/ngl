@@ -882,7 +882,19 @@ NGL.buildUnitcellAssembly = function( structure ){
     }
 
     var unitcellAssembly = new NGL.Assembly( "UNITCELL" );
-    unitcellAssembly.addPart( getMatrixList() );
+    var unitcellMatrixList = getMatrixList();
+    if( structure.biomolDict[ "NCS" ] ){
+        var ncsUnitcellMatrixList = [];
+        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
+        unitcellMatrixList.forEach( function( sm ){
+            ncsMatrixList.forEach( function( nm ){
+                ncsUnitcellMatrixList.push( sm.clone().multiply( nm ) );
+            } );
+        } );
+        unitcellAssembly.addPart( ncsUnitcellMatrixList );
+    }else{
+        unitcellAssembly.addPart( unitcellMatrixList );
+    }
 
     var vec = new THREE.Vector3();
     var supercellAssembly = new NGL.Assembly( "SUPERCELL" );
@@ -919,7 +931,18 @@ NGL.buildUnitcellAssembly = function( structure ){
         getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
         getMatrixList( vec.set( -1,  1,  0 ) )   // 465
     );
-    supercellAssembly.addPart( supercellMatrixList );
+    if( structure.biomolDict[ "NCS" ] ){
+        var ncsSupercellMatrixList = [];
+        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
+        supercellMatrixList.forEach( function( sm ){
+            ncsMatrixList.forEach( function( nm ){
+                ncsSupercellMatrixList.push( sm.clone().multiply( nm ) );
+            } );
+        } );
+        supercellAssembly.addPart( ncsSupercellMatrixList );
+    }else{
+        supercellAssembly.addPart( supercellMatrixList );
+    }
 
     structure.biomolDict[ "UNITCELL" ] = unitcellAssembly;
     structure.biomolDict[ "SUPERCELL" ] = supercellAssembly;
