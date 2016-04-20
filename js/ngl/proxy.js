@@ -934,15 +934,15 @@ NGL.Residue = {
         };
 
         atomnames[ NGL.CgRnaBackboneType ] = {
-            trace: [ "C4'", "C4*" ],
-            backboneStart: [ "C4'", "C4*" ],
-            backboneEnd: [ "C4'", "C4*" ],
+            trace: [ "C4'", "C4*", "P" ],
+            backboneStart: [ "C4'", "C4*", "P" ],
+            backboneEnd: [ "C4'", "C4*", "P" ],
         };
 
         atomnames[ NGL.CgDnaBackboneType ] = {
-            trace: [ "C3'", "C3*", "C2'" ],  // C2' is used in martini ff
-            backboneStart: [ "C3'", "C3*", "C2'" ],
-            backboneEnd: [ "C3'", "C3*", "C2'" ],
+            trace: [ "C3'", "C3*", "C2'", "P" ],  // C2' is used in martini ff
+            backboneStart: [ "C3'", "C3*", "C2'", "P" ],
+            backboneEnd: [ "C3'", "C3*", "C2'", "P" ],
         };
 
         atomnames[ NGL.UnknownBackboneType ] = {};
