@@ -1051,7 +1051,7 @@ NGL.Viewer.prototype = {
         // light
 
         this.pointLight = new THREE.SpotLight(
-            this.params.lightColor, this.params.lightIntensity, 0, 1
+            this.params.lightColor, this.params.lightIntensity
         );
         this.modelGroup.add( this.pointLight );
 
@@ -1800,7 +1800,7 @@ NGL.Viewer.prototype = {
 
         this.renderer.render( this.backgroundGroup, this.camera, renderTarget );
         if( renderTarget ){
-            this.renderer.clearTarget( renderTarget, undefined, true, undefined );
+            this.renderer.clearTarget( renderTarget, false, true, false );
         }else{
             this.renderer.clearDepth();
         }
@@ -1818,8 +1818,7 @@ NGL.Viewer.prototype = {
     __renderMultiSample: function(){
 
         // based on the Manual Multi-Sample Anti-Aliasing Render Pass
-        // contributed to three.js
-        // by bhouston / http://clara.io/
+        // contributed to three.js by bhouston / http://clara.io/
         //
         // This manual approach to MSAA re-renders the scene ones for
         // each sample with camera jitter and accumulates the results.
@@ -1871,9 +1870,7 @@ NGL.Viewer.prototype = {
         // reset jitter to nothing.
         // TODO: add support for orthogonal cameras
         if ( camera.setViewOffset ){
-            camera.setViewOffset(
-                undefined, undefined, undefined, undefined, undefined, undefined
-            );
+            camera.view = null;
         }
 
     },

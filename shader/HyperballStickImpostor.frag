@@ -49,7 +49,7 @@ varying float vRadius2;
     #include bsdfs
     #include ambient_pars
     #include lights_pars
-    #include lights_standard_pars_fragment
+    #include lights_physical_pars_fragment
 #endif
 
 bool interior = false;
@@ -283,7 +283,7 @@ void main(){
             normal = vec3( 0.0, 0.0, 0.4 );
         }
 
-        #include lights_standard_fragment
+        #include lights_physical_fragment
         #include lights_template
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;

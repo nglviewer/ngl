@@ -26,7 +26,7 @@ uniform float nearClip;
     #include bsdfs
     #include ambient_pars
     #include lights_pars
-    #include lights_standard_pars_fragment
+    #include lights_physical_pars_fragment
 #endif
 
 void main(){
@@ -54,7 +54,7 @@ void main(){
 
         #include dull_interior_fragment
 
-        #include lights_standard_fragment
+        #include lights_physical_fragment
         #include lights_template
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;

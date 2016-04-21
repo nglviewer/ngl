@@ -8,3 +8,4 @@ var performance;
 var require;
 var process;
 var FileReaderSync;
+var WebGL2RenderingContext;

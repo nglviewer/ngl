@@ -195,17 +195,16 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
     this.uniforms = THREE.UniformsUtils.merge( [
         THREE.UniformsLib[ "common" ],
         {
-            "fogColor": { type: "c", value: null },
-            "fogNear": { type: "f", value: 0.0 },
-            "fogFar": { type: "f", value: 0.0 },
-            "opacity": { type: "f", value: this.opacity },
-            "nearClip": { type: "f", value: 0.0 }
+            "fogColor": { value: null },
+            "fogNear": { value: 0.0 },
+            "fogFar": { value: 0.0 },
+            "opacity": { value: this.opacity },
+            "nearClip": { value: 0.0 }
         },
         {
-            "emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-            "roughness": { type: "f", value: this.roughness },
-            "metalness": { type: "f", value: this.metalness },
-            "envMapIntensity" : { type: "f", value: 1 } // temporary
+            "emissive" : { value: new THREE.Color( 0x000000 ) },
+            "roughness": { value: this.roughness },
+            "metalness": { value: this.metalness }
         },
         THREE.UniformsLib[ "ambient" ],
         THREE.UniformsLib[ "lights" ]
@@ -213,13 +212,13 @@ NGL.Buffer = function( position, color, index, pickingColor, params ){
 
     this.uniforms[ "diffuse" ].value.set( this.diffuse );
 
-    var objectId = new THREE.Uniform( "f", 0.0 )
+    var objectId = new THREE.Uniform( 0.0 )
         .onUpdate( function( object, camera ){
             this.value = NGL.supportsReadPixelsFloat ? object.id : object.id / 255;
         } );
 
     this.pickingUniforms = {
-        "nearClip": { type: "f", value: 0.0 },
+        "nearClip": { value: 0.0 },
         "objectId": objectId
     };
 
@@ -823,7 +822,7 @@ NGL.Buffer.prototype = {
             }
 
             if( u[ name ] !== undefined ){
-                if( u[ name ].type === "c" ){
+                if( u[ name ].value.set ){
                     u[ name ].value.set( data[ name ] );
                 }else{
                     u[ name ].value = data[ name ];
@@ -831,7 +830,7 @@ NGL.Buffer.prototype = {
             }
 
             if( wu[ name ] !== undefined ){
-                if( wu[ name ].type === "c" ){
+                if( wu[ name ].value.set ){
                     wu[ name ].value.set( data[ name ] );
                 }else{
                     wu[ name ].value = data[ name ];
@@ -839,7 +838,7 @@ NGL.Buffer.prototype = {
             }
 
             if( pu[ name ] !== undefined ){
-                if( pu[ name ].type === "c" ){
+                if( pu[ name ].value.set ){
                     pu[ name ].value.set( data[ name ] );
                 }else{
                     pu[ name ].value = data[ name ];
@@ -1179,7 +1178,7 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, para
     NGL.QuadBuffer.call( this, params );
 
     this.addUniforms( {
-        "projectionMatrixInverse": { type: "m4", value: new THREE.Matrix4() }
+        "projectionMatrixInverse": { value: new THREE.Matrix4() }
     } );
 
     this.addAttributes( {
@@ -1232,14 +1231,14 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     NGL.AlignedBoxBuffer.call( this, p );
 
-    var modelViewMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+    var modelViewMatrixInverse = new THREE.Uniform( new THREE.Matrix4() )
         .onUpdate( function( object, camera ){
             this.value.getInverse( object.modelViewMatrix );
         } );
 
     this.addUniforms( {
         "modelViewMatrixInverse": modelViewMatrixInverse,
-        "shift": { type: "f", value: this.shift },
+        "shift": { value: this.shift },
     } );
 
     this.addAttributes( {
@@ -1364,18 +1363,18 @@ NGL.HyperballStickImpostorBuffer = function( position1, position2, color, color2
 
     }
 
-    var modelViewProjectionMatrix = new THREE.Uniform( "m4", new THREE.Matrix4() )
+    var modelViewProjectionMatrix = new THREE.Uniform( new THREE.Matrix4() )
         .onUpdate( matrixCalc );
-    var modelViewProjectionMatrixInverse = new THREE.Uniform( "m4", new THREE.Matrix4() )
+    var modelViewProjectionMatrixInverse = new THREE.Uniform( new THREE.Matrix4() )
         .onUpdate( matrixCalc );
-    var modelViewMatrixInverseTranspose = new THREE.Uniform( "m4", new THREE.Matrix4() )
+    var modelViewMatrixInverseTranspose = new THREE.Uniform( new THREE.Matrix4() )
         .onUpdate( matrixCalc );
 
     this.addUniforms( {
         "modelViewProjectionMatrix": modelViewProjectionMatrix,
         "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
         "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
-        "shrink": { type: "f", value: shrink },
+        "shrink": { value: shrink },
     } );
 
     this.addAttributes( {
@@ -1882,10 +1881,10 @@ NGL.PointBuffer = function( position, color, params ){
     NGL.Buffer.call( this, position, color, undefined, undefined, p );
 
     this.addUniforms( {
-        "size": { type: "f", value: this.pointSize },
-        "canvasHeight": { type: "f", value: 1.0 },
-        "pixelRatio": { type: "f", value: 1.0 },
-        "map": { type: "t", value: null },
+        "size": { value: this.pointSize },
+        "canvasHeight": { value: 1.0 },
+        "pixelRatio": { value: 1.0 },
+        "map": { value: null },
     } );
 
 };
@@ -2188,7 +2187,7 @@ NGL.TraceBuffer.prototype.setAttributes = function( data ){
 //     NGL.QuadBuffer.call( this );
 
 //     this.addUniforms({
-//         'projectionMatrixInverse': { type: "m4", value: new THREE.Matrix4() },
+//         'projectionMatrixInverse': { value: new THREE.Matrix4() },
 //     });
 
 //     this.addAttributes( {
@@ -3170,7 +3169,7 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     NGL.QuadBuffer.call( this, p );
 
     this.addUniforms( {
-        "fontTexture"  : { type: "t", value: null }
+        "fontTexture"  : { value: null }
     } );
 
     this.addAttributes( {
