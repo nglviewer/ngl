@@ -693,15 +693,10 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
 
-            var surface = o.addRepresentation( "surface", {
+            o.addRepresentation( "surface", {
                 wireframe: true,
-                visible: true,
+                color: "skyblue",
                 boxSize: 10
-            } );
-            o.addRepresentation( "dot", {
-                dotType: "sphere",
-                radius: 0.3,
-                visible: false
             } );
             o.centerView();
 
@@ -734,7 +729,9 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
-            o.addRepresentation( "cartoon" );
+            o.addRepresentation( "line", {
+                linewidth: 5, colorValue: "yellow"
+            } );
             o.centerView();
 
         } );
