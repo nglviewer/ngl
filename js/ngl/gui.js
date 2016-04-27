@@ -312,19 +312,21 @@ NGL.ToolbarWidget = function( stage ){
 
     stage.viewer.stats.signals.updated.add( function(){
 
-        statsPanel
-            .clear()
-            .add(
+        statsPanel.clear();
+
+        if( NGL.debug ){
+            statsPanel.add(
                 new UI.Text(
                     stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
                     stage.viewer.stats.lastFps + " fps"
                 )
             );
+        }
 
     } );
 
     container.add( messagePanel );
-    if( NGL.debug ) container.add( statsPanel );
+    container.add( statsPanel );
 
     return container;
 
