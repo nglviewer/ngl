@@ -40,14 +40,14 @@ NGL.Interpolator = function( m, tension ){
     function interpolatePosition( v0, v1, v2, v3, pos, offset ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
-            var d = dt * j
+            var d = dt * j;
             interpolateToArr( v0, v1, v2, v3, d, pos, l );
         }
     }
 
     function interpolateTangent( v0, v1, v2, v3, tan, offset ){
         for( var j = 0; j < m; ++j ){
-            var d = dt * j
+            var d = dt * j;
             var d1 = d - delta;
             var d2 = d + delta;
             var l = offset + j * 3;
@@ -128,7 +128,7 @@ NGL.Interpolator = function( m, tension ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
             if( shift ) l += m2 * 3;
-            var d = dt * j
+            var d = dt * j;
             interpolateToVec( u0, u1, u2, u3, d, vec1 );
             interpolateToVec( v0, v1, v2, v3, d, vec2 );
             vDir.subVectors( vec2, vec1 ).normalize();
@@ -262,6 +262,49 @@ NGL.Interpolator = function( m, tension ){
         }
     };
 
+    //
+
+    function interpolateColor( item1, item2, colFn, pcolFn, col, pcol, offset ){
+        for( var j = 0; j < m2; ++j ){
+            var l = offset + j * 3;
+            colFn( item1, col, l );  // itemColorToArray
+            pcolFn( item1, pcol, l );  // itemPickingColorToArray
+        }
+        for( var j = m2; j < m; ++j ){
+            var l = offset + j * 3;
+            colFn( item2, col, l );  // itemColorToArray
+            pcolFn( item2, pcol, l );  // itemPickingColorToArray
+        }
+    }
+
+    this.getColor = function( iterator, colFn, pcolFn, col, pcol, offset, isCyclic ){
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            k += 3 * m;
+        }
+        //
+        col[ k     ] = col[ k - 3 ];
+        col[ k + 1 ] = col[ k - 2 ];
+        col[ k + 2 ] = col[ k - 1 ];
+        pcol[ k     ] = pcol[ k - 3 ];
+        pcol[ k + 1 ] = pcol[ k - 2 ];
+        pcol[ k + 2 ] = pcol[ k - 1 ];
+    }
+
 };
 
 
@@ -325,11 +368,6 @@ NGL.Spline.prototype = {
     getSubdividedColor: function( m, params ){
 
         var polymer = this.polymer;
-        var structure = polymer.structure;
-        var residueStore = structure.residueStore;
-        var residueIndexStart = polymer.residueIndexStart;
-        var traceAtomIndex = residueStore.traceAtomIndex;
-
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nCol = n1 * m * 3 + 3;
@@ -338,74 +376,24 @@ NGL.Spline.prototype = {
         var col = new Float32Array( nCol );
         var pcol = new Float32Array( nCol );
 
+        var interpolator = new NGL.Interpolator( m );
+        var iterator = this.getAtomIterator( "trace" );
+
         var p = params || {};
-        p.structure = structure;
+        p.structure = polymer.structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        var k = 0;
-
-        var rp = structure.getResidueProxy();
-        rp.index = residueIndexStart;
-        var ap1 = structure.getAtomProxy();
-        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
-
-        for( var i = 0; i < n1; ++i ){
-
-            rp.index = residueIndexStart + i + 1;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var mh = Math.ceil( m / 2 );
-
-            for( var j = 0; j < mh; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap1, col, l );
-                pickingColorMaker.atomColorToArray( ap1, pcol, l );
-            }
-
-            for( var j = mh; j < m; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap2, col, l );
-                pickingColorMaker.atomColorToArray( ap2, pcol, l );
-            }
-
-            k += 3 * m;
-
+        function colFn( item, col, offset ){
+            colorMaker.atomColorToArray( item, col, offset );
         }
 
-        if( polymer.isCyclic ){
-
-            rp.index = residueIndexStart;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var mh = Math.ceil( m / 2 );
-
-            for( var j = 0; j < mh; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap1, col, l );
-                pickingColorMaker.atomColorToArray( ap1, pcol, l );
-            }
-
-            for( var j = mh; j < m; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap2, col, l );
-                pickingColorMaker.atomColorToArray( ap2, pcol, l );
-            }
-
-            k += 3 * m;
-
+        function pcolFn( item, pcol, offset ){
+            pickingColorMaker.atomColorToArray( item, pcol, offset );
         }
 
-        col[ nCol - 3 ] = col[ nCol - 6 ];
-        col[ nCol - 2 ] = col[ nCol - 5 ];
-        col[ nCol - 1 ] = col[ nCol - 4 ];
-
-        pcol[ nCol - 3 ] = pcol[ nCol - 6 ];
-        pcol[ nCol - 2 ] = pcol[ nCol - 5 ];
-        pcol[ nCol - 1 ] = pcol[ nCol - 4 ];
+        interpolator.getColor( iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic );
 
         return {
             "color": col,
