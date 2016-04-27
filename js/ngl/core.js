@@ -109,15 +109,30 @@ NGL.GET = function( id ){
 };
 
 
+NGL.boolean = function( value ){
+
+    if( !value ){
+        return false;
+    }
+
+    if( typeof value === "string" ){
+        return /^1|true|t|yes|y$/i.test( value );
+    }
+
+    return true;
+
+};
+
+
 if( typeof importScripts !== 'function' ){
 
     ( function(){
 
         var debug = NGL.GET( "debug" );
-        if( debug !== undefined ) NGL.debug = debug;
+        if( debug !== undefined ) NGL.debug = NGL.boolean( debug );
 
         var useWorker = NGL.GET( "useWorker" );
-        if( useWorker !== undefined ) NGL.useWorker = useWorker;
+        if( useWorker !== undefined ) NGL.useWorker = NGL.boolean( useWorker );
 
     } )();
 
