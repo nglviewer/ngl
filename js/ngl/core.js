@@ -62,6 +62,7 @@ if( typeof importScripts === 'function' ){
             "../lib/svd.js",
             "../lib/signals.min.js",
             "../lib/TypedFastBitSet.js",
+            "../lib/msgpack-decode.js",
             "../lib/mmtf-decode.js",
 
             "../ngl/shims.js",
