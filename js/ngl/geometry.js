@@ -305,17 +305,45 @@ NGL.Interpolator = function( m, tension ){
         pcol[ k + 2 ] = pcol[ k - 1 ];
     }
 
+    //
+
+    function interpolateSize( item1, item2, sizeFn, size, offset ){
+        var s1 = sizeFn( item1 );
+        var s2 = sizeFn( item2 );
+        for( var j = 0; j < m; ++j ){
+            // linear interpolation
+            var t = j / m;
+            size[ offset + j ] = ( 1 - t ) * s1 + t * s2;
+        }
+    }
+
+    this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolateSize( i0, i1, sizeFn, size, k );
+            k += m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolateSize( i0, i1, sizeFn, size, k );
+            k += m;
+        }
+        //
+        size[ k ] = size[ k - 1 ];
+    }
+
 };
 
 
-
-
-
-// TODO make independent of store/proxy
-
-NGL.Spline = function( polymer, arrows ){
-
-    this.arrows = arrows || false;
+NGL.Spline = function( polymer ){
 
     this.polymer = polymer;
     this.size = polymer.residueCount;
@@ -385,12 +413,12 @@ NGL.Spline.prototype = {
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        function colFn( item, col, offset ){
-            colorMaker.atomColorToArray( item, col, offset );
+        function colFn( item, array, offset ){
+            colorMaker.atomColorToArray( item, array, offset );
         }
 
-        function pcolFn( item, pcol, offset ){
-            pickingColorMaker.atomColorToArray( item, pcol, offset );
+        function pcolFn( item, array, offset ){
+            pickingColorMaker.atomColorToArray( item, array, offset );
         }
 
         interpolator.getColor( iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic );
@@ -432,117 +460,23 @@ NGL.Spline.prototype = {
     getSubdividedSize: function( m, type, scale ){
 
         var polymer = this.polymer;
-        var structure = polymer.structure;
-        var residueStore = structure.residueStore;
-        var residueIndexStart = polymer.residueIndexStart;
-        var traceAtomIndex = residueStore.traceAtomIndex;
 
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nSize = n1 * m + 1;
         if( polymer.isCyclic ) nSize += m;
-        var arrows = this.arrows;
 
         var size = new Float32Array( nSize );
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        var k = 0;
-        var rp = structure.getResidueProxy();
-        rp.index = residueIndexStart;
-        var ap1 = structure.getAtomProxy();
-        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
-
-        for( var i = 0; i < n1; ++i ){
-
-            rp.index = residueIndexStart + i + 1;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var s1 = radiusFactory.atomRadius( ap1 );
-            var s2 = radiusFactory.atomRadius( ap2 );
-
-            if( arrows && (
-                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
-                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
-                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
-                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
-                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
-                )
-            ){
-
-                s1 *= 1.7;
-                var m2 = Math.ceil( m / 2 );
-
-                for( var j = 0; j < m2; ++j ){
-                    // linear interpolation
-                    var t = j / m2;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-                for( j = m2; j < m; ++j ){
-                    size[ k + j ] = s2;
-                }
-
-            }else{
-
-                for( var j = 0; j < m; ++j ){
-                    // linear interpolation
-                    var t = j / m;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-            }
-
-            k += m;
-
+        function sizeFn( item ){
+            return radiusFactory.atomRadius( item );
         }
 
-        if( polymer.isCyclic ){
+        var interpolator = new NGL.Interpolator( m );
+        var iterator = this.getAtomIterator( "trace" );
 
-            rp.index = residueIndexStart;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var s1 = radiusFactory.atomRadius( ap1 );
-            var s2 = radiusFactory.atomRadius( ap2 );
-
-            if( arrows && (
-                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
-                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
-                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
-                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
-                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
-                )
-            ){
-
-                s1 *= 1.7;
-                var m2 = Math.ceil( m / 2 );
-
-                for( var j = 0; j < m2; ++j ){
-                    // linear interpolation
-                    var t = j / m2;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-                for( j = m2; j < m; ++j ){
-                    size[ k + j ] = s2;
-                }
-
-            }else{
-
-                for( var j = 0; j < m; ++j ){
-                    // linear interpolation
-                    var t = j / m;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-            }
-
-            k += m;
-
-        }
-
-        size[ k ] = size[ k - 1 ];
+        interpolator.getSize( iterator, sizeFn, size, 0, polymer.isCyclic );
 
         return {
             "size": size

@@ -1699,9 +1699,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         capped: {
             type: "boolean", rebuild: true
-        },
-        arrows: {
-            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1712,6 +1709,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         p.colorScheme = p.colorScheme || "atomindex";
         p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
+        p.scale = p.scale || 0.7;
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -1727,11 +1725,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             this.radialSegments = p.radialSegments || 10;
         }
 
-        this.scale = p.scale || 0.7;
         this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped || true;
-        this.arrows = p.arrows || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1747,7 +1743,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer, this.arrows );
+            var spline = new NGL.Spline( polymer );
 
             var subPos = spline.getSubdividedPosition(
                 this.subdiv, this.tension
@@ -1809,7 +1805,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ], this.arrows );
+            var spline = new NGL.Spline( data.polymerList[ i ] );
 
             data.bufferList[ i ].rx = this.aspectRatio;
 
