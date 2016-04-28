@@ -1228,8 +1228,6 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 } )
             );
 
-            this.__center = new Float32Array( sview.bondCount * 3 );
-
             var cylinderBuffer = new NGL.CylinderBuffer(
                 bondData.position1,
                 bondData.position2,
@@ -1286,13 +1284,11 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
             if( !what || what[ "position" ] ){
                 sphereData[ "position" ] = atomData.position;
-                var from = bondData.position1;
-                var to = bondData.position2;
                 cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                    from, to, this.__center
+                    bondData.position1, bondData.position2
                 );
-                cylinderData[ "position1" ] = from;
-                cylinderData[ "position2" ] = to;
+                cylinderData[ "position1" ] = bondData.position1;
+                cylinderData[ "position2" ] = bondData.position2;
             }
 
             if( !what || what[ "color" ] ){
@@ -2703,13 +2699,12 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var cylinderData = {};
 
         if( !what || what[ "position" ] ){
-            var from = bondData.position1;
-            var to = bondData.position2;
+
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to, this.__center
+                bondData.position1, bondData.position2
             );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
+            cylinderData[ "position1" ] = bondData.position1;
+            cylinderData[ "position2" ] = bondData.position2;
         }
 
         if( !what || what[ "color" ] ){
