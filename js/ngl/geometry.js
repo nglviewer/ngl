@@ -599,78 +599,61 @@ NGL.Helixorient.prototype = {
 
     constructor: NGL.Helixorient,
 
-    getPolymer: function( smooth, padded ){
-
-        // FIXME not adapted for polymer and store
+    getCenterIterator: function( smooth ){
 
         var center = this.getPosition().center;
-
-        var i, j, a, r, fr, fa;
-        var residues = [];
         var n = center.length / 3;
-        var fiber = this.fiber;
 
-        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
-        var trace = fiber.computedAtoms[ "trace" ];
+        var i = 0;
+        var j = -1;
 
-        for( i = 0; i < n; ++i ){
+        var cache = [
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3()
+        ];
 
-            fa = trace[ i ];
-            fr = fa.residue;
-
-            r = new NGL.Residue();
-            a = new NGL.Atom( r );
-
-            r.atoms.push( a );
-            r.atomCount += 1;
-            r.resname = fr.resname;
-            r.index = fr.index;
-            r.chain = fr.chain;
-
-            j = 3 * i;
-
-            a.positionFromArray( center, j );
-
-            if( smooth ){
-
-                var l, k, t;
-                var w = Math.min( smooth, i, n - i - 1 );
-
-                for( k = 1; k <= w; ++k ){
-
-                    l = k * 3;
-                    t = ( w + 1 - k ) / ( w + 1 );
-
-                    a.x += t * center[ j - l + 0 ] + t * center[ j + l + 0 ];
-                    a.y += t * center[ j - l + 1 ] + t * center[ j + l + 1 ];
-                    a.z += t * center[ j - l + 2 ] + t * center[ j + l + 2 ];
-
-                }
-
-                a.x /= w + 1;
-                a.y /= w + 1;
-                a.z /= w + 1;
-
-            }
-
-            a.atomname = fa.atomname;
-            a.index = fa.index;
-            a.resname = fa.resname;
-            a.chainname = fa.chainname;
-            a.bfactor = fa.bfactor;
-            a.ss = fa.ss;
-
-            residues.push( r );
-
-            if( padded && ( i === 0 || i === n - 1 ) ){
-                residues.push( r );
-            }
-
+        function next(){
+            var vector = this.get( j );
+            j += 1;
+            return vector;
         }
 
-        var f = new NGL.Fiber( residues, fiber.structure );
+        function get( idx ){
+            idx = Math.min( n - 1, Math.max( 0, idx ) );
+            var v = cache[ i % 4 ];
+            var idx3 = 3 * idx;
+            v.fromArray( center, idx3 );
+            if( smooth ){
+                var l, k, t;
+                var w = Math.min( smooth, idx, n - idx - 1 );
+                for( k = 1; k <= w; ++k ){
+                    l = k * 3;
+                    t = ( w + 1 - k ) / ( w + 1 );
+                    v.x += t * center[ idx3 - l + 0 ] + t * center[ idx3 + l + 0 ];
+                    v.y += t * center[ idx3 - l + 1 ] + t * center[ idx3 + l + 1 ];
+                    v.z += t * center[ idx3 - l + 2 ] + t * center[ idx3 + l + 2 ];
+                }
+                v.x /= w + 1;
+                v.y /= w + 1;
+                v.z /= w + 1;
+            }
+            i += 1;
+            return v;
+        }
 
-        return f;
+        function reset(){
+            i = 0;
+            j = -1;
+        }
+
+        return {
+            size: n,
+            next: next,
+            get: get,
+            reset: reset
+        };
 
     },
 

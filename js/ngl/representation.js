@@ -2531,13 +2531,13 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
 NGL.RopeRepresentation = function( structure, viewer, params ){
 
-    NGL.StructureRepresentation.call( this, structure, viewer, params );
+    NGL.CartoonRepresentation.call( this, structure, viewer, params );
 
 };
 
 NGL.RopeRepresentation.prototype = NGL.createObject(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.CartoonRepresentation.prototype, {
 
     constructor: NGL.RopeRepresentation,
 
@@ -2545,220 +2545,33 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        radialSegments: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        capped: {
-            type: "boolean", rebuild: true
-        },
         smooth: {
             type: "integer", max: 15, min: 0, rebuild: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.CartoonRepresentation.prototype.parameters, { aspectRatio: null } ),
 
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "atomindex";
-        p.radius = p.radius || this.defaultSize;
+        p.aspectRatio = 1.0;
+        p.tension = p.tension || 0.5;
+        p.scale = p.scale || 5.0;
 
-        if( p.quality === "low" ){
-            this.subdiv = 3;
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.subdiv = 6;
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.subdiv = 12;
-            this.radialSegments = 20;
-        }else{
-            this.subdiv = p.subdiv || 6;
-            this.radialSegments = p.radialSegments || 10;
-        }
-
-        this.tension = p.tension || 0.5;
-        this.capped = p.capped || true;
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
-        NGL.StructureRepresentation.prototype.init.call( this, p );
-
-        this.__polymerList = [];
-        this.__bufferList = [];
+        NGL.CartoonRepresentation.prototype.init.call( this, p );
 
     },
 
-    prepare: function( callback ){
+    getSpline: function( polymer ){
 
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
+        var helixorient = new NGL.Helixorient( polymer );
 
-        if( this.structureView.atomCount === 0 ){
-            callback();
-            return;
-        }
-
-        var scope = this;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
-            scope.__polymerList.push( polymer );
-
-        }, this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var polymer = polymerList[ i ];
-
-                    var helixorient = new NGL.Helixorient( polymer );
-
-                    var spline = new NGL.Spline(
-                        helixorient.getFiber( scope.smooth, true )
-                    );
-                    var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
-                    );
-                    var subOri = spline.getSubdividedOrientation(
-                        scope.subdiv, scope.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
-                    );
-                    var subSize = spline.getSubdividedSize(
-                        scope.subdiv, scope.radius, scope.scale
-                    );
-
-                    var rx = 1.0;
-                    var ry = 1.0;
-
-                    scope.__bufferList.push(
-                        new NGL.TubeMeshBuffer(
-                            subPos.position,
-                            subOri.normal,
-                            subOri.binormal,
-                            subOri.tangent,
-                            subCol.color,
-                            subSize.size,
-                            subCol.pickingColor,
-                            scope.getBufferParams( {
-                                radialSegments: scope.radialSegments,
-                                rx: rx,
-                                ry: ry,
-                                capped: scope.capped,
-                                dullInterior: true
-                            } )
-                        )
-                    );
-
-                }
-
-            },
-
-            callback,
-
-            50
-
-        );
-
-    },
-
-    create: function(){
-
-        var n = this.__polymerList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
-        }
-
-    },
-
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        // NGL.time( "rope repr update" );
-
-        what = what || {};
-
-        var i = 0;
-        var n = this.polymerList.length;
-
-        for( i = 0; i < n; ++i ){
-
-            var polymer = this.polymerList[ i ]
-
-            if( polymer.residueCount < 4 ) return;
-
-            var bufferData = {};
-            var helixorient = new NGL.Helixorient( polymer );
-            var spline = new NGL.Spline( helixorient.getPolymer( this.smooth, true ) );
-
-            if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
-                var subOri = spline.getSubdividedOrientation(
-                    this.subdiv, this.tension
-                );
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
-                bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subOri.normal;
-                bufferData[ "binormal" ] = subOri.binormal;
-                bufferData[ "tangent" ] = subOri.tangent;
-                bufferData[ "size" ] = subSize.size;
-            }
-
-            if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
-                bufferData[ "color" ] = subCol.color;
-                bufferData[ "pickingColor" ] = subCol.pickingColor;
-            }
-
-            this.bufferList[ i ].setAttributes( bufferData );
-
-        }
-
-        // NGL.timeEnd( "rope repr update" );
-
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "tension" ] ){
-
-            what[ "radius" ] = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
+        return new NGL.Spline( polymer, this.getSplineParams( {
+            directional: false,
+            positionIterator: helixorient.getCenterIterator( this.smooth )
+        } ) );
 
     }
 
