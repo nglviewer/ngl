@@ -1727,9 +1727,25 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
         this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
-        this.capped = p.capped || true;
+        this.capped = p.capped === undefined ? true : p.capped;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: this.aspectRatio === 1.0 ? false : true
+        }, params );
+
+    },
+
+    getSpline: function( polymer ){
+
+        return new NGL.Spline( polymer, this.getSplineParams() );
 
     },
 
@@ -1743,30 +1759,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer );
+            var spline = this.getSpline( polymer );
 
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subOri = spline.getSubdividedOrientation(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
-            var subSize = spline.getSubdividedSize(
-                this.subdiv, this.radius, this.scale
-            );
-
-            var rp = polymer.structure.getResidueProxy();
-            rp.index = polymer.residueIndexStart;
-
-            var rx = 1.0 * this.aspectRatio;
-            var ry = 1.0;
-
-            if( polymer.isCg() ){
-                ry = rx;
-            }
+            var subPos = spline.getSubdividedPosition();
+            var subOri = spline.getSubdividedOrientation();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
             bufferList.push(
                 new NGL.TubeMeshBuffer(
@@ -1779,8 +1777,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
-                        rx: rx,
-                        ry: ry,
+                        rx: polymer.isCg() ? 1.0 : this.aspectRatio,
+                        ry: 1.0,
                         capped: this.capped,
                         dullInterior: true
                     } )
@@ -1805,17 +1803,15 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ] );
+            var spline = this.getSpline( data.polymerList[ i ] );
 
             data.bufferList[ i ].rx = this.aspectRatio;
 
             if( what[ "position" ] || what[ "radius" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
-                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
+                var subPos = spline.getSubdividedPosition();
+                var subOri = spline.getSubdividedOrientation();
+                var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.normal;
@@ -1827,9 +1823,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -1894,6 +1888,14 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         NGL.CartoonRepresentation.prototype.init.call( this, p );
 
+    },
+
+    getSplineParams: function( params ){
+
+        return NGL.CartoonRepresentation.prototype.getSplineParams.call( this, {
+            directional: false
+        } );
+
     }
 
 } );
@@ -1956,6 +1958,16 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     },
 
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: true
+        }, params );
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -1966,19 +1978,11 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer );
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subOri = spline.getSubdividedOrientation(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
-            var subSize = spline.getSubdividedSize(
-                this.subdiv, this.radius, this.scale
-            );
+            var spline = new NGL.Spline( polymer, this.getSplineParams() );
+            var subPos = spline.getSubdividedPosition();
+            var subOri = spline.getSubdividedOrientation();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
             bufferList.push(
                 new NGL.RibbonBuffer(
@@ -2011,31 +2015,23 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ] );
+            var spline = new NGL.Spline( data.polymerList[ i ], this.getSplineParams() );
 
             if( what[ "position" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
-                var subOri = spline.getSubdividedOrientation(
-                    this.subdiv, this.tension
-                );
+                var subPos = spline.getSubdividedPosition();
+                var subOri = spline.getSubdividedOrientation();
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.binormal;
                 bufferData[ "dir" ] = subOri.normal;
             }
 
             if( what[ "radius" ] || what[ "scale" ] ){
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
+                var subSize = spline.getSubdividedSize( this.radius, this.scale );
                 bufferData[ "size" ] = subSize.size;
             }
 
             if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
                 bufferData[ "color" ] = subCol.color;
             }
 
@@ -2118,6 +2114,16 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     },
 
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: false
+        }, params );
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -2128,13 +2134,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer );
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
+            var spline = new NGL.Spline( polymer, this.getSplineParams() );
+            var subPos = spline.getSubdividedPosition();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
 
             bufferList.push(
                 new NGL.TraceBuffer(
@@ -2163,19 +2165,15 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ] );
+            var spline = new NGL.Spline( data.polymerList[ i ], this.getSplineParams() );
 
             if( what[ "position" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
+                var subPos = spline.getSubdividedPosition();
                 bufferData[ "position" ] = subPos.position;
             }
 
             if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
                 bufferData[ "color" ] = subCol.color;
             }
 

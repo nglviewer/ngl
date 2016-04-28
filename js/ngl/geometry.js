@@ -4,8 +4,8 @@
  */
 
 
-///////////
-// Spline
+/////////////////
+// Interpolator
 
 NGL.Interpolator = function( m, tension ){
 
@@ -93,6 +93,7 @@ NGL.Interpolator = function( m, tension ){
     //
 
     this.getPosition = function( iterator, array, offset, isCyclic ){
+        iterator.reset();
         vectorSubdivide(
             interpolatePosition, iterator, array, offset, isCyclic
         );
@@ -106,6 +107,7 @@ NGL.Interpolator = function( m, tension ){
     }
 
     this.getTangent = function( iterator, array, offset, isCyclic ){
+        iterator.reset();
         vectorSubdivide(
             interpolateTangent, iterator, array, offset, isCyclic
         );
@@ -170,6 +172,9 @@ NGL.Interpolator = function( m, tension ){
     };
 
     this.getNormalDir = function( iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift ){
+        iterDir1.reset();
+        iterDir2.reset();
+        //
         var vSub1 = new THREE.Vector3();
         var vSub2 = new THREE.Vector3();
         var vSub3 = new THREE.Vector3();
@@ -278,6 +283,7 @@ NGL.Interpolator = function( m, tension ){
     }
 
     this.getColor = function( iterator, colFn, pcolFn, col, pcol, offset, isCyclic ){
+        iterator.reset();
         var i0 = iterator.next();  // first element not needed, replaced in the loop
         var i1 = iterator.next();
         //
@@ -318,6 +324,7 @@ NGL.Interpolator = function( m, tension ){
     }
 
     this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
+        iterator.reset();
         var i0 = iterator.next();  // first element not needed, replaced in the loop
         var i1 = iterator.next();
         //
@@ -343,12 +350,26 @@ NGL.Interpolator = function( m, tension ){
 };
 
 
-NGL.Spline = function( polymer ){
+///////////
+// Spline
+
+NGL.Spline = function( polymer, params ){
 
     this.polymer = polymer;
     this.size = polymer.residueCount;
 
-    this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
+    var p = params || {};
+    this.directional = p.directional || false;
+    this.positionIterator = p.positionIterator || false
+    this.subdiv = p.subdiv || 1;
+
+    if( isNaN( p.tension ) ){
+        this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
+    }else{
+        this.tension = p.tension || 0.5;
+    }
+
+    this.interpolator = new NGL.Interpolator( this.subdiv, this.tension );
 
 };
 
@@ -385,16 +406,23 @@ NGL.Spline.prototype = {
             return atomProxy;
         }
 
+        function reset(){
+            i = 0;
+            j = -1;
+        }
+
         return {
+            size: n,
             next: next,
             get: get,
-            size: n
+            reset: reset
         };
 
     },
 
-    getSubdividedColor: function( m, params ){
+    getSubdividedColor: function( params ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
         var n = polymer.residueCount;
         var n1 = n - 1;
@@ -403,8 +431,6 @@ NGL.Spline.prototype = {
 
         var col = new Float32Array( nCol );
         var pcol = new Float32Array( nCol );
-
-        var interpolator = new NGL.Interpolator( m );
         var iterator = this.getAtomIterator( "trace" );
 
         var p = params || {};
@@ -421,7 +447,9 @@ NGL.Spline.prototype = {
             pickingColorMaker.atomColorToArray( item, array, offset );
         }
 
-        interpolator.getColor( iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic );
+        this.interpolator.getColor(
+            iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic
+        );
 
         return {
             "color": col,
@@ -430,11 +458,9 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedPosition: function( m, tension ){
+    getSubdividedPosition: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
-        var pos = this.getPosition( m, tension );
+        var pos = this.getPosition();
 
         return {
             "position": pos
@@ -442,12 +468,10 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedOrientation: function( m, tension ){
+    getSubdividedOrientation: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
-        var tan = this.getTangent( m, tension );
-        var normals = this.getNormals( m, tension, tan );
+        var tan = this.getTangent();
+        var normals = this.getNormals( tan );
 
         return {
             "tangent": tan,
@@ -457,26 +481,27 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedSize: function( m, type, scale ){
+    getSubdividedSize: function( type, scale ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
-
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nSize = n1 * m + 1;
         if( polymer.isCyclic ) nSize += m;
 
         var size = new Float32Array( nSize );
+        var iterator = this.getAtomIterator( "trace" );
+
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
         function sizeFn( item ){
             return radiusFactory.atomRadius( item );
         }
 
-        var interpolator = new NGL.Interpolator( m );
-        var iterator = this.getAtomIterator( "trace" );
-
-        interpolator.getSize( iterator, sizeFn, size, 0, polymer.isCyclic );
+        this.interpolator.getSize(
+            iterator, sizeFn, size, 0, polymer.isCyclic
+        );
 
         return {
             "size": size
@@ -484,10 +509,9 @@ NGL.Spline.prototype = {
 
     },
 
-    getPosition: function( m, tension, atomname ){
+    getPosition: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
+        var m = this.subdiv;
         var polymer = this.polymer;
         var n = polymer.residueCount;
         var n1 = n - 1;
@@ -495,22 +519,19 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-        var interpolator = new NGL.Interpolator( m, tension );
-        var type = atomname || "trace";
-        var positionIterator = this.getAtomIterator( type );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
 
-        interpolator.getPosition(
-            positionIterator, pos, 0, polymer.isCyclic
+        this.interpolator.getPosition(
+            iterator, pos, 0, polymer.isCyclic
         );
 
         return pos;
 
     },
 
-    getTangent: function( m, tension, atomname ){
+    getTangent: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
+        var m = this.subdiv;
         var polymer = this.polymer;
         var n = this.size;
         var n1 = n - 1;
@@ -518,24 +539,21 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-        var interpolator = new NGL.Interpolator( m, tension );
-        var type = atomname || "trace";
-        var positionIterator = this.getAtomIterator( type );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
 
-        interpolator.getTangent(
-            positionIterator, tan, 0, polymer.isCyclic
+        this.interpolator.getTangent(
+            iterator, tan, 0, polymer.isCyclic
         );
 
         return tan;
 
     },
 
-    getNormals: function( m, tension, tan ){
+    getNormals: function( tan ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
-        var isCg = polymer.isCg();
         var isProtein = polymer.isProtein();
-
         var n = this.size;
         var n1 = n - 1;
         var nNorm = n1 * m * 3 + 3
@@ -544,17 +562,15 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( nNorm );
         var bin = new Float32Array( nNorm );
 
-        var interpolator = new NGL.Interpolator( m, tension );
-        var iterDir1 = this.getAtomIterator( "direction1" );
-        var iterDir2 = this.getAtomIterator( "direction2" );
-
-        if( isCg ){
-            interpolator.getNormal(
-                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
+        if( this.directional && !this.polymer.isCg() ){
+            var iterDir1 = this.getAtomIterator( "direction1" );
+            var iterDir2 = this.getAtomIterator( "direction2" );
+            this.interpolator.getNormalDir(
+                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
         }else{
-            interpolator.getNormalDir(
-                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
+            this.interpolator.getNormal(
+                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
         }
 
