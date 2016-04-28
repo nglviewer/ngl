@@ -2638,15 +2638,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     },
 
-    getBondData: function( sview, what, params ){
-
-        params = this.getBondParams( what, params );
-
-        return sview.getBondData( params );
-
-    },
-
-    createData: function( sview ){
+    getContactData: function( sview ){
 
         var contactsFnDict = {
             "polar": NGL.polarContacts,
@@ -2656,6 +2648,20 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         var contactData = contactsFnDict[ this.contactType ](
             sview, this.maxDistance, this.maxAngle
         );
+
+        return contactData;
+
+    },
+
+    getBondData: function( sview, what, params ){
+
+        return sview.getBondData( this.getBondParams( what, params ) );
+
+    },
+
+    createData: function( sview, data ){
+
+        var contactData = this.getContactData( sview );
 
         var params = {
             bondSet: contactData.bondSet,
@@ -2689,6 +2695,10 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
     },
 
     updateData: function( what, data ){
+
+        if( !what || what[ "position" ] ){
+            data.contactData = this.getContactData( data.sview );
+        }
 
         var params = {
             bondSet: data.contactData.bondSet,
