@@ -19,7 +19,7 @@
         function initStructure( o ){
             types.forEach( function( name ){
                 if( !name ) return;
-                if( [ "crossing", "rope", "distance" ].indexOf( name ) !== -1 ){
+                if( [ "distance" ].indexOf( name ) !== -1 ){
                     return;  // currently broken, ignore
                 }else if( name === "label" ){
                     reprDict[ name ] = o.addRepresentation(
@@ -86,7 +86,6 @@
             <li><a href="#base">base</a></li>
             <li><a href="#cartoon">cartoon</a></li>
             <li><a href="#contact">contact</a></li>
-            <li><a href="#crossing">crossing</a></li>
             <li><a href="#helixorient">helixorient</a></li>
             <li><a href="#hyperball">hyperball</a></li>
             <li><a href="#label">label</a></li>
@@ -188,15 +187,6 @@
         <li>*maxDistance*: &hellip;</li>
         <li>*maxAngle*: &hellip;</li>
     </ul>
-
-
-    <h2 id="crossing">crossing</h2>
-
-    <p>
-        *CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
-    </p>
-
-    &hellip;
 
 
     <h2 id="helixorient">helixorient</h2>
