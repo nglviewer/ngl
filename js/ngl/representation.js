@@ -2282,19 +2282,19 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                 new NGL.VectorBuffer(
                     position.center,
                     position.axis,
-                    {
+                    this.getBufferParams({
                         color: "skyblue",
                         scale: 1
-                    }
+                    })
                 ),
 
                 new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
-                    {
+                    this.getBufferParams({
                         color: "lightgreen",
                         scale: 1
-                    }
+                    })
                 )
 
             );
