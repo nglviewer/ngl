@@ -3042,14 +3042,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        font: {
-            type: "select", options: {
-                // "Arial": "Arial",
-                // "DejaVu": "DejaVu",
-                "LatoBlack": "LatoBlack"
-            },
-            rebuild: true
-        },
         labelSize: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
@@ -3069,7 +3061,10 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+        flatShaded: null,
+        assembly: null
+    } ),
 
     init: function( params ){
 
@@ -3087,56 +3082,57 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }
         this.disableImpostor = p.disableImpostor || false;
 
-        this.font = p.font || 'LatoBlack';
-        this.labelSize = p.labelSize || 1.0;
+        this.fontFamily = p.fontFamily || "sans-serif";
+        this.fontStyle = p.fontStyle || "normal";
+        this.fontWeight = p.fontWeight || "bold";
+        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
+        this.labelSize = p.labelSize || 2.0;
         this.labelColor = p.labelColor || 0xFFFFFF;
         this.labelVisible = p.labelVisible !== undefined ? p.labelVisible : true;
-        this.antialias = p.antialias !== undefined ? p.antialias : true;
         this.atomPair = p.atomPair || [];
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
-    create: function(){
+    getDistanceData: function( sview, atomPair ){
 
-        if( this.atomSet.atomCount === 0 ) return;
-
-        var n = this.atomPair.length;
-        if( n === 0 ) return;
-
+        var n = atomPair.length;
         var text = new Array( n );
         var position = new Float32Array( n * 3 );
         var sele1 = new NGL.Selection();
         var sele2 = new NGL.Selection();
 
-        this.bondSet = new NGL.BondSet();
-        this.bondSet.structure = this.structure;
-        var bSet = this.bondSet;
+        var bondStore = new NGL.BondStore();
+
+        var ap1 = sview.getAtomProxy();
+        var ap2 = sview.getAtomProxy();
 
         var j = 0;
 
-        this.atomPair.forEach( function( pair, i ){
+        atomPair.forEach( function( pair, i ){
 
             i -= j;
-
             var i3 = i * 3;
 
             sele1.setString( pair[ 0 ] );
             sele2.setString( pair[ 1 ] );
 
-            var a1 = this.atomSet.getAtoms( sele1, true );
-            var a2 = this.atomSet.getAtoms( sele2, true );
+            var atomIndices1 = sview.getAtomIndices( sele1 );
+            var atomIndices2 = sview.getAtomIndices( sele2 );
 
-            if( a1 && a2 ){
+            if( atomIndices1.length && atomIndices2.length ){
 
-                bSet.addBond( a1, a2, true );
+                ap1.index = atomIndices1[ 0 ];
+                ap2.index = atomIndices2[ 0 ];
 
-                text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+                bondStore.addBond( ap1, ap2, 1 );
 
-                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+                text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
+
+                position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
+                position[ i3 + 1 ] = ( ap1.y + ap2.y ) / 2;
+                position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
 
             }else{
 
@@ -3147,37 +3143,69 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }, this );
 
         if( j > 0 ){
-
             n -= j;
             position = position.subarray( 0, n * 3 );
-
         }
+
+        var bondSet = new TypedFastBitSet( bondStore.count );
+        bondSet.set_all( true );
+
+        return {
+            text: text,
+            position: position,
+            bondSet: bondSet,
+            bondStore: bondStore
+        };
+
+    },
+
+    getBondData: function( sview, what, params ){
+
+        return sview.getBondData( this.getBondParams( what, params ) );
+
+    },
+
+    create: function(){
+
+        if( this.structureView.atomCount === 0 ) return;
+
+        var n = this.atomPair.length;
+        if( n === 0 ) return;
+
+        var distanceData = this.getDistanceData( this.structureView, this.atomPair );
 
         var c = new THREE.Color( this.labelColor );
 
         this.textBuffer = new NGL.TextBuffer(
-            position,
+            distanceData.position,
             NGL.Utils.uniformArray( n, this.labelSize ),
             NGL.Utils.uniformArray3( n, c.r, c.g, c.b ),
-            text,
+            distanceData.text,
             this.getBufferParams( {
-                font: this.font,
-                antialias: this.antialias,
+                fontFamily: this.fontFamily,
+                fontStyle: this.fontStyle,
+                fontWeight: this.fontWeight,
+                sdf: this.sdf,
                 opacity: 1.0,
                 visible: this.labelVisible
             } )
         );
 
-        this.__center = new Float32Array( bSet.bondCount * 3 );
+        var bondParams = {
+            bondSet: distanceData.bondSet,
+            bondStore: distanceData.bondStore
+        };
+
+        var bondData = this.getBondData( this.structureView, undefined, bondParams );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            bSet.bondPosition( null, 0 ),
-            bSet.bondPosition( null, 1 ),
-            bSet.bondColor( null, 0, this.getColorParams() ),
-            bSet.bondColor( null, 1, this.getColorParams() ),
-            bSet.bondRadius( null, null, this.radius, this.scale ),
-            bSet.bondPickingColor( null, 0 ),
-            bSet.bondPickingColor( null, 1 ),
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            bondData.radius,
+            bondData.pickingColor1,
+            bondData.pickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -3187,96 +3215,60 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             } )
         );
 
-        this.bufferList.push( this.textBuffer, this.cylinderBuffer );
+        this.dataList.push( {
+            sview: this.structureView,
+            bondSet: distanceData.bondSet,
+            bondStore: distanceData.bondStore,
+            position: distanceData.position,
+            bufferList: [ this.textBuffer, this.cylinderBuffer ]
+        } );
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.atomSet.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+        if( !what || what[ "position" ] ){
+            var distanceData = this.getDistanceData( data.sview, this.atomPair );
+            data.bondSet = distanceData.bondSet;
+            data.bondStore = distanceData.bondStore;
+            data.position = distanceData.position;
+        }
 
-        var n = this.atomPair.length;
-        if( n === 0 ) return;
+        var bondParams = {
+            bondSet: data.bondSet,
+            bondStore: data.bondStore
+        };
 
-        what = what || {};
-
-        var bSet = this.bondSet;
-
-        var textData = {};
+        var bondData = this.getBondData( data.sview, what, bondParams );
         var cylinderData = {};
+        var textData = {};
+        var n = this.atomPair.length;
 
         if( what[ "position" ] ){
-
-            var position = new Float32Array( n * 3 );
-            var sele1 = new NGL.Selection();
-            var sele2 = new NGL.Selection();
-
-            this.atomPair.forEach( function( pair, i ){
-
-                var i3 = i * 3;
-
-                sele1.setString( pair[ 0 ] );
-                sele2.setString( pair[ 1 ] );
-
-                var a1 = this.atomSet.getAtoms( sele1, true );
-                var a2 = this.atomSet.getAtoms( sele2, true );
-
-                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
-
-            }, this );
-
-            textData[ "position" ] = position;
-
-            //
-
-            var from = bSet.bondPosition( null, 0 );
-            var to = bSet.bondPosition( null, 1 );
-
+            textData[ "position" ] = data.position;
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to
+                bondData.position1, bondData.position2
             );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
-
+            cylinderData[ "position1" ] = bondData.position1;
+            cylinderData[ "position2" ] = bondData.position2;
         }
 
         if( what[ "labelSize" ] ){
-
-            textData[ "size" ] = NGL.Utils.uniformArray(
-                n, this.labelSize
-            );
-
+            textData[ "size" ] = NGL.Utils.uniformArray( n, this.labelSize );
         }
 
         if( what[ "labelColor" ] ){
-
             var c = new THREE.Color( this.labelColor );
-            textData[ "color" ] = NGL.Utils.uniformArray3(
-                n, c.r, c.g, c.b
-            );
-
+            textData[ "color" ] = NGL.Utils.uniformArray3( n, c.r, c.g, c.b );
         }
 
         if( what[ "color" ] ){
-
-            cylinderData[ "color" ] = bSet.bondColor(
-                null, 0, this.getColorParams()
-            );
-            cylinderData[ "color2" ] = bSet.bondColor(
-                null, 1, this.getColorParams()
-            );
-
+            cylinderData[ "color" ] = bondData.color1;
+            cylinderData[ "color2" ] = bondData.color2;
         }
 
         if( what[ "radius" ] || what[ "scale" ] ){
-
-            cylinderData[ "radius" ] = bSet.bondRadius(
-                null, 0, this.radius, this.scale
-            );
-
+            cylinderData[ "radius" ] = bondData.radius;
         }
 
         this.textBuffer.setAttributes( textData );
@@ -3332,14 +3324,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }
 
         return this;
-
-    },
-
-    clear: function(){
-
-        if( this.bondSet ) this.bondSet.dispose();
-
-        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
