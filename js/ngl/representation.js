@@ -2641,7 +2641,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         }
         this.disableImpostor = p.disableImpostor || false;
 
-        this.contactType = p.contactType || "polar";
+        this.contactType = p.contactType || "polarBackbone";
         this.maxDistance = p.maxDistance || 3.5;
         this.maxAngle = p.maxAngle || 40;
 
@@ -2670,16 +2670,16 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     },
 
-    createData: function( sview, data ){
+    createData: function( sview ){
 
         var contactData = this.getContactData( sview );
 
-        var params = {
+        var bondParams = {
             bondSet: contactData.bondSet,
             bondStore: contactData.bondStore
         };
 
-        var bondData = this.getBondData( sview, undefined, params );
+        var bondData = this.getBondData( sview, undefined, bondParams );
 
         var cylinderBuffer = new NGL.CylinderBuffer(
             bondData.position1,
@@ -2700,7 +2700,8 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         return {
             bufferList: [ cylinderBuffer ],
-            contactData: contactData
+            bondSet: contactData.bondSet,
+            bondStore: contactData.bondStore
         };
 
     },
@@ -2708,15 +2709,17 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
     updateData: function( what, data ){
 
         if( !what || what[ "position" ] ){
-            data.contactData = this.getContactData( data.sview );
+            var contactData = this.getContactData( data.sview );
+            data.bondSet = contactData.bondSet;
+            data.bondStore = contactData.bondStore;
         }
 
-        var params = {
-            bondSet: data.contactData.bondSet,
-            bondStore: data.contactData.bondStore
+        var bondParams = {
+            bondSet: data.bondSet,
+            bondStore: data.bondStore
         };
 
-        var bondData = this.getBondData( data.sview, what, params );
+        var bondData = this.getBondData( data.sview, what, bondParams );
         var cylinderData = {};
 
         if( !what || what[ "position" ] ){
