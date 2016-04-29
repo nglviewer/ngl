@@ -3402,30 +3402,65 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
+        var numBonds, numAtoms, numGroups, numChains, numModels;
+        var chainsPerModel;
+
+        if( this.firstModelOnly ){
+
+            numModels = 1;
+            numChains = sd.chainsPerModel[ 0 ];
+
+            numGroups = 0;
+            for( var i = 0, il = numChains; i < il; ++i ){
+                numGroups += sd.groupsPerChain[ i ];
+            }
+
+            numAtoms = 0;
+            for( var i = 0, il = numGroups; i < il; ++i ){
+                var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
+                numAtoms += groupData.atomNameList.length;
+            }
+
+            numBonds = sd.numBonds;
+
+            chainsPerModel = [ numChains ];
+
+        }else{
+
+            numBonds = sd.numBonds;
+            numAtoms = sd.numAtoms;
+            numGroups = sd.numGroups;
+            numChains = sd.numChains;
+            numModels = sd.numModels;
+
+            chainsPerModel = sd.chainsPerModel;
+
+        }
+
+        numBonds += numGroups;  // add numGroups to have space for polymer bonds
+
         // bondStore
-        var bAtomIndex1 = new Uint32Array( sd.numBonds + sd.numGroups );  // add numGroups
-        var bAtomIndex2 = new Uint32Array( sd.numBonds + sd.numGroups );  // to have space
-        var bBondOrder = new Uint8Array( sd.numBonds + sd.numGroups );    // for polymer bonds
+        var bAtomIndex1 = new Uint32Array( numBonds );
+        var bAtomIndex2 = new Uint32Array( numBonds );
+        var bBondOrder = new Uint8Array( numBonds );
 
-        var aGroupIndex = new Uint32Array( sd.numAtoms );
+        var aGroupIndex = new Uint32Array( numAtoms );
 
-        var gChainIndex = new Uint32Array( sd.numGroups );
-        var gAtomOffset = new Uint32Array( sd.numGroups );
-        var gAtomCount = new Uint16Array( sd.numGroups );
+        var gChainIndex = new Uint32Array( numGroups );
+        var gAtomOffset = new Uint32Array( numGroups );
+        var gAtomCount = new Uint16Array( numGroups );
 
-        var cModelIndex = new Uint16Array( sd.numChains );
-        var cGroupOffset = new Uint32Array( sd.numChains );
-        var cGroupCount = new Uint32Array( sd.numChains );
+        var cModelIndex = new Uint16Array( numChains );
+        var cGroupOffset = new Uint32Array( numChains );
+        var cGroupCount = new Uint32Array( numChains );
 
-        var mChainOffset = new Uint32Array( sd.numModels );
-        var mChainCount = new Uint32Array( sd.numModels );
+        var mChainOffset = new Uint32Array( numModels );
+        var mChainCount = new Uint32Array( numModels );
 
         // set-up model-chain relations
-        var chainsPerModel = sd.chainsPerModel;
-        var modelChainCount;
         var chainOffset = 0;
-        for( var i = 0, il = sd.numModels; i < il; ++i ){
-            modelChainCount = chainsPerModel[ i ];
+        for( var i = 0, il = numModels; i < il; ++i ){
+            var modelChainCount = chainsPerModel[ i ];
             mChainOffset[ i ] = chainOffset;
             mChainCount[ i ] = modelChainCount;
             for( var j = 0; j < modelChainCount; ++j ){
@@ -3436,10 +3471,9 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         // set-up chain-residue relations
         var groupsPerChain = sd.groupsPerChain;
-        var chainGroupCount;
         var groupOffset = 0;
-        for( var i = 0, il = sd.numChains; i < il; ++i ){
-            chainGroupCount = groupsPerChain[ i ];
+        for( var i = 0, il = numChains; i < il; ++i ){
+            var chainGroupCount = groupsPerChain[ i ];
             cGroupOffset[ i ] = groupOffset;
             cGroupCount[ i ] = chainGroupCount;
             for( var j = 0; j < chainGroupCount; ++j ){
@@ -3454,7 +3488,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var atomOffset = 0;
         var bondOffset = 0;
 
-        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+        for( var i = 0, il = numGroups; i < il; ++i ){
 
             var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
             var groupAtomCount = groupData.atomNameList.length;
@@ -3491,9 +3525,13 @@ NGL.MmtfParser.prototype = NGL.createObject(
             }
 
             for( var i = 0, il = bondAtomList.length; i < il; i += 2 ){
-                bAtomIndex1[ bondOffset ] = bondAtomList[ i ];
-                bAtomIndex2[ bondOffset ] = bondAtomList[ i + 1 ];
-                bondOffset += 1;
+                var atomIndex1 = bondAtomList[ i ];
+                var atomIndex2 = bondAtomList[ i + 1 ];
+                if( atomIndex1 < numAtoms && atomIndex2 < numAtoms ){
+                    bAtomIndex1[ bondOffset ] = atomIndex1;
+                    bAtomIndex2[ bondOffset ] = atomIndex2;
+                    bondOffset += 1;
+                }
             }
 
         }
@@ -3501,42 +3539,42 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         s.bondStore.length = bBondOrder.length;
-        s.bondStore.count = sd.numBonds;
+        s.bondStore.count = bondOffset;
         s.bondStore.atomIndex1 = bAtomIndex1;
         s.bondStore.atomIndex2 = bAtomIndex2;
         s.bondStore.bondOrder = bBondOrder;
 
-        s.atomStore.length = sd.numAtoms;
-        s.atomStore.count = sd.numAtoms;
+        s.atomStore.length = numAtoms;
+        s.atomStore.count = numAtoms;
         s.atomStore.residueIndex = aGroupIndex;
-        s.atomStore.atomTypeId = new Uint16Array( sd.numAtoms );
-        s.atomStore.x = sd.xCoordList;
-        s.atomStore.y = sd.yCoordList;
-        s.atomStore.z = sd.zCoordList;
-        s.atomStore.serial = sd.atomIdList;
-        s.atomStore.bfactor = sd.bFactorList;
-        s.atomStore.altloc = sd.altLocList;
-        s.atomStore.occupancy = sd.occupancyList;
+        s.atomStore.atomTypeId = new Uint16Array( numAtoms );
+        s.atomStore.x = sd.xCoordList.subarray( 0, numAtoms );
+        s.atomStore.y = sd.yCoordList.subarray( 0, numAtoms );
+        s.atomStore.z = sd.zCoordList.subarray( 0, numAtoms );
+        s.atomStore.serial = sd.atomIdList.subarray( 0, numAtoms );
+        s.atomStore.bfactor = sd.bFactorList.subarray( 0, numAtoms );
+        s.atomStore.altloc = sd.altLocList.subarray( 0, numAtoms );
+        s.atomStore.occupancy = sd.occupancyList.subarray( 0, numAtoms );
 
-        s.residueStore.length = sd.numGroups;
-        s.residueStore.count = sd.numGroups;
+        s.residueStore.length = numGroups;
+        s.residueStore.count = numGroups;
         s.residueStore.chainIndex = gChainIndex;
         s.residueStore.residueTypeId = sd.groupTypeList;
         s.residueStore.atomOffset = gAtomOffset;
         s.residueStore.atomCount = gAtomCount;
-        s.residueStore.resno = sd.groupIdList;
-        s.residueStore.sstruc = sd.secStructList;
-        s.residueStore.inscode = sd.insCodeList;
+        s.residueStore.resno = sd.groupIdList.subarray( 0, numGroups );
+        s.residueStore.sstruc = sd.secStructList.subarray( 0, numGroups );
+        s.residueStore.inscode = sd.insCodeList.subarray( 0, numGroups );
 
-        s.chainStore.length = sd.numChains;
-        s.chainStore.count = sd.numChains;
+        s.chainStore.length = numChains;
+        s.chainStore.count = numChains;
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
-        s.chainStore.chainname = sd.chainNameList;
+        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains );
 
-        s.modelStore.length = sd.numModels;
-        s.modelStore.count = sd.numModels;
+        s.modelStore.length = numModels;
+        s.modelStore.count = numModels;
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
@@ -3571,7 +3609,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
             groupTypeDict[ i ] = s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
-        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+        for( var i = 0, il = numGroups; i < il; ++i ){
             s.residueStore.residueTypeId[ i ] = groupTypeDict[ s.residueStore.residueTypeId[ i ] ];
         }
 
