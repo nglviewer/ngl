@@ -271,7 +271,7 @@ void main(){
         }
 
         vec4 diffuseColor = vec4( diffuse, opacity );
-        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.01 ), vec3( 0.01 ), vec3( 0.01 ), vec3( 0.0 ) );
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         vec3 totalEmissiveLight = emissive;
 
         #include color_fragment
