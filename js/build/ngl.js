@@ -465,7 +465,6 @@ var NGL = {
 
     REVISION: '0.7dev',
     EPS: 0.0000001,
-    disableImpostor: false,
     useWorker: true,
     indexUint16: false,
     debug: false,
@@ -516,6 +515,7 @@ if( typeof importScripts === 'function' ){
             "../lib/svd.js",
             "../lib/signals.min.js",
             "../lib/TypedFastBitSet.js",
+            "../lib/msgpack-decode.js",
             "../lib/mmtf-decode.js",
 
             "../ngl/shims.js",
@@ -563,18 +563,30 @@ NGL.GET = function( id ){
 };
 
 
+NGL.boolean = function( value ){
+
+    if( !value ){
+        return false;
+    }
+
+    if( typeof value === "string" ){
+        return /^1|true|t|yes|y$/i.test( value );
+    }
+
+    return true;
+
+};
+
+
 if( typeof importScripts !== 'function' ){
 
     ( function(){
 
         var debug = NGL.GET( "debug" );
-        if( debug !== undefined ) NGL.debug = debug;
+        if( debug !== undefined ) NGL.debug = NGL.boolean( debug );
 
         var useWorker = NGL.GET( "useWorker" );
-        if( useWorker !== undefined ) NGL.useWorker = useWorker;
-
-        var disableImpostor = NGL.GET( "disableImpostor" );
-        if( disableImpostor !== undefined ) NGL.disableImpostor = disableImpostor;
+        if( useWorker !== undefined ) NGL.useWorker = NGL.boolean( useWorker );
 
     } )();
 
@@ -10512,8 +10524,8 @@ NGL.Alignment.prototype = {
  */
 
 
-///////////
-// Spline
+/////////////////
+// Interpolator
 
 NGL.Interpolator = function( m, tension ){
 
@@ -10548,14 +10560,14 @@ NGL.Interpolator = function( m, tension ){
     function interpolatePosition( v0, v1, v2, v3, pos, offset ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
-            var d = dt * j
+            var d = dt * j;
             interpolateToArr( v0, v1, v2, v3, d, pos, l );
         }
     }
 
     function interpolateTangent( v0, v1, v2, v3, tan, offset ){
         for( var j = 0; j < m; ++j ){
-            var d = dt * j
+            var d = dt * j;
             var d1 = d - delta;
             var d2 = d + delta;
             var l = offset + j * 3;
@@ -10601,6 +10613,7 @@ NGL.Interpolator = function( m, tension ){
     //
 
     this.getPosition = function( iterator, array, offset, isCyclic ){
+        iterator.reset();
         vectorSubdivide(
             interpolatePosition, iterator, array, offset, isCyclic
         );
@@ -10614,6 +10627,7 @@ NGL.Interpolator = function( m, tension ){
     }
 
     this.getTangent = function( iterator, array, offset, isCyclic ){
+        iterator.reset();
         vectorSubdivide(
             interpolateTangent, iterator, array, offset, isCyclic
         );
@@ -10636,7 +10650,7 @@ NGL.Interpolator = function( m, tension ){
         for( var j = 0; j < m; ++j ){
             var l = offset + j * 3;
             if( shift ) l += m2 * 3;
-            var d = dt * j
+            var d = dt * j;
             interpolateToVec( u0, u1, u2, u3, d, vec1 );
             interpolateToVec( v0, v1, v2, v3, d, vec2 );
             vDir.subVectors( vec2, vec1 ).normalize();
@@ -10678,6 +10692,9 @@ NGL.Interpolator = function( m, tension ){
     };
 
     this.getNormalDir = function( iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift ){
+        iterDir1.reset();
+        iterDir2.reset();
+        //
         var vSub1 = new THREE.Vector3();
         var vSub2 = new THREE.Vector3();
         var vSub3 = new THREE.Vector3();
@@ -10770,22 +10787,109 @@ NGL.Interpolator = function( m, tension ){
         }
     };
 
+    //
+
+    function interpolateColor( item1, item2, colFn, pcolFn, col, pcol, offset ){
+        for( var j = 0; j < m2; ++j ){
+            var l = offset + j * 3;
+            colFn( item1, col, l );  // itemColorToArray
+            pcolFn( item1, pcol, l );  // itemPickingColorToArray
+        }
+        for( var j = m2; j < m; ++j ){
+            var l = offset + j * 3;
+            colFn( item2, col, l );  // itemColorToArray
+            pcolFn( item2, pcol, l );  // itemPickingColorToArray
+        }
+    }
+
+    this.getColor = function( iterator, colFn, pcolFn, col, pcol, offset, isCyclic ){
+        iterator.reset();
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            k += 3 * m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            k += 3 * m;
+        }
+        //
+        col[ k     ] = col[ k - 3 ];
+        col[ k + 1 ] = col[ k - 2 ];
+        col[ k + 2 ] = col[ k - 1 ];
+        pcol[ k     ] = pcol[ k - 3 ];
+        pcol[ k + 1 ] = pcol[ k - 2 ];
+        pcol[ k + 2 ] = pcol[ k - 1 ];
+    }
+
+    //
+
+    function interpolateSize( item1, item2, sizeFn, size, offset ){
+        var s1 = sizeFn( item1 );
+        var s2 = sizeFn( item2 );
+        for( var j = 0; j < m; ++j ){
+            // linear interpolation
+            var t = j / m;
+            size[ offset + j ] = ( 1 - t ) * s1 + t * s2;
+        }
+    }
+
+    this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
+        iterator.reset();
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolateSize( i0, i1, sizeFn, size, k );
+            k += m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolateSize( i0, i1, sizeFn, size, k );
+            k += m;
+        }
+        //
+        size[ k ] = size[ k - 1 ];
+    }
+
 };
 
 
+///////////
+// Spline
 
-
-
-// TODO make independent of store/proxy
-
-NGL.Spline = function( polymer, arrows ){
-
-    this.arrows = arrows || false;
+NGL.Spline = function( polymer, params ){
 
     this.polymer = polymer;
     this.size = polymer.residueCount;
 
-    this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
+    var p = params || {};
+    this.directional = p.directional || false;
+    this.positionIterator = p.positionIterator || false
+    this.subdiv = p.subdiv || 1;
+
+    if( isNaN( p.tension ) ){
+        this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
+    }else{
+        this.tension = p.tension || 0.5;
+    }
+
+    this.interpolator = new NGL.Interpolator( this.subdiv, this.tension );
 
 };
 
@@ -10822,22 +10926,24 @@ NGL.Spline.prototype = {
             return atomProxy;
         }
 
+        function reset(){
+            i = 0;
+            j = -1;
+        }
+
         return {
+            size: n,
             next: next,
             get: get,
-            size: n
+            reset: reset
         };
 
     },
 
-    getSubdividedColor: function( m, params ){
+    getSubdividedColor: function( params ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
-        var structure = polymer.structure;
-        var residueStore = structure.residueStore;
-        var residueIndexStart = polymer.residueIndexStart;
-        var traceAtomIndex = residueStore.traceAtomIndex;
-
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nCol = n1 * m * 3 + 3;
@@ -10845,75 +10951,25 @@ NGL.Spline.prototype = {
 
         var col = new Float32Array( nCol );
         var pcol = new Float32Array( nCol );
+        var iterator = this.getAtomIterator( "trace" );
 
         var p = params || {};
-        p.structure = structure;
+        p.structure = polymer.structure;
 
         var colorMaker = NGL.ColorMakerRegistry.getScheme( p );
         var pickingColorMaker = NGL.ColorMakerRegistry.getPickingScheme( p );
 
-        var k = 0;
-
-        var rp = structure.getResidueProxy();
-        rp.index = residueIndexStart;
-        var ap1 = structure.getAtomProxy();
-        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
-
-        for( var i = 0; i < n1; ++i ){
-
-            rp.index = residueIndexStart + i + 1;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var mh = Math.ceil( m / 2 );
-
-            for( var j = 0; j < mh; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap1, col, l );
-                pickingColorMaker.atomColorToArray( ap1, pcol, l );
-            }
-
-            for( var j = mh; j < m; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap2, col, l );
-                pickingColorMaker.atomColorToArray( ap2, pcol, l );
-            }
-
-            k += 3 * m;
-
+        function colFn( item, array, offset ){
+            colorMaker.atomColorToArray( item, array, offset );
         }
 
-        if( polymer.isCyclic ){
-
-            rp.index = residueIndexStart;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var mh = Math.ceil( m / 2 );
-
-            for( var j = 0; j < mh; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap1, col, l );
-                pickingColorMaker.atomColorToArray( ap1, pcol, l );
-            }
-
-            for( var j = mh; j < m; ++j ){
-                var l = k + j * 3;
-                colorMaker.atomColorToArray( ap2, col, l );
-                pickingColorMaker.atomColorToArray( ap2, pcol, l );
-            }
-
-            k += 3 * m;
-
+        function pcolFn( item, array, offset ){
+            pickingColorMaker.atomColorToArray( item, array, offset );
         }
 
-        col[ nCol - 3 ] = col[ nCol - 6 ];
-        col[ nCol - 2 ] = col[ nCol - 5 ];
-        col[ nCol - 1 ] = col[ nCol - 4 ];
-
-        pcol[ nCol - 3 ] = pcol[ nCol - 6 ];
-        pcol[ nCol - 2 ] = pcol[ nCol - 5 ];
-        pcol[ nCol - 1 ] = pcol[ nCol - 4 ];
+        this.interpolator.getColor(
+            iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic
+        );
 
         return {
             "color": col,
@@ -10922,11 +10978,9 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedPosition: function( m, tension ){
+    getSubdividedPosition: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
-        var pos = this.getPosition( m, tension );
+        var pos = this.getPosition();
 
         return {
             "position": pos
@@ -10934,12 +10988,10 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedOrientation: function( m, tension ){
+    getSubdividedOrientation: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
-        var tan = this.getTangent( m, tension );
-        var normals = this.getNormals( m, tension, tan );
+        var tan = this.getTangent();
+        var normals = this.getNormals( tan );
 
         return {
             "tangent": tan,
@@ -10949,120 +11001,27 @@ NGL.Spline.prototype = {
 
     },
 
-    getSubdividedSize: function( m, type, scale ){
+    getSubdividedSize: function( type, scale ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
-        var structure = polymer.structure;
-        var residueStore = structure.residueStore;
-        var residueIndexStart = polymer.residueIndexStart;
-        var traceAtomIndex = residueStore.traceAtomIndex;
-
         var n = polymer.residueCount;
         var n1 = n - 1;
         var nSize = n1 * m + 1;
         if( polymer.isCyclic ) nSize += m;
-        var arrows = this.arrows;
 
         var size = new Float32Array( nSize );
+        var iterator = this.getAtomIterator( "trace" );
+
         var radiusFactory = new NGL.RadiusFactory( type, scale );
 
-        var k = 0;
-        var rp = structure.getResidueProxy();
-        rp.index = residueIndexStart;
-        var ap1 = structure.getAtomProxy();
-        var ap2 = structure.getAtomProxy( rp.traceAtomIndex );
-
-        for( var i = 0; i < n1; ++i ){
-
-            rp.index = residueIndexStart + i + 1;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var s1 = radiusFactory.atomRadius( ap1 );
-            var s2 = radiusFactory.atomRadius( ap2 );
-
-            if( arrows && (
-                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
-                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
-                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
-                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
-                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
-                )
-            ){
-
-                s1 *= 1.7;
-                var m2 = Math.ceil( m / 2 );
-
-                for( var j = 0; j < m2; ++j ){
-                    // linear interpolation
-                    var t = j / m2;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-                for( j = m2; j < m; ++j ){
-                    size[ k + j ] = s2;
-                }
-
-            }else{
-
-                for( var j = 0; j < m; ++j ){
-                    // linear interpolation
-                    var t = j / m;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-            }
-
-            k += m;
-
+        function sizeFn( item ){
+            return radiusFactory.atomRadius( item );
         }
 
-        if( polymer.isCyclic ){
-
-            rp.index = residueIndexStart;
-            ap1.index = ap2.index;
-            ap2.index = rp.traceAtomIndex;
-
-            var s1 = radiusFactory.atomRadius( ap1 );
-            var s2 = radiusFactory.atomRadius( ap2 );
-
-            if( arrows && (
-                    ( ap1.sstruc==="e" && ap2.sstruc!=="e" ) ||
-                    ( ap1.sstruc==="b" && ap2.sstruc!=="b" ) ||
-                    ( ap1.sstruc==="h" && ap2.sstruc!=="h" ) ||
-                    ( ap1.sstruc==="g" && ap2.sstruc!=="g" ) ||
-                    ( ap1.sstruc==="i" && ap2.sstruc!=="i" )
-                )
-            ){
-
-                s1 *= 1.7;
-                var m2 = Math.ceil( m / 2 );
-
-                for( var j = 0; j < m2; ++j ){
-                    // linear interpolation
-                    var t = j / m2;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-                for( j = m2; j < m; ++j ){
-                    size[ k + j ] = s2;
-                }
-
-            }else{
-
-                for( var j = 0; j < m; ++j ){
-                    // linear interpolation
-                    var t = j / m;
-                    size[ k + j ] = ( 1 - t ) * s1 + t * s2;
-                }
-
-            }
-
-            k += m;
-
-        }
-
-        size[ k ] = size[ k - 1 ];
+        this.interpolator.getSize(
+            iterator, sizeFn, size, 0, polymer.isCyclic
+        );
 
         return {
             "size": size
@@ -11070,10 +11029,9 @@ NGL.Spline.prototype = {
 
     },
 
-    getPosition: function( m, tension, atomname ){
+    getPosition: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
+        var m = this.subdiv;
         var polymer = this.polymer;
         var n = polymer.residueCount;
         var n1 = n - 1;
@@ -11081,22 +11039,19 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-        var interpolator = new NGL.Interpolator( m, tension );
-        var type = atomname || "trace";
-        var positionIterator = this.getAtomIterator( type );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
 
-        interpolator.getPosition(
-            positionIterator, pos, 0, polymer.isCyclic
+        this.interpolator.getPosition(
+            iterator, pos, 0, polymer.isCyclic
         );
 
         return pos;
 
     },
 
-    getTangent: function( m, tension, atomname ){
+    getTangent: function(){
 
-        if( isNaN( tension ) ) tension = this.tension;
-
+        var m = this.subdiv;
         var polymer = this.polymer;
         var n = this.size;
         var n1 = n - 1;
@@ -11104,24 +11059,21 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-        var interpolator = new NGL.Interpolator( m, tension );
-        var type = atomname || "trace";
-        var positionIterator = this.getAtomIterator( type );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
 
-        interpolator.getTangent(
-            positionIterator, tan, 0, polymer.isCyclic
+        this.interpolator.getTangent(
+            iterator, tan, 0, polymer.isCyclic
         );
 
         return tan;
 
     },
 
-    getNormals: function( m, tension, tan ){
+    getNormals: function( tan ){
 
+        var m = this.subdiv;
         var polymer = this.polymer;
-        var isCg = polymer.isCg();
         var isProtein = polymer.isProtein();
-
         var n = this.size;
         var n1 = n - 1;
         var nNorm = n1 * m * 3 + 3
@@ -11130,17 +11082,15 @@ NGL.Spline.prototype = {
         var norm = new Float32Array( nNorm );
         var bin = new Float32Array( nNorm );
 
-        var interpolator = new NGL.Interpolator( m, tension );
-        var iterDir1 = this.getAtomIterator( "direction1" );
-        var iterDir2 = this.getAtomIterator( "direction2" );
-
-        if( isCg ){
-            interpolator.getNormal(
-                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
+        if( this.directional && !this.polymer.isCg() ){
+            var iterDir1 = this.getAtomIterator( "direction1" );
+            var iterDir2 = this.getAtomIterator( "direction2" );
+            this.interpolator.getNormalDir(
+                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
         }else{
-            interpolator.getNormalDir(
-                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
+            this.interpolator.getNormal(
+                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
             );
         }
 
@@ -11169,78 +11119,61 @@ NGL.Helixorient.prototype = {
 
     constructor: NGL.Helixorient,
 
-    getPolymer: function( smooth, padded ){
-
-        // FIXME not adapted for polymer and store
+    getCenterIterator: function( smooth ){
 
         var center = this.getPosition().center;
-
-        var i, j, a, r, fr, fa;
-        var residues = [];
         var n = center.length / 3;
-        var fiber = this.fiber;
 
-        if( !fiber.computedAtoms[ "trace" ] ) fiber.computeAtom( "trace" );
-        var trace = fiber.computedAtoms[ "trace" ];
+        var i = 0;
+        var j = -1;
 
-        for( i = 0; i < n; ++i ){
+        var cache = [
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3()
+        ];
 
-            fa = trace[ i ];
-            fr = fa.residue;
-
-            r = new NGL.Residue();
-            a = new NGL.Atom( r );
-
-            r.atoms.push( a );
-            r.atomCount += 1;
-            r.resname = fr.resname;
-            r.index = fr.index;
-            r.chain = fr.chain;
-
-            j = 3 * i;
-
-            a.positionFromArray( center, j );
-
-            if( smooth ){
-
-                var l, k, t;
-                var w = Math.min( smooth, i, n - i - 1 );
-
-                for( k = 1; k <= w; ++k ){
-
-                    l = k * 3;
-                    t = ( w + 1 - k ) / ( w + 1 );
-
-                    a.x += t * center[ j - l + 0 ] + t * center[ j + l + 0 ];
-                    a.y += t * center[ j - l + 1 ] + t * center[ j + l + 1 ];
-                    a.z += t * center[ j - l + 2 ] + t * center[ j + l + 2 ];
-
-                }
-
-                a.x /= w + 1;
-                a.y /= w + 1;
-                a.z /= w + 1;
-
-            }
-
-            a.atomname = fa.atomname;
-            a.index = fa.index;
-            a.resname = fa.resname;
-            a.chainname = fa.chainname;
-            a.bfactor = fa.bfactor;
-            a.ss = fa.ss;
-
-            residues.push( r );
-
-            if( padded && ( i === 0 || i === n - 1 ) ){
-                residues.push( r );
-            }
-
+        function next(){
+            var vector = this.get( j );
+            j += 1;
+            return vector;
         }
 
-        var f = new NGL.Fiber( residues, fiber.structure );
+        function get( idx ){
+            idx = Math.min( n - 1, Math.max( 0, idx ) );
+            var v = cache[ i % 4 ];
+            var idx3 = 3 * idx;
+            v.fromArray( center, idx3 );
+            if( smooth ){
+                var l, k, t;
+                var w = Math.min( smooth, idx, n - idx - 1 );
+                for( k = 1; k <= w; ++k ){
+                    l = k * 3;
+                    t = ( w + 1 - k ) / ( w + 1 );
+                    v.x += t * center[ idx3 - l + 0 ] + t * center[ idx3 + l + 0 ];
+                    v.y += t * center[ idx3 - l + 1 ] + t * center[ idx3 + l + 1 ];
+                    v.z += t * center[ idx3 - l + 2 ] + t * center[ idx3 + l + 2 ];
+                }
+                v.x /= w + 1;
+                v.y /= w + 1;
+                v.z /= w + 1;
+            }
+            i += 1;
+            return v;
+        }
 
-        return f;
+        function reset(){
+            i = 0;
+            j = -1;
+        }
+
+        return {
+            size: n,
+            next: next,
+            get: get,
+            reset: reset
+        };
 
     },
 
@@ -11513,302 +11446,6 @@ NGL.Helixorient.prototype = {
 };
 
 
-//////////
-// Helix
-
-NGL.Helix = function(){
-
-    this.begin = new THREE.Vector3();
-    this.end = new THREE.Vector3();
-    this.axis = new THREE.Vector3();
-    this.center = new THREE.Vector3();
-
-    this.length = 0;
-
-    this.residues = [];
-    this.size = 0;
-
-};
-
-NGL.Helix.prototype = {
-
-    constructor: NGL.Helix,
-
-    fromHelixbundleAxis: function(){
-
-        var v = new THREE.Vector3();
-
-        return function( axis, i ){
-
-            this.begin.fromArray( axis.begin, i * 3 );
-            this.end.fromArray( axis.end, i * 3 );
-            this.axis.fromArray( axis.axis, i * 3 );
-            this.center.fromArray( axis.center, i * 3 );
-
-            this.length = v.subVectors( this.begin, this.end ).length();
-
-            this.residues = axis.residue[ i ];
-            this.size = this.residues.length;
-
-            return this;
-
-        }
-
-    }(),
-
-    angleTo: function(){
-
-        var v = new THREE.Vector3();
-
-        return function( helix ){
-
-            var s = v.crossVectors( this.axis, helix.axis ).length();
-            var c = this.axis.dot( helix.axis );
-            var angle = Math.atan2( s, c );
-
-            return c < 0 ? -angle : angle;
-
-        }
-
-    }(),
-
-    distanceTo: function(){
-
-        var x = new THREE.Vector3();
-        var y = new THREE.Vector3();
-        var c = new THREE.Vector3();
-
-        return function( helix ){
-
-            this.crossingPoints( helix, x, y );
-
-            c.subVectors( y, x );
-
-            return c.length();
-
-        }
-
-    }(),
-
-    crossingPoints: function(){
-
-        var w = new THREE.Vector3();
-        var v = new THREE.Vector3();
-        var ca = new THREE.Vector3();
-        var cb = new THREE.Vector3();
-
-        return function( helix, x, y ){
-
-            // U = A2-A1;
-            // V = B2-B1;
-            // W = cross(U,V);
-            // X = A1 + dot(cross(B1-A1,V),W)/dot(W,W)*U;
-            // Y = B1 + dot(cross(B1-A1,U),W)/dot(W,W)*V;
-            // d = norm(Y-X);
-
-            if( !x ) x = new THREE.Vector3();
-            if( !y ) y = new THREE.Vector3();
-
-            w.crossVectors( this.axis, helix.axis );
-            v.subVectors( helix.begin, this.begin );
-
-            var dotWW = w.dot( w );
-            var dotA = ca.crossVectors( v, helix.axis ).dot( w );
-            var dotB = cb.crossVectors( v, this.axis ).dot( w );
-
-            x.copy( this.axis ).multiplyScalar( dotA / dotWW ).add( this.begin );
-            y.copy( helix.axis ).multiplyScalar( dotB / dotWW ).add( helix.begin );
-
-            return [ x, y ];
-
-        }
-
-    }(),
-
-    crossing: function( helix ){
-
-        var data = {};
-
-        var angle = this.angleTo( helix ) / ( Math.PI / 180 );
-        var cp = this.crossingPoints( helix );
-
-        var lineContact = (
-            NGL.Utils.isPointOnSegment( cp[ 0 ], this.begin, this.end ) &&
-            NGL.Utils.isPointOnSegment( cp[ 1 ], helix.begin, helix.end )
-        );
-
-        var i1 = NGL.Utils.pointVectorIntersection(
-            this.begin, helix.begin, helix.axis
-        );
-        var i2 = NGL.Utils.pointVectorIntersection(
-            this.end, helix.begin, helix.axis
-        );
-        var i3 = NGL.Utils.pointVectorIntersection(
-            helix.begin, this.begin, this.axis
-        );
-        var i4 = NGL.Utils.pointVectorIntersection(
-            helix.end, this.begin, this.axis
-        );
-
-        var c1 = NGL.Utils.isPointOnSegment(
-            i1, helix.begin, helix.end
-        );
-        var c2 = NGL.Utils.isPointOnSegment(
-            i2, helix.begin, helix.end
-        );
-        var c3 = NGL.Utils.isPointOnSegment(
-            i3, this.begin, this.end
-        );
-        var c4 = NGL.Utils.isPointOnSegment(
-            i4, this.begin, this.end
-        );
-
-        var overlap = [ 0, 0, 0, 0 ];
-
-        if( c1 && c2 ){
-            overlap[ 0 ] = i1.distanceTo( i2 );
-        }
-        if( c3 && c4 ){
-            overlap[ 1 ] = i3.distanceTo( i4 );
-        }
-        if( c1 && !c2 ){
-            if( i2.distanceTo( helix.begin ) < i2.distanceTo( helix.end ) ){
-                overlap[ 2 ] = i1.distanceTo( helix.begin );
-            }else{
-                overlap[ 2 ] = i1.distanceTo( helix.end );
-            }
-        }
-        if( !c1 && c2 ){
-            if( i1.distanceTo( helix.begin ) < i1.distanceTo( helix.end ) ){
-                overlap[ 2 ] = i2.distanceTo( helix.begin );
-            }else{
-                overlap[ 2 ] = i2.distanceTo( helix.end );
-            }
-        }
-        if( c3 && !c4 ){
-            if( i4.distanceTo( this.begin ) < i4.distanceTo( this.end ) ){
-                overlap[ 3 ] = i3.distanceTo( this.begin );
-            }else{
-                overlap[ 3 ] = i3.distanceTo( this.end );
-            }
-        }
-        if( !c3 && c4 ){
-            if( i3.distanceTo( this.begin ) < i3.distanceTo( this.end ) ){
-                overlap[ 3 ] = i4.distanceTo( this.begin );
-            }else{
-                overlap[ 3 ] = i4.distanceTo( this.end );
-            }
-        }
-
-        var maxOverlap = Math.max.apply( null, overlap );
-
-        var onSegment = [ c1, c2, c3, c4 ];
-
-        if( !lineContact ){
-
-            var candidates = [];
-
-            if( angle > 120 || angle < 60 ){
-
-                candidates.push( {
-                    "distance": this.begin.distanceTo( i1 ),
-                    "contact": c1,
-                    "p1": this.begin,
-                    "p2": i1
-                } );
-
-                candidates.push( {
-                    "distance": this.end.distanceTo( i2 ),
-                    "contact": c2,
-                    "p1": this.end,
-                    "p2": i2
-                } );
-
-                candidates.push( {
-                    "distance": helix.begin.distanceTo( i3 ),
-                    "contact": c3,
-                    "p1": helix.begin,
-                    "p2": i3
-                } );
-
-                candidates.push( {
-                    "distance": helix.end.distanceTo( i4 ),
-                    "contact": c4,
-                    "p1": helix.end,
-                    "p2": i4
-                } );
-
-            }
-
-            //
-
-            if( maxOverlap > 0 && ( angle > 120 || angle < 60 ) ){
-
-                candidates.push( {
-                    "distance": this.begin.distanceTo( helix.begin ),
-                    "contact": true,
-                    "p1": this.begin,
-                    "p2": helix.begin
-                } );
-
-                candidates.push( {
-                    "distance": this.begin.distanceTo( helix.end ),
-                    "contact": true,
-                    "p1": this.begin,
-                    "p2": helix.end
-                } );
-
-                candidates.push( {
-                    "distance": this.end.distanceTo( helix.begin ),
-                    "contact": true,
-                    "p1": this.end,
-                    "p2": helix.begin
-                } );
-
-                candidates.push( {
-                    "distance": this.end.distanceTo( helix.end ),
-                    "contact": true,
-                    "p1": this.end,
-                    "p2": helix.end
-                } );
-
-            }
-
-            //
-
-            data.distance = Infinity;
-            candidates.forEach( function( c ){
-                if( c.contact && c.distance < data.distance ){
-                    data = c;
-                }
-            } );
-
-        }else{
-
-            data = {
-                "distance": this.distanceTo( helix ),
-                "contact": true,
-                "p1": cp[ 0 ],
-                "p2": cp[ 1 ]
-            };
-
-        }
-
-        return Object.assign( {
-            "distance": Infinity,
-            "contact": false,
-            "angle": angle,
-            "onSegment": onSegment,
-            "overlap": overlap,
-            "maxOverlap": maxOverlap,
-            "lineContact": lineContact
-        }, data );
-
-    }
-
-};
-
-
 ////////////////
 // Helixbundle
 
@@ -11954,77 +11591,6 @@ NGL.Helixbundle.prototype = {
             "residueOffset": residueOffset,
             "residueCount": residueCount
         };
-
-    }
-
-};
-
-
-/////////////////
-// HelixCrossing
-
-NGL.HelixCrossing = function( helices ){
-
-    this.helices = helices;
-
-};
-
-NGL.HelixCrossing.prototype = {
-
-    constructor: NGL.HelixCrossing,
-
-    getCrossing: function( minDistance ){
-
-        minDistance = minDistance || 12;
-
-        var helices = this.helices;
-
-        var helixLabel = [];
-        var helixCenter = [];
-        var crossingBeg = [];
-        var crossingEnd = [];
-        var info = [];
-
-        var k = 0;
-
-        for( var i = 0; i < helices.length; ++i ){
-
-            var h1 = helices[ i ];
-
-            helixLabel.push( "H" + ( i + 1 ) );
-            h1.center.toArray( helixCenter, i * 3 );
-
-            for( var j = i + 1; j < helices.length; ++j ){
-
-                var c = h1.crossing( helices[ j ] );
-
-                if( c.contact && c.distance < minDistance ){
-
-                    info.push( {
-                        "helix1": i + 1,
-                        "helix2": j + 1,
-                        "angle": c.angle,
-                        "distance": c.distance,
-                        "overlap": c.maxOverlap
-                    } );
-
-                    c.p1.toArray( crossingBeg, k * 3 );
-                    c.p2.toArray( crossingEnd, k * 3 );
-                    k += 1;
-
-                }
-
-            }
-
-        }
-
-        return {
-            "helixLabel": helixLabel,
-            "helixCenter": helixCenter,
-            "begin": crossingBeg,
-            "end": crossingEnd,
-            "info": info
-        }
 
     }
 
@@ -34914,6 +34480,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         },
         lineOnly: {
             type: "boolean", rebuild: true
+        },
+        cylinderOnly: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -34940,6 +34509,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         this.aspectRatio = p.aspectRatio || 2.0;
         this.lineOnly = p.lineOnly || false;
+        this.cylinderOnly = p.cylinderOnly || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -34987,22 +34557,27 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         }else{
 
-            var atomData = this.getAtomData( sview );
+            if( !this.cylinderOnly ){
+
+                var atomData = this.getAtomData( sview );
+
+                var sphereBuffer = new NGL.SphereBuffer(
+                    atomData.position,
+                    atomData.color,
+                    atomData.radius,
+                    atomData.pickingColor,
+                    this.getBufferParams( {
+                        sphereDetail: this.sphereDetail,
+                        disableImpostor: this.disableImpostor,
+                        dullInterior: true
+                    } )
+                );
+
+                bufferList.push( sphereBuffer );
+
+            }
+
             var bondData = this.getBondData( sview );
-
-            var sphereBuffer = new NGL.SphereBuffer(
-                atomData.position,
-                atomData.color,
-                atomData.radius,
-                atomData.pickingColor,
-                this.getBufferParams( {
-                    sphereDetail: this.sphereDetail,
-                    disableImpostor: this.disableImpostor,
-                    dullInterior: true
-                } )
-            );
-
-            this.__center = new Float32Array( sview.bondCount * 3 );
 
             var cylinderBuffer = new NGL.CylinderBuffer(
                 bondData.position1,
@@ -35022,7 +34597,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 this.disableImpostor
             );
 
-            bufferList.push( sphereBuffer, cylinderBuffer );
+            bufferList.push( cylinderBuffer );
 
         }
 
@@ -35060,13 +34635,11 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
             if( !what || what[ "position" ] ){
                 sphereData[ "position" ] = atomData.position;
-                var from = bondData.position1;
-                var to = bondData.position2;
                 cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                    from, to, this.__center
+                    bondData.position1, bondData.position2
                 );
-                cylinderData[ "position1" ] = from;
-                cylinderData[ "position2" ] = to;
+                cylinderData[ "position1" ] = bondData.position1;
+                cylinderData[ "position2" ] = bondData.position2;
             }
 
             if( !what || what[ "color" ] ){
@@ -35473,9 +35046,6 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         capped: {
             type: "boolean", rebuild: true
-        },
-        arrows: {
-            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -35486,6 +35056,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         p.colorScheme = p.colorScheme || "atomindex";
         p.colorScale = p.colorScale || "RdYlBu";
         p.radius = p.radius || "sstruc";
+        p.scale = p.scale || 0.7;
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -35501,13 +35072,27 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             this.radialSegments = p.radialSegments || 10;
         }
 
-        this.scale = p.scale || 0.7;
         this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
-        this.capped = p.capped || true;
-        this.arrows = p.arrows || false;
+        this.capped = p.capped === undefined ? true : p.capped;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: this.aspectRatio === 1.0 ? false : true
+        }, params );
+
+    },
+
+    getSpline: function( polymer ){
+
+        return new NGL.Spline( polymer, this.getSplineParams() );
 
     },
 
@@ -35521,30 +35106,12 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer, this.arrows );
+            var spline = this.getSpline( polymer );
 
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subOri = spline.getSubdividedOrientation(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
-            var subSize = spline.getSubdividedSize(
-                this.subdiv, this.radius, this.scale
-            );
-
-            var rp = polymer.structure.getResidueProxy();
-            rp.index = polymer.residueIndexStart;
-
-            var rx = 1.0 * this.aspectRatio;
-            var ry = 1.0;
-
-            if( polymer.isCg() ){
-                ry = rx;
-            }
+            var subPos = spline.getSubdividedPosition();
+            var subOri = spline.getSubdividedOrientation();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
             bufferList.push(
                 new NGL.TubeMeshBuffer(
@@ -35557,8 +35124,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
-                        rx: rx,
-                        ry: ry,
+                        rx: polymer.isCg() ? 1.0 : this.aspectRatio,
+                        ry: 1.0,
                         capped: this.capped,
                         dullInterior: true
                     } )
@@ -35583,17 +35150,15 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ], this.arrows );
+            var spline = this.getSpline( data.polymerList[ i ] );
 
             data.bufferList[ i ].rx = this.aspectRatio;
 
             if( what[ "position" ] || what[ "radius" ] ){
 
-                var subPos = spline.getSubdividedPosition( this.subdiv, this.tension );
-                var subOri = spline.getSubdividedOrientation( this.subdiv, this.tension );
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
+                var subPos = spline.getSubdividedPosition();
+                var subOri = spline.getSubdividedOrientation();
+                var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.normal;
@@ -35605,9 +35170,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
             if( what[ "color" ] ){
 
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
 
                 bufferData[ "color" ] = subCol.color;
                 bufferData[ "pickingColor" ] = subCol.pickingColor;
@@ -35672,6 +35235,14 @@ NGL.TubeRepresentation.prototype = NGL.createObject(
 
         NGL.CartoonRepresentation.prototype.init.call( this, p );
 
+    },
+
+    getSplineParams: function( params ){
+
+        return NGL.CartoonRepresentation.prototype.getSplineParams.call( this, {
+            directional: false
+        } );
+
     }
 
 } );
@@ -35734,6 +35305,16 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
 
     },
 
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: true
+        }, params );
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -35744,19 +35325,11 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer );
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subOri = spline.getSubdividedOrientation(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
-            var subSize = spline.getSubdividedSize(
-                this.subdiv, this.radius, this.scale
-            );
+            var spline = new NGL.Spline( polymer, this.getSplineParams() );
+            var subPos = spline.getSubdividedPosition();
+            var subOri = spline.getSubdividedOrientation();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
             bufferList.push(
                 new NGL.RibbonBuffer(
@@ -35789,31 +35362,23 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ] );
+            var spline = new NGL.Spline( data.polymerList[ i ], this.getSplineParams() );
 
             if( what[ "position" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
-                var subOri = spline.getSubdividedOrientation(
-                    this.subdiv, this.tension
-                );
+                var subPos = spline.getSubdividedPosition();
+                var subOri = spline.getSubdividedOrientation();
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.binormal;
                 bufferData[ "dir" ] = subOri.normal;
             }
 
             if( what[ "radius" ] || what[ "scale" ] ){
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
+                var subSize = spline.getSubdividedSize( this.radius, this.scale );
                 bufferData[ "size" ] = subSize.size;
             }
 
             if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
                 bufferData[ "color" ] = subCol.color;
             }
 
@@ -35896,6 +35461,16 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
 
     },
 
+    getSplineParams: function( params ){
+
+        return Object.assign( {
+            subdiv: this.subdiv,
+            tension: this.tension,
+            directional: false
+        }, params );
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -35906,13 +35481,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
 
-            var spline = new NGL.Spline( polymer );
-            var subPos = spline.getSubdividedPosition(
-                this.subdiv, this.tension
-            );
-            var subCol = spline.getSubdividedColor(
-                this.subdiv, this.getColorParams()
-            );
+            var spline = new NGL.Spline( polymer, this.getSplineParams() );
+            var subPos = spline.getSubdividedPosition();
+            var subCol = spline.getSubdividedColor( this.getColorParams() );
 
             bufferList.push(
                 new NGL.TraceBuffer(
@@ -35941,19 +35512,15 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new NGL.Spline( data.polymerList[ i ] );
+            var spline = new NGL.Spline( data.polymerList[ i ], this.getSplineParams() );
 
             if( what[ "position" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
+                var subPos = spline.getSubdividedPosition();
                 bufferData[ "position" ] = subPos.position;
             }
 
             if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
+                var subCol = spline.getSubdividedColor( this.getColorParams() );
                 bufferData[ "color" ] = subCol.color;
             }
 
@@ -36062,19 +35629,19 @@ NGL.HelixorientRepresentation.prototype = NGL.createObject(
                 new NGL.VectorBuffer(
                     position.center,
                     position.axis,
-                    {
+                    this.getBufferParams({
                         color: "skyblue",
                         scale: 1
-                    }
+                    })
                 ),
 
                 new NGL.VectorBuffer(
                     position.center,
                     position.resdir,
-                    {
+                    this.getBufferParams({
                         color: "lightgreen",
                         scale: 1
-                    }
+                    })
                 )
 
             );
@@ -36311,13 +35878,13 @@ NGL.RocketRepresentation.prototype = NGL.createObject(
 
 NGL.RopeRepresentation = function( structure, viewer, params ){
 
-    NGL.StructureRepresentation.call( this, structure, viewer, params );
+    NGL.CartoonRepresentation.call( this, structure, viewer, params );
 
 };
 
 NGL.RopeRepresentation.prototype = NGL.createObject(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.CartoonRepresentation.prototype, {
 
     constructor: NGL.RopeRepresentation,
 
@@ -36325,420 +35892,33 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        radialSegments: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        capped: {
-            type: "boolean", rebuild: true
-        },
         smooth: {
             type: "integer", max: 15, min: 0, rebuild: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.CartoonRepresentation.prototype.parameters, { aspectRatio: null } ),
 
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "atomindex";
-        p.radius = p.radius || this.defaultSize;
+        p.aspectRatio = 1.0;
+        p.tension = p.tension || 0.5;
+        p.scale = p.scale || 5.0;
 
-        if( p.quality === "low" ){
-            this.subdiv = 3;
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.subdiv = 6;
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.subdiv = 12;
-            this.radialSegments = 20;
-        }else{
-            this.subdiv = p.subdiv || 6;
-            this.radialSegments = p.radialSegments || 10;
-        }
-
-        this.tension = p.tension || 0.5;
-        this.capped = p.capped || true;
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
-        NGL.StructureRepresentation.prototype.init.call( this, p );
-
-        this.__polymerList = [];
-        this.__bufferList = [];
+        NGL.CartoonRepresentation.prototype.init.call( this, p );
 
     },
 
-    prepare: function( callback ){
+    getSpline: function( polymer ){
 
-        this.__polymerList.length = 0;
-        this.__bufferList.length = 0;
+        var helixorient = new NGL.Helixorient( polymer );
 
-        if( this.structureView.atomCount === 0 ){
-            callback();
-            return;
-        }
-
-        var scope = this;
-
-        this.structure.eachPolymer( function( polymer ){
-
-            if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
-            scope.__polymerList.push( polymer );
-
-        }, this.selection, true );
-
-        //
-
-        NGL.processArray(
-
-            this.__polymerList,
-
-            function( _i, _n, polymerList ){
-
-                for( var i = _i; i < _n; ++i ){
-
-                    var polymer = polymerList[ i ];
-
-                    var helixorient = new NGL.Helixorient( polymer );
-
-                    var spline = new NGL.Spline(
-                        helixorient.getFiber( scope.smooth, true )
-                    );
-                    var subPos = spline.getSubdividedPosition(
-                        scope.subdiv, scope.tension
-                    );
-                    var subOri = spline.getSubdividedOrientation(
-                        scope.subdiv, scope.tension
-                    );
-                    var subCol = spline.getSubdividedColor(
-                        scope.subdiv, scope.getColorParams()
-                    );
-                    var subSize = spline.getSubdividedSize(
-                        scope.subdiv, scope.radius, scope.scale
-                    );
-
-                    var rx = 1.0;
-                    var ry = 1.0;
-
-                    scope.__bufferList.push(
-                        new NGL.TubeMeshBuffer(
-                            subPos.position,
-                            subOri.normal,
-                            subOri.binormal,
-                            subOri.tangent,
-                            subCol.color,
-                            subSize.size,
-                            subCol.pickingColor,
-                            scope.getBufferParams( {
-                                radialSegments: scope.radialSegments,
-                                rx: rx,
-                                ry: ry,
-                                capped: scope.capped,
-                                dullInterior: true
-                            } )
-                        )
-                    );
-
-                }
-
-            },
-
-            callback,
-
-            50
-
-        );
-
-    },
-
-    create: function(){
-
-        var n = this.__polymerList.length;
-
-        for( var i = 0; i < n; ++i ){
-            this.polymerList.push( this.__polymerList[ i ] );
-            this.bufferList.push( this.__bufferList[ i ] );
-        }
-
-    },
-
-    update: function( what ){
-
-        if( this.structureView.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
-
-        // NGL.time( "rope repr update" );
-
-        what = what || {};
-
-        var i = 0;
-        var n = this.polymerList.length;
-
-        for( i = 0; i < n; ++i ){
-
-            var polymer = this.polymerList[ i ]
-
-            if( polymer.residueCount < 4 ) return;
-
-            var bufferData = {};
-            var helixorient = new NGL.Helixorient( polymer );
-            var spline = new NGL.Spline( helixorient.getPolymer( this.smooth, true ) );
-
-            if( what[ "position" ] || what[ "radius" ] || what[ "scale" ] ){
-                var subPos = spline.getSubdividedPosition(
-                    this.subdiv, this.tension
-                );
-                var subOri = spline.getSubdividedOrientation(
-                    this.subdiv, this.tension
-                );
-                var subSize = spline.getSubdividedSize(
-                    this.subdiv, this.radius, this.scale
-                );
-                bufferData[ "position" ] = subPos.position;
-                bufferData[ "normal" ] = subOri.normal;
-                bufferData[ "binormal" ] = subOri.binormal;
-                bufferData[ "tangent" ] = subOri.tangent;
-                bufferData[ "size" ] = subSize.size;
-            }
-
-            if( what[ "color" ] ){
-                var subCol = spline.getSubdividedColor(
-                    this.subdiv, this.getColorParams()
-                );
-                bufferData[ "color" ] = subCol.color;
-                bufferData[ "pickingColor" ] = subCol.pickingColor;
-            }
-
-            this.bufferList[ i ].setAttributes( bufferData );
-
-        }
-
-        // NGL.timeEnd( "rope repr update" );
-
-    },
-
-    setParameters: function( params ){
-
-        var rebuild = false;
-        var what = {};
-
-        if( params && params[ "tension" ] ){
-
-            what[ "radius" ] = true;
-
-        }
-
-        NGL.StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
-
-        return this;
-
-    }
-
-} );
-
-
-NGL.CrossingRepresentation = function( structure, viewer, params ){
-
-    NGL.StructureRepresentation.call( this, structure, viewer, params );
-
-};
-
-NGL.CrossingRepresentation.prototype = NGL.createObject(
-
-    NGL.StructureRepresentation.prototype, {
-
-    constructor: NGL.CrossingRepresentation,
-
-    type: "crossing",
-
-    parameters: Object.assign( {
-
-        localAngle: {
-            type: "integer", max: 180, min: 0, rebuild: true
-        },
-        centerDist: {
-            type: "number", precision: 1, max: 10, min: 0, rebuild: true
-        },
-        ssBorder: {
-            type: "boolean", rebuild: true
-        },
-        radiusSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        },
-        helixDist: {
-            type: "number", precision: 1, max: 30, min: 0, rebuild: true
-        },
-        displayLabel: {
-            type: "boolean", rebuild: true
-        },
-        download: {
-            type: "button", methodName: "download"
-        }
-
-    }, NGL.StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
-
-        var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || 0.7;
-        p.scale = p.scale || 1.0;
-
-        if( p.quality === "low" ){
-            this.radiusSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.radiusSegments = 10;
-        }else if( p.quality === "high" ){
-            this.radiusSegments = 20;
-        }else{
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
-        }
-        this.disableImpostor = p.disableImpostor || false;
-
-        this.localAngle = p.localAngle || 30;
-        this.centerDist = p.centerDist || 2.5;
-        this.ssBorder = p.ssBorder === undefined ? false : p.ssBorder;
-        this.helixDist = p.helixDist || 12;
-        this.displayLabel = p.displayLabel === undefined ? true : p.displayLabel;
-
-        NGL.StructureRepresentation.prototype.init.call( this, p );
-
-    },
-
-    create: function(){
-
-        if( this.atomSet.atomCount === 0 ) return;
-
-        var scope = this;
-
-        var helixList = [];
-
-        // TODO reduce buffer count as in e.g. rocket repr
-
-        this.structure.eachFiber( function( fiber ){
-
-            if( fiber.residueCount < 4 || fiber.isNucleic() ) return;
-
-            var helixbundle = new NGL.Helixbundle( fiber );
-            var axis = helixbundle.getAxis(
-                scope.localAngle, scope.centerDist, scope.ssBorder,
-                scope.getColorParams(), scope.radius, scope.scale
-            );
-
-            scope.bufferList.push(
-
-                new NGL.CylinderBuffer(
-                    axis.begin,
-                    axis.end,
-                    axis.color,
-                    axis.color,
-                    axis.size,
-                    axis.pickingColor,
-                    axis.pickingColor,
-                    scope.getBufferParams( {
-                        shift: 0,
-                        cap: true,
-                        radiusSegments: scope.radiusSegments,
-                        disableImpostor: this.disableImpostor,
-                        dullInterior: true
-                    } )
-                )
-
-            );
-
-            scope.fiberList.push( fiber );
-
-            for( var i = 0; i < axis.residue.length; ++i ){
-
-                var helix = new NGL.Helix();
-                helix.fromHelixbundleAxis( axis, i );
-                helixList.push( helix );
-
-            }
-
-        }, this.selection );
-
-        //
-
-        var helixCrossing = new NGL.HelixCrossing( helixList );
-        var crossing = helixCrossing.getCrossing( this.helixDist );
-
-        this.crossing = crossing;
-
-        var n = crossing.end.length / 3;
-
-        this.bufferList.push(
-
-            new NGL.CylinderBuffer(
-                new Float32Array( crossing.begin ),
-                new Float32Array( crossing.end ),
-                NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
-                NGL.Utils.uniformArray3( n, 0.2, 0.2, 0.9 ),
-                NGL.Utils.uniformArray( n, 0.1 ),
-                NGL.Utils.uniformArray3( n, 0, 0, 0 ),
-                NGL.Utils.uniformArray3( n, 0, 0, 0 ),
-                {
-                    shift: 0,
-                    cap: true,
-                    radiusSegments: this.radiusSegments,
-                    side: this.side,
-                    opacity: this.opacity,
-                    clipNear: this.clipNear,
-                    flatShaded: this.flatShaded,
-                    dullInterior: true
-                },
-                this.disableImpostor
-            )
-
-        );
-
-        if( this.displayLabel ){
-
-            var m = crossing.helixLabel.length;
-
-            this.bufferList.push(
-
-                new NGL.TextBuffer(
-                    crossing.helixCenter,
-                    NGL.Utils.uniformArray( m, 2.5 ),
-                    NGL.Utils.uniformArray3( m, 1.0, 1.0, 1.0 ),
-                    crossing.helixLabel,
-                    {
-                        clipNear: this.clipNear
-                    }
-                )
-
-            );
-
-        }
-
-    },
-
-    update: function( what ){
-
-        this.build();
-
-    },
-
-    download: function(){
-
-        var json = JSON.stringify( this.crossing.info, null, '\t' );
-
-        NGL.download(
-            new Blob( [ json ], {type : 'text/plain'} ),
-            "helixCrossing.json"
-        );
+        return new NGL.Spline( polymer, this.getSplineParams( {
+            directional: false,
+            positionIterator: helixorient.getCenterIterator( this.smooth )
+        } ) );
 
     }
 
@@ -36801,7 +35981,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
         }
         this.disableImpostor = p.disableImpostor || false;
 
-        this.contactType = p.contactType || "polar";
+        this.contactType = p.contactType || "polarBackbone";
         this.maxDistance = p.maxDistance || 3.5;
         this.maxAngle = p.maxAngle || 40;
 
@@ -36809,15 +35989,7 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
     },
 
-    getBondData: function( sview, what, params ){
-
-        params = this.getBondParams( what, params );
-
-        return sview.getBondData( params );
-
-    },
-
-    createData: function( sview ){
+    getContactData: function( sview ){
 
         var contactsFnDict = {
             "polar": NGL.polarContacts,
@@ -36828,12 +36000,26 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
             sview, this.maxDistance, this.maxAngle
         );
 
-        var params = {
+        return contactData;
+
+    },
+
+    getBondData: function( sview, what, params ){
+
+        return sview.getBondData( this.getBondParams( what, params ) );
+
+    },
+
+    createData: function( sview ){
+
+        var contactData = this.getContactData( sview );
+
+        var bondParams = {
             bondSet: contactData.bondSet,
             bondStore: contactData.bondStore
         };
 
-        var bondData = this.getBondData( sview, undefined, params );
+        var bondData = this.getBondData( sview, undefined, bondParams );
 
         var cylinderBuffer = new NGL.CylinderBuffer(
             bondData.position1,
@@ -36854,29 +36040,35 @@ NGL.ContactRepresentation.prototype = NGL.createObject(
 
         return {
             bufferList: [ cylinderBuffer ],
-            contactData: contactData
+            bondSet: contactData.bondSet,
+            bondStore: contactData.bondStore
         };
 
     },
 
     updateData: function( what, data ){
 
-        var params = {
-            bondSet: data.contactData.bondSet,
-            bondStore: data.contactData.bondStore
+        if( !what || what[ "position" ] ){
+            var contactData = this.getContactData( data.sview );
+            data.bondSet = contactData.bondSet;
+            data.bondStore = contactData.bondStore;
+        }
+
+        var bondParams = {
+            bondSet: data.bondSet,
+            bondStore: data.bondStore
         };
 
-        var bondData = this.getBondData( data.sview, what, params );
+        var bondData = this.getBondData( data.sview, what, bondParams );
         var cylinderData = {};
 
         if( !what || what[ "position" ] ){
-            var from = bondData.position1;
-            var to = bondData.position2;
+
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to, this.__center
+                bondData.position1, bondData.position2
             );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
+            cylinderData[ "position1" ] = bondData.position1;
+            cylinderData[ "position2" ] = bondData.position2;
         }
 
         if( !what || what[ "color" ] ){
@@ -37190,14 +36382,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 
     parameters: Object.assign( {
 
-        font: {
-            type: "select", options: {
-                // "Arial": "Arial",
-                // "DejaVu": "DejaVu",
-                "LatoBlack": "LatoBlack"
-            },
-            rebuild: true
-        },
         labelSize: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
@@ -37217,7 +36401,10 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             type: "boolean", rebuild: true
         }
 
-    }, NGL.StructureRepresentation.prototype.parameters ),
+    }, NGL.StructureRepresentation.prototype.parameters, {
+        flatShaded: null,
+        assembly: null
+    } ),
 
     init: function( params ){
 
@@ -37235,56 +36422,57 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }
         this.disableImpostor = p.disableImpostor || false;
 
-        this.font = p.font || 'LatoBlack';
-        this.labelSize = p.labelSize || 1.0;
+        this.fontFamily = p.fontFamily || "sans-serif";
+        this.fontStyle = p.fontStyle || "normal";
+        this.fontWeight = p.fontWeight || "bold";
+        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
+        this.labelSize = p.labelSize || 2.0;
         this.labelColor = p.labelColor || 0xFFFFFF;
         this.labelVisible = p.labelVisible !== undefined ? p.labelVisible : true;
-        this.antialias = p.antialias !== undefined ? p.antialias : true;
         this.atomPair = p.atomPair || [];
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
     },
 
-    create: function(){
+    getDistanceData: function( sview, atomPair ){
 
-        if( this.atomSet.atomCount === 0 ) return;
-
-        var n = this.atomPair.length;
-        if( n === 0 ) return;
-
+        var n = atomPair.length;
         var text = new Array( n );
         var position = new Float32Array( n * 3 );
         var sele1 = new NGL.Selection();
         var sele2 = new NGL.Selection();
 
-        this.bondSet = new NGL.BondSet();
-        this.bondSet.structure = this.structure;
-        var bSet = this.bondSet;
+        var bondStore = new NGL.BondStore();
+
+        var ap1 = sview.getAtomProxy();
+        var ap2 = sview.getAtomProxy();
 
         var j = 0;
 
-        this.atomPair.forEach( function( pair, i ){
+        atomPair.forEach( function( pair, i ){
 
             i -= j;
-
             var i3 = i * 3;
 
             sele1.setString( pair[ 0 ] );
             sele2.setString( pair[ 1 ] );
 
-            var a1 = this.atomSet.getAtoms( sele1, true );
-            var a2 = this.atomSet.getAtoms( sele2, true );
+            var atomIndices1 = sview.getAtomIndices( sele1 );
+            var atomIndices2 = sview.getAtomIndices( sele2 );
 
-            if( a1 && a2 ){
+            if( atomIndices1.length && atomIndices2.length ){
 
-                bSet.addBond( a1, a2, true );
+                ap1.index = atomIndices1[ 0 ];
+                ap2.index = atomIndices2[ 0 ];
 
-                text[ i ] = a1.distanceTo( a2 ).toFixed( 2 );
+                bondStore.addBond( ap1, ap2, 1 );
 
-                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
+                text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
+
+                position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
+                position[ i3 + 1 ] = ( ap1.y + ap2.y ) / 2;
+                position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
 
             }else{
 
@@ -37295,37 +36483,69 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }, this );
 
         if( j > 0 ){
-
             n -= j;
             position = position.subarray( 0, n * 3 );
-
         }
+
+        var bondSet = new TypedFastBitSet( bondStore.count );
+        bondSet.set_all( true );
+
+        return {
+            text: text,
+            position: position,
+            bondSet: bondSet,
+            bondStore: bondStore
+        };
+
+    },
+
+    getBondData: function( sview, what, params ){
+
+        return sview.getBondData( this.getBondParams( what, params ) );
+
+    },
+
+    create: function(){
+
+        if( this.structureView.atomCount === 0 ) return;
+
+        var n = this.atomPair.length;
+        if( n === 0 ) return;
+
+        var distanceData = this.getDistanceData( this.structureView, this.atomPair );
 
         var c = new THREE.Color( this.labelColor );
 
         this.textBuffer = new NGL.TextBuffer(
-            position,
+            distanceData.position,
             NGL.Utils.uniformArray( n, this.labelSize ),
             NGL.Utils.uniformArray3( n, c.r, c.g, c.b ),
-            text,
+            distanceData.text,
             this.getBufferParams( {
-                font: this.font,
-                antialias: this.antialias,
+                fontFamily: this.fontFamily,
+                fontStyle: this.fontStyle,
+                fontWeight: this.fontWeight,
+                sdf: this.sdf,
                 opacity: 1.0,
                 visible: this.labelVisible
             } )
         );
 
-        this.__center = new Float32Array( bSet.bondCount * 3 );
+        var bondParams = {
+            bondSet: distanceData.bondSet,
+            bondStore: distanceData.bondStore
+        };
+
+        var bondData = this.getBondData( this.structureView, undefined, bondParams );
 
         this.cylinderBuffer = new NGL.CylinderBuffer(
-            bSet.bondPosition( null, 0 ),
-            bSet.bondPosition( null, 1 ),
-            bSet.bondColor( null, 0, this.getColorParams() ),
-            bSet.bondColor( null, 1, this.getColorParams() ),
-            bSet.bondRadius( null, null, this.radius, this.scale ),
-            bSet.bondPickingColor( null, 0 ),
-            bSet.bondPickingColor( null, 1 ),
+            bondData.position1,
+            bondData.position2,
+            bondData.color1,
+            bondData.color2,
+            bondData.radius,
+            bondData.pickingColor1,
+            bondData.pickingColor2,
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
@@ -37335,96 +36555,60 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
             } )
         );
 
-        this.bufferList.push( this.textBuffer, this.cylinderBuffer );
+        this.dataList.push( {
+            sview: this.structureView,
+            bondSet: distanceData.bondSet,
+            bondStore: distanceData.bondStore,
+            position: distanceData.position,
+            bufferList: [ this.textBuffer, this.cylinderBuffer ]
+        } );
 
     },
 
-    update: function( what ){
+    updateData: function( what, data ){
 
-        if( this.atomSet.atomCount === 0 ) return;
-        if( this.bufferList.length === 0 ) return;
+        if( !what || what[ "position" ] ){
+            var distanceData = this.getDistanceData( data.sview, this.atomPair );
+            data.bondSet = distanceData.bondSet;
+            data.bondStore = distanceData.bondStore;
+            data.position = distanceData.position;
+        }
 
-        var n = this.atomPair.length;
-        if( n === 0 ) return;
+        var bondParams = {
+            bondSet: data.bondSet,
+            bondStore: data.bondStore
+        };
 
-        what = what || {};
-
-        var bSet = this.bondSet;
-
-        var textData = {};
+        var bondData = this.getBondData( data.sview, what, bondParams );
         var cylinderData = {};
+        var textData = {};
+        var n = this.atomPair.length;
 
         if( what[ "position" ] ){
-
-            var position = new Float32Array( n * 3 );
-            var sele1 = new NGL.Selection();
-            var sele2 = new NGL.Selection();
-
-            this.atomPair.forEach( function( pair, i ){
-
-                var i3 = i * 3;
-
-                sele1.setString( pair[ 0 ] );
-                sele2.setString( pair[ 1 ] );
-
-                var a1 = this.atomSet.getAtoms( sele1, true );
-                var a2 = this.atomSet.getAtoms( sele2, true );
-
-                position[ i3 + 0 ] = ( a1.x + a2.x ) / 2;
-                position[ i3 + 1 ] = ( a1.y + a2.y ) / 2;
-                position[ i3 + 2 ] = ( a1.z + a2.z ) / 2;
-
-            }, this );
-
-            textData[ "position" ] = position;
-
-            //
-
-            var from = bSet.bondPosition( null, 0 );
-            var to = bSet.bondPosition( null, 1 );
-
+            textData[ "position" ] = data.position;
             cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
-                from, to
+                bondData.position1, bondData.position2
             );
-            cylinderData[ "position1" ] = from;
-            cylinderData[ "position2" ] = to;
-
+            cylinderData[ "position1" ] = bondData.position1;
+            cylinderData[ "position2" ] = bondData.position2;
         }
 
         if( what[ "labelSize" ] ){
-
-            textData[ "size" ] = NGL.Utils.uniformArray(
-                n, this.labelSize
-            );
-
+            textData[ "size" ] = NGL.Utils.uniformArray( n, this.labelSize );
         }
 
         if( what[ "labelColor" ] ){
-
             var c = new THREE.Color( this.labelColor );
-            textData[ "color" ] = NGL.Utils.uniformArray3(
-                n, c.r, c.g, c.b
-            );
-
+            textData[ "color" ] = NGL.Utils.uniformArray3( n, c.r, c.g, c.b );
         }
 
         if( what[ "color" ] ){
-
-            cylinderData[ "color" ] = bSet.bondColor(
-                null, 0, this.getColorParams()
-            );
-            cylinderData[ "color2" ] = bSet.bondColor(
-                null, 1, this.getColorParams()
-            );
-
+            cylinderData[ "color" ] = bondData.color1;
+            cylinderData[ "color2" ] = bondData.color2;
         }
 
         if( what[ "radius" ] || what[ "scale" ] ){
-
-            cylinderData[ "radius" ] = bSet.bondRadius(
-                null, 0, this.radius, this.scale
-            );
-
+            cylinderData[ "radius" ] = bondData.radius;
         }
 
         this.textBuffer.setAttributes( textData );
@@ -37480,14 +36664,6 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
         }
 
         return this;
-
-    },
-
-    clear: function(){
-
-        if( this.bondSet ) this.bondSet.dispose();
-
-        NGL.StructureRepresentation.prototype.clear.call( this );
 
     }
 
@@ -40384,11 +39560,11 @@ NGL.Resources[ 'shader/SDFFont.frag' ] = "uniform sampler2D fontTexture;\nunifor
 
 // File:shader/SphereImpostor.vert
 
-NGL.Resources[ 'shader/SphereImpostor.vert' ] = "uniform mat4 projectionMatrixInverse;\nuniform float nearClip;\n\nvarying float vRadius;\nvarying vec3 vPoint;\nvarying vec3 vViewPosition;\n\nattribute vec2 mapping;\nattribute float radius;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    #include color_pars_vertex\n#endif\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        radius, 0.0, 0.0, 0.0,\n        0.0, radius, 0.0, 0.0,\n        0.0, 0.0, radius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n\n}\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        #include color_vertex\n    #endif\n\n    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n    mvPosition.z -= radius;  // avoid clipping, added again in fragment shader\n\n    gl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    vRadius = radius;\n    vPoint = ( projectionMatrixInverse * gl_Position ).xyz;\n    vViewPosition = -mvPosition.xyz;\n\n}";
+NGL.Resources[ 'shader/SphereImpostor.vert' ] = "uniform mat4 projectionMatrixInverse;\nuniform float nearClip;\n\nvarying float vRadius;\nvarying vec3 vPoint;\nvarying vec3 vPointViewPosition;\n\nattribute vec2 mapping;\nattribute float radius;\n\n#ifdef PICKING\n    attribute vec3 pickingColor;\n    varying vec3 vPickingColor;\n#else\n    #include color_pars_vertex\n#endif\n\nconst mat4 D = mat4(\n    1.0, 0.0, 0.0, 0.0,\n    0.0, 1.0, 0.0, 0.0,\n    0.0, 0.0, 1.0, 0.0,\n    0.0, 0.0, 0.0, -1.0\n);\n\nmat4 transpose( in mat4 inMatrix ) {\n    vec4 i0 = inMatrix[0];\n    vec4 i1 = inMatrix[1];\n    vec4 i2 = inMatrix[2];\n    vec4 i3 = inMatrix[3];\n\n    mat4 outMatrix = mat4(\n        vec4(i0.x, i1.x, i2.x, i3.x),\n        vec4(i0.y, i1.y, i2.y, i3.y),\n        vec4(i0.z, i1.z, i2.z, i3.z),\n        vec4(i0.w, i1.w, i2.w, i3.w)\n    );\n    return outMatrix;\n}\n\n//------------------------------------------------------------------------------\n// Compute point size and center using the technique described in:\n// \"GPU-Based Ray-Casting of Quadratic Surfaces\"\n// by Christian Sigg, Tim Weyrich, Mario Botsch, Markus Gross.\n//\n// Code based on\n/*=========================================================================\n\n Program:   Visualization Toolkit\n Module:    Quadrics_fs.glsl and Quadrics_vs.glsl\n\n Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen\n All rights reserved.\n See Copyright.txt or http://www.kitware.com/Copyright.htm for details.\n\n This software is distributed WITHOUT ANY WARRANTY; without even\n the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n PURPOSE.  See the above copyright notice for more information.\n\n =========================================================================*/\n\n// .NAME Quadrics_fs.glsl and Quadrics_vs.glsl\n// .SECTION Thanks\n// <verbatim>\n//\n//  This file is part of the PointSprites plugin developed and contributed by\n//\n//  Copyright (c) CSCS - Swiss National Supercomputing Centre\n//                EDF - Electricite de France\n//\n//  John Biddiscombe, Ugo Varetto (CSCS)\n//  Stephane Ploix (EDF)\n//\n// </verbatim>\n//\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - adapted to work with quads\nvoid ComputePointSizeAndPositionInClipCoordSphere(){\n\n    vec2 xbc;\n    vec2 ybc;\n\n    mat4 T = mat4(\n        radius, 0.0, 0.0, 0.0,\n        0.0, radius, 0.0, 0.0,\n        0.0, 0.0, radius, 0.0,\n        position.x, position.y, position.z, 1.0\n    );\n\n    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );\n    float A = dot( R[ 3 ], D * R[ 3 ] );\n    float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );\n    float C = dot( R[ 0 ], D * R[ 0 ] );\n    xbc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    xbc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sx = abs( xbc[ 0 ] - xbc[ 1 ] ) * 0.5;\n\n    A = dot( R[ 3 ], D * R[ 3 ] );\n    B = -2.0 * dot( R[ 1 ], D * R[ 3 ] );\n    C = dot( R[ 1 ], D * R[ 1 ] );\n    ybc[ 0 ] = ( -B - sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    ybc[ 1 ] = ( -B + sqrt( B * B - 4.0 * A * C ) ) / ( 2.0 * A );\n    float sy = abs( ybc[ 0 ] - ybc[ 1 ]  ) * 0.5;\n\n    gl_Position.xy = vec2( 0.5 * ( xbc.x + xbc.y ), 0.5 * ( ybc.x + ybc.y ) );\n    gl_Position.xy -= mapping * vec2( sx, sy );\n    gl_Position.xy *= gl_Position.w;\n\n}\n\nvoid main(void){\n\n    #ifdef PICKING\n        vPickingColor = pickingColor;\n    #else\n        #include color_vertex\n    #endif\n\n    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n    mvPosition.z -= radius;  // avoid clipping, added again in fragment shader\n\n    gl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );\n    ComputePointSizeAndPositionInClipCoordSphere();\n\n    vRadius = radius;\n    vPoint = ( projectionMatrixInverse * gl_Position ).xyz;\n    vPointViewPosition = -mvPosition.xyz;\n\n}";
 
 // File:shader/SphereImpostor.frag
 
-NGL.Resources[ 'shader/SphereImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform mat4 projectionMatrix;\n\n// uniform vec3 specular;\n// uniform float shininess;\n\n\nvarying float vRadius;\nvarying vec3 vPoint;\nvarying vec3 vViewPosition;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    #include common\n    #include color_pars_fragment\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    // #include lights_phong_pars_fragment\n    #include lights_physical_pars_fragment\n#endif\n\nbool flag2 = false;\nbool interior = false;\nvec3 cameraPos;\nvec3 cameraNormal;\n\n// vec4 poly_color = gl_Color;\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nbool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){\n\n    vec3 cameraSpherePos2 = -vViewPosition;\n    cameraSpherePos2.z += vRadius;\n\n    vec3 rayDirection = normalize( vPoint );\n\n    float B = -2.0 * dot( rayDirection, cameraSpherePos2 );\n    float C = dot( cameraSpherePos2, cameraSpherePos2 ) - ( vRadius * vRadius );\n\n    float det = ( B * B ) - ( 4.0 * C );\n    if( det < 0.0 ){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt( det );\n        float posT = ( -B + sqrtDet ) / 2.0;\n        float negT = ( -B - sqrtDet ) / 2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n\n        #ifdef NEAR_CLIP\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                return false;\n            }else if( calcClip( cameraPos ) > 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                flag2 = true;\n                return false;\n            }else{\n                cameraNormal = normalize( cameraPos - cameraSpherePos2 );\n            }\n        #else\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                return false;\n            }else{\n                cameraNormal = normalize( cameraPos - cameraSpherePos2 );\n            }\n        #endif\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\nvoid main(void){\n\n    // vec3 specular = vec3( 1.0, 1.0, 1.0 );\n    // float specularStrength = 1.0;\n    // float shininess = 1.0;\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( cameraPos ) > 0.0 )\n            discard;\n    #endif\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        // clamp to near clipping plane and add a tiny value to\n        // make spheres with a greater radius occlude smaller ones\n        #ifdef NEAR_CLIP\n            if( flag2 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }else if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        #else\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        #endif\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        // vec3 specColor = vColor;  // vec3( 1.0, 1.0, 1.0 );\n        // vec3 lightDir = vec3( 0.0, 0.0, 1.0 );\n        // vec3 vNormal = cameraNormal;\n\n        // float lambertian = max(dot(lightDir,vNormal), 0.0);\n        // float specular = 0.0;\n\n        // if(lambertian > 0.0) {\n\n        //     vec3 reflectDir = reflect(-lightDir, vNormal);\n        //     vec3 viewDir = normalize(-cameraPos);\n\n        //     float specAngle = max(dot(reflectDir, viewDir), 0.0);\n        //     specular = pow(specAngle, 4.0);\n\n        //     // the exponent controls the shininess (try mode 2)\n        //     specular = pow(specAngle, 16.0);\n\n        //     // according to the rendering equation we would need to multiply\n        //     // with the the \"lambertian\", but this has little visual effect\n        //     specular *= lambertian;\n\n\n        // }\n\n        // gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );\n\n        //\n\n        vec3 vNormal = cameraNormal;\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        #include normal_fragment\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        // #include lights_phong_fragment\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
+NGL.Resources[ 'shader/SphereImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform mat4 projectionMatrix;\n\n// uniform vec3 specular;\n// uniform float shininess;\n\n\nvarying float vRadius;\nvarying vec3 vPoint;\nvarying vec3 vPointViewPosition;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n#else\n    #include common\n    #include color_pars_fragment\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    // #include lights_phong_pars_fragment\n    #include lights_physical_pars_fragment\n#endif\n\nbool flag2 = false;\nbool interior = false;\nvec3 cameraPos;\nvec3 cameraNormal;\n\n// vec4 poly_color = gl_Color;\n//   if(uf_use_border_hinting == 1.0)\n//   {\n//     vec3 wc_eye_dir = normalize(wc_sp_pt);\n//     float n_dot_e   = abs(dot(wc_sp_nrml,wc_eye_dir));\n//     float alpha     = max(uf_border_color_start_cosine - n_dot_e,0.0)/uf_border_color_start_cosine;\n//     poly_color      = mix(gl_Color,uf_border_color,0.75*alpha);\n//   }\n//   color += (diff + amb)*poly_color + spec*gl_FrontMaterial.specular;\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nbool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){\n\n    vec3 cameraSpherePos2 = -vPointViewPosition;\n    cameraSpherePos2.z += vRadius;\n\n    vec3 rayDirection = normalize( vPoint );\n\n    float B = -2.0 * dot( rayDirection, cameraSpherePos2 );\n    float C = dot( cameraSpherePos2, cameraSpherePos2 ) - ( vRadius * vRadius );\n\n    float det = ( B * B ) - ( 4.0 * C );\n    if( det < 0.0 ){\n        discard;\n        return false;\n    }else{\n        float sqrtDet = sqrt( det );\n        float posT = ( -B + sqrtDet ) / 2.0;\n        float negT = ( -B - sqrtDet ) / 2.0;\n\n        float intersectT = min(posT, negT);\n        cameraPos = rayDirection * intersectT;\n\n        #ifdef NEAR_CLIP\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                return false;\n            }else if( calcClip( cameraPos ) > 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                flag2 = true;\n                return false;\n            }else{\n                cameraNormal = normalize( cameraPos - cameraSpherePos2 );\n            }\n        #else\n            if( calcDepth( cameraPos ) <= 0.0 ){\n                cameraPos = rayDirection * max( posT, negT );\n                interior = true;\n                return false;\n            }else{\n                cameraNormal = normalize( cameraPos - cameraSpherePos2 );\n            }\n        #endif\n\n        return true;\n    }\n\n    return false; // ensure that each control flow has a return\n\n}\n\nvoid main(void){\n\n    // vec3 specular = vec3( 1.0, 1.0, 1.0 );\n    // float specularStrength = 1.0;\n    // float shininess = 1.0;\n\n    bool flag = Impostor( cameraPos, cameraNormal );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( cameraPos ) > 0.0 )\n            discard;\n    #endif\n\n    // FIXME not compatible with custom clipping plane\n    //Set the depth based on the new cameraPos.\n    gl_FragDepthEXT = calcDepth( cameraPos );\n    if( !flag ){\n\n        // clamp to near clipping plane and add a tiny value to\n        // make spheres with a greater radius occlude smaller ones\n        #ifdef NEAR_CLIP\n            if( flag2 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }else if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        #else\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        #endif\n\n    }\n\n    // bugfix (mac only?)\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n\n        gl_FragColor = vec4( vPickingColor, objectId );\n\n    #else\n\n        // vec3 specColor = vColor;  // vec3( 1.0, 1.0, 1.0 );\n        // vec3 lightDir = vec3( 0.0, 0.0, 1.0 );\n        // vec3 vNormal = cameraNormal;\n\n        // float lambertian = max(dot(lightDir,vNormal), 0.0);\n        // float specular = 0.0;\n\n        // if(lambertian > 0.0) {\n\n        //     vec3 reflectDir = reflect(-lightDir, vNormal);\n        //     vec3 viewDir = normalize(-cameraPos);\n\n        //     float specAngle = max(dot(reflectDir, viewDir), 0.0);\n        //     specular = pow(specAngle, 4.0);\n\n        //     // the exponent controls the shininess (try mode 2)\n        //     specular = pow(specAngle, 16.0);\n\n        //     // according to the rendering equation we would need to multiply\n        //     // with the the \"lambertian\", but this has little visual effect\n        //     specular *= lambertian;\n\n\n        // }\n\n        // gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );\n\n        //\n\n        vec3 vNormal = cameraNormal;\n        vec3 vViewPosition = -cameraPos;\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        #include normal_fragment\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        // #include lights_phong_fragment\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
 
 // File:shader/chunk/dull_interior_fragment.glsl
 
