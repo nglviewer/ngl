@@ -776,7 +776,8 @@ NGL.AtomProxy.prototype = {
         if( taa.altloc && aaa.altloc ){
             var ta = taa.altloc[ ti ];  // use Uint8 value to compare
             var aa = aaa.altloc[ ai ];  // no need to convert to char
-            if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+            // 0 is the Null character, 32 is the space character
+            if( !( ta === 0 || aa === 0 || ta === 32 || aa === 32 || ( ta === aa ) ) ) return false;
         }
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
