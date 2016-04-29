@@ -15,7 +15,7 @@ uniform mat4 projectionMatrix;
 
 varying float vRadius;
 varying vec3 vPoint;
-varying vec3 vViewPosition;
+varying vec3 vPointViewPosition;
 
 #ifdef PICKING
     uniform float objectId;
@@ -58,7 +58,7 @@ float calcClip( vec3 cameraPos ){
 
 bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
 
-    vec3 cameraSpherePos2 = -vViewPosition;
+    vec3 cameraSpherePos2 = -vPointViewPosition;
     cameraSpherePos2.z += vRadius;
 
     vec3 rayDirection = normalize( vPoint );
@@ -184,6 +184,7 @@ void main(void){
         //
 
         vec3 vNormal = cameraNormal;
+        vec3 vViewPosition = -cameraPos;
 
         vec4 diffuseColor = vec4( diffuse, opacity );
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );

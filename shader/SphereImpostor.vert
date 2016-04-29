@@ -3,7 +3,7 @@ uniform float nearClip;
 
 varying float vRadius;
 varying vec3 vPoint;
-varying vec3 vViewPosition;
+varying vec3 vPointViewPosition;
 
 attribute vec2 mapping;
 attribute float radius;
@@ -124,6 +124,6 @@ void main(void){
 
     vRadius = radius;
     vPoint = ( projectionMatrixInverse * gl_Position ).xyz;
-    vViewPosition = -mvPosition.xyz;
+    vPointViewPosition = -mvPosition.xyz;
 
 }
