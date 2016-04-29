@@ -3405,7 +3405,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
 
-        if( this.firstModelOnly ){
+        if( this.firstModelOnly || this.asTrajectory ){
 
             numModels = 1;
             numChains = sd.chainsPerModel[ 0 ];
@@ -3438,6 +3438,29 @@ NGL.MmtfParser.prototype = NGL.createObject(
         }
 
         numBonds += numGroups;  // add numGroups to have space for polymer bonds
+
+        //
+
+        if( this.asTrajectory ){
+
+            for( var i = 0, il = sd.numModels; i < il; ++i ){
+
+                var frame = new Float32Array( numAtoms * 3 );
+                var frameAtomOffset = numAtoms * i;
+
+                for( var j = 0; j < numAtoms; ++j ){
+                    var j3 = j * 3;
+                    var offset = j + frameAtomOffset;
+                    frame[ j3     ] = sd.xCoordList[ offset ];
+                    frame[ j3 + 1 ] = sd.yCoordList[ offset ];
+                    frame[ j3 + 2 ] = sd.zCoordList[ offset ];
+                }
+
+                s.frames.push( frame );
+
+            }
+
+        }
 
         // bondStore
         var bAtomIndex1 = new Uint32Array( numBonds );
