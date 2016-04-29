@@ -1140,6 +1140,9 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
         },
         lineOnly: {
             type: "boolean", rebuild: true
+        },
+        cylinderOnly: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1166,6 +1169,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         this.aspectRatio = p.aspectRatio || 2.0;
         this.lineOnly = p.lineOnly || false;
+        this.cylinderOnly = p.cylinderOnly || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1213,20 +1217,27 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
 
         }else{
 
-            var atomData = this.getAtomData( sview );
-            var bondData = this.getBondData( sview );
+            if( !this.cylinderOnly ){
 
-            var sphereBuffer = new NGL.SphereBuffer(
-                atomData.position,
-                atomData.color,
-                atomData.radius,
-                atomData.pickingColor,
-                this.getBufferParams( {
-                    sphereDetail: this.sphereDetail,
-                    disableImpostor: this.disableImpostor,
-                    dullInterior: true
-                } )
-            );
+                var atomData = this.getAtomData( sview );
+
+                var sphereBuffer = new NGL.SphereBuffer(
+                    atomData.position,
+                    atomData.color,
+                    atomData.radius,
+                    atomData.pickingColor,
+                    this.getBufferParams( {
+                        sphereDetail: this.sphereDetail,
+                        disableImpostor: this.disableImpostor,
+                        dullInterior: true
+                    } )
+                );
+
+                bufferList.push( sphereBuffer );
+
+            }
+
+            var bondData = this.getBondData( sview );
 
             var cylinderBuffer = new NGL.CylinderBuffer(
                 bondData.position1,
@@ -1246,7 +1257,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                 this.disableImpostor
             );
 
-            bufferList.push( sphereBuffer, cylinderBuffer );
+            bufferList.push( cylinderBuffer );
 
         }
 
