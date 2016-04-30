@@ -21,9 +21,12 @@
             var button = document.getElementById( "btn" );
 
             var stage = new NGL.Stage( "viewport" );
+            stage.viewer.container.addEventListener( "dblclick", function(){
+                stage.toggleFullscreen();
+            } );
             stage.setTheme( "light" );
             stage.viewer.setBackground( 0xfff7ed );
-            stage.loadFile( "../doc/files/1d66.pdb" ).then( function( o ){
+            stage.loadFile( "../../files/1d66.pdb.gz" ).then( function( o ){
                 licorice = o.addRepresentation( "licorice" );
                 cartoon = o.addRepresentation( "cartoon" );
                 o.centerView();
@@ -63,9 +66,9 @@
     <h2>Language</h2>
 
     <div style="float:right; margin-left:30px">
-        <div id="viewport" style="width:500px; height:350px;"></div>
+        <div id="viewport" style="width:500px; height:400px;"></div>
         <div>
-            <input id="input" style="width:400px;" type="text" />
+            <input id="input" style="width:440px;" type="text" />
             <button id="btn">filter</button>
         </div>
     </div>

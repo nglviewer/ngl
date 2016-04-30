@@ -19,9 +19,8 @@
         function initStructure( o ){
             types.forEach( function( name ){
                 if( !name ) return;
-                if( [ "distance" ].indexOf( name ) !== -1 ){
-                    return;  // currently broken, ignore
-                }else if( name === "label" ){
+                if( [ "distance" ].indexOf( name ) !== -1 ) return;
+                if( name === "label" ){
                     reprDict[ name ] = o.addRepresentation(
                         name, { visible: false, colorScheme: "element", sele: ".C" }
                     );
@@ -51,6 +50,7 @@
             var buttons = document.getElementById( "buttons" );
             types.forEach( function( name ){
                 if( !name ) return;
+                if( [ "distance" ].indexOf( name ) !== -1 ) return;
                 var button = document.createElement( "button" );
                 button.id = "btn_" + name;
                 button.textContent = name;
@@ -59,7 +59,10 @@
             var stage = new NGL.Stage( "viewport" );
             stage.setTheme( "light" );
             stage.viewer.setBackground( 0xfff7ed );
-            stage.loadFile( "../doc/files/1crn.pdb" )
+            stage.viewer.container.addEventListener( "dblclick", function(){
+                stage.toggleFullscreen();
+            } );
+            stage.loadFile( "../../files/1wto.pdb.gz" )
                 .then( initStructure );
         } );
 
@@ -68,8 +71,8 @@
     <h1>[name]</h1>
 
     <div style="float:right; margin-left:30px">
-        <div id="viewport" style="width:400px; height:300px;"></div>
-        <div id="buttons" style="width:400px;"></div>
+        <div id="viewport" style="width:450px; height:350px;"></div>
+        <div id="buttons" style="width:450px;"></div>
     </div>
 
     <p>Each loaded structure can be displayed using a variety of representations that can be combined to create complex molecular views. Multiple representation types are supported, including space-filling spheres for atoms (spacefill), cylinders and spheres for bonds and atoms (ball+stick), simple lines for bonds (line), secondary structure abstraction (cartoon), backbone atom trace (backbone). The appearance of the representations can be fine-tuned by parameters, for example, to change the quality. Most representations have a color and a radius parameter that can use data from the underlying structure. For instance, a representation can be colored uniformly or according to the element, residue or secondary structure type of the atoms from which the representation is derived. The size of representation objects, for example sphere and cylinder radii in a ball+stick representation, can be set similarly.</p>
