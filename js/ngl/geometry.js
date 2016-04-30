@@ -362,6 +362,7 @@ NGL.Spline = function( polymer, params ){
     this.directional = p.directional || false;
     this.positionIterator = p.positionIterator || false
     this.subdiv = p.subdiv || 1;
+    this.smoothSheet = p.smoothSheet || false;
 
     if( isNaN( p.tension ) ){
         this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
@@ -377,7 +378,7 @@ NGL.Spline.prototype = {
 
     constructor: NGL.Spline,
 
-    getAtomIterator: function( type ){
+    getAtomIterator: function( type, smooth ){
 
         var polymer = this.polymer;
         var structure = polymer.structure;
@@ -393,15 +394,35 @@ NGL.Spline.prototype = {
             structure.getAtomProxy()
         ];
 
+        var cache2 = [
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3()
+        ];
+
         function next(){
             var atomProxy = this.get( j );
             j += 1;
             return atomProxy;
         }
 
+        var apPrev = structure.getAtomProxy();
+        var apNext = structure.getAtomProxy();
+
         function get( idx ){
             var atomProxy = cache[ i % 4 ];
             atomProxy.index = polymer.getAtomIndexByType( idx, type );
+            if( smooth && idx > 0 && idx < n && atomProxy.sstruc === "e" ){
+                var vec = cache2[ i % 4 ];
+                apPrev.index = polymer.getAtomIndexByType( idx + 1, type );
+                apNext.index = polymer.getAtomIndexByType( idx - 1, type );
+                vec.addVectors( apPrev, apNext )
+                    .add( atomProxy ).add( atomProxy )
+                    .multiplyScalar( 0.25 );
+                i += 1;
+                return vec;
+            }
             i += 1;
             return atomProxy;
         }
@@ -519,7 +540,7 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace", this.smoothSheet );
 
         this.interpolator.getPosition(
             iterator, pos, 0, polymer.isCyclic
@@ -539,7 +560,7 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace", this.smoothSheet );
 
         this.interpolator.getTangent(
             iterator, tan, 0, polymer.isCyclic

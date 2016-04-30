@@ -1706,6 +1706,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         capped: {
             type: "boolean", rebuild: true
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -1735,6 +1738,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped === undefined ? true : p.capped;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1745,7 +1749,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: this.aspectRatio === 1.0 ? false : true
+            directional: this.aspectRatio === 1.0 ? false : true,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -1943,6 +1948,9 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -1972,6 +1980,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1982,7 +1991,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: true
+            directional: true,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -2101,6 +2111,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters, {
@@ -2128,6 +2141,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -2138,7 +2152,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: false
+            directional: false,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -2568,7 +2583,10 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             type: "integer", max: 15, min: 0, rebuild: true
         }
 
-    }, NGL.CartoonRepresentation.prototype.parameters, { aspectRatio: null } ),
+    }, NGL.CartoonRepresentation.prototype.parameters, {
+        aspectRatio: null,
+        smoothSheet: null
+    } ),
 
     init: function( params ){
 
@@ -2576,6 +2594,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         p.aspectRatio = 1.0;
         p.tension = p.tension || 0.5;
         p.scale = p.scale || 5.0;
+        p.smoothSheet = false;
 
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
