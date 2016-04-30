@@ -2441,8 +2441,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     var p = params || {};
 
-    this.rx = p.rx !== undefined ? p.rx : 1.5;
-    this.ry = p.ry !== undefined ? p.ry : 0.5;
+    this.aspectRatio = p.aspectRatio !== undefined ? p.aspectRatio : 1.0;
     this.radialSegments = p.radialSegments !== undefined ? p.radialSegments : 4;
     this.capped = p.capped !== undefined ? p.capped : false;
 
@@ -2495,8 +2494,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
     return function( data ){
 
-        var rx = this.rx;
-        var ry = this.ry;
+        var aspectRatio = this.aspectRatio;
 
         var n = this.size2;
         var n1 = n - 1;
@@ -2563,13 +2561,13 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
                 v = ( j / radialSegments ) * 2 * Math.PI;
 
-                cxArr[ j ] = rx * Math.cos( v );
-                cyArr[ j ] = ry * Math.sin( v );
+                cxArr[ j ] = aspectRatio * Math.cos( v );
+                cyArr[ j ] = Math.sin( v );
 
-                cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
-                cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
-                cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
-                cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
+                cx1Arr[ j ] = aspectRatio * Math.cos( v - 0.01 );
+                cy1Arr[ j ] = Math.sin( v - 0.01 );
+                cx2Arr[ j ] = aspectRatio * Math.cos( v + 0.01 );
+                cy2Arr[ j ] = Math.sin( v + 0.01 );
 
             }
 

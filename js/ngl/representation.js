@@ -1756,6 +1756,18 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     },
 
+    getScale: function( polymer ){
+
+        return polymer.isCg() ? this.scale * this.aspectRatio : this.scale;
+
+    },
+
+    getAspectRatio: function( polymer ){
+
+        return polymer.isCg() ? 1.0 : this.aspectRatio;
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -1771,7 +1783,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             var subPos = spline.getSubdividedPosition();
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this.getColorParams() );
-            var subSize = spline.getSubdividedSize( this.radius, this.scale );
+            var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
 
             bufferList.push(
                 new NGL.TubeMeshBuffer(
@@ -1784,8 +1796,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
-                        rx: polymer.isCg() ? 1.0 : this.aspectRatio,
-                        ry: 1.0,
+                        aspectRatio: this.getAspectRatio( polymer ),
                         capped: this.capped,
                         dullInterior: true
                     } )
@@ -1810,15 +1821,16 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
-            var spline = this.getSpline( data.polymerList[ i ] );
+            var polymer = data.polymerList[ i ];
+            var spline = this.getSpline( polymer );
 
-            data.bufferList[ i ].rx = this.aspectRatio;
+            data.bufferList[ i ].aspectRatio = this.getAspectRatio( polymer );
 
             if( what[ "position" ] || what[ "radius" ] ){
 
                 var subPos = spline.getSubdividedPosition();
                 var subOri = spline.getSubdividedOrientation();
-                var subSize = spline.getSubdividedSize( this.radius, this.scale );
+                var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.normal;
