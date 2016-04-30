@@ -49,21 +49,9 @@ NGL.Streamer.prototype = {
 
             if( this.compressed ){
 
-                NGL.decompressWorker(
-
+                this.data = NGL.decompress(
                     // TODO find better way to specify compression
-                    data, "foo." + this.compressed, true,
-
-                    function( decompressedData ){
-
-                        this.data = decompressedData;
-                        if( typeof this.onload === "function" ){
-                            this.onload( this.data );
-                        }
-                        callback();
-
-                    }.bind( this )
-
+                    data, "foo." + this.compressed, true
                 );
 
             }else{
@@ -71,14 +59,14 @@ NGL.Streamer.prototype = {
                 if( this.binary && data instanceof ArrayBuffer ){
                     data = new Uint8Array( data );
                 }
-
                 this.data = data;
-                if( typeof this.onload === "function" ){
-                    this.onload( this.data );
-                }
-                callback();
 
             }
+
+            if( typeof this.onload === "function" ){
+                this.onload( this.data );
+            }
+            callback();
 
         }.bind( this ) );
 

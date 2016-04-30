@@ -1166,9 +1166,7 @@ NGL.Parser.prototype = {
 
     parseWorker: function( callback ){
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             var worker = new NGL.Worker( "parse" ).post(
 

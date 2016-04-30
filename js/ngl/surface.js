@@ -649,9 +649,7 @@ NGL.Volume.prototype = {
 
         //
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             if( this.workerPool === undefined ){
                 this.workerPool = new NGL.WorkerPool( "surf", 2 );
@@ -2514,9 +2512,7 @@ NGL.MolecularSurface.prototype = {
 
         var p = Object.assign( {}, params );
 
-        if( ( p.useWorker || NGL.useWorker ) && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             var structure = undefined;
 

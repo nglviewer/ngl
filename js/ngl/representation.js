@@ -2809,9 +2809,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         },
         volume: {
             type: "hidden"
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -2838,7 +2835,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -2863,7 +2859,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 callback( i );
             };
             info.molsurf.getSurfaceWorker( p, afterWorker );
-            // info.surface = info.molsurf.getSurface( p );
 
         }else{
 

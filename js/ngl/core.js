@@ -131,9 +131,6 @@ if( typeof importScripts !== 'function' ){
         var debug = NGL.GET( "debug" );
         if( debug !== undefined ) NGL.debug = NGL.boolean( debug );
 
-        var useWorker = NGL.GET( "useWorker" );
-        if( useWorker !== undefined ) NGL.useWorker = NGL.boolean( useWorker );
-
     } )();
 
 }

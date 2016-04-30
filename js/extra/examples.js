@@ -8,6 +8,7 @@ NGL.ExampleRegistry.addDict( {
     "gro_trajectory": function( stage ){
 
         stage.loadFile( "data://md_1u19_trj.gro", {
+            useWorker: true,
             asTrajectory: true,
             sele: "50-100"
         } ).then( function( o ){
@@ -266,7 +267,9 @@ NGL.ExampleRegistry.addDict( {
 
     "ribosome": function( stage ){
 
-        stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
+        stage.loadFile( "data://4UJD.cif.gz", {
+            useWorker: true
+        } ).then( function( o ){
 
             o.addRepresentation( "cartoon", {
 
@@ -489,36 +492,15 @@ NGL.ExampleRegistry.addDict( {
 
     "largeGro": function( stage ){
 
-        NGL.time( "test" );
-
-        // stage.loadFile( "data://1crn.gro", function( o ){
-
-        //     o.addRepresentation( "ribbon", { color: "residueindex" } );
-        //     o.centerView();
-
-        // } );
-
-        stage.loadFile( "data://water.gro" ).then( function( o ){
+        stage.loadFile( "data://water.gro", {
+            useWorker: true,
+            binary: false
+        } ).then( function( o ){
 
             o.addRepresentation( "line", { color: "residueindex" } );
             o.centerView();
 
-            o.viewer.render();
-
-            NGL.timeEnd( "test" );
-
         } );
-
-        /*stage.loadFile( "data://3l5q.gro", function( o ){
-
-            o.addRepresentation( "trace", { color: "residueindex", subdiv: 3 } );
-            o.centerView();
-
-            o.viewer.render();
-
-            NGL.timeEnd( "test" );
-
-        } );*/
 
     },
 
@@ -631,7 +613,8 @@ NGL.ExampleRegistry.addDict( {
     "hiv": function( stage ){
 
         stage.loadFile( "data://3j3y.cif.gz", {
-            cAlphaOnly: true
+            cAlphaOnly: true,
+            useWorker: true
         } ).then( function( o ){
 
             o.addRepresentation( "surface", {
@@ -740,7 +723,9 @@ NGL.ExampleRegistry.addDict( {
 
     "map": function( stage ){
 
-        stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){
+        stage.loadFile( "data://emd_2682.map.gz", {
+            useWorker: true
+        } ).then( function( o ){
 
             o.addRepresentation( "surface", {
                 opacity: 0.5,
@@ -750,7 +735,9 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
-        stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
+        stage.loadFile( "data://4UJD.cif.gz", {
+            useWorker: true
+        } ).then( function( o ){
 
             o.addRepresentation( "cartoon", { color: "chainindex" } );
             stage.centerView();
@@ -810,14 +797,18 @@ NGL.ExampleRegistry.addDict( {
 
     "bigcube": function( stage ){
 
-        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ).then( function( o ){
+        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz", {
+            useWorker: true
+        } ).then( function( o ){
 
             o.addRepresentation( "surface", { isolevel: 2.7 } );
             // o.centerView();
 
         } );
 
-        stage.loadFile( "data://rho-inactive_md-system.gro" ).then( function( o ){
+        stage.loadFile( "data://rho-inactive_md-system.gro", {
+            useWorker: true
+        } ).then( function( o ){
 
             o.addRepresentation( "cartoon" );
             o.addRepresentation( "licorice", { sele: "hetero" } );

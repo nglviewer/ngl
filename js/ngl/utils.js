@@ -472,7 +472,7 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Decompress
 
-NGL.decompress = function( data, file, asBinary, callback ){
+NGL.decompress = function( data, file, asBinary ){
 
     var binData, decompressedData;
     var ext = NGL.getFileInfo( file ).compressed;
@@ -510,15 +510,7 @@ NGL.decompress = function( data, file, asBinary, callback ){
 
     NGL.timeEnd( "NGL.decompress " + ext );
 
-    var returnData = asBinary ? binData : decompressedData;
-
-    if( typeof callback === "function" ){
-
-        callback( returnData );
-
-    }
-
-    return returnData;
+    return asBinary ? binData : decompressedData;
 
 };
 
@@ -534,16 +526,14 @@ NGL.WorkerRegistry.add( "decompress", function( e, callback ){
         transferable.push( value.buffer );
     }
 
-    callback( value, transferable );
+    callback( { decompressedData: value }, transferable );
 
 } );
 
 
 NGL.decompressWorker = function( data, file, asBinary, callback ){
 
-    if( NGL.useWorker && typeof Worker !== "undefined" &&
-        typeof importScripts !== 'function'
-    ){
+    if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
         var worker = new NGL.Worker( "decompress" ).post(
 
@@ -554,7 +544,7 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
             function( e ){
 
                 worker.terminate();
-                callback( e.data );
+                callback( e.data.decompressedData );
 
             },
 
@@ -564,8 +554,7 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
                     "NGL.decompressWorker error - trying without worker", e
                 );
                 worker.terminate();
-
-                NGL.decompress( data, file, asBinary, callback );
+                callback( NGL.decompress( data, file, asBinary ) );
 
             }
 
@@ -573,7 +562,7 @@ NGL.decompressWorker = function( data, file, asBinary, callback ){
 
     }else{
 
-        NGL.decompress( data, file, asBinary, callback );
+        callback( NGL.decompress( data, file, asBinary ) );
 
     }
 

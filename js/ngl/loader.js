@@ -192,7 +192,7 @@ NGL.ParserLoader = function( src, params ){
 
     NGL.Loader.call( this, src, params );
 
-    this.noWorker = this.params.noWorker || false;
+    this.useWorker = this.params.useWorker === undefined ? false : this.params.useWorker;
 
 };
 
@@ -243,13 +243,13 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        if( this.noWorker ){
+        if( this.useWorker ){
 
-            parser.parse( resolve );
+            parser.parseWorker( resolve );
 
         }else{
 
-            parser.parseWorker( resolve );
+            parser.parse( resolve );
 
         }
 
@@ -315,7 +315,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
                 promiseList.push(
                     NGL.autoLoad( basePath + name, {
-                        ext: "text", noWorker: true
+                        ext: "text", useWorker: false
                     } )
                 );
 

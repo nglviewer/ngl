@@ -87,7 +87,6 @@ if (!Array.from) {
 function setupNGL(){
 
     // NGL.develop = true;
-    NGL.useWorker = false;
     NGL.mainScriptFilePath = "../../js/ngl/core.js";
 
     NGL.DatasourceRegistry.add(
