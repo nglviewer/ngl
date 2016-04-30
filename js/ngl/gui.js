@@ -541,7 +541,7 @@ NGL.MenubarViewWidget = function( stage ){
     }
 
     function onSpinOnClick(){
-        stage.setSpin( [ 0, 1, 0 ], 0.01 );
+        stage.setSpin( [ 0, 1, 0 ], 0.005 );
     }
 
     function onSpinOffClick(){
