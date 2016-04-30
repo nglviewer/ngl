@@ -76,7 +76,7 @@ NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://files.rcsb.org/download/";
     // var baseUrl = "http://www.rcsb.org/pdb/files/";
-    var mmtfBaseUrl = "http://mmtf.rcsb.org/full/";
+    var mmtfBaseUrl = "http://mmtf.rcsb.org/v0/full/";
     var bbMmtfBaseUrl = "http://mmtf.rcsb.org/reduced/";
 
     this.getUrl = function( src ){
