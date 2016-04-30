@@ -271,32 +271,6 @@ NGL.Streamer.prototype = {
 
     },
 
-    eachChunkOfLinesAsync: function( callback, onfinish ){
-        console.warn("eachChunkOfLinesAsync")
-        var self = this;
-        var n = self.chunkCount();
-        var _i = 0;
-
-        function fn(){
-            ++_i;
-            NGL.processArray(
-                self.nextChunkOfLines(),
-                callback,
-                function(){
-                    if( _i >= n ){
-                        onfinish();
-                    }else{
-                        // requestAnimationFrame( fn );
-                        setTimeout( fn );
-                    }
-                }
-            );
-        }
-
-        fn();
-
-    },
-
     toJSON: function(){
 
         var type = this.type.substr( 0, 1 ).toUpperCase() +

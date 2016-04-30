@@ -276,45 +276,6 @@ NGL.fromJSON = function( input ){
 };
 
 
-NGL.processArray = function( array, fn, callback, chunkSize ){
-
-    var n = array.length;
-    chunkSize = chunkSize !== undefined ? chunkSize : 1000000;
-
-    if( typeof importScripts === 'function' || chunkSize >= n ){
-
-        // no chunking required when inside a web worker
-        fn( 0, n, array );
-        callback();
-
-    }else{
-
-        var _i = 0;
-        var _step = chunkSize;
-        var _n = Math.min( _step, n );
-
-        var fn2 = function(){
-            var stop = fn( _i, _n, array );
-            if( stop ){
-                _i = n;
-            }else{
-                _i += _step;
-                _n = Math.min( _n + _step, n );
-            }
-            if( _i >= n ){
-                callback();
-            }else{
-                setTimeout( fn2 );
-            }
-        };
-
-        fn2();
-
-    }
-
-};
-
-
 NGL.throttle = function( func, wait, options ){
 
     // from http://underscorejs.org/docs/underscore.html
