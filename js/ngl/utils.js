@@ -472,99 +472,26 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Decompress
 
-NGL.decompress = function( data, file, asBinary ){
+NGL.decompress = function( data ){
 
-    var binData, decompressedData;
-    var ext = NGL.getFileInfo( file ).compressed;
+    var decompressedData;
 
-    NGL.time( "NGL.decompress " + ext );
+    NGL.time( "NGL.decompress" );
 
     if( data instanceof ArrayBuffer ){
-
         data = new Uint8Array( data );
-
     }
 
-    if( ext === "gz" ){
-
-        try{
-            binData = pako.ungzip( data );
-        }catch( e ){
-            if( NGL.debug ) NGL.warn( e );
-            // assume it is already uncompressed
-            binData = data;
-        }
-
-    }else{
-
-        NGL.warn( "no decompression method available for '" + ext + "'" );
-        decompressedData = data;
-
+    try{
+        decompressedData = pako.ungzip( data );
+    }catch( e ){
+        if( NGL.debug ) NGL.warn( e );
+        decompressedData = data;  // assume it is already uncompressed
     }
 
-    if( !asBinary && decompressedData === undefined ){
+    NGL.timeEnd( "NGL.decompress" );
 
-        decompressedData = NGL.Uint8ToString( binData );
-
-    }
-
-    NGL.timeEnd( "NGL.decompress " + ext );
-
-    return asBinary ? binData : decompressedData;
-
-};
-
-
-NGL.WorkerRegistry.add( "decompress", function( e, callback ){
-
-    var d = e.data;
-
-    var value = NGL.decompress( d.data, d.file, d.asBinary );
-    var transferable = [];
-
-    if( d.asBinary ){
-        transferable.push( value.buffer );
-    }
-
-    callback( { decompressedData: value }, transferable );
-
-} );
-
-
-NGL.decompressWorker = function( data, file, asBinary, callback ){
-
-    if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
-
-        var worker = new NGL.Worker( "decompress" ).post(
-
-            { data: data, file: file, asBinary: asBinary },
-
-            [ data.buffer ? data.buffer : data ],
-
-            function( e ){
-
-                worker.terminate();
-                callback( e.data.decompressedData );
-
-            },
-
-            function( e ){
-
-                console.warn(
-                    "NGL.decompressWorker error - trying without worker", e
-                );
-                worker.terminate();
-                callback( NGL.decompress( data, file, asBinary ) );
-
-            }
-
-        );
-
-    }else{
-
-        callback( NGL.decompress( data, file, asBinary ) );
-
-    }
+    return decompressedData;
 
 };
 

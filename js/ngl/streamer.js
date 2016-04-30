@@ -49,10 +49,7 @@ NGL.Streamer.prototype = {
 
             if( this.compressed ){
 
-                this.data = NGL.decompress(
-                    // TODO find better way to specify compression
-                    data, "foo." + this.compressed, true
-                );
+                this.data = NGL.decompress( data );
 
             }else{
 
