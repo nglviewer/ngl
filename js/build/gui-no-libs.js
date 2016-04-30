@@ -3489,6 +3489,10 @@ NGL.MenubarFileWidget = function( stage ){
         stage.defaultFileParams.dontAutoBond = e.target.checked;
     }
 
+    function onUseWorkerChange( e ){
+        stage.defaultFileParams.useWorker = e.target.checked;
+    }
+
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -3504,6 +3508,7 @@ NGL.MenubarFileWidget = function( stage ){
         createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
         createCheckbox( 'reorderAtoms', false, onReorderAtomsChange ),
         createCheckbox( 'dontAutoBond', false, onDontAutoBondChange ),
+        createCheckbox( 'useWorker', false, onUseWorkerChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),

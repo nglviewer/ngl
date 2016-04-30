@@ -585,9 +585,6 @@ if( typeof importScripts !== 'function' ){
         var debug = NGL.GET( "debug" );
         if( debug !== undefined ) NGL.debug = NGL.boolean( debug );
 
-        var useWorker = NGL.GET( "useWorker" );
-        if( useWorker !== undefined ) NGL.useWorker = NGL.boolean( useWorker );
-
     } )();
 
 }
@@ -1187,45 +1184,6 @@ NGL.fromJSON = function( input ){
 };
 
 
-NGL.processArray = function( array, fn, callback, chunkSize ){
-
-    var n = array.length;
-    chunkSize = chunkSize !== undefined ? chunkSize : 1000000;
-
-    if( typeof importScripts === 'function' || chunkSize >= n ){
-
-        // no chunking required when inside a web worker
-        fn( 0, n, array );
-        callback();
-
-    }else{
-
-        var _i = 0;
-        var _step = chunkSize;
-        var _n = Math.min( _step, n );
-
-        var fn2 = function(){
-            var stop = fn( _i, _n, array );
-            if( stop ){
-                _i = n;
-            }else{
-                _i += _step;
-                _n = Math.min( _n + _step, n );
-            }
-            if( _i >= n ){
-                callback();
-            }else{
-                setTimeout( fn2 );
-            }
-        };
-
-        fn2();
-
-    }
-
-};
-
-
 NGL.throttle = function( func, wait, options ){
 
     // from http://underscorejs.org/docs/underscore.html
@@ -1383,110 +1341,26 @@ NGL.Uint8ToLines = function( u8a, chunkSize, newline ){
 
 // Decompress
 
-NGL.decompress = function( data, file, asBinary, callback ){
+NGL.decompress = function( data ){
 
-    var binData, decompressedData;
-    var ext = NGL.getFileInfo( file ).compressed;
+    var decompressedData;
 
-    NGL.time( "NGL.decompress " + ext );
+    NGL.time( "NGL.decompress" );
 
     if( data instanceof ArrayBuffer ){
-
         data = new Uint8Array( data );
-
     }
 
-    if( ext === "gz" ){
-
-        try{
-            binData = pako.ungzip( data );
-        }catch( e ){
-            if( NGL.debug ) NGL.warn( e );
-            // assume it is already uncompressed
-            binData = data;
-        }
-
-    }else{
-
-        NGL.warn( "no decompression method available for '" + ext + "'" );
-        decompressedData = data;
-
+    try{
+        decompressedData = pako.ungzip( data );
+    }catch( e ){
+        if( NGL.debug ) NGL.warn( e );
+        decompressedData = data;  // assume it is already uncompressed
     }
 
-    if( !asBinary && decompressedData === undefined ){
+    NGL.timeEnd( "NGL.decompress" );
 
-        decompressedData = NGL.Uint8ToString( binData );
-
-    }
-
-    NGL.timeEnd( "NGL.decompress " + ext );
-
-    var returnData = asBinary ? binData : decompressedData;
-
-    if( typeof callback === "function" ){
-
-        callback( returnData );
-
-    }
-
-    return returnData;
-
-};
-
-
-NGL.WorkerRegistry.add( "decompress", function( e, callback ){
-
-    var d = e.data;
-
-    var value = NGL.decompress( d.data, d.file, d.asBinary );
-    var transferable = [];
-
-    if( d.asBinary ){
-        transferable.push( value.buffer );
-    }
-
-    callback( value, transferable );
-
-} );
-
-
-NGL.decompressWorker = function( data, file, asBinary, callback ){
-
-    if( NGL.useWorker && typeof Worker !== "undefined" &&
-        typeof importScripts !== 'function'
-    ){
-
-        var worker = new NGL.Worker( "decompress" ).post(
-
-            { data: data, file: file, asBinary: asBinary },
-
-            [ data.buffer ? data.buffer : data ],
-
-            function( e ){
-
-                worker.terminate();
-                callback( e.data );
-
-            },
-
-            function( e ){
-
-                console.warn(
-                    "NGL.decompressWorker error - trying without worker", e
-                );
-                worker.terminate();
-
-                NGL.decompress( data, file, asBinary, callback );
-
-            }
-
-        );
-
-    }else{
-
-        NGL.decompress( data, file, asBinary, callback );
-
-    }
+    return decompressedData;
 
 };
 
@@ -2414,7 +2288,8 @@ NGL.AtomProxy.prototype = {
         if( taa.altloc && aaa.altloc ){
             var ta = taa.altloc[ ti ];  // use Uint8 value to compare
             var aa = aaa.altloc[ ai ];  // no need to convert to char
-            if( !( ta === 0 || aa === 0 || ( ta === aa ) ) ) return false;
+            // 0 is the Null character, 32 is the space character
+            if( !( ta === 0 || aa === 0 || ta === 32 || aa === 32 || ( ta === aa ) ) ) return false;
         }
 
         var x = taa.x[ ti ] - aaa.x[ ai ];
@@ -17844,9 +17719,7 @@ NGL.Volume.prototype = {
 
         //
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             if( this.workerPool === undefined ){
                 this.workerPool = new NGL.WorkerPool( "surf", 2 );
@@ -19709,9 +19582,7 @@ NGL.MolecularSurface.prototype = {
 
         var p = Object.assign( {}, params );
 
-        if( ( p.useWorker || NGL.useWorker ) && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             var structure = undefined;
 
@@ -21418,36 +21289,21 @@ NGL.Streamer.prototype = {
 
             if( this.compressed ){
 
-                NGL.decompressWorker(
-
-                    // TODO find better way to specify compression
-                    data, "foo." + this.compressed, true,
-
-                    function( decompressedData ){
-
-                        this.data = decompressedData;
-                        if( typeof this.onload === "function" ){
-                            this.onload( this.data );
-                        }
-                        callback();
-
-                    }.bind( this )
-
-                );
+                this.data = NGL.decompress( data );
 
             }else{
 
                 if( this.binary && data instanceof ArrayBuffer ){
                     data = new Uint8Array( data );
                 }
-
                 this.data = data;
-                if( typeof this.onload === "function" ){
-                    this.onload( this.data );
-                }
-                callback();
 
             }
+
+            if( typeof this.onload === "function" ){
+                this.onload( this.data );
+            }
+            callback();
 
         }.bind( this ) );
 
@@ -21652,32 +21508,6 @@ NGL.Streamer.prototype = {
             callback( d.lines, chunkNo, chunkCount );
 
         }.bind( this ) );
-
-    },
-
-    eachChunkOfLinesAsync: function( callback, onfinish ){
-        console.warn("eachChunkOfLinesAsync")
-        var self = this;
-        var n = self.chunkCount();
-        var _i = 0;
-
-        function fn(){
-            ++_i;
-            NGL.processArray(
-                self.nextChunkOfLines(),
-                callback,
-                function(){
-                    if( _i >= n ){
-                        onfinish();
-                    }else{
-                        // requestAnimationFrame( fn );
-                        setTimeout( fn );
-                    }
-                }
-            );
-        }
-
-        fn();
 
     },
 
@@ -23164,9 +22994,7 @@ NGL.Parser.prototype = {
 
     parseWorker: function( callback ){
 
-        if( NGL.useWorker && typeof Worker !== "undefined" &&
-            typeof importScripts !== 'function'
-        ){
+        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
             var worker = new NGL.Worker( "parse" ).post(
 
@@ -25400,30 +25228,88 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
+        var numBonds, numAtoms, numGroups, numChains, numModels;
+        var chainsPerModel;
+
+        if( this.firstModelOnly || this.asTrajectory ){
+
+            numModels = 1;
+            numChains = sd.chainsPerModel[ 0 ];
+
+            numGroups = 0;
+            for( var i = 0, il = numChains; i < il; ++i ){
+                numGroups += sd.groupsPerChain[ i ];
+            }
+
+            numAtoms = 0;
+            for( var i = 0, il = numGroups; i < il; ++i ){
+                var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
+                numAtoms += groupData.atomNameList.length;
+            }
+
+            numBonds = sd.numBonds;
+
+            chainsPerModel = [ numChains ];
+
+        }else{
+
+            numBonds = sd.numBonds;
+            numAtoms = sd.numAtoms;
+            numGroups = sd.numGroups;
+            numChains = sd.numChains;
+            numModels = sd.numModels;
+
+            chainsPerModel = sd.chainsPerModel;
+
+        }
+
+        numBonds += numGroups;  // add numGroups to have space for polymer bonds
+
+        //
+
+        if( this.asTrajectory ){
+
+            for( var i = 0, il = sd.numModels; i < il; ++i ){
+
+                var frame = new Float32Array( numAtoms * 3 );
+                var frameAtomOffset = numAtoms * i;
+
+                for( var j = 0; j < numAtoms; ++j ){
+                    var j3 = j * 3;
+                    var offset = j + frameAtomOffset;
+                    frame[ j3     ] = sd.xCoordList[ offset ];
+                    frame[ j3 + 1 ] = sd.yCoordList[ offset ];
+                    frame[ j3 + 2 ] = sd.zCoordList[ offset ];
+                }
+
+                s.frames.push( frame );
+
+            }
+
+        }
+
         // bondStore
-        var bAtomIndex1 = new Uint32Array( sd.numBonds + sd.numGroups );  // add numGroups
-        var bAtomIndex2 = new Uint32Array( sd.numBonds + sd.numGroups );  // to have space
-        var bBondOrder = new Uint8Array( sd.numBonds + sd.numGroups );    // for polymer bonds
+        var bAtomIndex1 = new Uint32Array( numBonds );
+        var bAtomIndex2 = new Uint32Array( numBonds );
+        var bBondOrder = new Uint8Array( numBonds );
 
-        var aGroupIndex = new Uint32Array( sd.numAtoms );
+        var aGroupIndex = new Uint32Array( numAtoms );
 
-        var gChainIndex = new Uint32Array( sd.numGroups );
-        var gAtomOffset = new Uint32Array( sd.numGroups );
-        var gAtomCount = new Uint16Array( sd.numGroups );
+        var gChainIndex = new Uint32Array( numGroups );
+        var gAtomOffset = new Uint32Array( numGroups );
+        var gAtomCount = new Uint16Array( numGroups );
 
-        var cModelIndex = new Uint16Array( sd.numChains );
-        var cGroupOffset = new Uint32Array( sd.numChains );
-        var cGroupCount = new Uint32Array( sd.numChains );
+        var cModelIndex = new Uint16Array( numChains );
+        var cGroupOffset = new Uint32Array( numChains );
+        var cGroupCount = new Uint32Array( numChains );
 
-        var mChainOffset = new Uint32Array( sd.numModels );
-        var mChainCount = new Uint32Array( sd.numModels );
+        var mChainOffset = new Uint32Array( numModels );
+        var mChainCount = new Uint32Array( numModels );
 
         // set-up model-chain relations
-        var chainsPerModel = sd.chainsPerModel;
-        var modelChainCount;
         var chainOffset = 0;
-        for( var i = 0, il = sd.numModels; i < il; ++i ){
-            modelChainCount = chainsPerModel[ i ];
+        for( var i = 0, il = numModels; i < il; ++i ){
+            var modelChainCount = chainsPerModel[ i ];
             mChainOffset[ i ] = chainOffset;
             mChainCount[ i ] = modelChainCount;
             for( var j = 0; j < modelChainCount; ++j ){
@@ -25434,10 +25320,9 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
         // set-up chain-residue relations
         var groupsPerChain = sd.groupsPerChain;
-        var chainGroupCount;
         var groupOffset = 0;
-        for( var i = 0, il = sd.numChains; i < il; ++i ){
-            chainGroupCount = groupsPerChain[ i ];
+        for( var i = 0, il = numChains; i < il; ++i ){
+            var chainGroupCount = groupsPerChain[ i ];
             cGroupOffset[ i ] = groupOffset;
             cGroupCount[ i ] = chainGroupCount;
             for( var j = 0; j < chainGroupCount; ++j ){
@@ -25452,7 +25337,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         var atomOffset = 0;
         var bondOffset = 0;
 
-        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+        for( var i = 0, il = numGroups; i < il; ++i ){
 
             var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
             var groupAtomCount = groupData.atomNameList.length;
@@ -25489,9 +25374,13 @@ NGL.MmtfParser.prototype = NGL.createObject(
             }
 
             for( var i = 0, il = bondAtomList.length; i < il; i += 2 ){
-                bAtomIndex1[ bondOffset ] = bondAtomList[ i ];
-                bAtomIndex2[ bondOffset ] = bondAtomList[ i + 1 ];
-                bondOffset += 1;
+                var atomIndex1 = bondAtomList[ i ];
+                var atomIndex2 = bondAtomList[ i + 1 ];
+                if( atomIndex1 < numAtoms && atomIndex2 < numAtoms ){
+                    bAtomIndex1[ bondOffset ] = atomIndex1;
+                    bAtomIndex2[ bondOffset ] = atomIndex2;
+                    bondOffset += 1;
+                }
             }
 
         }
@@ -25499,42 +25388,42 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         s.bondStore.length = bBondOrder.length;
-        s.bondStore.count = sd.numBonds;
+        s.bondStore.count = bondOffset;
         s.bondStore.atomIndex1 = bAtomIndex1;
         s.bondStore.atomIndex2 = bAtomIndex2;
         s.bondStore.bondOrder = bBondOrder;
 
-        s.atomStore.length = sd.numAtoms;
-        s.atomStore.count = sd.numAtoms;
+        s.atomStore.length = numAtoms;
+        s.atomStore.count = numAtoms;
         s.atomStore.residueIndex = aGroupIndex;
-        s.atomStore.atomTypeId = new Uint16Array( sd.numAtoms );
-        s.atomStore.x = sd.xCoordList;
-        s.atomStore.y = sd.yCoordList;
-        s.atomStore.z = sd.zCoordList;
-        s.atomStore.serial = sd.atomIdList;
-        s.atomStore.bfactor = sd.bFactorList;
-        s.atomStore.altloc = sd.altLocList;
-        s.atomStore.occupancy = sd.occupancyList;
+        s.atomStore.atomTypeId = new Uint16Array( numAtoms );
+        s.atomStore.x = sd.xCoordList.subarray( 0, numAtoms );
+        s.atomStore.y = sd.yCoordList.subarray( 0, numAtoms );
+        s.atomStore.z = sd.zCoordList.subarray( 0, numAtoms );
+        s.atomStore.serial = sd.atomIdList.subarray( 0, numAtoms );
+        s.atomStore.bfactor = sd.bFactorList.subarray( 0, numAtoms );
+        s.atomStore.altloc = sd.altLocList.subarray( 0, numAtoms );
+        s.atomStore.occupancy = sd.occupancyList.subarray( 0, numAtoms );
 
-        s.residueStore.length = sd.numGroups;
-        s.residueStore.count = sd.numGroups;
+        s.residueStore.length = numGroups;
+        s.residueStore.count = numGroups;
         s.residueStore.chainIndex = gChainIndex;
         s.residueStore.residueTypeId = sd.groupTypeList;
         s.residueStore.atomOffset = gAtomOffset;
         s.residueStore.atomCount = gAtomCount;
-        s.residueStore.resno = sd.groupIdList;
-        s.residueStore.sstruc = sd.secStructList;
-        s.residueStore.inscode = sd.insCodeList;
+        s.residueStore.resno = sd.groupIdList.subarray( 0, numGroups );
+        s.residueStore.sstruc = sd.secStructList.subarray( 0, numGroups );
+        s.residueStore.inscode = sd.insCodeList.subarray( 0, numGroups );
 
-        s.chainStore.length = sd.numChains;
-        s.chainStore.count = sd.numChains;
+        s.chainStore.length = numChains;
+        s.chainStore.count = numChains;
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
-        s.chainStore.chainname = sd.chainNameList;
+        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains );
 
-        s.modelStore.length = sd.numModels;
-        s.modelStore.count = sd.numModels;
+        s.modelStore.length = numModels;
+        s.modelStore.count = numModels;
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
@@ -25569,7 +25458,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
             groupTypeDict[ i ] = s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
-        for( var i = 0, il = sd.numGroups; i < il; ++i ){
+        for( var i = 0, il = numGroups; i < il; ++i ){
             s.residueStore.residueTypeId[ i ] = groupTypeDict[ s.residueStore.residueTypeId[ i ] ];
         }
 
@@ -27063,7 +26952,7 @@ NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://files.rcsb.org/download/";
     // var baseUrl = "http://www.rcsb.org/pdb/files/";
-    var mmtfBaseUrl = "http://mmtf.rcsb.org/full/";
+    var mmtfBaseUrl = "http://mmtf.rcsb.org/v0/full/";
     var bbMmtfBaseUrl = "http://mmtf.rcsb.org/reduced/";
 
     this.getUrl = function( src ){
@@ -27179,7 +27068,7 @@ NGL.ParserLoader = function( src, params ){
 
     NGL.Loader.call( this, src, params );
 
-    this.noWorker = this.params.noWorker || false;
+    this.useWorker = this.params.useWorker === undefined ? false : this.params.useWorker;
 
 };
 
@@ -27230,13 +27119,13 @@ NGL.ParserLoader.prototype = NGL.createObject(
             this.streamer, this.params
         );
 
-        if( this.noWorker ){
+        if( this.useWorker ){
 
-            parser.parse( resolve );
+            parser.parseWorker( resolve );
 
         }else{
 
-            parser.parseWorker( resolve );
+            parser.parse( resolve );
 
         }
 
@@ -27302,7 +27191,7 @@ NGL.PluginLoader.prototype = NGL.createObject(
 
                 promiseList.push(
                     NGL.autoLoad( basePath + name, {
-                        ext: "text", noWorker: true
+                        ext: "text", useWorker: false
                     } )
                 );
 
@@ -32281,8 +32170,7 @@ NGL.TubeMeshBuffer = function( position, normal, binormal, tangent, color, size,
 
     var p = params || {};
 
-    this.rx = p.rx !== undefined ? p.rx : 1.5;
-    this.ry = p.ry !== undefined ? p.ry : 0.5;
+    this.aspectRatio = p.aspectRatio !== undefined ? p.aspectRatio : 1.0;
     this.radialSegments = p.radialSegments !== undefined ? p.radialSegments : 4;
     this.capped = p.capped !== undefined ? p.capped : false;
 
@@ -32335,8 +32223,7 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
     return function( data ){
 
-        var rx = this.rx;
-        var ry = this.ry;
+        var aspectRatio = this.aspectRatio;
 
         var n = this.size2;
         var n1 = n - 1;
@@ -32403,13 +32290,13 @@ NGL.TubeMeshBuffer.prototype.setAttributes = function(){
 
                 v = ( j / radialSegments ) * 2 * Math.PI;
 
-                cxArr[ j ] = rx * Math.cos( v );
-                cyArr[ j ] = ry * Math.sin( v );
+                cxArr[ j ] = aspectRatio * Math.cos( v );
+                cyArr[ j ] = Math.sin( v );
 
-                cx1Arr[ j ] = rx * Math.cos( v - 0.01 );
-                cy1Arr[ j ] = ry * Math.sin( v - 0.01 );
-                cx2Arr[ j ] = rx * Math.cos( v + 0.01 );
-                cy2Arr[ j ] = ry * Math.sin( v + 0.01 );
+                cx1Arr[ j ] = aspectRatio * Math.cos( v - 0.01 );
+                cy1Arr[ j ] = Math.sin( v - 0.01 );
+                cx2Arr[ j ] = aspectRatio * Math.cos( v + 0.01 );
+                cy2Arr[ j ] = Math.sin( v + 0.01 );
 
             }
 
@@ -35096,6 +34983,18 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
 
     },
 
+    getScale: function( polymer ){
+
+        return polymer.isCg() ? this.scale * this.aspectRatio : this.scale;
+
+    },
+
+    getAspectRatio: function( polymer ){
+
+        return polymer.isCg() ? 1.0 : this.aspectRatio;
+
+    },
+
     createData: function( sview ){
 
         var bufferList = [];
@@ -35111,7 +35010,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
             var subPos = spline.getSubdividedPosition();
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this.getColorParams() );
-            var subSize = spline.getSubdividedSize( this.radius, this.scale );
+            var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
 
             bufferList.push(
                 new NGL.TubeMeshBuffer(
@@ -35124,8 +35023,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
                     subCol.pickingColor,
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
-                        rx: polymer.isCg() ? 1.0 : this.aspectRatio,
-                        ry: 1.0,
+                        aspectRatio: this.getAspectRatio( polymer ),
                         capped: this.capped,
                         dullInterior: true
                     } )
@@ -35150,15 +35048,16 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         for( var i = 0, il = data.polymerList.length; i < il; ++i ){
 
             var bufferData = {};
-            var spline = this.getSpline( data.polymerList[ i ] );
+            var polymer = data.polymerList[ i ];
+            var spline = this.getSpline( polymer );
 
-            data.bufferList[ i ].rx = this.aspectRatio;
+            data.bufferList[ i ].aspectRatio = this.getAspectRatio( polymer );
 
             if( what[ "position" ] || what[ "radius" ] ){
 
                 var subPos = spline.getSubdividedPosition();
                 var subOri = spline.getSubdividedOrientation();
-                var subSize = spline.getSubdividedSize( this.radius, this.scale );
+                var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
 
                 bufferData[ "position" ] = subPos.position;
                 bufferData[ "normal" ] = subOri.normal;
@@ -36149,9 +36048,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         },
         volume: {
             type: "hidden"
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -36178,7 +36074,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -36203,7 +36098,6 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
                 callback( i );
             };
             info.molsurf.getSurfaceWorker( p, afterWorker );
-            // info.surface = info.molsurf.getSurface( p );
 
         }else{
 
@@ -39504,7 +39398,7 @@ NGL.Resources[ 'shader/CylinderImpostor.vert' ] = "// Open-Source PyMOL is Copyr
 
 // File:shader/CylinderImpostor.frag
 
-NGL.Resources[ 'shader/CylinderImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n//\n//  All Rights Reserved\n//\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n//\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - custom clipping\n// - three.js lighting\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform mat4 projectionMatrix;\n\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor1;\n    varying vec3 vColor2;\n    #include common\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_physical_pars_fragment\n#endif\n\nbool interior = false;\n\nfloat distSq3( vec3 v3a, vec3 v3b ){\n\n    return (\n        ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n        ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n        ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n    );\n\n}\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nvoid main(){\n\n    vec3 point = w.xyz / w.w;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            _normal = axis;\n        #else\n            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            _normal = axis;\n        #else\n            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    gl_FragDepthEXT = calcDepth( new_point );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( new_point ) > 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            if( calcClip( new_point ) > 0.0 )\n                discard;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #endif\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }\n\n    #else\n\n        vec3 vViewPosition = -new_point;\n        vec3 vNormal = _normal;\n        vec3 vColor;\n\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                vColor = vColor1;\n            }else{\n                vColor = vColor2;\n            }\n        }else{\n            if( b > 0.0 ){\n                vColor = vColor1;\n            }else{\n                vColor = vColor2;\n            }\n        }\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        #include normal_fragment\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
+NGL.Resources[ 'shader/CylinderImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\n// Open-Source PyMOL is Copyright (C) Schrodinger, LLC.\n//\n//  All Rights Reserved\n//\n//  Permission to use, copy, modify, distribute, and distribute modified\n//  versions of this software and its built-in documentation for any\n//  purpose and without fee is hereby granted, provided that the above\n//  copyright notice appears in all copies and that both the copyright\n//  notice and this permission notice appear in supporting documentation,\n//  and that the name of Schrodinger, LLC not be used in advertising or\n//  publicity pertaining to distribution of the software without specific,\n//  written prior permission.\n//\n//  SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,\n//  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN\n//  NO EVENT SHALL SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR\n//  CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS\n//  OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE\n//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE\n//  USE OR PERFORMANCE OF THIS SOFTWARE.\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - custom clipping\n// - three.js lighting\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform mat4 projectionMatrix;\n\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor1;\n    varying vec3 vColor2;\n    #include common\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_physical_pars_fragment\n#endif\n\nbool interior = false;\n\nfloat distSq3( vec3 v3a, vec3 v3b ){\n\n    return (\n        ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n        ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n        ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n    );\n\n}\n\n// round caps\n// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs\n\n// void main2(void)\n// {\n//     #ifdef PICKING\n//         gl_FragColor = vec4( vPickingColor, 1.0 );\n//     #else\n//         gl_FragColor = vec4( vColor, 1.0 );\n//     #endif\n// }\n\n// Calculate depth based on the given camera position.\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nvoid main(){\n\n    vec3 point = w.xyz / w.w;\n\n    // unpacking\n    vec3 base = base_radius.xyz;\n    float vRadius = base_radius.w;\n    vec3 end = end_b.xyz;\n    float b = end_b.w;\n\n    vec3 end_cyl = end;\n    vec3 surface_point = point;\n\n    const float ortho=0.0;\n\n    vec3 ray_target = surface_point;\n    vec3 ray_origin = vec3(0.0);\n    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\n    mat3 basis = mat3( U, V, axis );\n\n    vec3 diff = ray_target - 0.5 * (base + end_cyl);\n    vec3 P = diff * basis;\n\n    // angle (cos) between cylinder cylinder_axis and ray direction\n    float dz = dot( axis, ray_direction );\n\n    float radius2 = vRadius*vRadius;\n\n    // calculate distance to the cylinder from ray origin\n    vec3 D = vec3(dot(U, ray_direction),\n                dot(V, ray_direction),\n                dz);\n    float a0 = P.x*P.x + P.y*P.y - radius2;\n    float a1 = P.x*D.x + P.y*D.y;\n    float a2 = D.x*D.x + D.y*D.y;\n\n    // calculate a dicriminant of the above quadratic equation\n    float d = a1*a1 - a0*a2;\n    if (d < 0.0)\n        // outside of the cylinder\n        discard;\n\n    float dist = (-a1 + sqrt(d)) / a2;\n\n    // point of intersection on cylinder surface\n    vec3 new_point = ray_target + dist * ray_direction;\n\n    vec3 tmp_point = new_point - base;\n    vec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\n\n    ray_origin = mix( ray_origin, surface_point, ortho );\n\n    // test front cap\n    float cap_test = dot( new_point - base, axis );\n\n    // to calculate caps, simply check the angle between\n    // the point of intersection - cylinder end vector\n    // and a cap plane normal (which is the cylinder cylinder_axis)\n    // if the angle < 0, the point is outside of cylinder\n    // test front cap\n\n    #ifndef CAP\n        vec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\n        vec3 tmp_point2 = new_point2 - base;\n    #endif\n\n    // flat\n    if (cap_test < 0.0)\n    {\n        // ray-plane intersection\n        float dNV = dot(-axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(-axis, (base)) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if (dot(new_point - base, new_point-base) > radius2)\n            discard;\n\n        #ifdef CAP\n            _normal = axis;\n        #else\n            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    // test end cap\n    cap_test = dot((new_point - end_cyl), axis);\n\n    // flat\n    if( cap_test > 0.0 )\n    {\n        // ray-plane intersection\n        float dNV = dot(axis, ray_direction);\n        if (dNV < 0.0)\n            discard;\n        float near = dot(axis, end_cyl) / dNV;\n        new_point = ray_direction * near + ray_origin;\n        // within the cap radius?\n        if( dot(new_point - end_cyl, new_point-base) > radius2 )\n            discard;\n\n        #ifdef CAP\n            _normal = axis;\n        #else\n            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );\n        #endif\n    }\n\n    gl_FragDepthEXT = calcDepth( new_point );\n\n    #ifdef NEAR_CLIP\n        if( calcClip( new_point ) > 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            if( calcClip( new_point ) > 0.0 )\n                discard;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            dist = (-a1 - sqrt(d)) / a2;\n            new_point = ray_target + dist * ray_direction;\n            interior = true;\n            gl_FragDepthEXT = calcDepth( new_point );\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n            }\n        }\n    #endif\n\n    // this is a workaround necessary for Mac\n    // otherwise the modified fragment won't clip properly\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    #ifdef PICKING\n\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }else{\n            if( b > 0.0 ){\n                gl_FragColor = vec4( vPickingColor, objectId );\n            }else{\n                gl_FragColor = vec4( vPickingColor2, objectId );\n            }\n        }\n\n    #else\n\n        vec3 vViewPosition = -new_point;\n        vec3 vNormal = _normal;\n        vec3 vColor;\n\n        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\n            if( b < 0.0 ){\n                vColor = vColor1;\n            }else{\n                vColor = vColor2;\n            }\n        }else{\n            if( b > 0.0 ){\n                vColor = vColor1;\n            }else{\n                vColor = vColor2;\n            }\n        }\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n\n        vec3 normal = normalize( vNormal );  // don't use #include normal_fragment\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
 
 // File:shader/HyperballStickImpostor.vert
 
@@ -39512,7 +39406,7 @@ NGL.Resources[ 'shader/HyperballStickImpostor.vert' ] = "// Copyright (C) 2010-2
 
 // File:shader/HyperballStickImpostor.frag
 
-NGL.Resources[ 'shader/HyperballStickImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\n// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n//\n// License: CeCILL-C license (http://www.cecill.info/)\n//\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - custom clipping\n// - three.js lighting\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\nuniform mat4 projectionMatrix;\n\nvarying mat4 matrix_near;\nvarying vec4 prime1;\nvarying vec4 prime2;\nvarying float vRadius;\nvarying float vRadius2;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor1;\n    varying vec3 vColor2;\n    #include common\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_physical_pars_fragment\n#endif\n\nbool interior = false;\n\nfloat calcClip( vec4 cameraPos ){\n    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return calcClip( vec4( cameraPos, 1.0 ) );\n}\n\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t2 =(-b+sqrt(delta))/a;\n\n    return r.origin+t2*r.direction;\n}\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\nvoid main(){\n\n    float radius = max( vRadius, vRadius2 );\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    // vec3 _normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n    vec3 _normal = ( modelViewMatrixInverseTranspose * M2 ).xyz;\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    #ifdef NEAR_CLIP\n        if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\n            M = isect_surf2(ray, mat);\n            if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\n                discard;\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #endif\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n\n        if( distance_ratio > 0.5 ){\n            gl_FragColor = vec4( vPickingColor, objectId );\n        }else{\n            gl_FragColor = vec4( vPickingColor2, objectId );\n        }\n\n    #else\n\n        vec3 vViewPosition = -( modelViewMatrix * vec4( M, 1.0 ) ).xyz;\n        vec3 vNormal = _normal;\n        vec3 vColor;\n\n        if( distance_ratio>0.5 ){\n            vColor = vColor1;\n        }else{\n            vColor = vColor2;\n        }\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.01 ), vec3( 0.01 ), vec3( 0.01 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n        //#include normal_fragment\n        vec3 normal = normalize( vNormal );\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
+NGL.Resources[ 'shader/HyperballStickImpostor.frag' ] = "#define STANDARD\n#define IMPOSTOR\n\n// Copyright (C) 2010-2011 by\n// Laboratoire de Biochimie Theorique (CNRS),\n// Laboratoire d'Informatique Fondamentale d'Orleans (Universite d'Orleans), (INRIA) and\n// Departement des Sciences de la Simulation et de l'Information (CEA).\n//\n// License: CeCILL-C license (http://www.cecill.info/)\n//\n// Contact: Marc Baaden\n// E-mail: baaden@smplinux.de\n// Webpage: http://hyperballs.sourceforge.net\n\n// Contributions by Alexander Rose\n// - ported to WebGL\n// - dual color\n// - picking color\n// - custom clipping\n// - three.js lighting\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform float shrink;\nuniform mat4 modelViewMatrix;\nuniform mat4 modelViewProjectionMatrix;\nuniform mat4 modelViewMatrixInverseTranspose;\nuniform mat4 projectionMatrix;\n\nvarying mat4 matrix_near;\nvarying vec4 prime1;\nvarying vec4 prime2;\nvarying float vRadius;\nvarying float vRadius2;\n\n#ifdef PICKING\n    uniform float objectId;\n    varying vec3 vPickingColor;\n    varying vec3 vPickingColor2;\n#else\n    varying vec3 vColor1;\n    varying vec3 vColor2;\n    #include common\n    #include fog_pars_fragment\n    #include bsdfs\n    #include ambient_pars\n    #include lights_pars\n    #include lights_physical_pars_fragment\n#endif\n\nbool interior = false;\n\nfloat calcClip( vec4 cameraPos ){\n    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );\n}\n\nfloat calcClip( vec3 cameraPos ){\n    return calcClip( vec4( cameraPos, 1.0 ) );\n}\n\nfloat calcDepth( in vec3 cameraPos ){\n    vec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\n    return 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\n\nstruct Ray {\n    vec3 origin ;\n    vec3 direction ;\n};\n\nbool cutoff_plane (vec3 M, vec3 cutoff, vec3 x3){\n    float a = x3.x;\n    float b = x3.y;\n    float c = x3.z;\n    float d = -x3.x*cutoff.x-x3.y*cutoff.y-x3.z*cutoff.z;\n    float l = a*M.x+b*M.y+c*M.z+d;\n    if (l<0.0) {return true;}\n    else{return false;}\n}\n\nvec3 isect_surf(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t1 =(-b-sqrt(delta))/a;\n\n    // Second solution not necessary if you don't want\n    // to see inside spheres and cylinders, save some fps\n    //float t2 = (-b+sqrt(delta)) / a  ;\n    //float t =(t1<t2) ? t1 : t2;\n\n    return r.origin+t1*r.direction;\n}\n\nvec3 isect_surf2(Ray r, mat4 matrix_coef){\n    vec4 direction = vec4(r.direction, 0.0);\n    vec4 origin = vec4(r.origin, 1.0);\n    float a = dot(direction,(matrix_coef*direction));\n    float b = dot(origin,(matrix_coef*direction));\n    float c = dot(origin,(matrix_coef*origin));\n    float delta =b*b-a*c;\n    gl_FragColor.a = 1.0;\n    if (delta<0.0){\n        discard;\n        // gl_FragColor.a = 0.5;\n    }\n    float t2 =(-b+sqrt(delta))/a;\n\n    return r.origin+t2*r.direction;\n}\n\nRay primary_ray(vec4 near1, vec4 far1){\n    vec3 near=near1.xyz/near1.w;\n    vec3 far=far1.xyz/far1.w;\n    return Ray(near,far-near);\n}\n\nfloat update_z_buffer(vec3 M, mat4 ModelViewP){\n    float  depth1;\n    vec4 Ms=(ModelViewP*vec4(M,1.0));\n    return depth1=(1.0+Ms.z/Ms.w)/2.0;\n}\n\nvoid main(){\n\n    float radius = max( vRadius, vRadius2 );\n\n    vec4 i_near, i_far, focus;\n    vec3 e3, e1, e1_temp, e2;\n\n    i_near = vec4(matrix_near[0][0],matrix_near[0][1],matrix_near[0][2],matrix_near[0][3]);\n    i_far  = vec4(matrix_near[1][0],matrix_near[1][1],matrix_near[1][2],matrix_near[1][3]);\n    focus = vec4(matrix_near[2][0],matrix_near[2][1],matrix_near[2][2],matrix_near[2][3]);\n    e3 = vec3(matrix_near[3][0],matrix_near[3][1],matrix_near[3][2]);\n\n    e1.x = 1.0;\n    e1.y = 1.0;\n    e1.z = ( (e3.x*focus.x + e3.y*focus.y + e3.z*focus.z) - e1.x*e3.x - e1.y*e3.y)/e3.z;\n    e1_temp = e1 - focus.xyz;\n    e1 = normalize(e1_temp);\n\n    e2 = normalize(cross(e1,e3));\n\n    vec4 equation = focus;\n\n    float shrinkfactor = shrink;\n    float t1 = -1.0/(1.0-shrinkfactor);\n    float t2 = 1.0/(shrinkfactor);\n    // float t3 = 2.0/(shrinkfactor);\n\n    vec4 colonne1, colonne2, colonne3, colonne4;\n    mat4 mat;\n\n    vec3 equation1 = vec3(t2,t2,t1);\n\n    float A1 = - e1.x*equation.x - e1.y*equation.y - e1.z*equation.z;\n    float A2 = - e2.x*equation.x - e2.y*equation.y - e2.z*equation.z;\n    float A3 = - e3.x*equation.x - e3.y*equation.y - e3.z*equation.z;\n\n    float A11 = equation1.x*e1.x*e1.x +  equation1.y*e2.x*e2.x + equation1.z*e3.x*e3.x;\n    float A21 = equation1.x*e1.x*e1.y +  equation1.y*e2.x*e2.y + equation1.z*e3.x*e3.y;\n    float A31 = equation1.x*e1.x*e1.z +  equation1.y*e2.x*e2.z + equation1.z*e3.x*e3.z;\n    float A41 = equation1.x*e1.x*A1   +  equation1.y*e2.x*A2   + equation1.z*e3.x*A3;\n\n    float A22 = equation1.x*e1.y*e1.y +  equation1.y*e2.y*e2.y + equation1.z*e3.y*e3.y;\n    float A32 = equation1.x*e1.y*e1.z +  equation1.y*e2.y*e2.z + equation1.z*e3.y*e3.z;\n    float A42 = equation1.x*e1.y*A1   +  equation1.y*e2.y*A2   + equation1.z*e3.y*A3;\n\n    float A33 = equation1.x*e1.z*e1.z +  equation1.y*e2.z*e2.z + equation1.z*e3.z*e3.z;\n    float A43 = equation1.x*e1.z*A1   +  equation1.y*e2.z*A2   + equation1.z*e3.z*A3;\n\n    float A44 = equation1.x*A1*A1 +  equation1.y*A2*A2 + equation1.z*A3*A3 - equation.w;\n\n    colonne1 = vec4(A11,A21,A31,A41);\n    colonne2 = vec4(A21,A22,A32,A42);\n    colonne3 = vec4(A31,A32,A33,A43);\n    colonne4 = vec4(A41,A42,A43,A44);\n\n    mat = mat4(colonne1,colonne2,colonne3,colonne4);\n\n    // Ray calculation using near and far\n    Ray ray = primary_ray(i_near,i_far) ;\n\n    // Intersection between ray and surface for each pixel\n    vec3 M;\n    M = isect_surf(ray, mat);\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    // Transform normal to model space to view-space\n    vec4 M1 = vec4(M,1.0);\n    vec4 M2 =  mat*M1;\n    // vec3 _normal = normalize( ( modelViewMatrixInverseTranspose * M2 ).xyz );\n    vec3 _normal = ( modelViewMatrixInverseTranspose * M2 ).xyz;\n\n    // Recalculate the depth in function of the new pixel position\n    gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n\n    #ifdef NEAR_CLIP\n        if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 ){\n            M = isect_surf2(ray, mat);\n            if( calcClip( modelViewMatrix * vec4( M, 1.0 ) ) > 0.0 )\n                discard;\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );\n            }\n        }else if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix);\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #else\n        if( gl_FragDepthEXT <= 0.0 ){\n            M = isect_surf2(ray, mat);\n            interior = true;\n            gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;\n            if( gl_FragDepthEXT >= 0.0 ){\n                gl_FragDepthEXT = 0.0 + ( 0.0000001 / radius );\n            }\n        }\n    #endif\n\n    // cut the extremities of bonds to superimpose bond and spheres surfaces\n    if (cutoff_plane(M, prime1.xyz, -e3) || cutoff_plane(M, prime2.xyz, e3)){ discard; }\n\n    if (gl_FragDepthEXT < 0.0)\n        discard;\n    if (gl_FragDepthEXT > 1.0)\n        discard;\n\n    // Mix the color bond in function of the two atom colors\n    float distance_ratio = ((M.x-prime2.x)*e3.x + (M.y-prime2.y)*e3.y +(M.z-prime2.z)*e3.z) /\n                                distance(prime2.xyz,prime1.xyz);\n\n    #ifdef PICKING\n\n        if( distance_ratio > 0.5 ){\n            gl_FragColor = vec4( vPickingColor, objectId );\n        }else{\n            gl_FragColor = vec4( vPickingColor2, objectId );\n        }\n\n    #else\n\n        vec3 vViewPosition = -( modelViewMatrix * vec4( M, 1.0 ) ).xyz;\n        vec3 vNormal = _normal;\n        vec3 vColor;\n\n        if( distance_ratio>0.5 ){\n            vColor = vColor1;\n        }else{\n            vColor = vColor2;\n        }\n\n        vec4 diffuseColor = vec4( diffuse, opacity );\n        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n        vec3 totalEmissiveLight = emissive;\n\n        #include color_fragment\n        #include roughnessmap_fragment\n        #include metalnessmap_fragment\n\n        vec3 normal = normalize( vNormal );  // don't use #include normal_fragment\n        if( interior ){\n            normal = vec3( 0.0, 0.0, 0.4 );\n        }\n\n        #include lights_physical_fragment\n        #include lights_template\n\n        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\n\n        gl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\n        #include premultiplied_alpha_fragment\n        #include tonemapping_fragment\n        #include encodings_fragment\n        #include fog_fragment\n\n    #endif\n\n}";
 
 // File:shader/Line.vert
 
