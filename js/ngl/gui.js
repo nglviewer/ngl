@@ -257,9 +257,7 @@ NGL.ViewportWidget = function( stage ){
         }
         var queue = new NGL.Queue( fn, e.dataTransfer.files );
 
-
     }, false );
-
 
     return container;
 

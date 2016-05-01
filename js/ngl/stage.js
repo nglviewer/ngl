@@ -60,7 +60,6 @@ NGL.Stage = function( eid, params ){
     this.viewer = new NGL.Viewer( eid );
     if( !this.viewer.renderer ) return;
     this.setParameters( p );
-    this.initFileDragDrop();
     this.viewer.animate();
     this.pickingControls = new NGL.PickingControls( this.viewer, this );
 
@@ -293,35 +292,6 @@ NGL.Stage.prototype = {
             this.centerView();
 
         }
-
-    },
-
-    initFileDragDrop: function(){
-
-        this.viewer.container.addEventListener( 'dragover', function( e ){
-
-            e.stopPropagation();
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-
-        }, false );
-
-        this.viewer.container.addEventListener( 'drop', function( e ){
-
-            e.stopPropagation();
-            e.preventDefault();
-
-            var fileList = e.dataTransfer.files;
-            var n = fileList.length;
-
-            for( var i=0; i<n; ++i ){
-
-                // TODO loading params (e.g. set in GUI)
-                this.loadFile( fileList[ i ] );
-
-            }
-
-        }.bind( this ), false );
 
     },
 
