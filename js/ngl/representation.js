@@ -2837,6 +2837,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         },
         volume: {
             type: "hidden"
+        },
+        useWorker: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -2863,6 +2866,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -2882,11 +2886,16 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             info.molsurf = new NGL.MolecularSurface( sview );
 
             var p = this.getSurfaceParams();
-            var afterWorker = function( surface ){
+            var onSurfaceFinish = function( surface ){
                 info.surface = surface;
                 callback( i );
             };
-            info.molsurf.getSurfaceWorker( p, afterWorker );
+
+            if( this.useWorker ){
+                info.molsurf.getSurfaceWorker( p, onSurfaceFinish );
+            }else{
+                onSurfaceFinish( info.molsurf.getSurface( p ) );
+            }
 
         }else{
 
@@ -3815,6 +3824,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         },
         boxSize: {
             type: "integer", precision: 1, max: 100, min: 0
+        },
+        useWorker: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -3831,6 +3843,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -3875,13 +3888,23 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                this.volume.getSurfaceWorker(
-                    isolevel, this.smooth, this.boxCenter, this.boxSize,
-                    function( surface ){
-                        this.surface = surface;
-                        callback();
-                    }.bind( this )
-                );
+                var onSurfaceFinish = function( surface ){
+                    this.surface = surface;
+                    callback();
+                }.bind( this );
+
+                if( this.useWorker ){
+                    this.volume.getSurfaceWorker(
+                        isolevel, this.smooth, this.boxCenter, this.boxSize,
+                        onSurfaceFinish
+                    );
+                }else{
+                    onSurfaceFinish(
+                        this.volume.getSurface(
+                            isolevel, this.smooth, this.boxCenter, this.boxSize
+                        )
+                    );
+                }
             }else{
                 callback();
             }
