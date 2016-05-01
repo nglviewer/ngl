@@ -2927,7 +2927,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             callback()
         }.bind( this );
 
-        var name = this.assembly || this.structure.defaultAssembly;
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
