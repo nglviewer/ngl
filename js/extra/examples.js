@@ -432,10 +432,17 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1RB8.pdb" ).then( function( o ){
 
-            o.addRepresentation( "cartoon", { subdiv: 3, radialSegments: 6 } );
-            o.addRepresentation( "licorice" );
-            // o.addRepresentation( "hyperball" );
-            o.centerView();
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                assembly: "BU1",
+                surfaceType: "sas",
+                probeRadius: 0.1,
+                scaleFactor: 0.2,
+                colorScheme: "atomindex",
+                colorScale: "RdYlBu",
+                useWorker: false
+            } );
+            stage.centerView();
 
         } );
 
@@ -445,25 +452,17 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1M4X.cif" ).then( function( o ){
 
-            o.addRepresentation( "ribbon", {
-                quality: "custom",
-                subdiv: 4,
-                colorScheme: "chainindex",
-                flatShaded: true,
-                scale: 4
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                assembly: "BU1",
+                surfaceType: "sas",
+                probeRadius: 0.1,
+                scaleFactor: 0.05,
+                colorScheme: "atomindex",
+                colorScale: "PiYG",
+                useWorker: false
             } );
-
-            o.addRepresentation( "spacefill", {
-                scale: 1.5,
-                sele: "CYS"
-            } );
-
-            stage.setOrientation( [
-                [106.13855387207457,168.29837433056917,39.41757017002202],
-                [-0.08524916187307008,-0.1476908817966636,0.9853527205189371],
-                [-370.2980687321651,-677.1146027986514,-106.14535249654159],
-                [5.201234901226486,-3.7482553715267244,4.897403343961378]
-            ] );
+            stage.centerView();
 
         } );
 
