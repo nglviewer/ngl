@@ -834,9 +834,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             atomData.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                dullInterior: true
-            } ),
-            this.disableImpostor
+                dullInterior: true,
+                disableImpostor: this.disableImpostor
+            } )
         );
 
         return {
@@ -1253,8 +1253,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                     radiusSegments: this.radiusSegments,
                     disableImpostor: this.disableImpostor,
                     dullInterior: true
-                } ),
-                this.disableImpostor
+                } )
             );
 
             bufferList.push( cylinderBuffer );
@@ -1406,8 +1405,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        this.linewidth = p.linewidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -3475,9 +3472,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     scope.getBufferParams( {
                         sphereDetail: scope.sphereDetail,
-                        dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                        dullInterior: true,
+                        disableImpostor: scope.disableImpostor
+                    } )
                 );
 
                 scope.bufferList.push( sphereBuffer );
@@ -3498,9 +3495,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
+                        disableImpostor: scope.disableImpostor,
                         dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                    } )
 
                 );
 
