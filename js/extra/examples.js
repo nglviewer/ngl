@@ -38,7 +38,9 @@ NGL.ExampleRegistry.addDict( {
                 sele: "296 or RET", scale: 3, aspectRatio: 1.5
             } );
             o.addRepresentation( "surface", {
-                sele: "RET", opacity: 0.4
+                sele: "RET",
+                opacity: 0.4,
+                useWorker: false
             } );
             o.addRepresentation( "licorice", {
                 sele: "( ( 135 or 223 ) and sidechainAttached ) or ( 347 )",
@@ -46,6 +48,7 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.addRepresentation( "contact", {
                 sele: "135 or 223 or 347",
+                contactType: "polar",
                 scale: 0.7
             } );
             o.addRepresentation( "label", {
@@ -218,18 +221,6 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://pbc.gro" ).then( function( o ){
 
             // FIXME pbc centering and removal for files other then trajectories
-
-            /*var maxX = o.structure.box[ 0 ];
-            var maxY = o.structure.box[ 1 ];
-            var maxZ = o.structure.box[ 2 ];
-
-            o.structure.eachAtom( function( a ){
-
-                a.x = ( a.x + maxX ) % maxX;
-                a.y = ( a.y + maxY ) % maxY;
-                a.z = ( a.z + maxZ ) % maxZ;
-
-            } );*/
 
             o.addRepresentation( "cartoon", { sele: "backbone" } );
             o.addRepresentation( "spacefill", { sele: "backbone" } );
