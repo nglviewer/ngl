@@ -3654,7 +3654,6 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         if( sd.bioAssemblyList ){
-            var cp = s.getChainProxy();
             sd.bioAssemblyList.forEach( function( bioAssem, k ){
                 var tDict = {};  // assembly parts hashed by transformation matrix
                 bioAssem.transformList.forEach( function( t, tk ){
@@ -3688,9 +3687,17 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         var matrixList = cDict[ ck ];
                         var chainList = ck.split( "," );
                         var chainDict = {};
-                        chainList.forEach( function( chainIndex, i ){
-                            cp.index = parseInt( chainIndex );
-                            chainDict[ cp.chainname ] = true;
+                        chainList.forEach( function( chainIndex ){
+                            var chainname = "";
+                            for( var k = 0; k < 4; ++k ){
+                                var code = sd.chainNameList[ chainIndex * 4 + k ];
+                                if( code ){
+                                    chainname += String.fromCharCode( code );
+                                }else{
+                                    break;
+                                }
+                            }
+                            chainDict[ chainname ] = true;
                         } );
                         assembly.addPart( matrixList, Object.keys( chainDict ) );
                     }
