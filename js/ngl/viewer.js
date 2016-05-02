@@ -1332,9 +1332,19 @@ NGL.Viewer.prototype = {
 
     },
 
-    getImage: function( type, quality ){
+    getImage: function(){
 
-        return this.renderer.domElement.toBlob( type, quality );
+        var renderer = this.renderer;
+
+        return new Promise( function( resolve, reject ){
+            renderer.domElement.toBlob( resolve, "image/png" );
+        } );
+
+    },
+
+    makeImage: function( params ){
+
+        return NGL.makeImage( this, params );
 
     },
 
@@ -1603,12 +1613,6 @@ NGL.Viewer.prototype = {
         }
 
         requestAnimationFrame( this._animate );
-
-    },
-
-    screenshot: function( params ){
-
-        NGL.screenshot( this, params );
 
     },
 
@@ -2356,7 +2360,7 @@ NGL.TiledRenderer.prototype = {
 };
 
 
-NGL.screenshot = function( viewer, params ){
+NGL.makeImage = function( viewer, params ){
 
     var p = params || {};
 
@@ -2395,22 +2399,18 @@ NGL.screenshot = function( viewer, params ){
         } );
     }
 
-    var tiledRenderer = new NGL.TiledRenderer(
-        renderer, camera, viewer,
-        {
-            factor: factor,
-            antialias: antialias,
-            onProgress: onProgress,
-            onFinish: onFinish
+    function trimCanvas( canvas ){
+        if( trim ){
+            var bg = backgroundColor;
+            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
+            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
+            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
+            var a = ( transparent ? 0 : 255 ) | 0;
+            return NGL.trimCanvas( canvas, r, g, b, a );
+        }else{
+            return canvas;
         }
-    );
-
-    renderer.setClearAlpha( transparent ? 0 : 1 );
-    setLineWidthAndPixelSize();
-    tiledRenderer.renderAsync();
-    // tiledRenderer.render();
-
-    //
+    }
 
     function onProgress( i, n, finished ){
         if( typeof p.onProgress === "function" ){
@@ -2418,37 +2418,37 @@ NGL.screenshot = function( viewer, params ){
         }
     }
 
-    function onFinish( i, n ){
-        save( n );
-        renderer.setClearAlpha( originalClearAlpha );
-        setLineWidthAndPixelSize( true );
-        viewer.requestRender();
-    }
+    return new Promise( function( resolve, reject ){
 
-    function save( n ){
-
-        var canvas;
-
-        if( trim ){
-            var bg = backgroundColor;
-            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
-            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
-            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
-            var a = ( transparent ? 0 : 255 ) | 0;
-            canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
-        }else{
-            canvas = tiledRenderer.canvas;
-        }
-
-        canvas.toBlob(
-            function( blob ){
-                NGL.download( blob, "screenshot.png" );
-                onProgress( n, n, true );
-                tiledRenderer.dispose();
-            },
-            "image/png"
+        var tiledRenderer = new NGL.TiledRenderer(
+            renderer, camera, viewer,
+            {
+                factor: factor,
+                antialias: antialias,
+                onProgress: onProgress,
+                onFinish: onFinish
+            }
         );
 
-    }
+        renderer.setClearAlpha( transparent ? 0 : 1 );
+        setLineWidthAndPixelSize();
+        tiledRenderer.renderAsync();
+
+        function onFinish( i, n ){
+            var canvas = trimCanvas( tiledRenderer.canvas );
+            canvas.toBlob(
+                function( blob ){
+                    renderer.setClearAlpha( originalClearAlpha );
+                    setLineWidthAndPixelSize( true );
+                    viewer.requestRender();
+                    tiledRenderer.dispose();
+                    onProgress( n, n, true );
+                    resolve( blob );
+                },
+                "image/png"
+            );
+        }
+
+    } );
 
 };

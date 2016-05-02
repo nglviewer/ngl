@@ -439,11 +439,13 @@ NGL.MenubarFileWidget = function( stage ){
 
     function onScreenshotOptionClick () {
 
-        stage.viewer.screenshot( {
+        stage.makeImage( {
             factor: 1,
             antialias: true,
             trim: false,
             transparent: false
+        } ).then( function( blob ){
+            NGL.download( blob, "screenshot.png" );
         } );
 
     }
@@ -921,9 +923,7 @@ NGL.ExportImageWidget = function( stage ){
             .setMarginLeft( "20px" )
             .setFloat( "right" )
             .onClick( function(){
-
                 container.setDisplay( "none" );
-
             } )
     );
 
@@ -955,33 +955,31 @@ NGL.ExportImageWidget = function( stage ){
 
             exportButton.setDisplay( "none" );
             progress.setDisplay( "inline-block" );
+            function onProgress( i, n, finished ){
+                if( i === 1 ){
+                    progress.setMax( n );
+                }
+                if( i >= n ){
+                    progress.setIndeterminate();
+                }else{
+                    progress.setValue( i );
+                }
+                if( finished ){
+                    progress.setDisplay( "none" );
+                    exportButton.setDisplay( "inline-block" );
+                }
+            }
 
             setTimeout( function(){
-
-                stage.exportImage(
-
-                    parseInt( factorSelect.getValue() ),
-                    antialiasCheckbox.getValue(),
-                    trimCheckbox.getValue(),
-                    transparentCheckbox.getValue(),
-
-                    function( i, n, finished ){
-                        if( i === 1 ){
-                            progress.setMax( n );
-                        }
-                        if( i >= n ){
-                            progress.setIndeterminate();
-                        }else{
-                            progress.setValue( i );
-                        }
-                        if( finished ){
-                            progress.setDisplay( "none" );
-                            exportButton.setDisplay( "inline-block" );
-                        }
-                    }
-
-                );
-
+                stage.makeImage( {
+                    factor: parseInt( factorSelect.getValue() ),
+                    antialias: antialiasCheckbox.getValue(),
+                    trim: trimCheckbox.getValue(),
+                    transparent: transparentCheckbox.getValue(),
+                    onProgress: onProgress
+                } ).then( function( blob ){
+                    NGL.download( blob, "screenshot.png" );
+                } );
             }, 50 );
 
         } );

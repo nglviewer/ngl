@@ -531,44 +531,24 @@ NGL.Stage.prototype = {
 
     },
 
-    exportImage: function( factor, antialias, trim, transparent, onProgress ){
+    makeImage: function( params ){
 
-        var reprParamsList = [];
+        var viewer = this.viewer;
+        var tasks = this.tasks;
 
-        function makeScreenshot(){
+        return new Promise( function( resolve, reject ){
 
-            this.viewer.screenshot( {
+            function makeImage(){
+                viewer.makeImage( params ).then( function( blob ){
+                    resolve( blob )
+                } ).catch( function( e ){
+                    reject( e );
+                } );
+            }
 
-                factor: factor,
-                antialias: antialias,
-                trim: trim,
-                transparent: transparent,
+            tasks.onZeroOnce( makeImage );
 
-                onProgress: function( i, n, finished ){
-
-                    if( typeof onProgress === "function" ){
-
-                        onProgress( i, n, finished );
-
-                    }
-
-                    if( finished ){
-
-                        reprParamsList.forEach( function( d ){
-
-                            d.repr.setParameters( d.params );
-
-                        } );
-
-                    }
-
-                }
-
-            } );
-
-        }
-
-        this.tasks.onZeroOnce( makeScreenshot, this );
+        } );
 
     },
 
