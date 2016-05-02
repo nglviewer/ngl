@@ -74,5 +74,5 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/rcsb/mmtf-javascript/compare/v0.6.0...HEAD
-[v0.6.0]: https://github.com/rcsb/mmtf-javascript/compare/v0.5.0...v0.6.0
+[Unreleased]: https://github.com/arose/ngl/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/arose/ngl/compare/v0.5.0...v0.6.0
