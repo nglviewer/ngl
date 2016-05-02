@@ -2009,15 +2009,13 @@ NGL.Structure.prototype = {
     getSequence: function(){
 
         var seq = [];
+        var rp = this.getResidueProxy();
 
-        // FIXME nucleic support
-
-        this.eachResidue( function( r ){
-
-            if( r.getAtomByName( "CA" ) ){
-                seq.push( r.getResname1() );
+        this.eachSelectedAtom( function( ap ){
+            rp.index = ap.residueIndex;
+            if( ap.index === rp.traceAtomIndex ){
+                seq.push( rp.getResname1() );
             }
-
         } );
 
         return seq;

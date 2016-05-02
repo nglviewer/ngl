@@ -1159,7 +1159,8 @@ NGL.ResidueProxy.prototype = {
     },
 
     getResname1: function(){
-        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
+        // FIXME nucleic support
+        return NGL.AA1[ this.resname.toUpperCase() ] || 'X';
     },
 
     getBackboneType: function( position ){
