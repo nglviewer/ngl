@@ -928,7 +928,7 @@ NGL.BfactorColorMaker = function( params ){
             selection = new NGL.Selection( params.sele );
         }
 
-        this.structure.eachAtom( function( a ){
+        this.structure.eachSelectedAtom( function( a ){
             var bfactor = a.bfactor;
             min = Math.min( min, bfactor );
             max = Math.max( max, bfactor );
@@ -1517,7 +1517,7 @@ NGL.Structure.prototype = {
             if( as === undefined ){
 
                 as = new TypedFastBitSet( n );
-                this.eachAtom2( function( ap ){
+                this.eachAtom( function( ap ){
                     as.add_unsafe( ap.index );
                 }, selection );
                 this.atomSetCache[ seleString ] = as;
@@ -1611,7 +1611,7 @@ NGL.Structure.prototype = {
 
     },
 
-    eachAtom: function( callback, selection ){
+    eachSelectedAtom: function( callback, selection ){
 
         var ap = this.getAtomProxy();
         var as = this.getAtomSet3( selection );
@@ -1631,11 +1631,11 @@ NGL.Structure.prototype = {
 
     },
 
-    eachAtom2: function( callback, selection ){
+    eachAtom: function( callback, selection ){
 
         if( selection && selection.test ){
             this.eachModel( function( mp ){
-                mp.eachAtom2( callback, selection )
+                mp.eachAtom( callback, selection )
             }, selection );
         }else{
             var an = this.atomStore.count;
@@ -1971,7 +1971,7 @@ NGL.Structure.prototype = {
         var maxY = -Infinity;
         var maxZ = -Infinity;
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
 
             var x = ap.x;
             var y = ap.y;
@@ -2030,7 +2030,7 @@ NGL.Structure.prototype = {
 
         var indices = [];
 
-        this.eachAtom2( function( ap ){
+        this.eachAtom( function( ap ){
             indices.push( ap.index );
         }, selection );
 
@@ -2043,7 +2043,7 @@ NGL.Structure.prototype = {
         var i = 0;
         var index = new Float32Array( this.atomCount );
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
             index[ i ] = ap.index;
         } );
 
@@ -2057,7 +2057,7 @@ NGL.Structure.prototype = {
 
         var i = 0;
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
             ap.positionFromArray( position, i );
             i += 3;
         } );

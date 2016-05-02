@@ -2900,7 +2900,7 @@ NGL.EDTSurface = function( structure ){
             if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
-        structure.eachAtom( function( ap ){
+        structure.eachSelectedAtom( function( ap ){
             fillatom( ap.index );
         } );
 
@@ -3005,7 +3005,7 @@ NGL.EDTSurface = function( structure ){
             vpBits[ i ] &= ~ISDONE;  // not isdone
         }
 
-        structure.eachAtom( function( ap ){
+        structure.eachSelectedAtom( function( ap ){
             fillAtomWaals( ap.index );
         } );
 

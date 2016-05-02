@@ -101,7 +101,7 @@ var kwd = NGL.Selection.Keywords;
 function getNthSelectedAtom( structure, nth ){
     var i = 0;
     var atomProxy = structure.getAtomProxy();
-    structure.eachAtom( function( ap ){
+    structure.eachSelectedAtom( function( ap ){
         if( i === nth ) atomProxy.index = ap.index;
         ++i;
     } );

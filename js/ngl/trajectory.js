@@ -170,7 +170,7 @@ NGL.Trajectory.prototype = {
         var i = 0;
         var initialStructure = new Float32Array( 3 * this.atomCount );
 
-        this.structure.eachAtom( function( a ){
+        this.structure.eachSelectedAtom( function( a ){
 
             initialStructure[ i + 0 ] = a.x;
             initialStructure[ i + 1 ] = a.y;

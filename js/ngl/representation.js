@@ -1061,7 +1061,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
         );
-        sview.eachAtom( function( ap ){
+        sview.eachSelectedAtom( function( ap ){
             text.push( labelFactory.atomLabel( ap ) );
         } );
 

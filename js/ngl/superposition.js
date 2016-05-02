@@ -24,7 +24,7 @@ NGL.Superposition = function( atoms1, atoms2 ){
     // allocate & init data structures
 
     var n;
-    if( typeof atoms1.eachAtom === "function" ){
+    if( typeof atoms1.eachSelectedAtom === "function" ){
         n = atoms1.atomCount;
     }else if( atoms1 instanceof Float32Array ){
         n = atoms1.length / 3;
@@ -102,9 +102,9 @@ NGL.Superposition.prototype = {
         var i = 0;
         var cd = coords.data;
 
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
 
-            atoms.eachAtom( function( a ){
+            atoms.eachSelectedAtom( function( a ){
 
                 cd[ i + 0 ] = a.x;
                 cd[ i + 1 ] = a.y;
@@ -131,7 +131,7 @@ NGL.Superposition.prototype = {
         // allocate data structures
 
         var n;
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
             n = atoms.atomCount;
         }else if( atoms instanceof Float32Array ){
             n = atoms.length / 3;
@@ -154,9 +154,9 @@ NGL.Superposition.prototype = {
         var i = 0;
         var cd = coords.data;
 
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
 
-            atoms.eachAtom( function( a ){
+            atoms.eachSelectedAtom( function( a ){
 
                 a.x = cd[ i + 0 ];
                 a.y = cd[ i + 1 ];

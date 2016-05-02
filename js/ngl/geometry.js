@@ -1128,7 +1128,7 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var points = new Float32Array( entity.atomCount * 4 );
     var i = 0;
 
-    entity.eachAtom( function( ap ){
+    entity.eachSelectedAtom( function( ap ){
         points[ i + 0 ] = ap.x;
         points[ i + 1 ] = ap.y;
         points[ i + 2 ] = ap.z;
@@ -1220,7 +1220,7 @@ NGL.Contact.prototype = {
         var atomSet = this.sview1.getAtomSet( false );
         var bondStore = new NGL.BondStore();
 
-        this.sview1.eachAtom( function( ap1 ){
+        this.sview1.eachSelectedAtom( function( ap1 ){
 
             var found = false;
             var contacts = kdtree2.nearest(
