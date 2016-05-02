@@ -1059,7 +1059,6 @@ NGL.AssemblyPart.prototype = {
             return new NGL.Selection( sele );
         }else{
             return new NGL.Selection( "" );
-            // return null;
         }
     },
 
@@ -1078,7 +1077,6 @@ NGL.AssemblyPart.prototype = {
             instanceList.push( {
                 id: j + 1,
                 name: j,
-                // assembly: name,
                 matrix: this.matrixList[ j ]
             } );
         }

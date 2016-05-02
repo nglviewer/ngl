@@ -473,11 +473,9 @@ NGL.ChainStore.prototype = NGL.createObject(
 
     getChainname: function( i ){
 
-        var code;
         var chainname = "";
-        var j = 4 * i;
         for( var k = 0; k < 4; ++k ){
-            code = this.chainname[ j + k ];
+            var code = this.chainname[ 4 * i + k ];
             if( code ){
                 chainname += String.fromCharCode( code );
             }else{
