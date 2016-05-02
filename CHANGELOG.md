@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file, following t
 - CODE: tweaked DistanceRepresentation visibility params
 
 
-## [v0.6.0] - 2015-10-12
+## [v0.6] - 2015-10-12
 ### Added
 - MIGRATION: `Stage.loadFile` signature changed, now returns a `Promise` and does not accept callbacks
 - MIGRATION: moved trajectory server into its own repository: [MDSrv](https://github.com/arose/mdsrv/)
@@ -69,10 +69,10 @@ All notable changes to this project will be documented in this file, following t
 - DEL: removed FragFit plugins
 
 
-## v0.5.0 - 2015-30-04
+## v0.5 - 2015-30-04
 ### Added
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.6.0...HEAD
-[v0.6.0]: https://github.com/arose/ngl/compare/v0.5.0...v0.6.0
+[Unreleased]: https://github.com/arose/ngl/compare/v0.6...HEAD
+[v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6
