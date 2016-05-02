@@ -1084,28 +1084,6 @@ NGL.ResidueProxy.prototype = {
 
         var count = this.atomCount;
         var offset = this.atomOffset;
-        var ap = this.structure.getAtomProxy();
-        var end = offset + count;
-
-        if( selection && selection.atomOnlyTest ){
-            var atomOnlyTest = selection.atomOnlyTest;
-            for( var i = offset; i < end; ++i ){
-                ap.index = i;
-                if( atomOnlyTest( ap ) ) callback( ap );
-            }
-        }else{
-            for( var i = offset; i < end; ++i ){
-                ap.index = i;
-                callback( ap );
-            }
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
-        var count = this.atomCount;
-        var offset = this.atomOffset;
         var ap = this.structure._ap;
         var end = offset + count;
 
@@ -1434,7 +1412,7 @@ NGL.Polymer.prototype = {
     eachAtom: function( callback, selection ){
 
         this.eachResidue( function( rp ){
-            rp.eachAtom( callback );
+            rp.eachAtom( callback, selection );
         }, selection );
 
     },
@@ -1636,56 +1614,8 @@ NGL.ChainProxy.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        var i, j, o, r, a;
-        var n = this.residueCount;
-
-        if( selection && selection.residueOnlyTest ){
-
-            var test = selection.residueOnlyTest;
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                if( test( r ) ) r.eachAtom( callback, selection );
-
-            }
-
-        }else if( selection && (
-                selection.atomOnlyTest ||
-                ( this.chainname === "" && selection.test )
-            )
-        ){
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                r.eachAtom( callback, selection );
-
-            }
-
-        }else{
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                o = r.atomCount;
-
-                for( j = 0; j < o; ++j ){
-
-                    callback( r.atoms[ j ] );
-
-                }
-
-            }
-
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
         this.eachResidue( function( rp ){
-            rp.eachAtom2( callback, selection )
+            rp.eachAtom( callback, selection )
         }, selection );
 
     },
@@ -1914,38 +1844,8 @@ NGL.ModelProxy.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection && selection.chainOnlyTest ){
-
-            var test = selection.chainOnlyTest;
-
-            this.chains.forEach( function( c ){
-
-                // NGL.log( "model.eachAtom#chain", c.chainname, selection.selection )
-
-                if( test( c ) ){
-                    c.eachAtom( callback, selection );
-                }/*else{
-                    NGL.log( "chain", c.chainname );
-                }*/
-
-            } );
-
-        }else{
-
-            this.chains.forEach( function( c ){
-
-                c.eachAtom( callback, selection );
-
-            } );
-
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
         this.eachChain( function( cp ){
-            cp.eachAtom2( callback, selection )
+            cp.eachAtom( callback, selection )
         }, selection );
 
     },
