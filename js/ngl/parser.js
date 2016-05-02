@@ -3593,7 +3593,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
-        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains );
+        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains * 4 );
 
         s.modelStore.length = numModels;
         s.modelStore.count = numModels;
