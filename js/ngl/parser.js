@@ -3654,54 +3654,26 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         if( sd.bioAssemblyList ){
-            sd.bioAssemblyList.forEach( function( bioAssem, k ){
-                var tDict = {};  // assembly parts hashed by transformation matrix
-                bioAssem.transformList.forEach( function( t, tk ){
-                    var part = tDict[ t.transformation ];
-                    if( !part ){
-                        part = {
-                            matrix: new THREE.Matrix4().fromArray( t.matrix ).transpose(),
-                            chainList: t.chainIndexList
-                        };
-                        tDict[ t.matrix ] = part;
-                    }else{
-                        part.chainList = part.chainList.concat( t.chainIndexList );
-                    }
-                } );
-                var cDict = {};  // matrix lists hashed by chain list
-                for( var pk in tDict ){
-                    var p = tDict[ pk ];
-                    var matrixList = cDict[ p.chainList ];
-                    if( !matrixList ){
-                        matrixList = [ p.matrix ];
-                        cDict[ p.chainList ] = matrixList;
-                    }else{
-                        matrixList.push( p.matrix );
-                    }
-                }
-                if( Object.keys( cDict ).length > 0 ){
-                    var id = k + 1;
-                    var assembly = new NGL.Assembly( id );
-                    s.biomolDict[ "BU" + id ] = assembly;
-                    for( var ck in cDict ){
-                        var matrixList = cDict[ ck ];
-                        var chainList = ck.split( "," );
-                        var chainDict = {};
-                        chainList.forEach( function( chainIndex ){
-                            var chainname = "";
-                            for( var k = 0; k < 4; ++k ){
-                                var code = sd.chainNameList[ chainIndex * 4 + k ];
-                                if( code ){
-                                    chainname += String.fromCharCode( code );
-                                }else{
-                                    break;
-                                }
+            sd.bioAssemblyList.forEach( function( _assembly, k ){
+                var id = k + 1;
+                var assembly = new NGL.Assembly( id );
+                s.biomolDict[ "BU" + id ] = assembly;
+                _assembly.transformList.forEach( function( _transform ){
+                    var matrix = new THREE.Matrix4().fromArray( _transform.matrix ).transpose();
+                    var chainList = _transform.chainIndexList.map( function( chainIndex ){
+                        var chainname = "";
+                        for( var k = 0; k < 4; ++k ){
+                            var code = sd.chainNameList[ chainIndex * 4 + k ];
+                            if( code ){
+                                chainname += String.fromCharCode( code );
+                            }else{
+                                break;
                             }
-                            chainDict[ chainname ] = true;
-                        } );
-                        assembly.addPart( matrixList, Object.keys( chainDict ) );
-                    }
-                }
+                        }
+                        return chainname;
+                    } );
+                    assembly.addPart( [ matrix ], chainList );
+                } );
             } );
         }
 
