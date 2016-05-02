@@ -2,6 +2,11 @@
 ![Gallery](gallery.png)
 
 
+[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/master/LICENSE)
+[![Version](http://img.shields.io/badge/version-0.6-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.6)
+[![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
+
+
 NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.
 
 See it in action:
@@ -28,9 +33,7 @@ Table of contents
 * [Installation](#installation)
 * [Development](#development)
 * [Deployment](#deployment)
-* [Changelog](#changelog)
 * [Acknowledgments](#acknowledgments)
-* [License](#license)
 
 
 
@@ -120,81 +123,6 @@ Read more about getting started with the Apache webserver [here](http://httpd.ap
 
 
 
-Changelog
-=========
-
-Version 0.7dev
---------------
-
-* MIGRATION: chainname read from `auth_asym_id` instead of from `label_asym_id` field
-* ADD: `stage.toggleFullscreen` method
-* DOC: clarified apache configuration for deployment
-* FIX: bonds not reset when building a NGL.StructureSubset
-* FIX: cif parser, ignore non-displayable bonds between symmetry mates
-* FIX: cif parser, struct_conn bonds not added for multiple altloc atoms
-* LIB: updated signals.js
-* CODE: support loading of Blob objects in addition to File objects
-* CODE: tweaked DistanceRepresentation visibility params
-
-
-Version 0.6
------------
-
-* MIGRATION: `Stage.loadFile` signature changed, now returns a `Promise` and does not accept callbacks
-* MIGRATION: moved trajectory server into its own repository: [MDSrv](https://github.com/arose/mdsrv/)
-* ADD: Support for MOL2 and SDF files
-* ADD: Support for DX files
-* ADD: Support for PQR files
-* ADD: `ExampleRegistry` singleton
-* ADD: `PluginRegistry` singleton
-* ADD: `Datasource` class to use instead of hard-coded paths
-* ADD: `GidPool`
-* ADD: simple xml parser
-* ADD: APBS plugin to load PQR and DX file, simple GUI
-* ADD: bond and surface picking
-* ADD: User-defined color schemes (API)
-* EXAMPLES: general fixes and enhancements
-* DOC: moved installation and development information into the README
-* GUI/DOC: Higher color contrast for GUI and documentation pages
-* GUI: `VirtualList` and `VirtualTable`
-* GUI: re-sizable sidebar (contents still need to be made responsive)
-* DEL: removed FragFit plugins
-* CODE: qunit updated
-* CODE: moved logical units of code into their own files
-* CODE: speeded up secondary structure assignment from PDB/mmCIF files; fixed bugs leading to wrong assignment
-* CODE: element color scheme now uses colorValue parameter to color carbon elements
-* CODE: script and assets paths are now configurable
-* CODE: more forgiving pdb parsing wrt to model records
-* CODE: helper function for re-ordering atoms
-* CODE: enhancements to handling Web Workers (`WorkerPool`, lazy Worker creation)
-* CODE: enhancements to volume triangulation (limit to given box, skip empty parts)
-* CODE: all `*Buffer` classes now inherit from `Buffer` and share common code
-* CODE: BufferAttributes can be re-used or grown
-* CODE: moved Buffer-specific code out of Representation class
-* CODE: molecular surface enhancements (color by atom, filter by atom)
-* CODE: nicer clipping of meshes and impostors (unlit interior to make them appear solid)
-* CODE: optimized kdtree building
-* CODE: clearer atomnames handling for fiber creation
-* CODE: Color handling code refactored exposing more parameters
-* CODE: Basic support for async creation of representations (so far used for molecular surfaces and volume triangulation)
-* CODE: chunked data loading and parsing via streamer class
-* CODE: faster autobonding of large residues (e.g. hydrated lipids)
-* CODE: WebWorker support while using development and build files
-* CODE: WebWorker used for decompression, parsing and surface generation
-* FIX: Issue #7
-* FIX: residues at the end of fibers may not require all backbone atoms
-* FIX: standard compatible atom names when writing pdb files
-* FIX: origin coordinates not used/read from mrc header
-* WIP: scripting API
-
-
-Version 0.5
------------
-
-The first release.
-
-
-
 Acknowledgments
 ===============
 
@@ -220,10 +148,3 @@ This project would not be possible without recourse to many fine open-source pro
 * [Open Source PyMOL](http://sourceforge.net/projects/pymol/) - screen aligned cylinder shader
 * [VTK](http://www.vtk.org/) Quadric shader code from the PointSprite Plugin - quadric surface center calculation
 * [HyperBalls](http://sourceforge.net/projects/hyperballs/) - hyperball stick shader - Chavent, M., Vanel, A., Tek, A., Levy, B., Robert, S., Raffin, B., &amp; Baaden, M. (2011). GPU-accelerated atom and dynamic bond visualization using hyperballs: a unified algorithm for balls, sticks, and hyperboloids. Journal of Computational Chemistry, 32(13), 2924–35. [doi:10.1002/jcc.21861](https://dx.doi.org/10.1002/jcc.21861)
-
-
-
-License
-=======
-
-Generally MIT licensed, see the LICENSE file for details.
