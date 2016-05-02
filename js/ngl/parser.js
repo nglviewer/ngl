@@ -1054,7 +1054,8 @@ NGL.AssemblyPart.prototype = {
 
     getSelection: function(){
         if( this.chainList.length > 0 ){
-            var sele = ":" + this.chainList.join( " OR :" );
+            var chainList = NGL.uniqueArray( this.chainList );
+            var sele = ":" + chainList.join( " OR :" );
             return new NGL.Selection( sele );
         }else{
             return new NGL.Selection( "" );

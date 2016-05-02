@@ -356,6 +356,13 @@ NGL.dataURItoImage = function( dataURI ){
 };
 
 
+NGL.uniqueArray = function( array ){
+    return array.sort().filter( function( value, index, sorted ){
+        return ( index === 0 ) || ( value !== sorted[ index - 1 ] );
+    } );
+};
+
+
 // String/arraybuffer conversion
 
 NGL.Uint8ToString = function( u8a ){
