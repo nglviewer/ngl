@@ -31,7 +31,6 @@ Table of contents
 =================
 
 * [Installation](#installation)
-* [Development](#development)
 * [Deployment](#deployment)
 * [Acknowledgments](#acknowledgments)
 
@@ -68,33 +67,6 @@ The NGL Viewer can be configured to interactively display molecular dynamics tra
 * [js/extra/mdsrv.js](js/extra/mdsrv.js) - Implementation of `NGL.MdsrvDatasource` that is used to access trajectory data in `NGL.RemoteTrajectory`.
 * [js/extra/examples_mdsrv.js](js/extra/examples_mdsrv.js) - A number of examples of molecular dynamics trajectories.
 * [html/mdsrv.dev.html](html/mdsrv.dev.html) - Example html showing the configuration for viewing trajectories in the NGL Viewer.
-
-
-
-Development
-===========
-
-Development of the NGL Viewer is coordinated through the repository on [github](http://github.com/arose/ngl). Please use the [issue tracker](https://github.com/arose/ngl/issues) there to report bugs or suggest improvements.
-
-To participate in developing for the NGL Viewer you need a local copy of the source code, which you can obtain by forking the [repository](https://github.com/arose/ngl) on github. Read about how to [fork a repository](https://help.github.com/articles/fork-a-repo/), [sync a fork](https://help.github.com/articles/syncing-a-fork/) and [start a pull request](https://help.github.com/articles/using-pull-requests/).
-
-
-Local server
-------------
-
-A (Python based) local development server can be started with the shell script
-
-    sh serve.sh
-
-to serve the NGL Viewer at http://localhost:8000/.
-
-Limited (due to browser security restrictions) functionality is available when directly opening one of the [html files](html/) from the local file system. For Google Chrome/Chromium it can be helpful to start the browser with the `--allow-file-access-from-files` command line flag.
-
-
-Unit tests
-----------
-
-[QUnit](http://qunitjs.com/) is used for unit testing. The unit tests can be found [here](test/unit/).
 
 
 
