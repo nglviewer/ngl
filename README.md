@@ -105,7 +105,6 @@ This project would not be possible without recourse to many fine open-source pro
     * NGL's documentation uses the three.js documentation as a template
     * NGL's GUI is based on the three.js editor UI
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
-* [async.js](https://github.com/caolan/async)
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
 * [QUnit](http://qunitjs.com/) - for unit testing; [assert-close](https://github.com/JamesMGreene/qunit-assert-close), [Blanket.js](http://blanketjs.org/)
 * [Benchmark.js](http://benchmarkjs.com/) - for benchmarking
@@ -116,7 +115,7 @@ This project would not be possible without recourse to many fine open-source pro
 * [JS Signals](http://millermedeiros.github.com/js-signals)
 * [tether.js](http://github.hubspot.com/tether/)
 * [Lightweight promise polyfill](https://github.com/taylorhakes/promise-polyfill)
-* Compression: [bzip2.js](https://github.com/antimatter15/bzip2.js), [JSZip](http://stuk.github.io/jszip/), [js-lzma](https://code.google.com/p/js-lzma/), [pako - zlib port](https://github.com/nodeca/pako)
+* [pako - zlib port](https://github.com/nodeca/pako)
 * [Open Source PyMOL](http://sourceforge.net/projects/pymol/) - screen aligned cylinder shader
 * [VTK](http://www.vtk.org/) Quadric shader code from the PointSprite Plugin - quadric surface center calculation
 * [HyperBalls](http://sourceforge.net/projects/hyperballs/) - hyperball stick shader - Chavent, M., Vanel, A., Tek, A., Levy, B., Robert, S., Raffin, B., &amp; Baaden, M. (2011). GPU-accelerated atom and dynamic bond visualization using hyperballs: a unified algorithm for balls, sticks, and hyperboloids. Journal of Computational Chemistry, 32(13), 2924–35. [doi:10.1002/jcc.21861](https://dx.doi.org/10.1002/jcc.21861)
