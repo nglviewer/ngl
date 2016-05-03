@@ -3,9 +3,26 @@ All notable changes to this project will be documented in this file, following t
 
 
 ## [Unreleased]
+### Added
+- Store and Proxy classes for memory efficiency
+- MMTF, DXBIN, DCD parser
+- `unitcell` representation
+- take NCS operations into account when creating unitcell & supercell assemblies
+- added multi sample rendering
+- added support for spinning around an axis
+- use bitsets for storing selections of atoms
+- Assembly and AssemblyPart classes
+- stage.toggleFullscreen method
+- ... and much more
+
 ### Changed
+- fixed transformation matrix in mrc/ccp4 parser
+- optimized near clipping
+- more consistent fog
+- use workers more sparsely due to the large overhead of creating them
+- create font SDF on demand, remove asset dependency
+- integrated three.js lighting into custom shaders
 - MIGRATION: chainname read from `auth_asym_id` instead of from `label_asym_id` field
-- ADD: `stage.toggleFullscreen` method
 - DOC: clarified apache configuration for deployment
 - FIX: bonds not reset when building a NGL.StructureSubset
 - FIX: cif parser, ignore non-displayable bonds between symmetry mates
@@ -13,6 +30,11 @@ All notable changes to this project will be documented in this file, following t
 - LIB: updated signals.js
 - CODE: support loading of Blob objects in addition to File objects
 - CODE: tweaked DistanceRepresentation visibility params
+- ... and much more
+
+### Removed
+- zip, lzma, bzip2 decompression
+- ... and much more
 
 
 ## [v0.6] - 2015-10-12
@@ -74,5 +96,5 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.6...HEAD
+[Unreleased]: https://github.com/arose/ngl/compare/v0.6...dev
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6
