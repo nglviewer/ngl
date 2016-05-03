@@ -950,7 +950,7 @@ NGL.Viewer.prototype = {
         // picking texture
 
         this.renderer.extensions.get( 'OES_texture_float' );
-        this.renderer.extensions.get( 'OES_texture_half_float' );
+        NGL.supportsHalfFloat = this.renderer.extensions.get( 'OES_texture_half_float' );
         this.renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         this.pickingTarget = new THREE.WebGLRenderTarget(
@@ -987,7 +987,7 @@ NGL.Viewer.prototype = {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
                 format: THREE.RGBAFormat,
-                type: THREE.HalfFloatType
+                type: NGL.supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
             }
         );
 
