@@ -85,7 +85,7 @@ NGL.PdbWriter = function( structure, params ){
                 // Alignment of one-letter atom name such as C starts at column 14,
                 // while two-letter atom name such as FE starts at column 13.
                 var atomname = a.atomname;
-                if( atomname.length === 1 ) atomname = " " + atomname;
+                atomname = " " + atomname;
 
                 records.push( sprintf(
                     formatString,
