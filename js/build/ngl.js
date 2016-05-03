@@ -1264,6 +1264,13 @@ NGL.dataURItoImage = function( dataURI ){
 };
 
 
+NGL.uniqueArray = function( array ){
+    return array.sort().filter( function( value, index, sorted ){
+        return ( index === 0 ) || ( value !== sorted[ index - 1 ] );
+    } );
+};
+
+
 // String/arraybuffer conversion
 
 NGL.Uint8ToString = function( u8a ){
@@ -2596,28 +2603,6 @@ NGL.ResidueProxy.prototype = {
 
         var count = this.atomCount;
         var offset = this.atomOffset;
-        var ap = this.structure.getAtomProxy();
-        var end = offset + count;
-
-        if( selection && selection.atomOnlyTest ){
-            var atomOnlyTest = selection.atomOnlyTest;
-            for( var i = offset; i < end; ++i ){
-                ap.index = i;
-                if( atomOnlyTest( ap ) ) callback( ap );
-            }
-        }else{
-            for( var i = offset; i < end; ++i ){
-                ap.index = i;
-                callback( ap );
-            }
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
-        var count = this.atomCount;
-        var offset = this.atomOffset;
         var ap = this.structure._ap;
         var end = offset + count;
 
@@ -2693,7 +2678,8 @@ NGL.ResidueProxy.prototype = {
     },
 
     getResname1: function(){
-        return NGL.AA1[ this.resname.toUpperCase() ] || '?';
+        // FIXME nucleic support
+        return NGL.AA1[ this.resname.toUpperCase() ] || 'X';
     },
 
     getBackboneType: function( position ){
@@ -2946,7 +2932,7 @@ NGL.Polymer.prototype = {
     eachAtom: function( callback, selection ){
 
         this.eachResidue( function( rp ){
-            rp.eachAtom( callback );
+            rp.eachAtom( callback, selection );
         }, selection );
 
     },
@@ -3148,56 +3134,8 @@ NGL.ChainProxy.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        var i, j, o, r, a;
-        var n = this.residueCount;
-
-        if( selection && selection.residueOnlyTest ){
-
-            var test = selection.residueOnlyTest;
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                if( test( r ) ) r.eachAtom( callback, selection );
-
-            }
-
-        }else if( selection && (
-                selection.atomOnlyTest ||
-                ( this.chainname === "" && selection.test )
-            )
-        ){
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                r.eachAtom( callback, selection );
-
-            }
-
-        }else{
-
-            for( i = 0; i < n; ++i ){
-
-                r = this.residues[ i ];
-                o = r.atomCount;
-
-                for( j = 0; j < o; ++j ){
-
-                    callback( r.atoms[ j ] );
-
-                }
-
-            }
-
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
         this.eachResidue( function( rp ){
-            rp.eachAtom2( callback, selection )
+            rp.eachAtom( callback, selection )
         }, selection );
 
     },
@@ -3426,38 +3364,8 @@ NGL.ModelProxy.prototype = {
 
     eachAtom: function( callback, selection ){
 
-        if( selection && selection.chainOnlyTest ){
-
-            var test = selection.chainOnlyTest;
-
-            this.chains.forEach( function( c ){
-
-                // NGL.log( "model.eachAtom#chain", c.chainname, selection.selection )
-
-                if( test( c ) ){
-                    c.eachAtom( callback, selection );
-                }/*else{
-                    NGL.log( "chain", c.chainname );
-                }*/
-
-            } );
-
-        }else{
-
-            this.chains.forEach( function( c ){
-
-                c.eachAtom( callback, selection );
-
-            } );
-
-        }
-
-    },
-
-    eachAtom2: function( callback, selection ){
-
         this.eachChain( function( cp ){
-            cp.eachAtom2( callback, selection )
+            cp.eachAtom( callback, selection )
         }, selection );
 
     },
@@ -4536,11 +4444,9 @@ NGL.ChainStore.prototype = NGL.createObject(
 
     getChainname: function( i ){
 
-        var code;
         var chainname = "";
-        var j = 4 * i;
         for( var k = 0; k < 4; ++k ){
-            code = this.chainname[ j + k ];
+            var code = this.chainname[ 4 * i + k ];
             if( code ){
                 chainname += String.fromCharCode( code );
             }else{
@@ -10757,6 +10663,7 @@ NGL.Spline = function( polymer, params ){
     this.directional = p.directional || false;
     this.positionIterator = p.positionIterator || false
     this.subdiv = p.subdiv || 1;
+    this.smoothSheet = p.smoothSheet || false;
 
     if( isNaN( p.tension ) ){
         this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
@@ -10772,7 +10679,7 @@ NGL.Spline.prototype = {
 
     constructor: NGL.Spline,
 
-    getAtomIterator: function( type ){
+    getAtomIterator: function( type, smooth ){
 
         var polymer = this.polymer;
         var structure = polymer.structure;
@@ -10788,15 +10695,35 @@ NGL.Spline.prototype = {
             structure.getAtomProxy()
         ];
 
+        var cache2 = [
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3()
+        ];
+
         function next(){
             var atomProxy = this.get( j );
             j += 1;
             return atomProxy;
         }
 
+        var apPrev = structure.getAtomProxy();
+        var apNext = structure.getAtomProxy();
+
         function get( idx ){
             var atomProxy = cache[ i % 4 ];
             atomProxy.index = polymer.getAtomIndexByType( idx, type );
+            if( smooth && idx > 0 && idx < n && atomProxy.sstruc === "e" ){
+                var vec = cache2[ i % 4 ];
+                apPrev.index = polymer.getAtomIndexByType( idx + 1, type );
+                apNext.index = polymer.getAtomIndexByType( idx - 1, type );
+                vec.addVectors( apPrev, apNext )
+                    .add( atomProxy ).add( atomProxy )
+                    .multiplyScalar( 0.25 );
+                i += 1;
+                return vec;
+            }
             i += 1;
             return atomProxy;
         }
@@ -10914,7 +10841,7 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
-        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace", this.smoothSheet );
 
         this.interpolator.getPosition(
             iterator, pos, 0, polymer.isCyclic
@@ -10934,7 +10861,7 @@ NGL.Spline.prototype = {
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
-        var iterator = this.positionIterator || this.getAtomIterator( "trace" );
+        var iterator = this.positionIterator || this.getAtomIterator( "trace", this.smoothSheet );
 
         this.interpolator.getTangent(
             iterator, tan, 0, polymer.isCyclic
@@ -11502,7 +11429,7 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var points = new Float32Array( entity.atomCount * 4 );
     var i = 0;
 
-    entity.eachAtom( function( ap ){
+    entity.eachSelectedAtom( function( ap ){
         points[ i + 0 ] = ap.x;
         points[ i + 1 ] = ap.y;
         points[ i + 2 ] = ap.z;
@@ -11594,7 +11521,7 @@ NGL.Contact.prototype = {
         var atomSet = this.sview1.getAtomSet( false );
         var bondStore = new NGL.BondStore();
 
-        this.sview1.eachAtom( function( ap1 ){
+        this.sview1.eachSelectedAtom( function( ap1 ){
 
             var found = false;
             var contacts = kdtree2.nearest(
@@ -12937,7 +12864,7 @@ NGL.Superposition = function( atoms1, atoms2 ){
     // allocate & init data structures
 
     var n;
-    if( typeof atoms1.eachAtom === "function" ){
+    if( typeof atoms1.eachSelectedAtom === "function" ){
         n = atoms1.atomCount;
     }else if( atoms1 instanceof Float32Array ){
         n = atoms1.length / 3;
@@ -13015,9 +12942,9 @@ NGL.Superposition.prototype = {
         var i = 0;
         var cd = coords.data;
 
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
 
-            atoms.eachAtom( function( a ){
+            atoms.eachSelectedAtom( function( a ){
 
                 cd[ i + 0 ] = a.x;
                 cd[ i + 1 ] = a.y;
@@ -13044,7 +12971,7 @@ NGL.Superposition.prototype = {
         // allocate data structures
 
         var n;
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
             n = atoms.atomCount;
         }else if( atoms instanceof Float32Array ){
             n = atoms.length / 3;
@@ -13067,9 +12994,9 @@ NGL.Superposition.prototype = {
         var i = 0;
         var cd = coords.data;
 
-        if( typeof atoms.eachAtom === "function" ){
+        if( typeof atoms.eachSelectedAtom === "function" ){
 
-            atoms.eachAtom( function( a ){
+            atoms.eachSelectedAtom( function( a ){
 
                 a.x = cd[ i + 0 ];
                 a.y = cd[ i + 1 ];
@@ -14183,7 +14110,7 @@ NGL.BfactorColorMaker = function( params ){
             selection = new NGL.Selection( params.sele );
         }
 
-        this.structure.eachAtom( function( a ){
+        this.structure.eachSelectedAtom( function( a ){
             var bfactor = a.bfactor;
             min = Math.min( min, bfactor );
             max = Math.max( max, bfactor );
@@ -14772,7 +14699,7 @@ NGL.Structure.prototype = {
             if( as === undefined ){
 
                 as = new TypedFastBitSet( n );
-                this.eachAtom2( function( ap ){
+                this.eachAtom( function( ap ){
                     as.add_unsafe( ap.index );
                 }, selection );
                 this.atomSetCache[ seleString ] = as;
@@ -14866,7 +14793,7 @@ NGL.Structure.prototype = {
 
     },
 
-    eachAtom: function( callback, selection ){
+    eachSelectedAtom: function( callback, selection ){
 
         var ap = this.getAtomProxy();
         var as = this.getAtomSet3( selection );
@@ -14886,11 +14813,11 @@ NGL.Structure.prototype = {
 
     },
 
-    eachAtom2: function( callback, selection ){
+    eachAtom: function( callback, selection ){
 
         if( selection && selection.test ){
             this.eachModel( function( mp ){
-                mp.eachAtom2( callback, selection )
+                mp.eachAtom( callback, selection )
             }, selection );
         }else{
             var an = this.atomStore.count;
@@ -15226,7 +15153,7 @@ NGL.Structure.prototype = {
         var maxY = -Infinity;
         var maxZ = -Infinity;
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
 
             var x = ap.x;
             var y = ap.y;
@@ -15264,15 +15191,13 @@ NGL.Structure.prototype = {
     getSequence: function(){
 
         var seq = [];
+        var rp = this.getResidueProxy();
 
-        // FIXME nucleic support
-
-        this.eachResidue( function( r ){
-
-            if( r.getAtomByName( "CA" ) ){
-                seq.push( r.getResname1() );
+        this.eachSelectedAtom( function( ap ){
+            rp.index = ap.residueIndex;
+            if( ap.index === rp.traceAtomIndex ){
+                seq.push( rp.getResname1() );
             }
-
         } );
 
         return seq;
@@ -15285,7 +15210,7 @@ NGL.Structure.prototype = {
 
         var indices = [];
 
-        this.eachAtom2( function( ap ){
+        this.eachAtom( function( ap ){
             indices.push( ap.index );
         }, selection );
 
@@ -15298,7 +15223,7 @@ NGL.Structure.prototype = {
         var i = 0;
         var index = new Float32Array( this.atomCount );
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
             index[ i ] = ap.index;
         } );
 
@@ -15312,7 +15237,7 @@ NGL.Structure.prototype = {
 
         var i = 0;
 
-        this.eachAtom( function( ap ){
+        this.eachSelectedAtom( function( ap ){
             ap.positionFromArray( position, i );
             i += 3;
         } );
@@ -15927,7 +15852,7 @@ NGL.Trajectory.prototype = {
         var i = 0;
         var initialStructure = new Float32Array( 3 * this.atomCount );
 
-        this.structure.eachAtom( function( a ){
+        this.structure.eachSelectedAtom( function( a ){
 
             initialStructure[ i + 0 ] = a.x;
             initialStructure[ i + 1 ] = a.y;
@@ -19970,7 +19895,7 @@ NGL.EDTSurface = function( structure ){
             if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
-        structure.eachAtom( function( ap ){
+        structure.eachSelectedAtom( function( ap ){
             fillatom( ap.index );
         } );
 
@@ -20075,7 +20000,7 @@ NGL.EDTSurface = function( structure ){
             vpBits[ i ] &= ~ISDONE;  // not isdone
         }
 
-        structure.eachAtom( function( ap ){
+        structure.eachSelectedAtom( function( ap ){
             fillAtomWaals( ap.index );
         } );
 
@@ -22882,11 +22807,11 @@ NGL.AssemblyPart.prototype = {
 
     getSelection: function(){
         if( this.chainList.length > 0 ){
-            var sele = ":" + this.chainList.join( " OR :" );
+            var chainList = NGL.uniqueArray( this.chainList );
+            var sele = ":" + chainList.join( " OR :" );
             return new NGL.Selection( sele );
         }else{
             return new NGL.Selection( "" );
-            // return null;
         }
     },
 
@@ -22905,7 +22830,6 @@ NGL.AssemblyPart.prototype = {
             instanceList.push( {
                 id: j + 1,
                 name: j,
-                // assembly: name,
                 matrix: this.matrixList[ j ]
             } );
         }
@@ -25420,7 +25344,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
-        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains );
+        s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains * 4 );
 
         s.modelStore.length = numModels;
         s.modelStore.count = numModels;
@@ -25481,47 +25405,26 @@ NGL.MmtfParser.prototype = NGL.createObject(
         //
 
         if( sd.bioAssemblyList ){
-            var cp = s.getChainProxy();
-            sd.bioAssemblyList.forEach( function( bioAssem, k ){
-                var tDict = {};  // assembly parts hashed by transformation matrix
-                bioAssem.transformList.forEach( function( t, tk ){
-                    var part = tDict[ t.transformation ];
-                    if( !part ){
-                        part = {
-                            matrix: new THREE.Matrix4().fromArray( t.matrix ).transpose(),
-                            chainList: t.chainIndexList
-                        };
-                        tDict[ t.matrix ] = part;
-                    }else{
-                        part.chainList = part.chainList.concat( t.chainIndexList );
-                    }
+            sd.bioAssemblyList.forEach( function( _assembly, k ){
+                var id = k + 1;
+                var assembly = new NGL.Assembly( id );
+                s.biomolDict[ "BU" + id ] = assembly;
+                _assembly.transformList.forEach( function( _transform ){
+                    var matrix = new THREE.Matrix4().fromArray( _transform.matrix ).transpose();
+                    var chainList = _transform.chainIndexList.map( function( chainIndex ){
+                        var chainname = "";
+                        for( var k = 0; k < 4; ++k ){
+                            var code = sd.chainNameList[ chainIndex * 4 + k ];
+                            if( code ){
+                                chainname += String.fromCharCode( code );
+                            }else{
+                                break;
+                            }
+                        }
+                        return chainname;
+                    } );
+                    assembly.addPart( [ matrix ], chainList );
                 } );
-                var cDict = {};  // matrix lists hashed by chain list
-                for( var pk in tDict ){
-                    var p = tDict[ pk ];
-                    var matrixList = cDict[ p.chainList ];
-                    if( !matrixList ){
-                        matrixList = [ p.matrix ];
-                        cDict[ p.chainList ] = matrixList;
-                    }else{
-                        matrixList.push( p.matrix );
-                    }
-                }
-                if( Object.keys( cDict ).length > 0 ){
-                    var id = k + 1;
-                    var assembly = new NGL.Assembly( id );
-                    s.biomolDict[ "BU" + id ] = assembly;
-                    for( var ck in cDict ){
-                        var matrixList = cDict[ ck ];
-                        var chainList = ck.split( "," );
-                        var chainDict = {};
-                        chainList.forEach( function( chainIndex, i ){
-                            cp.index = parseInt( chainIndex );
-                            chainDict[ cp.chainname ] = true;
-                        } );
-                        assembly.addPart( matrixList, Object.keys( chainDict ) );
-                    }
-                }
             } );
         }
 
@@ -28604,9 +28507,19 @@ NGL.Viewer.prototype = {
 
     },
 
-    getImage: function( type, quality ){
+    getImage: function(){
 
-        return this.renderer.domElement.toBlob( type, quality );
+        var renderer = this.renderer;
+
+        return new Promise( function( resolve, reject ){
+            renderer.domElement.toBlob( resolve, "image/png" );
+        } );
+
+    },
+
+    makeImage: function( params ){
+
+        return NGL.makeImage( this, params );
 
     },
 
@@ -28875,12 +28788,6 @@ NGL.Viewer.prototype = {
         }
 
         requestAnimationFrame( this._animate );
-
-    },
-
-    screenshot: function( params ){
-
-        NGL.screenshot( this, params );
 
     },
 
@@ -29628,7 +29535,7 @@ NGL.TiledRenderer.prototype = {
 };
 
 
-NGL.screenshot = function( viewer, params ){
+NGL.makeImage = function( viewer, params ){
 
     var p = params || {};
 
@@ -29667,22 +29574,18 @@ NGL.screenshot = function( viewer, params ){
         } );
     }
 
-    var tiledRenderer = new NGL.TiledRenderer(
-        renderer, camera, viewer,
-        {
-            factor: factor,
-            antialias: antialias,
-            onProgress: onProgress,
-            onFinish: onFinish
+    function trimCanvas( canvas ){
+        if( trim ){
+            var bg = backgroundColor;
+            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
+            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
+            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
+            var a = ( transparent ? 0 : 255 ) | 0;
+            return NGL.trimCanvas( canvas, r, g, b, a );
+        }else{
+            return canvas;
         }
-    );
-
-    renderer.setClearAlpha( transparent ? 0 : 1 );
-    setLineWidthAndPixelSize();
-    tiledRenderer.renderAsync();
-    // tiledRenderer.render();
-
-    //
+    }
 
     function onProgress( i, n, finished ){
         if( typeof p.onProgress === "function" ){
@@ -29690,38 +29593,38 @@ NGL.screenshot = function( viewer, params ){
         }
     }
 
-    function onFinish( i, n ){
-        save( n );
-        renderer.setClearAlpha( originalClearAlpha );
-        setLineWidthAndPixelSize( true );
-        viewer.requestRender();
-    }
+    return new Promise( function( resolve, reject ){
 
-    function save( n ){
-
-        var canvas;
-
-        if( trim ){
-            var bg = backgroundColor;
-            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
-            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
-            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
-            var a = ( transparent ? 0 : 255 ) | 0;
-            canvas = NGL.trimCanvas( tiledRenderer.canvas, r, g, b, a );
-        }else{
-            canvas = tiledRenderer.canvas;
-        }
-
-        canvas.toBlob(
-            function( blob ){
-                NGL.download( blob, "screenshot.png" );
-                onProgress( n, n, true );
-                tiledRenderer.dispose();
-            },
-            "image/png"
+        var tiledRenderer = new NGL.TiledRenderer(
+            renderer, camera, viewer,
+            {
+                factor: factor,
+                antialias: antialias,
+                onProgress: onProgress,
+                onFinish: onFinish
+            }
         );
 
-    }
+        renderer.setClearAlpha( transparent ? 0 : 1 );
+        setLineWidthAndPixelSize();
+        tiledRenderer.renderAsync();
+
+        function onFinish( i, n ){
+            var canvas = trimCanvas( tiledRenderer.canvas );
+            canvas.toBlob(
+                function( blob ){
+                    renderer.setClearAlpha( originalClearAlpha );
+                    setLineWidthAndPixelSize( true );
+                    viewer.requestRender();
+                    tiledRenderer.dispose();
+                    onProgress( n, n, true );
+                    resolve( blob );
+                },
+                "image/png"
+            );
+        }
+
+    } );
 
 };
 
@@ -34061,9 +33964,9 @@ NGL.SpacefillRepresentation.prototype = NGL.createObject(
             atomData.pickingColor,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
-                dullInterior: true
-            } ),
-            this.disableImpostor
+                dullInterior: true,
+                disableImpostor: this.disableImpostor
+            } )
         );
 
         return {
@@ -34288,7 +34191,7 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         var labelFactory = new NGL.LabelFactory(
             this.labelType, this.labelText
         );
-        sview.eachAtom( function( ap ){
+        sview.eachSelectedAtom( function( ap ){
             text.push( labelFactory.atomLabel( ap ) );
         } );
 
@@ -34480,8 +34383,7 @@ NGL.BallAndStickRepresentation.prototype = NGL.createObject(
                     radiusSegments: this.radiusSegments,
                     disableImpostor: this.disableImpostor,
                     dullInterior: true
-                } ),
-                this.disableImpostor
+                } )
             );
 
             bufferList.push( cylinderBuffer );
@@ -34633,8 +34535,6 @@ NGL.LineRepresentation.prototype = NGL.createObject(
     init: function( params ){
 
         var p = params || {};
-
-        this.linewidth = p.linewidth || 1;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -34933,6 +34833,9 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         },
         capped: {
             type: "boolean", rebuild: true
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters ),
@@ -34962,6 +34865,7 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         this.aspectRatio = p.aspectRatio || 5.0;
         this.tension = p.tension || NaN;
         this.capped = p.capped === undefined ? true : p.capped;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -34972,7 +34876,8 @@ NGL.CartoonRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: this.aspectRatio === 1.0 ? false : true
+            directional: this.aspectRatio === 1.0 ? false : true,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -35170,6 +35075,9 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -35199,6 +35107,7 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -35209,7 +35118,8 @@ NGL.RibbonRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: true
+            directional: true,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -35328,6 +35238,9 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         },
         tension: {
             type: "number", precision: 1, max: 1.0, min: 0.1
+        },
+        smoothSheet: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters, {
@@ -35355,6 +35268,7 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         }
 
         this.tension = p.tension || NaN;
+        this.smoothSheet = p.smoothSheet || false;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -35365,7 +35279,8 @@ NGL.TraceRepresentation.prototype = NGL.createObject(
         return Object.assign( {
             subdiv: this.subdiv,
             tension: this.tension,
-            directional: false
+            directional: false,
+            smoothSheet: this.smoothSheet
         }, params );
 
     },
@@ -35795,7 +35710,10 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
             type: "integer", max: 15, min: 0, rebuild: true
         }
 
-    }, NGL.CartoonRepresentation.prototype.parameters, { aspectRatio: null } ),
+    }, NGL.CartoonRepresentation.prototype.parameters, {
+        aspectRatio: null,
+        smoothSheet: null
+    } ),
 
     init: function( params ){
 
@@ -35803,6 +35721,7 @@ NGL.RopeRepresentation.prototype = NGL.createObject(
         p.aspectRatio = 1.0;
         p.tension = p.tension || 0.5;
         p.scale = p.scale || 5.0;
+        p.smoothSheet = false;
 
         this.smooth = p.smooth === undefined ? 2 : p.smooth;
 
@@ -36048,6 +35967,9 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         },
         volume: {
             type: "hidden"
+        },
+        useWorker: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.StructureRepresentation.prototype.parameters, {
@@ -36074,6 +35996,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
 
         NGL.StructureRepresentation.prototype.init.call( this, params );
 
@@ -36093,11 +36016,16 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             info.molsurf = new NGL.MolecularSurface( sview );
 
             var p = this.getSurfaceParams();
-            var afterWorker = function( surface ){
+            var onSurfaceFinish = function( surface ){
                 info.surface = surface;
                 callback( i );
             };
-            info.molsurf.getSurfaceWorker( p, afterWorker );
+
+            if( this.useWorker ){
+                info.molsurf.getSurfaceWorker( p, onSurfaceFinish );
+            }else{
+                onSurfaceFinish( info.molsurf.getSurface( p ) );
+            }
 
         }else{
 
@@ -36129,7 +36057,7 @@ NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
             callback()
         }.bind( this );
 
-        var name = this.assembly || this.structure.defaultAssembly;
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
@@ -36564,6 +36492,210 @@ NGL.DistanceRepresentation.prototype = NGL.createObject(
 } );
 
 
+NGL.UnitcellRepresentation = function( structure, viewer, params ){
+
+    NGL.StructureRepresentation.call( this, structure, viewer, params );
+
+};
+
+NGL.UnitcellRepresentation.prototype = NGL.createObject(
+
+    NGL.StructureRepresentation.prototype, {
+
+    constructor: NGL.UnitcellRepresentation,
+
+    type: "unitcell",
+
+    parameters: Object.assign( {
+
+        radius: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        sphereDetail: {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
+        },
+        radiusSegments: {
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
+        },
+        disableImpostor: {
+            type: "boolean", rebuild: true
+        }
+
+    }, NGL.Representation.prototype.parameters, {
+        assembly: null
+    } ),
+
+    init: function( params ){
+
+        var p = params || {};
+
+        p.radius = p.radius === undefined ? 0.5 : p.radius;
+        p.colorValue = p.colorValue === undefined ? "orange" : p.colorValue;
+
+        if( p.quality === "low" ){
+            this.sphereDetail = 0;
+            this.radiusSegments = 5;
+        }else if( p.quality === "medium" ){
+            this.sphereDetail = 1;
+            this.radiusSegments = 10;
+        }else if( p.quality === "high" ){
+            this.sphereDetail = 2;
+            this.radiusSegments = 20;
+        }else{
+            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+        }
+        this.disableImpostor = p.disableImpostor || false;
+
+        NGL.StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getUnitcellData: function( structure ){
+
+        var c = new THREE.Color( this.colorValue );
+
+        var vertexPosition = new Float32Array( 3 * 8 );
+        var vertexColor = NGL.Utils.uniformArray3( 8, c.r, c.g, c.b );
+        var vertexRadius = NGL.Utils.uniformArray( 8, this.radius );
+
+        var edgePosition1 = new Float32Array( 3 * 12 );
+        var edgePosition2 = new Float32Array( 3 * 12 );
+        var edgeColor = NGL.Utils.uniformArray3( 12, c.r, c.g, c.b );
+        var edgeRadius = NGL.Utils.uniformArray( 12, this.radius );
+
+        var uc = structure.unitcell;
+        var centerFrac = structure.center.clone()
+            .applyMatrix4( uc.cartToFrac )
+            .floor().multiplyScalar( 2 ).addScalar( 1 );
+        var v = new THREE.Vector3();
+
+        var cornerOffset = 0;
+        function addCorner( x, y, z ){
+            v.set( x, y, z )
+                .multiply( centerFrac )
+                .applyMatrix4( uc.fracToCart )
+                .toArray( vertexPosition, cornerOffset );
+            cornerOffset += 3;
+        }
+        addCorner( 0, 0, 0 );
+        addCorner( 1, 0, 0 );
+        addCorner( 0, 1, 0 );
+        addCorner( 0, 0, 1 );
+        addCorner( 1, 1, 0 );
+        addCorner( 1, 0, 1 );
+        addCorner( 0, 1, 1 );
+        addCorner( 1, 1, 1 );
+
+        var edgeOffset = 0;
+        function addEdge( a, b ){
+            v.fromArray( vertexPosition, a * 3 )
+                .toArray( edgePosition1, edgeOffset );
+            v.fromArray( vertexPosition, b * 3 )
+                .toArray( edgePosition2, edgeOffset );
+            edgeOffset += 3;
+        }
+        addEdge( 0, 1 );
+        addEdge( 0, 2 );
+        addEdge( 0, 3 );
+        addEdge( 1, 4 );
+        addEdge( 1, 5 );
+        addEdge( 2, 6 );
+        addEdge( 3, 5 );
+        addEdge( 4, 7 );
+        addEdge( 5, 7 );
+        addEdge( 2, 4 );
+        addEdge( 7, 6 );
+        addEdge( 3, 6 );
+
+        return {
+            vertexPosition: vertexPosition,
+            vertexColor: vertexColor,
+            vertexRadius: vertexRadius,
+            edgePosition1: edgePosition1,
+            edgePosition2: edgePosition2,
+            edgeColor: edgeColor,
+            edgeRadius: edgeRadius
+        };
+
+    },
+
+    create: function(){
+
+        var structure = this.structureView.getStructure();
+        var unitcellData = this.getUnitcellData( structure );
+
+        this.sphereBuffer = new NGL.SphereBuffer(
+            unitcellData.vertexPosition,
+            unitcellData.vertexColor,
+            unitcellData.vertexRadius,
+            undefined,
+            this.getBufferParams( {
+                sphereDetail: this.sphereDetail,
+                disableImpostor: this.disableImpostor,
+                dullInterior: true
+            } )
+        );
+
+        this.cylinderBuffer = new NGL.CylinderBuffer(
+            unitcellData.edgePosition1,
+            unitcellData.edgePosition2,
+            unitcellData.edgeColor,
+            unitcellData.edgeColor,
+            unitcellData.edgeRadius,
+            undefined,
+            undefined,
+            this.getBufferParams( {
+                shift: 0,
+                cap: true,
+                radiusSegments: this.radiusSegments,
+                disableImpostor: this.disableImpostor,
+                dullInterior: true
+            } )
+        );
+
+        this.dataList.push( {
+            sview: this.structureView,
+            bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
+        } );
+
+    },
+
+    updateData: function( what, data ){
+
+        var structure = data.sview.getStructure();
+        var unitcellData = this.getUnitcellData( structure );
+        var sphereData = {};
+        var cylinderData = {};
+
+        if( !what || what[ "position" ] ){
+            sphereData[ "position" ] = unitcellData.vertexPosition;
+            cylinderData[ "position" ] = NGL.Utils.calculateCenterArray(
+                unitcellData.position1, unitcellData.position2
+            );
+            cylinderData[ "position1" ] = unitcellData.edgePosition1;
+            cylinderData[ "position2" ] = unitcellData.edgePosition2;
+        }
+
+        if( !what || what[ "color" ] ){
+            sphereData[ "color" ] = unitcellData.vertexColor;
+            cylinderData[ "color" ] = unitcellData.edgeColor;
+            cylinderData[ "color2" ] = unitcellData.edgeColor;
+        }
+
+        if( !what || what[ "radius" ] ){
+            sphereData[ "radius" ] = unitcellData.vertexRadius;
+            cylinderData[ "radius" ] = unitcellData.edgeRadius;
+        }
+
+        this.sphereBuffer.setAttributes( sphereData );
+        this.cylinderBuffer.setAttributes( cylinderData );
+
+    }
+
+} );
+
+
 //////////////////////////////
 // Trajectory representation
 
@@ -36683,9 +36815,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                     NGL.Utils.uniformArray3( n, tc.r, tc.g, tc.b ),
                     scope.getBufferParams( {
                         sphereDetail: scope.sphereDetail,
-                        dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                        dullInterior: true,
+                        disableImpostor: scope.disableImpostor
+                    } )
                 );
 
                 scope.bufferList.push( sphereBuffer );
@@ -36706,9 +36838,9 @@ NGL.TrajectoryRepresentation.prototype = NGL.createObject(
                         shift: 0,
                         cap: true,
                         radiusSegments: scope.radiusSegments,
+                        disableImpostor: scope.disableImpostor,
                         dullInterior: true
-                    } ),
-                    scope.disableImpostor
+                    } )
 
                 );
 
@@ -36822,6 +36954,9 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         },
         boxSize: {
             type: "integer", precision: 1, max: 100, min: 0
+        },
+        useWorker: {
+            type: "boolean", rebuild: true
         }
 
     }, NGL.Representation.prototype.parameters ),
@@ -36838,6 +36973,7 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
         this.background = p.background || false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
 
         NGL.Representation.prototype.init.call( this, p );
 
@@ -36882,13 +37018,23 @@ NGL.SurfaceRepresentation.prototype = NGL.createObject(
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                this.volume.getSurfaceWorker(
-                    isolevel, this.smooth, this.boxCenter, this.boxSize,
-                    function( surface ){
-                        this.surface = surface;
-                        callback();
-                    }.bind( this )
-                );
+                var onSurfaceFinish = function( surface ){
+                    this.surface = surface;
+                    callback();
+                }.bind( this );
+
+                if( this.useWorker ){
+                    this.volume.getSurfaceWorker(
+                        isolevel, this.smooth, this.boxCenter, this.boxSize,
+                        onSurfaceFinish
+                    );
+                }else{
+                    onSurfaceFinish(
+                        this.volume.getSurface(
+                            isolevel, this.smooth, this.boxCenter, this.boxSize
+                        )
+                    );
+                }
             }else{
                 callback();
             }
@@ -37489,7 +37635,6 @@ NGL.Stage = function( eid, params ){
     this.viewer = new NGL.Viewer( eid );
     if( !this.viewer.renderer ) return;
     this.setParameters( p );
-    this.initFileDragDrop();
     this.viewer.animate();
     this.pickingControls = new NGL.PickingControls( this.viewer, this );
 
@@ -37722,35 +37867,6 @@ NGL.Stage.prototype = {
             this.centerView();
 
         }
-
-    },
-
-    initFileDragDrop: function(){
-
-        this.viewer.container.addEventListener( 'dragover', function( e ){
-
-            e.stopPropagation();
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-
-        }, false );
-
-        this.viewer.container.addEventListener( 'drop', function( e ){
-
-            e.stopPropagation();
-            e.preventDefault();
-
-            var fileList = e.dataTransfer.files;
-            var n = fileList.length;
-
-            for( var i=0; i<n; ++i ){
-
-                // TODO loading params (e.g. set in GUI)
-                this.loadFile( fileList[ i ] );
-
-            }
-
-        }.bind( this ), false );
 
     },
 
@@ -37990,44 +38106,24 @@ NGL.Stage.prototype = {
 
     },
 
-    exportImage: function( factor, antialias, trim, transparent, onProgress ){
+    makeImage: function( params ){
 
-        var reprParamsList = [];
+        var viewer = this.viewer;
+        var tasks = this.tasks;
 
-        function makeScreenshot(){
+        return new Promise( function( resolve, reject ){
 
-            this.viewer.screenshot( {
+            function makeImage(){
+                viewer.makeImage( params ).then( function( blob ){
+                    resolve( blob )
+                } ).catch( function( e ){
+                    reject( e );
+                } );
+            }
 
-                factor: factor,
-                antialias: antialias,
-                trim: trim,
-                transparent: transparent,
+            tasks.onZeroOnce( makeImage );
 
-                onProgress: function( i, n, finished ){
-
-                    if( typeof onProgress === "function" ){
-
-                        onProgress( i, n, finished );
-
-                    }
-
-                    if( finished ){
-
-                        reprParamsList.forEach( function( d ){
-
-                            d.repr.setParameters( d.params );
-
-                        } );
-
-                    }
-
-                }
-
-            } );
-
-        }
-
-        this.tasks.onZeroOnce( makeScreenshot, this );
+        } );
 
     },
 
