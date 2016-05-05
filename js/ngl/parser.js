@@ -3656,6 +3656,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 var id = k + 1;
                 var assembly = new NGL.Assembly( id );
                 s.biomolDict[ "BU" + id ] = assembly;
+                var chainToPart = {};
                 _assembly.transformList.forEach( function( _transform ){
                     var matrix = new THREE.Matrix4().fromArray( _transform.matrix ).transpose();
                     var chainList = _transform.chainIndexList.map( function( chainIndex ){
@@ -3670,7 +3671,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         }
                         return chainname;
                     } );
-                    assembly.addPart( [ matrix ], chainList );
+                    var part = chainToPart[ chainList ];
+                    if( part ){
+                        part.matrixList.push( matrix );
+                    }else{
+                        chainToPart[ chainList ] = assembly.addPart( [ matrix ], chainList );
+                    }
                 } );
             } );
         }
