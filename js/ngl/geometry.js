@@ -1128,7 +1128,9 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var points = new Float32Array( entity.atomCount * 4 );
     var i = 0;
 
-    entity.eachSelectedAtom( function( ap ){
+    var eachFnName = entity.eachSelectedAtom ? "eachSelectedAtom" : "eachAtom";
+
+    entity[ eachFnName ]( function( ap ){
         points[ i + 0 ] = ap.x;
         points[ i + 1 ] = ap.y;
         points[ i + 2 ] = ap.z;
