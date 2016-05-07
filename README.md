@@ -59,16 +59,6 @@ __WebGL draft extensions__: For a smoother appearance of cylinders and spheres y
 * Internet Explorer: Currently, the `EXT_frag_depth` extension is not supported.
 
 
-Trajectories
-------------
-
-The NGL Viewer can be configured to interactively display molecular dynamics trajectories served by [MDSrv](https://github.com/arose/mdsrv/). After installing MDSrv please look at the following files on how to set everything up.
-
-* [js/extra/mdsrv.js](js/extra/mdsrv.js) - Implementation of `NGL.MdsrvDatasource` that is used to access trajectory data in `NGL.RemoteTrajectory`.
-* [js/extra/examples_mdsrv.js](js/extra/examples_mdsrv.js) - A number of examples of molecular dynamics trajectories.
-* [html/mdsrv.dev.html](html/mdsrv.dev.html) - Example html showing the configuration for viewing trajectories in the NGL Viewer.
-
-
 
 Deployment
 ==========
