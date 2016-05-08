@@ -463,7 +463,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
 var NGL = {
 
-    REVISION: '0.7dev',
+    REVISION: '0.7',
     EPS: 0.0000001,
     useWorker: true,
     indexUint16: false,
@@ -1275,22 +1275,27 @@ NGL.uniqueArray = function( array ){
 
 NGL.Uint8ToString = function( u8a ){
 
-    // from http://stackoverflow.com/a/12713326/1435042
+    var chunkSize = 0x7000;
 
-    var CHUNK_SZ = 0x1000;
-    var c = [];
+    if( u8a.length > chunkSize ){
 
-    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+      var c = [];
+
+      for(var i = 0; i < u8a.length; i += chunkSize) {
 
         c.push( String.fromCharCode.apply(
-
-            null, u8a.subarray( i, i + CHUNK_SZ )
-
+          null, u8a.subarray( i, i + chunkSize )
         ) );
 
-    }
+      }
 
-    return c.join("");
+      return c.join("");
+
+    }else{
+
+      return String.fromCharCode.apply( null, u8a );
+
+    }
 
 };
 
@@ -11429,7 +11434,9 @@ NGL.Kdtree = function( entity, useSquaredDist ){
     var points = new Float32Array( entity.atomCount * 4 );
     var i = 0;
 
-    entity.eachSelectedAtom( function( ap ){
+    var eachFnName = entity.eachSelectedAtom ? "eachSelectedAtom" : "eachAtom";
+
+    entity[ eachFnName ]( function( ap ){
         points[ i + 0 ] = ap.x;
         points[ i + 1 ] = ap.y;
         points[ i + 2 ] = ap.z;
@@ -17056,28 +17063,17 @@ NGL.Surface.prototype = {
         var geo;
 
         if( geometry instanceof THREE.Geometry ){
-
-            geo = geometry;
-
-            // TODO check if needed
-            geo.computeFaceNormals( true );
-            geo.computeVertexNormals( true );
-
+            geometry.computeVertexNormals( true );
+            geo = new THREE.BufferGeometry().fromGeometry( geometry );
         }else if( geometry instanceof THREE.BufferGeometry ){
-
             geo = geometry;
-
         }else{
-
             geo = geometry.children[0].geometry;
-
         }
 
-        // TODO check if needed
-        geo.computeBoundingSphere();
-        geo.computeBoundingBox();
+        if( !geo.boundingBox ) geo.computeBoundingBox();
 
-        this.center.copy( geo.boundingSphere.center );
+        this.center.copy( geo.boundingBox.center() );
         this.boundingBox.copy( geo.boundingBox );
 
         var position, color, index, normal;
@@ -17095,15 +17091,6 @@ NGL.Surface.prototype = {
             position = attr.position.array;
             index = attr.index ? attr.index.array : null;
             normal = attr.normal.array;
-
-        }else{
-
-            // FIXME
-            NGL.log( "TODO non BufferGeometry surface" );
-
-            position = NGL.Utils.positionFromGeometry( geo );
-            index = NGL.Utils.indexFromGeometry( geo );
-            normal = NGL.Utils.normalFromGeometry( geo );
 
         }
 
@@ -22796,7 +22783,7 @@ NGL.AssemblyPart.prototype = {
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
-            if( chainList.indexOf( cp.chainname ) != -1 ){
+            if( chainList.length === 0 || chainList.indexOf( cp.chainname ) != -1 ){
                 atomCount += cp.atomCount;
             }
         } );
@@ -25147,6 +25134,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
+        // https://github.com/rcsb/mmtf
+
         if( NGL.debug ) NGL.time( "NGL.MmtfParser._parse " + this.name );
 
         var s = this.structure;
@@ -25409,6 +25398,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 var id = k + 1;
                 var assembly = new NGL.Assembly( id );
                 s.biomolDict[ "BU" + id ] = assembly;
+                var chainToPart = {};
                 _assembly.transformList.forEach( function( _transform ){
                     var matrix = new THREE.Matrix4().fromArray( _transform.matrix ).transpose();
                     var chainList = _transform.chainIndexList.map( function( chainIndex ){
@@ -25423,7 +25413,12 @@ NGL.MmtfParser.prototype = NGL.createObject(
                         }
                         return chainname;
                     } );
-                    assembly.addPart( [ matrix ], chainList );
+                    var part = chainToPart[ chainList ];
+                    if( part ){
+                        part.matrixList.push( matrix );
+                    }else{
+                        chainToPart[ chainList ] = assembly.addPart( [ matrix ], chainList );
+                    }
                 } );
             } );
         }
@@ -26287,8 +26282,7 @@ NGL.SurfaceParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        var text = NGL.Uint8ToString( this.streamer.data );
-        var geometry = this.loader.parse( text );
+        var geometry = this.loader.parse( this.streamer.asText() );
 
         this.surface.fromGeometry( geometry );
 
@@ -28125,7 +28119,7 @@ NGL.Viewer.prototype = {
         // picking texture
 
         this.renderer.extensions.get( 'OES_texture_float' );
-        this.renderer.extensions.get( 'OES_texture_half_float' );
+        NGL.supportsHalfFloat = this.renderer.extensions.get( 'OES_texture_half_float' );
         this.renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         this.pickingTarget = new THREE.WebGLRenderTarget(
@@ -28162,7 +28156,7 @@ NGL.Viewer.prototype = {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
                 format: THREE.RGBAFormat,
-                type: THREE.HalfFloatType
+                type: NGL.supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
             }
         );
 
@@ -29339,8 +29333,6 @@ NGL.Viewer.prototype = {
 
     setOrientation: function( orientation ){
 
-        console.log( "setOrientation" );
-
         // remove any paning/translation
         this.controls.object.position.sub( this.controls.target );
         this.controls.target.copy( this.controls.target0 );
@@ -29540,7 +29532,7 @@ NGL.makeImage = function( viewer, params ){
     var p = params || {};
 
     var trim = p.trim!==undefined ? p.trim : false;
-    var factor = p.factor!==undefined ? p.factor : false;
+    var factor = p.factor!==undefined ? p.factor : 1;
     var antialias = p.antialias!==undefined ? p.antialias : false;
     var transparent = p.transparent!==undefined ? p.transparent : false;
 
@@ -38149,7 +38141,7 @@ NGL.Stage.prototype = {
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
+            "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
         ];
 
@@ -38179,7 +38171,7 @@ NGL.Stage.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
+            "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
         ];
 
