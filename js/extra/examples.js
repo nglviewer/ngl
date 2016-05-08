@@ -360,7 +360,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://1u19.pdb" ).then( function( o ){
 
             o.addRepresentation( "tube", {
-                sele: ":A", bfactor: 0.005, color: "bfactor"
+                sele: ":A", radius: "bfactor", scale: 0.010, color: "bfactor"
             } );
 
             o.addRepresentation( "ball+stick", {
