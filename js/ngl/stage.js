@@ -574,7 +574,7 @@ NGL.Stage.prototype = {
 
         var types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
+            "backbone", "rocket", "helixorient", "contact", "distance"
             "dot"
         ];
 
@@ -604,7 +604,7 @@ NGL.Stage.prototype = {
 
         var impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
-            "backbone", "rocket", "crossing", "contact",
+            "backbone", "rocket", "helixorient", "contact", "distance"
             "dot"
         ];
 
