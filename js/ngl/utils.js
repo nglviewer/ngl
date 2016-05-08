@@ -367,9 +367,9 @@ NGL.uniqueArray = function( array ){
 
 NGL.Uint8ToString = function( u8a ){
 
-    var chunkSize = 0xffff;
+    var chunkSize = 0x7000;
 
-    if( length > chunkSize ){
+    if( u8a.length > chunkSize ){
 
       var c = [];
 
