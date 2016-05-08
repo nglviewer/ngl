@@ -367,22 +367,27 @@ NGL.uniqueArray = function( array ){
 
 NGL.Uint8ToString = function( u8a ){
 
-    // from http://stackoverflow.com/a/12713326/1435042
+    var chunkSize = 0xffff;
 
-    var CHUNK_SZ = 0x1000;
-    var c = [];
+    if( length > chunkSize ){
 
-    for( var i = 0; i < u8a.length; i += CHUNK_SZ ){
+      var c = [];
+
+      for(var i = 0; i < u8a.length; i += chunkSize) {
 
         c.push( String.fromCharCode.apply(
-
-            null, u8a.subarray( i, i + CHUNK_SZ )
-
+          null, u8a.subarray( i, i + chunkSize )
         ) );
 
-    }
+      }
 
-    return c.join("");
+      return c.join("");
+
+    }else{
+
+      return String.fromCharCode.apply( null, u8a );
+
+    }
 
 };
 
