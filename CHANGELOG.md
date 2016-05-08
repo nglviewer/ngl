@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased]
+## [v0.7] - 2016-05-08
 ### Added
 - Store and Proxy classes for memory efficiency
 - MMTF, DXBIN, DCD files format parsers
@@ -107,5 +107,5 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.6...dev
+[v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6

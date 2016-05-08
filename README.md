@@ -3,7 +3,7 @@
 
 
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/dev/LICENSE)
-[![Version](http://img.shields.io/badge/version-0.6-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.6)
+[![Version](http://img.shields.io/badge/version-0.7-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.7)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/dev/CHANGELOG.md)
 
 
