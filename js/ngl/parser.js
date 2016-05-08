@@ -3394,6 +3394,8 @@ NGL.MmtfParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
+        // https://github.com/rcsb/mmtf
+
         if( NGL.debug ) NGL.time( "NGL.MmtfParser._parse " + this.name );
 
         var s = this.structure;
