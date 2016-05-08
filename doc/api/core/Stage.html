@@ -133,7 +133,7 @@
 		<div>Convenience method to remove all components from the stage.</div>
 
 
-		<h3>.eachComponents( callback, type )</h3>
+		<h3>.eachComponent( callback, type )</h3>
 		<div>Iterates over all components of an optional *type* and call *callback* on each of them.</div>
 
 
@@ -141,8 +141,18 @@
 		<div>Iterates over all representations of an optional *componentType* and call *callback* on each of them.</div>
 
 
-		<h3>.exportImage( factor, antialias, transparent, trim, onProgress )</h3>
-		<div>Triggers creation and subsequent download of an image of the current scene.</div>
+		<h3>.makeImage( params )</h3>
+		<div>Triggers creation of an image of the current scene. Returns a Promise. Params are `trim`, `factor`, `antialias`, `transparent`.</div>
+		<code>
+		stage.makeImage( {
+			factor: 1,
+			antialias: true,
+			trim: false,
+			transparent: false
+		} ).then( function( blob ){
+			NGL.download( blob, "screenshot.png" );
+		} );
+		</code>
 
 
 		<h3>.centerView()</h3>

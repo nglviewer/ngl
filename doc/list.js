@@ -12,32 +12,13 @@ var list = {
             [ "User interface", "manual/usage/User-interface" ],
             // [ "Scripting", "manual/usage/Scripting" ],
             [ "Embedding", "manual/usage/Embedding" ]
-        ],
-        // "Methods": [
-        //     [ "Processing", "manual/methods/Processing" ],
-        //     [ "Rendering", "manual/methods/Rendering" ]
-        // ]
+        ]
     },
 
     "API reference": {
         "Core": [
             [ "Stage", "api/core/Stage" ],
             [ "Viewer", "api/core/Viewer" ]
-        ],
-        "Object": [
-            [ "Atom", "api/object/Atom" ],
-            [ "AtomArray", "api/object/AtomArray" ],
-            [ "Chain", "api/object/Chain" ],
-            [ "ColorMaker", "api/object/ColorMaker" ],
-            [ "ColorMakerRegistry", "api/object/ColorMakerRegistry" ],
-            [ "Fiber", "api/object/Fiber" ],
-            [ "Model", "api/object/Model" ],
-            [ "ProxyAtom", "api/object/ProxyAtom" ],
-            [ "Residue", "api/object/Residue" ],
-            [ "Selection", "api/object/Selection" ],
-            [ "Structure", "api/object/Structure" ],
-            [ "Surface", "api/object/Surface" ],
-            [ "Volume", "api/object/Volume" ]
         ],
         "Component": [
             [ "Component", "api/component/Component" ],
@@ -51,14 +32,8 @@ var list = {
         "Representation": [
             [ "Representation", "api/representation/Representation" ],
             [ "StructureRepresentation", "api/representation/StructureRepresentation" ],
-            [ "SurfaceRepresentation", "api/representation/SurfaceRepresentation" ],
-            // [ "SpacefillRepresentation", "api/representation/SpacefillRepresentation" ],
-            // [ "RibbonRepresentation", "api/representation/RibbonRepresentation" ]
-        ],
-        // "Algorithm": [
-        //     [ "Alignment", "api/algorithm/Alignment" ],
-        //     [ "Superposition", "api/algorithm/Superposition" ]
-        // ]
+            [ "SurfaceRepresentation", "api/representation/SurfaceRepresentation" ]
+        ]
     },
 
 };

@@ -16,21 +16,21 @@
 				<li>Structures</li>
 					<ul>
 						<li><a href="#mmcif">mmCIF</a></li>
-						<li><a href="#pdb">PDB</a></li>
+						<li><a href="#pdb">PDB/PQR</a></li>
 						<li><a href="#gro">GRO</a></li>
 						<li><a href="#sdf">SDF</a></li>
 						<li><a href="#mol2">MOL2</a></li>
+						<li><a href="#mmtf">MMTF</a> (beta)</li>
 					</ul>
-				<li>Trajectories (remote)</li>
+				<li>Trajectories</li>
 					<ul>
-						<li><a href="#xtc">XTC/TRR</a></li>
-						<li><a href="#netcdf">netCDF</a></li>
 						<li><a href="#dcd">DCD</a></li>
 					</ul>
 				<li>Densities</li>
 					<ul>
-						<li><a href="#mrc">MRC/MAP/CCP4</a> (beta)</li>
-						<li><a href="#cube">CUBE</a> (beta)</li>
+						<li><a href="#mrc">MRC/MAP/CCP4</a></li>
+						<li><a href="#cube">CUBE</a></li>
+						<li><a href="#dx">DX/DXBIN</a></li>
 					</ul>
 				<li>Surfaces</li>
 					<ul>
@@ -105,17 +105,19 @@
 						<li>*covalent*: deduced from *element*</li>
 						<li>*bfactor*: read from "B_iso_or_equiv" field</li>
 						<li>*altloc*: read from "label_alt_id" field</li>
+						<li>*inscode*: read from "pdbx_PDB_ins_code" field</li>
 						<li>*hetero*: determined from "group_PDB" field, which is "ATOM" or "HETATM"</li>
+						<li>*occupancy*: read from "occupancy" field</li>
 					</ul>
 				<li>Connectivity: read from the "_struct_conn" item, which generally contains data on hetero atom connectivity. Entries with "_conn_type_id" equal to "hydrog" are currently ignored. Connectivity for non-hetero atoms is calculated during post-processing.</li>
 			</ul>
 		</p>
 
 
-		<h3 id="pdb">PDB</h3>
+		<h3 id="pdb">PDB/PQR</h3>
 
 		<p>
-			Extension: <strong>.pdb</strong>, <strong>.ent</strong>
+			Extension: <strong>.pdb</strong>, <strong>.ent</strong>, <strong>.pqr</strong>
 		</p>
 
 		<p>
@@ -149,7 +151,9 @@
 						<li>*covalent*: deduced from *element*</li>
 						<li>*bfactor*: read from "tempFactor" field</li>
 						<li>*altloc*: read from "altLoc" field</li>
+						<li>*inscode*: read from "insCode" field</li>
 						<li>*hetero*: determined from record type, which is "ATOM" or "HETATM"</li>
+						<li>*occupancy*: read from "occupancy" field</li>
 					</ul>
 				<li>Connectivity: read from the "CONNECT" record, which generally contains data on hetero atom connectivity. Connectivity for non-hetero atoms is calculated during post-processing.</li>
 			</ul>
@@ -185,6 +189,7 @@
 						<li>*vdw*: deduced from *element*</li>
 						<li>*covalent*: deduced from *element*</li>
 						<li>*altloc*: not available, left empty</li>
+						<li>*inscode*: not available, left empty</li>
 					</ul>
 				<li>Connectivity: not available in the format, automatically calculated during post-processing</li>
 			</ul>
@@ -228,6 +233,7 @@
 						<li>*vdw*: deduced from *element*</li>
 						<li>*covalent*: deduced from *element*</li>
 						<li>*altloc*: not available, left empty</li>
+						<li>*inscode*: not available, left empty</li>
 					</ul>
 				<li>Connectivity: read from bond block, includes bond order</li>
 			</ul>
@@ -263,6 +269,7 @@
 						<li>*vdw*: deduced from *element*</li>
 						<li>*covalent*: deduced from *element*</li>
 						<li>*altloc*: not available, left empty</li>
+						<li>*inscode*: not available, left empty</li>
 						<li>*bfactor*: read from the "partial charge" field (i.e. not a bfactor)</li>
 					</ul>
 				<li>Connectivity: read from bond record, includes bond order</li>
@@ -270,23 +277,47 @@
 		</p>
 
 
+		<h3 id="mmtf">MMTF</h3>
+
+		<p>
+			Extension: <strong>.mmtf</strong>
+		</p>
+
+		<p>
+			Specification: <a href="https://github.com/rcsb/mmtf" target="_blank">https://github.com/rcsb/mmtf</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Title: read from "title"</li>
+				<li>Box coordinates: read from "unitCell" field</li>
+				<li>Secondary structure: read from "secStructList" field</li>
+				<li>Atom data:</li>
+					<ul>
+						<li>*resname*: read from "groupTypeList[].groupName" field</li>
+						<li>*x*, *y*, *z*: read from "x/y/zCoordList" fields</li>
+						<li>*resno*: read from "groupIdList" field</li>
+						<li>*serial*: read from "atomIdList" field</li>
+						<li>*atomname*: read from "groupTypeList[].atomNameList" field</li>
+						<li>*chainname*: read from "chainNameList" field</li>
+						<li>*element*: read from "groupTypeList[].elementList" field</li>
+						<li>*vdw*: deduced from *element*</li>
+						<li>*covalent*: deduced from *element*</li>
+						<li>*altloc*: read from "altLocList" field</li>
+						<li>*inscode*: read from "insCodeList" field</li>
+						<li>*bfactor*: read from "bFactorList" field</li>
+						<li>*occupancy*: read from "occupancyList" field</li>
+					</ul>
+				<li>Connectivity: read from "bondAtomList", "bondOrderList"  fields and their "groupTypeList[]" counterparts</li>
+			</ul>
+		</p>
+
+
 		<h2>Trajectories</h2>
 
-		<p>Structure files in *mmCIF*, *PDB*, *GRO*, *SDF* or *MOL2* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. The trajectory files in *XTC*, *netCDF* or *DCD* format can only be imported from the server and added to a *Structure*, that is, the web application itself can not read these file types.</p>
-
-
-		<h3 id="xtc">XTC/TRR</h3>
-
-		<p>
-			Extension: <strong>.xtc</strong>, <strong>.trr</strong>
-		</p>
-
-
-		<h3 id="netcdf">netCDF</h3>
-
-		<p>
-			Extension: <strong>.netcdf</strong>
-		</p>
+		<p>Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. Trajectory files in *DCD* format are added to a *Structure*.</p>
 
 
 		<h3 id="dcd">DCD</h3>
@@ -305,11 +336,7 @@
 		<h3 id="mrc">MRC/MAP/CCP4</h3>
 
 		<p>
-			Extension: <strong>.mrc</strong>, <strong>.map</strong>, <strong>.ccp4</strong>
-		</p>
-
-		<p>
-			*CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
+			Extensions: <strong>.mrc</strong>, <strong>.map</strong>, <strong>.ccp4</strong>
 		</p>
 
 		<p>
@@ -333,10 +360,6 @@
 		</p>
 
 		<p>
-			*CAUTION* This feature is only for preview. It is still under development and has not been thoroughly tested. Bugs and other surprises are likely.
-		</p>
-
-		<p>
 			Specification: <a href="http://paulbourke.net/dataformats/cube/" target="_blank">http://paulbourke.net/dataformats/cube/</a>
 		</p>
 
@@ -354,6 +377,26 @@
 
 			<ul>
 				<li>Read structure embedded in the header.</li>
+			</ul>
+		</p>
+
+
+		<h3 id="dx">DX/DXBIN</h3>
+
+		<p>
+			Extensions: <strong>.dx</strong>, <strong>.dxbin</strong>
+		</p>
+
+		<p>
+			Specification: <a href="http://www.poissonboltzmann.org/docs/file-format-info/" target="_blank">http://www.poissonboltzmann.org/docs/file-format-info/</a>
+		</p>
+
+		<p>
+			Supported features:
+
+			<ul>
+				<li>Header data</li>
+				<li>Density data</li>
 			</ul>
 		</p>
 
