@@ -61,28 +61,17 @@ NGL.Surface.prototype = {
         var geo;
 
         if( geometry instanceof THREE.Geometry ){
-
-            geo = geometry;
-
-            // TODO check if needed
-            geo.computeFaceNormals( true );
-            geo.computeVertexNormals( true );
-
+            geometry.computeVertexNormals( true );
+            geo = new THREE.BufferGeometry().fromGeometry( geometry );
         }else if( geometry instanceof THREE.BufferGeometry ){
-
             geo = geometry;
-
         }else{
-
             geo = geometry.children[0].geometry;
-
         }
 
-        // TODO check if needed
-        geo.computeBoundingSphere();
-        geo.computeBoundingBox();
+        if( !geo.boundingBox ) geo.computeBoundingBox();
 
-        this.center.copy( geo.boundingSphere.center );
+        this.center.copy( geo.boundingBox.center() );
         this.boundingBox.copy( geo.boundingBox );
 
         var position, color, index, normal;
@@ -100,15 +89,6 @@ NGL.Surface.prototype = {
             position = attr.position.array;
             index = attr.index ? attr.index.array : null;
             normal = attr.normal.array;
-
-        }else{
-
-            // FIXME
-            NGL.log( "TODO non BufferGeometry surface" );
-
-            position = NGL.Utils.positionFromGeometry( geo );
-            index = NGL.Utils.indexFromGeometry( geo );
-            normal = NGL.Utils.normalFromGeometry( geo );
 
         }
 
