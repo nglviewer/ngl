@@ -5,36 +5,47 @@ All notable changes to this project will be documented in this file, following t
 ## [Unreleased]
 ### Added
 - Store and Proxy classes for memory efficiency
-- MMTF, DXBIN, DCD parser
-- `unitcell` representation
+- MMTF, DXBIN, DCD files format parsers
+- 'unitcell' representation
+- stage.makeImage (returns Promise)
 - take NCS operations into account when creating unitcell & supercell assemblies
-- added multi sample rendering
+- added multi sample antialias rendering
 - added support for spinning around an axis
 - use bitsets for storing selections of atoms
 - Assembly and AssemblyPart classes
 - stage.toggleFullscreen method
-- ... and much more
+- read occupancy data when available (mmCIF, pdb, mmtf)
+- occupancy color scheme
+- alternate location support in selections, e.g. %B
+- read insertion codes when available (mmCIF, pdb, mmtf)
+- insertion code support in selections, e.g. ^A
+- numeric residue name support in selections, e.g. [032]
+- Queue class to handle async tasks
 
 ### Changed
 - fixed transformation matrix in mrc/ccp4 parser
 - optimized near clipping
+- Fiber class remanamed to Polymer
 - more consistent fog
 - use workers more sparsely due to the large overhead of creating them
 - create font SDF on demand, remove asset dependency
 - integrated three.js lighting into custom shaders
 - MIGRATION: chainname read from `auth_asym_id` instead of from `label_asym_id` field
 - DOC: clarified apache configuration for deployment
-- FIX: bonds not reset when building a NGL.StructureSubset
 - FIX: cif parser, ignore non-displayable bonds between symmetry mates
 - FIX: cif parser, struct_conn bonds not added for multiple altloc atoms
 - LIB: updated signals.js
+- LIB: updated promise.js
+- LIB: updated three.js
+- LIB: updated pako.js to pako_inflate.js (no deflation support needed)
 - CODE: support loading of Blob objects in addition to File objects
 - CODE: tweaked DistanceRepresentation visibility params
-- ... and much more
 
 ### Removed
 - zip, lzma, bzip2 decompression
-- ... and much more
+- removed async.js
+- mdsrv related code and documentation
+- stage.exportImage (makes image and triggers download), use stage.makeImage
 
 
 ## [v0.6] - 2015-10-12
