@@ -4542,8 +4542,7 @@ NGL.SurfaceParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        var text = NGL.Uint8ToString( this.streamer.data );
-        var geometry = this.loader.parse( text );
+        var geometry = this.loader.parse( this.streamer.asText() );
 
         this.surface.fromGeometry( geometry );
 
