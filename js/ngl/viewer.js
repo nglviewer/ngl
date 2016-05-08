@@ -2363,7 +2363,7 @@ NGL.makeImage = function( viewer, params ){
     var p = params || {};
 
     var trim = p.trim!==undefined ? p.trim : false;
-    var factor = p.factor!==undefined ? p.factor : false;
+    var factor = p.factor!==undefined ? p.factor : 1;
     var antialias = p.antialias!==undefined ? p.antialias : false;
     var transparent = p.transparent!==undefined ? p.transparent : false;
 
