@@ -7,11 +7,15 @@ panel.add( loadingInfo );
 var promiseList = [];
 
 
-promiseList.push( stage.loadFile( "data://1IHM.pdb" ).then( function( o ){
+promiseList.push( stage.loadFile( "data://1IHM.pdb", {
+
+    assembly: "BU1"
+
+} ).then( function( o ){
 
     o.addRepresentation( "rope", {
         subdiv: 3, radialSegments: 6, quality: "user",
-        colorScheme: "chainindex", scale: 4.0
+        colorScheme: "chainindex", radius: 1.0, scale: 4.0
     } );
     o.requestGuiVisibility( false );
     stage.centerView();

@@ -602,17 +602,12 @@ NGL.ExampleRegistry.addDict( {
 
     "hiv": function( stage ){
 
-        stage.loadFile( "data://3j3y.cif.gz", {
-            cAlphaOnly: true,
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "rcsb://3j3y.mmtf" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                surfaceType: "ms",
+                surfaceType: "sas",
                 smooth: 2,
-                probeRadius: 4,
-                scaleFactor: 0.3,
-                lowResolution: true,
+                scaleFactor: 0.2,
                 colorScheme: "chainindex"
             } );
 
@@ -767,10 +762,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://acrolein1gs.cube.gz" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                visible: true, isolevel: 0.1, wireframe: true
-            } );
-            o.addRepresentation( "dot", {
-                visible: true, minValue: 0.1
+                visible: true, isolevel: 0.1, opacity: 0.6
             } );
             o.centerView();
 
