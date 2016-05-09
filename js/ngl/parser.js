@@ -2782,8 +2782,8 @@ NGL.CifParser.prototype = NGL.createObject(
 
             var symmetry = cif.symmetry;
 
-            var sGroup = symmetry[ "space_group_name_H-M" ];
-            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+            var sGroup = symmetry[ "space_group_name_H_M" ];
+            if( typeof sGroup === "string" && sGroup[0] === sGroup[ sGroup.length-1 ] &&
                 ( sGroup[0] === "'" || sGroup[0] === '"' )
             ){
                 sGroup = sGroup.substring( 1, sGroup.length-1 );
