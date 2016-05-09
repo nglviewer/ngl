@@ -738,11 +738,7 @@ NGL.calculateBondsWithin = function( structure, onlyAddRung ){
                 return;
             }
 
-            var resname = r.resname;
-            var equalAtomnames = false;
-
             var bonds = r.getBonds();
-
             var atomIndices1 = bonds.atomIndices1;
             var atomIndices2 = bonds.atomIndices2;
             var nn = atomIndices1.length;
