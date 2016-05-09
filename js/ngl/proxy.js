@@ -907,7 +907,7 @@ NGL.Residue = {
         atomnames[ NGL.ProteinBackboneType ] = {
             trace: "CA",
             direction1: "C",
-            direction2: [ "O", "OC1", "O1" ],
+            direction2: [ "O", "OC1", "O1", "OX1" ],
             backboneStart: "N",
             backboneEnd: "C",
         };
