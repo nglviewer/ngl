@@ -819,8 +819,6 @@ NGL.Viewer = function( eid, params ){
         this.height = box.height;
     }
 
-    this.aspect = this.width / this.height;
-
     this.initParams();
     this.initStats();
     // this.holdRendering = true;
@@ -902,15 +900,31 @@ NGL.Viewer.prototype = {
         var p = this.params;
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
-        this.perspectiveCamera = new THREE.PerspectiveCamera(
-            p.cameraFov, this.aspect, 0.1, 10000
+        // this.perspectiveCamera = new THREE.PerspectiveCamera(
+        //     p.cameraFov, this.width / this.height, 0.1, 10000
+        // );
+        // this.perspectiveCamera.position.z = p.cameraZ;
+        // this.perspectiveCamera.lookAt( lookAt );
+
+        // this.orthographicCamera = new THREE.OrthographicCamera(
+        //     this.width / -2, this.width / 2,
+        //     this.height / 2, this.height / -2,
+        //     0.1, 10000
+        // );
+        // this.orthographicCamera.position.z = p.cameraZ;
+        // this.orthographicCamera.lookAt( lookAt );
+
+        this.camera = new THREE.CombinedCamera(
+            this.width, this.height, p.cameraFov, 0.1, 10000, 0.1, 10000
         );
-        this.perspectiveCamera.position.z = p.cameraZ;
-        this.perspectiveCamera.lookAt( lookAt );
+        this.camera.position.z = p.cameraZ;
+        this.camera.lookAt( lookAt );
 
-        this.camera = this.perspectiveCamera;
+        // this.camera = this.perspectiveCamera;
+        // this.camera = this.orthographicCamera;
 
-        this.camera.updateProjectionMatrix();
+        // this.camera.updateProjectionMatrix();
+        this.camera.toOrthographic();
 
     },
 
@@ -1121,9 +1135,13 @@ NGL.Viewer.prototype = {
             'touchmove', preventDefault, false
         );
 
-        this.controls = new THREE.TrackballControls(
+        this.perspectiveControls = new THREE.TrackballControls(
             this.camera, this.renderer.domElement
         );
+        this.orthographicControls = new THREE.OrthographicTrackballControls(
+            this.camera, this.renderer.domElement
+        );
+        this.controls = this.orthographicControls;
 
         this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.2;
@@ -1405,9 +1423,14 @@ NGL.Viewer.prototype = {
         if( type!==null ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
 
-        this.camera = this.perspectiveCamera;
+        if( type === "orthographic" ){
+            this.camera.toOrthographic();
+        }else if( type === "perspective" ){
+            this.camera.toPerspective();
+        }
 
-        this.perspectiveCamera.fov = p.cameraFov;
+        this.camera.setFov( p.cameraFov );
+        // this.perspectiveCamera.fov = p.cameraFov;
 
         this.controls.object = this.camera;
         this.camera.updateProjectionMatrix();
@@ -1442,8 +1465,7 @@ NGL.Viewer.prototype = {
         this.width = width;
         this.height = height;
 
-        this.aspect = this.width / this.height;
-        this.perspectiveCamera.aspect = this.aspect;
+        this.camera.setSize( this.width, this.height );
         this.camera.updateProjectionMatrix();
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -2126,8 +2148,9 @@ NGL.Viewer.prototype = {
                     var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
                     var objSize = maxSize + ( minSize / 2 );
                     var fov = THREE.Math.degToRad( this.camera.fov );
+                    var aspect = this.width / this.height;
 
-                    zoom = ( objSize ) / 2 / this.camera.aspect / Math.tan( fov / 2 );
+                    zoom = ( objSize ) / 2 / aspect / Math.tan( fov / 2 );
 
                 }
 
@@ -2236,12 +2259,13 @@ NGL.TiledRenderer.prototype = {
         this.scaleMatrix = new THREE.Matrix4();
 
         var halfFov = THREE.Math.degToRad( this.camera.fov * 0.5 );
+        var aspect = this.width / this.height;
 
         this.near = this.camera.near;
         this.top = Math.tan( halfFov ) * this.near;
         this.bottom = -this.top;
-        this.left = this.camera.aspect * this.bottom;
-        this.right = this.camera.aspect * this.top;
+        this.left = aspect * this.bottom;
+        this.right = aspect * this.top;
         this.width = Math.abs( this.right - this.left );
         this.height = Math.abs( this.top - this.bottom );
 
