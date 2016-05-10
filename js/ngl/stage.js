@@ -539,9 +539,12 @@ NGL.Stage.prototype = {
         return new Promise( function( resolve, reject ){
 
             function makeImage(){
+                tasks.increment();
                 viewer.makeImage( params ).then( function( blob ){
-                    resolve( blob )
+                    tasks.decrement();
+                    resolve( blob );
                 } ).catch( function( e ){
+                    tasks.decrement();
                     reject( e );
                 } );
             }
