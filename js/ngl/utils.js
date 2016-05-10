@@ -230,6 +230,8 @@ NGL.getFileInfo = function( file ){
     }else{
         path = file
     }
+    var queryIndex = path.lastIndexOf( '?' );
+    path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
 
     var name = path.replace( /^.*[\\\/]/, '' );
     var base = name.substring( 0, name.lastIndexOf( '.' ) );
