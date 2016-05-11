@@ -1456,11 +1456,11 @@ NGL.Viewer.prototype = {
                 this.camera.position.copy( this.perspectiveCamera.position );
                 this.camera.up.copy( this.perspectiveCamera.up );
                 //
-                var fov = this.perspectiveCamera.fov;
-                var near = this.perspectiveCamera.near;
-                var far = this.perspectiveCamera.far;
-                var hyperfocus = ( near + far ) / 2;
-                var height = 2 * Math.tan( fov * Math.PI / 180 / 2 ) * hyperfocus;
+                var pFov = this.perspectiveCamera.fov;
+                var pNear = this.perspectiveCamera.near;
+                var pFar = this.perspectiveCamera.far;
+                var hyperfocus = ( pNear + pFar ) / 2;
+                var height = 2 * Math.tan( pFov * Math.PI / 180 / 2 ) * hyperfocus;
                 this.camera.zoom = this.height / height;
             }
         }else{  // p.cameraType === "perspective"
