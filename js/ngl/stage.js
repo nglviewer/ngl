@@ -110,6 +110,9 @@ NGL.Stage.prototype = {
         fogFar: {
             type: "range", step: 1, max: 100, min: 0
         },
+        cameraType: {
+            type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+        },
         cameraFov: {
             type: "range", step: 1, max: 120, min: 15
         },
@@ -156,7 +159,7 @@ NGL.Stage.prototype = {
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
-        viewer.setCamera( undefined, p.cameraFov );
+        viewer.setCamera( p.cameraType, p.cameraFov );
         viewer.setSampling( p.sampleLevel );
         viewer.setLight(
             p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
@@ -910,6 +913,7 @@ NGL.Preferences = function( id, defaultParams ){
         fogNear: 50,
         fogFar: 100,
         cameraFov: 40,
+        cameraType: "perspective",
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,

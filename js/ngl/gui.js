@@ -532,6 +532,14 @@ NGL.MenubarViewWidget = function( stage ){
         stage.setParameters( { theme: "dark" } );
     }
 
+    function onPerspectiveCameraOptionClick(){
+        stage.setParameters( { cameraType: "perspective" } );
+    }
+
+    function onOrthographicCameraOptionClick(){
+        stage.setParameters( { cameraType: "orthographic" } );
+    }
+
     function onFullScreenOptionClick(){
         stage.toggleFullscreen( document.body );
     }
@@ -572,6 +580,9 @@ NGL.MenubarViewWidget = function( stage ){
     var menuConfig = [
         createOption( 'Light theme', onLightThemeOptionClick ),
         createOption( 'Dark theme', onDarkThemeOptionClick ),
+        createDivider(),
+        createOption( 'Perspective', onPerspectiveCameraOptionClick ),
+        createOption( 'Orthographic', onOrthographicCameraOptionClick ),
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
