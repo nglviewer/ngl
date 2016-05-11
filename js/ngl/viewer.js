@@ -716,6 +716,45 @@ NGL.JitterVectors.forEach( function( offsetList ){
 } );
 
 
+THREE.OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
+
+    this.view = {
+        fullWidth: fullWidth,
+        fullHeight: fullHeight,
+        offsetX: x,
+        offsetY: y,
+        width: width,
+        height: height
+    };
+
+    this.updateProjectionMatrix();
+
+};
+
+THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
+
+    var dx = ( this.right - this.left ) / ( 2 * this.zoom );
+    var dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
+    var cx = ( this.right + this.left ) / 2;
+    var cy = ( this.top + this.bottom ) / 2;
+
+    var left = cx - dx;
+    var right = cx + dx;
+    var top = cy + dy;
+    var bottom = cy - dy;
+
+    if( this.view ){
+        left -= this.view.offsetX / this.zoom;
+        right -= this.view.offsetX / this.zoom;
+        top -= this.view.offsetY / this.zoom;
+        bottom -= this.view.offsetY / this.zoom;
+    }
+
+    this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
+
+};
+
+
 //////////
 // Stats
 
@@ -1866,14 +1905,10 @@ NGL.Viewer.prototype = {
         // from the last and accumulate the results.
         for ( var i = 0; i < offsetList.length; ++i ){
 
-            // only jitters perspective cameras.
-            // TODO: add support for jittering orthogonal cameras
             var offset = offsetList[ i ];
-            if( camera.setViewOffset ){
-                camera.setViewOffset(
-                    width, height, offset[ 0 ], offset[ 1 ], width, height
-                );
-            }
+            camera.setViewOffset(
+                width, height, offset[ 0 ], offset[ 1 ], width, height
+            );
             this.__updateCamera();
 
             this.__renderModelGroup( this.sampleTarget );
@@ -1893,11 +1928,7 @@ NGL.Viewer.prototype = {
         this.renderer.clear();
         this.renderer.render( this.compositeScene, this.compositeCamera );
 
-        // reset jitter to nothing.
-        // TODO: add support for orthogonal cameras
-        if ( camera.setViewOffset ){
-            camera.view = null;
-        }
+        camera.view = null;
 
     },
 
