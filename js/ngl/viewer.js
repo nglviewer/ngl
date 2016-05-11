@@ -911,7 +911,7 @@ NGL.Viewer.prototype = {
 
             backgroundColor: new THREE.Color( 0x000000 ),
 
-            cameraType: 1,
+            cameraType: "perspective",
             cameraFov: 40,
             cameraZ: -80, // FIXME initial value should be automatically determined
 
@@ -939,31 +939,26 @@ NGL.Viewer.prototype = {
         var p = this.params;
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
-        // this.perspectiveCamera = new THREE.PerspectiveCamera(
-        //     p.cameraFov, this.width / this.height, 0.1, 10000
-        // );
-        // this.perspectiveCamera.position.z = p.cameraZ;
-        // this.perspectiveCamera.lookAt( lookAt );
-
-        // this.orthographicCamera = new THREE.OrthographicCamera(
-        //     this.width / -2, this.width / 2,
-        //     this.height / 2, this.height / -2,
-        //     0.1, 10000
-        // );
-        // this.orthographicCamera.position.z = p.cameraZ;
-        // this.orthographicCamera.lookAt( lookAt );
-
-        this.camera = new THREE.CombinedCamera(
-            this.width, this.height, p.cameraFov, 0.1, 10000, 0.1, 10000
+        this.perspectiveCamera = new THREE.PerspectiveCamera(
+            p.cameraFov, this.width / this.height, 0.1, 10000
         );
-        this.camera.position.z = p.cameraZ;
-        this.camera.lookAt( lookAt );
+        this.perspectiveCamera.position.z = p.cameraZ;
+        this.perspectiveCamera.lookAt( lookAt );
 
-        // this.camera = this.perspectiveCamera;
-        // this.camera = this.orthographicCamera;
+        this.orthographicCamera = new THREE.OrthographicCamera(
+            this.width / -2, this.width / 2,
+            this.height / 2, this.height / -2,
+            0.1, 10000
+        );
+        this.orthographicCamera.position.z = p.cameraZ;
+        this.orthographicCamera.lookAt( lookAt );
 
-        // this.camera.updateProjectionMatrix();
-        this.camera.toOrthographic();
+        if( p.cameraType === "orthographic" ){
+            this.camera = this.orthographicCamera;
+        }else{  // p.cameraType === "perspective"
+            this.camera = this.perspectiveCamera;
+        }
+        this.camera.updateProjectionMatrix();
 
     },
 
@@ -1174,14 +1169,7 @@ NGL.Viewer.prototype = {
             'touchmove', preventDefault, false
         );
 
-        this.perspectiveControls = new THREE.TrackballControls(
-            this.camera, this.renderer.domElement
-        );
-        this.orthographicControls = new THREE.OrthographicTrackballControls(
-            this.camera, this.renderer.domElement
-        );
-        this.controls = this.orthographicControls;
-
+        this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
@@ -1459,19 +1447,33 @@ NGL.Viewer.prototype = {
 
         var p = this.params;
 
-        if( type!==null ) p.cameraType = type;
+        if( type ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
 
-        if( type === "orthographic" ){
-            this.camera.toOrthographic();
-        }else if( type === "perspective" ){
-            this.camera.toPerspective();
+        if( p.cameraType === "orthographic" ){
+            if( this.camera !== this.orthographicCamera ){
+                this.camera = this.orthographicCamera;
+                this.camera.position.copy( this.perspectiveCamera.position );
+                this.camera.up.copy( this.perspectiveCamera.up );
+                //
+                var fov = this.perspectiveCamera.fov;
+                var near = this.perspectiveCamera.near;
+                var far = this.perspectiveCamera.far;
+                var hyperfocus = ( near + far ) / 2;
+                var height = 2 * Math.tan( fov * Math.PI / 180 / 2 ) * hyperfocus;
+                this.camera.zoom = this.height / height;
+            }
+        }else{  // p.cameraType === "perspective"
+            if( this.camera !== this.perspectiveCamera ){
+                this.camera = this.perspectiveCamera;
+                this.camera.position.copy( this.orthographicCamera.position );
+                this.camera.up.copy( this.orthographicCamera.up );
+            }
         }
 
-        this.camera.setFov( p.cameraFov );
-        // this.perspectiveCamera.fov = p.cameraFov;
-
+        this.perspectiveCamera.fov = p.cameraFov;
         this.controls.object = this.camera;
+        this.camera.lookAt( this.controls.target );
         this.camera.updateProjectionMatrix();
 
         this.requestRender();
@@ -1504,7 +1506,11 @@ NGL.Viewer.prototype = {
         this.width = width;
         this.height = height;
 
-        this.camera.setSize( this.width, this.height );
+        this.perspectiveCamera.aspect = this.width / this.height;
+        this.orthographicCamera.left = -this.width / 2;
+        this.orthographicCamera.right = this.width / 2;
+        this.orthographicCamera.top = this.height / 2;
+        this.orthographicCamera.bottom = -this.height / 2;
         this.camera.updateProjectionMatrix();
 
         this.renderer.setPixelRatio( window.devicePixelRatio );

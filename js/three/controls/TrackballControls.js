@@ -211,6 +211,9 @@ THREE.TrackballControls = function ( object, domElement ) {
 			_touchZoomDistanceStart = _touchZoomDistanceEnd;
 			_eye.multiplyScalar( factor );
 
+			// ortho
+			if( _this.object.fov === undefined ) _this.object.zoom *= factor;
+
 		} else {
 
 			factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
@@ -218,6 +221,9 @@ THREE.TrackballControls = function ( object, domElement ) {
 			if ( factor !== 1.0 && factor > 0.0 ) {
 
 				_eye.multiplyScalar( factor );
+
+				// ortho
+				if( _this.object.fov === undefined ) _this.object.zoom /= factor;
 
 				if ( _this.staticMoving ) {
 
@@ -247,7 +253,15 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			if ( mouseChange.lengthSq() ) {
 
-				mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
+				if( _this.object.fov === undefined ){
+					// Scale movement to keep clicked/dragged position under cursor
+					var scale_x = ( _this.object.right - _this.object.left ) / _this.object.zoom;
+					var scale_y = ( _this.object.top - _this.object.bottom ) / _this.object.zoom;
+					mouseChange.x *= scale_x;
+					mouseChange.y *= scale_y;
+				}else{
+					mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
+				}
 
 				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
 				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
