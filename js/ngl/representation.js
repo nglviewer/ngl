@@ -532,7 +532,10 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
-        var biomolOptions = { "default": "default", "": "AU" };
+        var biomolOptions = {
+            "default": "default",
+            "": ( structure.unitcell ? "AU" : "FULL" )
+        };
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
@@ -3493,6 +3496,7 @@ NGL.UnitcellRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var structure = this.structureView.getStructure();
+        if( !structure.unitcell ) return;
         var unitcellData = this.getUnitcellData( structure );
 
         this.sphereBuffer = new NGL.SphereBuffer(

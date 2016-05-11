@@ -1361,15 +1361,9 @@ NGL.StructureParser.prototype = NGL.createObject(
 
         this._postProcess();
 
-        if( s.unitcell === undefined ){
-            var bbSize = s.boundingBox.size();
-            s.unitcell = new NGL.Unitcell(
-                bbSize.x, bbSize.y, bbSize.z,
-                90, 90, 90, "P 1"
-            );
+        if( s.unitcell ){
+            NGL.buildUnitcellAssembly( s );
         }
-
-        NGL.buildUnitcellAssembly( s );
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
         if( NGL.debug ) NGL.log( this[ this.__objName ] );

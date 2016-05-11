@@ -1339,7 +1339,9 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setColor( '#444' )
         .setOptions( (function(){
             var biomolDict = component.structure.biomolDict;
-            var assemblyOptions = { "": "AU" };
+            var assemblyOptions = {
+                "": ( component.structure.unitcell ? "AU" : "FULL" )
+            };
             Object.keys( biomolDict ).forEach( function( k ){
                 assemblyOptions[ k ] = k;
             } );
