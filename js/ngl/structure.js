@@ -1235,7 +1235,7 @@ NGL.Structure = function( name, path ){
     this.biomolDict = {};
     this.helices = [];
     this.sheets = [];
-    this.unitcell = new NGL.Unitcell();
+    this.unitcell = undefined;
     this.selection = undefined;
 
     this.frames = [];
@@ -2084,7 +2084,7 @@ NGL.Structure.prototype = {
             biomolDict: {},
             helices: this.helices,
             sheets: this.sheets,
-            unitcell: this.unitcell.toJSON(),
+            unitcell: this.unitcell ? this.unitcell.toJSON() : undefined,
 
             frames: this.frames,
             boxes: this.boxes,
@@ -2142,7 +2142,7 @@ NGL.Structure.prototype = {
         this.biomolDict = input.biomolDict;
         this.helices = input.helices;
         this.sheets = input.sheets;
-        this.unitcell = new NGL.Unitcell().fromJSON( input.unitcell );
+        if( input.unitcell ) this.unitcell = new NGL.Unitcell().fromJSON( input.unitcell );
 
         this.frames = input.frames;
         this.boxes = input.boxes;

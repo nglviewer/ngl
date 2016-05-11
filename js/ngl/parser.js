@@ -1842,7 +1842,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
@@ -2850,7 +2850,7 @@ NGL.CifParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         // add connections
@@ -3133,7 +3133,7 @@ NGL.SdfParser.prototype = NGL.createObject(
         sb.finalize();
 
         s._dontAutoBond = true;
-        s.unitcell = undefined;  // triggers use of bounding box
+        s.unitcell = undefined;
 
         if( NGL.debug ) NGL.timeEnd( "NGL.SdfParser._parse " + this.name );
         callback();
@@ -3355,7 +3355,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
         sb.finalize();
 
         s._dontAutoBond = true;
-        s.unitcell = undefined;  // triggers use of bounding box
+        s.unitcell = undefined;
 
         if( NGL.debug ) NGL.timeEnd( "NGL.Mol2Parser._parse " + this.name );
         callback();
@@ -3680,7 +3680,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 sd.spaceGroup
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
