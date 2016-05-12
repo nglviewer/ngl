@@ -990,6 +990,27 @@ NGL.Assembly.prototype = {
 
     },
 
+    isIdentity: function( structure ){
+
+        if( this.partList.length !== 1 ) return false;
+
+        var part = this.partList[ 0 ];
+        if( part.matrixList.length !== 1 ) return false;
+
+        var identityMatrix = new THREE.Matrix4();
+        if( !identityMatrix.equals( part.matrixList[ 0 ] ) ) return false;
+
+        var structureChainList = [];
+        structure.eachChain( function( cp ){
+            structureChainList.push( cp.chainname );
+        } );
+        structureChainList = NGL.uniqueArray( structureChainList );
+        if( part.chainList.length !== structureChainList.length ) return false;
+
+        return true;
+
+    },
+
     toJSON: function(){
 
         var output = {
