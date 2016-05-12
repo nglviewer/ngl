@@ -12,8 +12,8 @@ uniform mat4 projectionMatrix;
 // uniform vec3 specular;
 // uniform float shininess;
 
-
 varying float vRadius;
+varying float vRadiusSq;
 varying vec3 vPoint;
 varying vec3 vPointViewPosition;
 
@@ -63,19 +63,18 @@ bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
 
     vec3 rayDirection = normalize( vPoint );
 
-    float B = -2.0 * dot( rayDirection, cameraSpherePos2 );
-    float C = dot( cameraSpherePos2, cameraSpherePos2 ) - ( vRadius * vRadius );
+    float B = dot( rayDirection, cameraSpherePos2 );
+    float det = B * B + vRadiusSq - dot( cameraSpherePos2, cameraSpherePos2 );
 
-    float det = ( B * B ) - ( 4.0 * C );
     if( det < 0.0 ){
         discard;
         return false;
     }else{
         float sqrtDet = sqrt( det );
-        float posT = ( -B + sqrtDet ) / 2.0;
-        float negT = ( -B - sqrtDet ) / 2.0;
+        float posT = ( B + sqrtDet );
+        float negT = ( B - sqrtDet );
 
-        float intersectT = min(posT, negT);
+        float intersectT = min( posT, negT );
         cameraPos = rayDirection * intersectT;
 
         #ifdef NEAR_CLIP
