@@ -1178,7 +1178,8 @@ NGL.SphereImpostorBuffer = function( position, color, radius, pickingColor, para
     NGL.QuadBuffer.call( this, params );
 
     this.addUniforms( {
-        "projectionMatrixInverse": { value: new THREE.Matrix4() }
+        "projectionMatrixInverse": { value: new THREE.Matrix4() },
+        "ortho": { value: 0.0 },
     } );
 
     this.addAttributes( {

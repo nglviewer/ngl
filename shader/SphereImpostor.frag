@@ -8,6 +8,7 @@ uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
 uniform mat4 projectionMatrix;
+uniform float ortho;
 
 // uniform vec3 specular;
 // uniform float shininess;
@@ -58,45 +59,46 @@ float calcClip( vec3 cameraPos ){
 
 bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
 
-    vec3 cameraSpherePos2 = -vPointViewPosition;
-    cameraSpherePos2.z += vRadius;
+    vec3 cameraSpherePos = -vPointViewPosition;
+    cameraSpherePos.z += vRadius;
 
-    vec3 rayDirection = normalize( vPoint );
+    vec3 rayOrigin = mix( vec3( 0.0, 0.0, 0.0 ), vPoint, ortho );
+    vec3 rayDirection = mix( normalize( vPoint ), vec3( 0.0, 0.0, 1.0 ), ortho );
+    vec3 cameraSphereDir = mix( cameraSpherePos, rayOrigin - cameraSpherePos, ortho );
 
-    float B = dot( rayDirection, cameraSpherePos2 );
-    float det = B * B + vRadiusSq - dot( cameraSpherePos2, cameraSpherePos2 );
+    float B = dot( rayDirection, cameraSphereDir );
+    float det = B * B + vRadiusSq - dot( cameraSphereDir, cameraSphereDir );
 
     if( det < 0.0 ){
         discard;
         return false;
     }else{
         float sqrtDet = sqrt( det );
-        float posT = ( B + sqrtDet );
-        float negT = ( B - sqrtDet );
+        float posT = mix( B + sqrtDet, B + sqrtDet, ortho );
+        float negT = mix( B - sqrtDet, sqrtDet - B, ortho );
 
-        float intersectT = min( posT, negT );
-        cameraPos = rayDirection * intersectT;
+        cameraPos = rayDirection * negT + rayOrigin;
 
         #ifdef NEAR_CLIP
             if( calcDepth( cameraPos ) <= 0.0 ){
-                cameraPos = rayDirection * max( posT, negT );
+                cameraPos = rayDirection * posT + rayOrigin;
                 interior = true;
                 return false;
             }else if( calcClip( cameraPos ) > 0.0 ){
-                cameraPos = rayDirection * max( posT, negT );
+                cameraPos = rayDirection * posT + rayOrigin;
                 interior = true;
                 flag2 = true;
                 return false;
             }else{
-                cameraNormal = normalize( cameraPos - cameraSpherePos2 );
+                cameraNormal = normalize( -cameraPos - cameraSpherePos );
             }
         #else
             if( calcDepth( cameraPos ) <= 0.0 ){
-                cameraPos = rayDirection * max( posT, negT );
+                cameraPos = rayDirection * posT + rayOrigin;
                 interior = true;
                 return false;
             }else{
-                cameraNormal = normalize( cameraPos - cameraSpherePos2 );
+                cameraNormal = normalize( cameraPos - cameraSpherePos );
             }
         #endif
 

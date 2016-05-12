@@ -125,7 +125,8 @@ void main(void){
 
     vRadius = radius;
     vRadiusSq = radius * radius;
-    vPoint = ( projectionMatrixInverse * gl_Position ).xyz;
-    vPointViewPosition = -mvPosition.xyz;
+    vec4 vPoint4 = projectionMatrixInverse * gl_Position;
+    vPoint = vPoint4.xyz / vPoint4.w;
+    vPointViewPosition = -mvPosition.xyz / mvPosition.w;
 
 }
