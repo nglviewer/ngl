@@ -1360,6 +1360,8 @@ NGL.StructureComponent.prototype = NGL.createObject(
 
     centerView: function( zoom, sele ){
 
+        zoom = zoom !== undefined ? zoom : true;
+
         var center;
 
         if( sele ){

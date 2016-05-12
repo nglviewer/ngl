@@ -1456,11 +1456,11 @@ NGL.Viewer.prototype = {
                 this.camera.position.copy( this.perspectiveCamera.position );
                 this.camera.up.copy( this.perspectiveCamera.up );
                 //
-                var pFov = this.perspectiveCamera.fov;
+                var pFov = THREE.Math.degToRad( this.perspectiveCamera.fov );
                 var pNear = this.perspectiveCamera.near;
                 var pFar = this.perspectiveCamera.far;
                 var hyperfocus = ( pNear + pFar ) / 2;
-                var height = 2 * Math.tan( pFov * Math.PI / 180 / 2 ) * hyperfocus;
+                var height = 2 * Math.tan( pFov / 2 ) * hyperfocus;
                 this.camera.zoom = this.height / height;
             }
         }else{  // p.cameraType === "perspective"
@@ -1788,13 +1788,13 @@ NGL.Viewer.prototype = {
         this.cDist = cDist;
 
         var bRadius = Math.max( 10, this.boundingBox.size( this.distVector ).length() * 0.5 );
+        bRadius += this.boundingBox.center( this.distVector )
+            .add( this.rotationGroup.position )
+            .length();
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
         }
-        bRadius += this.boundingBox.center( this.distVector )
-            .add( this.rotationGroup.position )
-            .length();
         this.bRadius = bRadius;
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
@@ -2173,24 +2173,25 @@ NGL.Viewer.prototype = {
 
             if( zoom ){
 
+                var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
+                var aspect = this.width / this.height;
+
                 if( zoom === true ){
 
                     // automatic zoom that shows
                     // everything inside the bounding box
-                    // TODO take extent of the towards the camera into account
+                    // TODO take extent towards the camera into account
 
                     this.boundingBox.size( bbSize );
                     var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
                     var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
                     var objSize = maxSize + ( minSize / 2 );
-                    var fov = THREE.Math.degToRad( this.camera.fov );
-                    var aspect = this.width / this.height;
-
-                    zoom = ( objSize ) / 2 / aspect / Math.tan( fov / 2 );
+                    zoom = objSize;
 
                 }
 
+                zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
                 zoom = Math.max( zoom, 1.2 * this.params.clipDist );
 
                 eye.copy( this.camera.position ).sub( this.controls.target );
@@ -2200,6 +2201,13 @@ NGL.Viewer.prototype = {
                 eye.copy( eyeDirection );
 
                 this.camera.position.addVectors( this.controls.target, eye );
+
+                this.__updateClipping();
+                var near = this.camera.near;
+                var far = this.camera.far;
+                var hyperfocus = ( near + far ) / 2;
+                var height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+                this.orthographicCamera.zoom = this.height / height;
 
             }
 
