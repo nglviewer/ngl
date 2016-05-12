@@ -49,8 +49,8 @@ varying vec4 w;
     varying vec3 vColor2;
 #endif
 
-uniform mat4 modelViewMatrixInverse;
 uniform float shift;
+uniform float ortho;
 
 void main(){
 
@@ -69,9 +69,7 @@ void main(){
     vec3 dir = normalize( position2 - position1 );
     float ext = length( position2 - position1 ) / 2.0;
 
-    vec3 cam_dir = normalize(
-        ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center
-    );
+    vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );
 
     vec3 ldir;
 
@@ -82,12 +80,13 @@ void main(){
     else // direction vector already looks in my direction
         ldir = ext * dir;
 
-    vec3 left = normalize( cross( cam_dir, ldir ) );
+    vec3 left = cross( cam_dir, ldir );
+    vec3 up = cross( left, ldir );
     vec3 leftShift = shift * left * radius;
     if( b < 0.0 )
         leftShift *= -1.0;
-    left = radius * left;
-    vec3 up = radius * normalize( cross( left, ldir ) );
+    left = radius * normalize( left );
+    up = radius * normalize( up );
 
     // transform to modelview coordinates
     axis = normalize( normalMatrix * ldir );

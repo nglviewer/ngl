@@ -2001,6 +2001,7 @@ NGL.Viewer.prototype = {
             var bRadius = this.bRadius;
             var canvasHeight = this.height;
             var pixelRatio = this.renderer.getPixelRatio();
+            var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
 
             projectionMatrixInverse.getInverse(
                 camera.projectionMatrix
@@ -2042,6 +2043,10 @@ NGL.Viewer.prototype = {
                     u.projectionMatrixTranspose.value.copy(
                         projectionMatrixTranspose
                     );
+                }
+
+                if( u.ortho ){
+                    u.ortho.value = ortho;
                 }
 
             } );
