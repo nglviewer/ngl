@@ -1682,7 +1682,7 @@ NGL.Viewer.prototype = {
             var gid, object, instance, bondId;
             var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            this.render( null, true );
+            this.render( true );
             this.renderer.readRenderTargetPixels(
                 this.pickingTarget, x, y, 1, 1, pixelBuffer
             );
@@ -1811,14 +1811,14 @@ NGL.Viewer.prototype = {
 
     },
 
-    __updateCamera: function( tileing ){
+    __updateCamera: function(){
 
         var camera = this.camera;
 
         camera.updateMatrix();
         camera.updateMatrixWorld( true );
         camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-        if( !tileing ) this.camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix();
 
         this.updateMaterialUniforms( this.scene, camera );
         this.sortProjectedPosition( this.scene, camera );
@@ -1936,7 +1936,7 @@ NGL.Viewer.prototype = {
 
     },
 
-    render: function( e, picking, tileing ){
+    render: function( picking ){
 
         if( this._rendering ){
             NGL.warn( "tried to call 'render' from within 'render'" );
@@ -1947,11 +1947,8 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        // var p = this.params;
-        var camera = this.camera;
-
         this.__updateClipping();
-        this.__updateCamera( tileing );
+        this.__updateCamera();
         this.__updateLights();
 
         // render
@@ -1962,7 +1959,7 @@ NGL.Viewer.prototype = {
 
             this.__renderPickingGroup();
 
-        }else if( this.sampleLevel > 0 && !tileing ){
+        }else if( this.sampleLevel > 0 ){
 
             this.__renderMultiSample();
 
@@ -2295,86 +2292,65 @@ NGL.TiledRenderer.prototype = {
         this.ctx = canvas.getContext( '2d' );
         this.canvas = canvas;
 
-        //
-
-        this.shearMatrix = new THREE.Matrix4();
-        this.scaleMatrix = new THREE.Matrix4();
-
-        var halfFov = THREE.Math.degToRad( this.camera.fov * 0.5 );
-        var aspect = this.viewer.width / this.viewer.height;
-
-        this.near = this.camera.near;
-        this.top = Math.tan( halfFov ) * this.near;
-        this.bottom = -this.top;
-        this.left = aspect * this.bottom;
-        this.right = aspect * this.top;
-        this.width = Math.abs( this.right - this.left );
-        this.height = Math.abs( this.top - this.bottom );
-
-    },
-
-    makeAsymmetricFrustum: function( projectionMatrix, i ){
-
-        var factor = this.factor;
-        var near = this.near;
-        var width = this.width;
-        var height = this.height;
-
-        var x = i % factor;
-        var y = Math.floor( i / factor );
-
-        this.shearMatrix.set(
-            1, 0, ( x - ( factor - 1 ) * 0.5 ) * width / near, 0,
-            0, 1, -( y - ( factor - 1 ) * 0.5 ) * height / near, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        this.scaleMatrix.set(
-            factor, 0, 0, 0,
-            0, factor, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        projectionMatrix
-            .multiply( this.shearMatrix )
-            .multiply( this.scaleMatrix );
-
-        return projectionMatrix;
+        this.viewerSampleLevel = this.viewer.sampleLevel;
+        this.viewer.sampleLevel = -1;
 
     },
 
     renderTile: function( i ){
 
-        this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
-        this.viewer.render( null, null, true );
+        var factor = this.factor;
 
-        var x = ( i % this.factor ) * this.viewer.width;
-        var y = Math.floor( i / this.factor ) * this.viewer.height;
+        var x = i % factor;
+        var y = Math.floor( i / factor );
+
+        var width = this.viewer.width;
+        var height = this.viewer.height;
+        var offsetX = x * width;
+        var offsetY = y * height;
+
+        this.viewer.camera.setViewOffset(
+            width * factor,
+            height * factor,
+            offsetX,
+            offsetY,
+            width,
+            height
+        );
+
+        this.viewer.render();
 
         if( this.antialias ){
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.floor( x / 2 ),
-                Math.floor( y / 2 ),
-                Math.ceil( this.viewer.width / 2 ),
-                Math.ceil( this.viewer.height / 2 )
+                Math.floor( offsetX / 2 ),
+                Math.floor( offsetY / 2 ),
+                Math.ceil( width / 2 ),
+                Math.ceil( height / 2 )
             );
         }else{
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.floor( x ),
-                Math.floor( y ),
-                Math.ceil( this.viewer.width ),
-                Math.ceil( this.viewer.height )
+                Math.floor( offsetX ),
+                Math.floor( offsetY ),
+                Math.ceil( width ),
+                Math.ceil( height )
             );
         }
 
-        this.camera.updateProjectionMatrix();
-
         if( typeof this.onProgress === "function" ){
             this.onProgress( i + 1, this.n, false );
+        }
+
+    },
+
+    finalize: function(){
+
+        this.viewer.sampleLevel = this.viewerSampleLevel;
+        this.viewer.camera.view = null;
+
+        if( typeof this.onFinish === "function" ){
+            this.onFinish( this.n + 1, this.n, false );
         }
 
     },
@@ -2385,9 +2361,7 @@ NGL.TiledRenderer.prototype = {
 
         for( var i = 0; i <= n; ++i ){
             if( i === n ){
-                if( typeof this.onFinish === "function" ){
-                    this.onFinish( i + 1, n, false );
-                }
+                this.finalize();
             }else{
                 this.renderTile( i );
             }
@@ -2399,14 +2373,12 @@ NGL.TiledRenderer.prototype = {
 
         var n = this.n;
         var renderTile = this.renderTile.bind( this );
-        var onFinish = this.onFinish;
+        var finalize = this.finalize.bind( this );
 
         for( var i = 0; i <= n; ++i ){
             setTimeout( function( i ){
                 if( i === n ){
-                    if( typeof onFinish === "function" ){
-                        onFinish( i + 1, n, false );
-                    }
+                    finalize();
                 }else{
                     renderTile( i );
                 }
