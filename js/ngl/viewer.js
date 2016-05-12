@@ -1642,7 +1642,9 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 500 && !this.still && this.sampleLevel < 3 ){
+        var delta = performance.now() - this.stats.startTime;
+
+        if( delta > 500 && !this.still && this.sampleLevel < 3 && this.sampleLevel !== -1 ){
 
             var currentSampleLevel = this.sampleLevel;
             this.sampleLevel = 3;
@@ -1651,18 +1653,6 @@ NGL.Viewer.prototype = {
             this.still = true;
             this.sampleLevel = currentSampleLevel;
             if( NGL.debug ) NGL.log( "rendered still frame" );
-
-        }else if( this.params.sampleLevel === -1 ){
-
-            if( this.stats.avgDuration > 30 ){
-                this.sampleLevel = Math.max( 0, this.sampleLevel - 1 );
-                if( NGL.debug ) NGL.log( "sample level down", this.sampleLevel );
-                this.stats.count = 0;
-            }else if( this.stats.avgDuration < 17 && this.stats.count > 60 ){
-                this.sampleLevel = Math.min( 5, this.sampleLevel + 1 );
-                if( NGL.debug ) NGL.log( "sample level up", this.sampleLevel );
-                this.stats.count = 0;
-            }
 
         }
 
