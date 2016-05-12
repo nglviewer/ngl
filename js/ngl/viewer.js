@@ -2306,7 +2306,7 @@ NGL.TiledRenderer.prototype = {
         this.scaleMatrix = new THREE.Matrix4();
 
         var halfFov = THREE.Math.degToRad( this.camera.fov * 0.5 );
-        var aspect = this.width / this.height;
+        var aspect = this.viewer.width / this.viewer.height;
 
         this.near = this.camera.near;
         this.top = Math.tan( halfFov ) * this.near;
