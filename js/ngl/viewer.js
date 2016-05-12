@@ -1455,13 +1455,7 @@ NGL.Viewer.prototype = {
                 this.camera = this.orthographicCamera;
                 this.camera.position.copy( this.perspectiveCamera.position );
                 this.camera.up.copy( this.perspectiveCamera.up );
-                //
-                var pFov = THREE.Math.degToRad( this.perspectiveCamera.fov );
-                var pNear = this.perspectiveCamera.near;
-                var pFar = this.perspectiveCamera.far;
-                var hyperfocus = ( pNear + pFar ) / 2;
-                var height = 2 * Math.tan( pFov / 2 ) * hyperfocus;
-                this.camera.zoom = this.height / height;
+                this.__updateZoom();
             }
         }else{  // p.cameraType === "perspective"
             if( this.camera !== this.perspectiveCamera ){
@@ -1638,6 +1632,8 @@ NGL.Viewer.prototype = {
             this.camera.position.addVectors( this.controls.target, eye );
             this.camera.lookAt( this.controls.target );
 
+            this.__updateZoom();
+
         }
 
     }(),
@@ -1810,6 +1806,18 @@ NGL.Viewer.prototype = {
         fog.color.set( p.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
+
+    },
+
+    __updateZoom: function(){
+
+        this.__updateClipping();
+        var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
+        var near = this.camera.near;
+        var far = this.camera.far;
+        var hyperfocus = ( near + far ) / 2;
+        var height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        this.orthographicCamera.zoom = this.height / height;
 
     },
 
@@ -2173,9 +2181,6 @@ NGL.Viewer.prototype = {
 
             if( zoom ){
 
-                var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
-                var aspect = this.width / this.height;
-
                 if( zoom === true ){
 
                     // automatic zoom that shows
@@ -2191,6 +2196,9 @@ NGL.Viewer.prototype = {
 
                 }
 
+                var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
+                var aspect = this.width / this.height;
+
                 zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
                 zoom = Math.max( zoom, 1.2 * this.params.clipDist );
 
@@ -2202,13 +2210,7 @@ NGL.Viewer.prototype = {
 
                 this.camera.position.addVectors( this.controls.target, eye );
 
-                this.__updateClipping();
-                var near = this.camera.near;
-                var far = this.camera.far;
-                var hyperfocus = ( near + far ) / 2;
-                var height = 2 * Math.tan( fov / 2 ) * hyperfocus;
-                this.orthographicCamera.zoom = this.height / height;
-
+                this.__updateZoom();
             }
 
             this.requestRender();
