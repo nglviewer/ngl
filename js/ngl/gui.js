@@ -100,6 +100,7 @@ NGL.Preferences = function( id, defaultParams ){
         quality: "medium",
         sampleLevel: 0,
         theme: "dark",
+        backgroundColor: "black",
         overview: true,
         rotateSpeed: 2.0,
         zoomSpeed: 1.2,
@@ -183,10 +184,6 @@ NGL.Preferences.prototype = {
 
 NGL.StageWidget = function( stage ){
 
-    var signals = stage.signals;
-
-    //
-
     var preferences = new NGL.Preferences( "ngl-stage-widget" );
 
     var pp = {};
@@ -199,6 +196,9 @@ NGL.StageWidget = function( stage ){
         var sp = {};
         sp[ key ] = value;
         stage.setParameters( sp );
+        if( key === "theme" ){
+            setTheme( value );
+        }
     }, this );
 
     //
@@ -208,18 +208,20 @@ NGL.StageWidget = function( stage ){
     cssLinkElement.id = "theme";
 
     function setTheme( value ){
-        var cssPath;
+        var cssPath, bgColor;
         if( value === "light" ){
             cssPath = NGL.cssDirectory + "light.css";
+            bgColor = "white";
         }else{
             cssPath = NGL.cssDirectory + "dark.css";
+            bgColor = "black";
         }
         cssLinkElement.href = cssPath;
+        stage.setParameters( { backgroundColor: bgColor } );
     }
 
-    setTheme( stage.getParameters().theme );
+    setTheme( preferences.getKey( "theme" ) );
     document.head.appendChild( cssLinkElement );
-    signals.themeChanged.add( setTheme );
 
     //
 
@@ -453,7 +455,7 @@ NGL.MenubarWidget = function( stage, preferences ){
     var container = new UI.Panel();
 
     container.add( new NGL.MenubarFileWidget( stage ) );
-    container.add( new NGL.MenubarViewWidget( stage ) );
+    container.add( new NGL.MenubarViewWidget( stage, preferences ) );
     if( NGL.ExampleRegistry.count > 0 ){
         container.add( new NGL.MenubarExamplesWidget( stage ) );
     }
@@ -635,16 +637,16 @@ NGL.MenubarFileWidget = function( stage ){
 };
 
 
-NGL.MenubarViewWidget = function( stage ){
+NGL.MenubarViewWidget = function( stage, preferences ){
 
     // event handlers
 
     function onLightThemeOptionClick(){
-        stage.setParameters( { theme: "light" } );
+        preferences.setKey( "theme", "light" );
     }
 
     function onDarkThemeOptionClick(){
-        stage.setParameters( { theme: "dark" } );
+        preferences.setKey( "theme", "dark" );
     }
 
     function onFullScreenOptionClick(){

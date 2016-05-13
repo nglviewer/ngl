@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file, following t
 
 ## [Unreleased]
 ### Added
+- `backgroundColor` parameter for `Stage`
 - `OX1` atoms are recognized as part of the protein backbone
 - `stage.makeImage` now increments the task counter
 - added `.isIdentity` method to test if an `Assembly` is an identity transformation over all chains
@@ -14,6 +15,7 @@ All notable changes to this project will be documented in this file, following t
 - the query string is removed from urls before the determining file info (e.g. name, extension)
 
 ### Removed
+- `stage.setTheme` removed (use new `backgroundColor` parameter), themes now part of GUI code
 - `NGL.Preferences` is now part of the GUI code and removed from `NGL.Stage`. Setting `overwritePreferences: true` when instantiating an `NGL.Stage` object is not necessary anymore.
 
 

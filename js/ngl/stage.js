@@ -13,7 +13,6 @@ NGL.Stage = function( eid, params ){
 
     this.signals = {
 
-        themeChanged: new SIGNALS.Signal(),
         parametersChanged: new SIGNALS.Signal(),
         fullscreenChanged: new SIGNALS.Signal(),
 
@@ -43,7 +42,7 @@ NGL.Stage = function( eid, params ){
         impostor: true,
         quality: "medium",
         sampleLevel: 0,
-        theme: "dark",
+        backgroundColor: "black",
         rotateSpeed: 2.0,
         zoomSpeed: 1.2,
         panSpeed: 0.8,
@@ -72,8 +71,8 @@ NGL.Stage.prototype = {
 
     parameters: {
 
-        theme: {
-            type: "select", options: { "light": "light", "dark": "dark" }
+        backgroundColor: {
+            type: "color"
         },
         quality: {
             type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
@@ -146,7 +145,6 @@ NGL.Stage.prototype = {
         }
 
         // apply parameters
-        if( p.theme !== undefined ) this.setTheme( p.theme );
         if( p.quality !== undefined ) this.setQuality( p.quality );
         if( p.impostor !== undefined ) this.setImpostor( p.impostor );
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
@@ -156,6 +154,7 @@ NGL.Stage.prototype = {
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( undefined, p.cameraFov );
         viewer.setSampling( p.sampleLevel );
+        viewer.setBackground( p.backgroundColor );
         viewer.setLight(
             p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
         );
@@ -550,22 +549,6 @@ NGL.Stage.prototype = {
             tasks.onZeroOnce( makeImage );
 
         } );
-
-    },
-
-    setTheme: function( value ){
-
-        this.parameters.theme.value = value;
-
-        var viewerBackground;
-        if( value === "light" ){
-            viewerBackground = "white";
-        }else{
-            viewerBackground = "black";
-        }
-
-        this.signals.themeChanged.dispatch( value );
-        this.viewer.setBackground( viewerBackground );
 
     },
 
