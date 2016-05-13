@@ -17,7 +17,6 @@ promiseList.push( stage.loadFile( "data://ferritin/4Y08.pdb", {
     o.addRepresentation( "spacefill", {
         sele: "#fe", color: "red", scale: 1.0, opacity: 1.0
     } );
-    o.requestGuiVisibility( false );
     stage.centerView();
     return o;
 
@@ -30,7 +29,6 @@ promiseList.push( stage.loadFile( "data://ferritin/4ZJK.pdb", {
     o.addRepresentation( "spacefill", {
         sele: "#fe", color: "orange", scale: 1.0, opacity: 1.0
     } );
-    o.requestGuiVisibility( false );
     return o;
 
 } ) );
@@ -42,7 +40,6 @@ promiseList.push( stage.loadFile( "data://ferritin/4OYN.pdb", {
     o.addRepresentation( "spacefill", {
         sele: "#fe", color: "yellow", scale: 1.0, opacity: 1.0
     } );
-    o.requestGuiVisibility( false );
     return o;
 
 } ) );

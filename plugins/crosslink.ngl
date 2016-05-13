@@ -143,7 +143,6 @@ var CrosslinkLoader = function(){
         infoText.setValue( "loading..." );
 
         var initComp = function( comp ){
-            comp.requestGuiVisibility( false );
             comp.centerView();
             return comp;
         }

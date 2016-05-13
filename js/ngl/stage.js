@@ -933,7 +933,6 @@ NGL.Component.prototype = {
         representationAdded: null,
         representationRemoved: null,
         visibilityChanged: null,
-        requestGuiVisibility: null,
 
         statusChanged: null,
         nameChanged: null,
@@ -1059,14 +1058,6 @@ NGL.Component.prototype = {
     getCenter: function(){
 
         // NGL.warn( "not implemented" )
-
-    },
-
-    requestGuiVisibility: function( value ){
-
-        this.signals.requestGuiVisibility.dispatch( value );
-
-        return this;
 
     },
 
@@ -1728,12 +1719,6 @@ NGL.Collection.prototype = {
     setSelection: function( string ){
 
         return this._invoke( "setSelection", [ string ] );
-
-    },
-
-    requestGuiVisibility: function( value ){
-
-        return this._invoke( "requestGuiVisibility", [ value ] );
 
     },
 

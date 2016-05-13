@@ -1327,13 +1327,7 @@ NGL.SidebarWidget = function( stage ){
 NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     signals.statusChanged.add( function( value ){
 
@@ -1398,10 +1392,6 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
-
-    signals.requestGuiVisibility.add( function( value ){
-        container.setCollapsed( !value );
-    } );
 
     signals.representationAdded.add( function( repr ){
         reprContainer.add(
@@ -1611,15 +1601,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     var reprContainer = new UI.Panel();
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
 
     signals.representationAdded.add( function( repr ){
 
@@ -1676,15 +1660,9 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
 
     signals.nameChanged.add( function( value ){
 
@@ -1754,12 +1732,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var signals = component.signals;
 
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" )
         .setMarginLeft( "20px" );
-
-    signals.requestGuiVisibility.add( function( value ){
-        container.setCollapsed( !value );
-    } );
 
     signals.visibilityChanged.add( function( value ){
         toggle.setValue( value );
@@ -1875,7 +1849,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var signals = component.signals;
     var traj = component.trajectory;
 
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" )
         .setMarginLeft( "20px" );
 
     var reprContainer = new UI.Panel();
