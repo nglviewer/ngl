@@ -744,10 +744,11 @@ THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
     var bottom = cy - dy;
 
     if( this.view ){
-        left -= this.view.offsetX / this.zoom;
-        right -= this.view.offsetX / this.zoom;
-        top -= this.view.offsetY / this.zoom;
-        bottom -= this.view.offsetY / this.zoom;
+        var zoom = this.zoom / ( this.view.width / this.view.fullWidth );
+        left += this.view.offsetX / zoom;
+        right = left + this.view.width / zoom;
+        top -= this.view.offsetY / zoom;
+        bottom = top - this.view.height / zoom;
     }
 
     this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
