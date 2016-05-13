@@ -75,14 +75,13 @@ NGL.StaticDatasource = function( baseUrl ){
 NGL.RcsbDatasource = function(){
 
     var baseUrl = "http://files.rcsb.org/download/";
-    // var baseUrl = "http://www.rcsb.org/pdb/files/";
     var mmtfBaseUrl = "http://mmtf.rcsb.org/v0/full/";
     var bbMmtfBaseUrl = "http://mmtf.rcsb.org/reduced/";
 
     this.getUrl = function( src ){
         // valid path are
         // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
-        // XXXX defaults to XXXX.mmtf
+        // XXXX defaults to XXXX.cif
         var info = NGL.getFileInfo( src );
         var file;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
