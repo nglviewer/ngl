@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file, following t
 ### Removed
 - `stage.setTheme` removed (use new `backgroundColor` parameter), themes now part of GUI code
 - `NGL.Preferences` is now part of the GUI code and removed from `NGL.Stage`. Setting `overwritePreferences: true` when instantiating an `NGL.Stage` object is not necessary anymore.
+- removed .requestVisibility method and signal (too GUI specific, if needed, should be handled there)
 
 
 ## [v0.7] - 2016-05-08
