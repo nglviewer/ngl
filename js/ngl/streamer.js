@@ -13,6 +13,7 @@ NGL.Streamer = function( src, params ){
 
     this.compressed = p.compressed !== undefined ? p.compressed : false;
     this.binary = p.binary !== undefined ? p.binary : false;
+    this.json = p.json !== undefined ? p.json : false;
 
     this.src = src;
     this.chunkSize = 1024 * 1024 * 10;
@@ -424,6 +425,8 @@ NGL.NetworkStreamer.prototype = NGL.createObject(
 
         if( this.compressed || this.binary ){
             xhr.responseType = "arraybuffer";
+        }else if( this.json ){
+            xhr.responseType = "json";
         }
         // xhr.crossOrigin = true;
 

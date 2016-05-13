@@ -142,7 +142,8 @@ NGL.Loader = function( src, params ){
 
     var streamerParams = {
         compressed: this.compressed,
-        binary: this.binary
+        binary: this.binary,
+        json: this.ext === "json"
     };
 
     if( ( self.File && src instanceof File ) ||

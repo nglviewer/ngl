@@ -1575,6 +1575,25 @@ QUnit.test( "json parser", function( assert ) {
 });
 
 
+QUnit.test( "json parser as binary", function( assert ) {
+
+    setupNGL();
+    var done = assert.async();
+
+    var path = "data://sample.json";
+    var sampleText = "Moin world!";
+
+    return NGL.autoLoad( path, { binary: true } ).then( function( json ){
+
+        assert.equal( 42, json.data.foo, "Passed!" );
+
+        done();
+
+    } );
+
+});
+
+
 QUnit.test( "xml parser", function( assert ) {
 
     setupNGL();

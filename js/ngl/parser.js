@@ -4737,8 +4737,11 @@ NGL.JsonParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        // FIXME set xhr.responseType in streamer to "json"
-        this.json.data = JSON.parse( this.streamer.asText() );
+        if( this.streamer.compressed || this.streamer.binary ){
+            this.json.data = JSON.parse( this.streamer.asText() );
+        }else{
+            this.json.data = this.streamer.data;
+        }
 
         callback();
 

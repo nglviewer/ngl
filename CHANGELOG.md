@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file, following t
 - `stage.makeImage` now increments the task counter
 - added `.isIdentity` method to test if an `Assembly` is an identity transformation over all chains
 - embedded-dev build target (@sbliven)
+- support for responseType = "json" to efficiently load json data
 
 ### Changed
 - there is no longer a fake unitcell created when no space group information is available
