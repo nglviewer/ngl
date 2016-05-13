@@ -80,11 +80,126 @@ NGL.createParameterInput = function( p ){
 };
 
 
+
+////////////////
+// Preferences
+
+NGL.Preferences = function( id, defaultParams ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+        keyChanged: new SIGNALS.Signal(),
+    };
+
+    this.id = id || "ngl-gui";
+    var dp = Object.assign( {}, defaultParams );
+
+    this.storage = {
+        impostor: true,
+        quality: "medium",
+        sampleLevel: 0,
+        theme: "dark",
+        overview: true,
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
+        cameraFov: 40,
+        lightColor: 0xdddddd,
+        lightIntensity: 1.0,
+        ambientColor: 0xdddddd,
+        ambientIntensity: 0.2
+    };
+
+    // overwrite default values with params
+    for( var key in this.storage ){
+        if( dp[ key ] !== undefined ){
+            this.storage[ key ] = dp[ key ];
+        }
+    }
+
+    try{
+        if ( window.localStorage[ this.id ] === undefined ) {
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+        } else {
+            var data = JSON.parse( window.localStorage[ this.id ] );
+            for ( var key in data ) {
+                this.storage[ key ] = data[ key ];
+            }
+        }
+    }catch( e ){
+        NGL.error( "localStorage not accessible/available" );
+    }
+
+};
+
+NGL.Preferences.prototype = {
+
+    constructor: NGL.Preferences,
+
+    getKey: function( key ){
+
+        return this.storage[ key ];
+
+    },
+
+    setKey: function( key, value ){
+
+        this.storage[ key ] = value;
+
+        try{
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+            this.signals.keyChanged.dispatch( key, value );
+        }catch( e ){
+            // Webkit === 22 / Firefox === 1014
+            if( e.code === 22 || e.code === 1014 ){
+                NGL.error( "localStorage full" );
+            }else{
+                NGL.error( "localStorage not accessible/available", e );
+            }
+        }
+
+    },
+
+    clear: function(){
+
+        try{
+            delete window.localStorage[ this.id ];
+        }catch( e ){
+            NGL.error( "localStorage not accessible/available" );
+        }
+
+    }
+
+};
+
+
 // Stage
 
 NGL.StageWidget = function( stage ){
 
     var signals = stage.signals;
+
+    //
+
+    var preferences = new NGL.Preferences( "ngl-stage-widget" );
+
+    var pp = {};
+    for( var name in preferences.storage ){
+        pp[ name ] = preferences.getKey( name );
+    }
+    stage.setParameters( pp );
+
+    preferences.signals.keyChanged.add( function( key, value ){
+        var sp = {};
+        sp[ key ] = value;
+        stage.setParameters( sp );
+    }, this );
 
     //
 
@@ -114,7 +229,7 @@ NGL.StageWidget = function( stage ){
     var toolbar = new NGL.ToolbarWidget( stage ).setId( "toolbar" );
     document.body.appendChild( toolbar.dom );
 
-    var menubar = new NGL.MenubarWidget( stage ).setId( "menubar" );
+    var menubar = new NGL.MenubarWidget( stage, preferences ).setId( "menubar" );
     document.body.appendChild( menubar.dom );
 
     var sidebar = new NGL.SidebarWidget( stage ).setId( "sidebar" );
@@ -333,7 +448,7 @@ NGL.ToolbarWidget = function( stage ){
 
 // Menubar
 
-NGL.MenubarWidget = function( stage ){
+NGL.MenubarWidget = function( stage, preferences ){
 
     var container = new UI.Panel();
 
@@ -345,7 +460,7 @@ NGL.MenubarWidget = function( stage ){
     if( NGL.PluginRegistry.count > 0 ){
         container.add( new NGL.MenubarPluginsWidget( stage ) );
     }
-    container.add( new NGL.MenubarHelpWidget( stage ) );
+    container.add( new NGL.MenubarHelpWidget( stage, preferences ) );
 
     container.add(
         new UI.Panel().setClass( "menu" ).setFloat( "right" ).add(
@@ -636,7 +751,7 @@ NGL.MenubarPluginsWidget = function( stage ){
 };
 
 
-NGL.MenubarHelpWidget = function( stage ){
+NGL.MenubarHelpWidget = function( stage, preferences ){
 
     // event handlers
 
@@ -674,17 +789,17 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // export image
 
-    var preferencesWidget = new NGL.PreferencesWidget( stage )
+    var preferencesWidget = new NGL.PreferencesWidget( stage, preferences )
         .setDisplay( "none" )
         .attach();
 
     // overview
 
-    var overviewWidget = new NGL.OverviewWidget( stage )
+    var overviewWidget = new NGL.OverviewWidget( stage, preferences )
         .setDisplay( "none" )
         .attach();
 
-    if( stage.preferences.getKey( "overview" ) ){
+    if( preferences.getKey( "overview" ) ){
         onOverviewOptionClick();
     }
 
@@ -712,7 +827,7 @@ NGL.MenubarHelpWidget = function( stage ){
 
 // Overview
 
-NGL.OverviewWidget = function( stage ){
+NGL.OverviewWidget = function( stage, preferences ){
 
     var container = new UI.OverlayPanel();
 
@@ -800,10 +915,10 @@ NGL.OverviewWidget = function( stage ){
             "<a href='" + NGL.documentationUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
-    var overview = stage.preferences.getKey( "overview" );
+    var overview = preferences.getKey( "overview" );
     var showOverviewCheckbox = new UI.Checkbox( overview )
         .onClick( function(){
-            stage.preferences.setKey(
+            preferences.setKey(
                 "overview",
                 showOverviewCheckbox.getValue()
             );
@@ -834,7 +949,7 @@ NGL.OverviewWidget = function( stage ){
 
 // Preferences
 
-NGL.PreferencesWidget = function( stage ){
+NGL.PreferencesWidget = function( stage, preferences ){
 
     var container = new UI.OverlayPanel();
 
@@ -872,14 +987,14 @@ NGL.PreferencesWidget = function( stage ){
 
         if( !input ) return;
 
-        stage.preferences.signals.keyChanged.add( function( key, value ){
+        preferences.signals.keyChanged.add( function( key, value ){
             if( key === name ) input.setValue( value );
         } );
 
         function setParam(){
             var sp = {};
             sp[ name ] = input.getValue();
-            stage.preferences.setKey( name, sp[ name ] );
+            preferences.setKey( name, sp[ name ] );
         }
 
         if( p.type === "range" ){
