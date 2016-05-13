@@ -1021,8 +1021,6 @@ NGL.Viewer.prototype = {
 
         // msaa textures
 
-        this.sampleLevel = 0;
-
         this.sampleTarget = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
             this.height * window.devicePixelRatio,
@@ -1529,10 +1527,6 @@ NGL.Viewer.prototype = {
         );
 
         this.controls.handleResize();
-
-        if( this.params.sampleLevel === -1 ){
-            this.sampleLevel = 0;
-        }
 
         this.requestRender();
 
