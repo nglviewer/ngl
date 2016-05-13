@@ -49,6 +49,7 @@ varying vec4 w;
     varying vec3 vColor2;
 #endif
 
+uniform mat4 modelViewMatrixInverse;
 uniform float shift;
 uniform float ortho;
 
@@ -69,7 +70,15 @@ void main(){
     vec3 dir = normalize( position2 - position1 );
     float ext = length( position2 - position1 ) / 2.0;
 
-    vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );
+    // using cameraPosition fails on some machines, not sure why
+    // vec3 cam_dir = normalize( cameraPosition - mix( center, vec3( 0.0 ), ortho ) );
+    vec3 cam_dir;
+    if( ortho == 0.0 ){
+        cam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;
+    }else{
+        cam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;
+    }
+    cam_dir = normalize( cam_dir );
 
     vec3 ldir;
 
@@ -80,13 +89,12 @@ void main(){
     else // direction vector already looks in my direction
         ldir = ext * dir;
 
-    vec3 left = cross( cam_dir, ldir );
-    vec3 up = cross( left, ldir );
+    vec3 left = normalize( cross( cam_dir, ldir ) );
     vec3 leftShift = shift * left * radius;
     if( b < 0.0 )
         leftShift *= -1.0;
-    left = radius * normalize( left );
-    up = radius * normalize( up );
+    left = radius * left;
+    vec3 up = radius * normalize( cross( left, ldir ) );
 
     // transform to modelview coordinates
     axis = normalize( normalMatrix * ldir );
@@ -106,7 +114,7 @@ void main(){
 
     gl_Position = projectionMatrix * w;
 
-    // avoid clipping
-    gl_Position.z = 1.0;
+    // avoid clipping (1.0 seems to induce flickering with some drivers)
+    gl_Position.z = 0.99;
 
 }

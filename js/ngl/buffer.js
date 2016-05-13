@@ -1232,7 +1232,13 @@ NGL.CylinderImpostorBuffer = function( from, to, color, color2, radius, pickingC
 
     NGL.AlignedBoxBuffer.call( this, p );
 
+    var modelViewMatrixInverse = new THREE.Uniform( new THREE.Matrix4() )
+        .onUpdate( function( object, camera ){
+            this.value.getInverse( object.modelViewMatrix );
+        } );
+
     this.addUniforms( {
+        "modelViewMatrixInverse": modelViewMatrixInverse,
         "shift": { value: this.shift },
         "ortho": { value: 0.0 },
     } );
