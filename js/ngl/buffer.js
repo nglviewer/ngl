@@ -3149,6 +3149,9 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     this.fontWeight = p.fontWeight !== undefined ? p.fontWeight : "bold";
     this.fontSize = p.fontSize !== undefined ? p.fontSize : 48;
     this.sdf = p.sdf !== undefined ? p.sdf : true;
+    this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
+    this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
+    this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
 
     var n = position.length / 3;
 
@@ -3167,7 +3170,10 @@ NGL.TextBuffer = function( position, size, color, text, params ){
     NGL.QuadBuffer.call( this, p );
 
     this.addUniforms( {
-        "fontTexture"  : { value: null }
+        "fontTexture"  : { value: null },
+        "xOffset": { value: this.xOffset },
+        "yOffset": { value: this.yOffset },
+        "zOffset": { value: this.zOffset }
     } );
 
     this.addAttributes( {
@@ -3197,6 +3203,9 @@ NGL.TextBuffer.prototype.parameters = Object.assign( {
     fontWeight: { uniform: true },
     fontSize: { uniform: true },
     sdf: { updateShader: true, uniform: true },
+    xOffset: { uniform: true },
+    yOffset: { uniform: true },
+    zOffset: { uniform: true }
 
 }, NGL.Buffer.prototype.parameters );
 
