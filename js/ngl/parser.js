@@ -548,69 +548,82 @@ NGL.calculateChainnames = function( structure ){
         var rEnd = 0;
         var chainData = [];
 
-        structure.eachResidueN( 2, function( rp1, rp2 ){
+        if( structure.residueStore.count === 1 ){
 
-            var newChain = false;
+            chainData.push( {
+                mIndex: 0,
+                chainname: "A",
+                rStart: 0,
+                rCount: 1
+            } );
 
-            var bbType1 = rp1.backboneType;
-            var bbType2 = rp2.backboneType;
-            var bbTypeUnk = NGL.UnknownBackboneType;
+        }else{
 
-            rEnd = rp1.index;
+            structure.eachResidueN( 2, function( rp1, rp2 ){
 
-            if( rp1.modelIndex !== rp2.modelIndex ){
-                newChain = true;
-            }else if( rp1.moleculeType !== rp2.moleculeType ){
-                newChain = true;
-            }else if( bbType1 !== bbTypeUnk && bbType1 === bbType2 ){
-                ap1.index = rp1.backboneEndAtomIndex;
-                ap2.index = rp2.backboneStartAtomIndex;
-                if( !ap1.connectedTo( ap2 ) ){
-                    newChain = true;
-                }
-            }
+                var newChain = false;
 
-            if( rp2.index === residueStore.count - 1 ){
-                newChain = true;
-                rEnd = rp2.index;
-            }
+                var bbType1 = rp1.backboneType;
+                var bbType2 = rp2.backboneType;
+                var bbTypeUnk = NGL.UnknownBackboneType;
 
-            if( newChain ){
-                var j = i;
-                var k = 0;
-                var chainname = names[ j % n ];
-
-                while( j >= n ){
-                    j = Math.floor( j / n );
-                    chainname += names[ j % n ];
-                    k += 1;
-                }
-
-                chainData.push( {
-                    mIndex: mi,
-                    chainname: chainname,
-                    rStart: rStart,
-                    rCount: rEnd - rStart + 1
-                } );
-
-                i += 1;
+                rEnd = rp1.index;
 
                 if( rp1.modelIndex !== rp2.modelIndex ){
-                    i = 0;
-                    mi += 1;
+                    newChain = true;
+                }else if( rp1.moleculeType !== rp2.moleculeType ){
+                    newChain = true;
+                }else if( bbType1 !== bbTypeUnk && bbType1 === bbType2 ){
+                    ap1.index = rp1.backboneEndAtomIndex;
+                    ap2.index = rp2.backboneStartAtomIndex;
+                    if( !ap1.connectedTo( ap2 ) ){
+                        newChain = true;
+                    }
                 }
 
-                if( k >= 5 ){
-                    NGL.warn( "out of chain names" );
-                    i = 0;
+                if( rp2.index === residueStore.count - 1 ){
+                    newChain = true;
+                    rEnd = rp2.index;
                 }
 
-                rStart = rp2.index;
-                rEnd = rp2.index;
+                if( newChain ){
+                    var j = i;
+                    var k = 0;
+                    var chainname = names[ j % n ];
 
-            }
+                    while( j >= n ){
+                        j = Math.floor( j / n );
+                        chainname += names[ j % n ];
+                        k += 1;
+                    }
 
-        } );
+                    chainData.push( {
+                        mIndex: mi,
+                        chainname: chainname,
+                        rStart: rStart,
+                        rCount: rEnd - rStart + 1
+                    } );
+
+                    i += 1;
+
+                    if( rp1.modelIndex !== rp2.modelIndex ){
+                        i = 0;
+                        mi += 1;
+                    }
+
+                    if( k >= 5 ){
+                        NGL.warn( "out of chain names" );
+                        i = 0;
+                    }
+
+                    rStart = rp2.index;
+                    rEnd = rp2.index;
+
+                }
+
+            } );
+
+        }
 
         //
 
