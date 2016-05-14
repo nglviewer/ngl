@@ -24,6 +24,9 @@
 # concatenate minified files for embedded use
 ./build.py --include embedded --output ../js/build/ngl.embedded.min.js
 
+# concatenate non-minified files for embedded use
+./build.py --include embedded-dev --output ../js/build/ngl.embedded.js
+
 
 ###################
 # js minification

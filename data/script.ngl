@@ -34,8 +34,6 @@ Promise.all( [
             sele: "( sidechainAttached and CYS ) or SF4"
         } );
         o.setName( "1BLU" );
-        stage.getRepresentationsByName( { comp: "1BLU" } )
-            .requestGuiVisibility( false );
 
     } )
 
@@ -67,7 +65,5 @@ Promise.all( [
     ) );
 
     stage.centerView();
-    stage.getComponentsByName( undefined, NGL.StructureComponent )
-        .requestGuiVisibility( false );
 
 } );

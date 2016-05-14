@@ -2,6 +2,26 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased]
+### Added
+- `backgroundColor` parameter for `Stage`
+- x/y/z offset parameters for labels (TextBuffer)
+- `OX1` atoms are recognized as part of the protein backbone
+- `stage.makeImage` now increments the task counter
+- added `.isIdentity` method to test if an `Assembly` is an identity transformation over all chains
+- embedded-dev build target (@sbliven)
+- support for responseType = "json" to efficiently load json data
+
+### Changed
+- there is no longer a fake unitcell created when no space group information is available
+- the query string is removed from urls before the determining file info (e.g. name, extension)
+
+### Removed
+- `stage.setTheme` removed (use new `backgroundColor` parameter), themes now part of GUI code
+- `NGL.Preferences` is now part of the GUI code and removed from `NGL.Stage`. Setting `overwritePreferences: true` when instantiating an `NGL.Stage` object is not necessary anymore.
+- removed .requestVisibility method and signal (too GUI specific, if needed, should be handled there)
+
+
 ## [v0.7] - 2016-05-08
 ### Added
 - Store and Proxy classes for memory efficiency
@@ -107,5 +127,6 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
+[Unreleased]: https://github.com/arose/ngl/compare/v0.7...HEAD
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6

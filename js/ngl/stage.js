@@ -9,32 +9,10 @@
 
 NGL.Stage = function( eid, params ){
 
-    var p = Object.assign( {}, params );
-    var preferencesId = p.preferencesId || "ngl-stage";
-
-    this.parameters = NGL.deepCopy( NGL.Stage.prototype.parameters );
-    this.preferences = new NGL.Preferences( preferencesId, p );
-
-    for( var name in this.parameters ){
-        p[ name ] = this.preferences.getKey( name );
-        if( p.overwritePreferences && params[ name ] !== undefined ){
-            p[ name ] = params[ name ];
-        }
-    }
-
-    this.preferences.signals.keyChanged.add( function( key, value ){
-        var sp = {};
-        sp[ key ] = value;
-        this.setParameters( sp );
-    }, this );
-
-    //
-
     var SIGNALS = signals;
 
     this.signals = {
 
-        themeChanged: new SIGNALS.Signal(),
         parametersChanged: new SIGNALS.Signal(),
         fullscreenChanged: new SIGNALS.Signal(),
 
@@ -59,9 +37,32 @@ NGL.Stage = function( eid, params ){
 
     this.viewer = new NGL.Viewer( eid );
     if( !this.viewer.renderer ) return;
-    this.setParameters( p );
-    this.viewer.animate();
+
+    var p = Object.assign( {
+        impostor: true,
+        quality: "medium",
+        sampleLevel: 0,
+        backgroundColor: "black",
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
+        cameraFov: 40,
+        cameraType: "perspective",
+        lightColor: 0xdddddd,
+        lightIntensity: 1.0,
+        ambientColor: 0xdddddd,
+        ambientIntensity: 0.2
+    }, params );
+    this.parameters = NGL.deepCopy( NGL.Stage.prototype.parameters );
+    this.setParameters( p );  // must come after the viewer has been instantiated
+
     this.pickingControls = new NGL.PickingControls( this.viewer, this );
+    this.viewer.animate();
 
 };
 
@@ -71,8 +72,8 @@ NGL.Stage.prototype = {
 
     parameters: {
 
-        theme: {
-            type: "select", options: { "light": "light", "dark": "dark" }
+        backgroundColor: {
+            type: "color"
         },
         quality: {
             type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
@@ -81,9 +82,6 @@ NGL.Stage.prototype = {
             type: "range", step: 1, max: 5, min: -1
         },
         impostor: {
-            type: "boolean"
-        },
-        overview: {
             type: "boolean"
         },
         rotateSpeed: {
@@ -151,7 +149,6 @@ NGL.Stage.prototype = {
         }
 
         // apply parameters
-        if( p.theme !== undefined ) this.setTheme( p.theme );
         if( p.quality !== undefined ) this.setQuality( p.quality );
         if( p.impostor !== undefined ) this.setImpostor( p.impostor );
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
@@ -161,6 +158,7 @@ NGL.Stage.prototype = {
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );
         viewer.setSampling( p.sampleLevel );
+        viewer.setBackground( p.backgroundColor );
         viewer.setLight(
             p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
         );
@@ -542,9 +540,12 @@ NGL.Stage.prototype = {
         return new Promise( function( resolve, reject ){
 
             function makeImage(){
+                tasks.increment();
                 viewer.makeImage( params ).then( function( blob ){
-                    resolve( blob )
+                    tasks.decrement();
+                    resolve( blob );
                 } ).catch( function( e ){
+                    tasks.decrement();
                     reject( e );
                 } );
             }
@@ -552,22 +553,6 @@ NGL.Stage.prototype = {
             tasks.onZeroOnce( makeImage );
 
         } );
-
-    },
-
-    setTheme: function( value ){
-
-        this.parameters.theme.value = value;
-
-        var viewerBackground;
-        if( value === "light" ){
-            viewerBackground = "white";
-        }else{
-            viewerBackground = "black";
-        }
-
-        this.signals.themeChanged.dispatch( value );
-        this.viewer.setBackground( viewerBackground );
 
     },
 
@@ -884,105 +869,6 @@ NGL.PickingControls = function( viewer, stage ){
 };
 
 
-////////////////
-// Preferences
-
-NGL.Preferences = function( id, defaultParams ){
-
-    var SIGNALS = signals;
-
-    this.signals = {
-        keyChanged: new SIGNALS.Signal(),
-    };
-
-    this.id = id || "ngl-stage";
-    var dp = Object.assign( {}, defaultParams );
-
-    this.storage = {
-        impostor: true,
-        quality: "medium",
-        sampleLevel: 0,
-        theme: "dark",
-        overview: true,
-        rotateSpeed: 2.0,
-        zoomSpeed: 1.2,
-        panSpeed: 0.8,
-        clipNear: 0,
-        clipFar: 100,
-        clipDist: 10,
-        fogNear: 50,
-        fogFar: 100,
-        cameraFov: 40,
-        cameraType: "perspective",
-        lightColor: 0xdddddd,
-        lightIntensity: 1.0,
-        ambientColor: 0xdddddd,
-        ambientIntensity: 0.2
-    };
-
-    // overwrite default values with params
-    for( var key in this.storage ){
-        if( dp[ key ] !== undefined ){
-            this.storage[ key ] = dp[ key ];
-        }
-    }
-
-    try{
-        if ( window.localStorage[ this.id ] === undefined ) {
-            window.localStorage[ this.id ] = JSON.stringify( this.storage );
-        } else {
-            var data = JSON.parse( window.localStorage[ this.id ] );
-            for ( var key in data ) {
-                this.storage[ key ] = data[ key ];
-            }
-        }
-    }catch( e ){
-        NGL.error( "localStorage not accessible/available" );
-    }
-
-};
-
-NGL.Preferences.prototype = {
-
-    constructor: NGL.Preferences,
-
-    getKey: function( key ){
-
-        return this.storage[ key ];
-
-    },
-
-    setKey: function( key, value ){
-
-        this.storage[ key ] = value;
-
-        try{
-            window.localStorage[ this.id ] = JSON.stringify( this.storage );
-            this.signals.keyChanged.dispatch( key, value );
-        }catch( e ){
-            // Webkit === 22 / Firefox === 1014
-            if( e.code === 22 || e.code === 1014 ){
-                NGL.error( "localStorage full" );
-            }else{
-                NGL.error( "localStorage not accessible/available", e );
-            }
-        }
-
-    },
-
-    clear: function(){
-
-        try{
-            delete window.localStorage[ this.id ];
-        }catch( e ){
-            NGL.error( "localStorage not accessible/available" );
-        }
-
-    }
-
-};
-
-
 //////////////
 // Component
 
@@ -1051,7 +937,6 @@ NGL.Component.prototype = {
         representationAdded: null,
         representationRemoved: null,
         visibilityChanged: null,
-        requestGuiVisibility: null,
 
         statusChanged: null,
         nameChanged: null,
@@ -1177,14 +1062,6 @@ NGL.Component.prototype = {
     getCenter: function(){
 
         // NGL.warn( "not implemented" )
-
-    },
-
-    requestGuiVisibility: function( value ){
-
-        this.signals.requestGuiVisibility.dispatch( value );
-
-        return this;
 
     },
 
@@ -1848,12 +1725,6 @@ NGL.Collection.prototype = {
     setSelection: function( string ){
 
         return this._invoke( "setSelection", [ string ] );
-
-    },
-
-    requestGuiVisibility: function( value ){
-
-        return this._invoke( "requestGuiVisibility", [ value ] );
 
     },
 

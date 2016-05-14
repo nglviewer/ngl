@@ -14,10 +14,9 @@ promiseList.push( stage.loadFile( "data://1IHM.pdb", {
 } ).then( function( o ){
 
     o.addRepresentation( "rope", {
-        subdiv: 3, radialSegments: 6, quality: "user",
+        subdiv: 1, radialSegments: 5, quality: "user",
         colorScheme: "chainindex", radius: 1.0, scale: 4.0
     } );
-    o.requestGuiVisibility( false );
     stage.centerView();
 
 } ) );
@@ -35,7 +34,6 @@ promiseList.push( stage.loadFile( "data://2L1F.pdb", {
     o.addRepresentation( "base", {
         colorScheme: "resname", radius: 0.7
     } );
-    o.requestGuiVisibility( false );
     stage.centerView();
 
 } ) );

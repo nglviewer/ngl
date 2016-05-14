@@ -738,11 +738,7 @@ NGL.calculateBondsWithin = function( structure, onlyAddRung ){
                 return;
             }
 
-            var resname = r.resname;
-            var equalAtomnames = false;
-
             var bonds = r.getBonds();
-
             var atomIndices1 = bonds.atomIndices1;
             var atomIndices2 = bonds.atomIndices2;
             var nn = atomIndices1.length;
@@ -991,6 +987,27 @@ NGL.Assembly.prototype = {
         } );
 
         return instanceCount;
+
+    },
+
+    isIdentity: function( structure ){
+
+        if( this.partList.length !== 1 ) return false;
+
+        var part = this.partList[ 0 ];
+        if( part.matrixList.length !== 1 ) return false;
+
+        var identityMatrix = new THREE.Matrix4();
+        if( !identityMatrix.equals( part.matrixList[ 0 ] ) ) return false;
+
+        var structureChainList = [];
+        structure.eachChain( function( cp ){
+            structureChainList.push( cp.chainname );
+        } );
+        structureChainList = NGL.uniqueArray( structureChainList );
+        if( part.chainList.length !== structureChainList.length ) return false;
+
+        return true;
 
     },
 
@@ -1365,15 +1382,9 @@ NGL.StructureParser.prototype = NGL.createObject(
 
         this._postProcess();
 
-        if( s.unitcell === undefined ){
-            var bbSize = s.boundingBox.size();
-            s.unitcell = new NGL.Unitcell(
-                bbSize.x, bbSize.y, bbSize.z,
-                90, 90, 90, "P 1"
-            );
+        if( s.unitcell ){
+            NGL.buildUnitcellAssembly( s );
         }
-
-        NGL.buildUnitcellAssembly( s );
 
         if( NGL.debug ) NGL.timeEnd( "NGL.StructureParser._afterParse" );
         if( NGL.debug ) NGL.log( this[ this.__objName ] );
@@ -1852,7 +1863,7 @@ NGL.PdbParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.PdbParser._parse " + this.name );
@@ -2860,7 +2871,7 @@ NGL.CifParser.prototype = NGL.createObject(
                 unitcellDict.spacegroup, unitcellDict.scale
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         // add connections
@@ -3143,7 +3154,7 @@ NGL.SdfParser.prototype = NGL.createObject(
         sb.finalize();
 
         s._dontAutoBond = true;
-        s.unitcell = undefined;  // triggers use of bounding box
+        s.unitcell = undefined;
 
         if( NGL.debug ) NGL.timeEnd( "NGL.SdfParser._parse " + this.name );
         callback();
@@ -3365,7 +3376,7 @@ NGL.Mol2Parser.prototype = NGL.createObject(
         sb.finalize();
 
         s._dontAutoBond = true;
-        s.unitcell = undefined;  // triggers use of bounding box
+        s.unitcell = undefined;
 
         if( NGL.debug ) NGL.timeEnd( "NGL.Mol2Parser._parse " + this.name );
         callback();
@@ -3690,7 +3701,7 @@ NGL.MmtfParser.prototype = NGL.createObject(
                 sd.spaceGroup
             );
         }else{
-            s.unitcell = undefined;  // triggers use of bounding box
+            s.unitcell = undefined;
         }
 
         if( NGL.debug ) NGL.timeEnd( "NGL.MmtfParser._parse " + this.name );
@@ -4726,8 +4737,11 @@ NGL.JsonParser.prototype = NGL.createObject(
 
     _parse: function( callback ){
 
-        // FIXME set xhr.responseType in streamer to "json"
-        this.json.data = JSON.parse( this.streamer.asText() );
+        if( this.streamer.compressed || this.streamer.binary ){
+            this.json.data = JSON.parse( this.streamer.asText() );
+        }else{
+            this.json.data = this.streamer.data;
+        }
 
         callback();
 

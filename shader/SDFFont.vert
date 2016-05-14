@@ -1,4 +1,7 @@
 uniform float nearClip;
+uniform float xOffset;
+uniform float yOffset;
+uniform float zOffset;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
@@ -18,7 +21,9 @@ void main(void){
     vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
     cameraCornerPos.xy += mapping * inputSize * 0.01;
-    cameraCornerPos.z += 0.5;
+    cameraCornerPos.x += xOffset;
+    cameraCornerPos.y += yOffset;
+    cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * zOffset;
 
     gl_Position = projectionMatrix * cameraCornerPos;
 

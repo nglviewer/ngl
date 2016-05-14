@@ -532,7 +532,10 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
     NGL.Representation.call( this, structure, viewer, p );
 
     if( structure.biomolDict ){
-        var biomolOptions = { "default": "default", "": "AU" };
+        var biomolOptions = {
+            "default": "default",
+            "": ( structure.unitcell ? "AU" : "FULL" )
+        };
         Object.keys( structure.biomolDict ).forEach( function( k ){
             biomolOptions[ k ] = k;
         } );
@@ -1023,6 +1026,15 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         sdf: {
             type: "boolean", buffer: true
         },
+        xOffset: {
+            type: "number", precision: 1, max: 20, min: -20, buffer: true
+        },
+        yOffset: {
+            type: "number", precision: 1, max: 20, min: -20, buffer: true
+        },
+        zOffset: {
+            type: "number", precision: 1, max: 20, min: -20, buffer: true
+        },
 
     }, NGL.StructureRepresentation.prototype.parameters, {
 
@@ -1047,6 +1059,9 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
         this.fontStyle = p.fontStyle || "normal";
         this.fontWeight = p.fontWeight || "bold";
         this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
+        this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
+        this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
+        this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
 
         NGL.StructureRepresentation.prototype.init.call( this, p );
 
@@ -1074,7 +1089,10 @@ NGL.LabelRepresentation.prototype = NGL.createObject(
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,
                 fontWeight: this.fontWeight,
-                sdf: this.sdf
+                sdf: this.sdf,
+                xOffset: this.xOffset,
+                yOffset: this.yOffset,
+                zOffset: this.zOffset
             } )
         );
 
@@ -3493,6 +3511,7 @@ NGL.UnitcellRepresentation.prototype = NGL.createObject(
     create: function(){
 
         var structure = this.structureView.getStructure();
+        if( !structure.unitcell ) return;
         var unitcellData = this.getUnitcellData( structure );
 
         this.sphereBuffer = new NGL.SphereBuffer(

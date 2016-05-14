@@ -199,7 +199,6 @@ function loadApbs( pqr, dx, isBinary ){
     panel.add( infoText );
 
     var initComp = function( comp ){
-        comp.requestGuiVisibility( false );
         comp.centerView();
         return comp;
     }

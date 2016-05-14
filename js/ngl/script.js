@@ -164,8 +164,6 @@ NGL.ScriptQueue.prototype = {
 
         p.onLoad = function( component ){
 
-            component.requestGuiVisibility( false );
-
             if( typeof _onLoad === "function" ){
                 _onLoad( component );
             }
