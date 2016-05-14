@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file, following t
 
 ## [Unreleased]
 ### Added
+- orthographic camera mode
 - `backgroundColor` parameter for `Stage`
 - x/y/z offset parameters for labels (TextBuffer)
 - `OX1` atoms are recognized as part of the protein backbone

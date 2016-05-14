@@ -716,6 +716,50 @@ NGL.JitterVectors.forEach( function( offsetList ){
 } );
 
 
+THREE.OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
+
+    this.view = {
+        fullWidth: fullWidth,
+        fullHeight: fullHeight,
+        offsetX: x,
+        offsetY: y,
+        width: width,
+        height: height
+    };
+
+    this.updateProjectionMatrix();
+
+};
+
+THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
+
+    var dx = ( this.right - this.left ) / ( 2 * this.zoom );
+    var dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
+    var cx = ( this.right + this.left ) / 2;
+    var cy = ( this.top + this.bottom ) / 2;
+
+    var left = cx - dx;
+    var right = cx + dx;
+    var top = cy + dy;
+    var bottom = cy - dy;
+
+    if( this.view ){
+
+        var scaleW = this.zoom / ( this.view.width / this.view.fullWidth );
+        var scaleH = this.zoom / ( this.view.height / this.view.fullHeight );
+
+        left += this.view.offsetX / scaleW;
+        right = left + this.view.width / scaleW;
+        top -= this.view.offsetY / scaleH;
+        bottom = top - this.view.height / scaleH;
+
+    }
+
+    this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
+
+};
+
+
 //////////
 // Stats
 
@@ -819,8 +863,6 @@ NGL.Viewer = function( eid, params ){
         this.height = box.height;
     }
 
-    this.aspect = this.width / this.height;
-
     this.initParams();
     this.initStats();
     // this.holdRendering = true;
@@ -874,7 +916,7 @@ NGL.Viewer.prototype = {
 
             backgroundColor: new THREE.Color( 0x000000 ),
 
-            cameraType: 1,
+            cameraType: "perspective",
             cameraFov: 40,
             cameraZ: -80, // FIXME initial value should be automatically determined
 
@@ -903,13 +945,24 @@ NGL.Viewer.prototype = {
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
         this.perspectiveCamera = new THREE.PerspectiveCamera(
-            p.cameraFov, this.aspect, 0.1, 10000
+            p.cameraFov, this.width / this.height, 0.1, 10000
         );
         this.perspectiveCamera.position.z = p.cameraZ;
         this.perspectiveCamera.lookAt( lookAt );
 
-        this.camera = this.perspectiveCamera;
+        this.orthographicCamera = new THREE.OrthographicCamera(
+            this.width / -2, this.width / 2,
+            this.height / 2, this.height / -2,
+            0.1, 10000
+        );
+        this.orthographicCamera.position.z = p.cameraZ;
+        this.orthographicCamera.lookAt( lookAt );
 
+        if( p.cameraType === "orthographic" ){
+            this.camera = this.orthographicCamera;
+        }else{  // p.cameraType === "perspective"
+            this.camera = this.perspectiveCamera;
+        }
         this.camera.updateProjectionMatrix();
 
     },
@@ -967,8 +1020,6 @@ NGL.Viewer.prototype = {
         this.pickingTarget.texture.generateMipmaps = false;
 
         // msaa textures
-
-        this.sampleLevel = 0;
 
         this.sampleTarget = new THREE.WebGLRenderTarget(
             this.width * window.devicePixelRatio,
@@ -1121,10 +1172,7 @@ NGL.Viewer.prototype = {
             'touchmove', preventDefault, false
         );
 
-        this.controls = new THREE.TrackballControls(
-            this.camera, this.renderer.domElement
-        );
-
+        this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
@@ -1402,14 +1450,27 @@ NGL.Viewer.prototype = {
 
         var p = this.params;
 
-        if( type!==null ) p.cameraType = type;
+        if( type ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
 
-        this.camera = this.perspectiveCamera;
+        if( p.cameraType === "orthographic" ){
+            if( this.camera !== this.orthographicCamera ){
+                this.camera = this.orthographicCamera;
+                this.camera.position.copy( this.perspectiveCamera.position );
+                this.camera.up.copy( this.perspectiveCamera.up );
+                this.__updateZoom();
+            }
+        }else{  // p.cameraType === "perspective"
+            if( this.camera !== this.perspectiveCamera ){
+                this.camera = this.perspectiveCamera;
+                this.camera.position.copy( this.orthographicCamera.position );
+                this.camera.up.copy( this.orthographicCamera.up );
+            }
+        }
 
         this.perspectiveCamera.fov = p.cameraFov;
-
         this.controls.object = this.camera;
+        this.camera.lookAt( this.controls.target );
         this.camera.updateProjectionMatrix();
 
         this.requestRender();
@@ -1442,8 +1503,11 @@ NGL.Viewer.prototype = {
         this.width = width;
         this.height = height;
 
-        this.aspect = this.width / this.height;
-        this.perspectiveCamera.aspect = this.aspect;
+        this.perspectiveCamera.aspect = this.width / this.height;
+        this.orthographicCamera.left = -this.width / 2;
+        this.orthographicCamera.right = this.width / 2;
+        this.orthographicCamera.top = this.height / 2;
+        this.orthographicCamera.bottom = -this.height / 2;
         this.camera.updateProjectionMatrix();
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -1463,10 +1527,6 @@ NGL.Viewer.prototype = {
         );
 
         this.controls.handleResize();
-
-        if( this.params.sampleLevel === -1 ){
-            this.sampleLevel = 0;
-        }
 
         this.requestRender();
 
@@ -1571,6 +1631,8 @@ NGL.Viewer.prototype = {
             this.camera.position.addVectors( this.controls.target, eye );
             this.camera.lookAt( this.controls.target );
 
+            this.__updateZoom();
+
         }
 
     }(),
@@ -1579,7 +1641,9 @@ NGL.Viewer.prototype = {
 
         this.controls.update();
 
-        if( performance.now() - this.stats.startTime > 500 && !this.still && this.sampleLevel < 3 ){
+        var delta = performance.now() - this.stats.startTime;
+
+        if( delta > 500 && !this.still && this.sampleLevel < 3 && this.sampleLevel !== -1 ){
 
             var currentSampleLevel = this.sampleLevel;
             this.sampleLevel = 3;
@@ -1588,18 +1652,6 @@ NGL.Viewer.prototype = {
             this.still = true;
             this.sampleLevel = currentSampleLevel;
             if( NGL.debug ) NGL.log( "rendered still frame" );
-
-        }else if( this.params.sampleLevel === -1 ){
-
-            if( this.stats.avgDuration > 30 ){
-                this.sampleLevel = Math.max( 0, this.sampleLevel - 1 );
-                if( NGL.debug ) NGL.log( "sample level down", this.sampleLevel );
-                this.stats.count = 0;
-            }else if( this.stats.avgDuration < 17 && this.stats.count > 60 ){
-                this.sampleLevel = Math.min( 5, this.sampleLevel + 1 );
-                if( NGL.debug ) NGL.log( "sample level up", this.sampleLevel );
-                this.stats.count = 0;
-            }
 
         }
 
@@ -1629,7 +1681,7 @@ NGL.Viewer.prototype = {
             var gid, object, instance, bondId;
             var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            this.render( null, true );
+            this.render( true );
             this.renderer.readRenderTargetPixels(
                 this.pickingTarget, x, y, 1, 1, pixelBuffer
             );
@@ -1721,13 +1773,13 @@ NGL.Viewer.prototype = {
         this.cDist = cDist;
 
         var bRadius = Math.max( 10, this.boundingBox.size( this.distVector ).length() * 0.5 );
+        bRadius += this.boundingBox.center( this.distVector )
+            .add( this.rotationGroup.position )
+            .length();
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
         }
-        bRadius += this.boundingBox.center( this.distVector )
-            .add( this.rotationGroup.position )
-            .length();
         this.bRadius = bRadius;
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
@@ -1746,14 +1798,26 @@ NGL.Viewer.prototype = {
 
     },
 
-    __updateCamera: function( tileing ){
+    __updateZoom: function(){
+
+        this.__updateClipping();
+        var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
+        var near = this.camera.near;
+        var far = this.camera.far;
+        var hyperfocus = ( near + far ) / 2;
+        var height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        this.orthographicCamera.zoom = this.height / height;
+
+    },
+
+    __updateCamera: function(){
 
         var camera = this.camera;
 
         camera.updateMatrix();
         camera.updateMatrixWorld( true );
         camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-        if( !tileing ) this.camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix();
 
         this.updateMaterialUniforms( this.scene, camera );
         this.sortProjectedPosition( this.scene, camera );
@@ -1844,14 +1908,10 @@ NGL.Viewer.prototype = {
         // from the last and accumulate the results.
         for ( var i = 0; i < offsetList.length; ++i ){
 
-            // only jitters perspective cameras.
-            // TODO: add support for jittering orthogonal cameras
             var offset = offsetList[ i ];
-            if( camera.setViewOffset ){
-                camera.setViewOffset(
-                    width, height, offset[ 0 ], offset[ 1 ], width, height
-                );
-            }
+            camera.setViewOffset(
+                width, height, offset[ 0 ], offset[ 1 ], width, height
+            );
             this.__updateCamera();
 
             this.__renderModelGroup( this.sampleTarget );
@@ -1871,15 +1931,11 @@ NGL.Viewer.prototype = {
         this.renderer.clear();
         this.renderer.render( this.compositeScene, this.compositeCamera );
 
-        // reset jitter to nothing.
-        // TODO: add support for orthogonal cameras
-        if ( camera.setViewOffset ){
-            camera.view = null;
-        }
+        camera.view = null;
 
     },
 
-    render: function( e, picking, tileing ){
+    render: function( picking ){
 
         if( this._rendering ){
             NGL.warn( "tried to call 'render' from within 'render'" );
@@ -1890,11 +1946,8 @@ NGL.Viewer.prototype = {
 
         this._rendering = true;
 
-        // var p = this.params;
-        var camera = this.camera;
-
         this.__updateClipping();
-        this.__updateCamera( tileing );
+        this.__updateCamera();
         this.__updateLights();
 
         // render
@@ -1905,7 +1958,7 @@ NGL.Viewer.prototype = {
 
             this.__renderPickingGroup();
 
-        }else if( this.sampleLevel > 0 && !tileing ){
+        }else if( this.sampleLevel > 0 ){
 
             this.__renderMultiSample();
 
@@ -1934,6 +1987,7 @@ NGL.Viewer.prototype = {
             var bRadius = this.bRadius;
             var canvasHeight = this.height;
             var pixelRatio = this.renderer.getPixelRatio();
+            var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
 
             projectionMatrixInverse.getInverse(
                 camera.projectionMatrix
@@ -1975,6 +2029,10 @@ NGL.Viewer.prototype = {
                     u.projectionMatrixTranspose.value.copy(
                         projectionMatrixTranspose
                     );
+                }
+
+                if( u.ortho ){
+                    u.ortho.value = ortho;
                 }
 
             } );
@@ -2118,19 +2176,21 @@ NGL.Viewer.prototype = {
 
                     // automatic zoom that shows
                     // everything inside the bounding box
-                    // TODO take extent of the towards the camera into account
+                    // TODO take extent towards the camera into account
 
                     this.boundingBox.size( bbSize );
                     var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
                     var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
                     var objSize = maxSize + ( minSize / 2 );
-                    var fov = THREE.Math.degToRad( this.camera.fov );
-
-                    zoom = ( objSize ) / 2 / this.camera.aspect / Math.tan( fov / 2 );
+                    zoom = objSize;
 
                 }
 
+                var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
+                var aspect = this.width / this.height;
+
+                zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
                 zoom = Math.max( zoom, 1.2 * this.params.clipDist );
 
                 eye.copy( this.camera.position ).sub( this.controls.target );
@@ -2141,6 +2201,7 @@ NGL.Viewer.prototype = {
 
                 this.camera.position.addVectors( this.controls.target, eye );
 
+                this.__updateZoom();
             }
 
             this.requestRender();
@@ -2230,85 +2291,65 @@ NGL.TiledRenderer.prototype = {
         this.ctx = canvas.getContext( '2d' );
         this.canvas = canvas;
 
-        //
-
-        this.shearMatrix = new THREE.Matrix4();
-        this.scaleMatrix = new THREE.Matrix4();
-
-        var halfFov = THREE.Math.degToRad( this.camera.fov * 0.5 );
-
-        this.near = this.camera.near;
-        this.top = Math.tan( halfFov ) * this.near;
-        this.bottom = -this.top;
-        this.left = this.camera.aspect * this.bottom;
-        this.right = this.camera.aspect * this.top;
-        this.width = Math.abs( this.right - this.left );
-        this.height = Math.abs( this.top - this.bottom );
-
-    },
-
-    makeAsymmetricFrustum: function( projectionMatrix, i ){
-
-        var factor = this.factor;
-        var near = this.near;
-        var width = this.width;
-        var height = this.height;
-
-        var x = i % factor;
-        var y = Math.floor( i / factor );
-
-        this.shearMatrix.set(
-            1, 0, ( x - ( factor - 1 ) * 0.5 ) * width / near, 0,
-            0, 1, -( y - ( factor - 1 ) * 0.5 ) * height / near, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        this.scaleMatrix.set(
-            factor, 0, 0, 0,
-            0, factor, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
-
-        projectionMatrix
-            .multiply( this.shearMatrix )
-            .multiply( this.scaleMatrix );
-
-        return projectionMatrix;
+        this.viewerSampleLevel = this.viewer.sampleLevel;
+        this.viewer.sampleLevel = -1;
 
     },
 
     renderTile: function( i ){
 
-        this.makeAsymmetricFrustum( this.camera.projectionMatrix, i );
-        this.viewer.render( null, null, true );
+        var factor = this.factor;
 
-        var x = ( i % this.factor ) * this.viewer.width;
-        var y = Math.floor( i / this.factor ) * this.viewer.height;
+        var x = i % factor;
+        var y = Math.floor( i / factor );
+
+        var width = this.viewer.width;
+        var height = this.viewer.height;
+        var offsetX = x * width;
+        var offsetY = y * height;
+
+        this.viewer.camera.setViewOffset(
+            width * factor,
+            height * factor,
+            offsetX,
+            offsetY,
+            width,
+            height
+        );
+
+        this.viewer.render();
 
         if( this.antialias ){
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.floor( x / 2 ),
-                Math.floor( y / 2 ),
-                Math.ceil( this.viewer.width / 2 ),
-                Math.ceil( this.viewer.height / 2 )
+                Math.floor( offsetX / 2 ),
+                Math.floor( offsetY / 2 ),
+                Math.ceil( width / 2 ),
+                Math.ceil( height / 2 )
             );
         }else{
             this.ctx.drawImage(
                 this.renderer.domElement,
-                Math.floor( x ),
-                Math.floor( y ),
-                Math.ceil( this.viewer.width ),
-                Math.ceil( this.viewer.height )
+                Math.floor( offsetX ),
+                Math.floor( offsetY ),
+                Math.ceil( width ),
+                Math.ceil( height )
             );
         }
 
-        this.camera.updateProjectionMatrix();
-
         if( typeof this.onProgress === "function" ){
             this.onProgress( i + 1, this.n, false );
+        }
+
+    },
+
+    finalize: function(){
+
+        this.viewer.sampleLevel = this.viewerSampleLevel;
+        this.viewer.camera.view = null;
+
+        if( typeof this.onFinish === "function" ){
+            this.onFinish( this.n + 1, this.n, false );
         }
 
     },
@@ -2319,9 +2360,7 @@ NGL.TiledRenderer.prototype = {
 
         for( var i = 0; i <= n; ++i ){
             if( i === n ){
-                if( typeof this.onFinish === "function" ){
-                    this.onFinish( i + 1, n, false );
-                }
+                this.finalize();
             }else{
                 this.renderTile( i );
             }
@@ -2333,14 +2372,12 @@ NGL.TiledRenderer.prototype = {
 
         var n = this.n;
         var renderTile = this.renderTile.bind( this );
-        var onFinish = this.onFinish;
+        var finalize = this.finalize.bind( this );
 
         for( var i = 0; i <= n; ++i ){
             setTimeout( function( i ){
                 if( i === n ){
-                    if( typeof onFinish === "function" ){
-                        onFinish( i + 1, n, false );
-                    }
+                    finalize();
                 }else{
                     renderTile( i );
                 }

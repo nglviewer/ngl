@@ -111,6 +111,7 @@ NGL.Preferences = function( id, defaultParams ){
         fogNear: 50,
         fogFar: 100,
         cameraFov: 40,
+        cameraType: "perspective",
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
@@ -649,6 +650,14 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         preferences.setKey( "theme", "dark" );
     }
 
+    function onPerspectiveCameraOptionClick(){
+        stage.setParameters( { cameraType: "perspective" } );
+    }
+
+    function onOrthographicCameraOptionClick(){
+        stage.setParameters( { cameraType: "orthographic" } );
+    }
+
     function onFullScreenOptionClick(){
         stage.toggleFullscreen( document.body );
     }
@@ -689,6 +698,9 @@ NGL.MenubarViewWidget = function( stage, preferences ){
     var menuConfig = [
         createOption( 'Light theme', onLightThemeOptionClick ),
         createOption( 'Dark theme', onDarkThemeOptionClick ),
+        createDivider(),
+        createOption( 'Perspective', onPerspectiveCameraOptionClick ),
+        createOption( 'Orthographic', onOrthographicCameraOptionClick ),
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),

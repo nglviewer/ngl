@@ -2,6 +2,7 @@ uniform mat4 projectionMatrixInverse;
 uniform float nearClip;
 
 varying float vRadius;
+varying float vRadiusSq;
 varying vec3 vPoint;
 varying vec3 vPointViewPosition;
 
@@ -123,7 +124,9 @@ void main(void){
     ComputePointSizeAndPositionInClipCoordSphere();
 
     vRadius = radius;
-    vPoint = ( projectionMatrixInverse * gl_Position ).xyz;
-    vPointViewPosition = -mvPosition.xyz;
+    vRadiusSq = radius * radius;
+    vec4 vPoint4 = projectionMatrixInverse * gl_Position;
+    vPoint = vPoint4.xyz / vPoint4.w;
+    vPointViewPosition = -mvPosition.xyz / mvPosition.w;
 
 }

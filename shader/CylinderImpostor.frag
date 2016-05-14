@@ -36,6 +36,7 @@ uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
 uniform mat4 projectionMatrix;
+uniform float ortho;
 
 varying vec3 axis;
 varying vec4 base_radius;
@@ -105,8 +106,6 @@ void main(){
 
     vec3 end_cyl = end;
     vec3 surface_point = point;
-
-    const float ortho=0.0;
 
     vec3 ray_target = surface_point;
     vec3 ray_origin = vec3(0.0);
