@@ -23,13 +23,13 @@ NGL.createParameterInput = function( p ){
 
     if( p.type === "number" ){
 
-        input = new UI.Number( parseFloat( p.value ) || NaN )
+        input = new UI.Number( parseFloat( p.value ) )
             .setRange( p.min, p.max )
             .setPrecision( p.precision );
 
     }else if( p.type === "integer" ){
 
-        input = new UI.Integer( parseInt( p.value ) || NaN )
+        input = new UI.Integer( parseInt( p.value ) )
             .setRange( p.min, p.max );
 
     }else if( p.type === "range" ){
