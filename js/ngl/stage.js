@@ -1088,9 +1088,9 @@ NGL.StructureComponent = function( stage, structure, params ){
 
 };
 
-NGL.StructureComponent.prototype = NGL.createObject(
+NGL.StructureComponent.prototype = Object.assign( Object.create(
 
-    NGL.Component.prototype, {
+    NGL.Component.prototype ), {
 
     constructor: NGL.StructureComponent,
 
@@ -1318,9 +1318,9 @@ NGL.SurfaceComponent = function( stage, surface, params ){
 
 };
 
-NGL.SurfaceComponent.prototype = NGL.createObject(
+NGL.SurfaceComponent.prototype = Object.assign( Object.create(
 
-    NGL.Component.prototype, {
+    NGL.Component.prototype ), {
 
     constructor: NGL.SurfaceComponent,
 
@@ -1398,9 +1398,9 @@ NGL.TrajectoryComponent = function( stage, trajectory, params, parent ){
 
 };
 
-NGL.TrajectoryComponent.prototype = NGL.createObject(
+NGL.TrajectoryComponent.prototype = Object.assign( Object.create(
 
-    NGL.Component.prototype, {
+    NGL.Component.prototype ), {
 
     constructor: NGL.TrajectoryComponent,
 
@@ -1469,9 +1469,9 @@ NGL.ScriptComponent = function( stage, script, params ){
 
 };
 
-NGL.ScriptComponent.prototype = NGL.createObject(
+NGL.ScriptComponent.prototype = Object.assign( Object.create(
 
-    NGL.Component.prototype, {
+    NGL.Component.prototype ), {
 
     constructor: NGL.ScriptComponent,
 
@@ -1523,9 +1523,9 @@ NGL.RepresentationComponent = function( stage, repr, params, parent ){
 
 };
 
-NGL.RepresentationComponent.prototype = NGL.createObject(
+NGL.RepresentationComponent.prototype = Object.assign( Object.create(
 
-    NGL.Component.prototype, {
+    NGL.Component.prototype ), {
 
     constructor: NGL.RepresentationComponent,
 
@@ -1743,9 +1743,9 @@ NGL.ComponentCollection = function( compList ){
 
 };
 
-NGL.ComponentCollection.prototype = NGL.createObject(
+NGL.ComponentCollection.prototype = Object.assign( Object.create(
 
-    NGL.Collection.prototype, {
+    NGL.Collection.prototype ), {
 
     constructor: NGL.ComponentCollection,
 
@@ -1770,9 +1770,9 @@ NGL.RepresentationCollection = function( reprList ){
 
 };
 
-NGL.RepresentationCollection.prototype = NGL.createObject(
+NGL.RepresentationCollection.prototype = Object.assign( Object.create(
 
-    NGL.Collection.prototype, {
+    NGL.Collection.prototype ), {
 
     constructor: NGL.RepresentationCollection,
 

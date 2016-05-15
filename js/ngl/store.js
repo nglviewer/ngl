@@ -296,9 +296,9 @@ NGL.BondStore = function( sizeOrObject ){
 
 };
 
-NGL.BondStore.prototype = NGL.createObject(
+NGL.BondStore.prototype = Object.assign( Object.create(
 
-    NGL.Store.prototype, {
+    NGL.Store.prototype ), {
 
     constructor: NGL.BondStore,
 
@@ -348,9 +348,9 @@ NGL.AtomStore = function( sizeOrObject ){
 
 };
 
-NGL.AtomStore.prototype = NGL.createObject(
+NGL.AtomStore.prototype = Object.assign( Object.create(
 
-    NGL.Store.prototype, {
+    NGL.Store.prototype ), {
 
     constructor: NGL.AtomStore,
 
@@ -392,9 +392,9 @@ NGL.ResidueStore = function( sizeOrObject ){
 
 };
 
-NGL.ResidueStore.prototype = NGL.createObject(
+NGL.ResidueStore.prototype = Object.assign( Object.create(
 
-    NGL.Store.prototype, {
+    NGL.Store.prototype ), {
 
     constructor: NGL.ResidueStore,
 
@@ -443,9 +443,9 @@ NGL.ChainStore = function( sizeOrObject ){
 
 };
 
-NGL.ChainStore.prototype = NGL.createObject(
+NGL.ChainStore.prototype = Object.assign( Object.create(
 
-    NGL.Store.prototype, {
+    NGL.Store.prototype ), {
 
     constructor: NGL.ChainStore,
 
@@ -498,9 +498,9 @@ NGL.ModelStore = function( sizeOrObject ){
 
 };
 
-NGL.ModelStore.prototype = NGL.createObject(
+NGL.ModelStore.prototype = Object.assign( Object.create(
 
-    NGL.Store.prototype, {
+    NGL.Store.prototype ), {
 
     constructor: NGL.ModelStore,
 

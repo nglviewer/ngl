@@ -705,9 +705,9 @@ NGL.RemoteTrajectory = function( trajPath, structure, selectionString ){
 
 };
 
-NGL.RemoteTrajectory.prototype = NGL.createObject(
+NGL.RemoteTrajectory.prototype = Object.assign( Object.create(
 
-    NGL.Trajectory.prototype, {
+    NGL.Trajectory.prototype ), {
 
     constructor: NGL.RemoteTrajectory,
 
@@ -864,9 +864,9 @@ NGL.StructureTrajectory = function( trajPath, structure, selectionString ){
 
 };
 
-NGL.StructureTrajectory.prototype = NGL.createObject(
+NGL.StructureTrajectory.prototype = Object.assign( Object.create(
 
-    NGL.Trajectory.prototype, {
+    NGL.Trajectory.prototype ), {
 
     constructor: NGL.StructureTrajectory,
 
@@ -986,9 +986,9 @@ NGL.FramesTrajectory = function( frames, structure, selectionString ){
 
 };
 
-NGL.FramesTrajectory.prototype = NGL.createObject(
+NGL.FramesTrajectory.prototype = Object.assign( Object.create(
 
-    NGL.Trajectory.prototype, {
+    NGL.Trajectory.prototype ), {
 
     constructor: NGL.FramesTrajectory,
 

@@ -1354,9 +1354,9 @@ NGL.StructureParser = function( streamer, params ){
 
 };
 
-NGL.StructureParser.prototype = NGL.createObject(
+NGL.StructureParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.StructureParser,
     type: "structure",
@@ -1445,9 +1445,9 @@ NGL.PdbParser = function( streamer, params ){
 
 };
 
-NGL.PdbParser.prototype = NGL.createObject(
+NGL.PdbParser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.PdbParser,
     type: "pdb",
@@ -1895,9 +1895,9 @@ NGL.PqrParser = function( streamer, params ){
 
 };
 
-NGL.PqrParser.prototype = NGL.createObject(
+NGL.PqrParser.prototype = Object.assign( Object.create(
 
-    NGL.PdbParser.prototype, {
+    NGL.PdbParser.prototype ), {
 
     constructor: NGL.PqrParser,
     type: "pqr",
@@ -1914,9 +1914,9 @@ NGL.GroParser = function( streamer, params ){
 
 };
 
-NGL.GroParser.prototype = NGL.createObject(
+NGL.GroParser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.GroParser,
     type: "gro",
@@ -2079,9 +2079,9 @@ NGL.CifParser = function( streamer, params ){
 
 };
 
-NGL.CifParser.prototype = NGL.createObject(
+NGL.CifParser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.CifParser,
     type: "cif",
@@ -3022,9 +3022,9 @@ NGL.SdfParser = function( streamer, params ){
 
 };
 
-NGL.SdfParser.prototype = NGL.createObject(
+NGL.SdfParser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.SdfParser,
     type: "sdf",
@@ -3183,9 +3183,9 @@ NGL.Mol2Parser = function( streamer, params ){
 
 };
 
-NGL.Mol2Parser.prototype = NGL.createObject(
+NGL.Mol2Parser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.Mol2Parser,
     type: "mol2",
@@ -3409,9 +3409,9 @@ NGL.MmtfParser = function( streamer, params ){
 
 };
 
-NGL.MmtfParser.prototype = NGL.createObject(
+NGL.MmtfParser.prototype = Object.assign( Object.create(
 
-    NGL.StructureParser.prototype, {
+    NGL.StructureParser.prototype ), {
 
     constructor: NGL.MmtfParser,
     type: "mmtf",
@@ -3745,9 +3745,9 @@ NGL.TrajectoryParser = function( streamer, params ){
 
 };
 
-NGL.TrajectoryParser.prototype = NGL.createObject(
+NGL.TrajectoryParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.TrajectoryParser,
     type: "trajectory",
@@ -3765,9 +3765,9 @@ NGL.DcdParser = function( streamer, params ){
 
 };
 
-NGL.DcdParser.prototype = NGL.createObject(
+NGL.DcdParser.prototype = Object.assign( Object.create(
 
-    NGL.TrajectoryParser.prototype, {
+    NGL.TrajectoryParser.prototype ), {
 
     constructor: NGL.DcdParser,
     type: "dcd",
@@ -3960,9 +3960,9 @@ NGL.VolumeParser = function( streamer, params ){
 
 };
 
-NGL.VolumeParser.prototype = NGL.createObject(
+NGL.VolumeParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.VolumeParser,
     type: "volume",
@@ -3990,9 +3990,9 @@ NGL.MrcParser = function( streamer, params ){
 
 };
 
-NGL.MrcParser.prototype = NGL.createObject(
+NGL.MrcParser.prototype = Object.assign( Object.create(
 
-    NGL.VolumeParser.prototype, {
+    NGL.VolumeParser.prototype ), {
 
     constructor: NGL.MrcParser,
     type: "mrc",
@@ -4228,9 +4228,9 @@ NGL.CubeParser = function( streamer, params ){
 
 };
 
-NGL.CubeParser.prototype = NGL.createObject(
+NGL.CubeParser.prototype = Object.assign( Object.create(
 
-    NGL.VolumeParser.prototype, {
+    NGL.VolumeParser.prototype ), {
 
     constructor: NGL.CubeParser,
     type: "cube",
@@ -4337,9 +4337,9 @@ NGL.DxParser = function( streamer, params ){
 
 };
 
-NGL.DxParser.prototype = NGL.createObject(
+NGL.DxParser.prototype = Object.assign( Object.create(
 
-    NGL.VolumeParser.prototype, {
+    NGL.VolumeParser.prototype ), {
 
     constructor: NGL.DxParser,
     type: "dx",
@@ -4499,9 +4499,9 @@ NGL.DxbinParser = function( streamer, params ){
 
 };
 
-NGL.DxbinParser.prototype = NGL.createObject(
+NGL.DxbinParser.prototype = Object.assign( Object.create(
 
-    NGL.DxParser.prototype, {
+    NGL.DxParser.prototype ), {
 
     constructor: NGL.DxbinParser,
     type: "dxbin",
@@ -4555,9 +4555,9 @@ NGL.SurfaceParser = function( streamer, params ){
 
 };
 
-NGL.SurfaceParser.prototype = NGL.createObject(
+NGL.SurfaceParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.SurfaceParser,
     type: "surface",
@@ -4587,9 +4587,9 @@ NGL.PlyParser = function( streamer, params ){
 
 };
 
-NGL.PlyParser.prototype = NGL.createObject(
+NGL.PlyParser.prototype = Object.assign( Object.create(
 
-    NGL.SurfaceParser.prototype, {
+    NGL.SurfaceParser.prototype ), {
 
     constructor: NGL.PlyParser,
     type: "ply"
@@ -4607,9 +4607,9 @@ NGL.ObjParser = function( streamer, params ){
 
 };
 
-NGL.ObjParser.prototype = NGL.createObject(
+NGL.ObjParser.prototype = Object.assign( Object.create(
 
-    NGL.SurfaceParser.prototype, {
+    NGL.SurfaceParser.prototype ), {
 
     constructor: NGL.ObjParser,
     type: "obj"
@@ -4636,9 +4636,9 @@ NGL.TextParser = function( streamer, params ){
 
 };
 
-NGL.TextParser.prototype = NGL.createObject(
+NGL.TextParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.TextParser,
     type: "text",
@@ -4676,9 +4676,9 @@ NGL.CsvParser = function( streamer, params ){
 
 };
 
-NGL.CsvParser.prototype = NGL.createObject(
+NGL.CsvParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.CsvParser,
     type: "csv",
@@ -4739,9 +4739,9 @@ NGL.JsonParser = function( streamer, params ){
 
 };
 
-NGL.JsonParser.prototype = NGL.createObject(
+NGL.JsonParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.JsonParser,
     type: "json",
@@ -4782,9 +4782,9 @@ NGL.XmlParser = function( streamer, params ){
 
 };
 
-NGL.XmlParser.prototype = NGL.createObject(
+NGL.XmlParser.prototype = Object.assign( Object.create(
 
-    NGL.Parser.prototype, {
+    NGL.Parser.prototype ), {
 
     constructor: NGL.XmlParser,
     type: "xml",

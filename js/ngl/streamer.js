@@ -28,8 +28,6 @@ NGL.Streamer = function( src, params ){
 
 };
 
-NGL.Streamer.prototype.constructor = NGL.Streamer;
-
 NGL.Streamer.prototype = {
 
     constructor: NGL.Streamer,
@@ -346,9 +344,9 @@ NGL.NetworkStreamer = function( url, params ){
 
 };
 
-NGL.NetworkStreamer.prototype = NGL.createObject(
+NGL.NetworkStreamer.prototype = Object.assign( Object.create(
 
-    NGL.Streamer.prototype, {
+    NGL.Streamer.prototype ), {
 
     constructor: NGL.NetworkStreamer,
 
@@ -451,9 +449,9 @@ NGL.FileStreamer = function( file, params ){
 
 };
 
-NGL.FileStreamer.prototype = NGL.createObject(
+NGL.FileStreamer.prototype = Object.assign( Object.create(
 
-    NGL.Streamer.prototype, {
+    NGL.Streamer.prototype ), {
 
     constructor: NGL.FileStreamer,
 
@@ -536,9 +534,9 @@ NGL.StringStreamer = function( str, params ){
 
 };
 
-NGL.StringStreamer.prototype = NGL.createObject(
+NGL.StringStreamer.prototype = Object.assign( Object.create(
 
-    NGL.Streamer.prototype, {
+    NGL.Streamer.prototype ), {
 
     constructor: NGL.StringStreamer,
 
@@ -563,9 +561,9 @@ NGL.BinaryStreamer = function( bin, params ){
 
 };
 
-NGL.BinaryStreamer.prototype = NGL.createObject(
+NGL.BinaryStreamer.prototype = Object.assign( Object.create(
 
-    NGL.Streamer.prototype, {
+    NGL.Streamer.prototype ), {
 
     constructor: NGL.BinaryStreamer,
 

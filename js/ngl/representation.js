@@ -473,9 +473,9 @@ NGL.BufferRepresentation = function( buffer, viewer, params ){
 
 };
 
-NGL.BufferRepresentation.prototype = NGL.createObject(
+NGL.BufferRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.Representation.prototype, {
+    NGL.Representation.prototype ), {
 
     constructor: NGL.BufferRepresentation,
 
@@ -558,9 +558,9 @@ NGL.StructureRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.StructureRepresentation.prototype = NGL.createObject(
+NGL.StructureRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.Representation.prototype, {
+    NGL.Representation.prototype ), {
 
     constructor: NGL.StructureRepresentation,
 
@@ -788,9 +788,9 @@ NGL.SpacefillRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.SpacefillRepresentation.prototype = NGL.createObject(
+NGL.SpacefillRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.SpacefillRepresentation,
 
@@ -878,9 +878,9 @@ NGL.PointRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.PointRepresentation.prototype = NGL.createObject(
+NGL.PointRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.PointRepresentation,
 
@@ -988,9 +988,9 @@ NGL.LabelRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.LabelRepresentation.prototype = NGL.createObject(
+NGL.LabelRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.LabelRepresentation,
 
@@ -1132,9 +1132,9 @@ NGL.BallAndStickRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.BallAndStickRepresentation.prototype = NGL.createObject(
+NGL.BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.BallAndStickRepresentation,
 
@@ -1368,9 +1368,9 @@ NGL.LicoriceRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.LicoriceRepresentation.prototype = NGL.createObject(
+NGL.LicoriceRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.BallAndStickRepresentation.prototype, {
+    NGL.BallAndStickRepresentation.prototype ), {
 
     constructor: NGL.LicoriceRepresentation,
 
@@ -1398,9 +1398,9 @@ NGL.LineRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.LineRepresentation.prototype = NGL.createObject(
+NGL.LineRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.LineRepresentation,
 
@@ -1477,9 +1477,9 @@ NGL.HyperballRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.HyperballRepresentation.prototype = NGL.createObject(
+NGL.HyperballRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.LicoriceRepresentation.prototype, {
+    NGL.LicoriceRepresentation.prototype ), {
 
     constructor: NGL.HyperballRepresentation,
 
@@ -1603,9 +1603,9 @@ NGL.BackboneRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.BackboneRepresentation.prototype = NGL.createObject(
+NGL.BackboneRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.BallAndStickRepresentation.prototype, {
+    NGL.BallAndStickRepresentation.prototype ), {
 
     constructor: NGL.BackboneRepresentation,
 
@@ -1650,9 +1650,9 @@ NGL.BaseRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.BaseRepresentation.prototype = NGL.createObject(
+NGL.BaseRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.BallAndStickRepresentation.prototype, {
+    NGL.BallAndStickRepresentation.prototype ), {
 
     constructor: NGL.BaseRepresentation,
 
@@ -1697,9 +1697,9 @@ NGL.CartoonRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.CartoonRepresentation.prototype = NGL.createObject(
+NGL.CartoonRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.CartoonRepresentation,
 
@@ -1907,9 +1907,9 @@ NGL.TubeRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.TubeRepresentation.prototype = NGL.createObject(
+NGL.TubeRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.CartoonRepresentation.prototype, {
+    NGL.CartoonRepresentation.prototype ), {
 
     constructor: NGL.TubeRepresentation,
 
@@ -1948,9 +1948,9 @@ NGL.RibbonRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.RibbonRepresentation.prototype = NGL.createObject(
+NGL.RibbonRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.RibbonRepresentation,
 
@@ -2111,9 +2111,9 @@ NGL.TraceRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.TraceRepresentation.prototype = NGL.createObject(
+NGL.TraceRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.TraceRepresentation,
 
@@ -2258,9 +2258,9 @@ NGL.HelixorientRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.HelixorientRepresentation.prototype = NGL.createObject(
+NGL.HelixorientRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.HelixorientRepresentation,
 
@@ -2408,9 +2408,9 @@ NGL.RocketRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.RocketRepresentation.prototype = NGL.createObject(
+NGL.RocketRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.RocketRepresentation,
 
@@ -2584,9 +2584,9 @@ NGL.RopeRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.RopeRepresentation.prototype = NGL.createObject(
+NGL.RopeRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.CartoonRepresentation.prototype, {
+    NGL.CartoonRepresentation.prototype ), {
 
     constructor: NGL.RopeRepresentation,
 
@@ -2637,9 +2637,9 @@ NGL.ContactRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.ContactRepresentation.prototype = NGL.createObject(
+NGL.ContactRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.ContactRepresentation,
 
@@ -2806,9 +2806,9 @@ NGL.MolecularSurfaceRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.MolecularSurfaceRepresentation.prototype = NGL.createObject(
+NGL.MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.MolecularSurfaceRepresentation,
 
@@ -3080,9 +3080,9 @@ NGL.DistanceRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.DistanceRepresentation.prototype = NGL.createObject(
+NGL.DistanceRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.DistanceRepresentation,
 
@@ -3386,9 +3386,9 @@ NGL.UnitcellRepresentation = function( structure, viewer, params ){
 
 };
 
-NGL.UnitcellRepresentation.prototype = NGL.createObject(
+NGL.UnitcellRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.UnitcellRepresentation,
 
@@ -3600,9 +3600,9 @@ NGL.TrajectoryRepresentation = function( trajectory, viewer, params ){
 
 };
 
-NGL.TrajectoryRepresentation.prototype = NGL.createObject(
+NGL.TrajectoryRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.StructureRepresentation.prototype, {
+    NGL.StructureRepresentation.prototype ), {
 
     constructor: NGL.TrajectoryRepresentation,
 
@@ -3814,9 +3814,9 @@ NGL.SurfaceRepresentation = function( surface, viewer, params ){
 
 };
 
-NGL.SurfaceRepresentation.prototype = NGL.createObject(
+NGL.SurfaceRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.Representation.prototype, {
+    NGL.Representation.prototype ), {
 
     constructor: NGL.SurfaceRepresentation,
 
@@ -4078,9 +4078,9 @@ NGL.DotRepresentation = function( surface, viewer, params ){
 
 };
 
-NGL.DotRepresentation.prototype = NGL.createObject(
+NGL.DotRepresentation.prototype = Object.assign( Object.create(
 
-    NGL.Representation.prototype, {
+    NGL.Representation.prototype ), {
 
     constructor: NGL.DotRepresentation,
 

@@ -68,25 +68,6 @@ NGL.getAbsolutePath = function( relativePath ){
 };
 
 
-NGL.createObject = function( prototype, properties ){
-
-    var object = Object.create( prototype );
-
-    for( var key in properties ) {
-
-        if ( properties.hasOwnProperty( key ) ) {
-
-            object[ key ] = properties[ key ];
-
-        }
-
-    }
-
-    return object;
-
-};
-
-
 NGL.deepCopy = function( src ){
 
     if( typeof src !== "object" ){

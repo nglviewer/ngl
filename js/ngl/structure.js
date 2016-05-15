@@ -2287,9 +2287,9 @@ NGL.StructureView = function( structure, selection ){
 
 };
 
-NGL.StructureView.prototype = NGL.createObject(
+NGL.StructureView.prototype = Object.assign( Object.create(
 
-    NGL.Structure.prototype, {
+    NGL.Structure.prototype ), {
 
     constructor: NGL.StructureView,
     type: "StructureView",

@@ -196,9 +196,9 @@ NGL.ParserLoader = function( src, params ){
 
 };
 
-NGL.ParserLoader.prototype = NGL.createObject(
+NGL.ParserLoader.prototype = Object.assign( Object.create(
 
-    NGL.Loader.prototype, {
+    NGL.Loader.prototype ), {
 
     constructor: NGL.ParserLoader,
 
@@ -264,9 +264,9 @@ NGL.ScriptLoader = function( src, params ){
 
 };
 
-NGL.ScriptLoader.prototype = NGL.createObject(
+NGL.ScriptLoader.prototype = Object.assign( Object.create(
 
-    NGL.Loader.prototype, {
+    NGL.Loader.prototype ), {
 
     constructor: NGL.ScriptLoader,
 
@@ -291,9 +291,9 @@ NGL.PluginLoader = function( src, params ){
 
 };
 
-NGL.PluginLoader.prototype = NGL.createObject(
+NGL.PluginLoader.prototype = Object.assign( Object.create(
 
-    NGL.Loader.prototype, {
+    NGL.Loader.prototype ), {
 
     constructor: NGL.PluginLoader,
 
