@@ -1051,13 +1051,9 @@ NGL.Viewer.prototype = {
             uniforms: this.compositeUniforms,
             vertexShader: NGL.getShader( "Quad.vert" ),
             fragmentShader: NGL.getShader( "Quad.frag" ),
+            premultipliedAlpha: true,
             transparent: true,
-            blending: THREE.CustomBlending,
-            blendSrc: THREE.OneFactor,
-            blendDst: THREE.OneFactor,
-            blendSrcAlpha: THREE.OneFactor,
-            blendDstAlpha: THREE.OneFactor,
-            blendEquation: THREE.AddEquation,
+            blending: THREE.AdditiveBlending,
             depthTest: false,
             depthWrite: false
         } );
