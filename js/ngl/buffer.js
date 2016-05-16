@@ -3175,7 +3175,8 @@ NGL.TextBuffer = function( position, size, color, text, params ){
         "fontTexture"  : { value: null },
         "xOffset": { value: this.xOffset },
         "yOffset": { value: this.yOffset },
-        "zOffset": { value: this.zOffset }
+        "zOffset": { value: this.zOffset },
+        "ortho": { value: 0.0 }
     } );
 
     this.addAttributes( {

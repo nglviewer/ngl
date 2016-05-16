@@ -2,6 +2,7 @@ uniform float nearClip;
 uniform float xOffset;
 uniform float yOffset;
 uniform float zOffset;
+uniform float ortho;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
@@ -18,12 +19,18 @@ void main(void){
     #include color_vertex
     texCoord = inputTexCoord;
 
-    vec4 cameraPos = ( modelViewMatrix * vec4( position, 1.0 ) );
+    vec3 pos = position;
+    if( ortho != 0.0 ){
+        pos += normalize( cameraPosition ) * zOffset;
+    }
+    vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
     cameraCornerPos.xy += mapping * inputSize * 0.01;
     cameraCornerPos.x += xOffset;
     cameraCornerPos.y += yOffset;
-    cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * zOffset;
+    if( ortho == 0.0 ){
+        cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * zOffset;
+    }
 
     gl_Position = projectionMatrix * cameraCornerPos;
 
