@@ -4,7 +4,8 @@
  */
 
 
-import { ColorMakerRegistry, RadiusFactory } from "../globals.js";
+import { ColorMakerRegistry } from "../globals.js";
+import RadiusFactory from "../utils/radius-factory.js";
 import Helixorient from "./helixorient.js";
 import { calculateMeanVector3, pointVectorIntersection } from "../math/vector-utils.js";
 

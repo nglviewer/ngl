@@ -3,10 +3,37 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-// import signals from "../lib/signals.min.js"
-// import pako from "../lib/pako_inflate.min.js"
 
-// import log from "./log.js"
+import { Log, Debug } from "./globals.js";
+
+
+function GET( id ){
+
+    var a = new RegExp( id + "=([^&#=]*)" );
+    var m = a.exec( window.location.search );
+
+    if( m ){
+        return decodeURIComponent( m[1] );
+    }else{
+        return undefined;
+    }
+
+}
+
+
+function boolean( value ){
+
+    if( !value ){
+        return false;
+    }
+
+    if( typeof value === "string" ){
+        return /^1|true|t|yes|y$/i.test( value );
+    }
+
+    return true;
+
+}
 
 
 function defaults( value, defaultValue ){
@@ -16,7 +43,7 @@ function defaults( value, defaultValue ){
 }
 
 
-function browser(){
+function getBrowser(){
 
     var ua = window.navigator.userAgent;
 
@@ -94,7 +121,7 @@ function deepCopy( src ){
 function download( data, downloadName ){
 
     if( !data ){
-        NGL.warn( "NGL.download: no data given." );
+        Log.warn( "download: no data given." );
         return;
     }
 
@@ -149,7 +176,7 @@ function submit( url, data, callback, onerror ){
 
     }else{
 
-        NGL.warn( "NGL.submit: type not supported.", data  );
+        Log.warn( "submit: type not supported.", data  );
 
     }
 
@@ -412,7 +439,7 @@ function decompress( data ){
 
     var decompressedData;
 
-    NGL.time( "NGL.decompress" );
+    Log.time( "decompress" );
 
     if( data instanceof ArrayBuffer ){
         data = new Uint8Array( data );
@@ -421,11 +448,11 @@ function decompress( data ){
     try{
         decompressedData = pako.ungzip( data );
     }catch( e ){
-        if( NGL.debug ) NGL.warn( e );
+        if( Debug ) Log.warn( e );
         decompressedData = data;  // assume it is already uncompressed
     }
 
-    NGL.timeEnd( "NGL.decompress" );
+    Log.timeEnd( "decompress" );
 
     return decompressedData;
 
@@ -463,7 +490,7 @@ Counter.prototype = {
 
         if( this.count < 0 ){
 
-            NGL.warn( "NGL.Counter.count below zero", this.count );
+            Log.warn( "Counter.count below zero", this.count );
 
         }
 
@@ -577,8 +604,10 @@ function Queue( fn, argList ){
 
 
 export {
+    GET,
+    boolean,
     defaults,
-    browser,
+    getBrowser,
     getAbsolutePath,
     deepCopy,
     download,

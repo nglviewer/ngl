@@ -4,10 +4,10 @@
  */
 
 
-//////////
-// Store
+import { Debug, Log } from "../globals.js";
 
-NGL.Store = function( sizeOrObject ){
+
+function Store( sizeOrObject ){
 
     if( sizeOrObject === undefined ){
 
@@ -23,11 +23,11 @@ NGL.Store = function( sizeOrObject ){
 
     }
 
-};
+}
 
-NGL.Store.prototype = {
+Store.prototype = {
 
-    constructor: NGL.Store,
+    constructor: Store,
 
     type: "Store",
 
@@ -74,7 +74,7 @@ NGL.Store.prototype = {
                     break;
 
                 default:
-                    NGL.warn( "arrayType unknown: " + arrayType );
+                    Log.warn( "arrayType unknown: " + arrayType );
 
             }
 
@@ -84,7 +84,7 @@ NGL.Store.prototype = {
 
     resize: function( size ){
 
-        // NGL.time( "NGL.Store.resize" );
+        // Log.time( "Store.resize" );
 
         this.length = Math.round( size || 0 );
         this.count = Math.min( this.count, this.length );
@@ -105,7 +105,7 @@ NGL.Store.prototype = {
 
         }
 
-        // NGL.timeEnd( "NGL.Store.resize" );
+        // Log.timeEnd( "Store.resize" );
 
     },
 
@@ -161,7 +161,7 @@ NGL.Store.prototype = {
 
     sort: function( compareFunction ){
 
-        NGL.time( "NGL.Store.sort" );
+        Log.time( "Store.sort" );
 
         var thisStore = this;
         var tmpStore = new this.constructor( 1 );
@@ -203,7 +203,7 @@ NGL.Store.prototype = {
 
         quicksort( 0, this.count - 1 );
 
-        NGL.timeEnd( "NGL.Store.sort" );
+        Log.timeEnd( "Store.sort" );
 
     },
 
@@ -287,230 +287,4 @@ NGL.Store.prototype = {
 };
 
 
-//////////////
-// BondStore
-
-NGL.BondStore = function( sizeOrObject ){
-
-    NGL.Store.call( this, sizeOrObject );
-
-};
-
-NGL.BondStore.prototype = Object.assign( Object.create(
-
-    NGL.Store.prototype ), {
-
-    constructor: NGL.BondStore,
-
-    type: "BondStore",
-
-    __fields: [
-
-        [ "atomIndex1", 1, "int32" ],
-        [ "atomIndex2", 1, "int32" ],
-        [ "bondOrder", 1, "int8" ],
-
-    ],
-
-    addBond: function( atom1, atom2, bondOrder ){
-
-        this.growIfFull();
-
-        var i = this.count;
-        this.atomIndex1[ i ] = atom1.index;
-        this.atomIndex2[ i ] = atom2.index;
-        this.bondOrder[ i ] = bondOrder;
-
-        this.count += 1;
-
-    },
-
-    addBondIfConnected: function( atom1, atom2, bondOrder ){
-
-        if( atom1.connectedTo( atom2 ) ){
-            this.addBond( atom1, atom2, bondOrder );
-            return true;
-        }
-
-        return false;
-
-    }
-
-} );
-
-
-//////////////
-// AtomStore
-
-NGL.AtomStore = function( sizeOrObject ){
-
-    NGL.Store.call( this, sizeOrObject );
-
-};
-
-NGL.AtomStore.prototype = Object.assign( Object.create(
-
-    NGL.Store.prototype ), {
-
-    constructor: NGL.AtomStore,
-
-    type: "AtomStore",
-
-    __fields: [
-
-        [ "residueIndex", 1, "uint32" ],
-        [ "atomTypeId", 1, "uint16" ],
-
-        [ "x", 1, "float32" ],
-        [ "y", 1, "float32" ],
-        [ "z", 1, "float32" ],
-        [ "serial", 1, "int32" ],
-        [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ],
-        [ "occupancy", 1, "float32" ]
-
-    ],
-
-    setAltloc: function( i, str ){
-        this.altloc[ i ] = str.charCodeAt( 0 );
-    },
-
-    getAltloc: function( i ){
-        var code = this.altloc[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    }
-
-} );
-
-
-/////////////////
-// ResidueStore
-
-NGL.ResidueStore = function( sizeOrObject ){
-
-    NGL.Store.call( this, sizeOrObject );
-
-};
-
-NGL.ResidueStore.prototype = Object.assign( Object.create(
-
-    NGL.Store.prototype ), {
-
-    constructor: NGL.ResidueStore,
-
-    type: "ResidueStore",
-
-    __fields: [
-
-        [ "chainIndex", 1, "uint32" ],
-        [ "atomOffset", 1, "uint32" ],
-        [ "atomCount", 1, "uint16" ],
-        [ "residueTypeId", 1, "uint16" ],
-
-        [ "resno", 1, "int32" ],
-        [ "sstruc", 1, "uint8" ],
-        [ "inscode", 1, "uint8" ]
-
-    ],
-
-    setSstruc: function( i, str ){
-        this.sstruc[ i ] = str.charCodeAt( 0 );
-    },
-
-    getSstruc: function( i ){
-        var code = this.sstruc[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    },
-
-    setInscode: function( i, str ){
-        this.inscode[ i ] = str.charCodeAt( 0 );
-    },
-
-    getInscode: function( i ){
-        var code = this.inscode[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    }
-
-} );
-
-
-///////////////
-// ChainStore
-
-NGL.ChainStore = function( sizeOrObject ){
-
-    NGL.Store.call( this, sizeOrObject );
-
-};
-
-NGL.ChainStore.prototype = Object.assign( Object.create(
-
-    NGL.Store.prototype ), {
-
-    constructor: NGL.ChainStore,
-
-    type: "ChainStore",
-
-    __fields: [
-
-        [ "modelIndex", 1, "uint16" ],
-        [ "residueOffset", 1, "uint32" ],
-        [ "residueCount", 1, "uint32" ],
-
-        [ "chainname", 4, "uint8" ]
-
-    ],
-
-    setChainname: function( i, str ){
-
-        var j = 4 * i;
-        this.chainname[ j ] = str.charCodeAt( 0 );
-        this.chainname[ j + 1 ] = str.charCodeAt( 1 );
-        this.chainname[ j + 2 ] = str.charCodeAt( 2 );
-        this.chainname[ j + 3 ] = str.charCodeAt( 3 );
-
-    },
-
-    getChainname: function( i ){
-
-        var chainname = "";
-        for( var k = 0; k < 4; ++k ){
-            var code = this.chainname[ 4 * i + k ];
-            if( code ){
-                chainname += String.fromCharCode( code );
-            }else{
-                break;
-            }
-        }
-        return chainname;
-
-    }
-
-} );
-
-
-///////////////
-// ModelStore
-
-NGL.ModelStore = function( sizeOrObject ){
-
-    NGL.Store.call( this, sizeOrObject );
-
-};
-
-NGL.ModelStore.prototype = Object.assign( Object.create(
-
-    NGL.Store.prototype ), {
-
-    constructor: NGL.ModelStore,
-
-    type: "ModelStore",
-
-    __fields: [
-
-        [ "chainOffset", 1, "uint32" ],
-        [ "chainCount", 1, "uint32" ]
-
-    ]
-
-} );
+export default Store;

@@ -4,339 +4,12 @@
  */
 
 
-/**
- * [Resources description]
- * @type {Object}
- * @private
- */
-NGL.Resources = {
+import { Debug, Log, Browser, WebglErrorMessage } from "../globals.js";
+import { getShader } from "../shader/shader-utils.js";
+import { makeImage } from "./viewer-utils";
 
-    // shaders
-    'shader/CylinderImpostor.vert': null,
-    'shader/CylinderImpostor.frag': null,
-    'shader/HyperballStickImpostor.vert': null,
-    'shader/HyperballStickImpostor.frag': null,
-    'shader/Line.vert': null,
-    'shader/Line.frag': null,
-    // 'shader/LineSprite.vert': null,
-    // 'shader/LineSprite.frag': null,
-    'shader/Mesh.vert': null,
-    'shader/Mesh.frag': null,
-    // 'shader/ParticleSprite.vert': null,
-    // 'shader/ParticleSprite.frag': null,
-    'shader/Point.vert': null,
-    'shader/Point.frag': null,
-    'shader/Quad.vert': null,
-    'shader/Quad.frag': null,
-    'shader/Ribbon.vert': null,
-    'shader/SDFFont.vert': null,
-    'shader/SDFFont.frag': null,
-    // 'shader/SphereHalo.vert': null,
-    // 'shader/SphereHalo.frag': null,
-    'shader/SphereImpostor.vert': null,
-    'shader/SphereImpostor.frag': null,
 
-    // shader chunks
-    'shader/chunk/dull_interior_fragment.glsl': null,
-    'shader/chunk/fog_fragment.glsl': null,
-    'shader/chunk/nearclip_fragment.glsl': null,
-    'shader/chunk/nearclip_vertex.glsl': null,
-    'shader/chunk/opaque_back_fragment.glsl': null,
-
-};
-
-
-/**
- * [Utils description]
- * @namespace NGL.Utils
- * @type {Object}
- */
-NGL.Utils = {
-
-    positionFromGeometry: function( geometry ){
-
-        var vertices = geometry.vertices;
-
-        var j, v3;
-        var n = vertices.length;
-        var position = new Float32Array( n * 3 );
-
-        for( var v = 0; v < n; v++ ){
-
-            j = v * 3;
-            v3 = vertices[ v ];
-
-            position[ j + 0 ] = v3.x;
-            position[ j + 1 ] = v3.y;
-            position[ j + 2 ] = v3.z;
-
-        }
-
-        return position;
-
-    },
-
-    colorFromGeometry: function( geometry ){
-
-        var faces = geometry.faces;
-        var vn = geometry.vertices.length;
-
-        var j, f, c;
-        var n = faces.length;
-        var color = new Float32Array( vn * 3 );
-
-        for( var v = 0; v < n; v++ ){
-
-            f = faces[ v ];
-            c = f.color;
-
-            j = f.a * 3;
-            color[ j + 0 ] = c.r;
-            color[ j + 1 ] = c.g;
-            color[ j + 2 ] = c.b;
-
-            j = f.b * 3;
-            color[ j + 0 ] = c.r;
-            color[ j + 1 ] = c.g;
-            color[ j + 2 ] = c.b;
-
-            j = f.c * 3;
-            color[ j + 0 ] = c.r;
-            color[ j + 1 ] = c.g;
-            color[ j + 2 ] = c.b;
-
-        }
-
-        return color;
-
-    },
-
-    indexFromGeometry: function( geometry ){
-
-        var faces = geometry.faces;
-
-        var j, f;
-        var n = faces.length;
-        var TypedArray = n * 3 > 65535 ? Uint32Array : Uint16Array;
-        var index = new TypedArray( n * 3 );
-
-        for( var v = 0; v < n; v++ ){
-
-            j = v * 3;
-            f = faces[ v ];
-
-            index[ j + 0 ] = f.a;
-            index[ j + 1 ] = f.b;
-            index[ j + 2 ] = f.c;
-
-        }
-
-        return index;
-
-    },
-
-    normalFromGeometry: function( geometry ){
-
-        var faces = geometry.faces;
-        var vn = geometry.vertices.length;
-
-        var j, f, nn, n1, n2, n3;
-        var n = faces.length;
-        var normal = new Float32Array( vn * 3 );
-
-        for( var v = 0; v < n; v++ ){
-
-            f = faces[ v ];
-            nn = f.vertexNormals;
-            n1 = nn[ 0 ];
-            n2 = nn[ 1 ];
-            n3 = nn[ 2 ];
-
-            j = f.a * 3;
-            normal[ j + 0 ] = n1.x;
-            normal[ j + 1 ] = n1.y;
-            normal[ j + 2 ] = n1.z;
-
-            j = f.b * 3;
-            normal[ j + 0 ] = n2.x;
-            normal[ j + 1 ] = n2.y;
-            normal[ j + 2 ] = n2.z;
-
-            j = f.c * 3;
-            normal[ j + 0 ] = n3.x;
-            normal[ j + 1 ] = n3.y;
-            normal[ j + 2 ] = n3.z;
-
-        }
-
-        return normal;
-
-    }
-
-};
-
-
-NGL.getShader = function(){
-
-    var re = /^(?!\/\/)\s*#include\s+(\S+)/gmi;
-    var cache = {};
-
-    function getDefines( defines ){
-
-        if( defines === undefined ) return "";
-
-        var lines = [];
-
-        for ( var name in defines ) {
-
-            var value = defines[ name ];
-
-            if ( value === false ) continue;
-
-            lines.push( '#define ' + name + ' ' + value );
-
-        }
-
-        return lines.join( '\n' ) + "\n";
-
-    }
-
-    //
-
-    return function( name, defines ){
-
-        defines = defines || {};
-
-        var hash = name + "|";
-        for( var key in defines ){
-            hash += key + ":" + defines[ key ];
-        }
-
-        if( !cache[ hash ] ){
-
-            var definesText = getDefines( defines );
-
-            var shaderText = NGL.Resources[ 'shader/' + name ];
-            if( !shaderText ){
-                throw "empty shader, '" + name + "'";
-            }
-            shaderText = shaderText.replace( re, function( match, p1 ){
-
-                var path = 'shader/chunk/' + p1 + '.glsl';
-                var chunk = NGL.Resources[ path ] || THREE.ShaderChunk[ p1 ];
-
-                return chunk ? chunk : "";
-
-            });
-
-            cache[ hash ] = definesText + shaderText;
-
-        }
-
-        return cache[ hash ];
-
-    }
-
-}();
-
-
-NGL.trimCanvas = function( canvas, r, g, b, a ){
-
-    var canvasHeight = canvas.height;
-    var canvasWidth = canvas.width;
-
-    var ctx = canvas.getContext( '2d' );
-    var pixels = ctx.getImageData(0, 0, canvasWidth, canvasHeight ).data;
-
-    var x, y, doBreak;
-
-    doBreak = false;
-    for( y = 0; y < canvasHeight; y++ ) {
-        for( x = 0; x < canvasWidth; x++ ) {
-            var off = ( y * canvasWidth + x ) * 4;
-            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
-                doBreak = true;
-                break;
-            }
-        }
-        if( doBreak ){
-            break;
-        }
-    }
-    var topY = y;
-
-    doBreak = false;
-    for( x = 0; x < canvasWidth; x++ ) {
-        for( y = 0; y < canvasHeight; y++ ) {
-            var off = ( y * canvasWidth + x ) * 4;
-            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
-                doBreak = true;
-                break;
-            }
-        }
-        if( doBreak ){
-            break;
-        }
-    }
-    var topX = x;
-
-    doBreak = false;
-    for( y = canvasHeight-1; y >= 0; y-- ) {
-        for( x = canvasWidth-1; x >= 0; x-- ) {
-            var off = ( y * canvasWidth + x ) * 4;
-            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
-                doBreak = true;
-                break;
-            }
-        }
-        if( doBreak ){
-            break;
-        }
-    }
-    var bottomY = y;
-
-    doBreak = false;
-    for( x = canvasWidth-1; x >= 0; x-- ) {
-        for( y = canvasHeight-1; y >= 0; y-- ) {
-            var off = ( y * canvasWidth + x ) * 4;
-            if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
-                doBreak = true;
-                break;
-            }
-        }
-        if( doBreak ){
-            break;
-        }
-    }
-    var bottomX = x;
-
-    var trimedCanvas = document.createElement( 'canvas' );
-    trimedCanvas.style.display = "hidden";
-    document.body.appendChild( trimedCanvas );
-
-    trimedCanvas.width = bottomX - topX;
-    trimedCanvas.height = bottomY - topY;
-
-    var trimedCtx = trimedCanvas.getContext( '2d' );
-
-    trimedCtx.drawImage(
-        canvas,
-        topX, topY,
-        trimedCanvas.width, trimedCanvas.height,
-        0, 0,
-        trimedCanvas.width, trimedCanvas.height
-    );
-
-    return trimedCanvas;
-
-}
-
-
-NGL.JitterVectors = [
+var JitterVectors = [
     [
         [ 0, 0 ]
     ],
@@ -367,7 +40,8 @@ NGL.JitterVectors = [
         [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
     ]
 ];
-NGL.JitterVectors.forEach( function( offsetList ){
+
+JitterVectors.forEach( function( offsetList ){
     offsetList.forEach( function( offset ){
         // 0.0625 = 1 / 16
         offset[ 0 ] *= 0.0625;
@@ -420,10 +94,7 @@ THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
 };
 
 
-//////////
-// Stats
-
-NGL.Stats = function(){
+function Stats(){
 
     var SIGNALS = signals;
 
@@ -448,7 +119,7 @@ NGL.Stats = function(){
 
 }
 
-NGL.Stats.prototype = {
+Stats.prototype = {
 
     update: function(){
 
@@ -490,15 +161,12 @@ NGL.Stats.prototype = {
 };
 
 
-///////////
-// Viewer
-
 /**
  * [Viewer description]
  * @class
  * @param {String} eid
  */
-NGL.Viewer = function( eid, params ){
+function Viewer( eid, params ){
 
     var SIGNALS = signals;
 
@@ -560,11 +228,11 @@ NGL.Viewer = function( eid, params ){
 
     };
 
-};
+}
 
-NGL.Viewer.prototype = {
+Viewer.prototype = {
 
-    constructor: NGL.Viewer,
+    constructor: Viewer,
 
     initParams: function(){
 
@@ -636,7 +304,7 @@ NGL.Viewer.prototype = {
                 antialias: true
             } );
         }catch( e ){
-            this.container.innerHTML = NGL.webglErrorMessage;
+            this.container.innerHTML = WebglErrorMessage;
             return false;
         }
         this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -648,11 +316,11 @@ NGL.Viewer.prototype = {
         // console.log( gl.getContextAttributes().antialias );
         // console.log( gl.getParameter(gl.SAMPLES) );
 
-        NGL.extensionFragDepth = this.renderer.extensions.get( "EXT_frag_depth" );
-        NGL.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
+        this.extensionFragDepth = this.renderer.extensions.get( "EXT_frag_depth" );
+        this.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
 
-        NGL.supportsReadPixelsFloat = (
-            ( NGL.browser === "Chrome" &&
+        this.supportsReadPixelsFloat = (
+            ( Browser === "Chrome" &&
                 this.renderer.extensions.get( 'OES_texture_float' ) ) ||
             ( this.renderer.extensions.get( 'OES_texture_float' ) &&
                 this.renderer.extensions.get( "WEBGL_color_buffer_float" ) )
@@ -663,7 +331,7 @@ NGL.Viewer.prototype = {
         // picking texture
 
         this.renderer.extensions.get( 'OES_texture_float' );
-        NGL.supportsHalfFloat = this.renderer.extensions.get( 'OES_texture_half_float' );
+        this.supportsHalfFloat = this.renderer.extensions.get( 'OES_texture_half_float' );
         this.renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         this.pickingTarget = new THREE.WebGLRenderTarget(
@@ -674,7 +342,7 @@ NGL.Viewer.prototype = {
                 magFilter: THREE.NearestFilter,
                 stencilBuffer: false,
                 format: THREE.RGBAFormat,
-                type: NGL.supportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
+                type: this.supportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
         this.pickingTarget.texture.generateMipmaps = false;
@@ -698,7 +366,7 @@ NGL.Viewer.prototype = {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
                 format: THREE.RGBAFormat,
-                type: NGL.supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
+                type: this.supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
             }
         );
 
@@ -709,8 +377,8 @@ NGL.Viewer.prototype = {
 
         this.compositeMaterial = new THREE.ShaderMaterial( {
             uniforms: this.compositeUniforms,
-            vertexShader: NGL.getShader( "Quad.vert" ),
-            fragmentShader: NGL.getShader( "Quad.frag" ),
+            vertexShader: getShader( "Quad.vert" ),
+            fragmentShader: getShader( "Quad.frag" ),
             premultipliedAlpha: true,
             transparent: true,
             blending: THREE.AdditiveBlending,
@@ -863,13 +531,13 @@ NGL.Viewer.prototype = {
 
     initStats: function(){
 
-        this.stats = new NGL.Stats();
+        this.stats = new Stats();
 
     },
 
     add: function( buffer, instanceList ){
 
-        // NGL.time( "Viewer.add" );
+        // Log.time( "Viewer.add" );
 
         if( instanceList ){
 
@@ -898,17 +566,17 @@ NGL.Viewer.prototype = {
         }
 
         this.rotationGroup.updateMatrixWorld();
-        if( NGL.debug ) this.updateHelper();
+        if( Debug ) this.updateHelper();
 
         // this.requestRender();
 
-        // NGL.timeEnd( "Viewer.add" );
+        // Log.timeEnd( "Viewer.add" );
 
     },
 
     addBuffer: function( buffer, instance ){
 
-        // NGL.time( "Viewer.addBuffer" );
+        // Log.time( "Viewer.addBuffer" );
 
         var mesh = buffer.getMesh();
         mesh.userData[ "buffer" ] = buffer;
@@ -952,7 +620,7 @@ NGL.Viewer.prototype = {
             this.updateBoundingBox( buffer.geometry );
         }
 
-        // NGL.timeEnd( "Viewer.addBuffer" );
+        // Log.timeEnd( "Viewer.addBuffer" );
 
     },
 
@@ -968,7 +636,7 @@ NGL.Viewer.prototype = {
         }
 
         this.updateBoundingBox();
-        if( NGL.debug ) this.updateHelper();
+        if( Debug ) this.updateHelper();
 
         // this.requestRender();
 
@@ -1048,7 +716,7 @@ NGL.Viewer.prototype = {
 
     makeImage: function( params ){
 
-        return NGL.makeImage( this, params );
+        return makeImage( this, params );
 
     },
 
@@ -1307,7 +975,7 @@ NGL.Viewer.prototype = {
             this.render();
             this.still = true;
             this.sampleLevel = currentSampleLevel;
-            if( NGL.debug ) NGL.log( "rendered still frame" );
+            if( Debug ) Log.log( "rendered still frame" );
 
         }
 
@@ -1335,14 +1003,14 @@ NGL.Viewer.prototype = {
             y *= window.devicePixelRatio;
 
             var gid, object, instance, bondId;
-            var pixelBuffer = NGL.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+            var pixelBuffer = this.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             this.render( true );
             this.renderer.readRenderTargetPixels(
                 this.pickingTarget, x, y, 1, 1, pixelBuffer
             );
 
-            if( NGL.supportsReadPixelsFloat ){
+            if( this.supportsReadPixelsFloat ){
                 gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                     ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
@@ -1362,10 +1030,10 @@ NGL.Viewer.prototype = {
                 instance = object.userData.instance;
             }
 
-            if( NGL.debug ){
+            if( Debug ){
                 var rgba = Array.apply( [], pixelBuffer );
-                NGL.log( pixelBuffer );
-                NGL.log(
+                Log.log( pixelBuffer );
+                Log.log(
                     "picked color",
                     [
                         ( rgba[0] ).toPrecision(2),
@@ -1374,10 +1042,10 @@ NGL.Viewer.prototype = {
                         ( rgba[3] ).toPrecision(2)
                     ]
                 );
-                NGL.log( "picked gid", gid );
-                NGL.log( "picked instance", instance );
-                NGL.log( "picked position", x, y );
-                NGL.log( "devicePixelRatio", window.devicePixelRatio );
+                Log.log( "picked gid", gid );
+                Log.log( "picked instance", instance );
+                Log.log( "picked position", x, y );
+                Log.log( "devicePixelRatio", window.devicePixelRatio );
             }
 
             return {
@@ -1392,7 +1060,7 @@ NGL.Viewer.prototype = {
     requestRender: function(){
 
         if( this._renderPending || this.holdRendering ){
-            // NGL.info( "there is still a 'render' call pending" );
+            // Log.info( "there is still a 'render' call pending" );
             return;
         }
 
@@ -1506,7 +1174,7 @@ NGL.Viewer.prototype = {
         this.updateInfo();
         this.renderer.setRenderTarget( null );  // back to standard render target
 
-        if( NGL.debug ){
+        if( Debug ){
             this.renderer.clear();
             this.renderer.render( this.pickingGroup, this.camera );
             this.renderer.render( this.helperGroup, this.camera );
@@ -1533,7 +1201,7 @@ NGL.Viewer.prototype = {
         this.renderer.render( this.modelGroup, this.camera, renderTarget );
         this.updateInfo();
 
-        if( NGL.debug ){
+        if( Debug ){
             this.renderer.render( this.helperGroup, this.camera, renderTarget );
         }
 
@@ -1549,7 +1217,7 @@ NGL.Viewer.prototype = {
         // References: https://en.wikipedia.org/wiki/Multisample_anti-aliasing
 
         var camera = this.camera;
-        var offsetList = NGL.JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
+        var offsetList = JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
 
         this.compositeUniforms[ "scale" ].value = 1.0 / offsetList.length;
         this.compositeUniforms[ "tForeground" ].value = this.sampleTarget;
@@ -1594,11 +1262,11 @@ NGL.Viewer.prototype = {
     render: function( picking ){
 
         if( this._rendering ){
-            NGL.warn( "tried to call 'render' from within 'render'" );
+            Log.warn( "tried to call 'render' from within 'render'" );
             return;
         }
 
-        // NGL.time( "Viewer.render" );
+        // Log.time( "Viewer.render" );
 
         this._rendering = true;
 
@@ -1627,8 +1295,8 @@ NGL.Viewer.prototype = {
         this._rendering = false;
         this._renderPending = false;
 
-        // NGL.timeEnd( "Viewer.render" );
-        // NGL.log( this.info.memory, this.info.render );
+        // Log.timeEnd( "Viewer.render" );
+        // Log.log( this.info.memory, this.info.render );
 
     },
 
@@ -1707,7 +1375,7 @@ NGL.Viewer.prototype = {
 
         return function( scene, camera ){
 
-            // NGL.time( "sort" );
+            // Log.time( "sort" );
 
             scene.traverseVisible( function ( o ){
 
@@ -1788,7 +1456,7 @@ NGL.Viewer.prototype = {
 
             } );
 
-            // NGL.timeEnd( "sort" );
+            // Log.timeEnd( "sort" );
 
         }
 
@@ -1796,7 +1464,7 @@ NGL.Viewer.prototype = {
 
     clear: function(){
 
-        NGL.log( "scene cleared" );
+        Log.log( "scene cleared" );
 
         this.scene.remove( this.rotationGroup );
 
@@ -1902,244 +1570,4 @@ NGL.Viewer.prototype = {
 };
 
 
-/////////////
-// Renderer
-
-NGL.TiledRenderer = function( renderer, camera, viewer, params ){
-
-    var p = params || {};
-
-    this.renderer = renderer;
-    this.camera = camera;
-    this.viewer = viewer;
-
-    this.factor = p.factor!==undefined ? p.factor : 2;
-    this.antialias = p.antialias!==undefined ? p.antialias : false;
-
-    this.onProgress = p.onProgress;
-    this.onFinish = p.onFinish;
-
-    this.init();
-
-};
-
-NGL.TiledRenderer.prototype = {
-
-    init: function(){
-
-        if( this.antialias ) this.factor *= 2;
-        this.n = this.factor * this.factor;
-
-        // canvas
-
-        var canvas = document.createElement( 'canvas' );
-        canvas.style.display = "hidden";
-        document.body.appendChild( canvas );
-
-        if( this.antialias ){
-            canvas.width = this.viewer.width * this.factor / 2;
-            canvas.height = this.viewer.height * this.factor / 2;
-        }else{
-            canvas.width = this.viewer.width * this.factor;
-            canvas.height = this.viewer.height * this.factor;
-        }
-
-        this.ctx = canvas.getContext( '2d' );
-        this.canvas = canvas;
-
-        this.viewerSampleLevel = this.viewer.sampleLevel;
-        this.viewer.sampleLevel = -1;
-
-    },
-
-    renderTile: function( i ){
-
-        var factor = this.factor;
-
-        var x = i % factor;
-        var y = Math.floor( i / factor );
-
-        var width = this.viewer.width;
-        var height = this.viewer.height;
-        var offsetX = x * width;
-        var offsetY = y * height;
-
-        this.viewer.camera.setViewOffset(
-            width * factor,
-            height * factor,
-            offsetX,
-            offsetY,
-            width,
-            height
-        );
-
-        this.viewer.render();
-
-        if( this.antialias ){
-            this.ctx.drawImage(
-                this.renderer.domElement,
-                Math.floor( offsetX / 2 ),
-                Math.floor( offsetY / 2 ),
-                Math.ceil( width / 2 ),
-                Math.ceil( height / 2 )
-            );
-        }else{
-            this.ctx.drawImage(
-                this.renderer.domElement,
-                Math.floor( offsetX ),
-                Math.floor( offsetY ),
-                Math.ceil( width ),
-                Math.ceil( height )
-            );
-        }
-
-        if( typeof this.onProgress === "function" ){
-            this.onProgress( i + 1, this.n, false );
-        }
-
-    },
-
-    finalize: function(){
-
-        this.viewer.sampleLevel = this.viewerSampleLevel;
-        this.viewer.camera.view = null;
-
-        if( typeof this.onFinish === "function" ){
-            this.onFinish( this.n + 1, this.n, false );
-        }
-
-    },
-
-    render: function(){
-
-        var n = this.n;
-
-        for( var i = 0; i <= n; ++i ){
-            if( i === n ){
-                this.finalize();
-            }else{
-                this.renderTile( i );
-            }
-        }
-
-    },
-
-    renderAsync: function(){
-
-        var n = this.n;
-        var renderTile = this.renderTile.bind( this );
-        var finalize = this.finalize.bind( this );
-
-        for( var i = 0; i <= n; ++i ){
-            setTimeout( function( i ){
-                if( i === n ){
-                    finalize();
-                }else{
-                    renderTile( i );
-                }
-            }, 0, i );
-        }
-
-    },
-
-    dispose: function(){
-
-        document.body.removeChild( this.canvas );
-
-    }
-
-};
-
-
-NGL.makeImage = function( viewer, params ){
-
-    var p = params || {};
-
-    var trim = p.trim!==undefined ? p.trim : false;
-    var factor = p.factor!==undefined ? p.factor : 1;
-    var antialias = p.antialias!==undefined ? p.antialias : false;
-    var transparent = p.transparent!==undefined ? p.transparent : false;
-
-    var renderer = viewer.renderer;
-    var camera = viewer.camera;
-
-    var originalClearAlpha = renderer.getClearAlpha();
-    var backgroundColor = renderer.getClearColor();
-
-    function setLineWidthAndPixelSize( invert ){
-        var _factor = factor;
-        if( antialias ) _factor *= 2;
-        if( invert ) _factor = 1 / _factor;
-        viewer.scene.traverse( function( o ){
-            var m = o.material;
-            if( m && m.linewidth ){
-                m.linewidth *= _factor;
-            }
-            if( m && m.uniforms && m.uniforms.size ){
-                if( m.uniforms.size[ "__seen" ] === undefined ){
-                    m.uniforms.size.value *= _factor;
-                    m.uniforms.size[ "__seen" ] = true;
-                }
-            }
-        } );
-        viewer.scene.traverse( function( o ){
-            var m = o.material;
-            if( m && m.uniforms && m.uniforms.size ){
-                delete m.uniforms.size[ "__seen" ];
-            }
-        } );
-    }
-
-    function trimCanvas( canvas ){
-        if( trim ){
-            var bg = backgroundColor;
-            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
-            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
-            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
-            var a = ( transparent ? 0 : 255 ) | 0;
-            return NGL.trimCanvas( canvas, r, g, b, a );
-        }else{
-            return canvas;
-        }
-    }
-
-    function onProgress( i, n, finished ){
-        if( typeof p.onProgress === "function" ){
-            p.onProgress( i, n, finished );
-        }
-    }
-
-    return new Promise( function( resolve, reject ){
-
-        var tiledRenderer = new NGL.TiledRenderer(
-            renderer, camera, viewer,
-            {
-                factor: factor,
-                antialias: antialias,
-                onProgress: onProgress,
-                onFinish: onFinish
-            }
-        );
-
-        renderer.setClearAlpha( transparent ? 0 : 1 );
-        setLineWidthAndPixelSize();
-        tiledRenderer.renderAsync();
-
-        function onFinish( i, n ){
-            var canvas = trimCanvas( tiledRenderer.canvas );
-            canvas.toBlob(
-                function( blob ){
-                    renderer.setClearAlpha( originalClearAlpha );
-                    setLineWidthAndPixelSize( true );
-                    viewer.requestRender();
-                    tiledRenderer.dispose();
-                    onProgress( n, n, true );
-                    resolve( blob );
-                },
-                "image/png"
-            );
-        }
-
-    } );
-
-};
+export default Viewer;

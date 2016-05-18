@@ -4,1221 +4,30 @@
  */
 
 
-////////////
-// GidPool
-
-NGL.GidPool = {
-
-    // REMEMBER not synced with worker
-
-    nextGid: 1,
-
-    objectList: [],
-
-    rangeList: [],
-
-    getBaseObject: function( object ){
-
-        if( object.type === "StructureView" ){
-            object = object.getStructure();
-        }
-
-        return object;
-
-    },
-
-    addObject: function( object ){
-
-        object = this.getBaseObject( object );
-
-        NGL.GidPool.objectList.push( object );
-        NGL.GidPool.rangeList.push( NGL.GidPool.allocateGidRange( object ) );
-
-        return NGL.GidPool;
-
-    },
-
-    removeObject: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var idx = NGL.GidPool.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            NGL.GidPool.objectList.splice( idx, 1 );
-            NGL.GidPool.rangeList.splice( idx, 1 );
-
-            if( NGL.GidPool.objectList.length === 0 ){
-                NGL.GidPool.nextGid = 1;
-            }
-
-        }
-
-        return NGL.GidPool;
-
-    },
-
-    updateObject: function( object, silent ){
-
-        object = this.getBaseObject( object );
-
-        var idx = NGL.GidPool.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            var range = NGL.GidPool.rangeList[ idx ];
-
-            if( range[1] === NGL.GidPool.nextGid ){
-                var count = NGL.GidPool.getGidCount( object );
-                NGL.GidPool.nextGid += count - ( range[1] - range[0] );
-                range[ 1 ] = NGL.GidPool.nextGid;
-            }else{
-                NGL.GidPool.rangeList[ idx ] = NGL.GidPool.allocateGidRange( object );
-            }
-
-        }else{
-
-            if( !silent ){
-                NGL.warn( "NGL.GidPool.updateObject: object not found." );
-            }
-
-        }
-
-        return NGL.GidPool;
-
-    },
-
-    getGidCount: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var count = 0;
-
-        if( object.type === "Structure" ){
-            count = (
-                object.atomStore.count +
-                object.bondStore.count +
-                object.backboneBondStore.count +
-                object.rungBondStore.count
-            );
-        }else if( object.type === "Volume" ){
-            count = object.__data.length;
-        }else{
-            NGL.warn( "NGL.GidPool.getGidCount: unknown object type" );
-        }
-
-        return count;
-
-    },
-
-    allocateGidRange: function( object ){
-
-        object = this.getBaseObject( object );
-
-        var firstGid = NGL.GidPool.nextGid;
-
-        NGL.GidPool.nextGid += NGL.GidPool.getGidCount( object );
-
-        if( NGL.GidPool.nextGid > Math.pow( 2, 24 ) ){
-            NGL.error( "NGL.GidPool.allocateGidRange: GidPool overflown" );
-        }
-
-        return [ firstGid, NGL.GidPool.nextGid ];
-
-    },
-
-    freeGidRange: function( object ){
-
-        object = this.getBaseObject( object );
-        // TODO
-
-    },
-
-    getNextGid: function(){
-
-        return NGL.GidPool.nextGid++;
-
-    },
-
-    getGid: function( object, offset ){
-
-        object = this.getBaseObject( object );
-        offset = offset || 0;
-
-        var gid = 0;
-        var idx = NGL.GidPool.objectList.indexOf( object );
-
-        if( idx !== -1 ){
-
-            var range = NGL.GidPool.rangeList[ idx ];
-            var first = range[ 0 ];
-
-            gid = first + offset;
-
-        }else{
-
-            NGL.warn( "NGL.GidPool.getGid: object not found." );
-
-        }
-
-        return gid;
-
-    },
-
-    getByGid: function( gid ){
-
-        var entity;
-
-        NGL.GidPool.objectList.forEach( function( o, i ){
-
-            var range = NGL.GidPool.rangeList[ i ];
-            if( gid < range[ 0 ] || gid >= range[ 1 ] ){
-                return;
-            }
-            var offset = gid - range[ 0 ];
-
-            if( o.type === "Structure" ){
-
-                if( offset <= o.atomStore.count ){
-
-                    entity = o.getAtomProxy( offset );
-
-                }else if( offset <= o.atomStore.count + o.bondStore.count ){
-
-                    offset -= o.atomStore.count
-                    entity = o.getBondProxy( offset );
-
-                }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
-
-                    offset -= ( o.atomStore.count + o.bondStore.count );
-                    entity = o.getBondProxy( offset );
-                    entity.bondStore = o.backboneBondStore;
-
-                }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
-
-                    offset -= ( o.atomStore.count + o.bondStore.count + o.backboneBondStore.count );
-                    entity = o.getBondProxy( offset );
-                    entity.bondStore = o.rungBondStore;
-
-                }else{
-
-                    NGL.warn( "NGL.GidPool.getByGid: invalid Structure gid", gid );
-
-                }
-
-            }else if( o.type === "Volume" ){
-
-                entity = {
-                    volume: o,
-                    index: offset,
-                    value: o.data[ offset ],
-                    x: o.dataPosition[ offset * 3 ],
-                    y: o.dataPosition[ offset * 3 + 1 ],
-                    z: o.dataPosition[ offset * 3 + 2 ],
-                };
-
-            }else{
-
-                NGL.warn( "NGL.GidPool.getByGid: unknown object type for gid", gid );
-
-            }
-
-        } );
-
-        return entity;
-
-    }
-
-}
-
-
-///////////////
-// ColorMaker
-
-NGL.ColorMakerRegistry = {
-
-    signals: {
-
-        // typesChanged: new signals.Signal(),
-
-    },
-
-    scales: {
-
-        "": "",
-
-        // Sequential
-        "OrRd": "[S] Orange-Red",
-        "PuBu": "[S] Purple-Blue",
-        "BuPu": "[S] Blue-Purple",
-        "Oranges": "[S] Oranges",
-        "BuGn": "[S] Blue-Green",
-        "YlOrBr": "[S] Yellow-Orange-Brown",
-        "YlGn": "[S] Yellow-Green",
-        "Reds": "[S] Reds",
-        "RdPu": "[S] Red-Purple",
-        "Greens": "[S] Greens",
-        "YlGnBu": "[S] Yellow-Green-Blue",
-        "Purples": "[S] Purples",
-        "GnBu": "[S] Green-Blue",
-        "Greys": "[S] Greys",
-        "YlOrRd": "[S] Yellow-Orange-Red",
-        "PuRd": "[S] Purple-Red",
-        "Blues": "[S] Blues",
-        "PuBuGn": "[S] Purple-Blue-Green",
-
-        // Diverging
-        "Spectral": "[D] Spectral",
-        "RdYlGn": "[D] Red-Yellow-Green",
-        "RdBu": "[D] Red-Blue",
-        "PiYG": "[D] Pink-Yellowgreen",
-        "PRGn": "[D] Purplered-Green",
-        "RdYlBu": "[D] Red-Yellow-Blue",
-        "BrBG": "[D] Brown-Bluegreen",
-        "RdGy": "[D] Red-Grey",
-        "PuOr": "[D] Purple-Orange",
-
-        // Qualitative
-        "Set1": "[Q] Set1",
-        "Set2": "[Q] Set2",
-        "Set3": "[Q] Set3",
-        "Dark2": "[Q] Dark2",
-        "Paired": "[Q] Paired",
-        "Pastel1": "[Q] Pastel1",
-        "Pastel2": "[Q] Pastel2",
-        "Accent": "[Q] Accent",
-
-        // Other
-        "roygb": "[?] Rainbow",
-        "rwb": "[?] Red-White-Blue",
-
-    },
-
-    modes: {
-
-        "": "",
-
-        "rgb": "Red Green Blue",
-        "hsv": "Hue Saturation Value",
-        "hsl": "Hue Saturation Lightness",
-        "hsi": "Hue Saturation Intensity",
-        "lab": "CIE L*a*b*",
-        "hcl": "Hue Chroma Lightness"
-
-    },
-
-    types: {},
-
-    userSchemes: {},
-
-    getScheme: function( params ){
-
-        var p = params || {};
-
-        var id = p.scheme || "";
-
-        var schemeClass;
-
-        if( id in NGL.ColorMakerRegistry.types ){
-
-            schemeClass = NGL.ColorMakerRegistry.types[ id ];
-
-        }else if( id in NGL.ColorMakerRegistry.userSchemes ){
-
-            schemeClass = NGL.ColorMakerRegistry.userSchemes[ id ];
-
-        }else{
-
-            schemeClass = NGL.ColorMaker;
-
-        }
-
-        return new schemeClass( params );
-
-    },
-
-    getPickingScheme: function( params ){
-
-        var p = Object.assign( params || {} );
-        p.scheme = "picking";
-
-        return NGL.ColorMakerRegistry.getScheme( p );
-
-    },
-
-    getTypes: function(){
-
-        var types = {};
-
-        Object.keys( NGL.ColorMakerRegistry.types ).forEach( function( k ){
-            // NGL.ColorMakerRegistry.types[ k ]
-            types[ k ] = k;
-        } );
-
-        Object.keys( NGL.ColorMakerRegistry.userSchemes ).forEach( function( k ){
-            types[ k ] = k.split( "|" )[ 1 ];
-        } );
-
-        return types;
-
-    },
-
-    getScales: function(){
-
-        return NGL.ColorMakerRegistry.scales;
-
-    },
-
-    getModes: function(){
-
-        return NGL.ColorMakerRegistry.modes;
-
-    },
-
-    addScheme: function( scheme, label ){
-
-        if( !( scheme instanceof NGL.ColorMaker ) ){
-
-            scheme = NGL.ColorMakerRegistry.createScheme( scheme, label );
-
-        }
-
-        label = label || "";
-        var id = "" + THREE.Math.generateUUID() + "|" + label;
-
-        NGL.ColorMakerRegistry.userSchemes[ id ] = scheme;
-        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
-
-        return id;
-
-    },
-
-    removeScheme: function( id ){
-
-        delete NGL.ColorMakerRegistry.userSchemes[ id ];
-        // NGL.ColorMakerRegistry.signals.typesChanged.dispatch();
-
-    },
-
-    createScheme: function( constructor, label ){
-
-        var ColorMaker = function( params ){
-
-            NGL.ColorMaker.call( this, params );
-
-            this.label = label || "";
-
-            constructor.call( this, params );
-
-        }
-
-        ColorMaker.prototype = NGL.ColorMaker.prototype;
-
-        ColorMaker.prototype.constructor = ColorMaker;
-
-        return ColorMaker;
-
-    },
-
-    addSelectionScheme: function( pairList, label ){
-
-        return NGL.ColorMakerRegistry.addScheme( function( params ){
-
-            var colorList = [];
-            var selectionList = [];
-
-            pairList.forEach( function( pair ){
-
-                colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
-                selectionList.push( new NGL.Selection( pair[ 1 ] ) );
-
-            } );
-
-            var n = pairList.length;
-
-            this.atomColor = function( a ){
-
-                for( var i = 0; i < n; ++i ){
-
-                    if( selectionList[ i ].test( a ) ){
-
-                        return colorList[ i ];
-
-                    }
-
-                }
-
-                return 0xFFFFFF;
-
-            };
-
-        }, label );
-
-    }
-
-}
-
-
-NGL.ColorMaker = function( params ){
-
-    var p = params || {};
-
-    this.scale = p.scale || "uniform";
-    this.mode = p.mode || "hcl";
-    this.domain = p.domain || [ 0, 1 ];
-    this.value = new THREE.Color( p.value || 0xFFFFFF ).getHex();
-
-    this.structure = p.structure;
-    this.volume = p.volume;
-    this.surface = p.surface;
-
-    if( this.structure ){
-        this.atomProxy = this.structure.getAtomProxy();
-    }
-
-};
-
-NGL.ColorMaker.prototype = {
-
-    constructor: NGL.ColorMaker,
-
-    getScale: function( params ){
-
-        var p = params || {};
-
-        var scale = p.scale || this.scale;
-        if( scale === "rainbow" || scale === "roygb" ){
-            scale = [ "red", "orange", "yellow", "green", "blue" ];
-        }else if( scale === "rwb" ){
-            scale = [ "red", "white", "blue" ];
-        }
-
-        return chroma
-            .scale( scale )
-            .mode( p.mode || this.mode )
-            .domain( p.domain || this.domain )
-            .out( "num" );
-
-    },
-
-    colorToArray: function( color, array, offset ){
-
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
-
-        array[ offset + 0 ] = ( color >> 16 & 255 ) / 255;
-        array[ offset + 1 ] = ( color >> 8 & 255 ) / 255;
-        array[ offset + 2 ] = ( color & 255 ) / 255;
-
-        return array;
-
-    },
-
-    atomColor: function( a ){
-
-        return 0xFFFFFF;
-
-    },
-
-    atomColorToArray: function( a, array, offset ){
-
-        return this.colorToArray(
-            this.atomColor( a ), array, offset
-        );
-
-    },
-
-    bondColor: function( b, fromTo ){
-
-        this.atomProxy.index = fromTo ? b.atomIndex1 : b.atomIndex2;
-        return this.atomColor( this.atomProxy );
-
-    },
-
-    bondColorToArray: function( b, fromTo, array, offset ){
-
-        return this.colorToArray(
-            this.bondColor( b, fromTo ), array, offset
-        );
-
-    },
-
-    volumeColor: function( i ){
-
-        return 0xFFFFFF;
-
-    },
-
-    volumeColorToArray: function( i, array, offset ){
-
-        return this.colorToArray(
-            this.volumeColor( i ), array, offset
-        );
-
-    },
-
-    positionColor: function( v ){
-
-        return 0xFFFFFF;
-
-    },
-
-    positionColorToArray: function( v, array, offset ){
-
-        return this.colorToArray(
-            this.positionColor( v ), array, offset
-        );
-
-    }
-
-};
-
-
-NGL.VolumeColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var valueScale = this.getScale();
-    var volume = this.volume;
-    var inverseMatrix = volume.inverseMatrix;
-    var data = volume.__data;
-    var nx = volume.nx;
-    var ny = volume.ny;
-    var nz = volume.nz;
-    var vec = new THREE.Vector3();
-
-    this.positionColor = function( v ){
-
-        vec.copy( v );
-        vec.applyMatrix4( inverseMatrix );
-        vec.round();
-
-        var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
-
-        return valueScale( data[ index ] );
-
-    };
-
-};
-
-NGL.VolumeColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.VolumeColorMaker.prototype.constructor = NGL.VolumeColorMaker;
-
-
-NGL.ValueColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var valueScale = this.getScale();
-
-    this.volumeColor = function( i ){
-
-        return valueScale( this.volume.data[ i ] );
-
-    };
-
-};
-
-NGL.ValueColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ValueColorMaker.prototype.constructor = NGL.ValueColorMaker;
-
-
-NGL.PickingColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var offset;
-    if( this.structure ){
-        offset = this.structure.atomStore.count;
-        if( params.backbone ){
-            offset += this.structure.bondStore.count;
-        }else if( params.rung ){
-            offset += this.structure.bondStore.count;
-            offset += this.structure.backboneBondStore.count;
-        }
-    }
-
-    this.atomColor = function( a ){
-
-        return NGL.GidPool.getGid( this.structure, a.index );
-
-    };
-
-    this.bondColor = function( b, fromTo ){
-
-        return NGL.GidPool.getGid( this.structure, offset + b.index );
-
-    };
-
-    this.volumeColor = function( i ){
-
-        return NGL.GidPool.getGid( this.volume, i );
-
-    };
-
-};
-
-NGL.PickingColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.PickingColorMaker.prototype.constructor = NGL.PickingColorMaker;
-
-
-NGL.RandomColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    this.atomColor = function( a ){
-
-        return Math.random() * 0xFFFFFF;
-
-    };
-
-};
-
-NGL.RandomColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.RandomColorMaker.prototype.constructor = NGL.RandomColorMaker;
-
-
-NGL.UniformColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var color = this.value;
-
-    this.atomColor = function(){
-
-        return color;
-
-    };
-
-    this.bondColor = function(){
-
-        return color;
-
-    };
-
-    this.valueColor = function(){
-
-        return color;
-
-    };
-
-};
-
-NGL.UniformColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.UniformColorMaker.prototype.constructor = NGL.UniformColorMaker;
-
-
-NGL.AtomindexColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
-
-        var scalePerModel = {};
-
-        this.structure.eachModel( function( mp ){
-            this.domain = [ mp.atomOffset, mp.atomEnd ];
-            scalePerModel[ mp.index ] = this.getScale();
-        }.bind( this ) );
-
-        this.atomColor = function( a ){
-            return scalePerModel[ a.modelIndex ]( a.index );
-        };
-
-    }else{
-
-        var atomindexScale = this.getScale();
-
-        this.atomColor = function( a ){
-            return atomindexScale( a.index );
-        };
-
-    }
-
-};
-
-NGL.AtomindexColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.AtomindexColorMaker.prototype.constructor = NGL.AtomindexColorMaker;
-
-
-NGL.ResidueindexColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
-        this.domain = [ 0, this.structure.residueStore.count ];
-    }
-    var residueindexScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return residueindexScale( a.residueIndex );
-    };
-
-};
-
-NGL.ResidueindexColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ResidueindexColorMaker.prototype.constructor = NGL.ResidueindexColorMaker;
-
-
-NGL.ChainindexColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "Spectral";
-    }
-    if( !params.domain ){
-        this.domain = [ 0, this.structure.chainStore.count ];
-    }
-    var chainindexScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return chainindexScale( a.chainIndex );
-    };
-
-};
-
-NGL.ChainindexColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ChainindexColorMaker.prototype.constructor = NGL.ChainindexColorMaker;
-
-
-NGL.ModelindexColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
-        this.domain = [ 0, this.structure.modelStore.count ];
-    }
-    var modelindexScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return modelindexScale( a.modelIndex );
-    };
-
-};
-
-NGL.ModelindexColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ModelindexColorMaker.prototype.constructor = NGL.ModelindexColorMaker;
-
-
-NGL.SstrucColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var strucColors = NGL.StructureColors;
-    var defaultStrucColor = NGL.StructureColors[""];
-    var rp = this.structure.getResidueProxy();
-
-    this.atomColor = function( ap ){
-
-        var sstruc = ap.sstruc;
-
-        if( sstruc === "h" ){
-            return strucColors[ "alphaHelix" ];
-        }else if( sstruc === "g" ){
-            return strucColors[ "3_10Helix" ];
-        }else if( sstruc === "i" ){
-            return strucColors[ "piHelix" ];
-        }else if( sstruc === "e" || sstruc === "b" ){
-            return strucColors[ "betaStrand" ];
-        }else{
-            rp.index = ap.residueIndex;
-            if( rp.isNucleic() ){
-                return strucColors[ "dna" ];
-            }else if( rp.isProtein() || sstruc === "s" || sstruc === "t" || sstruc === "l" ){
-                return strucColors[ "coil" ];
-            }else{
-                return defaultStrucColor;
-            }
-        }
-
-    };
-
-};
-
-NGL.SstrucColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.SstrucColorMaker.prototype.constructor = NGL.SstrucColorMaker;
-
-
-NGL.ElementColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var elemColors = NGL.ElementColors;
-    var defaultElemColor = NGL.ElementColors[""];
-    var colorValue = this.value;
-    if( params.value === undefined ){
-        colorValue = NGL.ElementColors[ "C" ];
-    }
-
-    this.atomColor = function( a ){
-
-        var element = a.element;
-
-        if( element === "C" ){
-            return colorValue;
-        }else{
-            return elemColors[ element ] || defaultElemColor;
-        }
-
-    };
-
-};
-
-NGL.ElementColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ElementColorMaker.prototype.constructor = NGL.ElementColorMaker;
-
-
-NGL.ResnameColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    var resColors = NGL.ResidueColors;
-    var defaultResColor = NGL.ResidueColors[""];
-
-    this.atomColor = function( a ){
-
-        return resColors[ a.resname ] || defaultResColor;
-
-    };
-
-};
-
-NGL.ResnameColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.ResnameColorMaker.prototype.constructor = NGL.ResnameColorMaker;
-
-
-NGL.BfactorColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "OrRd";
-    }
-
-    if( !params.domain ){
-
-        var selection;
-        var min = Infinity;
-        var max = -Infinity;
-
-        if( params.sele ){
-            selection = new NGL.Selection( params.sele );
-        }
-
-        this.structure.eachSelectedAtom( function( a ){
-            var bfactor = a.bfactor;
-            min = Math.min( min, bfactor );
-            max = Math.max( max, bfactor );
-        }, selection );
-
-        this.domain = [ min, max ];
-
-    }
-
-    var bfactorScale = this.getScale();
-
-    this.atomColor = function( a ){
-
-        return bfactorScale( a.bfactor );
-
-    };
-
-};
-
-NGL.BfactorColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.BfactorColorMaker.prototype.constructor = NGL.BfactorColorMaker;
-
-
-NGL.OccupancyColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "PuBu";
-    }
-
-    if( !params.domain ){
-        this.domain = [ 0.0, 1.0 ];
-    }
-
-    var occupancyScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return occupancyScale( a.occupancy );
-    };
-
-};
-
-NGL.OccupancyColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.OccupancyColorMaker.prototype.constructor = NGL.OccupancyColorMaker;
-
-
-NGL.HydrophobicityColorMaker = function( params ){
-
-    NGL.ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "RdYlGn";
-    }
-
-    var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
-
-    var resHF = {};
-    for( var name in NGL.ResidueHydrophobicity ){
-        resHF[ name ] = NGL.ResidueHydrophobicity[ name ][ idx ];
-    }
-    var defaultResHF = resHF[""];
-
-    if( !params.domain ){
-
-        var val;
-        var min = Infinity;
-        var max = -Infinity;
-
-        for( var name in resHF ){
-
-            val = resHF[ name ];
-            min = Math.min( min, val );
-            max = Math.max( max, val );
-
-        }
-
-        this.domain = [ min, 0, max ];
-
-    }
-
-    var hfScale = this.getScale();
-
-    this.atomColor = function( a ){
-
-        return hfScale( resHF[ a.resname ] || defaultResHF );
-
-    };
-
-};
-
-NGL.HydrophobicityColorMaker.prototype = NGL.ColorMaker.prototype;
-
-NGL.HydrophobicityColorMaker.prototype.constructor = NGL.HydrophobicityColorMaker;
-
-
-NGL.ColorMakerRegistry.types = {
-
-    "": NGL.ColorMaker,
-    "picking": NGL.PickingColorMaker,
-    "random": NGL.RandomColorMaker,
-    "uniform": NGL.UniformColorMaker,
-    "atomindex": NGL.AtomindexColorMaker,
-    "residueindex": NGL.ResidueindexColorMaker,
-    "chainindex": NGL.ChainindexColorMaker,
-    "modelindex": NGL.ModelindexColorMaker,
-    "sstruc": NGL.SstrucColorMaker,
-    "element": NGL.ElementColorMaker,
-    "resname": NGL.ResnameColorMaker,
-    "bfactor": NGL.BfactorColorMaker,
-    "hydrophobicity": NGL.HydrophobicityColorMaker,
-    "value": NGL.ValueColorMaker,
-    "volume": NGL.VolumeColorMaker,
-    "occupancy": NGL.OccupancyColorMaker
-
-};
-
-
-////////////
-// Factory
-
-NGL.RadiusFactory = function( type, scale ){
-
-    this.type = type;
-    this.scale = scale || 1.0;
-
-    this.max = 10;
-
-};
-
-NGL.RadiusFactory.types = {
-
-    "": "",
-    "vdw": "by vdW radius",
-    "covalent": "by covalent radius",
-    "sstruc": "by secondary structure",
-    "bfactor": "by bfactor",
-    "size": "size"
-
-};
-
-NGL.RadiusFactory.prototype = {
-
-    constructor: NGL.RadiusFactory,
-
-    atomRadius: function( a ){
-
-        var type = this.type;
-        var scale = this.scale;
-        var vdwRadii = NGL.VdwRadii;
-        var covalentRadii = NGL.CovalentRadii;
-
-        var defaultVdwRadius = NGL.VdwRadii[""];
-        var defaultCovalentRadius = NGL.CovalentRadii[""];
-        var defaultBfactor = 1;
-
-        var nucleic = [ "C3'", "C3*", "C4'", "C4*", "P" ];
-
-        var r;
-
-        switch( type ){
-
-            case "vdw":
-
-                r = vdwRadii[ a.element ] || defaultVdwRadius;
-                break;
-
-            case "covalent":
-
-                r = covalentRadii[ a.element ] || defaultCovalentRadius;
-                break;
-
-            case "bfactor":
-
-                r = a.bfactor || defaultBfactor;
-                break;
-
-            case "sstruc":
-
-                var sstruc = a.sstruc;
-                if( sstruc === "h" ){
-                    r = 0.25;
-                }else if( sstruc === "g" ){
-                    r = 0.25;
-                }else if( sstruc === "i" ){
-                    r = 0.25;
-                }else if( sstruc === "e" ){
-                    r = 0.25;
-                }else if( sstruc === "b" ){
-                    r = 0.25;
-                }else if( nucleic.indexOf( a.atomname ) !== -1 ){
-                    r = 0.4;
-                }else{
-                    r = 0.1;
-                }
-                break;
-
-            default:
-
-                r = type || 1.0;
-                break;
-
-        }
-
-        return Math.min( r * scale, this.max );
-
-    }
-
-};
-
-
-NGL.LabelFactory = function( type, text ){
-
-    this.type = type;
-    this.text = text || {};
-
-};
-
-NGL.LabelFactory.types = {
-
-    "": "",
-    "atomname": "atom name",
-    "atomindex": "atom index",
-    "atom": "atom name + index",
-    "resname": "residue name",
-    "resno": "residue no",
-    "res": "residue name + no",
-    "text": "text"
-
-};
-
-NGL.LabelFactory.prototype = {
-
-    constructor: NGL.LabelFactory,
-
-    atomLabel: function( a ){
-
-        var type = this.type;
-
-        var l;
-
-        switch( type ){
-
-            case "atomname":
-                l = a.atomname;
-                break;
-
-            case "atomindex":
-                l = "" + a.index;
-                break;
-
-            case "atom":
-                l = a.atomname + "|" + a.index;
-                break;
-
-            case "resname":
-                l = a.resname;
-                break;
-
-            case "resno":
-                l = "" + a.resno;
-                break;
-
-            case "res":
-                l = ( NGL.AA1[ a.resname.toUpperCase() ] || '' ) + a.resno;
-                break;
-
-            case "text":
-                l = this.text[ a.index ];
-                break;
-
-            default:
-                l = a.qualifiedName();
-                break;
-
-        }
-
-        return l === undefined ? '' : l;
-
-    }
-
-};
-
-
-//////////////
-// Structure
-
-NGL.Structure = function( name, path ){
+import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import RadiusFactory from "../utils/radius-factory.js";
+import Selection from "../selection.js";
+import StructureView from "./structure-view.js";
+import Unitcell from "../symmetry/unitcell.js";
+import Assembly from "../symmetry/assembly.js";
+
+import BondStore from "../store/bond-store.js";
+import AtomStore from "../store/atom-store.js";
+import ResidueStore from "../store/residue-store.js";
+import ChainStore from "../store/chain-store.js";
+import ModelStore from "../store/model-store.js";
+
+import AtomMap from "../store/atom-map.js";
+import ResidueMap from "../store/residue-map.js";
+
+import BondProxy from "../proxy/bond-proxy.js";
+import AtomProxy from "../proxy/atom-proxy.js";
+import ResidueProxy from "../proxy/residue-proxy.js";
+import ChainProxy from "../proxy/chain-proxy.js";
+import ModelProxy from "../proxy/model-proxy.js";
+
+
+function Structure( name, path ){
 
     var SIGNALS = signals;
     this.signals = {
@@ -1241,16 +50,16 @@ NGL.Structure = function( name, path ){
     this.frames = [];
     this.boxes = [];
 
-    this.bondStore = new NGL.BondStore( 0 );
-    this.backboneBondStore = new NGL.BondStore( 0 );
-    this.rungBondStore = new NGL.BondStore( 0 );
-    this.atomStore = new NGL.AtomStore( 0 );
-    this.residueStore = new NGL.ResidueStore( 0 );
-    this.chainStore = new NGL.ChainStore( 0 );
-    this.modelStore = new NGL.ModelStore( 0 );
+    this.bondStore = new BondStore( 0 );
+    this.backboneBondStore = new BondStore( 0 );
+    this.rungBondStore = new BondStore( 0 );
+    this.atomStore = new AtomStore( 0 );
+    this.residueStore = new ResidueStore( 0 );
+    this.chainStore = new ChainStore( 0 );
+    this.modelStore = new ModelStore( 0 );
 
-    this.atomMap = new NGL.AtomMap( this );
-    this.residueMap = new NGL.ResidueMap( this );
+    this.atomMap = new AtomMap( this );
+    this.residueMap = new ResidueMap( this );
 
     this.atomSet = this.getAtomSet( this.selection );
     this.bondSet = this.getBondSet();
@@ -1258,22 +67,22 @@ NGL.Structure = function( name, path ){
     this.center = new THREE.Vector3();
     this.boundingBox = new THREE.Box3();
 
-    NGL.GidPool.addObject( this );
+    GidPool.addObject( this );
 
     this._ap = this.getAtomProxy();
     this._rp = this.getResidueProxy();
     this._cp = this.getChainProxy();
 
-};
+}
 
-NGL.Structure.prototype = {
+Structure.prototype = {
 
-    constructor: NGL.Structure,
+    constructor: Structure,
     type: "Structure",
 
     refresh: function(){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.refresh" );
+        if( Debug ) Log.time( "Structure.refresh" );
 
         this.atomSetCache = {};
 
@@ -1289,9 +98,9 @@ NGL.Structure.prototype = {
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
 
-        NGL.GidPool.updateObject( this );
+        GidPool.updateObject( this );
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.refresh" );
+        if( Debug ) Log.timeEnd( "Structure.refresh" );
 
         this.signals.refreshed.dispatch();
 
@@ -1299,7 +108,7 @@ NGL.Structure.prototype = {
 
     getBondProxy: function( index ){
 
-        return new NGL.BondProxy( this, index );
+        return new BondProxy( this, index );
 
     },
 
@@ -1307,11 +116,11 @@ NGL.Structure.prototype = {
 
         if( tmp ){
             if( this.__tmpAtomProxy === undefined ){
-                this.__tmpAtomProxy = new NGL.AtomProxy( this, index );
+                this.__tmpAtomProxy = new AtomProxy( this, index );
             }
             return this.__tmpAtomProxy;
         }else{
-            return new NGL.AtomProxy( this, index );
+            return new AtomProxy( this, index );
         }
 
     },
@@ -1320,30 +129,30 @@ NGL.Structure.prototype = {
 
         if( tmp ){
             if( this.__tmpResidueProxy === undefined ){
-                this.__tmpResidueProxy = new NGL.ResidueProxy( this, index );
+                this.__tmpResidueProxy = new ResidueProxy( this, index );
             }
             return this.__tmpResidueProxy;
         }else{
-            return new NGL.ResidueProxy( this, index );
+            return new ResidueProxy( this, index );
         }
 
     },
 
     getChainProxy: function( index ){
 
-        return new NGL.ChainProxy( this, index );
+        return new ChainProxy( this, index );
 
     },
 
     getModelProxy: function( index ){
 
-        return new NGL.ModelProxy( this, index );
+        return new ModelProxy( this, index );
 
     },
 
     getBondSet: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getBondSet" );
+        if( Debug ) Log.time( "Structure.getBondSet" );
 
         var n = this.bondStore.count;
         var bs = new TypedFastBitSet( n );
@@ -1366,7 +175,7 @@ NGL.Structure.prototype = {
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getBondSet" );
+        if( Debug ) Log.timeEnd( "Structure.getBondSet" );
 
         return bs;
 
@@ -1374,7 +183,7 @@ NGL.Structure.prototype = {
 
     getBackboneBondSet: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getBackboneBondSet" );
+        if( Debug ) Log.time( "Structure.getBackboneBondSet" );
 
         var n = this.backboneBondStore.count;
         var bs = new TypedFastBitSet( n );
@@ -1398,7 +207,7 @@ NGL.Structure.prototype = {
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getBackboneBondSet" );
+        if( Debug ) Log.timeEnd( "Structure.getBackboneBondSet" );
 
         return bs;
 
@@ -1406,7 +215,7 @@ NGL.Structure.prototype = {
 
     getRungBondSet: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getRungBondSet" );
+        if( Debug ) Log.time( "Structure.getRungBondSet" );
 
         var n = this.rungBondStore.count;
         var bs = new TypedFastBitSet( n );
@@ -1430,7 +239,7 @@ NGL.Structure.prototype = {
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getRungBondSet" );
+        if( Debug ) Log.timeEnd( "Structure.getRungBondSet" );
 
         return bs;
 
@@ -1438,7 +247,7 @@ NGL.Structure.prototype = {
 
     getAtomSet: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet" );
+        if( Debug ) Log.time( "Structure.getAtomSet" );
 
         var as;
         var n = this.atomStore.count;
@@ -1485,7 +294,7 @@ NGL.Structure.prototype = {
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet" );
+        if( Debug ) Log.timeEnd( "Structure.getAtomSet" );
 
         return as;
 
@@ -1493,7 +302,7 @@ NGL.Structure.prototype = {
 
     getAtomSet2: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet2" );
+        if( Debug ) Log.time( "Structure.getAtomSet2" );
 
         var as;
         var n = this.atomStore.count;
@@ -1535,7 +344,7 @@ NGL.Structure.prototype = {
 
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet2" );
+        if( Debug ) Log.timeEnd( "Structure.getAtomSet2" );
 
         return as;
 
@@ -1593,7 +402,7 @@ NGL.Structure.prototype = {
 
     getAtomSet3: function( selection ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.getAtomSet3" );
+        if( Debug ) Log.time( "Structure.getAtomSet3" );
 
         var as = this.atomSet;
 
@@ -1605,7 +414,7 @@ NGL.Structure.prototype = {
             }
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.getAtomSet3" );
+        if( Debug ) Log.timeEnd( "Structure.getAtomSet3" );
 
         return as;
 
@@ -1790,18 +599,18 @@ NGL.Structure.prototype = {
         if( !what || what[ "color" ] ){
             color = new Float32Array( atomCount * 3 );
             atomData[ "color" ] = color;
-            colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
+            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what[ "pickingColor" ] ){
             pickingColor = new Float32Array( atomCount * 3 );
             atomData[ "pickingColor" ] = pickingColor;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
         }
         if( !what || what[ "radius" ] ){
             radius = new Float32Array( atomCount );
             atomData[ "radius" ] = radius;
-            radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+            radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
 
         atomSet.forEach( function( index, i ){
@@ -1854,7 +663,7 @@ NGL.Structure.prototype = {
             color2 = new Float32Array( bondCount * 3 );
             bondData[ "color1" ] = color1;
             bondData[ "color2" ] = color2;
-            colorMaker = NGL.ColorMakerRegistry.getScheme( p.colorParams );
+            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what[ "pickingColor" ] ){
             pickingColor1 = new Float32Array( bondCount * 3 );
@@ -1862,10 +671,10 @@ NGL.Structure.prototype = {
             bondData[ "pickingColor1" ] = pickingColor1;
             bondData[ "pickingColor2" ] = pickingColor2;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = NGL.ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
         }
         if( !what || what[ "radius" ] ){
-            radiusFactory = new NGL.RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
+            radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
         if( !what || what[ "radius" ] ){
             radius1 = new Float32Array( bondCount );
@@ -1953,13 +762,13 @@ NGL.Structure.prototype = {
 
     getView: function( selection ){
 
-        return new NGL.StructureView( this, selection );
+        return new StructureView( this, selection );
 
     },
 
     getBoundingBox: function( selection ){
 
-        if( NGL.debug ) console.time( "getBoundingBox" );
+        if( Debug ) Log.time( "getBoundingBox" );
 
         var box = new THREE.Box3();
 
@@ -1990,7 +799,7 @@ NGL.Structure.prototype = {
         box.min.set( minX, minY, minZ );
         box.max.set( maxX, maxY, maxZ );
 
-        if( NGL.debug ) console.timeEnd( "getBoundingBox" );
+        if( Debug ) Log.timeEnd( "getBoundingBox" );
 
         return box;
 
@@ -2066,7 +875,7 @@ NGL.Structure.prototype = {
 
     toJSON: function(){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.toJSON" );
+        if( Debug ) Log.time( "Structure.toJSON" );
 
         var output = {
 
@@ -2124,7 +933,7 @@ NGL.Structure.prototype = {
             output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
         }
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.toJSON" );
+        if( Debug ) Log.timeEnd( "Structure.toJSON" );
 
         return output;
 
@@ -2132,7 +941,7 @@ NGL.Structure.prototype = {
 
     fromJSON: function( input ){
 
-        if( NGL.debug ) NGL.time( "NGL.Structure.fromJSON" );
+        if( Debug ) Log.time( "Structure.fromJSON" );
 
         this.name = input.name;
         this.path = input.path;
@@ -2142,7 +951,7 @@ NGL.Structure.prototype = {
         this.biomolDict = input.biomolDict;
         this.helices = input.helices;
         this.sheets = input.sheets;
-        if( input.unitcell ) this.unitcell = new NGL.Unitcell().fromJSON( input.unitcell );
+        if( input.unitcell ) this.unitcell = new Unitcell().fromJSON( input.unitcell );
 
         this.frames = input.frames;
         this.boxes = input.boxes;
@@ -2166,7 +975,7 @@ NGL.Structure.prototype = {
 
         this.biomolDict = {};
         for( var name in input.biomolDict ){
-            var assembly = new NGL.Assembly();
+            var assembly = new Assembly();
             this.biomolDict[ name ] = assembly.fromJSON( input.biomolDict[ name ] );
         }
         this.atomSetDict = {};
@@ -2183,9 +992,9 @@ NGL.Structure.prototype = {
         this.atomMap.fromJSON( input.atomMap );
         this.residueMap.fromJSON( input.residueMap );
 
-        NGL.GidPool.updateObject( this );
+        GidPool.updateObject( this );
 
-        if( NGL.debug ) NGL.timeEnd( "NGL.Structure.fromJSON" );
+        if( Debug ) Log.timeEnd( "Structure.fromJSON" );
 
         return this;
 
@@ -2234,7 +1043,7 @@ NGL.Structure.prototype = {
 
     dispose: function(){
 
-        NGL.GidPool.removeObject( this );
+        GidPool.removeObject( this );
 
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;
@@ -2265,233 +1074,4 @@ NGL.Structure.prototype = {
 };
 
 
-NGL.StructureView = function( structure, selection ){
-
-    var SIGNALS = signals;
-    this.signals = {
-        refreshed: new SIGNALS.Signal(),
-    };
-
-    this.structure = structure;
-    this.selection = selection;
-
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
-
-    // to allow creating an empty object to call .fromJSON onto
-    if( !structure && !selection ) return;
-
-    this.init();
-
-    this.refresh();
-
-};
-
-NGL.StructureView.prototype = Object.assign( Object.create(
-
-    NGL.Structure.prototype ), {
-
-    constructor: NGL.StructureView,
-    type: "StructureView",
-
-    init: function(){
-
-        Object.defineProperties( this, {
-            atomSetDict: {
-                get: function(){ return this.structure.atomSetDict }
-            },
-            bondStore: {
-                get: function(){ return this.structure.bondStore }
-            },
-            backboneBondStore: {
-                get: function(){ return this.structure.backboneBondStore }
-            },
-            rungBondStore: {
-                get: function(){ return this.structure.rungBondStore }
-            },
-            atomStore: {
-                get: function(){ return this.structure.atomStore }
-            },
-            residueStore: {
-                get: function(){ return this.structure.residueStore }
-            },
-            chainStore: {
-                get: function(){ return this.structure.chainStore }
-            },
-            modelStore: {
-                get: function(){ return this.structure.modelStore }
-            },
-            atomMap: {
-                get: function(){ return this.structure.atomMap }
-            },
-            residueMap: {
-                get: function(){ return this.structure.residueMap }
-            }
-        } );
-
-        this._ap = this.getAtomProxy();
-        this._rp = this.getResidueProxy();
-        this._cp = this.getChainProxy();
-
-        // FIXME should selection be serializable?
-        if( this.selection ){
-            this.selection.signals.stringChanged.add( function( string ){
-                this.refresh();
-            }, this );
-        }
-
-        this.structure.signals.refreshed.add( this.refresh, this );
-
-    },
-
-    refresh: function(){
-
-        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh" );
-
-        this.atomSetCache = {};
-
-        this.atomSet = this.getAtomSet2( this.selection );
-        if( this.structure.atomSet ){
-            if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#atomSet.intersection" );
-            this.atomSet = this.atomSet.intersection( this.structure.atomSet );
-            if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#atomSet.intersection" );
-        }
-
-        this.bondSet = this.getBondSet();
-
-        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#atomSetDict.new_intersection" );
-        for( var name in this.atomSetDict ){
-            var as = this.atomSetDict[ name ];
-            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
-        }
-        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#atomSetDict.new_intersection" );
-
-        if( NGL.debug ) NGL.time( "NGL.StructureView.refresh#size" );
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh#size" );
-
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
-
-        if( NGL.debug ) NGL.timeEnd( "NGL.StructureView.refresh" );
-
-        this.signals.refreshed.dispatch();
-
-    },
-
-    getSelection: function(){
-
-        var parentSelection = this.structure.getSelection();
-        if( parentSelection ){
-            if( parentSelection.string && this.selection.string ){
-                return new NGL.Selection(
-                    "( " + parentSelection.string + " ) AND " +
-                    "( " + this.selection.string + " )"
-                );
-            }else if( parentSelection.string ){
-                return new NGL.Selection( parentSelection.string );
-            }else if( this.selection.string ){
-                return new NGL.Selection( this.selection.string );
-            }else{
-                return new NGL.Selection( "" );
-            }
-        }else{
-            return this.selection;
-        }
-
-    },
-
-    getStructure: function(){
-
-        return this.structure.getStructure();
-
-    },
-
-    toJSON: function(){
-
-        var output = {
-
-            metadata: {
-                version: 0.1,
-                type: 'StructureView',
-                generator: 'StructureViewExporter'
-            },
-
-            structure: this.structure.toJSON(),
-            // selection: this.selection.toJSON(),
-
-            atomSet: this.atomSet.toJSON(),
-            bondSet: this.bondSet.toJSON(),
-
-            atomCount: this.atomCount,
-            bondCount: this.bondCount,
-
-            atomSetCache: {}
-
-        };
-
-        for( var name in this.atomSetCache ){
-            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
-        }
-
-        return output;
-
-    },
-
-    fromJSON: function( input ){
-
-        if( input.structure.metadata.type === "Structure" ){
-            this.structure = new NGL.Structure().fromJSON( input.structure );
-        }else if( input.structure.metadata.type === "StructureView" ){
-            this.structure = new NGL.StructureView().fromJSON( input.structure );
-        }
-
-        this.atomSet = new TypedFastBitSet().fromJSON( input.atomSet );
-        this.bondSet = new TypedFastBitSet().fromJSON( input.bondSet );
-
-        this.atomCount = input.atomCount;
-        this.bondCount = input.bondCount;
-
-        this.atomSetCache = {};
-        for( var name in input.atomSetCache ){
-            var as = new TypedFastBitSet();
-            this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
-        }
-
-        this.init();
-
-        return this;
-
-    },
-
-    getTransferable: function(){
-
-        var transferable = [];
-
-        transferable.concat( this.structure.getTransferable() );
-
-        transferable.concat( this.bondSet.getTransferable() );
-        transferable.concat( this.atomSet.getTransferable() );
-
-        for( var name in this.atomSetCache ){
-            transferable.concat( this.atomSetCache[ name ].getTransferable() );
-        }
-
-        return transferable;
-
-    },
-
-    dispose: function(){
-
-        delete this.structure;
-
-        delete this.atomSet;
-        delete this.bondSet;
-
-        delete this.atomCount;
-        delete this.bondCount;
-
-    }
-
-} );
+export default Structure;

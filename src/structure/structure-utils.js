@@ -846,6 +846,44 @@ function buildUnitcellAssembly( structure ){
 }
 
 
+var guessElement = function(){
+
+    var elm1 = [ "H", "C", "O", "N", "S", "P" ];
+    var elm2 = [ "NA", "CL" ];
+
+    return function( atomName ){
+
+        var at = atomName.trim().toUpperCase();
+        if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
+        // parse again to check for a second integer
+        if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
+        var n = at.length;
+
+        if( n===0 ) return "";
+
+        if( n===1 ) return at;
+
+        if( n===2 ){
+
+            if( elm2.indexOf( at )!==-1 ) return at;
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        if( n>=3 ){
+
+            if( elm1.indexOf( at[0] )!==-1 ) return at[0];
+
+        }
+
+        return "";
+
+    };
+
+}();
+
+
 export {
 	reorderAtoms,
 	assignSecondaryStructure,
@@ -855,5 +893,6 @@ export {
 	calculateResidueBonds,
 	calculateBondsWithin,
 	calculateBondsBetween,
-	buildUnitcellAssembly
+	buildUnitcellAssembly,
+    guessElement
 };

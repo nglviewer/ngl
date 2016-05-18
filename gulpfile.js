@@ -12,13 +12,17 @@ var concat = require("gulp-concat");
 
 var rollup = require('rollup').rollup;
 var commonjs = require('rollup-plugin-commonjs');
+var string = require('rollup-plugin-string');
 // var nodeResolve = require('rollup-plugin-node-resolve');
 
 gulp.task('foo', function () {
   return rollup({
     entry: 'src/stage/stage.js',
     plugins: [
-      commonjs()
+      commonjs(),
+      string({
+        extensions: ['.vert', '.frag', '.glsl']
+      })
     ]
   }).then(function (bundle) {
     return bundle.write({

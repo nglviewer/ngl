@@ -4,23 +4,11 @@
  */
 
 
-//////////////
-// Selection
-
-NGL.Selection = function( string ){
-
-    var SIGNALS = signals;
-
-    this.signals = {
-        stringChanged: new SIGNALS.Signal(),
-    };
-
-    this.setString( string );
-
-};
+import { Log, Debug } from "./globals.js";
+import { binarySearchIndexOf } from "./utils.js";
 
 
-NGL.Selection.Keywords = {
+var kwd = {
     "PROTEIN": 1,
     "NUCLEIC": 2,
     "RNA": 3,
@@ -37,9 +25,21 @@ NGL.Selection.Keywords = {
 };
 
 
-NGL.Selection.prototype = {
+function Selection( string ){
 
-    constructor: NGL.Selection,
+    var SIGNALS = signals;
+
+    this.signals = {
+        stringChanged: new SIGNALS.Signal(),
+    };
+
+    this.setString( string );
+
+}
+
+Selection.prototype = {
+
+    constructor: Selection,
 
     setString: function( string, silent ){
 
@@ -51,7 +51,7 @@ NGL.Selection.prototype = {
         try{
             this.parse( string );
         }catch( e ){
-            // NGL.error( e.stack );
+            // Log.error( e.stack );
             this.selection = { "error": e.message };
         }
 
@@ -84,7 +84,6 @@ NGL.Selection.prototype = {
 
         var scope = this;
 
-        var kwd = NGL.Selection.Keywords;
         var selection = this.selection;
         var selectionStack = [];
         var newSelection, oldSelection;
@@ -96,7 +95,7 @@ NGL.Selection.prototype = {
         }
         var chunks = string.split( /\s+/ );
 
-        // NGL.log( string, chunks )
+        // Log.log( string, chunks )
 
         var all = [ "*", "", "ALL" ];
 
@@ -150,7 +149,7 @@ NGL.Selection.prototype = {
 
             if( c === "(" ){
 
-                // NGL.log( "(" );
+                // Log.log( "(" );
 
                 not = false;
                 createNewContext();
@@ -158,7 +157,7 @@ NGL.Selection.prototype = {
 
             }else if( c === ")" ){
 
-                // NGL.log( ")" );
+                // Log.log( ")" );
 
                 getPrevContext();
                 if( selection.negate ){
@@ -197,7 +196,7 @@ NGL.Selection.prototype = {
 
             if( c.toUpperCase() === "AND" ){
 
-                // NGL.log( "AND" );
+                // Log.log( "AND" );
 
                 if( selection.operator === "OR" ){
                     var lastRule = selection.rules.pop();
@@ -210,7 +209,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "OR" ){
 
-                // NGL.log( "OR" );
+                // Log.log( "OR" );
 
                 if( selection.operator === "AND" ){
                     getPrevContext( "OR" );
@@ -221,7 +220,7 @@ NGL.Selection.prototype = {
 
             }else if( c.toUpperCase() === "NOT" ){
 
-                // NGL.log( "NOT", j );
+                // Log.log( "NOT", j );
 
                 not = 1;
                 createNewContext();
@@ -230,7 +229,7 @@ NGL.Selection.prototype = {
 
             }else{
 
-                // NGL.log( "chunk", c, j, selection );
+                // Log.log( "chunk", c, j, selection );
 
             }
 
@@ -686,7 +685,6 @@ NGL.Selection.prototype = {
 
         var t = selection.negate ? false : true;
         var f = selection.negate ? true : false;
-        var k = NGL.Selection.Keywords;
 
         var s, and, ret, na;
         var subTests = [];
@@ -731,7 +729,7 @@ NGL.Selection.prototype = {
 
                 }else{
 
-                    if( s.keyword===k.ALL ){
+                    if( s.keyword===kwd.ALL ){
                         if( and ){ continue; }else{ return t; }
                     }
 
@@ -812,7 +810,6 @@ NGL.Selection.prototype = {
 
         var helixTypes = [ "h", "g", "i" ];
         var sheetTypes = [ "e", "b" ];
-        var kwd = NGL.Selection.Keywords;
 
         var selection;
 
@@ -871,7 +868,7 @@ NGL.Selection.prototype = {
             if( s.altloc!==undefined && s.altloc!==a.altloc ) return false;
 
             if( s.atomindex!==undefined &&
-                    NGL.binarySearchIndexOf( s.atomindex, a.index ) < 0
+                    binarySearchIndexOf( s.atomindex, a.index ) < 0
             ) return false;
 
             if( s.resname!==undefined && s.resname!==a.resname ) return false;
@@ -900,7 +897,6 @@ NGL.Selection.prototype = {
 
         var helixTypes = [ "h", "g", "i" ];
         var sheetTypes = [ "e", "b" ];
-        var kwd = NGL.Selection.Keywords;
 
         var selection;
 
@@ -1057,3 +1053,6 @@ NGL.Selection.prototype = {
     }
 
 };
+
+
+export default Selection;

@@ -3,6 +3,45 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+
+NGL.ExampleRegistry = {
+
+    dict: {},
+
+    add: function( name, fn ){
+        this.dict[ name ] = fn;
+    },
+
+    addDict: function( dict ){
+        Object.keys( dict ).forEach( function( name ){
+            this.add( name, dict[ name ] );
+        }.bind( this ) );
+    },
+
+    get: function( name ){
+        return this.dict[ name ];
+    },
+
+    get names(){
+        return Object.keys( this.dict );
+    },
+
+    get count(){
+        return this.names.length;
+    },
+
+    load: function( name, stage ){
+        var fn = this.get( name );
+        if( typeof fn === "function" ){
+            fn( stage );
+        }else{
+            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
+        }
+    }
+
+};
+
+
 NGL.ExampleRegistry.addDict( {
 
     "gro_trajectory": function( stage ){

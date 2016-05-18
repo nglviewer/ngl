@@ -4,7 +4,7 @@
  */
 
 
-var twoPi = 2 * Math.PI;
+import { TwoPI } from "./math-constants.js";
 
 
 function circularMean( array, max, stride, offset, indices ){
@@ -30,7 +30,7 @@ function circularMean( array, max, stride, offset, indices ){
 
             c = ( array[ indices[ i ] * stride + offset ] + max ) % max;
 
-            angle = ( c / max ) * twoPi - Math.PI;
+            angle = ( c / max ) * TwoPI - Math.PI;
 
             cosMean += Math.cos( angle );
             sinMean += Math.sin( angle );
@@ -43,7 +43,7 @@ function circularMean( array, max, stride, offset, indices ){
 
             c = ( array[ i ] + max ) % max;
 
-            angle = ( c / max ) * twoPi - Math.PI;
+            angle = ( c / max ) * TwoPI - Math.PI;
 
             cosMean += Math.cos( angle );
             sinMean += Math.sin( angle );
@@ -57,7 +57,7 @@ function circularMean( array, max, stride, offset, indices ){
 
     var meanAngle = Math.atan2( sinMean, cosMean );
 
-    var mean = ( meanAngle + Math.PI ) / twoPi * max;
+    var mean = ( meanAngle + Math.PI ) / TwoPI * max;
 
     return mean;
 

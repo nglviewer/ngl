@@ -4,7 +4,7 @@
  */
 
 
-import { EPS } from "../constants.js";
+import { EPS } from "./math-constants.js";
 
 
 /**

@@ -6,7 +6,7 @@
 
 import { Debug, Log, WorkerRegistry } from "../globals.js";
 import { fromJSON } from "../utils.js";
-import Worker from "../worker.js";
+import Worker from "../worker/worker.js";
 
 
 WorkerRegistry.add( "parse", function( e, callback ){

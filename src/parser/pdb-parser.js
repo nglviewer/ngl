@@ -6,9 +6,24 @@
 
 import { Debug, Log } from "../globals.js";
 import StructureParser from "./structure-parser.js";
-import { HelixTypes } from "../structure/structure-constants.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
+
+
+// PDB helix record encoding
+var HelixTypes = {
+    1: "h",  // Right-handed alpha (default)
+    2: "h",  // Right-handed omega
+    3: "i",  // Right-handed pi
+    4: "h",  // Right-handed gamma
+    5: "g",  // Right-handed 310
+    6: "h",  // Left-handed alpha
+    7: "h",  // Left-handed omega
+    8: "h",  // Left-handed gamma
+    9: "h",  // 27 ribbon/helix
+    10: "h",  // Polyproline
+    "": "h",
+};
 
 
 function PdbParser( streamer, params ){
@@ -458,3 +473,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
 
 export default PdbParser;
+
+export {
+    HelixTypes
+};

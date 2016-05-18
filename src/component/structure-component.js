@@ -6,9 +6,9 @@
 
 import Component from "./component.js";
 import TrajectoryComponent from "./trajectory-component.js";
-import { makeTrajectory } from "../trajectory.js";
+import { makeTrajectory } from "../trajectory/trajectory-utils.js";
 import Selection from "../selection.js";
-import { superpose } from "../superpose.js";
+import { superpose } from "../align/align-utils.js";
 
 
 function StructureComponent( stage, structure, params ){

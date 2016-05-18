@@ -4,7 +4,8 @@
  */
 
 
-import { ColorMakerRegistry, RadiusFactory } from "../globals.js";
+import { ColorMakerRegistry } from "../globals.js";
+import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 import { pointVectorIntersection } from "../math/vector-utils.js";
 

@@ -4,10 +4,10 @@
  */
 
 
-//////////////
-// Alignment
+import { Debug, Log } from "../globals.js";
 
-NGL.SubstitutionMatrices = function(){
+
+var SubstitutionMatrices = function(){
 
     var blosum62x = [
         [4,0,-2,-1,-2,0,-2,-1,-1,-1,-1,-2,-1,-1,-1,1,0,0,-3,-2],        // A
@@ -101,7 +101,7 @@ NGL.SubstitutionMatrices = function(){
 }();
 
 
-NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
+function Alignment( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix ){
 
     // TODO try encoding seqs as integers and use array subst matrix, maybe faster
 
@@ -113,21 +113,21 @@ NGL.Alignment = function( seq1, seq2, gapPenalty, gapExtensionPenalty, substMatr
     this.substMatrix = substMatrix || "blosum62";
 
     if( this.substMatrix ){
-        this.substMatrix = NGL.SubstitutionMatrices[ this.substMatrix ];
+        this.substMatrix = SubstitutionMatrices[ this.substMatrix ];
     }
 
-};
+}
 
-NGL.Alignment.prototype = {
+Alignment.prototype = {
 
-    constructor: NGL.Alignment,
+    constructor: Alignment,
 
     initMatrices: function(){
 
         this.n = this.seq1.length;
         this.m = this.seq2.length;
 
-        // NGL.log(this.n, this.m);
+        // Log.log(this.n, this.m);
 
         this.score = undefined;
         this.ali = '';
@@ -168,7 +168,7 @@ NGL.Alignment.prototype = {
 
         this.S[ 0 ][ 0 ] = 0;
 
-        // NGL.log(this.S, this.V, this.H);
+        // Log.log(this.S, this.V, this.H);
 
     },
 
@@ -208,7 +208,7 @@ NGL.Alignment.prototype = {
 
         } else {
 
-            NGL.warn('NGL.Alignment: no subst matrix');
+            Log.warn('Alignment: no subst matrix');
 
             return function( i, j ){
 
@@ -225,7 +225,7 @@ NGL.Alignment.prototype = {
 
     calc: function(){
 
-        NGL.time( "NGL.Alignment.calc" );
+        Log.time( "Alignment.calc" );
 
         this.initMatrices();
 
@@ -275,15 +275,15 @@ NGL.Alignment.prototype = {
 
         }
 
-        NGL.timeEnd( "NGL.Alignment.calc" );
+        Log.timeEnd( "Alignment.calc" );
 
-        // NGL.log(this.S, this.V, this.H);
+        // Log.log(this.S, this.V, this.H);
 
     },
 
     trace: function(){
 
-        // NGL.time( "NGL.Alignment.trace" );
+        // Log.time( "Alignment.trace" );
 
         this.ali1 = '';
         this.ali2 = '';
@@ -305,8 +305,8 @@ NGL.Alignment.prototype = {
             this.score = this.H[i][j];
         }
 
-        // NGL.log("NGL.Alignment: SCORE", this.score);
-        // NGL.log("NGL.Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+        // Log.log("Alignment: SCORE", this.score);
+        // Log.log("Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
 
         while( i > 0 && j > 0 ){
 
@@ -323,7 +323,7 @@ NGL.Alignment.prototype = {
                 }else if( this.S[i][j]==this.H[i][j] ){
                     mat = "H";
                 }else{
-                    NGL.error('NGL.Alignment: S');
+                    Log.error('Alignment: S');
                     --i;
                     --j;
                 }
@@ -341,7 +341,7 @@ NGL.Alignment.prototype = {
                     --i;
                     mat = "S";
                 }else{
-                    NGL.error('NGL.Alignment: V');
+                    Log.error('Alignment: V');
                     --i;
                 }
 
@@ -358,13 +358,13 @@ NGL.Alignment.prototype = {
                     --j;
                     mat = "S";
                 }else{
-                    NGL.error('NGL.Alignment: H');
+                    Log.error('Alignment: H');
                     --j;
                 }
 
             }else{
 
-                NGL.error('NGL.Alignment: no matrix');
+                Log.error('Alignment: no matrix');
 
             }
 
@@ -386,10 +386,13 @@ NGL.Alignment.prototype = {
 
         }
 
-        // NGL.timeEnd( "NGL.Alignment.trace" );
+        // Log.timeEnd( "Alignment.trace" );
 
-        // NGL.log([this.ali1, this.ali2]);
+        // Log.log([this.ali1, this.ali2]);
 
     }
 
 };
+
+
+export default Alignment;

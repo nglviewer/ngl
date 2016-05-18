@@ -6,7 +6,7 @@
 
 import { Debug, Log } from "../globals.js";
 import StructureParser from "./structure-parser.js";
-import { HelixTypes } from "../structure/structure-constants.js";
+import { HelixTypes } from "./pdb-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 import Selection from "../selection.js";
