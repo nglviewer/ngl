@@ -2685,11 +2685,11 @@ NGL.CifParser.prototype = Object.assign( Object.create(
             gen.assembly_id.forEach( function( id, i ){
 
                 var md = {};
-                var oe = gen.oper_expression[ i ];
+                var oe = gen.oper_expression[ i ].replace( "'", "" );
 
-                if( oe.indexOf( ")(" ) !== -1 ){
+                if( oe.indexOf( ")(" ) !== -1 || oe.indexOf( "(" ) > 0 ){
 
-                    oe = oe.split( ")(" );
+                    oe = oe.split( "(" );
 
                     var md1 = getMatrixDict( oe[ 0 ] );
                     var md2 = getMatrixDict( oe[ 1 ] );
