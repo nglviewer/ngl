@@ -30,13 +30,13 @@ import JsonParser from "../parser/json-parser.js";
 import XmlParser from "../parser/xml-parser.js";
 
 
-ParserLoader = function( src, params ){
+function ParserLoader( src, params ){
 
     Loader.call( this, src, params );
 
     this.useWorker = this.params.useWorker === undefined ? false : this.params.useWorker;
 
-};
+}
 
 ParserLoader.prototype = Object.assign( Object.create(
 

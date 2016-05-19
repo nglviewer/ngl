@@ -11,7 +11,7 @@ import Selection from "../selection.js";
 function Assembly( name ){
 
     this.name = name || "";
-    this.partList = []
+    this.partList = [];
 
 }
 
@@ -79,7 +79,7 @@ Assembly.prototype = {
         };
 
         this.partList.forEach( function( part, i ){
-            output.partList[ i ] = part.toJSON()
+            output.partList[ i ] = part.toJSON();
         } );
 
         return output;
@@ -107,7 +107,7 @@ function AssemblyPart( matrixList, chainList ){
     this.matrixList = matrixList || [];
     this.chainList = chainList || [];
 
-};
+}
 
 AssemblyPart.prototype = {
 

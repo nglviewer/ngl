@@ -4,9 +4,9 @@
  */
 
 
-import { Debug, Log, fromJSON } from "../globals.js";
-import { WorkerRegistry } from "../globals.js";
-import Worker from "../worker.js";
+import { Debug, Log, WorkerRegistry } from "../globals.js";
+import { fromJSON } from "../utils.js";
+import Worker from "../worker/worker.js";
 import Structure from "../structure/structure.js";
 import StructureView from "../structure/structure-view.js";
 import EDTSurface from "./edt-surface.js";
@@ -63,12 +63,12 @@ MolecularSurface.prototype = {
         );
         var surface = vol.getSurface( 1, p.smooth );
 
-        surface.info[ "type" ] = p.type;
-        surface.info[ "probeRadius" ] = p.probeRadius;
-        surface.info[ "scaleFactor" ] = p.scaleFactor;
-        surface.info[ "smooth" ] = p.smooth;
-        surface.info[ "lowRes" ] = p.lowRes;
-        surface.info[ "cutoff" ] = p.cutoff;
+        surface.info.type = p.type;
+        surface.info.probeRadius = p.probeRadius;
+        surface.info.scaleFactor = p.scaleFactor;
+        surface.info.smooth = p.smooth;
+        surface.info.lowRes = p.lowRes;
+        surface.info.cutoff = p.cutoff;
 
         vol.dispose();
 
@@ -82,7 +82,7 @@ MolecularSurface.prototype = {
 
         if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
-            var structure = undefined;
+            var structure;
 
             if( this.worker === undefined ){
 

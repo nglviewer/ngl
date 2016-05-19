@@ -8,11 +8,11 @@ import Loader from "./loader.js";
 import Script from "../script.js";
 
 
-ScriptLoader = function( src, params ){
+function ScriptLoader( src, params ){
 
     Loader.call( this, src, params );
 
-};
+}
 
 ScriptLoader.prototype = Object.assign( Object.create(
 

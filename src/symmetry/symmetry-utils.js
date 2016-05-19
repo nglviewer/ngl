@@ -114,7 +114,7 @@ function getSymmetryOperations( spacegroup ){
 
     return matrixDict;
 
-};
+}
 
 
 export {

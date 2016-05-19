@@ -91,9 +91,9 @@ Polymer.prototype = {
 
         if( this.isCyclic ){
             if( index === -1 ){
-                index = this.residueCount - 1
+                index = this.residueCount - 1;
             }else if( index === this.residueCount ){
-                index = 0
+                index = 0;
             }
         }else{
             if( index === -1 && !this.isPrevConnected ) index += 1;
@@ -143,16 +143,17 @@ Polymer.prototype = {
 
     eachAtomN: function( n, callback, type ){
 
+        var i;
         var m = this.residueCount;
 
         var array = new Array( n );
-        for( var i = 0; i < n; ++i ){
+        for( i = 0; i < n; ++i ){
             array[ i ] = this.structure.getAtomProxy( this.getAtomIndexByType( i, type ) );
         }
         callback.apply( this, array );
 
         for( var j = n; j < m; ++j ){
-            for( var i = 1; i < n; ++i ){
+            for( i = 1; i < n; ++i ){
                 array[ i - 1 ].index = array[ i ].index;
             }
             array[ n - 1 ].index = this.getAtomIndexByType( j, type );
@@ -215,8 +216,8 @@ Polymer.prototype = {
             array[ i ] = this.structure.getAtomProxy();
         }
 
-        var as1 = this.structure.atomSetCache[ "__direction1" ];
-        var as2 = this.structure.atomSetCache[ "__direction2" ];
+        var as1 = this.structure.atomSetCache.__direction1;
+        var as2 = this.structure.atomSetCache.__direction2;
         if( as1 === undefined || as2 === undefined ){
             Log.error( "no precomputed atomSet for direction1 or direction2" );
             return;

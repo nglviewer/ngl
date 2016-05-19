@@ -64,9 +64,9 @@ var PickingControls = function( viewer, stage ){
         var gid = pickingData.gid;
         var instance = pickingData.instance;
 
-        var pickedAtom = undefined;
-        var pickedBond = undefined;
-        var pickedVolume = undefined;
+        var pickedAtom;
+        var pickedBond;
+        var pickedVolume;
 
         var picked = GidPool.getByGid( gid );
 

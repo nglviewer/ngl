@@ -30,7 +30,7 @@ function StructureParser( streamer, params ){
     this.structure = new Structure( this.name, this.path );
     this.structureBuilder = new StructureBuilder( this.structure );
 
-};
+}
 
 StructureParser.prototype = Object.assign( Object.create(
 

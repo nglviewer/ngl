@@ -128,15 +128,19 @@ TiledRenderer.prototype = {
         var n = this.n;
         var renderTile = this.renderTile.bind( this );
         var finalize = this.finalize.bind( this );
+        var count = 0;
+
+        function fn(){
+            if( count === n ){
+                finalize();
+            }else{
+                renderTile( count );
+            }
+            count += 1;
+        }
 
         for( var i = 0; i <= n; ++i ){
-            setTimeout( function( i ){
-                if( i === n ){
-                    finalize();
-                }else{
-                    renderTile( i );
-                }
-            }, 0, i );
+            setTimeout( fn, 0, i );
         }
 
     },

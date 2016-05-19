@@ -144,7 +144,7 @@ Parser.prototype = {
             name: this.name,
             path: this.path,
 
-        }
+        };
 
         if( typeof this[ this.__objName ].toJSON === "function" ){
 

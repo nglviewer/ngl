@@ -118,7 +118,7 @@ var pointVectorIntersection = function(){
 
         return pointI;
 
-    }
+    };
 
 }();
 

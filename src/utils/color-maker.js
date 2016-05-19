@@ -90,7 +90,7 @@ var DefaultResidueColor = 0xFF00FF;
 // from Jmol http://jmol.sourceforge.net/jscolors/ (shapely)
 var StructureColors = {
     "alphaHelix": 0xFF0080,
-    "3_10Helix": 0xA00080,
+    "threeTenHelix": 0xA00080,
     "piHelix": 0x600080,
     "betaStrand": 0xFFC800,
     "betaTurn": 0x6080FF,
@@ -280,7 +280,7 @@ ColorMakerRegistry.prototype = {
 
             constructor.call( this, params );
 
-        }
+        };
 
         _ColorMaker.prototype = ColorMaker.prototype;
 
@@ -326,7 +326,7 @@ ColorMakerRegistry.prototype = {
 
     }
 
-}
+};
 
 
 function ColorMaker( params ){
@@ -700,19 +700,19 @@ function SstrucColorMaker( params ){
         var sstruc = ap.sstruc;
 
         if( sstruc === "h" ){
-            return StructureColors[ "alphaHelix" ];
+            return StructureColors.alphaHelix;
         }else if( sstruc === "g" ){
-            return StructureColors[ "3_10Helix" ];
+            return StructureColors.threeTenHelix;
         }else if( sstruc === "i" ){
-            return StructureColors[ "piHelix" ];
+            return StructureColors.piHelix;
         }else if( sstruc === "e" || sstruc === "b" ){
-            return StructureColors[ "betaStrand" ];
+            return StructureColors.betaStrand;
         }else{
             rp.index = ap.residueIndex;
             if( rp.isNucleic() ){
-                return StructureColors[ "dna" ];
+                return StructureColors.dna;
             }else if( rp.isProtein() || sstruc === "s" || sstruc === "t" || sstruc === "l" ){
-                return StructureColors[ "coil" ];
+                return StructureColors.coil;
             }else{
                 return DefaultStructureColor;
             }
@@ -733,7 +733,7 @@ function ElementColorMaker( params ){
 
     var colorValue = this.value;
     if( params.value === undefined ){
-        colorValue = ElementColors[ "C" ];
+        colorValue = ElementColors.C;
     }
 
     this.atomColor = function( a ){
@@ -848,10 +848,11 @@ function HydrophobicityColorMaker( params ){
         this.scale = "RdYlGn";
     }
 
+    var name;
     var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
 
     var resHF = {};
-    for( var name in ResidueHydrophobicity ){
+    for( name in ResidueHydrophobicity ){
         resHF[ name ] = ResidueHydrophobicity[ name ][ idx ];
     }
 
@@ -861,7 +862,7 @@ function HydrophobicityColorMaker( params ){
         var min = Infinity;
         var max = -Infinity;
 
-        for( var name in resHF ){
+        for( name in resHF ){
 
             val = resHF[ name ];
             min = Math.min( min, val );

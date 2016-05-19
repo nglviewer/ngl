@@ -41,34 +41,34 @@ StructureView.prototype = Object.assign( Object.create(
 
         Object.defineProperties( this, {
             atomSetDict: {
-                get: function(){ return this.structure.atomSetDict }
+                get: function(){ return this.structure.atomSetDict; }
             },
             bondStore: {
-                get: function(){ return this.structure.bondStore }
+                get: function(){ return this.structure.bondStore; }
             },
             backboneBondStore: {
-                get: function(){ return this.structure.backboneBondStore }
+                get: function(){ return this.structure.backboneBondStore; }
             },
             rungBondStore: {
-                get: function(){ return this.structure.rungBondStore }
+                get: function(){ return this.structure.rungBondStore; }
             },
             atomStore: {
-                get: function(){ return this.structure.atomStore }
+                get: function(){ return this.structure.atomStore; }
             },
             residueStore: {
-                get: function(){ return this.structure.residueStore }
+                get: function(){ return this.structure.residueStore; }
             },
             chainStore: {
-                get: function(){ return this.structure.chainStore }
+                get: function(){ return this.structure.chainStore; }
             },
             modelStore: {
-                get: function(){ return this.structure.modelStore }
+                get: function(){ return this.structure.modelStore; }
             },
             atomMap: {
-                get: function(){ return this.structure.atomMap }
+                get: function(){ return this.structure.atomMap; }
             },
             residueMap: {
-                get: function(){ return this.structure.residueMap }
+                get: function(){ return this.structure.residueMap; }
             }
         } );
 
@@ -175,7 +175,7 @@ StructureView.prototype = Object.assign( Object.create(
         };
 
         for( var name in this.atomSetCache ){
-            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
+            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON();
         }
 
         return output;

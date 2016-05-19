@@ -1,0 +1,276 @@
+/**
+ * @file Structure Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+
+import { ExtensionFragDepth } from "../globals.js";
+import Representation from "./representation.js";
+import Selection from "../selection.js";
+import RadiusFactory from "../utils/radius-factory.js";
+
+
+function StructureRepresentation( structure, viewer, params ){
+
+    var p = params || {};
+
+    this.dataList = [];
+
+    this.structure = structure;
+    this.selection = new Selection( p.sele );
+    this.structureView = this.structure.getView( this.selection );
+
+    Representation.call( this, structure, viewer, p );
+
+    if( structure.biomolDict ){
+        var biomolOptions = {
+            "default": "default",
+            "": ( structure.unitcell ? "AU" : "FULL" )
+        };
+        Object.keys( structure.biomolDict ).forEach( function( k ){
+            biomolOptions[ k ] = k;
+        } );
+        this.parameters.assembly = {
+            type: "select",
+            options: biomolOptions,
+            rebuild: true
+        };
+    }else{
+        this.parameters.assembly = null;
+    }
+
+    // must come after structureView to ensure selection change signals
+    // have already updated the structureView
+    this.selection.signals.stringChanged.add( function(){
+        this.build();
+    }.bind( this ) );
+
+    this.build();
+
+}
+
+StructureRepresentation.prototype = Object.assign( Object.create(
+
+    Representation.prototype ), {
+
+    constructor: StructureRepresentation,
+
+    type: "structure",
+
+    parameters: Object.assign( {
+
+        radiusType: {
+            type: "select", options: RadiusFactory.types
+        },
+        radius: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        scale: {
+            type: "number", precision: 3, max: 10.0, min: 0.001
+        },
+        assembly: null
+
+    }, Representation.prototype.parameters ),
+
+    defaultScale: {
+        "vdw": 1.0,
+        "covalent": 1.0,
+        "bfactor": 0.01,
+        "sstruc": 1.0
+    },
+
+    defaultSize: 1.0,
+
+    init: function( params ){
+
+        var p = params || {};
+        p.colorScheme = p.colorScheme || "element";
+
+        this.radius = p.radius || "vdw";
+        this.scale = p.scale || 1.0;
+        this.assembly = p.assembly === undefined ? "default" : p.assembly;
+        this.defaultAssembly = p.defaultAssembly || "";
+
+        Representation.prototype.init.call( this, p );
+
+    },
+
+    create: function(){
+
+        if( this.structureView.atomCount === 0 ) return;
+
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
+        var assembly = this.structure.biomolDict[ name ];
+
+        if( assembly ){
+            assembly.partList.forEach( function( part, i ){
+                var sview = part.getView( this.structureView );
+                if( sview.atomCount === 0 ) return;
+                var data = this.createData( sview, i );
+                if( data ){
+                    data.sview = sview;
+                    data.instanceList = part.getInstanceList();
+                    this.dataList.push( data );
+                }
+            }, this );
+        }else{
+            var data = this.createData( this.structureView, 0 );
+            if( data ){
+                data.sview = this.structureView;
+                this.dataList.push( data );
+            }
+        }
+
+    },
+
+    createData: function( sview ){
+
+        console.error( "createData not implemented" );
+
+    },
+
+    update: function( what ){
+
+        this.dataList.forEach( function( data ){
+            if( data.bufferList.length > 0 ){
+                this.updateData( what, data );
+            }
+        }, this );
+
+    },
+
+    updateData: function( what, data ){
+
+        console.error( "updateData not implemented" );
+
+    },
+
+    getColorParams: function(){
+
+        var p = Representation.prototype.getColorParams.call( this );
+        p.structure = this.structure;
+
+        return p;
+
+    },
+
+    getAtomParams: function( what, params ){
+
+        return Object.assign( {
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": this.scale }
+        }, params );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        return Object.assign( {
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": this.scale }
+        }, params );
+
+    },
+
+    setSelection: function( string, silent ){
+
+        this.selection.setString( string, silent );
+
+        return this;
+
+    },
+
+    setParameters: function( params, what, rebuild ){
+
+        what = what || {};
+
+        if( params && params.radiusType !== undefined ){
+            if( params.radiusType === "size" ){
+                this.radius = this.defaultSize;
+            }else{
+                this.radius = params.radiusType;
+            }
+            what.radius = true;
+            if( !ExtensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+        }
+
+        if( params && params.radius !== undefined ){
+            what.radius = true;
+            if( !ExtensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+        }
+
+        if( params && params.scale !== undefined ){
+            what.radius = true;
+            if( !ExtensionFragDepth || this.disableImpostor ){
+                rebuild = true;
+            }
+        }
+
+        Representation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
+
+    },
+
+    getParameters: function(){
+
+        var params = Object.assign(
+            Representation.prototype.getParameters.call( this ),
+            {
+                sele: this.selection ? this.selection.string : undefined,
+                defaultAssembly: this.defaultAssembly
+            }
+        );
+
+        return params;
+
+    },
+
+    attach: function( callback ){
+
+        var viewer = this.viewer;
+        var bufferList = this.bufferList;
+
+        this.dataList.forEach( function( data ){
+            data.bufferList.forEach( function( buffer ){
+                bufferList.push( buffer );
+                viewer.add( buffer, data.instanceList );
+            } );
+        } );
+
+        this.setVisibility( this.visible );
+        callback();
+
+    },
+
+    clear: function(){
+
+        this.dataList.length = 0;
+
+        Representation.prototype.clear.call( this );
+
+    },
+
+    dispose: function(){
+
+        this.structureView.dispose();
+
+        delete this.structure;
+        delete this.structureView;
+
+        Representation.prototype.dispose.call( this );
+
+    }
+
+} );
+
+
+export default StructureRepresentation;

@@ -82,13 +82,14 @@ ChainProxy.prototype = {
     eachAtom: function( callback, selection ){
 
         this.eachResidue( function( rp ){
-            rp.eachAtom( callback, selection )
+            rp.eachAtom( callback, selection );
         }, selection );
 
     },
 
     eachResidue: function( callback, selection ){
 
+        var i;
         var count = this.residueCount;
         var offset = this.residueOffset;
         var rp = this.structure._rp;
@@ -97,20 +98,20 @@ ChainProxy.prototype = {
         if( selection && selection.test ){
             var residueOnlyTest = selection.residueOnlyTest;
             if( residueOnlyTest ){
-                for( var i = offset; i < end; ++i ){
+                for( i = offset; i < end; ++i ){
                     rp.index = i;
                     if( residueOnlyTest( rp ) ){
                         callback( rp, selection );
                     }
                 }
             }else{
-                for( var i = offset; i < end; ++i ){
+                for( i = offset; i < end; ++i ){
                     rp.index = i;
                     callback( rp, selection );
                 }
             }
         }else{
-            for( var i = offset; i < end; ++i ){
+            for( i = offset; i < end; ++i ){
                 rp.index = i;
                 callback( rp );
             }
@@ -120,19 +121,20 @@ ChainProxy.prototype = {
 
     eachResidueN: function( n, callback ){
 
+        var i;
         var count = this.residueCount;
         var offset = this.residueOffset;
         var end = offset + count;
         if( count < n ) return;
         var array = new Array( n );
 
-        for( var i = 0; i < n; ++i ){
+        for( i = 0; i < n; ++i ){
             array[ i ] = this.structure.getResidueProxy( offset + i );
         }
         callback.apply( this, array );
 
         for( var j = offset + n; j < end; ++j ){
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
                 array[ i ].index += 1;
             }
             callback.apply( this, array );

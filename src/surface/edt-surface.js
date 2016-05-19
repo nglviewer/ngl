@@ -973,11 +973,12 @@ function EDTSurface( structure ){
 
     function marchingcubeinit( stype ){
 
+        var i;
         var n = vpBits.length;
 
         if( stype === "vws" ) {
 
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
                 vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
@@ -986,7 +987,7 @@ function EDTSurface( structure ){
 
         }else if( stype === "ms" ){  // ses without vdw => ms
 
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISDONE;
                 if( vpBits[ i ] & ISBOUND ){
@@ -999,7 +1000,7 @@ function EDTSurface( structure ){
 
         }else if( stype === "ses" ){
 
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
 
                 if( ( vpBits[ i ] & ISBOUND ) && ( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] &= ~ISBOUND;
@@ -1012,7 +1013,7 @@ function EDTSurface( structure ){
 
         }else if( stype === "sas" ){
 
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
                 vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
@@ -1021,7 +1022,7 @@ function EDTSurface( structure ){
 
         }
 
-    };
+    }
 
 }
 

@@ -72,7 +72,7 @@ ModelProxy.prototype = {
     eachAtom: function( callback, selection ){
 
         this.eachChain( function( cp ){
-            cp.eachAtom( callback, selection )
+            cp.eachAtom( callback, selection );
         }, selection );
 
     },
@@ -151,6 +151,7 @@ ModelProxy.prototype = {
 
     eachChain: function( callback, selection ){
 
+        var i;
         var count = this.chainCount;
         var offset = this.chainOffset;
         var cp = this.structure._cp;
@@ -159,20 +160,20 @@ ModelProxy.prototype = {
         if( selection && selection.test ){
             var chainOnlyTest = selection.chainOnlyTest;
             if( chainOnlyTest ){
-                for( var i = offset; i < end; ++i ){
+                for( i = offset; i < end; ++i ){
                     cp.index = i;
                     if( chainOnlyTest( cp ) ){
                         callback( cp, selection );
                     }
                 }
             }else{
-                for( var i = offset; i < end; ++i ){
+                for( i = offset; i < end; ++i ){
                     cp.index = i;
                     callback( cp, selection );
                 }
             }
         }else{
-            for( var i = offset; i < end; ++i ){
+            for( i = offset; i < end; ++i ){
                 cp.index = i;
                 callback( cp );
             }

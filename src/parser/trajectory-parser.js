@@ -16,7 +16,7 @@ function TrajectoryParser( streamer, params ){
 
     this.frames = new Frames( this.name, this.path );
 
-};
+}
 
 TrajectoryParser.prototype = Object.assign( Object.create(
 

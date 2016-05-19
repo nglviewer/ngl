@@ -190,9 +190,9 @@ MrcParser.prototype = Object.assign( Object.create(
         var basisZ = [
             h.zlen * Math.cos( Math.PI / 180.0 * h.beta ),
             h.zlen * (
-                    Math.cos( Math.PI / 180.0 * h.alpha )
-                    - Math.cos( Math.PI / 180.0 * h.gamma )
-                    * Math.cos( Math.PI / 180.0 * h.beta )
+                    Math.cos( Math.PI / 180.0 * h.alpha ) -
+                    Math.cos( Math.PI / 180.0 * h.gamma ) *
+                    Math.cos( Math.PI / 180.0 * h.beta )
                 ) / Math.sin( Math.PI / 180.0 * h.gamma ),
             0
         ];

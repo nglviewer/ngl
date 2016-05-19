@@ -15,9 +15,9 @@ var commonjs = require('rollup-plugin-commonjs');
 var string = require('rollup-plugin-string');
 // var nodeResolve = require('rollup-plugin-node-resolve');
 
-gulp.task('foo', function () {
+gulp.task('build-ngl', function () {
   return rollup({
-    entry: 'src/stage/stage.js',
+    entry: 'src/ngl.js',
     plugins: [
       commonjs(),
       string({
@@ -27,13 +27,11 @@ gulp.task('foo', function () {
   }).then(function (bundle) {
     return bundle.write({
       format: 'umd',
-      moduleName: 'stage',
-      dest: 'dist/js/stage.js'
+      moduleName: 'NGL',
+      dest: 'build/js/ngl.js'
     });
   });
 });
-
-
 
 gulp.task('doc', function() {
   var config = {
@@ -62,7 +60,7 @@ gulp.task('clean', function() {
 });
 
 gulp.task('lint', function() {
-  return gulp.src('./src/*.js')
+  return gulp.src('./src/**/*.js')
     .pipe(jshint({esversion: 6}))
     .pipe(jshint.reporter('default'));
 });
@@ -72,63 +70,20 @@ gulp.task('test', ['build'], function() {
     .pipe(qunit());
 });
 
-gulp.task('build-msgpack-decode', function(){
-  return gulp.src(['./src/msgpack-decode.js'], {read: false})
-    .pipe(rollup({
-      format: 'umd',
-      moduleName: 'decodeMsgpack'
-    }))
-    .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-mmtf-utils', function(){
-  return gulp.src('./src/mmtf-utils.js', {read: false})
-    .pipe(rollup({
-      format: 'umd',
-      moduleName: 'MmtfUtils'
-    }))
-    .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-mmtf-decode', function(){
-  return gulp.src(['./src/mmtf-decode.js'], {read: false})
-    .pipe(rollup({
-      format: 'umd',
-      moduleName: 'decodeMmtf'
-    }))
-    .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-mmtf-traverse', function(){
-  return gulp.src('./src/mmtf-traverse.js', {read: false})
-    .pipe(rollup({
-      format: 'umd',
-      moduleName: 'traverseMmtf'
-    }))
-    .pipe(gulp.dest('build'));
-});
-
-gulp.task('build-mmtf', function(){
-  return gulp.src('./src/mmtf.js', {read: false})
-    .pipe(rollup({
-      format: 'umd',
-      moduleName: 'MMTF'
-    }))
-    .pipe(gulp.dest('build'));
-});
-
 gulp.task('concat', function() {
   return gulp.src(['./src/', './lib/file1.js', './lib/file2.js'])
     .pipe(concat('all.js'))
     .pipe(gulp.dest('./build/'));
 });
 
-gulp.task('compress', ['concat'], function(){
+gulp.task('compress', ['build-ngl'], function(){
   return gulp.src(['./build/js/*.js'])
     .pipe(uglify())
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('build', ['build-ngl']);
+
 gulp.task('scripts', ['compress']);
 
-gulp.task('default', ['foo']);
+gulp.task('default', ['compress']);

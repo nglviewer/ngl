@@ -8,7 +8,11 @@ import { Log } from "../globals.js";
 import { getFileInfo, getAbsolutePath } from "../utils.js";
 
 
-var DatasourceRegistry = {
+function DatasourceRegistry(){
+
+}
+
+DatasourceRegistry.prototype = {
 
     sourceDict: {},
 
@@ -46,21 +50,6 @@ var DatasourceRegistry = {
 };
 
 
-function getDataInfo( src ){
-
-    var info = getFileInfo( src );
-    var datasource = DatasourceRegistry.get( info.protocol );
-    var url = datasource.getUrl( info.src );
-    var info2 = getFileInfo( url );
-    if( !info2.ext && datasource.getExt ){
-        info2.ext = datasource.getExt( src );
-    }
-
-    return info2;
-
-}
-
-
 function StaticDatasource( baseUrl ){
 
     baseUrl = baseUrl || "";
@@ -83,7 +72,7 @@ function RcsbDatasource(){
         // valid path are
         // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
         // XXXX defaults to XXXX.cif
-        var info = NGL.getFileInfo( src );
+        var info = getFileInfo( src );
         var file;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
             ( info.compressed === false || info.compressed === "gz" )
@@ -105,7 +94,7 @@ function RcsbDatasource(){
     };
 
     this.getExt = function( src ){
-        var info = NGL.getFileInfo( src );
+        var info = getFileInfo( src );
         if( info.ext === "mmtf" || !info.ext ){
             return "mmtf";
         }
@@ -113,7 +102,7 @@ function RcsbDatasource(){
 
 }
 
-DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
+DatasourceRegistry.prototype.sourceDict.rcsb = new RcsbDatasource();
 
 
 export {

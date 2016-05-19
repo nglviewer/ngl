@@ -15,12 +15,12 @@ function trimCanvas( canvas, r, g, b, a ){
     var ctx = canvas.getContext( '2d' );
     var pixels = ctx.getImageData(0, 0, canvasWidth, canvasHeight ).data;
 
-    var x, y, doBreak;
+    var x, y, doBreak, off;
 
     doBreak = false;
     for( y = 0; y < canvasHeight; y++ ) {
         for( x = 0; x < canvasWidth; x++ ) {
-            var off = ( y * canvasWidth + x ) * 4;
+            off = ( y * canvasWidth + x ) * 4;
             if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
                     pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
                 doBreak = true;
@@ -36,7 +36,7 @@ function trimCanvas( canvas, r, g, b, a ){
     doBreak = false;
     for( x = 0; x < canvasWidth; x++ ) {
         for( y = 0; y < canvasHeight; y++ ) {
-            var off = ( y * canvasWidth + x ) * 4;
+            off = ( y * canvasWidth + x ) * 4;
             if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
                     pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
                 doBreak = true;
@@ -52,7 +52,7 @@ function trimCanvas( canvas, r, g, b, a ){
     doBreak = false;
     for( y = canvasHeight-1; y >= 0; y-- ) {
         for( x = canvasWidth-1; x >= 0; x-- ) {
-            var off = ( y * canvasWidth + x ) * 4;
+            off = ( y * canvasWidth + x ) * 4;
             if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
                     pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
                 doBreak = true;
@@ -68,7 +68,7 @@ function trimCanvas( canvas, r, g, b, a ){
     doBreak = false;
     for( x = canvasWidth-1; x >= 0; x-- ) {
         for( y = canvasHeight-1; y >= 0; y-- ) {
-            var off = ( y * canvasWidth + x ) * 4;
+            off = ( y * canvasWidth + x ) * 4;
             if( pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
                     pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a ){
                 doBreak = true;
@@ -128,16 +128,16 @@ function makeImage( viewer, params ){
                 m.linewidth *= _factor;
             }
             if( m && m.uniforms && m.uniforms.size ){
-                if( m.uniforms.size[ "__seen" ] === undefined ){
+                if( m.uniforms.size.__seen === undefined ){
                     m.uniforms.size.value *= _factor;
-                    m.uniforms.size[ "__seen" ] = true;
+                    m.uniforms.size.__seen = true;
                 }
             }
         } );
         viewer.scene.traverse( function( o ){
             var m = o.material;
             if( m && m.uniforms && m.uniforms.size ){
-                delete m.uniforms.size[ "__seen" ];
+                delete m.uniforms.size.__seen;
             }
         } );
     }

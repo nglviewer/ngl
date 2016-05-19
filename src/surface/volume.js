@@ -4,10 +4,10 @@
  */
 
 
-import { Debug, Log, fromJSON } from "../globals.js";
-import { WorkerPool, WorkerRegistry } from "../globals.js";
+import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
+import { fromJSON } from "../utils.js";
+import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
-import { WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth } from "./surface-utils.js";
 import Surface from "./surface.js";
@@ -19,6 +19,7 @@ WorkerRegistry.add( "surf", function( e, callback ){
 
     if( self.vol === undefined ) self.vol = new Volume();
 
+    var surface;
     var vol = self.vol;
     var d = e.data;
     var p = d.params;
@@ -26,7 +27,7 @@ WorkerRegistry.add( "surf", function( e, callback ){
     if( d.vol ) vol.fromJSON( d.vol );
 
     if( p ){
-        var surface = vol.getSurface(
+        surface = vol.getSurface(
             p.isolevel, p.smooth, p.center, p.size
         );
     }
@@ -237,8 +238,8 @@ Volume.prototype = {
         }
 
         var surface = new Surface( "", "", sd );
-        surface.info[ "isolevel" ] = isolevel;
-        surface.info[ "smooth" ] = smooth;
+        surface.info.isolevel = isolevel;
+        surface.info.smooth = smooth;
 
         return surface;
 
@@ -490,7 +491,7 @@ Volume.prototype = {
     getDataSize: function( size, scale ){
 
         var n = this.dataPosition.length / 3;
-        var array;
+        var i, array;
 
         switch( size ){
 
@@ -502,7 +503,7 @@ Volume.prototype = {
             case "abs-value":
 
                 array = new Float32Array( this.data );
-                for( var i = 0; i < n; ++i ){
+                for( i = 0; i < n; ++i ){
                     array[ i ] = Math.abs( array[ i ] );
                 }
                 break;
@@ -511,7 +512,7 @@ Volume.prototype = {
 
                 array = new Float32Array( this.data );
                 var min = this.getDataMin();
-                for( var i = 0; i < n; ++i ){
+                for( i = 0; i < n; ++i ){
                     array[ i ] -= min;
                 }
                 break;
@@ -530,7 +531,7 @@ Volume.prototype = {
 
         if( scale !== 1.0 ){
 
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
                 array[ i ] *= scale;
             }
 
@@ -682,7 +683,7 @@ Volume.prototype = {
                 max: this.boundingBox.max.toArray()
             }
 
-        }
+        };
 
         if( this.header ){
 

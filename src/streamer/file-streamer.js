@@ -25,11 +25,13 @@ FileStreamer.prototype = Object.assign( Object.create(
 
     _read: function( callback ){
 
+        var reader;
+
         if( typeof importScripts === 'function' ){
 
             // Use FileReaderSync within Worker
 
-            var reader = new FileReaderSync();
+            reader = new FileReaderSync();
             var data;
             if( this.binary || this.compressed ){
                 data = reader.readAsArrayBuffer( this.file );
@@ -43,7 +45,7 @@ FileStreamer.prototype = Object.assign( Object.create(
 
         }else{
 
-            var reader = new FileReader();
+            reader = new FileReader();
 
             //
 

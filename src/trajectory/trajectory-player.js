@@ -168,7 +168,7 @@ TrajectoryPlayer.prototype = {
 
             // snap to the grid implied by this.step division and multiplication
             // thus minimizing cache misses
-            var i = Math.ceil( frame / this.step ) * this.step
+            var i = Math.ceil( frame / this.step ) * this.step;
 
             // wrap when restarting from the limit (i.e. end or start)
             if( this.direction === "forward" && frame >= this.end ){

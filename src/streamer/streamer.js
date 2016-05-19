@@ -130,7 +130,9 @@ Streamer.prototype = {
     },
 
     lineCount: function(){
-        console.warn("lineCount")
+
+        console.warn("lineCount - deprecated");
+
         var data = this.data;
         var n = data.length;
 
@@ -289,9 +291,7 @@ Streamer.prototype = {
             chunkSize: this.chunkSize,
             newline: this.newline,
 
-
-
-        }
+        };
 
         if( this.__srcName ){
             output[ this.__srcName ] = this[ this.__srcName ];

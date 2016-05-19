@@ -29,7 +29,7 @@ function makeTrajectory( trajSrc, structure, sele ){
 
     return traj;
 
-};
+}
 
 
 export {

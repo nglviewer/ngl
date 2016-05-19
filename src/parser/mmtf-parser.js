@@ -34,6 +34,8 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.time( "MmtfParser._parse " + this.name );
 
+        var i, il, j, groupData;
+
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
@@ -46,13 +48,13 @@ MmtfParser.prototype = Object.assign( Object.create(
             numChains = sd.chainsPerModel[ 0 ];
 
             numGroups = 0;
-            for( var i = 0, il = numChains; i < il; ++i ){
+            for( i = 0, il = numChains; i < il; ++i ){
                 numGroups += sd.groupsPerChain[ i ];
             }
 
             numAtoms = 0;
-            for( var i = 0, il = numGroups; i < il; ++i ){
-                var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
+            for( i = 0, il = numGroups; i < il; ++i ){
+                groupData = sd.groupList[ sd.groupTypeList[ i ] ];
                 numAtoms += groupData.atomNameList.length;
             }
 
@@ -78,12 +80,12 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         if( this.asTrajectory ){
 
-            for( var i = 0, il = sd.numModels; i < il; ++i ){
+            for( i = 0, il = sd.numModels; i < il; ++i ){
 
                 var frame = new Float32Array( numAtoms * 3 );
                 var frameAtomOffset = numAtoms * i;
 
-                for( var j = 0; j < numAtoms; ++j ){
+                for( j = 0; j < numAtoms; ++j ){
                     var j3 = j * 3;
                     var offset = j + frameAtomOffset;
                     frame[ j3     ] = sd.xCoordList[ offset ];
@@ -117,11 +119,11 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         // set-up model-chain relations
         var chainOffset = 0;
-        for( var i = 0, il = numModels; i < il; ++i ){
+        for( i = 0, il = numModels; i < il; ++i ){
             var modelChainCount = chainsPerModel[ i ];
             mChainOffset[ i ] = chainOffset;
             mChainCount[ i ] = modelChainCount;
-            for( var j = 0; j < modelChainCount; ++j ){
+            for( j = 0; j < modelChainCount; ++j ){
                 cModelIndex[ j + chainOffset ] = i;
             }
             chainOffset += modelChainCount;
@@ -130,11 +132,11 @@ MmtfParser.prototype = Object.assign( Object.create(
         // set-up chain-residue relations
         var groupsPerChain = sd.groupsPerChain;
         var groupOffset = 0;
-        for( var i = 0, il = numChains; i < il; ++i ){
+        for( i = 0, il = numChains; i < il; ++i ){
             var chainGroupCount = groupsPerChain[ i ];
             cGroupOffset[ i ] = groupOffset;
             cGroupCount[ i ] = chainGroupCount;
-            for( var j = 0; j < chainGroupCount; ++j ){
+            for( j = 0; j < chainGroupCount; ++j ){
                 gChainIndex[ j + groupOffset ] = i;
             }
             groupOffset += chainGroupCount;
@@ -146,18 +148,18 @@ MmtfParser.prototype = Object.assign( Object.create(
         var atomOffset = 0;
         var bondOffset = 0;
 
-        for( var i = 0, il = numGroups; i < il; ++i ){
+        for( i = 0, il = numGroups; i < il; ++i ){
 
-            var groupData = sd.groupList[ sd.groupTypeList[ i ] ];
+            groupData = sd.groupList[ sd.groupTypeList[ i ] ];
             var groupAtomCount = groupData.atomNameList.length;
 
-            var bondAtomList = groupData.bondAtomList;
-            var bondOrderList = groupData.bondOrderList;
+            var groupBondAtomList = groupData.bondAtomList;
+            var groupBondOrderList = groupData.bondOrderList;
 
-            for( var j = 0, jl = bondOrderList.length; j < jl; ++j ){
-                bAtomIndex1[ bondOffset ] = atomOffset + bondAtomList[ j * 2 ];
-                bAtomIndex2[ bondOffset ] = atomOffset + bondAtomList[ j * 2 + 1 ];
-                bBondOrder[ bondOffset ] = bondOrderList[ j ];
+            for( j = 0, jl = bondOrderList.length; j < jl; ++j ){
+                bAtomIndex1[ bondOffset ] = atomOffset + groupBondAtomList[ j * 2 ];
+                bAtomIndex2[ bondOffset ] = atomOffset + groupBondAtomList[ j * 2 + 1 ];
+                bBondOrder[ bondOffset ] = groupBondOrderList[ j ];
                 bondOffset += 1;
             }
 
@@ -166,7 +168,7 @@ MmtfParser.prototype = Object.assign( Object.create(
             gAtomOffset[ i ] = atomOffset;
             gAtomCount[ i ] = groupAtomCount;
 
-            for( var j = 0; j < groupAtomCount; ++j ){
+            for( j = 0; j < groupAtomCount; ++j ){
                 aGroupIndex[ atomOffset ] = i;
                 atomOffset += 1;
             }
@@ -182,7 +184,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 bBondOrder.set( sd.bondOrderList, bondOffset );
             }
 
-            for( var i = 0, il = bondAtomList.length; i < il; i += 2 ){
+            for( i = 0, il = bondAtomList.length; i < il; i += 2 ){
                 var atomIndex1 = bondAtomList[ i ];
                 var atomIndex2 = bondAtomList[ i + 1 ];
                 if( atomIndex1 < numAtoms && atomIndex2 < numAtoms ){
@@ -255,10 +257,10 @@ MmtfParser.prototype = Object.assign( Object.create(
         ];
 
         var groupTypeDict = {};
-        for( var i = 0, il = sd.groupList.length; i < il; ++i ){
+        for( i = 0, il = sd.groupList.length; i < il; ++i ){
             var groupType = sd.groupList[ i ];
             var atomTypeIdList = [];
-            for( var j = 0, jl = groupType.atomNameList.length; j < jl; ++j ){
+            for( j = 0, jl = groupType.atomNameList.length; j < jl; ++j ){
                 var element = groupType.elementList[ j ].toUpperCase();
                 var atomname = groupType.atomNameList[ j ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
@@ -267,11 +269,11 @@ MmtfParser.prototype = Object.assign( Object.create(
             groupTypeDict[ i ] = s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
         }
 
-        for( var i = 0, il = numGroups; i < il; ++i ){
+        for( i = 0, il = numGroups; i < il; ++i ){
             s.residueStore.residueTypeId[ i ] = groupTypeDict[ s.residueStore.residueTypeId[ i ] ];
         }
 
-        for( var i = 0, il = s.atomStore.count; i < il; ++i ){
+        for( i = 0, il = s.atomStore.count; i < il; ++i ){
             var residueIndex = s.atomStore.residueIndex[ i ];
             var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ];
             var resAtomOffset = s.residueStore.atomOffset[ residueIndex ];
@@ -280,7 +282,7 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         if( sd.secStructList ){
             var secStructLength = sd.secStructList.length;
-            for( var i = 0, il = s.residueStore.count; i < il; ++i ){
+            for( i = 0, il = s.residueStore.count; i < il; ++i ){
                 // with ( i % secStructLength ) secStruct entries are reused
                 var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
                 if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;

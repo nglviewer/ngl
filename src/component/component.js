@@ -4,16 +4,9 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-
-import StructureComponent from "./structure-component.js";
-import SurfaceComponent from "./surface-component.js";
-import ScriptComponent from "./script-component.js";
-import RepresentationComponent from "./representation-component.js";
-
 import { defaults } from "../utils.js";
-
-// import THREE
-// import signals
+import RepresentationComponent from "./representation-component.js";
+import { makeRepresentation } from "../representation/representation-utils.js";
 
 
 var nextComponentId = 0;

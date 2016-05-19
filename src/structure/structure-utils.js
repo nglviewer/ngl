@@ -135,7 +135,7 @@ function assignSecondaryStructure( structure ){
                             residueStore.getInscode( j ) === helix[ 5 ]   // inscodeEnd
                         ){
 
-                            helixRun = false
+                            helixRun = false;
                             i += 1;
 
                             if( i < n ){
@@ -218,7 +218,7 @@ function assignSecondaryStructure( structure ){
                             residueStore.getInscode( j ) === sheet[ 5 ]   // inscodeEnd
                         ){
 
-                            sheetRun = false
+                            sheetRun = false;
                             i += 1;
 
                             if( i < n ){
@@ -321,7 +321,7 @@ var calculateSecondaryStructure = function(){
             }
             residueStore.sstruc[ offset + i ] = sstruc.charCodeAt( 0 );
         }
-    }
+    };
 
     var cgPolymer = function( p ){
 
@@ -350,7 +350,7 @@ var calculateSecondaryStructure = function(){
 
         }
 
-    }
+    };
 
     return function( structure ){
 
@@ -369,7 +369,7 @@ var calculateSecondaryStructure = function(){
             }
 
             // set lone secondary structure assignments to "c"
-            var prevSstruc = undefined;
+            var prevSstruc;
             var sstrucCount = 0;
             p.eachResidue( function( r ){
                 if( r.sstruc === prevSstruc ){
@@ -388,7 +388,7 @@ var calculateSecondaryStructure = function(){
 
         if( Debug ) Log.timeEnd( "calculateSecondaryStructure" );
 
-    }
+    };
 
 }();
 
@@ -426,7 +426,7 @@ function calculateChainnames( structure ){
             chainStore.residueCount[ ci ] = rCount;
             chainStore.count += 1;
             modelStore.chainCount[ mIndex ] += 1;
-        }
+        };
 
         var ap1 = structure.getAtomProxy();
         var ap2 = structure.getAtomProxy();
@@ -563,6 +563,7 @@ function calculateResidueBonds( r ){
         return;
     }
 
+    var i, j;
     var atomIndices1 = [];
     var atomIndices2 = [];
 
@@ -571,29 +572,29 @@ function calculateResidueBonds( r ){
         var kdtree = new Kdtree( r, true );
         var radius = r.isCg() ? 1.2 : 2.3;
 
-        for( var i = offset; i < end1; ++i ){
+        for( i = offset; i < end1; ++i ){
             a1.index = i;
             var maxd = a1.covalent + radius + 0.3;
             var nearestAtoms = kdtree.nearest(
                 a1, Infinity, maxd * maxd
             );
             var m = nearestAtoms.length;
-            for( var j = 0; j < m; ++j ){
+            for( j = 0; j < m; ++j ){
                 a2.index = nearestAtoms[ j ].index;
                 if( a1.index < a2.index ){
                     if( a1.connectedTo( a2 ) ){
                         atomIndices1.push( a1.index - offset );
                         atomIndices2.push( a2.index - offset );
-                    };
+                    }
                 }
             }
         }
 
     }else{
 
-        for( var i = offset; i < end1; ++i ){
+        for( i = offset; i < end1; ++i ){
             a1.index = i;
-            for( var j = i + 1; j <= end1; ++j ){
+            for( j = i + 1; j <= end1; ++j ){
                 a2.index = j;
                 if( a1.connectedTo( a2 ) ){
                     atomIndices1.push( i - offset );
@@ -662,7 +663,7 @@ function calculateBondsWithin( structure, onlyAddRung ){
 
     } );
 
-    structure.atomSetDict[ "rung" ] = rungAtomSet;
+    structure.atomSetDict.rung = rungAtomSet;
 
     if( Debug ) Log.timeEnd( "calculateBondsWithin" );
 
@@ -715,7 +716,7 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
         addBondIfConnected( rp2, rp1 );
     } );
 
-    structure.atomSetDict[ "backbone" ] = backboneAtomSet;
+    structure.atomSetDict.backbone = backboneAtomSet;
 
     if( Debug ) Log.timeEnd( "calculateBondsBetween" );
 
@@ -777,9 +778,10 @@ function buildUnitcellAssembly( structure ){
 
     var unitcellAssembly = new Assembly( "UNITCELL" );
     var unitcellMatrixList = getMatrixList();
-    if( structure.biomolDict[ "NCS" ] ){
+    var ncsMatrixList;
+    if( structure.biomolDict.NCS ){
+        ncsMatrixList = structure.biomolDict.NCS.partList[ 0 ].matrixList;
         var ncsUnitcellMatrixList = [];
-        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
         unitcellMatrixList.forEach( function( sm ){
             ncsMatrixList.forEach( function( nm ){
                 ncsUnitcellMatrixList.push( sm.clone().multiply( nm ) );
@@ -825,9 +827,8 @@ function buildUnitcellAssembly( structure ){
         getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
         getMatrixList( vec.set( -1,  1,  0 ) )   // 465
     );
-    if( structure.biomolDict[ "NCS" ] ){
+    if( structure.biomolDict.NCS ){
         var ncsSupercellMatrixList = [];
-        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
         supercellMatrixList.forEach( function( sm ){
             ncsMatrixList.forEach( function( nm ){
                 ncsSupercellMatrixList.push( sm.clone().multiply( nm ) );
@@ -838,8 +839,8 @@ function buildUnitcellAssembly( structure ){
         supercellAssembly.addPart( supercellMatrixList );
     }
 
-    structure.biomolDict[ "UNITCELL" ] = unitcellAssembly;
-    structure.biomolDict[ "SUPERCELL" ] = supercellAssembly;
+    structure.biomolDict.UNITCELL = unitcellAssembly;
+    structure.biomolDict.SUPERCELL = supercellAssembly;
 
     if( Debug ) Log.timeEnd( "buildUnitcellAssembly" );
 

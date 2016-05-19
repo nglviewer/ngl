@@ -190,7 +190,7 @@ GidPool.prototype = {
 
                 }else if( offset <= o.atomStore.count + o.bondStore.count ){
 
-                    offset -= o.atomStore.count
+                    offset -= o.atomStore.count;
                     entity = o.getBondProxy( offset );
 
                 }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){

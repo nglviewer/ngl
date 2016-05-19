@@ -14,7 +14,7 @@ function StructureBuilder( structure ){
     var currentHetero = null;
 
     var previousResname;
-    var previousHetero
+    var previousHetero;
 
     var atomStore = structure.atomStore;
     var residueStore = structure.residueStore;

@@ -433,8 +433,6 @@ function uint8ToLines( u8a, chunkSize, newline ){
 }
 
 
-// Decompress
-
 function decompress( data ){
 
     var decompressedData;
@@ -459,150 +457,6 @@ function decompress( data ){
 }
 
 
-// Counter
-
-var Counter = function(){
-
-    var SIGNALS = signals;
-
-    this.count = 0;
-
-    this.signals = {
-
-        countChanged: new SIGNALS.Signal(),
-
-    }
-
-}
-
-Counter.prototype = {
-
-    clear: function(){
-
-        this.change( -this.count );
-
-    },
-
-    change: function( delta ){
-
-        this.count += delta;
-        this.signals.countChanged.dispatch( delta, this.count );
-
-        if( this.count < 0 ){
-
-            Log.warn( "Counter.count below zero", this.count );
-
-        }
-
-    },
-
-    increment: function(){
-
-        this.change( 1 );
-
-    },
-
-    decrement: function(){
-
-        this.change( -1 );
-
-    },
-
-    listen: function( counter ){
-
-        // incorporate changes of another counter
-
-        this.change( counter.count );
-
-        counter.signals.countChanged.add( function( delta, count ){
-
-            this.change( delta );
-
-        }.bind( this ) );
-
-    },
-
-    onZeroOnce: function( callback, context ){
-
-        if( this.count === 0 ){
-
-            callback.call( context, 0, 0 );
-
-        }else{
-
-            var fn = function(){
-
-                if( this.count === 0 ){
-
-                    this.signals.countChanged.remove( fn, this );
-
-                    callback.apply( context, arguments );
-
-                }
-
-            }
-
-            this.signals.countChanged.add( fn, this );
-
-        }
-
-    },
-
-    dispose: function(){
-
-        this.clear();
-
-    }
-
-};
-
-
-// Queue
-
-function Queue( fn, argList ){
-
-    var queue = [];
-    var pending = false;
-
-    if( argList ){
-        for( var i = 0, il = argList.length; i < il; ++i ){
-            queue.push( argList[ i ] );
-        }
-        next();
-    }
-
-    function run( arg ){
-        fn( arg, next );
-    }
-
-    function next(){
-        var arg = queue.shift();
-        if( arg !== undefined ){
-            pending = true;
-            setTimeout( function(){ run( arg ); } );
-        }else{
-            pending = false;
-        }
-    }
-
-    // API
-
-    this.push = function( arg ){
-        queue.push( arg );
-        if( !pending ) next();
-    }
-
-    this.kill = function( arg ){
-        queue.length = 0;
-    };
-
-    this.length = function(){
-        return queue.length;
-    };
-
-}
-
-
 export {
     GET,
     boolean,
@@ -622,7 +476,5 @@ export {
     uniqueArray,
     uint8ToString,
     uint8ToLines,
-    decompress,
-    Counter,
-    Queue
+    decompress
 };

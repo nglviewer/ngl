@@ -27,8 +27,8 @@
         'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
     ).split(',');
 
-    while( prop = properties.pop() ) if( !con[ prop] ) con[ prop ] = empty;
-    while( method = methods.pop() ) if( !con[ method] ) con[ method ] = dummy;
+    while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
+    while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
 
     // Using `this` for web workers while maintaining compatibility with browser
     // targeted script loaders such as Browserify or Webpack where the only way to
@@ -165,16 +165,17 @@ if (!String.prototype.startsWith) {
         'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
         var defineProperty = (function() {
             // IE 8 only supports `Object.defineProperty` on DOM elements
+            var result;
             try {
                 var object = {};
                 var $defineProperty = Object.defineProperty;
-                var result = $defineProperty(object, object, object) && $defineProperty;
+                result = $defineProperty(object, object, object) && $defineProperty;
             } catch(error) {}
             return result;
         }());
         var toString = {}.toString;
         var startsWith = function(search) {
-            if (this == null) {
+            if (this === null) {
                 throw TypeError();
             }
             var string = String(this);
@@ -325,7 +326,7 @@ if ( self.performance.now === undefined ) {
 
             return Date.now() - start;
 
-        }
+        };
 
     } )();
 
@@ -382,7 +383,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
             }
 
-        }
+        };
 
     }();
 
@@ -402,7 +403,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
             }
 
-        }
+        };
 
     }();
 
@@ -422,7 +423,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
             }
 
-        }
+        };
 
     }();
 
@@ -442,7 +443,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
             }
 
-        }
+        };
 
     }();
 

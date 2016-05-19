@@ -28,12 +28,13 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     var nv = verts.length / 3;
     var nf = faces.length / 3;
+    var bg;
 
     if( inflate ){
 
         // Buffer geometry is only used to calculate normals
 
-        var bg = new THREE.BufferGeometry();
+        bg = new THREE.BufferGeometry();
         bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
         bg.setIndex( new THREE.BufferAttribute( faces, 1 ) );
 
@@ -41,14 +42,15 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     var tps = new Float32Array( nv * 3 );
 
+    var i;
     var ndeg = 20;
     var vertdeg = new Array( ndeg );
 
-    for( var i = 0; i < ndeg; ++i ){
+    for( i = 0; i < ndeg; ++i ){
         vertdeg[ i ] = new Uint32Array( nv );
     }
 
-    for( var i = 0; i < nv; ++i ){
+    for( i = 0; i < nv; ++i ){
         vertdeg[ 0 ][ i ] = 0;
     }
 
@@ -57,7 +59,7 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     // for each face
 
-    for( var i = 0; i < nf; ++i ){
+    for( i = 0; i < nf; ++i ){
 
         var ao = i * 3;
         var bo = i * 3 + 1;
@@ -156,7 +158,7 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
         // for each vertex
 
-        for( var i = 0; i < nv; ++i ){
+        for( i = 0; i < nv; ++i ){
 
             i3 = i * 3;
             vdi = vertdeg[ 0 ][ i ];

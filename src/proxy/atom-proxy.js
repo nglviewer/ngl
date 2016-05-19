@@ -41,7 +41,7 @@ AtomProxy.prototype = {
         return this.residueStore.chainIndex[ this.residueIndex ];
     },
     get residue () {
-        console.warn("residue")
+        console.warn( "residue - might be expensive" );
         return this.structure.getResidueProxy( this.residueIndex, false );
     },
 

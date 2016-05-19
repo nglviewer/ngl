@@ -91,7 +91,7 @@ Unitcell.prototype = {
             cartToFrac: this.cartToFrac.toArray(),
             fracToCart: this.fracToCart.toArray(),
 
-        }
+        };
 
         return output;
 

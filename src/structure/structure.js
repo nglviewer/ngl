@@ -187,7 +187,7 @@ Structure.prototype = {
 
         var n = this.backboneBondStore.count;
         var bs = new TypedFastBitSet( n );
-        var as = this.atomSetCache[ "__backbone" ];
+        var as = this.atomSetCache.__backbone;
 
         if( as ){
 
@@ -219,7 +219,7 @@ Structure.prototype = {
 
         var n = this.rungBondStore.count;
         var bs = new TypedFastBitSet( n );
-        var as = this.atomSetCache[ "__rung" ];
+        var as = this.atomSetCache.__rung;
 
         if( as ){
 
@@ -444,7 +444,7 @@ Structure.prototype = {
 
         if( selection && selection.test ){
             this.eachModel( function( mp ){
-                mp.eachAtom( callback, selection )
+                mp.eachAtom( callback, selection );
             }, selection );
         }else{
             var an = this.atomStore.count;
@@ -459,19 +459,20 @@ Structure.prototype = {
 
     eachResidue: function( callback, selection ){
 
+        var i;
         if( selection && selection.test ){
             var mn = this.modelStore.count;
             var mp = this.getModelProxy();
             if( selection.modelOnlyTest ){
                 var modelOnlyTest = selection.modelOnlyTest;
-                for( var i = 0; i < mn; ++i ){
+                for( i = 0; i < mn; ++i ){
                     mp.index = i;
                     if( modelOnlyTest( mp ) ){
                         mp.eachResidue( callback, selection );
                     }
                 }
             }else{
-                for( var i = 0; i < mn; ++i ){
+                for( i = 0; i < mn; ++i ){
                     mp.index = i;
                     mp.eachResidue( callback, selection );
                 }
@@ -479,7 +480,7 @@ Structure.prototype = {
         }else{
             var rn = this.residueStore.count;
             var rp = this.getResidueProxy();
-            for( var i = 0; i < rn; ++i ){
+            for( i = 0; i < rn; ++i ){
                 rp.index = i;
                 callback( rp );
             }
@@ -489,17 +490,18 @@ Structure.prototype = {
 
     eachResidueN: function( n, callback ){
 
+        var i, j;
         var rn = this.residueStore.count;
         if( rn < n ) return;
         var array = new Array( n );
 
-        for( var i = 0; i < n; ++i ){
+        for( i = 0; i < n; ++i ){
             array[ i ] = this.getResidueProxy( i );
         }
         callback.apply( this, array );
 
-        for( var j = n; j < rn; ++j ){
-            for( var i = 0; i < n; ++i ){
+        for( j = n; j < rn; ++j ){
+            for( i = 0; i < n; ++i ){
                 array[ i ].index += 1;
             }
             callback.apply( this, array );
@@ -548,26 +550,27 @@ Structure.prototype = {
 
     eachModel: function( callback, selection ){
 
+        var i;
         var n = this.modelStore.count;
         var mp = this.getModelProxy();
 
         if( selection && selection.test ){
             var modelOnlyTest = selection.modelOnlyTest;
             if( modelOnlyTest ){
-                for( var i = 0; i < n; ++i ){
+                for( i = 0; i < n; ++i ){
                     mp.index = i;
                     if( modelOnlyTest( mp ) ){
                         callback( mp, selection );
                     }
                 }
             }else{
-                for( var i = 0; i < n; ++i ){
+                for( i = 0; i < n; ++i ){
                     mp.index = i;
                     callback( mp, selection );
                 }
             }
         }else{
-            for( var i = 0; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
                 mp.index = i;
                 callback( mp );
             }
@@ -592,24 +595,24 @@ Structure.prototype = {
         var ap = this.getAtomProxy();
         var atomCount = atomSet.size();
 
-        if( !what || what[ "position" ] ){
+        if( !what || what.position ){
             position = new Float32Array( atomCount * 3 );
-            atomData[ "position" ] = position;
+            atomData.position = position;
         }
-        if( !what || what[ "color" ] ){
+        if( !what || what.color ){
             color = new Float32Array( atomCount * 3 );
-            atomData[ "color" ] = color;
+            atomData.color = color;
             colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
         }
-        if( !what || what[ "pickingColor" ] ){
+        if( !what || what.pickingColor ){
             pickingColor = new Float32Array( atomCount * 3 );
-            atomData[ "pickingColor" ] = pickingColor;
+            atomData.pickingColor = pickingColor;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
             pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
         }
-        if( !what || what[ "radius" ] ){
+        if( !what || what.radius ){
             radius = new Float32Array( atomCount );
-            atomData[ "radius" ] = radius;
+            atomData.radius = radius;
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
 
@@ -652,44 +655,44 @@ Structure.prototype = {
         var ap2 = this.getAtomProxy();
         var bondCount = bondSet.size();
 
-        if( !what || what[ "position" ] ){
+        if( !what || what.position ){
             position1 = new Float32Array( bondCount * 3 );
             position2 = new Float32Array( bondCount * 3 );
-            bondData[ "position1" ] = position1;
-            bondData[ "position2" ] = position2;
+            bondData.position1 = position1;
+            bondData.position2 = position2;
         }
-        if( !what || what[ "color" ] ){
+        if( !what || what.color ){
             color1 = new Float32Array( bondCount * 3 );
             color2 = new Float32Array( bondCount * 3 );
-            bondData[ "color1" ] = color1;
-            bondData[ "color2" ] = color2;
+            bondData.color1 = color1;
+            bondData.color2 = color2;
             colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
         }
-        if( !what || what[ "pickingColor" ] ){
+        if( !what || what.pickingColor ){
             pickingColor1 = new Float32Array( bondCount * 3 );
             pickingColor2 = new Float32Array( bondCount * 3 );
-            bondData[ "pickingColor1" ] = pickingColor1;
-            bondData[ "pickingColor2" ] = pickingColor2;
+            bondData.pickingColor1 = pickingColor1;
+            bondData.pickingColor2 = pickingColor2;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
             pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
         }
-        if( !what || what[ "radius" ] ){
+        if( !what || what.radius ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
-        if( !what || what[ "radius" ] ){
+        if( !what || what.radius ){
             radius1 = new Float32Array( bondCount );
             if( p.radius2 ){
                 radius2 = new Float32Array( bondCount );
-                bondData[ "radius1" ] = radius1;
-                bondData[ "radius2" ] = radius2;
+                bondData.radius1 = radius1;
+                bondData.radius2 = radius2;
             }else{
-                bondData[ "radius" ] = radius1;
+                bondData.radius = radius1;
             }
         }
 
         bondSet.forEach( function( index, i ){
             var i3 = i * 3;
-            bp.index = index
+            bp.index = index;
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
             if( position1 ){
@@ -719,7 +722,7 @@ Structure.prototype = {
     getBackboneAtomData: function( params ){
 
         params = Object.assign( {
-            atomSet: this.atomSetCache[ "__backbone" ],
+            atomSet: this.atomSetCache.__backbone,
         }, params );
 
         return this.getAtomData( params );
@@ -740,7 +743,7 @@ Structure.prototype = {
     getRungAtomData: function( params ){
 
         params = Object.assign( {
-            atomSet: this.atomSetCache[ "__rung" ],
+            atomSet: this.atomSetCache.__rung,
         }, params );
 
         return this.getAtomData( params );
@@ -923,14 +926,15 @@ Structure.prototype = {
 
         };
 
-        for( var name in this.biomolDict ){
-            output.biomolDict[ name ] = this.biomolDict[ name ].toJSON()
+        var name;
+        for( name in this.biomolDict ){
+            output.biomolDict[ name ] = this.biomolDict[ name ].toJSON();
         }
-        for( var name in this.atomSetDict ){
-            output.atomSetDict[ name ] = this.atomSetDict[ name ].toJSON()
+        for( name in this.atomSetDict ){
+            output.atomSetDict[ name ] = this.atomSetDict[ name ].toJSON();
         }
-        for( var name in this.atomSetCache ){
-            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON()
+        for( name in this.atomSetCache ){
+            output.atomSetCache[ name ] = this.atomSetCache[ name ].toJSON();
         }
 
         if( Debug ) Log.timeEnd( "Structure.toJSON" );
@@ -973,19 +977,20 @@ Structure.prototype = {
         this.bondSet.fromJSON( input.bondSet );
         this.atomSet.fromJSON( input.atomSet );
 
+        var name, as;
         this.biomolDict = {};
-        for( var name in input.biomolDict ){
+        for( name in input.biomolDict ){
             var assembly = new Assembly();
             this.biomolDict[ name ] = assembly.fromJSON( input.biomolDict[ name ] );
         }
         this.atomSetDict = {};
-        for( var name in input.atomSetDict ){
-            var as = new TypedFastBitSet();
+        for( name in input.atomSetDict ){
+            as = new TypedFastBitSet();
             this.atomSetDict[ name ] = as.fromJSON( input.atomSetDict[ name ] );
         }
         this.atomSetCache = {};
-        for( var name in input.atomSetCache ){
-            var as = new TypedFastBitSet();
+        for( name in input.atomSetCache ){
+            as = new TypedFastBitSet();
             this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
         }
 
@@ -1012,17 +1017,18 @@ Structure.prototype = {
         transferable.concat( this.chainStore.getTransferable() );
         transferable.concat( this.modelStore.getTransferable() );
 
+        var i, n, name;
         if( this.frames ){
             var frames = this.frames;
-            var n = this.frames.length;
-            for( var i = 0; i < n; ++i ){
+            n = this.frames.length;
+            for( i = 0; i < n; ++i ){
                 transferable.push( frames[ i ].buffer );
             }
         }
         if( this.boxes ){
             var boxes = this.boxes;
-            var n = this.boxes.length;
-            for( var i = 0; i < n; ++i ){
+            n = this.boxes.length;
+            for( i = 0; i < n; ++i ){
                 transferable.push( boxes[ i ].buffer );
             }
         }
@@ -1030,10 +1036,10 @@ Structure.prototype = {
         transferable.concat( this.bondSet.getTransferable() );
         transferable.concat( this.atomSet.getTransferable() );
 
-        for( var name in this.atomSetDict ){
+        for( name in this.atomSetDict ){
             transferable.concat( this.atomSetDict[ name ].getTransferable() );
         }
-        for( var name in this.atomSetCache ){
+        for( name in this.atomSetCache ){
             transferable.concat( this.atomSetCache[ name ].getTransferable() );
         }
 

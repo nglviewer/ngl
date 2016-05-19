@@ -5,10 +5,10 @@
 
 
 import { Debug, Log } from "../globals.js";
-import { Queue } from "../utils.js";
+import Queue from "../utils/queue.js";
 import { circularMean } from "../math/array-utils.js";
 import Selection from "../selection.js";
-import Superposition from "../align/superposition.js"
+import Superposition from "../align/superposition.js";
 
 
 // TODO params handling in constructor and getParameters method
@@ -223,13 +223,13 @@ Trajectory.prototype = {
                    ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
                    v0 * t + p1;
 
-        }
+        };
 
         var lerp = function( a, b, t ) {
 
             return a + ( b - a ) * t;
 
-        }
+        };
 
         return function( i, ip, ipp, ippp, t, type, callback ){
 
@@ -240,12 +240,13 @@ Trajectory.prototype = {
             var cpp = fc[ ipp ];
             var cppp = fc[ ippp ];
 
+            var j;
             var m = c.length;
             var coords = new Float32Array( m );
 
             if( type === "spline" ){
 
-                for( var j = 0; j < m; j += 3 ){
+                for( j = 0; j < m; j += 3 ){
 
                     coords[ j + 0 ] = spline(
                         cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
@@ -261,7 +262,7 @@ Trajectory.prototype = {
 
             }else{
 
-                for( var j = 0; j < m; j += 3 ){
+                for( j = 0; j < m; j += 3 ){
 
                     coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
                     coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
@@ -281,7 +282,7 @@ Trajectory.prototype = {
 
             }
 
-        }
+        };
 
     }(),
 

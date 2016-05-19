@@ -71,6 +71,8 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
         function _parseChunkOfLines( _i, _n, lines ){
 
+            var ls;
+
             for( var i = _i; i < _n; ++i ){
 
                 var line = lines[ i ].trim();
@@ -120,7 +122,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
                     }else if( moleculeLineNo === 1 ){
 
-                        var ls = line.split( reWhitespace );
+                        ls = line.split( reWhitespace );
                         numAtoms = parseInt( ls[ 0 ] );
                         // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
 
@@ -151,7 +153,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
                 }else if( currentRecordType === atomRecordType ){
 
-                    var ls = line.split( reWhitespace );
+                    ls = line.split( reWhitespace );
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -198,7 +200,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
                     if( firstModelOnly && modelIdx > 0 ) continue;
                     if( asTrajectory && modelIdx > 0 ) continue;
 
-                    var ls = line.split( reWhitespace );
+                    ls = line.split( reWhitespace );
 
                     // ls[ 0 ] is bond id
                     ap1.index = parseInt( ls[ 1 ] ) - 1 + modelAtomIdxStart;
@@ -209,9 +211,9 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
                 }
 
-            };
+            }
 
-        };
+        }
 
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
             _parseChunkOfLines( 0, lines.length, lines );

@@ -9,11 +9,11 @@ import { autoLoad } from "./loader-utils.js";
 import Script from "../script.js";
 
 
-PluginLoader = function( src, params ){
+function PluginLoader( src, params ){
 
     Loader.call( this, src, params );
 
-};
+}
 
 PluginLoader.prototype = Object.assign( Object.create(
 

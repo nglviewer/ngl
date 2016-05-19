@@ -139,6 +139,7 @@ ResidueProxy.prototype = {
 
     eachAtom: function( callback, selection ){
 
+        var i;
         var count = this.atomCount;
         var offset = this.atomOffset;
         var ap = this.structure._ap;
@@ -146,12 +147,12 @@ ResidueProxy.prototype = {
 
         if( selection && selection.atomOnlyTest ){
             var atomOnlyTest = selection.atomOnlyTest;
-            for( var i = offset; i < end; ++i ){
+            for( i = offset; i < end; ++i ){
                 ap.index = i;
                 if( atomOnlyTest( ap ) ) callback( ap );
             }
         }else{
-            for( var i = offset; i < end; ++i ){
+            for( i = offset; i < end; ++i ){
                 ap.index = i;
                 callback( ap );
             }
@@ -244,7 +245,9 @@ ResidueProxy.prototype = {
     },
 
     getAtomnameList: function(){
-        console.warn("getAtomnameList")
+
+        console.warn( "getAtomnameList - might be expensive" );
+
         var n = this.atomCount;
         var offset = this.atomOffset;
         var list = new Array( n );

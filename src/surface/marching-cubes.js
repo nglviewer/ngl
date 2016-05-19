@@ -27,6 +27,7 @@ function MarchingCubes2( data, nx, ny, nz, isolevel ){
     var vc3 = 0;  // vertexCount * 3
     var fc3 = 0;  // faceCount * 3
 
+    var i;
     var n = 0;
     var grid = new Float32Array( 8 );
     var edges = new Int32Array( 12 );
@@ -44,9 +45,9 @@ function MarchingCubes2( data, nx, ny, nz, isolevel ){
 
                 var cubeIndex = 0;
 
-                for( var i=0; i<8; ++i ){
+                for( i=0; i<8; ++i ){
 
-                    var v = cubeVerts[ i ]
+                    var v = cubeVerts[ i ];
                     var k = n + v[0] + dims[0] * ( v[1] + dims[1] * v[2] );
                     var s = data[ k ] - isolevel;
 
@@ -63,7 +64,7 @@ function MarchingCubes2( data, nx, ny, nz, isolevel ){
                     continue;
                 }
 
-                for( var i=0; i<12; ++i ){
+                for( i=0; i<12; ++i ){
 
                     if( ( edgeMask & ( 1 << i ) ) === 0 ){
                         continue;
@@ -95,7 +96,7 @@ function MarchingCubes2( data, nx, ny, nz, isolevel ){
 
                 var f = triTable[ cubeIndex ];
 
-                for( var i=0; i<f.length; i += 3 ){
+                for( i=0; i<f.length; i += 3 ){
 
                     faces[ fc3 + 0 ] = edges[ f[ i + 0 ] ];
                     faces[ fc3 + 1 ] = edges[ f[ i + 1 ] ];
@@ -133,7 +134,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var isolevel = 0;
     var noNormals = false;
-    var center = undefined;
+    var center;
     var size = Infinity;
 
     var n = nx * ny * nz;
@@ -202,7 +203,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
         };
 
-    }
+    };
 
     // polygonization
 
@@ -387,7 +388,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntX( q, 0, fx, fy, fz, field0, field1 );
 
-        };
+        }
 
         if ( bits & 2 ) {
 
@@ -397,7 +398,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntY( q1, 1, fx2, fy, fz, field1, field3 );
 
-        };
+        }
 
         if ( bits & 4 ) {
 
@@ -407,7 +408,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntX( qy, 2, fx, fy2, fz, field2, field3 );
 
-        };
+        }
 
         if ( bits & 8 ) {
 
@@ -417,7 +418,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntY( q, 3, fx, fy, fz, field0, field2 );
 
-        };
+        }
 
         // bottom of the cube
 
@@ -429,7 +430,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntX( qz, 4, fx, fy, fz2, field4, field5 );
 
-        };
+        }
 
         if ( bits & 32 ) {
 
@@ -439,7 +440,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntY( q1z, 5, fx2, fy, fz2, field5, field7 );
 
-        };
+        }
 
         if ( bits & 64 ) {
 
@@ -449,7 +450,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntX( qyz, 6, fx, fy2, fz2, field6, field7 );
 
-        };
+        }
 
         if ( bits & 128 ) {
 
@@ -459,7 +460,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntY( qz, 7, fx, fy, fz2, field4, field6 );
 
-        };
+        }
 
         // vertical lines of the cube
 
@@ -471,7 +472,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntZ( q, 8, fx, fy, fz, field0, field4 );
 
-        };
+        }
 
         if ( bits & 512 ) {
 
@@ -481,7 +482,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntZ( q1, 9, fx2, fy, fz, field1, field5 );
 
-        };
+        }
 
         if ( bits & 1024 ) {
 
@@ -491,7 +492,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntZ( q1y, 10, fx2, fy2, fz, field3, field7 );
 
-        };
+        }
 
         if ( bits & 2048 ) {
 
@@ -501,7 +502,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             }
             VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
 
-        };
+        }
 
         cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
 
@@ -529,7 +530,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
-        var q, x, y, z, fx, fy, fz, y_offset, z_offset
+        var q, x, y, z, fx, fy, fz, y_offset, z_offset;
 
         xBeg = xBeg !== undefined ? xBeg : 0;
         yBeg = yBeg !== undefined ? yBeg : 0;

@@ -5,12 +5,18 @@
 
 
 import { getBrowser, GET, boolean, defaults } from "./utils.js";
+import Registry from "./utils/registry.js";
 import _GidPool from "./utils/gid-pool.js";
 import _WorkerRegistry from "./worker/worker-registry.js";
 import { ColorMakerRegistry as _ColorMakerRegistry } from "./utils/color-maker.js";
+import { DatasourceRegistry as _DatasourceRegistry } from "./loader/datasource-utils.js";
 
 
-var Browser = getBowser();
+var Browser = getBrowser();
+
+var SupportsReadPixelsFloat = false;
+
+var ExtensionFragDepth = false;
 
 var Log = {
 	log: Function.prototype.bind.call( console.log, console ),
@@ -33,14 +39,22 @@ var WorkerRegistry = new _WorkerRegistry();
 
 var ColorMakerRegistry = new _ColorMakerRegistry();
 
+var DatasourceRegistry = new _DatasourceRegistry();
+
+var RepresentationRegistry = new Registry();
+
 
 export {
 	Browser,
+	SupportsReadPixelsFloat,
+	ExtensionFragDepth,
 	Log,
 	GidPool,
 	Debug,
 	WebglErrorMessage,
 	MainScriptFilePath,
 	WorkerRegistry,
-	ColorMakerRegistry
+	ColorMakerRegistry,
+	DatasourceRegistry,
+	RepresentationRegistry
 };

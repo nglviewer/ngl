@@ -5,17 +5,19 @@
 
 
 import { Debug, Log } from "../globals.js";
-import { Counter, getFileInfo, deepCopy } from "../utils.js";
+import { getFileInfo, deepCopy } from "../utils.js";
+import Counter from "../utils/counter.js";
 import Viewer from "../viewer/viewer.js";
-import { autoLoad } from "../loader/loader-utils";
 
-import { makeComponent } from "../component/component-utils.js";
 import Component from "../component/component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
+import { makeComponent } from "../component/component-utils.js";
 
 import PickingControls from "./picking-controls.js";
+
+import { autoLoad } from "../loader/loader-utils";
 
 
 function Stage( eid, params ){
@@ -199,8 +201,8 @@ Stage.prototype = {
             var atomCount, instanceCount;
             var structure = object.structure;
 
-            if( structure.biomolDict[ "BU1" ] ){
-                var assembly = structure.biomolDict[ "BU1" ];
+            if( structure.biomolDict.BU1 ){
+                var assembly = structure.biomolDict.BU1;
                 atomCount = assembly.getAtomCount( structure );
                 instanceCount = assembly.getInstanceCount();
                 object.setDefaultAssembly( "BU1" );
@@ -338,7 +340,7 @@ Stage.prototype = {
             component.setStatus( e );
             throw e;
 
-        }
+        };
 
         return autoLoad( path, p ).then( onLoadFn, onErrorFn );
 
@@ -473,7 +475,7 @@ Stage.prototype = {
             this.signals.fullscreenChanged.dispatch( true );
 
             // workaround for Safari
-            setTimeout( function(){ self.handleResize() }, 100 );
+            setTimeout( function(){ self.handleResize(); }, 100 );
 
         }else{
 
@@ -505,7 +507,7 @@ Stage.prototype = {
 
                 this.viewer.centerView( true );
 
-            }
+            };
 
             this.tasks.signals.countChanged.add( centerFn, this );
 

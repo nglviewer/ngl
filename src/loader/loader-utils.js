@@ -4,11 +4,26 @@
  */
 
 
+import { DatasourceRegistry } from "../globals.js";
+import { getFileInfo } from "../utils.js";
 import ParserLoader from "./parser-loader.js";
 import ScriptLoader from "./script-loader.js";
 import PluginLoader from "./plugin-loader.js";
 
-import { getDataInfo } from "./datasource-utils.js";
+
+function getDataInfo( src ){
+
+    var info = getFileInfo( src );
+    var datasource = DatasourceRegistry.get( info.protocol );
+    var url = datasource.getUrl( info.src );
+    var info2 = getFileInfo( url );
+    if( !info2.ext && datasource.getExt ){
+        info2.ext = datasource.getExt( src );
+    }
+
+    return info2;
+
+}
 
 
 var loaderMap = {
@@ -49,7 +64,7 @@ var loaderMap = {
 };
 
 
-autoLoad = function( file, params ){
+function autoLoad( file, params ){
 
     var p = Object.assign( getDataInfo( file ), params );
     var loader = new loaderMap[ p.ext ]( p.src, p );
@@ -60,9 +75,10 @@ autoLoad = function( file, params ){
         return Promise.reject( "autoLoad: ext '" + p.ext + "' unknown" );
     }
 
-};
+}
 
 
 export {
+    getDataInfo,
 	autoLoad
 };

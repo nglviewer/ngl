@@ -58,7 +58,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero ){
     }
     this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
 
-};
+}
 
 ResidueType.prototype = {
 
@@ -269,19 +269,20 @@ ResidueType.prototype = {
     },
 
     getAtomIndexByName: function( atomname ){
+        var i, index;
         var n = this.atomCount;
         var atomMap = this.structure.atomMap;
         var atomTypeIdList = this.atomTypeIdList;
         if( Array.isArray( atomname ) ){
-            for( var i = 0; i < n; ++i ){
-                var index = atomTypeIdList[ i ];
+            for( i = 0; i < n; ++i ){
+                index = atomTypeIdList[ i ];
                 if( atomname.indexOf( atomMap.get( index ).atomname ) !== -1 ){
                     return i;
                 }
             }
         }else{
-            for( var i = 0; i < n; ++i ){
-                var index = atomTypeIdList[ i ];
+            for( i = 0; i < n; ++i ){
+                index = atomTypeIdList[ i ];
                 if( atomname === atomMap.get( index ).atomname ){
                     return i;
                 }

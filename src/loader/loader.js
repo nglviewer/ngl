@@ -8,7 +8,7 @@ import FileStreamer from "../streamer/file-streamer.js";
 import NetworkStreamer from "../streamer/network-streamer.js";
 
 
-Loader = function( src, params ){
+function Loader( src, params ){
 
     var p = Object.assign( {}, params );
 
@@ -45,7 +45,7 @@ Loader = function( src, params ){
         this.streamer.onprogress = p.onprogress;
     }
 
-};
+}
 
 Loader.prototype = {
 

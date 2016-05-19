@@ -148,9 +148,9 @@ SdfParser.prototype = Object.assign( Object.create(
 
                 ++lineNo;
 
-            };
+            }
 
-        };
+        }
 
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
             _parseChunkOfLines( 0, lines.length, lines );

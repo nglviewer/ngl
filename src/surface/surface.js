@@ -81,7 +81,7 @@ Surface.prototype = {
 
         if( geo instanceof THREE.BufferGeometry ){
 
-            var attr = geo.attributes
+            var attr = geo.attributes;
             var an = attr.normal ? attr.normal.array : false;
 
             // assume there are no normals if the first is zero
@@ -112,17 +112,17 @@ Surface.prototype = {
         var p = params || {};
 
         var n = this.size;
-        var array;
+        var i, array, colorMaker;
 
         if( p.scheme === "volume" ){
 
             var v = new THREE.Vector3();
             var pos = this.position;
-            var colorMaker = ColorMakerRegistry.getScheme( p );
+            colorMaker = ColorMakerRegistry.getScheme( p );
 
             array = new Float32Array( n * 3 );
 
-            for( var i = 0, a; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
 
                 var i3 = i * 3;
                 v.set( pos[ i3 ], pos[ i3 + 1 ], pos[ i3 + 2 ] );
@@ -134,11 +134,11 @@ Surface.prototype = {
 
             p.surface = this;  // FIXME should this be p.surface???
             array = new Float32Array( n * 3 );
-            var colorMaker = ColorMakerRegistry.getScheme( p );
+            colorMaker = ColorMakerRegistry.getScheme( p );
             var atomProxy = p.structure.getAtomProxy();
             var atomindex = this.atomindex;
 
-            for( var i = 0, a; i < n; ++i ){
+            for( i = 0; i < n; ++i ){
                 atomProxy.index = atomindex[ i ];
                 colorMaker.atomColorToArray( atomProxy, array, i * 3 );
             }
@@ -262,7 +262,7 @@ Surface.prototype = {
                 max: this.boundingBox.max.toArray()
             }
 
-        }
+        };
 
         return output;
 

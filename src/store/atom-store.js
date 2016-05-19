@@ -11,7 +11,7 @@ function AtomStore( sizeOrObject ){
 
     Store.call( this, sizeOrObject );
 
-};
+}
 
 AtomStore.prototype = Object.assign( Object.create(
 

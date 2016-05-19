@@ -50,7 +50,7 @@ XmlParser.prototype = Object.assign( Object.create(
                 return {
                     declaration: declaration(),
                     root: tag()
-                }
+                };
             }
 
             function declaration(){
@@ -94,7 +94,7 @@ XmlParser.prototype = Object.assign( Object.create(
                 node.content = content();
                 // children
                 var child;
-                while (child = tag()) {
+                while ((child = tag())) {
                     node.children.push(child);
                 }
                 // closing
@@ -111,7 +111,7 @@ XmlParser.prototype = Object.assign( Object.create(
             function attribute(){
                 var m = match(/([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/);
                 if (!m) return;
-                return { name: m[1], value: strip(m[2]) }
+                return { name: m[1], value: strip(m[2]) };
             }
 
             function strip( val ){
@@ -126,11 +126,11 @@ XmlParser.prototype = Object.assign( Object.create(
             }
 
             function eos(){
-                return 0 == xml.length;
+                return 0 === xml.length;
             }
 
             function is( prefix ){
-                return 0 == xml.indexOf(prefix);
+                return 0 === xml.indexOf(prefix);
             }
 
         }

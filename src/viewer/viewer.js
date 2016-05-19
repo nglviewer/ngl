@@ -579,36 +579,36 @@ Viewer.prototype = {
         // Log.time( "Viewer.addBuffer" );
 
         var mesh = buffer.getMesh();
-        mesh.userData[ "buffer" ] = buffer;
+        mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            mesh.userData[ "instance" ] = instance;
+            mesh.userData.instance = instance;
         }
         buffer.group.add( mesh );
 
         var wireframeMesh = buffer.getWireframeMesh();
-        wireframeMesh.userData[ "buffer" ] = buffer;
+        wireframeMesh.userData.buffer = buffer;
         if( instance ){
             // wireframeMesh.applyMatrix( instance.matrix );
             wireframeMesh.matrix.copy( mesh.matrix );
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            wireframeMesh.userData[ "instance" ] = instance;
+            wireframeMesh.userData.instance = instance;
         }
         buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
             var pickingMesh = buffer.getPickingMesh();
-            pickingMesh.userData[ "buffer" ] = buffer;
+            pickingMesh.userData.buffer = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData[ "instance" ] = instance;
+                pickingMesh.userData.instance = instance;
             }
             buffer.pickingGroup.add( pickingMesh );
 
@@ -677,9 +677,9 @@ Viewer.prototype = {
 
             if( node.geometry !== undefined ){
 
-                var matrix = undefined;
-                if( node.userData[ "instance" ] ){
-                    matrix = node.userData[ "instance" ].matrix;
+                var matrix;
+                if( node.userData.instance ){
+                    matrix = node.userData.instance.matrix;
                 }
 
                 updateGeometry( node.geometry, matrix );
@@ -935,7 +935,7 @@ Viewer.prototype = {
             this.camera.position.addVectors( this.controls.target, eye );
             this.camera.lookAt( this.controls.target );
 
-        }
+        };
 
     }(),
 
@@ -957,7 +957,7 @@ Viewer.prototype = {
 
             this.__updateZoom();
 
-        }
+        };
 
     }(),
 
@@ -1219,9 +1219,9 @@ Viewer.prototype = {
         var camera = this.camera;
         var offsetList = JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
 
-        this.compositeUniforms[ "scale" ].value = 1.0 / offsetList.length;
-        this.compositeUniforms[ "tForeground" ].value = this.sampleTarget;
-        this.compositeUniforms[ "tForeground" ].needsUpdate = true;
+        this.compositeUniforms.scale.value = 1.0 / offsetList.length;
+        this.compositeUniforms.tForeground.value = this.sampleTarget;
+        this.compositeUniforms.tForeground.needsUpdate = true;
         this.compositeMaterial.needsUpdate = true;
 
         // this.renderer.setRenderTarget( this.sampleTarget );
@@ -1247,9 +1247,9 @@ Viewer.prototype = {
 
         this.renderer.setRenderTarget( null );
 
-        this.compositeUniforms[ "scale" ].value = 1.0;
-        this.compositeUniforms[ "tForeground" ].value = this.holdTarget;
-        this.compositeUniforms[ "tForeground" ].needsUpdate = true;
+        this.compositeUniforms.scale.value = 1.0;
+        this.compositeUniforms.tForeground.value = this.holdTarget;
+        this.compositeUniforms.tForeground.needsUpdate = true;
         this.compositeMaterial.needsUpdate = true;
 
         this.renderer.clear();
@@ -1361,12 +1361,13 @@ Viewer.prototype = {
 
             } );
 
-        }
+        };
 
     }(),
 
     sortProjectedPosition: function(){
 
+        var i;
         var lastCall = 0;
 
         var vertex = new THREE.Vector3();
@@ -1405,7 +1406,7 @@ Viewer.prototype = {
 
                 var sortArray = sortData.__sortArray;
 
-                for( var i = 0; i < n; ++i ){
+                for( i = 0; i < n; ++i ){
 
                     var i2 = 2 * i;
 
@@ -1437,7 +1438,7 @@ Viewer.prototype = {
                     tmpTab = sortData[ name ];
                     sortData[ name ] = array;
 
-                    for( var i = 0; i < n; ++i ){
+                    for( i = 0; i < n; ++i ){
 
                         index = sortArray[ i * 2 + 1 ];
 
@@ -1458,7 +1459,7 @@ Viewer.prototype = {
 
             // Log.timeEnd( "sort" );
 
-        }
+        };
 
     }(),
 
@@ -1532,7 +1533,7 @@ Viewer.prototype = {
 
             this.signals.orientationChanged.dispatch();
 
-        }
+        };
 
     }(),
 
