@@ -8,15 +8,13 @@ import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
 import Viewer from "../viewer/viewer.js";
+import PickingControls from "./picking-controls.js";
 
 import Component from "../component/component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
 import { makeComponent } from "../component/component-utils.js";
-
-import PickingControls from "./picking-controls.js";
-
 import { autoLoad } from "../loader/loader-utils";
 
 

@@ -4,7 +4,7 @@
  */
 
 
-import { ExtensionFragDepth } from "../globals.js";
+import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import LineBuffer from "../buffer/line-buffer.js";
@@ -85,6 +85,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "line", LineRepresentation );
 
 
 export default LineRepresentation;

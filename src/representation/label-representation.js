@@ -4,7 +4,7 @@
  */
 
 
-import { Browser } from "../globals.js";
+import { Browser, RepresentationRegistry } from "../globals.js";
 import LabelFactory from "../utils/label-factory.js";
 import StructureRepresentation from "./structure-representation.js";
 import TextBuffer from "../buffer/text-buffer.js";
@@ -152,6 +152,9 @@ LabelRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "label", LabelRepresentation );
 
 
 export default LabelRepresentation;

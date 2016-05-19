@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import { polarContacts, polarBackboneContacts } from "../geometry/contact-utils.js";
@@ -170,6 +171,9 @@ ContactRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "contact", ContactRepresentation );
 
 
 export default ContactRepresentation;

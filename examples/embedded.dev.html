@@ -40,7 +40,12 @@
                 stage.viewer.container.addEventListener( "dblclick", function(){
                     stage.toggleFullscreen();
                 } );
-                stage.loadFile( "rcsb://1crn.pdb", { defaultRepresentation: true } );
+                stage.loadFile( "rcsb://1crn.mmtf", {
+                    defaultRepresentation: true
+                } ).then( function( o ){
+                    // o.addRepresentation( "spacefill" );
+                    // o.addRepresentation( "surface", { useWorker: false } );
+                } );
             } );
 
         </script>

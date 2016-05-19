@@ -4,7 +4,7 @@
  */
 
 
-import { ExtensionFragDepth } from "../globals.js";
+import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import LicoriceRepresentation from "./licorice-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -135,6 +135,9 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "hyperball", HyperballRepresentation );
 
 
 export default HyperballRepresentation;

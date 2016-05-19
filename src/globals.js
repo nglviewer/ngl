@@ -15,16 +15,22 @@ import { DatasourceRegistry as _DatasourceRegistry } from "./loader/datasource-u
 var Browser = getBrowser();
 
 var SupportsReadPixelsFloat = false;
+function setSupportsReadPixelsFloat( value ){
+    SupportsReadPixelsFloat = value;
+}
 
 var ExtensionFragDepth = false;
+function setExtensionFragDepth( value ){
+    ExtensionFragDepth = value;
+}
 
 var Log = {
-	log: Function.prototype.bind.call( console.log, console ),
-	info: Function.prototype.bind.call( console.info, console ),
-	warn: Function.prototype.bind.call( console.warn, console ),
-	error: Function.prototype.bind.call( console.error, console ),
-	time: Function.prototype.bind.call( console.time, console ),
-	timeEnd: Function.prototype.bind.call( console.timeEnd, console )
+    log: Function.prototype.bind.call( console.log, console ),
+    info: Function.prototype.bind.call( console.info, console ),
+    warn: Function.prototype.bind.call( console.warn, console ),
+    error: Function.prototype.bind.call( console.error, console ),
+    time: Function.prototype.bind.call( console.time, console ),
+    timeEnd: Function.prototype.bind.call( console.timeEnd, console )
 };
 
 var Debug = boolean( GET( "debug" ) );
@@ -45,16 +51,18 @@ var RepresentationRegistry = new Registry();
 
 
 export {
-	Browser,
-	SupportsReadPixelsFloat,
-	ExtensionFragDepth,
-	Log,
-	GidPool,
-	Debug,
-	WebglErrorMessage,
-	MainScriptFilePath,
-	WorkerRegistry,
-	ColorMakerRegistry,
-	DatasourceRegistry,
-	RepresentationRegistry
+    Browser,
+    SupportsReadPixelsFloat,
+    setSupportsReadPixelsFloat,
+    ExtensionFragDepth,
+    setExtensionFragDepth,
+    Log,
+    GidPool,
+    Debug,
+    WebglErrorMessage,
+    MainScriptFilePath,
+    WorkerRegistry,
+    ColorMakerRegistry,
+    DatasourceRegistry,
+    RepresentationRegistry
 };

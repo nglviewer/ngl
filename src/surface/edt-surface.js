@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import { VdwRadii, ResidueRadii } from "../structure/structure-constants.js";
 import Selection from "../selection.js";
 import Volume from "./volume.js";
 import Grid from "../geometry/grid.js";

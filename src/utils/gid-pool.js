@@ -228,7 +228,7 @@ GidPool.prototype = {
 
             }
 
-        } );
+        }, this );
 
         return entity;
 

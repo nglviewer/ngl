@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, RepresentationRegistry } from "../globals.js";
 import Helixorient from "../geometry/helixorient.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -157,6 +157,9 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "helixorient", HelixorientRepresentation );
 
 
 export default HelixorientRepresentation;

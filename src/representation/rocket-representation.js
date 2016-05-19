@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import StructureRepresentation from "./structure-representation.js";
 import Helixbundle from "../geometry/helixbundle.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
@@ -185,6 +186,9 @@ RocketRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "rocket", RocketRepresentation );
 
 
 export default RocketRepresentation;

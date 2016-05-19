@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import PointBuffer from "../buffer/point-buffer.js";
@@ -117,6 +118,9 @@ PointRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "point", PointRepresentation );
 
 
 export default PointRepresentation;

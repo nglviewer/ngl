@@ -34,7 +34,7 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.time( "MmtfParser._parse " + this.name );
 
-        var i, il, j, groupData;
+        var i, il, j, jl, groupData;
 
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
@@ -156,7 +156,7 @@ MmtfParser.prototype = Object.assign( Object.create(
             var groupBondAtomList = groupData.bondAtomList;
             var groupBondOrderList = groupData.bondOrderList;
 
-            for( j = 0, jl = bondOrderList.length; j < jl; ++j ){
+            for( j = 0, jl = groupBondOrderList.length; j < jl; ++j ){
                 bAtomIndex1[ bondOffset ] = atomOffset + groupBondAtomList[ j * 2 ];
                 bAtomIndex2[ bondOffset ] = atomOffset + groupBondAtomList[ j * 2 + 1 ];
                 bBondOrder[ bondOffset ] = groupBondOrderList[ j ];

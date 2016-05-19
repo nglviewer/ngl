@@ -5,8 +5,8 @@
  */
 
 import { defaults } from "../utils.js";
-import RepresentationComponent from "./representation-component.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
+import RepresentationComponent from "./representation-component.js";
 
 
 var nextComponentId = 0;

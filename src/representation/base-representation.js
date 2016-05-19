@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
@@ -52,6 +53,9 @@ BaseRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "base", BaseRepresentation );
 
 
 export default BaseRepresentation;

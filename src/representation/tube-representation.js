@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import CartoonRepresentation from "./cartoon-representation.js";
 
 
@@ -44,6 +45,9 @@ TubeRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "tube", TubeRepresentation );
 
 
 export default TubeRepresentation;

@@ -4,7 +4,7 @@
  */
 
 
-import { Browser } from "../globals.js";
+import { Browser, RepresentationRegistry } from "../globals.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import Selection from "../selection.js";
@@ -317,6 +317,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "distance", DistanceRepresentation );
 
 
 export default DistanceRepresentation;

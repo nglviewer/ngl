@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
@@ -52,6 +53,9 @@ BackboneRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "backbone", BackboneRepresentation );
 
 
 export default BackboneRepresentation;

@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import Spline from "../geometry/spline.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -155,6 +156,9 @@ TraceRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "trace", TraceRepresentation );
 
 
 export default TraceRepresentation;

@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import StructureRepresentation from "./structure-representation.js";
 import MolecularSurface from "../surface/molecular-surface.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
@@ -289,6 +290,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "surface", MolecularSurfaceRepresentation );
 
 
 export default MolecularSurfaceRepresentation;

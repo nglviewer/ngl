@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import CartoonRepresentation from "./cartoon-representation.js";
 import Helixorient from "../geometry/helixorient.js";
 import Spline from "../geometry/spline.js";
@@ -60,6 +61,9 @@ RopeRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "rope", RopeRepresentation );
 
 
 export default RopeRepresentation;

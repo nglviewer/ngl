@@ -10,6 +10,8 @@
  */
 
 import { RepresentationRegistry } from "./globals.js";
+import Structure from "./structure/structure.js";
+import StructureView from "./structure/structure-view.js";
 import Stage from "./stage/stage.js";
 
 import BackboneRepresentation from "./representation/backbone-representation";
@@ -33,26 +35,6 @@ import TraceRepresentation from "./representation/trace-representation";
 import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
 
-RepresentationRegistry.add( "backbone", BackboneRepresentation );
-RepresentationRegistry.add( "ball+stick", BallAndStickRepresentation );
-RepresentationRegistry.add( "base", BaseRepresentation );
-RepresentationRegistry.add( "cartoon", CartoonRepresentation );
-RepresentationRegistry.add( "contact", ContactRepresentation );
-RepresentationRegistry.add( "distance", DistanceRepresentation );
-RepresentationRegistry.add( "helixorient", HelixorientRepresentation );
-RepresentationRegistry.add( "hyperball", HyperballRepresentation );
-RepresentationRegistry.add( "label", LabelRepresentation );
-RepresentationRegistry.add( "licorice", LicoriceRepresentation );
-RepresentationRegistry.add( "line", LineRepresentation );
-RepresentationRegistry.add( "surface", MolecularSurfaceRepresentation );
-RepresentationRegistry.add( "point", PointRepresentation );
-RepresentationRegistry.add( "ribbon", RibbonRepresentation );
-RepresentationRegistry.add( "rocket", RocketRepresentation );
-RepresentationRegistry.add( "rope", RopeRepresentation );
-RepresentationRegistry.add( "spacefill", SpacefillRepresentation );
-RepresentationRegistry.add( "trace", TraceRepresentation );
-RepresentationRegistry.add( "tube", TubeRepresentation );
-RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
 
 /**
  * Version name

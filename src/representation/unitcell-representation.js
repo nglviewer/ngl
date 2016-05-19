@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -214,6 +215,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
 
 
 export default UnitcellRepresentation;

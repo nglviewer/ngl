@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
@@ -35,6 +36,9 @@ LicoriceRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "licorice", LicoriceRepresentation );
 
 
 export default LicoriceRepresentation;

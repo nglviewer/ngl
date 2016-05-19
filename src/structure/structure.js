@@ -7,7 +7,7 @@
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Selection from "../selection.js";
-import StructureView from "./structure-view.js";
+// import StructureView from "./structure-view.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
@@ -762,12 +762,6 @@ Structure.prototype = {
     },
 
     //
-
-    getView: function( selection ){
-
-        return new StructureView( this, selection );
-
-    },
 
     getBoundingBox: function( selection ){
 

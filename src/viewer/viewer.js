@@ -4,7 +4,11 @@
  */
 
 
-import { Debug, Log, Browser, WebglErrorMessage } from "../globals.js";
+import {
+    Debug, Log, Browser, WebglErrorMessage,
+    ExtensionFragDepth, setExtensionFragDepth,
+    SupportsReadPixelsFloat, setSupportsReadPixelsFloat
+} from "../globals.js";
 import { getShader } from "../shader/shader-utils.js";
 import { makeImage } from "./viewer-utils";
 
@@ -316,10 +320,10 @@ Viewer.prototype = {
         // console.log( gl.getContextAttributes().antialias );
         // console.log( gl.getParameter(gl.SAMPLES) );
 
-        this.extensionFragDepth = this.renderer.extensions.get( "EXT_frag_depth" );
+        setExtensionFragDepth( this.renderer.extensions.get( "EXT_frag_depth" ) );
         this.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
 
-        this.supportsReadPixelsFloat = (
+        setSupportsReadPixelsFloat(
             ( Browser === "Chrome" &&
                 this.renderer.extensions.get( 'OES_texture_float' ) ) ||
             ( this.renderer.extensions.get( 'OES_texture_float' ) &&
@@ -342,7 +346,7 @@ Viewer.prototype = {
                 magFilter: THREE.NearestFilter,
                 stencilBuffer: false,
                 format: THREE.RGBAFormat,
-                type: this.supportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
+                type: SupportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
         this.pickingTarget.texture.generateMipmaps = false;
@@ -1003,14 +1007,14 @@ Viewer.prototype = {
             y *= window.devicePixelRatio;
 
             var gid, object, instance, bondId;
-            var pixelBuffer = this.supportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+            var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             this.render( true );
             this.renderer.readRenderTargetPixels(
                 this.pickingTarget, x, y, 1, 1, pixelBuffer
             );
 
-            if( this.supportsReadPixelsFloat ){
+            if( SupportsReadPixelsFloat ){
                 gid =
                     ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                     ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |

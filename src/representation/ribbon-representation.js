@@ -4,6 +4,7 @@
  */
 
 
+import { RepresentationRegistry } from "../globals.js";
 import Spline from "../geometry/spline.js";
 import StructureRepresentation from "./structure-representation.js";
 import RibbonBuffer from "../buffer/ribbon-buffer.js";
@@ -172,6 +173,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "ribbon", RibbonRepresentation );
 
 
 export default RibbonRepresentation;

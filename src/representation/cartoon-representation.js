@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, RepresentationRegistry } from "../globals.js";
 import Spline from "../geometry/spline.js";
 import StructureRepresentation from "./structure-representation.js";
 import TubeMeshBuffer from "../buffer/tubemesh-buffer.js";
@@ -218,6 +218,9 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
     }
 
 } );
+
+
+RepresentationRegistry.add( "cartoon", CartoonRepresentation );
 
 
 export default CartoonRepresentation;

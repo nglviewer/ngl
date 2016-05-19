@@ -4,8 +4,15 @@
  */
 
 
+import { Debug, Log } from "../globals.js";
 import Structure from "./structure.js";
 import Selection from "../selection.js";
+
+
+// add here to avoid cyclic import dependency
+Structure.prototype.getView = function( selection ){
+    return new StructureView( this, selection );
+};
 
 
 function StructureView( structure, selection ){
