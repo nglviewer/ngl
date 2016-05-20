@@ -6,6 +6,7 @@
 
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
+import Bitset from "../utils/bitset.js";
 import StructureRepresentation from "./structure-representation.js";
 import Selection from "../selection.js";
 import BondStore from "../store/bond-store.js";
@@ -136,7 +137,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             position = position.subarray( 0, n * 3 );
         }
 
-        var bondSet = new TypedFastBitSet( bondStore.count );
+        var bondSet = new Bitset( bondStore.count );
         bondSet.set_all( true );
 
         return {

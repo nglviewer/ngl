@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import Bitset from "../utils/bitset.js";
 
 
 function Polymer( structure, residueIndexStart, residueIndexEnd ){
@@ -224,7 +225,7 @@ Polymer.prototype = {
         }
         var j = 0;
 
-        TypedFastBitSet.forEach( function( index1, index2 ){
+        Bitset.forEach( function( index1, index2 ){
             if( index1 >= offset && index1 < end && index2 >= offset && index2 < end ){
                 for( var i = 1; i < n; ++i ){
                     array[ i - 1 ].index = array[ i ].index;

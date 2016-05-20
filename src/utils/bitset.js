@@ -516,3 +516,8 @@ TypedFastBitSet.prototype.fromJSON = function(input) {
   this.words = input.words;
   return this;
 };
+
+
+var Bitset = TypedFastBitSet;
+
+export default Bitset;

@@ -5,6 +5,7 @@
 
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Selection from "../selection.js";
 // import StructureView from "./structure-view.js";
@@ -155,7 +156,7 @@ Structure.prototype = {
         if( Debug ) Log.time( "Structure.getBondSet" );
 
         var n = this.bondStore.count;
-        var bs = new TypedFastBitSet( n );
+        var bs = new Bitset( n );
         var as = this.atomSet;
 
         if( as ){
@@ -186,7 +187,7 @@ Structure.prototype = {
         if( Debug ) Log.time( "Structure.getBackboneBondSet" );
 
         var n = this.backboneBondStore.count;
-        var bs = new TypedFastBitSet( n );
+        var bs = new Bitset( n );
         var as = this.atomSetCache.__backbone;
 
         if( as ){
@@ -218,7 +219,7 @@ Structure.prototype = {
         if( Debug ) Log.time( "Structure.getRungBondSet" );
 
         var n = this.rungBondStore.count;
-        var bs = new TypedFastBitSet( n );
+        var bs = new Bitset( n );
         var as = this.atomSetCache.__rung;
 
         if( as ){
@@ -254,11 +255,11 @@ Structure.prototype = {
 
         if( selection === false ){
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
 
         }else if( selection === true ){
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
             as.set_all( true );
 
         }else if( selection && selection.test ){
@@ -272,7 +273,7 @@ Structure.prototype = {
 
                 // TODO can be faster by setting ranges of atoms
                 //      but for that must loop over hierarchy itself
-                as = new TypedFastBitSet( n );
+                as = new Bitset( n );
                 var ap = this.getAtomProxy();
                 var test = selection.test;
                 for( var i = 0; i < n; ++i ){
@@ -289,7 +290,7 @@ Structure.prototype = {
 
         }else{
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
             as.set_all( true );
 
         }
@@ -309,11 +310,11 @@ Structure.prototype = {
 
         if( selection === false ){
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
 
         }else if( selection === true ){
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
             as.set_all( true );
 
         }else if( selection && selection.test ){
@@ -325,7 +326,7 @@ Structure.prototype = {
 
             if( as === undefined ){
 
-                as = new TypedFastBitSet( n );
+                as = new Bitset( n );
                 this.eachAtom( function( ap ){
                     as.add_unsafe( ap.index );
                 }, selection );
@@ -339,7 +340,7 @@ Structure.prototype = {
 
         }else{
 
-            as = new TypedFastBitSet( n );
+            as = new Bitset( n );
             as.set_all( true );
 
         }
@@ -979,12 +980,12 @@ Structure.prototype = {
         }
         this.atomSetDict = {};
         for( name in input.atomSetDict ){
-            as = new TypedFastBitSet();
+            as = new Bitset();
             this.atomSetDict[ name ] = as.fromJSON( input.atomSetDict[ name ] );
         }
         this.atomSetCache = {};
         for( name in input.atomSetCache ){
-            as = new TypedFastBitSet();
+            as = new Bitset();
             this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
         }
 

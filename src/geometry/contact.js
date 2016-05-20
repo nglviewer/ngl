@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import Bitset from "../utils/bitset.js";
 import Kdtree from "./kdtree.js";
 import BondStore from "../store/bond-store.js";
 
@@ -59,7 +60,7 @@ Contact.prototype = {
 
         } );
 
-        var bondSet = new TypedFastBitSet( bondStore.count );
+        var bondSet = new Bitset( bondStore.count );
         bondSet.set_all( true );
 
         Log.timeEnd( "Contact within" );

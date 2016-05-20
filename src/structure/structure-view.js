@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import Bitset from "../utils/bitset.js";
 import Structure from "./structure.js";
 import Selection from "../selection.js";
 
@@ -197,15 +198,15 @@ StructureView.prototype = Object.assign( Object.create(
             this.structure = new StructureView().fromJSON( input.structure );
         }
 
-        this.atomSet = new TypedFastBitSet().fromJSON( input.atomSet );
-        this.bondSet = new TypedFastBitSet().fromJSON( input.bondSet );
+        this.atomSet = new Bitset().fromJSON( input.atomSet );
+        this.bondSet = new Bitset().fromJSON( input.bondSet );
 
         this.atomCount = input.atomCount;
         this.bondCount = input.bondCount;
 
         this.atomSetCache = {};
         for( var name in input.atomSetCache ){
-            var as = new TypedFastBitSet();
+            var as = new Bitset();
             this.atomSetCache[ name ] = as.fromJSON( input.atomSetCache[ name ] );
         }
 
