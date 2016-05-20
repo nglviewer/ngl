@@ -132,7 +132,7 @@ NGL.PdbWriter = function( structure, params ){
 
     function download( name, ext ){
 
-        name = name || "structure"
+        name = name || "structure";
         ext = ext || "pdb";
 
         var file = name + "." + ext;

@@ -79,24 +79,24 @@ GeometryBuffer.prototype = Object.assign( Object.create(
             var transformedGeoPosition, transformedGeoNormal;
             var meshPosition, meshColor, meshPickingColor, meshNormal;
 
-            if( data[ "position" ] ){
-                position = data[ "position" ];
+            if( data.position ){
+                position = data.position;
                 geoPosition = this.geoPosition;
                 meshPosition = this.meshPosition;
                 transformedGeoPosition = this.transformedGeoPosition;
-                attributes[ "position" ].needsUpdate = true;
+                attributes.position.needsUpdate = true;
             }
 
-            if( data[ "color" ] ){
-                color = data[ "color" ];
+            if( data.color ){
+                color = data.color;
                 meshColor = this.meshColor;
-                attributes[ "color" ].needsUpdate = true;
+                attributes.color.needsUpdate = true;
             }
 
-            if( data[ "pickingColor" ] ){
-                pickingColor = data[ "pickingColor" ];
+            if( data.pickingColor ){
+                pickingColor = data.pickingColor;
                 meshPickingColor = this.meshPickingColor;
-                attributes[ "pickingColor" ].needsUpdate = true;
+                attributes.pickingColor.needsUpdate = true;
             }
 
             var updateNormals = !!( this.updateNormals && position );
@@ -106,7 +106,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
                 geoNormal = this.geoNormal;
                 meshNormal = this.meshNormal;
                 transformedGeoNormal = this.transformedGeoNormal;
-                attributes[ "normal" ].needsUpdate = true;
+                attributes.normal.needsUpdate = true;
             }
 
             var n = this.positionCount;
@@ -114,6 +114,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
             for( var i = 0; i < n; ++i ){
 
+                var j, l;
                 var k = i * m * 3;
                 var i3 = i * 3;
 
@@ -146,9 +147,9 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
                 if( color ){
 
-                    for( var j = 0; j < m; ++j ){
+                    for( j = 0; j < m; ++j ){
 
-                        var l = k + 3 * j;
+                        l = k + 3 * j;
 
                         meshColor[ l     ] = color[ i3     ];
                         meshColor[ l + 1 ] = color[ i3 + 1 ];
@@ -160,9 +161,9 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
                 if( pickingColor ){
 
-                    for( var j = 0; j < m; ++j ){
+                    for( j = 0; j < m; ++j ){
 
-                        var l = k + 3 * j;
+                        l = k + 3 * j;
 
                         meshPickingColor[ l     ] = pickingColor[ i3     ];
                         meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
@@ -174,7 +175,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
             }
 
-        }
+        };
 
     }(),
 

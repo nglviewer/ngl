@@ -11,9 +11,11 @@ function Kdtree( entity, useSquaredDist ){
 
     if( Debug ) Log.time( "Kdtree build" );
 
+    var metric;
+
     if( useSquaredDist ){
 
-        var metric = function( a, b ){
+        metric = function( a, b ){
             var dx = a[0] - b[0];
             var dy = a[1] - b[1];
             var dz = a[2] - b[2];
@@ -22,7 +24,7 @@ function Kdtree( entity, useSquaredDist ){
 
     }else{
 
-        var metric = function( a, b ){
+        metric = function( a, b ){
             var dx = a[0] - b[0];
             var dy = a[1] - b[1];
             var dz = a[2] - b[2];

@@ -74,7 +74,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
 
         return THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle;
 
-    }
+    };
 
     for( var i = 0, il = bondStore.count; i < il; ++i ){
 

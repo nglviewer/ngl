@@ -67,40 +67,40 @@ RibbonBuffer.prototype = Object.assign( Object.create(
         var position, normal, size, dir, color, pickingColor;
         var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+        if( data.position ){
+            position = data.position;
+            aPosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
         }
 
-        if( data[ "normal" ] ){
-            normal = data[ "normal" ];
-            aNormal = attributes[ "normal" ].array;
-            attributes[ "normal" ].needsUpdate = true;
+        if( data.normal ){
+            normal = data.normal;
+            aNormal = attributes.normal.array;
+            attributes.normal.needsUpdate = true;
         }
 
-        if( data[ "size" ] ){
-            size = data[ "size" ];
-            aSize = attributes[ "size" ].array;
-            attributes[ "size" ].needsUpdate = true;
+        if( data.size ){
+            size = data.size;
+            aSize = attributes.size.array;
+            attributes.size.needsUpdate = true;
         }
 
-        if( data[ "dir" ] ){
-            dir = data[ "dir" ];
-            aDir = attributes[ "dir" ].array;
-            attributes[ "dir" ].needsUpdate = true;
+        if( data.dir ){
+            dir = data.dir;
+            aDir = attributes.dir.array;
+            attributes.dir.needsUpdate = true;
         }
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
+        if( data.color ){
+            color = data.color;
+            aColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
         }
 
-        if( data[ "pickingColor" ] ){
-            pickingColor = data[ "pickingColor" ];
-            aPickingColor = attributes[ "pickingColor" ].array;
-            attributes[ "pickingColor" ].needsUpdate = true;
+        if( data.pickingColor ){
+            pickingColor = data.pickingColor;
+            aPickingColor = attributes.pickingColor.array;
+            attributes.pickingColor.needsUpdate = true;
         }
 
         var v, i, k, p, l, v3;

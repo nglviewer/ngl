@@ -54,7 +54,7 @@ DxParser.prototype = Object.assign( Object.create(
                         for( var j = 0, lj = ls.length; j < lj; ++j ){
                             data[ count ] = parseFloat( ls[ j ] );
                             ++count;
-                        };
+                        }
 
                     }
 
@@ -62,9 +62,9 @@ DxParser.prototype = Object.assign( Object.create(
 
                 ++lineNo;
 
-            };
+            }
 
-        };
+        }
 
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
             _parseChunkOfLines( 0, lines.length, lines );
@@ -89,11 +89,12 @@ DxParser.prototype = Object.assign( Object.create(
 
         for( var i = 0; i < n; ++i ){
 
+            var ls;
             var line = headerLines[ i ];
 
             if( line.startsWith( "object 1" ) ){
 
-                var ls = line.split( reWhitespace );
+                ls = line.split( reWhitespace );
 
                 header.nx = parseInt( ls[ 5 ] );
                 header.ny = parseInt( ls[ 6 ] );
@@ -101,7 +102,7 @@ DxParser.prototype = Object.assign( Object.create(
 
             }else if( line.startsWith( "origin" ) ){
 
-                var ls = line.split( reWhitespace );
+                ls = line.split( reWhitespace );
 
                 header.xmin = parseFloat( ls[ 1 ] );
                 header.ymin = parseFloat( ls[ 2 ] );
@@ -109,7 +110,7 @@ DxParser.prototype = Object.assign( Object.create(
 
             }else if( line.startsWith( "delta" ) ){
 
-                var ls = line.split( reWhitespace );
+                ls = line.split( reWhitespace );
 
                 if( deltaLineCount === 0 ){
                     header.hx = parseFloat( ls[ 1 ] );
@@ -138,7 +139,7 @@ DxParser.prototype = Object.assign( Object.create(
         return {
             dataLineStart: dataLineStart,
             headerByteCount: headerByteCount
-        }
+        };
 
     },
 

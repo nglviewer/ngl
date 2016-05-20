@@ -56,6 +56,7 @@ DcdParser.prototype = Object.assign( Object.create(
         }
         var dv = new DataView( bin );
 
+        var i, n;
         var f = this.frames;
         var coordinates = f.coordinates;
         var boxes = f.boxes;
@@ -68,8 +69,8 @@ DcdParser.prototype = Object.assign( Object.create(
         var ef = intView[ 0 ] !== dv.getInt32( 0 );  // endianess flag
         // swap byte order when big endian (84 indicates little endian)
         if( intView[ 0 ] !== 84 ){
-            var n = bin.byteLength;
-            for( var i = 0; i < n; i+=4 ){
+            n = bin.byteLength;
+            for( i = 0; i < n; i+=4 ){
                 dv.setFloat32( i, dv.getFloat32( i ), true );
             }
         }
@@ -147,7 +148,7 @@ DcdParser.prototype = Object.assign( Object.create(
         var natom = header.NATOM;
         var natom4 = natom * 4;
 
-        for( var i = 0, n = header.NSET; i < n; ++i ){
+        for( i = 0, n = header.NSET; i < n; ++i ){
 
             if( extraBlock ){
                 nextPos += 4;  // block start

@@ -52,11 +52,11 @@ VectorBuffer.prototype = Object.assign( Object.create(
         var position, vector;
         var aPosition;
 
-        if( data[ "position" ] && data[ "vector" ] ){
-            position = data[ "position" ];
-            vector = data[ "vector" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+        if( data.position && data.vector ){
+            position = data.position;
+            vector = data.vector;
+            aPosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
         }
 
         var n = this.size;
@@ -64,7 +64,7 @@ VectorBuffer.prototype = Object.assign( Object.create(
 
         var i, j;
 
-        if( data[ "position" ] && data[ "vector" ] ){
+        if( data.position && data.vector ){
 
             for( var v = 0; v < n; v++ ){
 

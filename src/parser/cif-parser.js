@@ -160,15 +160,17 @@ CifParser.prototype = Object.assign( Object.create(
 
                 }else if( line[0]==="_" ){
 
+                    var keyParts, category, name;
+
                     if( pendingLoop ){
 
                         // Log.log( "LOOP KEY", line );
 
-                        var ks = line.split(".");
-                        var category = ks[ 0 ].substring( 1 );
-                        var name = ks[ 1 ];
+                        keyParts = line.split(".");
+                        category = loopKeys[ 0 ].substring( 1 );
+                        name = loopKeys[ 1 ];
 
-                        if( ks.length === 1 ){
+                        if( loopKeys.length === 1 ){
 
                             name = false;
                             if( !cif[ category ] ) cif[ category ] = [];
@@ -193,18 +195,18 @@ CifParser.prototype = Object.assign( Object.create(
 
                     }else{
 
-                        var ls = line.match( reQuotedWhitespace );
-                        var key = ls[ 0 ];
-                        var value = ls[ 1 ];
-                        var ks = key.split(".");
-                        var category = ks[ 0 ].substring( 1 );
-                        var name = ks[ 1 ];
+                        var keyValuePair = line.match( reQuotedWhitespace );
+                        var key = keyValuePair[ 0 ];
+                        var value = keyValuePair[ 1 ];
+                        keyParts = key.split(".");
+                        category = keyParts[ 0 ].substring( 1 );
+                        name = keyParts[ 1 ];
 
-                        if( ks.length === 1 ){
+                        if( keyParts.length === 1 ){
 
                             name = false;
                             if( !cif[ category ] ) cif[ category ] = [];
-                            cif[ category ] = value
+                            cif[ category ] = value;
 
                         }else{
 
@@ -237,15 +239,17 @@ CifParser.prototype = Object.assign( Object.create(
 
                         // Log.log( "LOOP VALUE", line );
 
+                        var nn, ls;
+
                         if( !line ){
 
                             continue;
 
                         }else if( currentCategory==="atom_site" ){
 
-                            var nn = pointerNames.length;
+                            nn = pointerNames.length;
+                            ls = line.split( reWhitespace );
 
-                            var ls = line.split( reWhitespace );
                             var k;
 
                             if( first ){
@@ -324,11 +328,11 @@ CifParser.prototype = Object.assign( Object.create(
 
                             if( asTrajectory ){
 
-                                var j = currentCoord * 3;
+                                var frameOffset = currentCoord * 3;
 
-                                currentFrame[ j + 0 ] = x;
-                                currentFrame[ j + 1 ] = y;
-                                currentFrame[ j + 2 ] = z;
+                                currentFrame[ frameOffset + 0 ] = x;
+                                currentFrame[ frameOffset + 1 ] = y;
+                                currentFrame[ frameOffset + 2 ] = z;
 
                                 currentCoord += 1;
 
@@ -369,7 +373,7 @@ CifParser.prototype = Object.assign( Object.create(
                             if( Debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
                                 // actually a many-to-many mapping
-                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ]
+                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
                                     Log.warn( assignedChainname, chainname );
                                 }
@@ -381,8 +385,8 @@ CifParser.prototype = Object.assign( Object.create(
 
                         }else{
 
-                            var ls = line.match( reQuotedWhitespace );
-                            var nn = ls.length;
+                            ls = line.match( reQuotedWhitespace );
+                            nn = ls.length;
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
@@ -445,6 +449,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             }
 
+            var i, il, begIcode, endIcode;
+
             // get helices
             var sc = cif.struct_conf;
 
@@ -455,11 +461,11 @@ CifParser.prototype = Object.assign( Object.create(
                 // ensure data is in lists
                 _ensureArray( sc, "id" );
 
-                for( var i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
+                for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
                     var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
                     if( !Number.isNaN( helixType ) ){
-                        var begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
-                        var endIcode = sc.pdbx_end_PDB_ins_code[ i ];
+                        begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
+                        endIcode = sc.pdbx_end_PDB_ins_code[ i ];
                         helices.push( [
                             asymIdDict[ sc.beg_label_asym_id[ i ] ],
                             parseInt( sc.beg_auth_seq_id[ i ] ),
@@ -484,9 +490,9 @@ CifParser.prototype = Object.assign( Object.create(
                 // ensure data is in lists
                 _ensureArray( ssr, "id" );
 
-                for( var i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
-                    var begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
-                    var endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
+                for( i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+                    begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
+                    endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
                     sheets.push( [
                         asymIdDict[ ssr.beg_label_asym_id[ i ] ],
                         parseInt( ssr.beg_auth_seq_id[ i ] ),
@@ -543,31 +549,31 @@ CifParser.prototype = Object.assign( Object.create(
 
         if( cif.pdbx_struct_oper_list ){
 
-            var op = cif.pdbx_struct_oper_list;
+            var biomolOp = cif.pdbx_struct_oper_list;
 
             // ensure data is in lists
-            _ensureArray( op, "id" );
+            _ensureArray( biomolOp, "id" );
 
-            op.id.forEach( function( id, i ){
+            biomolOp.id.forEach( function( id, i ){
 
                 var m = new THREE.Matrix4();
                 var elms = m.elements;
 
-                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+                elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( biomolOp[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( biomolOp[ "matrix[1][3]" ][ i ] );
 
-                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+                elms[  4 ] = parseFloat( biomolOp[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( biomolOp[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( biomolOp[ "matrix[2][3]" ][ i ] );
 
-                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+                elms[  8 ] = parseFloat( biomolOp[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( biomolOp[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( biomolOp[ "matrix[3][3]" ][ i ] );
 
-                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+                elms[  3 ] = parseFloat( biomolOp[ "vector[1]" ][ i ] );
+                elms[  7 ] = parseFloat( biomolOp[ "vector[2]" ][ i ] );
+                elms[ 11 ] = parseFloat( biomolOp[ "vector[3]" ][ i ] );
 
                 m.transpose();
 
@@ -615,7 +621,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 return matDict;
 
-            }
+            };
 
             gen.assembly_id.forEach( function( id, i ){
 
@@ -673,35 +679,35 @@ CifParser.prototype = Object.assign( Object.create(
         // non-crystallographic symmetry operations
         if( cif.struct_ncs_oper ){
 
-            var op = cif.struct_ncs_oper;
+            var ncsOp = cif.struct_ncs_oper;
 
             // ensure data is in lists
-            _ensureArray( op, "id" );
+            _ensureArray( ncsOp, "id" );
 
             var ncsName = "NCS";
             biomolDict[ ncsName ] = new Assembly( ncsName );
             var ncsPart = biomolDict[ ncsName ].addPart();
 
-            op.id.forEach( function( id, i ){
+            ncsOp.id.forEach( function( id, i ){
 
                 var m = new THREE.Matrix4();
                 var elms = m.elements;
 
-                elms[  0 ] = parseFloat( op[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( op[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( op[ "matrix[1][3]" ][ i ] );
+                elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
+                elms[  1 ] = parseFloat( ncsOp[ "matrix[1][2]" ][ i ] );
+                elms[  2 ] = parseFloat( ncsOp[ "matrix[1][3]" ][ i ] );
 
-                elms[  4 ] = parseFloat( op[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( op[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( op[ "matrix[2][3]" ][ i ] );
+                elms[  4 ] = parseFloat( ncsOp[ "matrix[2][1]" ][ i ] );
+                elms[  5 ] = parseFloat( ncsOp[ "matrix[2][2]" ][ i ] );
+                elms[  6 ] = parseFloat( ncsOp[ "matrix[2][3]" ][ i ] );
 
-                elms[  8 ] = parseFloat( op[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( op[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( op[ "matrix[3][3]" ][ i ] );
+                elms[  8 ] = parseFloat( ncsOp[ "matrix[3][1]" ][ i ] );
+                elms[  9 ] = parseFloat( ncsOp[ "matrix[3][2]" ][ i ] );
+                elms[ 10 ] = parseFloat( ncsOp[ "matrix[3][3]" ][ i ] );
 
-                elms[  3 ] = parseFloat( op[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( op[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( op[ "vector[3]" ][ i ] );
+                elms[  3 ] = parseFloat( ncsOp[ "vector[1]" ][ i ] );
+                elms[  7 ] = parseFloat( ncsOp[ "vector[2]" ][ i ] );
+                elms[ 11 ] = parseFloat( ncsOp[ "vector[3]" ][ i ] );
 
                 m.transpose();
 
@@ -757,24 +763,24 @@ CifParser.prototype = Object.assign( Object.create(
 
         if( cif.database_PDB_matrix ){
 
-            var mat = cif.database_PDB_matrix;
-            var elms = origx.elements;
+            var origxMat = cif.database_PDB_matrix;
+            var origxElms = origx.elements;
 
-            elms[  0 ] = parseFloat( mat[ "origx[1][1]" ] );
-            elms[  1 ] = parseFloat( mat[ "origx[1][2]" ] );
-            elms[  2 ] = parseFloat( mat[ "origx[1][3]" ] );
+            origxElms[  0 ] = parseFloat( origxMat[ "origx[1][1]" ] );
+            origxElms[  1 ] = parseFloat( origxMat[ "origx[1][2]" ] );
+            origxElms[  2 ] = parseFloat( origxMat[ "origx[1][3]" ] );
 
-            elms[  4 ] = parseFloat( mat[ "origx[2][1]" ] );
-            elms[  5 ] = parseFloat( mat[ "origx[2][2]" ] );
-            elms[  6 ] = parseFloat( mat[ "origx[2][3]" ] );
+            origxElms[  4 ] = parseFloat( origxMat[ "origx[2][1]" ] );
+            origxElms[  5 ] = parseFloat( origxMat[ "origx[2][2]" ] );
+            origxElms[  6 ] = parseFloat( origxMat[ "origx[2][3]" ] );
 
-            elms[  8 ] = parseFloat( mat[ "origx[3][1]" ] );
-            elms[  9 ] = parseFloat( mat[ "origx[3][2]" ] );
-            elms[ 10 ] = parseFloat( mat[ "origx[3][3]" ] );
+            origxElms[  8 ] = parseFloat( origxMat[ "origx[3][1]" ] );
+            origxElms[  9 ] = parseFloat( origxMat[ "origx[3][2]" ] );
+            origxElms[ 10 ] = parseFloat( origxMat[ "origx[3][3]" ] );
 
-            elms[  3 ] = parseFloat( mat[ "origx_vector[1]" ] );
-            elms[  7 ] = parseFloat( mat[ "origx_vector[2]" ] );
-            elms[ 11 ] = parseFloat( mat[ "origx_vector[3]" ] );
+            origxElms[  3 ] = parseFloat( origxMat[ "origx_vector[1]" ] );
+            origxElms[  7 ] = parseFloat( origxMat[ "origx_vector[2]" ] );
+            origxElms[ 11 ] = parseFloat( origxMat[ "origx_vector[3]" ] );
 
             origx.transpose();
 
@@ -787,24 +793,24 @@ CifParser.prototype = Object.assign( Object.create(
 
         if( cif.atom_sites ){
 
-            var mat = cif.atom_sites;
-            var elms = scale.elements;
+            var scaleMat = cif.atom_sites;
+            var scaleElms = scale.elements;
 
-            elms[  0 ] = parseFloat( mat[ "fract_transf_matrix[1][1]" ] );
-            elms[  1 ] = parseFloat( mat[ "fract_transf_matrix[1][2]" ] );
-            elms[  2 ] = parseFloat( mat[ "fract_transf_matrix[1][3]" ] );
+            scaleElms[  0 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][1]" ] );
+            scaleElms[  1 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][2]" ] );
+            scaleElms[  2 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][3]" ] );
 
-            elms[  4 ] = parseFloat( mat[ "fract_transf_matrix[2][1]" ] );
-            elms[  5 ] = parseFloat( mat[ "fract_transf_matrix[2][2]" ] );
-            elms[  6 ] = parseFloat( mat[ "fract_transf_matrix[2][3]" ] );
+            scaleElms[  4 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][1]" ] );
+            scaleElms[  5 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][2]" ] );
+            scaleElms[  6 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][3]" ] );
 
-            elms[  8 ] = parseFloat( mat[ "fract_transf_matrix[3][1]" ] );
-            elms[  9 ] = parseFloat( mat[ "fract_transf_matrix[3][2]" ] );
-            elms[ 10 ] = parseFloat( mat[ "fract_transf_matrix[3][3]" ] );
+            scaleElms[  8 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][1]" ] );
+            scaleElms[  9 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][2]" ] );
+            scaleElms[ 10 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][3]" ] );
 
-            elms[  3 ] = parseFloat( mat[ "fract_transf_vector[1]" ] );
-            elms[  7 ] = parseFloat( mat[ "fract_transf_vector[2]" ] );
-            elms[ 11 ] = parseFloat( mat[ "fract_transf_vector[3]" ] );
+            scaleElms[  3 ] = parseFloat( scaleMat[ "fract_transf_vector[1]" ] );
+            scaleElms[  7 ] = parseFloat( scaleMat[ "fract_transf_vector[2]" ] );
+            scaleElms[ 11 ] = parseFloat( scaleMat[ "fract_transf_vector[3]" ] );
 
             scale.transpose();
 
@@ -842,7 +848,7 @@ CifParser.prototype = Object.assign( Object.create(
                 // mismat - mismatched base pairs
                 // saltbr - ionic interaction
 
-                var conn_type_id = sc.conn_type_id[ i ]
+                var conn_type_id = sc.conn_type_id[ i ];
                 if( conn_type_id === "hydrog" ||
                     conn_type_id === "mismat" ||
                     conn_type_id === "saltbr" ) continue;
@@ -875,7 +881,7 @@ CifParser.prototype = Object.assign( Object.create(
                 var atomIndices1 = atomIndicesCache[ sele1 ];
                 if( !atomIndices1 ){
                     var selection1 = new Selection( sele1 );
-                    if( selection1.selection[ "error" ] ){
+                    if( selection1.selection.error ){
                         Log.warn( "invalid selection for connection", sele1 );
                         continue;
                     }
@@ -895,7 +901,7 @@ CifParser.prototype = Object.assign( Object.create(
                 var atomIndices2 = atomIndicesCache[ sele2 ];
                 if( !atomIndices2 ){
                     var selection2 = new Selection( sele2 );
-                    if( selection2.selection[ "error" ] ){
+                    if( selection2.selection.error ){
                         Log.warn( "invalid selection for connection", sele2 );
                         continue;
                     }

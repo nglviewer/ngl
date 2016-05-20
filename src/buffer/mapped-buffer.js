@@ -86,7 +86,7 @@ MappedBuffer.prototype = Object.assign( Object.create(
         var mappingSize = this.mappingSize;
         var mappingItemSize = this.mappingItemSize;
 
-        var aMapping = this.geometry.attributes[ "mapping" ].array;
+        var aMapping = this.geometry.attributes.mapping.array;
 
         for( var v = 0; v < count; v++ ) {
 

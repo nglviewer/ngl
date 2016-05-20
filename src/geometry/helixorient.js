@@ -159,7 +159,7 @@ Helixorient.prototype = {
         var twist = new Float32Array( n );
         var resdir = new Float32Array( 3 * n );
 
-        var tmp, j;
+        var tmp, j, i;
         var diff13Length, diff24Length;
 
         var r12 = new THREE.Vector3();
@@ -185,7 +185,7 @@ Helixorient.prototype = {
         var a3 = structure.getAtomProxy( polymer.getAtomIndexByType( 1, type ) );
         var a4 = structure.getAtomProxy( polymer.getAtomIndexByType( 2, type ) );
 
-        for( var i = 0; i < n3; ++i ){
+        for( i = 0; i < n3; ++i ){
 
             a1.index = a2.index;
             a2.index = a3.index;
@@ -275,7 +275,7 @@ Helixorient.prototype = {
         v1.toArray( center, 3 * n - 3 );
 
         // calc last three resdir
-        for( var i = n - 3; i < n; ++i ){
+        for( i = n - 3; i < n; ++i ){
 
             v1.fromArray( center, 3 * i );
             // _center.copy( res[ i ].getTraceAtom() );
@@ -298,7 +298,7 @@ Helixorient.prototype = {
         resTwist[ 1 ] = twist[ 0 ];
         resRise[ 1 ] = radius[ 0 ];
 
-        for( var i = 2; i < n - 2; ++i ){
+        for( i = 2; i < n - 2; ++i ){
 
             resRadius[ i ] = 0.5 * ( radius[ i - 2 ] + radius[ i - 1 ] );
             resTwist[ i ] = 0.5 * ( twist[ i - 2 ] + twist[ i - 1 ] );
@@ -321,7 +321,7 @@ Helixorient.prototype = {
         copyArray( axis, resAxis, 0, 0, 3 );
         copyArray( axis, resAxis, 0, 3, 3 );
 
-        for( var i = 2; i < n - 2; ++i ){
+        for( i = 2; i < n - 2; ++i ){
 
             v1.fromArray( axis, 3 * ( i - 2 ) );
             v2.fromArray( axis, 3 * ( i - 1 ) );

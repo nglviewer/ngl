@@ -36,14 +36,14 @@ SphereGeometryBuffer.prototype = Object.assign( Object.create(
             scale.set( r, r, r );
             matrix.scale( scale );
 
-        }
+        };
 
     },
 
     setAttributes: function( data ){
 
-        if( data[ "radius" ] ){
-            this.setPositionTransform( data[ "radius" ] );
+        if( data.radius ){
+            this.setPositionTransform( data.radius );
         }
 
         GeometryBuffer.prototype.setAttributes.call( this, data );

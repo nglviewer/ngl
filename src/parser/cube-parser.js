@@ -69,16 +69,16 @@ CubeParser.prototype = Object.assign( Object.create(
                         if ( line.length !==1 ) {
                             data[ count ] = parseFloat( line[ j ] );
                             ++count;
-                        };
-                    };
+                        }
+                    }
 
                 }
 
                 ++lineNo;
 
-            };
+            }
 
-        };
+        }
 
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
             _parseChunkOfLines( 0, lines.length, lines );

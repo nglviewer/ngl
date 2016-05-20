@@ -76,6 +76,9 @@ PdbParser.prototype = Object.assign( Object.create(
         var serial, chainname, resno, resname, occupancy,
             inscode, atomname, element, hetero, bfactor, altloc;
 
+        var startChain, startResi, startIcode;
+        var endChain, endResi, endIcode;
+
         var serialDict = {};
         var unitcellDict = {};
 
@@ -93,6 +96,8 @@ PdbParser.prototype = Object.assign( Object.create(
         var pendingStart = true;
 
         function _parseChunkOfLines( _i, _n, lines ){
+
+            var j, jl;
 
             for( var i = _i; i < _n; ++i ){
 
@@ -128,32 +133,34 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
+                    var x, y, z, ls, dd;
+
                     if( isPqr ){
 
-                        var ls = line.split( reWhitespace );
-                        var dd = ls.length === 10 ? 1 : 0;
+                        ls = line.split( reWhitespace );
+                        dd = ls.length === 10 ? 1 : 0;
 
                         atomname = ls[ 2 ];
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                        var x = parseFloat( ls[ 6 - dd ] );
-                        var y = parseFloat( ls[ 7 - dd ] );
-                        var z = parseFloat( ls[ 8 - dd ] );
+                        x = parseFloat( ls[ 6 - dd ] );
+                        y = parseFloat( ls[ 7 - dd ] );
+                        z = parseFloat( ls[ 8 - dd ] );
 
                     }else{
 
                         atomname = line.substr( 12, 4 ).trim();
                         if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                        var x = parseFloat( line.substr( 30, 8 ) );
-                        var y = parseFloat( line.substr( 38, 8 ) );
-                        var z = parseFloat( line.substr( 46, 8 ) );
+                        x = parseFloat( line.substr( 30, 8 ) );
+                        y = parseFloat( line.substr( 38, 8 ) );
+                        z = parseFloat( line.substr( 46, 8 ) );
 
                     }
 
                     if( asTrajectory ){
 
-                        var j = currentCoord * 3;
+                        j = currentCoord * 3;
 
                         currentFrame[ j + 0 ] = x;
                         currentFrame[ j + 1 ] = y;
@@ -223,7 +230,7 @@ PdbParser.prototype = Object.assign( Object.create(
                         continue;
                     }
 
-                    for( var j = 0; j < 4; ++j ){
+                    for( j = 0; j < 4; ++j ){
 
                         var to = parseInt( line.substr( pos[ j ], 5 ) );
                         if( Number.isNaN( to ) ) continue;
@@ -249,12 +256,12 @@ PdbParser.prototype = Object.assign( Object.create(
 
                 }else if( recordName === 'HELIX ' ){
 
-                    var startChain = line[ 19 ].trim();
-                    var startResi = parseInt( line.substr( 21, 4 ) );
-                    var startIcode = line[ 25 ].trim();
-                    var endChain = line[ 31 ].trim();
-                    var endResi = parseInt( line.substr( 33, 4 ) );
-                    var endIcode = line[ 37 ].trim();
+                    startChain = line[ 19 ].trim();
+                    startResi = parseInt( line.substr( 21, 4 ) );
+                    startIcode = line[ 25 ].trim();
+                    endChain = line[ 31 ].trim();
+                    endResi = parseInt( line.substr( 33, 4 ) );
+                    endIcode = line[ 37 ].trim();
                     var helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 );
                     helices.push( [
@@ -265,12 +272,12 @@ PdbParser.prototype = Object.assign( Object.create(
 
                 }else if( recordName === 'SHEET ' ){
 
-                    var startChain = line[ 21 ].trim();
-                    var startResi = parseInt( line.substr( 22, 4 ) );
-                    var startIcode = line[ 26 ].trim();
-                    var endChain = line[ 32 ].trim();
-                    var endResi = parseInt( line.substr( 33, 4 ) );
-                    var endIcode = line[ 37 ].trim();
+                    startChain = line[ 21 ].trim();
+                    startResi = parseInt( line.substr( 22, 4 ) );
+                    startIcode = line[ 26 ].trim();
+                    endChain = line[ 32 ].trim();
+                    endResi = parseInt( line.substr( 33, 4 ) );
+                    endIcode = line[ 37 ].trim();
                     sheets.push( [
                         startChain, startResi, startIcode,
                         endChain, endResi, endIcode
@@ -288,22 +295,21 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     }else if( line.substr( 13, 5 ) === "BIOMT" ){
 
-                        var ls = line.split( /\s+/ );
-
+                        var biomt = line.split( /\s+/ );
                         var row = parseInt( line[ 18 ] ) - 1;
-                        var mat = ls[ 3 ].trim();
+                        var mat = biomt[ 3 ].trim();
 
                         if( row === 0 ){
                             currentMatrix = new THREE.Matrix4();
                             currentPart.matrixList.push( currentMatrix );
                         }
 
-                        var elms = currentMatrix.elements;
+                        var biomtElms = currentMatrix.elements;
 
-                        elms[ 4 * 0 + row ] = parseFloat( ls[ 4 ] );
-                        elms[ 4 * 1 + row ] = parseFloat( ls[ 5 ] );
-                        elms[ 4 * 2 + row ] = parseFloat( ls[ 6 ] );
-                        elms[ 4 * 3 + row ] = parseFloat( ls[ 7 ] );
+                        biomtElms[ 4 * 0 + row ] = parseFloat( biomt[ 4 ] );
+                        biomtElms[ 4 * 1 + row ] = parseFloat( biomt[ 5 ] );
+                        biomtElms[ 4 * 2 + row ] = parseFloat( biomt[ 6 ] );
+                        biomtElms[ 4 * 3 + row ] = parseFloat( biomt[ 7 ] );
 
                     }else if(
                         line.substr( 11, 30 ) === 'APPLY THE FOLLOWING TO CHAINS:' ||
@@ -314,10 +320,11 @@ PdbParser.prototype = Object.assign( Object.create(
                             currentPart = currentBiomol.addPart();
                         }
 
-                        line.substr( 41, 30 ).split( "," ).forEach( function( v ){
-                            var c = v.trim();
+                        var chainList = line.substr( 41, 30 ).split( "," );
+                        for( j, jl = chainList.length; j < jl; ++j ){
+                            var c = chainList[ j ].trim();
                             if( c ) currentPart.chainList.push( c );
-                        } );
+                        }
 
                     }
 
@@ -349,29 +356,29 @@ PdbParser.prototype = Object.assign( Object.create(
 
                 }else if( recordName === 'MTRIX ' ){
 
-                    var ls = line.split( /\s+/ );
-                    var mat = ls[ 1 ].trim();
+                    var ncs = line.split( /\s+/ );
+                    var ncsMat = ncs[ 1 ].trim();
 
-                    if( line[ 5 ] === "1" && mat === "1" ){
-                        var name = "NCS";
-                        currentBiomol = new Assembly( name );
-                        biomolDict[ name ] = currentBiomol;
+                    if( line[ 5 ] === "1" && ncsMat === "1" ){
+                        var ncsName = "NCS";
+                        currentBiomol = new Assembly( ncsName );
+                        biomolDict[ ncsName ] = currentBiomol;
                         currentPart = currentBiomol.addPart();
                     }
 
-                    var row = parseInt( line[ 5 ] ) - 1;
+                    var ncsRow = parseInt( line[ 5 ] ) - 1;
 
-                    if( row === 0 ){
+                    if( ncsRow === 0 ){
                         currentMatrix = new THREE.Matrix4();
                         currentPart.matrixList.push( currentMatrix );
                     }
 
-                    var elms = currentMatrix.elements;
+                    var ncsElms = currentMatrix.elements;
 
-                    elms[ 4 * 0 + row ] = parseFloat( ls[ 2 ] );
-                    elms[ 4 * 1 + row ] = parseFloat( ls[ 3 ] );
-                    elms[ 4 * 2 + row ] = parseFloat( ls[ 4 ] );
-                    elms[ 4 * 3 + row ] = parseFloat( ls[ 5 ] );
+                    ncsElms[ 4 * 0 + ncsRow ] = parseFloat( ncs[ 2 ] );
+                    ncsElms[ 4 * 1 + ncsRow ] = parseFloat( ncs[ 3 ] );
+                    ncsElms[ 4 * 2 + ncsRow ] = parseFloat( ncs[ 4 ] );
+                    ncsElms[ 4 * 3 + ncsRow ] = parseFloat( ncs[ 5 ] );
 
                 }else if( line.substr( 0, 5 ) === 'ORIGX' ){
 
@@ -379,14 +386,14 @@ PdbParser.prototype = Object.assign( Object.create(
                         unitcellDict.origx = new THREE.Matrix4();
                     }
 
-                    var ls = line.split( /\s+/ );
-                    var row = parseInt( line[ 5 ] ) - 1;
-                    var elms = unitcellDict.origx.elements;
+                    var orgix = line.split( /\s+/ );
+                    var origxRow = parseInt( line[ 5 ] ) - 1;
+                    var origxElms = unitcellDict.origx.elements;
 
-                    elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
-                    elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
-                    elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
-                    elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
+                    origxElms[ 4 * 0 + origxRow ] = parseFloat( orgix[ 1 ] );
+                    origxElms[ 4 * 1 + origxRow ] = parseFloat( orgix[ 2 ] );
+                    origxElms[ 4 * 2 + origxRow ] = parseFloat( orgix[ 3 ] );
+                    origxElms[ 4 * 3 + origxRow ] = parseFloat( orgix[ 4 ] );
 
                 }else if( line.substr( 0, 5 ) === 'SCALE' ){
 
@@ -394,14 +401,14 @@ PdbParser.prototype = Object.assign( Object.create(
                         unitcellDict.scale = new THREE.Matrix4();
                     }
 
-                    var ls = line.split( /\s+/ );
-                    var row = parseInt( line[ 5 ] ) - 1;
-                    var elms = unitcellDict.scale.elements;
+                    var scale = line.split( /\s+/ );
+                    var scaleRow = parseInt( line[ 5 ] ) - 1;
+                    var scaleElms = unitcellDict.scale.elements;
 
-                    elms[ 4 * 0 + row ] = parseFloat( ls[ 1 ] );
-                    elms[ 4 * 1 + row ] = parseFloat( ls[ 2 ] );
-                    elms[ 4 * 2 + row ] = parseFloat( ls[ 3 ] );
-                    elms[ 4 * 3 + row ] = parseFloat( ls[ 4 ] );
+                    scaleElms[ 4 * 0 + scaleRow ] = parseFloat( scale[ 1 ] );
+                    scaleElms[ 4 * 1 + scaleRow ] = parseFloat( scale[ 2 ] );
+                    scaleElms[ 4 * 2 + scaleRow ] = parseFloat( scale[ 3 ] );
+                    scaleElms[ 4 * 3 + scaleRow ] = parseFloat( scale[ 4 ] );
 
                 }else if( recordName === 'CRYST1' ){
 
@@ -415,27 +422,27 @@ PdbParser.prototype = Object.assign( Object.create(
                     // 56 - 66       LString        sGroup        Space group.
                     // 67 - 70       Integer        z             Z value.
 
-                    var a = parseFloat( line.substr( 6, 9 ) );
-                    var b = parseFloat( line.substr( 15, 9 ) );
-                    var c = parseFloat( line.substr( 24, 9 ) );
+                    var aLength = parseFloat( line.substr( 6, 9 ) );
+                    var bLength = parseFloat( line.substr( 15, 9 ) );
+                    var cLength = parseFloat( line.substr( 24, 9 ) );
 
                     var alpha = parseFloat( line.substr( 33, 7 ) );
                     var beta = parseFloat( line.substr( 40, 7 ) );
                     var gamma = parseFloat( line.substr( 47, 7 ) );
 
                     var sGroup = line.substr( 55, 11 ).trim();
-                    var z = parseInt( line.substr( 66, 4 ) );
+                    var zValue = parseInt( line.substr( 66, 4 ) );
 
                     var box = new Float32Array( 9 );
-                    box[ 0 ] = a;
-                    box[ 4 ] = b;
-                    box[ 8 ] = c;
+                    box[ 0 ] = aLength;
+                    box[ 4 ] = bLength;
+                    box[ 8 ] = cLength;
                     boxes.push( box );
 
                     if( modelIdx === 0 ){
-                        unitcellDict.a = a;
-                        unitcellDict.b = b;
-                        unitcellDict.c = c;
+                        unitcellDict.a = aLength;
+                        unitcellDict.b = bLength;
+                        unitcellDict.c = cLength;
                         unitcellDict.alpha = alpha;
                         unitcellDict.beta = beta;
                         unitcellDict.gamma = gamma;

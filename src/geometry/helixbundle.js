@@ -60,7 +60,7 @@ Helixbundle.prototype = {
         var tmpAxis = [];
         var tmpCenter = [];
 
-        var _axis, _center
+        var _axis, _center;
         var _beg = new THREE.Vector3();
         var _end = new THREE.Vector3();
 

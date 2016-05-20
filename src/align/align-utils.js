@@ -5,7 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
-import Selection from "../Selection.js";
+import Selection from "../selection.js";
 import Alignment from "./alignment.js";
 import Superposition from "./superposition.js";
 
@@ -18,7 +18,7 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
     xsele1 = xsele1 || "";
     xsele2 = xsele2 || "";
 
-    var atoms1, atoms2;
+    var i, j, n, atoms1, atoms2;
 
     if( align ){
 
@@ -47,9 +47,9 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         // Log.log( ali.ali2 );
 
         var l, _i, _j, x, y;
-        var i = 0;
-        var j = 0;
-        var n = ali.ali1.length;
+        i = 0;
+        j = 0;
+        n = ali.ali1.length;
         var aliIdx1 = [];
         var aliIdx2 = [];
 
@@ -134,8 +134,8 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         var test1 = xselection1.test;
         var test2 = xselection2.test;
 
-        var i, a1, a2;
-        var n = atoms1.atomCount;
+        var a1, a2;
+        n = atoms1.atomCount;
 
         for( i = 0; i < n; ++i ){
 

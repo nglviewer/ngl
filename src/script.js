@@ -25,6 +25,8 @@ function Script( functionBody, name, path ){
 
     try {
 
+        // supress warning about string evaluation as code
+        // jshint evil:true
         this.fn = new Function(
 
             'stage', 'panel',

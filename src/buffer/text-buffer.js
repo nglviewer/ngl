@@ -160,14 +160,16 @@ TextAtlas.prototype = {
         // Clear scratch area
         ctx.clearRect(0, 0, w, h);
 
+        var i, il, j, imageData, data;
+
         if( this.outline === 0 ){
 
             ctx.fillText( text, x, y );
-            var imageData = ctx.getImageData( 0, 0, w, h );
-            var data = imageData.data;
+            imageData = ctx.getImageData( 0, 0, w, h );
+            data = imageData.data;
 
-            var j = 3;  // Skip to alpha channel
-            for( var i = 0, il = data.length / 4; i < il; ++i ){
+            j = 3;  // Skip to alpha channel
+            for( i = 0, il = data.length / 4; i < il; ++i ){
                 dst[ i ] = data[ j ];
                 j += 4;
             }
@@ -177,10 +179,10 @@ TextAtlas.prototype = {
             ctx.globalCompositeOperation = "source-over";
             // Draw strokes of decreasing width to create
             // nested outlines (absolute distance)
-            for( var i = o + 1; i > 0; --i ){
+            for( i = o + 1; i > 0; --i ){
                 // Eliminate odd strokes once past > 1px,
                 // don't need the detail
-                var j = i > 1 ? i * 2 - 2 : i;
+                j = i > 1 ? i * 2 - 2 : i;
                 ctx.strokeStyle = colors[ j - 1 ];
                 ctx.lineWidth = j;
                 ctx.strokeText( text, x, y );
@@ -188,12 +190,12 @@ TextAtlas.prototype = {
             ctx.globalCompositeOperation = "multiply";
             ctx.fillStyle = "#FF00FF";
             ctx.fillText( text, x, y );
-            var imageData = ctx.getImageData( 0, 0, w, h );
-            var data = imageData.data;
+            imageData = ctx.getImageData( 0, 0, w, h );
+            data = imageData.data;
 
-            var j = 0;
+            j = 0;
             var gamma = this.gamma;
-            for( var i = 0, il = data.length / 4; i < il; ++i ){
+            for( i = 0, il = data.length / 4; i < il; ++i ){
                 // Get value + mask
                 var a = data[ j ];
                 var mask = a ? data[ j + 1 ] / a : 1;
@@ -324,22 +326,22 @@ TextBuffer.prototype = Object.assign( Object.create(
         var text = this.text;
         var attributes = this.geometry.attributes;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+        if( data.position ){
+            position = data.position;
+            aPosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
         }
 
-        if( data[ "size" ] ){
-            size = data[ "size" ];
-            inputSize = attributes[ "inputSize" ].array;
-            attributes[ "inputSize" ].needsUpdate = true;
+        if( data.size ){
+            size = data.size;
+            inputSize = attributes.inputSize.array;
+            attributes.inputSize.needsUpdate = true;
         }
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
+        if( data.color ){
+            color = data.color;
+            aColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
         }
 
         var n = this.positionCount;
@@ -422,8 +424,8 @@ TextBuffer.prototype = Object.assign( Object.create(
         var ta = this.ta;
         var text = this.text;
 
-        var inputTexCoord = this.geometry.attributes[ "inputTexCoord" ].array;
-        var inputMapping = this.geometry.attributes[ "mapping" ].array;
+        var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
+        var inputMapping = this.geometry.attributes.mapping.array;
 
         var n = this.positionCount;
 
@@ -474,8 +476,8 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         }
 
-        this.geometry.attributes[ "inputTexCoord" ].needsUpdate = true;
-        this.geometry.attributes[ "mapping" ].needsUpdate = true;
+        this.geometry.attributes.inputTexCoord.needsUpdate = true;
+        this.geometry.attributes.mapping.needsUpdate = true;
 
     },
 
@@ -484,7 +486,7 @@ TextBuffer.prototype = Object.assign( Object.create(
         var defines = Buffer.prototype.getDefines.call( this, type );
 
         if( this.sdf ){
-            defines[ "SDF" ] = 1;
+            defines.SDF = 1;
         }
 
         return defines;
@@ -494,17 +496,17 @@ TextBuffer.prototype = Object.assign( Object.create(
     setUniforms: function( data ){
 
         if( data && (
-                data[ "fontFamily" ] !== undefined ||
-                data[ "fontStyle" ] !== undefined ||
-                data[ "fontWeight" ] !== undefined ||
-                data[ "fontSize" ] !== undefined ||
-                data[ "sdf" ] !== undefined
+                data.fontFamily !== undefined ||
+                data.fontStyle !== undefined ||
+                data.fontWeight !== undefined ||
+                data.fontSize !== undefined ||
+                data.sdf !== undefined
             )
         ){
 
             this.makeTexture();
             this.makeMapping();
-            data[ "fontTexture" ] = this.tex;
+            data.fontTexture = this.tex;
 
         }
 

@@ -38,7 +38,7 @@ function makePointTexture( params ){
 
     //
 
-    var x = 0
+    var x = 0;
     var y = 0;
     var data = new Uint8Array( width * height * 4 );
 
@@ -138,15 +138,15 @@ PointBuffer.prototype = Object.assign( Object.create(
         var defines = Buffer.prototype.getDefines.call( this, type );
 
         if( this.sizeAttenuation ){
-            defines[ "USE_SIZEATTENUATION" ] = 1;
+            defines.USE_SIZEATTENUATION = 1;
         }
 
         if( this.useTexture ){
-            defines[ "USE_MAP" ] = 1;
+            defines.USE_MAP = 1;
         }
 
         if( this.alphaTest > 0 && this.alphaTest <= 1 ){
-            defines[ "ALPHATEST" ] = this.alphaTest.toPrecision( 2 );
+            defines.ALPHATEST = this.alphaTest.toPrecision( 2 );
         }
 
         return defines;
@@ -155,10 +155,10 @@ PointBuffer.prototype = Object.assign( Object.create(
 
     setUniforms: function( data ){
 
-        if( data && data[ "edgeBleach" ] !== undefined ){
+        if( data && data.edgeBleach !== undefined ){
 
             this.makeTexture();
-            data[ "map" ] = this.tex;
+            data.map = this.tex;
 
         }
 

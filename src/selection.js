@@ -64,7 +64,7 @@ Selection.prototype = {
 
         this.atomOnlyTest = this.makeAtomTest( true );
         this.residueOnlyTest = this.makeResidueTest( true );
-        this.chainOnlyTest = this.makeChainTest( true )
+        this.chainOnlyTest = this.makeChainTest( true );
         this.modelOnlyTest = this.makeModelTest( true );
 
         if( !silent ){
@@ -119,7 +119,7 @@ Selection.prototype = {
             }
             j = 0;
 
-        }
+        };
 
         var getPrevContext = function( operator ){
 
@@ -132,14 +132,14 @@ Selection.prototype = {
                 j = selection.rules.length;
             }
 
-        }
+        };
 
         var pushRule = function( rule ){
 
             selection.rules.push( rule );
             j += 1;
 
-        }
+        };
 
         for( i = 0; i < chunks.length; ++i ){
 
@@ -757,7 +757,7 @@ Selection.prototype = {
                 if( and ){ return t; }else{ return f; }
             }
 
-        }
+        };
 
     },
 
@@ -887,7 +887,7 @@ Selection.prototype = {
 
             return true;
 
-        }
+        };
 
         return this._makeTest( fn, selection );
 
@@ -958,7 +958,7 @@ Selection.prototype = {
 
             return true;
 
-        }
+        };
 
         return this._makeTest( fn, selection );
 
@@ -1003,7 +1003,7 @@ Selection.prototype = {
 
             return true;
 
-        }
+        };
 
         return this._makeTest( fn, selection );
 
@@ -1046,7 +1046,7 @@ Selection.prototype = {
 
             return true;
 
-        }
+        };
 
         return this._makeTest( fn, selection );
 

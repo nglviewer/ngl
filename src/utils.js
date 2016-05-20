@@ -215,7 +215,7 @@ function getFileInfo( file ){
     ){
         path = file.name || "";
     }else{
-        path = file
+        path = file;
     }
     var queryIndex = path.lastIndexOf( '?' );
     path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
@@ -331,7 +331,7 @@ var binarySearchIndexOf = function(){
             }
         }
         return -low - 1;
-    }
+    };
 }();
 
 

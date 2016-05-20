@@ -12,6 +12,23 @@
 
     <body>
 
+        <script>
+
+            var blob, stage;
+            var url = "http://mmtf.rcsb.org/v0/full/3sn6";
+            var xhr = new XMLHttpRequest();
+            xhr.open( "GET", url, true );
+            xhr.addEventListener( 'load', function( event ){
+                blob = new Blob( [ xhr.response ], { type: 'application/octet-binary'} );
+                if( stage ){
+                    stage.loadFile( blob, { ext: "mmtf", defaultRepresentation: true } );
+                }
+            } );
+            xhr.responseType = "arraybuffer";
+            xhr.send( null );
+
+        </script>
+
         <!-- THREE -->
         <script src="../lib/three/three.js"></script>
         <script src="../lib/three/TypedArrayUtils.js"></script>
@@ -36,16 +53,14 @@
         <script>
 
             document.addEventListener( "DOMContentLoaded", function(){
-                var stage = new NGL.Stage( "viewport" );
+                stage = new NGL.Stage( "viewport" );
                 stage.viewer.container.addEventListener( "dblclick", function(){
                     stage.toggleFullscreen();
                 } );
-                stage.loadFile( "rcsb://1crn.mmtf", {
-                    defaultRepresentation: true
-                } ).then( function( o ){
-                    // o.addRepresentation( "spacefill" );
-                    // o.addRepresentation( "surface", { useWorker: false } );
-                } );
+                // stage.loadFile( "rcsb://1crn.mmtf", { defaultRepresentation: true } );
+                if( blob ){
+                    stage.loadFile( blob, { ext: "mmtf", defaultRepresentation: true } );
+                }
             } );
 
         </script>

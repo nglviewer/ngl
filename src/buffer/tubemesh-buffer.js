@@ -32,7 +32,7 @@ function TubeMeshBuffer( position, normal, binormal, tangent, color, size, picki
     this.meshNormal = new Float32Array( x );
     this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
 
-    var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3
+    var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3;
     var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
     this.meshIndex = new TypedArray( xi );
     this.makeIndex();
@@ -77,37 +77,37 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
             var attributes = this.geometry.attributes;
 
             var position, normal, binormal, tangent, color, size, pickingColor;
-            var meshPosition, meshColor, meshNormal, meshPickingColor
+            var meshPosition, meshColor, meshNormal, meshPickingColor;
 
-            if( data[ "position" ] ){
+            if( data.position ){
 
-                position = data[ "position" ];
-                normal = data[ "normal" ];
-                binormal = data[ "binormal" ];
-                tangent = data[ "tangent" ];
-                size = data[ "size" ];
+                position = data.position;
+                normal = data.normal;
+                binormal = data.binormal;
+                tangent = data.tangent;
+                size = data.size;
 
-                meshPosition = attributes[ "position" ].array;
-                meshNormal = attributes[ "normal" ].array;
+                meshPosition = attributes.position.array;
+                meshNormal = attributes.normal.array;
 
-                attributes[ "position" ].needsUpdate = true;
-                attributes[ "normal" ].needsUpdate = true;
-
-            }
-
-            if( data[ "color" ] ){
-
-                color = data[ "color" ];
-                meshColor = attributes[ "color" ].array;
-                attributes[ "color" ].needsUpdate = true;
+                attributes.position.needsUpdate = true;
+                attributes.normal.needsUpdate = true;
 
             }
 
-            if( data[ "pickingColor" ] ){
+            if( data.color ){
 
-                pickingColor = data[ "pickingColor" ];
-                meshPickingColor = attributes[ "pickingColor" ].array;
-                attributes[ "pickingColor" ].needsUpdate = true;
+                color = data.color;
+                meshColor = attributes.color.array;
+                attributes.color.needsUpdate = true;
+
+            }
+
+            if( data.pickingColor ){
+
+                pickingColor = data.pickingColor;
+                meshPickingColor = attributes.pickingColor.array;
+                attributes.pickingColor.needsUpdate = true;
 
             }
 
@@ -175,7 +175,7 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
                 for( j = 0; j < radialSegments; ++j ){
 
-                    s = l + j * 3
+                    s = l + j * 3;
 
                     if( position ){
 
@@ -308,7 +308,7 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
             }
 
-        }
+        };
 
     }(),
 
@@ -326,7 +326,7 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
         for( i = 0; i < n1; ++i ){
 
-            k = i * radialSegments * 3 * 2
+            k = i * radialSegments * 3 * 2;
 
             irs = i * radialSegments;
             irs1 = ( i + 1 ) * radialSegments;

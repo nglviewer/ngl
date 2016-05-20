@@ -49,7 +49,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
         this.repr = repr;
         // this.name = repr.type;
 
-        this.stage.tasks.listen( this.repr.tasks )
+        this.stage.tasks.listen( this.repr.tasks );
 
         this.updateVisibility();
 

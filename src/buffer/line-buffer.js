@@ -51,18 +51,18 @@ LineBuffer.prototype = Object.assign( Object.create(
 
         var attributes = this.geometry.attributes;
 
-        if( data[ "from" ] && data[ "to" ] ){
-            from = data[ "from" ];
-            to = data[ "to" ];
-            aPosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+        if( data.from && data.to ){
+            from = data.from;
+            to = data.to;
+            aPosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
         }
 
-        if( data[ "color" ] && data[ "color2" ] ){
-            color = data[ "color" ];
-            color2 = data[ "color2" ];
-            aColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
+        if( data.color && data.color2 ){
+            color = data.color;
+            color2 = data.color2;
+            aColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
         }
 
         var n = this.size;

@@ -106,7 +106,7 @@ function Interpolator( m, tension ){
         array[ k     ] = v.x;
         array[ k + 1 ] = v.y;
         array[ k + 2 ] = v.z;
-    }
+    };
 
     this.getTangent = function( iterator, array, offset, isCyclic ){
         iterator.reset();
@@ -117,7 +117,7 @@ function Interpolator( m, tension ){
         var k = n1 * m * 3;
         if( isCyclic ) k += m * 3;
         copyArray( array, array, k - 3, k, 3 );
-    }
+    };
 
     //
 
@@ -272,13 +272,14 @@ function Interpolator( m, tension ){
     //
 
     function interpolateColor( item1, item2, colFn, pcolFn, col, pcol, offset ){
-        for( var j = 0; j < m2; ++j ){
-            var l = offset + j * 3;
+        var j, l;
+        for( j = 0; j < m2; ++j ){
+            l = offset + j * 3;
             colFn( item1, col, l );  // itemColorToArray
             pcolFn( item1, pcol, l );  // itemPickingColorToArray
         }
-        for( var j = m2; j < m; ++j ){
-            var l = offset + j * 3;
+        for( j = m2; j < m; ++j ){
+            l = offset + j * 3;
             colFn( item2, col, l );  // itemColorToArray
             pcolFn( item2, pcol, l );  // itemPickingColorToArray
         }
@@ -311,7 +312,7 @@ function Interpolator( m, tension ){
         pcol[ k     ] = pcol[ k - 3 ];
         pcol[ k + 1 ] = pcol[ k - 2 ];
         pcol[ k + 2 ] = pcol[ k - 1 ];
-    }
+    };
 
     //
 
@@ -347,7 +348,7 @@ function Interpolator( m, tension ){
         }
         //
         size[ k ] = size[ k - 1 ];
-    }
+    };
 
 }
 
@@ -359,7 +360,7 @@ function Spline( polymer, params ){
 
     var p = params || {};
     this.directional = p.directional || false;
-    this.positionIterator = p.positionIterator || false
+    this.positionIterator = p.positionIterator || false;
     this.subdiv = p.subdiv || 1;
     this.smoothSheet = p.smoothSheet || false;
 
@@ -484,7 +485,7 @@ Spline.prototype = {
 
         return {
             "position": pos
-        }
+        };
 
     },
 
@@ -497,7 +498,7 @@ Spline.prototype = {
             "tangent": tan,
             "normal": normals.normal,
             "binormal": normals.binormal
-        }
+        };
 
     },
 
@@ -535,7 +536,7 @@ Spline.prototype = {
         var polymer = this.polymer;
         var n = polymer.residueCount;
         var n1 = n - 1;
-        var nPos = n1 * m * 3 + 3
+        var nPos = n1 * m * 3 + 3;
         if( polymer.isCyclic ) nPos += m * 3;
 
         var pos = new Float32Array( nPos );
@@ -555,7 +556,7 @@ Spline.prototype = {
         var polymer = this.polymer;
         var n = this.size;
         var n1 = n - 1;
-        var nTan = n1 * m * 3 + 3
+        var nTan = n1 * m * 3 + 3;
         if( polymer.isCyclic ) nTan += m * 3;
 
         var tan = new Float32Array( nTan );
@@ -576,7 +577,7 @@ Spline.prototype = {
         var isProtein = polymer.isProtein();
         var n = this.size;
         var n1 = n - 1;
-        var nNorm = n1 * m * 3 + 3
+        var nNorm = n1 * m * 3 + 3;
         if( polymer.isCyclic ) nNorm += m * 3;
 
         var norm = new Float32Array( nNorm );
@@ -597,7 +598,7 @@ Spline.prototype = {
         return {
             "normal": norm,
             "binormal": bin
-        }
+        };
 
     }
 

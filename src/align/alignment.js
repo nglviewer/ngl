@@ -136,13 +136,15 @@ Alignment.prototype = {
         this.V = [];
         this.H = [];
 
-        for( var i = 0; i <= this.n; ++i ){
+        var i, j;
+
+        for( i = 0; i <= this.n; ++i ){
 
             this.S[ i ] = [];
             this.V[ i ] = [];
             this.H[ i ] = [];
 
-            for( var j = 0; j <= this.m; ++j ){
+            for( j = 0; j <= this.m; ++j ){
 
                 this.S[ i ][ j ] = 0;
                 this.V[ i ][ j ] = 0;
@@ -152,14 +154,14 @@ Alignment.prototype = {
 
         }
 
-        for( var i = 0; i <= this.n; ++i ){
+        for( i = 0; i <= this.n; ++i ){
 
             this.S[ i ][ 0 ] = this.gap( 0 );
             this.H[ i ][ 0 ] = -Infinity;
 
         }
 
-        for( var j = 0; j <= this.m; ++j ){
+        for( j = 0; j <= this.m; ++j ){
 
             this.S[ 0 ][ j ] = this.gap( 0 );
             this.V[ 0 ][ j ] = -Infinity;
@@ -204,7 +206,7 @@ Alignment.prototype = {
 
                 }
 
-            }
+            };
 
         } else {
 
@@ -217,7 +219,7 @@ Alignment.prototype = {
 
                 return c1 === c2 ? 5 : -3;
 
-            }
+            };
 
         }
 

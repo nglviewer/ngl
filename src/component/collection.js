@@ -16,11 +16,7 @@ function Collection( list ){
 
         var elm = this.list[ i ];
 
-        elm.signals.disposed.add( function(){
-
-            this._remove( elm );
-
-        }, this );
+        elm.signals.disposed.add( this._remove, this );
 
     }
 

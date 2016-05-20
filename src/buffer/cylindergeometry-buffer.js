@@ -74,7 +74,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
             scale.set( r, r, eye.distanceTo( target ) );
             matrix.scale( scale );
 
-        }
+        };
 
     },
 
@@ -84,54 +84,54 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var m = this._radius.length / 2;
         var geoData = {};
 
-        if( data[ "position1" ] && data[ "position2" ] ){
+        if( data.position1 && data.position2 ){
 
             calculateCenterArray(
-                data[ "position1" ], data[ "position2" ], this.__center
+                data.position1, data.position2, this.__center
             );
             calculateCenterArray(
-                data[ "position1" ], this.__center, this._position
+                data.position1, this.__center, this._position
             );
             calculateCenterArray(
-                this.__center, data[ "position2" ], this._position, n
+                this.__center, data.position2, this._position, n
             );
 
-            this._from.set( data[ "position1" ] );
+            this._from.set( data.position1 );
             this._from.set( this.__center, n );
 
             this._to.set( this.__center );
-            this._to.set( data[ "position2" ], n );
+            this._to.set( data.position2, n );
 
-            geoData[ "position" ] = this._position;
-
-        }
-
-        if( data[ "color" ] && data[ "color2" ] ){
-
-            this._color.set( data[ "color" ] );
-            this._color.set( data[ "color2" ], n );
-
-            geoData[ "color" ] = this._color;
+            geoData.position = this._position;
 
         }
 
-        if( data[ "pickingColor" ] && data[ "pickingColor2" ] ){
+        if( data.color && data.color2 ){
 
-            this._pickingColor.set( data[ "pickingColor" ] );
-            this._pickingColor.set( data[ "pickingColor2" ], n );
+            this._color.set( data.color );
+            this._color.set( data.color2, n );
 
-            geoData[ "pickingColor" ] = this._pickingColor;
-
-        }
-
-        if( data[ "radius" ] ){
-
-            this._radius.set( data[ "radius" ] );
-            this._radius.set( data[ "radius" ], m );
+            geoData.color = this._color;
 
         }
 
-        if( ( data[ "position1" ] && data[ "position2" ] ) || data[ "radius" ] ){
+        if( data.pickingColor && data.pickingColor2 ){
+
+            this._pickingColor.set( data.pickingColor );
+            this._pickingColor.set( data.pickingColor2, n );
+
+            geoData.pickingColor = this._pickingColor;
+
+        }
+
+        if( data.radius ){
+
+            this._radius.set( data.radius );
+            this._radius.set( data.radius, m );
+
+        }
+
+        if( ( data.position1 && data.position2 ) || data.radius ){
 
             this.setPositionTransform( this._from, this._to, this._radius );
 

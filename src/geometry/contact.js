@@ -72,7 +72,7 @@ Contact.prototype = {
 
     }
 
-}
+};
 
 
 export default Contact;

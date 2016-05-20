@@ -62,7 +62,7 @@ function Buffer( position, color, index, pickingColor, params ){
     }
 
     this.uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "common" ],
+        THREE.UniformsLib.common,
         {
             "fogColor": { value: null },
             "fogNear": { value: 0.0 },
@@ -75,11 +75,11 @@ function Buffer( position, color, index, pickingColor, params ){
             "roughness": { value: this.roughness },
             "metalness": { value: this.metalness }
         },
-        THREE.UniformsLib[ "ambient" ],
-        THREE.UniformsLib[ "lights" ]
+        THREE.UniformsLib.ambient,
+        THREE.UniformsLib.lights
     ] );
 
-    this.uniforms[ "diffuse" ].value.set( this.diffuse );
+    this.uniforms.diffuse.value.set( this.diffuse );
 
     var objectId = new THREE.Uniform( 0.0 )
         .onUpdate( function( object, camera ){
@@ -285,7 +285,7 @@ Buffer.prototype = {
 
             }
 
-        }
+        };
 
     }(),
 
@@ -420,26 +420,26 @@ Buffer.prototype = {
         var defines = {};
 
         if( this.clipNear ){
-            defines[ "NEAR_CLIP" ] = 1;
+            defines.NEAR_CLIP = 1;
         }
 
         if( type === "picking" ){
 
-            defines[ "PICKING" ] = 1;
+            defines.PICKING = 1;
 
         }else{
 
             if( type === "background" || this.background ){
-                defines[ "NOLIGHT" ] = 1;
+                defines.NOLIGHT = 1;
             }
             if( this.flatShaded ){
-                defines[ "FLAT_SHADED" ] = 1;
+                defines.FLAT_SHADED = 1;
             }
             if( this.opaqueBack ){
-                defines[ "OPAQUE_BACK" ] = 1;
+                defines.OPAQUE_BACK = 1;
             }
             if( this.dullInterior ){
-                defines[ "DULL_INTERIOR" ] = 1;
+                defines.DULL_INTERIOR = 1;
             }
 
         }
@@ -595,7 +595,7 @@ Buffer.prototype = {
             }
 
             if( name === "forceTransparent" ){
-                propertyData[ "transparent" ] = this.transparent;
+                propertyData.transparent = this.transparent;
             }
 
         }

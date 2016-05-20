@@ -90,7 +90,7 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
         var material = Buffer.prototype.getMaterial.call( this, type );
 
         if( this.cap ){
-            material.defines[ "CAP" ] = 1;
+            material.defines.CAP = 1;
         }
 
         return material;

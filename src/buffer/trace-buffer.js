@@ -49,16 +49,16 @@ TraceBuffer.prototype = Object.assign( Object.create(
 
         var attributes = this.geometry.attributes;
 
-        if( data[ "position" ] ){
-            position = data[ "position" ];
-            linePosition = attributes[ "position" ].array;
-            attributes[ "position" ].needsUpdate = true;
+        if( data.position ){
+            position = data.position;
+            linePosition = attributes.position.array;
+            attributes.position.needsUpdate = true;
         }
 
-        if( data[ "color" ] ){
-            color = data[ "color" ];
-            lineColor = attributes[ "color" ].array;
-            attributes[ "color" ].needsUpdate = true;
+        if( data.color ){
+            color = data.color;
+            lineColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
         }
 
         if( !position && !color ){

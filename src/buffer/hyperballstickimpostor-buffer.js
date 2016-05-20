@@ -135,7 +135,7 @@ HyperballStickImpostorBuffer.prototype = Object.assign( Object.create(
 
         shrink: { uniform: true }
 
-    }, BoxBuffer.prototype.parameters );
+    }, BoxBuffer.prototype.parameters )
 
 } );
 
