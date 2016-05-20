@@ -373,7 +373,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
         return function(){
 
-            if( NGL.debug ){
+            if( NGL.Debug ){
 
                 return _getShaderParameter.apply( this, arguments );
 
@@ -393,7 +393,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
         return function(){
 
-            if( NGL.debug ){
+            if( NGL.Debug ){
 
                 return _getShaderInfoLog.apply( this, arguments );
 
@@ -413,7 +413,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
         return function( program, pname ){
 
-            if( NGL.debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+            if( NGL.Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
 
                 return _getProgramParameter.apply( this, arguments );
 
@@ -433,7 +433,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
         return function(){
 
-            if( NGL.debug ){
+            if( NGL.Debug ){
 
                 return _getProgramInfoLog.apply( this, arguments );
 

@@ -9,7 +9,7 @@
  * @module NGL
  */
 
-import { RepresentationRegistry } from "./globals.js";
+import { Debug, RepresentationRegistry } from "./globals.js";
 import Structure from "./structure/structure.js";
 import StructureView from "./structure/structure-view.js";
 import Stage from "./stage/stage.js";
@@ -45,5 +45,6 @@ var version = "v0.8.0dev";
 
 export {
     version,
+    Debug,
     Stage
 };
