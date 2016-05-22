@@ -4,9 +4,6 @@
  */
 
 
-import { Log, Debug } from "./globals.js";
-
-
 function GET( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );
@@ -120,10 +117,7 @@ function deepCopy( src ){
 
 function download( data, downloadName ){
 
-    if( !data ){
-        Log.warn( "download: no data given." );
-        return;
-    }
+    if( !data ) return;
 
     downloadName = downloadName || "download";
 
@@ -176,7 +170,7 @@ function submit( url, data, callback, onerror ){
 
     }else{
 
-        Log.warn( "submit: type not supported.", data  );
+        throw "submit: data must be a FormData instance.";
 
     }
 
@@ -384,8 +378,6 @@ function uint8ToString( u8a ){
 
 function uint8ToLines( u8a, chunkSize, newline ){
 
-    if( Debug ) Log.time( "uint8ToLines" );
-
     chunkSize = chunkSize !== undefined ? chunkSize : 1024 * 1024 * 10;
     newline = newline !== undefined ? newline : "\n";
 
@@ -426,8 +418,6 @@ function uint8ToLines( u8a, chunkSize, newline ){
 
     }
 
-    if( Debug ) Log.timeEnd( "uint8ToLines" );
-
     return lines;
 
 }
@@ -437,8 +427,6 @@ function decompress( data ){
 
     var decompressedData;
 
-    if( Debug ) Log.time( "decompress" );
-
     if( data instanceof ArrayBuffer ){
         data = new Uint8Array( data );
     }
@@ -446,11 +434,8 @@ function decompress( data ){
     try{
         decompressedData = pako.ungzip( data );
     }catch( e ){
-        if( Debug ) Log.warn( e );
         decompressedData = data;  // assume it is already uncompressed
     }
-
-    if( Debug ) Log.timeEnd( "decompress" );
 
     return decompressedData;
 

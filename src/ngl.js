@@ -18,6 +18,10 @@ import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 
+import { throttle } from "./utils.js";
+import Queue from "./utils/queue.js";
+
+
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
 import BaseRepresentation from "./representation/base-representation";
@@ -56,5 +60,8 @@ export {
     RepresentationRegistry,
     PdbWriter,
     Stage,
-    TrajectoryPlayer
+    TrajectoryPlayer,
+
+    Queue,
+    throttle
 };
