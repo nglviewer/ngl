@@ -131,7 +131,7 @@ function PdbWriter( structure, params ){
 
     }
 
-    function download( name, ext ){
+    function _download( name, ext ){
 
         name = name || "structure";
         ext = ext || "pdb";
@@ -147,7 +147,7 @@ function PdbWriter( structure, params ){
 
     this.getString = getString;
     this.getBlob = getBlob;
-    this.download = download;
+    this.download = _download;
 
 }
 
