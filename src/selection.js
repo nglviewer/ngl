@@ -1056,3 +1056,7 @@ Selection.prototype = {
 
 
 export default Selection;
+
+export {
+    kwd
+};

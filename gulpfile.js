@@ -2,7 +2,7 @@ var gulp = require('gulp');
 var gutil = require('gulp-util');
 var rename = require("gulp-rename");
 var jshint = require('gulp-jshint');
-// var rollup = require('gulp-rollup');
+var gulpRollup = require('gulp-rollup');
 var sourcemaps = require('gulp-sourcemaps');
 var qunit = require('gulp-qunit');
 var uglify = require('gulp-uglify');
@@ -32,6 +32,31 @@ gulp.task('build-ngl', function () {
     });
   });
 });
+
+gulp.task('build-test', function(){
+  return gulp.src('test/src/**/*.js', {read: false})
+    .pipe(gulpRollup({
+      format: 'iife'
+    }))
+    .pipe(gulp.dest('test/build'));
+});
+
+// gulp.task('build-test', function () {
+//   gulpRollup({
+//     entry: 'test/src/**/*.js',
+//     plugins: [
+//       commonjs(),
+//       string({
+//         extensions: ['.vert', '.frag', '.glsl']
+//       })
+//     ]
+//   }).then(function (bundle) {
+//     return bundle.write({
+//       format: 'iife',
+//       dest: 'test/build/'
+//     });
+//   });
+// });
 
 gulp.task('doc', function() {
   var config = {
