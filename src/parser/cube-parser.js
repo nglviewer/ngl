@@ -5,7 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
-import VolumeParser from "./parser.js";
+import VolumeParser from "./volume-parser.js";
 
 
 function CubeParser( streamer, params ){
