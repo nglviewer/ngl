@@ -384,7 +384,7 @@ function uint8ToString( u8a ){
 
 function uint8ToLines( u8a, chunkSize, newline ){
 
-    log.time( "uint8ToLines" );
+    if( Debug ) Log.time( "uint8ToLines" );
 
     chunkSize = chunkSize !== undefined ? chunkSize : 1024 * 1024 * 10;
     newline = newline !== undefined ? newline : "\n";
@@ -426,7 +426,7 @@ function uint8ToLines( u8a, chunkSize, newline ){
 
     }
 
-    log.timeEnd( "uint8ToLines" );
+    if( Debug ) Log.timeEnd( "uint8ToLines" );
 
     return lines;
 
@@ -437,7 +437,7 @@ function decompress( data ){
 
     var decompressedData;
 
-    Log.time( "decompress" );
+    if( Debug ) Log.time( "decompress" );
 
     if( data instanceof ArrayBuffer ){
         data = new Uint8Array( data );
@@ -450,7 +450,7 @@ function decompress( data ){
         decompressedData = data;  // assume it is already uncompressed
     }
 
-    Log.timeEnd( "decompress" );
+    if( Debug ) Log.timeEnd( "decompress" );
 
     return decompressedData;
 

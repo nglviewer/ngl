@@ -34,7 +34,6 @@
  * You can install the library under node with the command line
  *   npm install fastbitset
  */
-'use strict';
 
 // you can provide an iterable
 // an exception is thrown if typed arrays are not supported
@@ -126,18 +125,19 @@ TypedFastBitSet.prototype.set_range = function(from, to, value) {
     this.words[k] = value;
   }
   // set parts of the range not spanning complete words
+  var i, n;
   if (value){
-    for (var i = from, n = (wordStart << 5) + 1; i < n; ++i) {
+    for (i = from, n = (wordStart << 5) + 1; i < n; ++i) {
       this.words[i >>> 5] |= 1 << i ;
     }
-    for (var i = (wordEnd << 5), n = to + 1; i < n; ++i) {
+    for (i = (wordEnd << 5), n = to + 1; i < n; ++i) {
       this.words[i >>> 5] |= 1 << i ;
     }
   }else{
-    for (var i = from, n = (wordStart << 5) + 1; i < n; ++i) {
+    for (i = from, n = (wordStart << 5) + 1; i < n; ++i) {
       this.words[i >>> 5] &= ~(1 << i);
     }
-    for (var i = (wordEnd << 5), n = to + 1; i < n; ++i) {
+    for (i = (wordEnd << 5), n = to + 1; i < n; ++i) {
       this.words[i >>> 5] &= ~(1 << i);
     }
   }
@@ -240,7 +240,7 @@ TypedFastBitSet.prototype.array = function() {
   var c = this.count | 0;
   for (var k = 0; k < c; ++k) {
     var w =  this.words[k];
-    while (w != 0) {
+    while (w !== 0) {
       var t = w & -w;
       answer[pos++] = (k << 5) + this.hammingWeight((t - 1) | 0);
       w ^= t;
@@ -257,7 +257,7 @@ TypedFastBitSet.prototype.forEach = function(fnc) {
   var i = 0 | 0;
   for (var k = 0; k < c; ++k) {
     var w = this.words[k];
-    while (w != 0) {
+    while (w !== 0) {
       var t = w & -w;
       var index = (k << 5) + this.hammingWeight((t - 1) | 0);
       // FIXME workaround, it should not be required to check the length
@@ -273,7 +273,7 @@ TypedFastBitSet.forEach = function(fnc, bitmap1, bitmap2) {
   for (var k = 0; k < c; ++k) {
     var w1 = bitmap1.words[k];
     var w2 = bitmap2.words[k];
-    while (w1 != 0 && w2 != 0) {
+    while (w1 !== 0 && w2 !== 0) {
       var t1 = w1 & -w1;
       var t2 = w2 & -w2;
       var kShift = k << 5;
@@ -325,7 +325,7 @@ TypedFastBitSet.prototype.intersection = function(otherbitmap) {
     this.words[k] &= otherbitmap.words[k];
   }
   var c = this.count;
-  for (var k = newcount; k < c; ++k) {
+  for (k = newcount; k < c; ++k) {
     this.words[k] = 0;
   }
   this.count = newcount;
@@ -360,18 +360,19 @@ TypedFastBitSet.prototype.new_intersection = function(otherbitmap) {
 // the current bitmap is modified
 TypedFastBitSet.prototype.equals = function(otherbitmap) {
   var mcount = Math.min(this.count , otherbitmap.count);
-  for (var k = 0 | 0; k < mcount; ++k) {
+  var k, c;
+  for (k = 0 | 0; k < mcount; ++k) {
     if (this.words[k] != otherbitmap.words[k]) return false;
   }
   if (this.count < otherbitmap.count) {
-    var c = otherbitmap.count;
-    for (var k = this.count; k < c; ++k) {
-      if (otherbitmap.words[k] != 0) return false;
+    c = otherbitmap.count;
+    for (k = this.count; k < c; ++k) {
+      if (otherbitmap.words[k] !== 0) return false;
     }
   } else if (otherbitmap.count < this.count) {
-    var c = this.count;
-    for (var k = otherbitmap.count; k < c; ++k) {
-      if (this.words[k] != 0) return false;
+    c = this.count;
+    for (k = otherbitmap.count; k < c; ++k) {
+      if (this.words[k] !== 0) return false;
     }
   }
   return true;
@@ -439,7 +440,7 @@ TypedFastBitSet.prototype.union = function(otherbitmap) {
   if (this.count < otherbitmap.count) {
     this.resize((otherbitmap.count  << 5) - 1);
     var c = otherbitmap.count;
-    for (var k = mcount; k < c; ++k) {
+    for (k = mcount; k < c; ++k) {
       this.words[k] = otherbitmap.words[k];
     }
     this.count = otherbitmap.count;
@@ -453,16 +454,17 @@ TypedFastBitSet.prototype.new_union = function(otherbitmap) {
   var answer = Object.create(TypedFastBitSet.prototype);
   answer.count = Math.max(this.count,otherbitmap.count);
   answer.words = new Uint32Array(answer.count);
-  var mcount = Math.min(this.count,otherbitmap.count)
-  for (var k = 0; k < mcount; ++k) {
+  var mcount = Math.min(this.count,otherbitmap.count);
+  var k;
+  for (k = 0; k < mcount; ++k) {
       answer.words[k] = this.words[k] | otherbitmap.words[k];
   }
   var c = this.count;
-  for (var k = mcount; k < c; ++k) {
+  for (k = mcount; k < c; ++k) {
       answer.words[k] = this.words[k] ;
   }
   var c2 = otherbitmap.count;
-  for (var k = mcount; k < c2; ++k) {
+  for (k = mcount; k < c2; ++k) {
       answer.words[k] = otherbitmap.words[k] ;
   }
   return answer;
@@ -478,17 +480,18 @@ TypedFastBitSet.prototype.new_difference = function(otherbitmap) {
 TypedFastBitSet.prototype.union_size = function(otherbitmap) {
   var mcount = Math.min(this.count,otherbitmap.count);
   var answer = 0 | 0;
-  for (var k = 0 | 0; k < mcount; ++k) {
+  var k, c;
+  for (k = 0 | 0; k < mcount; ++k) {
     answer += this.hammingWeight(this.words[k] | otherbitmap.words[k]);
   }
   if (this.count < otherbitmap.count) {
-    var c = otherbitmap.count;
-    for (var k = this.count ; k < c; ++k) {
+    c = otherbitmap.count;
+    for (k = this.count ; k < c; ++k) {
       answer += this.hammingWeight(otherbitmap.words[k] | 0);
     }
   } else {
-    var c = this.count;
-    for (var k = otherbitmap.count ; k < c; ++k) {
+    c = this.count;
+    for (k = otherbitmap.count ; k < c; ++k) {
       answer += this.hammingWeight(this.words[k] | 0);
     }
   }

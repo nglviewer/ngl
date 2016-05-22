@@ -167,10 +167,10 @@ CifParser.prototype = Object.assign( Object.create(
                         // Log.log( "LOOP KEY", line );
 
                         keyParts = line.split(".");
-                        category = loopKeys[ 0 ].substring( 1 );
-                        name = loopKeys[ 1 ];
+                        category = keyParts[ 0 ].substring( 1 );
+                        name = keyParts[ 1 ];
 
-                        if( loopKeys.length === 1 ){
+                        if( keyParts.length === 1 ){
 
                             name = false;
                             if( !cif[ category ] ) cif[ category ] = [];

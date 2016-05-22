@@ -343,8 +343,11 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
 
         for(i = 0; i < n-1; i++) {
             for(j = i+1; j < n; j++) {
-                Ai = (i*astep)|0, Aj = (j*astep)|0;
-                a = W[i], p = 0, b = W[j];
+                Ai = (i*astep)|0;
+                Aj = (j*astep)|0;
+                a = W[i];
+                p = 0;
+                b = W[j];
 
                 k = 2;
                 p += At[Ai]*At[Aj];
@@ -356,7 +359,8 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                 if(Math.abs(p) <= eps*Math.sqrt(a*b)) continue;
 
                 p *= 2.0;
-                beta = a - b, gamma = hypot(p, beta);
+                beta = a - b;
+                gamma = hypot(p, beta);
                 if( beta < 0 ) {
                     delta = (gamma - beta)*0.5;
                     s = Math.sqrt(delta/gamma);
@@ -366,7 +370,8 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                     s = (p/(gamma*c*2.0));
                 }
 
-                a=0.0, b=0.0;
+                a=0.0;
+                b=0.0;
 
                 k = 2; // unroll
                 t0 = c*At[Ai] + s*At[Aj];
@@ -388,12 +393,14 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                     a += t0*t0; b += t1*t1;
                 }
 
-                W[i] = a; W[j] = b;
+                W[i] = a;
+                W[j] = b;
 
                 changed = 1;
 
                 if(Vt) {
-                    Vi = (i*vstep)|0, Vj = (j*vstep)|0;
+                    Vi = (i*vstep)|0;
+                    Vj = (j*vstep)|0;
 
                     k = 2;
                     t0 = c*Vt[Vi] + s*Vt[Vj];
@@ -412,7 +419,7 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                 }
             }
         }
-        if(changed == 0) break;
+        if(changed === 0) break;
     }
 
     for(i = 0; i < n; i++) {
@@ -462,7 +469,7 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
             val0 = (1.0/m);
             for(k = 0; k < m; k++) {
                 seed = (seed * 214013 + 2531011);
-                val = (((seed >> 16) & 0x7fff) & 256) != 0 ? val0 : -val0;
+                val = (((seed >> 16) & 0x7fff) & 256) !== 0 ? val0 : -val0;
                 At[i*astep + k] = val;
             }
             for(iter = 0; iter < 2; iter++) {
@@ -513,7 +520,7 @@ function svd( A, W, U, V ){
     var w_mt = new Matrix( 1, n );
     var v_mt = new Matrix( n, n );
 
-    if(at == 0) {
+    if(at === 0) {
         transpose(a_mt, A);
     } else {
         for(i = 0; i < _n*_m; i++) {
@@ -535,7 +542,7 @@ function svd( A, W, U, V ){
         }
     }
 
-    if (at == 0) {
+    if (at === 0) {
         if( U ) transpose(U, a_mt);
         if( V ) transpose(V, v_mt);
     } else {
@@ -558,5 +565,5 @@ export {
     multiply_ABt,
     invert_3x3,
     multiply_3x3,
-    mat3x3_determinant,
+    mat3x3_determinant
 };
