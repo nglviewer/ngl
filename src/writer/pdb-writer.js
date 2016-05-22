@@ -1,13 +1,14 @@
 /**
- * @file Writer
+ * @file Pdb Writer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
 
-///////////////
-// PDB Writer
+import { Debug, Log } from "../globals.js";
+import { download } from "../utils.js";
 
-NGL.PdbWriter = function( structure, params ){
+
+function PdbWriter( structure, params ){
 
     var p = Object.assign( {}, params );
 
@@ -138,7 +139,7 @@ NGL.PdbWriter = function( structure, params ){
         var file = name + "." + ext;
         var blob = getBlob();
 
-        NGL.download( blob, file );
+        download( blob, file );
 
     }
 
@@ -148,4 +149,7 @@ NGL.PdbWriter = function( structure, params ){
     this.getBlob = getBlob;
     this.download = download;
 
-};
+}
+
+
+export default PdbWriter;
