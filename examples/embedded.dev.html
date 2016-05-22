@@ -15,14 +15,19 @@
         <script>
 
             var blob, stage;
+            function load( o ){
+                stage.loadFile( blob, {
+                    ext: "mmtf", defaultRepresentation: true
+                } ).then( function( o ){
+                    o.addRepresentation( "contact" );
+                } );
+            }
             var url = "http://mmtf.rcsb.org/v0/full/3sn6";
             var xhr = new XMLHttpRequest();
             xhr.open( "GET", url, true );
             xhr.addEventListener( 'load', function( event ){
                 blob = new Blob( [ xhr.response ], { type: 'application/octet-binary'} );
-                if( stage ){
-                    stage.loadFile( blob, { ext: "mmtf", defaultRepresentation: true } );
-                }
+                if( stage ) load();
             } );
             xhr.responseType = "arraybuffer";
             xhr.send( null );
@@ -31,7 +36,6 @@
 
         <!-- THREE -->
         <script src="../lib/three/three.js"></script>
-        <script src="../lib/three/TypedArrayUtils.js"></script>
         <script src="../lib/three/TrackballControls.js"></script>
         <script src="../lib/three/OBJLoader.js"></script>
         <script src="../lib/three/PLYLoader.js"></script>
@@ -57,9 +61,7 @@
                     stage.toggleFullscreen();
                 } );
                 // stage.loadFile( "rcsb://1crn.mmtf", { defaultRepresentation: true } );
-                if( blob ){
-                    stage.loadFile( blob, { ext: "mmtf", defaultRepresentation: true } );
-                }
+                if( blob ) load();
             } );
 
         </script>

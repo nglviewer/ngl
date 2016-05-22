@@ -11,6 +11,7 @@ import {
 } from "../globals.js";
 import { getShader } from "../shader/shader-utils.js";
 import { makeImage } from "./viewer-utils";
+import { quicksortIP } from "../math/array-utils.js";
 
 
 var JitterVectors = [
@@ -1423,7 +1424,7 @@ Viewer.prototype = {
 
                 }
 
-                THREE.TypedArrayUtils.quicksortIP( sortArray, 2, 0 );
+                quicksortIP( sortArray, 2, 0 );
 
                 var index, indexSrc, indexDst, tmpTab;
 

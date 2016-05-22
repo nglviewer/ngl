@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import _Kdtree from "../utils/kdtree.js";
 
 
 function Kdtree( entity, useSquaredDist ){
@@ -47,7 +48,7 @@ function Kdtree( entity, useSquaredDist ){
     } );
 
     this.points = points;
-    this.kdtree = new THREE.TypedArrayUtils.Kdtree( points, metric, 4, 3 );
+    this.kdtree = new _Kdtree( points, metric, 4, 3 );
 
     if( Debug ) Log.timeEnd( "Kdtree build" );
 
