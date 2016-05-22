@@ -176,8 +176,7 @@ AtomProxy.prototype = {
         return (
             moleculeType === ProteinType ||
             moleculeType === RnaType ||
-            moleculeType === DnaType ||
-            moleculeType === CgType
+            moleculeType === DnaType
         );
     },
 

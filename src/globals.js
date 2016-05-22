@@ -34,6 +34,9 @@ var Log = {
 };
 
 var Debug = boolean( GET( "debug" ) );
+function setDebug( value ){
+    Debug = value;
+}
 
 var GidPool = new _GidPool();
 
@@ -59,6 +62,7 @@ export {
     Log,
     GidPool,
     Debug,
+    setDebug,
     WebglErrorMessage,
     MainScriptFilePath,
     WorkerRegistry,

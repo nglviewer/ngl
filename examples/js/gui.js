@@ -781,13 +781,13 @@ NGL.MenubarHelpWidget = function( stage, preferences ){
     }
 
     function onDebugOnClick(){
-        NGL.debug = true;
+        NGL.setDebug( true );
         stage.viewer.updateHelper();
         stage.viewer.requestRender();
     }
 
     function onDebugOffClick(){
-        NGL.debug = false;
+        NGL.setDebug( false );
         stage.viewer.updateHelper();
         stage.viewer.requestRender();
     }

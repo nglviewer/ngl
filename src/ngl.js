@@ -9,7 +9,10 @@
  * @module NGL
  */
 
-import { Debug, DatasourceRegistry, RepresentationRegistry } from "./globals.js";
+import {
+	Debug, setDebug,
+	DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry
+} from "./globals.js";
 import { StaticDatasource } from "./loader/datasource-utils.js";
 import { autoLoad } from "./loader/loader-utils.js";
 import Structure from "./structure/structure.js";
@@ -54,10 +57,12 @@ var Version = "v0.8.0dev";
 export {
     Version,
     Debug,
+    setDebug,
     DatasourceRegistry,
     StaticDatasource,
     autoLoad,
     RepresentationRegistry,
+    ColorMakerRegistry,
     PdbWriter,
     Stage,
     TrajectoryPlayer,

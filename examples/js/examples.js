@@ -435,7 +435,7 @@ NGL.ExampleRegistry.addDict( {
 
     "timing": function( stage ){
 
-        NGL.time( "test" );
+        console.time( "test" );
 
         // stage.loadFile( "data://3l5q.pdb", function( o ){
         stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
@@ -448,11 +448,11 @@ NGL.ExampleRegistry.addDict( {
             // o.addRepresentation( "point", { color: "chainindex" } );
             stage.centerView();
 
-            NGL.timeEnd( "test" );
+            console.timeEnd( "test" );
 
-            NGL.time( "render" );
+            console.time( "render" );
             o.viewer.render();
-            NGL.timeEnd( "render" );
+            console.timeEnd( "render" );
 
         } );
 

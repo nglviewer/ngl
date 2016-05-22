@@ -49,6 +49,8 @@ Script.prototype = {
 
     constructor: Script,
 
+    type: "Script",
+
     call: function( stage, onFinish ){
 
         var panel = {
@@ -83,16 +85,19 @@ Script.prototype = {
             try{
 
                 this.fn.apply( null, args );
+                finish();
 
             }catch( e ){
 
                 Log.error( "Script.fn", e );
+                error();
 
             }
 
         }else{
 
             Log.log( "Script.call no function available" );
+            finish();
 
         }
 

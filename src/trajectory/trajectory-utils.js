@@ -13,7 +13,7 @@ function makeTrajectory( trajSrc, structure, sele ){
 
     var traj;
 
-    if( trajSrc.type === "frames" || trajSrc instanceof Promise ){
+    if( ( trajSrc && trajSrc.type === "frames" ) || trajSrc instanceof Promise ){
 
         traj = new FramesTrajectory( trajSrc, structure, sele );
 
