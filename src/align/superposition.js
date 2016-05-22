@@ -5,7 +5,10 @@
 
 
 import { Debug, Log } from "../globals.js";
-import { Matrix } from "../math/matrix-utils.js";
+import {
+    Matrix, svd, mean_rows, sub_rows, add_rows, transpose,
+    multiply_ABt, invert_3x3, multiply_3x3, mat3x3_determinant
+} from "../math/matrix-utils.js";
 
 
 function Superposition( atoms1, atoms2 ){
@@ -53,30 +56,28 @@ Superposition.prototype = {
 
     _superpose: function( coords1, coords2 ){
 
-        this.mean1 = jsfeat.matmath.mean_rows( coords1 );
-        this.mean2 = jsfeat.matmath.mean_rows( coords2 );
+        this.mean1 = mean_rows( coords1 );
+        this.mean2 = mean_rows( coords2 );
 
-        jsfeat.matmath.sub_rows( coords1, this.mean1 );
-        jsfeat.matmath.sub_rows( coords2, this.mean2 );
+        sub_rows( coords1, this.mean1 );
+        sub_rows( coords2, this.mean2 );
 
-        jsfeat.matmath.transpose( this.coords1t, coords1 );
-        jsfeat.matmath.transpose( this.coords2t, coords2 );
+        transpose( this.coords1t, coords1 );
+        transpose( this.coords2t, coords2 );
 
-        jsfeat.matmath.multiply_ABt( this.A, this.coords2t, this.coords1t );
+        multiply_ABt( this.A, this.coords2t, this.coords1t );
 
-        var svd = jsfeat.linalg.svd_decompose(
-            this.A, this.W, this.U, this.V
-        );
+        svd( this.A, this.W, this.U, this.V );
 
-        jsfeat.matmath.invert_3x3( this.V, this.VH );
-        jsfeat.matmath.multiply_3x3( this.R, this.U, this.VH );
+        invert_3x3( this.V, this.VH );
+        multiply_3x3( this.R, this.U, this.VH );
 
-        if( jsfeat.matmath.mat3x3_determinant( this.R ) < 0.0 ){
+        if( mat3x3_determinant( this.R ) < 0.0 ){
 
-            Log.log( "R not a right handed system" );
+            if( Debug ) Log.log( "R not a right handed system" );
 
-            jsfeat.matmath.multiply_3x3( this.tmp, this.c, this.VH );
-            jsfeat.matmath.multiply_3x3( this.R, this.U, this.tmp );
+            multiply_3x3( this.tmp, this.c, this.VH );
+            multiply_3x3( this.R, this.U, this.tmp );
 
         }
 
@@ -131,10 +132,10 @@ Superposition.prototype = {
 
         // do transform
 
-        jsfeat.matmath.sub_rows( coords, this.mean1 );
-        jsfeat.matmath.multiply_ABt( tmp, this.R, coords );
-        jsfeat.matmath.transpose( coords, tmp );
-        jsfeat.matmath.add_rows( coords, this.mean2 );
+        sub_rows( coords, this.mean1 );
+        multiply_ABt( tmp, this.R, coords );
+        transpose( coords, tmp );
+        add_rows( coords, this.mean2 );
 
         var i = 0;
         var cd = coords.data;
