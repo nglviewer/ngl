@@ -9,10 +9,14 @@
  * @module NGL
  */
 
-import { Debug, RepresentationRegistry } from "./globals.js";
+import { Debug, DatasourceRegistry, RepresentationRegistry } from "./globals.js";
+import { StaticDatasource } from "./loader/datasource-utils.js";
+import { autoLoad } from "./loader/loader-utils.js";
 import Structure from "./structure/structure.js";
 import StructureView from "./structure/structure-view.js";
+import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
+import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
@@ -41,10 +45,16 @@ import UnitcellRepresentation from "./representation/unitcell-representation";
  * @static
  * @type {String}
  */
-var version = "v0.8.0dev";
+var Version = "v0.8.0dev";
 
 export {
-    version,
+    Version,
     Debug,
-    Stage
+    DatasourceRegistry,
+    StaticDatasource,
+    autoLoad,
+    RepresentationRegistry,
+    PdbWriter,
+    Stage,
+    TrajectoryPlayer
 };

@@ -138,7 +138,7 @@ UI.SelectionInput = function( selection ){
 
 	this.setSpellcheck( false );
 
-    if( ! ( selection instanceof NGL.Selection ) ){
+    if( ! ( selection.type === "selection" ) ){
 
         NGL.error( "UI.SelectionInput: not a selection", selection );
 
@@ -295,7 +295,7 @@ UI.ComponentPanel = function( component ){
 
     signals.nameChanged.add( function( value ){
 
-        name.setValue( NGL.unicodeHelper( value ) );
+        name.setValue( value );
 
     } );
 
@@ -313,7 +313,7 @@ UI.ComponentPanel = function( component ){
 
     // Name
 
-    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+    var name = new UI.EllipsisText( component.name )
         .setWidth( "100px" );
 
     // Actions

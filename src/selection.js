@@ -41,6 +41,8 @@ Selection.prototype = {
 
     constructor: Selection,
 
+    type: "selection",
+
     setString: function( string, silent ){
 
         if( string === undefined ) string = this.string || "";

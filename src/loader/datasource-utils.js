@@ -106,6 +106,7 @@ DatasourceRegistry.prototype.sourceDict.rcsb = new RcsbDatasource();
 
 
 export {
-	DatasourceRegistry,
-	getDataInfo
+    DatasourceRegistry,
+    StaticDatasource,
+    getDataInfo
 };

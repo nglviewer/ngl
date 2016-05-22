@@ -80,6 +80,48 @@ NGL.createParameterInput = function( p ){
 };
 
 
+NGL.throttle = function( func, wait, options ){
+
+    // from http://underscorejs.org/docs/underscore.html
+
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+
+    if( !options ) options = {};
+
+    var later = function(){
+        previous = options.leading === false ? 0 : Date.now();
+        timeout = null;
+        result = func.apply( context, args );
+        if( !timeout ) context = args = null;
+    };
+
+    return function(){
+
+        var now = Date.now();
+        if( !previous && options.leading === false ) previous = now;
+        var remaining = wait - ( now - previous );
+        context = this;
+        args = arguments;
+        if( remaining <= 0 || remaining > wait ){
+            if( timeout ){
+                clearTimeout( timeout );
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if( !timeout ) context = args = null;
+        }else if( !timeout && options.trailing !== false ){
+            timeout = setTimeout( later, remaining );
+        }
+
+        return result;
+
+    };
+
+};
+
 
 ////////////////
 // Preferences
@@ -467,7 +509,7 @@ NGL.MenubarWidget = function( stage, preferences ){
 
     container.add(
         new UI.Panel().setClass( "menu" ).setFloat( "right" ).add(
-            new UI.Text( "NGL Viewer " + NGL.REVISION ).setClass( "title" )
+            new UI.Text( "NGL Viewer " + NGL.Version ).setClass( "title" )
         )
     );
 
@@ -1154,19 +1196,19 @@ NGL.SidebarWidget = function( stage ){
 
         var widget;
 
-        if( component instanceof NGL.StructureComponent ){
+        if( component.type === "structure" ){
 
             widget = new NGL.StructureComponentWidget( component, stage );
 
-        }else if( component instanceof NGL.SurfaceComponent ){
+        }else if( component.type === "surface" ){
 
             widget = new NGL.SurfaceComponentWidget( component, stage );
 
-        }else if( component instanceof NGL.ScriptComponent ){
+        }else if( component.type === "script" ){
 
             widget = new NGL.ScriptComponentWidget( component, stage );
 
-        }else if( component instanceof NGL.Component ){
+        }else if( component.type === "component" ){
 
             widget = new NGL.ComponentWidget( component, stage );
 
@@ -1367,7 +1409,7 @@ NGL.ComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+    var name = new UI.EllipsisText( component.name )
         .setWidth( "100px" );
 
     // Loading indicator
@@ -1441,9 +1483,9 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setColor( '#444' )
         .setOptions( (function(){
             var reprOptions = { "": "[ add ]" };
-            for( var key in NGL.representationTypes ){
+            NGL.RepresentationRegistry.names.forEach( function( key ){
                 reprOptions[ key ] = key;
-            }
+            } );
             return reprOptions;
         })() )
         .onChange( function(){
@@ -1542,7 +1584,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         stage.eachComponent( function( o, i ){
 
             if( o !== component ){
-                superposeOptions[ i ] = NGL.unicodeHelper( o.name );
+                superposeOptions[ i ] = o.name;
             }
 
         }, NGL.StructureComponent );
@@ -1678,7 +1720,7 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     signals.nameChanged.add( function( value ){
 
-        name.setValue( NGL.unicodeHelper( value ) );
+        name.setValue( value );
 
     } );
 
@@ -1717,7 +1759,7 @@ NGL.ScriptComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+    var name = new UI.EllipsisText( component.name )
         .setWidth( "100px" );
 
     // Status
@@ -1752,7 +1794,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
     } );
 
     signals.nameChanged.add( function( value ){
-        name.setValue( NGL.unicodeHelper( value ) );
+        name.setValue( value );
     } );
 
     signals.disposed.add( function(){
@@ -1762,7 +1804,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( NGL.unicodeHelper( component.name ) )
+    var name = new UI.EllipsisText( component.name )
         .setWidth( "103px" );
 
     // Actions
@@ -1788,9 +1830,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     // Selection
 
-    if( ( component.parent instanceof NGL.StructureComponent ||
-            component.parent instanceof NGL.TrajectoryComponent ) &&
-        component.repr.selection instanceof NGL.Selection
+    if( ( component.parent.type === "structure" ||
+            component.parent.type === "trajectory" ) &&
+        component.repr.selection.type === "selection"
     ){
 
         container.add(
