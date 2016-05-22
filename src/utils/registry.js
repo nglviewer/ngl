@@ -13,8 +13,14 @@ function Registry(){
     };
 
     this.get = function( name ){
-    	return dict[ name ];
+        return dict[ name ];
     };
+
+    Object.defineProperties( this, {
+        names: {
+            get: function(){ return Object.keys( dict ); }
+        }
+    } );
 
 }
 
