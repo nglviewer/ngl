@@ -7,6 +7,14 @@
 import Component from "./component.js";
 
 
+// add here to avoid cyclic import dependency
+Component.prototype.__getRepresentationComponent = function( repr, p ){
+    return new RepresentationComponent(
+        this.stage, repr, p, this
+    );
+};
+
+
 function RepresentationComponent( stage, repr, params, parent ){
 
     var p = params || {};

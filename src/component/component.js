@@ -6,7 +6,7 @@
 
 import { defaults } from "../utils.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
-import RepresentationComponent from "./representation-component.js";
+// import RepresentationComponent from "./representation-component.js";
 
 
 var nextComponentId = 0;
@@ -63,15 +63,10 @@ Component.prototype = {
         p.visible = defaults( p.visible, true );
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
-
         var repr = makeRepresentation( type, object, this.viewer, p2 );
-
-        var reprComp = new RepresentationComponent(
-            this.stage, repr, p, this
-        );
+        var reprComp = this.__getRepresentationComponent( repr, p );
 
         this.reprList.push( reprComp );
-
         this.signals.representationAdded.dispatch( reprComp );
 
         return reprComp;

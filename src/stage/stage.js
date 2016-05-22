@@ -11,6 +11,7 @@ import Viewer from "../viewer/viewer.js";
 import PickingControls from "./picking-controls.js";
 
 import Component from "../component/component.js";
+import RepresentationComponent from "../component/representation-component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
