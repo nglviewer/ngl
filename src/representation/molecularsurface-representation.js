@@ -102,7 +102,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
         this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
         this.volume = p.volume || undefined;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
 
         StructureRepresentation.prototype.init.call( this, params );
 

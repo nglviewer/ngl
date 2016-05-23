@@ -93,7 +93,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.background = p.background || false;
         this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
         this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
+        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
 
         Representation.prototype.init.call( this, p );
 
