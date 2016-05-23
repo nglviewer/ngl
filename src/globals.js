@@ -4,7 +4,7 @@
  */
 
 
-import { getBrowser, GET, boolean, defaults } from "./utils.js";
+import { getBrowser, getQuery, boolean, defaults } from "./utils.js";
 import Registry from "./utils/registry.js";
 import _GidPool from "./utils/gid-pool.js";
 import _WorkerRegistry from "./worker/worker-registry.js";
@@ -33,7 +33,7 @@ var Log = {
     timeEnd: Function.prototype.bind.call( console.timeEnd, console )
 };
 
-var Debug = boolean( GET( "debug" ) );
+var Debug = boolean( getQuery( "debug" ) );
 function setDebug( value ){
     Debug = value;
 }

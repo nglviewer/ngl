@@ -4,7 +4,7 @@
  */
 
 
-function GET( id ){
+function getQuery( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );
     var m = a.exec( window.location.search );
@@ -443,7 +443,7 @@ function decompress( data ){
 
 
 export {
-    GET,
+    getQuery,
     boolean,
     defaults,
     getBrowser,

@@ -14,14 +14,14 @@ import {
 	DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry
 } from "./globals.js";
 import { StaticDatasource } from "./loader/datasource-utils.js";
-import { autoLoad } from "./loader/loader-utils.js";
+import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Structure from "./structure/structure.js";
 import StructureView from "./structure/structure-view.js";
 import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 
-import { throttle } from "./utils.js";
+import { throttle, getQuery } from "./utils.js";
 import Queue from "./utils/queue.js";
 
 
@@ -46,6 +46,8 @@ import TraceRepresentation from "./representation/trace-representation";
 import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
 
+import SphereBuffer from "./buffer/sphere-buffer.js";
+
 
 /**
  * Version name
@@ -68,5 +70,9 @@ export {
     TrajectoryPlayer,
 
     Queue,
-    throttle
+    throttle,
+    getQuery,
+    getDataInfo,
+
+    SphereBuffer
 };

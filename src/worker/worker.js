@@ -39,16 +39,18 @@ function Worker( name ){
     worker.onerror = function( event ){
 
         pending -= 1;
-        var postId = event.data.__postId;
-
-        if( onerrorDict[ postId ] ){
-            onerrorDict[ postId ].call( worker, event );
+        if( event.data ){
+            var postId = event.data.__postId;
+            if( onerrorDict[ postId ] ){
+                onerrorDict[ postId ].call( worker, event );
+            }else{
+                Log.error( "Worker.onerror", postId, name, event );
+            }
+            delete onmessageDict[ postId ];
+            delete onerrorDict[ postId ];
         }else{
-            Log.error( "Worker.onerror", postId, name, event );
+            Log.error( "Worker.onerror", name, event );
         }
-
-        delete onmessageDict[ postId ];
-        delete onerrorDict[ postId ];
 
     };
 

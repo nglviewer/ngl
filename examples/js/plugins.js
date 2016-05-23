@@ -1,5 +1,7 @@
-
-
+/**
+ * @file  Plugins
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
 
 
 NGL.PluginRegistry = {

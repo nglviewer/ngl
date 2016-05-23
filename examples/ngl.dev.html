@@ -65,24 +65,24 @@
 
             // // Plugins
 
-            // NGL.PluginRegistry.add(
-            //     "apbs", "../plugins/apbs.plugin"
-            // );
-            // NGL.PluginRegistry.add(
-            //     "crosslink", "../plugins/crosslink.plugin"
-            // );
+            NGL.PluginRegistry.add(
+                "apbs", "plugins/apbs.plugin"
+            );
+            NGL.PluginRegistry.add(
+                "crosslink", "plugins/crosslink.plugin"
+            );
 
             //
 
             document.addEventListener( "DOMContentLoaded", function(){
                 stage = new NGL.Stage();
                 NGL.StageWidget( stage );
-                // var example = NGL.GET( "example" );
-                // if( example ) NGL.ExampleRegistry.load( example, stage );
-                // var load = NGL.GET( "load" );
-                // if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-                // var plugin = NGL.GET( "plugin" );
-                // if( plugin ) NGL.PluginRegistry.load( plugin, stage );
+                var example = NGL.getQuery( "example" );
+                if( example ) NGL.ExampleRegistry.load( example, stage );
+                var load = NGL.getQuery( "load" );
+                if( load ) stage.loadFile( load, { defaultRepresentation: true } );
+                var plugin = NGL.getQuery( "plugin" );
+                if( plugin ) NGL.PluginRegistry.load( plugin, stage );
             } );
 
         </script>

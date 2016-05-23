@@ -285,9 +285,9 @@ var ApbsLoader = function(){
 
 function apbsLoader(){
 
-    var pqr = NGL.GET( "pqr" );
-    var dx = NGL.GET( "dx" );
-    var dxbin = NGL.GET( "dxbin" );
+    var pqr = NGL.getQuery( "pqr" );
+    var dx = NGL.getQuery( "dx" );
+    var dxbin = NGL.getQuery( "dxbin" );
     var isBinary = false;
     if( dxbin ){
         dx = dxbin;
