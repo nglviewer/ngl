@@ -2,7 +2,7 @@
 import { autoLoad } from "../../../src/loader/loader-utils.js";
 
 
-describe('structure/structur', function() {
+describe('structure/structure', function() {
 
 
 describe('iteration', function () {

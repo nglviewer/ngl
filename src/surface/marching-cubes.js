@@ -175,11 +175,11 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         if( _box !== undefined ){
 
-            _box.min.round();
-            _box.max.round();
+            var min = _box[ 0 ].map( Math.round );
+            var max = _box[ 1 ].map( Math.round );
             triangulate(
-                _box.min.x, _box.min.y, _box.min.z,
-                _box.max.x, _box.max.y, _box.max.z
+                min[ 0 ], min[ 1 ], min[ 2 ],
+                max[ 0 ], max[ 1 ], max[ 2 ]
             );
 
         }else{

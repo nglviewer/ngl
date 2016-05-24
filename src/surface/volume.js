@@ -9,7 +9,7 @@ import { fromJSON } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
-import { laplacianSmooth } from "./surface-utils.js";
+import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
 import Surface from "./surface.js";
 
 
@@ -204,8 +204,8 @@ Volume.prototype = {
         if( center && size ){
 
             if( !this.__box ) this.__box = new THREE.Box3();
-            box = this.__box;
-            this.getBox( center, size, box );
+            this.getBox( center, size, this.__box );
+            box = [ this.__box.min.toArray(), this.__box.max.toArray() ];
 
         }
 

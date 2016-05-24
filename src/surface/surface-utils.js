@@ -5,6 +5,9 @@
 
 
 import { Debug, Log } from "../globals.js";
+import {
+    sub, cross, normalize, forEach, fromArray
+} from "../math/vector-utils.js";
 
 
 function laplacianSmooth( verts, faces, numiter, inflate ){
@@ -28,16 +31,10 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     var nv = verts.length / 3;
     var nf = faces.length / 3;
-    var bg;
+    var bg, norms;
 
     if( inflate ){
-
-        // Buffer geometry is only used to calculate normals
-
-        bg = new THREE.BufferGeometry();
-        bg.addAttribute( "position", new THREE.BufferAttribute( verts, 3 ) );
-        bg.setIndex( new THREE.BufferAttribute( faces, 1 ) );
-
+        norms = new Float32Array( nv * 3 );
     }
 
     var tps = new Float32Array( nv * 3 );
@@ -221,8 +218,7 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
         if( inflate ){
 
-            bg.computeVertexNormals();
-            var norms = bg.attributes.normal.array;
+            computeVertexNormals( verts, faces, norms );
             var nv3 = nv * 3;
 
             for( i3 = 0; i3 < nv3; i3 += 3 ){
@@ -240,17 +236,97 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     }
 
-    if( inflate ){
-
-        bg.dispose();
-
-    }
-
     if( Debug ) Log.timeEnd( "laplacianSmooth" );
 
 }
 
 
+function computeVertexNormals( position, index, normal ){
+
+    if( normal === undefined ){
+        normal = new Float32Array( position.length );
+    }else{
+        // reset existing normals to zero
+        for( var i = 0, il = normal.length; i < il; i ++ ){
+            normal[ i ] = 0;
+        }
+    }
+
+    var vA, vB, vC;
+    var a = new Float32Array( 3 );
+    var b = new Float32Array( 3 );
+    var c = new Float32Array( 3 );
+    var cb = new Float32Array( 3 );
+    var ab = new Float32Array( 3 );
+
+    if( index ){
+
+        // indexed elements
+        for( var i = 0, il = index.length; i < il; i += 3 ){
+
+            var ai = index[ i ] * 3;
+            var bi = index[ i + 1 ] * 3;
+            var ci = index[ i + 2 ] * 3;
+
+            fromArray( a, position, ai );
+            fromArray( b, position, bi );
+            fromArray( c, position, ci );
+
+            sub( cb, c, b );
+            sub( ab, a, b );
+            cross( cb, cb, ab );
+
+            normal[ ai ] += cb[ 0 ];
+            normal[ ai + 1 ] += cb[ 1 ];
+            normal[ ai + 2 ] += cb[ 2 ];
+
+            normal[ bi ] += cb[ 0 ];
+            normal[ bi + 1 ] += cb[ 1 ];
+            normal[ bi + 2 ] += cb[ 2 ];
+
+            normal[ ci ] += cb[ 0 ];
+            normal[ ci + 1 ] += cb[ 1 ];
+            normal[ ci + 2 ] += cb[ 2 ];
+
+        }
+
+    }else{
+
+        // non-indexed elements (unconnected triangle soup)
+        for ( var i = 0, il = position.length; i < il; i += 9 ) {
+
+            fromArray( a, position, i );
+            fromArray( b, position, i + 3 );
+            fromArray( c, position, i + 6 );
+
+            sub( cb, c, b );
+            sub( ab, a, b );
+            cross( cb, cb, ab );
+
+            normal[ i ] = cb[ 0 ];
+            normal[ i + 1 ] = cb[ 1 ];
+            normal[ i + 2 ] = cb[ 2 ];
+
+            normal[ i + 3 ] = cb[ 0 ];
+            normal[ i + 4 ] = cb[ 1 ];
+            normal[ i + 5 ] = cb[ 2 ];
+
+            normal[ i + 6 ] = cb[ 0 ];
+            normal[ i + 7 ] = cb[ 1 ];
+            normal[ i + 8 ] = cb[ 2 ];
+
+        }
+
+    }
+
+    forEach( normal, normalize );
+
+    return normal;
+
+}
+
+
 export {
-	laplacianSmooth
+    laplacianSmooth,
+    computeVertexNormals
 };
