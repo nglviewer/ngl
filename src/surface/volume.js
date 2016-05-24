@@ -13,34 +13,86 @@ import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
 import Surface from "./surface.js";
 
 
+function VolumeSurface( data, nx, ny, nz, atomindex ){
+
+    var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
+
+    function getSurface( isolevel, smooth, box ){
+        var sd = mc.triangulate( isolevel, smooth, box );
+        if( smooth ){
+            laplacianSmooth( sd.position, sd.index, smooth, true );
+            sd.normal = computeVertexNormals( sd.position, sd.index );
+        }
+        return sd;
+    }
+
+    this.getSurface = getSurface;
+
+}
+
+
 WorkerRegistry.add( "surf", function( e, callback ){
 
     if( Debug ) Log.time( "WORKER surf" );
 
-    if( self.vol === undefined ) self.vol = new Volume();
+    if( self.volsurf === undefined ) self.volsurf = new VolumeSurface();
 
-    var surface;
-    var vol = self.vol;
+    var sd;
     var d = e.data;
     var p = d.params;
 
-    if( d.vol ) vol.fromJSON( d.vol );
+    if( d.field ){
+        self.volsurf = new VolumeSurface(
+            d.field, d.nx, d.ny, d.nz, d.atomindex
+        );
+    }
 
     if( p ){
-        surface = vol.getSurface(
-            p.isolevel, p.smooth, p.center, p.size
-        );
+        sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box );
     }
 
     if( Debug ) Log.timeEnd( "WORKER surf" );
 
     if( p ){
-        callback( surface.toJSON(), surface.getTransferable() );
+        var transferable = [ sd.position, sd.index ];
+        if( sd.atomindex ) transferable.push( sd.atomindex );
+        if( sd.normal ) transferable.push( sd.normal );
+        callback( sd, transferable );
     }else{
         callback();
     }
 
 } );
+
+
+// WorkerRegistry.add( "surf", function( e, callback ){
+
+//     if( Debug ) Log.time( "WORKER surf" );
+
+//     if( self.vol === undefined ) self.vol = new Volume();
+
+//     var surface;
+//     var vol = self.vol;
+//     var d = e.data;
+//     var p = d.params;
+
+//     if( d.vol ) vol.fromJSON( d.vol );
+
+//     if( p ){
+//         surface = vol.getSurface(
+//             p.isolevel, p.smooth, p.center, p.size
+//         );
+//     }
+
+//     if( Debug ) Log.timeEnd( "WORKER surf" );
+
+//     if( p ){
+//         callback( surface.toJSON(), surface.getTransferable() );
+//     }else{
+//         callback();
+//     }
+
+// } );
 
 
 function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
@@ -182,59 +234,36 @@ Volume.prototype = {
 
     },
 
+    __getBox: function( center, size ){
+
+        if( !center || !size ) return;
+
+        if( !this.__box ) this.__box = new THREE.Box3();
+        var box = this.getBox( center, size, this.__box );
+        return [ box.min.toArray(), box.max.toArray() ];
+
+    },
+
     getSurface: function( isolevel, smooth, center, size ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
-        center = center;
-        size = size;
 
         //
 
-        if( this.mc === undefined ){
-
-            this.mc = new MarchingCubes(
+        if( this.volsurf === undefined ){
+            this.volsurf = new VolumeSurface(
                 this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
             );
-
         }
 
-        var box;
-
-        if( center && size ){
-
-            if( !this.__box ) this.__box = new THREE.Box3();
-            this.getBox( center, size, this.__box );
-            box = [ this.__box.min.toArray(), this.__box.max.toArray() ];
-
-        }
-
-        var sd;
-
-        if( smooth ){
-
-            sd = this.mc.triangulate( isolevel, true, box );
-            laplacianSmooth( sd.position, sd.index, smooth, true );
-
-            var bg = new THREE.BufferGeometry();
-            bg.addAttribute( "position", new THREE.BufferAttribute( sd.position, 3 ) );
-            bg.setIndex( new THREE.BufferAttribute( sd.index, 1 ) );
-            bg.computeVertexNormals();
-            sd.normal = bg.attributes.normal.array;
-            bg.dispose();
-
-        }else{
-
-            sd = this.mc.triangulate( isolevel, false, box );
-
-        }
+        var box = this.__getBox( center, size );
+        var sd = this.volsurf.getSurface( isolevel, smooth, box );
 
         this.matrix.applyToVector3Array( sd.position );
 
         if( sd.normal ){
-
             this.normalMatrix.applyToVector3Array( sd.normal );
-
         }
 
         var surface = new Surface( "", "", sd );
@@ -267,8 +296,7 @@ Volume.prototype = {
                     params: {
                         isolevel: isolevel,
                         smooth: smooth,
-                        center: center,
-                        size: size
+                        box: this.__getBox( center, size )
                     }
                 },
 

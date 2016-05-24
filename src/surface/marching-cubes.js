@@ -1039,4 +1039,11 @@ var edgeIndex = [
 ];
 
 
+// var workerString = [
+//     MarchingCubes.toString()
+// ].join( "\n\n\n" );
+
+// console.log( workerString );
+
+
 export default MarchingCubes;
