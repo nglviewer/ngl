@@ -4,7 +4,6 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
 import {
     sub, cross, normalize, forEach, fromArray
 } from "../math/vector-utils.js";
@@ -23,8 +22,6 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
     // warranty.
     //
     // ported to JavaScript and adapted to NGL by Alexander Rose
-
-    if( Debug ) Log.time( "laplacianSmooth" );
 
     numiter = numiter || 1;
     inflate = inflate || true;
@@ -236,9 +233,8 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     }
 
-    if( Debug ) Log.timeEnd( "laplacianSmooth" );
-
 }
+laplacianSmooth.__deps = [ computeVertexNormals ];
 
 
 function computeVertexNormals( position, index, normal ){
@@ -324,6 +320,7 @@ function computeVertexNormals( position, index, normal ){
     return normal;
 
 }
+computeVertexNormals.__deps = [ sub, cross, normalize, forEach, fromArray ];
 
 
 export {

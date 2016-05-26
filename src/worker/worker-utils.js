@@ -4,6 +4,27 @@
  */
 
 
+import { uniqueArray } from "../utils.js";
+
+
+function getWorkerDeps( vars ){
+    var deps = vars;
+    vars.forEach( function( sym ){
+        if( sym.__deps ){
+            Array.prototype.push.apply( deps, getWorkerDeps( sym.__deps ) );
+        }
+    } );
+    return deps;
+}
+
+function makeWorkerString( vars ){
+    var deps = uniqueArray( getWorkerDeps( vars ) );
+    console.log( deps );
+    return deps.map( function( sym ){
+        return sym.toString();
+    } ).join( "\n\n\n" );
+}
+
 
 function onmessage( e ){
 
@@ -43,5 +64,6 @@ function onmessage( e ){
 
 
 export {
-	onmessage
+    makeWorkerString,
+    onmessage
 };

@@ -7,6 +7,7 @@
 import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import { fromJSON } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
+import { makeWorkerString } from "../worker/worker-utils.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
@@ -29,6 +30,10 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
     this.getSurface = getSurface;
 
 }
+VolumeSurface.__deps = [ laplacianSmooth, computeVertexNormals, MarchingCubes ];
+
+
+console.log( makeWorkerString( [ VolumeSurface ] ) );
 
 
 WorkerRegistry.add( "surf", function( e, callback ){

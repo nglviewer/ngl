@@ -163,6 +163,7 @@ function forEach( array, fn, b ){
         toArray( a, array, i );
     }
 }
+forEach.__deps = [ fromArray, toArray ];
 
 function length( a ){
     return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
@@ -183,6 +184,7 @@ function multiply( out, a, b ){
 function divideScalar( out, a, s ){
     multiplyScalar( out, a, 1 / s );
 }
+divideScalar.__deps = [ multiplyScalar ];
 
 function multiplyScalar( out, a, s ){
     out[0] = a[0] * s;
@@ -193,6 +195,7 @@ function multiplyScalar( out, a, s ){
 function normalize( out, a ){
     multiplyScalar( out, a, 1 / length( a ) );
 }
+normalize.__deps = [ multiplyScalar ];
 
 
 export {
