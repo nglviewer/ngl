@@ -17,6 +17,7 @@ import { StaticDatasource } from "./loader/datasource-utils.js";
 import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Structure from "./structure/structure.js";
 import StructureView from "./structure/structure-view.js";
+import Selection from "./selection.js";
 import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
@@ -65,6 +66,7 @@ export {
     autoLoad,
     RepresentationRegistry,
     ColorMakerRegistry,
+    Selection,
     PdbWriter,
     Stage,
     TrajectoryPlayer,
