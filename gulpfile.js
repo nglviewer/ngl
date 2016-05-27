@@ -112,10 +112,9 @@ gulp.task('compress', ['build-ngl'], function(){
 gulp.task('build', ['build-ngl']);
 
 gulp.task('watch', function () {
+  gulp.start(['build', 'build-test']);
   watch(['./src/**/*.js', './test/src/**/*.js', './src/shader/**/*'], batch(function (events, done) {
-    gulp.start('build', function(){
-      gulp.start('build-test', done);
-    });
+    gulp.start(['build', 'build-test'], done);
   }));
 });
 
