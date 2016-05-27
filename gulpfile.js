@@ -9,6 +9,8 @@ var uglify = require('gulp-uglify');
 var del = require('del');
 var jsdoc = require("gulp-jsdoc3");
 var concat = require("gulp-concat");
+var watch = require('gulp-watch');
+var batch = require('gulp-batch');
 
 var rollup = require('rollup').rollup;
 var commonjs = require('rollup-plugin-commonjs');
@@ -108,6 +110,14 @@ gulp.task('compress', ['build-ngl'], function(){
 });
 
 gulp.task('build', ['build-ngl']);
+
+gulp.task('watch', function () {
+  watch('./**/*.js', batch(function (events, done) {
+    gulp.start('build', function(){
+      gulp.start('build-test', done);
+    });
+  }));
+});
 
 gulp.task('scripts', ['compress']);
 
