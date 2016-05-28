@@ -10,10 +10,12 @@
  */
 
 import {
-	Debug, setDebug,
-	DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry
+    Debug, setDebug,
+    DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry
 } from "./globals.js";
-import { StaticDatasource } from "./loader/datasource-utils.js";
+import {
+    StaticDatasource, RcsbDatasource, PassThroughDatasource
+} from "./loader/datasource-utils.js";
 import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Selection from "./selection.js";
 import PdbWriter from "./writer/pdb-writer.js";
@@ -23,6 +25,7 @@ import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 import { throttle, getQuery } from "./utils.js";
 import Queue from "./utils/queue.js";
 
+//
 
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
@@ -49,6 +52,7 @@ import BufferRepresentation from "./representation/buffer-representation";
 import SphereBuffer from "./buffer/sphere-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
 
+//
 
 import GroParser from "./parser/gro-parser.js";
 import PdbParser from "./parser/pdb-parser.js";
@@ -72,6 +76,15 @@ import TextParser from "./parser/text-parser.js";
 import CsvParser from "./parser/csv-parser.js";
 import JsonParser from "./parser/json-parser.js";
 import XmlParser from "./parser/xml-parser.js";
+
+//
+
+DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
+DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
+DatasourceRegistry.add( "http", new PassThroughDatasource() );
+DatasourceRegistry.add( "https", new PassThroughDatasource() );
+
+//
 
 
 /**

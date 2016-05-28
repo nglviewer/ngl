@@ -8,46 +8,13 @@ import { Log } from "../globals.js";
 import { getFileInfo, getAbsolutePath } from "../utils.js";
 
 
-function DatasourceRegistry(){
+function PassThroughDatasource(){
+
+    this.getUrl = function( path ){
+        return path;
+    };
 
 }
-
-DatasourceRegistry.prototype = {
-
-    sourceDict: {},
-
-    listing: undefined,
-    trajectory: undefined,
-
-    __passThrough: {
-        getUrl: function( path ){
-            return path;
-        }
-    },
-
-    add: function( name, datasource ){
-        name = name.toLowerCase();
-        if( name in this.sourceDict ){
-            Log.warn( "overwriting datasource named '" + name + "'" );
-        }
-        this.sourceDict[ name ] = datasource;
-    },
-
-    get: function( name ){
-        name = name || "";
-        name = name.toLowerCase();
-        if( name in this.sourceDict ){
-            return this.sourceDict[ name ];
-        }else if( [ "http", "https", "ftp" ].indexOf( name ) !== -1 ){
-            return this.__passThrough;
-        }else if( !name ){
-            return this.__passThrough;
-        }else{
-            Log.error( "no datasource named '" + name + "' found" );
-        }
-    }
-
-};
 
 
 function StaticDatasource( baseUrl ){
@@ -88,7 +55,7 @@ function RcsbDatasource(){
             return baseUrl + info.name + ".cif";
             // return mmtfBaseUrl + info.name + ".mmtf";
         }else{
-            console.warn( "unsupported ext", info.ext );
+            Log.warn( "unsupported ext", info.ext );
             return mmtfBaseUrl + info.name;
         }
     };
@@ -102,11 +69,10 @@ function RcsbDatasource(){
 
 }
 
-DatasourceRegistry.prototype.sourceDict.rcsb = new RcsbDatasource();
-
 
 export {
-    DatasourceRegistry,
+    PassThroughDatasource,
     StaticDatasource,
+    RcsbDatasource,
     getDataInfo
 };

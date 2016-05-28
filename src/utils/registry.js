@@ -9,11 +9,11 @@ function Registry(){
     var dict = {};
 
     this.add = function( name, value ){
-        dict[ name ] = value;
+        dict[ name.toLowerCase() ] = value;
     };
 
     this.get = function( name ){
-        return dict[ name ];
+        return dict[ name.toLowerCase() ];
     };
 
     Object.defineProperties( this, {

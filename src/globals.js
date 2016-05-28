@@ -9,7 +9,6 @@ import Registry from "./utils/registry.js";
 import _GidPool from "./utils/gid-pool.js";
 import _WorkerRegistry from "./worker/worker-registry.js";
 import { ColorMakerRegistry as _ColorMakerRegistry } from "./utils/color-maker.js";
-import { DatasourceRegistry as _DatasourceRegistry } from "./loader/datasource-utils.js";
 
 
 var Browser = getBrowser();
@@ -45,13 +44,9 @@ var WebglErrorMessage = "<div style=\"display:flex; align-items:center; justify-
 var MainScriptFilePath = "../js/build/ngl.full.min.js";
 
 var WorkerRegistry = new _WorkerRegistry();
-
 var ColorMakerRegistry = new _ColorMakerRegistry();
-
-var DatasourceRegistry = new _DatasourceRegistry();
-
+var DatasourceRegistry = new Registry();
 var RepresentationRegistry = new Registry();
-
 var ParserRegistry = new Registry();
 
 
