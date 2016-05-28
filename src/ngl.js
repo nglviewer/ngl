@@ -15,8 +15,6 @@ import {
 } from "./globals.js";
 import { StaticDatasource } from "./loader/datasource-utils.js";
 import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
-import Structure from "./structure/structure.js";
-import StructureView from "./structure/structure-view.js";
 import Selection from "./selection.js";
 import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
@@ -47,7 +45,11 @@ import TraceRepresentation from "./representation/trace-representation";
 import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
 
+import BufferRepresentation from "./representation/buffer-representation";
 import SphereBuffer from "./buffer/sphere-buffer.js";
+import CylinderBuffer from "./buffer/cylinder-buffer.js";
+
+
 import GroParser from "./parser/gro-parser.js";
 import PdbParser from "./parser/pdb-parser.js";
 import PqrParser from "./parser/pqr-parser.js";
@@ -98,5 +100,7 @@ export {
     getQuery,
     getDataInfo,
 
-    SphereBuffer
+    BufferRepresentation,
+    SphereBuffer,
+    CylinderBuffer
 };
