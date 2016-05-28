@@ -7,7 +7,7 @@
 import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import { fromJSON } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
-import { makeWorkerString } from "../worker/worker-utils.js";
+import { makeWorkerString, makeWorker } from "../worker/worker-utils.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
@@ -33,7 +33,9 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 VolumeSurface.__deps = [ laplacianSmooth, computeVertexNormals, MarchingCubes ];
 
 
-console.log( makeWorkerString( [ VolumeSurface ] ) );
+// console.log( makeWorkerString( [ VolumeSurface ] ) );
+// var w = makeWorker( [ VolumeSurface ] );
+// console.log( w );
 
 
 WorkerRegistry.add( "surf", function( e, callback ){
@@ -288,44 +290,85 @@ Volume.prototype = {
 
         if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
 
-            if( this.workerPool === undefined ){
-                this.workerPool = new WorkerPool( "surf", 2 );
+            function onmessage( e ){
+                // console.log( e );
+                var a = e.data.args;
+                var p = e.data.params;
+                var volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
+                var sd = volsurf.getSurface( p.isolevel, p.smooth, p.box );
+                var transferList = [ sd.position.buffer, sd.index.buffer ];
+                // console.log(sd)
+                if( sd.normal ) transferList.push( sd.normal.buffer );
+                if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
+                self.postMessage( {
+                    sd: sd,
+                    p: p
+                }, transferList );
             }
 
-            var worker = this.workerPool.getNextWorker();
+            var w = makeWorker( onmessage, [ VolumeSurface ] );
 
-            worker.post(
+            w.onmessage = function( e ){
+                var sd = e.data.sd;
+                var p = e.data.p;
+                // console.log( sd );
+                this.matrix.applyToVector3Array( sd.position );
+                if( sd.normal ){
+                    this.normalMatrix.applyToVector3Array( sd.normal );
+                }
+                var surface = new Surface( "", "", sd );
+                surface.info.isolevel = p.isolevel;
+                surface.info.smooth = p.smooth;
+                callback( surface );
+            }.bind( this );
 
-                {
-                    vol: worker.postCount === 0 ? this.toJSON() : null,
-                    params: {
-                        isolevel: isolevel,
-                        smooth: smooth,
-                        box: this.__getBox( center, size )
-                    }
-                },
+            w.postMessage( {
+                args: [ this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex ],
+                params: {
+                    isolevel: isolevel,
+                    smooth: smooth,
+                    box: this.__getBox( center, size )
+                }
+            } );
 
-                undefined,
+            // if( this.workerPool === undefined ){
+            //     this.workerPool = new WorkerPool( "surf", 2 );
+            // }
 
-                function( e ){
+            // var worker = this.workerPool.getNextWorker();
 
-                    var surface = fromJSON( e.data );
-                    callback( surface );
+            // worker.post(
 
-                },
+            //     {
+            //         vol: worker.postCount === 0 ? this.toJSON() : null,
+            //         params: {
+            //             isolevel: isolevel,
+            //             smooth: smooth,
+            //             box: this.__getBox( center, size )
+            //         }
+            //     },
 
-                function( e ){
+            //     undefined,
 
-                    console.warn(
-                        "Volume.generateSurfaceWorker error - trying without worker", e
-                    );
+            //     function( e ){
 
-                    var surface = this.getSurface( isolevel, smooth, center, size );
-                    callback( surface );
+            //         var surface = fromJSON( e.data );
+            //         callback( surface );
 
-                }.bind( this )
+            //     },
 
-            );
+            //     function( e ){
+
+            //         console.warn(
+            //             "Volume.generateSurfaceWorker error - trying without worker", e
+            //         );
+
+            //         var surface = this.getSurface( isolevel, smooth, center, size );
+            //         callback( surface );
+
+            //     }.bind( this )
+
+            // );
 
         }else{
 
