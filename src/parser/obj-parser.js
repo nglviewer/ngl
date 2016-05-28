@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import SurfaceParser from "./surface-parser.js";
 
 
@@ -25,6 +26,8 @@ ObjParser.prototype = Object.assign( Object.create(
     type: "obj"
 
 } );
+
+ParserRegistry.add( "obj", ObjParser );
 
 
 export default ObjParser;

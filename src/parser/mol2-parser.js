@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 
 
@@ -230,6 +230,8 @@ Mol2Parser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "mol2", Mol2Parser );
 
 
 export default Mol2Parser;

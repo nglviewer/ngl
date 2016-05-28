@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 
 
@@ -167,6 +167,8 @@ SdfParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "sdf", SdfParser );
 
 
 export default SdfParser;

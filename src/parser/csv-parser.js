@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
@@ -66,6 +67,8 @@ CsvParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "csv", CsvParser );
 
 
 export default CsvParser;

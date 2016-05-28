@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
@@ -142,6 +143,8 @@ XmlParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "xml", XmlParser );
 
 
 export default XmlParser;

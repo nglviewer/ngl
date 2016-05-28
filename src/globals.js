@@ -52,6 +52,8 @@ var DatasourceRegistry = new _DatasourceRegistry();
 
 var RepresentationRegistry = new Registry();
 
+var ParserRegistry = new Registry();
+
 
 export {
     Browser,
@@ -68,5 +70,6 @@ export {
     WorkerRegistry,
     ColorMakerRegistry,
     DatasourceRegistry,
-    RepresentationRegistry
+    RepresentationRegistry,
+    ParserRegistry
 };

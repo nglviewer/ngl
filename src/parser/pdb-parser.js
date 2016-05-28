@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
@@ -477,6 +477,10 @@ PdbParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "pdb", PdbParser );
+ParserRegistry.add( "pdb1", PdbParser );
+ParserRegistry.add( "ent", PdbParser );
 
 
 export default PdbParser;

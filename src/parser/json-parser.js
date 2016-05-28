@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
@@ -45,6 +46,8 @@ JsonParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "json", JsonParser );
 
 
 export default JsonParser;

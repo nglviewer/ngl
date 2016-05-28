@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 
 
@@ -241,6 +241,10 @@ MrcParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "mrc", MrcParser );
+ParserRegistry.add( "ccp4", MrcParser );
+ParserRegistry.add( "map", MrcParser );
 
 
 export default MrcParser;

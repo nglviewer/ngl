@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import TrajectoryParser from "./trajectory-parser.js";
 import { uint8ToString } from "../utils.js";
 
@@ -198,6 +198,8 @@ DcdParser.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ParserRegistry.add( "dcd", DcdParser );
 
 
 export default DcdParser;

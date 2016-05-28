@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import { HelixTypes } from "./pdb-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -955,6 +955,10 @@ CifParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "cif", CifParser );
+ParserRegistry.add( "mcif", CifParser );
+ParserRegistry.add( "mmcif", CifParser );
 
 
 export default CifParser;

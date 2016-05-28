@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 
@@ -175,6 +175,8 @@ GroParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "gro", GroParser );
 
 
 export default GroParser;

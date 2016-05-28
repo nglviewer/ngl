@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import { calculateBondsBetween, calculateBondsWithin } from "../structure/structure-utils.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -344,6 +344,8 @@ MmtfParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "mmtf", MmtfParser );
 
 
 export default MmtfParser;

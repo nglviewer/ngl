@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import PdbParser from "./pdb-parser.js";
 
@@ -24,6 +25,8 @@ PqrParser.prototype = Object.assign( Object.create(
     type: "pqr",
 
 } );
+
+ParserRegistry.add( "pqr", PqrParser );
 
 
 export default PqrParser;

@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import { uint8ToLines } from "../utils.js";
 import DxParser from "./dx-parser.js";
 
@@ -55,6 +55,8 @@ DxbinParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "dxbin", DxbinParser );
 
 
 export default DxbinParser;

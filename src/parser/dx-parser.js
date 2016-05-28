@@ -4,7 +4,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 
 
@@ -169,6 +169,8 @@ DxParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "dx", DxParser );
 
 
 export default DxParser;

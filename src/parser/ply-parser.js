@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import SurfaceParser from "./surface-parser.js";
 
 
@@ -25,6 +26,8 @@ PlyParser.prototype = Object.assign( Object.create(
     type: "ply"
 
 } );
+
+ParserRegistry.add( "ply", PlyParser );
 
 
 export default PlyParser;

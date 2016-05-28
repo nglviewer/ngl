@@ -4,6 +4,7 @@
  */
 
 
+import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
@@ -41,6 +42,9 @@ TextParser.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ParserRegistry.add( "txt", TextParser );
+ParserRegistry.add( "text", TextParser );
 
 
 export default TextParser;
