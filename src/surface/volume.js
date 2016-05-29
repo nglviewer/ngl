@@ -5,9 +5,7 @@
 
 
 import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
-import { fromJSON } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
-import { makeWorkerString, makeWorker } from "../worker/worker-utils.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
@@ -33,73 +31,25 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 VolumeSurface.__deps = [ laplacianSmooth, computeVertexNormals, MarchingCubes ];
 
 
-// console.log( makeWorkerString( [ VolumeSurface ] ) );
-// var w = makeWorker( [ VolumeSurface ] );
-// console.log( w );
+WorkerRegistry.add( "surf", function func( e, callback ){
 
-
-WorkerRegistry.add( "surf", function( e, callback ){
-
-    if( Debug ) Log.time( "WORKER surf" );
-
-    if( self.volsurf === undefined ) self.volsurf = new VolumeSurface();
-
-    var sd;
-    var d = e.data;
-    var p = d.params;
-
-    if( d.field ){
-        self.volsurf = new VolumeSurface(
-            d.field, d.nx, d.ny, d.nz, d.atomindex
-        );
+    var a = e.data.args;
+    var p = e.data.params;
+    if( a ){
+        self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
-
     if( p ){
-        sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box );
+        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box );
+        var transferList = [ sd.position.buffer, sd.index.buffer ];
+        if( sd.normal ) transferList.push( sd.normal.buffer );
+        if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
+        callback( {
+            sd: sd,
+            p: p
+        }, transferList );
     }
 
-    if( Debug ) Log.timeEnd( "WORKER surf" );
-
-    if( p ){
-        var transferable = [ sd.position, sd.index ];
-        if( sd.atomindex ) transferable.push( sd.atomindex );
-        if( sd.normal ) transferable.push( sd.normal );
-        callback( sd, transferable );
-    }else{
-        callback();
-    }
-
-} );
-
-
-// WorkerRegistry.add( "surf", function( e, callback ){
-
-//     if( Debug ) Log.time( "WORKER surf" );
-
-//     if( self.vol === undefined ) self.vol = new Volume();
-
-//     var surface;
-//     var vol = self.vol;
-//     var d = e.data;
-//     var p = d.params;
-
-//     if( d.vol ) vol.fromJSON( d.vol );
-
-//     if( p ){
-//         surface = vol.getSurface(
-//             p.isolevel, p.smooth, p.center, p.size
-//         );
-//     }
-
-//     if( Debug ) Log.timeEnd( "WORKER surf" );
-
-//     if( p ){
-//         callback( surface.toJSON(), surface.getTransferable() );
-//     }else{
-//         callback();
-//     }
-
-// } );
+}, [ VolumeSurface ] );
 
 
 function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
@@ -251,6 +201,22 @@ Volume.prototype = {
 
     },
 
+    makeSurface: function( sd, isolevel, smooth ){
+
+        this.matrix.applyToVector3Array( sd.position );
+
+        if( sd.normal ){
+            this.normalMatrix.applyToVector3Array( sd.normal );
+        }
+
+        var surface = new Surface( "", "", sd );
+        surface.info.isolevel = isolevel;
+        surface.info.smooth = smooth;
+
+        return surface;
+
+    },
+
     getSurface: function( isolevel, smooth, center, size ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
@@ -267,17 +233,7 @@ Volume.prototype = {
         var box = this.__getBox( center, size );
         var sd = this.volsurf.getSurface( isolevel, smooth, box );
 
-        this.matrix.applyToVector3Array( sd.position );
-
-        if( sd.normal ){
-            this.normalMatrix.applyToVector3Array( sd.normal );
-        }
-
-        var surface = new Surface( "", "", sd );
-        surface.info.isolevel = isolevel;
-        surface.info.smooth = smooth;
-
-        return surface;
+        return this.makeSurface( sd, isolevel, smooth );
 
     },
 
@@ -288,87 +244,44 @@ Volume.prototype = {
 
         //
 
-        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
+        if( window.Worker ){
 
-            function onmessage( e ){
-                // console.log( e );
-                var a = e.data.args;
-                var p = e.data.params;
-                var volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
-                var sd = volsurf.getSurface( p.isolevel, p.smooth, p.box );
-                var transferList = [ sd.position.buffer, sd.index.buffer ];
-                // console.log(sd)
-                if( sd.normal ) transferList.push( sd.normal.buffer );
-                if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
-                self.postMessage( {
-                    sd: sd,
-                    p: p
-                }, transferList );
+            if( this.workerPool === undefined ){
+                this.workerPool = new WorkerPool( "surf", 2 );
             }
 
-            var w = makeWorker( onmessage, [ VolumeSurface ] );
+            var msg = {};
+            var worker = this.workerPool.getNextWorker();
 
-            w.onmessage = function( e ){
-                var sd = e.data.sd;
-                var p = e.data.p;
-                // console.log( sd );
-                this.matrix.applyToVector3Array( sd.position );
-                if( sd.normal ){
-                    this.normalMatrix.applyToVector3Array( sd.normal );
-                }
-                var surface = new Surface( "", "", sd );
-                surface.info.isolevel = p.isolevel;
-                surface.info.smooth = p.smooth;
-                callback( surface );
-            }.bind( this );
+            if( worker.postCount === 0 ){
+                msg.args = [
+                    this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
+                ];
+            }
 
-            w.postMessage( {
-                args: [ this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex ],
-                params: {
-                    isolevel: isolevel,
-                    smooth: smooth,
-                    box: this.__getBox( center, size )
-                }
-            } );
+            msg.params = {
+                isolevel: isolevel,
+                smooth: smooth,
+                box: this.__getBox( center, size )
+            };
 
-            // if( this.workerPool === undefined ){
-            //     this.workerPool = new WorkerPool( "surf", 2 );
-            // }
+            worker.post( msg, undefined,
 
-            // var worker = this.workerPool.getNextWorker();
+                function( e ){
+                    var sd = e.data.sd;
+                    var p = e.data.p;
+                    callback( this.makeSurface( sd, p.isolevel, p.smooth ) );
+                }.bind( this ),
 
-            // worker.post(
+                function( e ){
+                    console.warn(
+                        "Volume.generateSurfaceWorker error - trying without worker", e
+                    );
+                    var surface = this.getSurface( isolevel, smooth, center, size );
+                    callback( surface );
+                }.bind( this )
 
-            //     {
-            //         vol: worker.postCount === 0 ? this.toJSON() : null,
-            //         params: {
-            //             isolevel: isolevel,
-            //             smooth: smooth,
-            //             box: this.__getBox( center, size )
-            //         }
-            //     },
-
-            //     undefined,
-
-            //     function( e ){
-
-            //         var surface = fromJSON( e.data );
-            //         callback( surface );
-
-            //     },
-
-            //     function( e ){
-
-            //         console.warn(
-            //             "Volume.generateSurfaceWorker error - trying without worker", e
-            //         );
-
-            //         var surface = this.getSurface( isolevel, smooth, center, size );
-            //         callback( surface );
-
-            //     }.bind( this )
-
-            // );
+            );
 
         }else{
 
