@@ -1,4 +1,5 @@
 
+import XmlParser from "../../../src/parser/xml-parser.js";
 import { autoLoad } from "../../../src/loader/loader-utils.js";
 
 

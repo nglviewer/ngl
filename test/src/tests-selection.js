@@ -1,4 +1,6 @@
 
+import PdbParser from "../../src/parser/pdb-parser.js";
+import CifParser from "../../src/parser/cif-parser.js";
 import StructureView from "../../src/structure/structure-view.js";
 import { autoLoad } from "../../src/loader/loader-utils.js";
 import Selection from "../../src/selection.js";

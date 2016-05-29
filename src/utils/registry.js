@@ -4,16 +4,16 @@
  */
 
 
-function Registry(){
+function Registry( name ){
 
     var dict = {};
 
-    this.add = function( name, value ){
-        dict[ name.toLowerCase() ] = value;
+    this.add = function( key, value ){
+        dict[ key.toLowerCase() ] = value;
     };
 
-    this.get = function( name ){
-        return dict[ name.toLowerCase() ];
+    this.get = function( key ){
+        return dict[ key === undefined ? "" : key.toLowerCase() ];
     };
 
     Object.defineProperties( this, {

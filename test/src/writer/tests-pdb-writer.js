@@ -1,4 +1,5 @@
 
+import PdbParser from "../../../src/parser/pdb-parser.js";
 import { autoLoad } from "../../../src/loader/loader-utils.js";
 import PdbWriter from "../../../src/writer/pdb-writer.js";
 

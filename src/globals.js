@@ -45,9 +45,9 @@ var MainScriptFilePath = "../js/build/ngl.full.min.js";
 
 var WorkerRegistry = new _WorkerRegistry();
 var ColorMakerRegistry = new _ColorMakerRegistry();
-var DatasourceRegistry = new Registry();
-var RepresentationRegistry = new Registry();
-var ParserRegistry = new Registry();
+var DatasourceRegistry = new Registry( "datasource" );
+var RepresentationRegistry = new Registry( "representatation" );
+var ParserRegistry = new Registry( "parser" );
 
 
 export {

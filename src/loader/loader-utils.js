@@ -15,14 +15,13 @@ function getDataInfo( src ){
 
     var info = getFileInfo( src );
     var datasource = DatasourceRegistry.get( info.protocol );
-    var url = datasource.getUrl( info.src );
-    var info2 = getFileInfo( url );
-    if( !info2.ext && datasource.getExt ){
-        info2.ext = datasource.getExt( src );
+    if( datasource ){
+        info = getFileInfo( datasource.getUrl( info.src ) );
+        if( !info.ext && datasource.getExt ){
+            info.ext = datasource.getExt( src );
+        }
     }
-
-    return info2;
-
+    return info;
 }
 
 

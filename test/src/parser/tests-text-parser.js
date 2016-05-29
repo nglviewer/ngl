@@ -1,4 +1,5 @@
 
+import TextParser from "../../../src/parser/text-parser.js";
 import { autoLoad } from "../../../src/loader/loader-utils.js";
 
 

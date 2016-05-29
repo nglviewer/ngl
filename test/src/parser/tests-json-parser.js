@@ -1,4 +1,5 @@
 
+import JsonParser from "../../../src/parser/json-parser.js";
 import { autoLoad } from "../../../src/loader/loader-utils.js";
 
 
