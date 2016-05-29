@@ -239,11 +239,13 @@ laplacianSmooth.__deps = [ computeVertexNormals ];
 
 function computeVertexNormals( position, index, normal ){
 
+    var i, il;
+
     if( normal === undefined ){
         normal = new Float32Array( position.length );
     }else{
         // reset existing normals to zero
-        for( var i = 0, il = normal.length; i < il; i ++ ){
+        for( i = 0, il = normal.length; i < il; i ++ ){
             normal[ i ] = 0;
         }
     }
@@ -258,7 +260,7 @@ function computeVertexNormals( position, index, normal ){
     if( index ){
 
         // indexed elements
-        for( var i = 0, il = index.length; i < il; i += 3 ){
+        for( i = 0, il = index.length; i < il; i += 3 ){
 
             var ai = index[ i ] * 3;
             var bi = index[ i + 1 ] * 3;
@@ -289,7 +291,7 @@ function computeVertexNormals( position, index, normal ){
     }else{
 
         // non-indexed elements (unconnected triangle soup)
-        for ( var i = 0, il = position.length; i < il; i += 9 ) {
+        for ( i = 0, il = position.length; i < il; i += 9 ) {
 
             fromArray( a, position, i );
             fromArray( b, position, i + 3 );

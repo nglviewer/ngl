@@ -24,7 +24,7 @@ function WorkerRegistry(){
         if( !blobDict[ name ] ){
             blobDict[ name ] = makeWorkerBlob(
                 funcDict[ name ], depsDict[ name ]
-            )
+            );
         }
         return blobDict[ name ];
     };
