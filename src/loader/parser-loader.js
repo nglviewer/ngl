@@ -12,8 +12,6 @@ function ParserLoader( src, params ){
 
     Loader.call( this, src, params );
 
-    this.useWorker = this.params.useWorker === undefined ? false : this.params.useWorker;
-
 }
 
 ParserLoader.prototype = Object.assign( Object.create(
@@ -27,11 +25,7 @@ ParserLoader.prototype = Object.assign( Object.create(
         var ParserClass = ParserRegistry.get( this.ext );
         var parser = new ParserClass( this.streamer, this.params );
 
-        if( this.useWorker ){
-            parser.parseWorker( resolve );
-        }else{
-            parser.parse( resolve );
-        }
+        parser.parse( resolve );
 
     }
 

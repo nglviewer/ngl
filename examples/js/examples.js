@@ -47,7 +47,6 @@ NGL.ExampleRegistry.addDict( {
     "gro_trajectory": function( stage ){
 
         stage.loadFile( "data://md_1u19_trj.gro", {
-            useWorker: true,
             asTrajectory: true,
             sele: "50-100"
         } ).then( function( o ){
@@ -297,9 +296,7 @@ NGL.ExampleRegistry.addDict( {
 
     "ribosome": function( stage ){
 
-        stage.loadFile( "data://4UJD.cif.gz", {
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
 
             o.addRepresentation( "cartoon", {
 
@@ -521,10 +518,7 @@ NGL.ExampleRegistry.addDict( {
 
     "largeGro": function( stage ){
 
-        stage.loadFile( "data://water.gro", {
-            useWorker: true,
-            binary: false
-        } ).then( function( o ){
+        stage.loadFile( "data://water.gro" ).then( function( o ){
 
             o.addRepresentation( "line", { color: "residueindex" } );
             o.centerView();
@@ -747,9 +741,7 @@ NGL.ExampleRegistry.addDict( {
 
     "map": function( stage ){
 
-        stage.loadFile( "data://emd_2682.map.gz", {
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){
 
             o.addRepresentation( "surface", {
                 opacity: 0.5,
@@ -759,9 +751,7 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
-        stage.loadFile( "data://4UJD.cif.gz", {
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "data://4UJD.cif.gz" ).then( function( o ){
 
             o.addRepresentation( "cartoon", { color: "chainindex" } );
             stage.centerView();
@@ -818,18 +808,14 @@ NGL.ExampleRegistry.addDict( {
 
     "bigcube": function( stage ){
 
-        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz", {
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ).then( function( o ){
 
             o.addRepresentation( "surface", { isolevel: 2.7 } );
             // o.centerView();
 
         } );
 
-        stage.loadFile( "data://rho-inactive_md-system.gro", {
-            useWorker: true
-        } ).then( function( o ){
+        stage.loadFile( "data://rho-inactive_md-system.gro" ).then( function( o ){
 
             o.addRepresentation( "cartoon" );
             o.addRepresentation( "licorice", { sele: "hetero" } );

@@ -82,37 +82,7 @@ StructureParser.prototype = Object.assign( Object.create(
 
     },
 
-    _postProcess: function(){},
-
-    toJSON: function(){
-
-        var output = Parser.prototype.toJSON.call( this );
-
-        output.firstModelOnly = this.firstModelOnly;
-        output.asTrajectory = this.asTrajectory;
-        output.cAlphaOnly = this.cAlphaOnly;
-        output.reorderAtoms = this.reorderAtoms;
-        output.dontAutoBond = this.dontAutoBond;
-        output.doAutoSS = this.doAutoSS;
-
-        return output;
-
-    },
-
-    fromJSON: function( input ){
-
-        Parser.prototype.fromJSON.call( this, input );
-
-        this.firstModelOnly = input.firstModelOnly;
-        this.asTrajectory = input.asTrajectory;
-        this.cAlphaOnly = input.cAlphaOnly;
-        this.reorderAtoms = input.reorderAtoms;
-        this.dontAutoBond = input.dontAutoBond;
-        this.doAutoSS = input.doAutoSS;
-
-        return this;
-
-    },
+    _postProcess: function(){}
 
 } );
 
