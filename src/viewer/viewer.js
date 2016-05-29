@@ -1225,7 +1225,7 @@ Viewer.prototype = {
         var offsetList = JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
 
         this.compositeUniforms.scale.value = 1.0 / offsetList.length;
-        this.compositeUniforms.tForeground.value = this.sampleTarget;
+        this.compositeUniforms.tForeground.value = this.sampleTarget.texture;
         this.compositeUniforms.tForeground.needsUpdate = true;
         this.compositeMaterial.needsUpdate = true;
 
@@ -1253,7 +1253,7 @@ Viewer.prototype = {
         this.renderer.setRenderTarget( null );
 
         this.compositeUniforms.scale.value = 1.0;
-        this.compositeUniforms.tForeground.value = this.holdTarget;
+        this.compositeUniforms.tForeground.value = this.holdTarget.texture;
         this.compositeUniforms.tForeground.needsUpdate = true;
         this.compositeMaterial.needsUpdate = true;
 
