@@ -4,30 +4,37 @@
  */
 
 
-import { SymOp } from "./symmetry-constants.js";
+import { EncodedSymOp, SymOpCode } from "./symmetry-constants.js";
 
 
 function getSymmetryOperations( spacegroup ){
 
-    var symopList = SymOp[ spacegroup ];
-
+    var encodedSymopList = EncodedSymOp[ spacegroup ];
     var matrixDict = {};
 
-    if( symopList === undefined ){
-
+    if( encodedSymopList === undefined ){
         console.warn(
             "getSymmetryOperations: spacegroup '" +
             spacegroup + "' not found in symop library"
         );
         return matrixDict;
+    }
 
+    var symopList = [];
+
+    for( var i = 0, il = encodedSymopList.length; i < il; i+=3 ){
+        var symop = [];
+        for( var j = 0; j < 3; ++j ){
+            symop.push( SymOpCode[ encodedSymopList[ i + j ] ] );
+        }
+        symopList.push( symop );
     }
 
     var reInteger = /^[1-9]$/;
 
     symopList.forEach( function( symop ){
 
-        var ls = symop.split( "," );
+        // console.log( "symop", symop );
 
         var row = 0;
         var matrix = new THREE.Matrix4().set(
@@ -40,9 +47,7 @@ function getSymmetryOperations( spacegroup ){
 
         matrixDict[ symop ] = matrix;
 
-        // console.log( "symop", ls )
-
-        ls.forEach( function( elm ){
+        symop.forEach( function( elm ){
 
             // console.log( "row", row );
 
