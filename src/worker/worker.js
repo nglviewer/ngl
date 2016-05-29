@@ -4,7 +4,7 @@
  */
 
 
-import { Log, Debug, MainScriptFilePath, WorkerRegistry } from "../globals.js";
+import { Log, Debug, WorkerRegistry } from "../globals.js";
 
 
 function Worker( name ){
@@ -14,7 +14,9 @@ function Worker( name ){
     var onmessageDict = {};
     var onerrorDict = {};
 
-    var worker = new self.Worker( MainScriptFilePath );
+    var blobUrl = URL.createObjectURL( WorkerRegistry.get( name ) );
+    var worker = new window.Worker( blobUrl );
+    URL.revokeObjectURL( blobUrl );
 
     WorkerRegistry.activeWorkerCount += 1;
 
@@ -23,7 +25,7 @@ function Worker( name ){
         pending -= 1;
         var postId = event.data.__postId;
 
-        Log.timeEnd( "Worker.postMessage " + name + " #" + postId );
+        if( Debug ) Log.timeEnd( "Worker.postMessage " + name + " #" + postId );
 
         if( onmessageDict[ postId ] ){
             onmessageDict[ postId ].call( worker, event );
@@ -68,7 +70,7 @@ function Worker( name ){
         aMessage.__postId = postCount;
         aMessage.__debug = Debug;
 
-        Log.time( "Worker.postMessage " + name + " #" + postCount );
+        if( Debug ) Log.time( "Worker.postMessage " + name + " #" + postCount );
 
         try{
             worker.postMessage.call( worker, aMessage, transferList );
