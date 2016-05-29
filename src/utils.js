@@ -252,14 +252,6 @@ function getFileInfo( file ){
 }
 
 
-function fromJSON( input ){
-
-    // TODO
-    return new NGL[ input.metadata.type ]().fromJSON( input );
-
-}
-
-
 function throttle( func, wait, options ){
 
     // from http://underscorejs.org/docs/underscore.html
@@ -454,7 +446,6 @@ export {
     open,
     unicodeHelper,
     getFileInfo,
-    fromJSON, // FIXME
     throttle,
     binarySearchIndexOf,
     dataURItoImage,
