@@ -429,7 +429,7 @@ NGL.ToolbarWidget = function( stage ){
 
         statsPanel.clear();
 
-        if( NGL.debug ){
+        if( NGL.Debug ){
             statsPanel.add(
                 new UI.Text(
                     stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
