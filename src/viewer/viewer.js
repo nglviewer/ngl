@@ -1389,15 +1389,17 @@ Viewer.prototype = {
                     return;
                 }
 
+                var attributes = o.geometry.attributes;
+                var n = attributes.position.count;
+
+                if( n === 0 ) return;
+
                 matrix.multiplyMatrices(
                     camera.matrixWorldInverse, o.matrixWorld
                 );
                 modelViewProjectionMatrix.multiplyMatrices(
                     camera.projectionMatrix, matrix
                 );
-
-                var attributes = o.geometry.attributes;
-                var n = attributes.position.count;
 
                 if( !o.userData.sortData ){
                     o.userData.sortData = {};
