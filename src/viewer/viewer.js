@@ -1224,12 +1224,13 @@ Viewer.prototype = {
         var camera = this.camera;
         var offsetList = JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
 
-        this.compositeUniforms.scale.value = 1.0 / offsetList.length;
+        var baseSampleWeight = 1.0 / offsetList.length;
+        var roundingRange = 1 / 32;
+
         this.compositeUniforms.tForeground.value = this.sampleTarget.texture;
         this.compositeUniforms.tForeground.needsUpdate = true;
         this.compositeMaterial.needsUpdate = true;
 
-        // this.renderer.setRenderTarget( this.sampleTarget );
         var width = this.sampleTarget.width;
         var height = this.sampleTarget.height;
 
@@ -1242,6 +1243,14 @@ Viewer.prototype = {
                 width, height, offset[ 0 ], offset[ 1 ], width, height
             );
             this.__updateCamera();
+
+            var sampleWeight = baseSampleWeight;
+            // the theory is that equal weights for each sample lead to an accumulation of rounding errors.
+            // The following equation varies the sampleWeight per sample so that it is uniformly distributed
+            // across a range of values whose rounding errors cancel each other out.
+            var uniformCenteredDistribution = ( -0.5 + ( i + 0.5 ) / offsetList.length );
+            sampleWeight += roundingRange * uniformCenteredDistribution;
+            this.compositeUniforms.scale.value = sampleWeight;
 
             this.__renderModelGroup( this.sampleTarget );
             this.renderer.render(
