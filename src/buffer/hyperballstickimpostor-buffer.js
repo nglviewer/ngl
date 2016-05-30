@@ -8,6 +8,57 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";
 
 
+var tmpMatrix = new THREE.Matrix4();
+
+function matrixCalc( object, camera ){
+
+    var u = object.material.uniforms;
+
+    if( u.modelViewMatrixInverse ){
+        u.modelViewMatrixInverse.value.getInverse(
+            object.modelViewMatrix
+        );
+    }
+
+    if( u.modelViewMatrixInverseTranspose ){
+        if( u.modelViewMatrixInverse ){
+            u.modelViewMatrixInverseTranspose.value.copy(
+                u.modelViewMatrixInverse.value
+            ).transpose();
+        }else{
+            u.modelViewMatrixInverseTranspose.value
+                .getInverse( object.modelViewMatrix )
+                .transpose();
+        }
+    }
+
+    if( u.modelViewProjectionMatrix ){
+        u.modelViewProjectionMatrix.value.multiplyMatrices(
+            camera.projectionMatrix, object.modelViewMatrix
+        );
+    }
+
+    if( u.modelViewProjectionMatrixInverse ){
+        if( u.modelViewProjectionMatrix ){
+            tmpMatrix.copy(
+                u.modelViewProjectionMatrix.value
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }else{
+            tmpMatrix.multiplyMatrices(
+                camera.projectionMatrix, object.modelViewMatrix
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }
+    }
+
+}
+
+
 function HyperballStickImpostorBuffer( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
 
     var p = params || {};
@@ -20,56 +71,6 @@ function HyperballStickImpostorBuffer( position1, position2, color, color2, radi
     this.fragmentShader = "HyperballStickImpostor.frag";
 
     BoxBuffer.call( this, p );
-
-    var matrix = new THREE.Matrix4();
-
-    function matrixCalc( object, camera ){
-
-        var u = object.material.uniforms;
-
-        if( u.modelViewMatrixInverse ){
-            u.modelViewMatrixInverse.value.getInverse(
-                object.modelViewMatrix
-            );
-        }
-
-        if( u.modelViewMatrixInverseTranspose ){
-            if( u.modelViewMatrixInverse ){
-                u.modelViewMatrixInverseTranspose.value.copy(
-                    u.modelViewMatrixInverse.value
-                ).transpose();
-            }else{
-                u.modelViewMatrixInverseTranspose.value
-                    .getInverse( object.modelViewMatrix )
-                    .transpose();
-            }
-        }
-
-        if( u.modelViewProjectionMatrix ){
-            u.modelViewProjectionMatrix.value.multiplyMatrices(
-                camera.projectionMatrix, object.modelViewMatrix
-            );
-        }
-
-        if( u.modelViewProjectionMatrixInverse ){
-            if( u.modelViewProjectionMatrix ){
-                matrix.copy(
-                    u.modelViewProjectionMatrix.value
-                );
-                u.modelViewProjectionMatrixInverse.value.getInverse(
-                    matrix
-                );
-            }else{
-                matrix.multiplyMatrices(
-                    camera.projectionMatrix, object.modelViewMatrix
-                );
-                u.modelViewProjectionMatrixInverse.value.getInverse(
-                    matrix
-                );
-            }
-        }
-
-    }
 
     var modelViewProjectionMatrix = new THREE.Uniform( new THREE.Matrix4() )
         .onUpdate( matrixCalc );
