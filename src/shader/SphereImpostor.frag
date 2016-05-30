@@ -90,7 +90,7 @@ bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
                 flag2 = true;
                 return false;
             }else{
-                cameraNormal = normalize( -cameraPos - cameraSpherePos );
+                cameraNormal = normalize( cameraPos - cameraSpherePos );
             }
         #else
             if( calcDepth( cameraPos ) <= 0.0 ){
