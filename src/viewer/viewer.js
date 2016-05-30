@@ -88,15 +88,13 @@ THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
 
         var scaleW = this.zoom / ( this.view.width / this.view.fullWidth );
         var scaleH = this.zoom / ( this.view.height / this.view.fullHeight );
-        console.log( scaleW, scaleH, this.view.width / this.view.fullWidth )
-        // scaleH = scaleW;
+        var biasW = ( this.right - this.left ) / this.view.width;
+        var biasH = ( this.top - this.bottom ) / this.view.height;
 
-        left += this.view.offsetX / scaleW;
-        right = left + this.view.width / scaleW;
-        top -= this.view.offsetY / scaleH;
-        bottom = top - this.view.height / scaleH;
-
-        console.log( left, right, top, bottom )
+        left += biasW * ( this.view.offsetX / scaleW );
+        right = left + biasW * ( this.view.width / scaleW );
+        top -= biasH * ( this.view.offsetY / scaleH );
+        bottom = top - biasH * ( this.view.height / scaleH );
 
     }
 
