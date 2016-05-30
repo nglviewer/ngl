@@ -124,6 +124,14 @@ PointBuffer.prototype = Object.assign( Object.create(
         this.material.blending = THREE.NormalBlending;
         this.material.needsUpdate = true;
 
+        this.wireframeMaterial.uniforms.map.value = this.tex;
+        this.wireframeMaterial.blending = THREE.NormalBlending;
+        this.wireframeMaterial.needsUpdate = true;
+
+        this.pickingMaterial.uniforms.map.value = this.tex;
+        this.pickingMaterial.blending = THREE.NormalBlending;
+        this.pickingMaterial.needsUpdate = true;
+
     },
 
     makeTexture: function(){

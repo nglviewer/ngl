@@ -263,7 +263,7 @@ function TextBuffer( position, size, color, text, params ){
     QuadBuffer.call( this, p );
 
     this.addUniforms( {
-        "fontTexture"  : { value: null },
+        "fontTexture": { value: null },
         "xOffset": { value: this.xOffset },
         "yOffset": { value: this.yOffset },
         "zOffset": { value: this.zOffset },
@@ -315,6 +315,16 @@ TextBuffer.prototype = Object.assign( Object.create(
         this.material.lights = false;
         this.material.uniforms.fontTexture.value = this.tex;
         this.material.needsUpdate = true;
+
+        this.wireframeMaterial.extensions.derivatives = true;
+        this.wireframeMaterial.lights = false;
+        this.wireframeMaterial.uniforms.fontTexture.value = this.tex;
+        this.wireframeMaterial.needsUpdate = true;
+
+        this.pickingMaterial.extensions.derivatives = true;
+        this.pickingMaterial.lights = false;
+        this.pickingMaterial.uniforms.fontTexture.value = this.tex;
+        this.pickingMaterial.needsUpdate = true;
 
     },
 
