@@ -1061,7 +1061,7 @@ NGL.LabelRepresentation.prototype = Object.assign( Object.create(
         this.fontFamily = p.fontFamily || "sans-serif";
         this.fontStyle = p.fontStyle || "normal";
         this.fontWeight = p.fontWeight || "bold";
-        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
+        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser === "Chrome";
         this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
         this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
         this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
