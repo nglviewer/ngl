@@ -3031,13 +3031,13 @@ NGL.createParameterInput = function( p ){
 
     if( p.type === "number" ){
 
-        input = new UI.Number( parseFloat( p.value ) || NaN )
+        input = new UI.Number( parseFloat( p.value ) )
             .setRange( p.min, p.max )
             .setPrecision( p.precision );
 
     }else if( p.type === "integer" ){
 
-        input = new UI.Integer( parseInt( p.value ) || NaN )
+        input = new UI.Integer( parseInt( p.value ) )
             .setRange( p.min, p.max );
 
     }else if( p.type === "range" ){
@@ -3088,11 +3088,127 @@ NGL.createParameterInput = function( p ){
 };
 
 
+
+////////////////
+// Preferences
+
+NGL.Preferences = function( id, defaultParams ){
+
+    var SIGNALS = signals;
+
+    this.signals = {
+        keyChanged: new SIGNALS.Signal(),
+    };
+
+    this.id = id || "ngl-gui";
+    var dp = Object.assign( {}, defaultParams );
+
+    this.storage = {
+        impostor: true,
+        quality: "medium",
+        sampleLevel: 0,
+        theme: "dark",
+        backgroundColor: "black",
+        overview: true,
+        rotateSpeed: 2.0,
+        zoomSpeed: 1.2,
+        panSpeed: 0.8,
+        clipNear: 0,
+        clipFar: 100,
+        clipDist: 10,
+        fogNear: 50,
+        fogFar: 100,
+        cameraFov: 40,
+        cameraType: "perspective",
+        lightColor: 0xdddddd,
+        lightIntensity: 1.0,
+        ambientColor: 0xdddddd,
+        ambientIntensity: 0.2
+    };
+
+    // overwrite default values with params
+    for( var key in this.storage ){
+        if( dp[ key ] !== undefined ){
+            this.storage[ key ] = dp[ key ];
+        }
+    }
+
+    try{
+        if ( window.localStorage[ this.id ] === undefined ) {
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+        } else {
+            var data = JSON.parse( window.localStorage[ this.id ] );
+            for ( var key in data ) {
+                this.storage[ key ] = data[ key ];
+            }
+        }
+    }catch( e ){
+        NGL.error( "localStorage not accessible/available" );
+    }
+
+};
+
+NGL.Preferences.prototype = {
+
+    constructor: NGL.Preferences,
+
+    getKey: function( key ){
+
+        return this.storage[ key ];
+
+    },
+
+    setKey: function( key, value ){
+
+        this.storage[ key ] = value;
+
+        try{
+            window.localStorage[ this.id ] = JSON.stringify( this.storage );
+            this.signals.keyChanged.dispatch( key, value );
+        }catch( e ){
+            // Webkit === 22 / Firefox === 1014
+            if( e.code === 22 || e.code === 1014 ){
+                NGL.error( "localStorage full" );
+            }else{
+                NGL.error( "localStorage not accessible/available", e );
+            }
+        }
+
+    },
+
+    clear: function(){
+
+        try{
+            delete window.localStorage[ this.id ];
+        }catch( e ){
+            NGL.error( "localStorage not accessible/available" );
+        }
+
+    }
+
+};
+
+
 // Stage
 
 NGL.StageWidget = function( stage ){
 
-    var signals = stage.signals;
+    var preferences = new NGL.Preferences( "ngl-stage-widget" );
+
+    var pp = {};
+    for( var name in preferences.storage ){
+        pp[ name ] = preferences.getKey( name );
+    }
+    stage.setParameters( pp );
+
+    preferences.signals.keyChanged.add( function( key, value ){
+        var sp = {};
+        sp[ key ] = value;
+        stage.setParameters( sp );
+        if( key === "theme" ){
+            setTheme( value );
+        }
+    }, this );
 
     //
 
@@ -3101,18 +3217,20 @@ NGL.StageWidget = function( stage ){
     cssLinkElement.id = "theme";
 
     function setTheme( value ){
-        var cssPath;
+        var cssPath, bgColor;
         if( value === "light" ){
             cssPath = NGL.cssDirectory + "light.css";
+            bgColor = "white";
         }else{
             cssPath = NGL.cssDirectory + "dark.css";
+            bgColor = "black";
         }
         cssLinkElement.href = cssPath;
+        stage.setParameters( { backgroundColor: bgColor } );
     }
 
-    setTheme( stage.getParameters().theme );
+    setTheme( preferences.getKey( "theme" ) );
     document.head.appendChild( cssLinkElement );
-    signals.themeChanged.add( setTheme );
 
     //
 
@@ -3122,7 +3240,7 @@ NGL.StageWidget = function( stage ){
     var toolbar = new NGL.ToolbarWidget( stage ).setId( "toolbar" );
     document.body.appendChild( toolbar.dom );
 
-    var menubar = new NGL.MenubarWidget( stage ).setId( "menubar" );
+    var menubar = new NGL.MenubarWidget( stage, preferences ).setId( "menubar" );
     document.body.appendChild( menubar.dom );
 
     var sidebar = new NGL.SidebarWidget( stage ).setId( "sidebar" );
@@ -3341,19 +3459,19 @@ NGL.ToolbarWidget = function( stage ){
 
 // Menubar
 
-NGL.MenubarWidget = function( stage ){
+NGL.MenubarWidget = function( stage, preferences ){
 
     var container = new UI.Panel();
 
     container.add( new NGL.MenubarFileWidget( stage ) );
-    container.add( new NGL.MenubarViewWidget( stage ) );
+    container.add( new NGL.MenubarViewWidget( stage, preferences ) );
     if( NGL.ExampleRegistry.count > 0 ){
         container.add( new NGL.MenubarExamplesWidget( stage ) );
     }
     if( NGL.PluginRegistry.count > 0 ){
         container.add( new NGL.MenubarPluginsWidget( stage ) );
     }
-    container.add( new NGL.MenubarHelpWidget( stage ) );
+    container.add( new NGL.MenubarHelpWidget( stage, preferences ) );
 
     container.add(
         new UI.Panel().setClass( "menu" ).setFloat( "right" ).add(
@@ -3528,16 +3646,24 @@ NGL.MenubarFileWidget = function( stage ){
 };
 
 
-NGL.MenubarViewWidget = function( stage ){
+NGL.MenubarViewWidget = function( stage, preferences ){
 
     // event handlers
 
     function onLightThemeOptionClick(){
-        stage.setParameters( { theme: "light" } );
+        preferences.setKey( "theme", "light" );
     }
 
     function onDarkThemeOptionClick(){
-        stage.setParameters( { theme: "dark" } );
+        preferences.setKey( "theme", "dark" );
+    }
+
+    function onPerspectiveCameraOptionClick(){
+        stage.setParameters( { cameraType: "perspective" } );
+    }
+
+    function onOrthographicCameraOptionClick(){
+        stage.setParameters( { cameraType: "orthographic" } );
     }
 
     function onFullScreenOptionClick(){
@@ -3580,6 +3706,9 @@ NGL.MenubarViewWidget = function( stage ){
     var menuConfig = [
         createOption( 'Light theme', onLightThemeOptionClick ),
         createOption( 'Dark theme', onDarkThemeOptionClick ),
+        createDivider(),
+        createOption( 'Perspective', onPerspectiveCameraOptionClick ),
+        createOption( 'Orthographic', onOrthographicCameraOptionClick ),
         createDivider(),
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
@@ -3644,7 +3773,7 @@ NGL.MenubarPluginsWidget = function( stage ){
 };
 
 
-NGL.MenubarHelpWidget = function( stage ){
+NGL.MenubarHelpWidget = function( stage, preferences ){
 
     // event handlers
 
@@ -3682,17 +3811,17 @@ NGL.MenubarHelpWidget = function( stage ){
 
     // export image
 
-    var preferencesWidget = new NGL.PreferencesWidget( stage )
+    var preferencesWidget = new NGL.PreferencesWidget( stage, preferences )
         .setDisplay( "none" )
         .attach();
 
     // overview
 
-    var overviewWidget = new NGL.OverviewWidget( stage )
+    var overviewWidget = new NGL.OverviewWidget( stage, preferences )
         .setDisplay( "none" )
         .attach();
 
-    if( stage.preferences.getKey( "overview" ) ){
+    if( preferences.getKey( "overview" ) ){
         onOverviewOptionClick();
     }
 
@@ -3720,7 +3849,7 @@ NGL.MenubarHelpWidget = function( stage ){
 
 // Overview
 
-NGL.OverviewWidget = function( stage ){
+NGL.OverviewWidget = function( stage, preferences ){
 
     var container = new UI.OverlayPanel();
 
@@ -3808,10 +3937,10 @@ NGL.OverviewWidget = function( stage ){
             "<a href='" + NGL.documentationUrl + "' target='_blank'>documentation pages</a>."
         ) ) );
 
-    var overview = stage.preferences.getKey( "overview" );
+    var overview = preferences.getKey( "overview" );
     var showOverviewCheckbox = new UI.Checkbox( overview )
         .onClick( function(){
-            stage.preferences.setKey(
+            preferences.setKey(
                 "overview",
                 showOverviewCheckbox.getValue()
             );
@@ -3842,7 +3971,7 @@ NGL.OverviewWidget = function( stage ){
 
 // Preferences
 
-NGL.PreferencesWidget = function( stage ){
+NGL.PreferencesWidget = function( stage, preferences ){
 
     var container = new UI.OverlayPanel();
 
@@ -3880,14 +4009,14 @@ NGL.PreferencesWidget = function( stage ){
 
         if( !input ) return;
 
-        stage.preferences.signals.keyChanged.add( function( key, value ){
+        preferences.signals.keyChanged.add( function( key, value ){
             if( key === name ) input.setValue( value );
         } );
 
         function setParam(){
             var sp = {};
             sp[ name ] = input.getValue();
-            stage.preferences.setKey( name, sp[ name ] );
+            preferences.setKey( name, sp[ name ] );
         }
 
         if( p.type === "range" ){
@@ -4218,13 +4347,7 @@ NGL.SidebarWidget = function( stage ){
 NGL.ComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     signals.statusChanged.add( function( value ){
 
@@ -4290,10 +4413,6 @@ NGL.StructureComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
     var trajContainer = new UI.Panel();
 
-    signals.requestGuiVisibility.add( function( value ){
-        container.setCollapsed( !value );
-    } );
-
     signals.representationAdded.add( function( repr ){
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
@@ -4347,7 +4466,9 @@ NGL.StructureComponentWidget = function( component, stage ){
         .setColor( '#444' )
         .setOptions( (function(){
             var biomolDict = component.structure.biomolDict;
-            var assemblyOptions = { "": "AU" };
+            var assemblyOptions = {
+                "": ( component.structure.unitcell ? "AU" : "FULL" )
+            };
             Object.keys( biomolDict ).forEach( function( k ){
                 assemblyOptions[ k ] = k;
             } );
@@ -4500,15 +4621,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 NGL.SurfaceComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     var reprContainer = new UI.Panel();
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
 
     signals.representationAdded.add( function( repr ){
 
@@ -4565,15 +4680,9 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 NGL.ScriptComponentWidget = function( component, stage ){
 
     var signals = component.signals;
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" );
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
 
     var panel = new UI.Panel().setMarginLeft( "20px" );
-
-    signals.requestGuiVisibility.add( function( value ){
-
-        container.setCollapsed( !value );
-
-    } );
 
     signals.nameChanged.add( function( value ){
 
@@ -4643,12 +4752,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     var signals = component.signals;
 
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" )
         .setMarginLeft( "20px" );
-
-    signals.requestGuiVisibility.add( function( value ){
-        container.setCollapsed( !value );
-    } );
 
     signals.visibilityChanged.add( function( value ){
         toggle.setValue( value );
@@ -4764,7 +4869,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var signals = component.signals;
     var traj = component.trajectory;
 
-    var container = new UI.CollapsibleIconPanel( "minus-square","plus-square" )
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" )
         .setMarginLeft( "20px" );
 
     var reprContainer = new UI.Panel();
