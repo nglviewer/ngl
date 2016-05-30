@@ -184,6 +184,11 @@ NGL.Preferences.prototype = {
 
 NGL.StageWidget = function( stage ){
 
+    var viewport = new NGL.ViewportWidget( stage ).setId( "viewport" );
+    document.body.appendChild( viewport.dom );
+
+    //
+
     var preferences = new NGL.Preferences( "ngl-stage-widget" );
 
     var pp = {};
@@ -224,9 +229,6 @@ NGL.StageWidget = function( stage ){
     document.head.appendChild( cssLinkElement );
 
     //
-
-    var viewport = new NGL.ViewportWidget( stage ).setId( "viewport" );
-    document.body.appendChild( viewport.dom );
 
     var toolbar = new NGL.ToolbarWidget( stage ).setId( "toolbar" );
     document.body.appendChild( toolbar.dom );

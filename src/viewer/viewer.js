@@ -151,7 +151,10 @@ function Viewer( eid, params ){
     var renderer, indexUint16, supportsHalfFloat;
     var pickingTarget, sampleTarget, holdTarget;
     var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
-    if( initRenderer() === false ) return;
+    if( initRenderer() === false ){
+        this.container = container;
+        return;
+    }
 
     var controls;
     initControls();
