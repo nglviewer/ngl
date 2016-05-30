@@ -297,14 +297,13 @@ function sortProjectedPosition( scene, camera ){
 var projectionMatrixInverse = new THREE.Matrix4();
 var projectionMatrixTranspose = new THREE.Matrix4();
 
-function updateMaterialUniforms( group, camera, renderer ){
+function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
 
     var canvasHeight = renderer.getSize().height;
     var pixelRatio = renderer.getPixelRatio();
     var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
 
     projectionMatrixInverse.getInverse( camera.projectionMatrix );
-
     projectionMatrixTranspose.copy( camera.projectionMatrix ).transpose();
 
     group.traverse( function( o ){

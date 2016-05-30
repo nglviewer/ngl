@@ -1044,7 +1044,7 @@ function Viewer( eid, params ){
         camera.matrixWorldInverse.getInverse( camera.matrixWorld );
         camera.updateProjectionMatrix();
 
-        updateMaterialUniforms( scene, camera, renderer );
+        updateMaterialUniforms( scene, camera, renderer, cDist, bRadius );
         sortProjectedPosition( scene, camera );
 
     }
