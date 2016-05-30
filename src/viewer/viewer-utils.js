@@ -5,6 +5,7 @@
 
 
 import TiledRenderer from "./tiled-renderer.js";
+import { quicksortIP } from "../math/array-utils.js";
 
 
 function trimCanvas( canvas, r, g, b, a ){
@@ -197,6 +198,160 @@ function makeImage( viewer, params ){
 }
 
 
+var vertex = new THREE.Vector3();
+var matrix = new THREE.Matrix4();
+var modelViewProjectionMatrix = new THREE.Matrix4();
+
+function sortProjectedPosition( scene, camera ){
+
+    // Log.time( "sort" );
+
+    var i;
+
+    scene.traverseVisible( function ( o ){
+
+        if( !( o instanceof THREE.Points ) || !o.sortParticles ){
+            return;
+        }
+
+        var attributes = o.geometry.attributes;
+        var n = attributes.position.count;
+
+        if( n === 0 ) return;
+
+        matrix.multiplyMatrices(
+            camera.matrixWorldInverse, o.matrixWorld
+        );
+        modelViewProjectionMatrix.multiplyMatrices(
+            camera.projectionMatrix, matrix
+        );
+
+        if( !o.userData.sortData ){
+            o.userData.sortData = {};
+        }
+
+        var sortData = o.userData.sortData;
+
+        if( !sortData.__sortArray ){
+            sortData.__sortArray = new Float32Array( n * 2 );
+        }
+
+        var sortArray = sortData.__sortArray;
+
+        for( i = 0; i < n; ++i ){
+
+            var i2 = 2 * i;
+
+            vertex.fromArray( attributes.position.array, i * 3 );
+            vertex.applyProjection( modelViewProjectionMatrix );
+
+            // negate, so that sorting order is reversed
+            sortArray[ i2 ] = -vertex.z;
+            sortArray[ i2 + 1 ] = i;
+
+        }
+
+        quicksortIP( sortArray, 2, 0 );
+
+        var index, indexSrc, indexDst, tmpTab;
+
+        for( var name in attributes ){
+
+            var attr = attributes[ name ];
+            var array = attr.array;
+            var itemSize = attr.itemSize;
+
+            if( !sortData[ name ] ){
+                sortData[ name ] = new Float32Array(
+                    itemSize * n
+                );
+            }
+
+            tmpTab = sortData[ name ];
+            sortData[ name ] = array;
+
+            for( i = 0; i < n; ++i ){
+
+                index = sortArray[ i * 2 + 1 ];
+
+                for( var j = 0; j < itemSize; ++j ){
+                    indexSrc = index * itemSize + j;
+                    indexDst = i * itemSize + j;
+                    tmpTab[ indexDst ] = array[ indexSrc ];
+                }
+
+            }
+
+            attributes[ name ].array = tmpTab;
+            attributes[ name ].needsUpdate = true;
+
+        }
+
+    } );
+
+    // Log.timeEnd( "sort" );
+
+}
+
+
+var projectionMatrixInverse = new THREE.Matrix4();
+var projectionMatrixTranspose = new THREE.Matrix4();
+
+function updateMaterialUniforms( group, camera, renderer ){
+
+    var canvasHeight = renderer.getSize().height;
+    var pixelRatio = renderer.getPixelRatio();
+    var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
+
+    projectionMatrixInverse.getInverse( camera.projectionMatrix );
+
+    projectionMatrixTranspose.copy( camera.projectionMatrix ).transpose();
+
+    group.traverse( function( o ){
+
+        var m = o.material;
+        if( !m ) return;
+
+        var u = o.material.uniforms;
+        if( !u ) return;
+
+        if( m.clipNear ){
+            var nearFactor = ( 50 - m.clipNear ) / 50;
+            var nearClip = cDist - ( bRadius * nearFactor );
+            u.nearClip.value = nearClip;
+        }
+
+        if( u.canvasHeight ){
+            u.canvasHeight.value = canvasHeight;
+        }
+
+        if( u.pixelRatio ){
+            u.pixelRatio.value = pixelRatio;
+        }
+
+        if( u.projectionMatrixInverse ){
+            u.projectionMatrixInverse.value.copy(
+                projectionMatrixInverse
+            );
+        }
+
+        if( u.projectionMatrixTranspose ){
+            u.projectionMatrixTranspose.value.copy(
+                projectionMatrixTranspose
+            );
+        }
+
+        if( u.ortho ){
+            u.ortho.value = ortho;
+        }
+
+    } );
+
+}
+
+
 export {
-	makeImage
+    makeImage,
+    sortProjectedPosition,
+    updateMaterialUniforms
 };

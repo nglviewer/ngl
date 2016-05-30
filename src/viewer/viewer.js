@@ -10,8 +10,9 @@ import {
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import { getShader } from "../shader/shader-utils.js";
-import { makeImage } from "./viewer-utils";
-import { quicksortIP } from "../math/array-utils.js";
+import {
+    makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
+} from "./viewer-utils";
 
 
 var JitterVectors = [
@@ -86,11 +87,15 @@ THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
 
         var scaleW = this.zoom / ( this.view.width / this.view.fullWidth );
         var scaleH = this.zoom / ( this.view.height / this.view.fullHeight );
+        console.log( scaleW, scaleH, this.view.width / this.view.fullWidth )
+        // scaleH = scaleW;
 
         left += this.view.offsetX / scaleW;
         right = left + this.view.width / scaleW;
         top -= this.view.offsetY / scaleH;
         bottom = top - this.view.height / scaleH;
+
+        console.log( left, right, top, bottom )
 
     }
 
@@ -173,75 +178,77 @@ Stats.prototype = {
  */
 function Viewer( eid, params ){
 
-    var SIGNALS = signals;
-
-    this.signals = {
-
-        orientationChanged: new SIGNALS.Signal(),
-
+    var _signals = {
+        orientationChanged: new signals.Signal(),
     };
 
+    var container;
     if( eid ){
-        this.container = document.getElementById( eid );
+        container = document.getElementById( eid );
     }else{
-        this.container = document.createElement( 'div' );
+        container = document.createElement( 'div' );
     }
 
-    if ( this.container === document ) {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
+    var width, height;
+    if ( container === document ) {
+        width = window.innerWidth;
+        height = window.innerHeight;
     } else {
-        var box = this.container.getBoundingClientRect();
-        this.width = box.width;
-        this.height = box.height;
+        var box = container.getBoundingClientRect();
+        width = box.width;
+        height = box.height;
     }
 
-    this.initParams();
-    this.initStats();
-    // this.holdRendering = true;
+    var rendering, renderPending, sampleLevel, isStill, cDist, bRadius;
 
-    this.initCamera();
-    this.initScene();
-    if( this.initRenderer() === false ) return;
-    this.initControls();
-    this.initHelper();
+    var parameters;
+    initParams();
 
-    this._render = this.render.bind( this );
-    this._animate = this.animate.bind( this );
+    var stats;
+    initStats();
+
+    var perspectiveCamera, orthographicCamera, camera;
+    initCamera();
+
+    var scene, pointLight, ambientLight;
+    var rotationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
+    initScene();
+
+    var renderer, indexUint16, supportsHalfFloat;
+    var pickingTarget, sampleTarget, holdTarget;
+    var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
+    if( initRenderer() === false ) return;
+
+    var controls;
+    initControls();
+
+    var boundingBoxMesh;
+    var boundingBox = new THREE.Box3();
+    initHelper();
 
     // fog & background
-    this.setBackground();
-    this.setFog();
+    setBackground();
+    setFog();
 
-    this.boundingBox = new THREE.Box3();
-    this.distVector = new THREE.Vector3();
+    var distVector = new THREE.Vector3();
 
-    this.info = {
-
+    var info = {
         memory: {
             programs: 0,
             geometries: 0,
             textures: 0
         },
-
         render: {
             calls: 0,
             vertices: 0,
             faces: 0,
             points: 0
         }
-
     };
 
-}
+    function initParams(){
 
-Viewer.prototype = {
-
-    constructor: Viewer,
-
-    initParams: function(){
-
-        this.params = {
+        parameters = {
 
             fogColor: new THREE.Color( 0x000000 ),
             fogNear: 50,
@@ -270,78 +277,77 @@ Viewer.prototype = {
 
         };
 
-    },
+    }
 
-    initCamera: function(){
+    function initCamera(){
 
-        var p = this.params;
         var lookAt = new THREE.Vector3( 0, 0, 0 );
 
-        this.perspectiveCamera = new THREE.PerspectiveCamera(
-            p.cameraFov, this.width / this.height, 0.1, 10000
+        perspectiveCamera = new THREE.PerspectiveCamera(
+            parameters.cameraFov, width / height, 0.1, 10000
         );
-        this.perspectiveCamera.position.z = p.cameraZ;
-        this.perspectiveCamera.lookAt( lookAt );
+        perspectiveCamera.position.z = parameters.cameraZ;
+        perspectiveCamera.lookAt( lookAt );
 
-        this.orthographicCamera = new THREE.OrthographicCamera(
-            this.width / -2, this.width / 2,
-            this.height / 2, this.height / -2,
+        orthographicCamera = new THREE.OrthographicCamera(
+            width / -2, width / 2,
+            height / 2, height / -2,
             0.1, 10000
         );
-        this.orthographicCamera.position.z = p.cameraZ;
-        this.orthographicCamera.lookAt( lookAt );
+        orthographicCamera.position.z = parameters.cameraZ;
+        orthographicCamera.lookAt( lookAt );
 
-        if( p.cameraType === "orthographic" ){
-            this.camera = this.orthographicCamera;
-        }else{  // p.cameraType === "perspective"
-            this.camera = this.perspectiveCamera;
+        if( parameters.cameraType === "orthographic" ){
+            camera = orthographicCamera;
+        }else{  // parameters.cameraType === "perspective"
+            camera = perspectiveCamera;
         }
-        this.camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix();
 
-    },
+    }
 
-    initRenderer: function(){
+    function initRenderer(){
 
         try{
-            this.renderer = new THREE.WebGLRenderer( {
+            renderer = new THREE.WebGLRenderer( {
                 preserveDrawingBuffer: true,
                 alpha: true,
                 antialias: true
             } );
         }catch( e ){
-            this.container.innerHTML = WebglErrorMessage;
+            container.innerHTML = WebglErrorMessage;
             return false;
         }
-        this.renderer.setPixelRatio( window.devicePixelRatio );
-        this.renderer.setSize( this.width, this.height );
-        this.renderer.autoClear = false;
-        this.renderer.sortObjects = true;
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( width, height );
+        renderer.autoClear = false;
+        renderer.sortObjects = true;
 
-        // var gl = this.renderer.getContext();
+        // var gl = renderer.getContext();
         // console.log( gl.getContextAttributes().antialias );
         // console.log( gl.getParameter(gl.SAMPLES) );
 
-        setExtensionFragDepth( this.renderer.extensions.get( "EXT_frag_depth" ) );
-        this.indexUint16 = !this.renderer.extensions.get( 'OES_element_index_uint' );
+        setExtensionFragDepth( renderer.extensions.get( "EXT_frag_depth" ) );
+        indexUint16 = !renderer.extensions.get( 'OES_element_index_uint' );
 
         setSupportsReadPixelsFloat(
             ( Browser === "Chrome" &&
-                this.renderer.extensions.get( 'OES_texture_float' ) ) ||
-            ( this.renderer.extensions.get( 'OES_texture_float' ) &&
-                this.renderer.extensions.get( "WEBGL_color_buffer_float" ) )
+                renderer.extensions.get( 'OES_texture_float' ) ) ||
+            ( renderer.extensions.get( 'OES_texture_float' ) &&
+                renderer.extensions.get( "WEBGL_color_buffer_float" ) )
         );
 
-        this.container.appendChild( this.renderer.domElement );
+        container.appendChild( renderer.domElement );
 
         // picking texture
 
-        this.renderer.extensions.get( 'OES_texture_float' );
-        this.supportsHalfFloat = this.renderer.extensions.get( 'OES_texture_half_float' );
-        this.renderer.extensions.get( "WEBGL_color_buffer_float" );
+        renderer.extensions.get( 'OES_texture_float' );
+        supportsHalfFloat = renderer.extensions.get( 'OES_texture_half_float' );
+        renderer.extensions.get( "WEBGL_color_buffer_float" );
 
-        this.pickingTarget = new THREE.WebGLRenderTarget(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio,
+        pickingTarget = new THREE.WebGLRenderTarget(
+            width * window.devicePixelRatio,
+            height * window.devicePixelRatio,
             {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
@@ -350,13 +356,13 @@ Viewer.prototype = {
                 type: SupportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
             }
         );
-        this.pickingTarget.texture.generateMipmaps = false;
+        pickingTarget.texture.generateMipmaps = false;
 
         // msaa textures
 
-        this.sampleTarget = new THREE.WebGLRenderTarget(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio,
+        sampleTarget = new THREE.WebGLRenderTarget(
+            width * window.devicePixelRatio,
+            height * window.devicePixelRatio,
             {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
@@ -364,24 +370,24 @@ Viewer.prototype = {
             }
         );
 
-        this.holdTarget = new THREE.WebGLRenderTarget(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio,
+        holdTarget = new THREE.WebGLRenderTarget(
+            width * window.devicePixelRatio,
+            height * window.devicePixelRatio,
             {
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
                 format: THREE.RGBAFormat,
-                type: this.supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
+                type: supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
             }
         );
 
-        this.compositeUniforms = {
+        compositeUniforms = {
             "tForeground": { type: "t", value: null },
             "scale": { type: "f", value: 1.0 }
         };
 
-        this.compositeMaterial = new THREE.ShaderMaterial( {
-            uniforms: this.compositeUniforms,
+        compositeMaterial = new THREE.ShaderMaterial( {
+            uniforms: compositeUniforms,
             vertexShader: getShader( "Quad.vert" ),
             fragmentShader: getShader( "Quad.frag" ),
             premultipliedAlpha: true,
@@ -391,58 +397,58 @@ Viewer.prototype = {
             depthWrite: false
         } );
 
-        this.compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-        this.compositeScene = new THREE.Scene().add( new THREE.Mesh(
-            new THREE.PlaneGeometry( 2, 2 ), this.compositeMaterial
+        compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+        compositeScene = new THREE.Scene().add( new THREE.Mesh(
+            new THREE.PlaneGeometry( 2, 2 ), compositeMaterial
         ) );
 
-    },
+    }
 
-    initScene: function(){
+    function initScene(){
 
-        if( !this.scene ){
-            this.scene = new THREE.Scene();
+        if( !scene ){
+            scene = new THREE.Scene();
         }
 
-        this.rotationGroup = new THREE.Group();
-        this.rotationGroup.name = "rotationGroup";
-        this.scene.add( this.rotationGroup );
+        rotationGroup = new THREE.Group();
+        rotationGroup.name = "rotationGroup";
+        scene.add( rotationGroup );
 
-        this.modelGroup = new THREE.Group();
-        this.modelGroup.name = "modelGroup";
-        this.rotationGroup.add( this.modelGroup );
+        modelGroup = new THREE.Group();
+        modelGroup.name = "modelGroup";
+        rotationGroup.add( modelGroup );
 
-        this.pickingGroup = new THREE.Group();
-        this.pickingGroup.name = "pickingGroup";
-        this.rotationGroup.add( this.pickingGroup );
+        pickingGroup = new THREE.Group();
+        pickingGroup.name = "pickingGroup";
+        rotationGroup.add( pickingGroup );
 
-        this.backgroundGroup = new THREE.Group();
-        this.backgroundGroup.name = "backgroundGroup";
-        this.rotationGroup.add( this.backgroundGroup );
+        backgroundGroup = new THREE.Group();
+        backgroundGroup.name = "backgroundGroup";
+        rotationGroup.add( backgroundGroup );
 
-        this.helperGroup = new THREE.Group();
-        this.helperGroup.name = "helperGroup";
-        this.rotationGroup.add( this.helperGroup );
+        helperGroup = new THREE.Group();
+        helperGroup.name = "helperGroup";
+        rotationGroup.add( helperGroup );
 
         // fog
 
-        this.modelGroup.fog = new THREE.Fog();
+        modelGroup.fog = new THREE.Fog();
 
         // light
 
-        this.pointLight = new THREE.SpotLight(
-            this.params.lightColor, this.params.lightIntensity
+        pointLight = new THREE.SpotLight(
+            parameters.lightColor, parameters.lightIntensity
         );
-        this.modelGroup.add( this.pointLight );
+        modelGroup.add( pointLight );
 
-        this.ambientLight = new THREE.AmbientLight(
-            this.params.ambientLight, this.params.ambientIntensity
+        ambientLight = new THREE.AmbientLight(
+            parameters.ambientLight, parameters.ambientIntensity
         );
-        this.modelGroup.add( this.ambientLight );
+        modelGroup.add( ambientLight );
 
-    },
+    }
 
-    initHelper: function(){
+    function initHelper(){
 
         var indices = new Uint16Array( [
             0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
@@ -455,19 +461,18 @@ Viewer.prototype = {
         bbGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
         var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
 
-        this.boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
-        this.helperGroup.add( this.boundingBoxMesh );
+        boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
+        helperGroup.add( boundingBoxMesh );
 
-    },
+    }
 
-    updateHelper: function(){
+    function updateHelper(){
 
-        var position = this.boundingBoxMesh.geometry.attributes.position;
+        var position = boundingBoxMesh.geometry.attributes.position;
         var array = position.array;
 
-        var bb = this.boundingBox;
-        var min = bb.min;
-        var max = bb.max;
+        var min = boundingBox.min;
+        var max = boundingBox.max;
 
         array[  0 ] = max.x; array[  1 ] = max.y; array[  2 ] = max.z;
         array[  3 ] = min.x; array[  4 ] = max.y; array[  5 ] = max.z;
@@ -480,106 +485,98 @@ Viewer.prototype = {
 
         position.needsUpdate = true;
 
-        if( !bb.isEmpty() ){
-            this.boundingBoxMesh.geometry.computeBoundingSphere();
+        if( !boundingBox.isEmpty() ){
+            boundingBoxMesh.geometry.computeBoundingSphere();
         }
 
-    },
+    }
 
-    initControls: function(){
+    function initControls(){
 
         function preventDefault( e ){
             e.preventDefault();
         }
-        this.renderer.domElement.addEventListener(
+        renderer.domElement.addEventListener(
             'mousewheel', preventDefault, false
         );
-        this.renderer.domElement.addEventListener(  // firefox
+        renderer.domElement.addEventListener(  // firefox
             'MozMousePixelScroll', preventDefault, false
         );
-        this.renderer.domElement.addEventListener(
+        renderer.domElement.addEventListener(
             'touchmove', preventDefault, false
         );
 
-        this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
-        this.controls.rotateSpeed = 2.0;
-        this.controls.zoomSpeed = 1.2;
-        this.controls.panSpeed = 0.8;
-        this.controls.staticMoving = true;
-        // this.controls.dynamicDampingFactor = 0.3;
-        this.controls.keys = [ 65, 83, 68 ];
+        controls = new THREE.TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 2.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.staticMoving = true;
+        // controls.dynamicDampingFactor = 0.3;
+        controls.keys = [ 65, 83, 68 ];
 
-        this.controls.addEventListener(
-            'change', this.requestRender.bind( this )
-        );
+        controls.addEventListener( 'change', requestRender, false );
 
         document.addEventListener(
-            'mousemove',
-            this.controls.update.bind( this.controls ),
-            false
+            'mousemove', controls.update.bind( controls ), false
         );
         document.addEventListener(
-            'touchmove',
-            this.controls.update.bind( this.controls ),
-            false
+            'touchmove', controls.update.bind( controls ), false
         );
 
-        this.controls.addEventListener(
+        controls.addEventListener(
             'change',
             function(){
-                this.signals.orientationChanged.dispatch();
-            }.bind( this ),
+                _signals.orientationChanged.dispatch();
+            },
             false
         );
 
-    },
+    }
 
-    initStats: function(){
+    function initStats(){
 
-        this.stats = new Stats();
+        stats = new Stats();
 
-    },
+    }
 
-    add: function( buffer, instanceList ){
+    function add( buffer, instanceList ){
 
         // Log.time( "Viewer.add" );
 
         if( instanceList ){
 
             instanceList.forEach( function( instance ){
-
-                this.addBuffer( buffer, instance );
-
-            }, this );
+                addBuffer( buffer, instance );
+            } );
 
         }else{
 
-            this.addBuffer( buffer );
+            addBuffer( buffer );
 
         }
 
         if( buffer.background ){
-            this.backgroundGroup.add( buffer.group );
-            this.backgroundGroup.add( buffer.wireframeGroup );
+            backgroundGroup.add( buffer.group );
+            backgroundGroup.add( buffer.wireframeGroup );
         }else{
-            this.modelGroup.add( buffer.group );
-            this.modelGroup.add( buffer.wireframeGroup );
+            modelGroup.add( buffer.group );
+            modelGroup.add( buffer.wireframeGroup );
         }
 
         if( buffer.pickable ){
-            this.pickingGroup.add( buffer.pickingGroup );
+            pickingGroup.add( buffer.pickingGroup );
         }
 
-        this.rotationGroup.updateMatrixWorld();
-        if( Debug ) this.updateHelper();
+        rotationGroup.updateMatrixWorld();
+        if( Debug ) updateHelper();
 
-        // this.requestRender();
+        // requestRender();
 
         // Log.timeEnd( "Viewer.add" );
 
-    },
+    }
 
-    addBuffer: function( buffer, instance ){
+    function addBuffer( buffer, instance ){
 
         // Log.time( "Viewer.addBuffer" );
 
@@ -620,37 +617,34 @@ Viewer.prototype = {
         }
 
         if( instance ){
-            this.updateBoundingBox( buffer.geometry, instance.matrix );
+            updateBoundingBox( buffer.geometry, instance.matrix );
         }else{
-            this.updateBoundingBox( buffer.geometry );
+            updateBoundingBox( buffer.geometry );
         }
 
         // Log.timeEnd( "Viewer.addBuffer" );
 
-    },
+    }
 
-    remove: function( buffer ){
+    function remove( buffer ){
 
-        this.rotationGroup.children.forEach( function( group ){
+        rotationGroup.children.forEach( function( group ){
             group.remove( buffer.group );
             group.remove( buffer.wireframeGroup );
         } );
 
         if( buffer.pickable ){
-            this.pickingGroup.remove( buffer.pickingGroup );
+            pickingGroup.remove( buffer.pickingGroup );
         }
 
-        this.updateBoundingBox();
-        if( Debug ) this.updateHelper();
+        updateBoundingBox();
+        if( Debug ) updateHelper();
 
-        // this.requestRender();
+        // requestRender();
 
-    },
+    }
 
-    updateBoundingBox: function( geometry, matrix ){
-
-        var gbb;
-        var bb = this.boundingBox;
+    function updateBoundingBox( geometry, matrix ){
 
         function updateGeometry( geometry, matrix ){
 
@@ -660,225 +654,204 @@ Viewer.prototype = {
                 geometry.computeBoundingBox();
             }
 
+            var geoBoundingBox;
             if( matrix ){
-                gbb = geometry.boundingBox.clone();
-                gbb.applyMatrix4( matrix );
+                geoBoundingBox = geometry.boundingBox.clone();
+                geoBoundingBox.applyMatrix4( matrix );
             }else{
-                gbb = geometry.boundingBox;
+                geoBoundingBox = geometry.boundingBox;
             }
 
-            if( gbb.min.equals( gbb.max ) ){
+            if( geoBoundingBox.min.equals( geoBoundingBox.max ) ){
                 // mainly to give a single impostor geometry some volume
                 // as it is only expanded in the shader on the GPU
-                gbb.expandByScalar( 5 );
+                geoBoundingBox.expandByScalar( 5 );
             }
 
-            bb.expandByPoint( gbb.min );
-            bb.expandByPoint( gbb.max );
+            boundingBox.expandByPoint( geoBoundingBox.min );
+            boundingBox.expandByPoint( geoBoundingBox.max );
 
         }
 
         function updateNode( node ){
 
             if( node.geometry !== undefined ){
-
                 var matrix;
                 if( node.userData.instance ){
                     matrix = node.userData.instance.matrix;
                 }
-
                 updateGeometry( node.geometry, matrix );
-
             }
 
         }
 
         if( geometry ){
-
             updateGeometry( geometry, matrix );
-
         }else{
-
-            bb.makeEmpty();
-            this.modelGroup.traverse( updateNode );
-            this.backgroundGroup.traverse( updateNode );
-
+            boundingBox.makeEmpty();
+            modelGroup.traverse( updateNode );
+            backgroundGroup.traverse( updateNode );
         }
 
-        this.controls.maxDistance = bb.size().length() * 10;
+        controls.maxDistance = boundingBox.size().length() * 10;
 
-    },
+    }
 
-    getImage: function(){
-
-        var renderer = this.renderer;
+    function getImage(){
 
         return new Promise( function( resolve, reject ){
             renderer.domElement.toBlob( resolve, "image/png" );
         } );
 
-    },
+    }
 
-    makeImage: function( params ){
+    function makeImage( params ){
 
-        return makeImage( this, params );
+        return _makeImage( this, params );
 
-    },
+    }
 
-    setLight: function( color, intensity, ambientColor, ambientIntensity ){
+    function setLight( color, intensity, ambientColor, ambientIntensity ){
 
-        var p = this.params;
+        var p = parameters;
 
         if( color !== undefined ) p.lightColor.set( color );
         if( intensity !== undefined ) p.lightIntensity = intensity;
         if( ambientColor !== undefined ) p.ambientColor.set( ambientColor );
         if( ambientIntensity !== undefined ) p.ambientIntensity = ambientIntensity;
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setFog: function( color, near, far ){
+    function setFog( color, near, far ){
 
-        var p = this.params;
+        var p = parameters;
 
         if( color !== undefined ) p.fogColor.set( color );
         if( near !== undefined ) p.fogNear = near;
         if( far !== undefined ) p.fogFar = far;
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setBackground: function( color ){
+    function setBackground( color ){
 
-        var p = this.params;
+        var p = parameters;
 
         if( color ) p.backgroundColor.set( color );
 
-        this.setFog( p.backgroundColor );
-        this.renderer.setClearColor( p.backgroundColor, 0 );
-        this.renderer.domElement.style.backgroundColor = p.backgroundColor.getStyle();
+        setFog( p.backgroundColor );
+        renderer.setClearColor( p.backgroundColor, 0 );
+        renderer.domElement.style.backgroundColor = p.backgroundColor.getStyle();
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setSampling: function( level ){
+    function setSampling( level ){
 
         if( level !== undefined ){
-            this.params.sampleLevel = level;
-            this.sampleLevel = level;
+            parameters.sampleLevel = level;
+            sampleLevel = level;
         }
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setCamera: function( type, fov ){
+    function setCamera( type, fov ){
 
-        var p = this.params;
+        var p = parameters;
 
         if( type ) p.cameraType = type;
         if( fov ) p.cameraFov = fov;
 
         if( p.cameraType === "orthographic" ){
-            if( this.camera !== this.orthographicCamera ){
-                this.camera = this.orthographicCamera;
-                this.camera.position.copy( this.perspectiveCamera.position );
-                this.camera.up.copy( this.perspectiveCamera.up );
-                this.__updateZoom();
+            if( camera !== orthographicCamera ){
+                camera = orthographicCamera;
+                camera.position.copy( perspectiveCamera.position );
+                camera.up.copy( perspectiveCamera.up );
+                __updateZoom();
             }
         }else{  // p.cameraType === "perspective"
-            if( this.camera !== this.perspectiveCamera ){
-                this.camera = this.perspectiveCamera;
-                this.camera.position.copy( this.orthographicCamera.position );
-                this.camera.up.copy( this.orthographicCamera.up );
+            if( camera !== perspectiveCamera ){
+                camera = perspectiveCamera;
+                camera.position.copy( orthographicCamera.position );
+                camera.up.copy( orthographicCamera.up );
             }
         }
 
-        this.perspectiveCamera.fov = p.cameraFov;
-        this.controls.object = this.camera;
-        this.camera.lookAt( this.controls.target );
-        this.camera.updateProjectionMatrix();
+        perspectiveCamera.fov = p.cameraFov;
+        controls.object = camera;
+        camera.lookAt( controls.target );
+        camera.updateProjectionMatrix();
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setClip: function( near, far, dist ){
+    function setClip( near, far, dist ){
 
-        var p = this.params;
+        var p = parameters;
 
         if( near !== undefined ) p.clipNear = near;
         if( far !== undefined ) p.clipFar = far;
         if( dist !== undefined ) p.clipDist = dist;
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    setSpin: function( axis, angle ){
+    function setSpin( axis, angle ){
 
-        var p = this.params;
+        if( axis !== undefined ) parameters.spinAxis = axis;
+        if( angle !== undefined ) parameters.spinAngle = angle;
 
-        if( axis !== undefined ) p.spinAxis = axis;
-        if( angle !== undefined ) p.spinAngle = angle;
+    }
 
-    },
+    function setSize( _width, _height ){
 
-    setSize: function( width, height ){
+        width = _width;
+        height = _height;
 
-        this.width = width;
-        this.height = height;
+        perspectiveCamera.aspect = width / height;
+        orthographicCamera.left = -width / 2;
+        orthographicCamera.right = width / 2;
+        orthographicCamera.top = height / 2;
+        orthographicCamera.bottom = -height / 2;
+        camera.updateProjectionMatrix();
 
-        this.perspectiveCamera.aspect = this.width / this.height;
-        this.orthographicCamera.left = -this.width / 2;
-        this.orthographicCamera.right = this.width / 2;
-        this.orthographicCamera.top = this.height / 2;
-        this.orthographicCamera.bottom = -this.height / 2;
-        this.camera.updateProjectionMatrix();
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( width, height );
 
-        this.renderer.setPixelRatio( window.devicePixelRatio );
-        this.renderer.setSize( this.width, this.height );
+        var dprWidth = width * window.devicePixelRatio;
+        var dprHeight = height * window.devicePixelRatio;
 
-        this.pickingTarget.setSize(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio
-        );
-        this.sampleTarget.setSize(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio
-        );
-        this.holdTarget.setSize(
-            this.width * window.devicePixelRatio,
-            this.height * window.devicePixelRatio
-        );
+        pickingTarget.setSize( dprWidth, dprHeight );
+        sampleTarget.setSize( dprWidth, dprHeight );
+        holdTarget.setSize( dprWidth, dprHeight );
 
-        this.controls.handleResize();
+        controls.handleResize();
 
-        this.requestRender();
+        requestRender();
 
-    },
+    }
 
-    handleResize: function(){
+    function handleResize(){
 
-        if( this.container === document ){
-
-            this.setSize( window.innerWidth, window.innerHeight );
-
+        if( container === document ){
+            setSize( window.innerWidth, window.innerHeight );
         }else{
-
-            var box = this.container.getBoundingClientRect();
-            this.setSize( box.width, box.height );
-
+            var box = container.getBoundingClientRect();
+            setSize( box.width, box.height );
         }
 
-    },
+    }
 
-    updateInfo: function( reset ){
+    function updateInfo( reset ){
 
-        var info = this.info;
         var memory = info.memory;
         var render = info.render;
 
@@ -895,7 +868,7 @@ Viewer.prototype = {
 
         }else{
 
-            var rInfo = this.renderer.info;
+            var rInfo = renderer.info;
             var rMemory = rInfo.memory;
             var rRender = rInfo.render;
 
@@ -910,9 +883,9 @@ Viewer.prototype = {
 
         }
 
-    },
+    }
 
-    rotate: function(){
+    var rotate = function(){
 
         var eye = new THREE.Vector3();
         var quaternion = new THREE.Quaternion();
@@ -923,9 +896,9 @@ Viewer.prototype = {
 
         return function( axis, angle ){
 
-            eye.copy( this.camera.position ).sub( this.controls.target );
+            eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
-            upDirection.copy( this.camera.up ).normalize();
+            upDirection.copy( camera.up ).normalize();
             sidewaysDirection.crossVectors( upDirection, eyeDirection ).normalize();
 
             eyeDirection.setLength( axis.z );
@@ -936,68 +909,64 @@ Viewer.prototype = {
             quaternion.setFromAxisAngle( moveDirection.normalize(), angle );
             eye.applyQuaternion( quaternion );
 
-            this.camera.up.applyQuaternion( quaternion );
-            this.camera.position.addVectors( this.controls.target, eye );
-            this.camera.lookAt( this.controls.target );
+            camera.up.applyQuaternion( quaternion );
+            camera.position.addVectors( controls.target, eye );
+            camera.lookAt( controls.target );
 
         };
 
-    }(),
+    }();
 
-    zoom: function(){
+    var zoom = function(){
 
         var eye = new THREE.Vector3();
         var eyeDirection = new THREE.Vector3();
 
         return function( distance ){
 
-            eye.copy( this.camera.position ).sub( this.controls.target );
+            eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
 
             eyeDirection.setLength( distance );
             eye.add( eyeDirection );
 
-            this.camera.position.addVectors( this.controls.target, eye );
-            this.camera.lookAt( this.controls.target );
+            camera.position.addVectors( controls.target, eye );
+            camera.lookAt( controls.target );
 
-            this.__updateZoom();
+            __updateZoom();
 
         };
 
-    }(),
+    }();
 
-    animate: function(){
+    function animate(){
 
-        this.controls.update();
+        controls.update();
+        var delta = performance.now() - stats.startTime;
 
-        var delta = performance.now() - this.stats.startTime;
-
-        if( delta > 500 && !this.still && this.sampleLevel < 3 && this.sampleLevel !== -1 ){
-
-            var currentSampleLevel = this.sampleLevel;
-            this.sampleLevel = 3;
-            this._renderPending = true;
-            this.render();
-            this.still = true;
-            this.sampleLevel = currentSampleLevel;
+        if( delta > 500 && !isStill && sampleLevel < 3 && sampleLevel !== -1 ){
+            var currentSampleLevel = sampleLevel;
+            sampleLevel = 3;
+            renderPending = true;
+            render();
+            isStill = true;
+            sampleLevel = currentSampleLevel;
             if( Debug ) Log.log( "rendered still frame" );
-
         }
 
         // spin
 
-        var p = this.params;
-
+        var p = parameters;
         if( p.spinAxis && p.spinAngle ){
-            this.rotate( p.spinAxis, p.spinAngle * this.stats.lastDuration / 16 );
-            this.requestRender();
+            rotate( p.spinAxis, p.spinAngle * stats.lastDuration / 16 );
+            requestRender();
         }
 
-        requestAnimationFrame( this._animate );
+        requestAnimationFrame( animate );
 
-    },
+    }
 
-    pick: function(){
+    var pick = function(){
 
         var pixelBufferFloat = new Float32Array( 4 );
         var pixelBufferUint = new Uint8Array( 4 );
@@ -1010,9 +979,9 @@ Viewer.prototype = {
             var gid, object, instance, bondId;
             var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            this.render( true );
-            this.renderer.readRenderTargetPixels(
-                this.pickingTarget, x, y, 1, 1, pixelBuffer
+            render( true );
+            renderer.readRenderTargetPixels(
+                pickingTarget, x, y, 1, 1, pixelBuffer
             );
 
             if( SupportsReadPixelsFloat ){
@@ -1027,7 +996,7 @@ Viewer.prototype = {
                     ( pixelBuffer[2] );
             }
 
-            object = this.pickingGroup.getObjectById(
+            object = pickingGroup.getObjectById(
                 Math.round( pixelBuffer[ 3 ] )
             );
 
@@ -1060,56 +1029,53 @@ Viewer.prototype = {
 
         };
 
-    }(),
+    }();
 
-    requestRender: function(){
+    function requestRender(){
 
-        if( this._renderPending || this.holdRendering ){
+        if( renderPending ){
             // Log.info( "there is still a 'render' call pending" );
             return;
         }
 
         // start gathering stats anew after inactivity
-        if( performance.now() - this.stats.startTime > 22 ){
-            this.stats.begin();
-            this.still = false;
+        if( performance.now() - stats.startTime > 22 ){
+            stats.begin();
+            isStill = false;
         }
 
-        this._renderPending = true;
+        renderPending = true;
 
         requestAnimationFrame( function(){
-            this.render();
-            this.stats.update();
-        }.bind( this ) );
+            render();
+            stats.update();
+        } );
 
-    },
+    }
 
-    __updateClipping: function(){
+    function __updateClipping(){
 
-        var p = this.params;
-        var camera = this.camera;
+        var p = parameters;
 
         // clipping
 
-        var cDist = this.distVector.copy( camera.position )
-                        .sub( this.controls.target ).length();
+        cDist = distVector.copy( camera.position )
+                        .sub( controls.target ).length();
         // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
             camera.position.set( 0, 0, p.cameraZ );
             cDist = Math.abs( p.cameraZ );
         }
-        this.cDist = cDist;
 
-        var bRadius = Math.max( 10, this.boundingBox.size( this.distVector ).length() * 0.5 );
-        bRadius += this.boundingBox.center( this.distVector )
-            .add( this.rotationGroup.position )
+        bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
+        bRadius += boundingBox.center( distVector )
+            .add( rotationGroup.position )
             .length();
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
         }
-        this.bRadius = bRadius;
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
@@ -1120,99 +1086,88 @@ Viewer.prototype = {
 
         var fogNearFactor = ( 50 - p.fogNear ) / 50;
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
-        var fog = this.modelGroup.fog;
+        var fog = modelGroup.fog;
         fog.color.set( p.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
-    },
+    }
 
-    __updateZoom: function(){
+    function __updateZoom(){
 
-        this.__updateClipping();
-        var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
-        var near = this.camera.near;
-        var far = this.camera.far;
-        var hyperfocus = ( near + far ) / 2;
-        var height = 2 * Math.tan( fov / 2 ) * hyperfocus;
-        this.orthographicCamera.zoom = this.height / height;
+        __updateClipping();
+        var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+        var hyperfocus = ( camera.near + camera.far ) / 2;
+        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        orthographicCamera.zoom = height / _height;
 
-    },
+    }
 
-    __updateCamera: function(){
-
-        var camera = this.camera;
+    function __updateCamera(){
 
         camera.updateMatrix();
         camera.updateMatrixWorld( true );
         camera.matrixWorldInverse.getInverse( camera.matrixWorld );
         camera.updateProjectionMatrix();
 
-        this.updateMaterialUniforms( this.scene, camera );
-        this.sortProjectedPosition( this.scene, camera );
+        updateMaterialUniforms( scene, camera, renderer );
+        sortProjectedPosition( scene, camera );
 
-    },
+    }
 
-    __updateLights: function(){
+    function __updateLights(){
 
-        var p = this.params;
-        var camera = this.camera;
-
-        var pointLight = this.pointLight;
         pointLight.position.copy( camera.position ).multiplyScalar( 100 );
         pointLight.updateMatrixWorld();
-        pointLight.color.set( p.lightColor );
-        pointLight.intensity = p.lightIntensity;
+        pointLight.color.set( parameters.lightColor );
+        pointLight.intensity = parameters.lightIntensity;
 
-        var ambientLight = this.ambientLight;
-        ambientLight.color.set( p.ambientColor );
-        ambientLight.intensity = p.ambientIntensity;
+        ambientLight.color.set( parameters.ambientColor );
+        ambientLight.intensity = parameters.ambientIntensity;
 
-    },
+    }
 
-    __renderPickingGroup: function(){
+    function __renderPickingGroup(){
 
-        this.renderer.clearTarget( this.pickingTarget );
-        this.renderer.render(
-            this.pickingGroup, this.camera, this.pickingTarget
-        );
-        this.updateInfo();
-        this.renderer.setRenderTarget( null );  // back to standard render target
+        renderer.clearTarget( pickingTarget );
+        renderer.render( pickingGroup, camera, pickingTarget );
+        updateInfo();
+        renderer.setRenderTarget( null );  // back to standard render target
 
         if( Debug ){
-            this.renderer.clear();
-            this.renderer.render( this.pickingGroup, this.camera );
-            this.renderer.render( this.helperGroup, this.camera );
+            renderer.clear();
+            renderer.render( pickingGroup, camera );
+            renderer.render( helperGroup, camera );
         }
 
-    },
+    }
 
-    __renderModelGroup: function( renderTarget ){
+    function __renderModelGroup( renderTarget ){
 
         if( renderTarget ){
-            this.renderer.clearTarget( renderTarget );
+            renderer.clearTarget( renderTarget );
         }else{
-            this.renderer.clear();
+            renderer.clear();
         }
 
-        this.renderer.render( this.backgroundGroup, this.camera, renderTarget );
+        renderer.render( backgroundGroup, camera, renderTarget );
         if( renderTarget ){
-            this.renderer.clearTarget( renderTarget, false, true, false );
+            renderer.clearTarget( renderTarget, false, true, false );
         }else{
-            this.renderer.clearDepth();
+            renderer.clearDepth();
         }
-        this.updateInfo();
+        updateInfo();
 
-        this.renderer.render( this.modelGroup, this.camera, renderTarget );
-        this.updateInfo();
+        renderer.render( modelGroup, camera, renderTarget );
+        updateInfo();
 
         if( Debug ){
-            this.renderer.render( this.helperGroup, this.camera, renderTarget );
+            renderer.render( helperGroup, camera, renderTarget );
         }
 
-    },
+    }
 
-    __renderMultiSample: function(){
+    function __renderMultiSample(){
 
         // based on the Manual Multi-Sample Anti-Aliasing Render Pass
         // contributed to three.js by bhouston / http://clara.io/
@@ -1221,18 +1176,17 @@ Viewer.prototype = {
         // each sample with camera jitter and accumulates the results.
         // References: https://en.wikipedia.org/wiki/Multisample_anti-aliasing
 
-        var camera = this.camera;
-        var offsetList = JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
+        var offsetList = JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
 
         var baseSampleWeight = 1.0 / offsetList.length;
         var roundingRange = 1 / 32;
 
-        this.compositeUniforms.tForeground.value = this.sampleTarget.texture;
-        this.compositeUniforms.tForeground.needsUpdate = true;
-        this.compositeMaterial.needsUpdate = true;
+        compositeUniforms.tForeground.value = sampleTarget.texture;
+        compositeUniforms.tForeground.needsUpdate = true;
+        compositeMaterial.needsUpdate = true;
 
-        var width = this.sampleTarget.width;
-        var height = this.sampleTarget.height;
+        var _width = sampleTarget.width;
+        var _height = sampleTarget.height;
 
         // render the scene multiple times, each slightly jitter offset
         // from the last and accumulate the results.
@@ -1240,9 +1194,9 @@ Viewer.prototype = {
 
             var offset = offsetList[ i ];
             camera.setViewOffset(
-                width, height, offset[ 0 ], offset[ 1 ], width, height
+                _width, _height, offset[ 0 ], offset[ 1 ], _width, _height
             );
-            this.__updateCamera();
+            __updateCamera();
 
             var sampleWeight = baseSampleWeight;
             // the theory is that equal weights for each sample lead to an accumulation of rounding errors.
@@ -1250,248 +1204,74 @@ Viewer.prototype = {
             // across a range of values whose rounding errors cancel each other out.
             var uniformCenteredDistribution = ( -0.5 + ( i + 0.5 ) / offsetList.length );
             sampleWeight += roundingRange * uniformCenteredDistribution;
-            this.compositeUniforms.scale.value = sampleWeight;
+            compositeUniforms.scale.value = sampleWeight;
 
-            this.__renderModelGroup( this.sampleTarget );
-            this.renderer.render(
-                this.compositeScene, this.compositeCamera, this.holdTarget, ( i === 0 )
+            __renderModelGroup( sampleTarget );
+            renderer.render(
+                compositeScene, compositeCamera, holdTarget, ( i === 0 )
             );
 
         }
 
-        this.renderer.setRenderTarget( null );
+        renderer.setRenderTarget( null );
 
-        this.compositeUniforms.scale.value = 1.0;
-        this.compositeUniforms.tForeground.value = this.holdTarget.texture;
-        this.compositeUniforms.tForeground.needsUpdate = true;
-        this.compositeMaterial.needsUpdate = true;
+        compositeUniforms.scale.value = 1.0;
+        compositeUniforms.tForeground.value = holdTarget.texture;
+        compositeUniforms.tForeground.needsUpdate = true;
+        compositeMaterial.needsUpdate = true;
 
-        this.renderer.clear();
-        this.renderer.render( this.compositeScene, this.compositeCamera );
+        renderer.clear();
+        renderer.render( compositeScene, compositeCamera );
 
         camera.view = null;
 
-    },
+    }
 
-    render: function( picking ){
+    function render( picking ){
 
-        if( this._rendering ){
+        if( rendering ){
             Log.warn( "tried to call 'render' from within 'render'" );
             return;
         }
 
         // Log.time( "Viewer.render" );
 
-        this._rendering = true;
+        rendering = true;
 
-        this.__updateClipping();
-        this.__updateCamera();
-        this.__updateLights();
+        __updateClipping();
+        __updateCamera();
+        __updateLights();
 
         // render
 
-        this.updateInfo( true );
+        updateInfo( true );
 
         if( picking ){
-
-            this.__renderPickingGroup();
-
-        }else if( this.sampleLevel > 0 ){
-
-            this.__renderMultiSample();
-
+            __renderPickingGroup();
+        }else if( sampleLevel > 0 ){
+            __renderMultiSample();
         }else{
-
-            this.__renderModelGroup();
-
+            __renderModelGroup();
         }
 
-        this._rendering = false;
-        this._renderPending = false;
+        rendering = false;
+        renderPending = false;
 
         // Log.timeEnd( "Viewer.render" );
-        // Log.log( this.info.memory, this.info.render );
+        // Log.log( info.memory, info.render );
 
-    },
+    }
 
-    updateMaterialUniforms: function(){
-
-        var projectionMatrixInverse = new THREE.Matrix4();
-        var projectionMatrixTranspose = new THREE.Matrix4();
-
-        return function( group, camera ){
-
-            var cDist = this.cDist;
-            var bRadius = this.bRadius;
-            var canvasHeight = this.height;
-            var pixelRatio = this.renderer.getPixelRatio();
-            var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
-
-            projectionMatrixInverse.getInverse(
-                camera.projectionMatrix
-            );
-
-            projectionMatrixTranspose.copy(
-                camera.projectionMatrix
-            ).transpose();
-
-            group.traverse( function( o ){
-
-                var m = o.material;
-                if( !m ) return;
-
-                var u = o.material.uniforms;
-                if( !u ) return;
-
-                if( m.clipNear ){
-                    var nearFactor = ( 50 - m.clipNear ) / 50;
-                    var nearClip = cDist - ( bRadius * nearFactor );
-                    u.nearClip.value = nearClip;
-                }
-
-                if( u.canvasHeight ){
-                    u.canvasHeight.value = canvasHeight;
-                }
-
-                if( u.pixelRatio ){
-                    u.pixelRatio.value = pixelRatio;
-                }
-
-                if( u.projectionMatrixInverse ){
-                    u.projectionMatrixInverse.value.copy(
-                        projectionMatrixInverse
-                    );
-                }
-
-                if( u.projectionMatrixTranspose ){
-                    u.projectionMatrixTranspose.value.copy(
-                        projectionMatrixTranspose
-                    );
-                }
-
-                if( u.ortho ){
-                    u.ortho.value = ortho;
-                }
-
-            } );
-
-        };
-
-    }(),
-
-    sortProjectedPosition: function(){
-
-        var i;
-        var lastCall = 0;
-
-        var vertex = new THREE.Vector3();
-        var matrix = new THREE.Matrix4();
-        var modelViewProjectionMatrix = new THREE.Matrix4();
-
-        return function( scene, camera ){
-
-            // Log.time( "sort" );
-
-            scene.traverseVisible( function ( o ){
-
-                if( !( o instanceof THREE.Points ) || !o.sortParticles ){
-                    return;
-                }
-
-                var attributes = o.geometry.attributes;
-                var n = attributes.position.count;
-
-                if( n === 0 ) return;
-
-                matrix.multiplyMatrices(
-                    camera.matrixWorldInverse, o.matrixWorld
-                );
-                modelViewProjectionMatrix.multiplyMatrices(
-                    camera.projectionMatrix, matrix
-                );
-
-                if( !o.userData.sortData ){
-                    o.userData.sortData = {};
-                }
-
-                var sortData = o.userData.sortData;
-
-                if( !sortData.__sortArray ){
-                    sortData.__sortArray = new Float32Array( n * 2 );
-                }
-
-                var sortArray = sortData.__sortArray;
-
-                for( i = 0; i < n; ++i ){
-
-                    var i2 = 2 * i;
-
-                    vertex.fromArray( attributes.position.array, i * 3 );
-                    vertex.applyProjection( modelViewProjectionMatrix );
-
-                    // negate, so that sorting order is reversed
-                    sortArray[ i2 ] = -vertex.z;
-                    sortArray[ i2 + 1 ] = i;
-
-                }
-
-                quicksortIP( sortArray, 2, 0 );
-
-                var index, indexSrc, indexDst, tmpTab;
-
-                for( var name in attributes ){
-
-                    var attr = attributes[ name ];
-                    var array = attr.array;
-                    var itemSize = attr.itemSize;
-
-                    if( !sortData[ name ] ){
-                        sortData[ name ] = new Float32Array(
-                            itemSize * n
-                        );
-                    }
-
-                    tmpTab = sortData[ name ];
-                    sortData[ name ] = array;
-
-                    for( i = 0; i < n; ++i ){
-
-                        index = sortArray[ i * 2 + 1 ];
-
-                        for( var j = 0; j < itemSize; ++j ){
-                            indexSrc = index * itemSize + j;
-                            indexDst = i * itemSize + j;
-                            tmpTab[ indexDst ] = array[ indexSrc ];
-                        }
-
-                    }
-
-                    attributes[ name ].array = tmpTab;
-                    attributes[ name ].needsUpdate = true;
-
-                }
-
-            } );
-
-            // Log.timeEnd( "sort" );
-
-        };
-
-    }(),
-
-    clear: function(){
+    function clear(){
 
         Log.log( "scene cleared" );
+        scene.remove( rotationGroup );
+        initScene();
+        renderer.clear();
 
-        this.scene.remove( this.rotationGroup );
+    }
 
-        this.initScene();
-
-        this.renderer.clear();
-
-    },
-
-    centerView: function(){
+    var centerView = function(){
 
         var t = new THREE.Vector3();
         var eye = new THREE.Vector3();
@@ -1500,16 +1280,16 @@ Viewer.prototype = {
 
         return function( zoom, center ){
 
-            center = center || this.boundingBox.center();
+            center = center || boundingBox.center();
 
             // remove any paning/translation
-            this.controls.object.position.sub( this.controls.target );
-            this.controls.target.copy( this.controls.target0 );
+            controls.object.position.sub( controls.target );
+            controls.target.copy( controls.target0 );
 
             // center
             t.copy( center ).multiplyScalar( -1 );
-            this.rotationGroup.position.copy( t );
-            this.rotationGroup.updateMatrixWorld();
+            rotationGroup.position.copy( t );
+            rotationGroup.updateMatrixWorld();
 
             if( zoom ){
 
@@ -1519,7 +1299,7 @@ Viewer.prototype = {
                     // everything inside the bounding box
                     // TODO take extent towards the camera into account
 
-                    this.boundingBox.size( bbSize );
+                    boundingBox.size( bbSize );
                     var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
                     var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
                     // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
@@ -1528,63 +1308,112 @@ Viewer.prototype = {
 
                 }
 
-                var fov = THREE.Math.degToRad( this.perspectiveCamera.fov );
-                var aspect = this.width / this.height;
+                var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+                var aspect = width / height;
 
                 zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
-                zoom = Math.max( zoom, 1.2 * this.params.clipDist );
+                zoom = Math.max( zoom, 1.2 * parameters.clipDist );
 
-                eye.copy( this.camera.position ).sub( this.controls.target );
+                eye.copy( camera.position ).sub( controls.target );
                 eyeDirection.copy( eye ).normalize();
 
                 eyeDirection.setLength( zoom );
                 eye.copy( eyeDirection );
 
-                this.camera.position.addVectors( this.controls.target, eye );
+                camera.position.addVectors( controls.target, eye );
 
-                this.__updateZoom();
+                __updateZoom();
             }
 
-            this.requestRender();
+            requestRender();
 
-            this.signals.orientationChanged.dispatch();
+            _signals.orientationChanged.dispatch();
 
         };
 
-    }(),
+    }();
 
-    getOrientation: function(){
+    function getOrientation(){
 
         return [
-            this.camera.position.toArray(),
-            this.camera.up.toArray(),
-            this.rotationGroup.position.toArray(),
-            this.controls.target.toArray()
+            camera.position.toArray(),
+            camera.up.toArray(),
+            rotationGroup.position.toArray(),
+            controls.target.toArray()
         ];
-
-    },
-
-    setOrientation: function( orientation ){
-
-        // remove any paning/translation
-        this.controls.object.position.sub( this.controls.target );
-        this.controls.target.copy( this.controls.target0 );
-
-        this.controls.target.fromArray( orientation[ 3 ] );
-
-        this.rotationGroup.position.fromArray( orientation[ 2 ] );
-        this.rotationGroup.updateMatrixWorld();
-
-        this.camera.up.fromArray( orientation[ 1 ] );
-        this.camera.position.fromArray( orientation[ 0 ] );
-
-        this.requestRender();
-
-        this.signals.orientationChanged.dispatch();
 
     }
 
-};
+    function setOrientation( orientation ){
+
+        // remove any paning/translation
+        controls.object.position.sub( controls.target );
+        controls.target.copy( controls.target0 );
+
+        controls.target.fromArray( orientation[ 3 ] );
+
+        rotationGroup.position.fromArray( orientation[ 2 ] );
+        rotationGroup.updateMatrixWorld();
+
+        camera.up.fromArray( orientation[ 1 ] );
+        camera.position.fromArray( orientation[ 0 ] );
+
+        requestRender();
+
+        _signals.orientationChanged.dispatch();
+
+    }
+
+    // API
+
+    this.container = container;
+    this.stats = stats;
+    this.signals = _signals;
+    this.rotationGroup = rotationGroup;
+
+    this.add = add;
+    this.remove = remove;
+    this.clear = clear;
+
+    this.getImage = getImage;
+    this.makeImage = makeImage;
+
+    this.setLight = setLight;
+    this.setFog = setFog;
+    this.setBackground = setBackground;
+    this.setSampling = setSampling;
+    this.setCamera = setCamera;
+    this.setClip = setClip;
+    this.setSpin = setSpin;
+    this.setSize = setSize;
+    this.handleResize = handleResize;
+
+    this.rotate = rotate;
+    this.zoom = zoom;
+    this.centerView = centerView;
+    this.getOrientation = getOrientation;
+    this.setOrientation = setOrientation;
+
+    this.pick = pick;
+    this.requestRender = requestRender;
+    this.render = render;
+    this.animate = animate;
+    this.updateHelper = updateHelper;
+
+    this.controls = controls;
+    this.renderer = renderer;
+    this.scene = scene;
+
+    Object.defineProperties( this, {
+        camera: { get: function(){ return camera; } },
+        width: { get: function(){ return width; } },
+        height: { get: function(){ return height; } },
+        sampleLevel: { get: function(){ return sampleLevel; } }
+    } );
+
+}
+
+Viewer.prototype.constructor = Viewer;
 
 
 export default Viewer;
