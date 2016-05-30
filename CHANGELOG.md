@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file, following t
 ### Changed
 - there is no longer a fake unitcell created when no space group information is available
 - the query string is removed from urls before the determining file info (e.g. name, extension)
+- fixed labelText param not working in LabelRepresentation
 
 ### Removed
 - `stage.setTheme` removed (use new `backgroundColor` parameter), themes now part of GUI code

@@ -1001,6 +1001,9 @@ NGL.LabelRepresentation.prototype = Object.assign( Object.create(
         labelType: {
             type: "select", options: NGL.LabelFactory.types, rebuild: true
         },
+        labelText: {
+            type: "hidden"
+        },
         fontFamily: {
             type: "select", options: {
                 "sans-serif": "sans-serif",
