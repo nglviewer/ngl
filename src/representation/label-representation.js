@@ -29,6 +29,9 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         labelType: {
             type: "select", options: LabelFactory.types, rebuild: true
         },
+        labelText: {
+            type: "hidden"
+        },
         fontFamily: {
             type: "select", options: {
                 "sans-serif": "sans-serif",
@@ -62,7 +65,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         },
         zOffset: {
             type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
+        }
 
     }, StructureRepresentation.prototype.parameters, {
 
