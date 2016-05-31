@@ -10,6 +10,7 @@ import {
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import Stats from "./stats.js";
+import TrackballControls from "../controls/trackball-controls.js";
 import { getShader } from "../shader/shader-utils.js";
 import {
     makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
@@ -441,7 +442,7 @@ function Viewer( eid, params ){
             'touchmove', preventDefault, false
         );
 
-        controls = new THREE.TrackballControls( camera, renderer.domElement );
+        controls = new TrackballControls( camera, renderer.domElement );
         controls.rotateSpeed = 2.0;
         controls.zoomSpeed = 1.2;
         controls.panSpeed = 0.8;
