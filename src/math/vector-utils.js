@@ -123,7 +123,7 @@ var pointVectorIntersection = function(){
 }();
 
 
-function cross( out, a, b ){
+function v3cross( out, a, b ){
     var ax = a[0], ay = a[1], az = a[2];
     var bx = b[0], by = b[1], bz = b[2];
     out[0] = ay * bz - az * by;
@@ -131,71 +131,73 @@ function cross( out, a, b ){
     out[2] = ax * by - ay * bx;
 }
 
-function sub( out, a, b ){
+function v3sub( out, a, b ){
     out[0] = a[0] - b[0];
     out[1] = a[1] - b[1];
     out[2] = a[2] - b[2];
 }
 
-function add( out, a, b ){
+function v3add( out, a, b ){
     out[0] = a[0] + b[0];
     out[1] = a[1] + b[1];
     out[2] = a[2] + b[2];
 }
 
-function fromArray( out, array, offset ){
+function v3fromArray( out, array, offset ){
     out[0] = array[offset];
     out[1] = array[offset+1];
     out[2] = array[offset+2];
 }
 
-function toArray( input, array, offset ){
+function v3toArray( input, array, offset ){
     array[offset] = input[0];
     array[offset+1] = input[1];
     array[offset+2] = input[2];
 }
 
-function forEach( array, fn, b ){
+function v3forEach( array, fn, b ){
     var a = new Float32Array( 3 );
     for( var i=0, n=array.length; i<n; i+=3 ){
-        fromArray( a, array, i );
+        v3fromArray( a, array, i );
         fn( a, a, b );
-        toArray( a, array, i );
+        v3toArray( a, array, i );
     }
 }
-forEach.__deps = [ fromArray, toArray ];
+v3forEach.__deps = [ v3fromArray, v3toArray ];
 
-function length( a ){
+function v3length( a ){
     return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
 }
 
-function divide( out, a, b ){
+function v3divide( out, a, b ){
     out[0] = a[0] / b[0];
     out[1] = a[1] / b[1];
     out[2] = a[2] / b[2];
 }
 
-function multiply( out, a, b ){
+function v3multiply( out, a, b ){
     out[0] = a[0] * b[0];
     out[1] = a[1] * b[1];
     out[2] = a[2] * b[2];
 }
 
-function divideScalar( out, a, s ){
-    multiplyScalar( out, a, 1 / s );
+function v3divideScalar( out, a, s ){
+    v3multiplyScalar( out, a, 1 / s );
 }
-divideScalar.__deps = [ multiplyScalar ];
+v3divideScalar.__deps = [ v3multiplyScalar ];
 
-function multiplyScalar( out, a, s ){
+function v3multiplyScalar( out, a, s ){
     out[0] = a[0] * s;
     out[1] = a[1] * s;
     out[2] = a[2] * s;
 }
 
-function normalize( out, a ){
-    multiplyScalar( out, a, 1 / length( a ) );
+function v3normalize( out, a ){
+    v3multiplyScalar( out, a, 1 / v3length( a ) );
 }
-normalize.__deps = [ multiplyScalar ];
+v3normalize.__deps = [ v3multiplyScalar, v3length ];
+
+}
 
 
 export {
@@ -204,16 +206,16 @@ export {
     isPointOnSegment,
     pointVectorIntersection,
 
-    cross,
-    sub,
-    add,
-    fromArray,
-    toArray,
-    forEach,
-    length,
-    divide,
-    multiply,
-    divideScalar,
-    multiplyScalar,
-    normalize
+    v3cross,
+    v3sub,
+    v3add,
+    v3fromArray,
+    v3toArray,
+    v3forEach,
+    v3length,
+    v3divide,
+    v3multiply,
+    v3divideScalar,
+    v3multiplyScalar,
+    v3normalize,
 };

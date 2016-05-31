@@ -5,7 +5,7 @@
 
 
 import {
-    sub, cross, normalize, forEach, fromArray
+    v3sub, v3cross, v3normalize, v3forEach, v3fromArray
 } from "../math/vector-utils.js";
 
 
@@ -266,13 +266,13 @@ function computeVertexNormals( position, index, normal ){
             var bi = index[ i + 1 ] * 3;
             var ci = index[ i + 2 ] * 3;
 
-            fromArray( a, position, ai );
-            fromArray( b, position, bi );
-            fromArray( c, position, ci );
+            v3fromArray( a, position, ai );
+            v3fromArray( b, position, bi );
+            v3fromArray( c, position, ci );
 
-            sub( cb, c, b );
-            sub( ab, a, b );
-            cross( cb, cb, ab );
+            v3sub( cb, c, b );
+            v3sub( ab, a, b );
+            v3cross( cb, cb, ab );
 
             normal[ ai ] += cb[ 0 ];
             normal[ ai + 1 ] += cb[ 1 ];
@@ -293,13 +293,13 @@ function computeVertexNormals( position, index, normal ){
         // non-indexed elements (unconnected triangle soup)
         for ( i = 0, il = position.length; i < il; i += 9 ) {
 
-            fromArray( a, position, i );
-            fromArray( b, position, i + 3 );
-            fromArray( c, position, i + 6 );
+            v3fromArray( a, position, i );
+            v3fromArray( b, position, i + 3 );
+            v3fromArray( c, position, i + 6 );
 
-            sub( cb, c, b );
-            sub( ab, a, b );
-            cross( cb, cb, ab );
+            v3sub( cb, c, b );
+            v3sub( ab, a, b );
+            v3cross( cb, cb, ab );
 
             normal[ i ] = cb[ 0 ];
             normal[ i + 1 ] = cb[ 1 ];
@@ -317,12 +317,14 @@ function computeVertexNormals( position, index, normal ){
 
     }
 
-    forEach( normal, normalize );
+    v3forEach( normal, v3normalize );
 
     return normal;
 
 }
-computeVertexNormals.__deps = [ sub, cross, normalize, forEach, fromArray ];
+computeVertexNormals.__deps = [
+    v3sub, v3cross, v3normalize, v3forEach, v3fromArray
+];
 
 
 export {
