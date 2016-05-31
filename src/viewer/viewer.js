@@ -16,6 +16,8 @@ import {
     makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
 } from "./viewer-utils";
 
+import Signal from "../../lib/signals.es6.js";
+
 
 var JitterVectors = [
     [
@@ -112,7 +114,7 @@ THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
 function Viewer( eid, params ){
 
     var _signals = {
-        orientationChanged: new signals.Signal(),
+        orientationChanged: new Signal(),
     };
 
     var container;

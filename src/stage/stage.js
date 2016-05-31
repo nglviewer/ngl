@@ -18,22 +18,24 @@ import RepresentationCollection from "../component/representation-collection.js"
 import { makeComponent } from "../component/component-utils.js";
 import { autoLoad } from "../loader/loader-utils";
 
+import Signal from "../../lib/signals.es6.js";
+
 
 function Stage( eid, params ){
 
     this.signals = {
 
-        parametersChanged: new signals.Signal(),
-        fullscreenChanged: new signals.Signal(),
+        parametersChanged: new Signal(),
+        fullscreenChanged: new Signal(),
 
-        componentAdded: new signals.Signal(),
-        componentRemoved: new signals.Signal(),
+        componentAdded: new Signal(),
+        componentRemoved: new Signal(),
 
-        atomPicked: new signals.Signal(),
-        bondPicked: new signals.Signal(),
-        volumePicked: new signals.Signal(),
-        nothingPicked: new signals.Signal(),
-        onPicking: new signals.Signal()
+        atomPicked: new Signal(),
+        bondPicked: new Signal(),
+        volumePicked: new Signal(),
+        nothingPicked: new Signal(),
+        onPicking: new Signal()
 
     };
 

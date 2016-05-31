@@ -10,7 +10,8 @@ import {
     ResidueHydrophobicity, DefaultResidueHydrophobicity
 } from "../structure/structure-constants.js";
 
-import chroma from "../../lib/chroma.min.js";
+import chroma from "../../lib/chroma.es6.js";
+// import Signal from "../../lib/signals.es6.js";
 
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -114,7 +115,7 @@ ColorMakerRegistry.prototype = {
 
     signals: {
 
-        // typesChanged: new signals.Signal(),
+        // typesChanged: new Signal(),
 
     },
 

@@ -8,6 +8,8 @@ import { defaults } from "../utils.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
 
+import Signal from "../../lib/signals.es6.js";
+
 
 var nextComponentId = 0;
 
@@ -26,7 +28,7 @@ function Component( stage, params ){
     var signalNames = Object.keys( this.signals );
     this.signals = {};
     signalNames.forEach( function( name ){
-        this.signals[ name ] = new signals.Signal();
+        this.signals[ name ] = new Signal();
     }, this );
 
     this.stage = stage;

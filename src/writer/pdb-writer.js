@@ -7,7 +7,7 @@
 import { Debug, Log } from "../globals.js";
 import { download } from "../utils.js";
 
-import { sprintf } from "../../lib/sprintf.min.js";
+import { sprintf } from "../../lib/sprintf.es6.js";
 
 
 function PdbWriter( structure, params ){

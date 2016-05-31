@@ -4,11 +4,14 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
+
 function Stats(){
 
     this.signals = {
 
-        updated: new signals.Signal(),
+        updated: new Signal(),
 
     };
 
