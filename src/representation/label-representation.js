@@ -5,6 +5,7 @@
 
 
 import { Browser, RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import LabelFactory from "../utils/label-factory.js";
 import StructureRepresentation from "./structure-representation.js";
 import TextBuffer from "../buffer/text-buffer.js";
@@ -84,15 +85,15 @@ LabelRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        this.labelType = p.labelType || "res";
-        this.labelText = p.labelText || {};
-        this.fontFamily = p.fontFamily || "sans-serif";
-        this.fontStyle = p.fontStyle || "normal";
-        this.fontWeight = p.fontWeight || "bold";
-        this.sdf = p.sdf !== undefined ? p.sdf : Browser === "Chrome";
-        this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
-        this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
-        this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
+        this.labelType = defaults( p.labelType, "res" );
+        this.labelText = defaults( p.labelText, {} );
+        this.fontFamily = defaults( p.fontFamily, "sans-serif" );
+        this.fontStyle = defaults( p.fontStyle, "normal" );
+        this.fontWeight = defaults( p.fontWeight, "bold" );
+        this.sdf = defaults( p.sdf, Browser === "Chrome" );
+        this.xOffset = defaults( p.xOffset, 0.0 );
+        this.yOffset = defaults( p.yOffset, 0.0 );
+        this.zOffset = defaults( p.zOffset, 0.5 );
 
         StructureRepresentation.prototype.init.call( this, p );
 

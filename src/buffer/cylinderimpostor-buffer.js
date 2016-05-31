@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
@@ -15,9 +16,8 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     // Moves the cylinder in camera space to get, for example,
     // one of multiple shifted screen-aligned cylinders.
-    this.shift = p.shift !== undefined ? p.shift : 0;
-
-    this.cap = p.cap !== undefined ? p.cap : true;
+    this.shift = defaults( p.shift, 0 );
+    this.cap = defaults( p.cap, true );
 
     this.impostor = true;
     this.count = from.length / 3;

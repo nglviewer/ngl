@@ -4,12 +4,13 @@
  */
 
 
+import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
 function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
 
-    var detail = params.sphereDetail !== undefined ? params.sphereDetail : 1;
+    var detail = defaults( params.sphereDetail, 1 );
 
     this.geo = new THREE.IcosahedronGeometry( 1, detail );
 

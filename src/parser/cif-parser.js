@@ -626,7 +626,7 @@ CifParser.prototype = Object.assign( Object.create(
             gen.assembly_id.forEach( function( id, i ){
 
                 var md = {};
-                var oe = gen.oper_expression[ i ].replace( "'", "" );;
+                var oe = gen.oper_expression[ i ].replace( "'", "" );
 
                 if( oe.indexOf( ")(" || oe.indexOf( "(" ) > 0 ) !== -1 ){
 

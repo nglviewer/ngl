@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -54,7 +55,7 @@ ContactRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.radius = p.radius || this.defaultSize;
+        p.radius = defaults( p.radius, this.defaultSize );
 
         if( p.quality === "low" ){
             this.radiusSegments = 5;
@@ -63,13 +64,13 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+            this.radiusSegments = defaults( p.radiusSegments, 10 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
-        this.contactType = p.contactType || "polarBackbone";
-        this.maxDistance = p.maxDistance || 3.5;
-        this.maxAngle = p.maxAngle || 40;
+        this.contactType = defaults( p.contactType, "polarBackbone" );
+        this.maxDistance = defaults( p.maxDistance, 3.5 );
+        this.maxAngle = defaults( p.maxAngle, 40 );
 
         StructureRepresentation.prototype.init.call( this, p );
 

@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -54,7 +55,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.radius = p.radius || this.defaultSize;
+        p.radius = defaults( p.radius, this.defaultSize );
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -66,14 +67,14 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
+            this.radiusSegments = defaults( p.radiusSegments, 10 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
-        this.aspectRatio = p.aspectRatio || 2.0;
-        this.lineOnly = p.lineOnly || false;
-        this.cylinderOnly = p.cylinderOnly || false;
+        this.aspectRatio = defaults( p.aspectRatio, 2.0 );
+        this.lineOnly = defaults( p.lineOnly, false );
+        this.cylinderOnly = defaults( p.cylinderOnly, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

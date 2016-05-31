@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { Debug, Log, RepresentationRegistry } from "../globals.js";
 import Spline from "../geometry/spline.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -50,10 +51,10 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "atomindex";
-        p.colorScale = p.colorScale || "RdYlBu";
-        p.radius = p.radius || "sstruc";
-        p.scale = p.scale || 0.7;
+        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScale = defaults( p.colorScale, "RdYlBu" );
+        p.radius = defaults( p.radius, "sstruc" );
+        p.scale = defaults( p.scale, 0.7 );
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -65,14 +66,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             this.subdiv = 12;
             this.radialSegments = 20;
         }else{
-            this.subdiv = p.subdiv || 6;
-            this.radialSegments = p.radialSegments || 10;
+            this.subdiv = defaults( p.subdiv, 6 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
 
-        this.aspectRatio = p.aspectRatio || 5.0;
-        this.tension = p.tension || NaN;
-        this.capped = p.capped === undefined ? true : p.capped;
-        this.smoothSheet = p.smoothSheet || false;
+        this.aspectRatio = defaults( p.aspectRatio, 5.0 );
+        this.tension = defaults( p.tension, NaN );
+        this.capped = defaults( p.capped, true );
+        this.smoothSheet = defaults( p.smoothSheet, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

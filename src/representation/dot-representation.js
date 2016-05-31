@@ -5,6 +5,7 @@
 
 
 import { ExtensionFragDepth } from "../globals.js";
+import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -123,8 +124,8 @@ DotRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "uniform";
-        p.colorValue = p.colorValue || 0xDDDDDD;
+        p.colorScheme = defaults( p.colorScheme, "uniform" );
+        p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -133,25 +134,25 @@ DotRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
         }else{
-            this.sphereDetail = p.sphereDetail || 1;
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
-        this.thresholdType  = p.thresholdType !== undefined ? p.thresholdType : "sigma";
-        this.thresholdMin = p.thresholdMin !== undefined ? p.thresholdMin : 2.0;
-        this.thresholdMax = p.thresholdMax !== undefined ? p.thresholdMax : Infinity;
-        this.thresholdOut = p.thresholdOut !== undefined ? p.thresholdOut : false;
-        this.dotType = p.dotType !== undefined ? p.dotType : "point";
-        this.radius = p.radius !== undefined ? p.radius : 0.1;
-        this.scale = p.scale !== undefined ? p.scale : 1.0;
+        this.thresholdType = defaults( p.thresholdType, "sigma" );
+        this.thresholdMin = defaults( p.thresholdMin, 2.0 );
+        this.thresholdMax = defaults( p.thresholdMax, Infinity );
+        this.thresholdOut = defaults( p.thresholdOut, false );
+        this.dotType = defaults( p.dotType, "point" );
+        this.radius = defaults( p.radius, 0.1 );
+        this.scale = defaults( p.scale, 1.0 );
 
-        this.pointSize = p.pointSize || 1;
-        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
-        this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
-        this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
-        this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
-        this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
-        this.edgeBleach = p.edgeBleach !== undefined ? p.edgeBleach : 0.0;
+        this.pointSize = defaults( p.pointSize, 1 );
+        this.sizeAttenuation = defaults( p.sizeAttenuation, true );
+        this.sortParticles = defaults( p.sortParticles, false );
+        this.useTexture = defaults( p.useTexture, false );
+        this.alphaTest = defaults( p.alphaTest, 0.5 );
+        this.forceTransparent = defaults( p.forceTransparent, false );
+        this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
         Representation.prototype.init.call( this, p );
 
@@ -177,28 +178,30 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         if( this.volume ){
 
+            var volume = this.volume;
             var thresholdMin, thresholdMax;
 
             if( this.thresholdType === "sigma" ){
-                thresholdMin = this.volume.getValueForSigma( this.thresholdMin );
-                thresholdMax = this.volume.getValueForSigma( this.thresholdMax );
+                thresholdMin = volume.getValueForSigma( this.thresholdMin );
+                thresholdMax = volume.getValueForSigma( this.thresholdMax );
             }else{
                 thresholdMin = this.thresholdMin;
                 thresholdMax = this.thresholdMax;
             }
-            this.volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
+            volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
 
-            position = this.volume.getDataPosition();
-            color = this.volume.getDataColor( this.getColorParams() );
-            size = this.volume.getDataSize( this.radius, this.scale );
-            pickingColor = this.volume.getPickingDataColor( this.getColorParams() );
+            position = volume.getDataPosition();
+            color = volume.getDataColor( this.getColorParams() );
+            size = volume.getDataSize( this.radius, this.scale );
+            pickingColor = volume.getPickingDataColor( this.getColorParams() );
 
         }else{
 
-            position = this.surface.getPosition();
-            color = this.surface.getColor( this.getColorParams() );
-            size = this.surface.getSize( this.radius, this.scale );
-            pickingColor = this.surface.getPickingColor( this.getColorParams() );
+            var surface = this.surface;
+            position = surface.getPosition();
+            color = surface.getColor( this.getColorParams() );
+            size = surface.getSize( this.radius, this.scale );
+            pickingColor = surface.getPickingColor( this.getColorParams() );
 
         }
 

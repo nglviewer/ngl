@@ -6,6 +6,7 @@
 
 import { Debug, Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
+import { defaults } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -22,20 +23,20 @@ function Buffer( position, color, index, pickingColor, params ){
     this.pickable = false;
     this.dynamic = true;
 
-    this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : false;
-    this.dullInterior = p.dullInterior !== undefined ? p.dullInterior : false;
-    this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
-    this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-    this.clipNear = p.clipNear !== undefined ? p.clipNear : 0;
-    this.flatShaded = p.flatShaded !== undefined ? p.flatShaded : false;
-    this.background = p.background !== undefined ? p.background : false;
-    this.linewidth = p.linewidth !== undefined ? p.linewidth : 1;
-    this.wireframe = p.wireframe !== undefined ? p.wireframe : false;
-    this.wireframeLinewidth = p.wireframeLinewidth || 1;
-    this.roughness = p.roughness !== undefined ? p.roughness : 0.4;
-    this.metalness = p.metalness !== undefined ? p.metalness : 0.0;
-    this.diffuse = p.diffuse !== undefined ? p.diffuse : 0xffffff;
-    this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
+    this.opaqueBack = defaults( p.opaqueBack, false );
+    this.dullInterior = defaults( p.dullInterior, false );
+    this.side = defaults( p.side, THREE.DoubleSide );
+    this.opacity = defaults( p.opacity, 1.0 );
+    this.clipNear = defaults( p.clipNear, 0 );
+    this.flatShaded = defaults( p.flatShaded, false );
+    this.background = defaults( p.background, false );
+    this.linewidth = defaults( p.linewidth, 1 );
+    this.wireframe = defaults( p.wireframe, false );
+    this.wireframeLinewidth = defaults( p.wireframeLinewidth, 1 );
+    this.roughness = defaults( p.roughness, 0.4 );
+    this.metalness = defaults( p.metalness, 0.0 );
+    this.diffuse = defaults( p.diffuse, 0xffffff );
+    this.forceTransparent = defaults( p.forceTransparent, false );
 
     this.geometry = new THREE.BufferGeometry();
 

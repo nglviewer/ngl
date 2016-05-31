@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
 
@@ -12,9 +13,9 @@ function TubeMeshBuffer( position, normal, binormal, tangent, color, size, picki
 
     var p = params || {};
 
-    this.aspectRatio = p.aspectRatio !== undefined ? p.aspectRatio : 1.0;
-    this.radialSegments = p.radialSegments !== undefined ? p.radialSegments : 4;
-    this.capped = p.capped !== undefined ? p.capped : false;
+    this.aspectRatio = defaults( p.aspectRatio, 1.0 );
+    this.radialSegments = defaults( p.radialSegments, 4 );
+    this.capped = defaults( p.capped, false );
 
     this.capVertices = this.capped ? this.radialSegments : 0;
     this.capTriangles = this.capped ? this.radialSegments - 2 : 0;

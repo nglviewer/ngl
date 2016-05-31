@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";
 
@@ -63,7 +64,7 @@ function HyperballStickImpostorBuffer( position1, position2, color, color2, radi
 
     var p = params || {};
 
-    var shrink = p.shrink !== undefined ? p.shrink : 0.14;
+    var shrink = defaults( p.shrink, 0.14 );
 
     this.impostor = true;
     this.count = position1.length / 3;

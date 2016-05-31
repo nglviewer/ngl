@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import MolecularSurface from "../surface/molecular-surface.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
@@ -89,20 +90,20 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "uniform";
-        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
+        p.colorScheme = defaults( p.colorScheme, "uniform" );
+        p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
-        this.surfaceType = p.surfaceType !== undefined ? p.surfaceType : "ms";
-        this.probeRadius = p.probeRadius !== undefined ? p.probeRadius : 1.4;
-        this.smooth = p.smooth !== undefined ? p.smooth : 2;
-        this.scaleFactor = p.scaleFactor !== undefined ? p.scaleFactor : 2.0;
-        this.cutoff = p.cutoff || 0.0;
-        this.background = p.background || false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
-        this.lowResolution = p.lowResolution !== undefined ? p.lowResolution : false;
-        this.filterSele = p.filterSele !== undefined ? p.filterSele : "";
-        this.volume = p.volume || undefined;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : false;
+        this.surfaceType = defaults( p.surfaceType, "ms" );
+        this.probeRadius = defaults( p.probeRadius, 1.4 );
+        this.smooth = defaults( p.smooth, 2 );
+        this.scaleFactor = defaults( p.scaleFactor, 2.0 );
+        this.cutoff = defaults( p.cutoff, 0.0 );
+        this.background = defaults( p.background, false );
+        this.opaqueBack = defaults( p.opaqueBack, true );
+        this.lowResolution = defaults( p.lowResolution, false );
+        this.filterSele = defaults( p.filterSele, "" );
+        this.volume = defaults( p.volume, undefined );
+        this.useWorker = defaults( p.useWorker, false );
 
         StructureRepresentation.prototype.init.call( this, params );
 

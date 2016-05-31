@@ -4,6 +4,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";
 
@@ -15,14 +16,14 @@ function TextAtlas( params ){
 
     var p = Object.assign( {}, params );
 
-    this.font = p.font !== undefined ? p.font : [ 'sans-serif' ];
-    this.size = p.size || 36;
-    this.style = p.style !== undefined ? p.style : 'normal';
-    this.variant = p.variant !== undefined ? p.variant : 'normal';
-    this.weight = p.weight !== undefined ? p.weight : 'normal';
-    this.outline = p.outline !== undefined ? p.outline : 0;
-    this.width = p.width || 1024;
-    this.height = p.height || 1024;
+    this.font = defaults( p.font, [ 'sans-serif' ] );
+    this.size = defaults( p.size, 36 );
+    this.style = defaults( p.style, 'normal' );
+    this.variant = defaults( p.variant, 'normal' );
+    this.weight = defaults( p.weight, 'normal' );
+    this.outline = defaults( p.outline, 0 );
+    this.width = defaults( p.width, 1024 );
+    this.height = defaults( p.height, 1024 );
 
     this.gamma = 1;
     if( typeof navigator !== 'undefined' ){
@@ -46,7 +47,7 @@ TextAtlas.prototype = {
 
     constructor: TextAtlas,
 
-    build: function( params ){
+    build: function(){
 
         // Prepare line-height with room for outline and descenders/ascenders
         var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
@@ -237,14 +238,14 @@ function TextBuffer( position, size, color, text, params ){
     var p = params || {};
     p.forceTransparent = true;
 
-    this.fontFamily = p.fontFamily !== undefined ? p.fontFamily : "sans-serif";
-    this.fontStyle = p.fontStyle !== undefined ? p.fontStyle : "normal";
-    this.fontWeight = p.fontWeight !== undefined ? p.fontWeight : "bold";
-    this.fontSize = p.fontSize !== undefined ? p.fontSize : 48;
-    this.sdf = p.sdf !== undefined ? p.sdf : true;
-    this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
-    this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
-    this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
+    this.fontFamily = defaults( p.fontFamily, "sans-serif" );
+    this.fontStyle = defaults( p.fontStyle, "normal" );
+    this.fontWeight = defaults( p.fontWeight, "bold" );
+    this.fontSize = defaults( p.fontSize, 48 );
+    this.sdf = defaults( p.sdf, true );
+    this.xOffset = defaults( p.xOffset, 0.0 );
+    this.yOffset = defaults( p.yOffset, 0.0 );
+    this.zOffset = defaults( p.zOffset, 0.5 );
 
     var n = position.length / 3;
 

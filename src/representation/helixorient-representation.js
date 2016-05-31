@@ -5,6 +5,7 @@
 
 
 import { Debug, Log, RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Helixorient from "../geometry/helixorient.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -39,9 +40,9 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || 0.15;
-        p.scale = p.scale || 1.0;
+        p.colorScheme = defaults( p.colorScheme, "sstruc" );
+        p.radius = defaults( p.radius, 0.15 );
+        p.scale = defaults( p.scale, 1.0 );
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -50,9 +51,9 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

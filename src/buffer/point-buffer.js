@@ -72,13 +72,13 @@ function PointBuffer( position, color, params ){
     var p = params || {};
 
     this.point = true;
-    this.pointSize = p.pointSize !== undefined ? p.pointSize : 1;
-    this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
-    this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
-    this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
-    this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
-    this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
-    this.edgeBleach = p.edgeBleach !== undefined ? p.edgeBleach : 0.0;
+    this.pointSize = defaults( p.pointSize, 1 );
+    this.sizeAttenuation = defaults( p.sizeAttenuation, true );
+    this.sortParticles = defaults( p.sortParticles, false );
+    this.alphaTest = defaults( p.alphaTest, 0.5 );
+    this.useTexture = defaults( p.useTexture, false );
+    this.forceTransparent = defaults( p.forceTransparent, false );
+    this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
     this.size = position.length / 3;
     this.attributeSize = this.size;

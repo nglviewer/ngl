@@ -4,13 +4,14 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
 function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    var radiusSegments = params.radiusSegments !== undefined ? params.radiusSegments : 10;
+    var radiusSegments = defaults( params.radiusSegments, 10 );
 
     this.updateNormals = true;
 
