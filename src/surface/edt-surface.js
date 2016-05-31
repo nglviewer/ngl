@@ -9,6 +9,14 @@ import { VdwRadii, ResidueRadii } from "../structure/structure-constants.js";
 import Selection from "../selection.js";
 import Volume from "./volume.js";
 import Grid from "../geometry/grid.js";
+import {
+    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
+    v3floor, v3ceil, v3sub, v3negate
+} from "../math/vector-utils.js";
+import {
+    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
+} from "../math/matrix-utils.js";
+import { degToRad } from "../math/math-utils.js";
 
 
 function getSurfaceGrid( bbox, maxRadius, scaleFactor, extraMargin ){
@@ -17,20 +25,25 @@ function getSurfaceGrid( bbox, maxRadius, scaleFactor, extraMargin ){
     var margin = ( 1 / scaleFactor ) * 3;
     margin += maxRadius;
 
-    var min = new THREE.Vector3().copy( bbox.min );
-    var max = new THREE.Vector3().copy( bbox.max );
+    var min = new Float32Array( bbox.min.toArray() );
+    var max = new Float32Array( bbox.max.toArray() );
 
-    min.subScalar( extraMargin + margin );
-    max.addScalar( extraMargin + margin );
+    v3subScalar( min, min, extraMargin + margin );
+    v3addScalar( max, max, extraMargin + margin );
 
-    min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-    max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+    v3multiplyScalar( min, min, scaleFactor );
+    v3floor( min, min );
+    v3divideScalar( min, min, scaleFactor );
 
-    var dim = new THREE.Vector3()
-        .subVectors( max, min )
-        .multiplyScalar( scaleFactor )
-        .ceil()
-        .addScalar( 1 );
+    v3multiplyScalar( max, max, scaleFactor );
+    v3ceil( max, max );
+    v3divideScalar( max, max, scaleFactor );
+
+    var dim = new Float32Array( 3 );
+    v3sub( dim, max, min );
+    v3multiplyScalar( dim, dim, scaleFactor );
+    v3ceil( dim, dim );
+    v3addScalar( dim, dim, 1 );
 
     var maxSize = Math.pow( 10, 6 ) * 256;
     var tmpSize = dim.x * dim.y * dim.z * 3;
@@ -39,37 +52,45 @@ function getSurfaceGrid( bbox, maxRadius, scaleFactor, extraMargin ){
 
         scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
 
-        min.multiplyScalar( scaleFactor ).floor().divideScalar( scaleFactor );
-        max.multiplyScalar( scaleFactor ).ceil().divideScalar( scaleFactor );
+        v3multiplyScalar( min, min, scaleFactor );
+        v3floor( min, min );
+        v3divideScalar( min, min, scaleFactor );
 
-        dim.subVectors( max, min )
-            .multiplyScalar( scaleFactor )
-            .ceil()
-            .addScalar( 1 );
+        v3multiplyScalar( max, max, scaleFactor );
+        v3ceil( max, max );
+        v3divideScalar( max, max, scaleFactor );
+
+        v3sub( dim, max, min );
+        v3multiplyScalar( dim, dim, scaleFactor );
+        v3ceil( dim, dim );
+        v3addScalar( dim, dim, 1 );
 
     }
 
-    var tran = new THREE.Vector3().copy( min ).negate();
+    var tran = new Float32Array( min );
+    v3negate( tran, tran );
 
     // coordinate transformation matrix
-    var matrix = new THREE.Matrix4();
-    matrix.multiply(
-        new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+    var matrix = m4new();
+    var mroty = m4new();
+    m4makeRotationY( mroty, degToRad( 90 ) );
+    m4multiply( matrix, matrix, mroty );
+
+    var mscale = m4new();
+    m4makeScale( mscale,
+        -1 / scaleFactor,
+        1 / scaleFactor,
+        1 / scaleFactor
     );
-    matrix.multiply(
-        new THREE.Matrix4().makeScale(
-            -1 / scaleFactor,
-             1 / scaleFactor,
-             1 / scaleFactor
-        )
+    m4multiply( matrix, matrix, mscale );
+
+    var mtrans = m4new()
+    m4makeTranslation( mtrans,
+        -scaleFactor * tran[2],
+        -scaleFactor * tran[1],
+        -scaleFactor * tran[0]
     );
-    matrix.multiply(
-        new THREE.Matrix4().makeTranslation(
-            -scaleFactor * tran.z,
-            -scaleFactor * tran.y,
-            -scaleFactor * tran.x
-        )
-    );
+    m4multiply( matrix, matrix, mtrans );
 
     return {
         dim: dim,
@@ -79,6 +100,12 @@ function getSurfaceGrid( bbox, maxRadius, scaleFactor, extraMargin ){
     };
 
 }
+getSurfaceGrid.__deps = [
+    degToRad,
+    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
+    v3floor, v3ceil, v3sub, v3negate,
+    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
+];
 
 
 function EDTSurface( structure ){
@@ -146,11 +173,11 @@ function EDTSurface( structure ){
             bbox, maxRadius, scaleFactor, btype ? probeRadius : 0
         );
 
-        pLength = grid.dim.x;
-        pWidth = grid.dim.y;
-        pHeight = grid.dim.z;
+        pLength = grid.dim[0];
+        pWidth = grid.dim[1];
+        pHeight = grid.dim[2];
 
-        matrix = grid.matrix;
+        matrix = new THREE.Matrix4().fromArray( grid.matrix );
         ptran = grid.tran;
         scaleFactor = grid.scaleFactor;
 
@@ -301,9 +328,9 @@ function EDTSurface( structure ){
 
         if( selection && !selection.test( atomProxy1 ) ) return;
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran.x ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran.y ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran.z ) );
+        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran[2] ) );
 
         var at = atomProxy1[ radiusProperty ];
         var depty_at = depty[ at ];
@@ -363,9 +390,9 @@ function EDTSurface( structure ){
 
                                     if( atomProxy2.index !== atomProxy1.index ){
 
-                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran.x ) );
-                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran.y ) );
-                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran.z ) );
+                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran[0] ) );
+                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran[1] ) );
+                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran[2] ) );
 
                                         if( mi * mi + mj * mj + mk * mk <
                                             ox * ox + oy * oy + oz * oz
@@ -431,9 +458,9 @@ function EDTSurface( structure ){
 
         if( selection && !selection.test( atomProxy1 ) ) return;
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran.x ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran.y ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran.z ) );
+        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran[2] ) );
 
         var at = atomProxy1[ radiusProperty ];
         var pWH = pWidth * pHeight;
@@ -476,9 +503,9 @@ function EDTSurface( structure ){
 
                                 atomProxy2.index = vpAtomID[ index ];
 
-                                ox = Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran.x ) );
-                                oy = Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran.y ) );
-                                oz = Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran.z ) );
+                                ox = Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran[0] ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran[1] ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran[2] ) );
 
                                 if( mi * mi + mj * mj + mk * mk <
                                     ox * ox + oy * oy + oz * oz
