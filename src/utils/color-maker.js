@@ -10,6 +10,8 @@ import {
     ResidueHydrophobicity, DefaultResidueHydrophobicity
 } from "../structure/structure-constants.js";
 
+import chroma from "../../lib/chroma.min.js";
+
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
 var ElementColors = {
