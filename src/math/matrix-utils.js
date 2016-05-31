@@ -551,6 +551,97 @@ function svd( A, W, U, V ){
     }
 }
 
+//
+
+function m4new(){
+    return new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]);
+}
+
+function m4set( out, n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44 ){
+    out[ 0 ] = n11; out[ 4 ] = n12; out[ 8 ] = n13; out[ 12 ] = n14;
+    out[ 1 ] = n21; out[ 5 ] = n22; out[ 9 ] = n23; out[ 13 ] = n24;
+    out[ 2 ] = n31; out[ 6 ] = n32; out[ 10 ] = n33; out[ 14 ] = n34;
+    out[ 3 ] = n41; out[ 7 ] = n42; out[ 11 ] = n43; out[ 15 ] = n44;
+}
+
+function m4identity( out ){
+    m4set( out,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    );
+}
+m4identity.__deps = [ m4set ];
+
+function m4multiply( out, a, b ){
+    var a11 = a[ 0 ], a12 = a[ 4 ], a13 = a[ 8 ], a14 = a[ 12 ];
+    var a21 = a[ 1 ], a22 = a[ 5 ], a23 = a[ 9 ], a24 = a[ 13 ];
+    var a31 = a[ 2 ], a32 = a[ 6 ], a33 = a[ 10 ], a34 = a[ 14 ];
+    var a41 = a[ 3 ], a42 = a[ 7 ], a43 = a[ 11 ], a44 = a[ 15 ];
+
+    var b11 = b[ 0 ], b12 = b[ 4 ], b13 = b[ 8 ], b14 = b[ 12 ];
+    var b21 = b[ 1 ], b22 = b[ 5 ], b23 = b[ 9 ], b24 = b[ 13 ];
+    var b31 = b[ 2 ], b32 = b[ 6 ], b33 = b[ 10 ], b34 = b[ 14 ];
+    var b41 = b[ 3 ], b42 = b[ 7 ], b43 = b[ 11 ], b44 = b[ 15 ];
+
+    out[ 0 ] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+    out[ 4 ] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+    out[ 8 ] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+    out[ 12 ] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+
+    out[ 1 ] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+    out[ 5 ] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+    out[ 9 ] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+    out[ 13 ] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+
+    out[ 2 ] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+    out[ 6 ] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+    out[ 10 ] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+    out[ 14 ] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+
+    out[ 3 ] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+    out[ 7 ] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+    out[ 11 ] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+    out[ 15 ] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+}
+
+function m4makeScale( out, x, y, z ){
+    m4set( out,
+        x, 0, 0, 0,
+        0, y, 0, 0,
+        0, 0, z, 0,
+        0, 0, 0, 1
+    );
+}
+m4makeScale.__deps = [ m4set ];
+
+function m4makeTranslation( out, x, y, z ){
+    m4set( out,
+        1, 0, 0, x,
+        0, 1, 0, y,
+        0, 0, 1, z,
+        0, 0, 0, 1
+    );
+}
+m4makeTranslation.__deps = [ m4set ];
+
+function m4makeRotationY( out, theta ){
+    var c = Math.cos( theta ), s = Math.sin( theta );
+    m4set( out,
+        c, 0, s, 0,
+        0, 1, 0, 0,
+        -s, 0, c, 0,
+        0, 0, 0, 1
+    );
+}
+m4makeRotationY.__deps = [ m4set ];
+
 
 export {
     Matrix,
@@ -565,5 +656,12 @@ export {
     multiply_ABt,
     invert_3x3,
     multiply_3x3,
-    mat3x3_determinant
+    mat3x3_determinant,
+
+    m4new,
+    m4identity,
+    m4multiply,
+    m4makeScale,
+    m4makeTranslation,
+    m4makeRotationY
 };

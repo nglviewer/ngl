@@ -197,6 +197,40 @@ function v3normalize( out, a ){
 }
 v3normalize.__deps = [ v3multiplyScalar, v3length ];
 
+function v3subScalar( out, a, s ){
+    out[0] = a[0] - s;
+    out[1] = a[1] - s;
+    out[2] = a[2] - s;
+}
+
+function v3addScalar( out, a, s ){
+    out[0] = a[0] + s;
+    out[1] = a[1] + s;
+    out[2] = a[2] + s;
+}
+
+function v3floor( out, a ){
+    out[0] = Math.floor( a[0] );
+    out[1] = Math.floor( a[1] );
+    out[2] = Math.floor( a[2] );
+}
+
+function v3ceil( out, a ){
+    out[0] = Math.ceil( a[0] );
+    out[1] = Math.ceil( a[1] );
+    out[2] = Math.ceil( a[2] );
+}
+
+function v3round( out, a ){
+    out[0] = Math.round( a[0] );
+    out[1] = Math.round( a[1] );
+    out[2] = Math.round( a[2] );
+}
+
+function v3negate( out, a ){
+    out[0] = -a[0];
+    out[1] = -a[1];
+    out[2] = -a[2];
 }
 
 
@@ -218,4 +252,10 @@ export {
     v3divideScalar,
     v3multiplyScalar,
     v3normalize,
+    v3subScalar,
+    v3addScalar,
+    v3floor,
+    v3ceil,
+    v3round,
+    v3negate
 };
