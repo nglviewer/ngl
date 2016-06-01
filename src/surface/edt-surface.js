@@ -5,8 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
-import { VdwRadii, ResidueRadii } from "../structure/structure-constants.js";
-import Selection from "../selection.js";
+import { VdwRadii } from "../structure/structure-constants.js";
 import Volume from "./volume.js";
 import Grid from "../geometry/grid.js";
 import {
@@ -129,7 +128,7 @@ function EDTSurface( structure ){
     var atomProxy1 = structure.getAtomProxy();
     var atomProxy2 = structure.getAtomProxy();
 
-    var probeRadius, scaleFactor, cutoff, lowRes;
+    var probeRadius, scaleFactor, cutoff;
     var pLength, pWidth, pHeight;
     var matrix, ptran;
     var depty, widxz;
@@ -139,30 +138,15 @@ function EDTSurface( structure ){
 
     var radiusProperty;
     var radiusDict;
-    var selection;
 
-    function init( btype, _probeRadius, _scaleFactor, _cutoff, _lowRes, _setAtomID ){
+    function init( btype, _probeRadius, _scaleFactor, _cutoff, _setAtomID ){
 
         probeRadius = _probeRadius || 1.4;
         scaleFactor = _scaleFactor || 2.0;
-        lowRes = _lowRes || false;
         setAtomID = _setAtomID || true;
 
-        if( lowRes ){
-
-            radiusProperty = "resname";
-            radiusDict = ResidueRadii;
-
-            selection = new Selection( ".CA" );
-
-        }else{
-
-            radiusProperty = "element";
-            radiusDict = VdwRadii;
-
-            selection = undefined;
-
-        }
+        radiusProperty = "element";
+        radiusDict = VdwRadii;
 
         var maxRadius = 0;
         for( var name in radiusDict ){
@@ -227,14 +211,14 @@ function EDTSurface( structure ){
 
     //
 
-    this.getVolume = function( type, probeRadius, scaleFactor, lowRes, cutoff, setAtomID ){
+    this.getVolume = function( type, probeRadius, scaleFactor, cutoff, setAtomID ){
 
         if( Debug ) Log.time( "EDTSurface.getVolume" );
 
         var btype = type !== "vws";
         setAtomID = true;
 
-        init( btype, probeRadius, scaleFactor, cutoff, lowRes, setAtomID );
+        init( btype, probeRadius, scaleFactor, cutoff, setAtomID );
 
         fillvoxels( btype );
         buildboundary();
@@ -325,8 +309,6 @@ function EDTSurface( structure ){
         var ii, jj, kk;
 
         atomProxy1.index = atomIndex;
-
-        if( selection && !selection.test( atomProxy1 ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );
@@ -455,8 +437,6 @@ function EDTSurface( structure ){
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
 
         atomProxy1.index = atomIndex;
-
-        if( selection && !selection.test( atomProxy1 ) ) return;
 
         cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
         cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );

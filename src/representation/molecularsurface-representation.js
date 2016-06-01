@@ -66,9 +66,6 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         opaqueBack: {
             type: "boolean", buffer: true
         },
-        lowResolution: {
-            type: "boolean", rebuild: true
-        },
         filterSele: {
             type: "text"
         },
@@ -100,7 +97,6 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.cutoff = defaults( p.cutoff, 0.0 );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
-        this.lowResolution = defaults( p.lowResolution, false );
         this.filterSele = defaults( p.filterSele, "" );
         this.volume = defaults( p.volume, undefined );
         this.useWorker = defaults( p.useWorker, false );
@@ -254,7 +250,6 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             probeRadius: this.probeRadius,
             scaleFactor: this.scaleFactor,
             smooth: this.smooth,
-            lowRes: this.lowResolution,
             cutoff: this.cutoff,
             useWorker: this.useWorker
         }, params );

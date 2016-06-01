@@ -58,7 +58,7 @@ MolecularSurface.prototype = {
 
         var edtsurf = new EDTSurface( this.structure );
         var vol = edtsurf.getVolume(
-            p.type, p.probeRadius, p.scaleFactor, p.lowRes, p.cutoff
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff
         );
         var surface = vol.getSurface( 1, p.smooth );
 
@@ -66,7 +66,6 @@ MolecularSurface.prototype = {
         surface.info.probeRadius = p.probeRadius;
         surface.info.scaleFactor = p.scaleFactor;
         surface.info.smooth = p.smooth;
-        surface.info.lowRes = p.lowRes;
         surface.info.cutoff = p.cutoff;
 
         vol.dispose();
