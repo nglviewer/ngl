@@ -780,7 +780,9 @@ function buildUnitcellAssembly( structure ){
     var unitcellMatrixList = getMatrixList();
     var ncsMatrixList;
     if( structure.biomolDict.NCS ){
-        ncsMatrixList = structure.biomolDict.NCS.partList[ 0 ].matrixList;
+        ncsMatrixList = [ new THREE.Matrix4() ].concat(
+            structure.biomolDict.NCS.partList[ 0 ].matrixList
+        );
         var ncsUnitcellMatrixList = [];
         unitcellMatrixList.forEach( function( sm ){
             ncsMatrixList.forEach( function( nm ){

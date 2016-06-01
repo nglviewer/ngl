@@ -354,7 +354,10 @@ PdbParser.prototype = Object.assign( Object.create(
                     modelIdx += 1;
                     pendingStart = true;
 
-                }else if( recordName === 'MTRIX ' ){
+                }else if( line.substr( 0, 5 ) === 'MTRIX' ){
+
+                    // ignore 'given' operators
+                    if( line[ 59 ] === "1" ) continue;
 
                     var ncs = line.split( /\s+/ );
                     var ncsMat = ncs[ 1 ].trim();

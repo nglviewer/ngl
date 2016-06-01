@@ -626,7 +626,7 @@ CifParser.prototype = Object.assign( Object.create(
             gen.assembly_id.forEach( function( id, i ){
 
                 var md = {};
-                var oe = gen.oper_expression[ i ].replace( "'", "" );
+                var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
 
                 if( oe.indexOf( ")(" || oe.indexOf( "(" ) > 0 ) !== -1 ){
 
@@ -690,6 +690,9 @@ CifParser.prototype = Object.assign( Object.create(
 
             ncsOp.id.forEach( function( id, i ){
 
+                // ignore 'given' operators
+                if( ncsOp.code[ i ] === "given" ) return;
+
                 var m = new THREE.Matrix4();
                 var elms = m.elements;
 
@@ -714,6 +717,10 @@ CifParser.prototype = Object.assign( Object.create(
                 ncsPart.matrixList.push( m );
 
             } );
+
+            if( ncsPart.matrixList.length === 0 ){
+                delete biomolDict[ ncsName ];
+            }
 
         }
 
