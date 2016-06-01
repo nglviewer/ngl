@@ -6,6 +6,9 @@
  */
 
 
+import { v3new, v3cross } from "./vector-utils.js";
+
+
 function Matrix( columns, rows ){
 
     this.cols = columns;
@@ -642,6 +645,39 @@ function m4makeRotationY( out, theta ){
 }
 m4makeRotationY.__deps = [ m4set ];
 
+//
+
+function m3new(){
+    return new Float32Array([
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    ]);
+}
+
+function m3makeNormal( out, m4 ){
+    var r0 = v3new([ m4[0], m4[1], m4[2] ]);
+    var r1 = v3new([ m4[4], m4[5], m4[6] ]);
+    var r2 = v3new([ m4[8], m4[9], m4[10] ]);
+    var cp = v3new();
+    //        [ r0 ]       [ r1 x r2 ]
+    // M3x3 = [ r1 ]   N = [ r2 x r0 ]
+    //        [ r2 ]       [ r0 x r1 ]
+    v3cross( cp, r1, r2 )
+    out[ 0 ] = cp[ 0 ];
+    out[ 1 ] = cp[ 1 ];
+    out[ 2 ] = cp[ 2 ];
+    v3cross( cp, r2, r0 )
+    out[ 3 ] = cp[ 0 ];
+    out[ 4 ] = cp[ 1 ];
+    out[ 5 ] = cp[ 2 ];
+    v3cross( cp, r0, r1 )
+    out[ 6 ] = cp[ 0 ];
+    out[ 7 ] = cp[ 1 ];
+    out[ 8 ] = cp[ 2 ];
+}
+m3makeNormal.__deps = [ v3new, v3cross ];
+
 
 export {
     Matrix,
@@ -663,5 +699,8 @@ export {
     m4multiply,
     m4makeScale,
     m4makeTranslation,
-    m4makeRotationY
+    m4makeRotationY,
+
+    m3new,
+    m3makeNormal
 };

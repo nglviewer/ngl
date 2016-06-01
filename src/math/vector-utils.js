@@ -123,6 +123,67 @@ var pointVectorIntersection = function(){
 }();
 
 
+function computeBoundingBox( array ){
+    var minX = +Infinity;
+    var minY = +Infinity;
+    var minZ = +Infinity;
+    var maxX = -Infinity;
+    var maxY = -Infinity;
+    var maxZ = -Infinity;
+    for ( var i = 0, l = array.length; i < l; i += 3 ){
+        var x = array[ i ];
+        var y = array[ i + 1 ];
+        var z = array[ i + 2 ];
+        if ( x < minX ) minX = x;
+        if ( y < minY ) minY = y;
+        if ( z < minZ ) minZ = z;
+        if ( x > maxX ) maxX = x;
+        if ( y > maxY ) maxY = y;
+        if ( z > maxZ ) maxZ = z;
+    }
+    return [
+        v3new([ minX, minY, minZ ]),
+        v3new([ maxX, maxY, maxZ ])
+    ];
+}
+v3forEach.__deps = [ v3new ];
+
+
+function applyMatrix4toVector3array( m, a ){
+    for( var i = 0, il = a.length; i < il; i+=3 ){
+        var x = a[ i ], y = a[ i + 1 ], z = a[ i + 2 ];
+        a[ i     ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ]  * z + m[ 12 ];
+        a[ i + 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ]  * z + m[ 13 ];
+        a[ i + 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z + m[ 14 ];
+    }
+}
+
+
+function applyMatrix3toVector3array( m, a ){
+    for( var i = 0, il = a.length; i < il; i+=3 ){
+        var x = a[ i ], y = a[ i + 1 ], z = a[ i + 2 ];
+        a[ i     ] = m[ 0 ] * x + m[ 3 ] * y + m[ 6 ] * z;
+        a[ i + 1 ] = m[ 1 ] * x + m[ 4 ] * y + m[ 7 ] * z;
+        a[ i + 2 ] = m[ 2 ] * x + m[ 5 ] * y + m[ 8 ] * z;
+    }
+}
+
+
+function normalizeVector3array( a ){
+    for( var i = 0, il = a.length; i < il; i+=3 ){
+        var x = a[ i ], y = a[ i + 1 ], z = a[ i + 2 ];
+        var s = 1 / Math.sqrt( x*x + y*y + z*z );
+        a[ i     ] = x * s;
+        a[ i + 1 ] = y * s;
+        a[ i + 2 ] = z * s;
+    }
+}
+
+
+function v3new( array ){
+    return new Float32Array( array || 3 );
+}
+
 function v3cross( out, a, b ){
     var ax = a[0], ay = a[1], az = a[2];
     var bx = b[0], by = b[1], bz = b[2];
@@ -156,14 +217,14 @@ function v3toArray( input, array, offset ){
 }
 
 function v3forEach( array, fn, b ){
-    var a = new Float32Array( 3 );
+    var a = v3new( 3 );
     for( var i=0, n=array.length; i<n; i+=3 ){
         v3fromArray( a, array, i );
         fn( a, a, b );
         v3toArray( a, array, i );
     }
 }
-v3forEach.__deps = [ v3fromArray, v3toArray ];
+v3forEach.__deps = [ v3new, v3fromArray, v3toArray ];
 
 function v3length( a ){
     return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
@@ -239,7 +300,12 @@ export {
     calculateMeanVector3,
     isPointOnSegment,
     pointVectorIntersection,
+    computeBoundingBox,
+    applyMatrix4toVector3array,
+    applyMatrix3toVector3array,
+    normalizeVector3array,
 
+    v3new,
     v3cross,
     v3sub,
     v3add,

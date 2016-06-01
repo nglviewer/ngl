@@ -5,7 +5,7 @@
 
 
 import {
-    v3sub, v3cross, v3normalize, v3forEach, v3fromArray
+    v3sub, v3cross, v3fromArray, normalizeVector3array
 } from "../math/vector-utils.js";
 
 
@@ -317,13 +317,13 @@ function computeVertexNormals( position, index, normal ){
 
     }
 
-    v3forEach( normal, v3normalize );
+    normalizeVector3array( normal );
 
     return normal;
 
 }
 computeVertexNormals.__deps = [
-    v3sub, v3cross, v3normalize, v3forEach, v3fromArray
+    v3sub, v3cross, v3fromArray, normalizeVector3array
 ];
 
 

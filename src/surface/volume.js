@@ -9,6 +9,8 @@ import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
+import { applyMatrix4toVector3array, applyMatrix3toVector3array } from "../math/vector-utils.js";
+import { m3new, m3makeNormal } from "../math/matrix-utils.js";
 import Surface from "./surface.js";
 
 
@@ -16,11 +18,19 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box ){
+    function getSurface( isolevel, smooth, box, matrix ){
         var sd = mc.triangulate( isolevel, smooth, box );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
+        }
+        if( matrix ){
+            applyMatrix4toVector3array( matrix, sd.position );
+            if( sd.normal ){
+                var normalMatrix = m3new();
+                m3makeNormal( normalMatrix, matrix );
+                applyMatrix3toVector3array( normalMatrix, sd.normal );
+            }
         }
         return sd;
     }
@@ -28,7 +38,11 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
     this.getSurface = getSurface;
 
 }
-VolumeSurface.__deps = [ laplacianSmooth, computeVertexNormals, MarchingCubes ];
+VolumeSurface.__deps = [
+    laplacianSmooth, computeVertexNormals, MarchingCubes,
+    applyMatrix4toVector3array, applyMatrix3toVector3array,
+    m3new, m3makeNormal
+];
 
 
 WorkerRegistry.add( "surf", function func( e, callback ){
@@ -39,7 +53,7 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box );
+        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
@@ -203,12 +217,6 @@ Volume.prototype = {
 
     makeSurface: function( sd, isolevel, smooth ){
 
-        this.matrix.applyToVector3Array( sd.position );
-
-        if( sd.normal ){
-            this.normalMatrix.applyToVector3Array( sd.normal );
-        }
-
         var surface = new Surface( "", "", sd );
         surface.info.isolevel = isolevel;
         surface.info.smooth = smooth;
@@ -231,7 +239,7 @@ Volume.prototype = {
         }
 
         var box = this.__getBox( center, size );
-        var sd = this.volsurf.getSurface( isolevel, smooth, box );
+        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements );
 
         return this.makeSurface( sd, isolevel, smooth );
 
@@ -262,7 +270,8 @@ Volume.prototype = {
             msg.params = {
                 isolevel: isolevel,
                 smooth: smooth,
-                box: this.__getBox( center, size )
+                box: this.__getBox( center, size ),
+                matrix: this.matrix.elements
             };
 
             worker.post( msg, undefined,
