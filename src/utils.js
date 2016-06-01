@@ -4,9 +4,6 @@
  */
 
 
-import pako from "../lib/pako_inflate.min.js";
-
-
 function getQuery( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );
