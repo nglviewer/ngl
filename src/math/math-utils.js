@@ -4,17 +4,13 @@
  */
 
 
-import { DEG2RAD, RAD2DEG } from "./math-constants.js";
-
-
 function degToRad( deg ){
-	return deg * DEG2RAD;
+	return deg * 0.01745;  // deg * Math.PI / 180
 }
 
 function radToDeg( rad ){
-	return rad * RAD2DEG;
+	return rad * 57.29578;  // rad * 180 / Math.PI
 }
-
 
 export {
 	degToRad,

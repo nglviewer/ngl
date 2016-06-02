@@ -361,6 +361,28 @@ function quicksortIP( arr, eleSize, orderElement, begin, end ){
 }
 
 
+function arrayMax( array ){
+
+    var max = -Infinity;
+    for( var i = 0, il = array.length; i < il; ++i ){
+        if( array[ i ] > max ) max = array[ i ];
+    }
+    return max;
+
+}
+
+
+function arrayMin( array ){
+
+    var min = Infinity;
+    for( var i = 0, il = array.length; i < il; ++i ){
+        if( array[ i ] < min ) min = array[ i ];
+    }
+    return min;
+
+}
+
+
 export {
     circularMean,
     calculateCenterArray,
@@ -372,5 +394,7 @@ export {
     calculateMeanArray,
     calculateMinArray,
     copyArray,
-    quicksortIP
+    quicksortIP,
+    arrayMax,
+    arrayMin
 };
