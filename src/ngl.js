@@ -4,6 +4,13 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+
+import _Promise from "../lib/promise.es6.js";
+if( !window.Promise ){
+    window.Promise = _Promise;
+}
+
+
 /**
  * NGL module.
  * @module NGL
