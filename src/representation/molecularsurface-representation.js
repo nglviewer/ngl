@@ -99,7 +99,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.filterSele = defaults( p.filterSele, "" );
         this.volume = defaults( p.volume, undefined );
-        this.useWorker = defaults( p.useWorker, false );
+        this.useWorker = defaults( p.useWorker, true );
 
         StructureRepresentation.prototype.init.call( this, params );
 

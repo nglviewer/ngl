@@ -284,7 +284,7 @@ Volume.prototype = {
 
                 function( e ){
                     console.warn(
-                        "Volume.generateSurfaceWorker error - trying without worker", e
+                        "Volume.getSurfaceWorker error - trying without worker", e
                     );
                     var surface = this.getSurface( isolevel, smooth, center, size );
                     callback( surface );
@@ -758,3 +758,7 @@ Volume.prototype = {
 
 
 export default Volume;
+
+export {
+    VolumeSurface
+};

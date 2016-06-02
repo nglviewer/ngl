@@ -4,11 +4,11 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
 import { VdwRadii } from "../structure/structure-constants.js";
-import Volume from "./volume.js";
+import { VolumeSurface } from "./volume.js";
 import Grid from "../geometry/grid.js";
 import {
+    computeBoundingBox,
     v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
     v3floor, v3ceil, v3sub, v3negate
 } from "../math/vector-utils.js";
@@ -16,16 +16,14 @@ import {
     m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 } from "../math/matrix-utils.js";
 import { degToRad } from "../math/math-utils.js";
+import { arrayMax } from "../math/array-utils.js";
 
 
-function getSurfaceGrid( bbox, maxRadius, scaleFactor, extraMargin ){
+function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
 
     // need margin to avoid boundary/round off effects
     var margin = ( 1 / scaleFactor ) * 3;
     margin += maxRadius;
-
-    var min = new Float32Array( bbox.min.toArray() );
-    var max = new Float32Array( bbox.max.toArray() );
 
     v3subScalar( min, min, extraMargin + margin );
     v3addScalar( max, max, extraMargin + margin );
@@ -107,7 +105,18 @@ getSurfaceGrid.__deps = [
 ];
 
 
-function EDTSurface( structure ){
+function getRadiusDict( radiusList ){
+
+    var radiusDict = {};
+    for( var i = 0, il = radiusList.length; i < il; ++i ){
+        radiusDict[ radiusList[ i ] ] = true;
+    }
+    return radiusDict;
+
+}
+
+
+function EDTSurface( coordList, radiusList, indexList ){
 
     // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
     // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
@@ -124,9 +133,10 @@ function EDTSurface( structure ){
     //
     // adapted to NGL by Alexander Rose
 
-    var bbox = structure.getBoundingBox();
-    var atomProxy1 = structure.getAtomProxy();
-    var atomProxy2 = structure.getAtomProxy();
+    var radiusDict = getRadiusDict( radiusList );
+    var bbox = computeBoundingBox( coordList );
+    var min = bbox[ 0 ];
+    var max = bbox[ 1 ];
 
     var probeRadius, scaleFactor, cutoff;
     var pLength, pWidth, pHeight;
@@ -145,23 +155,20 @@ function EDTSurface( structure ){
         scaleFactor = _scaleFactor || 2.0;
         setAtomID = _setAtomID || true;
 
-        radiusProperty = "element";
-        radiusDict = VdwRadii;
-
         var maxRadius = 0;
         for( var name in radiusDict ){
             maxRadius = Math.max( maxRadius, radiusDict[ name ] );
         }
 
         var grid = getSurfaceGrid(
-            bbox, maxRadius, scaleFactor, btype ? probeRadius : 0
+            min, max, maxRadius, scaleFactor, btype ? probeRadius : 0
         );
 
         pLength = grid.dim[0];
         pWidth = grid.dim[1];
         pHeight = grid.dim[2];
 
-        matrix = new THREE.Matrix4().fromArray( grid.matrix );
+        matrix = grid.matrix;
         ptran = grid.tran;
         scaleFactor = grid.scaleFactor;
 
@@ -213,10 +220,9 @@ function EDTSurface( structure ){
 
     this.getVolume = function( type, probeRadius, scaleFactor, cutoff, setAtomID ){
 
-        if( Debug ) Log.time( "EDTSurface.getVolume" );
+        console.time( "EDTSurface.getVolume" );
 
         var btype = type !== "vws";
-        setAtomID = true;
 
         init( btype, probeRadius, scaleFactor, cutoff, setAtomID );
 
@@ -224,29 +230,44 @@ function EDTSurface( structure ){
         buildboundary();
 
         if( type === "ms" || type === "ses" ){
-
             fastdistancemap();
-
         }
 
         if( type === "ses" ){
-
             boundingatom( false );
             fillvoxelswaals();
-
         }
 
         marchingcubeinit( type );
 
-        var vol = new Volume(
-            type, "", vpBits, pHeight, pWidth, pLength, vpAtomID
+        // set atomindex in the volume data
+        for( var i = 0, il = vpAtomID.length; i < il; ++i ){
+            vpAtomID[ i ] = indexList[ vpAtomID[ i ] ];
+        }
+
+        console.timeEnd( "EDTSurface.getVolume" );
+
+        return {
+            data: vpBits,
+            nx: pHeight,
+            ny: pWidth,
+            nz: pLength,
+            atomindex: vpAtomID
+        };
+
+    };
+
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth ){
+
+        var vd = this.getVolume(
+            type, probeRadius, scaleFactor, cutoff, setAtomID
         );
 
-        vol.setMatrix( matrix );
+        var volsurf = new VolumeSurface(
+            vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
+        );
 
-        if( Debug ) Log.timeEnd( "EDTSurface.getVolume" );
-
-        return vol;
+        return volsurf.getSurface( 1, smooth, undefined, matrix );
 
     };
 
@@ -303,18 +324,19 @@ function EDTSurface( structure ){
 
     }
 
-    function fillatom( atomIndex ){
+    function fillatom( idx ){
+
+        var ci = idx * 3;
+        var ri = idx;
 
         var cx, cy, cz, ox, oy, oz, mi, mj, mk, i, j, k, si, sj, sk;
         var ii, jj, kk;
 
-        atomProxy1.index = atomIndex;
+        cx = Math.floor( 0.5 + scaleFactor * ( coordList[ ci ] + ptran[0] ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( coordList[ ci + 1 ] + ptran[1] ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( coordList[ ci + 2 ] + ptran[2] ) );
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran[2] ) );
-
-        var at = atomProxy1[ radiusProperty ];
+        var at = radiusList[ ri ];
         var depty_at = depty[ at ];
         var nind = 0;
         var cnt = 0;
@@ -324,7 +346,7 @@ function EDTSurface( structure ){
         var depty_at_nind;
 
         for( i = 0; i < n; ++i ){
-        for( j = 0; j < n; ++j ) {
+        for( j = 0; j < n; ++j ){
 
             depty_at_nind = depty_at[ nind ];
 
@@ -363,23 +385,23 @@ function EDTSurface( structure ){
                                 if( !( vpBits[ index ] & INOUT ) ){
 
                                     vpBits[ index ] |= INOUT;
-                                    vpAtomID[ index ] = atomIndex;
+                                    vpAtomID[ index ] = idx;
 
                                 }else if( vpBits[ index ] & INOUT ){
                                 // }else{
 
-                                    atomProxy2.index = vpAtomID[ index ];
+                                    var ci2 = vpAtomID[ index ];
 
-                                    if( atomProxy2.index !== atomProxy1.index ){
+                                    if( ci2 !== ci ){
 
-                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran[0] ) );
-                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran[1] ) );
-                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran[2] ) );
+                                        ox = cx + mi - Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 ] + ptran[0] ) );
+                                        oy = cy + mj - Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 + 1 ] + ptran[1] ) );
+                                        oz = cz + mk - Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 + 2 ] + ptran[2] ) );
 
                                         if( mi * mi + mj * mj + mk * mk <
                                             ox * ox + oy * oy + oz * oz
                                         ){
-                                            vpAtomID[ index ] = atomIndex;
+                                            vpAtomID[ index ] = idx;
                                         }
 
                                     }
@@ -407,7 +429,7 @@ function EDTSurface( structure ){
 
     function fillvoxels( btype ){
 
-        if( Debug ) Log.time( "EDTSurface fillvoxels" );
+        console.time( "EDTSurface fillvoxels" );
 
         var i, il;
 
@@ -417,9 +439,9 @@ function EDTSurface( structure ){
             if( setAtomID ) vpAtomID[ i ] = -1;
         }
 
-        structure.eachSelectedAtom( function( ap ){
-            fillatom( ap.index );
-        } );
+        for( i = 0, il = coordList.length / 3; i < il; ++i ){
+            fillatom( i );
+        }
 
         for( i = 0, il = vpBits.length; i < il; ++i ){
             if( vpBits[ i ] & INOUT ){
@@ -427,22 +449,23 @@ function EDTSurface( structure ){
             }
         }
 
-        if( Debug ) Log.timeEnd( "EDTSurface fillvoxels" );
+        console.timeEnd( "EDTSurface fillvoxels" );
 
     }
 
-    function fillAtomWaals( atomIndex ){
+    function fillAtomWaals( idx ){
+
+        var ci = idx * 3;
+        var ri = idx;
 
         var cx, cy, cz, ox, oy, oz, nind = 0;
         var mi, mj, mk, si, sj, sk, i, j, k, ii, jj, kk, n;
 
-        atomProxy1.index = atomIndex;
+        cx = Math.floor( 0.5 + scaleFactor * ( coordList[ ci ] + ptran[0] ) );
+        cy = Math.floor( 0.5 + scaleFactor * ( coordList[ ci + 1 ] + ptran[1] ) );
+        cz = Math.floor( 0.5 + scaleFactor * ( coordList[ ci + 2 ] + ptran[2] ) );
 
-        cx = Math.floor( 0.5 + scaleFactor * ( atomProxy1.x + ptran[0] ) );
-        cy = Math.floor( 0.5 + scaleFactor * ( atomProxy1.y + ptran[1] ) );
-        cz = Math.floor( 0.5 + scaleFactor * ( atomProxy1.z + ptran[2] ) );
-
-        var at = atomProxy1[ radiusProperty ];
+        var at = radiusList[ ri ];
         var pWH = pWidth * pHeight;
 
         for( i = 0, n = widxz[at]; i < n; ++i ){
@@ -477,20 +500,20 @@ function EDTSurface( structure ){
                             if( !( vpBits[ index ] & ISDONE ) ){
 
                                 vpBits[ index ] |= ISDONE;
-                                if( setAtomID ) vpAtomID[ index ] = atomProxy1.index;
+                                if( setAtomID ) vpAtomID[ index ] = idx;
 
                             }else if( setAtomID ){
 
-                                atomProxy2.index = vpAtomID[ index ];
+                                var ci2 = vpAtomID[ index ];
 
-                                ox = Math.floor( 0.5 + scaleFactor * ( atomProxy2.x + ptran[0] ) );
-                                oy = Math.floor( 0.5 + scaleFactor * ( atomProxy2.y + ptran[1] ) );
-                                oz = Math.floor( 0.5 + scaleFactor * ( atomProxy2.z + ptran[2] ) );
+                                ox = Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 ] + ptran[0] ) );
+                                oy = Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 + 1 ] + ptran[1] ) );
+                                oz = Math.floor( 0.5 + scaleFactor * ( coordList[ ci2 + 2 ] + ptran[2] ) );
 
                                 if( mi * mi + mj * mj + mk * mk <
                                     ox * ox + oy * oy + oz * oz
                                 ){
-                                    vpAtomID[ index ] = atomProxy1.index;
+                                    vpAtomID[ index ] = idx;
                                 }
 
                             }
@@ -520,9 +543,9 @@ function EDTSurface( structure ){
             vpBits[ i ] &= ~ISDONE;  // not isdone
         }
 
-        structure.eachSelectedAtom( function( ap ){
-            fillAtomWaals( ap.index );
-        } );
+        for( i = 0, il = coordList.length / 3; i < il; ++i ){
+            fillAtomWaals( i );
+        }
 
     }
 
@@ -577,7 +600,7 @@ function EDTSurface( structure ){
 
     function fastdistancemap(){
 
-        if( Debug ) Log.time( "EDTSurface fastdistancemap" );
+        console.time( "EDTSurface fastdistancemap" );
 
         var eliminate = 0;
         var certificate;
@@ -594,8 +617,7 @@ function EDTSurface( structure ){
 
         var index;
 
-        // console.log( "lwh", pLength * pWidth * pHeight );
-        if( Debug ) console.log( "l, w, h", pLength, pWidth, pHeight );
+        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -631,8 +653,8 @@ function EDTSurface( structure ){
             }
         }
 
-        if( Debug ) console.log( "totalsurfacevox", totalsurfacevox );
-        if( Debug ) console.log( "totalinnervox", totalinnervox );
+        console.log( "totalsurfacevox", totalsurfacevox );
+        console.log( "totalinnervox", totalinnervox );
 
         var inarray = new Int32Array( 3 * totalsurfacevox );
         var positin = 0;
@@ -665,7 +687,7 @@ function EDTSurface( structure ){
             positout = fastoneshell( inarray, boundPoint, positin, outarray );
             positin = 0;
 
-            if( Debug ) console.log( "positout", positout / 3 );
+            console.log( "positout", positout / 3 );
 
             for( i = 0, n = positout; i < n; i+=3 ){
 
@@ -726,13 +748,13 @@ function EDTSurface( structure ){
             }
         }
 
-        if( Debug ) Log.timeEnd( "EDTSurface fastdistancemap" );
+        console.timeEnd( "EDTSurface fastdistancemap" );
 
     }
 
     function fastoneshell( inarray, boundPoint, positin, outarray ){
 
-        if( Debug ) console.log( "positin", positin / 3 );
+        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -1033,6 +1055,9 @@ function EDTSurface( structure ){
     }
 
 }
+EDTSurface.__deps = [
+    getSurfaceGrid, getRadiusDict, VolumeSurface, computeBoundingBox, Grid
+];
 
 
 export default EDTSurface;

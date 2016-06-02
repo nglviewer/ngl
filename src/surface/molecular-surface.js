@@ -9,39 +9,30 @@ import Worker from "../worker/worker.js";
 import Structure from "../structure/structure.js";
 import StructureView from "../structure/structure-view.js";
 import EDTSurface from "./edt-surface.js";
+import Surface from "./surface.js";
 
 
-WorkerRegistry.add( "molsurf", function( e, callback ){
+WorkerRegistry.add( "molsurf", function func( e, callback ){
 
-    if( Debug ) Log.time( "WORKER molsurf" );
+    var a = e.data.args;
+    var p = e.data.params;
+    if( a && p ){
 
-    var d = e.data;
-    var p = d.params;
-
-    if( d.structure ){
-
-        if( d.structure.metadata.type === "Structure" ){
-            self.molsurf = new MolecularSurface(
-                new Structure().fromJSON( d.structure )
-            );
-        }else if( d.structure.metadata.type === "StructureView" ){
-            self.molsurf = new MolecularSurface(
-                new StructureView().fromJSON( d.structure )
-            );
-        }else{
-            console.error( "wrong type" );
-        }
-
+        var edtsurf = new EDTSurface( a.coordList, a.radiusList, a.indexList );
+        var sd = edtsurf.getSurface(
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+        );
+        var transferList = [ sd.position.buffer, sd.index.buffer ];
+        if( sd.normal ) transferList.push( sd.normal.buffer );
+        if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
+        callback( {
+            sd: sd,
+            p: p
+        }, transferList );
     }
 
-    var molsurf = self.molsurf;
-    var surface = molsurf.getSurface( p );
+}, [ EDTSurface ] );
 
-    if( Debug ) Log.timeEnd( "WORKER molsurf" );
-
-    callback( surface.toJSON(), surface.getTransferable() );
-
-} );
 
 
 function MolecularSurface( structure ){
@@ -52,15 +43,18 @@ function MolecularSurface( structure ){
 
 MolecularSurface.prototype = {
 
-    getSurface: function( params ){
+    getAtomData: function(){
 
-        var p = params || {};
+        return this.structure.getAtomData( {
+            what: { position: true, radius: true, index: true },
+            radiusParams: { radius: "vdw", scale: 1 }
+        } );
 
-        var edtsurf = new EDTSurface( this.structure );
-        var vol = edtsurf.getVolume(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff
-        );
-        var surface = vol.getSurface( 1, p.smooth );
+    },
+
+    makeSurface: function( sd, p ){
+
+        var surface = new Surface( "", "", sd );
 
         surface.info.type = p.type;
         surface.info.probeRadius = p.probeRadius;
@@ -68,9 +62,25 @@ MolecularSurface.prototype = {
         surface.info.smooth = p.smooth;
         surface.info.cutoff = p.cutoff;
 
-        vol.dispose();
-
         return surface;
+
+    },
+
+    getSurface: function( params ){
+
+        var p = params || {};
+
+        var atomData = this.getAtomData();
+        var coordList = atomData.position;
+        var radiusList = atomData.radius;
+        var indexList = atomData.index;
+
+        var edtsurf = new EDTSurface( coordList, radiusList, indexList );
+        var sd = edtsurf.getSurface(
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+        );
+
+        return this.makeSurface( sd, p );
 
     },
 
@@ -78,44 +88,45 @@ MolecularSurface.prototype = {
 
         var p = Object.assign( {}, params );
 
-        if( typeof Worker !== "undefined" && typeof importScripts !== 'function' ){
-
-            var structure;
+        if( window.Worker ){
 
             if( this.worker === undefined ){
-
-                structure = this.structure.toJSON();
                 this.worker = new Worker( "molsurf" );
-
             }
 
-            this.worker.post(
+            var atomData = this.getAtomData();
+            var coordList = atomData.position;
+            var radiusList = atomData.radius;
+            var indexList = atomData.index;
 
-                {
-                    structure: structure,
-                    params: p
+            var msg = {
+                args: {
+                    coordList: coordList,
+                    radiusList: radiusList,
+                    indexList: indexList
                 },
+                params: p
+            };
 
-                undefined,
+            var transferList = [
+                coordList.buffer, radiusList.buffer, indexList.buffer
+            ];
+
+            this.worker.post( msg, transferList,
 
                 function( e ){
-
-                    var surface = fromJSON( e.data );
-                    callback( surface );
-
+                    var sd = e.data.sd;
+                    callback( this.makeSurface( sd, p ) );
                 }.bind( this ),
 
                 function( e ){
-
                     console.warn(
-                        "MolecularSurface.generateSurfaceWorker error - trying without worker", e
+                        "MolecularSurface.getSurfaceWorker error - trying without worker", e
                     );
                     this.worker.terminate();
                     this.worker = undefined;
-
                     var surface = this.getSurface( p );
                     callback( surface );
-
                 }.bind( this )
 
             );
