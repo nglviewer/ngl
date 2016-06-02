@@ -10,7 +10,7 @@ import TiledRenderer from "./tiled-renderer.js";
 import { quicksortIP } from "../math/array-utils.js";
 
 
-function trimCanvas( canvas, r, g, b, a ){
+function _trimCanvas( canvas, r, g, b, a ){
 
     var canvasHeight = canvas.height;
     var canvasWidth = canvas.width;
@@ -152,7 +152,7 @@ function makeImage( viewer, params ){
             var g = ( transparent ? 0 : bg.g * 255 ) | 0;
             var b = ( transparent ? 0 : bg.b * 255 ) | 0;
             var a = ( transparent ? 0 : 255 ) | 0;
-            return trimCanvas( canvas, r, g, b, a );
+            return _trimCanvas( canvas, r, g, b, a );
         }else{
             return canvas;
         }
