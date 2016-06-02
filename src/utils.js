@@ -4,6 +4,9 @@
  */
 
 
+import { ungzip } from "../lib/pako_inflate.es6.js";
+
+
 function getQuery( id ){
 
     var a = new RegExp( id + "=([^&#=]*)" );
@@ -424,7 +427,7 @@ function decompress( data ){
     }
 
     try{
-        decompressedData = pako.ungzip( data );
+        decompressedData = ungzip( data );
     }catch( e ){
         decompressedData = data;  // assume it is already uncompressed
     }
