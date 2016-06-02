@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import Selection from "../selection.js";
 import { GidPool } from "../globals.js";
 import {

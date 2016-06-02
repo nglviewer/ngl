@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";

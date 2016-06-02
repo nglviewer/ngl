@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import { binarySearchIndexOf } from "../utils.js";
 import Helixbundle from "../geometry/helixbundle.js";

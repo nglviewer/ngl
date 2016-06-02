@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
 

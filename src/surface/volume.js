@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";

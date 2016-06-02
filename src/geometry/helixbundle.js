@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Helixorient from "./helixorient.js";

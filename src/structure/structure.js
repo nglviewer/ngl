@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";

@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";

@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { uniformArray3 } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
 

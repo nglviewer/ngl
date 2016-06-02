@@ -5,6 +5,7 @@
  */
 
 import { defaults } from "../utils.js";
+import { generateUUID } from "../math/math-utils.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
 
@@ -21,7 +22,7 @@ function Component( stage, params ){
     var p = params || {};
 
     this.name = p.name;
-    this.uuid = THREE.Math.generateUUID();
+    this.uuid = generateUUID();
     this.visible = p.visible !== undefined ? p.visible : true;
 
     // construct instance signals

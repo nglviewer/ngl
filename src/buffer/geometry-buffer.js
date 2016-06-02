@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 

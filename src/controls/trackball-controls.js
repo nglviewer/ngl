@@ -11,6 +11,9 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
+
 function TrackballControls( object, domElement ) {
 
     var _this = this;

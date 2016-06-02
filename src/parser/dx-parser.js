@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 

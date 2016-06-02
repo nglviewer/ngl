@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import {
     Debug, Log, Browser, WebglErrorMessage,
     ExtensionFragDepth, setExtensionFragDepth,

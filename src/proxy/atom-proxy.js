@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,

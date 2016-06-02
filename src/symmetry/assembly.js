@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";
 

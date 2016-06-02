@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import _Kdtree from "../utils/kdtree.js";
 

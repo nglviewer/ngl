@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
 

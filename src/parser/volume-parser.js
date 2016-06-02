@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import Parser from "./parser.js";
 import Volume from "../surface/volume.js";
 

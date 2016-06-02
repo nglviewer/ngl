@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";

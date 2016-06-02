@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { ParserRegistry } from "../globals.js";
 import SurfaceParser from "./surface-parser.js";
 

@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, RepresentationRegistry } from "../globals.js";
 
 import Structure from "../structure/structure.js";

@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 

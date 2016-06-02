@@ -4,6 +4,9 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
+
 function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
 
     this.a = a || 1;

@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";

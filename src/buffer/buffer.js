@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
 import { defaults } from "../utils.js";

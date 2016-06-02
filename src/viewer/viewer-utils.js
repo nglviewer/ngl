@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import TiledRenderer from "./tiled-renderer.js";
 import { quicksortIP } from "../math/array-utils.js";
 

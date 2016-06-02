@@ -4,6 +4,9 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
+
 import { Debug, Log } from "../globals.js";
 import Queue from "../utils/queue.js";
 import { circularMean } from "../math/array-utils.js";
@@ -15,13 +18,11 @@ import Superposition from "../align/superposition.js";
 
 function Trajectory( trajPath, structure, selectionString ){
 
-    var SIGNALS = signals;
-
     this.signals = {
-        gotNumframes: new SIGNALS.Signal(),
-        frameChanged: new SIGNALS.Signal(),
-        selectionChanged: new SIGNALS.Signal(),
-        playerChanged: new SIGNALS.Signal(),
+        gotNumframes: new Signal(),
+        frameChanged: new Signal(),
+        selectionChanged: new Signal(),
+        playerChanged: new Signal(),
     };
 
     this.params = {

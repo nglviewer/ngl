@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
 import { GidPool, Debug, Log } from "../globals.js";
 

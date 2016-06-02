@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { RepresentationRegistry } from "../globals.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import Representation from "./representation.js";

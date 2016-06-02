@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import CylinderImpostor_vert from "./CylinderImpostor.vert";
 import CylinderImpostor_frag from "./CylinderImpostor.frag";
 import HyperballStickImpostor_vert from "./HyperballStickImpostor.vert";

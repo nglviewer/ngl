@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
 import Queue from "../utils/queue.js";
 import Counter from "../utils/counter.js";

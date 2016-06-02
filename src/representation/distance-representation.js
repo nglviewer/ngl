@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";

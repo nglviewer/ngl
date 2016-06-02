@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { Debug, Log } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 import Structure from "./structure.js";

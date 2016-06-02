@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import QuadBuffer from "./quad-buffer.js";
 
 

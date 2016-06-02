@@ -4,6 +4,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import Contact from "./contact.js";
 import Selection from "../selection.js";
 
