@@ -5,7 +5,7 @@ For license texts see at the end of this document.
 ////////
 // NGL
 
-	The MIT License, Copyright &copy; 2013-2015 Alexander S. Rose
+	The MIT License, Copyright &copy; 2013-2016 Alexander S. Rose
 
 	applies to all files unless otherwise noted (excluding files in tmp/*)
 
@@ -13,26 +13,26 @@ For license texts see at the end of this document.
 //////////
 // THREE
 
-	The MIT License, Copyright &copy; 2010-2014 three.js authors
+	The MIT License, Copyright &copy; 2010-2016 three.js authors
 
-	js/three/*
-	js/lib/ui/ui.js
+	lib/three.js
 
-	css/dark.css
-	css/light.css
+	src/controls/trackball-controls.js
+	src/math/array-utils.js#quicksortIP
+	src/parser/obj-parser.js
+	src/parser/ply-parser.js
+	src/utils/binary-heap.js
+	src/utils/kdtree.js
+
+	examples/js/lib/ui/ui.js
+	examples/css/dark.css
+	examples/css/light.css
 
 	doc/page.css
 	doc/page.js
 	doc/list.js
 	doc/index.html
 	doc/prettify/threejs.css
-
-	img/circle.png
-	img/spark1.png
-
-	// modified by Alexander S. Rose
-
-	build/build.py
 
 
 ////////////
@@ -42,7 +42,9 @@ For license texts see at the end of this document.
 	Released under the MIT license
 	Author: Miller Medeiros
 
-	js/lib/ui/signals.min.js
+	lib/signals.es6.js
+
+	examples/js/lib/signals.min.js
 
 
 /////////////////
@@ -53,16 +55,16 @@ For license texts see at the end of this document.
 	License: MIT License
 	URL: http://opensource.org/licenses/mit-license.html
 
-	css/font-awesome.min.css
+	examples/css/font-awesome.min.css
 
 	License: SIL OFL 1.1
 	URL: http://scripts.sil.org/OFL
 
-	fonts/FontAwesome.otf
-	fonts/fontawesome-webfont.eot
-	fonts/fontawesome-webfont.svg
-	fonts/fontawesome-webfont.ttf
-	fonts/fontawesome-webfont.woff
+	examples/fonts/FontAwesome.otf
+	examples/fonts/fontawesome-webfont.eot
+	examples/fonts/fontawesome-webfont.svg
+	examples/fonts/fontawesome-webfont.ttf
+	examples/fonts/fontawesome-webfont.woff
 
 
 ///////////////
@@ -72,7 +74,7 @@ For license texts see at the end of this document.
 	3-clause BSD license, 2007-2013
 	Alexandru Marasteanu <hello [at) alexei (dot] ro>
 
-	js/lib/sprintf.js
+	lib/sprintf.es6.js
 
 
 ///////////
@@ -81,42 +83,26 @@ For license texts see at the end of this document.
 	http://inspirit.github.io/jsfeat/
 	MIT License, 2012, Eugene Zatepyakin
 
-	js/lib/svd.js
+	src/math/matrix-utils.js - svd methods
 
 
 //////////
-// QUint
+// Mocha
 
-	http://qunitjs.com/
-	https://github.com/JamesMGreene/qunit-assert-close
-	MIT License, Copyright 2006, 2014
-	jQuery Foundation and other contributors, https://jquery.org/
+	http://mochajs.org/
+	Copyright (c) 2011-2016 TJ Holowaychuk <tj@vision-media.ca>
 
-	test/unit/qunit-1.14.0.js
-	test/unit/qunit-1.14.0.css
-	test/unit/qunit-assert-close.js
+	test/html/mocha.css
+	test/html/mocha.js
 
 
-///////////////
-// Blanket.js
+/////////
+// Chai
 
-	http://blanketjs.org/
-	https://github.com/alex-seville/blanket
-	MIT License, Copyright 2013, Alex Seville
+	http://chaijs.com/
+	Copyright (c) 2011-2015 Jake Luer jake@alogicalparadox.com
 
-	test/unit/blanket.min.js
-
-
-/////////////////
-// Benchmark.js
-
-	http://benchmarkjs.com/
-	MIT License, Copyright 2010-2014
-	Mathias Bynens <http://mathiasbynens.be/>
-	Based on JSLitmus.js, copyright Robert Kieffer <http://broofa.com/>
-	Modified by John-David Dalton <http://allyoucanleet.com/>
-
-	test/bench/benchmark-1.0.0.js
+	test/html/chai.js
 
 
 //////////////
@@ -125,7 +111,7 @@ For license texts see at the end of this document.
 	https://github.com/gka/chroma.js
 	MIT License, Copyright 2011-2013, Gregor Aisch
 
-	js/lib/chroma.min.js
+	lib/chroma.es6.js
 
 
 /////////////////////
@@ -135,7 +121,7 @@ For license texts see at the end of this document.
 	https://github.com/zvin/FlexiColorPicker
 	MIT License, Copyright (c) 2011 - 2012 David Durman
 
-	js/lib/colorpicker.js
+	examples/js/lib/colorpicker.min.js
 
 
 /////////////////////
@@ -144,7 +130,7 @@ For license texts see at the end of this document.
 	https://github.com/sergi/virtual-list
 	MIT License, Copyright (C) 2013 Sergi Mansilla
 
-	js/lib/vlist.js
+	examples/js/ui/ui.extra.js#UI.VirtualList
 
 
 //////////////
@@ -153,34 +139,7 @@ For license texts see at the end of this document.
 	https://github.com/HubSpot/tether
 	MIT License, Copyright (c) 2014 HubSpot, Inc.
 
-	js/lib/tether.min.js
-
-
-/////////////
-// bzip2.js
-
-	https://github.com/antimatter15/bzip2.js
-	MIT License, Copyright (c) 2011 antimatter15 (antimatter15@gmail.com)
-
-	js/lib/bzip2.js
-
-
-//////////
-// JSZip
-
-	http://stuk.github.io/jszip/
-	MIT License, Copyright (c) 2009-2014 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso
-
-	js/lib/jszip.min.js
-
-
-////////////
-// js-lzma
-
-	https://code.google.com/p/js-lzma/
-	MIT License, Copyright (c) 2011 Juan Mellado
-
-	js/lib/lzma.js
+	examples/js/lib/tether.min.js
 
 
 ////////////////
@@ -189,7 +148,7 @@ For license texts see at the end of this document.
 	https://github.com/nodeca/pako
 	MIT License, Copyright (c) 2014 by Vitaly Puzrin
 
-	js/lib/pako.min.js
+	lib/pako.es6.js
 
 
 /////////////////////
@@ -198,26 +157,7 @@ For license texts see at the end of this document.
 	https://github.com/taylorhakes/promise-polyfill
 	MIT License, Copyright (c) 2014 Taylor Hakes, 2014 Forbes Lindesay,
 
-	js/lib/promise.min.js
-
-
-/////////////
-// async.js
-
-	https://github.com/caolan/async
-	MIT license, Copyright 2010-2014, Caolan McMahon
-
-	js/lib/async.js
-
-
-/////////////////////
-// Closure Compiler
-
-	Copyright 2009 The Closure Compiler Authors.
-	Licensed under the Apache License, Version 2.0 (the "License");
-	http://www.apache.org/licenses/LICENSE-2.0
-
-	build/closure-compiler/*
+	lib/promise.es6.js
 
 
 /////////////////////
@@ -236,8 +176,8 @@ For license texts see at the end of this document.
 
 	ported to WebGL by Alexander Rose
 
-	shader/HyperballStickImpostor.vert
-	shader/HyperballStickImpostor.frag
+	src/shader/HyperballStickImpostor.vert
+	src/shader/HyperballStickImpostor.frag
 
 
 /////////////////////////////////////////
@@ -264,9 +204,9 @@ For license texts see at the end of this document.
 	OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 	USE OR PERFORMANCE OF THIS SOFTWARE.
 
-	shader/CylinderImpostor.vert
-	shader/CylinderImpostor.frag
-	shader/LineSprite.vert
+	src/shader/CylinderImpostor.vert
+	src/shader/CylinderImpostor.frag
+	src/shader/LineSprite.vert
 
 
 ///////////////////////////////////////////
@@ -301,9 +241,9 @@ For license texts see at the end of this document.
 	//
 	// </verbatim>
 
-	shader/ParticleSprite.vert
-	shader/SphereHalo.vert
-	shader/SphereImpostor.vert
+	src/shader/ParticleSprite.vert
+	src/shader/SphereHalo.vert
+	src/shader/SphereImpostor.vert
 
 
 

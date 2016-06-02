@@ -93,8 +93,7 @@ This project would not be possible without recourse to many fine open-source pro
     * NGL's GUI is based on the three.js editor UI
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
-* [QUnit](http://qunitjs.com/) - for unit testing; [assert-close](https://github.com/JamesMGreene/qunit-assert-close), [Blanket.js](http://blanketjs.org/)
-* [Benchmark.js](http://benchmarkjs.com/) - for benchmarking
+* [Mocha](https://mochajs.org/) and [Chai](http://chaijs.com/) - for unit testing
 * [Chroma.js](https://github.com/gka/chroma.js) - for color handling
 * [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - for color picking
 * [Virtual DOM List](https://github.com/sergi/virtual-list)
