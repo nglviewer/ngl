@@ -32,8 +32,8 @@ function StaticDatasource( baseUrl ){
 function RcsbDatasource(){
 
     var baseUrl = "http://files.rcsb.org/download/";
-    var mmtfBaseUrl = "http://mmtf.rcsb.org/v0/full/";
-    var bbMmtfBaseUrl = "http://mmtf.rcsb.org/reduced/";
+    var mmtfBaseUrl = "http://mmtf.rcsb.org/v0.2/full/";
+    var bbMmtfBaseUrl = "http://mmtf.rcsb.org/v0.2/reduced/";
 
     this.getUrl = function( src ){
         // valid path are

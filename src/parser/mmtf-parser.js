@@ -12,6 +12,8 @@ import { calculateBondsBetween, calculateBondsWithin } from "../structure/struct
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
+import { decodeMsgpack, decodeMmtf } from "../../lib/mmtf.es6.js";
+
 
 function MmtfParser( streamer, params ){
 
@@ -321,6 +323,19 @@ MmtfParser.prototype = Object.assign( Object.create(
                     }
                 } );
             } );
+        }
+
+        if( sd.ncsOperatorList ){
+            var ncsName = "NCS";
+            var ncsAssembly = new Assembly( ncsName );
+            var ncsPart = ncsAssembly.addPart();
+            sd.ncsOperatorList.forEach( function( _operator, k ){
+                var matrix = new THREE.Matrix4().fromArray( _operator ).transpose();
+                ncsPart.matrixList.push( matrix );
+            } );
+            if( ncsPart.matrixList.length > 0 ){
+                s.biomolDict[ ncsName ] = ncsAssembly;
+            }
         }
 
         if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
