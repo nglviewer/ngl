@@ -3,3 +3,5 @@
 *.sublime-workspace
 
 node_modules/
+build/
+test/build/
