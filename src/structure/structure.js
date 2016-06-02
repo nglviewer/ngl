@@ -590,7 +590,7 @@ Structure.prototype = {
         var atomSet = p.atomSet || this.atomSet;
 
         var radiusFactory, colorMaker, pickingColorMaker;
-        var position, color, pickingColor, radius;
+        var position, color, pickingColor, radius, index;
 
         var atomData = {};
         var ap = this.getAtomProxy();
@@ -616,10 +616,14 @@ Structure.prototype = {
             atomData.radius = radius;
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
+        if( !what || what.index ){
+            index = new Float32Array( atomCount );
+            atomData.index = index;
+        }
 
-        atomSet.forEach( function( index, i ){
+        atomSet.forEach( function( idx, i ){
             var i3 = i * 3;
-            ap.index = index;
+            ap.index = idx;
             if( position ){
                 ap.positionToArray( position, i3 );
             }
@@ -631,6 +635,9 @@ Structure.prototype = {
             }
             if( radius ){
                 radius[ i ] = radiusFactory.atomRadius( ap );
+            }
+            if( index ){
+                index[ i ] = idx;
             }
         } );
 
