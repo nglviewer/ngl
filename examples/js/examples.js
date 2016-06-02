@@ -35,7 +35,7 @@ NGL.ExampleRegistry = {
         if( typeof fn === "function" ){
             fn( stage );
         }else{
-            NGL.warn( "NGL.ExampleRegistry.load not available:", name );
+            console.warn( "NGL.ExampleRegistry.load not available:", name );
         }
     }
 
