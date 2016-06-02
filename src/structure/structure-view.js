@@ -5,6 +5,7 @@
 
 
 import THREE from "../../lib/three.js";
+import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import Bitset from "../utils/bitset.js";
@@ -20,9 +21,8 @@ Structure.prototype.getView = function( selection ){
 
 function StructureView( structure, selection ){
 
-    var SIGNALS = signals;
     this.signals = {
-        refreshed: new SIGNALS.Signal(),
+        refreshed: new Signal(),
     };
 
     this.structure = structure;

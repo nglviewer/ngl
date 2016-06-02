@@ -4,13 +4,14 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
+
 function TrajectoryPlayer( traj, step, timeout, start, end ){
 
-    var SIGNALS = signals;
-
     this.signals = {
-        startedRunning: new SIGNALS.Signal(),
-        haltedRunning: new SIGNALS.Signal()
+        startedRunning: new Signal(),
+        haltedRunning: new Signal()
     };
 
     traj.signals.playerChanged.add( function( player ){

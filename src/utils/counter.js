@@ -6,16 +6,16 @@
 
 import { Log, Debug } from "../globals.js";
 
+import Signal from "../../lib/signals.es6.js";
+
 
 function Counter(){
-
-    var SIGNALS = signals;
 
     this.count = 0;
 
     this.signals = {
 
-        countChanged: new SIGNALS.Signal(),
+        countChanged: new Signal(),
 
     };
 

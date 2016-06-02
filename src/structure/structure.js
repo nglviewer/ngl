@@ -5,6 +5,7 @@
 
 
 import THREE from "../../lib/three.js";
+import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
 import Bitset from "../utils/bitset.js";
@@ -32,9 +33,8 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 function Structure( name, path ){
 
-    var SIGNALS = signals;
     this.signals = {
-        refreshed: new SIGNALS.Signal(),
+        refreshed: new Signal(),
     };
 
     this.name = name;

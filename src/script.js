@@ -4,18 +4,18 @@
  */
 
 
+import Signal from "../lib/signals.es6.js";
+
 import { Debug, Log } from "./globals.js";
 
 
 function Script( functionBody, name, path ){
 
-    var SIGNALS = signals;
-
     this.signals = {
 
-        elementAdded: new SIGNALS.Signal(),
-        elementRemoved: new SIGNALS.Signal(),
-        nameChanged: new SIGNALS.Signal(),
+        elementAdded: new Signal(),
+        elementRemoved: new Signal(),
+        nameChanged: new Signal(),
 
     };
 

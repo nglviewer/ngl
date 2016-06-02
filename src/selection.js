@@ -4,6 +4,8 @@
  */
 
 
+import Signal from "../lib/signals.es6.js";
+
 import { Log, Debug } from "./globals.js";
 import { binarySearchIndexOf } from "./utils.js";
 
@@ -27,10 +29,8 @@ var kwd = {
 
 function Selection( string ){
 
-    var SIGNALS = signals;
-
     this.signals = {
-        stringChanged: new SIGNALS.Signal(),
+        stringChanged: new Signal(),
     };
 
     this.setString( string );
