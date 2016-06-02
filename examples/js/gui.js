@@ -85,10 +85,8 @@ NGL.createParameterInput = function( p ){
 
 NGL.Preferences = function( id, defaultParams ){
 
-    var SIGNALS = signals;
-
     this.signals = {
-        keyChanged: new SIGNALS.Signal(),
+        keyChanged: new signals.Signal(),
     };
 
     this.id = id || "ngl-gui";
