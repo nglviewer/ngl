@@ -11,17 +11,13 @@ var jsdoc = require("gulp-jsdoc3");
 var concat = require("gulp-concat");
 var watch = require('gulp-watch');
 var batch = require('gulp-batch');
-
 var rollup = require('rollup').rollup;
-var commonjs = require('rollup-plugin-commonjs');
 var string = require('rollup-plugin-string');
-// var nodeResolve = require('rollup-plugin-node-resolve');
 
 gulp.task('build-ngl', function () {
   return rollup({
     entry: 'src/ngl.js',
     plugins: [
-      commonjs(),
       string({
         extensions: ['.vert', '.frag', '.glsl']
       })

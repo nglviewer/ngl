@@ -39,7 +39,6 @@
     "jshint": "^2.9.1",
     "qunit": "^0.9.1",
     "rollup": "^0.26.3",
-    "rollup-plugin-commonjs": "^2.2.1",
     "rollup-plugin-string": "^1.0.1"
   },
   "dependencies": {}
