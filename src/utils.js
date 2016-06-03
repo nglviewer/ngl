@@ -9,6 +9,8 @@ import { ungzip } from "../lib/pako_inflate.es6.js";
 
 function getQuery( id ){
 
+    if( typeof window === "undefined" ) return undefined;
+
     var a = new RegExp( id + "=([^&#=]*)" );
     var m = a.exec( window.location.search );
 
@@ -44,6 +46,8 @@ function defaults( value, defaultValue ){
 
 
 function getBrowser(){
+
+    if( typeof window === "undefined" ) return false;
 
     var ua = window.navigator.userAgent;
 
