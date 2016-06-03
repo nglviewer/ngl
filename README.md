@@ -35,8 +35,6 @@ Table of contents
 
 Usage
 =====
-Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). The  When embedding the NGL Viewer as a library it is sufficient to include the self contained [embedded build](js/build/ngl.embedded.min.js). The full web application including the GUI requires the full build and some static assets - have a look at the example [html files](html/) for what is required.
-
 
 Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build. For versions up to 0.7.1a the file is [js/build/ngl.embedded.min.js](https://github.com/arose/ngl/blob/v0.7.1a/js/build/ngl.embedded.min.js) and for later versions it is [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
 
