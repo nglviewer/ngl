@@ -51,10 +51,10 @@ gulp.task('build-test', function () {
             browser: true
           }),
           commonjs({
-            namedExports: { 'chai': ['assert' ] }
+            namedExports: { 'chai': ['assert'] }
           }),
           string({
-            extensions: ['.vert', '.frag', '.glsl']
+            extensions: ['.vert', '.frag', '.glsl', '.pdb', '.cif']
           })
         ]
       }).then(function (bundle) {
