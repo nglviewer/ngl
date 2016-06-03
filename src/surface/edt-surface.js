@@ -156,8 +156,8 @@ function EDTSurface( coordList, radiusList, indexList ){
         setAtomID = _setAtomID || true;
 
         var maxRadius = 0;
-        for( var name in radiusDict ){
-            maxRadius = Math.max( maxRadius, radiusDict[ name ] );
+        for( var radius in radiusDict ){
+            maxRadius = Math.max( maxRadius, radius );
         }
 
         var grid = getSurfaceGrid(
