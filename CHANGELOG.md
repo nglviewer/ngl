@@ -2,7 +2,12 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased]
+## [v0.7.1a] - 2016-06-02
+### Changed
+- fixed version in builds
+
+
+## [v0.7.1] - 2016-06-02
 ### Added
 - orthographic camera mode
 - `backgroundColor` parameter for `Stage`
@@ -16,6 +21,10 @@ All notable changes to this project will be documented in this file, following t
 ### Changed
 - there is no longer a fake unitcell created when no space group information is available
 - the query string is removed from urls before the determining file info (e.g. name, extension)
+- fixed labelText param not working in LabelRepresentation
+- enable SDF font as the default only on Chrome (fixes labels not shown on some OS/Browser)
+- ignore 'given' ncs operators
+- ensure that resname is upper case
 
 ### Removed
 - `stage.setTheme` removed (use new `backgroundColor` parameter), themes now part of GUI code
@@ -128,6 +137,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.7...HEAD
+[v0.7.1a]: https://github.com/arose/ngl/compare/v0.7.1...v0.7.1a
+[v0.7.1]: https://github.com/arose/ngl/compare/v0.7...v0.7.1
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6
