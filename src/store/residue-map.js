@@ -17,6 +17,7 @@ function ResidueMap( structure ){
     }
 
     function add( resname, atomTypeIdList, hetero ){
+        resname = resname.toUpperCase();
         var hash = getHash( resname, atomTypeIdList, hetero );
         var id = idDict[ hash ];
         if( id === undefined ){
