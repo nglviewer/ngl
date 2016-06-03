@@ -4,7 +4,7 @@ var rename = require("gulp-rename");
 var jshint = require('gulp-jshint');
 var gulpRollup = require('gulp-rollup');
 var sourcemaps = require('gulp-sourcemaps');
-var qunit = require('gulp-qunit');
+var mocha = require('gulp-mocha');
 var uglify = require('gulp-uglify');
 var del = require('del');
 var jsdoc = require("gulp-jsdoc3");
@@ -13,6 +13,9 @@ var watch = require('gulp-watch');
 var batch = require('gulp-batch');
 var rollup = require('rollup').rollup;
 var string = require('rollup-plugin-string');
+var glob = require('glob');
+var commonjs = require('rollup-plugin-commonjs');
+var nodeResolve = require('rollup-plugin-node-resolve');
 
 gulp.task('build-ngl', function () {
   return rollup({
@@ -31,30 +34,45 @@ gulp.task('build-ngl', function () {
   });
 });
 
-gulp.task('build-test', function(){
-  return gulp.src('test/src/**/*.js', {read: false})
-    .pipe(gulpRollup({
-      format: 'iife'
-    }))
-    .pipe(gulp.dest('test/build'));
+gulp.task('build-test', function () {
+  var promises = [];
+  var dir = './test/src/';
+  var out = './test/build/';
+  glob(dir+'**/*.js',function (er, files) {
+    files.forEach(function(name){
+      var dest = out + name.substring(dir.length);
+      promises.push(rollup({
+        entry: name,
+        plugins: [
+          nodeResolve({
+            jsnext: true,
+            main: true,
+            builtins: false,
+            browser: true
+          }),
+          commonjs({
+            namedExports: { 'chai': ['assert' ] }
+          }),
+          string({
+            extensions: ['.vert', '.frag', '.glsl']
+          })
+        ]
+      }).then(function (bundle) {
+        return bundle.write({
+          format: 'iife',
+          dest: dest,
+          external: [
+            'buffer'
+          ],
+          globals: {
+            buffer: 'Buffer'
+          },
+        });
+      }));
+    });
+  });
+  return Promise.all(promises);
 });
-
-// gulp.task('build-test', function () {
-//   gulpRollup({
-//     entry: 'test/src/**/*.js',
-//     plugins: [
-//       commonjs(),
-//       string({
-//         extensions: ['.vert', '.frag', '.glsl']
-//       })
-//     ]
-//   }).then(function (bundle) {
-//     return bundle.write({
-//       format: 'iife',
-//       dest: 'test/build/'
-//     });
-//   });
-// });
 
 gulp.task('doc', function() {
   var config = {
@@ -88,9 +106,13 @@ gulp.task('lint', function() {
     .pipe(jshint.reporter('default'));
 });
 
-gulp.task('test', ['build'], function() {
-  return gulp.src('./test/unittests.html')
-    .pipe(qunit());
+gulp.task('test', ['build-test'], function () {
+  return gulp.src('test/build/**/*.js', {read: false})
+    // gulp-mocha needs filepaths so you can't have any plugins before it
+    .pipe(mocha({
+      require: 'assert',
+      reporter: 'nyan'
+    }));
 });
 
 gulp.task('concat', function() {
@@ -108,9 +130,9 @@ gulp.task('compress', ['build-ngl'], function(){
 gulp.task('build', ['build-ngl']);
 
 gulp.task('watch', function () {
-  gulp.start(['build', 'build-test']);
+  gulp.start(['build']);
   watch(['./src/**/*.js', './test/src/**/*.js', './src/shader/**/*'], batch(function (events, done) {
-    gulp.start(['build', 'build-test'], done);
+    gulp.start(['build'], done);
   }));
 });
 
