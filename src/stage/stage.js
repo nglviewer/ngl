@@ -218,9 +218,14 @@ Stage.prototype = {
                 atomCount *= 4;
             }
 
-            if( Debug ) console.log( atomCount, instanceCount );
+            var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
+            if( backboneOnly ){
+                atomCount *= 10;
+            }
 
-            if( instanceCount > 5 && atomCount > 15000 ){
+            if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
+
+            if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
 
                 var scaleFactor = (
                     Math.min(
@@ -231,6 +236,7 @@ Stage.prototype = {
                         )
                     )
                 );
+                if( backboneOnly ) scaleFactor = Math.min( scaleFactor, 0.15 );
 
                 object.addRepresentation( "surface", {
                     sele: "polymer",
