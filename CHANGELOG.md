@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased]
+## [v0.7.1] - 2016-06-02
 ### Added
 - orthographic camera mode
 - `backgroundColor` parameter for `Stage`
@@ -132,6 +132,6 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.7...HEAD
+[v0.7.1]: https://github.com/arose/ngl/compare/v0.7...v0.7.1
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6
