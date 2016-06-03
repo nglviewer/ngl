@@ -463,7 +463,7 @@ if( typeof importScripts !== 'function' && WebGLRenderingContext ){
 
 var NGL = {
 
-    REVISION: '0.7',
+    REVISION: '0.7.1a',
     EPS: 0.0000001,
     useWorker: true,
     indexUint16: false,

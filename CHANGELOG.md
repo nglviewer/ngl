@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [v0.7.1a] - 2016-06-02
+### Changed
+- fixed version in builds
+
+
 ## [v0.7.1] - 2016-06-02
 ### Added
 - orthographic camera mode
@@ -132,6 +137,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
+[v0.7.1a]: https://github.com/arose/ngl/compare/v0.7.1...v0.7.1a
 [v0.7.1]: https://github.com/arose/ngl/compare/v0.7...v0.7.1
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
 [v0.6]: https://github.com/arose/ngl/compare/v0.5...v0.6
