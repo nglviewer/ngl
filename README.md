@@ -1,6 +1,6 @@
 
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/dev/LICENSE)
-[![Version](http://img.shields.io/badge/version-0.7-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.7)
+[![Version](http://img.shields.io/badge/version-0.7.1a-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.7.1a)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/dev/CHANGELOG.md)
 
 
@@ -27,20 +27,23 @@ Features
 Table of contents
 =================
 
-* [Installation](#installation)
-* [Deployment](#deployment)
+* [Usage](#usage)
+* [Browser support](#browser-support)
 * [Acknowledgments](#acknowledgments)
 
 
 
-Installation
-============
-
+Usage
+=====
 Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). The  When embedding the NGL Viewer as a library it is sufficient to include the self contained [embedded build](js/build/ngl.embedded.min.js). The full web application including the GUI requires the full build and some static assets - have a look at the example [html files](html/) for what is required.
 
 
-Browser
--------
+Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build. For versions up to 0.7.1a the file is [js/build/ngl.embedded.min.js](https://github.com/arose/ngl/blob/v0.7.1a/js/build/ngl.embedded.min.js) and for later versions it is [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
+
+
+
+Browser support
+===============
 
 The NGL Viewer requires your browser to support WebGL. To see if your browser supports WebGL and what you might need to do to activate it, visit the [Get WebGL](https://get.webgl.org/) page.
 
@@ -54,31 +57,6 @@ __WebGL draft extensions__: For a smoother appearance of cylinders and spheres y
 * Firefox: browse to `about:config` and set `webgl.enable-draft-extensions` to `true`.
 * Safari: Currently, the `EXT_frag_depth` extension is not supported.
 * Internet Explorer: Currently, the `EXT_frag_depth` extension is not supported.
-
-
-
-Deployment
-==========
-
-Any webserver that serves static files will do. If you want to serve the NGL Viewer directly from the repository with the Apache webserver you can do so by creating a symlink:
-
-	ln -s /path/to/ngl-repository/ /var/www/ngl
-
-This assumes the Apache configuration includes somthing like
-
-	DocumentRoot /var/www
-    <Directory />
-        Options FollowSymLinks
-        AllowOverride None
-    </Directory>
-    <Directory /var/www/>
-        Options Indexes FollowSymLinks MultiViews
-        AllowOverride None
-        Order allow,deny
-        allow from all
-    </Directory>
-
-Read more about getting started with the Apache webserver [here](http://httpd.apache.org/docs/trunk/getting-started.html).
 
 
 
