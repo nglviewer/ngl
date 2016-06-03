@@ -8,11 +8,9 @@
 	</head>
 	<body>
 
-		<script src="../../../js/build/ngl.embedded.min.js"></script>
+		<script src="../../../dist/ngl.js"></script>
 
 		<script>
-
-			NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
 
 			document.addEventListener( "DOMContentLoaded", function() {
 				var stage = new NGL.Stage( "viewport" );
@@ -27,7 +25,7 @@
 			<div id="viewport" style="width:400px; height:300px;"></div>
 		</div>
 
-		For embedding the viewer into other websites a single JavaScript file is available (<a href="../../../js/build/ngl.embedded.min.js" target="_blank">ngl.embedded.min.js</a>), fully containing the viewer sans the GUI code.
+		For embedding the viewer into other websites a single JavaScript file is available (<a href="../../../dist/ngl.js" target="_blank">ngl.js</a>).
 
 
 		<h2>Example</h2>
@@ -42,11 +40,9 @@
 		&lt;/head&gt;
 		&lt;body&gt;
 
-			&lt;script src="ngl.embedded.min.js"&gt;&lt;/script&gt;
+			&lt;script src="ngl.js"&gt;&lt;/script&gt;
 
 			&lt;script&gt;
-
-				NGL.mainScriptFilePath = "path/to/ngl.embedded.min.js";
 
 				document.addEventListener( "DOMContentLoaded", function() {
 					var stage = new NGL.Stage( "viewport" );

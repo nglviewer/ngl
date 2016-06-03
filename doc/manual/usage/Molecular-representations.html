@@ -8,12 +8,11 @@
 </head>
 <body>
 
-    <script src="../../../js/build/ngl.embedded.min.js"></script>
+    <script src="../../../dist/ngl.js"></script>
 
     <script>
 
-        NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
-        var types = Object.keys( NGL.representationTypes );
+        var types = NGL.RepresentationRegistry.names;
         var reprDict = {};
 
         function initStructure( o ){
@@ -56,9 +55,7 @@
                 button.textContent = name;
                 buttons.appendChild( button );
             } );
-            var stage = new NGL.Stage( "viewport" );
-            stage.setTheme( "light" );
-            stage.viewer.setBackground( 0xfff7ed );
+            var stage = new NGL.Stage( "viewport", { backgroundColor: 0xfff7ed } );
             stage.viewer.container.addEventListener( "dblclick", function(){
                 stage.toggleFullscreen();
             } );

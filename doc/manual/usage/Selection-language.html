@@ -8,11 +8,9 @@
 </head>
 <body>
 
-    <script src="../../../js/build/ngl.embedded.min.js"></script>
+    <script src="../../../dist/ngl.js"></script>
 
     <script>
-
-        NGL.mainScriptFilePath = "../../../js/build/ngl.embedded.min.js";
 
         document.addEventListener( "DOMContentLoaded", function() {
 
@@ -20,12 +18,10 @@
             var input = document.getElementById( "input" );
             var button = document.getElementById( "btn" );
 
-            var stage = new NGL.Stage( "viewport" );
+            var stage = new NGL.Stage( "viewport", { backgroundColor: 0xfff7ed } );
             stage.viewer.container.addEventListener( "dblclick", function(){
                 stage.toggleFullscreen();
             } );
-            stage.setTheme( "light" );
-            stage.viewer.setBackground( 0xfff7ed );
             stage.loadFile( "../../files/1d66.pdb.gz" ).then( function( o ){
                 licorice = o.addRepresentation( "licorice" );
                 cartoon = o.addRepresentation( "cartoon" );
