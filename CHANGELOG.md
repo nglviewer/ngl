@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased]
+### Added
+- gulp build scripts
+- mmtf v0.2 support
+
+### Changed
+- reorganised everything to use es6 modules
+
+### Removed
+- python-based build scripts
+- closure-compiler
+
+
 ## [v0.7.1a] - 2016-06-02
 ### Changed
 - fixed version in builds
@@ -137,6 +150,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
+[Unreleased]: https://github.com/arose/ngl/compare/v0.7.1a...HEAD
 [v0.7.1a]: https://github.com/arose/ngl/compare/v0.7.1...v0.7.1a
 [v0.7.1]: https://github.com/arose/ngl/compare/v0.7...v0.7.1
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
