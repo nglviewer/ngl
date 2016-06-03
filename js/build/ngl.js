@@ -3902,6 +3902,7 @@ NGL.ResidueMap = function( structure ){
     }
 
     function add( resname, atomTypeIdList, hetero ){
+        resname = resname.toUpperCase();
         var hash = getHash( resname, atomTypeIdList, hetero );
         var id = idDict[ hash ];
         if( id === undefined ){
@@ -22612,11 +22613,15 @@ NGL.buildUnitcellAssembly = function( structure ){
 
     }
 
+    var ncsMatrixList;
     var unitcellAssembly = new NGL.Assembly( "UNITCELL" );
     var unitcellMatrixList = getMatrixList();
     if( structure.biomolDict[ "NCS" ] ){
         var ncsUnitcellMatrixList = [];
-        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
+        ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
+        ncsMatrixList = [ new THREE.Matrix4() ].concat(
+            structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList
+        );
         unitcellMatrixList.forEach( function( sm ){
             ncsMatrixList.forEach( function( nm ){
                 ncsUnitcellMatrixList.push( sm.clone().multiply( nm ) );
@@ -22664,7 +22669,6 @@ NGL.buildUnitcellAssembly = function( structure ){
     );
     if( structure.biomolDict[ "NCS" ] ){
         var ncsSupercellMatrixList = [];
-        var ncsMatrixList = structure.biomolDict[ "NCS" ].partList[ 0 ].matrixList;
         supercellMatrixList.forEach( function( sm ){
             ncsMatrixList.forEach( function( nm ){
                 ncsSupercellMatrixList.push( sm.clone().multiply( nm ) );
@@ -23484,7 +23488,10 @@ NGL.PdbParser.prototype = Object.assign( Object.create(
                     modelIdx += 1;
                     pendingStart = true;
 
-                }else if( recordName === 'MTRIX ' ){
+                }else if( line.substr( 0, 5 ) === 'MTRIX' ){
+
+                    // ignore 'given' operators
+                    if( line[ 59 ] === "1" ) continue;
 
                     var ls = line.split( /\s+/ );
                     var mat = ls[ 1 ].trim();
@@ -24407,7 +24414,7 @@ NGL.CifParser.prototype = Object.assign( Object.create(
             gen.assembly_id.forEach( function( id, i ){
 
                 var md = {};
-                var oe = gen.oper_expression[ i ].replace( "'", "" );
+                var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
 
                 if( oe.indexOf( ")(" ) !== -1 || oe.indexOf( "(" ) > 0 ){
 
@@ -24471,6 +24478,9 @@ NGL.CifParser.prototype = Object.assign( Object.create(
 
             op.id.forEach( function( id, i ){
 
+                // ignore 'given' operators
+                if( op.code[ i ] === "given" ) return;
+
                 var m = new THREE.Matrix4();
                 var elms = m.elements;
 
@@ -24495,6 +24505,10 @@ NGL.CifParser.prototype = Object.assign( Object.create(
                 ncsPart.matrixList.push( m );
 
             } );
+
+            if( ncsPart.matrixList.length === 0 ){
+                delete biomolDict[ ncsName ];
+            }
 
         }
 
@@ -34237,7 +34251,7 @@ NGL.LabelRepresentation.prototype = Object.assign( Object.create(
         this.fontFamily = p.fontFamily || "sans-serif";
         this.fontStyle = p.fontStyle || "normal";
         this.fontWeight = p.fontWeight || "bold";
-        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser !== "Firefox";  // FIXME
+        this.sdf = p.sdf !== undefined ? p.sdf : NGL.browser === "Chrome";
         this.xOffset = p.xOffset !== undefined ? p.xOffset : 0.0;
         this.yOffset = p.yOffset !== undefined ? p.yOffset : 0.0;
         this.zOffset = p.zOffset !== undefined ? p.zOffset : 0.5;
