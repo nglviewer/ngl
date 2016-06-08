@@ -55,6 +55,9 @@ MmtfParser.prototype = Object.assign( Object.create(
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
 
+        s.id = sd.structureId;
+        s.title = sd.title;
+
         if( this.firstModelOnly || this.asTrajectory ){
 
             numModels = 1;
