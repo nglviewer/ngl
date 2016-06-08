@@ -6,9 +6,9 @@ Follow semantic versioning and make sure the changelog is up-to-date.
 
 Change the version number in:
 
-src/ngl.js
-README.md
-CHANGELOG.md
+- [src/ngl.js](src/ngl.js)
+- [README.md](README.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 Push to github. Make a release on github, tag the commit and copy the relevant info from the changelog file.
 
