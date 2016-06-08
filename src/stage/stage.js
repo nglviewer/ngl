@@ -325,6 +325,10 @@ Stage.prototype = {
         component.name = getFileInfo( path ).name;
         this.addComponent( component );
 
+        // tasks
+        var tasks = this.tasks;
+        tasks.increment();
+
         var onLoadFn = function( object ){
 
             // remove placeholder component
@@ -340,6 +344,8 @@ Stage.prototype = {
                 this.defaultFileRepresentation( component );
             }
 
+            tasks.decrement();
+
             return component;
 
         }.bind( this );
@@ -347,6 +353,7 @@ Stage.prototype = {
         var onErrorFn = function( e ){
 
             component.setStatus( e );
+            tasks.decrement();
             throw e;
 
         };
