@@ -6,7 +6,7 @@ Follow semantic versioning and make sure the changelog is up-to-date.
 
 Change the version number in:
 
-js/ngl/core.js
+src/ngl.js
 README.md
 CHANGELOG.md
 
@@ -22,19 +22,25 @@ Development of the NGL Viewer is coordinated through the repository on [github](
 To participate in developing for the NGL Viewer you need a local copy of the source code, which you can obtain by forking the [repository](https://github.com/arose/ngl) on github. Read about how to [fork a repository](https://help.github.com/articles/fork-a-repo/), [sync a fork](https://help.github.com/articles/syncing-a-fork/) and [start a pull request](https://help.github.com/articles/using-pull-requests/).
 
 
-Local server
-------------
+Modules
+-------
 
-A (Python based) local development server can be started with the shell script
+The source code ([src/](src/)) is organized into ES6 modules (see http://exploringjs.com/es6/ch_modules.html). The main entry point is the file [src/ngl.js](src/ngl.js) and [rollup](http://rollupjs.org/) is used to create a bundle that can be used in a browser.
 
-    sh serve.sh
 
-to serve the NGL Viewer at http://localhost:8000/.
+Building
+--------
 
-Limited (due to browser security restrictions) functionality is available when directly opening one of the [html files](html/) from the local file system. For Google Chrome/Chromium it can be helpful to start the browser with the `--allow-file-access-from-files` command line flag.
+[Gulp](http://gulpjs.com/) is used as a build tool. The necessary dependencies can be installed with `npm install`. A non-minified build ([build/js/ngl.js](build/js/ngl.js)) can be created with `gulp build`. A minified file for distribution ([dist/ngl.js](dist/ngl.js)) can be created with `gulp`. For development `gulp watch` can be called to watch source files and trigger a rebuild upon changes to them.
+
+
+Server
+------
+
+The [examples](examples/) need to served by a webserver. Options for a simple development webserver are `python -m SimpleHTTPServer` (Python 2), `python -m http.server` (Python 3) or https://github.com/indexzero/http-server (node.js).
 
 
 Unit tests
 ----------
 
-[QUnit](http://qunitjs.com/) is used for unit testing. The unit tests can be found [here](test/unit/).
+[Mocha](https://mochajs.org/) is used for unit testing. The unit tests can be found in [test/html/mocha.html](test/html/mocha.html). Note, that the tests must be built with `gulp build-test`.
