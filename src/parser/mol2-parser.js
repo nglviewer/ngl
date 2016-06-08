@@ -5,12 +5,17 @@
 
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
 
 
 function Mol2Parser( streamer, params ){
 
-    StructureParser.call( this, streamer, params );
+    var p = params || {};
+
+    p.dontAutoBond = defaults( p.dontAutoBond, true );
+
+    StructureParser.call( this, streamer, p );
 
 }
 
@@ -220,8 +225,6 @@ Mol2Parser.prototype = Object.assign( Object.create(
         } );
 
         sb.finalize();
-
-        s._dontAutoBond = true;
         s.unitcell = undefined;
 
         if( Debug ) Log.timeEnd( "Mol2Parser._parse " + this.name );

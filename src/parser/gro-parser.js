@@ -5,16 +5,18 @@
 
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 
 
 function GroParser( streamer, params ){
 
-    StructureParser.call( this, streamer, params );
+    var p = params || {};
 
-    this.structure._doAutoSS = true;
-    this.structure._doAutoChainName = true;
+    p.doAutoSS = defaults( p.doAutoSS, true );
+
+    StructureParser.call( this, streamer, p );
 
 }
 

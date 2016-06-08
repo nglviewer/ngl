@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 import Worker from "../worker/worker.js";
 
 
@@ -14,8 +15,8 @@ function Parser( streamer, params ){
 
     this.streamer = streamer;
 
-    this.name = p.name;
-    this.path = p.path;
+    this.name = defaults( p.name, "" );
+    this.path = defaults( p.path, "" );
 
 }
 

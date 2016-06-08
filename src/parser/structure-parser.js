@@ -5,6 +5,7 @@
 
 
 import { Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 import Parser from "./parser.js";
 import Structure from "../structure/structure.js";
 import StructureBuilder from "../structure/structure-builder.js";
@@ -18,12 +19,13 @@ function StructureParser( streamer, params ){
 
     var p = params || {};
 
-    this.firstModelOnly = p.firstModelOnly || false;
-    this.asTrajectory = p.asTrajectory || false;
-    this.cAlphaOnly = p.cAlphaOnly || false;
-    this.reorderAtoms = p.reorderAtoms || false;
-    this.dontAutoBond = p.dontAutoBond || false;
-    this.doAutoSS = true;
+    this.firstModelOnly = defaults( p.firstModelOnly, false );
+    this.asTrajectory = defaults( p.asTrajectory, false );
+    this.cAlphaOnly = defaults( p.cAlphaOnly, false );
+    this.reorderAtoms = defaults( p.reorderAtoms, false );
+    this.dontAutoBond = defaults( p.dontAutoBond, false );
+    this.autoBondBetween = defaults( p.autoBondBetween, false );
+    this.doAutoSS = defaults( p.doAutoSS, true );
 
     Parser.call( this, streamer, p );
 

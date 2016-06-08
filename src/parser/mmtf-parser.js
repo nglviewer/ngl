@@ -7,6 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
 import { calculateBondsBetween, calculateBondsWithin } from "../structure/structure-utils.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -17,11 +18,13 @@ import { decodeMsgpack, decodeMmtf } from "../../lib/mmtf.es6.js";
 
 function MmtfParser( streamer, params ){
 
-    StructureParser.call( this, streamer, params );
+    var p = params || {};
 
-    this.dontAutoBond = true;
-    this.autoBondBetween = false;
-    this.doAutoSS = false;
+    p.dontAutoBond = defaults( p.dontAutoBond, true );
+    p.autoBondBetween = defaults( p.autoBondBetween, false );
+    p.doAutoSS = defaults( p.doAutoSS, false );
+
+    StructureParser.call( this, streamer, p );
 
 }
 
