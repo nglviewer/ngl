@@ -35,7 +35,9 @@ function SurfaceRepresentation( surface, viewer, params ){
             var target = viewer.controls.target;
             var group = viewer.rotationGroup.position;
             position.copy( group ).negate().add( target );
-            this.setParameters( { "boxCenter": position } );
+            if( !position.equals( this.boxCenter ) ){
+                this.setParameters( { "boxCenter": position } );
+            }
         }.bind( this );
     }.bind( this ) )();
 
