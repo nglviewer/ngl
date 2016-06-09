@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file, following t
 
 ### Changed
 - reorganised everything to use es6 modules
+- read bondOrder from 'pdbx_value_order' in mmcif files
+- interpret 'CONECT 1529 1528 1528' as double bond in pdb files
 
 ### Removed
 - python-based build scripts

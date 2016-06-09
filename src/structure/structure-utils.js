@@ -647,7 +647,7 @@ function calculateBondsWithin( structure, onlyAddRung ){
             for( var i = 0; i < nn; ++i ){
                 a1.index = atomIndices1[ i ] + offset;
                 a2.index = atomIndices2[ i ] + offset;
-                bondStore.addBond( a1, a2 );
+                bondStore.addBond( a1, a2, 1 );  // assume single bond
             }
 
         }
@@ -694,7 +694,7 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
             ap2.index = rp2.backboneStartAtomIndex;
             if( ap1.connectedTo( ap2 ) ){
                 if( !onlyAddBackbone ){
-                    bondStore.addBond( ap1, ap2 );
+                    bondStore.addBond( ap1, ap2, 1 );  // assume single bond
                 }
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;

@@ -948,7 +948,20 @@ CifParser.prototype = Object.assign( Object.create(
                     ap2.index = atomIndices2[ j ];
 
                     if( ap1 && ap2 ){
-                        s.bondStore.addBond( ap1, ap2 );
+                        var bondOrder;
+                        var valueOrder = sc.pdbx_value_order[ i ];
+                        if( valueOrder === "?" ){
+                            bondOrder = 1;  // assume single bond
+                        }else if( valueOrder === "sing" ){
+                            bondOrder = 1;
+                        }else if( valueOrder === "doub" ){
+                            bondOrder = 2;
+                        }else if( valueOrder === "trip" ){
+                            bondOrder = 3;
+                        }else if( valueOrder === "quad" ){
+                            bondOrder = 4;
+                        }
+                        s.bondStore.addBond( ap1, ap2, bondOrder );
                     }else{
                         Log.log( "atoms for connection not found" );
                     }

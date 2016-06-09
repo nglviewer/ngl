@@ -226,6 +226,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                     var pos = [ 11, 16, 21, 26 ];
+                    var bondDict = {};
 
                     if( from === undefined ){
                         // Log.log( "missing CONNECT serial" );
@@ -250,7 +251,14 @@ PdbParser.prototype = Object.assign( Object.create(
                         ap1.index = from;
                         ap2.index = to;
 
-                        s.bondStore.addBond( ap1, ap2 );
+                        // interpret records where a 'to' atom is given multiple times
+                        // as double/triple bonds, e.g. CONECT 1529 1528 1528 is a double bond
+                        if( bondDict[ to ] ){
+                            s.bondStore.bondOrder[ bondDict[ to ] ] += 1;
+                        }else{
+                            bondDict[ to ] = s.bondStore.count;
+                            s.bondStore.addBond( ap1, ap2, 1 );  // start/assume with single bond
+                        }
 
                     }
 

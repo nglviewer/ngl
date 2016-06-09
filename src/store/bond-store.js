@@ -36,7 +36,7 @@ BondStore.prototype = Object.assign( Object.create(
         var i = this.count;
         this.atomIndex1[ i ] = atom1.index;
         this.atomIndex2[ i ] = atom2.index;
-        this.bondOrder[ i ] = bondOrder;
+        if( bondOrder ) this.bondOrder[ i ] = bondOrder;
 
         this.count += 1;
 
