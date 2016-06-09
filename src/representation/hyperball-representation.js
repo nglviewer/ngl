@@ -5,6 +5,7 @@
 
 
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import LicoriceRepresentation from "./licorice-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -40,10 +41,10 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.scale = p.scale || 0.2;
-        p.radius = p.radius || "vdw";
+        p.scale = defaults( p.scale, 0.2 );
+        p.radius = defaults( p.radius, "vdw" );
 
-        this.shrink = p.shrink || 0.12;
+        this.shrink = defaults( p.shrink, 0.12 );
 
         LicoriceRepresentation.prototype.init.call( this, p );
 

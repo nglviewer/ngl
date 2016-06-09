@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
@@ -31,7 +32,7 @@ BaseRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.aspectRatio = p.aspectRatio || 1.0;
+        p.aspectRatio = defaults( p.aspectRatio, 1.0 );
 
         BallAndStickRepresentation.prototype.init.call( this, p );
 

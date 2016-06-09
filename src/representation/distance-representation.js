@@ -7,6 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import { Browser, RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -61,7 +62,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.radius = p.radius || this.defaultSize;
+        p.radius = defaults( p.radius, this.defaultSize );
 
         if( p.quality === "low" ){
             this.radiusSegments = 5;
@@ -70,18 +71,18 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+            this.radiusSegments = defaults( p.radiusSegments, 10 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
-        this.fontFamily = p.fontFamily || "sans-serif";
-        this.fontStyle = p.fontStyle || "normal";
-        this.fontWeight = p.fontWeight || "bold";
-        this.sdf = p.sdf !== undefined ? p.sdf : Browser !== "Firefox";  // FIXME
-        this.labelSize = p.labelSize || 2.0;
-        this.labelColor = p.labelColor || 0xFFFFFF;
-        this.labelVisible = p.labelVisible !== undefined ? p.labelVisible : true;
-        this.atomPair = p.atomPair || [];
+        this.fontFamily = defaults( p.fontFamily, "sans-serif" );
+        this.fontStyle = defaults( p.fontStyle, "normal" );
+        this.fontWeight = defaults( p.fontWeight, "bold" );
+        this.sdf = defaults( p.sdf, Browser !== "Firefox" );  // FIXME
+        this.labelSize = defaults( p.labelSize, 2.0 );
+        this.labelColor = defaults( p.labelColor, 0xFFFFFF );
+        this.labelVisible = defaults( p.labelVisible, true );
+        this.atomPair = defaults( p.atomPair, [] );
 
         StructureRepresentation.prototype.init.call( this, p );
 

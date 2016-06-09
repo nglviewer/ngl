@@ -5,6 +5,7 @@
 
 
 import { ExtensionFragDepth } from "../globals.js";
+import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Selection from "../selection.js";
 import RadiusFactory from "../utils/radius-factory.js";
@@ -84,12 +85,12 @@ StructureRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "element";
+        p.colorScheme = defaults( p.colorScheme, "element" );
 
-        this.radius = p.radius || "vdw";
-        this.scale = p.scale || 1.0;
-        this.assembly = p.assembly === undefined ? "default" : p.assembly;
-        this.defaultAssembly = p.defaultAssembly || "";
+        this.radius = defaults( p.radius, "vdw" );
+        this.scale = defaults( p.scale, 1.0 );
+        this.assembly = defaults( p.assembly, "default" );
+        this.defaultAssembly = defaults( p.defaultAssembly, "" );
 
         Representation.prototype.init.call( this, p );
 

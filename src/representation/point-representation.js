@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import PointBuffer from "../buffer/point-buffer.js";
@@ -63,13 +64,13 @@ PointRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        this.pointSize = p.pointSize || 1;
-        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : true;
-        this.sortParticles = p.sortParticles !== undefined ? p.sortParticles : false;
-        this.useTexture = p.useTexture !== undefined ? p.useTexture : false;
-        this.alphaTest = p.alphaTest !== undefined ? p.alphaTest : 0.5;
-        this.forceTransparent = p.forceTransparent !== undefined ? p.forceTransparent : false;
-        this.edgeBleach = p.edgeBleach !== undefined ? p.edgeBleach : 0.0;
+        this.pointSize = defaults( p.pointSize, 1 );
+        this.sizeAttenuation = defaults( p.sizeAttenuation, true );
+        this.sortParticles = defaults( p.sortParticles, false );
+        this.useTexture = defaults( p.useTexture, false );
+        this.alphaTest = defaults( p.alphaTest, 0.5 );
+        this.forceTransparent = defaults( p.forceTransparent, false );
+        this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
         StructureRepresentation.prototype.init.call( this, p );
 

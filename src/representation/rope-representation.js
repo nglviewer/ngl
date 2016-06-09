@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import CartoonRepresentation from "./cartoon-representation.js";
 import Helixorient from "../geometry/helixorient.js";
 import Spline from "../geometry/spline.js";
@@ -39,11 +40,11 @@ RopeRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.aspectRatio = 1.0;
-        p.tension = p.tension || 0.5;
-        p.scale = p.scale || 5.0;
+        p.tension = defaults( p.tension, 0.5 );
+        p.scale = defaults( p.scale, 5.0 );
         p.smoothSheet = false;
 
-        this.smooth = p.smooth === undefined ? 2 : p.smooth;
+        this.smooth = defaults( p.smooth, 2 );
 
         CartoonRepresentation.prototype.init.call( this, p );
 

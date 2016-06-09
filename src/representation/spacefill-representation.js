@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 
@@ -45,9 +46,9 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

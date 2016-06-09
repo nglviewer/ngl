@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import Helixbundle from "../geometry/helixbundle.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
@@ -49,9 +50,9 @@ RocketRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "sstruc";
-        p.radius = p.radius || 1.5;
-        p.scale = p.scale || 1.0;
+        p.colorScheme = defaults( p.colorScheme, "sstruc" );
+        p.radius = defaults( p.radius, 1.5 );
+        p.scale = defaults( p.scale, 1.0 );
 
         if( p.quality === "low" ){
             this.radiusSegments = 5;
@@ -60,13 +61,13 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.radiusSegments = 20;
         }else{
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+            this.radiusSegments = defaults( p.radiusSegments, 10 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
-        this.localAngle = p.localAngle || 30;
-        this.centerDist = p.centerDist || 2.5;
-        this.ssBorder = p.ssBorder === undefined ? false : p.ssBorder;
+        this.localAngle = defaults( p.localAngle, 30 );
+        this.centerDist = defaults( p.centerDist, 2.5 );
+        this.ssBorder = defaults( p.ssBorder, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

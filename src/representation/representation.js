@@ -7,6 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
+import { defaults } from "../utils.js";
 import Queue from "../utils/queue.js";
 import Counter from "../utils/counter.js";
 
@@ -86,27 +87,27 @@ Representation.prototype = {
 
         var p = params || {};
 
-        this.clipNear = p.clipNear !== undefined ? p.clipNear : 0;
-        this.flatShaded = p.flatShaded || false;
-        this.side = p.side !== undefined ? p.side : "double";
-        this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
-        this.wireframe = p.wireframe || false;
-        this.linewidth = p.linewidth || 2;
+        this.clipNear = defaults( p.clipNear, 0 );
+        this.flatShaded = defaults( p.flatShaded, false );
+        this.side = defaults( p.side, "double" );
+        this.opacity = defaults( p.opacity, 1.0 );
+        this.wireframe = defaults( p.wireframe, false );
+        this.linewidth = defaults( p.linewidth, 2 );
 
         this.setColor( p.color, p );
 
-        this.colorScheme = p.colorScheme || "uniform";
-        this.colorScale = p.colorScale || "";
-        this.colorValue = p.colorValue || 0x909090;
-        this.colorDomain = p.colorDomain || "";
-        this.colorMode = p.colorMode || "hcl";
+        this.colorScheme = defaults( p.colorScheme, "uniform" );
+        this.colorScale = defaults( p.colorScale, "" );
+        this.colorValue = defaults( p.colorValue, 0x909090 );
+        this.colorDomain = defaults( p.colorDomain, "" );
+        this.colorMode = defaults( p.colorMode, "hcl" );
 
-        this.visible = p.visible !== undefined ? p.visible : true;
-        this.quality = p.quality;
+        this.visible = defaults( p.visible, true );
+        this.quality = defaults( p.quality, undefined );
 
-        this.roughness = p.roughness !== undefined ? p.roughness : 0.4;
-        this.metalness = p.metalness !== undefined ? p.metalness : 0.0;
-        this.diffuse = p.diffuse !== undefined ? p.diffuse : 0xffffff;
+        this.roughness = defaults( p.roughness, 0.4 );
+        this.metalness = defaults( p.metalness, 0.0 );
+        this.diffuse = defaults( p.diffuse, 0xffffff );
 
     },
 

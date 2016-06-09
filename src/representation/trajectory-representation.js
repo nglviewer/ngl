@@ -7,6 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import { Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 
 import Representation from "./representation.js";
@@ -71,17 +72,17 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "uniform";
-        p.colorValue = p.colorValue || 0xDDDDDD;
+        p.colorScheme = defaults( p.colorScheme, "uniform" );
+        p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
-        this.drawLine = p.drawLine || true;
-        this.drawCylinder = p.drawCylinder || false;
-        this.drawPoint = p.drawPoint || false;
-        this.drawSphere = p.drawSphere || false;
+        this.drawLine = defaults( p.drawLine, true );
+        this.drawCylinder = defaults( p.drawCylinder, false );
+        this.drawPoint = defaults( p.drawPoint, false );
+        this.drawSphere = defaults( p.drawSphere, false );
 
-        this.pointSize = p.pointSize || 1;
-        this.sizeAttenuation = p.sizeAttenuation !== undefined ? p.sizeAttenuation : false;
-        this.sort = p.sort !== undefined ? p.sort : true;
+        this.pointSize = defaults( p.pointSize, 1 );
+        this.sizeAttenuation = defaults( p.sizeAttenuation, false );
+        this.sort = defaults( p.sort, true );
 
         StructureRepresentation.prototype.init.call( this, p );
 

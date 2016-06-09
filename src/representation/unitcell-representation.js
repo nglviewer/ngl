@@ -7,6 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -51,8 +52,8 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        p.radius = p.radius === undefined ? 0.5 : p.radius;
-        p.colorValue = p.colorValue === undefined ? "orange" : p.colorValue;
+        p.radius = defaults( p.radius, 0.5 );
+        p.colorValue = defaults( p.colorValue, "orange" );
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -64,10 +65,10 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             this.sphereDetail = 2;
             this.radiusSegments = 20;
         }else{
-            this.sphereDetail = p.sphereDetail !== undefined ? p.sphereDetail : 1;
-            this.radiusSegments = p.radiusSegments !== undefined ? p.radiusSegments : 10;
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
+            this.radiusSegments = defaults( p.radiusSegments, 10 );
         }
-        this.disableImpostor = p.disableImpostor || false;
+        this.disableImpostor = defaults( p.disableImpostor, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

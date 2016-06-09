@@ -6,6 +6,7 @@
 
 import THREE from "../../lib/three.js";
 
+import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
@@ -88,16 +89,16 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "uniform";
-        p.colorValue = p.colorValue !== undefined ? p.colorValue : 0xDDDDDD;
+        p.colorScheme = defaults( p.colorScheme, "uniform" );
+        p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
-        this.isolevelType  = p.isolevelType !== undefined ? p.isolevelType : "sigma";
-        this.isolevel = p.isolevel !== undefined ? p.isolevel : 2.0;
-        this.smooth = p.smooth !== undefined ? p.smooth : 0;
-        this.background = p.background || false;
-        this.opaqueBack = p.opaqueBack !== undefined ? p.opaqueBack : true;
-        this.boxSize = p.boxSize !== undefined ? p.boxSize : 0;
-        this.useWorker = p.useWorker !== undefined ? p.useWorker : true;
+        this.isolevelType  = defaults( p.isolevelType, "sigma" );
+        this.isolevel = defaults( p.isolevel, 2.0 );
+        this.smooth = defaults( p.smooth, 0 );
+        this.background = defaults( p.background, false );
+        this.opaqueBack = defaults( p.opaqueBack, true );
+        this.boxSize = defaults( p.boxSize, 0 );
+        this.useWorker = defaults( p.useWorker, true );
 
         Representation.prototype.init.call( this, p );
 

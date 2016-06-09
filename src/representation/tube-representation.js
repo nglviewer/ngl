@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import CartoonRepresentation from "./cartoon-representation.js";
 
 
@@ -30,7 +31,7 @@ TubeRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.aspectRatio = 1.0;
-        p.scale = p.scale || 2.0;
+        p.scale = defaults( p.scale, 2.0 );
 
         CartoonRepresentation.prototype.init.call( this, p );
 

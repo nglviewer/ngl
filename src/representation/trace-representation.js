@@ -5,6 +5,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Spline from "../geometry/spline.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -48,8 +49,8 @@ TraceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = p.colorScheme || "atomindex";
-        p.colorScale = p.colorScale || "RdYlBu";
+        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScale = defaults( p.colorScale, "RdYlBu" );
 
         if( p.quality === "low" ){
             this.subdiv = 3;
@@ -58,11 +59,11 @@ TraceRepresentation.prototype = Object.assign( Object.create(
         }else if( p.quality === "high" ){
             this.subdiv = 12;
         }else{
-            this.subdiv = p.subdiv || 6;
+            this.subdiv = defaults( p.subdiv, 6 );
         }
 
-        this.tension = p.tension || NaN;
-        this.smoothSheet = p.smoothSheet || false;
+        this.tension = defaults( p.tension, NaN );
+        this.smoothSheet = defaults( p.smoothSheet, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 
