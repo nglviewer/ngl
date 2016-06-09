@@ -111,7 +111,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "backbone", {
                 sele: "*", scale: 1.0, aspectRatio: 1.5,
-                color: new THREE.Color( "lightgreen" ).getHex()
+                color: "lightgreen"
             } );
             o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
             o.centerView();
@@ -716,30 +716,31 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.centerView();
 
-            var position = new THREE.Vector3();
-            function getCenterArray(){
-                var target = stage.viewer.controls.target;
-                var group = stage.viewer.rotationGroup.position;
-                position.copy( group ).negate().add( target );
-                return position.toArray()
-            }
+            // TODO: THREE not available anymore
+            // var position = new THREE.Vector3();
+            // function getCenterArray(){
+            //     var target = stage.viewer.controls.target;
+            //     var group = stage.viewer.rotationGroup.position;
+            //     position.copy( group ).negate().add( target );
+            //     return position.toArray()
+            // }
 
-            var sphereBuffer = new NGL.SphereBuffer(
-                new Float32Array( getCenterArray() ),
-                new Float32Array( [ 1, 0, 0 ] ),
-                new Float32Array( [ 1 ] ),
-                undefined,
-                { flatShaded: true, disableImpostor: true }
-            );
-            o.addBufferRepresentation( sphereBuffer );
+            // var sphereBuffer = new NGL.SphereBuffer(
+            //     new Float32Array( getCenterArray() ),
+            //     new Float32Array( [ 1, 0, 0 ] ),
+            //     new Float32Array( [ 1 ] ),
+            //     undefined,
+            //     { flatShaded: true, disableImpostor: true }
+            // );
+            // o.addBufferRepresentation( sphereBuffer );
 
-            stage.viewer.controls.addEventListener(
-                'change', function(){
-                    sphereBuffer.setAttributes( {
-                        "position": getCenterArray(),
-                    } );
-                }
-            );
+            // stage.viewer.controls.addEventListener(
+            //     'change', function(){
+            //         sphereBuffer.setAttributes( {
+            //             "position": getCenterArray(),
+            //         } );
+            //     }
+            // );
 
         } );
 
@@ -1011,7 +1012,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             o.addRepresentation( "distance", {
                 atomPair: atomPair,
-                color: new THREE.Color( "skyblue" ).getHex()
+                color: "skyblue"
             } );
 
             o.centerView();
