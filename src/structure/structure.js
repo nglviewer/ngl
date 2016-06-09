@@ -31,6 +31,12 @@ import ChainProxy from "../proxy/chain-proxy.js";
 import ModelProxy from "../proxy/model-proxy.js";
 
 
+/**
+ * Structure
+ * @class
+ * @param {String} name - structure name
+ * @param {String} path - source path
+ */
 function Structure( name, path ){
 
     this.signals = {

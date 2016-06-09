@@ -68,6 +68,17 @@ WorkerRegistry.add( "surf", function func( e, callback ){
 }, [ VolumeSurface ] );
 
 
+/**
+ * Volume
+ * @class
+ * @param {String} name - volume name
+ * @param {String} path - source path
+ * @param {Float32array} data - volume 3d grid
+ * @param {Integer} nx - x dimension of the 3d volume
+ * @param {Integer} ny - y dimension of the 3d volume
+ * @param {Integer} nz - z dimension of the 3d volume
+ * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+ */
 function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.name = name;
@@ -92,6 +103,14 @@ Volume.prototype = {
     constructor: Volume,
     type: "Volume",
 
+    /**
+     * set volume data
+     * @param {Float32array} data - volume 3d grid
+     * @param {Integer} nx - x dimension of the 3d volume
+     * @param {Integer} ny - y dimension of the 3d volume
+     * @param {Integer} nz - z dimension of the 3d volume
+     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     */
     setData: function( data, nx, ny, nz, dataAtomindex ){
 
         this.nx = nx || 1;
@@ -130,6 +149,10 @@ Volume.prototype = {
 
     },
 
+    /**
+     * set transformation matrix
+     * @param {THREE.Matrix4} matrix - 4x4 transformation matrix
+     */
     setMatrix: function( matrix ){
 
         this.matrix.copy( matrix );
@@ -183,6 +206,10 @@ Volume.prototype = {
 
     },
 
+    /**
+     * set atom indices
+     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     */
     setDataAtomindex: function( dataAtomindex ){
 
         this.dataAtomindex = dataAtomindex;

@@ -7,6 +7,14 @@
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a Surface or Volume object
+ * @class
+ * @augments {Component}
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Surface|Volume} surface - surface or volume object to wrap
+ * @param {ComponentParameters} params - component parameters
+ */
 function SurfaceComponent( stage, surface, params ){
 
     var p = params || {};

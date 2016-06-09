@@ -23,6 +23,42 @@ import { autoLoad } from "../loader/loader-utils";
 import Signal from "../../lib/signals.es6.js";
 
 
+/**
+ * Stage parameter object.
+ * @typedef {Object} StageParameters - stage parameters
+ * @property {Color} backgroundColor - background color
+ * @property {Integer} sampleLevel - sampling level for antialiasing, between -1 and 5;
+ *                                   -1: no sampling, 0: only sampling when not moving
+ * @property {Float} rotateSpeed - camera-controls rotation speed, between 0 and 10
+ * @property {Float} zoomSpeed - camera-controls zoom speed, between 0 and 10
+ * @property {Float} panSpeed - camera-controls pan speed, between 0 and 10
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {Integer} clipFar - position of camera far/back clipping plane
+ *                               in percent of scene bounding box
+ * @property {Float} clipDist - camera clipping distance in Angstrom
+ * @property {Integer} fogNear - position of the start of the fog effect
+ *                               in percent of scene bounding box
+ * @property {Integer} fogFar - position where the fog is in full effect
+ *                              in percent of scene bounding box
+ * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
+ * @property {Float} cameraFov - camera field of view in degree, between 15 and 120
+ * @property {Color} lightColor - point light color
+ * @property {Float} lightIntensity - point light intensity
+ * @property {Color} ambientColor - ambient lioght color
+ * @property {Float} ambientIntensity - ambient light intensity
+ */
+
+
+/**
+ * Stage objects are central for creating molecular scenes with NGL.
+ * @class
+ * @example
+ *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ *
+ * @param {String} eid - document id
+ * @param {StageParameters} params -
+ */
 function Stage( eid, params ){
 
     this.signals = {
@@ -143,6 +179,10 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Set stage parameters
+     * @param {StageParameters} params - stage parameters
+     */
     setParameters: function( params ){
 
         var p = Object.assign( {}, params );
@@ -185,6 +225,10 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Get stage parameters
+     * @return {StageParameters} parameter object
+     */
     getParameters: function(){
 
         var params = {};
@@ -195,6 +239,11 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Create default representations for the given component
+     * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
+     * @return {undefined}
+     */
     defaultFileRepresentation: function( object ){
 
         if( object.type === "structure" ){
@@ -316,6 +365,14 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Load a file onto the stage
+     * @param  {String|File|Blob} path - either a URL or an object containing the file data
+     * @param  {Object} params - loading parameters
+     * @param  {String} params.ext - file extension, determines file type
+     * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
+     * @return {Promise} - resolves to a Component object
+     */
     loadFile: function( path, params ){
 
         var p = Object.assign( {}, this.defaultFileParams, params );
@@ -417,6 +474,10 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Handle any size-changes of the container element
+     * @return {undefined}
+     */
     handleResize: function(){
 
         this.viewer.handleResize();

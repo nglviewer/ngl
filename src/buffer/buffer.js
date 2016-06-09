@@ -12,6 +12,26 @@ import { defaults } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
+/**
+ * Buffer parameter object.
+ * @typedef {Object} StageParameters - stage parameters
+ * @property {Boolean} opaqueBack - render back-side opaque
+ */
+
+
+/**
+ * Buffer base class
+ * @class
+ * @param {Float32Array} position - positions
+ *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
+ * @param {Float32Array} color - colors
+ *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {Int32Array} [index] - triangle indices
+ *                                 [a1,b1,c1, a2,b2,c2, ..., aN,bN,cN]
+ * @param {Float32Array} [pickingColor] - picking colors
+ *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {BufferParams} params - parameters object
+ */
 function Buffer( position, color, index, pickingColor, params ){
 
     var p = params || {};

@@ -545,11 +545,19 @@ export {
     setDebug,
     DatasourceRegistry,
     StaticDatasource,
+    /**
+     * autoLoad function
+     * @see  @{@link autoLoad}
+     */
     autoLoad,
     RepresentationRegistry,
     ColorMakerRegistry,
     Selection,
     PdbWriter,
+    /**
+     * Stage class
+     * @see  @{@link Stage}
+     */
     Stage,
     TrajectoryPlayer,
 
@@ -559,7 +567,19 @@ export {
     getQuery,
     getDataInfo,
 
+    /**
+     * Buffer representation class
+     * @see  @{@link BufferRepresentation}
+     */
     BufferRepresentation,
+    /**
+     * Sphere buffer class
+     * @see  @{@link SphereBuffer}
+     */
     SphereBuffer,
+    /**
+     * Cylinder buffer class
+     * @see  @{@link CylinderBuffer}
+     */
     CylinderBuffer
 };

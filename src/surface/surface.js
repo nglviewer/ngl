@@ -12,6 +12,18 @@ import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import Selection from "../selection.js";
 
 
+/**
+ * Surface
+ * @class
+ * @param {String} name - surface name
+ * @param {String} path - source path
+ * @param {Object} data - surface data
+ * @param {Float32Array} data.position - surface positions
+ * @param {Int32Array} data.index - surface indices
+ * @param {Float32Array} data.normal - surface normals
+ * @param {Float32Array} data.color - surface colors
+ * @param {Int32Array} data.atomindex - atom indices
+ */
 function Surface( name, path, data ){
 
     this.name = name;
@@ -26,6 +38,7 @@ function Surface( name, path, data ){
         data instanceof THREE.Group
     ){
 
+        // to be removed
         this.fromGeometry( data );
 
     }else if( data ){
@@ -47,6 +60,14 @@ Surface.prototype = {
     constructor: Surface,
     type: "Surface",
 
+    /**
+     * set surface data
+     * @param {Float32Array} position - surface positions
+     * @param {Int32Array} index - surface indices
+     * @param {Float32Array} normal - surface normals
+     * @param {Float32Array} color - surface colors
+     * @param {Int32Array} atomindex - atom indices
+     */
     set: function( position, index, normal, color, atomindex ){
 
         this.position = position;

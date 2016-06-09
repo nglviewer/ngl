@@ -15,6 +15,20 @@ import Signal from "../../lib/signals.es6.js";
 var nextComponentId = 0;
 
 
+/**
+ * Component parameter object.
+ * @typedef {Object} ComponentParameters - component parameters
+ * @property {String} name - component name
+ * @property {Boolean} visible - component visibility
+ */
+
+
+/**
+ * Component base class
+ * @class
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {ComponentParameters} params - parameter object
+ */
 function Component( stage, params ){
 
     Object.defineProperty( this, 'id', { value: nextComponentId++ } );

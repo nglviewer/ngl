@@ -11,6 +11,14 @@ import Selection from "../selection.js";
 import { superpose } from "../align/align-utils.js";
 
 
+/**
+ * Component wrapping a Structure object
+ * @class
+ * @augments {Component}
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Structure} structure - structure object to wrap
+ * @param {ComponentParameters} params - component parameters
+ */
 function StructureComponent( stage, structure, params ){
 
     var p = params || {};
