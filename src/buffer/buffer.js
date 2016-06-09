@@ -19,6 +19,19 @@ import { getShader } from "../shader/shader-utils.js";
  */
 
 
+function getThreeSide( side ){
+    if( side === "front" ){
+        return THREE.FrontSide;
+    }else if( side === "back" ){
+        return THREE.BackSide;
+    }else if( side === "double" ){
+        return THREE.DoubleSide;
+    }else{
+        return THREE.DoubleSide;
+    }
+}
+
+
 /**
  * Buffer base class
  * @class
@@ -47,7 +60,7 @@ function Buffer( position, color, index, pickingColor, params ){
 
     this.opaqueBack = defaults( p.opaqueBack, false );
     this.dullInterior = defaults( p.dullInterior, false );
-    this.side = defaults( p.side, THREE.DoubleSide );
+    this.side = defaukts( p.side, "double" );
     this.opacity = defaults( p.opacity, 1.0 );
     this.clipNear = defaults( p.clipNear, 0 );
     this.flatShaded = defaults( p.flatShaded, false );
@@ -151,6 +164,8 @@ Buffer.prototype = {
 
     makeMaterial: function(){
 
+        var side = getThreeSide( this.side );
+
         this.material = new THREE.ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
@@ -160,7 +175,7 @@ Buffer.prototype = {
             depthWrite: true,
             lights: true,
             fog: true,
-            side: this.side,
+            side: side,
             linewidth: this.linewidth
         } );
         this.material.vertexColors = THREE.VertexColors;
@@ -177,7 +192,7 @@ Buffer.prototype = {
             depthWrite: true,
             lights: false,
             fog: true,
-            side: this.side,
+            side: side,
             linewidth: this.linewidth
         } );
         this.wireframeMaterial.vertexColors = THREE.VertexColors;
@@ -192,7 +207,7 @@ Buffer.prototype = {
             depthWrite: true,
             lights: false,
             fog: false,
-            side: this.side,
+            side: side,
             linewidth: this.linewidth
         } );
         this.pickingMaterial.vertexColors = THREE.VertexColors;
@@ -751,20 +766,24 @@ Buffer.prototype = {
 
         for( var name in data ){
 
+            var value = data[ name ];
+
             if( name === "transparent" ){
                 this.updateRenderOrder();
+            }else if( name === "side" ){
+                value = getThreeSide( value );
             }
 
             if( m[ name ] !== undefined ){
-                m[ name ] = data[ name ];
+                m[ name ] = value;
             }
 
             if( wm[ name ] !== undefined ){
-                wm[ name ] = data[ name ];
+                wm[ name ] = value;
             }
 
             if( pm[ name ] !== undefined ){
-                pm[ name ] = data[ name ];
+                pm[ name ] = value;
             }
 
         }

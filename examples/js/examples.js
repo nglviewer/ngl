@@ -509,7 +509,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://1crn.ply" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                opacity: 0.3, side: THREE.DoubleSide
+                opacity: 0.3, side: "double"
             } );
 
         } );
@@ -568,7 +568,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://1crn.ply" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                opacity: 0.3, side: THREE.FrontSide
+                opacity: 0.3, side: "front"
             } );
 
         } );
@@ -881,7 +881,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "helixorient" );
             o.addRepresentation( "rope", {
-                opacity: 0.4, side: THREE.FrontSide, smooth: 0
+                opacity: 0.4, side: "front", smooth: 0
             } );
             o.addRepresentation( "licorice", { sele: "backbone" } );
             o.centerView();
@@ -1061,7 +1061,7 @@ NGL.ExampleRegistry.addDict( {
                 smooth: 1,
                 color: "red",
                 opacity: 0.6,
-                side: THREE.BackSide,
+                side: "back",
                 opaqueBack: false
             } );
 
@@ -1071,7 +1071,7 @@ NGL.ExampleRegistry.addDict( {
                 smooth: 1,
                 color: "blue",
                 opacity: 0.6,
-                side: THREE.FrontSide,
+                side: "front",
                 opaqueBack: false
             } );
 
@@ -1172,7 +1172,7 @@ NGL.ExampleRegistry.addDict( {
                 smooth: 1,
                 color: "red",
                 opacity: 0.6,
-                side: THREE.BackSide,
+                side: "back",
                 opaqueBack: false
             } );
 
@@ -1182,7 +1182,7 @@ NGL.ExampleRegistry.addDict( {
                 smooth: 1,
                 color: "blue",
                 opacity: 0.6,
-                side: THREE.FrontSide,
+                side: "front",
                 opaqueBack: false
             } );
 
@@ -1196,7 +1196,7 @@ NGL.ExampleRegistry.addDict( {
 
         console.time( "load-to-render" );
         stage.loadFile( "data://4opj.cif" ).then( function( o ){
-            o.addRepresentation( "cartoon", { assembly: "BU1", opacity: 0.5, side: THREE.BackSide } );
+            o.addRepresentation( "cartoon", { assembly: "BU1", opacity: 0.5, side: "back" } );
             o.addRepresentation( "ribbon", { assembly: "SUPERCELL", color: "grey", scale: 1.0, visible: false } );
             o.addRepresentation( "backbone", { assembly: "AU" } );
             o.addRepresentation( "surface", { assembly: "BU2" } );

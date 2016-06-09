@@ -41,10 +41,10 @@ function DoubleSidedBuffer( buffer ){
     backBuffer.updateShader();
 
     frontBuffer.setParameters( {
-        side: THREE.FrontSide
+        side: "front"
     } );
     backBuffer.setParameters( {
-        side: THREE.BackSide,
+        side: "back",
         opacity: backBuffer.opacity
     } );
 
@@ -91,17 +91,17 @@ function DoubleSidedBuffer( buffer ){
 
         data = Object.assign( {}, data );
 
-        if( data.side === THREE.FrontSide ){
+        if( data.side === "front" ){
 
             frontMeshes.forEach( function( m ){ m.visible = true; } );
             backMeshes.forEach( function( m ){ m.visible = false; } );
 
-        }else if( data.side === THREE.BackSide ){
+        }else if( data.side === "back" ){
 
             frontMeshes.forEach( function( m ){ m.visible = false; } );
             backMeshes.forEach( function( m ){ m.visible = true; } );
 
-        }else if( data.side === THREE.DoubleSide ){
+        }else if( data.side === "double" ){
 
             frontMeshes.forEach( function( m ){ m.visible = true; } );
             backMeshes.forEach( function( m ){ m.visible = true; } );

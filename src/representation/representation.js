@@ -11,12 +11,6 @@ import Queue from "../utils/queue.js";
 import Counter from "../utils/counter.js";
 
 
-var SideTypes = {};
-SideTypes[ THREE.FrontSide ] = "front";
-SideTypes[ THREE.BackSide ] = "back";
-SideTypes[ THREE.DoubleSide ] = "double";
-
-
 function Representation( object, viewer, params ){
 
     this.viewer = viewer;
@@ -47,8 +41,8 @@ Representation.prototype = {
             type: "range", step: 0.01, max: 1, min: 0, buffer: true
         },
         side: {
-            type: "select", options: SideTypes, buffer: true,
-            int: true
+            type: "select", buffer: true,
+            options: { front: "front", back: "back", double: "double" },
         },
         wireframe: {
             type: "boolean", buffer: true
@@ -94,7 +88,7 @@ Representation.prototype = {
 
         this.clipNear = p.clipNear !== undefined ? p.clipNear : 0;
         this.flatShaded = p.flatShaded || false;
-        this.side = p.side !== undefined ? p.side : THREE.DoubleSide;
+        this.side = p.side !== undefined ? p.side : "double";
         this.opacity = p.opacity !== undefined ? p.opacity : 1.0;
         this.wireframe = p.wireframe || false;
         this.linewidth = p.linewidth || 2;
