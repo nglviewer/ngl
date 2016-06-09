@@ -9,6 +9,12 @@ import { quicksortIP } from "../math/array-utils.js";
 
 
 /**
+ * Kdtree
+ * @class
+ * @author Roman Bolzern <roman.bolzern@fhnw.ch>, 2013
+ * @author I4DS http://www.fhnw.ch/i4ds, 2013
+ * @license MIT License <http://www.opensource.org/licenses/mit-license.php>
+ * @description
  * k-d Tree for typed arrays (e.g. for Float32Array), in-place
  * provides fast nearest neighbour search
  * useful e.g. for a custom shader and/or BufferGeometry, saves tons of memory
@@ -16,18 +22,7 @@ import { quicksortIP } from "../math/array-utils.js";
  *
  * Based on https://github.com/ubilabs/kd-tree-javascript by Ubilabs
  *
- * @author Roman Bolzern <roman.bolzern@fhnw.ch>, 2013
- * @author I4DS http://www.fhnw.ch/i4ds, 2013
- * @license MIT License <http://www.opensource.org/licenses/mit-license.php>
- *
  * Requires typed array quicksort
- *
- * Example:
- * points: [x, y, z, x, y, z, x, y, z, ...]
- * metric: function(a, b){
- *    return Math.pow(a[0]-b[0], 2) + Math.pow(a[1]-b[1], 2) + Math.pow(a[2]-b[2], 2);
- * }  //Manhatten distance
- * eleSize: 3 //because of (x, y, z)
  *
  * Further information (including mathematical properties)
  * http://en.wikipedia.org/wiki/Binary_tree
@@ -35,6 +30,18 @@ import { quicksortIP } from "../math/array-utils.js";
  *
  * If you want to further minimize memory usage, remove Node.depth and replace
  * in search algorithm with a traversal to root node (see comments at Node)
+ *
+ * @example
+ * points: [x, y, z, x, y, z, x, y, z, ...]
+ * metric: function(a, b){
+ *    return Math.pow(a[0]-b[0], 2) + Math.pow(a[1]-b[1], 2) + Math.pow(a[2]-b[2], 2);
+ * }  //Manhatten distance
+ * eleSize: 3 //because of (x, y, z)
+ *
+ * @param {Float32Array} points - points
+ * @param {Function} metric - metric
+ * @param {Integer} eleSize - eleSize
+ * @param {Integer} dimSize - dimSize
  */
 function Kdtree( points, metric, eleSize, dimSize ){
 
@@ -204,6 +211,10 @@ function Kdtree( points, metric, eleSize, dimSize ){
 }
 
 /**
+ * Node
+ * @class
+ * @private
+ * @description
  * If you need to free up additional memory and agree with an additional O( log n ) traversal time you can get rid of "depth" and "pos" in Node:
  * Depth can be easily done by adding 1 for every parent (care: root node has depth 0, not 1)
  * Pos is a bit tricky: Assuming the tree is balanced (which is the case when after we built it up), perform the following steps:
@@ -217,6 +228,9 @@ function Kdtree( points, metric, eleSize, dimSize ){
  *        and I think you need to +1 for the current position, not sure.. depends, try it out ^^
  *
  * I experienced that for 200'000 nodes you can get rid of 4 MB memory each, leading to 8 MB memory saved.
+ *
+ * @param {Integer} pos - index of position
+ * @param {Integer} parent - index of parent Node
  */
 function Node( pos, parent ){
 	this.pos = pos;

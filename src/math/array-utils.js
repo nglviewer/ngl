@@ -238,20 +238,27 @@ function copyArray( src, dst, srcOffset, dstOffset, length ){
 var swap = new Float32Array( 4 );
 var temp = new Float32Array( 4 );
 /**
- * In-place quicksort for typed arrays (e.g. for Float32Array)
- * provides fast sorting
- * useful e.g. for a custom shader and/or BufferGeometry
- *
+ * quicksortIP
+ * @function
  * @author Roman Bolzern <roman.bolzern@fhnw.ch>, 2013
  * @author I4DS http://www.fhnw.ch/i4ds, 2013
  * @license MIT License <http://www.opensource.org/licenses/mit-license.php>
- *
+ * @description
+ * In-place quicksort for typed arrays (e.g. for Float32Array)
+ * provides fast sorting
+ * useful e.g. for a custom shader and/or BufferGeometry
  * Complexity: http://bigocheatsheet.com/ see Quicksort
  *
- * Example:
+ * @example
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * eleSize: 3 //because of (x, y, z)
  * orderElement: 0 //order according to x
+ *
+ * @param {TypedArray} arr - array to be sorted
+ * @param {Integer} eleSize - element size
+ * @param {Integer} orderElement - index of element used for sorting, < eleSize
+ * @param {Integer} [begin] - start index for range to be sorted
+ * @param {Integer} [end] - end index for range to be sorted
  */
 function quicksortIP( arr, eleSize, orderElement, begin, end ){
 

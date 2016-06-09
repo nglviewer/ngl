@@ -6,6 +6,7 @@
 
 /**
  * Binary heap implementation
+ * @class
  * @author http://eloquentjavascript.net/appendix2.htm
  */
 function BinaryHeap( scoreFunction ){

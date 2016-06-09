@@ -11,6 +11,9 @@ import SurfaceParser from "./surface-parser.js";
 
 
 /**
+ * OBJLoader
+ * @class
+ * @private
  * @author mrdoob / http://mrdoob.com/
  */
 function OBJLoader( manager ) {

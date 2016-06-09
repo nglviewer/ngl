@@ -1,4 +1,6 @@
 /**
+ * @file Bitset
+ *
  * FastBitSet.js : a fast bit set implementation in JavaScript.
  * (c) the authors
  * Licensed under the Apache License, Version 2.0.
@@ -35,10 +37,17 @@
  *   npm install fastbitset
  */
 
+
 // you can provide an iterable
 // an exception is thrown if typed arrays are not supported
 // - added size argument, ASR
 // - added flip argument, ASR
+/**
+ * Bitset
+ * @class
+ * @param {Integer} size - how many element to store
+ * @param {Boolean} [flip] - set to true to set all bits to 1
+ */
 function TypedFastBitSet(size, flip) {
   this.count = 0 | 0;
   this.words = new Uint32Array(8);

@@ -45,7 +45,7 @@ import Signal from "../../lib/signals.es6.js";
  * @property {Float} cameraFov - camera field of view in degree, between 15 and 120
  * @property {Color} lightColor - point light color
  * @property {Float} lightIntensity - point light intensity
- * @property {Color} ambientColor - ambient lioght color
+ * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
  */
 

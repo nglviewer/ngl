@@ -14,8 +14,22 @@ import { getShader } from "../shader/shader-utils.js";
 
 /**
  * Buffer parameter object.
- * @typedef {Object} StageParameters - stage parameters
+ * @typedef {Object} BufferParameters - buffer parameters
  * @property {Boolean} opaqueBack - render back-side opaque
+ * @property {Boolean} dullInterior - render back-side with dull lighting
+ * @property {String} side - which triangle sides to render, "front" front-side,
+ *                            "back" back-side, "double" front- and back-side
+ * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {Boolean} flatShaded - render flat shaded
+ * @property {Integer} linewidth - width of lines (when applicable)
+ * @property {Boolean} wireframe - render as wireframe
+ * @property {Integer} wireframeLinewidth - width of wireframe lines
+ * @property {Float} roughness - how rough the material is, between 0 and 1
+ * @property {Float} metalness - how metallic the material is, between 0 and 1
+ * @property {Color} diffuse - diffuse color for lighting
+ * @property {Boolean} forceTransparent - force the material to allow transparency
  */
 
 
@@ -43,7 +57,7 @@ function getThreeSide( side ){
  *                                 [a1,b1,c1, a2,b2,c2, ..., aN,bN,cN]
  * @param {Float32Array} [pickingColor] - picking colors
  *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {BufferParams} params - parameters object
+ * @param {BufferParameters} params - parameters object
  */
 function Buffer( position, color, index, pickingColor, params ){
 
