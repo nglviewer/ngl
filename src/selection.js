@@ -23,7 +23,8 @@ var kwd = {
     "SIDECHAIN": 10,
     "ALL": 11,
     "HETERO": 12,
-    "ION": 13
+    "ION": 13,
+    "SACCHARIDE": 14
 };
 
 
@@ -283,6 +284,12 @@ Selection.prototype = {
 
             if( c.toUpperCase() === "ION" ){
                 sele.keyword = kwd.ION;
+                pushRule( sele );
+                continue;
+            }
+
+            if( c.toUpperCase() === "SACCHARIDE" || c.toUpperCase() === "SUGAR" ){
+                sele.keyword = kwd.SACCHARIDE;
                 pushRule( sele );
                 continue;
             }
@@ -875,6 +882,7 @@ Selection.prototype = {
                 if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.sstruc )===-1 ) return false;
                 if( s.keyword===kwd.SHEET && sheetTypes.indexOf( a.sstruc )===-1 ) return false;
                 if( s.keyword===kwd.ION && !a.isIon() ) return false;
+                if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) return false;
             }
 
             if( s.atomname!==undefined && s.atomname!==a.atomname ) return false;
@@ -954,6 +962,7 @@ Selection.prototype = {
                 if( s.keyword===kwd.HELIX && helixTypes.indexOf( r.sstruc )===-1 ) return false;
                 if( s.keyword===kwd.SHEET && sheetTypes.indexOf( r.sstruc )===-1 ) return false;
                 if( s.keyword===kwd.ION && !r.isIon() ) return false;
+                if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) return false;
             }
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;

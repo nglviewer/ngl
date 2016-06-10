@@ -7,7 +7,7 @@
 import THREE from "../../lib/three.js";
 
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, UnknownType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
 } from "../structure/structure-constants.js";
@@ -225,6 +225,10 @@ AtomProxy.prototype = {
 
     isIon: function(){
         return this.residueType.moleculeType === IonType;
+    },
+
+    isSaccharide: function(){
+        return this.residueType.moleculeType === SaccharideType;
     },
 
     distanceTo: function( atom ){

@@ -5,7 +5,7 @@
 
 
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, UnknownType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     AA1
@@ -210,6 +210,10 @@ ResidueProxy.prototype = {
 
     isIon: function(){
         return this.residueType.moleculeType === IonType;
+    },
+
+    isSaccharide: function(){
+        return this.residueType.moleculeType === SaccharideType;
     },
 
     getAtomType: function( index ){

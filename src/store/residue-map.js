@@ -12,17 +12,22 @@ function ResidueMap( structure ){
     var idDict = {};
     var typeList = [];
 
-    function getHash( resname, atomTypeIdList, hetero ){
-        return resname + "|" + atomTypeIdList.join( "," ) + "|" + ( hetero ? 1 : 0 );
+    function getHash( resname, atomTypeIdList, hetero, chemCompType ){
+        return (
+            resname + "|" +
+            atomTypeIdList.join( "," ) + "|" +
+            ( hetero ? 1 : 0 ) + "|" +
+            ( chemCompType ? chemCompType : "" )
+        );
     }
 
-    function add( resname, atomTypeIdList, hetero ){
+    function add( resname, atomTypeIdList, hetero, chemCompType ){
         resname = resname.toUpperCase();
-        var hash = getHash( resname, atomTypeIdList, hetero );
+        var hash = getHash( resname, atomTypeIdList, hetero, chemCompType );
         var id = idDict[ hash ];
         if( id === undefined ){
             var residueType = new ResidueType(
-                structure, resname, atomTypeIdList, hetero
+                structure, resname, atomTypeIdList, hetero, chemCompType
             );
             id = typeList.length;
             idDict[ hash ] = id;

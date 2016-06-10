@@ -6,21 +6,24 @@
 
 import { calculateResidueBonds } from "../structure/structure-utils.js";
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, UnknownType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
-    AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, LigandNames,
+    ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
+    ChemCompOther, ChemCompNonPolymer, ChemCompHetero,
+    AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames,
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
 
-function ResidueType( structure, resname, atomTypeIdList, hetero ){
+function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType ){
 
     this.structure = structure;
 
     this.resname = resname;
     this.atomTypeIdList = atomTypeIdList;
     this.hetero = hetero ? 1 : 0;
+    this.chemCompType = chemCompType;
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
@@ -105,6 +108,8 @@ ResidueType.prototype = {
             return WaterType;
         }else if( this.isIon() ){
             return IonType;
+        }else if( this.isSaccharide() ){
+            return SaccharideType;
         }else{
             return UnknownType;
         }
@@ -129,11 +134,14 @@ ResidueType.prototype = {
     },
 
     isProtein: function(){
-        return (
-            ( this.hasAtomWithName( "CA", "C", "N" ) &&
-                LigandNames.indexOf( this.resname ) === -1 ) ||
-            AA3.indexOf( this.resname ) !== -1
-        );
+        if( this.chemCompType ){
+            return ChemCompProtein.indexOf( this.chemCompType ) !== -1;
+        }else{
+            return (
+                this.hasAtomWithName( "CA", "C", "N" ) ||
+                AA3.indexOf( this.resname ) !== -1
+            );
+        }
     },
 
     isCg: function(){
@@ -150,20 +158,26 @@ ResidueType.prototype = {
     },
 
     isRna: function(){
-        return (
-            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) &&
-                LigandNames.indexOf( this.resname ) === -1 ) ||
-            RnaBases.indexOf( this.resname ) !== -1
-        );
+        if( this.chemCompType ){
+            return ChemCompRna.indexOf( this.chemCompType ) !== -1;
+        }else{
+            return (
+                this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) ||
+                RnaBases.indexOf( this.resname ) !== -1
+            );
+        }
     },
 
     isDna: function(){
-        return (
-            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
-                !this.hasAtomWithName( [ "O2'", "O2*" ] ) &&
-                LigandNames.indexOf( this.resname ) === -1 ) ||
-            DnaBases.indexOf( this.resname ) !== -1
-        );
+        if( this.chemCompType ){
+            return ChemCompDna.indexOf( this.chemCompType ) !== -1;
+        }else{
+            return (
+                ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
+                    !this.hasAtomWithName( [ "O2'", "O2*" ] ) ) ||
+                DnaBases.indexOf( this.resname ) !== -1
+            );
+        }
     },
 
     isPolymer: function(){
@@ -180,6 +194,10 @@ ResidueType.prototype = {
 
     isWater: function(){
         return WaterNames.indexOf( this.resname ) !== -1;
+    },
+
+    isSaccharide: function(){
+        return ChemCompSaccharide.indexOf( this.chemCompType ) !== -1;
     },
 
     hasBackboneAtoms: function( position, type ){

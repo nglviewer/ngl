@@ -11,6 +11,7 @@ var IonType = 2;
 var ProteinType = 3;
 var RnaType = 4;
 var DnaType = 5;
+var SaccharideType = 6;
 
 
 // backbone types
@@ -21,6 +22,35 @@ var DnaBackboneType = 3;
 var CgProteinBackboneType = 4;
 var CgRnaBackboneType = 5;
 var CgDnaBackboneType = 6;
+
+
+// chemical component types
+var ChemCompProtein = [
+    "D-BETA-PEPTIDE, C-GAMMA LINKING", "D-GAMMA-PEPTIDE, C-DELTA LINKING",
+    "D-PEPTIDE COOH CARBOXY TERMINUS", "D-PEPTIDE NH3 AMINO TERMINUS", "D-PEPTIDE LINKING",
+    "L-BETA-PEPTIDE, C-GAMMA LINKING", "L-GAMMA-PEPTIDE, C-DELTA LINKING",
+    "L-PEPTIDE COOH CARBOXY TERMINUS", "L-PEPTIDE NH3 AMINO TERMINUS", "L-PEPTIDE LINKING",
+    "PEPTIDE LINKING", "PEPTIDE-LIKE"
+];
+var ChemCompRna = [
+    "RNA OH 3 PRIME TERMINUS", "RNA OH 5 PRIME TERMINUS", "RNA LINKING"
+];
+var ChemCompDna = [
+    "DNA OH 3 PRIME TERMINUS", "DNA OH 5 PRIME TERMINUS", "DNA LINKING",
+    "L-DNA LINKING", "L-RNA LINKING"
+];
+var ChemCompSaccharide = [
+    "D-SACCHARIDE", "D-SACCHARIDE 1,4 AND 1,4 LINKING", "D-SACCHARIDE 1,4 AND 1,6 LINKING",
+    "L-SACCHARIDE", "L-SACCHARIDE 1,4 AND 1,4 LINKING", "L-SACCHARIDE 1,4 AND 1,6 LINKING",
+    "SACCHARIDE"
+];
+var ChemCompOther = [
+    "OTHER"
+];
+var ChemCompNonPolymer = [
+    "NON-POLYMER"
+];
+var ChemCompHetero = ChemCompNonPolymer.concat( ChemCompOther, ChemCompSaccharide );
 
 
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
@@ -242,9 +272,6 @@ var IonNames = [
     "V", "Y1", "YT3", "ZN"
 ];
 
-// ligands that are wrongly detected as protein or rna/dna based on atom names
-var LigandNames = [ "FOL" ];
-
 
 var ProteinBackboneAtoms = [
     "CA", "C", "N", "O", "O1", "O2", "OC1", "OC2",
@@ -312,6 +339,7 @@ export {
     ProteinType,
     RnaType,
     DnaType,
+    SaccharideType,
 
     UnknownBackboneType,
     ProteinBackboneType,
@@ -320,6 +348,14 @@ export {
     CgProteinBackboneType,
     CgRnaBackboneType,
     CgDnaBackboneType,
+
+    ChemCompProtein,
+    ChemCompRna,
+    ChemCompDna,
+    ChemCompSaccharide,
+    ChemCompOther,
+    ChemCompNonPolymer,
+    ChemCompHetero,
 
     VdwRadii,
     DefaultVdwRadius,
@@ -337,7 +373,6 @@ export {
     PurinBases,
     WaterNames,
     IonNames,
-    LigandNames,
 
     ProteinBackboneAtoms,
     NucleicBackboneAtoms,

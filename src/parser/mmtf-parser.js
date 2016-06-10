@@ -10,10 +10,24 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
 import { calculateBondsBetween, calculateBondsWithin } from "../structure/structure-utils.js";
+import { ChemCompHetero } from "../structure/structure-constants.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
 import { decodeMsgpack, decodeMmtf } from "../../lib/mmtf.es6.js";
+
+
+var SstrucMap = {
+    "0": "i".charCodeAt( 0 ),  // pi helix
+    "1": "s".charCodeAt( 0 ),  // bend
+    "2": "h".charCodeAt( 0 ),  // alpha helix
+    "3": "e".charCodeAt( 0 ),  // extended
+    "4": "g".charCodeAt( 0 ),  // 3-10 helix
+    "5": "b".charCodeAt( 0 ),  // bridge
+    "6": "t".charCodeAt( 0 ),  // turn
+    "7": "l".charCodeAt( 0 ),  // coil
+    "-1": "".charCodeAt( 0 )   // NA
+};
 
 
 function MmtfParser( streamer, params ){
@@ -257,23 +271,7 @@ MmtfParser.prototype = Object.assign( Object.create(
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
-        var sstrucMap = {
-            "0": "i".charCodeAt( 0 ),  // pi helix
-            "1": "s".charCodeAt( 0 ),  // bend
-            "2": "h".charCodeAt( 0 ),  // alpha helix
-            "3": "e".charCodeAt( 0 ),  // extended
-            "4": "g".charCodeAt( 0 ),  // 3-10 helix
-            "5": "b".charCodeAt( 0 ),  // bridge
-            "6": "t".charCodeAt( 0 ),  // turn
-            "7": "l".charCodeAt( 0 ),  // coil
-            "-1": "".charCodeAt( 0 )   // NA
-        };
 
-        var hetCompList = [
-            "non-polymer", "other", "saccharide", "l-saccharide", "d-saccharide",
-            "l-saccharide 1,4 and 1,4 linking", "l-saccharide 1,4 and 1,6 linking",
-            "d-saccharide 1,4 and 1,4 linking", "d-saccharide 1,4 and 1,6 linking"
-        ];
 
         var groupTypeDict = {};
         for( i = 0, il = sd.groupList.length; i < il; ++i ){
@@ -284,8 +282,10 @@ MmtfParser.prototype = Object.assign( Object.create(
                 var atomname = groupType.atomNameList[ j ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
-            var hetFlag = hetCompList.indexOf( groupType.chemCompType.toLowerCase() ) !== -1;
-            groupTypeDict[ i ] = s.residueMap.add( groupType.groupName, atomTypeIdList, hetFlag );
+            var hetFlag = ChemCompHetero.indexOf( groupType.chemCompType ) !== -1;
+            groupTypeDict[ i ] = s.residueMap.add(
+                groupType.groupName, atomTypeIdList, hetFlag, groupType.chemCompType
+            );
         }
 
         for( i = 0, il = numGroups; i < il; ++i ){
@@ -303,7 +303,7 @@ MmtfParser.prototype = Object.assign( Object.create(
             var secStructLength = sd.secStructList.length;
             for( i = 0, il = s.residueStore.count; i < il; ++i ){
                 // with ( i % secStructLength ) secStruct entries are reused
-                var sstruc = sstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
+                var sstruc = SstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ];
                 if( sstruc !== undefined ) s.residueStore.sstruc[ i ] = sstruc;
             }
         }
