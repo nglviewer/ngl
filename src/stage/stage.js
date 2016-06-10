@@ -367,11 +367,30 @@ Stage.prototype = {
 
     /**
      * Load a file onto the stage
+     *
+     * @example
+     * // load from URL
+     * stage.loadFile( "http://files.rcsb.org/download/5IOS.cif" );
+     *
+     * @example
+     * // load binary data in CCP4 format via a Blob
+     * var binaryBlob = new Blob( [ ccp4Data ], { type: 'application/octet-binary'} );
+     * stage.loadFile( binaryBlob, { ext: "ccp4" } );
+     *
+     * @example
+     * // load string data in PDB format via a Blob
+     * var stringBlob = new Blob( [ pdbData ], { type: 'text/plain'} );
+     * stage.loadFile( stringBlob, { ext: "pdb" } );
+     *
+     * @example
+     * // load a File object
+     * stage.loadFile( file );
+     *
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {Object} params - loading parameters
      * @param  {String} params.ext - file extension, determines file type
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
-     * @return {Promise} - resolves to a Component object
+     * @return {Promise} Promise resolves to a {@link Component} object
      */
     loadFile: function( path, params ){
 
