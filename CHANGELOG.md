@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file, following t
 - read bondOrder from 'pdbx_value_order' in mmcif files
 - interpret 'CONECT 1529 1528 1528' as double bond in pdb files
 - `side` Buffer/Representation parameter changed: THREE.FrontSide => "front", THREE.BackSide => "back", THREE.DoubleSide => "double"
+- support for negative resno values in selections: "-5:A", "-12--8", "-12-0"
 
 ### Removed
 - python-based build scripts

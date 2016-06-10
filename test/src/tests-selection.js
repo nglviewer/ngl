@@ -661,6 +661,42 @@ describe('parsing', function () {
         };
         assert.deepEqual( selection.selection, selectionObj );
     });
+
+    it('negative resno -143', function () {
+        var sele = "-143";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "resno": -143 }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    });
+
+    it('negative resno range -12-14', function () {
+        var sele = "-12-14";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "resno": [ -12, 14 ] }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    });
+
+    it('negative resno range -12--8', function () {
+        var sele = "-12--8";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "resno": [ -12, -8 ] }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    });
 });
 
 

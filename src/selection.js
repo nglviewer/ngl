@@ -634,16 +634,28 @@ Selection.prototype = {
             }
 
             if( inscode[0] ){
+                var negate, negate2;
+                if( inscode[0][0] === "-" ){
+                    inscode[0] = inscode[0].substr(1);
+                    negate = true;
+                }
+                if( inscode[0].indexOf( "--" ) !== -1 ){
+                    inscode[0] = inscode[0].replace( "--", "-" );
+                    negate2 = true;
+                }
                 resi = inscode[0].split("-");
                 if( resi.length === 1 ){
                     resi = parseInt( resi[0] );
                     if( isNaN( resi ) ){
                         throw new Error( "resi must be an integer" );
                     }
+                    if( negate ) resi *= -1;
                     sele.rules.push( {
                         resno: resi
                     } );
                 }else if( resi.length === 2 ){
+                    if( negate ) resi[0] *= -1;
+                    if( negate2 ) resi[1] *= -1;
                     sele.rules.push( {
                         resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
                     } );
