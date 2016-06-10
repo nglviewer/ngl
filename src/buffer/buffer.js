@@ -74,7 +74,7 @@ function Buffer( position, color, index, pickingColor, params ){
 
     this.opaqueBack = defaults( p.opaqueBack, false );
     this.dullInterior = defaults( p.dullInterior, false );
-    this.side = defaukts( p.side, "double" );
+    this.side = defaults( p.side, "double" );
     this.opacity = defaults( p.opacity, 1.0 );
     this.clipNear = defaults( p.clipNear, 0 );
     this.flatShaded = defaults( p.flatShaded, false );
