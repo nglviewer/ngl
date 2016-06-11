@@ -1,6 +1,7 @@
 /**
  * @file Tube Mesh Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

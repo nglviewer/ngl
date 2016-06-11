@@ -1,6 +1,7 @@
 /**
  * @file Remote Trajectory
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

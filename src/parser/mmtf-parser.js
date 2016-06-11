@@ -1,6 +1,7 @@
 /**
  * @file Mmtf Parser
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 
@@ -58,16 +59,16 @@ MmtfParser.prototype = Object.assign( Object.create(
         var i, il, j, jl, groupData;
 
         var s = this.structure;
-        var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
+        // var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
-        // console.time( "decodeMsgpack" )
-        // var md = decodeMsgpack( this.streamer.data );
-        // console.timeEnd( "decodeMsgpack" )
-        // console.log( md );
-        // console.time( "decodeMmtf" )
-        // var sd = decodeMmtf( md );
-        // console.timeEnd( "decodeMmtf" )
-        // console.log( sd );
+        console.time( "decodeMsgpack" )
+        var md = decodeMsgpack( this.streamer.data );
+        console.timeEnd( "decodeMsgpack" )
+        console.log( md );
+        console.time( "decodeMmtf" )
+        var sd = decodeMmtf( md );
+        console.timeEnd( "decodeMmtf" )
+        console.log( sd );
 
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;

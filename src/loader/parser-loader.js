@@ -1,6 +1,7 @@
 /**
  * @file Parser Loader
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

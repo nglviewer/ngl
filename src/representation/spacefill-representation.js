@@ -1,6 +1,7 @@
 /**
  * @file Spacefill Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

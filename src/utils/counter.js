@@ -1,6 +1,7 @@
 /**
  * @file Counter
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

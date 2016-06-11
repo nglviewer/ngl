@@ -1,6 +1,7 @@
 /**
  * @file Frames Trajectory
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

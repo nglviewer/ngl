@@ -1,6 +1,7 @@
 /**
  * @file Atom Store
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

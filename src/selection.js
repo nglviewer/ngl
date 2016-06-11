@@ -1,6 +1,7 @@
 /**
  * @file Selection
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 
@@ -28,6 +29,11 @@ var kwd = {
 };
 
 
+/**
+ * Selection
+ * @class
+ * @param {String} string - selection string, see {@tutorial selection-language}
+ */
 function Selection( string ){
 
     this.signals = {

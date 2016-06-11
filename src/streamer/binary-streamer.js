@@ -1,6 +1,7 @@
 /**
  * @file Binary Streamer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

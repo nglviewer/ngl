@@ -1,6 +1,7 @@
 /**
  * @file Chain Proxy
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

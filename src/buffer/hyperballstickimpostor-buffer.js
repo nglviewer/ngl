@@ -1,6 +1,7 @@
 /**
  * @file Hyperball Stick Impostor Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

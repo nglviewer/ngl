@@ -1,6 +1,7 @@
 /**
  * @file Label Factory
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

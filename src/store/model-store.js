@@ -1,6 +1,7 @@
 /**
  * @file Model Store
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

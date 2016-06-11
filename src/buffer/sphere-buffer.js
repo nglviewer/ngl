@@ -1,6 +1,7 @@
 /**
  * @file Sphere Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

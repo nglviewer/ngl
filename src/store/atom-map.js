@@ -1,6 +1,7 @@
 /**
  * @file Atom Map
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

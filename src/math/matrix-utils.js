@@ -1,5 +1,6 @@
 /**
  * @file Matrix Utils
+ * @private
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  *
  * svd methods from Eugene Zatepyakin / http://inspirit.github.io/jsfeat/

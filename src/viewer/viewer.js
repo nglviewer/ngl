@@ -1,6 +1,7 @@
 /**
  * @file Viewer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

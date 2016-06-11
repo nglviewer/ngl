@@ -1,6 +1,7 @@
 /**
  * @file Tube Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

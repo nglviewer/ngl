@@ -2,6 +2,7 @@
 /**
  * @file Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 import { defaults } from "../utils.js";

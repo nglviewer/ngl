@@ -1,6 +1,7 @@
 /**
  * @file Structure Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

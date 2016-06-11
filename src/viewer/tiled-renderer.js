@@ -1,6 +1,7 @@
 /**
  * @file Tiled Renderer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

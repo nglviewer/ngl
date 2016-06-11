@@ -1,6 +1,7 @@
 /**
  * @file Gid Pool
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

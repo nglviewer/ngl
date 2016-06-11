@@ -1,6 +1,7 @@
 /**
  * @file Symmetry Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

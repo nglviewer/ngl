@@ -1,6 +1,7 @@
 /**
  * @file Point Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

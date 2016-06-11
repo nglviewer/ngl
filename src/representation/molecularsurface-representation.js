@@ -1,6 +1,7 @@
 /**
  * @file Molecular Surface Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

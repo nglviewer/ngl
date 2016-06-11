@@ -89,10 +89,12 @@ gulp.task('doc', function() {
       "dateFormat": "MMMM Do YYYY, h:mm:ss a"
     },
     "opts": {
-      "destination": "./build/docs/api/"
+      "destination": "./build/docs/api/",
+      "tutorials": "./doc/tutorials/",
+      "package": "./package.json"
     }
   }
-  return gulp.src(['./docs/api-overview.md', './src/**/*.js'], {read: false})
+  return gulp.src(['./doc/overview.md', './src/**/*.js'], {read: false})
     .pipe(jsdoc(config));
 });
 

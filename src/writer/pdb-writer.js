@@ -1,6 +1,7 @@
 /**
  * @file Pdb Writer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 

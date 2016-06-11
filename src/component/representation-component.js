@@ -1,6 +1,7 @@
 /**
  * @file Representation Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
  */
 
 
