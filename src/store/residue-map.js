@@ -22,13 +22,13 @@ function ResidueMap( structure ){
         );
     }
 
-    function add( resname, atomTypeIdList, hetero, chemCompType ){
+    function add( resname, atomTypeIdList, hetero, chemCompType, bonds ){
         resname = resname.toUpperCase();
         var hash = getHash( resname, atomTypeIdList, hetero, chemCompType );
         var id = idDict[ hash ];
         if( id === undefined ){
             var residueType = new ResidueType(
-                structure, resname, atomTypeIdList, hetero, chemCompType
+                structure, resname, atomTypeIdList, hetero, chemCompType, bonds
             );
             id = typeList.length;
             idDict[ hash ] = id;

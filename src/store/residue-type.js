@@ -17,7 +17,7 @@ import {
 } from "../structure/structure-constants.js";
 
 
-function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType ){
+function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
     this.structure = structure;
 
@@ -25,6 +25,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType )
     this.atomTypeIdList = atomTypeIdList;
     this.hetero = hetero ? 1 : 0;
     this.chemCompType = chemCompType;
+    this.bonds = bonds;
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
@@ -322,7 +323,7 @@ ResidueType.prototype = {
     },
 
     getBonds: function( r ){
-        if( !this.bonds ){
+        if( this.bonds === undefined ){
             this.bonds = calculateResidueBonds( r );
         }
         return this.bonds;

@@ -569,6 +569,7 @@ function calculateResidueBonds( r ){
     var i, j;
     var atomIndices1 = [];
     var atomIndices2 = [];
+    var bondOrders = [];
 
     if( count > 50 ){
 
@@ -588,6 +589,7 @@ function calculateResidueBonds( r ){
                     if( a1.connectedTo( a2 ) ){
                         atomIndices1.push( a1.index - offset );
                         atomIndices2.push( a2.index - offset );
+                        bondOrders.push( 1 );
                     }
                 }
             }
@@ -602,6 +604,7 @@ function calculateResidueBonds( r ){
                 if( a1.connectedTo( a2 ) ){
                     atomIndices1.push( i - offset );
                     atomIndices2.push( j - offset );
+                    bondOrders.push( 1 );
                 }
             }
         }
@@ -610,7 +613,8 @@ function calculateResidueBonds( r ){
 
     return {
         atomIndices1: atomIndices1,
-        atomIndices2: atomIndices2
+        atomIndices2: atomIndices2,
+        bondsOrders: bondOrders
     };
 
 }

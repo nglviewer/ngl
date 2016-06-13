@@ -78,6 +78,9 @@ AtomProxy.prototype = {
     get atomType () {
         return  this.atomMap.get( this.atomStore.atomTypeId[ this.index ] );
     },
+    get residueAtomOffset () {
+        return this.residueStore.atomOffset[ this.residueIndex ];
+    },
 
     //
 
@@ -321,6 +324,42 @@ AtomProxy.prototype = {
         this.z = v.z;
 
         return this;
+
+    },
+
+    /**
+     * Get intra group/residue bonds
+     * @param  {Boolean} firstOnly - immediately return the first connected atomIndex
+     * @return {Array[Integer]|Integer|undefined} connected atomIndices
+     */
+    getResidueBonds: function( firstOnly ){
+
+        var residueAtomOffset = this.residueAtomOffset;
+        var relativeIndex = this.index - this.residueAtomOffset;
+        var bonds = this.residueType.getBonds();
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+        var idx1, idx2, connectedAtomIndex;
+
+        if( !firstOnly ) var connectedAtomIndices = [];
+
+        idx1 = atomIndices1.indexOf( relativeIndex );
+        while( idx1 !== -1 ){
+            connectedAtomIndex = atomIndices2[ idx1 ] + residueAtomOffset;
+            if( firstOnly ) return connectedAtomIndex;
+            connectedAtomIndices.push( connectedAtomIndex );
+            idx1 = atomIndices1.indexOf( relativeIndex, idx1 + 1 );
+        }
+
+        idx2 = atomIndices2.indexOf( relativeIndex );
+        while( idx2 !== -1 ){
+            connectedAtomIndex = atomIndices1[ idx2 ] + residueAtomOffset;
+            if( firstOnly ) return connectedAtomIndex;
+            connectedAtomIndices.push( connectedAtomIndex );
+            idx2 = atomIndices2.indexOf( relativeIndex, idx2 + 1 );
+        }
+
+        return connectedAtomIndices;
 
     },
 
