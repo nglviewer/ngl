@@ -894,6 +894,90 @@ var guessElement = function(){
 }();
 
 
+function getAtomToBondMapping( structure ){
+
+    // if( Debug ) Log.time( "getAtomToBondMapping" );
+
+    var n = structure.atomStore.count;
+    var atomToBondMap = new Array( n );
+
+    function add( idx1, bondIndex ){
+        if( atomToBondMap[ idx1 ] === undefined ){
+            atomToBondMap[ idx1 ] = [ bondIndex ];
+        }else{
+            atomToBondMap[ idx1 ].push( bondIndex );
+        }
+    }
+
+    structure.eachBond( function( bp ){
+        add( bp.atomIndex1, bp.index );
+        add( bp.atomIndex2, bp.index );
+    } );
+
+    // if( Debug ) Log.timeEnd( "getAtomToBondMapping" );
+
+    return atomToBondMap;
+
+}
+
+
+function assignResidueTypeBonds( structure ){
+
+    // if( Debug ) Log.time( "assignResidueTypeBonds" );
+
+    var atomToBondMap = getAtomToBondMapping( structure );
+    var bp = structure.getBondProxy();
+
+    structure.eachResidue( function( rp ){
+
+        var residueType = rp.residueType;
+        if( residueType.bonds !== undefined ) return;
+
+        var atomOffset = rp.atomOffset;
+        var atomIndices1 = [];
+        var atomIndices2 = [];
+        var bondOrders = [];
+        var bondDict = {};
+
+        rp.eachAtom( function( ap ){
+
+            var index = ap.index;
+            var atomBonds = atomToBondMap[ index ];
+            if( atomBonds ){
+                for( var i = 0, il = atomBonds.length; i < il; ++i ){
+                    bp.index = atomBonds[ i ];
+                    var idx1 = bp.atomIndex1;
+                    var idx2 = bp.atomIndex2;
+                    if( idx1 > idx2 ){
+                        var tmp = idx2;
+                        var idx2 = idx1;
+                        var idx1 = tmp;
+                    }
+                    var hash = idx1 + "|" + idx2;
+                    if( bondDict[ hash ] === undefined ){
+                        bondDict[ hash ] = true;
+                        atomIndices1.push( idx1 );
+                        atomIndices2.push( idx2 );
+                        bondOrders.push( bp.bondOrder );
+                    }
+                }
+            }
+
+        } );
+
+        residueType.bonds = {
+            atomIndices1: atomIndices1,
+            atomIndices2: atomIndices2,
+            bondOrders: bondOrders
+        };
+
+    } );
+
+    // if( Debug ) Log.timeEnd( "assignResidueTypeBonds" );
+
+}
+
+
 export {
 	reorderAtoms,
 	assignSecondaryStructure,
@@ -904,5 +988,7 @@ export {
 	calculateBondsWithin,
 	calculateBondsBetween,
 	buildUnitcellAssembly,
-    guessElement
+    guessElement,
+    getAtomToBondMapping,
+    assignResidueTypeBonds
 };

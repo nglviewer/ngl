@@ -7,6 +7,7 @@
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
@@ -230,6 +231,12 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "Mol2Parser._parse " + this.name );
         callback();
+
+    },
+
+    _postProcess: function(){
+
+        assignResidueTypeBonds( this.structure );
 
     }
 

@@ -7,6 +7,7 @@
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
@@ -167,6 +168,12 @@ SdfParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "SdfParser._parse " + this.name );
         callback();
+
+    },
+
+    _postProcess: function(){
+
+        assignResidueTypeBonds( this.structure );
 
     }
 
