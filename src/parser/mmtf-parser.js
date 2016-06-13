@@ -59,16 +59,7 @@ MmtfParser.prototype = Object.assign( Object.create(
         var i, il, j, jl, groupData;
 
         var s = this.structure;
-        // var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
-
-        console.time( "decodeMsgpack" )
-        var md = decodeMsgpack( this.streamer.data );
-        console.timeEnd( "decodeMsgpack" )
-        console.log( md );
-        console.time( "decodeMmtf" )
-        var sd = decodeMmtf( md );
-        console.timeEnd( "decodeMmtf" )
-        console.log( sd );
+        var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
@@ -284,8 +275,23 @@ MmtfParser.prototype = Object.assign( Object.create(
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var hetFlag = ChemCompHetero.indexOf( groupType.chemCompType ) !== -1;
+            var chemCompType = groupType.chemCompType;
+
+            var numGroupBonds = groupType.bondOrderList.length;
+            var atomIndices1 = new Array( numGroupBonds );
+            var atomIndices2 = new Array( numGroupBonds );
+            for( j = 0; j < numGroupBonds; ++j ){
+                atomIndices1[ j ] = groupType.bondAtomList[ j * 2 ];
+                atomIndices2[ j ] = groupType.bondAtomList[ j * 2 + 1 ];
+            }
+            var bonds = {
+                atomIndices1: atomIndices1,
+                atomIndices2: atomIndices2,
+                bondOrders: groupType.bondOrderList
+            }
+
             groupTypeDict[ i ] = s.residueMap.add(
-                groupType.groupName, atomTypeIdList, hetFlag, groupType.chemCompType
+                groupType.groupName, atomTypeIdList, hetFlag, chemCompType, bonds
             );
         }
 
