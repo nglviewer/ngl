@@ -275,7 +275,8 @@ var IonNames = [
 
 
 var ProteinBackboneAtoms = [
-    "CA", "C", "N", "O", "O1", "O2", "OC1", "OC2",
+    "CA", "C", "N", "O",
+    "O1", "O2", "OC1", "OC2", "OX1", "OXT",
     "H", "H1", "H2", "H3", "HA",
     "BB"
 ];
@@ -291,7 +292,7 @@ var ResidueTypeAtoms = {};
 ResidueTypeAtoms[ ProteinBackboneType ] = {
     trace: "CA",
     direction1: "C",
-    direction2: [ "O", "OC1", "O1", "OX1" ],
+    direction2: [ "O", "OC1", "O1", "OX1", "OXT" ],
     backboneStart: "N",
     backboneEnd: "C",
 };
