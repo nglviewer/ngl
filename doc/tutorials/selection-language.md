@@ -52,7 +52,23 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 *   alternate location: **%A**, **%B**, ... or **%** for non-alternate location atoms
 *   insertion code: **^A**, **^B**, ... or **^** for residues with no insertion code
 
-Some of these expressions can be combined (in this order) - residue numer (range), insertion code, chain name, atom name, alternate location, model - like this `10^A:F.CA%C/0 # select C-alpha atoms of residue 10 with insertion code A from chain F in model 0 at alternate location C` which is the same as `10 and ^A and :F and .CA and %C and /0` Single expressions may be left out as long as the order (see above) is kept, e.g. `:A/0 # select chain A from model 0`
+Some of these expressions can be combined (in this order) - residue numer (range), insertion code, chain name, atom name, alternate location, model - like this
+
+```
+10^A:F.CA%C/0  // select C-alpha atoms of residue 10 with insertion code A from chain F in model 0 at alternate location C
+```
+
+which is the same as
+
+```
+10 and ^A and :F and .CA and %C and /0
+```
+
+Single expressions may be left out as long as the order (see above) is kept, for example:
+
+```
+:A/0 # select chain A from model 0
+```
 
 
 ### Logical operators (in order of binding strength)

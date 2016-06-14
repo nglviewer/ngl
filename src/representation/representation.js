@@ -13,6 +13,36 @@ import Queue from "../utils/queue.js";
 import Counter from "../utils/counter.js";
 
 
+/**
+ * Representation parameter object.
+ * @typedef {Object} RepresentationParameters - representation parameters
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {Boolean} flatShaded - render flat shaded
+ * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {String} side - which triangle sides to render, "front" front-side,
+ *                            "back" back-side, "double" front- and back-side
+ * @property {Boolean} wireframe - render as wireframe
+ * @property {Integer} linewidth - width of lines (when applicable)
+ * @property {String} colorScheme - color scheme
+ * @property {String} colorScale - color scale
+ * @property {Color} colorValue - color value
+ * @property {Integer[]} colorDomain - scale value range
+ * @property {Integer} colorDomain.0 - min value
+ * @property {Integer} colorDomain.1 - max value
+ * @property {String} colorMode - color mode
+ * @property {Float} roughness - how rough the material is, between 0 and 1
+ * @property {Float} metalness - how metallic the material is, between 0 and 1
+ * @property {Color} diffuse - diffuse color for lighting
+ */
+
+
+/**
+ * Representation object
+ * @param {Object} object - the object to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {RepresentationParameters} params - representation parameters
+ */
 function Representation( object, viewer, params ){
 
     this.viewer = viewer;

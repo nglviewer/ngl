@@ -563,6 +563,11 @@ export {
      * @see  @{@link Stage}
      */
     Stage,
+    /**
+     * Assembly class
+     * @see  @{@link Assembly}
+     */
+    Assembly,
     TrajectoryPlayer,
 
     Queue,
