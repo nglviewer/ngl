@@ -16,7 +16,7 @@ import {
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
-import Bitset from "../utils/bitset.js";
+import THREE from "../../lib/three.js";
 
 /**
  * Propogates a depth-first search. TODO: Iterative deepening search instead?
@@ -460,6 +460,70 @@ ResidueType.prototype = {
                 }              
             }
         }
+    },
+
+    // Bonds will typically be queried in order
+    _lastBondIdx: 0,
+
+    /** Find ai3 for this bond, will return null if not definable.
+     * (Caller to use arbitrary point in this case)
+     */ 
+    getBondReferenceAtom: function( ap1, ap2 ) {
+	if( ap1.residueIndex !== ap2.residueIndex ) {
+	    return null; // Bond between residues, for now ignore (could detect)
+	}
+	var typeAtomIdx1 = ap1.index - ap1.residueAtomOffset;
+	var typeAtomIdx2 = ap2.index - ap2.residueAtomOffset;
+	// Sanity check
+	if( (Math.max(typeAtomIdx1, typeAtomIdx2) >= this.atomCount) ||
+	    ( Math.min(typeAtomIdx1, typeAtomIdx2) < 0)) {
+	    console.error("Something went wrong mapping atoms to ResidueType");
+	    return null;
+	}
+
+	var bonds = this.bonds;
+	var nBonds = this.bonds.atomIndices1.length;
+	if( !this.bondReferenceAtoms ) { this.assignBondReferenceAtoms(); }
+
+	for( var i=0, j=this._lastBondIdx; i<nBonds; i++, j++) {
+	    if( j === nBonds ) j = 0;
+	    if( ( typeAtomIdx1 === bonds.atomIndices1[j] && 
+		  typeAtomIdx2 === bonds.atomIndices2[j] ) || 
+		( typeAtomIdx1 === bonds.atomIndices2[j] && 
+		  typeAtomIdx2 === bonds.atomIndices1[j] ) ) {
+		this._lastBondIdx = j;
+		return this.bondReferenceAtoms[j];
+	    }
+	}
+    },
+
+    /* Returns a THREE Vector3 instance */
+    calculateShiftDir: function( ap1, ap2 ) {
+	var coLinear = false; // TODO: An actual fallback for this case!
+
+	var ai3 = this.getBondReferenceAtom( ap1, ap2 );
+	var p3;
+
+	if( Number.isInteger( ai3 ) ) {
+	    p3 = this.structure.getAtomProxy(ai3).positionToVector3();
+	} else {
+	    p3 = new THREE.Vector3(0,0,0); // Some arbitrary reference point
+	}
+
+	var p1 = ap1.positionToVector3();
+	var v12 = ap2.positionToVector3().sub(p1).normalize();
+	var v13 = p3.sub(p1).normalize();
+
+	var dp = v12.clone().dot(v13);
+
+	if (1 - Math.abs(dp) < 1e-5) {
+	    // More or less colinear:
+	    coLinear = true;
+	    console.warn("Colinear reference atom");
+	}
+	return ( v13.sub( v12.multiplyScalar(dp) ) ).normalize();
+
+
     },
 
     toJSON: function(){

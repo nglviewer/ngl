@@ -663,7 +663,7 @@ Structure.prototype = {
         var bondSet = p.bondSet || this.bondSet;
 
         var radiusFactory, colorMaker, pickingColorMaker;
-        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
+        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2, shiftDir;
 
         var bondData = {};
         var bp = this.getBondProxy();
@@ -671,6 +671,7 @@ Structure.prototype = {
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
         var bondCount = bondSet.size();
+	var rp = this.getResidueProxy();
 
         if( !what || what.position ){
             position1 = new Float32Array( bondCount * 3 );
@@ -707,11 +708,17 @@ Structure.prototype = {
             }
         }
 
+	if (what && what.shiftDir) { // Only when really requested?
+	    shiftDir = new Float32Array( bondCount * 3); 
+	    bondData.shiftDir = shiftDir;
+	}
+
         bondSet.forEach( function( index, i ){
             var i3 = i * 3;
             bp.index = index;
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
+	    rp.index = ap1.residueIndex;
             if( position1 ){
                 ap1.positionToArray( position1, i3 );
                 ap2.positionToArray( position2, i3 );
@@ -730,6 +737,10 @@ Structure.prototype = {
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
             }
+	    if( shiftDir && bp.bondOrder > 1 ){	
+		// Actual calculation done in ResidueType
+		rp.residueType.calculateShiftDir( ap1, ap2 ).toArray( shiftDir, i3 );
+	    }
         } );
 
         return bondData;
