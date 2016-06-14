@@ -1209,6 +1209,15 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "bondOrders": function( stage ) {
+
+        stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
+            o.addRepresentation( "licorice" );
+            stage.tasks.onZeroOnce( function() { stage.centerView(); } );
+        });
+
+    },
+
     "test": function( stage ){
 
         // var pdbid = "1HTQ";
