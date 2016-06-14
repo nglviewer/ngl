@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../math/three-utils.js";
 
 import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";
@@ -60,7 +60,7 @@ Assembly.prototype = {
         var part = this.partList[ 0 ];
         if( part.matrixList.length !== 1 ) return false;
 
-        var identityMatrix = new THREE.Matrix4();
+        var identityMatrix = new Matrix4();
         if( !identityMatrix.equals( part.matrixList[ 0 ] ) ) return false;
 
         var structureChainList = [];
