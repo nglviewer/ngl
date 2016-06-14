@@ -13,7 +13,7 @@ import Buffer from "./buffer.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
-function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
+function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, shiftDir, params ){
 
     var p = params || {};
 
@@ -36,7 +36,6 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.addUniforms( {
         "modelViewMatrixInverse": modelViewMatrixInverse,
-        "shift": { value: this.shift },
         "ortho": { value: 0.0 },
     } );
 
@@ -48,13 +47,12 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
     } );
 
     this.setAttributes( {
-        "position": calculateCenterArray( from, to ),
-
         "position1": from,
         "position2": to,
         "color": color,
         "color2": color2,
         "radius": radius,
+        "shiftDir": shiftDir,
     } );
 
     if( pickingColor ){
@@ -97,6 +95,40 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
         }
 
         return material;
+
+    },
+
+    setAttributes: function( data ){
+
+        data = Object.assign( {}, data );
+
+        if( data && data.shiftDir ){
+            this.shiftDir = data.shiftDir;
+            delete data.shiftDir;
+        }
+
+        if( data && this.shiftDir && this.shift && data.position1 && data.position2 ){
+            var pos1 = new Float32Array( data.position1 );
+            var pos2 = new Float32Array( data.position2 );
+            var shiftDir = this.shiftDir;
+            var shift = this.shift;
+            for( var i = 0, il = shiftDir.length; i < il; i += 3 ){
+                pos1[ i     ] += shiftDir[ i     ] * shift;
+                pos1[ i + 1 ] += shiftDir[ i + 1 ] * shift;
+                pos1[ i + 2 ] += shiftDir[ i + 2 ] * shift;
+                pos2[ i     ] += shiftDir[ i     ] * shift;
+                pos2[ i + 1 ] += shiftDir[ i + 1 ] * shift;
+                pos2[ i + 2 ] += shiftDir[ i + 2 ] * shift;
+            }
+            data.position1 = pos1;
+            data.position2 = pos2;
+        }
+
+        if( data && data.position1 && data.position2 ){
+            data.position = calculateCenterArray( data.position1, data.position2 );
+        }
+
+        AlignedBoxBuffer.prototype.setAttributes.call( this, data );
 
     }
 
