@@ -12,13 +12,12 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, shiftDir, params ){
+function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
     var p = params || {};
 
     var radiusSegments = defaults( p.radiusSegments, 10 );
 
-    this.shift = defaults( p.shift, 0 );
     this.updateNormals = true;
 
     var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
@@ -39,10 +38,6 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.__center = new Float32Array( n );
 
-    if( shiftDir ){
-        this._shiftDir = new Float32Array( n );
-    }
-
     GeometryBuffer.call(
         this, this._position, this._color, this._pickingColor, p
     );
@@ -56,8 +51,7 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
         "color2": color2,
         "radius": radius,
         "pickingColor": pickingColor,
-        "pickingColor2": pickingColor2,
-        "shiftDir": shiftDir
+        "pickingColor2": pickingColor2
     } );
 
 }
@@ -76,18 +70,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var target = new THREE.Vector3();
         var up = new THREE.Vector3( 0, 1, 0 );
 
-        var shift = this.shift;
-        var shiftDir = this._shiftDir;
-        var sn = shiftDir ? shiftDir.length : 0;
-
         this.applyPositionTransform = function( matrix, i, i3 ){
-
-            if( shiftDir && shift ){
-                var me = matrix.elements;
-                me[ 12 ] += shiftDir[ ( i3     ) % sn ] * shift;
-                me[ 13 ] += shiftDir[ ( i3 + 1 ) % sn ] * shift;
-                me[ 14 ] += shiftDir[ ( i3 + 2 ) % sn ] * shift;
-            }
 
             eye.fromArray( from, i3 );
             target.fromArray( to, i3 );
@@ -106,12 +89,6 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var n = this._position.length / 2;
         var m = this._radius.length / 2;
         var geoData = {};
-
-        if( data.shiftDir ){
-
-            this._shiftDir.set( data.shiftDir );
-
-        }
 
         if( data.position1 && data.position2 ){
 

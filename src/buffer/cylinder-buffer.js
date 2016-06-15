@@ -30,7 +30,7 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
  *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
  * @param {BufferParams} params - parameters object
  */
-function CylinderBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, shiftDir, params ){
+function CylinderBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
     var p = params || {};
 
@@ -40,14 +40,14 @@ function CylinderBuffer( from, to, color, color2, radius, pickingColor, pickingC
 
         return new CylinderGeometryBuffer(
             from, to, color, color2, radius,
-            pickingColor, pickingColor2, shiftDir, params
+            pickingColor, pickingColor2, params
         );
 
     }else{
 
         return new CylinderImpostorBuffer(
             from, to, color, color2, radius,
-            pickingColor, pickingColor2, shiftDir, params
+            pickingColor, pickingColor2, params
         );
 
     }

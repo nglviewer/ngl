@@ -16,23 +16,6 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
-function getShiftDir( bondData ){
-    var shiftDir = new Float32Array( bondData.position1.length );
-    var v1 = new THREE.Vector3();
-    var v2 = new THREE.Vector3();
-    var v3 = new THREE.Vector3();
-    for( var i = 0, il = shiftDir.length; i < il; i += 3 ){
-        v1.set( 1, 0, 0 );
-        v2.fromArray( bondData.position1, i );
-        v3.fromArray( bondData.position2, i );
-        v2.sub( v3 );
-        v1.cross( v2 ).normalize();
-        v1.toArray( shiftDir, i );
-    }
-    return shiftDir;
-}
-
-
 function BallAndStickRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
@@ -118,12 +101,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
     getBondData: function( sview, what, params ){
 
-        var bondData = sview.getBondData( this.getBondParams( what, params ) );
-
-        // TODO get real shift data
-        bondData.shiftDir = getShiftDir( bondData );
-
-        return bondData;
+        return sview.getBondData( this.getBondParams( what, params ) );
 
     },
 
@@ -165,8 +143,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bufferList.push( sphereBuffer );
 
             }
-
-            var cylinderBuffer1 = new CylinderBuffer(
+            var cylinderBuffer = new CylinderBuffer(
                 bondData.position1,
                 bondData.position2,
                 bondData.color1,
@@ -174,9 +151,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bondData.radius,
                 bondData.pickingColor1,
                 bondData.pickingColor2,
-                bondData.shiftDir,
                 this.getBufferParams( {
-                    shift: 0.2,
                     cap: true,
                     radiusSegments: this.radiusSegments,
                     disableImpostor: this.disableImpostor,
@@ -184,25 +159,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 } )
             );
 
-            var cylinderBuffer2 = new CylinderBuffer(
-                bondData.position1,
-                bondData.position2,
-                bondData.color1,
-                bondData.color2,
-                bondData.radius,
-                bondData.pickingColor1,
-                bondData.pickingColor2,
-                bondData.shiftDir,
-                this.getBufferParams( {
-                    shift: -0.2,
-                    cap: true,
-                    radiusSegments: this.radiusSegments,
-                    disableImpostor: this.disableImpostor,
-                    dullInterior: true
-                } )
-            );
-
-            bufferList.push( cylinderBuffer1, cylinderBuffer2 );
+            bufferList.push( cylinderBuffer );
 
         }
 
@@ -242,7 +199,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 sphereData.position = atomData.position;
                 cylinderData.position1 = bondData.position1;
                 cylinderData.position2 = bondData.position2;
-                cylinderData.shiftDir = bondData.shiftDir;
             }
 
             if( !what || what.color ){
@@ -258,7 +214,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
             data.bufferList[ 0 ].setAttributes( sphereData );
             data.bufferList[ 1 ].setAttributes( cylinderData );
-            data.bufferList[ 2 ].setAttributes( cylinderData );
 
         }
 

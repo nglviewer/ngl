@@ -13,13 +13,10 @@ import Buffer from "./buffer.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
-function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, shiftDir, params ){
+function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
     var p = params || {};
 
-    // Moves the cylinder in camera space to get, for example,
-    // one of multiple shifted screen-aligned cylinders.
-    this.shift = defaults( p.shift, 0 );
     this.cap = defaults( p.cap, true );
 
     this.impostor = true;
@@ -51,8 +48,7 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
         "position2": to,
         "color": color,
         "color2": color2,
-        "radius": radius,
-        "shiftDir": shiftDir,
+        "radius": radius
     } );
 
     if( pickingColor ){
@@ -99,30 +95,6 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
     },
 
     setAttributes: function( data ){
-
-        data = Object.assign( {}, data );
-
-        if( data && data.shiftDir ){
-            this.shiftDir = data.shiftDir;
-            delete data.shiftDir;
-        }
-
-        if( data && this.shiftDir && this.shift && data.position1 && data.position2 ){
-            var pos1 = new Float32Array( data.position1 );
-            var pos2 = new Float32Array( data.position2 );
-            var shiftDir = this.shiftDir;
-            var shift = this.shift;
-            for( var i = 0, il = shiftDir.length; i < il; i += 3 ){
-                pos1[ i     ] += shiftDir[ i     ] * shift;
-                pos1[ i + 1 ] += shiftDir[ i + 1 ] * shift;
-                pos1[ i + 2 ] += shiftDir[ i + 2 ] * shift;
-                pos2[ i     ] += shiftDir[ i     ] * shift;
-                pos2[ i + 1 ] += shiftDir[ i + 1 ] * shift;
-                pos2[ i + 2 ] += shiftDir[ i + 2 ] * shift;
-            }
-            data.position1 = pos1;
-            data.position2 = pos2;
-        }
 
         if( data && data.position1 && data.position2 ){
             data.position = calculateCenterArray( data.position1, data.position2 );
