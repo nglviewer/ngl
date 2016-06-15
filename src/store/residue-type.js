@@ -465,8 +465,9 @@ ResidueType.prototype = {
     // Bonds will typically be queried in order
     _lastBondIdx: 0,
 
-    /** Find ai3 for this bond, will return null if not definable.
-     * (Caller to use arbitrary point in this case)
+    /** Find ai3 for the bond between ap1 and ap2, if possible.
+     * 
+     * @returns an integer atom index, or null if cannot determine one.
      */ 
     getBondReferenceAtom: function( ap1, ap2 ) {
 	if( ap1.residueIndex !== ap2.residueIndex ) {
@@ -492,9 +493,15 @@ ResidueType.prototype = {
 		( typeAtomIdx1 === bonds.atomIndices2[j] && 
 		  typeAtomIdx2 === bonds.atomIndices1[j] ) ) {
 		this._lastBondIdx = j;
-		return this.bondReferenceAtoms[j];
+                var typeAtomIdx3 = this.bondReferenceAtoms[j];
+                if( Number.isInteger( typeAtomIdx3 ) ) {
+                    return typeAtomIdx3 + ap1.residueAtomOffset;
+                } else {
+                    return null;
+                }
 	    }
 	}
+        return null;
     },
 
     /* Returns a THREE Vector3 instance */
@@ -504,7 +511,7 @@ ResidueType.prototype = {
 	var ai3 = this.getBondReferenceAtom( ap1, ap2 );
 	var p3;
 
-	if( Number.isInteger( ai3 ) ) {
+	if( ai3 !== null ) {
 	    p3 = this.structure.getAtomProxy(ai3).positionToVector3();
 	} else {
 	    p3 = new THREE.Vector3(0,0,0); // Some arbitrary reference point
