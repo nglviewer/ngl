@@ -9,6 +9,8 @@ import THREE from "../../lib/three.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
+import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Selection from "../selection.js";
@@ -660,7 +662,8 @@ Structure.prototype = {
         if( p.colorParams ) p.colorParams.structure = this.getStructure();
 
         var what = p.what;
-        var bondSet = p.bondSet || this.bondSet;
+        var bondSet = defaults( p.bondSet, this.bondSet );
+        var multipleBonds = defaults( p.multipleBonds, false );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
@@ -670,7 +673,17 @@ Structure.prototype = {
         if( p.bondStore ) bp.bondStore = p.bondStore;
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
-        var bondCount = bondSet.size();
+
+        var bondCount;
+        if( multipleBonds ){
+            var storeBondOrder = bp.bondStore.bondOrder;
+            bondCount = 0;
+            bondSet.forEach( function( index ){
+                bondCount += storeBondOrder[ index ];
+            } );
+        }else{
+            bondCount = bondSet.size();
+        }
 
         if( !what || what.position ){
             position1 = new Float32Array( bondCount * 3 );
@@ -707,29 +720,96 @@ Structure.prototype = {
             }
         }
 
-        bondSet.forEach( function( index, i ){
-            var i3 = i * 3;
+        var i = 0;
+        var j, i3, k, bondOrder;
+        var v1 = new THREE.Vector3();
+        var v2 = new THREE.Vector3();
+        var v3 = new THREE.Vector3();
+        var v4 = new THREE.Vector3();
+        bondSet.forEach( function( index ){
+            i3 = i * 3;
             bp.index = index;
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
+            bondOrder = bp.bondOrder
             if( position1 ){
-                ap1.positionToArray( position1, i3 );
-                ap2.positionToArray( position2, i3 );
+                if( multipleBonds && bondOrder > 1 ){
+                    // todo, get better vector
+                    v1.set( 1, 0, 0 );
+                    ap1.positionToVector3( v2 );
+                    ap2.positionToVector3( v3 );
+                    v4.subVectors( v2, v3 );
+                    v1.cross( v4 ).normalize().multiplyScalar( 0.075 * bondOrder );
+                    // shift
+                    if( bondOrder === 2 ){
+                        v4.addVectors( v2, v1 ).toArray( position1, i3 );
+                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 3 );
+                        v4.addVectors( v3, v1 ).toArray( position2, i3 );
+                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 3 );
+                    }else if( bondOrder === 3 ){
+                        v2.toArray( position1, i3 );
+                        v4.addVectors( v2, v1 ).toArray( position1, i3 + 3 );
+                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 6 );
+                        v3.toArray( position2, i3 );
+                        v4.addVectors( v3, v1 ).toArray( position2, i3 + 3 );
+                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 6 );
+                    }else if( bondOrder === 4 ){
+                        v4.addVectors( v2, v1 ).toArray( position1, i3 );
+                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 3 );
+                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 6 );
+                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 9 );
+                        v4.addVectors( v3, v1 ).toArray( position2, i3 );
+                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 3 );
+                        v4.addVectors( v3, v1 ).toArray( position2, i3 + 6 );
+                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 9 );
+                    }else{
+                        // todo, some fallback
+                    }
+                }else{
+                    ap1.positionToArray( position1, i3 );
+                    ap2.positionToArray( position2, i3 );
+                }
             }
             if( color1 ){
                 colorMaker.bondColorToArray( bp, 1, color1, i3 );
                 colorMaker.bondColorToArray( bp, 0, color2, i3 );
+                if( multipleBonds && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        k = j * 3 + i3;
+                        copyWithin( color1, i3, k, 3 );
+                        copyWithin( color2, i3, k, 3 );
+                    }
+                }
             }
             if( pickingColor1 ){
                 pickingColorMaker.bondColorToArray( bp, 1, pickingColor1, i3 );
                 pickingColorMaker.bondColorToArray( bp, 0, pickingColor2, i3 );
+                if( multipleBonds && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        k = j * 3 + i3;
+                        copyWithin( pickingColor1, i3, k, 3 );
+                        copyWithin( pickingColor2, i3, k, 3 );
+                    }
+                }
             }
             if( radius1 ){
-                radius1[ i ] = radiusFactory.atomRadius( ap1 );
+                radius1[ i ] = radiusFactory.atomRadius( ap1 ) * ( 1 / ( multipleBonds ? bondOrder : 1 ) );
+                if( multipleBonds && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        radius1[ i + j ] = radius1[ i ];
+                    }
+                }
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
+                if( multipleBonds && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        radius2[ i + j ] = radius2[ i ];
+                    }
+                }
             }
+            i += multipleBonds ? bondOrder : 1;
+            console.log(bondOrder)
         } );
 
         return bondData;

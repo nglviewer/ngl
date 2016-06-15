@@ -51,6 +51,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         },
         cylinderOnly: {
             type: "boolean", rebuild: true
+        },
+        multipleBonds: {
+            type: "boolean", rebuild: true
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -96,6 +99,16 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     getAtomData: function( sview, what, params ){
 
         return sview.getAtomData( this.getAtomParams( what, params ) );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        params = Object.assign( {
+            multipleBonds: this.multipleBonds
+        }, params );
+
+        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
