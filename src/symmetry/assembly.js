@@ -5,12 +5,17 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../math/three-utils.js";
 
 import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";
 
 
+/**
+ * Assembly of transformed parts of a {@link Structure}
+ * @class
+ * @param {String} name - assembly name
+ */
 function Assembly( name ){
 
     this.name = name || "";
@@ -23,12 +28,29 @@ Assembly.prototype = {
     constructor: Assembly,
     type: "Assembly",
 
+    /**
+     * Add transformed parts to the assembly
+     * @example
+     * var m1 = new NGL.Matrix4().set( ... );
+     * var m2 = new NGL.Matrix4().set( ... );
+     * var assembly = new NGL.Assembly( "myAssembly" );
+     * // add part that transforms chain 'A' and 'B' using matrices `m1` and `m2`
+     * assembly.addPart( [ m1, m2 ], [ "A", "B" ] )
+     *
+     * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
+     * @param {String[]} chainList - array of chain names
+     */
     addPart: function( matrixList, chainList ){
         var part = new AssemblyPart( matrixList, chainList );
         this.partList.push( part );
         return part;
     },
 
+    /**
+     * Get the number of atom for a given structure
+     * @param  {Structure} structure - the given structure
+     * @return {Integer} number of atoms in the assembly
+     */
     getAtomCount: function( structure ){
 
         var atomCount = 0;
@@ -41,6 +63,11 @@ Assembly.prototype = {
 
     },
 
+    /**
+     * Get number of instances the assembly will produce, i.e.
+     * the number of transformations performed by the assembly
+     * @return {Integer} number of instances
+     */
     getInstanceCount: function(){
 
         var instanceCount = 0;
@@ -53,6 +80,11 @@ Assembly.prototype = {
 
     },
 
+    /**
+     * Determine if the assembly is contains the full and untransformed structure
+     * @param  {Structure}  structure - the given structure
+     * @return {Boolean} whether the assembly is identical to the structure
+     */
     isIdentity: function( structure ){
 
         if( this.partList.length !== 1 ) return false;
@@ -60,7 +92,7 @@ Assembly.prototype = {
         var part = this.partList[ 0 ];
         if( part.matrixList.length !== 1 ) return false;
 
-        var identityMatrix = new THREE.Matrix4();
+        var identityMatrix = new Matrix4();
         if( !identityMatrix.equals( part.matrixList[ 0 ] ) ) return false;
 
         var structureChainList = [];

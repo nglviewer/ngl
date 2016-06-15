@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>NGL - webapp</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="css/font-awesome.min.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="subresource" href="css/light.css" />
+    <link rel="subresource" href="css/dark.css" />
+</head>
+<body>
+    <!-- NGL -->
+    <script src="../build/js/ngl.js"></script>
+
+    <!-- UI -->
+    <script src="js/lib/signals.min.js"></script>
+    <script src="js/lib/tether.min.js"></script>
+    <script src="js/lib/colorpicker.min.js"></script>
+    <script src="js/ui/ui.js"></script>
+    <script src="js/ui/ui.extra.js"></script>
+    <script src="js/ui/ui.ngl.js"></script>
+    <script src="js/gui.js"></script>
+
+    <!-- EXTRA -->
+    <script src="js/examples.js"></script>
+    <script src="js/plugins.js"></script>
+
+    <script>
+        NGL.cssDirectory = "css/";
+        NGL.documentationUrl = "../doc/index.html";
+
+        // Datasources
+        NGL.DatasourceRegistry.add(
+            "data", new NGL.StaticDatasource( "../data/" )
+        );
+
+        // Plugins
+        // NGL.PluginRegistry.add(
+        //     "apbs", "plugins/apbs.plugin"
+        // );
+        // NGL.PluginRegistry.add(
+        //     "crosslink", "plugins/crosslink.plugin"
+        // );
+
+        document.addEventListener( "DOMContentLoaded", function(){
+            var stage = new NGL.Stage();
+            NGL.StageWidget( stage );
+            var example = NGL.getQuery( "example" );
+            if( example ) NGL.ExampleRegistry.load( example, stage );
+            var load = NGL.getQuery( "load" );
+            if( load ) stage.loadFile( load, { defaultRepresentation: true } );
+            // var plugin = NGL.getQuery( "plugin" );
+            // if( plugin ) NGL.PluginRegistry.load( plugin, stage );
+        } );
+    </script>
+</body>
+</html>

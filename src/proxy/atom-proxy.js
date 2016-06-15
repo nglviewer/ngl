@@ -330,7 +330,7 @@ AtomProxy.prototype = {
     /**
      * Get intra group/residue bonds
      * @param  {Boolean} firstOnly - immediately return the first connected atomIndex
-     * @return {Array[Integer]|Integer|undefined} connected atomIndices
+     * @return {Integer[]|Integer|undefined} connected atomIndices
      */
     getResidueBonds: function( firstOnly ){
 

@@ -12,6 +12,25 @@ import Selection from "../selection.js";
 import RadiusFactory from "../utils/radius-factory.js";
 
 
+/**
+ * Structure representation parameter object.
+ * @typedef {Object} StructureRepresentationParameters - structure representation parameters
+ * @mixes RepresentationParameters
+ *
+ * @property {String} radiusType - A list of possible sources of the radius used for rendering the representation. The radius can be based on the *vdW radius*, the *covalent radius* or the *B-factor* value of the corresponding atom. Additionally the radius can be based on the *secondary structure*. Alternatively, when set to *size*, the value from the *radius* parameter is used for all atoms.
+ * @property {Float} radius - A number providing a fixed radius used for rendering the representation.
+ * @property {Float} scale - A number that scales the value defined by the *radius* or the *radiusType* parameter.
+ * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
+ */
+
+
+/**
+ * Structure representation object
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {StructureRepresentationParameters} params - structure representation parameters
+ */
 function StructureRepresentation( structure, viewer, params ){
 
     var p = params || {};

@@ -1,16 +1,31 @@
 {
-    "selection-language": {
-        "title": "Selection Language",
-        "children": {
-        }
-    },
     "embedding": {
         "title": "Embedding",
         "children": {
         }
     },
+    "file-formats": {
+        "title": "File Formats",
+        "children": {
+        }
+    },
+    "molecular-representations": {
+        "title": "Molecular Representations",
+        "children": {
+        }
+    },
     "scripting": {
         "title": "Scripting",
+        "children": {
+        }
+    },
+    "selection-language": {
+        "title": "Selection Language",
+        "children": {
+        }
+    },
+    "snippets": {
+        "title": "Snippets",
         "children": {
         }
     }

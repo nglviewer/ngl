@@ -531,6 +531,10 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 
 //
 
+import { Matrix4, Vector3 } from "./math/three-utils.js";
+
+//
+
 
 /**
  * Version name
@@ -559,6 +563,11 @@ export {
      * @see  @{@link Stage}
      */
     Stage,
+    /**
+     * Assembly class
+     * @see  @{@link Assembly}
+     */
+    Assembly,
     TrajectoryPlayer,
 
     Queue,
@@ -581,5 +590,16 @@ export {
      * Cylinder buffer class
      * @see  @{@link CylinderBuffer}
      */
-    CylinderBuffer
+    CylinderBuffer,
+
+    /**
+     * Matrix4 class
+     * @see  @{@link Matrix4}
+     */
+    Matrix4,
+    /**
+     * Vector3 class
+     * @see  @{@link Vector3}
+     */
+    Vector3
 };

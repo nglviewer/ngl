@@ -17,7 +17,7 @@ Here, *o* is a *StructureComponent* instance.
 
 The following variables are available in a scripting context.
 
-*   *stage* - the [page:Stage] object
-*   *__name__* - the name of the script file
-*   *__path__* - the full path of the script file
-*   *__dir__* - the directory to the scipt file
+- *stage* - the [page:Stage] object
+- *\_\_name\_\_* - the name of the script file
+- *\_\_path\_\_* - the full path of the script file
+- *\_\_dir\_\_* - the directory to the scipt file
