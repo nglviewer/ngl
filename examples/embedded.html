@@ -1,49 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-
-    <head>
-
-        <title>NGL - embedded</title>
-
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-    </head>
-
-    <body>
-
-        <script src="../js/build/ngl.embedded.min.js"></script>
-
-        <!-- EXTRA -->
-        <script src="../js/extra/examples.js"></script>
-
-        <script>
-
-            NGL.mainScriptFilePath = "../js/build/ngl.embedded.min.js";
-
-            // Datasources
-
-            NGL.DatasourceRegistry.add(
-                "data", new NGL.StaticDatasource( "../data/" )
-            );
-
-            document.addEventListener( "DOMContentLoaded", function(){
-                var stage = new NGL.Stage( "viewport" );
-                stage.viewer.container.addEventListener( "dblclick", function(){
-                    stage.toggleFullscreen();
-                } );
-                var example = NGL.GET( "example" );
-                if( example ) NGL.ExampleRegistry.load( example, stage );
-                var load = NGL.GET( "load" );
-                if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-                var plugin = NGL.GET( "plugin" );
-                if( plugin ) NGL.PluginRegistry.load( plugin, stage );
-            } );
-
-        </script>
-
-        <div id="viewport" style="width:800px; height:800px;"></div>
-
-    </body>
-
+<head>
+    <title>NGL - embedded</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+    <script src="../build/js/ngl.js"></script>
+    <script>
+        document.addEventListener( "DOMContentLoaded", function(){
+            stage = new NGL.Stage( "viewport" );
+            stage.loadFile( "rcsb://1crn.mmtf", { defaultRepresentation: true } );
+        } );
+    </script>
+    <div id="viewport" style="width:800px; height:800px;"></div>
+</body>
 </html>
