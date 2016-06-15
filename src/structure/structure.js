@@ -663,7 +663,7 @@ Structure.prototype = {
 
         var what = p.what;
         var bondSet = defaults( p.bondSet, this.bondSet );
-        var multipleBonds = defaults( p.multipleBonds, false );
+        var multipleBond = defaults( p.multipleBond, false );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
@@ -675,7 +675,7 @@ Structure.prototype = {
         var ap2 = this.getAtomProxy();
 
         var bondCount;
-        if( multipleBonds ){
+        if( multipleBond ){
             var storeBondOrder = bp.bondStore.bondOrder;
             bondCount = 0;
             bondSet.forEach( function( index ){
@@ -733,7 +733,7 @@ Structure.prototype = {
             ap2.index = bp.atomIndex2;
             bondOrder = bp.bondOrder
             if( position1 ){
-                if( multipleBonds && bondOrder > 1 ){
+                if( multipleBond && bondOrder > 1 ){
                     // todo, get better vector
                     v1.set( 1, 0, 0 );
                     ap1.positionToVector3( v2 );
@@ -773,7 +773,7 @@ Structure.prototype = {
             if( color1 ){
                 colorMaker.bondColorToArray( bp, 1, color1, i3 );
                 colorMaker.bondColorToArray( bp, 0, color2, i3 );
-                if( multipleBonds && bondOrder > 1 ){
+                if( multipleBond && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         k = j * 3 + i3;
                         copyWithin( color1, i3, k, 3 );
@@ -784,7 +784,7 @@ Structure.prototype = {
             if( pickingColor1 ){
                 pickingColorMaker.bondColorToArray( bp, 1, pickingColor1, i3 );
                 pickingColorMaker.bondColorToArray( bp, 0, pickingColor2, i3 );
-                if( multipleBonds && bondOrder > 1 ){
+                if( multipleBond && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         k = j * 3 + i3;
                         copyWithin( pickingColor1, i3, k, 3 );
@@ -793,8 +793,8 @@ Structure.prototype = {
                 }
             }
             if( radius1 ){
-                radius1[ i ] = radiusFactory.atomRadius( ap1 ) * ( 1 / ( multipleBonds ? bondOrder : 1 ) );
-                if( multipleBonds && bondOrder > 1 ){
+                radius1[ i ] = radiusFactory.atomRadius( ap1 ) * ( 1 / ( multipleBond ? bondOrder : 1 ) );
+                if( multipleBond && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         radius1[ i + j ] = radius1[ i ];
                     }
@@ -802,14 +802,13 @@ Structure.prototype = {
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
-                if( multipleBonds && bondOrder > 1 ){
+                if( multipleBond && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         radius2[ i + j ] = radius2[ i ];
                     }
                 }
             }
-            i += multipleBonds ? bondOrder : 1;
-            console.log(bondOrder)
+            i += multipleBond ? bondOrder : 1;
         } );
 
         return bondData;

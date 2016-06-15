@@ -52,7 +52,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         cylinderOnly: {
             type: "boolean", rebuild: true
         },
-        multipleBonds: {
+        multipleBond: {
             type: "boolean", rebuild: true
         }
 
@@ -81,6 +81,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
+        this.multipleBond = defaults( p.multipleBond, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -105,7 +106,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     getBondParams: function( what, params ){
 
         params = Object.assign( {
-            multipleBonds: this.multipleBonds
+            multipleBond: this.multipleBond
         }, params );
 
         return StructureRepresentation.prototype.getBondParams.call( this, what, params );
