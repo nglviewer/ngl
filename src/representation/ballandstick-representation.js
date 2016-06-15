@@ -54,6 +54,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         },
         multipleBond: {
             type: "boolean", rebuild: true
+        },
+        bondSpacing: {
+            type: "number", precision: 2, max: 1.0, min: 0.5
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -82,6 +85,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
         this.multipleBond = defaults( p.multipleBond, false );
+        this.bondSpacing = defaults( p.bondSpacing, 0.95 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -106,7 +110,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     getBondParams: function( what, params ){
 
         params = Object.assign( {
-            multipleBond: this.multipleBond
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing
         }, params );
 
         return StructureRepresentation.prototype.getBondParams.call( this, what, params );
@@ -185,6 +190,10 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
     updateData: function( what, data ){
 
+        if( this.multipleBond && what && what.radius ){
+            what.position = true;
+        }
+
         var bondData = this.getBondData( data.sview, what );
 
         if( this.lineOnly ){
@@ -238,7 +247,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         var rebuild = false;
         var what = {};
 
-        if( params && params.aspectRatio ){
+        if( params && ( params.aspectRatio || params.bondSpacing ) ){
 
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){

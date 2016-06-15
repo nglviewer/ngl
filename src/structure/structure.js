@@ -664,6 +664,7 @@ Structure.prototype = {
         var what = p.what;
         var bondSet = defaults( p.bondSet, this.bondSet );
         var multipleBond = defaults( p.multipleBond, false );
+        var bondSpacing = defaults( p.bondSpacing, 0.95 );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
@@ -721,7 +722,7 @@ Structure.prototype = {
         }
 
         var i = 0;
-        var j, i3, k, bondOrder;
+        var j, i3, k, bondOrder, radius;
         var v1 = new THREE.Vector3();
         var v2 = new THREE.Vector3();
         var v3 = new THREE.Vector3();
@@ -731,7 +732,7 @@ Structure.prototype = {
             bp.index = index;
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
-            bondOrder = bp.bondOrder
+            bondOrder = bp.bondOrder;
             if( position1 ){
                 if( multipleBond && bondOrder > 1 ){
                     // todo, get better vector
@@ -739,7 +740,9 @@ Structure.prototype = {
                     ap1.positionToVector3( v2 );
                     ap2.positionToVector3( v3 );
                     v4.subVectors( v2, v3 );
-                    v1.cross( v4 ).normalize().multiplyScalar( 0.075 * bondOrder );
+                    var radius = radiusFactory.atomRadius( ap1 );
+                    var multiRadius = radius / bondOrder * bondSpacing;
+                    v1.cross( v4 ).normalize().multiplyScalar( radius - multiRadius );
                     // shift
                     if( bondOrder === 2 ){
                         v4.addVectors( v2, v1 ).toArray( position1, i3 );
@@ -753,15 +756,6 @@ Structure.prototype = {
                         v3.toArray( position2, i3 );
                         v4.addVectors( v3, v1 ).toArray( position2, i3 + 3 );
                         v4.subVectors( v3, v1 ).toArray( position2, i3 + 6 );
-                    }else if( bondOrder === 4 ){
-                        v4.addVectors( v2, v1 ).toArray( position1, i3 );
-                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 3 );
-                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 6 );
-                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 9 );
-                        v4.addVectors( v3, v1 ).toArray( position2, i3 );
-                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 3 );
-                        v4.addVectors( v3, v1 ).toArray( position2, i3 + 6 );
-                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 9 );
                     }else{
                         // todo, some fallback
                     }
@@ -793,8 +787,9 @@ Structure.prototype = {
                 }
             }
             if( radius1 ){
-                radius1[ i ] = radiusFactory.atomRadius( ap1 ) * ( 1 / ( multipleBond ? bondOrder : 1 ) );
+                radius1[ i ] = radiusFactory.atomRadius( ap1 );
                 if( multipleBond && bondOrder > 1 ){
+                    radius1[ i ] /= bondOrder * 1 / bondSpacing;
                     for( j = 1; j < bondOrder; ++j ){
                         radius1[ i + j ] = radius1[ i ];
                     }
@@ -803,6 +798,7 @@ Structure.prototype = {
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
                 if( multipleBond && bondOrder > 1 ){
+                    radius2[ i ] = bondOrder * 1 / bondSpacing;
                     for( j = 1; j < bondOrder; ++j ){
                         radius2[ i + j ] = radius2[ i ];
                     }
