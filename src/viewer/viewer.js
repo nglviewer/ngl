@@ -76,52 +76,6 @@ JitterVectors.forEach( function( offsetList ){
 } );
 
 
-OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
-
-    this.view = {
-        fullWidth: fullWidth,
-        fullHeight: fullHeight,
-        offsetX: x,
-        offsetY: y,
-        width: width,
-        height: height
-    };
-
-    this.updateProjectionMatrix();
-
-};
-
-OrthographicCamera.prototype.updateProjectionMatrix = function () {
-
-    var dx = ( this.right - this.left ) / ( 2 * this.zoom );
-    var dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
-    var cx = ( this.right + this.left ) / 2;
-    var cy = ( this.top + this.bottom ) / 2;
-
-    var left = cx - dx;
-    var right = cx + dx;
-    var top = cy + dy;
-    var bottom = cy - dy;
-
-    if( this.view ){
-
-        var scaleW = this.zoom / ( this.view.width / this.view.fullWidth );
-        var scaleH = this.zoom / ( this.view.height / this.view.fullHeight );
-        var biasW = ( this.right - this.left ) / this.view.width;
-        var biasH = ( this.top - this.bottom ) / this.view.height;
-
-        left += biasW * ( this.view.offsetX / scaleW );
-        right = left + biasW * ( this.view.width / scaleW );
-        top -= biasH * ( this.view.offsetY / scaleH );
-        bottom = top - biasH * ( this.view.height / scaleH );
-
-    }
-
-    this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
-
-};
-
-
 /**
  * [Viewer description]
  * @class
