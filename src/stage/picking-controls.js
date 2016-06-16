@@ -13,6 +13,19 @@ import { GidPool, Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 
 
+/**
+ * Picking data object.
+ * @typedef {Object} PickingData - picking data
+ * @property {AtomProxy} [pickedAtom] - picked atom
+ * @property {BondProxy} [pickedBond] - picked bond
+ * @property {Volume} [pickedVolume] - picked volume
+ * @property {Object} [instance] - instance data
+ * @property {Integer} instance.id - instance id
+ * @property {String|Integer} instance.name - instance name
+ * @property {Matrix4} instance.matrix - transformation matrix of the instance
+ */
+
+
 var PickingControls = function( viewer, params ){
 
     var hoverTimeout = 50;
@@ -49,6 +62,11 @@ var PickingControls = function( viewer, params ){
         hoverTimeout = defaults( p.hoverTimeout, hoverTimeout );
     }
 
+    /**
+     * pick helper function
+     * @param  {Object} mouse
+     * @return {PickingData} picking data
+     */
     function pick( mouse ){
         var pickingData = viewer.pick(
             mouse.canvasPosition.x, mouse.canvasPosition.y

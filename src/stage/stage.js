@@ -47,7 +47,56 @@ import { autoLoad } from "../loader/loader-utils";
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the hover signal is fired
+ * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered} signal is fired
+ */
+
+
+/**
+ * {@link Signal}, dispatched when stage parameters change {@link Signal}
+ * @example
+ * stage.signals.parametersChanged( function( stageParameters ){ ... } );
+ * @event Stage#parametersChanged
+ * @type {StageParameters}
+ */
+
+/**
+ * {@link Signal}, dispatched when the fullscreen is entered or left
+ * @example
+ * stage.signals.fullscreenChanged( function( isFullscreen ){ ... } );
+ * @event Stage#fullscreenChanged
+ * @type {Boolean}
+ */
+
+/**
+ * {@link Signal}, dispatched when a component is added to the stage
+ * @example
+ * stage.signals.componentAdded( function( component ){ ... } );
+ * @event Stage#componentAdded
+ * @type {Component}
+ */
+
+/**
+ * {@link Signal}, dispatched when a component is removed from the stage
+ * @example
+ * stage.signals.componentRemoved( function( component ){ ... } );
+ * @event Stage#componentRemoved
+ * @type {Component}
+ */
+
+/**
+ * {@link Signal}, dispatched upon clicking in the viewer canvas
+ * @example
+ * stage.signals.clicked( function( pickingData ){ ... } );
+ * @event Stage#clicked
+ * @type {PickingData}
+ */
+
+/**
+ * {@link Signal}, dispatched upon hovering over the viewer canvas
+ * @example
+ * stage.signals.hovered( function( pickingData ){ ... } );
+ * @event Stage#hovered
+ * @type {PickingData}
  */
 
 
@@ -184,6 +233,7 @@ Stage.prototype = {
 
     /**
      * Set stage parameters
+     * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
      */
     setParameters: function( params ){
@@ -391,6 +441,7 @@ Stage.prototype = {
      * // load a File object
      * stage.loadFile( file );
      *
+     * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {Object} params - loading parameters
      * @param  {String} params.ext - file extension, determines file type
@@ -508,6 +559,13 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Toggle fullscreen
+     * @fires Stage#fullscreenChanged
+     * @param  {Element} [element] - document element to put into fullscreen,
+     *                               defaults to the viewer container
+     * @return {undefined}
+     */
     toggleFullscreen: function( element ){
 
         if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&

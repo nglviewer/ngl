@@ -450,7 +450,7 @@ if( WebGLRenderingContext ){
 
 
 /**
- * NGL module.
+ * The NGL module. These members are available in the `NGL` namespace when using the {@link https://github.com/umdjs/umd|UMD} build in the `ngl.js` file.
  * @module NGL
  */
 
@@ -532,10 +532,10 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 
 //
 
+import Signal from "../lib/signals.es6.js";
 import { Matrix4, Vector3 } from "../lib/three.es6.js";
 
 //
-
 
 /**
  * Version name
@@ -543,6 +543,46 @@ import { Matrix4, Vector3 } from "../lib/three.es6.js";
  * @type {String}
  */
 var Version = "v0.8.0dev";
+
+
+/**
+ * Signal class, used to dispatch events
+ * @name Signal
+ * @class
+ * @global
+ * @see {@link https://millermedeiros.github.io/js-signals/docs/symbols/Signal.html}
+ *
+ * @example
+ * function onHover( pickingData ){
+ *     // ...
+ * }
+ * stage.signals.hovered.add( onHover );  // add listener
+ * stage.signals.hovered.remove( onHover );  // remove listener
+ *
+ * @example
+ * function onClick( pickingData ){
+ *     // ...
+ * }
+ * // add listener that is removed after first execution
+ * stage.signals.hovered.addOnce( onHover );
+ */
+
+/**
+ * 4x4 transformation matrix from three.js
+ * @name Matrix4
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Matrix4}
+ */
+
+/**
+ * 3d vector class from three.js
+ * @name Vector3
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Vector3}
+ */
+
 
 export {
     Version,
@@ -552,7 +592,7 @@ export {
     StaticDatasource,
     /**
      * autoLoad function
-     * @see  @{@link autoLoad}
+     * @see {@link autoLoad}
      */
     autoLoad,
     RepresentationRegistry,
@@ -561,12 +601,12 @@ export {
     PdbWriter,
     /**
      * Stage class
-     * @see  @{@link Stage}
+     * @see {@link Stage}
      */
     Stage,
     /**
      * Assembly class
-     * @see  @{@link Assembly}
+     * @see {@link Assembly}
      */
     Assembly,
     TrajectoryPlayer,
@@ -579,28 +619,34 @@ export {
 
     /**
      * Buffer representation class
-     * @see  @{@link BufferRepresentation}
+     * @see {@link BufferRepresentation}
      */
     BufferRepresentation,
     /**
      * Sphere buffer class
-     * @see  @{@link SphereBuffer}
+     * @see {@link SphereBuffer}
      */
     SphereBuffer,
     /**
      * Cylinder buffer class
-     * @see  @{@link CylinderBuffer}
+     * @see {@link CylinderBuffer}
      */
     CylinderBuffer,
 
     /**
+     * Signal class
+     * @see {@link Signal}
+     */
+    Signal,
+
+    /**
      * Matrix4 class
-     * @see  @{@link Matrix4}
+     * @see {@link Matrix4}
      */
     Matrix4,
     /**
      * Vector3 class
-     * @see  @{@link Vector3}
+     * @see {@link Vector3}
      */
     Vector3
 };
