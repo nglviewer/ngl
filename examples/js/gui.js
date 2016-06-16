@@ -411,13 +411,13 @@ NGL.ToolbarWidget = function( stage ){
         return prefix + " " + msg;
     }
 
-    stage.signals.onClick.add( function( d ){
+    stage.signals.clicked.add( function( d ){
         messagePanel1
             .clear()
             .add( new UI.Text( getPickingMessage( d, "Clicked" ) ) );
     } );
 
-    stage.signals.onHover.add( function( d ){
+    stage.signals.hovered.add( function( d ){
         messagePanel2
             .clear()
             .add( new UI.Text( getPickingMessage( d, "Hovered" ) ) );

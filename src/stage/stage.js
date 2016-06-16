@@ -69,8 +69,8 @@ function Stage( eid, params ){
         componentAdded: new Signal(),
         componentRemoved: new Signal(),
 
-        onClick: new Signal(),
-        onHover: new Signal()
+        clicked: new Signal(),
+        hovered: new Signal()
     };
 
     //
@@ -85,8 +85,8 @@ function Stage( eid, params ){
     if( !this.viewer.renderer ) return;
 
     this.pickingControls = new PickingControls( this.viewer );
-    this.pickingControls.signals.onClick.add( this.signals.onClick.dispatch );
-    this.pickingControls.signals.onHover.add( this.signals.onHover.dispatch );
+    this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
+    this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
 
     var p = Object.assign( {
         impostor: true,

@@ -19,8 +19,8 @@ var PickingControls = function( viewer, params ){
     setParameters( params );
 
     var signals = {
-        onClick: new Signal(),
-        onHover: new Signal()
+        clicked: new Signal(),
+        hovered: new Signal()
     };
 
     var position = new Vector3();
@@ -99,8 +99,8 @@ var PickingControls = function( viewer, params ){
         if( !mouse.moving && !mouse.hovering ){
             mouse.hovering = true;
             var pd = pick( mouse );
-            signals.onHover.dispatch( pd );
-            // if( Debug ) Log.log( "onHover", pd );
+            signals.hovered.dispatch( pd );
+            // if( Debug ) Log.log( "hovered", pd );
         }
         requestAnimationFrame( listen );
     }
@@ -132,8 +132,8 @@ var PickingControls = function( viewer, params ){
         mouse.which = undefined;
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
         var pd = pick( mouse );
-        signals.onClick.dispatch( pd );
-        if( Debug ) Log.log( "onCLick", pd );
+        signals.clicked.dispatch( pd );
+        if( Debug ) Log.log( "clicked", pd );
     } );
 
     // API
