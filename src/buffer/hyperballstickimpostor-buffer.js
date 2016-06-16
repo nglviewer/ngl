@@ -5,14 +5,14 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";
 
 
-var tmpMatrix = new THREE.Matrix4();
+var tmpMatrix = new Matrix4();
 
 function matrixCalc( object, camera ){
 
@@ -76,11 +76,11 @@ function HyperballStickImpostorBuffer( position1, position2, color, color2, radi
 
     BoxBuffer.call( this, p );
 
-    var modelViewProjectionMatrix = new THREE.Uniform( new THREE.Matrix4() )
+    var modelViewProjectionMatrix = new Uniform( new Matrix4() )
         .onUpdate( matrixCalc );
-    var modelViewProjectionMatrixInverse = new THREE.Uniform( new THREE.Matrix4() )
+    var modelViewProjectionMatrixInverse = new Uniform( new Matrix4() )
         .onUpdate( matrixCalc );
-    var modelViewMatrixInverseTranspose = new THREE.Uniform( new THREE.Matrix4() )
+    var modelViewMatrixInverseTranspose = new Uniform( new Matrix4() )
         .onUpdate( matrixCalc );
 
     this.addUniforms( {

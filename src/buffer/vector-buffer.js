@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Color } from "../../lib/three.es6.js";
 
 import { uniformArray3 } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
@@ -26,7 +26,7 @@ function VectorBuffer( position, vector, params ){
     this.attributeSize = n2;
 
     this.scale = p.scale || 1;
-    var color = new THREE.Color( p.color || "grey" );
+    var color = new Color( p.color || "grey" );
 
     this.linePosition = new Float32Array( n2 * 3 );
     this.lineColor = uniformArray3( n2, color.r, color.g, color.b );

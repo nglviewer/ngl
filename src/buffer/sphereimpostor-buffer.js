@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import QuadBuffer from "./quad-buffer.js";
 
@@ -20,7 +20,7 @@ function SphereImpostorBuffer( position, color, radius, pickingColor, params ){
     QuadBuffer.call( this, params );
 
     this.addUniforms( {
-        "projectionMatrixInverse": { value: new THREE.Matrix4() },
+        "projectionMatrixInverse": { value: new Matrix4() },
         "ortho": { value: 0.0 },
     } );
 

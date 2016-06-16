@@ -5,7 +5,14 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import {
+    Color,
+    FrontSide, BackSide, DoubleSide, VertexColors,
+    BufferGeometry, BufferAttribute,
+    UniformsUtils, UniformsLib, Uniform,
+    Group, LineSegments, Points, Mesh,
+    ShaderMaterial
+} from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
@@ -36,13 +43,13 @@ import { getShader } from "../shader/shader-utils.js";
 
 function getThreeSide( side ){
     if( side === "front" ){
-        return THREE.FrontSide;
+        return FrontSide;
     }else if( side === "back" ){
-        return THREE.BackSide;
+        return BackSide;
     }else if( side === "double" ){
-        return THREE.DoubleSide;
+        return DoubleSide;
     }else{
-        return THREE.DoubleSide;
+        return DoubleSide;
     }
 }
 
@@ -88,7 +95,7 @@ function Buffer( position, color, index, pickingColor, params ){
     this.diffuse = defaults( p.diffuse, 0xffffff );
     this.forceTransparent = defaults( p.forceTransparent, false );
 
-    this.geometry = new THREE.BufferGeometry();
+    this.geometry = new BufferGeometry();
 
     this.addAttributes( {
         "position": { type: "v3", value: position },
@@ -100,7 +107,7 @@ function Buffer( position, color, index, pickingColor, params ){
 
     if( index ){
         this.geometry.setIndex(
-            new THREE.BufferAttribute( index, 1 )
+            new BufferAttribute( index, 1 )
         );
         this.geometry.getIndex().setDynamic( this.dynamic );
     }
@@ -112,8 +119,8 @@ function Buffer( position, color, index, pickingColor, params ){
         this.pickable = true;
     }
 
-    this.uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib.common,
+    this.uniforms = UniformsUtils.merge( [
+        UniformsLib.common,
         {
             "fogColor": { value: null },
             "fogNear": { value: 0.0 },
@@ -122,17 +129,17 @@ function Buffer( position, color, index, pickingColor, params ){
             "nearClip": { value: 0.0 }
         },
         {
-            "emissive" : { value: new THREE.Color( 0x000000 ) },
+            "emissive" : { value: new Color( 0x000000 ) },
             "roughness": { value: this.roughness },
             "metalness": { value: this.metalness }
         },
-        THREE.UniformsLib.ambient,
-        THREE.UniformsLib.lights
+        UniformsLib.ambient,
+        UniformsLib.lights
     ] );
 
     this.uniforms.diffuse.value.set( this.diffuse );
 
-    var objectId = new THREE.Uniform( 0.0 )
+    var objectId = new Uniform( 0.0 )
         .onUpdate( function( object, camera ){
             this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
         } );
@@ -142,9 +149,9 @@ function Buffer( position, color, index, pickingColor, params ){
         "objectId": objectId
     };
 
-    this.group = new THREE.Group();
-    this.wireframeGroup = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
+    this.group = new Group();
+    this.wireframeGroup = new Group();
+    this.pickingGroup = new Group();
 
     this.makeWireframeGeometry();
 
@@ -181,7 +188,7 @@ Buffer.prototype = {
 
         var side = getThreeSide( this.side );
 
-        this.material = new THREE.ShaderMaterial( {
+        this.material = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -193,12 +200,12 @@ Buffer.prototype = {
             side: side,
             linewidth: this.linewidth
         } );
-        this.material.vertexColors = THREE.VertexColors;
+        this.material.vertexColors = VertexColors;
         this.material.extensions.derivatives = this.flatShaded;
         this.material.extensions.fragDepth = this.impostor;
         this.material.clipNear = this.clipNear;
 
-        this.wireframeMaterial = new THREE.ShaderMaterial( {
+        this.wireframeMaterial = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "Line.vert",
             fragmentShader: "Line.frag",
@@ -210,10 +217,10 @@ Buffer.prototype = {
             side: side,
             linewidth: this.linewidth
         } );
-        this.wireframeMaterial.vertexColors = THREE.VertexColors;
+        this.wireframeMaterial.vertexColors = VertexColors;
         this.wireframeMaterial.clipNear = this.clipNear;
 
-        this.pickingMaterial = new THREE.ShaderMaterial( {
+        this.pickingMaterial = new ShaderMaterial( {
             uniforms: this.pickingUniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -225,7 +232,7 @@ Buffer.prototype = {
             side: side,
             linewidth: this.linewidth
         } );
-        this.pickingMaterial.vertexColors = THREE.VertexColors;
+        this.pickingMaterial.vertexColors = VertexColors;
         this.pickingMaterial.extensions.fragDepth = this.impostor;
         this.pickingMaterial.clipNear = this.clipNear;
 
@@ -239,12 +246,12 @@ Buffer.prototype = {
 
         var geometry = this.geometry;
         var wireframeIndex = this.wireframeIndex;
-        var wireframeGeometry = new THREE.BufferGeometry();
+        var wireframeGeometry = new BufferGeometry();
 
         wireframeGeometry.attributes = geometry.attributes;
         if( wireframeIndex ){
             wireframeGeometry.setIndex(
-                new THREE.BufferAttribute( wireframeIndex, 1 )
+                new BufferAttribute( wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
             wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
@@ -350,7 +357,7 @@ Buffer.prototype = {
         if( this.wireframeIndex.length > this.wireframeGeometry.index.array.length ){
 
             this.wireframeGeometry.setIndex(
-                new THREE.BufferAttribute( this.wireframeIndex, 1 )
+                new BufferAttribute( this.wireframeIndex, 1 )
                     .setDynamic( this.dynamic )
             );
 
@@ -397,16 +404,16 @@ Buffer.prototype = {
 
         if( this.line ){
 
-            mesh = new THREE.LineSegments( this.geometry, this.material );
+            mesh = new LineSegments( this.geometry, this.material );
 
         }else if( this.point ){
 
-            mesh = new THREE.Points( this.geometry, this.material );
+            mesh = new Points( this.geometry, this.material );
             if( this.sortParticles ) mesh.sortParticles = true;
 
         }else{
 
-            mesh = new THREE.Mesh( this.geometry, this.material );
+            mesh = new Mesh( this.geometry, this.material );
 
         }
 
@@ -424,7 +431,7 @@ Buffer.prototype = {
         if( !this.material ) this.makeMaterial();
         if( !this.wireframeGeometry ) this.makeWireframeGeometry();
 
-        mesh = new THREE.LineSegments(
+        mesh = new LineSegments(
             this.wireframeGeometry, this.wireframeMaterial
         );
 
@@ -441,7 +448,7 @@ Buffer.prototype = {
 
         if( !this.material ) this.makeMaterial();
 
-        mesh = new THREE.Mesh( this.geometry, this.pickingMaterial );
+        mesh = new Mesh( this.geometry, this.pickingMaterial );
 
         mesh.frustumCulled = false;
         mesh.renderOrder = this.getRenderOrder();
@@ -515,11 +522,11 @@ Buffer.prototype = {
 
     addUniforms: function( uniforms ){
 
-        this.uniforms = THREE.UniformsUtils.merge(
+        this.uniforms = UniformsUtils.merge(
             [ this.uniforms, uniforms ]
         );
 
-        this.pickingUniforms = THREE.UniformsUtils.merge(
+        this.pickingUniforms = UniformsUtils.merge(
             [ this.pickingUniforms, uniforms ]
         );
 
@@ -554,7 +561,7 @@ Buffer.prototype = {
 
             this.geometry.addAttribute(
                 name,
-                new THREE.BufferAttribute( buf, itemSize[ a.type ] )
+                new BufferAttribute( buf, itemSize[ a.type ] )
                     .setDynamic( this.dynamic )
             );
 
@@ -687,7 +694,7 @@ Buffer.prototype = {
                 if( length > index.array.length ){
 
                     geometry.setIndex(
-                        new THREE.BufferAttribute( array, 1 )
+                        new BufferAttribute( array, 1 )
                             .setDynamic( this.dynamic )
                     );
 
@@ -711,7 +718,7 @@ Buffer.prototype = {
 
                     geometry.addAttribute(
                         name,
-                        new THREE.BufferAttribute( array, attribute.itemSize )
+                        new BufferAttribute( array, attribute.itemSize )
                             .setDynamic( this.dynamic )
                     );
 

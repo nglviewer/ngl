@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { BufferAttribute } from "../../lib/three.es6.js";
 
 import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
@@ -37,10 +37,10 @@ function RibbonBuffer( position, normal, dir, color, size, pickingColor, params 
     this.fragmentShader = 'Mesh.frag';
 
     this.geometry.addAttribute(
-        'dir', new THREE.BufferAttribute( new Float32Array( x ), 3 )
+        'dir', new BufferAttribute( new Float32Array( x ), 3 )
     );
     this.geometry.addAttribute(
-        'size', new THREE.BufferAttribute( new Float32Array( n4 ), 1 )
+        'size', new BufferAttribute( new Float32Array( n4 ), 1 )
     );
 
     this.setAttributes( {

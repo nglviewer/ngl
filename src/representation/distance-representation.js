@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Color } from "../../lib/three.es6.js";
 
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -168,7 +168,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         var distanceData = this.getDistanceData( this.structureView, this.atomPair );
 
-        var c = new THREE.Color( this.labelColor );
+        var c = new Color( this.labelColor );
 
         this.textBuffer = new TextBuffer(
             distanceData.position,
@@ -252,7 +252,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( what.labelColor ){
-            var c = new THREE.Color( this.labelColor );
+            var c = new Color( this.labelColor );
             textData.color = uniformArray3( n, c.r, c.g, c.b );
         }
 

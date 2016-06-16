@@ -532,7 +532,7 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 
 //
 
-import { Matrix4, Vector3 } from "./math/three-utils.js";
+import { Matrix4, Vector3 } from "../lib/three.es6.js";
 
 //
 

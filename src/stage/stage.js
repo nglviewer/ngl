@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
@@ -617,7 +617,7 @@ Stage.prototype = {
     setSpin: function( axis, angle ){
 
         if( Array.isArray( axis ) ){
-            axis = new THREE.Vector3().fromArray( axis );
+            axis = new Vector3().fromArray( axis );
         }
 
         this.viewer.setSpin( axis, angle );

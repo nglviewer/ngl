@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { binarySearchIndexOf } from "../utils.js";
@@ -337,8 +337,8 @@ var calculateSecondaryStructure = function(){
         var helixbundle = new Helixbundle( p );
         var pos = helixbundle.position;
 
-        var c1 = new THREE.Vector3();
-        var c2 = new THREE.Vector3();
+        var c1 = new Vector3();
+        var c2 = new Vector3();
 
         for( var i = 0, il = p.residueCount; i < il; ++i ){
 
@@ -739,9 +739,9 @@ function buildUnitcellAssembly( structure ){
     var centerFrac = structure.center.clone().applyMatrix4( uc.cartToFrac );
     var symopDict = getSymmetryOperations( uc.spacegroup );
 
-    var positionFrac = new THREE.Vector3();
-    var centerFracSymop = new THREE.Vector3();
-    var positionFracSymop = new THREE.Vector3();
+    var positionFrac = new Vector3();
+    var centerFracSymop = new Vector3();
+    var positionFracSymop = new Vector3();
 
     if( centerFrac.x > 1 ) positionFrac.x -= 1;
     if( centerFrac.x < 0 ) positionFrac.x += 1;
@@ -787,7 +787,7 @@ function buildUnitcellAssembly( structure ){
     var unitcellMatrixList = getMatrixList();
     var ncsMatrixList;
     if( structure.biomolDict.NCS ){
-        ncsMatrixList = [ new THREE.Matrix4() ].concat(
+        ncsMatrixList = [ new Matrix4() ].concat(
             structure.biomolDict.NCS.partList[ 0 ].matrixList
         );
         var ncsUnitcellMatrixList = [];
@@ -801,7 +801,7 @@ function buildUnitcellAssembly( structure ){
         unitcellAssembly.addPart( unitcellMatrixList );
     }
 
-    var vec = new THREE.Vector3();
+    var vec = new Vector3();
     var supercellAssembly = new Assembly( "SUPERCELL" );
     var supercellMatrixList = Array.prototype.concat.call(
         getMatrixList(),                         // 555

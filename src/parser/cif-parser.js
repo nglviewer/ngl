@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
@@ -559,7 +559,7 @@ CifParser.prototype = Object.assign( Object.create(
 
             biomolOp.id.forEach( function( id, i ){
 
-                var m = new THREE.Matrix4();
+                var m = new Matrix4();
                 var elms = m.elements;
 
                 elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
@@ -642,7 +642,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         Object.keys( md2 ).forEach( function( k2 ){
 
-                            var mat = new THREE.Matrix4();
+                            var mat = new Matrix4();
 
                             mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
                             md[ k1 + "x" + k2 ] = mat;
@@ -696,7 +696,7 @@ CifParser.prototype = Object.assign( Object.create(
                 // ignore 'given' operators
                 if( ncsOp.code[ i ] === "given" ) return;
 
-                var m = new THREE.Matrix4();
+                var m = new Matrix4();
                 var elms = m.elements;
 
                 elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
@@ -769,7 +769,7 @@ CifParser.prototype = Object.assign( Object.create(
         }
 
         // origx
-        var origx = new THREE.Matrix4();
+        var origx = new Matrix4();
 
         if( cif.database_PDB_matrix ){
 
@@ -799,7 +799,7 @@ CifParser.prototype = Object.assign( Object.create(
         }
 
         // scale
-        var scale = new THREE.Matrix4();
+        var scale = new Matrix4();
 
         if( cif.atom_sites ){
 

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { CanvasTexture } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
@@ -427,7 +427,7 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         this.ta = ta;
 
-        this.tex = new THREE.CanvasTexture( ta.canvas2 );
+        this.tex = new CanvasTexture( ta.canvas2 );
         this.tex.flipY = false;
         this.tex.needsUpdate = true;
 

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -324,7 +324,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 s.biomolDict[ "BU" + id ] = assembly;
                 var chainToPart = {};
                 _assembly.transformList.forEach( function( _transform ){
-                    var matrix = new THREE.Matrix4().fromArray( _transform.matrix ).transpose();
+                    var matrix = new Matrix4().fromArray( _transform.matrix ).transpose();
                     var chainList = _transform.chainIndexList.map( function( chainIndex ){
                         var chainname = "";
                         for( var k = 0; k < 4; ++k ){
@@ -352,7 +352,7 @@ MmtfParser.prototype = Object.assign( Object.create(
             var ncsAssembly = new Assembly( ncsName );
             var ncsPart = ncsAssembly.addPart();
             sd.ncsOperatorList.forEach( function( _operator, k ){
-                var matrix = new THREE.Matrix4().fromArray( _operator ).transpose();
+                var matrix = new Matrix4().fromArray( _operator ).transpose();
                 ncsPart.matrixList.push( matrix );
             } );
             if( ncsPart.matrixList.length > 0 ){

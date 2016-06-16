@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { EncodedSymOp, SymOpCode } from "./symmetry-constants.js";
 
@@ -40,7 +40,7 @@ function getSymmetryOperations( spacegroup ){
         // console.log( "symop", symop );
 
         var row = 0;
-        var matrix = new THREE.Matrix4().set(
+        var matrix = new Matrix4().set(
             0, 0, 0, 0,
             0, 0, 0, 0,
             0, 0, 0, 0,

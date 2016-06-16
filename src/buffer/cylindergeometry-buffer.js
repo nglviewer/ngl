@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4, Vector3, CylinderGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -18,10 +18,10 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.updateNormals = true;
 
-    var matrix = new THREE.Matrix4().makeRotationX( Math.PI/ 2  );
+    var matrix = new Matrix4().makeRotationX( Math.PI/ 2  );
 
     // FIXME params.cap
-    this.geo = new THREE.CylinderGeometry( 1, 1, 1, radiusSegments, 1, true );
+    this.geo = new CylinderGeometry( 1, 1, 1, radiusSegments, 1, true );
     this.geo.applyMatrix( matrix );
 
     var n = from.length;
@@ -63,10 +63,10 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
     setPositionTransform: function( from, to, radius ){
 
         var r;
-        var scale = new THREE.Vector3();
-        var eye = new THREE.Vector3();
-        var target = new THREE.Vector3();
-        var up = new THREE.Vector3( 0, 1, 0 );
+        var scale = new Vector3();
+        var eye = new Vector3();
+        var target = new Vector3();
+        var up = new Vector3( 0, 1, 0 );
 
         this.applyPositionTransform = function( matrix, i, i3 ){
 

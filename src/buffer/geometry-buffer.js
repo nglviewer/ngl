@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
 
 import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
@@ -70,8 +70,8 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
     setAttributes: function(){
 
-        var matrix = new THREE.Matrix4();
-        var normalMatrix = new THREE.Matrix3();
+        var matrix = new Matrix4();
+        var normalMatrix = new Matrix3();
 
         return function( data ){
 

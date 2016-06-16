@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Color } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -77,7 +77,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
     getUnitcellData: function( structure ){
 
-        var c = new THREE.Color( this.colorValue );
+        var c = new Color( this.colorValue );
 
         var vertexPosition = new Float32Array( 3 * 8 );
         var vertexColor = uniformArray3( 8, c.r, c.g, c.b );
@@ -92,7 +92,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         var centerFrac = structure.center.clone()
             .applyMatrix4( uc.cartToFrac )
             .floor().multiplyScalar( 2 ).addScalar( 1 );
-        var v = new THREE.Vector3();
+        var v = new Vector3();
 
         var cornerOffset = 0;
         function addCorner( x, y, z ){

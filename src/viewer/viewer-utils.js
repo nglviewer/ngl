@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Matrix4, Points } from "../../lib/three.es6.js";
 
 import TiledRenderer from "./tiled-renderer.js";
 import { quicksortIP } from "../math/array-utils.js";
@@ -201,9 +201,9 @@ function makeImage( viewer, params ){
 }
 
 
-var vertex = new THREE.Vector3();
-var matrix = new THREE.Matrix4();
-var modelViewProjectionMatrix = new THREE.Matrix4();
+var vertex = new Vector3();
+var matrix = new Matrix4();
+var modelViewProjectionMatrix = new Matrix4();
 
 function sortProjectedPosition( scene, camera ){
 
@@ -213,7 +213,7 @@ function sortProjectedPosition( scene, camera ){
 
     scene.traverseVisible( function ( o ){
 
-        if( !( o instanceof THREE.Points ) || !o.sortParticles ){
+        if( !( o instanceof Points ) || !o.sortParticles ){
             return;
         }
 
@@ -297,8 +297,8 @@ function sortProjectedPosition( scene, camera ){
 }
 
 
-var projectionMatrixInverse = new THREE.Matrix4();
-var projectionMatrixTranspose = new THREE.Matrix4();
+var projectionMatrixInverse = new Matrix4();
+var projectionMatrixTranspose = new Matrix4();
 
 function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
 

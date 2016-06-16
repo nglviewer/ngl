@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import _Kdtree from "../utils/kdtree.js";
@@ -67,7 +67,7 @@ Kdtree.prototype = {
 
             // Log.time( "Kdtree nearest" );
 
-            if( point instanceof THREE.Vector3 ){
+            if( point instanceof Vector3 ){
 
                 point.toArray( pointArray );
 

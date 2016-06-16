@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
@@ -74,8 +74,8 @@ function Structure( name, path ){
     this.atomSet = this.getAtomSet( this.selection );
     this.bondSet = this.getBondSet();
 
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
 
     GidPool.addObject( this );
 
@@ -784,7 +784,7 @@ Structure.prototype = {
 
         if( Debug ) Log.time( "getBoundingBox" );
 
-        var box = new THREE.Box3();
+        var box = new Box3();
 
         var minX = +Infinity;
         var minY = +Infinity;
@@ -971,10 +971,10 @@ Structure.prototype = {
         this.frames = input.frames;
         this.boxes = input.boxes;
 
-        this.center = new THREE.Vector3().fromArray( input.center );
-        this.boundingBox = new THREE.Box3(
-            new THREE.Vector3().fromArray( input.boundingBox[ 0 ] ),
-            new THREE.Vector3().fromArray( input.boundingBox[ 1 ] )
+        this.center = new Vector3().fromArray( input.center );
+        this.boundingBox = new Box3(
+            new Vector3().fromArray( input.boundingBox[ 0 ] ),
+            new Vector3().fromArray( input.boundingBox[ 1 ] )
         );
 
         this.bondStore.fromJSON( input.bondStore );

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
@@ -307,7 +307,7 @@ AtomProxy.prototype = {
 
     positionToVector3: function( v ){
 
-        if( v === undefined ) v = new THREE.Vector3();
+        if( v === undefined ) v = new Vector3();
 
         v.x = this.x;
         v.y = this.y;

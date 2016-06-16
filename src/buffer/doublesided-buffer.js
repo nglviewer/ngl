@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Group } from "../../lib/three.es6.js";
 
 import Buffer from "./buffer.js";
 
@@ -20,9 +20,9 @@ function DoubleSidedBuffer( buffer ){
     this.pickable = buffer.pickable;
     this.background = buffer.background;
 
-    this.group = new THREE.Group();
-    this.wireframeGroup = new THREE.Group();
-    this.pickingGroup = new THREE.Group();
+    this.group = new Group();
+    this.wireframeGroup = new Group();
+    this.pickingGroup = new Group();
 
     var frontMeshes = [];
     var backMeshes = [];
@@ -66,7 +66,7 @@ function DoubleSidedBuffer( buffer ){
 
         this.setParameters( { side: this.side } );
 
-        return new THREE.Group().add( back, front );
+        return new Group().add( back, front );
 
     };
 

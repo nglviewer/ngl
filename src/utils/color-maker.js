@@ -5,10 +5,12 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import Selection from "../selection.js";
 import { GidPool } from "../globals.js";
+import { generateUUID } from "../math/math-utils.js";
+
 import {
     ResidueHydrophobicity, DefaultResidueHydrophobicity
 } from "../structure/structure-constants.js";
@@ -260,7 +262,7 @@ ColorMakerRegistry.prototype = {
         }
 
         label = label || "";
-        var id = "" + THREE.Math.generateUUID() + "|" + label;
+        var id = "" + generateUUID() + "|" + label;
 
         this.userSchemes[ id ] = scheme;
         // this.signals.typesChanged.dispatch();
@@ -305,7 +307,7 @@ ColorMakerRegistry.prototype = {
 
             pairList.forEach( function( pair ){
 
-                colorList.push( new THREE.Color( pair[ 0 ] ).getHex() );
+                colorList.push( new Color( pair[ 0 ] ).getHex() );
                 selectionList.push( new Selection( pair[ 1 ] ) );
 
             } );
@@ -342,7 +344,7 @@ function ColorMaker( params ){
     this.scale = p.scale || "uniform";
     this.mode = p.mode || "hcl";
     this.domain = p.domain || [ 0, 1 ];
-    this.value = new THREE.Color( p.value || 0xFFFFFF ).getHex();
+    this.value = new Color( p.value || 0xFFFFFF ).getHex();
 
     this.structure = p.structure;
     this.volume = p.volume;
@@ -461,7 +463,7 @@ function VolumeColorMaker( params ){
     var nx = volume.nx;
     var ny = volume.ny;
     var nz = volume.nz;
-    var vec = new THREE.Vector3();
+    var vec = new Vector3();
 
     this.positionColor = function( v ){
 

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { ColorMakerRegistry } from "../globals.js";
@@ -31,12 +31,12 @@ function Surface( name, path, data ){
     this.path = path;
     this.info = {};
 
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
 
-    if( data instanceof THREE.Geometry ||
-        data instanceof THREE.BufferGeometry ||
-        data instanceof THREE.Group
+    if( data instanceof Geometry ||
+        data instanceof BufferGeometry ||
+        data instanceof Group
     ){
 
         // to be removed
@@ -87,10 +87,10 @@ Surface.prototype = {
 
         var geo;
 
-        if( geometry instanceof THREE.Geometry ){
+        if( geometry instanceof Geometry ){
             geometry.computeVertexNormals( true );
-            geo = new THREE.BufferGeometry().fromGeometry( geometry );
-        }else if( geometry instanceof THREE.BufferGeometry ){
+            geo = new BufferGeometry().fromGeometry( geometry );
+        }else if( geometry instanceof BufferGeometry ){
             geo = geometry;
         }else{
             geo = geometry.children[0].geometry;
@@ -103,7 +103,7 @@ Surface.prototype = {
 
         var position, color, index, normal;
 
-        if( geo instanceof THREE.BufferGeometry ){
+        if( geo instanceof BufferGeometry ){
 
             var attr = geo.attributes;
             var an = attr.normal ? attr.normal.array : false;
@@ -140,7 +140,7 @@ Surface.prototype = {
 
         if( p.scheme === "volume" ){
 
-            var v = new THREE.Vector3();
+            var v = new Vector3();
             var pos = this.position;
             colorMaker = ColorMakerRegistry.getScheme( p );
 
@@ -169,7 +169,7 @@ Surface.prototype = {
 
         }else{
 
-            var tc = new THREE.Color( p.value );
+            var tc = new Color( p.value );
             array = uniformArray3( n, tc.r, tc.g, tc.b );
 
         }

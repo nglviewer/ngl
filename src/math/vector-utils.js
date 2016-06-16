@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { EPS } from "./math-constants.js";
 
@@ -14,17 +14,17 @@ import { EPS } from "./math-constants.js";
  * Converted to JavaScript from
  * {@link http://paulbourke.net/geometry/pointlineplane/lineline.c}
  *
- * @param  {THREE.Vector3} p1
- * @param  {THREE.Vector3} p2
- * @param  {THREE.Vector3} p3
- * @param  {THREE.Vector3} p4
- * @return {Array.<THREE.Vector3, THREE.Vector3>}
+ * @param  {Vector3} p1
+ * @param  {Vector3} p2
+ * @param  {Vector3} p3
+ * @param  {Vector3} p4
+ * @return {Array.<Vector3, Vector3>}
  */
 function lineLineIntersect( p1, p2, p3, p4 ){
 
-    var p13 = new THREE.Vector3(),
-        p43 = new THREE.Vector3(),
-        p21 = new THREE.Vector3();
+    var p13 = new Vector3(),
+        p43 = new Vector3(),
+        p21 = new Vector3();
     var d1343, d4321, d1321, d4343, d2121;
     var denom, numer;
 
@@ -57,12 +57,12 @@ function lineLineIntersect( p1, p2, p3, p4 ){
     var mua = numer / denom;
     var mub = ( d1343 + d4321 * mua ) / d4343;
 
-    var pa = new THREE.Vector3(
+    var pa = new Vector3(
         p1.x + mua * p21.x,
         p1.y + mua * p21.y,
         p1.z + mua * p21.z
     );
-    var pb = new THREE.Vector3(
+    var pb = new Vector3(
         p3.x + mub * p43.x,
         p3.y + mub * p43.y,
         p3.z + mub * p43.z
@@ -92,7 +92,7 @@ function calculateMeanVector3( array ){
 
     }
 
-    return new THREE.Vector3( x / m, y / m, z / m );
+    return new Vector3( x / m, y / m, z / m );
 
 }
 
@@ -108,8 +108,8 @@ function isPointOnSegment( p, l1, l2 ){
 
 var pointVectorIntersection = function(){
 
-    var v = new THREE.Vector3();
-    var v1 = new THREE.Vector3();
+    var v = new Vector3();
+    var v1 = new Vector3();
 
     return function( point, origin, vector ){
 
@@ -117,7 +117,7 @@ var pointVectorIntersection = function(){
         v1.subVectors( point, origin );
         var distOriginI = Math.cos( v.angleTo( v1 ) ) * v1.length();
         var vectorI = v.normalize().multiplyScalar( distOriginI );
-        var pointI = new THREE.Vector3().addVectors( vectorI, origin );
+        var pointI = new Vector3().addVectors( vectorI, origin );
 
         return pointI;
 

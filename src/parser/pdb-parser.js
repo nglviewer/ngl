@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
@@ -311,7 +311,7 @@ PdbParser.prototype = Object.assign( Object.create(
                         var mat = biomt[ 3 ].trim();
 
                         if( row === 0 ){
-                            currentMatrix = new THREE.Matrix4();
+                            currentMatrix = new Matrix4();
                             currentPart.matrixList.push( currentMatrix );
                         }
 
@@ -383,7 +383,7 @@ PdbParser.prototype = Object.assign( Object.create(
                     var ncsRow = parseInt( line[ 5 ] ) - 1;
 
                     if( ncsRow === 0 ){
-                        currentMatrix = new THREE.Matrix4();
+                        currentMatrix = new Matrix4();
                         currentPart.matrixList.push( currentMatrix );
                     }
 
@@ -397,7 +397,7 @@ PdbParser.prototype = Object.assign( Object.create(
                 }else if( line.substr( 0, 5 ) === 'ORIGX' ){
 
                     if( !unitcellDict.origx ){
-                        unitcellDict.origx = new THREE.Matrix4();
+                        unitcellDict.origx = new Matrix4();
                     }
 
                     var orgix = line.split( /\s+/ );
@@ -412,7 +412,7 @@ PdbParser.prototype = Object.assign( Object.create(
                 }else if( line.substr( 0, 5 ) === 'SCALE' ){
 
                     if( !unitcellDict.scale ){
-                        unitcellDict.scale = new THREE.Matrix4();
+                        unitcellDict.scale = new Matrix4();
                     }
 
                     var scale = line.split( /\s+/ );

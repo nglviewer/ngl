@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -29,7 +29,7 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     AlignedBoxBuffer.call( this, p );
 
-    var modelViewMatrixInverse = new THREE.Uniform( new THREE.Matrix4() )
+    var modelViewMatrixInverse = new Uniform( new Matrix4() )
         .onUpdate( function( object, camera ){
             this.value.getInverse( object.modelViewMatrix );
         } );

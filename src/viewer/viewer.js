@@ -5,13 +5,26 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import {
+    PerspectiveCamera, OrthographicCamera,
+    Box3, Vector3, Quaternion, Color,
+    WebGLRenderer, WebGLRenderTarget,
+    NearestFilter, AdditiveBlending,
+    RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
+    ShaderMaterial,
+    PlaneGeometry,
+    Scene, Mesh, Group,
+    Fog, SpotLight, AmbientLight,
+    BufferGeometry, BufferAttribute,
+    LineBasicMaterial, LineSegments
+} from "../../lib/three.es6.js";
 
 import {
     Debug, Log, Browser, WebglErrorMessage,
     ExtensionFragDepth, setExtensionFragDepth,
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
+import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
 import TrackballControls from "../controls/trackball-controls.js";
 import { getShader } from "../shader/shader-utils.js";
@@ -63,7 +76,7 @@ JitterVectors.forEach( function( offsetList ){
 } );
 
 
-THREE.OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
+OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
 
     this.view = {
         fullWidth: fullWidth,
@@ -78,7 +91,7 @@ THREE.OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeig
 
 };
 
-THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
+OrthographicCamera.prototype.updateProjectionMatrix = function () {
 
     var dx = ( this.right - this.left ) / ( 2 * this.zoom );
     var dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
@@ -164,14 +177,14 @@ function Viewer( eid, params ){
     initControls();
 
     var boundingBoxMesh;
-    var boundingBox = new THREE.Box3();
+    var boundingBox = new Box3();
     initHelper();
 
     // fog & background
     setBackground();
     setFog();
 
-    var distVector = new THREE.Vector3();
+    var distVector = new Vector3();
 
     var info = {
         memory: {
@@ -191,11 +204,11 @@ function Viewer( eid, params ){
 
         parameters = {
 
-            fogColor: new THREE.Color( 0x000000 ),
+            fogColor: new Color( 0x000000 ),
             fogNear: 50,
             fogFar: 100,
 
-            backgroundColor: new THREE.Color( 0x000000 ),
+            backgroundColor: new Color( 0x000000 ),
 
             cameraType: "perspective",
             cameraFov: 40,
@@ -208,9 +221,9 @@ function Viewer( eid, params ){
             spinAxis: null,
             spinAngle: 0.01,
 
-            lightColor: new THREE.Color( 0xdddddd ),
+            lightColor: new Color( 0xdddddd ),
             lightIntensity: 1.0,
-            ambientColor: new THREE.Color( 0xdddddd ),
+            ambientColor: new Color( 0xdddddd ),
             ambientIntensity: 0.2,
 
             holdRendering: false,
@@ -222,15 +235,15 @@ function Viewer( eid, params ){
 
     function initCamera(){
 
-        var lookAt = new THREE.Vector3( 0, 0, 0 );
+        var lookAt = new Vector3( 0, 0, 0 );
 
-        perspectiveCamera = new THREE.PerspectiveCamera(
+        perspectiveCamera = new PerspectiveCamera(
             parameters.cameraFov, width / height, 0.1, 10000
         );
         perspectiveCamera.position.z = parameters.cameraZ;
         perspectiveCamera.lookAt( lookAt );
 
-        orthographicCamera = new THREE.OrthographicCamera(
+        orthographicCamera = new OrthographicCamera(
             width / -2, width / 2,
             height / 2, height / -2,
             0.1, 10000
@@ -250,7 +263,7 @@ function Viewer( eid, params ){
     function initRenderer(){
 
         try{
-            renderer = new THREE.WebGLRenderer( {
+            renderer = new WebGLRenderer( {
                 preserveDrawingBuffer: true,
                 alpha: true,
                 antialias: true
@@ -286,39 +299,39 @@ function Viewer( eid, params ){
         supportsHalfFloat = renderer.extensions.get( 'OES_texture_half_float' );
         renderer.extensions.get( "WEBGL_color_buffer_float" );
 
-        pickingTarget = new THREE.WebGLRenderTarget(
+        pickingTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
                 stencilBuffer: false,
-                format: THREE.RGBAFormat,
-                type: SupportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
+                format: RGBAFormat,
+                type: SupportsReadPixelsFloat ? FloatType : UnsignedByteType
             }
         );
         pickingTarget.texture.generateMipmaps = false;
 
         // msaa textures
 
-        sampleTarget = new THREE.WebGLRenderTarget(
+        sampleTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
+                format: RGBAFormat,
             }
         );
 
-        holdTarget = new THREE.WebGLRenderTarget(
+        holdTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
-                type: supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
+                format: RGBAFormat,
+                type: supportsHalfFloat ? HalfFloatType : FloatType
             }
         );
 
@@ -327,20 +340,20 @@ function Viewer( eid, params ){
             "scale": { type: "f", value: 1.0 }
         };
 
-        compositeMaterial = new THREE.ShaderMaterial( {
+        compositeMaterial = new ShaderMaterial( {
             uniforms: compositeUniforms,
             vertexShader: getShader( "Quad.vert" ),
             fragmentShader: getShader( "Quad.frag" ),
             premultipliedAlpha: true,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            blending: AdditiveBlending,
             depthTest: false,
             depthWrite: false
         } );
 
-        compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-        compositeScene = new THREE.Scene().add( new THREE.Mesh(
-            new THREE.PlaneGeometry( 2, 2 ), compositeMaterial
+        compositeCamera = new OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+        compositeScene = new Scene().add( new Mesh(
+            new PlaneGeometry( 2, 2 ), compositeMaterial
         ) );
 
     }
@@ -348,41 +361,41 @@ function Viewer( eid, params ){
     function initScene(){
 
         if( !scene ){
-            scene = new THREE.Scene();
+            scene = new Scene();
         }
 
-        rotationGroup = new THREE.Group();
+        rotationGroup = new Group();
         rotationGroup.name = "rotationGroup";
         scene.add( rotationGroup );
 
-        modelGroup = new THREE.Group();
+        modelGroup = new Group();
         modelGroup.name = "modelGroup";
         rotationGroup.add( modelGroup );
 
-        pickingGroup = new THREE.Group();
+        pickingGroup = new Group();
         pickingGroup.name = "pickingGroup";
         rotationGroup.add( pickingGroup );
 
-        backgroundGroup = new THREE.Group();
+        backgroundGroup = new Group();
         backgroundGroup.name = "backgroundGroup";
         rotationGroup.add( backgroundGroup );
 
-        helperGroup = new THREE.Group();
+        helperGroup = new Group();
         helperGroup.name = "helperGroup";
         rotationGroup.add( helperGroup );
 
         // fog
 
-        modelGroup.fog = new THREE.Fog();
+        modelGroup.fog = new Fog();
 
         // light
 
-        pointLight = new THREE.SpotLight(
+        pointLight = new SpotLight(
             parameters.lightColor, parameters.lightIntensity
         );
         modelGroup.add( pointLight );
 
-        ambientLight = new THREE.AmbientLight(
+        ambientLight = new AmbientLight(
             parameters.ambientLight, parameters.ambientIntensity
         );
         modelGroup.add( ambientLight );
@@ -397,12 +410,12 @@ function Viewer( eid, params ){
         ] );
         var positions = new Float32Array( 8 * 3 );
 
-        var bbGeometry = new THREE.BufferGeometry();
-        bbGeometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-        bbGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-        var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
+        var bbGeometry = new BufferGeometry();
+        bbGeometry.setIndex( new BufferAttribute( indices, 1 ) );
+        bbGeometry.addAttribute( 'position', new BufferAttribute( positions, 3 ) );
+        var bbMaterial = new LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
 
-        boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
+        boundingBoxMesh = new LineSegments( bbGeometry, bbMaterial );
         helperGroup.add( boundingBoxMesh );
 
     }
@@ -828,12 +841,12 @@ function Viewer( eid, params ){
 
     var rotate = function(){
 
-        var eye = new THREE.Vector3();
-        var quaternion = new THREE.Quaternion();
-        var eyeDirection = new THREE.Vector3();
-        var upDirection = new THREE.Vector3();
-        var sidewaysDirection = new THREE.Vector3();
-        var moveDirection = new THREE.Vector3();
+        var eye = new Vector3();
+        var quaternion = new Quaternion();
+        var eyeDirection = new Vector3();
+        var upDirection = new Vector3();
+        var sidewaysDirection = new Vector3();
+        var moveDirection = new Vector3();
 
         return function( axis, angle ){
 
@@ -860,8 +873,8 @@ function Viewer( eid, params ){
 
     var zoom = function(){
 
-        var eye = new THREE.Vector3();
-        var eyeDirection = new THREE.Vector3();
+        var eye = new Vector3();
+        var eyeDirection = new Vector3();
 
         return function( distance ){
 
@@ -1037,7 +1050,7 @@ function Viewer( eid, params ){
     function __updateZoom(){
 
         __updateClipping();
-        var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+        var fov = degToRad( perspectiveCamera.fov );
         var hyperfocus = ( camera.near + camera.far ) / 2;
         var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
         orthographicCamera.zoom = height / _height;
@@ -1214,10 +1227,10 @@ function Viewer( eid, params ){
 
     var centerView = function(){
 
-        var t = new THREE.Vector3();
-        var eye = new THREE.Vector3();
-        var eyeDirection = new THREE.Vector3();
-        var bbSize = new THREE.Vector3();
+        var t = new Vector3();
+        var eye = new Vector3();
+        var eyeDirection = new Vector3();
+        var bbSize = new Vector3();
 
         return function( zoom, center ){
 
@@ -1249,7 +1262,7 @@ function Viewer( eid, params ){
 
                 }
 
-                var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+                var fov = degToRad( perspectiveCamera.fov );
                 var aspect = width / height;
 
                 zoom = zoom / 2 / aspect / Math.tan( fov / 2 );

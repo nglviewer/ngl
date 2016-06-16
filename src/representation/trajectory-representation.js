@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Color } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -125,7 +125,7 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
         this.trajectory.getPath( index, function( path ){
 
             var n = path.length / 3;
-            var tc = new THREE.Color( scope.colorValue );
+            var tc = new Color( scope.colorValue );
 
             if( scope.drawSphere ){
 

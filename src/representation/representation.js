@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Color } from "../../lib/three.es6.js";
 
 import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -190,7 +190,7 @@ Representation.prototype = {
 
         }else if( value !== undefined ){
 
-            value = new THREE.Color( value ).getHex();
+            value = new Color( value ).getHex();
             if( p ){
                 p.colorScheme = "uniform";
                 p.colorValue = value;

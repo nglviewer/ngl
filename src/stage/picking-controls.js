@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector2, Vector3 } from "../../lib/three.es6.js";
 
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
 import { GidPool, Debug, Log } from "../globals.js";
@@ -13,12 +13,12 @@ import { GidPool, Debug, Log } from "../globals.js";
 
 var PickingControls = function( viewer, stage ){
 
-    var position = new THREE.Vector3();
+    var position = new Vector3();
 
     var mouse = {
 
-        position: new THREE.Vector2(),
-        down: new THREE.Vector2(),
+        position: new Vector2(),
+        down: new Vector2(),
         moving: false,
         distance: function(){
             return mouse.position.distanceTo( mouse.down );

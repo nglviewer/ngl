@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
@@ -26,13 +26,13 @@ function SurfaceRepresentation( surface, viewer, params ){
         this.volume = undefined;
     }
 
-    this.boxCenter = new THREE.Vector3();
-    this.__boxCenter = new THREE.Vector3();
-    this.box = new THREE.Box3();
-    this.__box = new THREE.Box3();
+    this.boxCenter = new Vector3();
+    this.__boxCenter = new Vector3();
+    this.box = new Box3();
+    this.__box = new Box3();
 
     this.setBox = ( function(){
-        var position = new THREE.Vector3();
+        var position = new Vector3();
         return function(){
             var target = viewer.controls.target;
             var group = viewer.rotationGroup.position;

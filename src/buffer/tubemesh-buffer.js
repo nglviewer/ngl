@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
@@ -66,8 +66,8 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
     setAttributes: function(){
 
-        var vTangent = new THREE.Vector3();
-        var vMeshNormal = new THREE.Vector3();
+        var vTangent = new Vector3();
+        var vMeshNormal = new Vector3();
 
         return function( data ){
 

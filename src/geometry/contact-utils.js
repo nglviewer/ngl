@@ -5,8 +5,9 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
+import { radToDeg } from "../math/math-utils.js";
 import Contact from "./contact.js";
 import Selection from "../selection.js";
 
@@ -54,8 +55,8 @@ function polarContacts( structure, maxDistance, maxAngle ){
     var atomC = structure.getAtomProxy();
     var rp = structure.getResidueProxy();
     var rpPrev = structure.getResidueProxy();
-    var v1 = new THREE.Vector3();
-    var v2 = new THREE.Vector3();
+    var v1 = new Vector3();
+    var v2 = new Vector3();
 
     var checkAngle = function( atom1, atom2, oName, cName ){
 
@@ -75,7 +76,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         v1.subVectors( atomC, atomO );
         v2.subVectors( atomC, atomN );
 
-        return THREE.Math.radToDeg( v1.angleTo( v2 ) ) < maxAngle;
+        return radToDeg( v1.angleTo( v2 ) ) < maxAngle;
 
     };
 
@@ -119,7 +120,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
             v1.add( v2 ).multiplyScalar( 0.5 );
             v2.subVectors( atomX, atomN );
 
-            if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+            if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
                 data.bondSet.flip_unsafe( i );
             }
 
@@ -171,8 +172,8 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
     var atomC = structure.getAtomProxy();
     var rp = structure.getResidueProxy();
     var rpPrev = structure.getResidueProxy();
-    var v1 = new THREE.Vector3();
-    var v2 = new THREE.Vector3();
+    var v1 = new Vector3();
+    var v2 = new Vector3();
 
     for( var i = 0, il = bondStore.count; i < il; ++i ){
 
@@ -205,9 +206,9 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
         v1.add( v2 ).multiplyScalar( 0.5 );
         v2.subVectors( atomO, atomN );
 
-        // Log.log( THREE.Math.radToDeg( v1.angleTo( v2 ) ) );
+        // Log.log( radToDeg( v1.angleTo( v2 ) ) );
 
-        if( THREE.Math.radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
+        if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
             data.bondSet.flip_unsafe( i );
         }
 
