@@ -10,12 +10,17 @@ import Signal from "../../lib/signals.es6.js";
 
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
 import { GidPool, Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 
 
-var PickingControls = function( viewer ){
+var PickingControls = function( viewer, params ){
+
+    var hoverTimeout = 50;
+    setParameters( params );
 
     var signals = {
-        onClick: new Signal()
+        onClick: new Signal(),
+        onHover: new Signal()
     };
 
     var position = new Vector3();
@@ -23,20 +28,31 @@ var PickingControls = function( viewer ){
     var mouse = {
         position: new Vector2(),
         down: new Vector2(),
+        canvasPosition: new Vector2(),
         moving: false,
+        hovering: true,
+        lastMoved: Infinity,
+        which: undefined,
         distance: function(){
             return mouse.position.distanceTo( mouse.down );
+        },
+        setCanvasPosition: function( e ){
+            var box = viewer.renderer.domElement.getBoundingClientRect();
+            var offsetX = e.clientX - box.left;
+            var offsetY = e.clientY - box.top;
+            mouse.canvasPosition.set( offsetX, box.height - offsetY );
         }
     };
 
-    function pick( e ){
-        var box = viewer.renderer.domElement.getBoundingClientRect();
-        var offsetX = e.clientX - box.left;
-        var offsetY = e.clientY - box.top;
-        var pickingData = viewer.pick(
-            offsetX, box.height - offsetY
-        );
+    function setParameters( params ){
+        var p = Object.assign( {}, params );
+        hoverTimeout = defaults( p.hoverTimeout, hoverTimeout );
+    }
 
+    function pick( mouse ){
+        var pickingData = viewer.pick(
+            mouse.canvasPosition.x, mouse.canvasPosition.y
+        );
         var instance = pickingData.instance;
         var picked = GidPool.getByGid( pickingData.gid );
 
@@ -45,12 +61,12 @@ var PickingControls = function( viewer ){
             pickedAtom = picked;
         }else if( picked && picked.type === "BondProxy" ){
             pickedBond = picked;
-        }else if( picked && picked && picked.volume.type === "Volume" ){
+        }else if( picked && picked.volume.type === "Volume" ){
             pickedVolume = picked;
         }
 
         if( ( pickedAtom || pickedBond || pickedVolume ) &&
-                e.which === MiddleMouseButton
+                mouse.which === MiddleMouseButton
         ){
             if( pickedAtom ){
                 position.copy( pickedAtom );
@@ -76,41 +92,54 @@ var PickingControls = function( viewer ){
         }
     }
 
+    function listen(){
+        if( performance.now() - mouse.lastMoved > hoverTimeout ){
+            mouse.moving = false;
+        }
+        if( !mouse.moving && !mouse.hovering ){
+            mouse.hovering = true;
+            var pd = pick( mouse );
+            signals.onHover.dispatch( pd );
+            // if( Debug ) Log.log( "onHover", pd );
+        }
+        requestAnimationFrame( listen );
+    }
+    listen();
+
     viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
         e.preventDefault();
         // e.stopPropagation();
         mouse.moving = true;
-        mouse.position.x = e.layerX;
-        mouse.position.y = e.layerY;
+        mouse.hovering = false;
+        mouse.lastMoved = performance.now();
+        mouse.position.set( e.layerX, e.layerY );
+        mouse.setCanvasPosition( e );
     } );
 
     viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
         e.preventDefault();
         // e.stopPropagation();
         mouse.moving = false;
-        mouse.down.x = e.layerX;
-        mouse.down.y = e.layerY;
+        mouse.hovering = false;
+        mouse.down.set( e.layerX, e.layerY );
+        mouse.which = e.which;
+        mouse.setCanvasPosition( e );
     } );
 
     viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
         e.preventDefault();
         // e.stopPropagation();
-
+        mouse.which = undefined;
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
-
-        var pd = pick( e );
+        var pd = pick( mouse );
         signals.onClick.dispatch( pd );
-
-        if( Debug ){
-            Log.log( "clicked atom", pd.pickedAtom );
-            Log.log( "clicked bond", pd.pickedBond );
-            Log.log( "clicked volume", pd.pickedVolume );
-        }
+        if( Debug ) Log.log( "onCLick", pd );
     } );
 
     // API
 
     this.signals = signals;
+    this.setParameters = setParameters;
 
 };
 

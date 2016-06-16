@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file, following t
 ### Added
 - gulp build scripts
 - mmtf v0.2 support
+- stage.onClick signal (renamed from .onPicking)
+- stage.onHover signal
 
 ### Changed
 - reorganised everything to use es6 modules
@@ -18,7 +20,7 @@ All notable changes to this project will be documented in this file, following t
 ### Removed
 - python-based build scripts
 - closure-compiler
-- stage.signals.onPicking, renamed to .onClick
+- stage.signals.onPicking (renamed to .onClick)
 - stage.signals.atom/bond/volume/nothingPicked, use .onClick instead
 
 

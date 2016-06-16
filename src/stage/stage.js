@@ -47,6 +47,7 @@ import { autoLoad } from "../loader/loader-utils";
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
+ * @property {Integer} hoverTimeout - timeout until the hover signal is fired
  */
 
 
@@ -68,7 +69,8 @@ function Stage( eid, params ){
         componentAdded: new Signal(),
         componentRemoved: new Signal(),
 
-        onClick: new Signal()
+        onClick: new Signal(),
+        onHover: new Signal()
     };
 
     //
@@ -81,6 +83,10 @@ function Stage( eid, params ){
 
     this.viewer = new Viewer( eid );
     if( !this.viewer.renderer ) return;
+
+    this.pickingControls = new PickingControls( this.viewer );
+    this.pickingControls.signals.onClick.add( this.signals.onClick.dispatch );
+    this.pickingControls.signals.onHover.add( this.signals.onHover.dispatch );
 
     var p = Object.assign( {
         impostor: true,
@@ -100,13 +106,11 @@ function Stage( eid, params ){
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
-        ambientIntensity: 0.2
+        ambientIntensity: 0.2,
+        hoverTimeout: 50,
     }, params );
     this.parameters = deepCopy( Stage.prototype.parameters );
     this.setParameters( p );  // must come after the viewer has been instantiated
-
-    this.pickingControls = new PickingControls( this.viewer );
-    this.pickingControls.signals.onClick.add( this.signals.onClick.dispatch );
 
     this.viewer.animate();
 
@@ -146,7 +150,7 @@ Stage.prototype = {
             type: "range", step: 1, max: 100, min: 0
         },
         clipDist: {
-            type: "number", precision: 0, max: 200, min: 0
+            type: "integer", max: 200, min: 0
         },
         fogNear: {
             type: "range", step: 1, max: 100, min: 0
@@ -172,6 +176,9 @@ Stage.prototype = {
         ambientIntensity: {
             type: "number", precision: 2, max: 10, min: 0
         },
+        hoverTimeout: {
+            type: "integer", max: 10000, min: 10
+        },
 
     },
 
@@ -185,6 +192,7 @@ Stage.prototype = {
         var tp = this.parameters;
         var viewer = this.viewer;
         var controls = viewer.controls;
+        var pickingControls = this.pickingControls;
 
         for( var name in p ){
 
@@ -204,6 +212,7 @@ Stage.prototype = {
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );

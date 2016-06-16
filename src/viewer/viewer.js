@@ -912,23 +912,23 @@ function Viewer( eid, params ){
                 instance = object.userData.instance;
             }
 
-            if( Debug ){
-                var rgba = Array.apply( [], pixelBuffer );
-                Log.log( pixelBuffer );
-                Log.log(
-                    "picked color",
-                    [
-                        ( rgba[0] ).toPrecision(2),
-                        ( rgba[1] ).toPrecision(2),
-                        ( rgba[2] ).toPrecision(2),
-                        ( rgba[3] ).toPrecision(2)
-                    ]
-                );
-                Log.log( "picked gid", gid );
-                Log.log( "picked instance", instance );
-                Log.log( "picked position", x, y );
-                Log.log( "devicePixelRatio", window.devicePixelRatio );
-            }
+            // if( Debug ){
+            //     var rgba = Array.apply( [], pixelBuffer );
+            //     Log.log( pixelBuffer );
+            //     Log.log(
+            //         "picked color",
+            //         [
+            //             ( rgba[0] ).toPrecision(2),
+            //             ( rgba[1] ).toPrecision(2),
+            //             ( rgba[2] ).toPrecision(2),
+            //             ( rgba[3] ).toPrecision(2)
+            //         ]
+            //     );
+            //     Log.log( "picked gid", gid );
+            //     Log.log( "picked instance", instance );
+            //     Log.log( "picked position", x, y );
+            //     Log.log( "devicePixelRatio", window.devicePixelRatio );
+            // }
 
             return {
                 "gid": gid,
