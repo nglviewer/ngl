@@ -271,7 +271,7 @@ var CrosslinkRepresentation = function( stage, structureComp, crosslinkData, par
     this._initStructureRepr();
     this._initLinkRepr();
 
-    this.stage.signals.onPicking.add(
+    this.stage.signals.onClick.add(
         this._handlePicking, this
     );
     this.crosslinkData.signals.linkListChanged.add(

@@ -6,6 +6,7 @@
 
 
 import { Vector3 } from "../../lib/three.es6.js";
+import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
@@ -20,8 +21,6 @@ import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
 import { makeComponent } from "../component/component-utils.js";
 import { autoLoad } from "../loader/loader-utils";
-
-import Signal from "../../lib/signals.es6.js";
 
 
 /**
@@ -63,19 +62,13 @@ import Signal from "../../lib/signals.es6.js";
 function Stage( eid, params ){
 
     this.signals = {
-
         parametersChanged: new Signal(),
         fullscreenChanged: new Signal(),
 
         componentAdded: new Signal(),
         componentRemoved: new Signal(),
 
-        atomPicked: new Signal(),
-        bondPicked: new Signal(),
-        volumePicked: new Signal(),
-        nothingPicked: new Signal(),
-        onPicking: new Signal()
-
+        onClick: new Signal()
     };
 
     //
@@ -112,7 +105,9 @@ function Stage( eid, params ){
     this.parameters = deepCopy( Stage.prototype.parameters );
     this.setParameters( p );  // must come after the viewer has been instantiated
 
-    this.pickingControls = new PickingControls( this.viewer, this );
+    this.pickingControls = new PickingControls( this.viewer );
+    this.pickingControls.signals.onClick.add( this.signals.onClick.dispatch );
+
     this.viewer.animate();
 
 }

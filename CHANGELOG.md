@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file, following t
 ### Removed
 - python-based build scripts
 - closure-compiler
+- stage.signals.onPicking, renamed to .onClick
+- stage.signals.atom/bond/volume/nothingPicked, use .onClick instead
 
 
 ## [v0.7.1a] - 2016-06-02

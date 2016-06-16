@@ -385,13 +385,11 @@ NGL.ViewportWidget = function( stage ){
 
 NGL.ToolbarWidget = function( stage ){
 
-    var signals = stage.signals;
     var container = new UI.Panel();
-
     var messagePanel = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
     var statsPanel = new UI.Panel().setDisplay( "inline" ).setFloat( "right" );
 
-    signals.onPicking.add( function( d ){
+    stage.signals.onClick.add( function( d ){
 
         var msg;
 
