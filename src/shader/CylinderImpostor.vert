@@ -50,7 +50,6 @@ varying vec4 w;
 #endif
 
 uniform mat4 modelViewMatrixInverse;
-uniform float shift;
 uniform float ortho;
 
 void main(){
@@ -90,9 +89,6 @@ void main(){
         ldir = ext * dir;
 
     vec3 left = normalize( cross( cam_dir, ldir ) );
-    vec3 leftShift = shift * left * radius;
-    if( b < 0.0 )
-        leftShift *= -1.0;
     left = radius * left;
     vec3 up = radius * normalize( cross( left, ldir ) );
 
@@ -101,15 +97,15 @@ void main(){
     U = normalize( normalMatrix * up );
     V = normalize( normalMatrix * left );
 
-    vec4 base4 = modelViewMatrix * vec4( center - ldir + leftShift, 1.0 );
+    vec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );
     base_radius.xyz = base4.xyz / base4.w;
 
-    vec4 top_position = modelViewMatrix * vec4( center + ldir + leftShift, 1.0 );
+    vec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );
     vec4 end4 = top_position;
     end_b.xyz = end4.xyz / end4.w;
 
     w = modelViewMatrix * vec4(
-        center + leftShift + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
+        center + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0
     );
 
     gl_Position = projectionMatrix * w;

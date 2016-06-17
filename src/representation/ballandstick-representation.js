@@ -5,6 +5,8 @@
  */
 
 
+import THREE from "../../lib/three.js";
+
 import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -49,6 +51,12 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         },
         cylinderOnly: {
             type: "boolean", rebuild: true
+        },
+        multipleBond: {
+            type: "boolean", rebuild: true
+        },
+        bondSpacing: {
+            type: "number", precision: 2, max: 1.0, min: 0.5
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -76,6 +84,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
+        this.multipleBond = defaults( p.multipleBond, false );
+        this.bondSpacing = defaults( p.bondSpacing, 0.95 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -94,6 +104,17 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     getAtomData: function( sview, what, params ){
 
         return sview.getAtomData( this.getAtomParams( what, params ) );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        params = Object.assign( {
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing
+        }, params );
+
+        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
@@ -141,7 +162,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bufferList.push( sphereBuffer );
 
             }
-
             var cylinderBuffer = new CylinderBuffer(
                 bondData.position1,
                 bondData.position2,
@@ -151,7 +171,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bondData.pickingColor1,
                 bondData.pickingColor2,
                 this.getBufferParams( {
-                    shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
                     disableImpostor: this.disableImpostor,
@@ -170,6 +189,10 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     },
 
     updateData: function( what, data ){
+
+        if( this.multipleBond && what && what.radius ){
+            what.position = true;
+        }
 
         var bondData = this.getBondData( data.sview, what );
 
@@ -197,9 +220,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
             if( !what || what.position ){
                 sphereData.position = atomData.position;
-                cylinderData.position = calculateCenterArray(
-                    bondData.position1, bondData.position2
-                );
                 cylinderData.position1 = bondData.position1;
                 cylinderData.position2 = bondData.position2;
             }
@@ -227,7 +247,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         var rebuild = false;
         var what = {};
 
-        if( params && params.aspectRatio ){
+        if( params && ( params.aspectRatio || params.bondSpacing ) ){
 
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){

@@ -14,7 +14,9 @@ import GeometryBuffer from "./geometry-buffer.js";
 
 function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
 
-    var radiusSegments = defaults( params.radiusSegments, 10 );
+    var p = params || {};
+
+    var radiusSegments = defaults( p.radiusSegments, 10 );
 
     this.updateNormals = true;
 
@@ -37,7 +39,7 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
     this.__center = new Float32Array( n );
 
     GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor, params
+        this, this._position, this._color, this._pickingColor, p
     );
 
     this.setPositionTransform( this._from, this._to, this._radius );

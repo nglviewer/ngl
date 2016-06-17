@@ -224,14 +224,16 @@ function calculateMinArray( array1, array2 ){
 
 function copyArray( src, dst, srcOffset, dstOffset, length ){
 
-    var i;
-    var n = length;
-
-    for( i = 0; i < n; ++i ){
-
+    for( var i = 0; i < length; ++i ){
         dst[ dstOffset + i ] = src[ srcOffset + i ];
-
     }
+
+}
+
+
+function copyWithin( array, srcOffset, dstOffset, length ){
+
+    copyArray( array, array, srcOffset, dstOffset, length );
 
 }
 
@@ -402,6 +404,7 @@ export {
     calculateMeanArray,
     calculateMinArray,
     copyArray,
+    copyWithin,
     quicksortIP,
     arrayMax,
     arrayMin

@@ -9,6 +9,8 @@ import THREE from "../../lib/three.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
+import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Selection from "../selection.js";
@@ -660,7 +662,9 @@ Structure.prototype = {
         if( p.colorParams ) p.colorParams.structure = this.getStructure();
 
         var what = p.what;
-        var bondSet = p.bondSet || this.bondSet;
+        var bondSet = defaults( p.bondSet, this.bondSet );
+        var multipleBond = defaults( p.multipleBond, false );
+        var bondSpacing = defaults( p.bondSpacing, 0.95 );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2, shiftDir;
@@ -670,8 +674,17 @@ Structure.prototype = {
         if( p.bondStore ) bp.bondStore = p.bondStore;
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
-        var bondCount = bondSet.size();
 	var rp = this.getResidueProxy();
+        var bondCount;
+        if( multipleBond ){
+            var storeBondOrder = bp.bondStore.bondOrder;
+            bondCount = 0;
+            bondSet.forEach( function( index ){
+                bondCount += storeBondOrder[ index ];
+            } );
+        }else{
+            bondCount = bondSet.size();
+        }
 
         if( !what || what.position ){
             position1 = new Float32Array( bondCount * 3 );
@@ -708,39 +721,98 @@ Structure.prototype = {
             }
         }
 
-	if (what && what.shiftDir) { // Only when really requested?
-	    shiftDir = new Float32Array( bondCount * 3); 
-	    bondData.shiftDir = shiftDir;
-	}
+        var i = 0;
+        var j, i3, k, bondOrder, radius;
 
-        bondSet.forEach( function( index, i ){
-            var i3 = i * 3;
+
+        var v1 = new THREE.Vector3();
+        var v2 = new THREE.Vector3();
+        var v3 = new THREE.Vector3();
+        var v4 = new THREE.Vector3();
+        bondSet.forEach( function( index ){
+            i3 = i * 3;
             bp.index = index;
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
-	    rp.index = ap1.residueIndex;
+            bondOrder = bp.bondOrder;
+            rp.index = ap1.residueIndex;
+
             if( position1 ){
                 ap1.positionToArray( position1, i3 );
                 ap2.positionToArray( position2, i3 );
+
+                if( multipleBond && bondOrder > 1 ){
+
+                    ap1.positionToVector3( v2 );
+                    ap2.positionToVector3( v3 );
+
+                    var radius = radiusFactory.atomRadius( ap1 );
+                    var multiRadius = radius / bondOrder * bondSpacing;
+
+                    // Get shift Vector:
+                    var shift = rp.residueType.calculateShiftDir( ap1, ap2 );
+
+                    shift.multiplyScalar( radius - multiRadius ); 
+                    if (bondOrder == 2) {
+                        v4.addVectors( v2, shift ).toArray( position1, i3 );
+                        v4.subVectors( v2, shift ).toArray( position1, i3 + 3 );
+                        v4.addVectors( v3, shift ).toArray( position2, i3 );
+                        v4.subVectors( v3, shift ).toArray( position2, i3 + 3 );
+                    } else if( bondOrder === 3 ){
+                        v2.toArray( position1, i3 );
+                        v4.addVectors( v2, shift ).toArray( position1, i3 + 3 );
+                        v4.subVectors( v2, shift ).toArray( position1, i3 + 6 );
+                        v3.toArray( position2, i3 );
+                        v4.addVectors( v3, shift ).toArray( position2, i3 + 3 );
+                        v4.subVectors( v3, shift ).toArray( position2, i3 + 6 );
+                    }else{
+                        // todo, some fallback
+                    } 
+                }
             }
             if( color1 ){
                 colorMaker.bondColorToArray( bp, 1, color1, i3 );
                 colorMaker.bondColorToArray( bp, 0, color2, i3 );
+                if( multipleBond && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        k = j * 3 + i3;
+                        copyWithin( color1, i3, k, 3 );
+                        copyWithin( color2, i3, k, 3 );
+                    }
+                }
             }
             if( pickingColor1 ){
                 pickingColorMaker.bondColorToArray( bp, 1, pickingColor1, i3 );
                 pickingColorMaker.bondColorToArray( bp, 0, pickingColor2, i3 );
+                if( multipleBond && bondOrder > 1 ){
+                    for( j = 1; j < bondOrder; ++j ){
+                        k = j * 3 + i3;
+                        copyWithin( pickingColor1, i3, k, 3 );
+                        copyWithin( pickingColor2, i3, k, 3 );
+                    }
+                }
             }
             if( radius1 ){
                 radius1[ i ] = radiusFactory.atomRadius( ap1 );
+                if( multipleBond && bondOrder > 1 ){
+                    radius1[ i ] /= bondOrder * 1 / bondSpacing;
+                    for( j = 1; j < bondOrder; ++j ){
+                        radius1[ i + j ] = radius1[ i ];
+                    }
+                }
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
+                if( multipleBond && bondOrder > 1 ){
+                    radius2[ i ] = bondOrder * 1 / bondSpacing;
+                    for( j = 1; j < bondOrder; ++j ){
+                        radius2[ i + j ] = radius2[ i ];
+                    }
+                }
             }
-	    if( shiftDir && bp.bondOrder > 1 ){	
-		// Actual calculation done in ResidueType
-		rp.residueType.calculateShiftDir( ap1, ap2 ).toArray( shiftDir, i3 );
-	    }
+
+            i += multipleBond ? bondOrder : 1;
+
         } );
 
         return bondData;

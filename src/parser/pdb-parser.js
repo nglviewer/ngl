@@ -254,7 +254,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
                         // interpret records where a 'to' atom is given multiple times
                         // as double/triple bonds, e.g. CONECT 1529 1528 1528 is a double bond
-                        if( bondDict[ to ] ){
+                        if( bondDict[ to ] !== undefined ){
                             s.bondStore.bondOrder[ bondDict[ to ] ] += 1;
                         }else{
                             bondDict[ to ] = s.bondStore.count;

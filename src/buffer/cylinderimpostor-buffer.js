@@ -17,9 +17,6 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     var p = params || {};
 
-    // Moves the cylinder in camera space to get, for example,
-    // one of multiple shifted screen-aligned cylinders.
-    this.shift = defaults( p.shift, 0 );
     this.cap = defaults( p.cap, true );
 
     this.impostor = true;
@@ -36,7 +33,6 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.addUniforms( {
         "modelViewMatrixInverse": modelViewMatrixInverse,
-        "shift": { value: this.shift },
         "ortho": { value: 0.0 },
     } );
 
@@ -48,13 +44,11 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
     } );
 
     this.setAttributes( {
-        "position": calculateCenterArray( from, to ),
-
         "position1": from,
         "position2": to,
         "color": color,
         "color2": color2,
-        "radius": radius,
+        "radius": radius
     } );
 
     if( pickingColor ){
@@ -97,6 +91,16 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
         }
 
         return material;
+
+    },
+
+    setAttributes: function( data ){
+
+        if( data && data.position1 && data.position2 ){
+            data.position = calculateCenterArray( data.position1, data.position2 );
+        }
+
+        AlignedBoxBuffer.prototype.setAttributes.call( this, data );
 
     }
 

@@ -274,8 +274,8 @@ MmtfParser.prototype = Object.assign( Object.create(
                 var atomname = groupType.atomNameList[ j ];
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
-            var hetFlag = ChemCompHetero.indexOf( groupType.chemCompType ) !== -1;
-            var chemCompType = groupType.chemCompType;
+            var chemCompType = groupType.chemCompType.toUpperCase();
+            var hetFlag = ChemCompHetero.indexOf( chemCompType ) !== -1;
 
             var numGroupBonds = groupType.bondOrderList.length;
             var atomIndices1 = new Array( numGroupBonds );

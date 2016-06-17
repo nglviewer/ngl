@@ -465,6 +465,7 @@ import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Selection from "./selection.js";
 import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
+import Assembly from "./symmetry/assembly.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 
 import { throttle, download, getQuery } from "./utils.js";
