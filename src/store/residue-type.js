@@ -533,15 +533,15 @@ ResidueType.prototype = {
         ap1.positionToVector3( p1 );
         var v12 = ap2.positionToVector3( p2 ).sub( p1 ).normalize();
         var v13 = p3.sub( p1 ).normalize();
-        var theta = v12.dot( v13 );
+        var dp = v12.dot( v13 );
 
-        if( 1 - Math.abs( theta ) < 1e-5 ){
+        if( 1 - Math.abs( dp ) < 1e-5 ){
             // More or less colinear:
             coLinear = true;
             console.warn("Colinear reference atom");
         }
 
-        return v.copy( v13.sub( v12 ) ).normalize();
+        return v.copy( v13.sub( v12.multiplyScalar( dp ) ) ).normalize();
     },
 
     toJSON: function(){
