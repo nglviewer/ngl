@@ -473,6 +473,7 @@ import Queue from "./utils/queue.js";
 
 //
 
+import AxesRepresentation from "./representation/axes-representation";
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
 import BaseRepresentation from "./representation/base-representation";

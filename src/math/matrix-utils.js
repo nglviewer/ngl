@@ -7,6 +7,7 @@
  */
 
 
+import { Vector3 } from "../../lib/three.es6.js";
 import { v3new, v3cross } from "./vector-utils.js";
 
 
@@ -555,6 +556,47 @@ function svd( A, W, U, V ){
     }
 }
 
+
+function principalAxes( points ){
+    console.time( "principalAxes" );
+
+    var n = points.rows;
+    var pointsT = new Matrix( n, 3 );
+    var A = new Matrix( 3, 3 );
+    var W = new Matrix( 1, 3 );
+    var U = new Matrix( 3, 3 );
+    var V = new Matrix( 3, 3 );
+
+    var mean = mean_rows( points );
+    sub_rows( points, mean );
+    transpose( pointsT, points );
+    multiply_ABt( A, pointsT, pointsT );
+    svd( A, W, U, V );
+
+    // console.log( points, pointsT, mean )
+    // console.log( n, A, W, U, V );
+
+    var vm = new Vector3( mean[0], mean[1], mean[2] );
+    var va = new Vector3( U.data[0], U.data[3], U.data[6] );
+    var vb = new Vector3( U.data[1], U.data[4], U.data[7] );
+    var vc = new Vector3( U.data[2], U.data[5], U.data[8] );
+
+    va.multiplyScalar( Math.sqrt( W.data[0] / ( n / 3 ) ) );
+    vb.multiplyScalar( Math.sqrt( W.data[1] / ( n / 3 ) ) );
+    vc.multiplyScalar( Math.sqrt( W.data[2] / ( n / 3 ) ) );
+
+    var begA = new Vector3().copy( vm ).sub( va );
+    var endA = new Vector3().copy( vm ).add( va );
+    var begB = new Vector3().copy( vm ).sub( vb );
+    var endB = new Vector3().copy( vm ).add( vb );
+    var begC = new Vector3().copy( vm ).sub( vc );
+    var endC = new Vector3().copy( vm ).add( vc );
+
+    console.timeEnd( "principalAxes" );
+
+    return [ [ begA, endA ], [ begB, endB ], [ begC, endC ] ];
+}
+
 //
 
 function m4new(){
@@ -683,6 +725,7 @@ m3makeNormal.__deps = [ v3new, v3cross ];
 export {
     Matrix,
     svd,
+    principalAxes,
     mean_rows,
     mean_cols,
     sub_rows,
