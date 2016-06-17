@@ -667,7 +667,7 @@ Structure.prototype = {
         var bondSpacing = defaults( p.bondSpacing, 0.85 );
 
         var radiusFactory, colorMaker, pickingColorMaker;
-        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2, shiftDir;
+        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
 
         var bondData = {};
         var bp = this.getBondProxy();
@@ -724,11 +724,8 @@ Structure.prototype = {
         var i = 0;
         var j, i3, k, bondOrder, radius;
 
-        var v1 = new THREE.Vector3();
-        var v2 = new THREE.Vector3();
-        var v3 = new THREE.Vector3();
-        var v4 = new THREE.Vector3();
-        var shift = new THREE.Vector3();
+        var vt = new THREE.Vector3();
+        var vShift = new THREE.Vector3();
         bondSet.forEach( function( index ){
             i3 = i * 3;
             bp.index = index;
@@ -738,25 +735,23 @@ Structure.prototype = {
             rp.index = ap1.residueIndex;
             if( position1 ){
                 if( multipleBond && bondOrder > 1 ){
-                    ap1.positionToVector3( v2 );
-                    ap2.positionToVector3( v3 );
                     var radius = radiusFactory.atomRadius( ap1 );
                     var multiRadius = radius / bondOrder * bondSpacing;
                     // Get shift Vector:
-                    rp.residueType.calculateShiftDir( ap1, ap2, shift );
-                    shift.multiplyScalar( radius - multiRadius );
+                    rp.residueType.calculateShiftDir( ap1, ap2, vShift );
+                    vShift.multiplyScalar( radius - multiRadius );
                     if( bondOrder === 2 ){
-                        v4.addVectors( v2, shift ).toArray( position1, i3 );
-                        v4.subVectors( v2, shift ).toArray( position1, i3 + 3 );
-                        v4.addVectors( v3, shift ).toArray( position2, i3 );
-                        v4.subVectors( v3, shift ).toArray( position2, i3 + 3 );
-                    } else if( bondOrder === 3 ){
-                        v2.toArray( position1, i3 );
-                        v4.addVectors( v2, shift ).toArray( position1, i3 + 3 );
-                        v4.subVectors( v2, shift ).toArray( position1, i3 + 6 );
-                        v3.toArray( position2, i3 );
-                        v4.addVectors( v3, shift ).toArray( position2, i3 + 3 );
-                        v4.subVectors( v3, shift ).toArray( position2, i3 + 6 );
+                        vt.addVectors( ap1, vShift ).toArray( position1, i3 );
+                        vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
+                        vt.addVectors( ap2, vShift ).toArray( position2, i3 );
+                        vt.subVectors( ap2, vShift ).toArray( position2, i3 + 3 );
+                    }else if( bondOrder === 3 ){
+                        ap1.positionToArray( position1, i3 );
+                        vt.addVectors( ap1, vShift ).toArray( position1, i3 + 3 );
+                        vt.subVectors( ap1, vShift ).toArray( position1, i3 + 6 );
+                        ap2.positionToArray( position2, i3 );
+                        vt.addVectors( ap2, vShift ).toArray( position2, i3 + 3 );
+                        vt.subVectors( ap2, vShift ).toArray( position2, i3 + 6 );
                     }else{
                         // todo, better fallback
                         ap1.positionToArray( position1, i3 );

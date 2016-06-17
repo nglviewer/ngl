@@ -297,9 +297,12 @@ AtomProxy.prototype = {
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
 
-        array[ offset + 0 ] = this.x;
-        array[ offset + 1 ] = this.y;
-        array[ offset + 2 ] = this.z;
+        var index = this.index;
+        var atomStore = this.atomStore;
+
+        array[ offset + 0 ] = atomStore.x[ index ];
+        array[ offset + 1 ] = atomStore.y[ index ];
+        array[ offset + 2 ] = atomStore.z[ index ];
 
         return array;
 

@@ -72,9 +72,6 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.backboneStartType = this.getBackboneType( 1 );
     this.backboneIndexList = this.getBackboneIndexList();
 
-    // Sparse array containing the reference atoms for each bond.
-    this.bondReferenceAtomIndices = [];
-
     var atomnames = ResidueTypeAtoms[ this.backboneType ];
     var atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
     var atomnamesEnd = ResidueTypeAtoms[ this.backboneEndType ];
@@ -101,6 +98,15 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
         rungEndIndex = this.getAtomIndexByName( "N3" );
     }
     this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
+
+    //
+
+    // Sparse array containing the reference atoms for each bond.
+    this.bondReferenceAtomIndices = [];
+
+    this._ap3 = this.structure.getAtomProxy();
+    this._v12 = new THREE.Vector3();
+    this._v13 = new THREE.Vector3();
 
 }
 
@@ -463,82 +469,66 @@ ResidueType.prototype = {
         }
     },
 
-    // Bonds will typically be queried in order
-    _lastBondIdx: 0,
+    getBondIndex: function( atomIndex1, atomIndex2 ){
+        var bonds = this.getBonds();
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+        var idx1 = atomIndices1.indexOf( atomIndex1 );
+        var idx2 = atomIndices2.indexOf( atomIndex2 );
+        while( idx1 !== -1 ){
+            while( idx2 !== -1 ){
+                if( idx1 === idx2 ) return idx1;
+                idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
+            }
+            idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
+        }
+        // returns undefined when no bond is found
+    },
 
     /**
      * Find reference atom for the bond between atom 1 and 2
      * @param {AtomProxy} ap1 - atom 1
      * @param {AtomProxy} ap2 - atom 2
-     * @return {Integer|null} atom index, or null if cannot determine one
+     * @return {Integer|undefined} atom index, or `undefined` if cannot determine one
      */
     getBondReferenceAtomIndex: function( ap1, ap2 ) {
         if( ap1.residueIndex !== ap2.residueIndex ) {
-            return null; // Bond between residues, for now ignore (could detect)
+            return undefined; // Bond between residues, for now ignore (could detect)
         }
         var typeAtomIdx1 = ap1.index - ap1.residueAtomOffset;
         var typeAtomIdx2 = ap2.index - ap2.residueAtomOffset;
-        // Sanity check
-        if( (Math.max(typeAtomIdx1, typeAtomIdx2) >= this.atomCount) ||
-            ( Math.min(typeAtomIdx1, typeAtomIdx2) < 0)) {
-            console.error("Something went wrong mapping atoms to ResidueType");
-            return null;
-        }
-
-        var bonds = this.bonds;
-        var nBonds = this.bonds.atomIndices1.length;
+        var bondIndex = this.getBondIndex( typeAtomIdx1, typeAtomIdx2 );
+        if( bondIndex === undefined ) return undefined;
         if( this.bondReferenceAtomIndices.length === 0 ){
             this.assignBondReferenceAtomIndices();
         }
-
-        for( var i=0, j=this._lastBondIdx; i<nBonds; i++, j++) {
-            if( j === nBonds ) j = 0;
-            if( ( typeAtomIdx1 === bonds.atomIndices1[j] &&
-                    typeAtomIdx2 === bonds.atomIndices2[j] ) ||
-                ( typeAtomIdx1 === bonds.atomIndices2[j] &&
-                    typeAtomIdx2 === bonds.atomIndices1[j] )
-            ){
-                this._lastBondIdx = j;
-                var typeAtomIdx3 = this.bondReferenceAtomIndices[j];
-                if( Number.isInteger( typeAtomIdx3 ) ) {
-                    return typeAtomIdx3 + ap1.residueAtomOffset;
-                } else {
-                    return null;
-                }
-            }
-        }
-        return null;
+        return this.bondReferenceAtomIndices[ bondIndex ];
     },
-
-    _p1: new THREE.Vector3(),
-    _p2: new THREE.Vector3(),
-    _p3: new THREE.Vector3(),
 
     /* Returns a THREE Vector3 instance */
     calculateShiftDir: function( ap1, ap2, v ) {
         if( !v ) v = new THREE.Vector3();
-        var coLinear = false; // TODO: An actual fallback for this case!
+        var coLinear = false;  // TODO: An actual fallback for this case!
 
         var ai3 = this.getBondReferenceAtomIndex( ap1, ap2 );
-        var p3 = this._p3;
-        var p2 = this._p2;
-        var p1 = this._p1;
+        var ap3 = this._ap3;
+        var v12 = this._v12;
+        var v13 = this._v13;
 
-        if( ai3 !== null ) {
-            this.structure.getAtomProxy( ai3 ).positionToVector3( p3 );
-        } else {
-            p3.set( 0, 0, 0 ); // Some arbitrary reference point
+        v12.subVectors( ap1, ap2 ).normalize();
+        if( ai3 !== undefined ){
+            ap3.index = ai3;
+            v13.subVectors( ap1, ap3 );
+        }else{
+            v13.copy( ap1 );  // no reference point, use origin
         }
+        v13.normalize();
 
-        ap1.positionToVector3( p1 );
-        var v12 = ap2.positionToVector3( p2 ).sub( p1 ).normalize();
-        var v13 = p3.sub( p1 ).normalize();
         var dp = v12.dot( v13 );
-
         if( 1 - Math.abs( dp ) < 1e-5 ){
             // More or less colinear:
             coLinear = true;
-            console.warn("Colinear reference atom");
+            console.warn( "Colinear reference atom" );
         }
 
         return v.copy( v13.sub( v12.multiplyScalar( dp ) ) ).normalize();
