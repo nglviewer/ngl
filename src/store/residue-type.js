@@ -16,8 +16,6 @@ import {
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
-import THREE from "../../lib/three.js";
-
 
 /**
  * Propogates a depth-first search. TODO: Iterative deepening search instead?
@@ -99,14 +97,8 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     }
     this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
 
-    //
-
-    // Sparse array containing the reference atoms for each bond.
+    // Sparse array containing the reference atom index for each bond.
     this.bondReferenceAtomIndices = [];
-
-    this._ap3 = this.structure.getAtomProxy();
-    this._v12 = new THREE.Vector3();
-    this._v13 = new THREE.Vector3();
 
 }
 
@@ -470,7 +462,7 @@ ResidueType.prototype = {
     },
 
     getBondIndex: function( atomIndex1, atomIndex2 ){
-        var bonds = this.getBonds();
+        var bonds = this.bonds;
         var atomIndices1 = bonds.atomIndices1;
         var atomIndices2 = bonds.atomIndices2;
         var idx1 = atomIndices1.indexOf( atomIndex1 );
@@ -485,53 +477,13 @@ ResidueType.prototype = {
         // returns undefined when no bond is found
     },
 
-    /**
-     * Find reference atom for the bond between atom 1 and 2
-     * @param {AtomProxy} ap1 - atom 1
-     * @param {AtomProxy} ap2 - atom 2
-     * @return {Integer|undefined} atom index, or `undefined` if cannot determine one
-     */
-    getBondReferenceAtomIndex: function( ap1, ap2 ) {
-        if( ap1.residueIndex !== ap2.residueIndex ) {
-            return undefined; // Bond between residues, for now ignore (could detect)
-        }
-        var typeAtomIdx1 = ap1.index - ap1.residueAtomOffset;
-        var typeAtomIdx2 = ap2.index - ap2.residueAtomOffset;
-        var bondIndex = this.getBondIndex( typeAtomIdx1, typeAtomIdx2 );
+    getBondReferenceAtomIndex: function( atomIndex1, atomIndex2 ) {
+        var bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
         if( bondIndex === undefined ) return undefined;
         if( this.bondReferenceAtomIndices.length === 0 ){
             this.assignBondReferenceAtomIndices();
         }
         return this.bondReferenceAtomIndices[ bondIndex ];
-    },
-
-    /* Returns a THREE Vector3 instance */
-    calculateShiftDir: function( ap1, ap2, v ) {
-        if( !v ) v = new THREE.Vector3();
-        var coLinear = false;  // TODO: An actual fallback for this case!
-
-        var ai3 = this.getBondReferenceAtomIndex( ap1, ap2 );
-        var ap3 = this._ap3;
-        var v12 = this._v12;
-        var v13 = this._v13;
-
-        v12.subVectors( ap1, ap2 ).normalize();
-        if( ai3 !== undefined ){
-            ap3.index = ai3;
-            v13.subVectors( ap1, ap3 );
-        }else{
-            v13.copy( ap1 );  // no reference point, use origin
-        }
-        v13.normalize();
-
-        var dp = v12.dot( v13 );
-        if( 1 - Math.abs( dp ) < 1e-5 ){
-            // More or less colinear:
-            coLinear = true;
-            console.warn( "Colinear reference atom" );
-        }
-
-        return v.copy( v13.sub( v12.multiplyScalar( dp ) ) ).normalize();
     },
 
     toJSON: function(){

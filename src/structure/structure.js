@@ -651,7 +651,6 @@ Structure.prototype = {
                 index[ i ] = idx;
             }
         } );
-
         return atomData;
 
     },
@@ -674,7 +673,6 @@ Structure.prototype = {
         if( p.bondStore ) bp.bondStore = p.bondStore;
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
-        var rp = this.getResidueProxy();
         var bondCount;
         if( multipleBond ){
             var storeBondOrder = bp.bondStore.bondOrder;
@@ -732,13 +730,12 @@ Structure.prototype = {
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
             bondOrder = bp.bondOrder;
-            rp.index = ap1.residueIndex;
             if( position1 ){
                 if( multipleBond && bondOrder > 1 ){
                     var radius = radiusFactory.atomRadius( ap1 );
                     var multiRadius = radius / bondOrder * bondSpacing;
                     // Get shift Vector:
-                    rp.residueType.calculateShiftDir( ap1, ap2, vShift );
+                    bp.calculateShiftDir( vShift );
                     vShift.multiplyScalar( radius - multiRadius );
                     if( bondOrder === 2 ){
                         vt.addVectors( ap1, vShift ).toArray( position1, i3 );
