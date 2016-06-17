@@ -9,7 +9,7 @@ import { Vector3, Color } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
-import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
+import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -195,9 +195,6 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
         if( !what || what.position ){
             sphereData.position = unitcellData.vertexPosition;
-            cylinderData.position = calculateCenterArray(
-                unitcellData.position1, unitcellData.position2
-            );
             cylinderData.position1 = unitcellData.edgePosition1;
             cylinderData.position2 = unitcellData.edgePosition2;
         }
