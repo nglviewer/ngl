@@ -74,7 +74,6 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
 
     // Sparse array containing the reference atoms for each bond.
     this.bondReferenceAtoms = [];
-    this.assignBondReferenceAtoms();
 
     var atomnames = ResidueTypeAtoms[ this.backboneType ];
     var atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
@@ -486,7 +485,9 @@ ResidueType.prototype = {
 
         var bonds = this.bonds;
         var nBonds = this.bonds.atomIndices1.length;
-        if( !this.bondReferenceAtoms ) { this.assignBondReferenceAtoms(); }
+        if( this.bondReferenceAtoms.length === 0 ){
+            this.assignBondReferenceAtoms();
+        }
 
         for( var i=0, j=this._lastBondIdx; i<nBonds; i++, j++) {
             if( j === nBonds ) j = 0;
@@ -528,9 +529,9 @@ ResidueType.prototype = {
         }
 
         ap1.positionToVector3( p1 );
-        var v12 = ap2.positionToVector3( p2 ).sub( p1 );
-        var v13 = p3.sub( p1 );
-        var theta = v12.dot( v13 ) / Math.sqrt( v12.lengthSq() * v13.lengthSq() );
+        var v12 = ap2.positionToVector3( p2 ).sub( p1 ).normalize();
+        var v13 = p3.sub( p1 ).normalize();
+        var theta = v12.dot( v13 );
 
         if( 1 - Math.abs( theta ) < 1e-5 ){
             // More or less colinear:
@@ -538,7 +539,7 @@ ResidueType.prototype = {
             console.warn("Colinear reference atom");
         }
 
-        return v.copy( v13.sub( v12 ).normalize() );
+        return v.copy( v13.sub( v12 ) ).normalize();
     },
 
     toJSON: function(){
