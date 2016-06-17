@@ -664,7 +664,7 @@ Structure.prototype = {
         var what = p.what;
         var bondSet = defaults( p.bondSet, this.bondSet );
         var multipleBond = defaults( p.multipleBond, false );
-        var bondSpacing = defaults( p.bondSpacing, 0.95 );
+        var bondSpacing = defaults( p.bondSpacing, 0.85 );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2, shiftDir;

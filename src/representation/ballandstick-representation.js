@@ -85,7 +85,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
         this.multipleBond = defaults( p.multipleBond, false );
-        this.bondSpacing = defaults( p.bondSpacing, 0.95 );
+        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
 
         StructureRepresentation.prototype.init.call( this, p );
 

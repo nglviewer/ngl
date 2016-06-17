@@ -73,7 +73,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.backboneIndexList = this.getBackboneIndexList();
 
     // Sparse array containing the reference atoms for each bond.
-    this.bondReferenceAtoms = [];
+    this.bondReferenceAtomIndices = [];
 
     var atomnames = ResidueTypeAtoms[ this.backboneType ];
     var atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
@@ -371,13 +371,13 @@ ResidueType.prototype = {
     /**
      * For bonds with order > 1, pick a reference atom
      */
-    assignBondReferenceAtoms: function( params ) {
+    assignBondReferenceAtomIndices: function( params ) {
         var p = Object.assign( { maxRingSize: 8 }, params );
 
         var atomIndices1 = this.bonds.atomIndices1;
         var atomIndices2 = this.bonds.atomIndices2;
         var bondOrders = this.bonds.bondOrders;
-        var bondReferenceAtoms = this.bondReferenceAtoms;
+        var bondReferenceAtomIndices = this.bondReferenceAtomIndices;
 
         var nb = this.bonds.atomIndices1.length;
 
@@ -401,7 +401,7 @@ ResidueType.prototype = {
 
         }
 
-        bondReferenceAtoms.length = 0;  // reset array
+        bondReferenceAtomIndices.length = 0;  // reset array
 
         for(var i = 0; i < nb; ++i ) {
 
@@ -422,7 +422,7 @@ ResidueType.prototype = {
                 // Take first bonded partner of a2 that isn't a1
                 for (var ai3 in bondGraph[ai2]) {
                     if (ai3 != ai1) {
-                        bondReferenceAtoms[i] = ai3;
+                        bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
                 }
@@ -434,7 +434,7 @@ ResidueType.prototype = {
                 // Reverse of above:
                 for (var ai3 in bondGraph[ai1]) {
                     if (ai3 != ai2) {
-                        bondReferenceAtoms[i] = ai3;
+                        bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
                 }
@@ -446,17 +446,17 @@ ResidueType.prototype = {
             // Naive method (don't store intermediate results)
             while (maxDepth < p.maxRingSize - 3) {
                 if( propogateSearch( bondGraph, visited, p.maxRingSize - 3 ) ) {
-                    bondReferenceAtoms[i] = visited[2];
+                    bondReferenceAtomIndices[i] = visited[2];
                     break;
                 }
                 maxDepth += 1;
             };
 
             // Not a ring, just pick one atom:
-            if( bondReferenceAtoms[i] === undefined) {
+            if( bondReferenceAtomIndices[i] === undefined) {
                 for (var ai3 in bondGraph[ai1]) {
                     if (ai3 != ai2) {
-                        bondReferenceAtoms[i] = ai3;
+                        bondReferenceAtomIndices[i] = ai3;
                     }
                 }
             }
@@ -466,11 +466,13 @@ ResidueType.prototype = {
     // Bonds will typically be queried in order
     _lastBondIdx: 0,
 
-    /** Find ai3 for the bond between ap1 and ap2, if possible.
-     *
-     * @returns an integer atom index, or null if cannot determine one.
+    /**
+     * Find reference atom for the bond between atom 1 and 2
+     * @param {AtomProxy} ap1 - atom 1
+     * @param {AtomProxy} ap2 - atom 2
+     * @return {Integer|null} atom index, or null if cannot determine one
      */
-    getBondReferenceAtom: function( ap1, ap2 ) {
+    getBondReferenceAtomIndex: function( ap1, ap2 ) {
         if( ap1.residueIndex !== ap2.residueIndex ) {
             return null; // Bond between residues, for now ignore (could detect)
         }
@@ -485,8 +487,8 @@ ResidueType.prototype = {
 
         var bonds = this.bonds;
         var nBonds = this.bonds.atomIndices1.length;
-        if( this.bondReferenceAtoms.length === 0 ){
-            this.assignBondReferenceAtoms();
+        if( this.bondReferenceAtomIndices.length === 0 ){
+            this.assignBondReferenceAtomIndices();
         }
 
         for( var i=0, j=this._lastBondIdx; i<nBonds; i++, j++) {
@@ -497,7 +499,7 @@ ResidueType.prototype = {
                     typeAtomIdx2 === bonds.atomIndices1[j] )
             ){
                 this._lastBondIdx = j;
-                var typeAtomIdx3 = this.bondReferenceAtoms[j];
+                var typeAtomIdx3 = this.bondReferenceAtomIndices[j];
                 if( Number.isInteger( typeAtomIdx3 ) ) {
                     return typeAtomIdx3 + ap1.residueAtomOffset;
                 } else {
@@ -517,7 +519,7 @@ ResidueType.prototype = {
         if( !v ) v = new THREE.Vector3();
         var coLinear = false; // TODO: An actual fallback for this case!
 
-        var ai3 = this.getBondReferenceAtom( ap1, ap2 );
+        var ai3 = this.getBondReferenceAtomIndex( ap1, ap2 );
         var p3 = this._p3;
         var p2 = this._p2;
         var p1 = this._p1;
