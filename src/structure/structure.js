@@ -667,14 +667,14 @@ Structure.prototype = {
         var bondSpacing = defaults( p.bondSpacing, 0.95 );
 
         var radiusFactory, colorMaker, pickingColorMaker;
-        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
+        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2, shiftDir;
 
         var bondData = {};
         var bp = this.getBondProxy();
         if( p.bondStore ) bp.bondStore = p.bondStore;
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
-
+	var rp = this.getResidueProxy();
         var bondCount;
         if( multipleBond ){
             var storeBondOrder = bp.bondStore.bondOrder;
@@ -723,6 +723,8 @@ Structure.prototype = {
 
         var i = 0;
         var j, i3, k, bondOrder, radius;
+
+
         var v1 = new THREE.Vector3();
         var v2 = new THREE.Vector3();
         var v3 = new THREE.Vector3();
@@ -733,35 +735,39 @@ Structure.prototype = {
             ap1.index = bp.atomIndex1;
             ap2.index = bp.atomIndex2;
             bondOrder = bp.bondOrder;
+            rp.index = ap1.residueIndex;
+
             if( position1 ){
+                ap1.positionToArray( position1, i3 );
+                ap2.positionToArray( position2, i3 );
+
                 if( multipleBond && bondOrder > 1 ){
-                    // todo, get better vector
-                    v1.set( 1, 0, 0 );
+
                     ap1.positionToVector3( v2 );
                     ap2.positionToVector3( v3 );
-                    v4.subVectors( v2, v3 );
+
                     var radius = radiusFactory.atomRadius( ap1 );
                     var multiRadius = radius / bondOrder * bondSpacing;
-                    v1.cross( v4 ).normalize().multiplyScalar( radius - multiRadius );
-                    // shift
-                    if( bondOrder === 2 ){
-                        v4.addVectors( v2, v1 ).toArray( position1, i3 );
-                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 3 );
-                        v4.addVectors( v3, v1 ).toArray( position2, i3 );
-                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 3 );
-                    }else if( bondOrder === 3 ){
+
+                    // Get shift Vector:
+                    var shift = rp.residueType.calculateShiftDir( ap1, ap2 );
+
+                    shift.multiplyScalar( radius - multiRadius ); 
+                    if (bondOrder == 2) {
+                        v4.addVectors( v2, shift ).toArray( position1, i3 );
+                        v4.subVectors( v2, shift ).toArray( position1, i3 + 3 );
+                        v4.addVectors( v3, shift ).toArray( position2, i3 );
+                        v4.subVectors( v3, shift ).toArray( position2, i3 + 3 );
+                    } else if( bondOrder === 3 ){
                         v2.toArray( position1, i3 );
-                        v4.addVectors( v2, v1 ).toArray( position1, i3 + 3 );
-                        v4.subVectors( v2, v1 ).toArray( position1, i3 + 6 );
+                        v4.addVectors( v2, shift ).toArray( position1, i3 + 3 );
+                        v4.subVectors( v2, shift ).toArray( position1, i3 + 6 );
                         v3.toArray( position2, i3 );
-                        v4.addVectors( v3, v1 ).toArray( position2, i3 + 3 );
-                        v4.subVectors( v3, v1 ).toArray( position2, i3 + 6 );
+                        v4.addVectors( v3, shift ).toArray( position2, i3 + 3 );
+                        v4.subVectors( v3, shift ).toArray( position2, i3 + 6 );
                     }else{
                         // todo, some fallback
-                    }
-                }else{
-                    ap1.positionToArray( position1, i3 );
-                    ap2.positionToArray( position2, i3 );
+                    } 
                 }
             }
             if( color1 ){
@@ -804,7 +810,9 @@ Structure.prototype = {
                     }
                 }
             }
+
             i += multipleBond ? bondOrder : 1;
+
         } );
 
         return bondData;
