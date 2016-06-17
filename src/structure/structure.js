@@ -674,7 +674,7 @@ Structure.prototype = {
         if( p.bondStore ) bp.bondStore = p.bondStore;
         var ap1 = this.getAtomProxy();
         var ap2 = this.getAtomProxy();
-	var rp = this.getResidueProxy();
+        var rp = this.getResidueProxy();
         var bondCount;
         if( multipleBond ){
             var storeBondOrder = bp.bondStore.bondOrder;
@@ -707,7 +707,7 @@ Structure.prototype = {
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
             pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
         }
-        if( !what || what.radius ){
+        if( !what || what.radius || ( multipleBond && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
         }
         if( !what || what.radius ){
@@ -724,11 +724,11 @@ Structure.prototype = {
         var i = 0;
         var j, i3, k, bondOrder, radius;
 
-
         var v1 = new THREE.Vector3();
         var v2 = new THREE.Vector3();
         var v3 = new THREE.Vector3();
         var v4 = new THREE.Vector3();
+        var shift = new THREE.Vector3();
         bondSet.forEach( function( index ){
             i3 = i * 3;
             bp.index = index;
@@ -736,24 +736,16 @@ Structure.prototype = {
             ap2.index = bp.atomIndex2;
             bondOrder = bp.bondOrder;
             rp.index = ap1.residueIndex;
-
             if( position1 ){
-                ap1.positionToArray( position1, i3 );
-                ap2.positionToArray( position2, i3 );
-
                 if( multipleBond && bondOrder > 1 ){
-
                     ap1.positionToVector3( v2 );
                     ap2.positionToVector3( v3 );
-
                     var radius = radiusFactory.atomRadius( ap1 );
                     var multiRadius = radius / bondOrder * bondSpacing;
-
                     // Get shift Vector:
-                    var shift = rp.residueType.calculateShiftDir( ap1, ap2 );
-
-                    shift.multiplyScalar( radius - multiRadius ); 
-                    if (bondOrder == 2) {
+                    rp.residueType.calculateShiftDir( ap1, ap2, shift );
+                    shift.multiplyScalar( radius - multiRadius );
+                    if( bondOrder === 2 ){
                         v4.addVectors( v2, shift ).toArray( position1, i3 );
                         v4.subVectors( v2, shift ).toArray( position1, i3 + 3 );
                         v4.addVectors( v3, shift ).toArray( position2, i3 );
@@ -766,8 +758,13 @@ Structure.prototype = {
                         v4.addVectors( v3, shift ).toArray( position2, i3 + 3 );
                         v4.subVectors( v3, shift ).toArray( position2, i3 + 6 );
                     }else{
-                        // todo, some fallback
-                    } 
+                        // todo, better fallback
+                        ap1.positionToArray( position1, i3 );
+                        ap2.positionToArray( position2, i3 );
+                    }
+                }else{
+                    ap1.positionToArray( position1, i3 );
+                    ap2.positionToArray( position2, i3 );
                 }
             }
             if( color1 ){
