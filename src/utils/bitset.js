@@ -229,7 +229,7 @@ TypedFastBitSet.prototype.size = function() {
   for (var i = 0; i < c; i++) {
     answer += this.hammingWeight(this.words[i] | 0);
   }
-  return answer;
+  return Math.min( answer, this.length );
 };
 
 // How many bits are set in the given range of the set?
