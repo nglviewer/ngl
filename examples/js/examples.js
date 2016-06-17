@@ -1211,7 +1211,7 @@ NGL.ExampleRegistry.addDict( {
     "bondOrders": function( stage ) {
 
         stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
-            o.addRepresentation( "licorice" );
+            o.addRepresentation( "licorice", {multipleBond: true } );
             stage.tasks.onZeroOnce( function() { stage.centerView(); } );
         });
 
