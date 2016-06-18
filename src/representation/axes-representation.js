@@ -14,7 +14,6 @@ import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
-import { Matrix, principalAxes } from "../math/matrix-utils.js";
 
 
 function AxesRepresentation( structure, viewer, params ){
@@ -78,19 +77,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
     getAxesData: function( sview ){
 
-        console.time( "getAxesData" );
-
-        var i = 0;
-        var coords = new Matrix( 3, sview.atomCount );
-        var cd = coords.data;
-        sview.eachSelectedAtom( function( a ){
-            cd[ i + 0 ] = a.x;
-            cd[ i + 1 ] = a.y;
-            cd[ i + 2 ] = a.z;
-            i += 3;
-        } );
-        var pa = principalAxes( coords );
-
+        var pa = sview.getPrincipalAxes();
         var c = new Color( this.colorValue );
 
         var vertexPosition = new Float32Array( 3 * 6 );
@@ -114,8 +101,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         addAxis( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] );
         addAxis( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] );
         addAxis( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] );
-
-        console.timeEnd( "getAxesData" );
 
         return {
             vertexPosition: vertexPosition,

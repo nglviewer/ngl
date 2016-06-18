@@ -11,6 +11,7 @@ import Signal from "../../lib/signals.es6.js";
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
+import { Matrix, principalAxes } from "../math/matrix-utils.js";
 import Selection from "../selection.js";
 // import StructureView from "./structure-view.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -104,6 +105,9 @@ Structure.prototype = {
             var as2 = this.getAtomSet2( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
+
+        this.atomCount = this.atomSet.size();
+        this.bondCount = this.bondSet.size();
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
@@ -816,6 +820,27 @@ Structure.prototype = {
         if( Debug ) Log.timeEnd( "getBoundingBox" );
 
         return box;
+
+    },
+
+    getPrincipalAxes: function( selection ){
+
+        console.time( "getPrincipalAxes" );
+
+        var i = 0;
+        var coords = new Matrix( 3, this.atomCount );
+        var cd = coords.data;
+
+        this.eachSelectedAtom( function( a ){
+            cd[ i + 0 ] = a.x;
+            cd[ i + 1 ] = a.y;
+            cd[ i + 2 ] = a.z;
+            i += 3;
+        }, selection );
+
+        console.timeEnd( "getPrincipalAxes" );
+
+        return principalAxes( coords );
 
     },
 
