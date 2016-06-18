@@ -75,7 +75,7 @@ BondProxy.prototype = {
         var typeAtomIndex1 = ap1.index - ap1.residueAtomOffset;
         var typeAtomIndex2 = ap2.index - ap2.residueAtomOffset;
         var residueType = ap1.residueType;
-        return residueType.getBondReferenceAtomIndex( typeAtomIndex1, typeAtomIndex2 )
+        return residueType.getBondReferenceAtomIndex( typeAtomIndex1, typeAtomIndex2 ) + ap1.residueAtomOffset;
     },
 
     /**
