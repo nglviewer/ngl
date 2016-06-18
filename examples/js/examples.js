@@ -1210,15 +1210,18 @@ NGL.ExampleRegistry.addDict( {
 
     "test": function( stage ){
 
-        // var pdbid = "1HTQ";
-        var pdbid = "1LVZ";
+        var pdbid = "3pqr";
         stage.loadFile( "rcsb://" + pdbid + ".mmtf", {
-            asTrajectory: true, assembly: "BU1"
+            assembly: "BU1"
         } ).then( function( o ){
-            o.addTrajectory();
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "trace", { color: "modelindex" } );
-            o.addRepresentation( "ball+stick" );
+            // o.addRepresentation( "ball+stick" );
+            o.addRepresentation( "axes" );
+
+            var pa = o.structure.getPrincipalAxes();
+            console.log( pa )
+
             stage.centerView();
         } );
 
