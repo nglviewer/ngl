@@ -410,16 +410,17 @@ ResidueType.prototype = {
             if (this.bonds.bondOrders[i] <= 1) continue;
 
             // Check if atom is terminal?
-            if ( bondGraph[ai1].length == 1 ) {
+            if ( bondGraph[ai1].length === 1 ) {
 
-                if ( bondGraph[ai2].length == 1 ) {
+                if ( bondGraph[ai2].length === 1 ) {
                     // No reference atom can be found
                     continue;
                 }
 
                 // Take first bonded partner of a2 that isn't a1
                 for (var ai3 in bondGraph[ai2]) {
-                    if (ai3 != ai1) {
+                    ai3 = parseInt( ai3 );
+                    if (ai3 !== ai1) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
@@ -428,10 +429,11 @@ ResidueType.prototype = {
 
             }
 
-            if ( bondGraph[ai2].length == 1 ) {
+            if ( bondGraph[ai2].length === 1 ) {
                 // Reverse of above:
                 for (var ai3 in bondGraph[ai1]) {
-                    if (ai3 != ai2) {
+                    ai3 = parseInt( ai3 );
+                    if (ai3 !== ai2) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
@@ -453,7 +455,8 @@ ResidueType.prototype = {
             // Not a ring, just pick one atom:
             if( bondReferenceAtomIndices[i] === undefined) {
                 for (var ai3 in bondGraph[ai1]) {
-                    if (ai3 != ai2) {
+                    ai3 = parseInt( ai3 );
+                    if (ai3 !== ai2) {
                         bondReferenceAtomIndices[i] = ai3;
                     }
                 }
