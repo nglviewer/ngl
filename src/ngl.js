@@ -534,7 +534,7 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix4, Vector3 } from "../lib/three.es6.js";
+import { Matrix3, Matrix4, Vector3, Quaternion } from "../lib/three.es6.js";
 
 //
 
@@ -569,6 +569,14 @@ var Version = "v0.8.0dev";
  */
 
 /**
+ * 3x3 matrix from three.js
+ * @name Matrix3
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Matrix3}
+ */
+
+/**
  * 4x4 transformation matrix from three.js
  * @name Matrix4
  * @class
@@ -582,6 +590,14 @@ var Version = "v0.8.0dev";
  * @class
  * @global
  * @see {@link http://threejs.org/docs/#Reference/Math/Vector3}
+ */
+
+/**
+ * Quaternion class from three.js
+ * @name Quaternion
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Quaternion}
  */
 
 
@@ -641,6 +657,11 @@ export {
     Signal,
 
     /**
+     * Matrix3 class
+     * @see {@link Matrix3}
+     */
+    Matrix3,
+    /**
      * Matrix4 class
      * @see {@link Matrix4}
      */
@@ -649,5 +670,10 @@ export {
      * Vector3 class
      * @see {@link Vector3}
      */
-    Vector3
+    Vector3,
+    /**
+     * Quaternion class
+     * @see {@link Quaternion}
+     */
+    Quaternion
 };
