@@ -594,7 +594,7 @@ function principalAxes( points ){
 
     console.timeEnd( "principalAxes" );
 
-    return [ [ begA, endA ], [ begB, endB ], [ begC, endC ] ];
+    return [ [ begA, endA ], [ begB, endB ], [ begC, endC ], vm ];
 }
 
 //
