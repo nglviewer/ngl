@@ -67,7 +67,7 @@ var PickingControls = function( viewer, params ){
      * @param  {Object} mouse
      * @return {PickingData} picking data
      */
-    function pick( mouse ){
+    function pick( mouse, clicked ){
         var pickingData = viewer.pick(
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
@@ -84,7 +84,7 @@ var PickingControls = function( viewer, params ){
         }
 
         if( ( pickedAtom || pickedBond || pickedVolume ) &&
-                mouse.which === MiddleMouseButton
+                mouse.which === MiddleMouseButton && clicked
         ){
             if( pickedAtom ){
                 position.copy( pickedAtom );
@@ -147,9 +147,9 @@ var PickingControls = function( viewer, params ){
     viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
         e.preventDefault();
         // e.stopPropagation();
-        mouse.which = undefined;
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
-        var pd = pick( mouse );
+        var pd = pick( mouse, true );
+        mouse.which = undefined;
         signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
     } );
