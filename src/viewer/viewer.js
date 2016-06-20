@@ -340,19 +340,19 @@ function Viewer( eid, params ){
 
         // fog
 
-        modelGroup.fog = new Fog();
+        scene.fog = new Fog();
 
         // light
 
         pointLight = new SpotLight(
             parameters.lightColor, parameters.lightIntensity
         );
-        modelGroup.add( pointLight );
+        scene.add( pointLight );
 
         ambientLight = new AmbientLight(
             parameters.ambientLight, parameters.ambientIntensity
         );
-        modelGroup.add( ambientLight );
+        scene.add( ambientLight );
 
     }
 
@@ -994,7 +994,7 @@ function Viewer( eid, params ){
 
         var fogNearFactor = ( 50 - p.fogNear ) / 50;
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
-        var fog = modelGroup.fog;
+        var fog = scene.fog;
         fog.color.set( p.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
@@ -1023,10 +1023,18 @@ function Viewer( eid, params ){
 
     }
 
+    function __setVisibility( model, picking, background, helper ){
+
+        modelGroup.visible = model;
+        pickingGroup.visible = picking;
+        backgroundGroup.visible = background;
+        helperGroup.visible = helper;
+
+    }
+
     function __updateLights(){
 
         pointLight.position.copy( camera.position ).multiplyScalar( 100 );
-        pointLight.updateMatrixWorld();
         pointLight.color.set( parameters.lightColor );
         pointLight.intensity = parameters.lightIntensity;
 
@@ -1038,14 +1046,16 @@ function Viewer( eid, params ){
     function __renderPickingGroup(){
 
         renderer.clearTarget( pickingTarget );
-        renderer.render( pickingGroup, camera, pickingTarget );
+        __setVisibility( false, true, false, false );
+        renderer.render( scene, camera, pickingTarget );
         updateInfo();
         renderer.setRenderTarget( null );  // back to standard render target
 
         if( Debug ){
+            __setVisibility( false, true, false, true );
+
             renderer.clear();
-            renderer.render( pickingGroup, camera );
-            renderer.render( helperGroup, camera );
+            renderer.render( scene, camera );
         }
 
     }
@@ -1058,7 +1068,8 @@ function Viewer( eid, params ){
             renderer.clear();
         }
 
-        renderer.render( backgroundGroup, camera, renderTarget );
+        __setVisibility( false, false, true, false );
+        renderer.render( scene, camera, renderTarget );
         if( renderTarget ){
             renderer.clearTarget( renderTarget, false, true, false );
         }else{
@@ -1066,12 +1077,9 @@ function Viewer( eid, params ){
         }
         updateInfo();
 
-        renderer.render( modelGroup, camera, renderTarget );
+        __setVisibility( true, false, false, Debug );
+        renderer.render( scene, camera, renderTarget );
         updateInfo();
-
-        if( Debug ){
-            renderer.render( helperGroup, camera, renderTarget );
-        }
 
     }
 
