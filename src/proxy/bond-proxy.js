@@ -85,7 +85,6 @@ BondProxy.prototype = {
      */
     calculateShiftDir: function( v ) {
         if( !v ) v = new THREE.Vector3();
-        var coLinear = false;  // TODO: An actual fallback for this case!
 
         var ap1 = this._ap1;
         var ap2 = this._ap2;
@@ -106,11 +105,15 @@ BondProxy.prototype = {
         }
         v13.normalize();
 
+        // make sure v13 and v12 are not colinear
         var dp = v12.dot( v13 );
         if( 1 - Math.abs( dp ) < 1e-5 ){
-            // More or less colinear:
-            coLinear = true;
-            console.warn( "Colinear reference atom" );
+            v13.set( 1, 0, 0 );
+            dp = v12.dot( v13 );
+            if( 1 - Math.abs( dp ) < 1e-5 ){
+                v13.set( 0, 1, 0 );
+                dp = v12.dot( v13 );
+            }
         }
 
         return v.copy( v13.sub( v12.multiplyScalar( dp ) ) ).normalize();
