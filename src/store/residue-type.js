@@ -475,14 +475,14 @@ ResidueType.prototype = {
         var atomIndices2 = bonds.atomIndices2;
         var idx1 = atomIndices1.indexOf( atomIndex1 );
         var idx2 = atomIndices2.indexOf( atomIndex2 );
-	var _idx2 = idx2;
+        var _idx2 = idx2;
         while( idx1 !== -1 ){
             while( idx2 !== -1 ){
                 if( idx1 === idx2 ) return idx1;
                 idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
             }
             idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
-	    idx2 = _idx2;
+        idx2 = _idx2;
         }
         // returns undefined when no bond is found
     },

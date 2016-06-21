@@ -62,7 +62,7 @@ BondProxy.prototype = {
 
     /**
      * Get reference atom index for the bond
-     * @return {AtomProxy|undefined} atom index, or `undefined` if unavailable
+     * @return {Integer|undefined} atom index, or `undefined` if unavailable
      */
     getReferenceAtomIndex: function() {
         var ap1 = this._ap1;
@@ -70,7 +70,7 @@ BondProxy.prototype = {
         ap1.index = this.atomIndex1;
         ap2.index = this.atomIndex2;
         if( ap1.residueIndex !== ap2.residueIndex ) {
-            return undefined; // Bond between residues, for now ignore (could detect)
+            return undefined;  // Bond between residues, for now ignore (could detect)
         }
         var typeAtomIndex1 = ap1.index - ap1.residueAtomOffset;
         var typeAtomIndex2 = ap2.index - ap2.residueAtomOffset;
