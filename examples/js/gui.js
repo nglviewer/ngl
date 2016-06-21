@@ -1812,7 +1812,11 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         if( !repr.parameters[ name ] ) return;
         var p = Object.assign( {}, repr.parameters[ name ] );
 
-        p.value = rp[ name ];
+        if( p.type === "button" ){
+            p.value = rp[ name ].bind( repr );
+        }else{
+            p.value = rp[ name ];
+        }
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 
