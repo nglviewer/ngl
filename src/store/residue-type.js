@@ -21,7 +21,9 @@ import {
  * Propogates a depth-first search. TODO: Iterative deepening search instead?
  * bondGraph[ai1] is an array of bonded atom IDs.
  * visited is the current path of atoms (JS array)
- * maxDepth is maximum recursion depth
+ * The current set of neighbours bondGraph[visited[visited.length-1]] is
+ * always checked
+ * If maxDepth is positive, search propogates (decrementing maxDepth)
  *
  */
 function propogateSearch( bondGraph, visited, maxDepth ) {
@@ -384,6 +386,8 @@ ResidueType.prototype = {
         // AtomProxy.getResidueBonds?
         var bondGraph = {}; //{ ai1: [ ai2, ... ] }
 
+        var j, ai3;
+
         for( var i = 0; i < nb; ++i ) {
 
             var ai1 = atomIndices1[i];
@@ -418,8 +422,8 @@ ResidueType.prototype = {
                 }
 
                 // Take first bonded partner of a2 that isn't a1
-                for (var ai3 in bondGraph[ai2]) {
-                    ai3 = parseInt( ai3 );
+                for (j=0; j<bondGraph[ai2].length; j++) {
+                    ai3 = bondGraph[ai2][j];
                     if (ai3 !== ai1) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
@@ -431,8 +435,8 @@ ResidueType.prototype = {
 
             if ( bondGraph[ai2].length === 1 ) {
                 // Reverse of above:
-                for (var ai3 in bondGraph[ai1]) {
-                    ai3 = parseInt( ai3 );
+                for (j=0; j<bondGraph[ai1].length; j++) {
+                    ai3 = bondGraph[ai1][j];
                     if (ai3 !== ai2) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
@@ -442,10 +446,10 @@ ResidueType.prototype = {
             }
 
             var visited = [ai1, ai2];
-            var maxDepth = 3;
+            var maxDepth = 1;
             // Naive method (don't store intermediate results)
-            while (maxDepth < p.maxRingSize - 3) {
-                if( propogateSearch( bondGraph, visited, p.maxRingSize - 3 ) ) {
+            while (maxDepth < p.maxRingSize - 2) {
+                if( propogateSearch( bondGraph, visited, maxDepth ) ) {
                     bondReferenceAtomIndices[i] = visited[2];
                     break;
                 }
@@ -454,10 +458,11 @@ ResidueType.prototype = {
 
             // Not a ring, just pick one atom:
             if( bondReferenceAtomIndices[i] === undefined) {
-                for (var ai3 in bondGraph[ai1]) {
-                    ai3 = parseInt( ai3 );
+                for( j=0; j<bondGraph[ai1].length; j++) {
+                    ai3 = bondGraph[ai1][j];
                     if (ai3 !== ai2) {
                         bondReferenceAtomIndices[i] = ai3;
+                        break;
                     }
                 }
             }
@@ -470,12 +475,14 @@ ResidueType.prototype = {
         var atomIndices2 = bonds.atomIndices2;
         var idx1 = atomIndices1.indexOf( atomIndex1 );
         var idx2 = atomIndices2.indexOf( atomIndex2 );
+	var _idx2 = idx2;
         while( idx1 !== -1 ){
             while( idx2 !== -1 ){
                 if( idx1 === idx2 ) return idx1;
                 idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
             }
             idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
+	    idx2 = _idx2;
         }
         // returns undefined when no bond is found
     },
