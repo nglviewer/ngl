@@ -28,7 +28,12 @@ BackboneRepresentation.prototype = Object.assign( Object.create(
 
     parameters: Object.assign( {
 
-    }, BallAndStickRepresentation.prototype.parameters ),
+    }, BallAndStickRepresentation.prototype.parameters, {
+
+        multipleBond: null,
+        bondSpacing: null,
+
+    } ),
 
     init: function( params ){
 

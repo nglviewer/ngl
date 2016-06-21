@@ -14,6 +14,30 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
+/**
+ * Ball And Stick representation parameter object.
+ * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ *
+ * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
+ * @property {Integer} radiusSegments - cylinder quality (number of segments)
+ * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
+ * @property {Float} aspectRatio - size difference between atom and bond radii
+ * @property {Boolean} lineOnly - render only bonds, and only as lines
+ * @property {Boolean} cylinderOnly - render only bonds (no atoms)
+ * @property {Boolean} multipleBond - whether or not to render multiple bonds
+ * @property {Float} bondSpacing - spacing for multiple bond rendering
+ */
+
+
+/**
+ * Ball And Stick representation object
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+ */
 function BallAndStickRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );

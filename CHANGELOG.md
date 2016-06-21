@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file, following t
 ### Added
 - gulp build scripts
 - mmtf v0.2 support
+- support for rendering double/triple bonds, enable via `multipleBond` Representation parameter (@fredludlow, @arose)
 
 ### Changed
 - reorganised everything to use es6 modules

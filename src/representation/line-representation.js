@@ -12,6 +12,21 @@ import StructureRepresentation from "./structure-representation.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
+/**
+ * Line representation object
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
+ * @param {Boolean} params.multipleBond - whether or not to render multiple bonds
+ * @param {Float} params.bondSpacing - spacing for multiple bond rendering
+ * @param {null} params.flatShaded - not available
+ * @param {null} params.side - not available
+ * @param {null} params.wireframe - not available
+ * @param {null} params.roughness - not available
+ * @param {null} params.matelness - not available
+ * @param {null} params.diffuse - not available
+ */
 function LineRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
