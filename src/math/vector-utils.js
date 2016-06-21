@@ -195,6 +195,10 @@ function v3cross( out, a, b ){
     out[2] = ax * by - ay * bx;
 }
 
+function v3dot( a, b ){
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+}
+
 function v3sub( out, a, b ){
     out[0] = a[0] - b[0];
     out[1] = a[1] - b[1];
@@ -297,6 +301,17 @@ function v3negate( out, a ){
     out[2] = -a[2];
 }
 
+function v3angle( a, b ){
+    var ax = a[0], ay = a[1], az = a[2];
+    var bx = b[0], by = b[1], bz = b[2];
+    var cx = ay * bz - az * by;
+    var cy = az * bx - ax * bz;
+    var cz = ax * by - ay * bx;
+    var s = Math.sqrt( cx*cx + cy*cy + cz*cz );
+    var c = ax*bx + ay*by + az*bz;
+    return Math.atan2( s, c );
+}
+
 
 export {
     lineLineIntersect,
@@ -310,6 +325,7 @@ export {
 
     v3new,
     v3cross,
+    v3dot,
     v3sub,
     v3add,
     v3fromArray,
@@ -326,5 +342,6 @@ export {
     v3floor,
     v3ceil,
     v3round,
-    v3negate
+    v3negate,
+    v3angle
 };
