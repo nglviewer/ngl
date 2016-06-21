@@ -63,11 +63,6 @@ PdbParser.prototype = Object.assign( Object.create(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var id = s.id;
-        var title = s.title;
-
-        var atoms = s.atoms;
-        var bondSet = s.bondSet;
         var helices = s.helices;
         var sheets = s.sheets;
         var biomolDict = s.biomolDict;
@@ -341,11 +336,11 @@ PdbParser.prototype = Object.assign( Object.create(
 
                 }else if( recordName === 'HEADER' ){
 
-                    id = line.substr( 62, 4 );
+                    s.id = line.substr( 62, 4 );
 
                 }else if( recordName === 'TITLE ' ){
 
-                    title += line.substr( 10, 70 ) + "\n";
+                    s.title += ( s.title ? " " : "" ) + line.substr( 10, 70 ).trim();
 
                 }else if( recordName === 'MODEL ' ){
 

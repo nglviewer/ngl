@@ -46,10 +46,6 @@ CifParser.prototype = Object.assign( Object.create(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var title = s.title;
-        var atoms = s.atoms;
-        var bondSet = s.bondSet;
-
         var line, recordName;
         var altloc, serial, elem, chainname, resno, resname,
             atomname, element, inscode;
