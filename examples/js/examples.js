@@ -1208,6 +1208,15 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "chemCompCif": function( stage ){
+
+        stage.loadFile( "data://PRDCC_000001.cif" ).then( function( o ){
+            o.addRepresentation( "licorice", { sele: "/0", multipleBond: true } );
+            stage.centerView();
+        } );
+
+    },
+
     "test": function( stage ){
 
         var pdbid = "3sn6";

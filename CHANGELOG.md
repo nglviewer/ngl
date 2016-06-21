@@ -8,9 +8,10 @@ All notable changes to this project will be documented in this file, following t
 - mmtf v0.2 support
 - stage.clicked signal (renamed from .onPicking)
 - stage.hovered signal
+- parsing of "chem comp" cif files
 
 ### Changed
-- reorganised everything to use es6 modules
+- reorganized everything to use es6 modules
 - read bondOrder from 'pdbx_value_order' in mmcif files
 - interpret 'CONECT 1529 1528 1528' as double bond in pdb files
 - `side` Buffer/Representation parameter changed: THREE.FrontSide => "front", THREE.BackSide => "back", THREE.DoubleSide => "double"
