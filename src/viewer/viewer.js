@@ -806,6 +806,7 @@ function Viewer( eid, params ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
+            if( eyeDirection.dot( axis ) < 0 ) angle *= -1;
             upDirection.copy( camera.up ).normalize();
             sidewaysDirection.crossVectors( upDirection, eyeDirection ).normalize();
 
@@ -1249,6 +1250,35 @@ function Viewer( eid, params ){
 
     }();
 
+    var alignView = function(){
+
+        var currentEye = new Vector3();
+        var currentUp = new Vector3();
+        var vn = new Vector3();
+        var vc = new Vector3();
+        var vz = new Vector3( 0, 0, 1 );
+
+        return function( eye, up, center, zoom ){
+
+            controls.reset();
+            centerView( zoom, center );
+
+            currentEye.copy( camera.position ).sub( controls.target ).normalize();
+            vn.crossVectors( currentEye, eye );
+            rotate( vn, -currentEye.angleTo( eye ) );
+
+            currentUp.copy( camera.up ).normalize();
+            vc.crossVectors( currentUp, up ).normalize();
+
+            var angle = currentUp.angleTo( up );
+            if( vz.dot( vc ) < 0 ) angle *= -1;
+
+            rotate( vz, angle );
+
+        }
+
+    }();
+
     function getOrientation(){
 
         return [
@@ -1307,6 +1337,7 @@ function Viewer( eid, params ){
     this.rotate = rotate;
     this.zoom = zoom;
     this.centerView = centerView;
+    this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
 
