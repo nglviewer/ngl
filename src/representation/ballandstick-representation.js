@@ -5,8 +5,6 @@
  */
 
 
-import THREE from "../../lib/three.js";
-
 import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import { calculateCenterArray } from "../math/array-utils.js";
