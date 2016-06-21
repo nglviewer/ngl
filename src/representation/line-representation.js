@@ -5,6 +5,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -27,6 +28,13 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
     parameters: Object.assign( {
 
+        multipleBond: {
+            type: "boolean", rebuild: true
+        },
+        bondSpacing: {
+            type: "number", precision: 2, max: 1.0, min: 0.5
+        }
+
     }, Representation.prototype.parameters, {
 
         flatShaded: null,
@@ -43,7 +51,22 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
+        this.multipleBond = defaults( p.multipleBond, false );
+        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
+
         StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        params = Object.assign( {
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing,
+            radiusParams: { "radius": 0.1, "scale": 1 }
+        }, params );
+
+        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
@@ -82,6 +105,25 @@ LineRepresentation.prototype = Object.assign( Object.create(
         }
 
         data.bufferList[ 0 ].setAttributes( lineData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params.bondSpacing ){
+
+            what.position = true;
+
+        }
+
+        StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 
