@@ -1210,61 +1210,15 @@ NGL.ExampleRegistry.addDict( {
 
     "test": function( stage ){
 
-        var pdbid = "3pqr";
+        var pdbid = "3sn6";
         stage.loadFile( "rcsb://" + pdbid + ".mmtf", {
             assembly: "BU1"
         } ).then( function( o ){
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "trace", { color: "modelindex" } );
             // o.addRepresentation( "ball+stick" );
-            o.addRepresentation( "axes" );
-
-            var pa = o.structure.getPrincipalAxes();
-            console.log( pa )
-
-            var controls = stage.viewer.controls;
-            var camera = stage.viewer.camera;
-            var rotationGroup = stage.viewer.rotationGroup;
-
-
-
-            var v1 = new NGL.Vector3().copy( pa[0][1] ).sub( pa[0][0] );
-            var v2 = new NGL.Vector3().copy( pa[1][1] ).sub( pa[1][0] );
-            var v3 = new NGL.Vector3().copy( pa[2][1] ).sub( pa[2][0] );
-o.centerView();
-            controls.object.position.sub( controls.target );
-            controls.target.copy( controls.target0 );
-            rotationGroup.position.copy( pa[ 3 ] ).multiplyScalar( -1 );
-            rotationGroup.updateMatrixWorld();
-
-            console.log( pa[3] )
-
-            v1.normalize();
-            v2.normalize();
-            v3.normalize();
-
-            // stage.centerView();
-            // o.centerView();
-
-            // camera.up.copy( v1 );
-
-            var eye = new NGL.Vector3();
-            var vn = new NGL.Vector3();
-            var vx = new NGL.Vector3( 1, 0, 0 );
-            var vy = new NGL.Vector3( 0, 1, 0 );
-            var vz = new NGL.Vector3( 0, 0, 1 );
-
-            eye.copy( camera.position ).sub( controls.target );
-            vn.crossVectors( vz, v3 )
-            stage.viewer.rotate( vn, eye.angleTo( v3 ) )
-
-            var m4 = new NGL.Matrix4();
-            var m3 = new NGL.Matrix3();
-            m4.makeRotationAxis( vn, eye.angleTo( v3 ) );
-            m3.getNormalMatrix( m4 )
-            v2.applyMatrix3( m3 ).normalize();
-
-            stage.viewer.rotate( vz, vy.angleTo( v2 ) )
+            var axes = o.addRepresentation( "axes" );
+            axes.repr.align();
 
             // function animate(){
             //     rotationGroup.rotateX( 0.01 )
