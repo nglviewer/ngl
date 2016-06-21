@@ -431,6 +431,21 @@ function calculateChainnames( structure ){
             modelStore.chainCount[ mIndex ] += 1;
         };
 
+        var getName = function( i ){
+            var j = i;
+            var k = 0;
+            var chainname = names[ j % n ];
+            while( j >= n ){
+                j = Math.floor( j / n );
+                chainname += names[ j % n ];
+                k += 1;
+            }
+            if( k >= 5 ){
+                Log.warn( "chainname overflow" );
+            }
+            return chainname;
+        };
+
         var ap1 = structure.getAtomProxy();
         var ap2 = structure.getAtomProxy();
 
@@ -440,7 +455,7 @@ function calculateChainnames( structure ){
         var rEnd = 0;
         var chainData = [];
 
-        if( structure.residueStore.count === 1 ){
+        if( residueStore.count === 1 ){
 
             chainData.push( {
                 mIndex: 0,
@@ -473,25 +488,17 @@ function calculateChainnames( structure ){
                     }
                 }
 
-                if( rp2.index === residueStore.count - 1 ){
+                // current chain goes to end of the structure
+                if( !newChain && rp2.index === residueStore.count - 1 ){
                     newChain = true;
                     rEnd = rp2.index;
                 }
 
                 if( newChain ){
-                    var j = i;
-                    var k = 0;
-                    var chainname = names[ j % n ];
-
-                    while( j >= n ){
-                        j = Math.floor( j / n );
-                        chainname += names[ j % n ];
-                        k += 1;
-                    }
 
                     chainData.push( {
                         mIndex: mi,
-                        chainname: chainname,
+                        chainname: getName( i ),
                         rStart: rStart,
                         rCount: rEnd - rStart + 1
                     } );
@@ -503,9 +510,14 @@ function calculateChainnames( structure ){
                         mi += 1;
                     }
 
-                    if( k >= 5 ){
-                        Log.warn( "out of chain names" );
-                        i = 0;
+                    // new chain for the last residue of the structure
+                    if( rp2.index === residueStore.count - 1 ){
+                        chainData.push( {
+                            mIndex: mi,
+                            chainname: getName( i ),
+                            rStart: residueStore.count - 1,
+                            rCount: 1
+                        } );
                     }
 
                     rStart = rp2.index;
