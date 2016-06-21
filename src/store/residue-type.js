@@ -18,15 +18,15 @@ import {
 
 
 /**
- * Propogates a depth-first search. TODO: Iterative deepening search instead?
+ * Propagates a depth-first search. TODO: Iterative deepening search instead?
  * bondGraph[ai1] is an array of bonded atom IDs.
  * visited is the current path of atoms (JS array)
  * The current set of neighbours bondGraph[visited[visited.length-1]] is
  * always checked
- * If maxDepth is positive, search propogates (decrementing maxDepth)
+ * If maxDepth is positive, search propagates (decrementing maxDepth)
  *
  */
-function propogateSearch( bondGraph, visited, maxDepth ) {
+function propagateSearch( bondGraph, visited, maxDepth ) {
 
     var current = visited[visited.length-1];
     var neighbours = bondGraph[current];
@@ -42,9 +42,9 @@ function propogateSearch( bondGraph, visited, maxDepth ) {
             if (visited.indexOf(neighbours[i]) !== -1) {
                 continue;
             }
-            // Propogate
+            // Propagate
             visited.push(neighbours[i]);
-            if (propogateSearch( bondGraph, visited, maxDepth-1)) {
+            if (propagateSearch( bondGraph, visited, maxDepth-1)) {
                 return true;
             }
             visited.pop();
@@ -449,7 +449,7 @@ ResidueType.prototype = {
             var maxDepth = 1;
             // Naive method (don't store intermediate results)
             while (maxDepth < p.maxRingSize - 2) {
-                if( propogateSearch( bondGraph, visited, maxDepth ) ) {
+                if( propagateSearch( bondGraph, visited, maxDepth ) ) {
                     bondReferenceAtomIndices[i] = visited[2];
                     break;
                 }
