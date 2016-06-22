@@ -6,16 +6,6 @@ import { autoLoad } from "../../src/loader/loader-utils.js";
 import Selection from "../../src/selection.js";
 import { kwd } from "../../src/selection.js";
 
-import PDB_1CRN from "../../data/1crn.pdb";
-import PDB_1LVZ from "../../data/1LVZ.pdb";
-import CIF_1LVZ from "../../data/1LVZ.cif";
-import PDB_LOWERCASE_RESNAME from "../data/lowerCaseResname.pdb";
-
-
-function getTextBlob( text ){
-    return new Blob( [ text ], { type: 'text/plain'} );
-}
-
 
 describe('selection', function() {
 
@@ -715,10 +705,11 @@ describe('selection', function () {
     it('backbone', function () {
         var sele = "backbone";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 184, "Passed!" );
+            assert.equal( sview.atomCount, 185, "Passed!" );
             assert.equal( ap.atomname, "N", "Passed!" );
         } );
     });
@@ -726,7 +717,8 @@ describe('selection', function () {
     it('.CA', function () {
         var sele = ".CA";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 30 );
             assert.equal( sview.atomCount, 46, "Passed!" );
@@ -737,7 +729,8 @@ describe('selection', function () {
     it('ARG or .N', function () {
         var sele = "ARG or .N";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             assert.equal( sview.atomCount, 22 + 46 - 2, "Passed!" );
         } );
@@ -746,10 +739,11 @@ describe('selection', function () {
     it('not backbone', function () {
         var sele = "not backbone";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 143, "Passed!" );
+            assert.equal( sview.atomCount, 142, "Passed!" );
             assert.equal( ap.atomname, "CB", "Passed!" );
         } );
     });
@@ -757,10 +751,11 @@ describe('selection', function () {
     it('sidechain', function () {
         var sele = "sidechain";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 143, "Passed!" );
+            assert.equal( sview.atomCount, 142, "Passed!" );
             assert.equal( ap.atomname, "CB", "Passed!" );
         } );
     });
@@ -768,11 +763,12 @@ describe('selection', function () {
     it('not backbone or .CA', function () {
         var sele = "not backbone or .CA";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
-            assert.equal( sview.atomCount, 189, "Passed!" );
+            assert.equal( sview.atomCount, 188, "Passed!" );
             assert.equal( ap1.atomname, "CA", "Passed!" );
             assert.equal( ap2.atomname, "CB", "Passed!" );
         } );
@@ -782,7 +778,8 @@ describe('selection', function () {
         var sele = "not backbone or .CA";
         var selection1 = new Selection( "TYR" );
         var selection2 = new Selection( "not not TYR" );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
             assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
@@ -793,7 +790,8 @@ describe('selection', function () {
         var sele = "not backbone or .CA";
         var selection1 = new Selection( "not ( 12 and .CA )" );
         var selection2 = new Selection( "not ( 12.CA )" );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
             assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
@@ -803,7 +801,8 @@ describe('selection', function () {
     it('/1 PDB', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1LVZ ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1LVZ.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
@@ -815,7 +814,8 @@ describe('selection', function () {
     it('/1 CIF', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( CIF_1LVZ ), { ext: "cif" } ).then( function( structure ){
+        var path = "../../data/1LVZ.cif";
+        return autoLoad( path, { ext: "cif" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
@@ -827,7 +827,8 @@ describe('selection', function () {
     it('atomindex', function () {
         var sele = "@1,8,12";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_1CRN ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../../data/1crn.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
@@ -842,7 +843,8 @@ describe('selection', function () {
     it('lowercase resname', function () {
         var sele = "phe";
         var selection = new Selection( sele );
-        autoLoad( getTextBlob( PDB_LOWERCASE_RESNAME ), { ext: "pdb" } ).then( function( structure ){
+        var path = "../data/lowerCaseResname.pdb";
+        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             assert.equal( sview.atomCount, 13, "Passed!" );
         } );
