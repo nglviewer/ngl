@@ -7,6 +7,7 @@
 
 import { CanvasTexture } from "../../lib/three.es6.js";
 
+import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";
@@ -245,7 +246,7 @@ function TextBuffer( position, size, color, text, params ){
     this.fontStyle = defaults( p.fontStyle, "normal" );
     this.fontWeight = defaults( p.fontWeight, "bold" );
     this.fontSize = defaults( p.fontSize, 48 );
-    this.sdf = defaults( p.sdf, true );
+    this.sdf = defaults( p.sdf, Browser === "Chrome" );
     this.xOffset = defaults( p.xOffset, 0.0 );
     this.yOffset = defaults( p.yOffset, 0.0 );
     this.zOffset = defaults( p.zOffset, 0.5 );

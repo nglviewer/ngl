@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file, following t
 - support for negative resno values in selections: "-5:A", "-12--8", "-12-0"
 - support for chemical component type (available in mmtf) for determining molecule type
 - `.get/setOrientation` return/argument changed
+- enable SDF font as the default TextBuffer class only on Chrome
 
 ### Removed
 - python-based build scripts
