@@ -628,7 +628,7 @@ CifParser.prototype = Object.assign( Object.create(
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        if( cif.chem_comp ){
+        if( cif.chem_comp && cif.chem_comp_atom ){
 
             parseChemComp();
             this.dontAutoBond = true;
