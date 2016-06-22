@@ -806,7 +806,6 @@ function Viewer( eid, params ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
-            if( eyeDirection.dot( axis ) < 0 ) angle *= -1;
             upDirection.copy( camera.up ).normalize();
             sidewaysDirection.crossVectors( upDirection, eyeDirection ).normalize();
 
@@ -1272,6 +1271,9 @@ function Viewer( eid, params ){
 
             var angle = currentUp.angleTo( up );
             if( vz.dot( vc ) < 0 ) angle *= -1;
+
+            currentEye.copy( camera.position ).sub( controls.target ).normalize();
+            if( currentEye.dot( vz ) < 0 ) angle *= -1;
 
             rotate( vz, angle );
 
