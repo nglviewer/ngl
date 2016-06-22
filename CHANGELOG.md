@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file, following t
 - `side` Buffer/Representation parameter changed: THREE.FrontSide => "front", THREE.BackSide => "back", THREE.DoubleSide => "double"
 - support for negative resno values in selections: "-5:A", "-12--8", "-12-0"
 - support for chemical component type (available in mmtf) for determining molecule type
+- `.get/setOrientation` return/argument changed
 
 ### Removed
 - python-based build scripts

@@ -830,18 +830,42 @@ function Viewer( eid, params ){
         var eye = new Vector3();
         var eyeDirection = new Vector3();
 
-        return function( distance ){
+        return function( distance, set ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
 
             eyeDirection.setLength( distance );
-            eye.add( eyeDirection );
+            if( set ){
+                eye.copy( eyeDirection );
+            }else{
+                eye.add( eyeDirection );
+            }
 
             camera.position.addVectors( controls.target, eye );
             camera.lookAt( controls.target );
 
             __updateZoom();
+
+        };
+
+    }();
+
+    function translate( vector ){
+
+        controls.target.add( vector );
+        camera.position.add( vector );
+
+    }
+
+    var center = function(){
+
+        var vector = new Vector3();
+
+        return function( position ){
+
+            vector.copy( position ).sub( controls.target );
+            translate( vector );
 
         };
 
@@ -968,7 +992,7 @@ function Viewer( eid, params ){
         // clipping
 
         cDist = distVector.copy( camera.position )
-                        .sub( controls.target ).length();
+                    .sub( controls.target ).length();
         // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
@@ -977,9 +1001,7 @@ function Viewer( eid, params ){
         }
 
         bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
-        bRadius += boundingBox.center( distVector )
-            .add( rotationGroup.position )
-            .length();
+        bRadius += boundingBox.center( distVector ).length();
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
@@ -1034,7 +1056,10 @@ function Viewer( eid, params ){
 
     function __updateLights(){
 
-        pointLight.position.copy( camera.position ).multiplyScalar( 100 );
+        distVector.copy( camera.position ).sub( controls.target )
+            .normalize().multiplyScalar( 1000 );
+
+        pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
         pointLight.intensity = parameters.lightIntensity;
 
@@ -1194,51 +1219,30 @@ function Viewer( eid, params ){
         var eyeDirection = new Vector3();
         var bbSize = new Vector3();
 
-        return function( zoom, center ){
+        return function( autoZoom, position ){
 
-            center = center || boundingBox.center();
+            center( position || boundingBox.center() );
 
-            // remove any paning/translation
-            controls.object.position.sub( controls.target );
-            controls.target.copy( controls.target0 );
+            if( autoZoom ){
 
-            // center
-            t.copy( center ).multiplyScalar( -1 );
-            rotationGroup.position.copy( t );
-            rotationGroup.updateMatrixWorld();
+                // automatic zoom that shows
+                // everything inside the bounding box
+                // TODO take extent towards the camera into account
 
-            if( zoom ){
-
-                if( zoom === true ){
-
-                    // automatic zoom that shows
-                    // everything inside the bounding box
-                    // TODO take extent towards the camera into account
-
-                    boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                    var objSize = maxSize + ( minSize / 2 );
-                    zoom = objSize;
-
-                }
+                boundingBox.size( bbSize );
+                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                var distance = maxSize + ( minSize / 2 );  // object size
 
                 var fov = degToRad( perspectiveCamera.fov );
                 var aspect = width / height;
 
-                zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
-                zoom = Math.max( zoom, 1.2 * parameters.clipDist );
+                distance = distance / 2 / aspect / Math.tan( fov / 2 );
+                distance = Math.max( distance, 1.2 * parameters.clipDist );
 
-                eye.copy( camera.position ).sub( controls.target );
-                eyeDirection.copy( eye ).normalize();
+                zoom( distance, true );
 
-                eyeDirection.setLength( zoom );
-                eye.copy( eyeDirection );
-
-                camera.position.addVectors( controls.target, eye );
-
-                __updateZoom();
             }
 
             requestRender();
@@ -1257,10 +1261,10 @@ function Viewer( eid, params ){
         var vc = new Vector3();
         var vz = new Vector3( 0, 0, 1 );
 
-        return function( eye, up, center, zoom ){
+        return function( eye, up, position, zoom ){
 
             controls.reset();
-            centerView( zoom, center );
+            centerView( zoom, position );
 
             currentEye.copy( camera.position ).sub( controls.target ).normalize();
             vn.crossVectors( currentEye, eye );
@@ -1284,27 +1288,18 @@ function Viewer( eid, params ){
     function getOrientation(){
 
         return [
+            controls.target.toArray(),
             camera.position.toArray(),
-            camera.up.toArray(),
-            rotationGroup.position.toArray(),
-            controls.target.toArray()
+            camera.up.toArray()
         ];
 
     }
 
     function setOrientation( orientation ){
 
-        // remove any paning/translation
-        controls.object.position.sub( controls.target );
-        controls.target.copy( controls.target0 );
-
-        controls.target.fromArray( orientation[ 3 ] );
-
-        rotationGroup.position.fromArray( orientation[ 2 ] );
-        rotationGroup.updateMatrixWorld();
-
-        camera.up.fromArray( orientation[ 1 ] );
-        camera.position.fromArray( orientation[ 0 ] );
+        controls.target.fromArray( orientation[ 0 ] );
+        camera.position.fromArray( orientation[ 1 ] );
+        camera.up.fromArray( orientation[ 2 ] );
 
         requestRender();
 
