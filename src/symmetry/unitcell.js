@@ -5,7 +5,9 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
+
+import { degToRad } from "../math/math-utils.js";
 
 
 function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
@@ -22,9 +24,9 @@ function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
 
     //
 
-    var alphaRad = THREE.Math.degToRad( this.alpha );
-    var betaRad = THREE.Math.degToRad( this.beta );
-    var gammaRad = THREE.Math.degToRad( this.gamma );
+    var alphaRad = degToRad( this.alpha );
+    var betaRad = degToRad( this.beta );
+    var gammaRad = degToRad( this.gamma );
     var cosAlpha = Math.cos( alphaRad );
     var cosBeta = Math.cos( betaRad );
     var cosGamma = Math.cos( gammaRad );
@@ -52,18 +54,18 @@ function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
             ( sinBeta * sinGamma )
         );
 
-        this.fracToCart = new THREE.Matrix4().set(
+        this.fracToCart = new Matrix4().set(
             this.a, 0, 0, 0,
             this.b * cosGamma, this.b * sinGamma, 0, 0,
             this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
             0, 0, 0, 1
         ).transpose();
-        this.cartToFrac = new THREE.Matrix4().getInverse( this.fracToCart );
+        this.cartToFrac = new Matrix4().getInverse( this.fracToCart );
 
     }else{
 
         this.cartToFrac = cartToFrac;
-        this.fracToCart = new THREE.Matrix4().getInverse( this.cartToFrac );
+        this.fracToCart = new Matrix4().getInverse( this.cartToFrac );
 
     }
 

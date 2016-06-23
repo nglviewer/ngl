@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
@@ -208,7 +208,7 @@ MrcParser.prototype = Object.assign( Object.create(
         var nxyz = [ 0, h.MX, h.MY, h.MZ ];
         var mapcrs = [ 0, h.MAPC, h.MAPR, h.MAPS ];
 
-        var matrix = new THREE.Matrix4();
+        var matrix = new Matrix4();
 
         matrix.set(
 
@@ -231,11 +231,11 @@ MrcParser.prototype = Object.assign( Object.create(
 
         );
 
-        matrix.setPosition( new THREE.Vector3(
+        matrix.setPosition( new Vector3(
             h.originX, h.originY, h.originZ
         ) );
 
-        matrix.multiply( new THREE.Matrix4().makeTranslation(
+        matrix.multiply( new Matrix4().makeTranslation(
             h.NXSTART, h.NYSTART, h.NZSTART
         ) );
 

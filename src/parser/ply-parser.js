@@ -5,7 +5,9 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import {
+    DefaultLoadingManager, XHRLoader, Geometry, Vector3, Face3, Color
+} from "../../lib/three.es6.js";
 
 import { ParserRegistry } from "../globals.js";
 import SurfaceParser from "./surface-parser.js";
@@ -41,7 +43,7 @@ import SurfaceParser from "./surface-parser.js";
  */
 function PLYLoader( manager ) {
 
-	this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+	this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
 
 	this.propertyNameMapping = {};
 
@@ -55,7 +57,7 @@ PLYLoader.prototype = {
 
 		var scope = this;
 
-		var loader = new THREE.XHRLoader( this.manager );
+		var loader = new XHRLoader( this.manager );
 		loader.setResponseType( 'arraybuffer' );
 		loader.load( url, function ( text ) {
 
@@ -282,7 +284,7 @@ PLYLoader.prototype = {
 
 		// PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
 
-		var geometry = new THREE.Geometry();
+		var geometry = new Geometry();
 
 		var result;
 
@@ -359,14 +361,14 @@ PLYLoader.prototype = {
 		if ( elementName === "vertex" ) {
 
 			geometry.vertices.push(
-				new THREE.Vector3( element.x, element.y, element.z )
+				new Vector3( element.x, element.y, element.z )
 			);
 
 			if ( 'red' in element && 'green' in element && 'blue' in element ) {
 
 				geometry.useColor = true;
 
-				var color = new THREE.Color();
+				var color = new Color();
 				color.setRGB( element.red / 255.0, element.green / 255.0, element.blue / 255.0 );
 				geometry.colors.push( color );
 
@@ -379,14 +381,14 @@ PLYLoader.prototype = {
 			if ( vertex_indices.length === 3 ) {
 
 				geometry.faces.push(
-					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 2 ] )
+					new Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 2 ] )
 				);
 
 			} else if ( vertex_indices.length === 4 ) {
 
 				geometry.faces.push(
-					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 3 ] ),
-					new THREE.Face3( vertex_indices[ 1 ], vertex_indices[ 2 ], vertex_indices[ 3 ] )
+					new Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 3 ] ),
+					new Face3( vertex_indices[ 1 ], vertex_indices[ 2 ], vertex_indices[ 3 ] )
 				);
 
 			}
@@ -461,7 +463,7 @@ PLYLoader.prototype = {
 
 	parseBinary: function ( data ) {
 
-		var geometry = new THREE.Geometry();
+		var geometry = new Geometry();
 
 		var header = this.parseHeader( this.bin2str( data ) );
 		var little_endian = ( header.format === "binary_little_endian" );

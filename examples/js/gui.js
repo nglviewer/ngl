@@ -112,7 +112,8 @@ NGL.Preferences = function( id, defaultParams ){
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
-        ambientIntensity: 0.2
+        ambientIntensity: 0.2,
+        hoverTimeout: 50,
     };
 
     // overwrite default values with params
@@ -385,50 +386,45 @@ NGL.ViewportWidget = function( stage ){
 
 NGL.ToolbarWidget = function( stage ){
 
-    var signals = stage.signals;
     var container = new UI.Panel();
-
-    var messagePanel = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
+    var messagePanel1 = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
+    var messagePanel2 = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
     var statsPanel = new UI.Panel().setDisplay( "inline" ).setFloat( "right" );
 
-    signals.onPicking.add( function( d ){
-
+    function getPickingMessage( d, prefix ){
         var msg;
-
         if( d.atom ){
-
-            msg = "Picked atom: " +
+            msg = "atom: " +
                 d.atom.qualifiedName() +
                 " (" + d.atom.structure.name + ")";
-
         }else if( d.bond ){
-
-            msg = "Picked bond: " +
+            msg = "bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.structure.name + ")";
-
         }else if( d.volume ){
-
-            msg = "Picked volume: " +
+            msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +
                 " (" + d.volume.volume.name + ")";
-
         }else{
-
-            msg = "Nothing to pick";
-
+            msg = "nothing";
         }
+        return prefix + " " + msg;
+    }
 
-        messagePanel
+    stage.signals.clicked.add( function( d ){
+        messagePanel1
             .clear()
-            .add( new UI.Text( msg ) );
+            .add( new UI.Text( getPickingMessage( d, "Clicked" ) ) );
+    } );
 
+    stage.signals.hovered.add( function( d ){
+        messagePanel2
+            .clear()
+            .add( new UI.Text( getPickingMessage( d, "Hovered" ) ) );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){
-
         statsPanel.clear();
-
         if( NGL.Debug ){
             statsPanel.add(
                 new UI.Text(
@@ -437,11 +433,9 @@ NGL.ToolbarWidget = function( stage ){
                 )
             );
         }
-
     } );
 
-    container.add( messagePanel );
-    container.add( statsPanel );
+    container.add( messagePanel1, messagePanel2, statsPanel );
 
     return container;
 
@@ -1818,7 +1812,11 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         if( !repr.parameters[ name ] ) return;
         var p = Object.assign( {}, repr.parameters[ name ] );
 
-        p.value = rp[ name ];
+        if( p.type === "button" ){
+            p.value = rp[ name ].bind( repr );
+        }else{
+            p.value = rp[ name ];
+        }
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 

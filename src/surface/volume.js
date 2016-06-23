@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
@@ -85,11 +85,11 @@ function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
     this.name = name;
     this.path = path;
 
-    this.matrix = new THREE.Matrix4();
-    this.normalMatrix = new THREE.Matrix3();
-    this.inverseMatrix = new THREE.Matrix4();
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.matrix = new Matrix4();
+    this.normalMatrix = new Matrix3();
+    this.inverseMatrix = new Matrix4();
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
 
     this.setData( data, nx, ny, nz, dataAtomindex );
 
@@ -152,7 +152,7 @@ Volume.prototype = {
 
     /**
      * set transformation matrix
-     * @param {THREE.Matrix4} matrix - 4x4 transformation matrix
+     * @param {Matrix4} matrix - 4x4 transformation matrix
      */
     setMatrix: function( matrix ){
 
@@ -182,10 +182,10 @@ Volume.prototype = {
         // make normal matrix
 
         var me = this.matrix.elements;
-        var r0 = new THREE.Vector3( me[0], me[1], me[2] );
-        var r1 = new THREE.Vector3( me[4], me[5], me[6] );
-        var r2 = new THREE.Vector3( me[8], me[9], me[10] );
-        var cp = new THREE.Vector3();
+        var r0 = new Vector3( me[0], me[1], me[2] );
+        var r1 = new Vector3( me[4], me[5], me[6] );
+        var r2 = new Vector3( me[8], me[9], me[10] );
+        var cp = new Vector3();
         //        [ r0 ]       [ r1 x r2 ]
         // M3x3 = [ r1 ]   N = [ r2 x r0 ]
         //        [ r2 ]       [ r0 x r1 ]
@@ -222,7 +222,7 @@ Volume.prototype = {
 
     getBox: function( center, size, target ){
 
-        if( !target ) target = new THREE.Box3();
+        if( !target ) target = new Box3();
 
         target.set( center, center );
         target.expandByScalar( size );
@@ -239,7 +239,7 @@ Volume.prototype = {
 
         if( !center || !size ) return;
 
-        if( !this.__box ) this.__box = new THREE.Box3();
+        if( !this.__box ) this.__box = new Box3();
         var box = this.getBox( center, size, this.__box );
         return [ box.min.toArray(), box.max.toArray() ];
 

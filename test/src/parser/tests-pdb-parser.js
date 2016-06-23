@@ -7,9 +7,9 @@ describe('parser/pdb-parser', function() {
 
 
 describe('parsing', function () {
-    it('double bonds', function (done) {
+    it('double bonds', function () {
         var path = "../data/doubleBonds.pdb";
-        autoLoad( path ).then( function( structure ){
+        return autoLoad( path ).then( function( structure ){
             var bs = structure.bondStore;
             assert.equal( bs.atomIndex1[ 0 ], 0 );
             assert.equal( bs.atomIndex2[ 0 ], 1 );
@@ -20,7 +20,6 @@ describe('parsing', function () {
             assert.equal( bs.atomIndex1[ 26 ], 9 );
             assert.equal( bs.atomIndex2[ 26 ], 8 );
             assert.equal( bs.bondOrder[ 26 ], 1 );
-            done();
         } );
     });
 });

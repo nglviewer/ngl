@@ -5,9 +5,10 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
+import { degToRad } from "../math/math-utils.js";
 import VolumeParser from "./volume-parser.js";
 
 
@@ -149,20 +150,20 @@ DxParser.prototype = Object.assign( Object.create(
     getMatrix: function(){
 
         var h = this.volume.header;
-        var matrix = new THREE.Matrix4();
+        var matrix = new Matrix4();
 
         matrix.multiply(
-            new THREE.Matrix4().makeRotationY( THREE.Math.degToRad( 90 ) )
+            new Matrix4().makeRotationY( degToRad( 90 ) )
         );
 
         matrix.multiply(
-            new THREE.Matrix4().makeTranslation(
+            new Matrix4().makeTranslation(
                 -h.zmin, h.ymin, h.xmin
             )
         );
 
         matrix.multiply(
-            new THREE.Matrix4().makeScale(
+            new Matrix4().makeScale(
                 -h.hz, h.hy, h.hx
             )
         );

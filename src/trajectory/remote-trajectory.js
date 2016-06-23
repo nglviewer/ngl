@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { XHRLoader } from "../../lib/three.es6.js";
 
 import { Debug, Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
@@ -109,7 +109,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
     getNumframes: function(){
 
-        var loader = new THREE.XHRLoader();
+        var loader = new XHRLoader();
         var ds = DatasourceRegistry.trajectory;
         var url = ds.getNumframesUrl( this.trajPath );
 

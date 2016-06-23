@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
@@ -34,10 +34,10 @@ Helixorient.prototype = {
         var j = -1;
 
         var cache = [
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3()
+            new Vector3(),
+            new Vector3(),
+            new Vector3(),
+            new Vector3()
         ];
 
         function next(){
@@ -165,22 +165,22 @@ Helixorient.prototype = {
         var tmp, j, i;
         var diff13Length, diff24Length;
 
-        var r12 = new THREE.Vector3();
-        var r23 = new THREE.Vector3();
-        var r34 = new THREE.Vector3();
+        var r12 = new Vector3();
+        var r23 = new Vector3();
+        var r34 = new Vector3();
 
-        var diff13 = new THREE.Vector3();
-        var diff24 = new THREE.Vector3();
+        var diff13 = new Vector3();
+        var diff24 = new Vector3();
 
-        var v1 = new THREE.Vector3();
-        var v2 = new THREE.Vector3();
+        var v1 = new Vector3();
+        var v2 = new Vector3();
 
-        var _axis = new THREE.Vector3();
-        var _prevAxis = new THREE.Vector3();
+        var _axis = new Vector3();
+        var _prevAxis = new Vector3();
 
-        var _resdir = new THREE.Vector3();
-        var _crossdir = new THREE.Vector3();
-        var _center = new THREE.Vector3( 0, 0, 0 );
+        var _resdir = new Vector3();
+        var _crossdir = new Vector3();
+        var _center = new Vector3( 0, 0, 0 );
 
         var type = "trace";
         var a1 = structure.getAtomProxy();

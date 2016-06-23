@@ -5,160 +5,159 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector2, Vector3 } from "../../lib/three.es6.js";
+import Signal from "../../lib/signals.es6.js";
 
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
 import { GidPool, Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 
 
-var PickingControls = function( viewer, stage ){
+/**
+ * Picking data object.
+ * @typedef {Object} PickingData - picking data
+ * @property {AtomProxy} [pickedAtom] - picked atom
+ * @property {BondProxy} [pickedBond] - picked bond
+ * @property {Volume} [pickedVolume] - picked volume
+ * @property {Object} [instance] - instance data
+ * @property {Integer} instance.id - instance id
+ * @property {String|Integer} instance.name - instance name
+ * @property {Matrix4} instance.matrix - transformation matrix of the instance
+ */
 
-    var position = new THREE.Vector3();
 
-    var mouse = {
+var PickingControls = function( viewer, params ){
 
-        position: new THREE.Vector2(),
-        down: new THREE.Vector2(),
-        moving: false,
-        distance: function(){
-            return mouse.position.distanceTo( mouse.down );
-        }
+    var hoverTimeout = 50;
+    setParameters( params );
 
+    var signals = {
+        clicked: new Signal(),
+        hovered: new Signal()
     };
 
-    viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
+    var position = new Vector3();
 
-        e.preventDefault();
-        // e.stopPropagation();
+    var mouse = {
+        position: new Vector2(),
+        down: new Vector2(),
+        canvasPosition: new Vector2(),
+        moving: false,
+        hovering: true,
+        lastMoved: Infinity,
+        which: undefined,
+        distance: function(){
+            return mouse.position.distanceTo( mouse.down );
+        },
+        setCanvasPosition: function( e ){
+            var box = viewer.renderer.domElement.getBoundingClientRect();
+            var offsetX = e.clientX - box.left;
+            var offsetY = e.clientY - box.top;
+            mouse.canvasPosition.set( offsetX, box.height - offsetY );
+        }
+    };
 
-        mouse.moving = true;
-        mouse.position.x = e.layerX;
-        mouse.position.y = e.layerY;
+    function setParameters( params ){
+        var p = Object.assign( {}, params );
+        hoverTimeout = defaults( p.hoverTimeout, hoverTimeout );
+    }
 
-    } );
-
-    viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
-
-        e.preventDefault();
-        // e.stopPropagation();
-
-        mouse.moving = false;
-        mouse.down.x = e.layerX;
-        mouse.down.y = e.layerY;
-
-    } );
-
-    viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
-
-        e.preventDefault();
-        // e.stopPropagation();
-
-        if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
-
-        var box = viewer.renderer.domElement.getBoundingClientRect();
-
-        var offsetX = e.clientX - box.left;
-        var offsetY = e.clientY - box.top;
-
+    /**
+     * pick helper function
+     * @param  {Object} mouse
+     * @return {PickingData} picking data
+     */
+    function pick( mouse, clicked ){
         var pickingData = viewer.pick(
-            offsetX,
-            box.height - offsetY
+            mouse.canvasPosition.x, mouse.canvasPosition.y
         );
-        var gid = pickingData.gid;
         var instance = pickingData.instance;
+        var picked = GidPool.getByGid( pickingData.gid );
 
-        var pickedAtom;
-        var pickedBond;
-        var pickedVolume;
-
-        var picked = GidPool.getByGid( gid );
-
+        var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){
-
             pickedAtom = picked;
-
         }else if( picked && picked.type === "BondProxy" ){
-
             pickedBond = picked;
-
-        }else if( picked && picked && picked.volume.type === "Volume" ){
-
+        }else if( picked && picked.volume.type === "Volume" ){
             pickedVolume = picked;
-
         }
 
-        //
-
         if( ( pickedAtom || pickedBond || pickedVolume ) &&
-                e.which === MiddleMouseButton
+                mouse.which === MiddleMouseButton && clicked
         ){
-
             if( pickedAtom ){
-
                 position.copy( pickedAtom );
-
             }else if( pickedBond ){
-
-                position.set( 0, 0, 0 )
-                    .addVectors( pickedBond.atom1, pickedBond.atom2 )
+                position.copy( pickedBond.atom1 )
+                    .add( pickedBond.atom2 )
                     .multiplyScalar( 0.5 );
-
             }else if( pickedVolume ){
-
                 position.copy( pickedVolume );
-
             }
 
             if( instance ){
-
                 position.applyProjection( instance.matrix );
-
             }
-
             viewer.centerView( false, position );
-
         }
 
-        //
-
-        if( pickedAtom ){
-
-            stage.signals.atomPicked.dispatch( pickedAtom );
-
-        }else if( pickedBond ){
-
-            stage.signals.bondPicked.dispatch( pickedBond );
-
-        }else if( pickedVolume ){
-
-            stage.signals.volumePicked.dispatch( pickedVolume );
-
-        }else{
-
-            stage.signals.nothingPicked.dispatch();
-
-        }
-
-        stage.signals.onPicking.dispatch( {
-
+        return {
             "atom": pickedAtom,
             "bond": pickedBond,
             "volume": pickedVolume,
             "instance": instance
-
-        } );
-
-        //
-
-        if( Debug ){
-
-            Log.log( "picked atom", pickedAtom );
-            Log.log( "picked bond", pickedBond );
-            Log.log( "picked volume", pickedVolume );
-
         }
+    }
 
+    function listen(){
+        if( performance.now() - mouse.lastMoved > hoverTimeout ){
+            mouse.moving = false;
+        }
+        if( !mouse.moving && !mouse.hovering ){
+            mouse.hovering = true;
+            var pd = pick( mouse );
+            signals.hovered.dispatch( pd );
+            // if( Debug ) Log.log( "hovered", pd );
+        }
+        requestAnimationFrame( listen );
+    }
+    listen();
+
+    viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
+        e.preventDefault();
+        // e.stopPropagation();
+        mouse.moving = true;
+        mouse.hovering = false;
+        mouse.lastMoved = performance.now();
+        mouse.position.set( e.layerX, e.layerY );
+        mouse.setCanvasPosition( e );
     } );
+
+    viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
+        e.preventDefault();
+        // e.stopPropagation();
+        mouse.moving = false;
+        mouse.hovering = false;
+        mouse.down.set( e.layerX, e.layerY );
+        mouse.which = e.which;
+        mouse.setCanvasPosition( e );
+    } );
+
+    viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
+        e.preventDefault();
+        // e.stopPropagation();
+        if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
+        var pd = pick( mouse, true );
+        mouse.which = undefined;
+        signals.clicked.dispatch( pd );
+        if( Debug ) Log.log( "clicked", pd );
+    } );
+
+    // API
+
+    this.signals = signals;
+    this.setParameters = setParameters;
 
 };
 

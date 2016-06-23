@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
@@ -64,15 +64,15 @@ Helixbundle.prototype = {
         var tmpCenter = [];
 
         var _axis, _center;
-        var _beg = new THREE.Vector3();
-        var _end = new THREE.Vector3();
+        var _beg = new Vector3();
+        var _end = new Vector3();
 
         var rp1 = structure.getResidueProxy();
         var rp2 = structure.getResidueProxy();
         var ap = structure.getAtomProxy();
 
-        var c1 = new THREE.Vector3();
-        var c2 = new THREE.Vector3();
+        var c1 = new Vector3();
+        var c2 = new Vector3();
 
         var split = false;
 

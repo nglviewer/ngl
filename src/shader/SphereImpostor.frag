@@ -194,6 +194,7 @@ void main(void){
         #include color_fragment
         #include roughnessmap_fragment
         #include metalnessmap_fragment
+        #include normal_flip
         #include normal_fragment
         if( interior ){
             normal = vec3( 0.0, 0.0, 0.4 );

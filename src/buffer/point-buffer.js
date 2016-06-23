@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { DataTexture, NormalBlending } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
@@ -62,7 +62,7 @@ function makePointTexture( params ){
 
     }
 
-    var tex = new THREE.DataTexture( data, width, height );
+    var tex = new DataTexture( data, width, height );
     tex.needsUpdate = true;
 
     return tex;
@@ -124,15 +124,15 @@ PointBuffer.prototype = Object.assign( Object.create(
         this.makeTexture();
 
         this.material.uniforms.map.value = this.tex;
-        this.material.blending = THREE.NormalBlending;
+        this.material.blending = NormalBlending;
         this.material.needsUpdate = true;
 
         this.wireframeMaterial.uniforms.map.value = this.tex;
-        this.wireframeMaterial.blending = THREE.NormalBlending;
+        this.wireframeMaterial.blending = NormalBlending;
         this.wireframeMaterial.needsUpdate = true;
 
         this.pickingMaterial.uniforms.map.value = this.tex;
-        this.pickingMaterial.blending = THREE.NormalBlending;
+        this.pickingMaterial.blending = NormalBlending;
         this.pickingMaterial.needsUpdate = true;
 
     },

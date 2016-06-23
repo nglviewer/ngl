@@ -1,11 +1,11 @@
 /**
- * @file Unitcell Representation
+ * @file Axes Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 
-import { Vector3, Color } from "../../lib/three.es6.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -16,19 +16,19 @@ import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
-function UnitcellRepresentation( structure, viewer, params ){
+function AxesRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
 }
 
-UnitcellRepresentation.prototype = Object.assign( Object.create(
+AxesRepresentation.prototype = Object.assign( Object.create(
 
     StructureRepresentation.prototype ), {
 
-    constructor: UnitcellRepresentation,
+    constructor: AxesRepresentation,
 
-    type: "unitcell",
+    type: "axes",
 
     parameters: Object.assign( {
 
@@ -43,6 +43,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         },
         disableImpostor: {
             type: "boolean", rebuild: true
+        },
+        align: {
+            type: "button"
         }
 
     }, Representation.prototype.parameters, {
@@ -54,7 +57,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         var p = params || {};
 
         p.radius = defaults( p.radius, 0.5 );
-        p.colorValue = defaults( p.colorValue, "orange" );
+        p.colorValue = defaults( p.colorValue, "lightgreen" );
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
@@ -75,62 +78,44 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    getUnitcellData: function( structure ){
+    align: function(){
 
+        var pa = this.structureView.getPrincipalAxes();
+
+        var v1 = new Vector3().copy( pa[0][1] ).sub( pa[0][0] ).normalize();
+        var v2 = new Vector3().copy( pa[1][1] ).sub( pa[1][0] ).normalize();
+        var v3 = new Vector3().copy( pa[2][1] ).sub( pa[2][0] ).normalize();
+
+        this.viewer.alignView( v3, v1, pa[ 3 ], true );
+
+    },
+
+    getAxesData: function( sview ){
+
+        var pa = sview.getPrincipalAxes();
         var c = new Color( this.colorValue );
 
-        var vertexPosition = new Float32Array( 3 * 8 );
-        var vertexColor = uniformArray3( 8, c.r, c.g, c.b );
-        var vertexRadius = uniformArray( 8, this.radius );
+        var vertexPosition = new Float32Array( 3 * 6 );
+        var vertexColor = uniformArray3( 6, c.r, c.g, c.b );
+        var vertexRadius = uniformArray( 6, this.radius );
 
-        var edgePosition1 = new Float32Array( 3 * 12 );
-        var edgePosition2 = new Float32Array( 3 * 12 );
-        var edgeColor = uniformArray3( 12, c.r, c.g, c.b );
-        var edgeRadius = uniformArray( 12, this.radius );
+        var edgePosition1 = new Float32Array( 3 * 3 );
+        var edgePosition2 = new Float32Array( 3 * 3 );
+        var edgeColor = uniformArray3( 3, c.r, c.g, c.b );
+        var edgeRadius = uniformArray( 3, this.radius );
 
-        var uc = structure.unitcell;
-        var centerFrac = structure.center.clone()
-            .applyMatrix4( uc.cartToFrac )
-            .floor().multiplyScalar( 2 ).addScalar( 1 );
-        var v = new Vector3();
-
-        var cornerOffset = 0;
-        function addCorner( x, y, z ){
-            v.set( x, y, z )
-                .multiply( centerFrac )
-                .applyMatrix4( uc.fracToCart )
-                .toArray( vertexPosition, cornerOffset );
-            cornerOffset += 3;
+        var offset = 0;
+        function addAxis( v1, v2 ){
+            v1.toArray( vertexPosition, offset * 2 );
+            v2.toArray( vertexPosition, offset * 2 + 3 );
+            v1.toArray( edgePosition1, offset );
+            v2.toArray( edgePosition2, offset );
+            offset += 3;
         }
-        addCorner( 0, 0, 0 );
-        addCorner( 1, 0, 0 );
-        addCorner( 0, 1, 0 );
-        addCorner( 0, 0, 1 );
-        addCorner( 1, 1, 0 );
-        addCorner( 1, 0, 1 );
-        addCorner( 0, 1, 1 );
-        addCorner( 1, 1, 1 );
 
-        var edgeOffset = 0;
-        function addEdge( a, b ){
-            v.fromArray( vertexPosition, a * 3 )
-                .toArray( edgePosition1, edgeOffset );
-            v.fromArray( vertexPosition, b * 3 )
-                .toArray( edgePosition2, edgeOffset );
-            edgeOffset += 3;
-        }
-        addEdge( 0, 1 );
-        addEdge( 0, 2 );
-        addEdge( 0, 3 );
-        addEdge( 1, 4 );
-        addEdge( 1, 5 );
-        addEdge( 2, 6 );
-        addEdge( 3, 5 );
-        addEdge( 4, 7 );
-        addEdge( 5, 7 );
-        addEdge( 2, 4 );
-        addEdge( 7, 6 );
-        addEdge( 3, 6 );
+        addAxis( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] );
+        addAxis( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] );
+        addAxis( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] );
 
         return {
             vertexPosition: vertexPosition,
@@ -146,14 +131,12 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        var structure = this.structureView.getStructure();
-        if( !structure.unitcell ) return;
-        var unitcellData = this.getUnitcellData( structure );
+        var axesData = this.getAxesData( this.structureView );
 
         this.sphereBuffer = new SphereBuffer(
-            unitcellData.vertexPosition,
-            unitcellData.vertexColor,
-            unitcellData.vertexRadius,
+            axesData.vertexPosition,
+            axesData.vertexColor,
+            axesData.vertexRadius,
             undefined,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
@@ -163,11 +146,11 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         );
 
         this.cylinderBuffer = new CylinderBuffer(
-            unitcellData.edgePosition1,
-            unitcellData.edgePosition2,
-            unitcellData.edgeColor,
-            unitcellData.edgeColor,
-            unitcellData.edgeRadius,
+            axesData.edgePosition1,
+            axesData.edgePosition2,
+            axesData.edgeColor,
+            axesData.edgeColor,
+            axesData.edgeRadius,
             undefined,
             undefined,
             this.getBufferParams( {
@@ -188,26 +171,25 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
     updateData: function( what, data ){
 
-        var structure = data.sview.getStructure();
-        var unitcellData = this.getUnitcellData( structure );
+        var axesData = this.getAxesData( data.sview );
         var sphereData = {};
         var cylinderData = {};
 
         if( !what || what.position ){
-            sphereData.position = unitcellData.vertexPosition;
-            cylinderData.position1 = unitcellData.edgePosition1;
-            cylinderData.position2 = unitcellData.edgePosition2;
+            sphereData.position = axesData.vertexPosition;
+            cylinderData.position1 = axesData.edgePosition1;
+            cylinderData.position2 = axesData.edgePosition2;
         }
 
         if( !what || what.color ){
-            sphereData.color = unitcellData.vertexColor;
-            cylinderData.color = unitcellData.edgeColor;
-            cylinderData.color2 = unitcellData.edgeColor;
+            sphereData.color = axesData.vertexColor;
+            cylinderData.color = axesData.edgeColor;
+            cylinderData.color2 = axesData.edgeColor;
         }
 
         if( !what || what.radius ){
-            sphereData.radius = unitcellData.vertexRadius;
-            cylinderData.radius = unitcellData.edgeRadius;
+            sphereData.radius = axesData.vertexRadius;
+            cylinderData.radius = axesData.edgeRadius;
         }
 
         this.sphereBuffer.setAttributes( sphereData );
@@ -218,7 +200,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 } );
 
 
-RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
+RepresentationRegistry.add( "axes", AxesRepresentation );
 
 
-export default UnitcellRepresentation;
+export default AxesRepresentation;

@@ -5,7 +5,8 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
+import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
@@ -20,8 +21,6 @@ import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
 import { makeComponent } from "../component/component-utils.js";
 import { autoLoad } from "../loader/loader-utils";
-
-import Signal from "../../lib/signals.es6.js";
 
 
 /**
@@ -48,6 +47,56 @@ import Signal from "../../lib/signals.es6.js";
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
+ * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered} signal is fired
+ */
+
+
+/**
+ * {@link Signal}, dispatched when stage parameters change {@link Signal}
+ * @example
+ * stage.signals.parametersChanged( function( stageParameters ){ ... } );
+ * @event Stage#parametersChanged
+ * @type {StageParameters}
+ */
+
+/**
+ * {@link Signal}, dispatched when the fullscreen is entered or left
+ * @example
+ * stage.signals.fullscreenChanged( function( isFullscreen ){ ... } );
+ * @event Stage#fullscreenChanged
+ * @type {Boolean}
+ */
+
+/**
+ * {@link Signal}, dispatched when a component is added to the stage
+ * @example
+ * stage.signals.componentAdded( function( component ){ ... } );
+ * @event Stage#componentAdded
+ * @type {Component}
+ */
+
+/**
+ * {@link Signal}, dispatched when a component is removed from the stage
+ * @example
+ * stage.signals.componentRemoved( function( component ){ ... } );
+ * @event Stage#componentRemoved
+ * @type {Component}
+ */
+
+/**
+ * {@link Signal}, dispatched upon clicking in the viewer canvas
+ * @example
+ * stage.signals.clicked( function( pickingData ){ ... } );
+ * @event Stage#clicked
+ * @type {PickingData}
+ */
+
+/**
+ * {@link Signal}, dispatched upon hovering over the viewer canvas
+ * @example
+ * stage.signals.hovered( function( pickingData ){ ... } );
+ * @event Stage#hovered
+ * @type {PickingData}
  */
 
 
@@ -63,19 +112,14 @@ import Signal from "../../lib/signals.es6.js";
 function Stage( eid, params ){
 
     this.signals = {
-
         parametersChanged: new Signal(),
         fullscreenChanged: new Signal(),
 
         componentAdded: new Signal(),
         componentRemoved: new Signal(),
 
-        atomPicked: new Signal(),
-        bondPicked: new Signal(),
-        volumePicked: new Signal(),
-        nothingPicked: new Signal(),
-        onPicking: new Signal()
-
+        clicked: new Signal(),
+        hovered: new Signal()
     };
 
     //
@@ -88,6 +132,10 @@ function Stage( eid, params ){
 
     this.viewer = new Viewer( eid );
     if( !this.viewer.renderer ) return;
+
+    this.pickingControls = new PickingControls( this.viewer );
+    this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
+    this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
 
     var p = Object.assign( {
         impostor: true,
@@ -107,12 +155,12 @@ function Stage( eid, params ){
         lightColor: 0xdddddd,
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
-        ambientIntensity: 0.2
+        ambientIntensity: 0.2,
+        hoverTimeout: 50,
     }, params );
     this.parameters = deepCopy( Stage.prototype.parameters );
     this.setParameters( p );  // must come after the viewer has been instantiated
 
-    this.pickingControls = new PickingControls( this.viewer, this );
     this.viewer.animate();
 
 }
@@ -151,7 +199,7 @@ Stage.prototype = {
             type: "range", step: 1, max: 100, min: 0
         },
         clipDist: {
-            type: "number", precision: 0, max: 200, min: 0
+            type: "integer", max: 200, min: 0
         },
         fogNear: {
             type: "range", step: 1, max: 100, min: 0
@@ -177,11 +225,15 @@ Stage.prototype = {
         ambientIntensity: {
             type: "number", precision: 2, max: 10, min: 0
         },
+        hoverTimeout: {
+            type: "integer", max: 10000, min: 10
+        },
 
     },
 
     /**
      * Set stage parameters
+     * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
      */
     setParameters: function( params ){
@@ -190,6 +242,7 @@ Stage.prototype = {
         var tp = this.parameters;
         var viewer = this.viewer;
         var controls = viewer.controls;
+        var pickingControls = this.pickingControls;
 
         for( var name in p ){
 
@@ -209,6 +262,7 @@ Stage.prototype = {
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );
@@ -387,6 +441,7 @@ Stage.prototype = {
      * // load a File object
      * stage.loadFile( file );
      *
+     * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {Object} params - loading parameters
      * @param  {String} params.ext - file extension, determines file type
@@ -504,6 +559,13 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Toggle fullscreen
+     * @fires Stage#fullscreenChanged
+     * @param  {Element} [element] - document element to put into fullscreen,
+     *                               defaults to the viewer container
+     * @return {undefined}
+     */
     toggleFullscreen: function( element ){
 
         if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&
@@ -617,7 +679,7 @@ Stage.prototype = {
     setSpin: function( axis, angle ){
 
         if( Array.isArray( axis ) ){
-            axis = new THREE.Vector3().fromArray( axis );
+            axis = new Vector3().fromArray( axis );
         }
 
         this.viewer.setSpin( axis, angle );

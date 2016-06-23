@@ -7,18 +7,25 @@ All notable changes to this project will be documented in this file, following t
 - gulp build scripts
 - mmtf v0.2 support
 - support for rendering double/triple bonds, enable via `multipleBond` Representation parameter (@fredludlow, @arose)
+- stage.clicked signal (renamed from .onPicking)
+- stage.hovered signal
+- parsing of "chem comp" cif files
 
 ### Changed
-- reorganised everything to use es6 modules
+- reorganized everything to use es6 modules
 - read bondOrder from 'pdbx_value_order' in mmcif files
 - interpret 'CONECT 1529 1528 1528' as double bond in pdb files
 - `side` Buffer/Representation parameter changed: THREE.FrontSide => "front", THREE.BackSide => "back", THREE.DoubleSide => "double"
 - support for negative resno values in selections: "-5:A", "-12--8", "-12-0"
 - support for chemical component type (available in mmtf) for determining molecule type
+- `.get/setOrientation` return/argument changed
+- enable SDF font as the default TextBuffer class only on Chrome
 
 ### Removed
 - python-based build scripts
 - closure-compiler
+- stage.signals.onPicking (renamed to .clicked)
+- stage.signals.atom/bond/volume/nothingPicked, use .clicked instead
 
 
 ## [v0.7.1a] - 2016-06-02

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { binarySearchIndexOf } from "../utils.js";
@@ -337,8 +337,8 @@ var calculateSecondaryStructure = function(){
         var helixbundle = new Helixbundle( p );
         var pos = helixbundle.position;
 
-        var c1 = new THREE.Vector3();
-        var c2 = new THREE.Vector3();
+        var c1 = new Vector3();
+        var c2 = new Vector3();
 
         for( var i = 0, il = p.residueCount; i < il; ++i ){
 
@@ -431,6 +431,21 @@ function calculateChainnames( structure ){
             modelStore.chainCount[ mIndex ] += 1;
         };
 
+        var getName = function( i ){
+            var j = i;
+            var k = 0;
+            var chainname = names[ j % n ];
+            while( j >= n ){
+                j = Math.floor( j / n );
+                chainname += names[ j % n ];
+                k += 1;
+            }
+            if( k >= 5 ){
+                Log.warn( "chainname overflow" );
+            }
+            return chainname;
+        };
+
         var ap1 = structure.getAtomProxy();
         var ap2 = structure.getAtomProxy();
 
@@ -440,7 +455,7 @@ function calculateChainnames( structure ){
         var rEnd = 0;
         var chainData = [];
 
-        if( structure.residueStore.count === 1 ){
+        if( residueStore.count === 1 ){
 
             chainData.push( {
                 mIndex: 0,
@@ -473,25 +488,17 @@ function calculateChainnames( structure ){
                     }
                 }
 
-                if( rp2.index === residueStore.count - 1 ){
+                // current chain goes to end of the structure
+                if( !newChain && rp2.index === residueStore.count - 1 ){
                     newChain = true;
                     rEnd = rp2.index;
                 }
 
                 if( newChain ){
-                    var j = i;
-                    var k = 0;
-                    var chainname = names[ j % n ];
-
-                    while( j >= n ){
-                        j = Math.floor( j / n );
-                        chainname += names[ j % n ];
-                        k += 1;
-                    }
 
                     chainData.push( {
                         mIndex: mi,
-                        chainname: chainname,
+                        chainname: getName( i ),
                         rStart: rStart,
                         rCount: rEnd - rStart + 1
                     } );
@@ -503,9 +510,14 @@ function calculateChainnames( structure ){
                         mi += 1;
                     }
 
-                    if( k >= 5 ){
-                        Log.warn( "out of chain names" );
-                        i = 0;
+                    // new chain for the last residue of the structure
+                    if( rp2.index === residueStore.count - 1 ){
+                        chainData.push( {
+                            mIndex: mi,
+                            chainname: getName( i ),
+                            rStart: residueStore.count - 1,
+                            rCount: 1
+                        } );
                     }
 
                     rStart = rp2.index;
@@ -739,9 +751,9 @@ function buildUnitcellAssembly( structure ){
     var centerFrac = structure.center.clone().applyMatrix4( uc.cartToFrac );
     var symopDict = getSymmetryOperations( uc.spacegroup );
 
-    var positionFrac = new THREE.Vector3();
-    var centerFracSymop = new THREE.Vector3();
-    var positionFracSymop = new THREE.Vector3();
+    var positionFrac = new Vector3();
+    var centerFracSymop = new Vector3();
+    var positionFracSymop = new Vector3();
 
     if( centerFrac.x > 1 ) positionFrac.x -= 1;
     if( centerFrac.x < 0 ) positionFrac.x += 1;
@@ -787,7 +799,7 @@ function buildUnitcellAssembly( structure ){
     var unitcellMatrixList = getMatrixList();
     var ncsMatrixList;
     if( structure.biomolDict.NCS ){
-        ncsMatrixList = [ new THREE.Matrix4() ].concat(
+        ncsMatrixList = [ new Matrix4() ].concat(
             structure.biomolDict.NCS.partList[ 0 ].matrixList
         );
         var ncsUnitcellMatrixList = [];
@@ -801,7 +813,7 @@ function buildUnitcellAssembly( structure ){
         unitcellAssembly.addPart( unitcellMatrixList );
     }
 
-    var vec = new THREE.Vector3();
+    var vec = new Vector3();
     var supercellAssembly = new Assembly( "SUPERCELL" );
     var supercellMatrixList = Array.prototype.concat.call(
         getMatrixList(),                         // 555

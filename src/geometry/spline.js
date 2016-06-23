@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
@@ -17,8 +17,8 @@ function Interpolator( m, tension ){
     var dt = 1.0 / m;
     var delta = 0.0001;
 
-    var vec1 = new THREE.Vector3();
-    var vec2 = new THREE.Vector3();
+    var vec1 = new Vector3();
+    var vec2 = new Vector3();
 
     function interpolate( p0, p1, p2, p3, t ) {
         var v0 = ( p2 - p0 ) * tension;
@@ -124,10 +124,10 @@ function Interpolator( m, tension ){
 
     //
 
-    var vDir = new THREE.Vector3();
-    var vTan = new THREE.Vector3();
-    var vNorm = new THREE.Vector3();
-    var vBin = new THREE.Vector3();
+    var vDir = new Vector3();
+    var vTan = new Vector3();
+    var vNorm = new Vector3();
+    var vBin = new Vector3();
 
     var m2 = Math.ceil( m / 2 );
 
@@ -180,19 +180,19 @@ function Interpolator( m, tension ){
         iterDir1.reset();
         iterDir2.reset();
         //
-        var vSub1 = new THREE.Vector3();
-        var vSub2 = new THREE.Vector3();
-        var vSub3 = new THREE.Vector3();
-        var vSub4 = new THREE.Vector3();
+        var vSub1 = new Vector3();
+        var vSub2 = new Vector3();
+        var vSub3 = new Vector3();
+        var vSub4 = new Vector3();
         //
-        var d1v1 = new THREE.Vector3();
-        var d1v2 = new THREE.Vector3().copy( iterDir1.next() );
-        var d1v3 = new THREE.Vector3().copy( iterDir1.next() );
-        var d1v4 = new THREE.Vector3().copy( iterDir1.next() );
-        var d2v1 = new THREE.Vector3();
-        var d2v2 = new THREE.Vector3().copy( iterDir2.next() );
-        var d2v3 = new THREE.Vector3().copy( iterDir2.next() );
-        var d2v4 = new THREE.Vector3().copy( iterDir2.next() );
+        var d1v1 = new Vector3();
+        var d1v2 = new Vector3().copy( iterDir1.next() );
+        var d1v3 = new Vector3().copy( iterDir1.next() );
+        var d1v4 = new Vector3().copy( iterDir1.next() );
+        var d2v1 = new Vector3();
+        var d2v2 = new Vector3().copy( iterDir2.next() );
+        var d2v3 = new Vector3().copy( iterDir2.next() );
+        var d2v4 = new Vector3().copy( iterDir2.next() );
         //
         vNorm.set( 0, 0, 1 );
         var n = iterDir1.size;
@@ -398,10 +398,10 @@ Spline.prototype = {
         ];
 
         var cache2 = [
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3()
+            new Vector3(),
+            new Vector3(),
+            new Vector3(),
+            new Vector3()
         ];
 
         function next(){

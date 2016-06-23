@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4 } from "../math/three-utils.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";

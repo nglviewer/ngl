@@ -5,13 +5,26 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import {
+    PerspectiveCamera, OrthographicCamera,
+    Box3, Vector3, Quaternion, Color,
+    WebGLRenderer, WebGLRenderTarget,
+    NearestFilter, AdditiveBlending,
+    RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
+    ShaderMaterial,
+    PlaneGeometry,
+    Scene, Mesh, Group,
+    Fog, SpotLight, AmbientLight,
+    BufferGeometry, BufferAttribute,
+    LineBasicMaterial, LineSegments
+} from "../../lib/three.es6.js";
 
 import {
     Debug, Log, Browser, WebglErrorMessage,
     ExtensionFragDepth, setExtensionFragDepth,
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
+import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
 import TrackballControls from "../controls/trackball-controls.js";
 import { getShader } from "../shader/shader-utils.js";
@@ -61,52 +74,6 @@ JitterVectors.forEach( function( offsetList ){
         offset[ 1 ] *= 0.0625;
     } );
 } );
-
-
-THREE.OrthographicCamera.prototype.setViewOffset = function( fullWidth, fullHeight, x, y, width, height ) {
-
-    this.view = {
-        fullWidth: fullWidth,
-        fullHeight: fullHeight,
-        offsetX: x,
-        offsetY: y,
-        width: width,
-        height: height
-    };
-
-    this.updateProjectionMatrix();
-
-};
-
-THREE.OrthographicCamera.prototype.updateProjectionMatrix = function () {
-
-    var dx = ( this.right - this.left ) / ( 2 * this.zoom );
-    var dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
-    var cx = ( this.right + this.left ) / 2;
-    var cy = ( this.top + this.bottom ) / 2;
-
-    var left = cx - dx;
-    var right = cx + dx;
-    var top = cy + dy;
-    var bottom = cy - dy;
-
-    if( this.view ){
-
-        var scaleW = this.zoom / ( this.view.width / this.view.fullWidth );
-        var scaleH = this.zoom / ( this.view.height / this.view.fullHeight );
-        var biasW = ( this.right - this.left ) / this.view.width;
-        var biasH = ( this.top - this.bottom ) / this.view.height;
-
-        left += biasW * ( this.view.offsetX / scaleW );
-        right = left + biasW * ( this.view.width / scaleW );
-        top -= biasH * ( this.view.offsetY / scaleH );
-        bottom = top - biasH * ( this.view.height / scaleH );
-
-    }
-
-    this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
-
-};
 
 
 /**
@@ -164,14 +131,14 @@ function Viewer( eid, params ){
     initControls();
 
     var boundingBoxMesh;
-    var boundingBox = new THREE.Box3();
+    var boundingBox = new Box3();
     initHelper();
 
     // fog & background
     setBackground();
     setFog();
 
-    var distVector = new THREE.Vector3();
+    var distVector = new Vector3();
 
     var info = {
         memory: {
@@ -191,11 +158,11 @@ function Viewer( eid, params ){
 
         parameters = {
 
-            fogColor: new THREE.Color( 0x000000 ),
+            fogColor: new Color( 0x000000 ),
             fogNear: 50,
             fogFar: 100,
 
-            backgroundColor: new THREE.Color( 0x000000 ),
+            backgroundColor: new Color( 0x000000 ),
 
             cameraType: "perspective",
             cameraFov: 40,
@@ -208,9 +175,9 @@ function Viewer( eid, params ){
             spinAxis: null,
             spinAngle: 0.01,
 
-            lightColor: new THREE.Color( 0xdddddd ),
+            lightColor: new Color( 0xdddddd ),
             lightIntensity: 1.0,
-            ambientColor: new THREE.Color( 0xdddddd ),
+            ambientColor: new Color( 0xdddddd ),
             ambientIntensity: 0.2,
 
             holdRendering: false,
@@ -222,15 +189,15 @@ function Viewer( eid, params ){
 
     function initCamera(){
 
-        var lookAt = new THREE.Vector3( 0, 0, 0 );
+        var lookAt = new Vector3( 0, 0, 0 );
 
-        perspectiveCamera = new THREE.PerspectiveCamera(
+        perspectiveCamera = new PerspectiveCamera(
             parameters.cameraFov, width / height, 0.1, 10000
         );
         perspectiveCamera.position.z = parameters.cameraZ;
         perspectiveCamera.lookAt( lookAt );
 
-        orthographicCamera = new THREE.OrthographicCamera(
+        orthographicCamera = new OrthographicCamera(
             width / -2, width / 2,
             height / 2, height / -2,
             0.1, 10000
@@ -250,7 +217,7 @@ function Viewer( eid, params ){
     function initRenderer(){
 
         try{
-            renderer = new THREE.WebGLRenderer( {
+            renderer = new WebGLRenderer( {
                 preserveDrawingBuffer: true,
                 alpha: true,
                 antialias: true
@@ -286,39 +253,39 @@ function Viewer( eid, params ){
         supportsHalfFloat = renderer.extensions.get( 'OES_texture_half_float' );
         renderer.extensions.get( "WEBGL_color_buffer_float" );
 
-        pickingTarget = new THREE.WebGLRenderTarget(
+        pickingTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
                 stencilBuffer: false,
-                format: THREE.RGBAFormat,
-                type: SupportsReadPixelsFloat ? THREE.FloatType : THREE.UnsignedByteType
+                format: RGBAFormat,
+                type: SupportsReadPixelsFloat ? FloatType : UnsignedByteType
             }
         );
         pickingTarget.texture.generateMipmaps = false;
 
         // msaa textures
 
-        sampleTarget = new THREE.WebGLRenderTarget(
+        sampleTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
+                format: RGBAFormat,
             }
         );
 
-        holdTarget = new THREE.WebGLRenderTarget(
+        holdTarget = new WebGLRenderTarget(
             width * window.devicePixelRatio,
             height * window.devicePixelRatio,
             {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
-                type: supportsHalfFloat ? THREE.HalfFloatType : THREE.FloatType
+                minFilter: NearestFilter,
+                magFilter: NearestFilter,
+                format: RGBAFormat,
+                type: supportsHalfFloat ? HalfFloatType : FloatType
             }
         );
 
@@ -327,20 +294,20 @@ function Viewer( eid, params ){
             "scale": { type: "f", value: 1.0 }
         };
 
-        compositeMaterial = new THREE.ShaderMaterial( {
+        compositeMaterial = new ShaderMaterial( {
             uniforms: compositeUniforms,
             vertexShader: getShader( "Quad.vert" ),
             fragmentShader: getShader( "Quad.frag" ),
             premultipliedAlpha: true,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            blending: AdditiveBlending,
             depthTest: false,
             depthWrite: false
         } );
 
-        compositeCamera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-        compositeScene = new THREE.Scene().add( new THREE.Mesh(
-            new THREE.PlaneGeometry( 2, 2 ), compositeMaterial
+        compositeCamera = new OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+        compositeScene = new Scene().add( new Mesh(
+            new PlaneGeometry( 2, 2 ), compositeMaterial
         ) );
 
     }
@@ -348,44 +315,44 @@ function Viewer( eid, params ){
     function initScene(){
 
         if( !scene ){
-            scene = new THREE.Scene();
+            scene = new Scene();
         }
 
-        rotationGroup = new THREE.Group();
+        rotationGroup = new Group();
         rotationGroup.name = "rotationGroup";
         scene.add( rotationGroup );
 
-        modelGroup = new THREE.Group();
+        modelGroup = new Group();
         modelGroup.name = "modelGroup";
         rotationGroup.add( modelGroup );
 
-        pickingGroup = new THREE.Group();
+        pickingGroup = new Group();
         pickingGroup.name = "pickingGroup";
         rotationGroup.add( pickingGroup );
 
-        backgroundGroup = new THREE.Group();
+        backgroundGroup = new Group();
         backgroundGroup.name = "backgroundGroup";
         rotationGroup.add( backgroundGroup );
 
-        helperGroup = new THREE.Group();
+        helperGroup = new Group();
         helperGroup.name = "helperGroup";
         rotationGroup.add( helperGroup );
 
         // fog
 
-        modelGroup.fog = new THREE.Fog();
+        scene.fog = new Fog();
 
         // light
 
-        pointLight = new THREE.SpotLight(
+        pointLight = new SpotLight(
             parameters.lightColor, parameters.lightIntensity
         );
-        modelGroup.add( pointLight );
+        scene.add( pointLight );
 
-        ambientLight = new THREE.AmbientLight(
+        ambientLight = new AmbientLight(
             parameters.ambientLight, parameters.ambientIntensity
         );
-        modelGroup.add( ambientLight );
+        scene.add( ambientLight );
 
     }
 
@@ -397,12 +364,12 @@ function Viewer( eid, params ){
         ] );
         var positions = new Float32Array( 8 * 3 );
 
-        var bbGeometry = new THREE.BufferGeometry();
-        bbGeometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-        bbGeometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-        var bbMaterial = new THREE.LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
+        var bbGeometry = new BufferGeometry();
+        bbGeometry.setIndex( new BufferAttribute( indices, 1 ) );
+        bbGeometry.addAttribute( 'position', new BufferAttribute( positions, 3 ) );
+        var bbMaterial = new LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
 
-        boundingBoxMesh = new THREE.LineSegments( bbGeometry, bbMaterial );
+        boundingBoxMesh = new LineSegments( bbGeometry, bbMaterial );
         helperGroup.add( boundingBoxMesh );
 
     }
@@ -828,12 +795,12 @@ function Viewer( eid, params ){
 
     var rotate = function(){
 
-        var eye = new THREE.Vector3();
-        var quaternion = new THREE.Quaternion();
-        var eyeDirection = new THREE.Vector3();
-        var upDirection = new THREE.Vector3();
-        var sidewaysDirection = new THREE.Vector3();
-        var moveDirection = new THREE.Vector3();
+        var eye = new Vector3();
+        var quaternion = new Quaternion();
+        var eyeDirection = new Vector3();
+        var upDirection = new Vector3();
+        var sidewaysDirection = new Vector3();
+        var moveDirection = new Vector3();
 
         return function( axis, angle ){
 
@@ -860,21 +827,45 @@ function Viewer( eid, params ){
 
     var zoom = function(){
 
-        var eye = new THREE.Vector3();
-        var eyeDirection = new THREE.Vector3();
+        var eye = new Vector3();
+        var eyeDirection = new Vector3();
 
-        return function( distance ){
+        return function( distance, set ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
 
             eyeDirection.setLength( distance );
-            eye.add( eyeDirection );
+            if( set ){
+                eye.copy( eyeDirection );
+            }else{
+                eye.add( eyeDirection );
+            }
 
             camera.position.addVectors( controls.target, eye );
             camera.lookAt( controls.target );
 
             __updateZoom();
+
+        };
+
+    }();
+
+    function translate( vector ){
+
+        controls.target.add( vector );
+        camera.position.add( vector );
+
+    }
+
+    var center = function(){
+
+        var vector = new Vector3();
+
+        return function( position ){
+
+            vector.copy( position ).sub( controls.target );
+            translate( vector );
 
         };
 
@@ -945,23 +936,23 @@ function Viewer( eid, params ){
                 instance = object.userData.instance;
             }
 
-            if( Debug ){
-                var rgba = Array.apply( [], pixelBuffer );
-                Log.log( pixelBuffer );
-                Log.log(
-                    "picked color",
-                    [
-                        ( rgba[0] ).toPrecision(2),
-                        ( rgba[1] ).toPrecision(2),
-                        ( rgba[2] ).toPrecision(2),
-                        ( rgba[3] ).toPrecision(2)
-                    ]
-                );
-                Log.log( "picked gid", gid );
-                Log.log( "picked instance", instance );
-                Log.log( "picked position", x, y );
-                Log.log( "devicePixelRatio", window.devicePixelRatio );
-            }
+            // if( Debug ){
+            //     var rgba = Array.apply( [], pixelBuffer );
+            //     Log.log( pixelBuffer );
+            //     Log.log(
+            //         "picked color",
+            //         [
+            //             ( rgba[0] ).toPrecision(2),
+            //             ( rgba[1] ).toPrecision(2),
+            //             ( rgba[2] ).toPrecision(2),
+            //             ( rgba[3] ).toPrecision(2)
+            //         ]
+            //     );
+            //     Log.log( "picked gid", gid );
+            //     Log.log( "picked instance", instance );
+            //     Log.log( "picked position", x, y );
+            //     Log.log( "devicePixelRatio", window.devicePixelRatio );
+            // }
 
             return {
                 "gid": gid,
@@ -1001,7 +992,7 @@ function Viewer( eid, params ){
         // clipping
 
         cDist = distVector.copy( camera.position )
-                        .sub( controls.target ).length();
+                    .sub( controls.target ).length();
         // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
@@ -1010,9 +1001,7 @@ function Viewer( eid, params ){
         }
 
         bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
-        bRadius += boundingBox.center( distVector )
-            .add( rotationGroup.position )
-            .length();
+        bRadius += boundingBox.center( distVector ).length();
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;
@@ -1027,7 +1016,7 @@ function Viewer( eid, params ){
 
         var fogNearFactor = ( 50 - p.fogNear ) / 50;
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
-        var fog = modelGroup.fog;
+        var fog = scene.fog;
         fog.color.set( p.fogColor );
         fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
@@ -1037,7 +1026,7 @@ function Viewer( eid, params ){
     function __updateZoom(){
 
         __updateClipping();
-        var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+        var fov = degToRad( perspectiveCamera.fov );
         var hyperfocus = ( camera.near + camera.far ) / 2;
         var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
         orthographicCamera.zoom = height / _height;
@@ -1056,10 +1045,21 @@ function Viewer( eid, params ){
 
     }
 
+    function __setVisibility( model, picking, background, helper ){
+
+        modelGroup.visible = model;
+        pickingGroup.visible = picking;
+        backgroundGroup.visible = background;
+        helperGroup.visible = helper;
+
+    }
+
     function __updateLights(){
 
-        pointLight.position.copy( camera.position ).multiplyScalar( 100 );
-        pointLight.updateMatrixWorld();
+        distVector.copy( camera.position ).sub( controls.target )
+            .normalize().multiplyScalar( 1000 );
+
+        pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
         pointLight.intensity = parameters.lightIntensity;
 
@@ -1071,14 +1071,16 @@ function Viewer( eid, params ){
     function __renderPickingGroup(){
 
         renderer.clearTarget( pickingTarget );
-        renderer.render( pickingGroup, camera, pickingTarget );
+        __setVisibility( false, true, false, false );
+        renderer.render( scene, camera, pickingTarget );
         updateInfo();
         renderer.setRenderTarget( null );  // back to standard render target
 
         if( Debug ){
+            __setVisibility( false, true, false, true );
+
             renderer.clear();
-            renderer.render( pickingGroup, camera );
-            renderer.render( helperGroup, camera );
+            renderer.render( scene, camera );
         }
 
     }
@@ -1091,7 +1093,8 @@ function Viewer( eid, params ){
             renderer.clear();
         }
 
-        renderer.render( backgroundGroup, camera, renderTarget );
+        __setVisibility( false, false, true, false );
+        renderer.render( scene, camera, renderTarget );
         if( renderTarget ){
             renderer.clearTarget( renderTarget, false, true, false );
         }else{
@@ -1099,12 +1102,9 @@ function Viewer( eid, params ){
         }
         updateInfo();
 
-        renderer.render( modelGroup, camera, renderTarget );
+        __setVisibility( true, false, false, Debug );
+        renderer.render( scene, camera, renderTarget );
         updateInfo();
-
-        if( Debug ){
-            renderer.render( helperGroup, camera, renderTarget );
-        }
 
     }
 
@@ -1214,56 +1214,35 @@ function Viewer( eid, params ){
 
     var centerView = function(){
 
-        var t = new THREE.Vector3();
-        var eye = new THREE.Vector3();
-        var eyeDirection = new THREE.Vector3();
-        var bbSize = new THREE.Vector3();
+        var t = new Vector3();
+        var eye = new Vector3();
+        var eyeDirection = new Vector3();
+        var bbSize = new Vector3();
 
-        return function( zoom, center ){
+        return function( autoZoom, position ){
 
-            center = center || boundingBox.center();
+            center( position || boundingBox.center() );
 
-            // remove any paning/translation
-            controls.object.position.sub( controls.target );
-            controls.target.copy( controls.target0 );
+            if( autoZoom ){
 
-            // center
-            t.copy( center ).multiplyScalar( -1 );
-            rotationGroup.position.copy( t );
-            rotationGroup.updateMatrixWorld();
+                // automatic zoom that shows
+                // everything inside the bounding box
+                // TODO take extent towards the camera into account
 
-            if( zoom ){
+                boundingBox.size( bbSize );
+                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                var distance = maxSize + ( minSize / 2 );  // object size
 
-                if( zoom === true ){
-
-                    // automatic zoom that shows
-                    // everything inside the bounding box
-                    // TODO take extent towards the camera into account
-
-                    boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                    var objSize = maxSize + ( minSize / 2 );
-                    zoom = objSize;
-
-                }
-
-                var fov = THREE.Math.degToRad( perspectiveCamera.fov );
+                var fov = degToRad( perspectiveCamera.fov );
                 var aspect = width / height;
 
-                zoom = zoom / 2 / aspect / Math.tan( fov / 2 );
-                zoom = Math.max( zoom, 1.2 * parameters.clipDist );
+                distance = distance / 2 / aspect / Math.tan( fov / 2 );
+                distance = Math.max( distance, 1.2 * parameters.clipDist );
 
-                eye.copy( camera.position ).sub( controls.target );
-                eyeDirection.copy( eye ).normalize();
+                zoom( distance, true );
 
-                eyeDirection.setLength( zoom );
-                eye.copy( eyeDirection );
-
-                camera.position.addVectors( controls.target, eye );
-
-                __updateZoom();
             }
 
             requestRender();
@@ -1274,30 +1253,53 @@ function Viewer( eid, params ){
 
     }();
 
+    var alignView = function(){
+
+        var currentEye = new Vector3();
+        var currentUp = new Vector3();
+        var vn = new Vector3();
+        var vc = new Vector3();
+        var vz = new Vector3( 0, 0, 1 );
+
+        return function( eye, up, position, zoom ){
+
+            controls.reset();
+            centerView( zoom, position );
+
+            currentEye.copy( camera.position ).sub( controls.target ).normalize();
+            vn.crossVectors( currentEye, eye );
+            rotate( vn, -currentEye.angleTo( eye ) );
+
+            currentUp.copy( camera.up ).normalize();
+            vc.crossVectors( currentUp, up ).normalize();
+
+            var angle = currentUp.angleTo( up );
+            if( vz.dot( vc ) < 0 ) angle *= -1;
+
+            currentEye.copy( camera.position ).sub( controls.target ).normalize();
+            if( currentEye.dot( vz ) < 0 ) angle *= -1;
+
+            rotate( vz, angle );
+
+        }
+
+    }();
+
     function getOrientation(){
 
         return [
+            controls.target.toArray(),
             camera.position.toArray(),
-            camera.up.toArray(),
-            rotationGroup.position.toArray(),
-            controls.target.toArray()
+            camera.up.toArray()
         ];
 
     }
 
     function setOrientation( orientation ){
 
-        // remove any paning/translation
-        controls.object.position.sub( controls.target );
-        controls.target.copy( controls.target0 );
-
-        controls.target.fromArray( orientation[ 3 ] );
-
-        rotationGroup.position.fromArray( orientation[ 2 ] );
-        rotationGroup.updateMatrixWorld();
-
-        camera.up.fromArray( orientation[ 1 ] );
-        camera.position.fromArray( orientation[ 0 ] );
+        controls.target.fromArray( orientation[ 0 ] );
+        camera.position.fromArray( orientation[ 1 ] );
+        camera.up.fromArray( orientation[ 2 ] );
 
         requestRender();
 
@@ -1332,6 +1334,7 @@ function Viewer( eid, params ){
     this.rotate = rotate;
     this.zoom = zoom;
     this.centerView = centerView;
+    this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
 

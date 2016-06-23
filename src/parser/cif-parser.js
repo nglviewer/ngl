@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
@@ -13,6 +13,7 @@ import { HelixTypes } from "./pdb-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 import Selection from "../selection.js";
+import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 
 
 function CifParser( streamer, params ){
@@ -46,10 +47,6 @@ CifParser.prototype = Object.assign( Object.create(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var title = s.title;
-        var atoms = s.atoms;
-        var bondSet = s.bondSet;
-
         var line, recordName;
         var altloc, serial, elem, chainname, resno, resname,
             atomname, element, inscode;
@@ -61,6 +58,7 @@ CifParser.prototype = Object.assign( Object.create(
         var reWhitespace = /\s+/;
         var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
         var reDoubleQuote = /"/g;
+        var reTrimQuotes = /^['"]+|['"]+$/g;
 
         var cif = {};
         this.cif = cif;
@@ -510,17 +508,146 @@ CifParser.prototype = Object.assign( Object.create(
 
         }
 
+        function parseChemComp(){
+
+            var cc = cif.chem_comp;
+            var cca = cif.chem_comp_atom;
+            var ccb = cif.chem_comp_bond;
+
+            if( cc ){
+
+                if( cc.name ){
+                    s.title = cc.name.trim().replace( reTrimQuotes, "" );
+                }
+                if( cc.id ){
+                    s.id = cc.id.trim().replace( reTrimQuotes, "" );
+                }
+
+            }
+
+            var atomnameDict = {};
+
+            if( cca ){
+
+                var i, j, atomname, element, resname, resno;
+                var n = cca.comp_id.length;
+
+                for( i = 0; i < n; ++i ){
+
+                    atomStore.growIfFull();
+
+                    atomname = cca.atom_id[ i ];
+                    element = cca.type_symbol[ i ];
+
+                    atomnameDict[ atomname ] = i;
+                    atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+                    atomStore.x[ i ] = cca.model_Cartn_x[ i ];
+                    atomStore.y[ i ] = cca.model_Cartn_y[ i ];
+                    atomStore.z[ i ] = cca.model_Cartn_z[ i ];
+                    atomStore.serial[ i ] = i;
+
+                    resname = cca.pdbx_component_comp_id[ i ];
+                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+                    sb.addAtom( 0, "", resname, resno, 1 );
+
+                }
+
+                for( i = 0; i < n; ++i ){
+
+                    j = i + n;
+
+                    atomStore.growIfFull();
+
+                    atomname = cca.atom_id[ i ];
+                    element = cca.type_symbol[ i ];
+
+                    atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
+
+                    atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ];
+                    atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ];
+                    atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ];
+                    atomStore.serial[ j ] = j;
+
+                    resname = cca.pdbx_component_comp_id[ i ];
+                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+                    sb.addAtom( 1, "", resname, resno, 1 );
+
+                }
+
+            }
+
+            sb.finalize();
+
+            if( cca && ccb ){
+
+                var i, atomname1, atomname2, valueOrder, bondOrder;
+                var n = ccb.comp_id.length;
+                var na = cca.comp_id.length;
+
+                var ap1 = s.getAtomProxy();
+                var ap2 = s.getAtomProxy();
+
+                for( i = 0; i < n; ++i ){
+
+                    atomname1 = ccb.atom_id_1[ i ];
+                    atomname2 = ccb.atom_id_2[ i ];
+                    valueOrder = ccb.value_order[ i ].toLowerCase();
+
+                    if( valueOrder === "?" ){
+                        bondOrder = 1;  // assume single bond
+                    }else if( valueOrder === "sing" ){
+                        bondOrder = 1;
+                    }else if( valueOrder === "doub" ){
+                        bondOrder = 2;
+                    }else if( valueOrder === "trip" ){
+                        bondOrder = 3;
+                    }else if( valueOrder === "quad" ){
+                        bondOrder = 4;
+                    }
+
+                    ap1.index = atomnameDict[ atomname1 ];
+                    ap2.index = atomnameDict[ atomname2 ];
+                    s.bondStore.growIfFull();
+                    s.bondStore.addBond( ap1, ap2, bondOrder );
+
+                    ap1.index += na;
+                    ap2.index += na;
+                    s.bondStore.growIfFull();
+                    s.bondStore.addBond( ap1, ap2, bondOrder );
+
+                }
+
+            }
+
+        }
+
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        sb.finalize();
+        if( cif.chem_comp && cif.chem_comp_atom ){
 
-        if( cif.struct && cif.struct.title ){
-            s.title = cif.struct.title.trim().replace( /^['"]+|['"]+$/g, "" );
+            parseChemComp();
+            this.dontAutoBond = true;
+            assignResidueTypeBonds( s );
+
+        }else{
+
+            sb.finalize();
+
+            if( cif.struct && cif.struct.title ){
+                s.title = cif.struct.title.trim().replace( reTrimQuotes, "" );
+            }
+            if( cif.entry && cif.entry.id ){
+                s.id = cif.entry.id.trim().replace( reTrimQuotes, "" );
+            }
+
+            postProcess();
+
         }
-
-        postProcess();
 
         if( Debug ) Log.timeEnd( "CifParser._parse " + this.name );
         callback();
@@ -559,7 +686,7 @@ CifParser.prototype = Object.assign( Object.create(
 
             biomolOp.id.forEach( function( id, i ){
 
-                var m = new THREE.Matrix4();
+                var m = new Matrix4();
                 var elms = m.elements;
 
                 elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
@@ -642,7 +769,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         Object.keys( md2 ).forEach( function( k2 ){
 
-                            var mat = new THREE.Matrix4();
+                            var mat = new Matrix4();
 
                             mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
                             md[ k1 + "x" + k2 ] = mat;
@@ -696,7 +823,7 @@ CifParser.prototype = Object.assign( Object.create(
                 // ignore 'given' operators
                 if( ncsOp.code[ i ] === "given" ) return;
 
-                var m = new THREE.Matrix4();
+                var m = new Matrix4();
                 var elms = m.elements;
 
                 elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
@@ -769,7 +896,7 @@ CifParser.prototype = Object.assign( Object.create(
         }
 
         // origx
-        var origx = new THREE.Matrix4();
+        var origx = new Matrix4();
 
         if( cif.database_PDB_matrix ){
 
@@ -799,7 +926,7 @@ CifParser.prototype = Object.assign( Object.create(
         }
 
         // scale
-        var scale = new THREE.Matrix4();
+        var scale = new Matrix4();
 
         if( cif.atom_sites ){
 
@@ -950,7 +1077,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                     if( ap1 && ap2 ){
                         var bondOrder;
-                        var valueOrder = sc.pdbx_value_order[ i ];
+                        var valueOrder = sc.pdbx_value_order[ i ].toLowerCase();
                         if( valueOrder === "?" ){
                             bondOrder = 1;  // assume single bond
                         }else if( valueOrder === "sing" ){

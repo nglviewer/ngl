@@ -11,8 +11,8 @@ import Parser from "./parser.js";
 import Structure from "../structure/structure.js";
 import StructureBuilder from "../structure/structure-builder.js";
 import {
-	reorderAtoms, calculateChainnames, calculateBonds, calculateBondsBetween,
-	calculateSecondaryStructure, assignSecondaryStructure, buildUnitcellAssembly
+    reorderAtoms, calculateChainnames, calculateBonds, calculateBondsBetween,
+    calculateSecondaryStructure, assignSecondaryStructure, buildUnitcellAssembly
 } from "../structure/structure-utils.js";
 
 
@@ -60,8 +60,11 @@ StructureParser.prototype = Object.assign( Object.create(
 
         if( !this.dontAutoBond ){
             calculateBonds( s );
-        }else if( this.autoBondBetween ){
-            calculateBondsBetween( s );
+        }else{
+            if( this.autoBondBetween ){
+                calculateBondsBetween( s );
+            }
+            s.atomSetDict.rung = s.getAtomSet( false );
         }
 
         // check for secondary structure

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
@@ -13,6 +13,7 @@ import { defaults } from "../utils.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
+import { Matrix, principalAxes } from "../math/matrix-utils.js";
 import Selection from "../selection.js";
 // import StructureView from "./structure-view.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -76,8 +77,8 @@ function Structure( name, path ){
     this.atomSet = this.getAtomSet( this.selection );
     this.bondSet = this.getBondSet();
 
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
 
     GidPool.addObject( this );
 
@@ -106,6 +107,9 @@ Structure.prototype = {
             var as2 = this.getAtomSet2( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
+
+        this.atomCount = this.atomSet.size();
+        this.bondCount = this.bondSet.size();
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
@@ -856,7 +860,7 @@ Structure.prototype = {
 
         if( Debug ) Log.time( "getBoundingBox" );
 
-        var box = new THREE.Box3();
+        var box = new Box3();
 
         var minX = +Infinity;
         var minY = +Infinity;
@@ -888,6 +892,27 @@ Structure.prototype = {
         if( Debug ) Log.timeEnd( "getBoundingBox" );
 
         return box;
+
+    },
+
+    getPrincipalAxes: function( selection ){
+
+        console.time( "getPrincipalAxes" );
+
+        var i = 0;
+        var coords = new Matrix( 3, this.atomCount );
+        var cd = coords.data;
+
+        this.eachSelectedAtom( function( a ){
+            cd[ i + 0 ] = a.x;
+            cd[ i + 1 ] = a.y;
+            cd[ i + 2 ] = a.z;
+            i += 3;
+        }, selection );
+
+        console.timeEnd( "getPrincipalAxes" );
+
+        return principalAxes( coords );
 
     },
 
@@ -1043,10 +1068,10 @@ Structure.prototype = {
         this.frames = input.frames;
         this.boxes = input.boxes;
 
-        this.center = new THREE.Vector3().fromArray( input.center );
-        this.boundingBox = new THREE.Box3(
-            new THREE.Vector3().fromArray( input.boundingBox[ 0 ] ),
-            new THREE.Vector3().fromArray( input.boundingBox[ 1 ] )
+        this.center = new Vector3().fromArray( input.center );
+        this.boundingBox = new Box3(
+            new Vector3().fromArray( input.boundingBox[ 0 ] ),
+            new Vector3().fromArray( input.boundingBox[ 1 ] )
         );
 
         this.bondStore.fromJSON( input.bondStore );

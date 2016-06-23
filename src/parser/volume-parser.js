@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import Parser from "./parser.js";
 import Volume from "../surface/volume.js";
@@ -38,7 +38,7 @@ VolumeParser.prototype = Object.assign( Object.create(
 
     getMatrix: function(){
 
-        return new THREE.Matrix4();
+        return new Matrix4();
 
     }
 

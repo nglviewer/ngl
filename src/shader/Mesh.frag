@@ -50,6 +50,7 @@ void main(){
         #include color_fragment
         #include roughnessmap_fragment
         #include metalnessmap_fragment
+        #include normal_flip
         #include normal_fragment
 
         #include dull_interior_fragment

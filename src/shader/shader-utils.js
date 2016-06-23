@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { ShaderChunk } from "../../lib/three.es6.js";
 
 import CylinderImpostor_vert from "./CylinderImpostor.vert";
 import CylinderImpostor_frag from "./CylinderImpostor.frag";
@@ -113,7 +113,7 @@ function getShader( name, defines ){
         shaderText = shaderText.replace( reInclude, function( match, p1 ){
 
             var path = 'shader/chunk/' + p1 + '.glsl';
-            var chunk = Resources[ path ] || THREE.ShaderChunk[ p1 ];
+            var chunk = Resources[ path ] || ShaderChunk[ p1 ];
 
             return chunk ? chunk : "";
 

@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { IcosahedronGeometry, Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
@@ -15,7 +15,7 @@ function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
 
     var detail = defaults( params.sphereDetail, 1 );
 
-    this.geo = new THREE.IcosahedronGeometry( 1, detail );
+    this.geo = new IcosahedronGeometry( 1, detail );
 
     this.setPositionTransform( radius );
 
@@ -32,7 +32,7 @@ SphereGeometryBuffer.prototype = Object.assign( Object.create(
     setPositionTransform: function( radius ){
 
         var r;
-        var scale = new THREE.Vector3();
+        var scale = new Vector3();
 
         this.applyPositionTransform = function( matrix, i ){
 

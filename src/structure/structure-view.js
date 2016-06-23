@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
@@ -29,8 +29,8 @@ function StructureView( structure, selection ){
     this.structure = structure;
     this.selection = selection;
 
-    this.center = new THREE.Vector3();
-    this.boundingBox = new THREE.Box3();
+    this.center = new Vector3();
+    this.boundingBox = new Box3();
 
     // to allow creating an empty object to call .fromJSON onto
     if( !structure && !selection ) return;
