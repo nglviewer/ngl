@@ -5,12 +5,28 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
+/**
+ * Line representation object
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
+ * @param {Boolean} params.multipleBond - whether or not to render multiple bonds
+ * @param {Float} params.bondSpacing - spacing for multiple bond rendering
+ * @param {null} params.flatShaded - not available
+ * @param {null} params.side - not available
+ * @param {null} params.wireframe - not available
+ * @param {null} params.roughness - not available
+ * @param {null} params.matelness - not available
+ * @param {null} params.diffuse - not available
+ */
 function LineRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
@@ -26,6 +42,13 @@ LineRepresentation.prototype = Object.assign( Object.create(
     type: "line",
 
     parameters: Object.assign( {
+
+        multipleBond: {
+            type: "boolean", rebuild: true
+        },
+        bondSpacing: {
+            type: "number", precision: 2, max: 1.0, min: 0.5
+        }
 
     }, Representation.prototype.parameters, {
 
@@ -43,7 +66,22 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
+        this.multipleBond = defaults( p.multipleBond, false );
+        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
+
         StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        params = Object.assign( {
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing,
+            radiusParams: { "radius": 0.1, "scale": 1 }
+        }, params );
+
+        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
@@ -82,6 +120,25 @@ LineRepresentation.prototype = Object.assign( Object.create(
         }
 
         data.bufferList[ 0 ].setAttributes( lineData );
+
+    },
+
+    setParameters: function( params ){
+
+        var rebuild = false;
+        var what = {};
+
+        if( params && params.bondSpacing ){
+
+            what.position = true;
+
+        }
+
+        StructureRepresentation.prototype.setParameters.call(
+            this, params, what, rebuild
+        );
+
+        return this;
 
     }
 

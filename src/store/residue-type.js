@@ -17,6 +17,44 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Propagates a depth-first search. TODO: Iterative deepening search instead?
+ * bondGraph[ai1] is an array of bonded atom IDs.
+ * visited is the current path of atoms (JS array)
+ * The current set of neighbours bondGraph[visited[visited.length-1]] is
+ * always checked
+ * If maxDepth is positive, search propagates (decrementing maxDepth)
+ *
+ */
+function propagateSearch( bondGraph, visited, maxDepth ) {
+
+    var current = visited[visited.length-1];
+    var neighbours = bondGraph[current];
+
+    for (var i = 0; i < neighbours.length; ++i) {
+
+        // Does this close the ring?
+        if( visited.length >= 3 && visited[0] === neighbours[i] ) {
+            // Hoorah, this is a ring!
+            return true;
+        }
+        if( maxDepth > 0 ) {
+            if (visited.indexOf(neighbours[i]) !== -1) {
+                continue;
+            }
+            // Propagate
+            visited.push(neighbours[i]);
+            if (propagateSearch( bondGraph, visited, maxDepth-1)) {
+                return true;
+            }
+            visited.pop();
+        }
+
+    }
+
+}
+
+
 function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
     this.structure = structure;
@@ -33,8 +71,6 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.backboneEndType = this.getBackboneType( -1 );
     this.backboneStartType = this.getBackboneType( 1 );
     this.backboneIndexList = this.getBackboneIndexList();
-
-    //
 
     var atomnames = ResidueTypeAtoms[ this.backboneType ];
     var atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
@@ -62,6 +98,9 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
         rungEndIndex = this.getAtomIndexByName( "N3" );
     }
     this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
+
+    // Sparse array containing the reference atom index for each bond.
+    this.bondReferenceAtomIndices = [];
 
 }
 
@@ -327,6 +366,134 @@ ResidueType.prototype = {
             this.bonds = calculateResidueBonds( r );
         }
         return this.bonds;
+    },
+
+    /**
+     * For bonds with order > 1, pick a reference atom
+     */
+    assignBondReferenceAtomIndices: function( params ) {
+        var p = Object.assign( { maxRingSize: 8 }, params );
+
+        var atomIndices1 = this.bonds.atomIndices1;
+        var atomIndices2 = this.bonds.atomIndices2;
+        var bondOrders = this.bonds.bondOrders;
+        var bondReferenceAtomIndices = this.bondReferenceAtomIndices;
+
+        var nb = this.bonds.atomIndices1.length;
+
+        // Various ways to do this - here we calculate the bondGraph. Might
+        // want to defer this, or build portions as needed using
+        // AtomProxy.getResidueBonds?
+        var bondGraph = {}; //{ ai1: [ ai2, ... ] }
+
+        var j, ai3;
+
+        for( var i = 0; i < nb; ++i ) {
+
+            var ai1 = atomIndices1[i];
+            var ai2 = atomIndices2[i];
+
+            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
+            a1.push(ai2);
+            //a1[ ai2 ] = bondOrders[i];
+
+            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
+            a2.push(ai1);
+            //[ ai1 ] = bondOrders[i];
+
+        }
+
+        bondReferenceAtomIndices.length = 0;  // reset array
+
+        for(var i = 0; i < nb; ++i ) {
+
+            var ai1 = atomIndices1[i];
+            var ai2 = atomIndices2[i];
+
+            // Not required for single bonds
+            if (this.bonds.bondOrders[i] <= 1) continue;
+
+            // Check if atom is terminal?
+            if ( bondGraph[ai1].length === 1 ) {
+
+                if ( bondGraph[ai2].length === 1 ) {
+                    // No reference atom can be found
+                    continue;
+                }
+
+                // Take first bonded partner of a2 that isn't a1
+                for (j=0; j<bondGraph[ai2].length; j++) {
+                    ai3 = bondGraph[ai2][j];
+                    if (ai3 !== ai1) {
+                        bondReferenceAtomIndices[i] = ai3;
+                        break;
+                    }
+                }
+                continue;
+
+            }
+
+            if ( bondGraph[ai2].length === 1 ) {
+                // Reverse of above:
+                for (j=0; j<bondGraph[ai1].length; j++) {
+                    ai3 = bondGraph[ai1][j];
+                    if (ai3 !== ai2) {
+                        bondReferenceAtomIndices[i] = ai3;
+                        break;
+                    }
+                }
+                continue;
+            }
+
+            var visited = [ai1, ai2];
+            var maxDepth = 1;
+            // Naive method (don't store intermediate results)
+            while (maxDepth < p.maxRingSize - 2) {
+                if( propagateSearch( bondGraph, visited, maxDepth ) ) {
+                    bondReferenceAtomIndices[i] = visited[2];
+                    break;
+                }
+                maxDepth += 1;
+            };
+
+            // Not a ring, just pick one atom:
+            if( bondReferenceAtomIndices[i] === undefined) {
+                for( j=0; j<bondGraph[ai1].length; j++) {
+                    ai3 = bondGraph[ai1][j];
+                    if (ai3 !== ai2) {
+                        bondReferenceAtomIndices[i] = ai3;
+                        break;
+                    }
+                }
+            }
+        }
+    },
+
+    getBondIndex: function( atomIndex1, atomIndex2 ){
+        var bonds = this.bonds;
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+        var idx1 = atomIndices1.indexOf( atomIndex1 );
+        var idx2 = atomIndices2.indexOf( atomIndex2 );
+        var _idx2 = idx2;
+        while( idx1 !== -1 ){
+            while( idx2 !== -1 ){
+                if( idx1 === idx2 ) return idx1;
+                idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
+            }
+            idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
+        idx2 = _idx2;
+        }
+        // returns undefined when no bond is found
+    },
+
+    getBondReferenceAtomIndex: function( atomIndex1, atomIndex2 ) {
+        var bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
+        if( bondIndex === undefined ) return undefined;
+        if( this.bondReferenceAtomIndices.length === 0 ){
+            this.assignBondReferenceAtomIndices();
+        }
+        return this.bondReferenceAtomIndices[ bondIndex ];
     },
 
     toJSON: function(){

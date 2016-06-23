@@ -9,6 +9,13 @@ import { RepresentationRegistry } from "../globals.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
+/**
+ * Licorice representation object ({@link BallAndStickRepresentation} with `aspectRatio` fixed at 1.0)
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+ */
 function LicoriceRepresentation( structure, viewer, params ){
 
     BallAndStickRepresentation.call( this, structure, viewer, params );

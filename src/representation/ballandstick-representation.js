@@ -14,6 +14,30 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
+/**
+ * Ball And Stick representation parameter object.
+ * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ *
+ * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
+ * @property {Integer} radiusSegments - cylinder quality (number of segments)
+ * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
+ * @property {Float} aspectRatio - size difference between atom and bond radii
+ * @property {Boolean} lineOnly - render only bonds, and only as lines
+ * @property {Boolean} cylinderOnly - render only bonds (no atoms)
+ * @property {Boolean} multipleBond - whether or not to render multiple bonds
+ * @property {Float} bondSpacing - spacing for multiple bond rendering
+ */
+
+
+/**
+ * Ball And Stick representation object
+ * @class
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+ */
 function BallAndStickRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
@@ -49,6 +73,12 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         },
         cylinderOnly: {
             type: "boolean", rebuild: true
+        },
+        multipleBond: {
+            type: "boolean", rebuild: true
+        },
+        bondSpacing: {
+            type: "number", precision: 2, max: 1.0, min: 0.5
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -76,6 +106,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
+        this.multipleBond = defaults( p.multipleBond, false );
+        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -94,6 +126,17 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     getAtomData: function( sview, what, params ){
 
         return sview.getAtomData( this.getAtomParams( what, params ) );
+
+    },
+
+    getBondParams: function( what, params ){
+
+        params = Object.assign( {
+            multipleBond: this.multipleBond,
+            bondSpacing: this.bondSpacing
+        }, params );
+
+        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
 
     },
 
@@ -141,7 +184,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bufferList.push( sphereBuffer );
 
             }
-
             var cylinderBuffer = new CylinderBuffer(
                 bondData.position1,
                 bondData.position2,
@@ -151,7 +193,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bondData.pickingColor1,
                 bondData.pickingColor2,
                 this.getBufferParams( {
-                    shift: 0,
                     cap: true,
                     radiusSegments: this.radiusSegments,
                     disableImpostor: this.disableImpostor,
@@ -170,6 +211,10 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
     },
 
     updateData: function( what, data ){
+
+        if( this.multipleBond && what && what.radius ){
+            what.position = true;
+        }
 
         var bondData = this.getBondData( data.sview, what );
 
@@ -197,9 +242,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
             if( !what || what.position ){
                 sphereData.position = atomData.position;
-                cylinderData.position = calculateCenterArray(
-                    bondData.position1, bondData.position2
-                );
                 cylinderData.position1 = bondData.position1;
                 cylinderData.position2 = bondData.position2;
             }
@@ -227,7 +269,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         var rebuild = false;
         var what = {};
 
-        if( params && params.aspectRatio ){
+        if( params && ( params.aspectRatio || params.bondSpacing ) ){
 
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){

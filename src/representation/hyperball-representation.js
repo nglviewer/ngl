@@ -37,7 +37,12 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
             type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
         }
 
-    }, LicoriceRepresentation.prototype.parameters ),
+    }, LicoriceRepresentation.prototype.parameters, {
+
+        multipleBond: null,
+        bondSpacing: null,
+
+    } ),
 
     init: function( params ){
 
