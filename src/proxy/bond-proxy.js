@@ -5,7 +5,7 @@
  */
 
 
-import THREE from "../../lib/three.js";
+import { Vector3 } from "../../lib/three.es6.js";
 
 
 function BondProxy( structure, index ){
@@ -14,8 +14,8 @@ function BondProxy( structure, index ){
     this.bondStore = structure.bondStore;
     this.index = index;
 
-    this._v12 = new THREE.Vector3();
-    this._v13 = new THREE.Vector3();
+    this._v12 = new Vector3();
+    this._v13 = new Vector3();
     this._ap1 = this.structure.getAtomProxy();
     this._ap2 = this.structure.getAtomProxy();
     this._ap3 = this.structure.getAtomProxy();
@@ -84,7 +84,7 @@ BondProxy.prototype = {
      * @return {Vector3} the shift direction vector
      */
     calculateShiftDir: function( v ) {
-        if( !v ) v = new THREE.Vector3();
+        if( !v ) v = new Vector3();
 
         var ap1 = this._ap1;
         var ap2 = this._ap2;

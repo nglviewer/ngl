@@ -726,8 +726,8 @@ Structure.prototype = {
         var i = 0;
         var j, i3, k, bondOrder, radius;
 
-        var vt = new THREE.Vector3();
-        var vShift = new THREE.Vector3();
+        var vt = new Vector3();
+        var vShift = new Vector3();
         bondSet.forEach( function( index ){
             i3 = i * 3;
             bp.index = index;
