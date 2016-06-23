@@ -6,7 +6,7 @@
 
 
 import {
-    DefaultLoadingManager, XHRLoader, Geometry, Vector3, Face3, Color
+    Geometry, Vector3, Face3, Color
 } from "../../lib/three.es6.js";
 
 import { ParserRegistry } from "../globals.js";
@@ -41,9 +41,7 @@ import SurfaceParser from "./surface-parser.js";
  * } );
  *
  */
-function PLYLoader( manager ) {
-
-	this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
+function PLYLoader() {
 
 	this.propertyNameMapping = {};
 
@@ -52,20 +50,6 @@ function PLYLoader( manager ) {
 PLYLoader.prototype = {
 
 	constructor: PLYLoader,
-
-	load: function ( url, onLoad, onProgress, onError ) {
-
-		var scope = this;
-
-		var loader = new XHRLoader( this.manager );
-		loader.setResponseType( 'arraybuffer' );
-		loader.load( url, function ( text ) {
-
-			onLoad( scope.parse( text ) );
-
-		}, onProgress, onError );
-
-	},
 
 	setPropertyNameMapping: function ( mapping ) {
 

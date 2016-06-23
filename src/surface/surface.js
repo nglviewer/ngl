@@ -93,7 +93,7 @@ Surface.prototype = {
         }else if( geometry instanceof BufferGeometry ){
             geo = geometry;
         }else{
-            geo = geometry.children[0].geometry;
+            geo = geometry[ 0 ];
         }
 
         if( !geo.boundingBox ) geo.computeBoundingBox();

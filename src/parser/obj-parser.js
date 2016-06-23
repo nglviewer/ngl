@@ -6,11 +6,8 @@
 
 
 import {
-    DefaultLoadingManager, XHRLoader,
     Group, Mesh, Line,
-    BufferGeometry, BufferAttribute,
-    LineBasicMaterial, MeshPhongMaterial,
-    SmoothShading, FlatShading
+    BufferGeometry, BufferAttribute
 } from "../../lib/three.es6.js";
 
 import { ParserRegistry } from "../globals.js";
@@ -23,11 +20,7 @@ import SurfaceParser from "./surface-parser.js";
  * @private
  * @author mrdoob / http://mrdoob.com/
  */
-function OBJLoader( manager ) {
-
-    this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
-
-    this.materials = null;
+function OBJLoader() {
 
     this.regexp = {
         // v float float float
@@ -60,29 +53,9 @@ OBJLoader.prototype = {
 
     constructor: OBJLoader,
 
-    load: function ( url, onLoad, onProgress, onError ) {
-
-        var scope = this;
-
-        var loader = new XHRLoader( scope.manager );
-        loader.setPath( this.path );
-        loader.load( url, function ( text ) {
-
-            onLoad( scope.parse( text ) );
-
-        }, onProgress, onError );
-
-    },
-
     setPath: function ( value ) {
 
         this.path = value;
-
-    },
-
-    setMaterials: function ( materials ) {
-
-        this.materials = materials;
 
     },
 
@@ -94,9 +67,6 @@ OBJLoader.prototype = {
 
             vertices : [],
             normals  : [],
-            uvs      : [],
-
-            materialLibraries : [],
 
             startObject: function ( name, fromDeclaration ) {
 
@@ -114,12 +84,7 @@ OBJLoader.prototype = {
                     name : name || '',
                     geometry : {
                         vertices : [],
-                        normals  : [],
-                        uvs      : []
-                    },
-                    material : {
-                        name   : '',
-                        smooth : true
+                        normals  : []
                     },
                     fromDeclaration : ( fromDeclaration !== false )
                 };
@@ -139,13 +104,6 @@ OBJLoader.prototype = {
 
                 var index = parseInt( value, 10 );
                 return ( index >= 0 ? index - 1 : index + len / 3 ) * 3;
-
-            },
-
-            parseUVIndex: function ( value, len ) {
-
-                var index = parseInt( value, 10 );
-                return ( index >= 0 ? index - 1 : index + len / 2 ) * 2;
 
             },
 
@@ -194,31 +152,7 @@ OBJLoader.prototype = {
 
             },
 
-            addUV: function ( a, b, c ) {
-
-                var src = this.uvs;
-                var dst = this.object.geometry.uvs;
-
-                dst.push( src[ a + 0 ] );
-                dst.push( src[ a + 1 ] );
-                dst.push( src[ b + 0 ] );
-                dst.push( src[ b + 1 ] );
-                dst.push( src[ c + 0 ] );
-                dst.push( src[ c + 1 ] );
-
-            },
-
-            addUVLine: function ( a ) {
-
-                var src = this.uvs;
-                var dst = this.object.geometry.uvs;
-
-                dst.push( src[ a + 0 ] );
-                dst.push( src[ a + 1 ] );
-
-            },
-
-            addFace: function ( a, b, c, d, ua, ub, uc, ud, na, nb, nc, nd ) {
+            addFace: function ( a, b, c, d, na, nb, nc, nd ) {
 
                 var vLen = this.vertices.length;
 
@@ -237,29 +171,6 @@ OBJLoader.prototype = {
 
                     this.addVertex( ia, ib, id );
                     this.addVertex( ib, ic, id );
-
-                }
-
-                if ( ua !== undefined ) {
-
-                    var uvLen = this.uvs.length;
-
-                    ia = this.parseUVIndex( ua, uvLen );
-                    ib = this.parseUVIndex( ub, uvLen );
-                    ic = this.parseUVIndex( uc, uvLen );
-
-                    if ( d === undefined ) {
-
-                        this.addUV( ia, ib, ic );
-
-                    } else {
-
-                        id = this.parseUVIndex( ud, uvLen );
-
-                        this.addUV( ia, ib, id );
-                        this.addUV( ib, ic, id );
-
-                    }
 
                 }
 
@@ -289,22 +200,15 @@ OBJLoader.prototype = {
 
             },
 
-            addLineGeometry: function ( vertices, uvs ) {
+            addLineGeometry: function ( vertices ) {
 
                 this.object.geometry.type = 'Line';
 
                 var vLen = this.vertices.length;
-                var uvLen = this.uvs.length;
 
                 for ( var vi = 0, l = vertices.length; vi < l; vi ++ ) {
 
                     this.addVertexLine( this.parseVertexIndex( vertices[ vi ], vLen ) );
-
-                }
-
-                for ( var uvi = 0, l = uvs.length; uvi < l; uvi ++ ) {
-
-                    this.addUVLine( this.parseUVIndex( uvs[ uvi ], uvLen ) );
 
                 }
 
@@ -382,13 +286,7 @@ OBJLoader.prototype = {
 
                 } else if ( lineSecondChar === 't' && ( result = this.regexp.uv_pattern.exec( line ) ) !== null ) {
 
-                    // 0               1      2
-                    // ["vt 0.1 0.2", "0.1", "0.2"]
-
-                    state.uvs.push(
-                        parseFloat( result[ 1 ] ),
-                        parseFloat( result[ 2 ] )
-                    );
+                    // ignore uv line
 
                 } else {
 
@@ -406,20 +304,13 @@ OBJLoader.prototype = {
 
                     state.addFace(
                         result[ 1 ], result[ 4 ], result[ 7 ], result[ 10 ],
-                        result[ 2 ], result[ 5 ], result[ 8 ], result[ 11 ],
+                        // result[ 2 ], result[ 5 ], result[ 8 ], result[ 11 ],  // ignore uv part
                         result[ 3 ], result[ 6 ], result[ 9 ], result[ 12 ]
                     );
 
                 } else if ( ( result = this.regexp.face_vertex_uv.exec( line ) ) !== null ) {
 
-                    // f vertex/uv vertex/uv vertex/uv
-                    // 0                  1    2    3    4    5    6   7          8
-                    // ["f 1/1 2/2 3/3", "1", "1", "2", "2", "3", "3", undefined, undefined]
-
-                    state.addFace(
-                        result[ 1 ], result[ 3 ], result[ 5 ], result[ 7 ],
-                        result[ 2 ], result[ 4 ], result[ 6 ], result[ 8 ]
-                    );
+                    // ignore uv line
 
                 } else if ( ( result = this.regexp.face_vertex_normal.exec( line ) ) !== null ) {
 
@@ -429,7 +320,6 @@ OBJLoader.prototype = {
 
                     state.addFace(
                         result[ 1 ], result[ 3 ], result[ 5 ], result[ 7 ],
-                        undefined, undefined, undefined, undefined,
                         result[ 2 ], result[ 4 ], result[ 6 ], result[ 8 ]
                     );
 
@@ -481,25 +371,10 @@ OBJLoader.prototype = {
                 var name = result[ 0 ].substr( 1 ).trim();
                 state.startObject( name );
 
+            // ignore material related lines
             } else if ( this.regexp.material_use_pattern.test( line ) ) {
-
-                // material
-
-                state.object.material.name = line.substring( 7 ).trim();
-
             } else if ( this.regexp.material_library_pattern.test( line ) ) {
-
-                // mtl file
-
-                state.materialLibraries.push( line.substring( 7 ).trim() );
-
             } else if ( ( result = this.regexp.smoothing_pattern.exec( line ) ) !== null ) {
-
-                // smooth shading
-
-                var value = result[ 1 ].trim().toLowerCase();
-                state.object.material.smooth = ( value === '1' || value === 'on' );
-
             } else {
 
                 // Handle null terminated files without exception
@@ -511,8 +386,7 @@ OBJLoader.prototype = {
 
         }
 
-        var container = new Group();
-        container.materialLibraries = [].concat( state.materialLibraries );
+        var container = [];
 
         for ( var i = 0, l = state.objects.length; i < l; i ++ ) {
 
@@ -537,42 +411,7 @@ OBJLoader.prototype = {
 
             }
 
-            if ( geometry.uvs.length > 0 ) {
-
-                buffergeometry.addAttribute( 'uv', new BufferAttribute( new Float32Array( geometry.uvs ), 2 ) );
-
-            }
-
-            var material;
-
-            if ( this.materials !== null ) {
-
-                material = this.materials.create( object.material.name );
-
-                // mtl etc. loaders probably can't create line materials correctly, copy properties to a line material.
-                if ( isLine && material && ! ( material instanceof LineBasicMaterial ) ) {
-
-                    var materialLine = new LineBasicMaterial();
-                    materialLine.copy( material );
-                    material = materialLine;
-
-                }
-
-            }
-
-            if ( ! material ) {
-
-                material = ( ! isLine ? new MeshPhongMaterial() : new LineBasicMaterial() );
-                material.name = object.material.name;
-
-            }
-
-            material.shading = object.material.smooth ? SmoothShading : FlatShading;
-
-            var mesh = ( ! isLine ? new Mesh( buffergeometry, material ) : new Line( buffergeometry, material ) );
-            mesh.name = object.name;
-
-            container.add( mesh );
+            container.push( buffergeometry );
 
         }
 
