@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file, following t
 - support for chemical component type (available in mmtf) for determining molecule type
 - `.get/setOrientation` return/argument changed
 - enable SDF font as the default TextBuffer class only on Chrome
+- support for building using three-jsnext
 
 ### Removed
 - python-based build scripts
