@@ -5,8 +5,6 @@
  */
 
 
-import { XHRLoader } from "../../lib/three.es6.js";
-
 import { Debug, Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
 
@@ -109,13 +107,16 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
     getNumframes: function(){
 
-        var loader = new XHRLoader();
+        var request = new XMLHttpRequest();
+
         var ds = DatasourceRegistry.trajectory;
         var url = ds.getNumframesUrl( this.trajPath );
 
-        loader.load( url, function( n ){
-            this.setNumframes( parseInt( n ) );
-        }.bind( this ) );
+        request.open( "GET", url, true );
+        request.addEventListener( 'load', function( event ){
+            this.setNumframes( parseInt( request.response ) );
+        }.bind( this ), false );
+        request.send( null );
 
     },
 
