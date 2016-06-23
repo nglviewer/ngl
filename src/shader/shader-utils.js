@@ -13,6 +13,8 @@ import HyperballStickImpostor_vert from "./HyperballStickImpostor.vert";
 import HyperballStickImpostor_frag from "./HyperballStickImpostor.frag";
 import Line_vert from "./Line.vert";
 import Line_frag from "./Line.frag";
+import BasicLine_vert from "./BasicLine.vert";
+import BasicLine_frag from "./BasicLine.frag";
 import Mesh_vert from "./Mesh.vert";
 import Mesh_frag from "./Mesh.frag";
 import Point_vert from "./Point.vert";
@@ -41,6 +43,8 @@ var Resources = {
     'shader/HyperballStickImpostor.frag': HyperballStickImpostor_frag,
     'shader/Line.vert': Line_vert,
     'shader/Line.frag': Line_frag,
+    'shader/BasicLine.vert': BasicLine_vert,
+    'shader/BasicLine.frag': BasicLine_frag,
     // 'shader/LineSprite.vert': null,
     // 'shader/LineSprite.frag': null,
     'shader/Mesh.vert': Mesh_vert,

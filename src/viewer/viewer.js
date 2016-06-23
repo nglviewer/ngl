@@ -16,7 +16,7 @@ import {
     Scene, Mesh, Group,
     Fog, SpotLight, AmbientLight,
     BufferGeometry, BufferAttribute,
-    LineBasicMaterial, LineSegments
+    LineSegments
 } from "../../lib/three.es6.js";
 
 import {
@@ -367,7 +367,12 @@ function Viewer( eid, params ){
         var bbGeometry = new BufferGeometry();
         bbGeometry.setIndex( new BufferAttribute( indices, 1 ) );
         bbGeometry.addAttribute( 'position', new BufferAttribute( positions, 3 ) );
-        var bbMaterial = new LineBasicMaterial( { color: "skyblue", linewidth: 2 } );
+        var bbMaterial = new ShaderMaterial( {
+            uniforms: { "uColor": { value: new Color( "skyblue" ) } },
+            vertexShader: getShader( "BasicLine.vert" ),
+            fragmentShader: getShader( "BasicLine.frag" ),
+            linewidth: 2
+        } );
 
         boundingBoxMesh = new LineSegments( bbGeometry, bbMaterial );
         helperGroup.add( boundingBoxMesh );
