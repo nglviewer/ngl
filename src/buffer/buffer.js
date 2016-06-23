@@ -207,8 +207,8 @@ Buffer.prototype = {
 
         this.wireframeMaterial = new ShaderMaterial( {
             uniforms: this.uniforms,
-            vertexShader: "Line.vert",
-            fragmentShader: "Line.frag",
+            vertexShader: "",
+            fragmentShader: "",
             depthTest: true,
             transparent: this.transparent,
             depthWrite: true,
@@ -236,6 +236,7 @@ Buffer.prototype = {
         this.pickingMaterial.extensions.fragDepth = this.impostor;
         this.pickingMaterial.clipNear = this.clipNear;
 
+        // also sets vertexShader/fragmentShader
         this.updateShader();
 
     },
