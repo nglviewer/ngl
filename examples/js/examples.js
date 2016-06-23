@@ -1219,15 +1219,16 @@ NGL.ExampleRegistry.addDict( {
 
     "test": function( stage ){
 
-        var pdbid = "3sn6";
-        stage.loadFile( "rcsb://" + pdbid + ".mmtf", {
+        stage.loadFile( "rcsb://3pqr.cif", {
             assembly: "BU1"
         } ).then( function( o ){
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "trace", { color: "modelindex" } );
             // o.addRepresentation( "ball+stick" );
             var axes = o.addRepresentation( "axes" );
-            axes.repr.align();
+            // axes.repr.align();
+
+            // return;
 
             // function animate(){
             //     rotationGroup.rotateX( 0.01 )
@@ -1236,6 +1237,99 @@ NGL.ExampleRegistry.addDict( {
             //     requestAnimationFrame( animate );
             // }
             // animate();
+
+            stage.setOrientation([[11.285436209032113,0.691544421726666,48.474629999030476],[33.92462426694005,49.27624143506454,-83.85351885234937],[0.9641782619579492,0.19736231309694505,0.17722414208218956]]);
+
+            return
+
+            var viewer = stage.viewer;
+            var controls = viewer.controls;
+            var camera = viewer.camera;
+
+            var target = new NGL.Vector3();
+            var position = new NGL.Vector3();
+            var up = new NGL.Vector3();
+
+            var targetN = new NGL.Vector3( -39.345,-8.419, 38.473 );
+            var positionN = new NGL.Vector3( -27.929, -103.524, 201.946 );
+            var upN = new NGL.Vector3( 0.996, 0.072, -0.027 );
+
+            // var q0 = new NGL.Quaternion();
+            // var qN = new NGL.Quaternion();
+
+            // q0.copy( camera.quaternion );
+            // console.log( camera.rotation.toArray(), camera.position.toArray(), camera.up.toArray() )
+
+            // stage.setOrientation( [
+            //     targetN.toArray(),
+            //     positionN.toArray(),
+            //     upN.toArray()
+            // ] );
+
+            // qN.copy( camera.quaternion );
+
+            // console.log( q0.toArray(), qN.toArray() );
+            // console.log( camera.rotation.toArray(), camera.position.toArray(), camera.up.toArray() )
+
+            // return;
+
+            // o.centerView();
+
+            var ori = stage.getOrientation();
+            var target0 = new NGL.Vector3().fromArray( ori[ 0 ] );
+            var position0 = new NGL.Vector3().fromArray( ori[ 1 ] );
+            var up0 = new NGL.Vector3().fromArray( ori[ 2 ] );
+
+            var eye0 = new NGL.Vector3().subVectors( position0, target0 ).normalize();
+            var eyeN = new NGL.Vector3().subVectors( positionN, targetN ).normalize();
+
+            var axis = new NGL.Vector3().crossVectors( eye0, eyeN ).normalize();
+            var angle = eye0.angleTo( eyeN );
+            if( eye0.dot( eyeN ) < 0 ) angle *= -1;
+
+            // target0.copy( targetN );
+            // position0.copy( positionN );
+            // up0.copy( upN );
+
+            var t0 = performance.now();
+            var prevAlpha = 0;
+            var cumAngle = 0;
+            function animate(){
+                var delta = performance.now() - t0;
+                var alpha = Math.min( 1.0, delta / 2000 );
+
+                target.lerpVectors( target0, targetN, alpha );
+                // position.lerpVectors( position0, positionN, alpha );
+                // up.lerpVectors( up0, upN, alpha );
+
+                controls.target.copy( target );
+                // camera.position.copy( positionN );
+                camera.up.copy( up );
+
+                var eye = new NGL.Vector3().subVectors( camera.position, target ).normalize();
+                var axis2 = new NGL.Vector3().crossVectors( eye, eyeN ).normalize();
+                var angle = eye.angleTo( eyeN );
+
+                cumAngle += ( alpha - prevAlpha ) * angle;
+                // console.log( angle, cumAngle )
+
+                viewer.rotate( axis2, ( alpha - prevAlpha ) * angle );
+
+                viewer.requestRender();
+
+                // stage.setOrientation( [
+                //     target.toArray(),
+                //     position.toArray(),
+                //     up.toArray()
+                // ] );
+
+                prevAlpha = alpha;
+
+                if( alpha < 1.0 ){
+                    requestAnimationFrame( animate );
+                }
+            }
+            animate();
 
         } );
 
