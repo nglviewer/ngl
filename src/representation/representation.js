@@ -46,10 +46,28 @@ import Counter from "../utils/counter.js";
  */
 function Representation( object, viewer, params ){
 
+    /**
+     * @member {Viewer}
+     */
     this.viewer = viewer;
 
-    this.queue = new Queue( this.make.bind( this ) );
+    /**
+     * Counter that keeps track of tasks related to the creation of
+     * the representation, including surface calculations.
+     * @member {Counter}
+     */
     this.tasks = new Counter();
+
+    /**
+     * @member {Queue}
+     * @private
+     */
+    this.queue = new Queue( this.make.bind( this ) );
+
+    /**
+     * @member {Array}
+     * @private
+     */
     this.bufferList = [];
 
     this.init( params );
@@ -301,6 +319,12 @@ Representation.prototype = {
 
     },
 
+    /**
+     * Set the visibility of the representation
+     * @param {Boolean} value - visibility flag
+     * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
+     * @return {Representation} this object
+     */
     setVisibility: function( value, noRenderRequest ){
 
         this.visible = value;
@@ -317,6 +341,19 @@ Representation.prototype = {
 
     },
 
+    /**
+     * Set the visibility of the representation
+     * @param {RepresentationParameters} params - parameters object
+     * @param {Object} [what] - buffer data attributes to be updated,
+     *                        note that this needs to be implemented in the
+     *                        derived classes. Generally it allows more
+     *                        fine-grained control over updating than
+     *                        forcing a rebuild.
+     * @param {Boolean} what.position - update position data
+     * @param {Boolean} what.color - update color data
+     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+     * @return {Representation} this object
+     */
     setParameters: function( params, what, rebuild ){
 
         var p = params || {};

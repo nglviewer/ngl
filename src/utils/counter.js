@@ -10,8 +10,25 @@ import { Log, Debug } from "../globals.js";
 import Signal from "../../lib/signals.es6.js";
 
 
+/**
+ * {@link Signal}, dispatched when the `count` changes
+ * @example
+ * counter.signals.countChanged( function( delta ){ ... } );
+ * @event Counter#countChanged
+ * @type {Integer}
+ */
+
+
+/**
+ * Counter class for keeping track of counts
+ * @class
+ */
 function Counter(){
 
+    /**
+     * The `count`
+     * @member {Integer}
+     */
     this.count = 0;
 
     this.signals = {
@@ -24,12 +41,20 @@ function Counter(){
 
 Counter.prototype = {
 
+    /**
+     * Set the `count` to zero
+     */
     clear: function(){
 
         this.change( -this.count );
 
     },
 
+    /**
+     * Change the `count`
+     * @fires Counter#countChanged
+     * @param {Integer} delta - count change
+     */
     change: function( delta ){
 
         this.count += delta;
@@ -43,21 +68,30 @@ Counter.prototype = {
 
     },
 
+    /**
+     * Increments the `count` by one.
+     */
     increment: function(){
 
         this.change( 1 );
 
     },
 
+    /**
+     * Decrements the `count` by one.
+     */
     decrement: function(){
 
         this.change( -1 );
 
     },
 
+    /**
+     * Listen to another counter object and change this `count` by the
+     * same amount
+     * @param  {Counter} counter - the counter object to listen to
+     */
     listen: function( counter ){
-
-        // incorporate changes of another counter
 
         this.change( counter.count );
 
@@ -69,6 +103,11 @@ Counter.prototype = {
 
     },
 
+    /**
+     * Invole the callback function once, when the `count` becomes zero
+     * @param  {Function} callback - the callback function
+     * @param  {Object}   context - the context for the callback function
+     */
     onZeroOnce: function( callback, context ){
 
         if( this.count === 0 ){

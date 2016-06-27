@@ -34,6 +34,7 @@ import LineBuffer from "../buffer/line-buffer.js";
 /**
  * Ball And Stick representation object
  * @class
+ * @extends StructureRepresentation
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object
  * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters

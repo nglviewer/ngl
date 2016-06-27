@@ -27,6 +27,7 @@ import RadiusFactory from "../utils/radius-factory.js";
 /**
  * Structure representation object
  * @class
+ * @extends Representation
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object
  * @param {StructureRepresentationParameters} params - structure representation parameters
@@ -35,11 +36,27 @@ function StructureRepresentation( structure, viewer, params ){
 
     var p = params || {};
 
+    /**
+     * @member {Structure}
+     */
+    this.structure = structure;
+
+    /**
+     * @member {StructureView}
+     */
+    this.structureView = this.structure.getView( this.selection );
+
+    /**
+     * @member {Array}
+     * @private
+     */
     this.dataList = [];
 
-    this.structure = structure;
+    /**
+     * @member {Selection}
+     * @private
+     */
     this.selection = new Selection( p.sele );
-    this.structureView = this.structure.getView( this.selection );
 
     Representation.call( this, structure, viewer, p );
 

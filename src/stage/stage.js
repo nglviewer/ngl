@@ -124,6 +124,11 @@ function Stage( eid, params ){
 
     //
 
+    /**
+     * Counter that keeps track of various potential long-running tasks,
+     * including file loading and surface calculation.
+     * @member {Counter}
+     */
     this.tasks = new Counter();
     this.compList = [];
     this.defaultFileParams = {};

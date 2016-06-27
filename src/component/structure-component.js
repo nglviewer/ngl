@@ -15,7 +15,7 @@ import { superpose } from "../align/align-utils.js";
 /**
  * Component wrapping a Structure object
  * @class
- * @augments {Component}
+ * @extends {Component}
  * @param {Stage} stage - stage object the component belongs to
  * @param {Structure} structure - structure object to wrap
  * @param {ComponentParameters} params - component parameters

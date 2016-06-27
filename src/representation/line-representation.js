@@ -15,6 +15,7 @@ import LineBuffer from "../buffer/line-buffer.js";
 /**
  * Line representation object
  * @class
+ * @extends StructureRepresentation
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
