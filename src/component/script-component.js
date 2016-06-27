@@ -8,6 +8,14 @@
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a Script object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Script} script - script object to wrap
+ * @param {ComponentParameters} params - component parameters
+ */
 function ScriptComponent( stage, script, params ){
 
     var p = params || {};

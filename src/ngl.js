@@ -547,6 +547,30 @@ var Version = "v0.8.0dev";
 
 
 /**
+ * Promise class
+ * @name Promise
+ * @class
+ * @global
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise}
+ */
+
+/**
+ * Blob class
+ * @name Blob
+ * @class
+ * @global
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Blob}
+ */
+
+/**
+ * File class
+ * @name File
+ * @class
+ * @global
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/File}
+ */
+
+/**
  * Signal class, used to dispatch events
  * @name Signal
  * @class

@@ -15,7 +15,7 @@ import { superpose } from "../align/align-utils.js";
 /**
  * Component wrapping a Structure object
  * @class
- * @extends {Component}
+ * @extends Component
  * @param {Stage} stage - stage object the component belongs to
  * @param {Structure} structure - structure object to wrap
  * @param {ComponentParameters} params - component parameters
@@ -50,6 +50,11 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     }, Component.prototype.signals ),
 
+    /**
+     * Initialize selection
+     * @private
+     * @param  {String} string - selection string
+     */
     initSelection: function( string ){
 
         this.selection = new Selection( string );
@@ -112,6 +117,18 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Add a new structure representation to the component
+     * @alias StructureComponent#addRepresentation
+     * @param {String} type - the name of the representation, one of:
+     *                        axes, backbone, ball+stick, base, cartoon, contact,
+     *                        distance, helixorient, hyperball, label, licorice, line
+     *                        surface, ribbon, rocket, rope, spacefill, trace, tube,
+     *                        unitcell.
+     * @param {StructureRepresentationParameters} params - representation parameters
+     * @return {RepresentationComponent} the created representation wrapped into
+     *                                   a representation component object
+     */
     addRepresentation: function( type, params ){
 
         var p = params || {};

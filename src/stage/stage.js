@@ -446,12 +446,20 @@ Stage.prototype = {
      * // load a File object
      * stage.loadFile( file );
      *
+     * @example
+     * // load from URL and add a 'ball+stick' representation with double/triple bonds
+     * stage.loadFile( "http://files.rcsb.org/download/1crn.cif" ).then( function( comp ){
+     *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
+     * } );
+     *
      * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {Object} params - loading parameters
      * @param  {String} params.ext - file extension, determines file type
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
-     * @return {Promise} Promise resolves to a {@link Component} object
+     * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
+     *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
+     *                   depending on the type of the loaded file.
      */
     loadFile: function( path, params ){
 

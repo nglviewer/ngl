@@ -72,6 +72,14 @@ Component.prototype = {
 
     },
 
+    /**
+     * Add a new representation to the component
+     * @param {String} type - the name of the representation
+     * @param {Object} object the object on which the representation should be based
+     * @param {RepresentationParameters} params - representation parameters
+     * @return {RepresentationComponent} the created representation wrapped into
+     *                                   a representation component object
+     */
     addRepresentation: function( type, object, params ){
 
         var p = params || {};
