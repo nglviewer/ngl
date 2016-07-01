@@ -1224,21 +1224,37 @@ function Viewer( eid, params ){
         var eyeDirection = new Vector3();
         var bbSize = new Vector3();
 
-        return function( autoZoom, position ){
+        return function( _zoom, position ){
 
-            center( position || boundingBox.center() );
+            if( position === undefined ){
+                if( !boundingBox.isEmpty() ){
+                    center( boundingBox.center() );
+                }
+            }else{
+                center( position );
+            }
 
-            if( autoZoom ){
+            if( _zoom ){
 
-                // automatic zoom that shows
-                // everything inside the bounding box
-                // TODO take extent towards the camera into account
+                var distance;
 
-                boundingBox.size( bbSize );
-                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                var distance = maxSize + ( minSize / 2 );  // object size
+                if( _zoom === true ){
+
+                    // automatic zoom that shows
+                    // everything inside the bounding box
+                    // TODO take extent towards the camera into account
+
+                    boundingBox.size( bbSize );
+                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    distance = maxSize + ( minSize / 2 );  // object size
+
+                }else{
+
+                    distance = _zoom;
+
+                }
 
                 var fov = degToRad( perspectiveCamera.fov );
                 var aspect = width / height;
@@ -1338,6 +1354,7 @@ function Viewer( eid, params ){
 
     this.rotate = rotate;
     this.zoom = zoom;
+    this.center = center;
     this.centerView = centerView;
     this.alignView = alignView;
     this.getOrientation = getOrientation;
