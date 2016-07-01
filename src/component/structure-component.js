@@ -200,26 +200,25 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         zoom = zoom !== undefined ? zoom : true;
 
-        var center;
+        var center = this.getCenter( sele );
 
-        if( sele ){
+        if( zoom ){
 
-            var selection = new Selection( sele );
+            var bb;
 
-            center = this.structure.atomCenter( selection );
-
-            if( zoom ){
-                var bb = this.structure.getBoundingBox( selection );
-                zoom = bb.size().length();
+            if( sele ){
+                bb = this.structure.getBoundingBox( new Selection( sele ) );
+            }else{
+                bb = this.structure.boundingBox;
             }
 
-        }else{
+            var bbSize = bb.size();
+            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
 
-            center = this.structure.center;
-
-            if( zoom ){
-                zoom = this.structure.boundingBox.size().length();
-            }
+            // zoom = bb.size().length();
 
         }
 
@@ -229,9 +228,17 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
-    getCenter: function(){
+    getCenter: function( sele ){
 
-        return this.structure.center;
+        if( sele ){
+
+            return this.structure.atomCenter( new Selection( sele ) );
+
+        }else{
+
+            return this.structure.center;
+
+        }
 
     },
 
