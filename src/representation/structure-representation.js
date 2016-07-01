@@ -42,6 +42,12 @@ function StructureRepresentation( structure, viewer, params ){
     this.structure = structure;
 
     /**
+     * @member {Selection}
+     * @private
+     */
+    this.selection = new Selection( p.sele );
+
+    /**
      * @member {StructureView}
      */
     this.structureView = this.structure.getView( this.selection );
@@ -51,12 +57,6 @@ function StructureRepresentation( structure, viewer, params ){
      * @private
      */
     this.dataList = [];
-
-    /**
-     * @member {Selection}
-     * @private
-     */
-    this.selection = new Selection( p.sele );
 
     Representation.call( this, structure, viewer, p );
 
