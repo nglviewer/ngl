@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Matrix4, Box3 } from "../../lib/three.es6.js";
 
 import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";
@@ -106,6 +106,20 @@ Assembly.prototype = {
 
     },
 
+    getBoundingBox: function( structure ){
+
+        var boundingBox = new Box3();
+
+        this.partList.forEach( function( part ){
+            var partBox = part.getBoundingBox( structure );
+            boundingBox.expandByPoint( partBox.min );
+            boundingBox.expandByPoint( partBox.max );
+        } );
+
+        return boundingBox;
+
+    },
+
     toJSON: function(){
 
         var output = {
@@ -161,6 +175,24 @@ AssemblyPart.prototype = {
         } );
 
         return this.matrixList.length * atomCount;
+
+    },
+
+    getBoundingBox: function( structure ){
+
+        var partBox = new Box3();
+        var instanceBox = new Box3();
+
+        var selection = this.getSelection();
+        var structureBox = structure.getBoundingBox( selection );
+
+        this.matrixList.forEach( function( matrix ){
+            instanceBox.copy( structureBox ).applyMatrix4( matrix );
+            partBox.expandByPoint( instanceBox.min );
+            partBox.expandByPoint( instanceBox.max );
+        } );
+
+        return partBox;
 
     },
 
