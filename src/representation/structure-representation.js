@@ -37,14 +37,10 @@ function StructureRepresentation( structure, viewer, params ){
     var p = params || {};
 
     /**
-     * @member {Structure}
+     * @member {Selection}
+     * @private
      */
-    this.structure = structure;
-
-    /**
-     * @member {StructureView}
-     */
-    this.structureView = this.structure.getView( this.selection );
+    this.selection = new Selection( p.sele );
 
     /**
      * @member {Array}
@@ -53,10 +49,14 @@ function StructureRepresentation( structure, viewer, params ){
     this.dataList = [];
 
     /**
-     * @member {Selection}
-     * @private
+     * @member {Structure}
      */
-    this.selection = new Selection( p.sele );
+    this.structure = structure;
+
+    /**
+     * @member {StructureView}
+     */
+    this.structureView = this.structure.getView( this.selection );
 
     Representation.call( this, structure, viewer, p );
 
