@@ -66,7 +66,7 @@ Trajectory.prototype = {
 
         this.saveInitialStructure();
 
-        this.backboneIndices = this.structure.atomIndex(
+        this.backboneIndices = this.structure.getAtomIndices(
             new Selection( "backbone and not hydrogen" )
         );
         this.makeIndices();
@@ -108,7 +108,7 @@ Trajectory.prototype = {
 
     makeIndices: function(){
 
-        this.indices = this.structure.atomIndex( this.selection );
+        this.indices = this.structure.getAtomIndices( this.selection );
 
         var i, j;
         var n = this.indices.length * 3;
@@ -379,15 +379,13 @@ Trajectory.prototype = {
 
     getCircularMean: function( indices, coords, box ){
 
-        var mean = [
+        return [
 
             circularMean( coords, box[ 0 ], 3, 0, indices ),
             circularMean( coords, box[ 1 ], 3, 1, indices ),
             circularMean( coords, box[ 2 ], 3, 2, indices )
 
         ];
-
-        return mean;
 
     },
 

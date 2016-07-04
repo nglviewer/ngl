@@ -963,6 +963,7 @@ Structure.prototype = {
 
         this.eachSelectedAtom( function( ap ){
             index[ i ] = ap.index;
+            i += 1;
         } );
 
         return index;
