@@ -35,6 +35,22 @@ LabelFactory.prototype = {
                 l = "" + a.index;
                 break;
 
+            case "occupancy":
+                l = a.occupancy.toFixed( 2 );
+                break;
+
+            case "bfactor":
+                l = a.bfactor.toFixed( 2 );
+                break;
+
+            case "serial":
+                l = "" + a.serial;
+                break;
+
+            case "element":
+                l = a.element;
+                break;
+
             case "atom":
                 l = a.atomname + "|" + a.index;
                 break;
@@ -55,6 +71,7 @@ LabelFactory.prototype = {
                 l = this.text[ a.index ];
                 break;
 
+            case "qualified":
             default:
                 l = a.qualifiedName();
                 break;
@@ -72,11 +89,16 @@ LabelFactory.types = {
     "": "",
     "atomname": "atom name",
     "atomindex": "atom index",
+    "occupancy": "occupancy",
+    "bfactor": "b-factor",
+    "serial": "serial",
+    "element": "element",
     "atom": "atom name + index",
     "resname": "residue name",
     "resno": "residue no",
     "res": "residue name + no",
-    "text": "text"
+    "text": "text",
+    "qualified": "qualified name"
 
 };
 
