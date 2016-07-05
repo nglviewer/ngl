@@ -49,13 +49,9 @@ FramesTrajectory.prototype = Object.assign( Object.create(
 
     makeAtomIndices:  function(){
 
-        var structure = this.structure;
+        if( this.structure.type === "StructureView" ){
 
-        if( structure.type === "StructureView" ){
-
-            this.atomIndices = structure.structure.atomIndex(
-                structure.selection
-            );
+            this.atomIndices = this.structure.getAtomIndices();
 
         }else{
 

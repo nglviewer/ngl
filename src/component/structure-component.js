@@ -9,6 +9,7 @@ import Component from "./component.js";
 import TrajectoryComponent from "./trajectory-component.js";
 import { makeTrajectory } from "../trajectory/trajectory-utils.js";
 import Selection from "../selection.js";
+import StructureView from "../structure/structure-view.js";
 import { superpose } from "../align/align-utils.js";
 
 
@@ -27,9 +28,10 @@ function StructureComponent( stage, structure, params ){
 
     Component.call( this, stage, p );
 
-    this.structure = structure;
+    this.selection = new Selection( p.sele );
+    this.structure = new StructureView( structure, this.selection );
     this.trajList = [];
-    this.initSelection( p.sele );
+    this.initSelection();
     this.setDefaultAssembly( p.assembly || "" );
 
 }
@@ -55,9 +57,7 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @private
      * @param  {String} string - selection string
      */
-    initSelection: function( string ){
-
-        this.selection = new Selection( string );
+    initSelection: function(){
 
         this.selection.signals.stringChanged.add( function( string ){
 

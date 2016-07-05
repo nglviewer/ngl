@@ -58,7 +58,6 @@ function Structure( name, path ){
     this.helices = [];
     this.sheets = [];
     this.unitcell = undefined;
-    this.selection = undefined;
 
     this.frames = [];
     this.boxes = [];
@@ -99,12 +98,12 @@ Structure.prototype = {
 
         this.atomSetCache = {};
 
-        this.atomSet = this.getAtomSet2( this.selection );
+        this.atomSet = this.getAtomSet( this.selection );
         this.bondSet = this.getBondSet();
 
         for( var name in this.atomSetDict ){
             var as = this.atomSetDict[ name ];
-            var as2 = this.getAtomSet2( false );
+            var as2 = this.getAtomSet( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
 
@@ -121,6 +120,8 @@ Structure.prototype = {
         this.signals.refreshed.dispatch();
 
     },
+
+    //
 
     getBondProxy: function( index ){
 
@@ -165,6 +166,8 @@ Structure.prototype = {
         return new ModelProxy( this, index );
 
     },
+
+    //
 
     getBondSet: function( selection ){
 
@@ -280,26 +283,18 @@ Structure.prototype = {
         }else if( selection && selection.test ){
 
             var seleString = selection.string;
-            as = this.atomSetCache[ seleString ];
 
-            if( !seleString ) console.warn( "empty seleString" );
+            if( seleString in this.atomSetCache ){
 
-            if( as === undefined ){
-
-                // TODO can be faster by setting ranges of atoms
-                //      but for that must loop over hierarchy itself
-                as = new Bitset( n );
-                var ap = this.getAtomProxy();
-                var test = selection.test;
-                for( var i = 0; i < n; ++i ){
-                    ap.index = i;
-                    if( test( ap ) ) as.add_unsafe( ap.index );
-                }
-                this.atomSetCache[ seleString ] = as;
+                as = this.atomSetCache[ seleString ];
 
             }else{
 
-                // console.log( "getting atomSet from cache", seleString );
+                as = new Bitset( n );
+                this.eachAtom( function( ap ){
+                    as.add_unsafe( ap.index );
+                }, selection );
+                this.atomSetCache[ seleString ] = as;
 
             }
 
@@ -316,67 +311,11 @@ Structure.prototype = {
 
     },
 
-    getAtomSet2: function( selection ){
-
-        if( Debug ) Log.time( "Structure.getAtomSet2" );
-
-        var as;
-        var n = this.atomStore.count;
-
-        if( selection === false ){
-
-            as = new Bitset( n );
-
-        }else if( selection === true ){
-
-            as = new Bitset( n );
-            as.set_all( true );
-
-        }else if( selection && selection.test ){
-
-            var seleString = selection.string;
-            as = this.atomSetCache[ seleString ];
-
-            if( !seleString ) console.warn( "empty seleString" );
-
-            if( as === undefined ){
-
-                as = new Bitset( n );
-                this.eachAtom( function( ap ){
-                    as.add_unsafe( ap.index );
-                }, selection );
-                this.atomSetCache[ seleString ] = as;
-
-            }else{
-
-                // console.log( "getting atomSet from cache", seleString );
-
-            }
-
-        }else{
-
-            as = new Bitset( n );
-            as.set_all( true );
-
-        }
-
-        if( Debug ) Log.timeEnd( "Structure.getAtomSet2" );
-
-        return as;
-
-    },
-
-    setSelection: function( selection ){
-
-        this.selection = selection;
-
-        this.refresh();
-
-    },
+    //
 
     getSelection: function(){
 
-        return this.selection;
+        return false;
 
     },
 
@@ -411,46 +350,6 @@ Structure.prototype = {
             for( var i = 0; i < n; ++i ){
                 bp.index = i;
                 callback( bp );
-            }
-        }
-
-    },
-
-    getAtomSet3: function( selection ){
-
-        if( Debug ) Log.time( "Structure.getAtomSet3" );
-
-        var as = this.atomSet;
-
-        if( selection && selection.test ){
-            if( as ){
-                as = as.new_intersection( this.getAtomSet2( selection ) );
-            }else{
-                as = this.getAtomSet2( selection );
-            }
-        }
-
-        if( Debug ) Log.timeEnd( "Structure.getAtomSet3" );
-
-        return as;
-
-    },
-
-    eachSelectedAtom: function( callback, selection ){
-
-        var ap = this.getAtomProxy();
-        var as = this.getAtomSet3( selection );
-        var n = this.atomStore.count;
-
-        if( as && as.size() < n ){
-            as.forEach( function( index ){
-                ap.index = index;
-                callback( ap );
-            } );
-        }else{
-            for( var i = 0; i < n; ++i ){
-                ap.index = i;
-                callback( ap );
             }
         }
 
@@ -602,7 +501,7 @@ Structure.prototype = {
         if( p.colorParams ) p.colorParams.structure = this.getStructure();
 
         var what = p.what;
-        var atomSet = p.atomSet || this.atomSet;
+        var atomSet = defaults( p.atomSet, this.atomSet );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position, color, pickingColor, radius, index;
@@ -870,7 +769,7 @@ Structure.prototype = {
         var maxY = -Infinity;
         var maxZ = -Infinity;
 
-        this.eachSelectedAtom( function( ap ){
+        this.eachAtom( function( ap ){
 
             var x = ap.x;
             var y = ap.y;
@@ -903,7 +802,7 @@ Structure.prototype = {
         var coords = new Matrix( 3, this.atomCount );
         var cd = coords.data;
 
-        this.eachSelectedAtom( function( a ){
+        this.eachAtom( function( a ){
             cd[ i + 0 ] = a.x;
             cd[ i + 1 ] = a.y;
             cd[ i + 2 ] = a.z;
@@ -926,17 +825,17 @@ Structure.prototype = {
 
     },
 
-    getSequence: function(){
+    getSequence: function( selection ){
 
         var seq = [];
         var rp = this.getResidueProxy();
 
-        this.eachSelectedAtom( function( ap ){
+        this.eachAtom( function( ap ){
             rp.index = ap.residueIndex;
             if( ap.index === rp.traceAtomIndex ){
                 seq.push( rp.getResname1() );
             }
-        } );
+        }, selection );
 
         return seq;
 
@@ -944,29 +843,23 @@ Structure.prototype = {
 
     getAtomIndices: function( selection ){
 
-        // Best to use only when the selection resolves to just a few indices!!!
+        var indices;
 
-        var indices = [];
+        if( selection && selection.string ){
 
-        this.eachAtom( function( ap ){
-            indices.push( ap.index );
-        }, selection );
+            indices = [];
+            this.eachAtom( function( ap ){
+                indices.push( ap.index );
+            }, selection );
+
+        }else{
+
+            var p = { what: { index: true } };
+            indices = this.getAtomData( p ).index;
+
+        }
 
         return indices;
-
-    },
-
-    atomIndex: function(){
-
-        var i = 0;
-        var index = new Float32Array( this.atomCount );
-
-        this.eachSelectedAtom( function( ap ){
-            index[ i ] = ap.index;
-            i += 1;
-        } );
-
-        return index;
 
     },
 
@@ -976,7 +869,7 @@ Structure.prototype = {
 
         var i = 0;
 
-        this.eachSelectedAtom( function( ap ){
+        this.eachAtom( function( ap ){
             ap.positionFromArray( position, i );
             i += 3;
         } );

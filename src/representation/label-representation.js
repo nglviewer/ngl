@@ -109,7 +109,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         var labelFactory = new LabelFactory(
             this.labelType, this.labelText
         );
-        sview.eachSelectedAtom( function( ap ){
+        sview.eachAtom( function( ap ){
             text.push( labelFactory.atomLabel( ap ) );
         } );
 

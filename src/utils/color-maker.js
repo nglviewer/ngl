@@ -798,7 +798,7 @@ function BfactorColorMaker( params ){
             selection = new Selection( params.sele );
         }
 
-        this.structure.eachSelectedAtom( function( a ){
+        this.structure.eachAtom( function( a ){
             var bfactor = a.bfactor;
             min = Math.min( min, bfactor );
             max = Math.max( max, bfactor );

@@ -34,7 +34,7 @@ Contact.prototype = {
         var atomSet = this.sview1.getAtomSet( false );
         var bondStore = new BondStore();
 
-        this.sview1.eachSelectedAtom( function( ap1 ){
+        this.sview1.eachAtom( function( ap1 ){
 
             var found = false;
             var contacts = kdtree2.nearest(

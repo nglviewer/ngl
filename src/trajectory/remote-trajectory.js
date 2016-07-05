@@ -25,13 +25,11 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
     makeAtomIndices: function(){
 
-        var structure = this.structure;
         var atomIndices = [];
 
-        // TODO is now StructureView
-        if( false ){  // if( structure instanceof StructureSubset ){
+        if( this.structure.type === "StructureView" ){
 
-            var indices = structure.structure.atomIndex( structure.selection );
+            var indices = this.structure.getAtomIndices();
 
             var i, r;
             var p = indices[ 0 ];

@@ -51,9 +51,36 @@ StructureView.prototype = Object.assign( Object.create(
     init: function(){
 
         Object.defineProperties( this, {
+            name: {
+                get: function(){ return this.structure.name; }
+            },
+            path: {
+                get: function(){ return this.structure.path; }
+            },
+            title: {
+                get: function(){ return this.structure.title; }
+            },
+            id: {
+                get: function(){ return this.structure.id; }
+            },
+
             atomSetDict: {
                 get: function(){ return this.structure.atomSetDict; }
             },
+            biomolDict: {
+                get: function(){ return this.structure.biomolDict; }
+            },
+            unitcell: {
+                get: function(){ return this.structure.unitcell; }
+            },
+
+            frames: {
+                get: function(){ return this.structure.frames; }
+            },
+            boxes: {
+                get: function(){ return this.structure.boxes; }
+            },
+
             bondStore: {
                 get: function(){ return this.structure.bondStore; }
             },
@@ -75,6 +102,7 @@ StructureView.prototype = Object.assign( Object.create(
             modelStore: {
                 get: function(){ return this.structure.modelStore; }
             },
+
             atomMap: {
                 get: function(){ return this.structure.atomMap; }
             },
@@ -104,7 +132,7 @@ StructureView.prototype = Object.assign( Object.create(
 
         this.atomSetCache = {};
 
-        this.atomSet = this.getAtomSet2( this.selection );
+        this.atomSet = this.getAtomSet( this.selection, true );
         if( this.structure.atomSet ){
             if( Debug ) Log.time( "StructureView.refresh#atomSet.intersection" );
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );
@@ -134,25 +162,39 @@ StructureView.prototype = Object.assign( Object.create(
 
     },
 
-    getSelection: function(){
+    //
+
+    setSelection: function( selection ){
+
+        this.selection = selection;
+
+        this.refresh();
+
+    },
+
+    getSelection: function( selection ){
+
+        var seleList = [];
+
+        if( selection && selection.string ){
+            seleList.push( selection.string );
+        }
 
         var parentSelection = this.structure.getSelection();
-        if( parentSelection ){
-            if( parentSelection.string && this.selection.string ){
-                return new Selection(
-                    "( " + parentSelection.string + " ) AND " +
-                    "( " + this.selection.string + " )"
-                );
-            }else if( parentSelection.string ){
-                return new Selection( parentSelection.string );
-            }else if( this.selection.string ){
-                return new Selection( this.selection.string );
-            }else{
-                return new Selection( "" );
-            }
-        }else{
-            return this.selection;
+        if( parentSelection && parentSelection.string ){
+            seleList.push( parentSelection.string );
         }
+
+        if( this.selection && this.selection.string ){
+            seleList.push( this.selection.string );
+        }
+
+        var sele = "";
+        if( seleList.length > 0 ){
+            sele = "( " + seleList.join( " ) AND ( " ) + " )";
+        }
+
+        return new Selection( sele );
 
     },
 
@@ -161,6 +203,77 @@ StructureView.prototype = Object.assign( Object.create(
         return this.structure.getStructure();
 
     },
+
+    //
+
+    eachBond: function( callback, selection ){
+
+        this.structure.eachBond( callback, this.getSelection( selection ) );
+
+    },
+
+    eachAtom: function( callback, selection ){
+
+        var ap = this.getAtomProxy();
+        var as = this.getAtomSet( selection );
+        var n = this.atomStore.count;
+
+        if( as && as.size() < n ){
+            as.forEach( function( index ){
+                ap.index = index;
+                callback( ap );
+            } );
+        }else{
+            for( var i = 0; i < n; ++i ){
+                ap.index = i;
+                callback( ap );
+            }
+        }
+
+    },
+
+    eachResidue: function( callback, selection ){
+
+        this.structure.eachResidue( callback, this.getSelection( selection ) );
+
+    },
+
+    eachResidueN: function( n, callback ){
+
+        console.error( "StructureView.eachResidueN() not implemented" );
+
+    },
+
+    eachChain: function( callback, selection ){
+
+        this.structure.eachChain( callback, this.getSelection( selection ) );
+
+    },
+
+    eachModel: function( callback, selection ){
+
+        this.structure.eachModel( callback, this.getSelection( selection ) );
+
+    },
+
+    //
+
+    getAtomSet: function( selection, ignoreView ){
+
+        if( Debug ) Log.time( "StructureView.getAtomSet" );
+
+        var as = this.structure.getAtomSet( selection );
+        if( !ignoreView && this.atomSet ){
+            as = as.new_intersection( this.atomSet );
+        }
+
+        if( Debug ) Log.timeEnd( "StructureView.getAtomSet" );
+
+        return as;
+
+    },
+
+    //
 
     toJSON: function(){
 
