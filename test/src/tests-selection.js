@@ -693,7 +693,7 @@ describe('parsing', function () {
 function getNthSelectedAtom( structure, nth ){
     var i = 0;
     var atomProxy = structure.getAtomProxy();
-    structure.eachSelectedAtom( function( ap ){
+    structure.eachAtom( function( ap ){
         if( i === nth ) atomProxy.index = ap.index;
         ++i;
     } );
