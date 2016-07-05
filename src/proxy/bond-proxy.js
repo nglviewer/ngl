@@ -8,6 +8,12 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 
+/**
+ * Bond proxy
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} index - the index
+ */
 function BondProxy( structure, index ){
 
     this.structure = structure;

@@ -9,6 +9,12 @@ import { UnknownBackboneType } from "../structure/structure-constants.js";
 import Polymer from "./polymer.js";
 
 
+/**
+ * Chain proxy
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} index - the index
+ */
 function ChainProxy( structure, index ){
 
     this.structure = structure;

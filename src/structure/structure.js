@@ -36,6 +36,49 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
+ * Bond iterator callback
+ * @callback bondCallback
+ * @param {BondProxy} bondProxy - current bond proxy
+ */
+
+/**
+ * Atom iterator callback
+ * @callback atomCallback
+ * @param {AtomProxy} atomProxy - current atom proxy
+ */
+
+/**
+ * Residue iterator callback
+ * @callback residueCallback
+ * @param {ResidueProxy} residueProxy - current residue proxy
+ */
+
+/**
+ * Residue-list iterator callback
+ * @callback residueListCallback
+ * @param {ResidueProxy[]} residueProxyList - list of current residue proxies
+ */
+
+/**
+ * Polymer iterator callback
+ * @callback polymerCallback
+ * @param {Polymer} polymer - current polymer object
+ */
+
+/**
+ * Chain iterator callback
+ * @callback chainCallback
+ * @param {ChainProxy} chainProxy - current chain proxy
+ */
+
+/**
+ * Model iterator callback
+ * @callback modelCallback
+ * @param {ModelProxy} modelProxy - current model proxy
+ */
+
+
+/**
  * Structure
  * @class
  * @param {String} name - structure name
@@ -325,8 +368,11 @@ Structure.prototype = {
 
     },
 
-    //
-
+    /**
+     * Bond iterator
+     * @param  {bondCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachBond: function( callback, selection ){
 
         var bp = this.getBondProxy();
@@ -355,6 +401,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Atom iterator
+     * @param  {atomCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachAtom: function( callback, selection ){
 
         if( selection && selection.test ){
@@ -372,6 +423,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Residue iterator
+     * @param  {residueCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachResidue: function( callback, selection ){
 
         var i;
@@ -403,6 +459,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Multi-residue iterator
+     * @param {Integer} n - window size
+     * @param  {residueListCallback} callback - the callback
+     */
     eachResidueN: function( n, callback ){
 
         var i, j;
@@ -424,6 +485,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Polymer iterator
+     * @param  {polymerCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachPolymer: function( callback, selection ){
 
         if( selection && selection.modelOnlyTest ){
@@ -446,6 +512,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Chain iterator
+     * @param  {chainCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachChain: function( callback, selection ){
 
         if( selection && selection.test ){
@@ -463,6 +534,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Model iterator
+     * @param  {modelCallback} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     */
     eachModel: function( callback, selection ){
 
         var i;

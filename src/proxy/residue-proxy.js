@@ -13,6 +13,12 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Residue proxy
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} index - the index
+ */
 function ResidueProxy( structure, index ){
 
     this.structure = structure;

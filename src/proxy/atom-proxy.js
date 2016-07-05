@@ -14,6 +14,12 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Atom proxy
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} index - the index
+ */
 function AtomProxy( structure, index ){
 
     this.structure = structure;

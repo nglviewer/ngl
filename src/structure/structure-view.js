@@ -14,12 +14,23 @@ import Structure from "./structure.js";
 import Selection from "../selection.js";
 
 
-// add here to avoid cyclic import dependency
+/**
+ * Get view on structure restricted to the selection
+ * @param  {Selection} selection - the selection
+ * @return {StructureView} the view on the structure
+ */
 Structure.prototype.getView = function( selection ){
+    // added here to avoid cyclic import dependency
     return new StructureView( this, selection );
 };
 
 
+/**
+ * View on the structure, restricted to the selection
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Selection} selection - the selection
+ */
 function StructureView( structure, selection ){
 
     this.signals = {

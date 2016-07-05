@@ -9,6 +9,13 @@ import { Debug, Log } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 
 
+/**
+ * Polymer
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} residueIndexStart - the index of the first residue
+ * @param {Integer} residueIndexEnd - the index of the last residue
+ */
 function Polymer( structure, residueIndexStart, residueIndexEnd ){
 
     this.structure = structure;

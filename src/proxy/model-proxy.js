@@ -5,6 +5,12 @@
  */
 
 
+/**
+ * Model proxy
+ * @class
+ * @param {Structure} structure - the structure
+ * @param {Integer} index - the index
+ */
 function ModelProxy( structure, index ){
 
     this.structure = structure;
