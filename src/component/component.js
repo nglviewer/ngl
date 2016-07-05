@@ -23,6 +23,14 @@ var nextComponentId = 0;
  * @property {Boolean} visible - component visibility
  */
 
+/**
+ * {@link Signal}, dispatched when a representation is added
+ * @example
+ * component.signals.representationAdded( function( representationComponent ){ ... } );
+ * @event Component#representationAdded
+ * @type {RepresentationComponent}
+ */
+
 
 /**
  * Component base class
@@ -74,6 +82,7 @@ Component.prototype = {
 
     /**
      * Add a new representation to the component
+     * @fires Component#representationAdded
      * @param {String} type - the name of the representation
      * @param {Object} object the object on which the representation should be based
      * @param {RepresentationParameters} params - representation parameters

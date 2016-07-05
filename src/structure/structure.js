@@ -36,6 +36,13 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
+ * {@link Signal}, dispatched when Structure.refresh() is called
+ * @example
+ * structure.signals.refreshed( function(){ ... } );
+ * @event Structure#refreshed
+ */
+
+/**
  * Bond iterator callback
  * @callback bondCallback
  * @param {BondProxy} bondProxy - current bond proxy
@@ -135,6 +142,10 @@ Structure.prototype = {
     constructor: Structure,
     type: "Structure",
 
+    /**
+     * Updates atomSets and bondSets. Updates GidPool entry.
+     * @fires Structure#refreshed
+     */
     refresh: function(){
 
         if( Debug ) Log.time( "Structure.refresh" );
@@ -952,8 +963,10 @@ Structure.prototype = {
 
     },
 
-    //
-
+    /**
+     * Removes structure from the GidPool. Calls dispose() method of property objects.
+     * Unsets properties to help garbage collection.
+     */
     dispose: function(){
 
         GidPool.removeObject( this );

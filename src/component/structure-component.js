@@ -14,6 +14,15 @@ import { superpose } from "../align/align-utils.js";
 
 
 /**
+ * {@link Signal}, dispatched when the default assembly is changed
+ * @example
+ * structureComponent.signals.defaultAssemblyChanged( function( value ){ ... } );
+ * @event StructureComponent#defaultAssemblyChanged
+ * @type {String}
+ */
+
+
+/**
  * Component wrapping a Structure object
  * @class
  * @extends Component
@@ -28,6 +37,11 @@ function StructureComponent( stage, structure, params ){
 
     Component.call( this, stage, p );
 
+    /**
+     * The wrapped structure
+     * @alias StructureComponent#structure
+     * @member {Structure}
+     */
     this.structure = structure;
 
     this.trajList = [];
@@ -42,6 +56,13 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     constructor: StructureComponent,
 
+    /**
+     * Component type
+     * @alias StructureComponent#type
+     * @constant
+     * @type {String}
+     * @default
+     */
     type: "structure",
 
     signals: Object.assign( {
@@ -55,11 +76,24 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Initialize selection
      * @private
-     * @param  {String} string - selection string
+     * @param {String} string - selection string
      */
     initSelection: function( sele ){
 
+        /**
+         * Selection for {@link StructureComponent#structureView}
+         * @alias StructureComponent#selection
+         * @private
+         * @member {Selection}
+         */
         this.selection = new Selection( sele );
+
+        /**
+         * View on {@link StructureComponent#structure}.
+         * Change its selection via {@link StructureComponent#setSelection}.
+         * @alias StructureComponent#structureView
+         * @member {StructureView}
+         */
         this.structureView = new StructureView(
             this.structure, this.selection
         );
@@ -75,6 +109,11 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set selection of {@link StructureComponent#structureView}
+     * @alias StructureComponent#setSelection
+     * @param {String} string - selection string
+     */
     setSelection: function( string ){
 
         this.selection.setString( string );
@@ -83,6 +122,12 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set the default assembly
+     * @alias StructureComponent#setDefaultAssembly
+     * @fires StructureComponent#defaultAssemblyChanged
+     * @param {String} value - assembly name
+     */
     setDefaultAssembly: function( value ){
 
         this.defaultAssembly = value;
@@ -91,6 +136,10 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Rebuild all representations
+     * @alias StructureComponent#rebuildRepresentations
+     */
     rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
@@ -104,6 +153,10 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Rebuild all trajectories
+     * @alias StructureComponent#rebuildTrajectories
+     */
     rebuildTrajectories: function(){
 
         this.trajList.slice().forEach( function( trajComp ){
@@ -115,6 +168,7 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Add a new structure representation to the component
      * @alias StructureComponent#addRepresentation
+     * @fires Component#representationAdded
      * @param {String} type - the name of the representation, one of:
      *                        axes, backbone, ball+stick, base, cartoon, contact,
      *                        distance, helixorient, hyperball, label, licorice, line

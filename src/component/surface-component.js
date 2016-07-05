@@ -33,8 +33,24 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 
     constructor: SurfaceComponent,
 
+    /**
+     * Component type
+     * @alias SurfaceComponent#type
+     * @constant
+     * @type {String}
+     * @default
+     */
     type: "surface",
 
+    /**
+     * Add a new surface representation to the component
+     * @alias SurfaceComponent#addRepresentation
+     * @param {String} type - the name of the representation, one of:
+     *                        surface, dot.
+     * @param {SurfaceRepresentationParameters} params - representation parameters
+     * @return {RepresentationComponent} the created representation wrapped into
+     *                                   a representation component object
+     */
     addRepresentation: function( type, params ){
 
         return Component.prototype.addRepresentation.call(

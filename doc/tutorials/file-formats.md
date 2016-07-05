@@ -23,9 +23,9 @@ Surfaces
 
 ## Structures
 
-Structure data is saved into [page:Structure] instances.
+Structure data is saved into {@link Structure} instances.
 
-Loading flags (available from the *File* menu):
+Loading flags (in the GUI available from the *File* menu):
 
 *   *asTrajectory*: load the topology from first model and add the coordinates from it and the remaining models as trajectory frames. Note that this assumes that all models share the same topology.
 *   *firstModelOnly*: load only the first model.
@@ -236,7 +236,7 @@ Extension: **.dcd**
 
 ## Densities
 
-Density data is saved into [page:Volume] instances.
+Density data is saved into {@link Volume} instances.
 
 ### MRC/MAP/CCP4
 
@@ -277,7 +277,7 @@ Supported features:
 
 ## Surfaces
 
-The surface geometry is saved into [page:Surface] instances.
+The surface geometry is saved into {@link Surface} instances.
 
 ### OBJ
 
