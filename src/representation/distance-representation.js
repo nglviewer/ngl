@@ -18,6 +18,37 @@ import TextBuffer from "../buffer/text-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
+/**
+ * Distance representation parameter object.
+ * @typedef {Object} DistanceRepresentationParameters - distance representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ *
+ * @property {Float} labelSize - size of the distance label
+ * @property {Color} labelColor - color of the distance label
+ * @property {Boolean} labelVisible - visibility of the distance label
+ * @property {Array[]} atomPair - list of pairs of selection strings, see {@link Selection}
+ * @property {Integer} radiusSegments - cylinder quality (number of segments)
+ * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
+ */
+
+
+/**
+ * Distance representation object
+ * @class
+ * @extends StructureRepresentation
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "cartoon" );
+ *     // any selection allowed, always takes the first atom a selection evaluates to
+ *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
+ *     o.addRepresentation( "distance", { atomPair: atomPair } );
+ *     stage.centerView();
+ * } );
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {DistanceRepresentationParameters} params - distance representation parameters
+ */
 function DistanceRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
