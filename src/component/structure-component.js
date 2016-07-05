@@ -28,10 +28,10 @@ function StructureComponent( stage, structure, params ){
 
     Component.call( this, stage, p );
 
-    this.selection = new Selection( p.sele );
-    this.structure = new StructureView( structure, this.selection );
+    this.structure = structure;
+
     this.trajList = [];
-    this.initSelection();
+    this.initSelection( p.sele );
     this.setDefaultAssembly( p.assembly || "" );
 
 }
@@ -57,24 +57,21 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @private
      * @param  {String} string - selection string
      */
-    initSelection: function(){
+    initSelection: function( sele ){
+
+        this.selection = new Selection( sele );
+        this.structureView = new StructureView(
+            this.structure, this.selection
+        );
 
         this.selection.signals.stringChanged.add( function( string ){
 
-            this.applySelection();
+            this.structureView.setSelection( this.selection );
 
             this.rebuildRepresentations();
             this.rebuildTrajectories();
 
         }, this );
-
-        this.applySelection();
-
-    },
-
-    applySelection: function(){
-
-        this.structure.setSelection( this.selection );
 
     },
 
@@ -109,10 +106,8 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     rebuildTrajectories: function(){
 
-        this.trajList.slice( 0 ).forEach( function( trajComp ){
-
-            trajComp.trajectory.setStructure( this.structure );
-
+        this.trajList.slice().forEach( function( trajComp ){
+            trajComp.trajectory.setStructure( this.structureView );
         }, this );
 
     },
@@ -135,7 +130,7 @@ StructureComponent.prototype = Object.assign( Object.create(
         p.defaultAssembly = this.defaultAssembly;
 
         return Component.prototype.addRepresentation.call(
-            this, type, this.structure, p
+            this, type, this.structureView, p
         );
 
     },
@@ -145,19 +140,15 @@ StructureComponent.prototype = Object.assign( Object.create(
         var params = { "i": i };
 
         var traj = makeTrajectory(
-            trajPath, this.structure, sele
+            trajPath, this.structureView, sele
         );
 
         traj.signals.frameChanged.add( function( value ){
-
             this.updateRepresentations( { "position": true } );
-
         }, this );
 
         var trajComp = new TrajectoryComponent( this.stage, traj, params, this );
-
         this.trajList.push( trajComp );
-
         this.signals.trajectoryAdded.dispatch( trajComp );
 
         return trajComp;
@@ -167,11 +158,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     removeTrajectory: function( traj ){
 
         var idx = this.trajList.indexOf( traj );
-
         if( idx !== -1 ){
-
             this.trajList.splice( idx, 1 );
-
         }
 
         traj.dispose();
@@ -184,12 +172,10 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( function( traj ){
-
             traj.dispose();
-
         } );
 
-        this.trajList = [];
+        this.trajList.length = 0;
         this.structure.dispose();
 
         Component.prototype.dispose.call( this );
@@ -207,9 +193,9 @@ StructureComponent.prototype = Object.assign( Object.create(
             var bb;
 
             if( sele ){
-                bb = this.structure.getBoundingBox( new Selection( sele ) );
+                bb = this.structureView.getBoundingBox( new Selection( sele ) );
             }else{
-                bb = this.structure.boundingBox;
+                bb = this.structureView.boundingBox;
             }
 
             var bbSize = bb.size();
@@ -244,10 +230,10 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     superpose: function( component, align, sele1, sele2, xsele1, xsele2 ){
 
-        // FIXME does not account for structure.atomBitSet
+        // FIXME does not account for structure.atomSet
 
         superpose(
-            this.structure, component.structure,
+            this.structureView, component.structureView,
             align, sele1, sele2, xsele1, xsele2
         );
 
