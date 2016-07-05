@@ -71,57 +71,10 @@ function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
 
 }
 
+
 Unitcell.prototype = {
 
-    toJSON: function(){
-
-        var output = {
-
-            metadata: {
-                version: 0.1,
-                type: 'Unitcell',
-                generator: 'UnitcellExporter'
-            },
-
-            a: this.a,
-            b: this.b,
-            c: this.c,
-
-            alpha: this.alpha,
-            beta: this.beta,
-            gamma: this.gamma,
-
-            spacegroup: this.spacegroup,
-            volume: this.volume,
-
-            cartToFrac: this.cartToFrac.toArray(),
-            fracToCart: this.fracToCart.toArray(),
-
-        };
-
-        return output;
-
-    },
-
-    fromJSON: function( input ){
-
-        this.a = input.a;
-        this.b = input.b;
-        this.c = input.c;
-
-        this.alpha = input.alpha;
-        this.beta = input.beta;
-        this.gamma = input.gamma;
-
-        this.spacegroup = input.spacegroup;
-        this.volume = input.volume;
-
-        this.cartToFrac.fromArray( input.cartToFrac );
-        this.fracToCart.fromArray( input.fracToCart );
-
-        return this;
-
-    }
+    constructor: Unitcell,
 
 };
 

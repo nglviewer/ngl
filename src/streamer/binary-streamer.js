@@ -26,18 +26,6 @@ BinaryStreamer.prototype = Object.assign( Object.create(
 
     __srcName: "bin",
 
-    getTransferable: function(){
-
-        var transferable = Streamer.prototype.getTransferable.call( this );
-
-        if( this.bin instanceof Uint8Array ){
-            transferable.push( this.bin.buffer );
-        }
-
-        return transferable;
-
-    }
-
 } );
 
 

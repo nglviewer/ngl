@@ -208,63 +208,6 @@ Store.prototype = {
 
     },
 
-    toJSON: function(){
-
-        var output = {
-
-            metadata: {
-                version: 0.1,
-                type: this.type,
-                generator: this.type + "Exporter"
-            },
-
-            length: this.length,
-            count: this.count,
-
-        };
-
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
-
-            var name = this.__fields[ i ][ 0 ];
-            output[ name ] = this[ name ];
-
-        }
-
-        return output;
-
-    },
-
-    fromJSON: function( input ){
-
-        this.length = input.length;
-        this.count = input.count;
-
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
-
-            var name = this.__fields[ i ][ 0 ];
-            this[ name ] = input[ name ];
-
-        }
-
-        return this;
-
-    },
-
-    getTransferable: function(){
-
-        var transferable = [];
-
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
-
-            var name = this.__fields[ i ][ 0 ];
-            transferable.push( this[ name ].buffer );
-
-        }
-
-        return transferable;
-
-    },
-
     clear: function(){
 
         this.count = 0;

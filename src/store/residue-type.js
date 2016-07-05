@@ -494,15 +494,6 @@ ResidueType.prototype = {
             this.assignBondReferenceAtomIndices();
         }
         return this.bondReferenceAtomIndices[ bondIndex ];
-    },
-
-    toJSON: function(){
-        var output = {
-            resname: this.resname,
-            atomTypeIdList: this.atomTypeIdList,
-            hetero: this.hetero
-        };
-        return output;
     }
 
 };

@@ -273,59 +273,6 @@ Streamer.prototype = {
 
     },
 
-    toJSON: function(){
-
-        var type = this.type.substr( 0, 1 ).toUpperCase() +
-                    this.type.substr( 1 );
-
-        var output = {
-
-            metadata: {
-                version: 0.1,
-                type: type + 'Streamer',
-                generator: type + 'StreamerExporter'
-            },
-
-            src: this.src,
-            compressed: this.compressed,
-            binary: this.binary,
-            chunkSize: this.chunkSize,
-            newline: this.newline,
-
-        };
-
-        if( this.__srcName ){
-            output[ this.__srcName ] = this[ this.__srcName ];
-        }
-
-        return output;
-
-    },
-
-    fromJSON: function( input ){
-
-        this.src = input.src;
-        this.compressed = input.compressed;
-        this.binary = input.binary;
-        this.chunkSize = input.chunkSize;
-        this.newline = input.newline;
-
-        if( this.__srcName ){
-            this[ this.__srcName ] = input[ this.__srcName ];
-        }
-
-        return this;
-
-    },
-
-    getTransferable: function(){
-
-        var transferable = [];
-
-        return transferable;
-
-    },
-
     dispose: function(){
 
         delete this.src;

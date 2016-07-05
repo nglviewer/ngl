@@ -32,14 +32,6 @@ AtomType.prototype = {
     vdw: undefined,
     covalent: undefined,
 
-    toJSON: function(){
-        var output = {
-            atomname: this.atomname,
-            element: this.element,
-        };
-        return output;
-    }
-
 };
 
 
