@@ -492,19 +492,12 @@ UI.Range = function( min, max, value, step ) {
     dom.className = 'Range';
     dom.type = 'range';
 
-    dom.min = min;
-    dom.max = max;
-    dom.value = value;
-    dom.step = step;
+    dom.min = min.toPrecision( 3 );
+    dom.max = max.toPrecision( 3 );
+    dom.value = value.toPrecision( 3 );
+    dom.step = step.toPrecision( 3 );
 
     this.dom = dom;
-    this.dom.value = value;
-
-    this.onInput( function(){
-
-        this.dom.setAttribute( "value", this.getValue() );
-
-    } );
 
     return this;
 

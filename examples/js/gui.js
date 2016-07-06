@@ -1004,7 +1004,8 @@ NGL.PreferencesWidget = function( stage, preferences ){
             preferences.setKey( name, sp[ name ] );
         }
 
-        if( p.type === "range" ){
+        var ua = navigator.userAgent;
+        if( p.type === "range" && !/Trident/.test( ua ) && !/MSIE/.test( ua ) ){
             input.onInput( setParam );
         }else{
             input.onChange( setParam );
@@ -1295,7 +1296,8 @@ NGL.SidebarWidget = function( stage ){
             stage.setParameters( sp );
         }
 
-        if( p.type === "range" ){
+        var ua = navigator.userAgent;
+        if( p.type === "range" && !/Trident/.test( ua ) && !/MSIE/.test( ua ) ){
             input.onInput( setParam );
         }else{
             input.onChange( setParam );
@@ -1833,7 +1835,8 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             repr.viewer.requestRender();
         }
 
-        if( p.type === "range" ){
+        var ua = navigator.userAgent;
+        if( p.type === "range" && !/Trident/.test( ua ) && !/MSIE/.test( ua ) ){
             input.onInput( setParam );
         }else{
             input.onChange( setParam );
