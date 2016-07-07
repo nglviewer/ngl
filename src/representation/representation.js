@@ -159,6 +159,48 @@ Representation.prototype = {
         this.metalness = defaults( p.metalness, 0.0 );
         this.diffuse = defaults( p.diffuse, 0xffffff );
 
+        // handle common parameters when applicable
+
+        var tp = this.parameters;
+
+        if( tp.sphereDetail === true ){
+            tp.sphereDetail = {
+                type: "integer", max: 3, min: 0, rebuild: "impostor"
+            };
+        }
+        if( tp.radialSegments === true ){
+            tp.radialSegments = {
+                type: "integer", max: 25, min: 5, rebuild: "impostor"
+            };
+        }
+        if( tp.disableImpostor === true ){
+            tp.disableImpostor = {
+                type: "boolean", rebuild: true
+            };
+        }
+
+        if( p.quality === "low" ){
+            if( tp.sphereDetail ) this.sphereDetail = 0;
+            if( tp.radialSegments ) this.radialSegments = 5;
+        }else if( p.quality === "medium" ){
+            if( tp.sphereDetail ) this.sphereDetail = 1;
+            if( tp.radialSegments ) this.radialSegments = 10;
+        }else if( p.quality === "high" ){
+            if( tp.sphereDetail ) this.sphereDetail = 2;
+            if( tp.radialSegments ) this.radialSegments = 20;
+        }else{
+            if( tp.sphereDetail ){
+                this.sphereDetail = defaults( p.sphereDetail, 1 );
+            }
+            if( tp.radialSegments ){
+                this.radialSegments = defaults( p.radialSegments, 10 );
+            }
+        }
+
+        if( tp.disableImpostor ){
+            this.disableImpostor = defaults( p.disableImpostor, false );
+        }
+
     },
 
     getColorParams: function(){

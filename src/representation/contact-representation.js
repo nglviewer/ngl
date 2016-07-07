@@ -44,12 +44,8 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         maxAngle: {
             type: "integer", max: 180, min: 0, rebuild: true
         },
-        radialSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        }
+        radialSegments: true,
+        disableImpostor: true
 
     }, StructureRepresentation.prototype.parameters ),
 
@@ -57,17 +53,6 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.radius = defaults( p.radius, this.defaultSize );
-
-        if( p.quality === "low" ){
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.radialSegments = 20;
-        }else{
-            this.radialSegments = defaults( p.radialSegments, 10 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         this.contactType = defaults( p.contactType, "polarBackbone" );
         this.maxDistance = defaults( p.maxDistance, 3.5 );

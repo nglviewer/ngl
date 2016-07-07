@@ -57,15 +57,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
     parameters: Object.assign( {
 
-        sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: "impostor"
-        },
-        radialSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        },
+        sphereDetail: true,
+        radialSegments: true,
+        disableImpostor: true,
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0
         },
@@ -88,21 +82,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.radius = defaults( p.radius, this.defaultSize );
-
-        if( p.quality === "low" ){
-            this.sphereDetail = 0;
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.sphereDetail = 1;
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.sphereDetail = 2;
-            this.radialSegments = 20;
-        }else{
-            this.sphereDetail = defaults( p.sphereDetail, 1 );
-            this.radialSegments = defaults( p.radialSegments, 10 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );

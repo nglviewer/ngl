@@ -79,12 +79,8 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         atomPair: {
             type: "hidden", rebuild: true
         },
-        radialSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        }
+        radialSegments: true,
+        disableImpostor: true
 
     }, StructureRepresentation.prototype.parameters, {
         flatShaded: null,
@@ -95,17 +91,6 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.radius = defaults( p.radius, this.defaultSize );
-
-        if( p.quality === "low" ){
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.radialSegments = 20;
-        }else{
-            this.radialSegments = defaults( p.radialSegments, 10 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         this.fontFamily = defaults( p.fontFamily, "sans-serif" );
         this.fontStyle = defaults( p.fontStyle, "normal" );

@@ -39,12 +39,8 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         ssBorder: {
             type: "boolean", rebuild: true
         },
-        radialSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        }
+        radialSegments: true,
+        disableImpostor: true
 
     }, StructureRepresentation.prototype.parameters ),
 
@@ -54,17 +50,6 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
         p.radius = defaults( p.radius, 1.5 );
         p.scale = defaults( p.scale, 1.0 );
-
-        if( p.quality === "low" ){
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.radialSegments = 20;
-        }else{
-            this.radialSegments = defaults( p.radialSegments, 10 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         this.localAngle = defaults( p.localAngle, 30 );
         this.centerDist = defaults( p.centerDist, 2.5 );

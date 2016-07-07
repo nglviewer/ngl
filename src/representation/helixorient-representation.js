@@ -29,12 +29,8 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
 
     parameters: Object.assign( {
 
-        sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        }
+        sphereDetail: true,
+        disableImpostor: true
 
     }, StructureRepresentation.prototype.parameters ),
 
@@ -44,17 +40,6 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
         p.radius = defaults( p.radius, 0.15 );
         p.scale = defaults( p.scale, 1.0 );
-
-        if( p.quality === "low" ){
-            this.sphereDetail = 0;
-        }else if( p.quality === "medium" ){
-            this.sphereDetail = 1;
-        }else if( p.quality === "high" ){
-            this.sphereDetail = 2;
-        }else{
-            this.sphereDetail = defaults( p.sphereDetail, 1 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 

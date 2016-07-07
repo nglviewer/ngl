@@ -35,15 +35,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         radius: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        sphereDetail: {
-            type: "integer", max: 3, min: 0, rebuild: "impostor"
-        },
-        radialSegments: {
-            type: "integer", max: 25, min: 5, rebuild: "impostor"
-        },
-        disableImpostor: {
-            type: "boolean", rebuild: true
-        },
+        sphereDetail: true,
+        radialSegments: true,
+        disableImpostor: true,
         align: {
             type: "button"
         }
@@ -58,21 +52,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
         p.radius = defaults( p.radius, 0.5 );
         p.colorValue = defaults( p.colorValue, "lightgreen" );
-
-        if( p.quality === "low" ){
-            this.sphereDetail = 0;
-            this.radialSegments = 5;
-        }else if( p.quality === "medium" ){
-            this.sphereDetail = 1;
-            this.radialSegments = 10;
-        }else if( p.quality === "high" ){
-            this.sphereDetail = 2;
-            this.radialSegments = 20;
-        }else{
-            this.sphereDetail = defaults( p.sphereDetail, 1 );
-            this.radialSegments = defaults( p.radialSegments, 10 );
-        }
-        this.disableImpostor = defaults( p.disableImpostor, false );
 
         StructureRepresentation.prototype.init.call( this, p );
 
