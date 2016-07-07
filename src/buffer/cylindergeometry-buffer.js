@@ -16,14 +16,22 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     var p = params || {};
 
-    var radiusSegments = defaults( p.radiusSegments, 10 );
+    var radialSegments = defaults( p.radialSegments, 10 );
+    var openEnded = defaults( p.openEnded, true );
 
     this.updateNormals = true;
 
     var matrix = new Matrix4().makeRotationX( Math.PI/ 2  );
 
     // FIXME params.cap
-    this.geo = new CylinderGeometry( 1, 1, 1, radiusSegments, 1, true );
+    this.geo = new CylinderGeometry(
+        1,  // radiusTop,
+        1,  // radiusBottom,
+        1,  // height,
+        radialSegments  // radialSegments,
+        1,  // heightSegments,
+        openEnded  //openEnded
+    );
     this.geo.applyMatrix( matrix );
 
     var n = from.length;

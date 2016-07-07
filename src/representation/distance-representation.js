@@ -28,7 +28,7 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Array[]} atomPair - list of pairs of selection strings, see {@link Selection}
- * @property {Integer} radiusSegments - cylinder quality (number of segments)
+ * @property {Integer} radialSegments - cylinder quality (number of segments)
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  */
 
@@ -79,7 +79,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         atomPair: {
             type: "hidden", rebuild: true
         },
-        radiusSegments: {
+        radialSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         disableImpostor: {
@@ -97,13 +97,13 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         p.radius = defaults( p.radius, this.defaultSize );
 
         if( p.quality === "low" ){
-            this.radiusSegments = 5;
+            this.radialSegments = 5;
         }else if( p.quality === "medium" ){
-            this.radiusSegments = 10;
+            this.radialSegments = 10;
         }else if( p.quality === "high" ){
-            this.radiusSegments = 20;
+            this.radialSegments = 20;
         }else{
-            this.radiusSegments = defaults( p.radiusSegments, 10 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
         this.disableImpostor = defaults( p.disableImpostor, false );
 
@@ -234,7 +234,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
-                radiusSegments: this.radiusSegments,
+                radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
             } )

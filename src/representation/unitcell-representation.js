@@ -38,7 +38,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
-        radiusSegments: {
+        radialSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         disableImpostor: {
@@ -58,16 +58,16 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
-            this.radiusSegments = 5;
+            this.radialSegments = 5;
         }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
-            this.radiusSegments = 10;
+            this.radialSegments = 10;
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
-            this.radiusSegments = 20;
+            this.radialSegments = 20;
         }else{
             this.sphereDetail = defaults( p.sphereDetail, 1 );
-            this.radiusSegments = defaults( p.radiusSegments, 10 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
         this.disableImpostor = defaults( p.disableImpostor, false );
 
@@ -173,7 +173,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
-                radiusSegments: this.radiusSegments,
+                radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
             } )

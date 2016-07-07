@@ -39,7 +39,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         ssBorder: {
             type: "boolean", rebuild: true
         },
-        radiusSegments: {
+        radialSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         disableImpostor: {
@@ -56,13 +56,13 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         p.scale = defaults( p.scale, 1.0 );
 
         if( p.quality === "low" ){
-            this.radiusSegments = 5;
+            this.radialSegments = 5;
         }else if( p.quality === "medium" ){
-            this.radiusSegments = 10;
+            this.radialSegments = 10;
         }else if( p.quality === "high" ){
-            this.radiusSegments = 20;
+            this.radialSegments = 20;
         }else{
-            this.radiusSegments = defaults( p.radiusSegments, 10 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
         this.disableImpostor = defaults( p.disableImpostor, false );
 
@@ -126,7 +126,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
-                radiusSegments: this.radiusSegments,
+                radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
             } )

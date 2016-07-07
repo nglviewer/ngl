@@ -44,7 +44,7 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         maxAngle: {
             type: "integer", max: 180, min: 0, rebuild: true
         },
-        radiusSegments: {
+        radialSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         disableImpostor: {
@@ -59,13 +59,13 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         p.radius = defaults( p.radius, this.defaultSize );
 
         if( p.quality === "low" ){
-            this.radiusSegments = 5;
+            this.radialSegments = 5;
         }else if( p.quality === "medium" ){
-            this.radiusSegments = 10;
+            this.radialSegments = 10;
         }else if( p.quality === "high" ){
-            this.radiusSegments = 20;
+            this.radialSegments = 20;
         }else{
-            this.radiusSegments = defaults( p.radiusSegments, 10 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
         this.disableImpostor = defaults( p.disableImpostor, false );
 
@@ -120,7 +120,7 @@ ContactRepresentation.prototype = Object.assign( Object.create(
             this.getBufferParams( {
                 shift: 0,
                 cap: true,
-                radiusSegments: this.radiusSegments,
+                radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
             } )

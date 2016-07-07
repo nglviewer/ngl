@@ -96,7 +96,7 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
             bondData.pickingColor2,
             this.getBufferParams( {
                 shrink: this.shrink,
-                radiusSegments: this.radiusSegments,
+                radialSegments: this.radialSegments,
                 dullInterior: true
             } ),
             this.disableImpostor

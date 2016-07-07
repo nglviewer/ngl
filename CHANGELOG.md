@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file, following t
 - `.get/setOrientation` return/argument changed
 - enable SDF font as the default TextBuffer class only on Chrome
 - support for building using three-jsnext
+- renamed `radiusSegments` parameter to `radialSegments`
 
 ### Removed
 - python-based build scripts

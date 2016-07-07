@@ -21,7 +21,7 @@ import LineBuffer from "../buffer/line-buffer.js";
  * @mixes StructureRepresentationParameters
  *
  * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
- * @property {Integer} radiusSegments - cylinder quality (number of segments)
+ * @property {Integer} radialSegments - cylinder quality (number of segments)
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  * @property {Float} aspectRatio - size difference between atom and bond radii
  * @property {Boolean} lineOnly - render only bonds, and only as lines
@@ -60,7 +60,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         sphereDetail: {
             type: "integer", max: 3, min: 0, rebuild: "impostor"
         },
-        radiusSegments: {
+        radialSegments: {
             type: "integer", max: 25, min: 5, rebuild: "impostor"
         },
         disableImpostor: {
@@ -91,16 +91,16 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         if( p.quality === "low" ){
             this.sphereDetail = 0;
-            this.radiusSegments = 5;
+            this.radialSegments = 5;
         }else if( p.quality === "medium" ){
             this.sphereDetail = 1;
-            this.radiusSegments = 10;
+            this.radialSegments = 10;
         }else if( p.quality === "high" ){
             this.sphereDetail = 2;
-            this.radiusSegments = 20;
+            this.radialSegments = 20;
         }else{
             this.sphereDetail = defaults( p.sphereDetail, 1 );
-            this.radiusSegments = defaults( p.radiusSegments, 10 );
+            this.radialSegments = defaults( p.radialSegments, 10 );
         }
         this.disableImpostor = defaults( p.disableImpostor, false );
 
@@ -195,7 +195,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bondData.pickingColor2,
                 this.getBufferParams( {
                     cap: true,
-                    radiusSegments: this.radiusSegments,
+                    radialSegments: this.radialSegments,
                     disableImpostor: this.disableImpostor,
                     dullInterior: true
                 } )

@@ -158,7 +158,7 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
                     scope.getBufferParams( {
                         shift: 0,
                         cap: true,
-                        radiusSegments: scope.radiusSegments,
+                        radialSegments: scope.radialSegments,
                         disableImpostor: scope.disableImpostor,
                         dullInterior: true
                     } )
