@@ -145,6 +145,24 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }else{
 
+            var cylinderBuffer = new CylinderBuffer(
+                bondData.position1,
+                bondData.position2,
+                bondData.color1,
+                bondData.color2,
+                bondData.radius,
+                bondData.pickingColor1,
+                bondData.pickingColor2,
+                this.getBufferParams( {
+                    openEnded: this.openEnded,
+                    radialSegments: this.radialSegments,
+                    disableImpostor: this.disableImpostor,
+                    dullInterior: true
+                } )
+            );
+
+            bufferList.push( cylinderBuffer );
+
             if( !this.cylinderOnly ){
 
                 var atomData = this.getAtomData( sview );
@@ -164,23 +182,6 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 bufferList.push( sphereBuffer );
 
             }
-            var cylinderBuffer = new CylinderBuffer(
-                bondData.position1,
-                bondData.position2,
-                bondData.color1,
-                bondData.color2,
-                bondData.radius,
-                bondData.pickingColor1,
-                bondData.pickingColor2,
-                this.getBufferParams( {
-                    cap: true,
-                    radialSegments: this.radialSegments,
-                    disableImpostor: this.disableImpostor,
-                    dullInterior: true
-                } )
-            );
-
-            bufferList.push( cylinderBuffer );
 
         }
 
@@ -216,29 +217,45 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }else{
 
-            var atomData = this.getAtomData( data.sview, what );
-            var sphereData = {};
             var cylinderData = {};
 
             if( !what || what.position ){
-                sphereData.position = atomData.position;
                 cylinderData.position1 = bondData.position1;
                 cylinderData.position2 = bondData.position2;
             }
 
             if( !what || what.color ){
-                sphereData.color = atomData.color;
                 cylinderData.color = bondData.color1;
                 cylinderData.color2 = bondData.color2;
             }
 
             if( !what || what.radius ){
-                sphereData.radius = atomData.radius;
                 cylinderData.radius = bondData.radius;
             }
 
-            data.bufferList[ 0 ].setAttributes( sphereData );
-            data.bufferList[ 1 ].setAttributes( cylinderData );
+            data.bufferList[ 0 ].setAttributes( cylinderData );
+
+            if( !this.cylinderOnly ){
+
+                var atomData = this.getAtomData( data.sview, what );
+                
+                var sphereData = {};
+
+                if( !what || what.position ){
+                    sphereData.position = atomData.position;
+                }
+
+                if( !what || what.color ){
+                    sphereData.color = atomData.color;
+                }
+
+                if( !what || what.radius ){
+                    sphereData.radius = atomData.radius;
+                }
+
+                data.bufferList[ 1 ].setAttributes( sphereData );
+
+            }
 
         }
 
