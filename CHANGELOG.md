@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file, following t
 - stage.hovered signal
 - parsing of "chem comp" cif files
 - experimental "axes" representation showing the principal axes of an atom selection
+- added cone & ellipsoid buffers
 
 ### Changed
 - reorganized everything to use es6 modules
