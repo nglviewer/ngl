@@ -15,21 +15,30 @@ function GeometryBuffer( position, color, pickingColor, params ){
 
     var p = params || {};
 
-    // required properties:
-    // - geo
-
+    // required property of subclasses
     var geo = this.geo;
-
+    
     var n = position.length / 3;
-    var m = geo.vertices.length;
-    var o = geo.faces.length;
+    var m, o;
+
+    if( geo.vertices && geo.faces ){
+        this.geoPosition = positionFromGeometry( geo );
+        this.geoNormal = normalFromGeometry( geo );
+        this.geoIndex = indexFromGeometry( geo );
+        m = geo.vertices.length;
+        o = geo.faces.length;
+    }else{
+        this.geoPosition = geo.attributes.position.array;
+        this.geoNormal = geo.attributes.normal.array;
+        this.geoIndex = geo.index.array;
+        m = this.geoPosition.length;
+        o = this.geoIndex.length / 3;
+    }
 
     this.size = n * m;
     this.positionCount = n;
-
-    this.geoPosition = positionFromGeometry( geo );
-    this.geoNormal = normalFromGeometry( geo );
-    this.geoIndex = indexFromGeometry( geo );
+    this.geoPositionCount = m;
+    this.geoFacesCount = o;
 
     this.transformedGeoPosition = new Float32Array( m * 3 );
     this.transformedGeoNormal = new Float32Array( m * 3 );
@@ -113,7 +122,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
             }
 
             var n = this.positionCount;
-            var m = this.geo.vertices.length;
+            var m = this.geoPositionCount;
 
             for( var i = 0; i < n; ++i ){
 
@@ -188,8 +197,8 @@ GeometryBuffer.prototype = Object.assign( Object.create(
         var meshIndex = this.meshIndex;
 
         var n = this.positionCount;
-        var m = this.geo.vertices.length;
-        var o = this.geo.faces.length;
+        var m = this.geoPositionCount;
+        var o = this.geoFacesCount;
 
         var p, i, j, q;
         var o3 = o * 3;

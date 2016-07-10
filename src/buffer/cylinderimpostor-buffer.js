@@ -17,7 +17,7 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     var p = params || {};
 
-    this.cap = defaults( p.cap, true );
+    this.openEnded = defaults( p.openEnded, false );
 
     this.impostor = true;
     this.count = from.length / 3;
@@ -69,11 +69,6 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.makeMapping();
 
-    // FIXME
-    // if( this.cap ){
-    //     this.material.defines[ "CAP" ] = 1;
-    // }
-
 }
 
 CylinderImpostorBuffer.prototype = Object.assign( Object.create(
@@ -86,7 +81,7 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
 
         var material = Buffer.prototype.getMaterial.call( this, type );
 
-        if( this.cap ){
+        if( !this.openEnded ){
             material.defines.CAP = 1;
         }
 

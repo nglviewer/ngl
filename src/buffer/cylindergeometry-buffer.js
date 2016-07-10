@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Vector3, CylinderGeometry } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, CylinderGeometry, CylinderBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -21,16 +21,22 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.updateNormals = true;
 
-    var matrix = new Matrix4().makeRotationX( Math.PI/ 2  );
+    var matrix = new Matrix4().makeRotationX( Math.PI / 2  );
 
-    // FIXME params.cap
-    this.geo = new CylinderGeometry(
+    var geoCtor;
+    if( openEnded ){
+        geoCtor = CylinderGeometry;
+    }else{
+        geoCtor = CylinderBufferGeometry;
+    }
+
+    this.geo = new geoCtor(
         1,  // radiusTop,
         1,  // radiusBottom,
         1,  // height,
-        radialSegments  // radialSegments,
+        radialSegments,  // radialSegments,
         1,  // heightSegments,
-        openEnded  //openEnded
+        openEnded  // openEnded
     );
     this.geo.applyMatrix( matrix );
 
@@ -50,8 +56,6 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
         this, this._position, this._color, this._pickingColor, p
     );
 
-    this.setPositionTransform( this._from, this._to, this._radius );
-
     this.setAttributes( {
         "position1": from,
         "position2": to,
@@ -70,7 +74,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
 
     constructor: CylinderGeometryBuffer,
 
-    setPositionTransform: function( from, to, radius ){
+    applyPositionTransform: function(){
 
         var r;
         var scale = new Vector3();
@@ -78,19 +82,19 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var target = new Vector3();
         var up = new Vector3( 0, 1, 0 );
 
-        this.applyPositionTransform = function( matrix, i, i3 ){
+        return function( matrix, i, i3 ){
 
-            eye.fromArray( from, i3 );
-            target.fromArray( to, i3 );
+            eye.fromArray( this._from, i3 );
+            target.fromArray( this._to, i3 );
             matrix.lookAt( eye, target, up );
 
-            r = radius[ i ];
+            r = this._radius[ i ];
             scale.set( r, r, eye.distanceTo( target ) );
             matrix.scale( scale );
 
         };
 
-    },
+    }(),
 
     setAttributes: function( data ){
 
@@ -99,7 +103,6 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var geoData = {};
 
         if( data.position1 && data.position2 ){
-
             calculateCenterArray(
                 data.position1, data.position2, this.__center
             );
@@ -109,46 +112,28 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
             calculateCenterArray(
                 this.__center, data.position2, this._position, n
             );
-
             this._from.set( data.position1 );
             this._from.set( this.__center, n );
-
             this._to.set( this.__center );
             this._to.set( data.position2, n );
-
             geoData.position = this._position;
-
         }
 
         if( data.color && data.color2 ){
-
             this._color.set( data.color );
             this._color.set( data.color2, n );
-
             geoData.color = this._color;
-
         }
 
         if( data.pickingColor && data.pickingColor2 ){
-
             this._pickingColor.set( data.pickingColor );
             this._pickingColor.set( data.pickingColor2, n );
-
             geoData.pickingColor = this._pickingColor;
-
         }
 
         if( data.radius ){
-
             this._radius.set( data.radius );
             this._radius.set( data.radius, m );
-
-        }
-
-        if( ( data.position1 && data.position2 ) || data.radius ){
-
-            this.setPositionTransform( this._from, this._to, this._radius );
-
         }
 
         GeometryBuffer.prototype.setAttributes.call( this, geoData );

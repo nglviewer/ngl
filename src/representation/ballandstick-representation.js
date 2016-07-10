@@ -22,6 +22,7 @@ import LineBuffer from "../buffer/line-buffer.js";
  *
  * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
  * @property {Integer} radialSegments - cylinder quality (number of segments)
+ * @property {Boolean} openEnded - capped or not
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  * @property {Float} aspectRatio - size difference between atom and bond radii
  * @property {Boolean} lineOnly - render only bonds, and only as lines
@@ -59,6 +60,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         sphereDetail: true,
         radialSegments: true,
+        openEnded: true,
         disableImpostor: true,
         aspectRatio: {
             type: "number", precision: 1, max: 10.0, min: 1.0

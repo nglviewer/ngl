@@ -498,6 +498,7 @@ import UnitcellRepresentation from "./representation/unitcell-representation";
 import BufferRepresentation from "./representation/buffer-representation";
 import SphereBuffer from "./buffer/sphere-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
+import ConeBuffer from "./buffer/cone-buffer.js";
 
 //
 
@@ -673,6 +674,11 @@ export {
      * @see {@link CylinderBuffer}
      */
     CylinderBuffer,
+    /**
+     * Cone buffer class
+     * @see {@link ConeBuffer}
+     */
+    ConeBuffer,
 
     /**
      * Signal class

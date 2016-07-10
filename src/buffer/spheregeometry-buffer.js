@@ -16,8 +16,7 @@ function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
     var detail = defaults( params.sphereDetail, 1 );
 
     this.geo = new IcosahedronGeometry( 1, detail );
-
-    this.setPositionTransform( radius );
+    this._radius = radius;
 
     GeometryBuffer.call( this, position, color, pickingColor, params );
 
@@ -29,25 +28,25 @@ SphereGeometryBuffer.prototype = Object.assign( Object.create(
 
     constructor: SphereGeometryBuffer,
 
-    setPositionTransform: function( radius ){
+    applyPositionTransform: function(){
 
         var r;
         var scale = new Vector3();
 
-        this.applyPositionTransform = function( matrix, i ){
+        return function( matrix, i ){
 
-            r = radius[ i ];
+            r = this._radius[ i ];
             scale.set( r, r, r );
             matrix.scale( scale );
 
         };
 
-    },
+    }(),
 
     setAttributes: function( data ){
 
         if( data.radius ){
-            this.setPositionTransform( data.radius );
+            this._radius = data.radius;
         }
 
         GeometryBuffer.prototype.setAttributes.call( this, data );

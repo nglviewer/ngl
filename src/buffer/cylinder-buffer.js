@@ -36,8 +36,6 @@ function CylinderBuffer( from, to, color, color2, radius, pickingColor, pickingC
 
     if( !ExtensionFragDepth || p.disableImpostor ){
 
-        // FIXME cap support missing
-
         return new CylinderGeometryBuffer(
             from, to, color, color2, radius,
             pickingColor, pickingColor2, params

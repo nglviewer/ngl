@@ -173,6 +173,11 @@ Representation.prototype = {
                 type: "integer", max: 25, min: 5, rebuild: "impostor"
             };
         }
+        if( tp.openEnded === true ){
+            tp.openEnded = {
+                type: "boolean", rebuild: "impostor"
+            };
+        }
         if( tp.disableImpostor === true ){
             tp.disableImpostor = {
                 type: "boolean", rebuild: true
@@ -195,6 +200,10 @@ Representation.prototype = {
             if( tp.radialSegments ){
                 this.radialSegments = defaults( p.radialSegments, 10 );
             }
+        }
+
+        if( tp.openEnded ){
+            this.openEnded = defaults( p.openEnded, true );
         }
 
         if( tp.disableImpostor ){

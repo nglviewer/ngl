@@ -156,8 +156,7 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
                     uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     uniformArray3( n - 1, tc.r, tc.g, tc.b ),
                     scope.getBufferParams( {
-                        shift: 0,
-                        cap: true,
+                        openEnded: false,
                         radialSegments: scope.radialSegments,
                         disableImpostor: scope.disableImpostor,
                         dullInterior: true

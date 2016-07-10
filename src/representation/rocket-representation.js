@@ -40,6 +40,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", rebuild: true
         },
         radialSegments: true,
+        openEnded: true,
         disableImpostor: true
 
     }, StructureRepresentation.prototype.parameters ),
@@ -50,6 +51,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
         p.radius = defaults( p.radius, 1.5 );
         p.scale = defaults( p.scale, 1.0 );
+        p.openEnded = defaults( p.openEnded, false );
 
         this.localAngle = defaults( p.localAngle, 30 );
         this.centerDist = defaults( p.centerDist, 2.5 );
@@ -109,8 +111,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData.pickingColor,
             axisData.pickingColor,
             this.getBufferParams( {
-                shift: 0,
-                cap: true,
+                openEnded: this.openEnded,
                 radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
