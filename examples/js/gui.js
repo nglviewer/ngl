@@ -1785,7 +1785,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
     if( ( component.parent.type === "structure" ||
             component.parent.type === "trajectory" ) &&
-        component.repr.selection.type === "selection"
+        component.repr.selection && component.repr.selection.type === "selection"
     ){
 
         container.add(
