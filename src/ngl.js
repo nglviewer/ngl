@@ -497,6 +497,7 @@ import UnitcellRepresentation from "./representation/unitcell-representation";
 
 import BufferRepresentation from "./representation/buffer-representation";
 import SphereBuffer from "./buffer/sphere-buffer.js";
+import EllipsoidBuffer from "./buffer/ellipsoid-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
 import ConeBuffer from "./buffer/cone-buffer.js";
 
@@ -669,6 +670,11 @@ export {
      * @see {@link SphereBuffer}
      */
     SphereBuffer,
+    /**
+     * Ellipsoid buffer class
+     * @see {@link EllipsoidBuffer}
+     */
+    EllipsoidBuffer,
     /**
      * Cylinder buffer class
      * @see {@link CylinderBuffer}

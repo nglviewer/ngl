@@ -13,12 +13,14 @@ import GeometryBuffer from "./geometry-buffer.js";
 
 function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
 
-    var detail = defaults( params.sphereDetail, 1 );
+    var p = params || {};
+
+    var detail = defaults( p.sphereDetail, 1 );
 
     this.geo = new IcosahedronGeometry( 1, detail );
     this._radius = radius;
 
-    GeometryBuffer.call( this, position, color, pickingColor, params );
+    GeometryBuffer.call( this, position, color, pickingColor, p );
 
 }
 
