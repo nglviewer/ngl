@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file, following t
 - stage.clicked signal (renamed from .onPicking)
 - stage.hovered signal
 - parsing of "chem comp" cif files
+- experimental "axes" representation showing the principal axes of an atom selection
 
 ### Changed
 - reorganized everything to use es6 modules
