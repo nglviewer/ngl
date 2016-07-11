@@ -32,7 +32,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
             type: "select", options: LabelFactory.types, rebuild: true
         },
         labelText: {
-            type: "hidden"
+            type: "hidden", rebuild: true
         },
         fontFamily: {
             type: "select", options: {
