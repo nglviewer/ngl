@@ -27,6 +27,7 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Float} labelSize - size of the distance label
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
+ * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
  * @property {Array[]} atomPair - list of pairs of selection strings, see {@link Selection}
  * @property {Integer} radialSegments - cylinder quality (number of segments)
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
@@ -76,6 +77,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         labelVisible: {
             type: "boolean"
         },
+        labelZOffset: {
+            type: "number", precision: 1, max: 20, min: -20, buffer: true
+        },
         atomPair: {
             type: "hidden", rebuild: true
         },
@@ -99,6 +103,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.labelSize = defaults( p.labelSize, 2.0 );
         this.labelColor = defaults( p.labelColor, 0xFFFFFF );
         this.labelVisible = defaults( p.labelVisible, true );
+        this.labelZOffset = defaults( p.labelZOffset, 0.5 );
         this.atomPair = defaults( p.atomPair, [] );
 
         StructureRepresentation.prototype.init.call( this, p );
@@ -196,6 +201,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
                 fontStyle: this.fontStyle,
                 fontWeight: this.fontWeight,
                 sdf: this.sdf,
+                zOffset: this.labelZOffset,
                 opacity: 1.0,
                 visible: this.labelVisible
             } )
@@ -234,14 +240,17 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    updateData: function( what, data ){
+    update: function( what ){
 
-        if( !what || what.position ){
-            var distanceData = this.getDistanceData( data.sview, this.atomPair );
-            data.bondSet = distanceData.bondSet;
-            data.bondStore = distanceData.bondStore;
-            data.position = distanceData.position;
+        if( what.position ){
+            this.build();
+        }else{
+            StructureRepresentation.prototype.update.call( this, what );
         }
+
+    },
+
+    updateData: function( what, data ){
 
         var bondParams = {
             bondSet: data.bondSet,
@@ -252,15 +261,6 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var cylinderData = {};
         var textData = {};
         var n = this.atomPair.length;
-
-        if( what.position ){
-            textData.position = data.position;
-            cylinderData.position = calculateCenterArray(
-                bondData.position1, bondData.position2
-            );
-            cylinderData.position1 = bondData.position1;
-            cylinderData.position2 = bondData.position2;
-        }
 
         if( what.labelSize ){
             textData.size = uniformArray( n, this.labelSize );
@@ -292,11 +292,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         );
 
         if( this.textBuffer ){
-
             this.textBuffer.setVisibility(
                 this.labelVisible && this.visible
             );
-
         }
 
         if( !noRenderRequest ) this.viewer.requestRender();
@@ -311,15 +309,11 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var what = {};
 
         if( params && params.labelSize ){
-
             what.labelSize = true;
-
         }
 
         if( params && params.labelColor ){
-
             what.labelColor = true;
-
         }
 
         StructureRepresentation.prototype.setParameters.call(
@@ -327,9 +321,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         );
 
         if( params && params.labelVisible !== undefined ){
-
             this.setVisibility( this.visible );
-
         }
 
         return this;
