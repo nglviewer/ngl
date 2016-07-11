@@ -18,13 +18,17 @@ import {
 
 
 /**
- * Propagates a depth-first search. TODO: Iterative deepening search instead?
- * bondGraph[ai1] is an array of bonded atom IDs.
- * visited is the current path of atoms (JS array)
+ * Propagates a depth-first search.
  * The current set of neighbours bondGraph[visited[visited.length-1]] is
- * always checked
- * If maxDepth is positive, search propagates (decrementing maxDepth)
+ * always checked.
+ * If maxDepth is positive, search propagates (decrementing maxDepth).
+ * TODO: Iterative deepening search instead?
  *
+ * @private
+ * @param {Array[]} bondGraph - bond graph, array of array of bonded atom indices
+ * @param {Array} visited - current path of atoms
+ * @param {Integer} maxDepth - max recursion depth
+ * @return {Boolean} whether to propagate the search or not
  */
 function propagateSearch( bondGraph, visited, maxDepth ) {
 

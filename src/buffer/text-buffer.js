@@ -237,6 +237,44 @@ TextAtlas.prototype = {
 };
 
 
+/**
+ * Text buffer parameter object.
+ * @typedef {Object} TextBufferParameters - text buffer parameters
+ *
+ * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {String} labelType - type of the label, one of:
+ *                                 "atomname", "atomindex", "occupancy", "bfactor",
+ *                                 "serial", "element", "atom", "resname", "resno",
+ *                                 "res", "text", "qualified". When set to "text", the
+ *                                 `labelText` list is used.
+ * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
+ *                                   to take effect
+ * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
+ * @property {String} fontStyle - font style, "normal" or "italic"
+ * @property {String} fontWeight - font weight, "normal" or "bold"
+ * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
+ * @property {Float} xOffset - offset in x-direction
+ * @property {Float} yOffset - offset in y-direction
+ * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ */
+
+
+/**
+ * Text buffer
+ * @class
+ * @augments {Buffer}
+ * @param {Float32Array} position - positions
+ *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
+ * @param {Float32Array} size - sizes
+ *                               [s1, s2, ..., sN]
+ * @param {Float32Array} color - colors
+ *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {String[]} text - text strings
+ *                               ["t1", "t2", ..., "tN"]
+ * @param {TextBufferParameters} params - parameters object
+ */
 function TextBuffer( position, size, color, text, params ){
 
     var p = params || {};

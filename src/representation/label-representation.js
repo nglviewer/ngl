@@ -12,6 +12,38 @@ import StructureRepresentation from "./structure-representation.js";
 import TextBuffer from "../buffer/text-buffer.js";
 
 
+/**
+ * Label representation parameter object.
+ * @typedef {Object} LabelRepresentationParameters - label representation parameters
+ *
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {String} labelType - type of the label, one of:
+ *                                 "atomname", "atomindex", "occupancy", "bfactor",
+ *                                 "serial", "element", "atom", "resname", "resno",
+ *                                 "res", "text", "qualified". When set to "text", the
+ *                                 `labelText` list is used.
+ * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
+ *                                   to take effect
+ * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
+ * @property {String} fontStyle - font style, "normal" or "italic"
+ * @property {String} fontWeight - font weight, "normal" or "bold"
+ * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
+ * @property {Float} xOffset - offset in x-direction
+ * @property {Float} yOffset - offset in y-direction
+ * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ */
+
+
+/**
+ * Label representation object
+ * @class
+ * @extends StructureRepresentation
+ * @param {Structure} structure - the structure to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {LabelRepresentationParameters} params - label representation parameters
+ */
 function LabelRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );

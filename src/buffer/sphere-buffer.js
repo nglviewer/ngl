@@ -22,7 +22,7 @@ import SphereImpostorBuffer from "./sphereimpostor-buffer.js";
  *                               [r1, r2, ..., rN]
  * @param {Float32Array} [pickingColor] - picking colors
  *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {BufferParams} params - parameters object
+ * @param {BufferParameters} params - parameters object
  */
 function SphereBuffer( position, color, radius, pickingColor, params ){
 
