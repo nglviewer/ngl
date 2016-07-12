@@ -123,7 +123,7 @@ function Structure( name, path ){
     this.atomMap = new AtomMap( this );
     this.residueMap = new ResidueMap( this );
 
-    this.atomSet = this.getAtomSet( this.selection );
+    this.atomSet = this.getAtomSet();
     this.bondSet = this.getBondSet();
 
     this.center = new Vector3();
@@ -152,7 +152,7 @@ Structure.prototype = {
 
         this.atomSetCache = {};
 
-        this.atomSet = this.getAtomSet( this.selection );
+        this.atomSet = this.getAtomSet();
         this.bondSet = this.getBondSet();
 
         for( var name in this.atomSetDict ){
@@ -225,6 +225,8 @@ Structure.prototype = {
 
     getBondSet: function( selection ){
 
+        // TODO implement selection parameter
+
         if( Debug ) Log.time( "Structure.getBondSet" );
 
         var n = this.bondStore.count;
@@ -255,6 +257,8 @@ Structure.prototype = {
     },
 
     getBackboneBondSet: function( selection ){
+
+        // TODO implement selection parameter
 
         if( Debug ) Log.time( "Structure.getBackboneBondSet" );
 
@@ -287,6 +291,8 @@ Structure.prototype = {
     },
 
     getRungBondSet: function( selection ){
+
+        // TODO implement selection parameter
 
         if( Debug ) Log.time( "Structure.getRungBondSet" );
 
