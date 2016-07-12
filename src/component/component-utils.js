@@ -8,6 +8,7 @@
 import { Debug, Log } from "../globals.js";
 import StructureComponent from "./structure-component.js";
 import SurfaceComponent from "./surface-component.js";
+import GeometryComponent from "./geometry-component.js";
 import ScriptComponent from "./script-component.js";
 
 
@@ -22,6 +23,10 @@ function makeComponent( stage, object, params ){
     }else if( object.type == "Surface" || object.type === "Volume" ){
 
         component = new SurfaceComponent( stage, object, params );
+
+    }else if( object.type === "Geometry" ){
+
+        component = new GeometryComponent( stage, object, params );
 
     }else if( object.type === "Script" ){
 

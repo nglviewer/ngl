@@ -18,6 +18,10 @@ import Representation from "./representation.js";
  */
 function BufferRepresentation( buffer, viewer, params ){
 
+    if( !Array.isArray( buffer ) ){
+        buffer = [ buffer ];
+    }
+
     Representation.call( this, buffer, viewer, params );
 
     this.buffer = buffer;
@@ -48,7 +52,7 @@ BufferRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        this.bufferList.push( this.buffer );
+        this.bufferList.push.apply( this.bufferList, this.buffer );
 
     },
 

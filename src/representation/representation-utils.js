@@ -10,6 +10,8 @@ import { Debug, Log, RepresentationRegistry } from "../globals.js";
 import Structure from "../structure/structure.js";
 import Surface from "../surface/surface.js";
 import Volume from "../surface/volume.js";
+import Trajectory from "../trajectory/trajectory.js";
+import Geometry from "../geometry/geometry.js";
 
 import BufferRepresentation from "./buffer-representation.js";
 import SurfaceRepresentation from "./surface-representation.js";
@@ -23,11 +25,7 @@ function makeRepresentation( type, object, viewer, params ){
 
     var ReprClass;
 
-    if( type === "buffer" ){
-
-        ReprClass = BufferRepresentation;
-
-    }else if( object instanceof Structure ){
+    if( object instanceof Structure ){
 
         ReprClass = RepresentationRegistry.get( type );
 
@@ -62,6 +60,15 @@ function makeRepresentation( type, object, viewer, params ){
     }else if( object instanceof Trajectory ){
 
         ReprClass = TrajectoryRepresentation;
+
+    }else if( object instanceof Geometry ){
+
+        ReprClass = BufferRepresentation;
+        object = object.getBufferList();
+
+    }else if( type === "buffer" ){
+
+        ReprClass = BufferRepresentation;
 
     }else{
 

@@ -528,6 +528,10 @@ import XmlParser from "./parser/xml-parser.js";
 
 //
 
+import Geometry from "./geometry/geometry.js";
+
+//
+
 DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
 DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
 DatasourceRegistry.add( "http", new PassThroughDatasource() );
@@ -536,7 +540,7 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix3, Matrix4, Vector3, Quaternion } from "../lib/three.es6.js";
+import { Matrix3, Matrix4, Vector3, Quaternion, Color } from "../lib/three.es6.js";
 
 //
 
@@ -626,6 +630,14 @@ var Version = "v0.8.0dev";
  * @see {@link http://threejs.org/docs/#Reference/Math/Quaternion}
  */
 
+/**
+ * Color class from three.js
+ * @name Color
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Color}
+ */
+
 
 export {
     Version,
@@ -687,6 +699,12 @@ export {
     ConeBuffer,
 
     /**
+     * Geometry class
+     * @see {@link Geometry}
+     */
+    Geometry,
+
+    /**
      * Signal class
      * @see {@link Signal}
      */
@@ -711,5 +729,10 @@ export {
      * Quaternion class
      * @see {@link Quaternion}
      */
-    Quaternion
+    Quaternion,
+    /**
+     * Color class
+     * @see {@link Color}
+     */
+    Color
 };

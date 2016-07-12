@@ -68,7 +68,7 @@ NGL.createParameterInput = function( p ){
 
     }else{
 
-        NGL.warn(
+        console.warn(
             "NGL.createParameterInput: unknown parameter type " +
             "'" + p.type + "'"
         );
@@ -1156,6 +1156,10 @@ NGL.SidebarWidget = function( stage ){
 
             widget = new NGL.SurfaceComponentWidget( component, stage );
 
+        }else if( component.type === "geometry" ){
+
+            widget = new NGL.GeometryComponentWidget( component, stage );
+
         }else if( component.type === "script" ){
 
             widget = new NGL.ScriptComponentWidget( component, stage );
@@ -1166,7 +1170,7 @@ NGL.SidebarWidget = function( stage ){
 
         }else{
 
-            NGL.warn( "NGL.SidebarWidget: component type unknown", component );
+            console.warn( "NGL.SidebarWidget: component type unknown", component );
             return;
 
         }
@@ -1650,6 +1654,64 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .addMenuEntry( "Representation", repr )
         .addMenuEntry(
             "File", new UI.Text( component.surface.path )
+                        .setMaxWidth( "100px" )
+                        .setWordWrap( "break-word" ) );
+
+    // Fill container
+
+    container
+        .addStatic( componentPanel )
+        .add( reprContainer );
+
+    return container;
+
+};
+
+
+NGL.GeometryComponentWidget = function( component, stage ){
+
+    var signals = component.signals;
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
+
+    var reprContainer = new UI.Panel();
+
+    signals.representationAdded.add( function( repr ){
+
+        reprContainer.add(
+            new NGL.RepresentationComponentWidget( repr, stage )
+        );
+
+    } );
+
+    // Add representation
+
+    var repr = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
+
+            var reprOptions = {
+                "": "[ add ]",
+                "buffer": "buffer"
+            };
+            return reprOptions;
+
+        })() )
+        .onChange( function(){
+
+            component.addRepresentation( repr.getValue() );
+            repr.setValue( "" );
+            componentPanel.setMenuDisplay( "none" );
+
+        } );
+
+    // Component panel
+
+    var componentPanel = new UI.ComponentPanel( component )
+        .setDisplay( "inline-block" )
+        .setMargin( "0px" )
+        .addMenuEntry( "Representation", repr )
+        .addMenuEntry(
+            "File", new UI.Text( component.geometry.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
