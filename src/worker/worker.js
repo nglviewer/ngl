@@ -17,7 +17,6 @@ function Worker( name ){
 
     var blobUrl = URL.createObjectURL( WorkerRegistry.get( name ) );
     var worker = new window.Worker( blobUrl );
-    URL.revokeObjectURL( blobUrl );
 
     WorkerRegistry.activeWorkerCount += 1;
 
@@ -74,10 +73,10 @@ function Worker( name ){
         if( Debug ) Log.time( "Worker.postMessage " + name + " #" + postCount );
 
         try{
-            worker.postMessage.call( worker, aMessage, transferList );
+            worker.postMessage( aMessage, transferList );
         }catch( error ){
             Log.error( "worker.post:", error );
-            worker.postMessage.call( worker, aMessage );
+            worker.postMessage( aMessage );
         }
 
         pending += 1;
@@ -91,6 +90,7 @@ function Worker( name ){
 
         if( worker ){
             worker.terminate();
+            URL.revokeObjectURL( blobUrl );
             WorkerRegistry.activeWorkerCount -= 1;
         }else{
             Log.log( "no worker to terminate" );

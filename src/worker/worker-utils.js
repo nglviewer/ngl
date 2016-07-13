@@ -65,7 +65,7 @@ function onmessage( e ){
 
 
 function makeWorkerBlob( func, deps ){
-    var str = makeWorkerString( deps );
+    var str = "'use strict';\n\n" + makeWorkerString( deps );
     str += "\n\n\nself.func = " + func.toString() + ";";
     str += "\n\n\nself.onmessage = " + onmessage.toString() + ";";
     // console.log( str );
