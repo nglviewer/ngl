@@ -10,6 +10,7 @@ import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import ConeBuffer from "../buffer/cone-buffer.js";
+import ArrowBuffer from "../buffer/arrow-buffer.js";
 
 
 /**
@@ -21,14 +22,17 @@ import ConeBuffer from "../buffer/cone-buffer.js";
  * geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
  * geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
  * geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+ * geometry.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
  * var geoComp = stage.addComponentFromObject( geometry );
  * geoComp.addRepresentation( "buffer" );
- * 
+ *
  * @param {String} name - name
  * @param {Object} params - parameter object
+ * @param {Integer} params.aspectRatio - arrow aspect ratio, used for cylinder radius and cone length
  * @param {Integer} params.sphereDetail - sphere quality (icosahedron subdivisions)
  * @param {Integer} params.radialSegments - cylinder quality (number of segments)
  * @param {Boolean} params.disableImpostor - disable use of raycasted impostors for rendering
+ * @param {Boolean} params.openEnded - capped or not
  */
 function Geometry( name, params ){
 
@@ -36,6 +40,7 @@ function Geometry( name, params ){
 
     var p = params || {};
 
+    var aspectRatio = defaults( p.aspectRatio, 1.5 );
     var sphereDetail = defaults( p.sphereDetail, 2 );
     var radialSegments = defaults( p.radialSegments, 50 );
     var disableImpostor = defaults( p.disableImpostor, false );
@@ -62,6 +67,11 @@ function Geometry( name, params ){
     var coneTo = [];
     var coneColor = [];
     var coneRadius = [];
+
+    var arrowFrom = [];
+    var arrowTo = [];
+    var arrowColor = [];
+    var arrowRadius = [];
 
     function addElement( elm, array ){
 
@@ -106,7 +116,7 @@ function Geometry( name, params ){
      * @memberof Geometry
      * @example
      * geometry.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
-     * 
+     *
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
@@ -125,7 +135,7 @@ function Geometry( name, params ){
      * @memberof Geometry
      * @example
      * geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
-     * 
+     *
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
@@ -148,7 +158,7 @@ function Geometry( name, params ){
      * @memberof Geometry
      * @example
      * geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-     * 
+     *
      * @param {Vector3|Array} from - from position vector or array
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
@@ -169,7 +179,7 @@ function Geometry( name, params ){
      * @memberof Geometry
      * @example
      * geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
-     * 
+     *
      * @param {Vector3|Array} from - from position vector or array
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
@@ -181,6 +191,27 @@ function Geometry( name, params ){
         addElement( to, coneTo );
         addElement( color, coneColor );
         coneRadius.push( radius );
+
+    }
+
+    /**
+     * Add an arrow
+     * @instance
+     * @memberof Geometry
+     * @example
+     * geometry.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+     *
+     * @param {Vector3|Array} from - from position vector or array
+     * @param {Vector3|Array} to - to position vector or array
+     * @param {Color|Array} color - color object or array
+     * @param {Float} radius - radius value
+     */
+    function addArrow( from, to, color, radius ){
+
+        addElement( from, arrowFrom );
+        addElement( to, arrowTo );
+        addElement( color, arrowColor );
+        arrowRadius.push( radius );
 
     }
 
@@ -252,6 +283,23 @@ function Geometry( name, params ){
             buffers.push( coneBuffer );
         }
 
+        if( arrowFrom.length ){
+            var arrowBuffer = new NGL.ArrowBuffer(
+                new Float32Array( arrowFrom ),
+                new Float32Array( arrowTo ),
+                new Float32Array( arrowColor ),
+                new Float32Array( arrowRadius ),
+                undefined,  // pickingColor
+                {
+                    aspectRatio: aspectRatio,
+                    radialSegments: radialSegments,
+                    disableImpostor: disableImpostor,
+                    openEnded: openEnded,
+                }
+            );
+            buffers.push( arrowBuffer );
+        }
+
         return bufferList.concat( buffers );
 
     }
@@ -283,6 +331,11 @@ function Geometry( name, params ){
         coneColor.length = 0;
         coneRadius.length = 0;
 
+        arrowFrom.length = 0;
+        arrowTo.length = 0;
+        arrowColor.length = 0;
+        arrowRadius.length = 0;
+
     }
 
     // API
@@ -293,6 +346,7 @@ function Geometry( name, params ){
     this.addEllipsoid = addEllipsoid;
     this.addCylinder = addCylinder;
     this.addCone = addCone;
+    this.addArrow = addArrow;
     this.getBufferList = getBufferList;
     this.dispose = dispose;
 

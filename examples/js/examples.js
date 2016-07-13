@@ -1431,6 +1431,7 @@ NGL.ExampleRegistry.addDict( {
             geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
             geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
             geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+            geometry.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
             var geoComp = stage.addComponentFromObject( geometry );
             geoComp.addRepresentation( "buffer" );
             stage.centerView();
