@@ -141,7 +141,7 @@ Superposition.prototype = {
         var i = 0;
         var cd = coords.data;
 
-        if( typeof atoms.eachtom === "function" ){
+        if( typeof atoms.eachAtom === "function" ){
 
             atoms.eachAtom( function( a ){
 

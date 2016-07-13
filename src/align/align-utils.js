@@ -19,7 +19,7 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
     xsele1 = xsele1 || "";
     xsele2 = xsele2 || "";
 
-    var i, j, n, atoms1, atoms2;
+    var i, j, n, atomSet1, atomSet2, sviewCa1, sviewCa2;
 
     if( align ){
 
@@ -27,8 +27,8 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         var _s2 = s2;
 
         if( sele1 && sele2 ){
-            _s1 = new NGL.StructureSubset( s1, new Selection( sele1 ) );
-            _s2 = new NGL.StructureSubset( s2, new Selection( sele2 ) );
+            _s1 = s1.getView( new Selection( sele1 ) );
+            _s2 = s2.getView( new Selection( sele2 ) );
         }
 
         var seq1 = _s1.getSequence();
@@ -86,16 +86,16 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         // Log.log( aliIdx1 );
         // Log.log( aliIdx2 );
 
-        atoms1 = new NGL.AtomSet();
-        atoms2 = new NGL.AtomSet();
+        atomSet1 = s1.getAtomSet( false );
+        atomSet2 = s2.getAtomSet( false );
 
         i = 0;
         _s1.eachResidue( function( r ){
 
-            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
+            if( !r.getResname1() || r.getAtomIndexByName( "CA" ) === undefined ) return;
 
             if( aliIdx1[ i ] ){
-                atoms1.addAtom( r.getAtomByName( "CA" ) );
+                atomSet1.add_unsafe( r.getAtomIndexByName( "CA" ) );
             }
             i += 1;
 
@@ -104,10 +104,10 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         i = 0;
         _s2.eachResidue( function( r ){
 
-            if( !r.getResname1() || !r.getAtomByName( "CA" ) ) return;
+            if( !r.getResname1() || r.getAtomIndexByName( "CA" ) === undefined ) return;
 
             if( aliIdx2[ i ] ){
-                atoms2.addAtom( r.getAtomByName( "CA" ) );
+                atomSet2.add_unsafe( r.getAtomIndexByName( "CA" ) );
             }
             i += 1;
 
@@ -115,54 +115,57 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
 
     }else{
 
-        atoms1 = new NGL.AtomSet(
-            s1, new NGL.Selection( sele1 + " and .CA" )
-        );
-        atoms2 = new NGL.AtomSet(
-            s2, new NGL.Selection( sele2 + " and .CA" )
-        );
+        sviewCa1 = s1.getView( new NGL.Selection( sele1 + " and .CA" ) );
+        sviewCa2 = s2.getView( new NGL.Selection( sele2 + " and .CA" ) );
 
     }
 
-    if( xsele1 && xsele2 ){
+    // FIXME
+    // if( xsele1 && xsele2 ){
 
-        var _atoms1 = new NGL.AtomSet();
-        var _atoms2 = new NGL.AtomSet();
+    //     var _atomSet1 = s1.getAtomSet();
+    //     var _atomSet2 = s2.getAtomSet();
 
-        var xselection1 = new Selection( xsele1 );
-        var xselection2 = new Selection( xsele2 );
+    //     var _a1 = s1.getAtomProxy();
+    //     var _a2 = s2.getAtomProxy();
 
-        var test1 = xselection1.test;
-        var test2 = xselection2.test;
+    //     var xselection1 = new Selection( xsele1 );
+    //     var xselection2 = new Selection( xsele2 );
 
-        var a1, a2;
-        n = atoms1.atomCount;
+    //     var test1 = xselection1.test;
+    //     var test2 = xselection2.test;
 
-        for( i = 0; i < n; ++i ){
+    //     as.forEach( function( index ){
+    //         ap.index = index;
+    //         callback( ap );
+    //     } );
 
-            a1 = atoms1.atoms[ i ];
-            a2 = atoms2.atoms[ i ];
+    //     n = atoms1.atomCount;
 
-            if( test1( a1 ) && test2( a2 ) ){
+    //     for( i = 0; i < n; ++i ){
 
-                _atoms1.addAtom( a1 );
-                _atoms2.addAtom( a2 );
+    //         a1 = atoms1.atoms[ i ];
+    //         a2 = atoms2.atoms[ i ];
 
-                // Log.log( a1.qualifiedName(), a2.qualifiedName() )
+    //         if( test1( a1 ) && test2( a2 ) ){
 
-            }
+    //             _atomSet1.add_unsafe( a1 );
+    //             _atomSet2.add_unsafe( a2 );
 
-        }
+    //             // Log.log( a1.qualifiedName(), a2.qualifiedName() )
 
-        atoms1 = _atoms1;
-        atoms2 = _atoms2;
+    //         }
 
-    }
+    //     }
 
-    var superpose = new Superposition( atoms1, atoms2 );
+    //     atoms1 = _atoms1;
+    //     atoms2 = _atoms2;
 
-    var atoms = new NGL.AtomSet( s1, new Selection( "*" ) );
-    superpose.transform( atoms );
+    // }
+
+    var superpose = new Superposition( sviewCa1, sviewCa2 );
+
+    superpose.transform( s1 );
 
     s1.center = s1.atomCenter();
 
