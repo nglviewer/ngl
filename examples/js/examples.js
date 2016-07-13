@@ -901,10 +901,8 @@ NGL.ExampleRegistry.addDict( {
         ], "TMDET 3dqb" );
 
         stage.loadFile( "data://3dqb.pdb" ).then( function( o ){
-
             o.addRepresentation( "cartoon", { color: schemeId } );
             o.centerView();
-
         } );
 
     },
@@ -924,10 +922,8 @@ NGL.ExampleRegistry.addDict( {
         } );
 
         stage.loadFile( "data://3dqb.pdb" ).then( function( o ){
-
             o.addRepresentation( "cartoon", { color: schemeId } );
             o.centerView();
-
         } );
 
     },
@@ -1108,8 +1104,16 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://ala3.pdb" ).then( function( o ){
 
+            var atomPair = [
+                [ "1.CA", "3.CA" ]
+            ];
+
             o.addRepresentation( "licorice" );
             o.addRepresentation( "cartoon", { sele: "protein" } );
+            o.addRepresentation( "distance", {
+                atomPair: atomPair,
+                color: "skyblue"
+            } );
             o.centerView();
 
             var framesPromise = NGL.autoLoad( "data://ala3.dcd" );
@@ -1234,9 +1238,9 @@ NGL.ExampleRegistry.addDict( {
     "bondOrders": function( stage ) {
 
         stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
-            o.addRepresentation( "licorice", {multipleBond: true } );
+            o.addRepresentation( "licorice", { multipleBond: true } );
             stage.centerView();
-        });
+        } );
 
     },
 
@@ -1364,6 +1368,66 @@ NGL.ExampleRegistry.addDict( {
             animate();
 
         } );
+
+    },
+
+    "test2": function( stage ) {
+
+        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
+            o.addRepresentation( "backbone", {
+                disableImpostor: true,
+                openEnded: false,
+                cylinderOnly: true
+            } );
+            stage.centerView();
+        });
+
+    },
+
+    "test3": function( stage ) {
+
+        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
+            o.addRepresentation( "cartoon" );
+            var coneBuffer = new NGL.ConeBuffer(
+                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
+                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
+                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
+                new Float32Array([ 1, 0.5 ])  // radius
+            );
+            var cylinderBuffer = new NGL.CylinderBuffer(
+                new Float32Array([ -3, 0, 0, 0, -2, 1 ]),  // from
+                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // to
+                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
+                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color2
+                new Float32Array([ 0.5, 0.25 ]),  // radius
+                undefined,
+                undefined,
+                {
+                    disableImpostor: true,
+                    openEnded: false
+                }
+            );
+            var ellipsoidBuffer = new NGL.EllipsoidBuffer(
+                new Float32Array([ 6, 0, 0 ]),  // position
+                new Float32Array([ 1, 0, 0 ]),  // color
+                new Float32Array([ 1 ]),  // radius
+                new Float32Array([ 3, 0, 0 ]),  // majorAxis
+                new Float32Array([ 0, 2, 0 ])  // minorAxis
+            );
+            // o.addBufferRepresentation( [
+            //     coneBuffer,
+            //     cylinderBuffer,
+            //     ellipsoidBuffer
+            // ] );
+            var geometry = new NGL.Geometry( "geo", { disableImpostor: true } );
+            geometry.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
+            geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
+            geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+            geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+            var geoComp = stage.addComponentFromObject( geometry );
+            geoComp.addRepresentation( "buffer" );
+            stage.centerView();
+        });
 
     },
 
