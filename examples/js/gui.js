@@ -1156,9 +1156,9 @@ NGL.SidebarWidget = function( stage ){
 
             widget = new NGL.SurfaceComponentWidget( component, stage );
 
-        }else if( component.type === "geometry" ){
+        }else if( component.type === "shape" ){
 
-            widget = new NGL.GeometryComponentWidget( component, stage );
+            widget = new NGL.ShapeComponentWidget( component, stage );
 
         }else if( component.type === "script" ){
 
@@ -1668,7 +1668,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 };
 
 
-NGL.GeometryComponentWidget = function( component, stage ){
+NGL.ShapeComponentWidget = function( component, stage ){
 
     var signals = component.signals;
     var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
@@ -1711,7 +1711,7 @@ NGL.GeometryComponentWidget = function( component, stage ){
         .setMargin( "0px" )
         .addMenuEntry( "Representation", repr )
         .addMenuEntry(
-            "File", new UI.Text( component.geometry.path )
+            "File", new UI.Text( component.shape.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 

@@ -1,5 +1,5 @@
 /**
- * @file Geometry Component
+ * @file Shape Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
@@ -9,42 +9,42 @@ import Component from "./component.js";
 
 
 /**
- * Component wrapping a geometry object
+ * Component wrapping a shape object
  * @class
  * @extends Component
  * @param {Stage} stage - stage object the component belongs to
- * @param {Geometry} geometry - geometry object to wrap
+ * @param {Shape} shape - shape object to wrap
  * @param {ComponentParameters} params - component parameters
  */
-function GeometryComponent( stage, geometry, params ){
+function ShapeComponent( stage, shape, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : geometry.name;
+    p.name = p.name !== undefined ? p.name : shape.name;
 
     Component.call( this, stage, p );
 
-    this.geometry = geometry;
+    this.shape = shape;
 
 }
 
-GeometryComponent.prototype = Object.assign( Object.create(
+ShapeComponent.prototype = Object.assign( Object.create(
 
     Component.prototype ), {
 
-    constructor: GeometryComponent,
+    constructor: ShapeComponent,
 
     /**
      * Component type
-     * @alias GeometryComponent#type
+     * @alias ShapeComponent#type
      * @constant
      * @type {String}
      * @default
      */
-    type: "geometry",
+    type: "shape",
 
     /**
-     * Add a new geometry representation to the component
-     * @alias GeometryComponent#addRepresentation
+     * Add a new shape representation to the component
+     * @alias ShapeComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
      *                        buffer.
      * @param {BufferRepresentationParameters} params - representation parameters
@@ -54,14 +54,14 @@ GeometryComponent.prototype = Object.assign( Object.create(
     addRepresentation: function( type, params ){
 
         return Component.prototype.addRepresentation.call(
-            this, type, this.geometry, params
+            this, type, this.shape, params
         );
 
     },
 
     dispose: function(){
 
-        this.geometry.dispose();
+        this.shape.dispose();
 
         Component.prototype.dispose.call( this );
 
@@ -70,4 +70,4 @@ GeometryComponent.prototype = Object.assign( Object.create(
 } );
 
 
-export default GeometryComponent;
+export default ShapeComponent;

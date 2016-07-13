@@ -11,7 +11,7 @@ import Structure from "../structure/structure.js";
 import Surface from "../surface/surface.js";
 import Volume from "../surface/volume.js";
 import Trajectory from "../trajectory/trajectory.js";
-import Geometry from "../geometry/geometry.js";
+import Shape from "../geometry/shape.js";
 
 import BufferRepresentation from "./buffer-representation.js";
 import SurfaceRepresentation from "./surface-representation.js";
@@ -61,7 +61,7 @@ function makeRepresentation( type, object, viewer, params ){
 
         ReprClass = TrajectoryRepresentation;
 
-    }else if( object instanceof Geometry ){
+    }else if( object instanceof Shape ){
 
         ReprClass = BufferRepresentation;
         object = object.getBufferList();

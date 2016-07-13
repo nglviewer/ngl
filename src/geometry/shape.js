@@ -1,5 +1,5 @@
 /**
- * @file Geometry
+ * @file Shape
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
@@ -14,16 +14,16 @@ import ArrowBuffer from "../buffer/arrow-buffer.js";
 
 
 /**
- * Class for building custom geometries.
+ * Class for building custom shapes.
  * @class
  * @example
- * var geometry = new NGL.Geometry( "geo", { disableImpostor: true } );
- * geometry.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
- * geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
- * geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
- * geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
- * geometry.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
- * var geoComp = stage.addComponentFromObject( geometry );
+ * var shape = new NGL.Shape( "shape", { disableImpostor: true } );
+ * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
+ * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
+ * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+ * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+ * shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
+ * var shapeComp = stage.addComponentFromObject( shape );
  * geoComp.addRepresentation( "buffer" );
  *
  * @param {String} name - name
@@ -34,9 +34,9 @@ import ArrowBuffer from "../buffer/arrow-buffer.js";
  * @param {Boolean} params.disableImpostor - disable use of raycasted impostors for rendering
  * @param {Boolean} params.openEnded - capped or not
  */
-function Geometry( name, params ){
+function Shape( name, params ){
 
-    this.name = defaults( name, "geometry" );
+    this.name = defaults( name, "shape" );
 
     var p = params || {};
 
@@ -85,7 +85,7 @@ function Geometry( name, params ){
     /**
      * Add a buffer
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @param {Buffer} buffer - buffer object
      */
     function addBuffer( buffer ){
@@ -97,7 +97,7 @@ function Geometry( name, params ){
     /**
      * Add a mesh
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @param {Float32Array|Array} position - positions
      * @param {Float32Array|Array} color - colors
      * @param {Uint32Array|Uint16Array|Array} index - indices
@@ -113,9 +113,9 @@ function Geometry( name, params ){
     /**
      * Add a sphere
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @example
-     * geometry.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
+     * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
      *
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
@@ -132,9 +132,9 @@ function Geometry( name, params ){
     /**
      * Add an ellipsoid
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @example
-     * geometry.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
+     * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
      *
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
@@ -155,9 +155,9 @@ function Geometry( name, params ){
     /**
      * Add a cylinder
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @example
-     * geometry.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+     * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
      *
      * @param {Vector3|Array} from - from position vector or array
      * @param {Vector3|Array} to - to position vector or array
@@ -176,9 +176,9 @@ function Geometry( name, params ){
     /**
      * Add a cone
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @example
-     * geometry.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+     * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
      *
      * @param {Vector3|Array} from - from position vector or array
      * @param {Vector3|Array} to - to position vector or array
@@ -197,9 +197,9 @@ function Geometry( name, params ){
     /**
      * Add an arrow
      * @instance
-     * @memberof Geometry
+     * @memberof Shape
      * @example
-     * geometry.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+     * shape.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
      *
      * @param {Vector3|Array} from - from position vector or array
      * @param {Vector3|Array} to - to position vector or array
@@ -352,8 +352,8 @@ function Geometry( name, params ){
 
 }
 
-Geometry.prototype.constructor = Geometry;
-Geometry.prototype.type = "Geometry";
+Shape.prototype.constructor = Shape;
+Shape.prototype.type = "Shape";
 
 
-export default Geometry;
+export default Shape;

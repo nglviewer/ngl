@@ -529,7 +529,7 @@ import XmlParser from "./parser/xml-parser.js";
 
 //
 
-import Geometry from "./geometry/geometry.js";
+import Shape from "./geometry/shape.js";
 
 //
 
@@ -705,10 +705,10 @@ export {
     ArrowBuffer,
 
     /**
-     * Geometry class
-     * @see {@link Geometry}
+     * Shape class
+     * @see {@link Shape}
      */
-    Geometry,
+    Shape,
 
     /**
      * Signal class
