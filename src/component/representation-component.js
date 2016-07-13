@@ -52,32 +52,30 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     setRepresentation: function( repr ){
 
         if( this.repr ){
-            this.repr.dispose();
+            this.removeRepresentation( this.repr );
         }
-
         this.repr = repr;
         // this.name = repr.type;
-
         this.stage.tasks.listen( this.repr.tasks );
-
         this.updateVisibility();
 
     },
 
     addRepresentation: function( type ){},
 
-    removeRepresentation: function( repr ){},
+    removeRepresentation: function( repr ){
+
+        this.stage.tasks.unlisten( this.repr.tasks );
+        this.repr.dispose();
+
+    },
 
     dispose: function(){
 
         if( this.parent ){
-
             this.parent.removeRepresentation( this );
-
         }
-
-        this.repr.dispose();
-
+        this.removeRepresentation( this.repr );
         this.signals.disposed.dispatch();
 
     },
@@ -95,13 +93,9 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     updateVisibility: function(){
 
         if( this.parent ){
-
             this.repr.setVisibility( this.parent.visible && this.visible );
-
         }else{
-
             this.repr.setVisibility( this.visible );
-
         }
 
     },

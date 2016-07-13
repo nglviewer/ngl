@@ -32,9 +32,7 @@ function Counter(){
     this.count = 0;
 
     this.signals = {
-
         countChanged: new Signal(),
-
     };
 
 }
@@ -61,9 +59,7 @@ Counter.prototype = {
         this.signals.countChanged.dispatch( delta, this.count );
 
         if( this.count < 0 ){
-
             Log.warn( "Counter.count below zero", this.count );
-
         }
 
     },
@@ -94,12 +90,17 @@ Counter.prototype = {
     listen: function( counter ){
 
         this.change( counter.count );
+        counter.signals.countChanged.add( this.change, this );
 
-        counter.signals.countChanged.add( function( delta, count ){
+    },
 
-            this.change( delta );
+    /**
+     * Stop listening to the other counter object
+     * @param  {Counter} counter - the counter object to stop listening to
+     */
+    unlisten: function( counter ){
 
-        }.bind( this ) );
+        counter.signals.countChanged.remove( this.change, this );
 
     },
 
@@ -119,15 +120,11 @@ Counter.prototype = {
             var fn = function(){
 
                 if( this.count === 0 ){
-
                     this.signals.countChanged.remove( fn, this );
-
                     callback.apply( context, arguments );
-
                 }
 
             };
-
             this.signals.countChanged.add( fn, this );
 
         }
@@ -137,6 +134,7 @@ Counter.prototype = {
     dispose: function(){
 
         this.clear();
+        this.signals.countChanged.dispose();
 
     }
 
