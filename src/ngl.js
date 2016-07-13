@@ -496,10 +496,11 @@ import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
 
 import BufferRepresentation from "./representation/buffer-representation";
-import SphereBuffer from "./buffer/sphere-buffer.js";
-import EllipsoidBuffer from "./buffer/ellipsoid-buffer.js";
-import CylinderBuffer from "./buffer/cylinder-buffer.js";
+import ArrowBuffer from "./buffer/arrow-buffer.js";
 import ConeBuffer from "./buffer/cone-buffer.js";
+import CylinderBuffer from "./buffer/cylinder-buffer.js";
+import EllipsoidBuffer from "./buffer/ellipsoid-buffer.js";
+import SphereBuffer from "./buffer/sphere-buffer.js";
 
 //
 
@@ -697,6 +698,11 @@ export {
      * @see {@link ConeBuffer}
      */
     ConeBuffer,
+    /**
+     * Arrow buffer class
+     * @see {@link ArrowBuffer}
+     */
+    ArrowBuffer,
 
     /**
      * Geometry class

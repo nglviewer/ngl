@@ -1388,6 +1388,13 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
             o.addRepresentation( "cartoon" );
+            var arrowBuffer = new NGL.ArrowBuffer(
+                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
+                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
+                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
+                new Float32Array([ 1, 0.5 ])  // radius
+            );
+            o.addBufferRepresentation( arrowBuffer );
             var coneBuffer = new NGL.ConeBuffer(
                 new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
                 new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
