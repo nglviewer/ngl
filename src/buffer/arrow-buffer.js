@@ -5,21 +5,41 @@
  */
 
 
-import { Matrix4, Vector3, CylinderGeometry, CylinderBufferGeometry } from "../../lib/three.es6.js";
+import { Vector3, Group } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
+import Buffer from "./buffer.js";
 import CylinderBuffer from "./cylinder-buffer.js";
 import ConeBuffer from "./cone-buffer.js";
 
 
+/**
+ * Arrow buffer
+ * @class
+ * @augments {Buffer}
+ * @param {Float32Array} from - from positions
+ *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
+ * @param {Float32Array} to - to positions
+ *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
+ * @param {Float32Array} color - colors
+ *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {Float32Array} radius - radii
+ *                               [r1, r2, ..., rN]
+ * @param {Float32Array} [pickingColor] - picking colors
+ *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {BufferParams} [params] - parameters object
+ */
 function ArrowBuffer( from, to, color, radius, pickingColor, params ){
 
     var p = params || {};
 
-    var radialSegments = defaults( p.radialSegments, 10 );
-    var openEnded = defaults( p.openEnded, true );
+    var aspectRatio = defaults( p.aspectRatio, 1.5 );
+    var radialSegments = defaults( p.radialSegments, 50 );
+    var openEnded = defaults( p.openEnded, false );
     var disableImpostor = defaults( p.disableImpostor, false );
+
+    var splitPosition = new Float32Array( from.length );
+    var cylinderRadius = new Float32Array( radius.length );
 
     var attr = makeAttributes( {
         from: from,
@@ -28,8 +48,6 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
         radius: radius,
         pickingColor: pickingColor
     } );
-
-    var split = new Float32Array( from.length );
 
     var cylinderBuffer = new CylinderBuffer(
         attr.cylinderFrom,
@@ -63,25 +81,57 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
 
         var attr = {};
 
-        calculateCenterArray( data.from, data.to, split );
+        if( data.radius ){
+            for( var i = 0, il = cylinderRadius.length; i < il; ++i ){
+                cylinderRadius[ i ] = data.radius[ i ] / aspectRatio;
+            }
+            attr.cylinderRadius = cylinderRadius;
+            attr.coneRadius = data.radius;
+        }
 
-        return {
-            cylinderFrom: data.from,
-            cylinderTo: split,
-            cylinderColor: data.color,
-            cylinderColor2: data.color,
-            cylinderRadius: data.radius,
-            cylinderPickingColor: data.pickingColor,
-            cylinderPickingColor2: data.pickingColor,
+        if( data.from && data.to ){
+            var vFrom = new Vector3();
+            var vTo = new Vector3();
+            var vDir = new Vector3();
+            var vSplit = new Vector3();
+            for( var i = 0, il = splitPosition.length; i < il; i += 3 ){
+                vFrom.fromArray( data.from, i );
+                vTo.fromArray( data.to, i );
+                vDir.subVectors( vFrom, vTo );
+                var fullLength = vDir.length();
+                var coneLength = cylinderRadius[ i / 3 ] * aspectRatio * 2;
+                var length = Math.min( fullLength, coneLength );
+                vDir.setLength( length );
+                vSplit.copy( vTo ).add( vDir );
+                vSplit.toArray( splitPosition, i );
+            }
+            attr.cylinderFrom = data.from;
+            attr.cylinderTo = splitPosition;
+            attr.coneFrom = splitPosition;
+            attr.coneTo = data.to;
+        }
 
-            coneFrom: split,
-            coneTo: data.to,
-            coneColor: data.color,
-            coneRadius: data.radius,
-            conePickingColor: data.pickingColor
-        };
+        if( data.color ){
+            attr.cylinderColor = data.color;
+            attr.cylinderColor2 = data.color;
+            attr.coneColor = data.color;
+        }
+
+        if( data.pickingColor ){
+            attr.cylinderPickingColor = data.pickingColor;
+            attr.cylinderPickingColor2 = data.pickingColor;
+            attr.conePickingColor = data.pickingColor;
+        }
+
+        return attr;
 
     }
+
+    this.wireframe = defaults( p.wireframe, false );
+
+    this.group = new Group();
+    this.wireframeGroup = new Group();
+    this.pickingGroup = new Group();
 
     this.getMesh = function( picking ){
 
@@ -115,60 +165,38 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
         var attr = makeAttributes( data );
 
         cylinderBuffer.setAttributes( {
-            cylinderFrom: attr.cylinderFrom,
-            cylinderTo: attr.cylinderTo,
-            cylinderColor: attr.cylinderColor,
-            cylinderColor2: attr.cylinderColor2,
-            cylinderRadius: attr.radius,
-            cylinderPickingColor: attr.cylinderPickingColor,
-            cylinderPickingColor2: attr.cylinderPickingColor2,
+            position1: attr.cylinderFrom,
+            position2: attr.cylinderTo,
+            color: attr.cylinderColor,
+            color2: attr.cylinderColor2,
+            radius: attr.radius,
+            pickingColor: attr.cylinderPickingColor,
+            pickingColor2: attr.cylinderPickingColor2,
         } );
 
         coneBuffer.setAttributes( {
-            coneFrom: attr.coneFrom,
-            coneTo: attr.coneTo,
-            coneColor: attr.coneColor,
-            coneRadius: attr.coneRadius.radius,
-            conePickingColor: attr.conePickingColor
+            position1: attr.coneFrom,
+            position2: attr.coneTo,
+            color: attr.coneColor,
+            radius: attr.coneRadius.radius,
+            pickingColor: attr.conePickingColor
         } );
 
     };
 
-    this.setParameters = function( data ){
+    /**
+     * Set buffer parameters
+     * @param {BufferParameters} params - buffer parameters object
+     */
+    this.setParameters = function( params ){
 
-        data = Object.assign( {}, data );
+        cylinderBuffer.setParameters( params );
+        coneBuffer.setParameters( params );
 
-        if( data.side === "front" ){
-
-            frontMeshes.forEach( function( m ){ m.visible = true; } );
-            backMeshes.forEach( function( m ){ m.visible = false; } );
-
-        }else if( data.side === "back" ){
-
-            frontMeshes.forEach( function( m ){ m.visible = false; } );
-            backMeshes.forEach( function( m ){ m.visible = true; } );
-
-        }else if( data.side === "double" ){
-
-            frontMeshes.forEach( function( m ){ m.visible = true; } );
-            backMeshes.forEach( function( m ){ m.visible = true; } );
-
-        }
-
-        if( data.side !== undefined ){
-            this.side = data.side;
-        }
-        delete data.side;
-
-        frontBuffer.setParameters( data );
-
-        if( data.wireframe !== undefined ){
-            this.wireframe = data.wireframe;
+        if( params && params.wireframe !== undefined ){
+            this.wireframe = params.wireframe;
             this.setVisibility( this.visible );
         }
-        delete data.wireframe;
-
-        backBuffer.setParameters( data );
 
     };
 
@@ -176,8 +204,8 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
 
     this.dispose = function(){
 
-        frontBuffer.dispose();
-        backBuffer.dispose();
+        cylinderBuffer.dispose();
+        coneBuffer.dispose();
 
     };
 

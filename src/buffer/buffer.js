@@ -604,6 +604,10 @@ Buffer.prototype = {
 
     },
 
+    /**
+     * Set buffer parameters
+     * @param {BufferParameters} params - buffer parameters object
+     */
     setParameters: function( params ){
 
         if( !params ) return;
@@ -817,6 +821,10 @@ Buffer.prototype = {
 
     },
 
+    /**
+     * Set buffer visibility
+     * @param {Boolean} value - visibility value
+     */
     setVisibility: function( value ){
 
         this.visible = value;
@@ -841,6 +849,9 @@ Buffer.prototype = {
 
     },
 
+    /**
+     * Free buffer resources
+     */
     dispose: function(){
 
         if( this.material ) this.material.dispose();
