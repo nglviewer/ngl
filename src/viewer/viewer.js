@@ -1007,6 +1007,7 @@ function Viewer( eid, params ){
 
         bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
         bRadius += boundingBox.center( distVector ).length();
+        // console.log( "bRadius", bRadius )
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
             bRadius = 50;

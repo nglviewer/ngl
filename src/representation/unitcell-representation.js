@@ -150,7 +150,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             undefined,
             undefined,
             this.getBufferParams( {
-                openEnded: false,
+                openEnded: true,
                 radialSegments: this.radialSegments,
                 disableImpostor: this.disableImpostor,
                 dullInterior: true
