@@ -98,12 +98,32 @@ function Shape( name, params ){
      * Add a mesh
      * @instance
      * @memberof Shape
+     * @example
+     * shape.addMesh(
+     *     [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
+     *     [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ]
+     * );
+     *
      * @param {Float32Array|Array} position - positions
      * @param {Float32Array|Array} color - colors
-     * @param {Uint32Array|Uint16Array|Array} index - indices
-     * @param {Float32Array|Array} normal - normals
+     * @param {Uint32Array|Uint16Array|Array} [index] - indices
+     * @param {Float32Array|Array} [normal] - normals
      */
     function addMesh( position, color, index, normal ){
+
+        if( Array.isArray( position ) ){
+            position = new Float32Array( position );
+        }
+        if( Array.isArray( color ) ){
+            color = new Float32Array( color );
+        }
+        if( Array.isArray( index ) ){
+            var ctor = ( position && position.length ) > 65535 ? Unit32Array : Uint16Array;
+            index = new ctor( index );
+        }
+        if( Array.isArray( normal ) ){
+            normal = new Float32Array( normal );
+        }
 
         var meshBuffer = new MeshBuffer( position, color, index, normal );
         bufferList.push( meshBuffer );
