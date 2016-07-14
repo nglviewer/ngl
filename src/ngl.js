@@ -470,6 +470,7 @@ import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 
 import { throttle, download, getQuery } from "./utils.js";
 import Queue from "./utils/queue.js";
+import Counter from "./utils/counter.js";
 
 //
 
@@ -668,6 +669,7 @@ export {
     TrajectoryPlayer,
 
     Queue,
+    Counter,
     throttle,
     download,
     getQuery,
