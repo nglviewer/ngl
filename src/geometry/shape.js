@@ -77,6 +77,8 @@ function Shape( name, params ){
 
         if( elm.toArray !== undefined ){
             elm = elm.toArray();
+        }else if( elm.x !== undefined ){
+            elm = [ elm.x, elm.y, elm.z ];
         }
         array.push.apply( array, elm );
 
