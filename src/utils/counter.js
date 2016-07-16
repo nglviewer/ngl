@@ -100,7 +100,10 @@ Counter.prototype = {
      */
     unlisten: function( counter ){
 
-        counter.signals.countChanged.remove( this.change, this );
+        var countChanged = counter.signals.countChanged;
+        if( countChanged.has( this.change, this ) ){
+            countChanged.remove( this.change, this );
+        }
 
     },
 
