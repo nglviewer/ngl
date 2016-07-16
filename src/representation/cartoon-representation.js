@@ -59,16 +59,12 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
 
         if( p.quality === "low" ){
             this.subdiv = 3;
-            this.radialSegments = 6;
         }else if( p.quality === "medium" ){
             this.subdiv = 6;
-            this.radialSegments = 10;
         }else if( p.quality === "high" ){
             this.subdiv = 12;
-            this.radialSegments = 20;
         }else{
             this.subdiv = defaults( p.subdiv, 6 );
-            this.radialSegments = defaults( p.radialSegments, 10 );
         }
 
         this.aspectRatio = defaults( p.aspectRatio, 5.0 );
@@ -77,6 +73,10 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         this.smoothSheet = defaults( p.smoothSheet, false );
 
         StructureRepresentation.prototype.init.call( this, p );
+
+        if( p.quality === "low" ){
+            this.radialSegments = 6;
+        }
 
     },
 
