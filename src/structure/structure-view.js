@@ -28,6 +28,7 @@ Structure.prototype.getView = function( selection ){
 /**
  * View on the structure, restricted to the selection
  * @class
+ * @extends Structure
  * @param {Structure} structure - the structure
  * @param {Selection} selection - the selection
  */
@@ -249,6 +250,10 @@ StructureView.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Not implemented
+     * @alias StructureView#eachResidueN
+     */
     eachResidueN: function( n, callback ){
 
         console.error( "StructureView.eachResidueN() not implemented" );
