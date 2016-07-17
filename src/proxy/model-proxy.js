@@ -86,51 +86,9 @@ ModelProxy.prototype = {
 
     eachResidue: function( callback, selection ){
 
-        var i, j, o, c, r;
-        var n = this.chainCount;
-
-        if( selection && selection.chainOnlyTest ){
-
-            var test = selection.chainOnlyTest;
-
-            for( i = 0; i < n; ++i ){
-
-                c = this.chains[ i ];
-                if( test( c ) ) c.eachResidue( callback, selection );
-
-                // if( !test( c ) ) continue;
-
-                // o = c.residueCount;
-
-                // var residueTest = selection.residueTest;
-
-                // for( j = 0; j < o; ++j ){
-
-                //     r = c.residues[ j ];
-                //     if( residueTest( r ) ) callback( r );
-
-                // }
-
-            }
-
-        }else{
-
-            for( i = 0; i < n; ++i ){
-
-                c = this.chains[ i ];
-                c.eachResidue( callback, selection );
-
-                // o = c.residueCount;
-
-                // for( j = 0; j < o; ++j ){
-
-                //     callback( c.residues[ j ] );
-
-                // }
-
-            }
-
-        }
+        this.eachChain( function( cp ){
+            cp.eachResidue( callback, selection );
+        }, selection );
 
     },
 
