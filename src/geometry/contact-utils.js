@@ -71,7 +71,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         }
 
         rp.index = atomO.residueIndex;
-        var atomC = rp.getAtomIndexByName( cName ) + rp.atomOffset;
+        var atomC = rp.getAtomIndexByName( cName );
 
         v1.subVectors( atomC, atomO );
         v2.subVectors( atomC, atomN );
@@ -106,13 +106,13 @@ function polarContacts( structure, maxDistance, maxAngle ){
             }
 
             rp.index = atomN.residueIndex;
-            atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+            atomCA.index = rp.getAtomIndexByName( "CA" );
             if( atomCA.index === undefined ) continue;
 
             var prevRes = rp.getPreviousConnectedResidue( rpPrev );
             if( prevRes === undefined ) continue;
 
-            atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+            atomC.index = prevRes.getAtomIndexByName( "C" );
             if( atomC.index === undefined ) continue;
 
             v1.subVectors( atomN, atomC );
@@ -192,13 +192,13 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
 
         rp.index = atomN.residueIndex;
 
-        atomCA.index = rp.getAtomIndexByName( "CA" ) + rp.atomOffset;
+        atomCA.index = rp.getAtomIndexByName( "CA" );
         if( atomCA.index === undefined ) continue;
 
         var prevRes = rp.getPreviousConnectedResidue( rpPrev );
         if( prevRes === undefined ) continue;
 
-        atomC.index = prevRes.getAtomIndexByName( "C" ) + prevRes.atomOffset;
+        atomC.index = prevRes.getAtomIndexByName( "C" );
         if( atomC.index === undefined ) continue;
 
         v1.subVectors( atomN, atomC );

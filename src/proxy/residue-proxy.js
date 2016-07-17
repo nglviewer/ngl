@@ -244,7 +244,11 @@ ResidueProxy.prototype = {
     },
 
     getAtomIndexByName: function( atomname ){
-        return this.residueType.getAtomIndexByName( atomname );
+        var index = this.residueType.getAtomIndexByName( atomname );
+        if( index !== undefined ){
+            index += this.atomOffset;
+        }
+        return index;
     },
 
     getAtomByName: function( atomname ){
