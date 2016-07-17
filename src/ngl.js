@@ -467,6 +467,7 @@ import PdbWriter from "./writer/pdb-writer.js";
 import Stage from "./stage/stage.js";
 import Assembly from "./symmetry/assembly.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
+import { superpose } from "./align/align-utils.js";
 
 import { throttle, download, getQuery } from "./utils.js";
 import Queue from "./utils/queue.js";
@@ -667,6 +668,11 @@ export {
      */
     Assembly,
     TrajectoryPlayer,
+    /**
+     * superpose function
+     * @see {@link superpose}
+     */
+    superpose,
 
     Queue,
     Counter,

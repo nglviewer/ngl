@@ -6,20 +6,28 @@
 
 
 import { Debug, Log } from "../globals.js";
+import { defaults } from "../utils.js";
 import Selection from "../selection.js";
 import Alignment from "./alignment.js";
 import Superposition from "./superposition.js";
 
 
-function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
+/**
+ * Perform structural superposition of two structures,
+ * optionally guided by a sequence alignment
+ * @param  {Structure|StructureView} s1 - structure 1 which is superposed onto structure 2
+ * @param  {Structure|StructureView} s2 - structure 2 onto which structure 1 is superposed
+ * @param  {Boolean} [align] - guide the superposition by a sequence alignment
+ * @param  {String} [sele1] - selection string for structure 1
+ * @param  {String} [sele2] - selection string for structure 2
+ */
+function superpose( s1, s2, align, sele1, sele2 ){
 
-    align = align || false;
-    sele1 = sele1 || "";
-    sele2 = sele2 || "";
-    xsele1 = xsele1 || "";
-    xsele2 = xsele2 || "";
+    align = defaults( align, false );
+    sele1 = defaults( sele1, "" );
+    sele2 = defaults( sele2, "" );
 
-    var i, j, n, atomSet1, atomSet2, sviewCa1, sviewCa2;
+    var i, j, n, atoms1, atoms2;
 
     if( align ){
 
@@ -86,16 +94,20 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         // Log.log( aliIdx1 );
         // Log.log( aliIdx2 );
 
-        atomSet1 = s1.getAtomSet( false );
-        atomSet2 = s2.getAtomSet( false );
+        var _atoms1 = [];
+        var _atoms2 = [];
+        var ap1 = _s1.getAtomProxy();
+        var ap2 = _s2.getAtomProxy();
 
         i = 0;
         _s1.eachResidue( function( r ){
 
-            if( !r.getResname1() || r.getAtomIndexByName( "CA" ) === undefined ) return;
+            if( r.traceAtomIndex === undefined ||
+                r.traceAtomIndex !== r.getAtomIndexByName( "CA" ) ) return;
 
             if( aliIdx1[ i ] ){
-                atomSet1.add_unsafe( r.getAtomIndexByName( "CA" ) );
+                ap1.index = r.getAtomIndexByName( "CA" );
+                _atoms1.push( ap1.x, ap1.y, ap1.z );
             }
             i += 1;
 
@@ -104,70 +116,33 @@ function superpose( s1, s2, align, sele1, sele2, xsele1, xsele2 ){
         i = 0;
         _s2.eachResidue( function( r ){
 
-            if( !r.getResname1() || r.getAtomIndexByName( "CA" ) === undefined ) return;
+            if( r.traceAtomIndex === undefined ||
+                r.traceAtomIndex !== r.getAtomIndexByName( "CA" ) ) return;
 
             if( aliIdx2[ i ] ){
-                atomSet2.add_unsafe( r.getAtomIndexByName( "CA" ) );
+                ap2.index = r.getAtomIndexByName( "CA" );
+                _atoms2.push( ap2.x, ap2.y, ap2.z );
             }
             i += 1;
 
         } );
 
+        atoms1 = new Float32Array( _atoms1 );
+        atoms2 = new Float32Array( _atoms2 );
+
     }else{
 
-        sviewCa1 = s1.getView( new NGL.Selection( sele1 + " and .CA" ) );
-        sviewCa2 = s2.getView( new NGL.Selection( sele2 + " and .CA" ) );
+        var sviewCa1 = s1.getView( new NGL.Selection( sele1 + " and .CA" ) );
+        var sviewCa2 = s2.getView( new NGL.Selection( sele2 + " and .CA" ) );
+
+        atoms1 = sviewCa1;
+        atoms2 = sviewCa2;
 
     }
 
-    // FIXME
-    // if( xsele1 && xsele2 ){
-
-    //     var _atomSet1 = s1.getAtomSet();
-    //     var _atomSet2 = s2.getAtomSet();
-
-    //     var _a1 = s1.getAtomProxy();
-    //     var _a2 = s2.getAtomProxy();
-
-    //     var xselection1 = new Selection( xsele1 );
-    //     var xselection2 = new Selection( xsele2 );
-
-    //     var test1 = xselection1.test;
-    //     var test2 = xselection2.test;
-
-    //     as.forEach( function( index ){
-    //         ap.index = index;
-    //         callback( ap );
-    //     } );
-
-    //     n = atoms1.atomCount;
-
-    //     for( i = 0; i < n; ++i ){
-
-    //         a1 = atoms1.atoms[ i ];
-    //         a2 = atoms2.atoms[ i ];
-
-    //         if( test1( a1 ) && test2( a2 ) ){
-
-    //             _atomSet1.add_unsafe( a1 );
-    //             _atomSet2.add_unsafe( a2 );
-
-    //             // Log.log( a1.qualifiedName(), a2.qualifiedName() )
-
-    //         }
-
-    //     }
-
-    //     atoms1 = _atoms1;
-    //     atoms2 = _atoms2;
-
-    // }
-
-    var superpose = new Superposition( sviewCa1, sviewCa2 );
-
+    var superpose = new Superposition( atoms1, atoms2 );
     superpose.transform( s1 );
-
-    s1.center = s1.atomCenter();
+    s1.refresh();
 
 }
 
