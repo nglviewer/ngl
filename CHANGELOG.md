@@ -11,7 +11,8 @@ All notable changes to this project will be documented in this file, following t
 - stage.hovered signal
 - parsing of "chem comp" cif files
 - experimental "axes" representation showing the principal axes of an atom selection
-- added cone & ellipsoid buffers
+- added cone, arrow & ellipsoid buffers
+- added Shape class as a simple way to add custom shapes to the scene
 
 ### Changed
 - reorganized everything to use es6 modules
@@ -19,17 +20,20 @@ All notable changes to this project will be documented in this file, following t
 - interpret 'CONECT 1529 1528 1528' as double bond in pdb files
 - `side` Buffer/Representation parameter changed: THREE.FrontSide => "front", THREE.BackSide => "back", THREE.DoubleSide => "double"
 - support for negative resno values in selections: "-5:A", "-12--8", "-12-0"
-- support for chemical component type (available in mmtf) for determining molecule type
+- use chemical component type (available in mmtf) for determining molecule type
 - `.get/setOrientation` return/argument changed
 - enable SDF font as the default TextBuffer class only on Chrome
 - support for building using three-jsnext
 - renamed `radiusSegments` parameter to `radialSegments`
+- WebWorkers (for building surfaces) no longer need to load the main script file
 
 ### Removed
 - python-based build scripts
 - closure-compiler
 - stage.signals.onPicking (renamed to .clicked)
 - stage.signals.atom/bond/volume/nothingPicked, use .clicked instead
+- `NGL.mainScriptFilePath` no longer needed
+- `NGL.useWorker`, use "useWorker" representation parameter
 
 
 ## [v0.7.1a] - 2016-06-02
