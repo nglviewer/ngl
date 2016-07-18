@@ -28,7 +28,7 @@
 
     <script>
         NGL.cssDirectory = "css/";
-        NGL.documentationUrl = "../doc/index.html";
+        NGL.documentationUrl = "../build/docs/api/ngl/";
 
         // Datasources
         NGL.DatasourceRegistry.add(
@@ -36,12 +36,9 @@
         );
 
         // Plugins
-        // NGL.PluginRegistry.add(
-        //     "apbs", "plugins/apbs.plugin"
-        // );
-        // NGL.PluginRegistry.add(
-        //     "crosslink", "plugins/crosslink.plugin"
-        // );
+        NGL.PluginRegistry.add(
+            "apbs", "plugins/apbs.plugin"
+        );
 
         document.addEventListener( "DOMContentLoaded", function(){
             var stage = new NGL.Stage();
@@ -50,8 +47,8 @@
             if( example ) NGL.ExampleRegistry.load( example, stage );
             var load = NGL.getQuery( "load" );
             if( load ) stage.loadFile( load, { defaultRepresentation: true } );
-            // var plugin = NGL.getQuery( "plugin" );
-            // if( plugin ) NGL.PluginRegistry.load( plugin, stage );
+            var plugin = NGL.getQuery( "plugin" );
+            if( plugin ) NGL.PluginRegistry.load( plugin, stage );
         } );
     </script>
 </body>

@@ -40,7 +40,7 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         smooth: 1,
         color: "red",
         opacity: isosurfOpacity,
-        side: THREE.DoubleSide,
+        side: "double",
         opaqueBack: false
     } );
 
@@ -51,7 +51,7 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         smooth: 1,
         color: "blue",
         opacity: isosurfOpacity,
-        side: THREE.DoubleSide,
+        side: "double",
         opaqueBack: false
     } );
 
@@ -154,10 +154,37 @@ var ApbsWidget = function( pqrComp, dxComp ){
             } );
         } );
 
+    var isosurfVisibility = true;
+    var isosurfVisibilityButton = new UI.Button( "isosurf visibility" )
+        .onClick( function(){
+            isosurfVisibility = !isosurfVisibility
+            apbsPreset.isosurfRepr.setVisibility( isosurfVisibility );
+        } );
+
+    var molsurfVisibility = true;
+    var molsurfVisibilityButton = new UI.Button( "molsurf visibility" )
+        .onClick( function(){
+            molsurfVisibility = !molsurfVisibility
+            apbsPreset.molsurfRepr.setVisibility( molsurfVisibility );
+        } );
+
+    var cartoonVisibility = true;
+    var cartoonVisibilityButton = new UI.Button( "cartoon visibility" )
+        .onClick( function(){
+            cartoonVisibility = !cartoonVisibility
+            apbsPreset.cartoonRepr.setVisibility( cartoonVisibility );
+        } );
+
+    var licoriceVisibility = true;
+    var licoriceVisibilityButton = new UI.Button( "licorice visibility" )
+        .onClick( function(){
+            licoriceVisibility = !licoriceVisibility
+            apbsPreset.licoriceRepr.setVisibility( licoriceVisibility );
+        } );
+
     container.add(
         new UI.Text( "isolevel" ).setMarginRight( "10px" ),
         isolevelNumber,
-        // isolevelSelect,
         new UI.Break(),
         new UI.Text( "isosurf opacity" ).setMarginRight( "10px" ),
         isosurfOpacityRange,
@@ -168,21 +195,13 @@ var ApbsWidget = function( pqrComp, dxComp ){
         new UI.Text( "molsurf color" ).setMarginRight( "10px" ),
         molsurfColorRange,
         new UI.Break(),
-        uiVisibilityButton(
-            "electrostatic isosurface", apbsPreset.isosurfRepr
-        ),
+        isosurfVisibilityButton,
         new UI.Break(),
-        uiVisibilityButton(
-            "molecular surface", apbsPreset.molsurfRepr
-        ),
+        molsurfVisibilityButton,
         new UI.Break(),
-        uiVisibilityButton(
-            "cartoon", apbsPreset.cartoonRepr
-        ),
+        cartoonVisibilityButton,
         new UI.Break(),
-        uiVisibilityButton(
-            "licorice", apbsPreset.licoriceRepr
-        )
+        licoriceVisibilityButton
     );
 
     return container;
