@@ -622,6 +622,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             }
 
+            s.refresh();
+
         }
 
         this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){

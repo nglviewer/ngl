@@ -968,8 +968,8 @@ function assignResidueTypeBonds( structure ){
                     var hash = idx1 + "|" + idx2;
                     if( bondDict[ hash ] === undefined ){
                         bondDict[ hash ] = true;
-                        atomIndices1.push( idx1 );
-                        atomIndices2.push( idx2 );
+                        atomIndices1.push( idx1 - atomOffset );
+                        atomIndices2.push( idx2 - atomOffset );
                         bondOrders.push( bp.bondOrder );
                     }
                 }
