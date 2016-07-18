@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file, following t
 - support for building using three-jsnext
 - renamed `radiusSegments` parameter to `radialSegments`
 - WebWorkers (for building surfaces) no longer need to load the main script file
+- `NGL.GET` renamed to `NGL.getQuery`
 
 ### Removed
 - python-based build scripts
