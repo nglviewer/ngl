@@ -201,15 +201,15 @@ NGL.ExampleRegistry.addDict( {
             stage.loadFile( "data://3dqb.pdb", {
                 assembly: "AU"
             } ).then( function( o ){
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "ball+stick", { sele: "hetero" } );
+                o.addRepresentation( "cartoon", { color: "lightgreen" } );
+                o.addRepresentation( "ball+stick", { sele: "hetero", color: "lightgreen" } );
                 o.centerView();
                 return o;
             } ),
 
             stage.loadFile( "data://3sn6.pdb" ).then( function( o ){
-                o.addRepresentation( "cartoon" );
-                o.addRepresentation( "ball+stick", { sele: "hetero" } );
+                o.addRepresentation( "cartoon", { color: "tomato" } );
+                o.addRepresentation( "ball+stick", { sele: "hetero",color: "tomato" } );
                 o.centerView();
                 return o;
             } )
@@ -219,7 +219,7 @@ NGL.ExampleRegistry.addDict( {
             var s1 = ol[ 0 ].structure;
             var s2 = ol[ 1 ].structure;
             NGL.superpose( s1, s2, true );
-            ol[ 0 ].updateRepresentations( { "position": true } );
+            ol[ 0 ].updateRepresentations( { position: true } );
             ol[ 0 ].centerView();
 
         } );
@@ -231,13 +231,13 @@ NGL.ExampleRegistry.addDict( {
         Promise.all( [
 
             stage.loadFile( "data://1gzm.pdb" ).then( function( o ){
-                o.addRepresentation( "cartoon", { "color": "lightgreen" } );
+                o.addRepresentation( "cartoon", { color: "lightgreen" } );
                 o.centerView();
                 return o;
             } ),
 
             stage.loadFile( "data://1u19.pdb" ).then( function( o ){
-                o.addRepresentation( "cartoon", { "color": "tomato" } );
+                o.addRepresentation( "cartoon", { color: "tomato" } );
                 o.centerView();
                 return o;
             } )
@@ -247,7 +247,7 @@ NGL.ExampleRegistry.addDict( {
             var s1 = ol[ 0 ].structure;
             var s2 = ol[ 1 ].structure;
             NGL.superpose( s1, s2, true, ":A", ":A" );
-            ol[ 0 ].updateRepresentations( { "position": true } );
+            ol[ 0 ].updateRepresentations( { position: true } );
             ol[ 0 ].centerView();
 
         } );
