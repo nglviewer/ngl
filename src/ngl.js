@@ -555,7 +555,7 @@ import { Matrix3, Matrix4, Vector3, Quaternion, Color } from "../lib/three.es6.j
  * @static
  * @type {String}
  */
-var Version = "v0.8.0dev";
+var Version = "v0.8.0rc1";
 
 
 /**
