@@ -64,7 +64,6 @@ StructureParser.prototype = Object.assign( Object.create(
             if( this.autoBondBetween ){
                 calculateBondsBetween( s );
             }
-            s.atomSetDict.rung = s.getAtomSet( false );
         }
 
         // check for secondary structure

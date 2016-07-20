@@ -155,6 +155,10 @@ Structure.prototype = {
         this.atomSet = this.getAtomSet();
         this.bondSet = this.getBondSet();
 
+        if( !this.atomSetDict.rung ){
+            this.atomSetDict.rung = this.getAtomSet( false );
+        }
+
         for( var name in this.atomSetDict ){
             var as = this.atomSetDict[ name ];
             var as2 = this.getAtomSet( false );
