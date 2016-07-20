@@ -125,7 +125,7 @@ gulp.task('concat', function() {
 
 gulp.task('compress', ['build-ngl'], function(){
   return gulp.src(['./build/js/*.js'])
-    .pipe(uglify())
+    .pipe(uglify().pipe(uglify().on('error', gutil.log)))
     .pipe(gulp.dest('dist'));
 });
 
