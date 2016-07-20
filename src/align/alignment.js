@@ -228,7 +228,7 @@ Alignment.prototype = {
 
     calc: function(){
 
-        Log.time( "Alignment.calc" );
+        if( Debug ) Log.time( "Alignment.calc" );
 
         this.initMatrices();
 
@@ -270,7 +270,7 @@ Alignment.prototype = {
 
                 Si[j] = Math.max(
                     Si1[ j - 1 ] + scoreFn( i - 1, j - 1 ), // match
-                    Vi[ j ], //del
+                    Vi[ j ], // del
                     Hi[ j ]  // ins
                 );
 
@@ -278,15 +278,15 @@ Alignment.prototype = {
 
         }
 
-        Log.timeEnd( "Alignment.calc" );
+        if( Debug ) Log.timeEnd( "Alignment.calc" );
 
-        // Log.log(this.S, this.V, this.H);
+        if( Debug ) Log.log(this.S, this.V, this.H);
 
     },
 
     trace: function(){
 
-        // Log.time( "Alignment.trace" );
+        if( Debug ) Log.time( "Alignment.trace" );
 
         this.ali1 = '';
         this.ali2 = '';
@@ -308,60 +308,60 @@ Alignment.prototype = {
             this.score = this.H[i][j];
         }
 
-        // Log.log("Alignment: SCORE", this.score);
-        // Log.log("Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+        if( Debug ) Log.log("Alignment: SCORE", this.score);
+        if( Debug ) Log.log("Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
 
         while( i > 0 && j > 0 ){
 
-            if( mat=="S" ){
+            if( mat === "S" ){
 
-                if( this.S[i][j]==this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
+                if( this.S[i][j] === this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --i;
                     --j;
                     mat = "S";
-                }else if( this.S[i][j]==this.V[i][j] ){
+                }else if( this.S[i][j] === this.V[i][j] ){
                     mat = "V";
-                }else if( this.S[i][j]==this.H[i][j] ){
+                }else if( this.S[i][j] === this.H[i][j] ){
                     mat = "H";
                 }else{
-                    Log.error('Alignment: S');
+                    // Log.debug('Alignment: S');
                     --i;
                     --j;
                 }
 
-            }else if( mat=="V" ){
+            }else if( mat === "V" ){
 
-                if( this.V[i][j]==this.V[i-1][j] + this.gapExtensionPenalty ){
+                if( this.V[i][j] === this.V[i-1][j] + this.gapExtensionPenalty ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = '-' + this.ali2;
                     --i;
                     mat = "V";
-                }else if( this.V[i][j]==this.S[i-1][j] + this.gap(0) ){
+                }else if( this.V[i][j] === this.S[i-1][j] + this.gap(0) ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = '-' + this.ali2;
                     --i;
                     mat = "S";
                 }else{
-                    Log.error('Alignment: V');
+                    // Log.debug('Alignment: V');
                     --i;
                 }
 
-            }else if( mat=="H" ){
+            }else if( mat === "H" ){
 
-                if( this.H[i][j] == this.H[i][j-1] + this.gapExtensionPenalty ){
+                if( this.H[i][j] === this.H[i][j-1] + this.gapExtensionPenalty ){
                     this.ali1 = '-' + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --j;
                     mat = "H";
-                }else if( this.H[i][j] == this.S[i][j-1] + this.gap(0) ){
+                }else if( this.H[i][j] === this.S[i][j-1] + this.gap(0) ){
                     this.ali1 = '-' + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --j;
                     mat = "S";
                 }else{
-                    Log.error('Alignment: H');
+                    // Log.debug('Alignment: H');
                     --j;
                 }
 
@@ -389,9 +389,9 @@ Alignment.prototype = {
 
         }
 
-        // Log.timeEnd( "Alignment.trace" );
+        if( Debug ) Log.timeEnd( "Alignment.trace" );
 
-        // Log.log([this.ali1, this.ali2]);
+        if( Debug ) Log.log([this.ali1, this.ali2]);
 
     }
 

@@ -282,13 +282,10 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
-    superpose: function( component, align, sele1, sele2, xsele1, xsele2 ){
-
-        // FIXME does not account for structure.atomSet
+    superpose: function( component, align, sele1, sele2 ){
 
         superpose(
-            this.structureView, component.structureView,
-            align, sele1, sele2, xsele1, xsele2
+            this.structureView, component.structureView, align, sele1, sele2
         );
 
         this.updateRepresentations( { "position": true } );

@@ -142,7 +142,7 @@ function superpose( s1, s2, align, sele1, sele2 ){
 
     var superpose = new Superposition( atoms1, atoms2 );
     superpose.transform( s1 );
-    s1.refresh();
+    s1.getStructure().refresh();
 
 }
 
