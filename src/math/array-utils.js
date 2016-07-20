@@ -19,7 +19,7 @@ function circularMean( array, max, stride, offset, indices ){
     stride = stride || 1;
     offset = offset || 0;
 
-    var n = indices ? indices.length : array.length;
+    var n = indices ? indices.length : array.length / stride;
     var angle, i, c;
 
     var cosMean = 0;

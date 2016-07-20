@@ -291,6 +291,14 @@ StructureView.prototype = Object.assign( Object.create(
 
     //
 
+    getAtomIndices: function( selection ){
+
+        return this.structure.getAtomIndices( this.getSelection( selection ) );
+
+    },
+
+    //
+
     dispose: function(){
 
         delete this.structure;

@@ -34,6 +34,7 @@ function Trajectory( trajPath, structure, selectionString ){
 
     this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
+    // selection to restrict atoms used for superposition
     this.selection = new Selection(
         selectionString || "backbone and not hydrogen"
     );
@@ -66,7 +67,7 @@ Trajectory.prototype = {
 
         this.saveInitialStructure();
 
-        this.backboneIndices = this.structure.getAtomIndices(
+        this.backboneIndices = this.getIndices(
             new Selection( "backbone and not hydrogen" )
         );
         this.makeIndices();
@@ -106,9 +107,37 @@ Trajectory.prototype = {
 
     },
 
+    getIndices: function( selection ){
+
+        var indices;
+
+        if( selection && selection.test ){
+
+            var i = 0;
+            var test = selection.test;
+            indices = [];
+
+            this.structure.eachAtom( function( ap ){
+                if( test( ap ) ){
+                    indices.push( i );
+                }
+                i += 1;
+            } );
+
+        }else{
+
+            indices = this.structure.getAtomIndices( this.selection );
+
+        }
+
+        return indices;
+
+    },
+
     makeIndices: function(){
 
-        this.indices = this.structure.getAtomIndices( this.selection );
+        // indices to restrict atoms used for superposition
+        this.indices = this.getIndices( this.selection );
 
         var i, j;
         var n = this.indices.length * 3;
@@ -349,13 +378,9 @@ Trajectory.prototype = {
         if( this._disposed ) return;
 
         if( i === -1 ){
-
             this.structure.updatePosition( this.initialStructure );
-
         }else{
-
             this.structure.updatePosition( this.frameCache[ i ] );
-
         }
 
         this.structure.trajectory = {
@@ -364,15 +389,11 @@ Trajectory.prototype = {
         };
 
         if( typeof callback === "function" ){
-
             callback();
-
         }
 
         this.currentFrame = i;
-
         this.inProgress = false;
-
         this.signals.frameChanged.dispatch( i );
 
     },
@@ -380,11 +401,9 @@ Trajectory.prototype = {
     getCircularMean: function( indices, coords, box ){
 
         return [
-
             circularMean( coords, box[ 0 ], 3, 0, indices ),
             circularMean( coords, box[ 1 ], 3, 1, indices ),
             circularMean( coords, box[ 2 ], 3, 2, indices )
-
         ];
 
     },
@@ -406,11 +425,9 @@ Trajectory.prototype = {
         var fz = - mz + bz + bz / 2;
 
         for( i = 0; i < n; i += 3 ){
-
             coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
             coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
             coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
-
         }
 
     },

@@ -27,16 +27,8 @@ StructureTrajectory.prototype = Object.assign( Object.create(
 
     makeAtomIndices: function(){
 
-        var structure = this.structure;
-        var atomSet = structure.atomSet;
-        var count = atomSet.size();
-
-        if( count < structure.atomStore.count ){
-            var atomIndices = new Int32Array( count );
-            atomSet.forEach( function( index, i ){
-                atomIndices[ i ] = index;
-            } );
-            this.atomIndices = atomIndices;
+        if( this.structure.atomSet.size() < this.structure.atomStore.count ){
+            this.atomIndices = this.structure.getAtomIndices();
         }else{
             this.atomIndices = null;
         }
@@ -79,9 +71,7 @@ StructureTrajectory.prototype = Object.assign( Object.create(
         this.process( i, box, coords, numframes );
 
         if( typeof callback === "function" ){
-
             callback();
-
         }
 
     },
