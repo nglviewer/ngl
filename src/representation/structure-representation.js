@@ -133,12 +133,18 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    getAssembly(){
+
+        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
+        return this.structure.biomolDict[ name ];
+
+    },
+
     create: function(){
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
-        var assembly = this.structure.biomolDict[ name ];
+        var assembly = this.getAssembly();
 
         if( assembly ){
             assembly.partList.forEach( function( part, i ){

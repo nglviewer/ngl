@@ -889,7 +889,7 @@ Structure.prototype = {
 
     getPrincipalAxes: function( selection ){
 
-        console.time( "getPrincipalAxes" );
+        if( Debug ) Log.time( "getPrincipalAxes" );
 
         var i = 0;
         var coords = new Matrix( 3, this.atomCount );
@@ -902,7 +902,7 @@ Structure.prototype = {
             i += 3;
         }, selection );
 
-        console.timeEnd( "getPrincipalAxes" );
+        if( Debug ) Log.timeEnd( "getPrincipalAxes" );
 
         return principalAxes( coords );
 

@@ -57,9 +57,23 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    getPrincipalAxes: function( sview ){
+
+        var selection;
+        var assembly = this.getAssembly();
+
+        if( assembly ){
+            selection = assembly.partList[ 0 ].getSelection();
+        }
+
+        // return this.structureView.getPrincipalAxes( selection );  // FIXME
+        return this.structureView.getView( selection ).getPrincipalAxes();
+
+    },
+
     align: function(){
 
-        var pa = this.structureView.getPrincipalAxes();
+        var pa = this.getPrincipalAxes( this.structureView );
 
         var v1 = new Vector3().copy( pa[0][1] ).sub( pa[0][0] ).normalize();
         var v2 = new Vector3().copy( pa[1][1] ).sub( pa[1][0] ).normalize();
@@ -71,7 +85,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
     getAxesData: function( sview ){
 
-        var pa = sview.getPrincipalAxes();
+        var pa = this.getPrincipalAxes( sview );
         var c = new Color( this.colorValue );
 
         var vertexPosition = new Float32Array( 3 * 6 );

@@ -558,7 +558,8 @@ function svd( A, W, U, V ){
 
 
 function principalAxes( points ){
-    console.time( "principalAxes" );
+
+    // console.time( "principalAxes" );
 
     var n = points.rows;
     var pointsT = new Matrix( n, 3 );
@@ -592,7 +593,7 @@ function principalAxes( points ){
     var begC = new Vector3().copy( vm ).sub( vc );
     var endC = new Vector3().copy( vm ).add( vc );
 
-    console.timeEnd( "principalAxes" );
+    // console.timeEnd( "principalAxes" );
 
     return [ [ begA, endA ], [ begB, endB ], [ begC, endC ], vm ];
 }

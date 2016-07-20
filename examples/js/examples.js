@@ -1258,6 +1258,18 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "axes": function( stage ){
+
+        stage.loadFile( "rcsb://3pqr.mmtf", {
+            assembly: "BU1"
+        } ).then( function( o ){
+            o.addRepresentation( "cartoon" );
+            var axes = o.addRepresentation( "axes" );
+            axes.repr.align();
+        } );
+
+    },
+
     "test": function( stage ){
 
         stage.loadFile( "rcsb://3pqr.cif", {
