@@ -348,9 +348,9 @@ AtomProxy.prototype = {
         var bonds = this.residueType.getBonds();
         var atomIndices1 = bonds.atomIndices1;
         var atomIndices2 = bonds.atomIndices2;
-        var idx1, idx2, connectedAtomIndex;
+        var idx1, idx2, connectedAtomIndex, connectedAtomIndices;
 
-        if( !firstOnly ) var connectedAtomIndices = [];
+        if( !firstOnly ) connectedAtomIndices = [];
 
         idx1 = atomIndices1.indexOf( relativeIndex );
         while( idx1 !== -1 ){

@@ -707,15 +707,15 @@ function m3makeNormal( out, m4 ){
     //        [ r0 ]       [ r1 x r2 ]
     // M3x3 = [ r1 ]   N = [ r2 x r0 ]
     //        [ r2 ]       [ r0 x r1 ]
-    v3cross( cp, r1, r2 )
+    v3cross( cp, r1, r2 );
     out[ 0 ] = cp[ 0 ];
     out[ 1 ] = cp[ 1 ];
     out[ 2 ] = cp[ 2 ];
-    v3cross( cp, r2, r0 )
+    v3cross( cp, r2, r0 );
     out[ 3 ] = cp[ 0 ];
     out[ 4 ] = cp[ 1 ];
     out[ 5 ] = cp[ 2 ];
-    v3cross( cp, r0, r1 )
+    v3cross( cp, r0, r1 );
     out[ 6 ] = cp[ 0 ];
     out[ 7 ] = cp[ 1 ];
     out[ 8 ] = cp[ 2 ];

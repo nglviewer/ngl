@@ -390,12 +390,12 @@ ResidueType.prototype = {
         // AtomProxy.getResidueBonds?
         var bondGraph = {}; //{ ai1: [ ai2, ... ] }
 
-        var j, ai3;
+        var i, j, ai1, ai2, ai3;
 
-        for( var i = 0; i < nb; ++i ) {
+        for( i = 0; i < nb; ++i ) {
 
-            var ai1 = atomIndices1[i];
-            var ai2 = atomIndices2[i];
+            ai1 = atomIndices1[i];
+            ai2 = atomIndices2[i];
 
             var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
             a1.push(ai2);
@@ -409,10 +409,10 @@ ResidueType.prototype = {
 
         bondReferenceAtomIndices.length = 0;  // reset array
 
-        for(var i = 0; i < nb; ++i ) {
+        for( i = 0; i < nb; ++i ) {
 
-            var ai1 = atomIndices1[i];
-            var ai2 = atomIndices2[i];
+            ai1 = atomIndices1[i];
+            ai2 = atomIndices2[i];
 
             // Not required for single bonds
             if (this.bonds.bondOrders[i] <= 1) continue;
@@ -458,7 +458,7 @@ ResidueType.prototype = {
                     break;
                 }
                 maxDepth += 1;
-            };
+            }
 
             // Not a ring, just pick one atom:
             if( bondReferenceAtomIndices[i] === undefined) {

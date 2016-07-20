@@ -288,7 +288,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 atomIndices1: atomIndices1,
                 atomIndices2: atomIndices2,
                 bondOrders: groupType.bondOrderList
-            }
+            };
 
             groupTypeDict[ i ] = s.residueMap.add(
                 groupType.groupName, atomTypeIdList, hetFlag, chemCompType, bonds

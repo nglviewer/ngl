@@ -235,6 +235,7 @@ OBJLoader.prototype = {
 
         }
 
+        var i, l;
         var lines = text.split( '\n' );
         var line = '', lineFirstChar = '', lineSecondChar = '';
         var lineLength = 0;
@@ -243,7 +244,7 @@ OBJLoader.prototype = {
         // Faster to just trim left side of the line. Use if available.
         var trimLeft = ( typeof ''.trimLeft === 'function' );
 
-        for ( var i = 0, l = lines.length; i < l; i ++ ) {
+        for ( i = 0, l = lines.length; i < l; i ++ ) {
 
             line = lines[ i ];
 
@@ -388,7 +389,7 @@ OBJLoader.prototype = {
 
         var container = [];
 
-        for ( var i = 0, l = state.objects.length; i < l; i ++ ) {
+        for ( i = 0, l = state.objects.length; i < l; i ++ ) {
 
             var object = state.objects[ i ];
             var geometry = object.geometry;

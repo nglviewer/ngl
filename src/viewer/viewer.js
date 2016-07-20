@@ -1303,7 +1303,7 @@ function Viewer( eid, params ){
 
             rotate( vz, angle );
 
-        }
+        };
 
     }();
 

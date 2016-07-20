@@ -962,8 +962,8 @@ function assignResidueTypeBonds( structure ){
                     var idx2 = bp.atomIndex2;
                     if( idx1 > idx2 ){
                         var tmp = idx2;
-                        var idx2 = idx1;
-                        var idx1 = tmp;
+                        idx2 = idx1;
+                        idx1 = tmp;
                     }
                     var hash = idx1 + "|" + idx2;
                     if( bondDict[ hash ] === undefined ){

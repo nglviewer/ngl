@@ -107,7 +107,7 @@ var PickingControls = function( viewer, params ){
             "bond": pickedBond,
             "volume": pickedVolume,
             "instance": instance
-        }
+        };
     }
 
     function listen(){

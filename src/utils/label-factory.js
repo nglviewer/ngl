@@ -71,7 +71,7 @@ LabelFactory.prototype = {
                 l = this.text[ a.index ];
                 break;
 
-            case "qualified":
+            // case "qualified":
             default:
                 l = a.qualifiedName();
                 break;

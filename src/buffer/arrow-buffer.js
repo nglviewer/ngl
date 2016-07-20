@@ -79,10 +79,11 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
 
     function makeAttributes( data ){
 
+        var i, il;
         var attr = {};
 
         if( data.radius ){
-            for( var i = 0, il = cylinderRadius.length; i < il; ++i ){
+            for( i = 0, il = cylinderRadius.length; i < il; ++i ){
                 cylinderRadius[ i ] = data.radius[ i ] / aspectRatio;
             }
             attr.cylinderRadius = cylinderRadius;
@@ -94,7 +95,7 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
             var vTo = new Vector3();
             var vDir = new Vector3();
             var vSplit = new Vector3();
-            for( var i = 0, il = splitPosition.length; i < il; i += 3 ){
+            for( i = 0, il = splitPosition.length; i < il; i += 3 ){
                 vFrom.fromArray( data.from, i );
                 vTo.fromArray( data.to, i );
                 vDir.subVectors( vFrom, vTo );

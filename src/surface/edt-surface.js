@@ -82,7 +82,7 @@ function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
     );
     m4multiply( matrix, matrix, mscale );
 
-    var mtrans = m4new()
+    var mtrans = m4new();
     m4makeTranslation( mtrans,
         -scaleFactor * tran[2],
         -scaleFactor * tran[1],
@@ -148,7 +148,6 @@ function EDTSurface( coordList, radiusList, indexList ){
     var vpBits, vpDistance, vpAtomID;
 
     var radiusProperty;
-    var radiusDict;
 
     function init( btype, _probeRadius, _scaleFactor, _cutoff, _setAtomID ){
 

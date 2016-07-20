@@ -604,7 +604,7 @@ function TrackballControls( object, domElement ) {
         window.removeEventListener( 'keydown', keydown, false );
         window.removeEventListener( 'keyup', keyup, false );
 
-    }
+    };
 
     this.domElement.addEventListener( 'contextmenu', contextmenu, false );
     this.domElement.addEventListener( 'mousedown', mousedown, false );

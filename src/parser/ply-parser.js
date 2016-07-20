@@ -83,9 +83,11 @@ PLYLoader.prototype = {
 
 		if ( data instanceof ArrayBuffer ) {
 
-			return this.isASCII( data )
-				? this.parseASCII( this.bin2str( data ) )
-				: this.parseBinary( data );
+			return (
+				this.isASCII( data ) ?
+					this.parseASCII( this.bin2str( data ) ) :
+					this.parseBinary( data )
+			);
 
 		} else {
 
@@ -115,8 +117,7 @@ PLYLoader.prototype = {
 		};
 
 		var lines = headerText.split( '\n' );
-		var currentElement = undefined;
-		var lineType, lineValues;
+		var currentElement, lineType, lineValues;
 
 		function make_ply_element_property( propertValues, propertyNameMapping ) {
 
@@ -176,13 +177,13 @@ PLYLoader.prototype = {
 
 			case "element":
 
-				if ( ! ( currentElement === undefined ) ) {
+				if ( currentElement !== undefined ) {
 
 					header.elements.push( currentElement );
 
 				}
 
-				currentElement = Object();
+				currentElement = {};
 				currentElement.name = lineValues[ 0 ];
 				currentElement.count = parseInt( lineValues[ 1 ] );
 				currentElement.properties = [];
@@ -204,7 +205,7 @@ PLYLoader.prototype = {
 
 		}
 
-		if ( ! ( currentElement === undefined ) ) {
+		if ( currentElement !== undefined ) {
 
 			header.elements.push( currentElement );
 
@@ -235,7 +236,7 @@ PLYLoader.prototype = {
 
 		var values = line.split( /\s+/ );
 
-		var element = Object();
+		var element = {};
 
 		for ( var i = 0; i < properties.length; i ++ ) {
 
@@ -408,7 +409,7 @@ PLYLoader.prototype = {
 
 	binaryReadElement: function ( dataview, at, properties, little_endian ) {
 
-		var element = Object();
+		var element = {};
 		var result, read = 0;
 
 		for ( var i = 0; i < properties.length; i ++ ) {

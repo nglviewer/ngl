@@ -510,6 +510,7 @@ CifParser.prototype = Object.assign( Object.create(
 
         function parseChemComp(){
 
+            var i, n;
             var cc = cif.chem_comp;
             var cca = cif.chem_comp_atom;
             var ccb = cif.chem_comp_bond;
@@ -529,8 +530,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             if( cca ){
 
-                var i, j, atomname, element, resname, resno;
-                var n = cca.comp_id.length;
+                var atomname, element, resname, resno;
+                n = cca.comp_id.length;
 
                 for( i = 0; i < n; ++i ){
 
@@ -583,8 +584,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             if( cca && ccb ){
 
-                var i, atomname1, atomname2, valueOrder, bondOrder;
-                var n = ccb.comp_id.length;
+                var atomname1, atomname2, valueOrder, bondOrder;
+                n = ccb.comp_id.length;
                 var na = cca.comp_id.length;
 
                 var ap1 = s.getAtomProxy();
