@@ -1565,14 +1565,6 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     setSuperposeOptions();
 
-    // SS calculate
-
-    var ssButton = new UI.Button( "calculate" ).onClick( function(){
-        NGL.calculateSecondaryStructure( component.structure );
-        component.rebuildRepresentations();
-        componentPanel.setMenuDisplay( "none" );
-    } );
-
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1582,7 +1574,6 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "Representation", repr )
         .addMenuEntry( "Assembly", assembly )
         .addMenuEntry( "Superpose", superpose )
-        .addMenuEntry( "SS", ssButton )
         .addMenuEntry(
             "File", new UI.Text( component.structure.path )
                         .setMaxWidth( "100px" )
