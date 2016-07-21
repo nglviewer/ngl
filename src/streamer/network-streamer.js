@@ -59,7 +59,7 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
                 }
 
-                throw "NGL.NetworkStreamer._read: status code " + xhr.status;
+                throw "NetworkStreamer._read: status code " + xhr.status;
 
             }
 

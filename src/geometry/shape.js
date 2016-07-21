@@ -8,6 +8,7 @@
 import { defaults } from "../utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
+import EllipsoidBuffer from "../buffer/ellipsoid-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import ConeBuffer from "../buffer/cone-buffer.js";
 import ArrowBuffer from "../buffer/arrow-buffer.js";
@@ -242,7 +243,7 @@ function Shape( name, params ){
         var buffers = [];
 
         if( spherePosition.length ){
-            var sphereBuffer = new NGL.SphereBuffer(
+            var sphereBuffer = new SphereBuffer(
                 new Float32Array( spherePosition ),
                 new Float32Array( sphereColor ),
                 new Float32Array( sphereRadius ),
@@ -256,7 +257,7 @@ function Shape( name, params ){
         }
 
         if( ellipsoidPosition.length ){
-            var ellipsoidBuffer = new NGL.EllipsoidBuffer(
+            var ellipsoidBuffer = new EllipsoidBuffer(
                 new Float32Array( ellipsoidPosition ),
                 new Float32Array( ellipsoidColor ),
                 new Float32Array( ellipsoidRadius ),
@@ -272,7 +273,7 @@ function Shape( name, params ){
         }
 
         if( cylinderFrom.length ){
-            var cylinderBuffer = new NGL.CylinderBuffer(
+            var cylinderBuffer = new CylinderBuffer(
                 new Float32Array( cylinderFrom ),
                 new Float32Array( cylinderTo ),
                 new Float32Array( cylinderColor ),
@@ -290,7 +291,7 @@ function Shape( name, params ){
         }
 
         if( coneFrom.length ){
-            var coneBuffer = new NGL.ConeBuffer(
+            var coneBuffer = new ConeBuffer(
                 new Float32Array( coneFrom ),
                 new Float32Array( coneTo ),
                 new Float32Array( coneColor ),
@@ -306,7 +307,7 @@ function Shape( name, params ){
         }
 
         if( arrowFrom.length ){
-            var arrowBuffer = new NGL.ArrowBuffer(
+            var arrowBuffer = new ArrowBuffer(
                 new Float32Array( arrowFrom ),
                 new Float32Array( arrowTo ),
                 new Float32Array( arrowColor ),

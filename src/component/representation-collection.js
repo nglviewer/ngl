@@ -10,7 +10,7 @@ import Collection from "./collection.js";
 
 function RepresentationCollection( reprList ){
 
-    NGL.Collection.call( this, reprList );
+    Collection.call( this, reprList );
 
 }
 

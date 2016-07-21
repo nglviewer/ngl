@@ -18,7 +18,7 @@ StringStreamer.prototype = Object.assign( Object.create(
 
     Streamer.prototype ), {
 
-    constructor: NGL.StringStreamer,
+    constructor: StringStreamer,
 
     type: "string",
 

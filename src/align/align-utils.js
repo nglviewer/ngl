@@ -132,8 +132,8 @@ function superpose( s1, s2, align, sele1, sele2 ){
 
     }else{
 
-        var sviewCa1 = s1.getView( new NGL.Selection( sele1 + " and .CA" ) );
-        var sviewCa2 = s2.getView( new NGL.Selection( sele2 + " and .CA" ) );
+        var sviewCa1 = s1.getView( new Selection( sele1 + " and .CA" ) );
+        var sviewCa2 = s2.getView( new Selection( sele2 + " and .CA" ) );
 
         atoms1 = sviewCa1;
         atoms2 = sviewCa2;
