@@ -557,7 +557,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 for( i = 0; i < n; ++i ){
 
-                    j = i + n;
+                    var j = i + n;
 
                     atomStore.growIfFull();
 
