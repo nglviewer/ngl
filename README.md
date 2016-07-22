@@ -1,6 +1,6 @@
 
-[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/dev/LICENSE)
-[![Version](http://img.shields.io/badge/version-0.7.1a-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.7.1a)
+[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/master/LICENSE)
+[![Version](http://img.shields.io/badge/version-0.8-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.8)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/dev/CHANGELOG.md)
 
 
@@ -36,7 +36,7 @@ Table of contents
 Usage
 =====
 
-Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build. For versions up to 0.7.1a the file is [js/build/ngl.embedded.min.js](https://github.com/arose/ngl/blob/v0.7.1a/js/build/ngl.embedded.min.js) and for later versions it is [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
+Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
 
 
 

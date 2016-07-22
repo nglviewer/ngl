@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased]
+## [v0.8] - 2016-07-22
 ### Added
 - gulp build scripts
 - mmtf v0.2 support
@@ -172,7 +172,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.7.1a...HEAD
+[v0.8]: https://github.com/arose/ngl/compare/v0.7.1a...v0.8
 [v0.7.1a]: https://github.com/arose/ngl/compare/v0.7.1...v0.7.1a
 [v0.7.1]: https://github.com/arose/ngl/compare/v0.7...v0.7.1
 [v0.7]: https://github.com/arose/ngl/compare/v0.6...v0.7
