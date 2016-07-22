@@ -65,6 +65,7 @@ StructureParser.prototype = Object.assign( Object.create(
                 calculateBondsBetween( s );
             }
         }
+        s.refresh();
 
         // check for secondary structure
         if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
