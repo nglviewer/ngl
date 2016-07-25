@@ -182,7 +182,8 @@ function EDTSurface( coordList, radiusList, indexList ){
         if( _cutoff ){
             cutoff = _cutoff;
         }else{
-            cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
+            // cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
+            cutoff = probeRadius / scaleFactor;
         }
 
         vpBits = new Uint8Array( pLength * pWidth * pHeight );
