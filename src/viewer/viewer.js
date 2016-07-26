@@ -1241,15 +1241,7 @@ function Viewer( eid, params ){
 
                 if( _zoom === true ){
 
-                    // automatic zoom that shows
-                    // everything inside the bounding box
-                    // TODO take extent towards the camera into account
-
-                    boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                    distance = maxSize + ( minSize / 2 );  // object size
+                    distance = boundingBox.size( bbSize ).length();
 
                 }else{
 
@@ -1259,9 +1251,11 @@ function Viewer( eid, params ){
 
                 var fov = degToRad( perspectiveCamera.fov );
                 var aspect = width / height;
+                var aspectFactor = ( height < width ? 1 : aspect );
 
-                distance = distance / 2 / aspect / Math.tan( fov / 2 );
-                distance = Math.max( distance, 1.2 * parameters.clipDist );
+                distance = Math.abs(
+                    ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+                );
 
                 zoom( distance, true );
 
