@@ -61,6 +61,7 @@ BufferRepresentation.prototype = Object.assign( Object.create(
         this.bufferList.forEach( function( buffer ){
 
             this.viewer.add( buffer );
+            buffer.setParameters( this.getBufferParams() );
 
         }, this );
 
