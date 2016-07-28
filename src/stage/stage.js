@@ -689,6 +689,14 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Spin the whole scene around an axis at the center
+     * @example
+     * stage.setSpin( [ 0, 1, 0 ], 0.01 );
+     *
+     * @param {Number[]|Vector3} axis - the axis to spin around
+     * @param {Number} angle - amount to spin per render call
+     */
     setSpin: function( axis, angle ){
 
         if( Array.isArray( axis ) ){
