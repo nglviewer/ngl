@@ -636,13 +636,29 @@ function ResidueindexColorMaker( params ){
         this.scale = "roygb";
     }
     if( !params.domain ){
-        this.domain = [ 0, this.structure.residueStore.count ];
-    }
-    var residueindexScale = this.getScale();
 
-    this.atomColor = function( a ){
-        return residueindexScale( a.residueIndex );
-    };
+        // this.domain = [ 0, this.structure.residueStore.count ];
+
+        var scalePerChain = {};
+
+        this.structure.eachChain( function( cp ){
+            this.domain = [ cp.residueOffset, cp.residueEnd ];
+            scalePerChain[ cp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            return scalePerChain[ a.chainIndex ]( a.residueIndex );
+        };
+
+    }else{
+
+        var residueindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return residueindexScale( a.residueIndex );
+        };
+
+    }
 
 }
 
@@ -659,13 +675,29 @@ function ChainindexColorMaker( params ){
         this.scale = "Spectral";
     }
     if( !params.domain ){
-        this.domain = [ 0, this.structure.chainStore.count ];
-    }
-    var chainindexScale = this.getScale();
 
-    this.atomColor = function( a ){
-        return chainindexScale( a.chainIndex );
-    };
+        // this.domain = [ 0, this.structure.chainStore.count ];
+
+        var scalePerModel = {};
+
+        this.structure.eachChain( function( mp ){
+            this.domain = [ mp.chainOffset, mp.chainEnd ];
+            scalePerModel[ mp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            return scalePerModel[ a.modelIndex ]( a.chainIndex );
+        };
+
+    }else{
+
+        var chainindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return chainindexScale( a.chainIndex );
+        };
+
+    }
 
 }
 
@@ -768,9 +800,7 @@ function ResnameColorMaker( params ){
     ColorMaker.call( this, params );
 
     this.atomColor = function( a ){
-
         return ResidueColors[ a.resname ] || DefaultResidueColor;
-
     };
 
 }
@@ -811,9 +841,7 @@ function BfactorColorMaker( params ){
     var bfactorScale = this.getScale();
 
     this.atomColor = function( a ){
-
         return bfactorScale( a.bfactor );
-
     };
 
 }
@@ -885,9 +913,7 @@ function HydrophobicityColorMaker( params ){
     var hfScale = this.getScale();
 
     this.atomColor = function( a ){
-
         return hfScale( resHF[ a.resname ] || DefaultResidueHydrophobicity );
-
     };
 
 }
