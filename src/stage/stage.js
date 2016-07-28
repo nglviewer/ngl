@@ -350,7 +350,7 @@ Stage.prototype = {
                 object.addRepresentation( "surface", {
                     sele: "polymer",
                     surfaceType: "sas",
-                    probeRadius: 0.1,
+                    probeRadius: 1.4,
                     scaleFactor: scaleFactor,
                     colorScheme: "atomindex",
                     colorScale: "RdYlBu",
