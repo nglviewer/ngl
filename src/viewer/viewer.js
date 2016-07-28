@@ -1082,12 +1082,12 @@ function Viewer( eid, params ){
         updateInfo();
         renderer.setRenderTarget( null );  // back to standard render target
 
-        if( Debug ){
-            __setVisibility( false, true, false, true );
+        // if( Debug ){
+        //     __setVisibility( false, true, false, true );
 
-            renderer.clear();
-            renderer.render( scene, camera );
-        }
+        //     renderer.clear();
+        //     renderer.render( scene, camera );
+        // }
 
     }
 
@@ -1241,7 +1241,13 @@ function Viewer( eid, params ){
 
                 if( _zoom === true ){
 
-                    distance = boundingBox.size( bbSize ).length();
+                    // distance = boundingBox.size( bbSize ).length();
+
+                    boundingBox.size( bbSize );
+                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                    distance = maxSize + Math.sqrt( minSize );
 
                 }else{
 
