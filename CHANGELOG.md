@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file, following t
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis
 - ChainindexColorMaker colorscale domain on a per model basis
+- Fixed, initial parameters for a Buffer not taken into account
 
 ### Removed
 
