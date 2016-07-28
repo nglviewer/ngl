@@ -680,7 +680,7 @@ function ChainindexColorMaker( params ){
 
         var scalePerModel = {};
 
-        this.structure.eachChain( function( mp ){
+        this.structure.eachModel( function( mp ){
             this.domain = [ mp.chainOffset, mp.chainEnd ];
             scalePerModel[ mp.index ] = this.getScale();
         }.bind( this ) );
