@@ -1122,6 +1122,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://md_1u19.gro" ).then( function( o ){
 
             o.addRepresentation( "cartoon" );
+            o.addRepresentation( "surface", { visible: false, lazy: true } );
             o.centerView();
 
             var framesPromise = NGL.autoLoad( "data://md_1u19.dcd.gz" );
@@ -1266,6 +1267,16 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             var axes = o.addRepresentation( "axes" );
             axes.repr.align();
+        } );
+
+    },
+
+    "lazy": function( stage ){
+
+        stage.loadFile( "rcsb://3pqr.mmtf" ).then( function( o ){
+            o.addRepresentation( "cartoon" );
+            o.addRepresentation( "surface", { visible: false, lazy: true } );
+            stage.centerView();
         } );
 
     },

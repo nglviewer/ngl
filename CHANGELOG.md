@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file, following t
 
 ## [Unreleased]
 ### Added
+- lazy representation parameter that only builds & updates the representation when visible
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis

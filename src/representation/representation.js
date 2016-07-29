@@ -16,6 +16,8 @@ import Counter from "../utils/counter.js";
 /**
  * Representation parameter object.
  * @typedef {Object} RepresentationParameters - representation parameters
+ * @property {Boolean} lazy - only build & update the representation when visible
+ *                            otherwise defer changes until set visible again
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
  * @property {Boolean} flatShaded - render flat shaded
@@ -42,7 +44,7 @@ import Counter from "../utils/counter.js";
  * @class
  * @param {Object} object - the object to be represented
  * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters
+ * @param {RepresentationParameters} [params] - representation parameters
  */
 function Representation( object, viewer, params ){
 
@@ -81,6 +83,10 @@ Representation.prototype = {
     type: "",
 
     parameters: {
+
+        lazy: {
+            type: "boolean"
+        },
 
         clipNear: {
             type: "range", step: 1, max: 100, min: 0, buffer: true
@@ -158,6 +164,13 @@ Representation.prototype = {
         this.roughness = defaults( p.roughness, 0.4 );
         this.metalness = defaults( p.metalness, 0.0 );
         this.diffuse = defaults( p.diffuse, 0xffffff );
+
+        this.lazy = defaults( p.lazy, false );
+        this.lazyProps = {
+            build: false,
+            bufferParams: {},
+            what: {}
+        };
 
         // handle common parameters when applicable
 
@@ -291,6 +304,11 @@ Representation.prototype = {
 
     build: function( params ){
 
+        if( this.lazy && !this.visible ){
+            this.lazyProps.build = true;
+            return;
+        }
+
         if( !this.prepare ){
             if( !params ){
                 params = this.getParameters();
@@ -303,14 +321,10 @@ Representation.prototype = {
 
         // don't let tasks accumulate
         if( this.queue.length() > 0 ){
-
             this.tasks.change( 1 - this.queue.length() );
             this.queue.kill();
-
         }else{
-
             this.tasks.increment();
-
         }
 
         if( !params ){
@@ -380,10 +394,26 @@ Representation.prototype = {
 
         this.visible = value;
 
+        if( this.visible ){
+
+            var lazyProps = this.lazyProps;
+
+            if( lazyProps.build ){
+
+                lazyProps.build = false;
+                this.build();
+                return;
+
+            }else if( lazyProps.bufferParams || lazyProps.what ){
+
+                this.updateParameters( lazyProps.bufferParams, lazyProps.what );
+
+            }
+
+        }
+
         this.bufferList.forEach( function( buffer ){
-
             buffer.setVisibility( value );
-
         } );
 
         if( !noRenderRequest ) this.viewer.requestRender();
@@ -455,30 +485,39 @@ Representation.prototype = {
         //
 
         if( rebuild ){
-
             this.build();
-
         }else{
-
-            this.bufferList.forEach( function( buffer ){
-                buffer.setParameters( bufferParams );
-            } );
-
-            if( Object.keys( what ).length ){
-                this.update( what );  // update buffer attribute
-            }
-
-            this.viewer.requestRender();
-
+            this.updateParameters( bufferParams, what );
         }
 
         return this;
 
     },
 
+    updateParameters: function( bufferParams, what ){
+
+        if( this.lazy && !this.visible ){
+            Object.assign( this.lazyProps.bufferParams, bufferParams );
+            Object.assign( this.lazyProps.what, what );
+            return;
+        }
+
+        this.bufferList.forEach( function( buffer ){
+            buffer.setParameters( bufferParams );
+        } );
+
+        if( Object.keys( what ).length ){
+            this.update( what );  // update buffer attribute
+        }
+
+        this.viewer.requestRender();
+
+    },
+
     getParameters: function(){
 
         var params = {
+            lazy: this.lazy,
             visible: this.visible,
             quality: this.quality
         };

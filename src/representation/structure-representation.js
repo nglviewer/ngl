@@ -175,6 +175,11 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     update: function( what ){
 
+        if( this.lazy && !this.visible ){
+            Object.assign( this.lazyProps.what, what );
+            return;
+        }
+
         this.dataList.forEach( function( data ){
             if( data.bufferList.length > 0 ){
                 this.updateData( what, data );
