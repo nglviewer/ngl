@@ -730,9 +730,9 @@ NGL.ExampleRegistry.addDict( {
                 new Float32Array( [ 1, 0, 0 ] ),
                 new Float32Array( [ 1 ] ),
                 undefined,
-                { flatShaded: true, disableImpostor: true }
+                { disableImpostor: true }
             );
-            o.addBufferRepresentation( sphereBuffer );
+            o.addBufferRepresentation( sphereBuffer, { flatShaded: true } );
 
             stage.viewer.controls.addEventListener(
                 'change', function(){
