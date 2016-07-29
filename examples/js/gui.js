@@ -1885,7 +1885,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
             var po = {};
             po[ name ] = input.getValue();
             component.setParameters( po );
-            repr.viewer.requestRender();
+            component.viewer.requestRender();
         }
 
         var ua = navigator.userAgent;

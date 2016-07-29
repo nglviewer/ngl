@@ -31,6 +31,22 @@ var nextComponentId = 0;
  * @type {RepresentationComponent}
  */
 
+/**
+ * {@link Signal}, dispatched when a representation is removed
+ * @example
+ * component.signals.representationRemoved( function( representationComponent ){ ... } );
+ * @event Component#representationRemoved
+ * @type {RepresentationComponent}
+ */
+
+/**
+ * {@link Signal}, dispatched when the visibility changes
+ * @example
+ * component.signals.visibilityChanged( function( value ){ ... } );
+ * @event Component#visibilityChanged
+ * @type {Boolean}
+ */
+
 
 /**
  * Component base class
@@ -84,8 +100,8 @@ Component.prototype = {
      * Add a new representation to the component
      * @fires Component#representationAdded
      * @param {String} type - the name of the representation
-     * @param {Object} object the object on which the representation should be based
-     * @param {RepresentationParameters} params - representation parameters
+     * @param {Object} object - the object on which the representation should be based
+     * @param {RepresentationParameters} [params] - representation parameters
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
@@ -116,14 +132,17 @@ Component.prototype = {
 
     },
 
+    /**
+     * Removes a representation component
+     * @fires Component#representationRemoved
+     * @param {RepresentationComponent} repr - the representation component
+     */
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
 
         if( idx !== -1 ){
-
             this.reprList.splice( idx, 1 );
-
         }
 
         this.signals.representationRemoved.dispatch( repr );
@@ -133,9 +152,7 @@ Component.prototype = {
     updateRepresentations: function( what ){
 
         this.reprList.forEach( function( repr ){
-
             repr.update( what );
-
         } );
 
         this.stage.viewer.requestRender();
@@ -146,9 +163,7 @@ Component.prototype = {
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
-
             repr.dispose();
-
         } );
 
     },
@@ -163,14 +178,18 @@ Component.prototype = {
 
     },
 
+    /**
+     * Set the visibility of the component, including added representations
+     * @fires Component#visibilityChanged
+     * @param {Boolean} value - visibility flag
+     * @return {Component} this object
+     */
     setVisibility: function( value ){
 
         this.visible = value;
 
         this.eachRepresentation( function( repr ){
-
             repr.updateVisibility();
-
         } );
 
         this.signals.visibilityChanged.dispatch( value );

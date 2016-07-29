@@ -5,6 +5,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
@@ -16,10 +17,38 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 };
 
 
+/**
+ * @ignore
+ * @event RepresentationComponent#representationAdded
+ */
+
+/**
+ * @ignore
+ * @event RepresentationComponent#representationRemoved
+ */
+
+/**
+ * {@link Signal}, dispatched when parameters change
+ * @example
+ * component.signals.parametersChanged( function( params ){ ... } );
+ * @event RepresentationComponent#parametersChanged
+ * @type {RepresentationParameters}
+ */
+
+
+/**
+ * Component wrapping a Representation object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Representation} repr - representation object to wrap
+ * @param {RepresentationParameters} [params] - component parameters
+ * @param {Component} [parent] - parent component
+ */
 function RepresentationComponent( stage, repr, params, parent ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : repr.type;
+    p.name = defaults( p.name, repr.type );
 
     Component.call( this, stage, p );
 
@@ -51,9 +80,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     setRepresentation: function( repr ){
 
-        if( this.repr ){
-            this.removeRepresentation( this.repr );
-        }
+        this.disposeRepresentation();
         this.repr = repr;
         // this.name = repr.type;
         this.stage.tasks.listen( this.repr.tasks );
@@ -61,12 +88,24 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
-    addRepresentation: function( type ){},
+    /**
+     * @ignore
+     * @alias RepresentationComponent#addRepresentation
+     */
+    addRepresentation: function(){},
 
-    removeRepresentation: function( repr ){
+    /**
+     * @ignore
+     * @alias RepresentationComponent#removeRepresentation
+     */
+    removeRepresentation: function(){},
 
-        this.stage.tasks.unlisten( this.repr.tasks );
-        this.repr.dispose();
+    disposeRepresentation: function(){
+
+        if( this.repr ){
+            this.stage.tasks.unlisten( this.repr.tasks );
+            this.repr.dispose();
+        }
 
     },
 
@@ -75,11 +114,19 @@ RepresentationComponent.prototype = Object.assign( Object.create(
         if( this.parent ){
             this.parent.removeRepresentation( this );
         }
-        this.removeRepresentation( this.repr );
+        this.disposeRepresentation();
+        delete this.reprArgs;
         this.signals.disposed.dispatch();
 
     },
 
+    /**
+     * Set the visibility of the component, takes parent visibility into account
+     * @alias RepresentationComponent#setVisibility
+     * @fires Component#visibilityChanged
+     * @param {Boolean} value - visibility flag
+     * @return {RepresentationComponent} this object
+     */
     setVisibility: function( value ){
 
         this.visible = value;
@@ -90,13 +137,19 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
-    updateVisibility: function(){
+    getVisibility: function(){
 
         if( this.parent ){
-            this.repr.setVisibility( this.parent.visible && this.visible );
+            return this.parent.visible && this.visible;
         }else{
-            this.repr.setVisibility( this.visible );
+            return this.visible;
         }
+
+    },
+
+    updateVisibility: function(){
+
+        this.repr.setVisibility( this.getVisibility() );
 
     },
 
@@ -116,6 +169,12 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set selection
+     * @alias RepresentationComponent#setSelection
+     * @param {String} string - selection string
+     * @return {RepresentationComponent} this object
+     */
     setSelection: function( string ){
 
         this.repr.setSelection( string );
@@ -124,6 +183,13 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set representation parameters
+     * @alias RepresentationComponent#setParameters
+     * @fires RepresentationComponent#parametersChanged
+     * @param {RepresentationParameters} params - parameter object
+     * @return {RepresentationComponent} this object
+     */
     setParameters: function( params ){
 
         this.repr.setParameters( params );
@@ -149,6 +215,10 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * @ignore
+     * @alias RepresentationComponent#getCenter
+     */
     getCenter: function(){}
 
 } );
