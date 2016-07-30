@@ -100,7 +100,7 @@ BondProxy.prototype = {
 
         ap1.index = this.atomIndex1;
         ap2.index = this.atomIndex2;
-        var ai3 = this.getReferenceAtomIndex( ap1, ap2 );
+        var ai3 = this.getReferenceAtomIndex();
 
         v12.subVectors( ap1, ap2 ).normalize();
         if( ai3 !== undefined ){

@@ -626,7 +626,7 @@ function calculateResidueBonds( r ){
     return {
         atomIndices1: atomIndices1,
         atomIndices2: atomIndices2,
-        bondsOrders: bondOrders
+        bondOrders: bondOrders
     };
 
 }
@@ -659,12 +659,13 @@ function calculateBondsWithin( structure, onlyAddRung ){
             var bonds = r.getBonds();
             var atomIndices1 = bonds.atomIndices1;
             var atomIndices2 = bonds.atomIndices2;
+            var bondOrders = bonds.bondOrders;
             var nn = atomIndices1.length;
 
             for( var i = 0; i < nn; ++i ){
                 a1.index = atomIndices1[ i ] + offset;
                 a2.index = atomIndices2[ i ] + offset;
-                bondStore.addBond( a1, a2, 1 );  // assume single bond
+                bondStore.addBond( a1, a2, bondOrders[ i ] );
             }
 
         }
