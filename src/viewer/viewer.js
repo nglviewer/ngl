@@ -1263,6 +1263,8 @@ function Viewer( eid, params ){
                     ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
                 );
 
+                distance += parameters.clipDist;
+
                 zoom( distance, true );
 
             }
