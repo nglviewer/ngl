@@ -58,12 +58,12 @@ StructureParser.prototype = Object.assign( Object.create(
         // check for chain names
         calculateChainnames( s );
 
-        if( !this.dontAutoBond ){
-            calculateBonds( s );
-        }else{
+        if( this.dontAutoBond ){
             if( this.autoBondBetween ){
                 calculateBondsBetween( s );
             }
+        }else{
+            calculateBonds( s );
         }
         s.refresh();
 
