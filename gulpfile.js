@@ -17,13 +17,28 @@ var glob = require('glob');
 var commonjs = require('rollup-plugin-commonjs');
 var nodeResolve = require('rollup-plugin-node-resolve');
 
+function glsl () {
+  return {
+    transform ( code, id ) {
+      if ( !/\.(glsl|frag|vert)$/.test( id ) ) return;
+      return 'export default ' + JSON.stringify(
+        code
+          .replace( /[ \t]*\/\/.*\n/g, '' )
+          .replace( /[ \t]*\/\*[\s\S]*?\*\//g, '' )
+          .replace( /\n{2,}/g, '\n' )
+          .replace( /\t/g, ' ' )
+          .replace( / {2,}/g, ' ' )
+          .replace( / *\n */g, '\n' )
+      ) + ';'
+    }
+  };
+}
+
 gulp.task('build-ngl', function () {
   return rollup({
     entry: 'src/ngl.js',
     plugins: [
-      string({
-        extensions: ['.vert', '.frag', '.glsl']
-      })
+      glsl()
     ]
   }).then(function (bundle) {
     return bundle.write({

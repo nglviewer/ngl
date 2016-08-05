@@ -80,10 +80,12 @@ void main(void){
 
     vec3 cam_dir = normalize(EyePoint.xyz - center);
     float b = dot(cam_dir, dir);
-    if(b<0.0) // direction vector looks away, so flip
+    // direction vector looks away, so flip
+    if(b<0.0)
         //ldir = -ext*dir;
         ldir = -(length(inputAxis)/2.0) * normalize(inputAxis);
-    else // direction vector already looks in my direction
+    // direction vector already looks in my direction
+    else
         //ldir = ext*dir;
         ldir = (length(inputAxis)/2.0) * normalize(inputAxis);
 

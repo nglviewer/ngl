@@ -29,7 +29,8 @@ void main(void){
         #include color_vertex
         #include beginnormal_vertex
         #include defaultnormal_vertex
-        #ifndef FLAT_SHADED  // Normal computed with derivatives when FLAT_SHADED
+        // Normal computed with derivatives when FLAT_SHADED
+        #ifndef FLAT_SHADED
             vNormal = normalize( transformedNormal );
         #endif
     #endif

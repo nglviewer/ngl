@@ -118,7 +118,8 @@ void main(void){
     #endif
 
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    mvPosition.z -= radius;  // avoid clipping, added again in fragment shader
+    // avoid clipping, added again in fragment shader
+    mvPosition.z -= radius;
 
     gl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();

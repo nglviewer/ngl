@@ -83,9 +83,11 @@ void main(){
 
     float b = dot( cam_dir, dir );
     end_b.w = b;
-    if( b < 0.0 ) // direction vector looks away, so flip
+    // direction vector looks away, so flip
+    if( b < 0.0 )
         ldir = -ext * dir;
-    else // direction vector already looks in my direction
+    // direction vector already looks in my direction
+    else
         ldir = ext * dir;
 
     vec3 left = normalize( cross( cam_dir, ldir ) );

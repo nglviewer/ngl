@@ -285,7 +285,8 @@ void main(){
         #include roughnessmap_fragment
         #include metalnessmap_fragment
 
-        vec3 normal = normalize( vNormal );  // don't use #include normal_fragment
+        // don't use #include normal_fragment
+        vec3 normal = normalize( vNormal );
         if( interior ){
             normal = vec3( 0.0, 0.0, 0.4 );
         }
