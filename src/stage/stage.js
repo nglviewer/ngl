@@ -161,7 +161,7 @@ function Stage( eid, params ){
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
         ambientIntensity: 0.2,
-        hoverTimeout: 50,
+        hoverTimeout: 500,
     }, params );
     this.parameters = deepCopy( Stage.prototype.parameters );
     this.setParameters( p );  // must come after the viewer has been instantiated
