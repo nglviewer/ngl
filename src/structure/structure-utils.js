@@ -632,6 +632,28 @@ function calculateResidueBonds( r ){
 }
 
 
+function calculateAtomBondMap( structure ){
+
+    if( Debug ) Log.time( "calculateAtomBondMap" );
+
+    var atomStore = structure.atomStore;
+    var bondStore = structure.bondStore;
+    var atomBondMap = [];
+
+    structure.eachBond( function( bp ){
+        var ai1 = bp.atomIndex1;
+        var ai2 = bp.atomIndex2;
+        if( atomBondMap[ ai1 ] === undefined ) atomBondMap[ ai1 ] = [];
+        atomBondMap[ ai1 ][ ai2 ] = bp.index;
+    } );
+
+    if( Debug ) Log.timeEnd( "calculateAtomBondMap" );
+
+    return atomBondMap;
+
+}
+
+
 function calculateBondsWithin( structure, onlyAddRung ){
 
     if( Debug ) Log.time( "calculateBondsWithin" );
@@ -641,6 +663,8 @@ function calculateBondsWithin( structure, onlyAddRung ){
     var rungAtomSet = structure.getAtomSet( false );
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
+    var bp = structure.getBondProxy();
+    var atomBondMap = calculateAtomBondMap( structure );
 
     structure.eachResidue( function( r ){
 
@@ -663,9 +687,20 @@ function calculateBondsWithin( structure, onlyAddRung ){
             var nn = atomIndices1.length;
 
             for( var i = 0; i < nn; ++i ){
-                a1.index = atomIndices1[ i ] + offset;
-                a2.index = atomIndices2[ i ] + offset;
-                bondStore.addBond( a1, a2, bondOrders[ i ] );
+                var ai1 = atomIndices1[ i ] + offset;
+                var ai2 = atomIndices2[ i ] + offset;
+                var tmp = atomBondMap[ ai1 ];
+                if( tmp !== undefined && ( tmp = tmp[ ai2 ] ) ){
+                    bp.index = tmp;
+                    var residueTypeBondIndex = r.residueType.getBondIndex( ai1, ai2 );
+                    // overwrite residueType bondOrder with value from existing bond
+                    bondOrders[ residueTypeBondIndex ] = bp.bondOrder;
+                }else{
+                    a1.index = ai1;
+                    a2.index = ai2;
+                    // only add bond if not already in bondStore
+                    bondStore.addBond( a1, a2, bondOrders[ i ] );
+                }
             }
 
         }

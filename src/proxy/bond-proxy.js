@@ -85,7 +85,7 @@ BondProxy.prototype = {
         if( ix !== undefined ){
             return ix + ap1.residueAtomOffset;
         }else{
-            console.warn( "No reference atom found", ap1.index, ap2.index  )
+            console.warn( "No reference atom found", ap1.index, ap2.index )
         }
     },
 

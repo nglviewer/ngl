@@ -35,12 +35,15 @@ BondStore.prototype = Object.assign( Object.create(
         this.growIfFull();
 
         var i = this.count;
-        if( atom1.index < atom2.index ){
-            this.atomIndex1[ i ] = atom1.index;
-            this.atomIndex2[ i ] = atom2.index;
+        var ai1 = atom1.index;
+        var ai2 = atom2.index;
+
+        if( ai1 < ai2 ){
+            this.atomIndex1[ i ] = ai1;
+            this.atomIndex2[ i ] = ai2;
         }else{
-            this.atomIndex2[ i ] = atom1.index;
-            this.atomIndex1[ i ] = atom2.index;
+            this.atomIndex2[ i ] = ai1;
+            this.atomIndex1[ i ] = ai2;
         }
         if( bondOrder ) this.bondOrder[ i ] = bondOrder;
 
