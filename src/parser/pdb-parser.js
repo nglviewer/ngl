@@ -79,6 +79,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
         var serialDict = {};
         var unitcellDict = {};
+        var bondDict = {};
 
         s.hasConnect = false;
 
@@ -222,7 +223,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                     var pos = [ 11, 16, 21, 26 ];
-                    var bondDict = {};
+                    var bondIndex = {};
 
                     if( from === undefined ){
                         // Log.log( "missing CONNECT serial" );
@@ -244,16 +245,25 @@ PdbParser.prototype = Object.assign( Object.create(
                             continue;
                         }*/
 
-                        ap1.index = from;
-                        ap2.index = to;
+                        if( from < to ){
+                            ap1.index = from;
+                            ap2.index = to;
+                        }else{
+                            ap1.index = to;
+                            ap2.index = from;
+                        }
 
                         // interpret records where a 'to' atom is given multiple times
                         // as double/triple bonds, e.g. CONECT 1529 1528 1528 is a double bond
-                        if( bondDict[ to ] !== undefined ){
-                            s.bondStore.bondOrder[ bondDict[ to ] ] += 1;
+                        if( bondIndex[ to ] !== undefined ){
+                            s.bondStore.bondOrder[ bondIndex[ to ] ] += 1;
                         }else{
-                            bondDict[ to ] = s.bondStore.count;
-                            s.bondStore.addBond( ap1, ap2, 1 );  // start/assume with single bond
+                            var hash = ap1.index + "|" + ap2.index;
+                            if( bondDict[ hash ] === undefined ){
+                                bondDict[ hash ] = true;
+                                bondIndex[ to ] = s.bondStore.count;
+                                s.bondStore.addBond( ap1, ap2, 1 );  // start/assume with single bond
+                            }
                         }
 
                     }
