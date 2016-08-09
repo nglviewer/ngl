@@ -68,10 +68,18 @@ ModelProxy.prototype = {
     },
 
     get residueCount () {
-        return this.residueEnd - this.residueOffset + 1;
+        if( this.chainCount === 0 ){
+            return 0;
+        }else{
+            return this.residueEnd - this.residueOffset + 1;
+        }
     },
     get atomCount () {
-        return this.atomEnd - this.atomOffset + 1;
+        if( this.residueCount === 0 ){
+            return 0;
+        }else{
+            return this.atomEnd - this.atomOffset + 1;
+        }
     },
 
     //

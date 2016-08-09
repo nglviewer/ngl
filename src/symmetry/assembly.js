@@ -141,7 +141,7 @@ AssemblyPart.prototype = {
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
-            if( chainList.length === 0 || chainList.indexOf( cp.chainname ) != -1 ){
+            if( chainList.length === 0 || chainList.indexOf( cp.chainname ) !== -1 ){
                 atomCount += cp.atomCount;
             }
         } );

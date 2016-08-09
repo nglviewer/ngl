@@ -72,7 +72,11 @@ ChainProxy.prototype = {
         );
     },
     get atomCount () {
-        return this.atomEnd - this.atomOffset + 1;
+        if( this.residueCount === 0 ){
+            return 0;
+        }else{
+            return this.atomEnd - this.atomOffset + 1;
+        }
     },
 
     //
