@@ -19,6 +19,7 @@ import Selection from "../selection.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
+import BondHash from "../store/bond-hash.js";
 import BondStore from "../store/bond-store.js";
 import AtomStore from "../store/atom-store.js";
 import ResidueStore from "../store/residue-store.js";
@@ -123,6 +124,8 @@ function Structure( name, path ){
     this.atomMap = new AtomMap( this );
     this.residueMap = new ResidueMap( this );
 
+    this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
+
     this.atomSet = this.getAtomSet();
     this.bondSet = this.getBondSet();
 
@@ -131,6 +134,7 @@ function Structure( name, path ){
 
     GidPool.addObject( this );
 
+    this._bp = this.getBondProxy();
     this._ap = this.getAtomProxy();
     this._rp = this.getResidueProxy();
     this._cp = this.getChainProxy();
@@ -149,6 +153,8 @@ Structure.prototype = {
     refresh: function(){
 
         if( Debug ) Log.time( "Structure.refresh" );
+
+        this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
 
         this.atomSetCache = {};
 

@@ -120,6 +120,10 @@ StructureView.prototype = Object.assign( Object.create(
             },
             residueMap: {
                 get: function(){ return this.structure.residueMap; }
+            },
+
+            bondHash: {
+                get: function(){ return this.structure.bondHash; }
             }
         } );
 

@@ -28,6 +28,7 @@ function AtomProxy( structure, index ){
     this.atomStore = structure.atomStore;
     this.residueMap = structure.residueMap;
     this.atomMap = structure.atomMap;
+    this.bondHash = structure.bondHash;
     this.index = index;
 
 }
@@ -156,18 +157,29 @@ AtomProxy.prototype = {
         this.atomStore.occupancy[ this.index ] = value;
     },
 
-    // get bonds () {
-    //     return this.atomStore.bonds[ this.index ];
-    // },
-    // set bonds ( value ) {
-    //     this.atomStore.bonds[ this.index ] = value;
-    // },
-
     get altloc () {
         return this.atomStore.getAltloc( this.index );
     },
     set altloc ( value ) {
         this.atomStore.setAltloc( this.index, value );
+    },
+
+    //
+
+    eachBond: function( callback ){
+
+        var bp = this.structure._bp;
+        var idx = this.index;
+        var bondHash = this.bondHash;
+        var indexArray = bondHash.indexArray;
+        var n = bondHash.countArray[ idx ];
+        var offset = bondHash.offsetArray[ idx ];
+
+        for( var i = 0; i < n; ++i ){
+            bp.index = indexArray[ offset + i ];
+            callback( bp );
+        }
+
     },
 
     //

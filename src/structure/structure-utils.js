@@ -942,38 +942,18 @@ var guessElement = function(){
 }();
 
 
-function getAtomToBondMapping( structure ){
-
-    // if( Debug ) Log.time( "getAtomToBondMapping" );
-
-    var n = structure.atomStore.count;
-    var atomToBondMap = new Array( n );
-
-    function add( idx1, bondIndex ){
-        if( atomToBondMap[ idx1 ] === undefined ){
-            atomToBondMap[ idx1 ] = [ bondIndex ];
-        }else{
-            atomToBondMap[ idx1 ].push( bondIndex );
-        }
-    }
-
-    structure.eachBond( function( bp ){
-        add( bp.atomIndex1, bp.index );
-        add( bp.atomIndex2, bp.index );
-    } );
-
-    // if( Debug ) Log.timeEnd( "getAtomToBondMapping" );
-
-    return atomToBondMap;
-
-}
-
-
+/**
+ * Assigns ResidueType bonds.
+ * @param {Structure} structure - the structure object
+ */
 function assignResidueTypeBonds( structure ){
 
     // if( Debug ) Log.time( "assignResidueTypeBonds" );
 
-    var atomToBondMap = getAtomToBondMapping( structure );
+    var bondHash = structure.bondHash;
+    var countArray = bondHash.countArray;
+    var offsetArray = bondHash.offsetArray;
+    var indexArray = bondHash.indexArray;
     var bp = structure.getBondProxy();
 
     structure.eachResidue( function( rp ){
@@ -990,24 +970,23 @@ function assignResidueTypeBonds( structure ){
         rp.eachAtom( function( ap ){
 
             var index = ap.index;
-            var atomBonds = atomToBondMap[ index ];
-            if( atomBonds ){
-                for( var i = 0, il = atomBonds.length; i < il; ++i ){
-                    bp.index = atomBonds[ i ];
-                    var idx1 = bp.atomIndex1;
-                    var idx2 = bp.atomIndex2;
-                    if( idx1 > idx2 ){
-                        var tmp = idx2;
-                        idx2 = idx1;
-                        idx1 = tmp;
-                    }
-                    var hash = idx1 + "|" + idx2;
-                    if( bondDict[ hash ] === undefined ){
-                        bondDict[ hash ] = true;
-                        atomIndices1.push( idx1 - atomOffset );
-                        atomIndices2.push( idx2 - atomOffset );
-                        bondOrders.push( bp.bondOrder );
-                    }
+            var offset = offsetArray[ index ];
+            var count = countArray[ index ];
+            for( var i = 0, il = count; i < il; ++i ){
+                bp.index = indexArray[ offset + i ];
+                var idx1 = bp.atomIndex1;
+                var idx2 = bp.atomIndex2;
+                if( idx1 > idx2 ){
+                    var tmp = idx2;
+                    idx2 = idx1;
+                    idx1 = tmp;
+                }
+                var hash = idx1 + "|" + idx2;
+                if( bondDict[ hash ] === undefined ){
+                    bondDict[ hash ] = true;
+                    atomIndices1.push( idx1 - atomOffset );
+                    atomIndices2.push( idx2 - atomOffset );
+                    bondOrders.push( bp.bondOrder );
                 }
             }
 
@@ -1037,6 +1016,5 @@ export {
 	calculateBondsBetween,
 	buildUnitcellAssembly,
     guessElement,
-    getAtomToBondMapping,
     assignResidueTypeBonds
 };
