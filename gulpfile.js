@@ -19,7 +19,7 @@ var nodeResolve = require('rollup-plugin-node-resolve');
 
 function glsl () {
   return {
-    transform ( code, id ) {
+    transform: function( code, id ) {
       if ( !/\.(glsl|frag|vert)$/.test( id ) ) return;
       return 'export default ' + JSON.stringify(
         code

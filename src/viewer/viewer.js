@@ -247,6 +247,9 @@ function Viewer( eid, params ){
 
         container.appendChild( renderer.domElement );
 
+        var dprWidth = width * window.devicePixelRatio;
+        var dprHeight = height * window.devicePixelRatio;
+
         // picking texture
 
         renderer.extensions.get( 'OES_texture_float' );
@@ -254,8 +257,7 @@ function Viewer( eid, params ){
         renderer.extensions.get( "WEBGL_color_buffer_float" );
 
         pickingTarget = new WebGLRenderTarget(
-            width * window.devicePixelRatio,
-            height * window.devicePixelRatio,
+            dprWidth, dprHeight,
             {
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
@@ -269,8 +271,7 @@ function Viewer( eid, params ){
         // msaa textures
 
         sampleTarget = new WebGLRenderTarget(
-            width * window.devicePixelRatio,
-            height * window.devicePixelRatio,
+            dprWidth, dprHeight,
             {
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
@@ -279,8 +280,7 @@ function Viewer( eid, params ){
         );
 
         holdTarget = new WebGLRenderTarget(
-            width * window.devicePixelRatio,
-            height * window.devicePixelRatio,
+            dprWidth, dprHeight,
             {
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
@@ -1129,8 +1129,6 @@ function Viewer( eid, params ){
         var roundingRange = 1 / 32;
 
         compositeUniforms.tForeground.value = sampleTarget.texture;
-        compositeUniforms.tForeground.needsUpdate = true;
-        compositeMaterial.needsUpdate = true;
 
         var _width = sampleTarget.width;
         var _height = sampleTarget.height;
@@ -1146,9 +1144,11 @@ function Viewer( eid, params ){
             __updateCamera();
 
             var sampleWeight = baseSampleWeight;
-            // the theory is that equal weights for each sample lead to an accumulation of rounding errors.
-            // The following equation varies the sampleWeight per sample so that it is uniformly distributed
-            // across a range of values whose rounding errors cancel each other out.
+            // the theory is that equal weights for each sample lead to an
+            // accumulation of rounding errors.
+            // The following equation varies the sampleWeight per sample
+            // so that it is uniformly distributed across a range of values
+            // whose rounding errors cancel each other out.
             var uniformCenteredDistribution = ( -0.5 + ( i + 0.5 ) / offsetList.length );
             sampleWeight += roundingRange * uniformCenteredDistribution;
             compositeUniforms.scale.value = sampleWeight;
@@ -1160,15 +1160,10 @@ function Viewer( eid, params ){
 
         }
 
-        renderer.setRenderTarget( null );
-
         compositeUniforms.scale.value = 1.0;
         compositeUniforms.tForeground.value = holdTarget.texture;
-        compositeUniforms.tForeground.needsUpdate = true;
-        compositeMaterial.needsUpdate = true;
 
-        renderer.clear();
-        renderer.render( compositeScene, compositeCamera );
+        renderer.render( compositeScene, compositeCamera, null, true );
 
         camera.view = null;
 
