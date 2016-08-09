@@ -690,7 +690,7 @@ function calculateBondsWithin( structure, onlyAddRung ){
                 var ai1 = atomIndices1[ i ] + offset;
                 var ai2 = atomIndices2[ i ] + offset;
                 var tmp = atomBondMap[ ai1 ];
-                if( tmp !== undefined && ( tmp = tmp[ ai2 ] ) ){
+                if( tmp !== undefined && ( tmp = tmp[ ai2 ] ) !== undefined ){
                     bp.index = tmp;
                     var residueTypeBondIndex = r.residueType.getBondIndex( ai1, ai2 );
                     // overwrite residueType bondOrder with value from existing bond
