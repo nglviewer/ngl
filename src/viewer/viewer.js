@@ -96,12 +96,12 @@ function Viewer( eid, params ){
 
     var width, height;
     if ( container === document ) {
-        width = window.innerWidth;
-        height = window.innerHeight;
+        width = window.innerWidth || 1;
+        height = window.innerHeight || 1;
     } else {
         var box = container.getBoundingClientRect();
-        width = box.width;
-        height = box.height;
+        width = box.width || 1;
+        height = box.height || 1;
     }
 
     var rendering, renderPending, sampleLevel, isStill, cDist, bRadius;
@@ -726,8 +726,8 @@ function Viewer( eid, params ){
 
     function setSize( _width, _height ){
 
-        width = _width;
-        height = _height;
+        width = _width || 1;
+        height = _height || 1;
 
         perspectiveCamera.aspect = width / height;
         orthographicCamera.left = -width / 2;
