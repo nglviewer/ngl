@@ -124,6 +124,7 @@ function Viewer( eid, params ){
     var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
     if( initRenderer() === false ){
         this.container = container;
+        Log.error( "Viewer: could not initialize renderer" );
         return;
     }
 
@@ -180,7 +181,6 @@ function Viewer( eid, params ){
             ambientColor: new Color( 0xdddddd ),
             ambientIntensity: 0.2,
 
-            holdRendering: false,
             sampleLevel: 0
 
         };
@@ -216,6 +216,8 @@ function Viewer( eid, params ){
 
     function initRenderer(){
 
+        var dpr = window.devicePixelRatio;
+
         try{
             renderer = new WebGLRenderer( {
                 preserveDrawingBuffer: true,
@@ -226,7 +228,7 @@ function Viewer( eid, params ){
             container.innerHTML = WebglErrorMessage;
             return false;
         }
-        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setPixelRatio( dpr );
         renderer.setSize( width, height );
         renderer.autoClear = false;
         renderer.sortObjects = true;
@@ -239,16 +241,16 @@ function Viewer( eid, params ){
         indexUint16 = !renderer.extensions.get( 'OES_element_index_uint' );
 
         setSupportsReadPixelsFloat(
-            ( Browser === "Chrome" &&
-                renderer.extensions.get( 'OES_texture_float' ) ) ||
             ( renderer.extensions.get( 'OES_texture_float' ) &&
-                renderer.extensions.get( "WEBGL_color_buffer_float" ) )
+                renderer.extensions.get( "WEBGL_color_buffer_float" ) ) ||
+            ( Browser === "Chrome" &&
+                renderer.extensions.get( 'OES_texture_float' ) )
         );
 
         container.appendChild( renderer.domElement );
 
-        var dprWidth = width * window.devicePixelRatio;
-        var dprHeight = height * window.devicePixelRatio;
+        var dprWidth = width * dpr;
+        var dprHeight = height * dpr;
 
         // picking texture
 
@@ -736,11 +738,13 @@ function Viewer( eid, params ){
         orthographicCamera.bottom = -height / 2;
         camera.updateProjectionMatrix();
 
-        renderer.setPixelRatio( window.devicePixelRatio );
+        var dpr = window.devicePixelRatio;
+
+        renderer.setPixelRatio( dpr );
         renderer.setSize( width, height );
 
-        var dprWidth = width * window.devicePixelRatio;
-        var dprHeight = height * window.devicePixelRatio;
+        var dprWidth = width * dpr;
+        var dprHeight = height * dpr;
 
         pickingTarget.setSize( dprWidth, dprHeight );
         sampleTarget.setSize( dprWidth, dprHeight );
