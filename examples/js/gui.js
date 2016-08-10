@@ -1878,7 +1878,9 @@ NGL.RepresentationComponentWidget = function( component, stage ){
         if( !input ) return;
 
         signals.parametersChanged.add( function( params ){
-            input.setValue( params[ name ] );
+            if( typeof input.setValue === "function" ){
+                input.setValue( params[ name ] );
+            }
         } );
 
         function setParam(){
