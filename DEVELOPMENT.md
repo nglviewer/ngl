@@ -31,7 +31,7 @@ The source code ([src/](src/)) is organized into ES6 modules (see http://explori
 Building
 --------
 
-[Gulp](http://gulpjs.com/) is used as a build tool. The necessary dependencies can be installed with `npm install`. A non-minified build ([build/js/ngl.js](build/js/ngl.js)) can be created with `gulp build`. A minified file for distribution ([dist/ngl.js](dist/ngl.js)) can be created with `gulp`. For development `gulp watch` can be called to watch source files and trigger a rebuild upon changes to them.
+[Gulp](http://gulpjs.com/) is used as a build tool and can be installed globally with `npm install -g`. The necessary dependencies can be installed with `npm install`. Note, [npm](https://www.npmjs.com/) is a package manager for JavaScript packages. A non-minified build ([build/js/ngl.js](build/js/ngl.js)) can be created with `gulp build`. A minified file for distribution ([dist/ngl.js](dist/ngl.js)) can be created with `gulp`. For development `gulp watch` can be called to watch source files and trigger a rebuild upon changes to them.
 
 A smaller build can be created by using [three-jsnext](https://github.com/rollup/three-jsnext). To enable this clone the three-jsnext repository to be a sibling directory of the ngl repository and then change the import `from` line at the end of [lib/three.es6.js](lib/three.es6.js) to point to [three-jsnext-import.js](lib/three-jsnext-import.js). Finally, rebuild.
 
