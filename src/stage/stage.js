@@ -610,7 +610,7 @@ Stage.prototype = {
                 document.removeEventListener( "fullscreenchange", resizeElement );
                 document.removeEventListener( "mozfullscreenchange", resizeElement );
                 document.removeEventListener( "webkitfullscreenchange", resizeElement );
-                document.removeEventListener( "msfullscreenchange", resizeElement );
+                document.removeEventListener( "MSFullscreenChange", resizeElement );
 
                 self.handleResize();
                 self.signals.fullscreenChanged.dispatch( false );
@@ -641,7 +641,7 @@ Stage.prototype = {
             document.addEventListener( "fullscreenchange", resizeElement );
             document.addEventListener( "mozfullscreenchange", resizeElement );
             document.addEventListener( "webkitfullscreenchange", resizeElement );
-            document.addEventListener( "msfullscreenchange", resizeElement );
+            document.addEventListener( "MSFullscreenChange", resizeElement );
 
             this.handleResize();
             this.signals.fullscreenChanged.dispatch( true );
