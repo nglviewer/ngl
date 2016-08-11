@@ -676,8 +676,6 @@ function ChainindexColorMaker( params ){
     }
     if( !params.domain ){
 
-        // this.domain = [ 0, this.structure.chainStore.count ];
-
         var scalePerModel = {};
 
         this.structure.eachModel( function( mp ){
@@ -704,6 +702,43 @@ function ChainindexColorMaker( params ){
 ChainindexColorMaker.prototype = ColorMaker.prototype;
 
 ChainindexColorMaker.prototype.constructor = ChainindexColorMaker;
+
+
+function ChainnameColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    var chainnameDictPerModel = {};
+    var scalePerModel = {};
+
+    this.structure.eachModel( function( mp ){
+        var i = 0;
+        var chainnameDict = {};
+        mp.eachChain( function( cp ){
+            if( chainnameDict[ cp.chainname ] === undefined ){
+                chainnameDict[ cp.chainname ] = i;
+                i += 1;
+            }
+        } );
+        this.domain = [ 0, i - 1 ];
+        chainnameDictPerModel[ mp.index ] = chainnameDict;
+        scalePerModel[ mp.index ] = this.getScale();
+    }.bind( this ) );
+
+    this.atomColor = function( a ){
+        var chainnameDict = chainnameDictPerModel[ a.modelIndex ];
+        return scalePerModel[ a.modelIndex ]( chainnameDict[ a.chainname ] );
+    };
+
+}
+
+ChainnameColorMaker.prototype = ColorMaker.prototype;
+
+ChainnameColorMaker.prototype.constructor = ChainnameColorMaker;
 
 
 function ModelindexColorMaker( params ){
@@ -932,6 +967,7 @@ ColorMakerRegistry.types = {
     "atomindex": AtomindexColorMaker,
     "residueindex": ResidueindexColorMaker,
     "chainindex": ChainindexColorMaker,
+    "chainname": ChainnameColorMaker,
     "modelindex": ModelindexColorMaker,
     "sstruc": SstrucColorMaker,
     "element": ElementColorMaker,
