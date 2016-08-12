@@ -631,6 +631,110 @@ function calculateResidueBonds( r ){
 
 }
 
+/** 
+ * Calculates ring atoms within a residue
+ * Adaptation of RDKit's fastFindRings method by G. Landrum:
+ * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+ * 
+ * @param {ResidueProxy} r - The residue for which we are to find rings
+ * @return {Object} ringData - contains ringFlags (1/0) and rings (nested array)
+ * 
+ * Note this method finds all ring atoms, but in cases of fused or connected rings 
+ * will not detect all rings. Do not rely on the rings object as an exhaustive (or even
+ * sensible) set of rings
+ * 
+ */
+function calculateResidueRings( r ){
+
+    var structure = r.structure;
+    var bondHash = r.structure.bondHash;
+
+    var bondCounts = bondHash.countArray;
+    var bondOffsets = bondHash.offsetArray;
+    var bondIndexes = bondHash.indexArray;
+
+    var bp = structure.getBondProxy();
+
+    var offset = r.atomOffset;
+    var end = offset + r.atomCount;
+
+    var state = new Int8Array( count );
+    var flags = new Int8Array( count );
+    var rings = [];
+    var visited = [];
+
+    function DFS( i, ai, from ) {
+
+        if( state[ i ] !== 0 ) { throw Error( "Oops!" ); }
+        state[ i ] = 1; // Visiting
+        visited.push( ai );
+
+        var bondsToOther = 0;
+        var nb = bondCounts[ ai ];
+
+        for( var bi = 0; bi < nb; ++bi ) {
+            bp.index = bondIndexes[ bondOffsets[ ai ] + bi ];
+            var aj = bp.atomIndex1 === ai ? bp.atomIndex2 : bp.atomIndex1;
+
+            if( aj < offset || aj > end ) {
+                // Outside original residue, ignore
+                bondsToOther++;
+                if( nb - bondsToOther < 2 ) {
+                    // Effectively terminal, stop
+                    state[ i ] = 2;
+                    continue;
+                }
+            }
+            var j = aj - offset;
+            if( state[ j ] == 0 ){
+                // Not yet visited
+
+                if (bondCounts[ aj ] < 2) {
+                    state[ j ] = 2;
+                } else {
+                    DFS(j, aj, ai);
+                }
+            } else if( state[ j ] === 1 ){
+                if( from && aj !== from ) {
+                    // A ring!
+                    var ring = [ aj ];
+                    flags[ j ] = 1;
+                    rings.push( ring );
+                    for( var k = visited.length-1; k >= 0; --k ){
+                        var ak = visited[ k ];
+                        if( ak === aj ) {
+                            break;
+                        }
+                        ring.push( ak );
+                        flags[ ak - offset ] = 1;
+                    }
+                }
+            }  
+        }
+        state[ i ] = 2; // Don't revisit - all paths for this atom should
+                        // have been explored by this point
+        visited.pop();
+    }
+     
+    for(var i=0, ai=offset; ai < end; ++i, ++ai ) {
+
+        if( state[ i ] ) { continue; } // Already processed
+
+        if( bondCounts[ ai ] < 2 ) {
+            // Terminal (flag as 2)
+            state[ i ] = 2;
+            continue;
+        }        
+        visited.length = 0;
+        
+        DFS( i, ai );
+
+    }
+
+    return { flags: flags,
+             rings: rings }
+
+}
 
 function calculateAtomBondMap( structure ){
 
@@ -1012,6 +1116,7 @@ export {
 	calculateChainnames,
 	calculateBonds,
 	calculateResidueBonds,
+        calculateResidueRings,
 	calculateBondsWithin,
 	calculateBondsBetween,
 	buildUnitcellAssembly,
