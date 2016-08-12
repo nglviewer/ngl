@@ -129,21 +129,60 @@ function download( data, downloadName ){
 
     downloadName = downloadName || "download";
 
-    var a = document.createElement( 'a' );
-    a.style.display = "hidden";
-    document.body.appendChild( a );
-    if( data instanceof Blob ){
-        a.href = URL.createObjectURL( data );
-    }else{
-        a.href = data;
-    }
-    a.download = downloadName;
-    a.target = "_blank";
-    a.click();
+    var isSafari = getBrowser() === "Safari";
+    var isChromeIos = /CriOS\/[\d]+/.test( window.navigator.userAgent );
 
-    document.body.removeChild( a );
-    if( data instanceof Blob ){
-        URL.revokeObjectURL( data );
+    var a = document.createElement( 'a' );
+
+    function open( str ){
+        var url = isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;');
+        var opened = window.open( url, '_blank' );
+        if( !opened ){
+            window.location.href = url;
+        }
+    }
+
+    if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
+
+        // native saveAs in IE 10+
+        navigator.msSaveOrOpenBlob( data, downloadName );
+
+    }else if( ( isSafari || isChromeIos ) && window.FileReader ){
+
+        if( data instanceof Blob ){
+            // no downloading of blob urls in Safari
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                open( reader.result );
+            };
+            reader.readAsDataURL( data );
+        }else{
+            open( data );
+        }
+
+    }else{
+
+        if( data instanceof Blob ){
+            data = URL.createObjectURL( data );
+        }
+
+        if( "download" in a ){
+            // download link available
+            a.style.display = "hidden";
+            document.body.appendChild( a );
+            a.href = data;
+            a.download = downloadName;
+            a.target = "_blank";
+            a.click();
+            document.body.removeChild( a );
+        }else{
+            view.open( data, "_blank" );
+        }
+
+        if( data instanceof Blob ){
+            URL.revokeObjectURL( data );
+        }
+
     }
 
 }
