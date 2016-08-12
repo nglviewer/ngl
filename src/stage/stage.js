@@ -352,7 +352,7 @@ Stage.prototype = {
                     surfaceType: "sas",
                     probeRadius: 1.4,
                     scaleFactor: scaleFactor,
-                    colorScheme: "atomindex",
+                    colorScheme: "chainname",
                     colorScale: "RdYlBu",
                     useWorker: false
                 } );
@@ -361,7 +361,7 @@ Stage.prototype = {
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
-                    colorScheme: "atomindex",
+                    colorScheme: "chainname",
                     colorScale: "RdYlBu"
                 } );
 
@@ -370,7 +370,7 @@ Stage.prototype = {
                 object.addRepresentation( "backbone", {
                     quality: "low",
                     disableImpostor: true,
-                    colorScheme: "atomindex",
+                    colorScheme: "chainname",
                     colorScale: "RdYlBu",
                     scale: 2.0
                 } );
@@ -378,7 +378,7 @@ Stage.prototype = {
             }else if( atomCount > 80000 ){
 
                 object.addRepresentation( "backbone", {
-                    colorScheme: "atomindex",
+                    colorScheme: "chainname",
                     colorScale: "RdYlBu",
                     scale: 2.0
                 } );
@@ -388,7 +388,7 @@ Stage.prototype = {
                 var quality = atomCount < 15000 ? "high" : "medium";
 
                 object.addRepresentation( "cartoon", {
-                    color: "atomindex",
+                    color: "chainname",
                     colorScale: "RdYlBu",
                     scale: 0.7,
                     aspectRatio: 5,
@@ -396,7 +396,7 @@ Stage.prototype = {
                 } );
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
-                        color: "atomindex",
+                        color: "chainname",
                         colorScale: "RdYlBu",
                         quality: quality
                     } );
@@ -610,7 +610,7 @@ Stage.prototype = {
                 document.removeEventListener( "fullscreenchange", resizeElement );
                 document.removeEventListener( "mozfullscreenchange", resizeElement );
                 document.removeEventListener( "webkitfullscreenchange", resizeElement );
-                document.removeEventListener( "msfullscreenchange", resizeElement );
+                document.removeEventListener( "MSFullscreenChange", resizeElement );
 
                 self.handleResize();
                 self.signals.fullscreenChanged.dispatch( false );
@@ -641,7 +641,7 @@ Stage.prototype = {
             document.addEventListener( "fullscreenchange", resizeElement );
             document.addEventListener( "mozfullscreenchange", resizeElement );
             document.addEventListener( "webkitfullscreenchange", resizeElement );
-            document.addEventListener( "msfullscreenchange", resizeElement );
+            document.addEventListener( "MSFullscreenChange", resizeElement );
 
             this.handleResize();
             this.signals.fullscreenChanged.dispatch( true );
