@@ -125,6 +125,8 @@ function deepCopy( src ){
 
 function download( data, downloadName ){
 
+    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+
     if( !data ) return;
 
     downloadName = downloadName || "download";
@@ -134,12 +136,15 @@ function download( data, downloadName ){
 
     var a = document.createElement( 'a' );
 
-    function open( str ){
-        var url = isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;');
+    function openUrl( url ){
         var opened = window.open( url, '_blank' );
         if( !opened ){
             window.location.href = url;
         }
+    }
+
+    function open( str ){
+        openUrl( isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;') );
     }
 
     if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
@@ -176,7 +181,7 @@ function download( data, downloadName ){
             a.click();
             document.body.removeChild( a );
         }else{
-            view.open( data, "_blank" );
+            openUrl( data );
         }
 
         if( data instanceof Blob ){
