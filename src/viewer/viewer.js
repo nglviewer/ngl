@@ -9,7 +9,7 @@ import {
     PerspectiveCamera, OrthographicCamera,
     Box3, Vector3, Quaternion, Color,
     WebGLRenderer, WebGLRenderTarget,
-    NearestFilter, AdditiveBlending,
+    LinearFilter, NearestFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
     ShaderMaterial,
     PlaneGeometry,
@@ -120,7 +120,7 @@ function Viewer( eid, params ){
     initScene();
 
     var renderer, indexUint16, supportsHalfFloat;
-    var pickingTarget, sampleTarget, holdTarget;
+    var pickingTarget, writeTarget, sampleTarget, holdTarget;
     var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
     if( initRenderer() === false ){
         this.container = container;
@@ -270,11 +270,20 @@ function Viewer( eid, params ){
 
         // msaa textures
 
-        sampleTarget = new WebGLRenderTarget(
+        writeTarget = new WebGLRenderTarget(
             dprWidth, dprHeight,
             {
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
+                format: RGBAFormat,
+            }
+        );
+
+        sampleTarget = new WebGLRenderTarget(
+            dprWidth, dprHeight,
+            {
+                minFilter: LinearFilter,
+                magFilter: LinearFilter,
                 format: RGBAFormat,
             }
         );
@@ -743,6 +752,7 @@ function Viewer( eid, params ){
         var dprHeight = height * window.devicePixelRatio;
 
         pickingTarget.setSize( dprWidth, dprHeight );
+        writeTarget.setSize( dprWidth, dprHeight );
         sampleTarget.setSize( dprWidth, dprHeight );
         holdTarget.setSize( dprWidth, dprHeight );
 
@@ -882,13 +892,20 @@ function Viewer( eid, params ){
         var delta = performance.now() - stats.startTime;
 
         if( delta > 500 && !isStill && sampleLevel < 3 && sampleLevel !== -1 ){
-            var currentSampleLevel = sampleLevel;
-            sampleLevel = 3;
-            renderPending = true;
-            render();
+            // var currentSampleLevel = sampleLevel;
+            // sampleLevel = 3;
+            // renderPending = true;
+            // render();
             isStill = true;
-            sampleLevel = currentSampleLevel;
+            accumulateIndex = 0;
+            // sampleLevel = currentSampleLevel;
             if( Debug ) Log.log( "rendered still frame" );
+        }
+
+        if( isStill && accumulateIndex < JitterVectors[ 3 ].length ){
+            console.log( "accumulateIndex" )
+            __renderSample();
+            // accumulateIndex++;
         }
 
         // spin
@@ -1111,6 +1128,70 @@ function Viewer( eid, params ){
         __setVisibility( true, false, false, Debug );
         renderer.render( scene, camera, renderTarget );
         updateInfo();
+
+    }
+
+    var accumulateIndex = 0;
+
+    function __renderSample(){
+
+        var offsetList = JitterVectors[ 3 ];
+
+        renderer.autoClear = false;
+
+        var baseSampleWeight = 1.0 / offsetList.length;
+        var roundingRange = 1 / 32;
+
+        var sampleWeight = baseSampleWeight;
+        // the theory is that equal weights for each sample lead to an
+        // accumulation of rounding errors.
+        // The following equation varies the sampleWeight per sample
+        // so that it is uniformly distributed across a range of values
+        // whose rounding errors cancel each other out.
+        var uniformCenteredDistribution = ( -0.5 + ( accumulateIndex + 0.5 ) / offsetList.length );
+        sampleWeight += roundingRange * uniformCenteredDistribution;
+
+        compositeUniforms.scale.value = sampleWeight;
+        compositeUniforms.tForeground.value = writeTarget.texture;
+
+        var _width = sampleTarget.width;
+        var _height = sampleTarget.height;
+
+        var offset = offsetList[ accumulateIndex ];
+        camera.setViewOffset(
+            _width, _height, offset[ 0 ], offset[ 1 ], _width, _height
+        );
+        __updateCamera();
+
+        __renderModelGroup( writeTarget );
+        renderer.render(
+            compositeScene, compositeCamera, sampleTarget, ( accumulateIndex === 0 )
+        );
+
+        accumulateIndex += 1;
+
+        camera.view = null;
+
+        var accumulationWeight = accumulateIndex * sampleWeight;
+console.log(accumulationWeight)
+        if( accumulationWeight > 0 ){
+            compositeUniforms.scale.value = 1.0;
+            compositeUniforms.tForeground.value = sampleTarget.texture;
+            renderer.render( compositeScene, compositeCamera, writeTarget, true );
+        }
+        // if( accumulationWeight < 1.0 ){
+        //     compositeUniforms.scale.value = 1.0 - accumulationWeight;
+        //     compositeUniforms.tForeground.value = holdTarget.texture;
+        //     renderer.render( compositeScene, compositeCamera, writeTarget, accumulationWeight === 0 );
+        // }
+
+        // renderer.setRenderTarget( null );
+
+        compositeUniforms.scale.value = 1.0;
+        compositeUniforms.tForeground.value = writeTarget.texture;
+
+        // renderer.clear();
+        renderer.render( compositeScene, compositeCamera, null, true );
 
     }
 
