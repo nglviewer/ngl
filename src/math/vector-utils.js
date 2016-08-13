@@ -111,7 +111,7 @@ var pointVectorIntersection = function(){
     var v = new Vector3();
     var v1 = new Vector3();
 
-    return function( point, origin, vector ){
+    return function pointVectorIntersection( point, origin, vector ){
 
         v.copy( vector );
         v1.subVectors( point, origin );

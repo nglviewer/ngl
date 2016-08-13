@@ -35,7 +35,7 @@ SphereGeometryBuffer.prototype = Object.assign( Object.create(
         var r;
         var scale = new Vector3();
 
-        return function( matrix, i ){
+        return function applyPositionTransform( matrix, i ){
 
             r = this._radius[ i ];
             scale.set( r, r, r );

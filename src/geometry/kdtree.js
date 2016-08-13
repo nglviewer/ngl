@@ -61,7 +61,7 @@ Kdtree.prototype = {
 
         var pointArray = new Float32Array( 3 );
 
-        return function( point, maxNodes, maxDistance ){
+        return function nearest( point, maxNodes, maxDistance ){
 
             // Log.time( "Kdtree nearest" );
 

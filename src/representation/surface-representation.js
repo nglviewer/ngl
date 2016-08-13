@@ -33,7 +33,7 @@ function SurfaceRepresentation( surface, viewer, params ){
 
     this.setBox = ( function(){
         var position = new Vector3();
-        return function(){
+        return function setBox(){
             var target = viewer.controls.target;
             var group = viewer.rotationGroup.position;
             position.copy( group ).negate().add( target );

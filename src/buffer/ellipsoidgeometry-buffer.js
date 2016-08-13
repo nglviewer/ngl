@@ -41,7 +41,7 @@ EllipsoidGeometryBuffer.prototype = Object.assign( Object.create(
         var up = new Vector3();
         var eye = new Vector3( 0, 0, 0 );
 
-        return function( matrix, i, i3 ){
+        return function applyPositionTransform( matrix, i, i3 ){
 
             target.fromArray( this._majorAxis, i3 );
             up.fromArray( this._minorAxis, i3 );

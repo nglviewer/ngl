@@ -69,7 +69,7 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
         var vTangent = new Vector3();
         var vMeshNormal = new Vector3();
 
-        return function( data ){
+        return function setAttributes( data ){
 
             var aspectRatio = this.aspectRatio;
 

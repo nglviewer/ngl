@@ -17,7 +17,7 @@ function GeometryBuffer( position, color, pickingColor, params ){
 
     // required property of subclasses
     var geo = this.geo;
-    
+
     var n = position.length / 3;
     var m, o;
 
@@ -82,7 +82,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
         var matrix = new Matrix4();
         var normalMatrix = new Matrix3();
 
-        return function( data ){
+        return function setAttributes( data ){
 
             var attributes = this.geometry.attributes;
 

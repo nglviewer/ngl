@@ -288,7 +288,7 @@ Buffer.prototype = {
 
         }
 
-        return function(){
+        return function makeWireframeIndex(){
 
             var index = this.geometry.index;
 

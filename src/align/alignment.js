@@ -192,7 +192,7 @@ Alignment.prototype = {
 
         if( substMatrix ){
 
-            return function( i, j ){
+            return function score( i, j ){
 
                 c1 = seq1[ i ];
                 c2 = seq2[ j ];
@@ -213,7 +213,7 @@ Alignment.prototype = {
 
             Log.warn('Alignment: no subst matrix');
 
-            return function( i, j ){
+            return function scoreNoSubstMat( i, j ){
 
                 c1 = seq1[ i ];
                 c2 = seq2[ j ];

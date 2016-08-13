@@ -811,7 +811,7 @@ function Viewer( eid, params ){
         var sidewaysDirection = new Vector3();
         var moveDirection = new Vector3();
 
-        return function( axis, angle ){
+        return function rotate( axis, angle ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
@@ -839,7 +839,7 @@ function Viewer( eid, params ){
         var eye = new Vector3();
         var eyeDirection = new Vector3();
 
-        return function( distance, set ){
+        return function zoom( distance, set ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
@@ -871,7 +871,7 @@ function Viewer( eid, params ){
 
         var vector = new Vector3();
 
-        return function( position ){
+        return function center( position ){
 
             vector.copy( position ).sub( controls.target );
             translate( vector );
@@ -912,7 +912,7 @@ function Viewer( eid, params ){
         var pixelBufferFloat = new Float32Array( 4 );
         var pixelBufferUint = new Uint8Array( 4 );
 
-        return function( x, y ){
+        return function pick( x, y ){
 
             x *= window.devicePixelRatio;
             y *= window.devicePixelRatio;
@@ -1224,7 +1224,7 @@ function Viewer( eid, params ){
         var eyeDirection = new Vector3();
         var bbSize = new Vector3();
 
-        return function( _zoom, position ){
+        return function centerView( _zoom, position ){
 
             if( position === undefined ){
                 if( !boundingBox.isEmpty() ){
@@ -1284,7 +1284,7 @@ function Viewer( eid, params ){
         var vc = new Vector3();
         var vz = new Vector3( 0, 0, 1 );
 
-        return function( eye, up, position, zoom ){
+        return function alignView( eye, up, position, zoom ){
 
             controls.reset();
             centerView( zoom, position );

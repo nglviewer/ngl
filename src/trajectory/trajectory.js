@@ -262,7 +262,7 @@ Trajectory.prototype = {
 
         };
 
-        return function( i, ip, ipp, ippp, t, type, callback ){
+        return function interpolate( i, ip, ipp, ippp, t, type, callback ){
 
             var fc = this.frameCache;
 

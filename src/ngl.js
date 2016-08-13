@@ -345,7 +345,7 @@ HTMLElement.prototype.getBoundingClientRect = function(){
 
     var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-    return function(){
+    return function getBoundingClientRect(){
         try{
             return _getBoundingClientRect.apply( this, arguments );
         }catch( e ){
@@ -370,7 +370,7 @@ if( WebGLRenderingContext ){
 
         var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
 
-        return function(){
+        return function getShaderParameter(){
 
             if( Debug ){
 
@@ -390,7 +390,7 @@ if( WebGLRenderingContext ){
 
         var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
 
-        return function(){
+        return function getShaderInfoLog(){
 
             if( Debug ){
 
@@ -410,7 +410,7 @@ if( WebGLRenderingContext ){
 
         var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
 
-        return function( program, pname ){
+        return function getProgramParameter( program, pname ){
 
             if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
 
@@ -430,7 +430,7 @@ if( WebGLRenderingContext ){
 
         var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
 
-        return function(){
+        return function getProgramInfoLog(){
 
             if( Debug ){
 

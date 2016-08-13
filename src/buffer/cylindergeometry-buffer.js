@@ -82,7 +82,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var target = new Vector3();
         var up = new Vector3( 0, 1, 0 );
 
-        return function( matrix, i, i3 ){
+        return function applyPositionTransform( matrix, i, i3 ){
 
             eye.fromArray( this._from, i3 );
             target.fromArray( this._to, i3 );

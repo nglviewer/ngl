@@ -727,7 +727,7 @@ Selection.prototype = {
         // ( x or y ) can short circuit on true
         // not ( x and y )
 
-        return function( entity ){
+        return function test( entity ){
 
             and = selection.operator === "AND";
             na = false;

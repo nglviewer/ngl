@@ -321,7 +321,7 @@ function throttle( func, wait, options ){
         if( !timeout ) context = args = null;
     };
 
-    return function(){
+    return function throttle(){
 
         var now = Date.now();
         if( !previous && options.leading === false ) previous = now;
@@ -353,7 +353,7 @@ var binarySearchIndexOf = function(){
         if( elm1 > elm2 ) return 1;
         return 0;
     }
-    return function( array, element, compareFunction ){
+    return function binarySearchIndexOf( array, element, compareFunction ){
         var low = 0;
         var high = array.length - 1;
         if( !compareFunction ) compareFunction = _compareFunction;

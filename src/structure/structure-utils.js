@@ -355,7 +355,7 @@ var calculateSecondaryStructure = function(){
 
     };
 
-    return function( structure ){
+    return function calculateSecondaryStructure( structure ){
 
         if( Debug ) Log.time( "calculateSecondaryStructure" );
 
@@ -909,7 +909,7 @@ var guessElement = function(){
     var elm1 = [ "H", "C", "O", "N", "S", "P" ];
     var elm2 = [ "NA", "CL" ];
 
-    return function( atomName ){
+    return function guessElement( atomName ){
 
         var at = atomName.trim().toUpperCase();
         if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );
