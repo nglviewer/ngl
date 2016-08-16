@@ -471,8 +471,10 @@ import RepresentationCollection from "./component/representation-collection.js";
 import Assembly from "./symmetry/assembly.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 import { superpose } from "./align/align-utils.js";
+import { guessElement } from "./structure/structure-utils.js";
 
 import { throttle, download, getQuery } from "./utils.js";
+import { ColorMaker } from "./utils/color-maker.js";
 import Queue from "./utils/queue.js";
 import Counter from "./utils/counter.js";
 
@@ -658,6 +660,7 @@ export {
     autoLoad,
     RepresentationRegistry,
     ColorMakerRegistry,
+    ColorMaker,
     Selection,
     PdbWriter,
     /**
@@ -679,6 +682,7 @@ export {
      * @see {@link superpose}
      */
     superpose,
+    guessElement,
 
     Queue,
     Counter,
