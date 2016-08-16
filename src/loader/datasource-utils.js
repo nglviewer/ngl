@@ -33,8 +33,9 @@ function StaticDatasource( baseUrl ){
 function RcsbDatasource(){
 
     var baseUrl = "//files.rcsb.org/download/";
-    var mmtfBaseUrl = "//mmtf.rcsb.org/v0.2/full/";
-    var bbMmtfBaseUrl = "//mmtf.rcsb.org/v0.2/reduced/";
+    var mmtfBaseUrl = "//mmtf.rcsb.org/v1.0/";
+    var mmtfFullUrl = mmtfBaseUrl + "full/";
+    var mmtfReducedUrl = mmtfBaseUrl + "reduced/";
 
     this.getUrl = function( src ){
         // valid path are
@@ -50,16 +51,15 @@ function RcsbDatasource(){
         }else if( info.ext === "mmtf" ){
             protocol = "http:";
             if( info.base.endsWith( ".bb" ) ){
-                url = bbMmtfBaseUrl + info.name;
+                url = mmtfReducedUrl + info.name;
             }else{
-                url = mmtfBaseUrl + info.name;
+                url = mmtfFullUrl + info.name;
             }
         }else if( !info.ext ){
-            url = baseUrl + info.name + ".cif";
-            // url = mmtfBaseUrl + info.name + ".mmtf";
+            url = mmtfFullUrl + info.name;
         }else{
             Log.warn( "unsupported ext", info.ext );
-            url = mmtfBaseUrl + info.name;
+            url = mmtfFullUrl + info.name;
         }
         return protocol + url;
     };
