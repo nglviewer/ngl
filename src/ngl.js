@@ -548,7 +548,7 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix3, Matrix4, Vector3, Quaternion, Color } from "../lib/three.es6.js";
+import { Matrix3, Matrix4, Vector3, Quaternion, Plane, Color } from "../lib/three.es6.js";
 
 //
 
@@ -636,6 +636,14 @@ var Version = "v0.9.0dev";
  * @class
  * @global
  * @see {@link http://threejs.org/docs/#Reference/Math/Quaternion}
+ */
+
+/**
+ * Plane class from three.js
+ * @name Plane
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Plane}
  */
 
 /**
@@ -754,6 +762,11 @@ export {
      * @see {@link Quaternion}
      */
     Quaternion,
+    /**
+     * Plane class
+     * @see {@link Plane}
+     */
+    Plane,
     /**
      * Color class
      * @see {@link Color}
