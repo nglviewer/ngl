@@ -61,7 +61,7 @@ __WebGL draft extensions__: For a smoother appearance of cylinders and spheres y
 Acknowledgments
 ===============
 
-This project would not be possible without recourse to many fine open-source projects. Especially the [three.js](http://threejs.org/) project provides a great foundation.
+This project would not be possible without many fine open-source projects. Especially the [three.js](http://threejs.org/) project provides a great foundation.
 
 * [three.js](http://threejs.org/)
     * NGL relies on the three.js library to interface WebGL
@@ -83,10 +83,15 @@ This project would not be possible without recourse to many fine open-source pro
 * [HyperBalls](http://sourceforge.net/projects/hyperballs/) - hyperball stick shader - Chavent, M., Vanel, A., Tek, A., Levy, B., Robert, S., Raffin, B., &amp; Baaden, M. (2011). GPU-accelerated atom and dynamic bond visualization using hyperballs: a unified algorithm for balls, sticks, and hyperboloids. Journal of Computational Chemistry, 32(13), 2924–35. [doi:10.1002/jcc.21861](https://dx.doi.org/10.1002/jcc.21861)
 
 
+Funding sources:
+
+* NCI/NIH award number U01 CA198942
+
 
 Cite
 ====
 
 When using NGL please cite:
 
+* AS Rose, AR Bradley, Y Valasatava, JM Duarte, A Prlić and PW Rose. _Web-based molecular graphics for large complexes._ ACM Proceedings of the 21st International Conference on Web3D Technology (Web3D '16): 185-186, 2016. [doi:10.1145/2945292.2945324](http://dx.doi.org/10.1145/2945292.2945324)
 * AS Rose and PW Hildebrand. _NGL Viewer: a web application for molecular visualization._ Nucl Acids Res (1 July 2015) 43 (W1): W576-W579 first published online April 29, 2015. [doi:10.1093/nar/gkv402](https://doi.org/10.1093/nar/gkv402)
