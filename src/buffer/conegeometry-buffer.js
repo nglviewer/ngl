@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Vector3, ConeGeometry, ConeBufferGeometry } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, ConeBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -23,14 +23,7 @@ function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
 
     var matrix = new Matrix4().makeRotationX( -Math.PI / 2  );
 
-    var geoCtor;
-    if( openEnded ){
-        geoCtor = ConeGeometry;
-    }else{
-        geoCtor = ConeBufferGeometry;
-    }
-
-    this.geo = new geoCtor(
+    this.geo = new ConeBufferGeometry(
         1,  // radius
         1,  // height
         radialSegments,  // radialSegments
