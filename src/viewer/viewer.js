@@ -993,7 +993,7 @@ function Viewer( eid, params ){
 
         renderPending = true;
 
-        requestAnimationFrame( function(){
+        requestAnimationFrame( function requestRenderAnimation(){
             render();
             stats.update();
         } );
