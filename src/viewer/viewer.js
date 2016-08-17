@@ -601,7 +601,13 @@ function Viewer( eid, params ){
         }
 
         if( geometry ){
-            updateGeometry( geometry, matrix );
+            if( Array.isArray( geometry ) ){
+                geometry.forEach( function( g ){
+                    updateGeometry( g, matrix );
+                } );
+            }else{
+                updateGeometry( geometry, matrix );
+            }
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );

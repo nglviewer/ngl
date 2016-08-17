@@ -128,6 +128,11 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
 
     }
 
+    this.geometry = [
+        cylinderBuffer.geometry,
+        coneBuffer.geometry
+    ];
+
     this.wireframe = defaults( p.wireframe, false );
 
     this.group = new Group();
