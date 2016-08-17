@@ -131,11 +131,8 @@ StructureView.prototype = Object.assign( Object.create(
         this._rp = this.getResidueProxy();
         this._cp = this.getChainProxy();
 
-        // FIXME should selection be serializable?
         if( this.selection ){
-            this.selection.signals.stringChanged.add( function( string ){
-                this.refresh();
-            }, this );
+            this.selection.signals.stringChanged.add( this.refresh, this );
         }
 
         this.structure.signals.refreshed.add( this.refresh, this );
@@ -304,6 +301,12 @@ StructureView.prototype = Object.assign( Object.create(
     //
 
     dispose: function(){
+
+        if( this.selection ){
+            this.selection.signals.stringChanged.remove( this.refresh, this );
+        }
+
+        this.structure.signals.refreshed.remove( this.refresh, this );
 
         delete this.structure;
 
