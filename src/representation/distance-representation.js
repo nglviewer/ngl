@@ -78,7 +78,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             type: "boolean"
         },
         labelZOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
+            type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
         },
         atomPair: {
             type: "hidden", rebuild: true
