@@ -13,6 +13,23 @@ import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";
 
 
+var getTextAtlas = function(){
+
+    var cache = {};
+
+    return function getTextAtlas( params ){
+
+        var hash = JSON.stringify( params );
+
+        if( cache[ hash ] === undefined ){
+            cache[ hash ] = new TextAtlas( params );
+        }
+        return cache[ hash ];
+    }
+
+}();
+
+
 function TextAtlas( params ){
 
     // adapted from https://github.com/unconed/mathbox
@@ -43,7 +60,12 @@ function TextAtlas( params ){
     this.currentX = 0;
     this.currentY = 0;
 
-    this.build( p );
+    this.build();
+    this.populate();
+
+    this.texture = new CanvasTexture( this.canvas2 );
+    this.texture.flipY = false;
+    this.texture.needsUpdate = true;
 
 }
 
@@ -101,8 +123,6 @@ TextAtlas.prototype = {
         this.canvas2.width = this.width;
         this.canvas2.height = this.height;
         this.context2 = this.canvas2.getContext( '2d' );
-        // document.body.appendChild( this.canvas2 );
-        // this.canvas2.setAttribute( "style", "position: absolute; bottom: 0; right: 0; z-index: 100; border: 1px solid green; background: rgba(255,0,255,.25);" );
 
     },
 
@@ -227,10 +247,11 @@ TextAtlas.prototype = {
 
     },
 
-    dispose: function(){
+    populate: function(){
 
-        // document.body.removeChild( this.canvas );
-        // document.body.removeChild( this.canvas2 );
+        for( var i = 0; i < 256; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
 
     }
 
@@ -354,20 +375,25 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         Buffer.prototype.makeMaterial.call( this );
 
-        this.material.extensions.derivatives = true;
-        this.material.lights = false;
-        this.material.uniforms.fontTexture.value = this.tex;
-        this.material.needsUpdate = true;
+        var tex = this.texture;
 
-        this.wireframeMaterial.extensions.derivatives = true;
-        this.wireframeMaterial.lights = false;
-        this.wireframeMaterial.uniforms.fontTexture.value = this.tex;
-        this.wireframeMaterial.needsUpdate = true;
+        var m = this.material;
+        m.extensions.derivatives = true;
+        m.lights = false;
+        m.uniforms.fontTexture.value = tex;
+        m.needsUpdate = true;
 
-        this.pickingMaterial.extensions.derivatives = true;
-        this.pickingMaterial.lights = false;
-        this.pickingMaterial.uniforms.fontTexture.value = this.tex;
-        this.pickingMaterial.needsUpdate = true;
+        var wm = this.wireframeMaterial;
+        wm.extensions.derivatives = true;
+        wm.lights = false;
+        wm.uniforms.fontTexture.value = tex;
+        wm.needsUpdate = true;
+
+        var pm = this.pickingMaterial;
+        pm.extensions.derivatives = true;
+        pm.lights = false;
+        pm.uniforms.fontTexture.value = tex;
+        pm.needsUpdate = true;
 
     },
 
@@ -449,10 +475,7 @@ TextBuffer.prototype = Object.assign( Object.create(
 
     makeTexture: function(){
 
-        if( this.tex ) this.tex.dispose();
-        if( this.ta ) this.ta.dispose();
-
-        var ta = new TextAtlas( {
+        this.textAtlas = getTextAtlas( {
             font: [ this.fontFamily ],
             style: this.fontStyle,
             weight: this.fontWeight,
@@ -460,21 +483,13 @@ TextBuffer.prototype = Object.assign( Object.create(
             outline: this.sdf ? 5 : 0
         } );
 
-        for( var i = 0; i < 256; ++i ){
-            ta.map( String.fromCharCode( i ) );
-        }
-
-        this.ta = ta;
-
-        this.tex = new CanvasTexture( ta.canvas2 );
-        this.tex.flipY = false;
-        this.tex.needsUpdate = true;
+        this.texture = this.textAtlas.texture;
 
     },
 
     makeMapping: function(){
 
-        var ta = this.ta;
+        var ta = this.textAtlas;
         var text = this.text;
 
         var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
@@ -559,20 +574,12 @@ TextBuffer.prototype = Object.assign( Object.create(
 
             this.makeTexture();
             this.makeMapping();
-            data.fontTexture = this.tex;
+            this.texture.needsUpdate = true;
+            data.fontTexture = this.texture;
 
         }
 
         Buffer.prototype.setUniforms.call( this, data );
-
-    },
-
-    dispose: function(){
-
-        Buffer.prototype.dispose.call( this );
-
-        if( this.tex ) this.tex.dispose();
-        if( this.ta ) this.ta.dispose();
 
     }
 
