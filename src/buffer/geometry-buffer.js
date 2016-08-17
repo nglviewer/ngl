@@ -31,7 +31,7 @@ function GeometryBuffer( position, color, pickingColor, params ){
         this.geoPosition = geo.attributes.position.array;
         this.geoNormal = geo.attributes.normal.array;
         this.geoIndex = geo.index.array;
-        m = this.geoPosition.length;
+        m = this.geoPosition.length / 3;
         o = this.geoIndex.length / 3;
     }
 
