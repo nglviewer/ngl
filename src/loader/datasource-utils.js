@@ -43,6 +43,7 @@ function RcsbDatasource(){
         // XXXX defaults to XXXX.cif
         var info = getFileInfo( src );
         var protocol = window.location.protocol;
+        var pdbid = info.name.substr( 0, 4 );
         var url;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
             ( info.compressed === false || info.compressed === "gz" )
@@ -51,15 +52,15 @@ function RcsbDatasource(){
         }else if( info.ext === "mmtf" ){
             protocol = "http:";
             if( info.base.endsWith( ".bb" ) ){
-                url = mmtfReducedUrl + info.name;
+                url = mmtfReducedUrl + pdbid;
             }else{
-                url = mmtfFullUrl + info.name;
+                url = mmtfFullUrl + pdbid;
             }
         }else if( !info.ext ){
-            url = mmtfFullUrl + info.name;
+            url = mmtfFullUrl + pdbid;
         }else{
             Log.warn( "unsupported ext", info.ext );
-            url = mmtfFullUrl + info.name;
+            url = mmtfFullUrl + pdbid;
         }
         return protocol + url;
     };
