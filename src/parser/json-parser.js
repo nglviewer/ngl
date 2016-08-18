@@ -6,6 +6,7 @@
 
 
 import { ParserRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Parser from "./parser.js";
 
 
@@ -14,6 +15,8 @@ function JsonParser( streamer, params ){
     var p = params || {};
 
     Parser.call( this, streamer, p );
+
+    this.string = defaults( p, false );
 
     this.json = {
 
@@ -36,7 +39,7 @@ JsonParser.prototype = Object.assign( Object.create(
 
     _parse: function( callback ){
 
-        if( this.streamer.compressed || this.streamer.binary ){
+        if( this.streamer.compressed || this.streamer.binary || this.string ){
             this.json.data = JSON.parse( this.streamer.asText() );
         }else{
             this.json.data = this.streamer.data;

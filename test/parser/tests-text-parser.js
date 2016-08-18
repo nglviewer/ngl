@@ -1,18 +1,22 @@
 
+import StringStreamer from "../../src/streamer/string-streamer.js";
 import TextParser from "../../src/parser/text-parser.js";
-import { autoLoad } from "../../src/loader/loader-utils.js";
 
 import { assert } from 'chai';
+import fs from 'fs';
 
 
 describe('parser/text-parser', function() {
 
 
 describe('parsing', function () {
-    it('basic async', function () {
-        var path = "../../data/sample.txt";
+    it('basic', function () {
         var sampleText = "Moin world!";
-        return autoLoad( path ).then( function( text ){
+        var path = __dirname + "/../../data/sample.txt";
+        var str = fs.readFileSync( path, "utf-8" );
+        var streamer = new StringStreamer( str );
+        var textParser = new TextParser( streamer );
+        textParser.parse( function( text ){
             assert.strictEqual( sampleText, text.data, "Passed!" );
         } );
     });

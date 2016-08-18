@@ -1,12 +1,14 @@
 
+import StringStreamer from "../src/streamer/string-streamer.js";
 import PdbParser from "../src/parser/pdb-parser.js";
 import CifParser from "../src/parser/cif-parser.js";
+// eslint-disable-next-line no-unused-vars
 import StructureView from "../src/structure/structure-view.js";
-import { autoLoad } from "../src/loader/loader-utils.js";
 import Selection from "../src/selection.js";
 import { kwd } from "../src/selection.js";
 
 import { assert } from 'chai';
+import fs from 'fs';
 
 
 describe('selection', function() {
@@ -705,11 +707,18 @@ function getNthSelectedAtom( structure, nth ){
 
 describe('selection', function () {
 
+    var _1crnPdb;
+
+    before(function() {
+        _1crnPdb = fs.readFileSync( __dirname + "/../data/1crn.pdb", "utf-8" );
+    });
+
     it('backbone', function () {
         var sele = "backbone";
         var selection = new Selection( sele );
-        var path = "../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
             assert.strictEqual( sview.atomCount, 185, "Passed!" );
@@ -720,8 +729,9 @@ describe('selection', function () {
     it('.CA', function () {
         var sele = ".CA";
         var selection = new Selection( sele );
-        var path = "../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 30 );
             assert.strictEqual( sview.atomCount, 46, "Passed!" );
@@ -732,8 +742,9 @@ describe('selection', function () {
     it('ARG or .N', function () {
         var sele = "ARG or .N";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             assert.strictEqual( sview.atomCount, 22 + 46 - 2, "Passed!" );
         } );
@@ -742,8 +753,9 @@ describe('selection', function () {
     it('not backbone', function () {
         var sele = "not backbone";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
             assert.strictEqual( sview.atomCount, 142, "Passed!" );
@@ -754,8 +766,9 @@ describe('selection', function () {
     it('sidechain', function () {
         var sele = "sidechain";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
             assert.strictEqual( sview.atomCount, 142, "Passed!" );
@@ -766,8 +779,9 @@ describe('selection', function () {
     it('not backbone or .CA', function () {
         var sele = "not backbone or .CA";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
@@ -778,11 +792,11 @@ describe('selection', function () {
     });
 
     it('TYR vs not not TYR', function () {
-        var sele = "not backbone or .CA";
         var selection1 = new Selection( "TYR" );
         var selection2 = new Selection( "not not TYR" );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
             assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
@@ -790,11 +804,11 @@ describe('selection', function () {
     });
 
     it('not ( 12 and .CA ) vs not ( 12.CA )', function () {
-        var sele = "not backbone or .CA";
         var selection1 = new Selection( "not ( 12 and .CA )" );
         var selection2 = new Selection( "not ( 12.CA )" );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
             assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
@@ -804,8 +818,11 @@ describe('selection', function () {
     it('/1 PDB', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        var path = "../../data/1LVZ.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var path = __dirname + "/../data/1LVZ.pdb";
+        var str = fs.readFileSync( path, "utf-8" );
+        var streamer = new StringStreamer( str );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
@@ -817,8 +834,11 @@ describe('selection', function () {
     it('/1 CIF', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        var path = "../../data/1LVZ.cif";
-        return autoLoad( path, { ext: "cif" } ).then( function( structure ){
+        var path = __dirname + "/../data/1LVZ.cif";
+        var str = fs.readFileSync( path, "utf-8" );
+        var streamer = new StringStreamer( str );
+        var cifParser = new CifParser( streamer );
+        cifParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
@@ -830,8 +850,9 @@ describe('selection', function () {
     it('atomindex', function () {
         var sele = "@1,8,12";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var streamer = new StringStreamer( _1crnPdb );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
@@ -846,8 +867,11 @@ describe('selection', function () {
     it('lowercase resname', function () {
         var sele = "phe";
         var selection = new Selection( sele );
-        var path = "../data/lowerCaseResname.pdb";
-        return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
+        var path = __dirname + "/data/lowerCaseResname.pdb";
+        var str = fs.readFileSync( path, "utf-8" );
+        var streamer = new StringStreamer( str );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
             var sview = structure.getView( selection );
             assert.strictEqual( sview.atomCount, 13, "Passed!" );
         } );
