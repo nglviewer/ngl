@@ -255,14 +255,6 @@ CifParser.prototype = Object.assign( Object.create(
 
                             if( first ){
 
-                                var names = [
-                                    "auth_asym_id", "auth_seq_id",
-                                    "label_atom_id", "label_comp_id", "label_asym_id", "label_alt_id",
-                                    "group_PDB", "id", "type_symbol", "pdbx_PDB_model_num",
-                                    "Cartn_x", "Cartn_y", "Cartn_z", "B_iso_or_equiv",
-                                    "pdbx_PDB_ins_code", "occupancy"
-                                ];
-
                                 auth_asym_id = pointerNames.indexOf( "auth_asym_id" );
                                 auth_seq_id = pointerNames.indexOf( "auth_seq_id" );
                                 label_atom_id = pointerNames.indexOf( "label_atom_id" );

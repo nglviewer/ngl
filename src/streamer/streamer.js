@@ -258,8 +258,6 @@ Streamer.prototype = {
 
     eachChunkOfLines: function( callback ){
 
-        var newline = this.newline;
-
         this.eachChunk( function( chunk, chunkNo, chunkCount ){
 
             var isLast = chunkNo === chunkCount + 1;
