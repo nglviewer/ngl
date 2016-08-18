@@ -1,6 +1,8 @@
 
-import PdbParser from "../../../src/parser/pdb-parser.js";
-import { autoLoad } from "../../../src/loader/loader-utils.js";
+import PdbParser from "../../src/parser/pdb-parser.js";
+import { autoLoad } from "../../src/loader/loader-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('structure/structure', function() {
@@ -14,7 +16,7 @@ describe('iteration', function () {
             structure.eachPolymer( function( p ){
                 i += 1;
             } );
-            assert.equal( i, 3, "Passed!" );
+            assert.strictEqual( i, 3, "Passed!" );
         } );
     });
 });

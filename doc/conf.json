@@ -1,0 +1,17 @@
+{
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+    "default": {
+      "outputSourceFiles": false
+    }
+  },
+  "opts": {
+    "destination": "./build/docs/api/",
+    "tutorials": "./doc/tutorials/",
+    "package": "./package.json"
+  },
+  "source": {
+    "include": [ "./doc/overview.md", "./src/" ]
+  }
+}

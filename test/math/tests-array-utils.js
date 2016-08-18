@@ -1,5 +1,7 @@
 
-import { quicksortIP } from "../../../src/math/array-utils.js";
+import { quicksortIP } from "../../src/math/array-utils.js";
+
+import { assert } from 'chai';
 
 
 // Production steps of ECMA-262, Edition 6, 22.1.2.1

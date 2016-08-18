@@ -37,11 +37,11 @@ if( !window.Promise ){
     while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
     while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
 
-    // Using `this` for web workers while maintaining compatibility with browser
+    // Using `self` for web workers while maintaining compatibility with browser
     // targeted script loaders such as Browserify or Webpack where the only way to
     // get to the global object is via `window`.
 
-} )( typeof window === 'undefined' ? this : window );
+} )( typeof window === 'undefined' ? self : window );
 
 
 if( !HTMLCanvasElement.prototype.toBlob ){

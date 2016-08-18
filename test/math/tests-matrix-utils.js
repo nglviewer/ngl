@@ -1,5 +1,7 @@
 
-import { Matrix, svd } from "../../../src/math/matrix-utils.js";
+import { Matrix, svd } from "../../src/math/matrix-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('math/matrix-utils', function() {
@@ -8,9 +10,9 @@ describe('math/matrix-utils', function() {
 describe('Matrix', function () {
     it('initialization', function () {
         var m = new Matrix( 5, 10 );
-        assert.equal(5, m.cols);
-        assert.equal(10, m.rows);
-        assert.equal(5 * 10, m.size);
+        assert.strictEqual(5, m.cols);
+        assert.strictEqual(10, m.rows);
+        assert.strictEqual(5 * 10, m.size);
     });
 });
 

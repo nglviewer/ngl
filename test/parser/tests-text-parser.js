@@ -1,6 +1,8 @@
 
-import TextParser from "../../../src/parser/text-parser.js";
-import { autoLoad } from "../../../src/loader/loader-utils.js";
+import TextParser from "../../src/parser/text-parser.js";
+import { autoLoad } from "../../src/loader/loader-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('parser/text-parser', function() {
@@ -11,7 +13,7 @@ describe('parsing', function () {
         var path = "../../data/sample.txt";
         var sampleText = "Moin world!";
         return autoLoad( path ).then( function( text ){
-            assert.equal( sampleText, text.data, "Passed!" );
+            assert.strictEqual( sampleText, text.data, "Passed!" );
         } );
     });
 });

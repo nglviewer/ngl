@@ -1,6 +1,8 @@
 
-import XmlParser from "../../../src/parser/xml-parser.js";
-import { autoLoad } from "../../../src/loader/loader-utils.js";
+import XmlParser from "../../src/parser/xml-parser.js";
+import { autoLoad } from "../../src/loader/loader-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('parser/xml-parser', function() {
@@ -14,7 +16,7 @@ describe('parsing', function () {
             var descr = xml.data.root;
             var pdb = descr.children[ 0 ];
             var id = pdb.attributes.structureId;
-            assert.equal( "3DQB", id, "Passed!" );
+            assert.strictEqual( "3DQB", id, "Passed!" );
         } );
     });
 });

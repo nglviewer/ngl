@@ -256,8 +256,8 @@ function getFileInfo( file ){
 
     var path, compressed, protocol;
 
-    if( ( self.File && file instanceof File ) ||
-        ( self.Blob && file instanceof self.Blob )
+    if( ( typeof File !== "undefined" && file instanceof File ) ||
+        ( typeof Blob !== "undefined" && file instanceof Blob )
     ){
         path = file.name || "";
     }else{
@@ -496,7 +496,6 @@ export {
     download,
     submit,
     open,
-    unicodeHelper,
     getFileInfo,
     throttle,
     binarySearchIndexOf,

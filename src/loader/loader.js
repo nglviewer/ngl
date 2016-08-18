@@ -34,8 +34,8 @@ function Loader( src, params ){
         json: this.ext === "json"
     };
 
-    if( ( self.File && src instanceof File ) ||
-        ( self.Blob && src instanceof self.Blob )
+    if( ( typeof File !== "undefined" && src instanceof File ) ||
+        ( typeof Blob !== "undefined" && src instanceof Blob )
     ){
         this.streamer = new FileStreamer( src, streamerParams );
     }else{

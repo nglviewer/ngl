@@ -1,10 +1,12 @@
 
-import PdbParser from "../../src/parser/pdb-parser.js";
-import CifParser from "../../src/parser/cif-parser.js";
-import StructureView from "../../src/structure/structure-view.js";
-import { autoLoad } from "../../src/loader/loader-utils.js";
-import Selection from "../../src/selection.js";
-import { kwd } from "../../src/selection.js";
+import PdbParser from "../src/parser/pdb-parser.js";
+import CifParser from "../src/parser/cif-parser.js";
+import StructureView from "../src/structure/structure-view.js";
+import { autoLoad } from "../src/loader/loader-utils.js";
+import Selection from "../src/selection.js";
+import { kwd } from "../src/selection.js";
+
+import { assert } from 'chai';
 
 
 describe('selection', function() {
@@ -702,27 +704,28 @@ function getNthSelectedAtom( structure, nth ){
 
 
 describe('selection', function () {
+
     it('backbone', function () {
         var sele = "backbone";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
+        var path = "../data/1crn.pdb";
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 185, "Passed!" );
-            assert.equal( ap.atomname, "N", "Passed!" );
+            assert.strictEqual( sview.atomCount, 185, "Passed!" );
+            assert.strictEqual( ap.atomname, "N", "Passed!" );
         } );
     });
 
     it('.CA', function () {
         var sele = ".CA";
         var selection = new Selection( sele );
-        var path = "../../data/1crn.pdb";
+        var path = "../data/1crn.pdb";
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 30 );
-            assert.equal( sview.atomCount, 46, "Passed!" );
-            assert.equal( ap.atomname, "CA", "Passed!" );
+            assert.strictEqual( sview.atomCount, 46, "Passed!" );
+            assert.strictEqual( ap.atomname, "CA", "Passed!" );
         } );
     });
 
@@ -732,7 +735,7 @@ describe('selection', function () {
         var path = "../../data/1crn.pdb";
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
-            assert.equal( sview.atomCount, 22 + 46 - 2, "Passed!" );
+            assert.strictEqual( sview.atomCount, 22 + 46 - 2, "Passed!" );
         } );
     });
 
@@ -743,8 +746,8 @@ describe('selection', function () {
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 142, "Passed!" );
-            assert.equal( ap.atomname, "CB", "Passed!" );
+            assert.strictEqual( sview.atomCount, 142, "Passed!" );
+            assert.strictEqual( ap.atomname, "CB", "Passed!" );
         } );
     });
 
@@ -755,8 +758,8 @@ describe('selection', function () {
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
             var ap = getNthSelectedAtom( sview, 0 );
-            assert.equal( sview.atomCount, 142, "Passed!" );
-            assert.equal( ap.atomname, "CB", "Passed!" );
+            assert.strictEqual( sview.atomCount, 142, "Passed!" );
+            assert.strictEqual( ap.atomname, "CB", "Passed!" );
         } );
     });
 
@@ -768,9 +771,9 @@ describe('selection', function () {
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
-            assert.equal( sview.atomCount, 188, "Passed!" );
-            assert.equal( ap1.atomname, "CA", "Passed!" );
-            assert.equal( ap2.atomname, "CB", "Passed!" );
+            assert.strictEqual( sview.atomCount, 188, "Passed!" );
+            assert.strictEqual( ap1.atomname, "CA", "Passed!" );
+            assert.strictEqual( ap2.atomname, "CB", "Passed!" );
         } );
     });
 
@@ -782,7 +785,7 @@ describe('selection', function () {
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
-            assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
+            assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
         } );
     });
 
@@ -794,7 +797,7 @@ describe('selection', function () {
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview1 = structure.getView( selection1 );
             var sview2 = structure.getView( selection2 );
-            assert.equal( sview1.atomCount, sview2.atomCount, "Passed!" );
+            assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
         } );
     });
 
@@ -806,8 +809,8 @@ describe('selection', function () {
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
-            assert.equal( ap1.modelIndex, 1, "Passed!" );
-            assert.equal( ap2.modelIndex, 1, "Passed!" );
+            assert.strictEqual( ap1.modelIndex, 1, "Passed!" );
+            assert.strictEqual( ap2.modelIndex, 1, "Passed!" );
         } );
     });
 
@@ -819,8 +822,8 @@ describe('selection', function () {
             var sview = structure.getView( selection );
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, sview.atomCount - 1 );
-            assert.equal( ap1.modelIndex, 1, "Passed!" );
-            assert.equal( ap2.modelIndex, 1, "Passed!" );
+            assert.strictEqual( ap1.modelIndex, 1, "Passed!" );
+            assert.strictEqual( ap2.modelIndex, 1, "Passed!" );
         } );
     });
 
@@ -833,10 +836,10 @@ describe('selection', function () {
             var ap1 = getNthSelectedAtom( sview, 0 );
             var ap2 = getNthSelectedAtom( sview, 1 );
             var ap3 = getNthSelectedAtom( sview, 2 );
-            assert.equal( sview.atomCount, 3, "Passed!" );
-            assert.equal( ap1.index, 1, "Passed!" );
-            assert.equal( ap2.index, 8, "Passed!" );
-            assert.equal( ap3.index, 12, "Passed!" );
+            assert.strictEqual( sview.atomCount, 3, "Passed!" );
+            assert.strictEqual( ap1.index, 1, "Passed!" );
+            assert.strictEqual( ap2.index, 8, "Passed!" );
+            assert.strictEqual( ap3.index, 12, "Passed!" );
         } );
     });
 
@@ -846,7 +849,7 @@ describe('selection', function () {
         var path = "../data/lowerCaseResname.pdb";
         return autoLoad( path, { ext: "pdb" } ).then( function( structure ){
             var sview = structure.getView( selection );
-            assert.equal( sview.atomCount, 13, "Passed!" );
+            assert.strictEqual( sview.atomCount, 13, "Passed!" );
         } );
     });
 });

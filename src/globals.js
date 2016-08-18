@@ -60,7 +60,6 @@ export {
     Debug,
     setDebug,
     WebglErrorMessage,
-    MainScriptFilePath,
     WorkerRegistry,
     ColorMakerRegistry,
     DatasourceRegistry,
