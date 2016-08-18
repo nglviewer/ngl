@@ -52,7 +52,7 @@ function Kdtree( points, metric, eleSize, dimSize ){
 
 	function buildTree( depth, parent, arrBegin, arrEnd ){
 
-		var dim = depth % eleSize,
+		var dim = depth % dimSize,
 			median,
 			node,
 			plength = ( arrEnd - arrBegin );
@@ -60,11 +60,9 @@ function Kdtree( points, metric, eleSize, dimSize ){
 		if( depth > maxDepth ) maxDepth = depth;
 
 		if( plength === 0 ) return null;
-		if( plength === 1 ) new Node( ( 0 + arrBegin ) * eleSize, parent );
+		if( plength === 1 ) return new Node( arrBegin * eleSize, parent );
 
-		if( dim < dimSize ){
-			quicksortIP( points, eleSize, dim, arrBegin, arrEnd );
-		}
+		quicksortIP( points, eleSize, dim, arrBegin, arrEnd );
 
 		median = Math.floor( plength / 2 );
 
@@ -86,11 +84,11 @@ function Kdtree( points, metric, eleSize, dimSize ){
 
 	}
 
-	function getNodePos( node ){
+	// function getNodePos( node ){
 
-		// TODO
-		//
-	}
+	// 	// TODO
+
+	// }
 
 	this.root = buildTree( 0, null, 0, points.length / eleSize );
 
@@ -116,7 +114,7 @@ function Kdtree( points, metric, eleSize, dimSize ){
 		function nearestSearch( node ) {
 
 			var bestChild,
-				dimension = getNodeDepth( node ) % eleSize,
+				dimension = getNodeDepth( node ) % dimSize,
 				ownPoint = [
 					points[ node.pos + 0 ],
 					points[ node.pos + 1 ],
@@ -136,7 +134,7 @@ function Kdtree( points, metric, eleSize, dimSize ){
 			}
 
 			for ( i = 0; i < dimSize; i += 1 ) {
-				if ( i === getNodeDepth( node ) % eleSize ) {
+				if ( i === getNodeDepth( node ) % dimSize ) {
 					linearPoint[ i ] = point[ i ];
 				} else {
 					linearPoint[ i ] = points[ node.pos + i ];
