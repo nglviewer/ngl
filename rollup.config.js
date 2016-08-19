@@ -15,7 +15,16 @@ function glsl () {
           .replace( /\t/g, ' ' )
           .replace( / {2,}/g, ' ' )
           .replace( / *\n */g, '\n' )
-      ) + ';'
+      ) + ';';
+    }
+  };
+}
+
+function text () {
+  return {
+    transform: function( code, id ) {
+      if ( !/\.(pdb|cif|csv|json|xml)$/.test( id ) ) return;
+      return 'export default ' + JSON.stringify( code ) + ';';
     }
   };
 }
@@ -23,7 +32,11 @@ function glsl () {
 export default {
   entry: 'src/ngl.js',
   plugins: [
-    glsl()
+    glsl(),
+    text()
+    // istanbul({
+    //   exclude: ['test/**/*', 'node_modules/**/*']
+    // })
   ],
   external: external,
   targets: [
