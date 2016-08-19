@@ -91,9 +91,6 @@ TextAtlas.prototype = {
         ctx.textBaseline = "bottom";
         ctx.lineJoin = "round";
 
-        // document.body.appendChild( canvas );
-        // canvas.setAttribute( "style", "position: absolute; top: 0; left: 0; z-index: 100; border: 1px solid red; background: rgba(255,0,255,.25);" );
-
         var colors = [];
         var dilate = this.outline * 3;
         for( var i = 0; i < dilate; ++i ){
@@ -125,8 +122,6 @@ TextAtlas.prototype = {
         if( this.mapped[ text ] === undefined ){
 
             this.draw( text );
-
-            // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
             if( this.currentX + this.scratchW > this.width ){
                 this.currentX = 0;
