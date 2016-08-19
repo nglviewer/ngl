@@ -86,14 +86,10 @@ function _trimCanvas( canvas, r, g, b, a ){
     var bottomX = x;
 
     var trimedCanvas = document.createElement( 'canvas' );
-    trimedCanvas.style.display = "hidden";
-    document.body.appendChild( trimedCanvas );
-
     trimedCanvas.width = bottomX - topX;
     trimedCanvas.height = bottomY - topY;
 
     var trimedCtx = trimedCanvas.getContext( '2d' );
-
     trimedCtx.drawImage(
         canvas,
         topX, topY,
@@ -188,7 +184,6 @@ function makeImage( viewer, params ){
                     renderer.setClearAlpha( originalClearAlpha );
                     setLineWidthAndPixelSize( true );
                     viewer.requestRender();
-                    tiledRenderer.dispose();
                     onProgress( n, n, true );
                     resolve( blob );
                 },

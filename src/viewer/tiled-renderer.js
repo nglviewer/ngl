@@ -23,9 +23,6 @@ function TiledRenderer( renderer, camera, viewer, params ){
     // canvas
 
     var canvas = document.createElement( 'canvas' );
-    canvas.style.display = "none";
-    document.body.appendChild( canvas );
-
     var width = viewer.width;
     var height = viewer.height;
 
@@ -127,17 +124,10 @@ function TiledRenderer( renderer, camera, viewer, params ){
 
     }
 
-    function dispose(){
-
-        document.body.removeChild( canvas );
-
-    }
-
     // API
 
     this.render = render;
     this.renderAsync = renderAsync;
-    this.dispose = dispose;
 
     this.canvas = canvas;
 
