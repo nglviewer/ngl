@@ -7,7 +7,7 @@
 
 import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
-import { Debug, Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
+import { Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";

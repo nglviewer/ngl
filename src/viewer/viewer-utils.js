@@ -165,7 +165,7 @@ function makeImage( viewer, params ){
         }
     }
 
-    return new Promise( function( resolve, reject ){
+    return new Promise( function( resolve ){
 
         var tiledRenderer = new TiledRenderer(
             renderer, camera, viewer,

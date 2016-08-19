@@ -167,7 +167,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    createData: function( sview ){
+    createData: function( /*sview*/ ){
 
         console.error( "createData not implemented" );
 
@@ -188,7 +188,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    updateData: function( what, data ){
+    updateData: function( /*what, data*/ ){
 
         console.error( "updateData not implemented" );
 

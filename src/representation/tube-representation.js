@@ -38,7 +38,7 @@ TubeRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    getSplineParams: function( params ){
+    getSplineParams: function( /*params*/ ){
 
         return CartoonRepresentation.prototype.getSplineParams.call( this, {
             directional: false

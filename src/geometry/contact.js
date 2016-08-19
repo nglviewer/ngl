@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 import Kdtree from "./kdtree.js";
 import BondStore from "../store/bond-store.js";

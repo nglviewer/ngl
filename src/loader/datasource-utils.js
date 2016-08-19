@@ -78,6 +78,5 @@ function RcsbDatasource(){
 export {
     PassThroughDatasource,
     StaticDatasource,
-    RcsbDatasource,
-    getDataInfo
+    RcsbDatasource
 };

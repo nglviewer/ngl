@@ -29,7 +29,7 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     var nv = verts.length / 3;
     var nf = faces.length / 3;
-    var bg, norms;
+    var norms;
 
     if( inflate ){
         norms = new Float32Array( nv * 3 );
@@ -142,7 +142,7 @@ function laplacianSmooth( verts, faces, numiter, inflate ){
 
     var wt = 1.0;
     var wt2 = 0.5;
-    var i3, vi3, vi, vdi, wt_vi, wt2_vi;
+    var i3, vi3, vdi, wt_vi, wt2_vi;
     var ssign = -1;
     var scaleFactor = 1;
     var outwt = 0.75 / ( scaleFactor + 3.5 );  // area-preserving
@@ -251,7 +251,6 @@ function computeVertexNormals( position, index, normal ){
         }
     }
 
-    var vA, vB, vC;
     var a = new Float32Array( 3 );
     var b = new Float32Array( 3 );
     var c = new Float32Array( 3 );

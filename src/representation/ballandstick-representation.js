@@ -7,7 +7,6 @@
 
 import { defaults } from "../utils.js";
 import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
-import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
@@ -240,7 +239,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             if( !this.cylinderOnly ){
 
                 var atomData = this.getAtomData( data.sview, what );
-                
+
                 var sphereData = {};
 
                 if( !what || what.position ){

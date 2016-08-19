@@ -18,14 +18,16 @@ function BondHash( bondStore, atomCount ){
     var countArray = new Uint8Array( atomCount );
     var offsetArray = new Int32Array( atomCount );
 
+    var i;
+
     // count bonds per atom
-    for( var i = 0; i < bondCount; ++i ){
+    for( i = 0; i < bondCount; ++i ){
         countArray[ atomIndex1Array[ i ] ] += 1;
         countArray[ atomIndex2Array[ i ] ] += 1;
     }
 
     // get offsets to atom bonds
-    for( var i = 1; i < atomCount; ++i ){
+    for( i = 1; i < atomCount; ++i ){
         offsetArray[ i ] += offsetArray[ i - 1 ] + countArray[ i - 1 ];
     }
 
@@ -37,7 +39,7 @@ function BondHash( bondStore, atomCount ){
     }
 
     // build index array
-    for( var i = 0; i < bondCount; ++i ){
+    for( i = 0; i < bondCount; ++i ){
         var idx1 = atomIndex1Array[ i ];
         var idx2 = atomIndex2Array[ i ];
         var j1 = offsetArray[ idx1 ];

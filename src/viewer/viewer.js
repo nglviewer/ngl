@@ -21,7 +21,7 @@ import {
 
 import {
     Debug, Log, Browser, WebglErrorMessage,
-    ExtensionFragDepth, setExtensionFragDepth,
+    setExtensionFragDepth,
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
@@ -81,7 +81,7 @@ JitterVectors.forEach( function( offsetList ){
  * @class
  * @param {String} eid
  */
-function Viewer( eid, params ){
+function Viewer( eid ){
 
     var _signals = {
         orientationChanged: new Signal(),
@@ -119,7 +119,7 @@ function Viewer( eid, params ){
     var rotationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
     initScene();
 
-    var renderer, indexUint16, supportsHalfFloat;
+    var renderer, supportsHalfFloat;
     var pickingTarget, sampleTarget, holdTarget;
     var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
     if( initRenderer() === false ){
@@ -238,7 +238,7 @@ function Viewer( eid, params ){
         // console.log( gl.getParameter(gl.SAMPLES) );
 
         setExtensionFragDepth( renderer.extensions.get( "EXT_frag_depth" ) );
-        indexUint16 = !renderer.extensions.get( 'OES_element_index_uint' );
+        renderer.extensions.get( 'OES_element_index_uint' );
 
         setSupportsReadPixelsFloat(
             ( renderer.extensions.get( 'OES_texture_float' ) &&
@@ -620,7 +620,7 @@ function Viewer( eid, params ){
 
     function getImage(){
 
-        return new Promise( function( resolve, reject ){
+        return new Promise( function( resolve ){
             renderer.domElement.toBlob( resolve, "image/png" );
         } );
 
@@ -923,7 +923,7 @@ function Viewer( eid, params ){
             x *= window.devicePixelRatio;
             y *= window.devicePixelRatio;
 
-            var gid, object, instance, bondId;
+            var gid, object, instance;
             var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             render( true );
@@ -1225,9 +1225,6 @@ function Viewer( eid, params ){
 
     var centerView = function(){
 
-        var t = new Vector3();
-        var eye = new Vector3();
-        var eyeDirection = new Vector3();
         var bbSize = new Vector3();
 
         return function centerView( _zoom, position ){

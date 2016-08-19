@@ -22,7 +22,7 @@ PluginLoader.prototype = Object.assign( Object.create(
 
     constructor: PluginLoader,
 
-    _load: function( resolve, reject ){
+    _load: function( resolve ){
 
         var basePath;
         if( this.protocol ){

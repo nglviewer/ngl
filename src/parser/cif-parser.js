@@ -43,13 +43,9 @@ CifParser.prototype = Object.assign( Object.create(
         var cAlphaOnly = this.cAlphaOnly;
 
         var frames = s.frames;
-        var boxes = s.boxes;
-        var doFrames = false;
         var currentFrame, currentCoord;
 
-        var line, recordName;
-        var altloc, serial, elem, chainname, resno, resname,
-            atomname, element, inscode;
+        var line;
 
         s.hasConnect = false;
 
@@ -114,7 +110,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 }else if( line.substring( 0, 5 )==="data_" ){
 
-                    var data = line.substring( 5 );
+                    // var data = line.substring( 5 );
 
                     // Log.log( "DATA", data );
 
@@ -250,8 +246,6 @@ CifParser.prototype = Object.assign( Object.create(
 
                             nn = pointerNames.length;
                             ls = line.split( reWhitespace );
-
-                            var k;
 
                             if( first ){
 
@@ -619,7 +613,7 @@ CifParser.prototype = Object.assign( Object.create(
 
         }
 
-        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 

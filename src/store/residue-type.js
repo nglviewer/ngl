@@ -11,7 +11,6 @@ import {
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-    ChemCompOther, ChemCompNonPolymer, ChemCompHetero,
     AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames,
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
@@ -354,7 +353,7 @@ ResidueType.prototype = {
         return undefined;
     },
 
-    hasAtomWithName: function( atomname ){
+    hasAtomWithName: function( /*atomname*/ ){
         var n = arguments.length;
         for( var i = 0; i < n; ++i ){
             if( arguments[ i ] === undefined ) continue;

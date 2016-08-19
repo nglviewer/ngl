@@ -142,8 +142,8 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     this.getMesh = function( picking ){
 
         return new Group().add(
-            cylinderBuffer.getMesh(),
-            coneBuffer.getMesh()
+            cylinderBuffer.getMesh( picking ),
+            coneBuffer.getMesh( picking )
         );
 
     };

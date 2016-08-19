@@ -42,9 +42,9 @@ ScriptComponent.prototype = Object.assign( Object.create(
 
     type: "script",
 
-    addRepresentation: function( type ){},
+    addRepresentation: function( /*type*/ ){},
 
-    removeRepresentation: function( repr ){},
+    removeRepresentation: function( /*repr*/ ){},
 
     run: function(){
 
@@ -68,7 +68,7 @@ ScriptComponent.prototype = Object.assign( Object.create(
 
     },
 
-    setVisibility: function( value ){},
+    setVisibility: function( /*value*/ ){},
 
     getCenter: function(){}
 

@@ -297,7 +297,7 @@ function quicksortIP( arr, eleSize, orderElement, begin, end ){
 
                 i = j - 1;
 
-                while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
+                while ( i >= left && arr[ i * eleSize + orderElement ] > swap[ orderElement ] ) {
                     for ( x = 0; x < eleSize; x ++ ) {
                         arr[ ( i + 1 ) * eleSize + x ] = arr[ i * eleSize + x ];
                     }
@@ -391,6 +391,26 @@ function arrayMin( array ){
     return min;
 
 }
+
+
+// function arraySorted( array ){
+
+//     for( var i = 1, il = array.length; i < il; ++i ){
+//         if( array[ i - 1 ] > array[ i ] ) return false;
+//     }
+//     return true;
+
+// }
+
+
+// function arraySortedCmp( array, cmp ){
+
+//     for( var i = 1, il = array.length; i < il; ++i ){
+//         if( cmp( array[ i - 1 ], array[ i ] ) > 1 ) return false;
+//     }
+//     return true;
+
+// }
 
 
 export {

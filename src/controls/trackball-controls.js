@@ -403,7 +403,7 @@ function TrackballControls( object, domElement ) {
 
     }
 
-    function keyup( event ) {
+    function keyup( /*event*/ ) {
 
         if ( _this.enabled === false ) return;
 
@@ -466,7 +466,7 @@ function TrackballControls( object, domElement ) {
 
     }
 
-    function mouseup( event ) {
+    function mouseup( /*event*/ ) {
 
         if ( _this.enabled === false ) return;
 

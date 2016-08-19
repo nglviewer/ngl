@@ -6,8 +6,7 @@
 
 
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
-    ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     AA1
 } from "../structure/structure-constants.js";

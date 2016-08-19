@@ -5,10 +5,8 @@
  */
 
 
-import { Debug, Log, WorkerRegistry } from "../globals.js";
+import { WorkerRegistry } from "../globals.js";
 import Worker from "../worker/worker.js";
-import Structure from "../structure/structure.js";
-import StructureView from "../structure/structure-view.js";
 import EDTSurface from "./edt-surface.js";
 import Surface from "./surface.js";
 

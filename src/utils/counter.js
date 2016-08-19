@@ -5,7 +5,7 @@
  */
 
 
-import { Log, Debug } from "../globals.js";
+import { Log } from "../globals.js";
 
 import Signal from "../../lib/signals.es6.js";
 

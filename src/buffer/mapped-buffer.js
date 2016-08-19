@@ -103,15 +103,13 @@ MappedBuffer.prototype = Object.assign( Object.create(
         var mappingSize = this.mappingSize;
         var mappingIndices = this.mappingIndices;
         var mappingIndicesSize = this.mappingIndicesSize;
-        var mappingItemSize = this.mappingItemSize;
 
         var index = this.index;
 
-        var i, ix, it;
+        var ix, it;
 
         for( var v = 0; v < count; v++ ) {
 
-            i = v * mappingItemSize * mappingSize;
             ix = v * mappingIndicesSize;
             it = v * mappingSize;
 

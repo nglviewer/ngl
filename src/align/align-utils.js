@@ -5,7 +5,6 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import Selection from "../selection.js";
 import Alignment from "./alignment.js";

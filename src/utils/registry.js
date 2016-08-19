@@ -9,6 +9,8 @@ function Registry( name ){
 
     var dict = {};
 
+    this.name = name;
+
     this.add = function( key, value ){
         dict[ key.toLowerCase() ] = value;
     };

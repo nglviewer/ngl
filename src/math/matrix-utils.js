@@ -177,7 +177,6 @@ function mean_rows( A ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
     var mean = new Array( ncols );
 
@@ -204,7 +203,6 @@ function mean_cols( A ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
     var mean = new Array( nrows );
 
@@ -231,7 +229,6 @@ function sub_rows( A, row ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
 
     for( i = 0; i < nrows; ++i ){
@@ -247,7 +244,6 @@ function sub_cols( A, col ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
 
     for( i = 0; i < ncols; ++i ){
@@ -263,7 +259,6 @@ function add_rows( A, row ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
 
     for( i = 0; i < nrows; ++i ){
@@ -279,7 +274,6 @@ function add_cols( A, col ){
     var p = 0;
     var nrows = A.rows;
     var ncols = A.cols;
-    var sum = 0.0;
     var Ad = A.data;
 
     for( i = 0; i < ncols; ++i ){
@@ -512,7 +506,7 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
 
 
 function svd( A, W, U, V ){
-    var at=0,i=0,j=0,_m=A.rows,_n=A.cols,m=_m,n=_n;
+    var at=0,i=0,_m=A.rows,_n=A.cols,m=_m,n=_n;
 
     if(m < n) {
         at = 1;
@@ -734,7 +728,9 @@ export {
     add_rows,
     add_cols,
     transpose,
+    multiply,
     multiply_ABt,
+    multiply_AtB,
     invert_3x3,
     multiply_3x3,
     mat3x3_determinant,

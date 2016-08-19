@@ -6,7 +6,6 @@
 
 
 import {
-    Group, Mesh, Line,
     BufferGeometry, BufferAttribute
 } from "../../lib/three.es6.js";
 
@@ -373,8 +372,11 @@ OBJLoader.prototype = {
                 state.startObject( name );
 
             // ignore material related lines
+            // eslint-disable-next-line no-empty
             } else if ( this.regexp.material_use_pattern.test( line ) ) {
+            // eslint-disable-next-line no-empty
             } else if ( this.regexp.material_library_pattern.test( line ) ) {
+            // eslint-disable-next-line no-empty
             } else if ( ( result = this.regexp.smoothing_pattern.exec( line ) ) !== null ) {
             } else {
 
@@ -393,7 +395,6 @@ OBJLoader.prototype = {
 
             var object = state.objects[ i ];
             var geometry = object.geometry;
-            var isLine = ( geometry.type === 'Line' );
 
             // Skip o/g line declarations that did not follow with any faces
             if ( geometry.vertices.length === 0 ) continue;

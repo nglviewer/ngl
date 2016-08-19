@@ -116,7 +116,7 @@ if( !Object.assign ){
         configurable: true,
         writable: true,
 
-        value: function(target, firstSource) {
+        value: function(target/*, firstSource*/) {
 
             "use strict";
             if (target === undefined || target === null)
@@ -177,7 +177,7 @@ if (!String.prototype.startsWith) {
                 var object = {};
                 var $defineProperty = Object.defineProperty;
                 result = $defineProperty(object, object, object) && $defineProperty;
-            } catch(error) {}
+            } catch(error) {}  // eslint-disable-line no-empty
             return result;
         }());
         var toString = {}.toString;
@@ -265,7 +265,7 @@ if (!String.prototype.endsWith) {
 
     if( !window.requestAnimationFrame ){
 
-        window.requestAnimationFrame = function( callback, element ){
+        window.requestAnimationFrame = function( callback/*, element*/ ){
 
             var currTime = new Date().getTime();
             var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
@@ -480,6 +480,7 @@ import Counter from "./utils/counter.js";
 
 //
 
+/* eslint-disable no-unused-vars */
 import AxesRepresentation from "./representation/axes-representation";
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
@@ -501,6 +502,7 @@ import SpacefillRepresentation from "./representation/spacefill-representation";
 import TraceRepresentation from "./representation/trace-representation";
 import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
+/* eslint-enable no-unused-vars */
 
 import BufferRepresentation from "./representation/buffer-representation";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
@@ -511,6 +513,7 @@ import SphereBuffer from "./buffer/sphere-buffer.js";
 
 //
 
+/* eslint-disable no-unused-vars */
 import GroParser from "./parser/gro-parser.js";
 import PdbParser from "./parser/pdb-parser.js";
 import PqrParser from "./parser/pqr-parser.js";
@@ -533,10 +536,12 @@ import TextParser from "./parser/text-parser.js";
 import CsvParser from "./parser/csv-parser.js";
 import JsonParser from "./parser/json-parser.js";
 import XmlParser from "./parser/xml-parser.js";
+/* eslint-enable no-unused-vars */
 
 //
 
 import Shape from "./geometry/shape.js";
+import Kdtree from "./geometry/kdtree.js";
 
 //
 
@@ -735,6 +740,8 @@ export {
      * @see {@link Shape}
      */
     Shape,
+
+    Kdtree,
 
     /**
      * Signal class

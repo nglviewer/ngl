@@ -8,7 +8,7 @@
 import Signal from "../../lib/signals.es6.js";
 
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 import Queue from "../utils/queue.js";
 import { circularMean } from "../math/array-utils.js";
 import Selection from "../selection.js";
@@ -39,7 +39,7 @@ function Trajectory( trajPath, structure, selectionString ){
         selectionString || "backbone and not hydrogen"
     );
 
-    this.selection.signals.stringChanged.add( function( string ){
+    this.selection.signals.stringChanged.add( function(){
         this.makeIndices();
         this.resetCache();
     }, this );
@@ -369,7 +369,7 @@ Trajectory.prototype = {
 
     _loadFrame: function( i, callback ){
 
-        Log.error( "Trajectory._loadFrame not implemented" );
+        Log.error( "Trajectory._loadFrame not implemented", i, callback );
 
     },
 
@@ -557,7 +557,7 @@ Trajectory.prototype = {
 
     getPath: function( index, callback ){
 
-        Log.error( "Trajectory.getPath not implemented" );
+        Log.error( "Trajectory.getPath not implemented", index, callback );
 
     }
 

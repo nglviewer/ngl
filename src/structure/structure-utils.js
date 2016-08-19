@@ -636,8 +636,6 @@ function calculateAtomBondMap( structure ){
 
     if( Debug ) Log.time( "calculateAtomBondMap" );
 
-    var atomStore = structure.atomStore;
-    var bondStore = structure.bondStore;
     var atomBondMap = [];
 
     structure.eachBond( function( bp ){
@@ -672,8 +670,6 @@ function calculateBondsWithin( structure, onlyAddRung ){
 
             var count = r.atomCount;
             var offset = r.atomOffset;
-            var end = offset + count;
-            var end1 = end - 1;
 
             if( count > 500 ){
                 Log.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );

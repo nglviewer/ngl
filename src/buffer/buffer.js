@@ -14,7 +14,7 @@ import {
     ShaderMaterial
 } from "../../lib/three.es6.js";
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
 import { defaults } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
@@ -140,7 +140,7 @@ function Buffer( position, color, index, pickingColor, params ){
     this.uniforms.diffuse.value.set( this.diffuse );
 
     var objectId = new Uniform( 0.0 )
-        .onUpdate( function( object, camera ){
+        .onUpdate( function( object/*, camera*/ ){
             this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
         } );
 

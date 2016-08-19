@@ -15,6 +15,7 @@ import Viewer from "../viewer/viewer.js";
 import PickingControls from "./picking-controls.js";
 
 import Component from "../component/component.js";
+// eslint-disable-next-line no-unused-vars
 import RepresentationComponent from "../component/representation-component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
@@ -416,7 +417,7 @@ Stage.prototype = {
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
 
-        }else if( object.type === "surface" || opject.type === "volume" ){
+        }else if( object.type === "surface" || object.type === "volume" ){
 
             object.addRepresentation( "surface" );
             this.centerView();
@@ -550,7 +551,7 @@ Stage.prototype = {
 
     removeAllComponents: function( type ){
 
-        this.compList.slice().forEach( function( o, i ){
+        this.compList.slice().forEach( function( o ){
 
             if( !type || o.type === type ){
 

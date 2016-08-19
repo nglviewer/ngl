@@ -7,7 +7,6 @@
 
 import Signal from "../lib/signals.es6.js";
 
-import { Log, Debug } from "./globals.js";
 import { binarySearchIndexOf } from "./utils.js";
 
 
@@ -96,7 +95,6 @@ Selection.prototype = {
         var selection = this.selection;
         var selectionStack = [];
         var newSelection, oldSelection;
-        var andContext = null;
 
         string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
         if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
@@ -108,9 +106,8 @@ Selection.prototype = {
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, i, error, not;
-        var atomname, chain, resno, resname, model, resi, altloc, inscode;
-        var j = 0;
+        var c, sele, i, not;
+        var atomname, chain, model, resi, altloc, inscode;
 
         var createNewContext = function( operator ){
 
@@ -126,7 +123,6 @@ Selection.prototype = {
                 selectionStack.push( selection );
                 selection = newSelection;
             }
-            j = 0;
 
         };
 
@@ -137,8 +133,6 @@ Selection.prototype = {
             if( selection === undefined ){
                 createNewContext( operator );
                 pushRule( oldSelection );
-            }else{
-                j = selection.rules.length;
             }
 
         };
@@ -146,7 +140,6 @@ Selection.prototype = {
         var pushRule = function( rule ){
 
             selection.rules.push( rule );
-            j += 1;
 
         };
 

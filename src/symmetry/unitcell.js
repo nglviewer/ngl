@@ -30,7 +30,7 @@ function Unitcell( a, b, c, alpha, beta, gamma, spacegroup, cartToFrac ){
     var cosAlpha = Math.cos( alphaRad );
     var cosBeta = Math.cos( betaRad );
     var cosGamma = Math.cos( gammaRad );
-    var sinAlpha = Math.sin( alphaRad );
+    // var sinAlpha = Math.sin( alphaRad );
     var sinBeta = Math.sin( betaRad );
     var sinGamma = Math.sin( gammaRad );
 

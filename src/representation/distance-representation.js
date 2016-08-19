@@ -9,7 +9,7 @@ import { Color } from "../../lib/three.es6.js";
 
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
-import { uniformArray, uniformArray3, calculateCenterArray } from "../math/array-utils.js";
+import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import StructureRepresentation from "./structure-representation.js";
 import Selection from "../selection.js";

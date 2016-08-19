@@ -38,7 +38,7 @@ function Queue( fn, argList ){
         if( !pending ) next();
     };
 
-    this.kill = function( arg ){
+    this.kill = function(){
         queue.length = 0;
     };
 

@@ -41,7 +41,7 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
         //
 
-        xhr.addEventListener( 'load', function ( event ) {
+        xhr.addEventListener( 'load', function () {
 
             if( xhr.status === 200 || xhr.status === 304 ||
                 // when requesting from local file system

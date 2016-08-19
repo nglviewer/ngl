@@ -303,135 +303,6 @@ function getTriTable(){
     ] );
 }
 
-var cubeVerts = [
-    [0,0,0],
-    [1,0,0],
-    [1,1,0],
-    [0,1,0],
-    [0,0,1],
-    [1,0,1],
-    [1,1,1],
-    [0,1,1]
-];
-
-var edgeIndex = [
-    [0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
-    [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]
-];
-
-
-function MarchingCubes2( data, nx, ny, nz, isolevel ){
-
-    // The MIT License (MIT) Copyright (c) 2012-2013 Mikola Lysenko
-    // http://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/
-    //
-    // Based on Paul Bourke's classic implementation:
-    // http://paulbourke.net/geometry/polygonise/
-    // JS port by Mikola Lysenko
-    //
-    // Adapted for NGL by Alexander Rose
-
-    var dims = new Int32Array( [ nx, ny, nz ] );
-
-    var vertices = [];
-    var faces = [];
-    var vc3 = 0;  // vertexCount * 3
-    var fc3 = 0;  // faceCount * 3
-
-    var i;
-    var n = 0;
-    var grid = new Float32Array( 8 );
-    var edges = new Int32Array( 12 );
-    var x = new Int32Array( 3 );
-
-    // March over the volume
-
-    for( x[2]=0; x[2] < dims[2]-1; ++x[2], n+=dims[0] ){
-
-        for( x[1]=0; x[1] < dims[1]-1; ++x[1], ++n){
-
-            for( x[0]=0; x[0] < dims[0]-1; ++x[0], ++n) {
-
-                // For each cell, compute cube mask
-
-                var cubeIndex = 0;
-
-                for( i=0; i<8; ++i ){
-
-                    var v = cubeVerts[ i ];
-                    var k = n + v[0] + dims[0] * ( v[1] + dims[1] * v[2] );
-                    var s = data[ k ] - isolevel;
-
-                    grid[ i ] = s;
-                    cubeIndex |= ( s > 0 ) ? 1 << i : 0;
-
-                }
-
-                // Compute vertices
-
-                var edgeMask = edgeTable[ cubeIndex ];
-
-                if( edgeMask === 0 ) {
-                    continue;
-                }
-
-                for( i=0; i<12; ++i ){
-
-                    if( ( edgeMask & ( 1 << i ) ) === 0 ){
-                        continue;
-                    }
-
-                    edges[ i ] = vc3 / 3;
-
-                    var e = edgeIndex[ i ];
-                    var p0 = cubeVerts[ e[ 0 ] ];
-                    var p1 = cubeVerts[ e[ 1 ] ];
-                    var a = grid[ e[ 0 ] ];
-                    var b = grid[ e[ 1 ] ];
-                    var d = a - b;
-                    var t = 0;
-
-                    if( Math.abs( d ) > 1e-6 ){
-                        t = a / d;
-                    }
-
-                    vertices[ vc3 + 0 ] = ( x[0] + p0[0] ) + t * ( p1[0] - p0[0] );
-                    vertices[ vc3 + 1 ] = ( x[1] + p0[1] ) + t * ( p1[1] - p0[1] );
-                    vertices[ vc3 + 2 ] = ( x[2] + p0[2] ) + t * ( p1[2] - p0[2] );
-
-                    vc3 += 3;
-
-                }
-
-                // Add faces
-
-                var f = triTable[ cubeIndex ];
-
-                for( i=0; i<f.length; i += 3 ){
-
-                    faces[ fc3 + 0 ] = edges[ f[ i + 0 ] ];
-                    faces[ fc3 + 1 ] = edges[ f[ i + 1 ] ];
-                    faces[ fc3 + 2 ] = edges[ f[ i + 2 ] ];
-
-                    fc3 += 3;
-
-                }
-
-            }
-
-        }
-
-    }
-
-    var TypedArray = vertices.length / 3 > 65535 ? Uint32Array : Uint16Array;
-    return {
-        position: new Float32Array( vertices ),
-        normal: undefined,
-        index: new TypedArray( faces )
-    };
-
-}
-
 
 function MarchingCubes( field, nx, ny, nz, atomindex ){
 
@@ -443,8 +314,6 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var isolevel = 0;
     var noNormals = false;
-    var center;
-    var size = Infinity;
 
     var n = nx * ny * nz;
 
@@ -839,7 +708,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
-        var q, x, y, z, fx, fy, fz, y_offset, z_offset;
+        var q, x, y, z, y_offset, z_offset;
 
         xBeg = xBeg !== undefined ? xBeg : 0;
         yBeg = yBeg !== undefined ? yBeg : 0;

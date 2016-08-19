@@ -6,7 +6,7 @@
 
 
 import { defaults } from "../utils.js";
-import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
+import { RepresentationRegistry } from "../globals.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import LineBuffer from "../buffer/line-buffer.js";

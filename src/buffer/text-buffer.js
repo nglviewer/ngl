@@ -84,12 +84,6 @@ TextAtlas.prototype = {
         canvas.width = maxWidth;
         canvas.height = lineHeight;
 
-        // Font string
-        var quote = function(str) {
-            return "\"" + ( str.replace( /(['"\\])/g, "\\$1" ) ) + "\"";
-        };
-        var font = this.font.map( quote ).join( ", " );
-
         var ctx = canvas.getContext( "2d" );
         ctx.font = this.style + " " + this.variant + " " + this.weight + " " + this.size + "px " + this.font;
         ctx.fillStyle = "#FF0000";
@@ -425,7 +419,7 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         var n = this.positionCount;
 
-        var i, j, o;
+        var j, o;
         var iCharAll = 0;
         var txt, iChar, nChar;
 
@@ -436,8 +430,6 @@ TextBuffer.prototype = Object.assign( Object.create(
             nChar = txt.length;
 
             for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
-
-                i = iCharAll * 2 * 4;
 
                 for( var m = 0; m < 4; m++ ) {
 
@@ -498,13 +490,12 @@ TextBuffer.prototype = Object.assign( Object.create(
         var n = this.positionCount;
 
         var c;
-        var i, j, o;
+        var i;
         var iCharAll = 0;
         var txt, xadvance, iChar, nChar;
 
         for( var v = 0; v < n; v++ ) {
 
-            o = 3 * v;
             txt = text[ v ];
             xadvance = 0;
             nChar = txt.length;

@@ -64,7 +64,6 @@ FramesTrajectory.prototype = Object.assign( Object.create(
     _loadFrame: function( i, callback ){
 
         var coords;
-        var structure = this.structure;
         var frame = this.frames[ i ];
 
         if( this.atomIndices ){

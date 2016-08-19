@@ -25,7 +25,6 @@ function TubeMeshBuffer( position, normal, binormal, tangent, color, size, picki
 
     var n = position.length / 3;
     var n1 = n - 1;
-    var radialSegments1 = this.radialSegments + 1;
 
     var x = n * this.radialSegments * 3 + 2 * this.capVertices * 3;
 
@@ -75,7 +74,6 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
             var n = this.size2;
             var n1 = n - 1;
-            var capVertices = this.capVertices;
             var radialSegments = this.radialSegments;
 
             var attributes = this.geometry.attributes;
@@ -119,7 +117,6 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
             var v, cx, cy;
             var cx1, cy1, cx2, cy2;
             var radius;
-            var irs, irs1;
 
             var normX, normY, normZ;
             var biX, biY, biZ;

@@ -98,7 +98,7 @@ StructureComponent.prototype = Object.assign( Object.create(
             this.structure, this.selection
         );
 
-        this.selection.signals.stringChanged.add( function( string ){
+        this.selection.signals.stringChanged.add( function( /*string*/ ){
 
             this.structureView.setSelection( this.selection );
 
@@ -197,7 +197,7 @@ StructureComponent.prototype = Object.assign( Object.create(
             trajPath, this.structureView, sele
         );
 
-        traj.signals.frameChanged.add( function( value ){
+        traj.signals.frameChanged.add( function( /*value*/ ){
             this.updateRepresentations( { "position": true } );
         }, this );
 

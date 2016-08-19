@@ -9,7 +9,6 @@ import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
-import Bitset from "../utils/bitset.js";
 import Structure from "./structure.js";
 import Selection from "../selection.js";
 
@@ -257,7 +256,7 @@ StructureView.prototype = Object.assign( Object.create(
      */
     eachResidueN: function( n, callback ){
 
-        console.error( "StructureView.eachResidueN() not implemented" );
+        console.error( "StructureView.eachResidueN() not implemented", n, callback );
 
     },
 

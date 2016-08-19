@@ -14,10 +14,7 @@ import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix, principalAxes } from "../math/matrix-utils.js";
-import Selection from "../selection.js";
 // import StructureView from "./structure-view.js";
-import Unitcell from "../symmetry/unitcell.js";
-import Assembly from "../symmetry/assembly.js";
 
 import BondHash from "../store/bond-hash.js";
 import BondStore from "../store/bond-store.js";
@@ -233,7 +230,7 @@ Structure.prototype = {
 
     //
 
-    getBondSet: function( selection ){
+    getBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -266,7 +263,7 @@ Structure.prototype = {
 
     },
 
-    getBackboneBondSet: function( selection ){
+    getBackboneBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -300,7 +297,7 @@ Structure.prototype = {
 
     },
 
-    getRungBondSet: function( selection ){
+    getRungBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -726,7 +723,7 @@ Structure.prototype = {
         }
 
         var i = 0;
-        var j, i3, k, bondOrder, radius;
+        var j, i3, k, bondOrder;
 
         var vt = new Vector3();
         var vShift = new Vector3();

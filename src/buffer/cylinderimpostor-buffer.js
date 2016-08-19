@@ -27,7 +27,7 @@ function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, 
     AlignedBoxBuffer.call( this, p );
 
     var modelViewMatrixInverse = new Uniform( new Matrix4() )
-        .onUpdate( function( object, camera ){
+        .onUpdate( function( object/*, camera*/ ){
             this.value.getInverse( object.modelViewMatrix );
         } );
 

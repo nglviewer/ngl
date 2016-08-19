@@ -6,7 +6,6 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 

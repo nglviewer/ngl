@@ -200,7 +200,7 @@ function submit( url, data, callback, onerror ){
         var xhr = new XMLHttpRequest();
         xhr.open( "POST", url );
 
-        xhr.addEventListener( 'load', function ( event ) {
+        xhr.addEventListener( 'load', function () {
 
             if ( xhr.status === 200 || xhr.status === 304 ) {
 

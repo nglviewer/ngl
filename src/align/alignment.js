@@ -60,10 +60,8 @@ var SubstitutionMatrices = function(){
         [ 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-1,-1,-1]  // X
     ];
 
-    var nucleotides = 'ACTG';
-
+    // var nucleotides = 'ACTG';
     var aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY';
-
     var aminoacids = 'ARNDCQEGHILKMFPSTWYVBZ?';
 
     function prepareMatrix( cellNames, mat ){
