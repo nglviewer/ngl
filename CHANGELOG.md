@@ -15,8 +15,10 @@ All notable changes to this project will be documented in this file, following t
 - Fixed, initial parameters for a Buffer not taken into account
 - ignore bonds that are defined multiple times in PDB parser
 - updated mmtf lib to v1.0
+- use npm as the build system
 
 ### Removed
+- gulp as the build system
 
 
 ## [v0.8] - 2016-07-22
