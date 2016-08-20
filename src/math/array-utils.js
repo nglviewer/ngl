@@ -371,6 +371,105 @@ function quicksortIP( arr, eleSize, orderElement, begin, end ){
 }
 
 
+function quicksortCmp( arr, cmp, begin, end ){
+
+    cmp = cmp || function cmp( a, b ){
+        if( a > b ) return 1;
+        if( a < b ) return -1;
+        return 0;
+    };
+    begin = begin || 0;
+    end = ( end || arr.length ) - 1;
+
+    var stack = [];
+    var sp = -1;
+    var left = begin;
+    var right = end;
+    var tmp = 0.0, tmp2 = 0.0;
+
+    function swap( a, b ){
+        tmp2 = arr[ a ];
+        arr[ a ] = arr[ b ];
+        arr[ b ] = tmp2;
+    }
+
+    var i, j;
+
+    while ( true ) {
+
+        if ( right - left <= 25 ) {
+
+            for ( j = left + 1; j <= right; ++j ) {
+
+                tmp = arr[ j ];
+                i = j - 1;
+
+                while ( i >= left && cmp( arr[ i ], tmp ) === 1 ) {
+                    arr[ i + 1 ] = arr[ i ];
+                    --i;
+                }
+
+                arr[ i + 1 ] = tmp;
+
+            }
+
+            if ( sp == -1 ) break;
+
+            right = stack[ sp-- ]; //?
+            left = stack[ sp-- ];
+
+        } else {
+
+            var median = ( left + right ) >> 1;
+
+            i = left + 1;
+            j = right;
+
+            swap( median, i );
+
+            if( cmp( arr[ left ], arr[ right ] ) === 1 ){
+                swap( left, right );
+            }
+
+            if( cmp( arr[ i ], arr[ right ] ) === 1 ){
+                swap( i, right );
+            }
+
+            if( cmp( arr[ left ], arr[ i ] ) === 1 ){
+                swap( left, i );
+            }
+
+            tmp = arr[ i ];
+
+            while( true ){
+                do i++; while( cmp( arr[ i ], tmp ) === -1 );
+                do j--; while( cmp( arr[ j ], tmp ) === 1 );
+                if( j < i ) break;
+                swap( i, j );
+            }
+
+            arr[ left + 1 ] = arr[ j ];
+            arr[ j ] = tmp;
+
+            if ( right - i + 1 >= j - left ){
+                stack[ ++sp ] = i;
+                stack[ ++sp ] = right;
+                right = j - 1;
+            } else {
+                stack[ ++sp ] = left;
+                stack[ ++sp ] = j - 1;
+                left = i;
+            }
+
+        }
+
+    }
+
+    return arr;
+
+}
+
+
 function arrayMax( array ){
 
     var max = -Infinity;
@@ -403,14 +502,14 @@ function arrayMin( array ){
 // }
 
 
-// function arraySortedCmp( array, cmp ){
+function arraySortedCmp( array, cmp ){
 
-//     for( var i = 1, il = array.length; i < il; ++i ){
-//         if( cmp( array[ i - 1 ], array[ i ] ) > 1 ) return false;
-//     }
-//     return true;
+    for( var i = 1, il = array.length; i < il; ++i ){
+        if( cmp( array[ i - 1 ], array[ i ] ) === 1 ) return false;
+    }
+    return true;
 
-// }
+}
 
 
 export {
@@ -426,6 +525,8 @@ export {
     copyArray,
     copyWithin,
     quicksortIP,
+    quicksortCmp,
     arrayMax,
-    arrayMin
+    arrayMin,
+    arraySortedCmp
 };
