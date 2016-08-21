@@ -8,7 +8,7 @@
 import { Vector3, Matrix4, Points } from "../../lib/three.es6.js";
 
 import TiledRenderer from "./tiled-renderer.js";
-import { quicksortIP } from "../math/array-utils.js";
+import { quicksortCmp } from "../math/array-utils.js";
 
 
 function _trimCanvas( canvas, r, g, b, a ){
@@ -202,7 +202,7 @@ var modelViewProjectionMatrix = new Matrix4();
 
 function sortProjectedPosition( scene, camera ){
 
-    // Log.time( "sort" );
+    // console.time( "sort" );
 
     var i;
 
@@ -224,32 +224,49 @@ function sortProjectedPosition( scene, camera ){
             camera.projectionMatrix, matrix
         );
 
+        var sortData, sortArray, zArray, cmpFn;
+
         if( !o.userData.sortData ){
-            o.userData.sortData = {};
+
+            zArray = new Float32Array( n );
+            sortArray = new Uint32Array( n );
+            cmpFn = function( ai, bi ){
+                var a = zArray[ ai ];
+                var b = zArray[ bi ];
+                if( a > b ) return 1;
+                if( a < b ) return -1;
+                return 0;
+            };
+
+            sortData = {
+                __zArray: zArray,
+                __sortArray: sortArray,
+                __cmpFn: cmpFn
+            };
+
+            o.userData.sortData = sortData;
+
+        }else{
+
+            sortData = o.userData.sortData;
+            zArray = sortData.__zArray;
+            sortArray = sortData.__sortArray;
+            cmpFn = sortData.__cmpFn;
+
         }
-
-        var sortData = o.userData.sortData;
-
-        if( !sortData.__sortArray ){
-            sortData.__sortArray = new Float32Array( n * 2 );
-        }
-
-        var sortArray = sortData.__sortArray;
 
         for( i = 0; i < n; ++i ){
-
-            var i2 = 2 * i;
 
             vertex.fromArray( attributes.position.array, i * 3 );
             vertex.applyProjection( modelViewProjectionMatrix );
 
             // negate, so that sorting order is reversed
-            sortArray[ i2 ] = -vertex.z;
-            sortArray[ i2 + 1 ] = i;
+            zArray[ i ] = -vertex.z;
+            sortArray[ i ] = i;
 
         }
 
-        quicksortIP( sortArray, 2, 0 );
+        quicksortCmp( sortArray, cmpFn );
 
         var index, indexSrc, indexDst, tmpTab;
 
@@ -270,7 +287,7 @@ function sortProjectedPosition( scene, camera ){
 
             for( i = 0; i < n; ++i ){
 
-                index = sortArray[ i * 2 + 1 ];
+                index = sortArray[ i ];
 
                 for( var j = 0; j < itemSize; ++j ){
                     indexSrc = index * itemSize + j;
@@ -287,7 +304,7 @@ function sortProjectedPosition( scene, camera ){
 
     } );
 
-    // Log.timeEnd( "sort" );
+    // console.timeEnd( "sort" );
 
 }
 
