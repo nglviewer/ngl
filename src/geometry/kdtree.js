@@ -37,21 +37,25 @@ function Kdtree( entity, useSquaredDist ){
 
     }
 
-    var points = new Float32Array( entity.atomCount * 4 );
+    var points = new Float32Array( entity.atomCount * 3 );
+    var atomIndices = new Uint32Array( entity.atomCount );
     var i = 0;
 
     entity.eachAtom( function( ap ){
         points[ i + 0 ] = ap.x;
         points[ i + 1 ] = ap.y;
         points[ i + 2 ] = ap.z;
-        points[ i + 3 ] = ap.index;
-        i += 4;
+        atomIndices[ i / 3 ] = ap.index;
+        i += 3;
     } );
 
+    this.atomIndices = atomIndices;
     this.points = points;
-    this.kdtree = new _Kdtree( points, metric, 4, 3 );
+    this.kdtree = new _Kdtree( points, metric );
 
     if( Debug ) Log.timeEnd( "Kdtree build" );
+
+    // console.log("this.kdtree.verify()", this.kdtree.verify())
 
 }
 
@@ -66,19 +70,17 @@ Kdtree.prototype = {
             // Log.time( "Kdtree nearest" );
 
             if( point instanceof Vector3 ){
-
                 point.toArray( pointArray );
-
             }else if( point.type === "AtomProxy" ){
-
                 point.positionToArray( pointArray );
-
             }
 
             var nodeList = this.kdtree.nearest(
                 pointArray, maxNodes, maxDistance
             );
 
+            var indices = this.kdtree.indices;
+            var atomIndices = this.atomIndices;
             var points = this.points;
             var resultList = [];
 
@@ -89,7 +91,7 @@ Kdtree.prototype = {
                 var dist = d[ 1 ];
 
                 resultList.push( {
-                    index: points[ node.pos + 3 ],
+                    index: atomIndices[ indices[ node.pos ] ],
                     distance: dist
                 } );
 
