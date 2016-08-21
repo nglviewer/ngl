@@ -47,13 +47,12 @@ function Kdtree( points, metric ){
 
     var currentDim = 0;
 
-    function cmp( ai, bi ){
-        var a = points[ ai * 3 + currentDim ];
-        var b = points[ bi * 3 + currentDim ];
-        if( a > b ) return 1;
-        if( a < b ) return -1;
-        return 0;
-    }
+    var tmp;
+    // function swap( a, b ){
+    //     tmp = indices[ a ];
+    //     indices[ a ] = indices[ b ];
+    //     indices[ b ] = tmp;
+    // }
 
     function buildTree( depth, parent, arrBegin, arrEnd ){
 
@@ -62,15 +61,53 @@ function Kdtree( points, metric ){
         var plength = arrEnd - arrBegin;
         if( plength === 0 ) return null;
         if( plength === 1 ) return new Node( arrBegin, parent );
+        // if( plength <= 32 ) return new Node( arrBegin, parent );
 
-        var median = Math.floor( plength / 2 );
+        var arrMedian = arrBegin + Math.floor( plength / 2 );
 
         currentDim = depth % 3;
-        quickselectCmp( indices, median + arrBegin, cmp, arrBegin, arrEnd );
+        // quickselectCmp( indices, median + arrBegin, cmp, arrBegin, arrEnd );
 
-        var node = new Node( median + arrBegin, parent );
-        node.left = buildTree( depth + 1, node, arrBegin, arrBegin + median );
-        node.right = buildTree( depth + 1, node, arrBegin + median + 1, arrEnd );
+        var j, pivotIndex, pivotValue, storeIndex;
+        var left = arrBegin;
+        var right = arrEnd - 1;
+        while( true ){
+            if( left === right ){
+                break;
+            }
+            pivotIndex = ( left + right ) >> 1;
+            pivotValue = points[ indices[ pivotIndex ] * 3 + currentDim ];
+            // swap( pivotIndex, right );
+            tmp = indices[ pivotIndex ];
+            indices[ pivotIndex ] = indices[ right ];
+            indices[ right ] = tmp;
+            storeIndex = left;
+            for( j = left; j < right; ++j ){
+                if( points[ indices[ j ] * 3 + currentDim ] < pivotValue ){
+                    // swap( storeIndex, j );
+                    tmp = indices[ storeIndex ];
+                    indices[ storeIndex ] = indices[ j ];
+                    indices[ j ] = tmp;
+                    ++storeIndex;
+                }
+            }
+            // swap( right, storeIndex );
+            tmp = indices[ right ];
+            indices[ right ] = indices[ storeIndex ];
+            indices[ storeIndex ] = tmp;
+            pivotIndex = storeIndex;
+            if( arrMedian === pivotIndex ){
+                break;
+            }else if( arrMedian < pivotIndex ){
+                right = pivotIndex - 1;
+            }else{
+                left = pivotIndex + 1;
+            }
+        }
+
+        var node = new Node( arrMedian, parent );
+        node.left = buildTree( depth + 1, node, arrBegin, arrMedian );
+        node.right = buildTree( depth + 1, node, arrMedian + 1, arrEnd );
 
         return node;
 

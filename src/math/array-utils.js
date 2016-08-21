@@ -488,7 +488,7 @@ function quickselectCmp( arr, n, cmp, left, right ){
         arr[ b ] = tmp;
     }
 
-    while ( true ) {
+    while( true ){
         if( left === right ){
             return arr[ left ];
         }
