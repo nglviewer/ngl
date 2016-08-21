@@ -404,7 +404,7 @@ function quicksortCmp( arr, cmp, begin, end ){
                 tmp = arr[ j ];
                 i = j - 1;
 
-                while ( i >= left && cmp( arr[ i ], tmp ) === 1 ) {
+                while ( i >= left && cmp( arr[ i ], tmp ) > 0 ) {
                     arr[ i + 1 ] = arr[ i ];
                     --i;
                 }
@@ -427,23 +427,23 @@ function quicksortCmp( arr, cmp, begin, end ){
 
             swap( median, i );
 
-            if( cmp( arr[ left ], arr[ right ] ) === 1 ){
+            if( cmp( arr[ left ], arr[ right ] ) > 0 ){
                 swap( left, right );
             }
 
-            if( cmp( arr[ i ], arr[ right ] ) === 1 ){
+            if( cmp( arr[ i ], arr[ right ] ) > 0 ){
                 swap( i, right );
             }
 
-            if( cmp( arr[ left ], arr[ i ] ) === 1 ){
+            if( cmp( arr[ left ], arr[ i ] ) > 0 ){
                 swap( left, i );
             }
 
             tmp = arr[ i ];
 
             while( true ){
-                do i++; while( cmp( arr[ i ], tmp ) === -1 );
-                do j--; while( cmp( arr[ j ], tmp ) === 1 );
+                do i++; while( cmp( arr[ i ], tmp ) < 0 );
+                do j--; while( cmp( arr[ j ], tmp ) > 0 );
                 if( j < i ) break;
                 swap( i, j );
             }
