@@ -6,7 +6,7 @@
 
 
 import BinaryHeap from "./binary-heap.js";
-import { quicksortCmp } from "../math/array-utils.js";
+import { quickselectCmp } from "../math/array-utils.js";
 
 
 /**
@@ -63,10 +63,10 @@ function Kdtree( points, metric ){
         if( plength === 0 ) return null;
         if( plength === 1 ) return new Node( arrBegin, parent );
 
-        currentDim = depth % 3;
-        quicksortCmp( indices, cmp, arrBegin, arrEnd );
-
         var median = Math.floor( plength / 2 );
+
+        currentDim = depth % 3;
+        quickselectCmp( indices, median + arrBegin, cmp, arrBegin, arrEnd );
 
         var node = new Node( median + arrBegin, parent );
         node.left = buildTree( depth + 1, node, arrBegin, arrBegin + median );

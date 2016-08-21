@@ -470,6 +470,52 @@ function quicksortCmp( arr, cmp, begin, end ){
 }
 
 
+function quickselectCmp( arr, n, cmp, left, right ){
+
+    cmp = cmp || function cmp( a, b ){
+        if( a > b ) return 1;
+        if( a < b ) return -1;
+        return 0;
+    };
+    left = left || 0;
+    right = ( right || arr.length ) - 1;
+
+    var tmp, i, pivotIndex, pivotValue, storeIndex;
+
+    function swap( a, b ){
+        tmp = arr[ a ];
+        arr[ a ] = arr[ b ];
+        arr[ b ] = tmp;
+    }
+
+    while ( true ) {
+        if( left === right ){
+            return arr[ left ];
+        }
+        pivotIndex = ( left + right ) >> 1;
+        pivotValue = arr[ pivotIndex ];
+        swap( pivotIndex, right );
+        storeIndex = left;
+        for( i = left; i < right; ++i ){
+            if( cmp( arr[ i ], pivotValue ) < 0 ){
+                swap( storeIndex, i );
+                ++storeIndex;
+            }
+        }
+        swap( right, storeIndex );
+        pivotIndex = storeIndex;
+        if( n === pivotIndex ){
+            return arr[ n ];
+        }else if( n < pivotIndex ){
+            right = pivotIndex - 1;
+        }else{
+            left = pivotIndex + 1;
+        }
+    }
+
+}
+
+
 function arrayMax( array ){
 
     var max = -Infinity;
@@ -492,20 +538,20 @@ function arrayMin( array ){
 }
 
 
-// function arraySorted( array ){
+function arraySorted( array ){
 
-//     for( var i = 1, il = array.length; i < il; ++i ){
-//         if( array[ i - 1 ] > array[ i ] ) return false;
-//     }
-//     return true;
+    for( var i = 1, il = array.length; i < il; ++i ){
+        if( array[ i - 1 ] > array[ i ] ) return false;
+    }
+    return true;
 
-// }
+}
 
 
 function arraySortedCmp( array, cmp ){
 
     for( var i = 1, il = array.length; i < il; ++i ){
-        if( cmp( array[ i - 1 ], array[ i ] ) === 1 ) return false;
+        if( cmp( array[ i - 1 ], array[ i ] ) > 0 ) return false;
     }
     return true;
 
@@ -526,7 +572,9 @@ export {
     copyWithin,
     quicksortIP,
     quicksortCmp,
+    quickselectCmp,
     arrayMax,
     arrayMin,
+    arraySorted,
     arraySortedCmp
 };
