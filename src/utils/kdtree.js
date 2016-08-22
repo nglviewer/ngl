@@ -44,10 +44,13 @@ function Kdtree( points, metric ){
     for( var i = 0; i < n; ++i ){
         indices[ i ] = i;
     }
+    var nodes = new Int32Array( n * 4 );
+    // pos, left, right, parent
 
+    var currentNode = 0;
     var currentDim = 0;
 
-    var tmp;
+    var tmp, nodeIndex;
     // function swap( a, b ){
     //     tmp = indices[ a ];
     //     indices[ a ] = indices[ b ];
@@ -59,15 +62,26 @@ function Kdtree( points, metric ){
         if( depth > maxDepth ) maxDepth = depth;
 
         var plength = arrEnd - arrBegin;
-        if( plength === 0 ) return null;
-        if( plength === 1 ) return new Node( arrBegin, parent );
-        // if( plength <= 32 ) return new Node( arrBegin, parent );
+        if( plength === 0 ){
+            return -1;
+        }
+        var nodeIndex = currentNode * 4;
+        currentNode += 1;
+        if( plength === 1 ){
+            nodes[ nodeIndex ] = arrBegin;
+            nodes[ nodeIndex + 1 ] = -1;
+            nodes[ nodeIndex + 2 ] = -1;
+            nodes[ nodeIndex + 3 ] = parent;
+            return nodeIndex;
+        }
+        // if( plength <= 32 ){
+        //     return nodeIndex;
+        // }
 
         var arrMedian = arrBegin + Math.floor( plength / 2 );
-
         currentDim = depth % 3;
-        // quickselectCmp( indices, median + arrBegin, cmp, arrBegin, arrEnd );
 
+        // inlined quickselect function
         var j, pivotIndex, pivotValue, storeIndex;
         var left = arrBegin;
         var right = arrEnd - 1;
@@ -105,20 +119,21 @@ function Kdtree( points, metric ){
             }
         }
 
-        var node = new Node( arrMedian, parent );
-        node.left = buildTree( depth + 1, node, arrBegin, arrMedian );
-        node.right = buildTree( depth + 1, node, arrMedian + 1, arrEnd );
-
-        return node;
+        nodes[ nodeIndex ] = arrMedian;
+        nodes[ nodeIndex + 1 ] = buildTree( depth + 1, nodeIndex, arrBegin, arrMedian );
+        nodes[ nodeIndex + 2 ] = buildTree( depth + 1, nodeIndex, arrMedian + 1, arrEnd );
+        nodes[ nodeIndex + 3 ] = parent;
+        return nodeIndex;
 
     }
 
-    function getNodeDepth( node ){
+    function getNodeDepth( nodeIndex ){
 
-        if( node.parent === null ){
+        var parentIndex = nodes[ nodeIndex + 3 ];
+        if( parentIndex === -1 ){
             return 0;
         }else{
-            return getNodeDepth( node.parent ) + 1;
+            return getNodeDepth( parentIndex ) + 1;
         }
 
     }
@@ -126,7 +141,7 @@ function Kdtree( points, metric ){
     // TODO
     // function getNodePos( node ){}
 
-    var rootNode = buildTree( 0, null, 0, n );
+    var rootIndex = buildTree( 0, -1, 0, n );
 
     /**
      * find nearest points
@@ -141,11 +156,11 @@ function Kdtree( points, metric ){
             function( e ){ return -e[ 1 ]; }
         );
 
-        function nearestSearch( node ){
+        function nearestSearch( nodeIndex ){
 
             var bestChild, otherChild;
-            var dimension = getNodeDepth( node ) % 3;
-            var pointIndex = indices[ node.pos ] * 3;
+            var dimension = getNodeDepth( nodeIndex ) % 3;
+            var pointIndex = indices[ nodes[ nodeIndex ] ] * 3;
             var ownPoint = [
                 points[ pointIndex + 0 ],
                 points[ pointIndex + 1 ],
@@ -153,8 +168,8 @@ function Kdtree( points, metric ){
             ];
             var ownDistance = metric( point, ownPoint );
 
-            function saveNode( node, distance ){
-                bestNodes.push( [ node, distance ] );
+            function saveNode( nodeIndex, distance ){
+                bestNodes.push( [ nodeIndex, distance ] );
                 if( bestNodes.size() > maxNodes ){
                     bestNodes.pop();
                 }
@@ -173,22 +188,25 @@ function Kdtree( points, metric ){
 
             // if it's a leaf
 
-            if( node.right === null && node.left === null ){
-                if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance < maxDistance ){
-                    saveNode( node, ownDistance );
+            var leftIndex = nodes[ nodeIndex + 1 ];
+            var rightIndex = nodes[ nodeIndex + 2 ];
+
+            if( rightIndex === -1 && leftIndex === -1 ){
+                if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ){
+                    saveNode( nodeIndex, ownDistance );
                 }
                 return;
             }
 
-            if( node.right === null ){
-                bestChild = node.left;
-            }else if ( node.left === null ){
-                bestChild = node.right;
+            if( rightIndex === -1 ){
+                bestChild = leftIndex;
+            }else if ( leftIndex === -1 ){
+                bestChild = rightIndex;
             }else {
-                if( point[ dimension ] < points[ pointIndex + dimension ] ){
-                    bestChild = node.left;
+                if( point[ dimension ] <= points[ pointIndex + dimension ] ){
+                    bestChild = leftIndex;
                 } else {
-                    bestChild = node.right;
+                    bestChild = rightIndex;
                 }
             }
 
@@ -198,7 +216,7 @@ function Kdtree( points, metric ){
 
             if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ){
 
-                saveNode( node, ownDistance );
+                saveNode( nodeIndex, ownDistance );
 
             }
 
@@ -206,13 +224,13 @@ function Kdtree( points, metric ){
 
             if( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ){
 
-                if( bestChild === node.left ){
-                    otherChild = node.right;
+                if( bestChild === leftIndex ){
+                    otherChild = rightIndex;
                 } else {
-                    otherChild = node.left;
+                    otherChild = leftIndex;
                 }
 
-                if( otherChild !== null ){
+                if( otherChild !== -1 ){
                     nearestSearch( otherChild );
                 }
 
@@ -220,52 +238,52 @@ function Kdtree( points, metric ){
 
         }
 
-        nearestSearch( rootNode );
+        nearestSearch( rootIndex );
 
         var result = [];
 
-        for( var i = 0; i < Math.min( bestNodes.size(), maxNodes ); i += 1 ){
-            var inode = bestNodes.content[ i ];
-            if( inode && inode[ 0 ] ){
-                result.push( [ inode[ 0 ], inode[ 1 ] ] );
-            }
+        for( var i = 0, il = Math.min( bestNodes.size(), maxNodes ); i < il; i += 1 ){
+            result.push( bestNodes.content[ i ] );
         }
 
         return result;
 
     }
 
-    function verify( node, depth ){
+    function verify( nodeIndex, depth ){
 
         var count = 1;
 
-        if( node === undefined ){
-            node = rootNode;
+        if( nodeIndex === undefined ){
+            nodeIndex = rootIndex;
             depth = 0;
         }
 
-        if( node === null ){
+        if( nodeIndex === -1 ){
             throw "node is null";
         }
 
         var dim = depth % 3;
 
-        if( node.left !== null ){
-            if( points[ indices[ node.left.pos ] * 3 + dim ] >
-                points[ indices[ node.pos ] * 3 + dim ]
+        var leftIndex = nodes[ nodeIndex + 1 ];
+        var rightIndex = nodes[ nodeIndex + 2 ];
+
+        if( leftIndex !== -1 ){
+            if( points[ indices[ nodes[ leftIndex ] ] * 3 + dim ] >
+                points[ indices[ nodes[ nodeIndex ] ] * 3 + dim ]
             ){
                 throw "left child is > parent!";
             }
-            count += verify( node.left, depth + 1 );
+            count += verify( leftIndex, depth + 1 );
         }
 
-        if( node.right !== null ){
-            if( points[ indices[ node.right.pos ] * 3 + dim ] <
-                points[ indices[ node.pos ] * 3 + dim ]
+        if( rightIndex !== -1 ){
+            if( points[ indices[ nodes[ rightIndex ] ] * 3 + dim ] <
+                points[ indices[ nodes[ nodeIndex ] ] * 3 + dim ]
             ){
                 throw "right child is < parent!";
             }
-            count += verify( node.right, depth + 1);
+            count += verify( rightIndex, depth + 1);
         }
 
         return count;
@@ -274,40 +292,13 @@ function Kdtree( points, metric ){
 
     // API
 
-    this.rootNode = rootNode;
+    this.rootIndex = rootIndex;
     this.maxDepth = maxDepth;
     this.nearest = nearest;
     this.indices = indices;
+    this.nodes = nodes;
     this.verify = verify;
 
-}
-
-/**
- * Node
- * @class
- * @private
- * @description
- * If you need to free up additional memory and agree with an additional O( log n ) traversal time you can get rid of "pos" in Node:
- * Pos is a bit tricky: Assuming the tree is balanced (which is the case when after we built it up), perform the following steps:
- *   By traversing to the root store the path e.g. in a bit pattern (01001011, 0 is left, 1 is right)
- *   From buildTree we know that "median = Math.floor( plength / 2 );", therefore for each bit...
- *     0: amountOfNodesRelevantForUs = Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *     1: amountOfNodesRelevantForUs = Math.ceil( (pamountOfNodesRelevantForUs - 1) / 2 );
- *        pos += Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *     when recursion done, we still need to add all left children of target node:
- *        pos += Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *        and I think you need to +1 for the current position, not sure.. depends, try it out ^^
- *
- * I experienced that for 200'000 nodes you can get rid of 4 MB memory each, leading to 8 MB memory saved.
- *
- * @param {Integer} pos - index of position
- * @param {Integer} parent - index of parent Node
- */
-function Node( pos, parent ){
-    this.pos = pos;
-    this.left = null;
-    this.right = null;
-    this.parent = parent;
 }
 
 

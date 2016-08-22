@@ -80,6 +80,7 @@ Kdtree.prototype = {
             );
 
             var indices = this.kdtree.indices;
+            var nodes = this.kdtree.nodes;
             var atomIndices = this.atomIndices;
             var points = this.points;
             var resultList = [];
@@ -87,11 +88,11 @@ Kdtree.prototype = {
             for( var i = 0, n = nodeList.length; i < n; ++i ){
 
                 var d = nodeList[ i ];
-                var node = d[ 0 ];
+                var nodeIndex = d[ 0 ];
                 var dist = d[ 1 ];
 
                 resultList.push( {
-                    index: atomIndices[ indices[ node.pos ] ],
+                    index: atomIndices[ indices[ nodes[ nodeIndex ] ] ],
                     distance: dist
                 } );
 

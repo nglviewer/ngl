@@ -34,9 +34,9 @@ describe('Kdtree', function () {
 
         var check = function( search, expected ){
             var result = kdtree.nearest( search, 3, 1 )[ 0 ];
-            var node = result[ 0 ];
+            var nodeIndex = result[ 0 ];
             var dist = result[ 1 ];
-            var pointIndex = kdtree.indices[ node.pos ] * 3;
+            var pointIndex = kdtree.indices[ kdtree.nodes[ nodeIndex ] ] * 3;
             assert.deepEqual(
                 [ points[ pointIndex ], points[ pointIndex + 1 ], points[ pointIndex + 2 ] ],
                 expected,
