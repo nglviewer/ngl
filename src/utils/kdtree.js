@@ -175,22 +175,10 @@ function Kdtree( points, metric ){
                 }
             }
 
-            var linearPoint = [];
-            for( var i = 0; i < 3; i += 1 ){
-                if( i === dimension ){
-                    linearPoint[ i ] = point[ i ];
-                } else {
-                    linearPoint[ i ] = points[ pointIndex + i ];
-                }
-            }
-
-            var linearDistance = metric( linearPoint, ownPoint );
-
-            // if it's a leaf
-
             var leftIndex = nodes[ nodeIndex + 1 ];
             var rightIndex = nodes[ nodeIndex + 2 ];
 
+            // if it's a leaf
             if( rightIndex === -1 && leftIndex === -1 ){
                 if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
                     ownDistance <= maxDistance
@@ -213,7 +201,6 @@ function Kdtree( points, metric ){
             }
 
             // recursive search
-
             nearestSearch( bestChild );
 
             if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
@@ -223,6 +210,16 @@ function Kdtree( points, metric ){
             }
 
             // if there's still room or the current distance is nearer than the best distance
+
+            var linearPoint = [];
+            for( var i = 0; i < 3; i += 1 ){
+                if( i === dimension ){
+                    linearPoint[ i ] = point[ i ];
+                } else {
+                    linearPoint[ i ] = points[ pointIndex + i ];
+                }
+            }
+            var linearDistance = metric( linearPoint, ownPoint );
 
             if( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) &&
                 Math.abs( linearDistance ) <= maxDistance
