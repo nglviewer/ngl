@@ -192,7 +192,9 @@ function Kdtree( points, metric ){
             var rightIndex = nodes[ nodeIndex + 2 ];
 
             if( rightIndex === -1 && leftIndex === -1 ){
-                if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ){
+                if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
+                    ownDistance <= maxDistance
+                ){
                     saveNode( nodeIndex, ownDistance );
                 }
                 return;
@@ -214,26 +216,25 @@ function Kdtree( points, metric ){
 
             nearestSearch( bestChild );
 
-            if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ){
-
+            if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
+                ownDistance <= maxDistance
+            ){
                 saveNode( nodeIndex, ownDistance );
-
             }
 
             // if there's still room or the current distance is nearer than the best distance
 
-            if( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ){
-
+            if( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) &&
+                Math.abs( linearDistance ) <= maxDistance
+            ){
                 if( bestChild === leftIndex ){
                     otherChild = rightIndex;
                 } else {
                     otherChild = leftIndex;
                 }
-
                 if( otherChild !== -1 ){
                     nearestSearch( otherChild );
                 }
-
             }
 
         }
@@ -241,7 +242,6 @@ function Kdtree( points, metric ){
         nearestSearch( rootIndex );
 
         var result = [];
-
         for( var i = 0, il = Math.min( bestNodes.size(), maxNodes ); i < il; i += 1 ){
             result.push( bestNodes.content[ i ] );
         }
