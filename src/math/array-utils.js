@@ -413,7 +413,7 @@ function quicksortCmp( arr, cmp, begin, end ){
 
             }
 
-            if ( sp == -1 ) break;
+            if ( sp === -1 ) break;
 
             right = stack[ sp-- ]; //?
             left = stack[ sp-- ];

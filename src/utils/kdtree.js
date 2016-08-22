@@ -85,10 +85,7 @@ function Kdtree( points, metric ){
         var j, pivotIndex, pivotValue, storeIndex;
         var left = arrBegin;
         var right = arrEnd - 1;
-        while( true ){
-            if( left === right ){
-                break;
-            }
+        while( right > left ){
             pivotIndex = ( left + right ) >> 1;
             pivotValue = points[ indices[ pivotIndex ] * 3 + currentDim ];
             // swap( pivotIndex, right );
