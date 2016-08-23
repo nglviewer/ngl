@@ -670,6 +670,7 @@ Structure.prototype = {
         var bondSet = defaults( p.bondSet, this.bondSet );
         var multipleBond = defaults( p.multipleBond, false );
         var bondSpacing = defaults( p.bondSpacing, 0.85 );
+        var asymmMulti = defaults( p.asymmMulti, true );
 
         var radiusFactory, colorMaker, pickingColorMaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
@@ -726,9 +727,10 @@ Structure.prototype = {
         }
 
         var i = 0;
-        var j, i3, k, bondOrder, radius;
+        var j, i3, k, bondOrder, radius, multiRadius;
 
         var vt = new Vector3();
+        var vShortening = new Vector3();
         var vShift = new Vector3();
         bondSet.forEach( function( index ){
             i3 = i * 3;
@@ -739,26 +741,49 @@ Structure.prototype = {
             if( position1 ){
                 if( multipleBond && bondOrder > 1 ){
                     var radius = radiusFactory.atomRadius( ap1 );
-                    var multiRadius = radius / bondOrder * bondSpacing;
+
                     // Get shift Vector:
                     bp.calculateShiftDir( vShift );
-                    vShift.multiplyScalar( radius - multiRadius );
-                    if( bondOrder === 2 ){
-                        vt.addVectors( ap1, vShift ).toArray( position1, i3 );
-                        vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
-                        vt.addVectors( ap2, vShift ).toArray( position2, i3 );
-                        vt.subVectors( ap2, vShift ).toArray( position2, i3 + 3 );
-                    }else if( bondOrder === 3 ){
-                        ap1.positionToArray( position1, i3 );
-                        vt.addVectors( ap1, vShift ).toArray( position1, i3 + 3 );
-                        vt.subVectors( ap1, vShift ).toArray( position1, i3 + 6 );
-                        ap2.positionToArray( position2, i3 );
-                        vt.addVectors( ap2, vShift ).toArray( position2, i3 + 3 );
-                        vt.subVectors( ap2, vShift ).toArray( position2, i3 + 6 );
-                    }else{
-                        // todo, better fallback
+                    if( asymmMulti ) {
+                        var multiRadius = radius / 2 * bondSpacing;
+                        vShift.multiplyScalar( radius + multiRadius + 0.1 );
+                        vShift.negate();
+
+                        vShortening.subVectors( ap2, ap1 ).multiplyScalar( 0.08 );
+                        
                         ap1.positionToArray( position1, i3 );
                         ap2.positionToArray( position2, i3 );
+
+                        if( bondOrder >= 2 ){
+                            vt.addVectors( ap1, vShift ).add(vShortening).toArray( position1, i3 + 3);
+                            vt.addVectors( ap2, vShift ).sub(vShortening).toArray( position2, i3 + 3);
+
+                            if( bondOrder >= 3 ){
+                                vt.subVectors( ap1, vShift ).add(vShortening).toArray( position1, i3 + 6 );
+                                vt.subVectors( ap2, vShift ).sub(vShortening).toArray( position2, i3 + 6 );
+                            }
+                        }
+                    } else {
+                        var multiRadius = radius / bondOrder * bondSpacing;                    
+                        vShift.multiplyScalar( radius - multiRadius );
+
+                        if( bondOrder === 2 ){
+                            vt.addVectors( ap1, vShift ).toArray( position1, i3 );
+                            vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
+                            vt.addVectors( ap2, vShift ).toArray( position2, i3 );
+                            vt.subVectors( ap2, vShift ).toArray( position2, i3 + 3 );
+                        }else if( bondOrder === 3 ){
+                            ap1.positionToArray( position1, i3 );
+                            vt.addVectors( ap1, vShift ).toArray( position1, i3 + 3 );
+                            vt.subVectors( ap1, vShift ).toArray( position1, i3 + 6 );
+                            ap2.positionToArray( position2, i3 );
+                            vt.addVectors( ap2, vShift ).toArray( position2, i3 + 3 );
+                            vt.subVectors( ap2, vShift ).toArray( position2, i3 + 6 );
+                        }else{
+                          // todo, better fallback
+                           ap1.positionToArray( position1, i3 );
+                           ap2.positionToArray( position2, i3 );
+                        }
                     }
                 }else{
                     ap1.positionToArray( position1, i3 );
@@ -790,18 +815,18 @@ Structure.prototype = {
             if( radius1 ){
                 radius1[ i ] = radiusFactory.atomRadius( ap1 );
                 if( multipleBond && bondOrder > 1 ){
-                    radius1[ i ] /= bondOrder * 1 / bondSpacing;
-                    for( j = 1; j < bondOrder; ++j ){
-                        radius1[ i + j ] = radius1[ i ];
+                    var multiRadius = radius1[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
+                    for( j = asymmMulti ? 1 : 0 ; j < bondOrder; ++j ){
+                        radius1[ i + j ] = multiRadius;
                     }
-                }
+                } 
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
                 if( multipleBond && bondOrder > 1 ){
-                    radius2[ i ] = bondOrder * 1 / bondSpacing;
-                    for( j = 1; j < bondOrder; ++j ){
-                        radius2[ i + j ] = radius2[ i ];
+                    var multiRadius = radius2[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
+                    for( j = asymmMulti ? 1 : 0 ; j < bondOrder; ++j ){
+                        radius2[ i + j ] = multiRadius;
                     }
                 }
             }
