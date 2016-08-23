@@ -198,6 +198,8 @@ input[type=range]:focus:after {
     "pre" that is described below.
     */
     white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .AdaptiveTextAreaSize {
