@@ -29,10 +29,12 @@ function SpatialHash( atomStore, boundingBox ){
     var yArray = atomStore.y;
     var zArray = atomStore.z;
 
+    var i, j;
+
     var count = 0;
     var grid = new Uint32Array( n );
     var bucketIndex = new Int32Array( an );
-    for( var i = 0; i < an; ++i ){
+    for( i = 0; i < an; ++i ){
         var x = ( xArray[ i ] - minX ) >> exp;
         var y = ( yArray[ i ] - minY ) >> exp;
         var z = ( zArray[ i ] - minZ ) >> exp;
@@ -44,7 +46,7 @@ function SpatialHash( atomStore, boundingBox ){
     }
 
     var bucketCount = new Uint16Array( count );
-    for( var i = 0, j = 0; i < n; ++i ){
+    for( i = 0, j = 0; i < n; ++i ){
         var c = grid[ i ];
         if( c > 0 ){
             grid[ i ] = j + 1;
@@ -54,13 +56,13 @@ function SpatialHash( atomStore, boundingBox ){
     }
 
     var bucketOffset = new Uint32Array( count );
-    for( var i = 1; i < count; ++i ){
+    for( i = 1; i < count; ++i ){
         bucketOffset[ i ] += bucketOffset[ i - 1 ] + bucketCount[ i - 1 ];
     }
 
     var bucketFill = new Uint16Array( count );
     var bucketArray = new Int32Array( an );
-    for( var i = 0; i < an; ++i ){
+    for( i = 0; i < an; ++i ){
         var bucketIdx = grid[ bucketIndex[ i ] ];
         if( bucketIdx > 0 ){
             var k = bucketIdx - 1;

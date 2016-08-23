@@ -596,7 +596,11 @@ describe('parsing', function () {
         var selectionObj = {
             "operator": undefined,
             "rules": [
-                { "atomindex": [ 1, 2, 3 ] }
+                {
+                    "atomindex": [ 1, 2, 3 ],
+                    "atomindexFirst": 1,
+                    "atomindexLast": 3
+                }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
@@ -608,7 +612,11 @@ describe('parsing', function () {
         var selectionObj = {
             "operator": "OR",
             "rules": [
-                { "atomindex": [ 1, 2, 13 ] },
+                {
+                    "atomindex": [ 1, 2, 13 ],
+                    "atomindexFirst": 1,
+                    "atomindexLast": 13
+                },
                 { "keyword": kwd.PROTEIN }
             ]
         };
@@ -621,7 +629,11 @@ describe('parsing', function () {
         var selectionObj = {
             "operator": undefined,
             "rules": [
-                { "atomindex": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ] }
+                {
+                    "atomindex": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
+                    "atomindexFirst": 0,
+                    "atomindexLast": 19
+                }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );

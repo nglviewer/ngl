@@ -266,13 +266,14 @@ describe('quickselectCmp', function () {
                     sort[ i ],
                     "selected " + i + "th item"
                 );
-                for( var j = 0; j < i; ++j ){
+                var j;
+                for( j = 0; j < i; ++j ){
                     assert.isTrue(
                         cmp( arr[ j ], arr[ i ] ) <= 0,
                         "" + j + "th item should be smaller (selected " + i + "th item)"
                     );
                 }
-                for( var j = i + 1; j < il; ++j ){
+                for( j = i + 1; j < il; ++j ){
                     // console.log( arr[ j ], arr[ i ] );
                     assert.isTrue(
                         cmp( arr[ j ], arr[ i ] ) >= 0,
@@ -298,14 +299,15 @@ describe('quickselectCmp', function () {
 
         for( var i = 0, il = list.length; i < il; ++i ){
             var arr = new Float32Array( list );
-            var selected = quickselectCmp( arr, i );
-            for( var j = 0; j < i; ++j ){
+            quickselectCmp( arr, i );
+            var j;
+            for( j = 0; j < i; ++j ){
                 assert.isTrue(
                     cmp( arr[ j ], arr[ i ] ) <= 0,
                     "" + j + "th item should be smaller (selected " + i + "th item)"
                 );
             }
-            for( var j = i + 1; j < il; ++j ){
+            for( j = i + 1; j < il; ++j ){
                 // console.log( arr[ j ], arr[ i ] );
                 assert.isTrue(
                     cmp( arr[ j ], arr[ i ] ) >= 0,

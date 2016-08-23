@@ -6,7 +6,6 @@
 
 
 import BinaryHeap from "./binary-heap.js";
-import { quickselectCmp } from "../math/array-utils.js";
 
 
 /**
@@ -50,13 +49,6 @@ function Kdtree( points, metric ){
     var currentNode = 0;
     var currentDim = 0;
 
-    var tmp, nodeIndex;
-    // function swap( a, b ){
-    //     tmp = indices[ a ];
-    //     indices[ a ] = indices[ b ];
-    //     indices[ b ] = tmp;
-    // }
-
     function buildTree( depth, parent, arrBegin, arrEnd ){
 
         if( depth > maxDepth ) maxDepth = depth;
@@ -82,7 +74,7 @@ function Kdtree( points, metric ){
         currentDim = depth % 3;
 
         // inlined quickselect function
-        var j, pivotIndex, pivotValue, storeIndex;
+        var j, tmp, pivotIndex, pivotValue, storeIndex;
         var left = arrBegin;
         var right = arrEnd - 1;
         while( right > left ){
