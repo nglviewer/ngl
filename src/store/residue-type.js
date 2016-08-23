@@ -5,8 +5,7 @@
  */
 
 
-import { calculateResidueBonds, calculateResidueRings
-} from "../structure/structure-utils.js";
+import { calculateResidueRings } from "../structure/structure-utils.js";
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
@@ -69,6 +68,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.hetero = hetero ? 1 : 0;
     this.chemCompType = chemCompType;
     this.bonds = bonds;
+    this.rings = undefined;
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
@@ -374,14 +374,142 @@ ResidueType.prototype = {
     },
 
 
-    getRings: function( r ) {
-
+    getRings: function() {
         if( this.rings === undefined ){
-            this.rings = calculateResidueRings( r );
+            this.calculateRings();
         }
         return this.rings;
     },
 
+    getBondGraph: function(){
+        if( this.bondGraph === undefined ){
+            this.calculateBondGraph();
+        }
+        return this.bondGraph;
+    },
+
+
+    /**
+     * @return {Object} bondGraph - represents the bonding in this
+     *   residue: { ai1: [ ai2, ai3, ...], ...}
+     *   
+     */
+    calculateBondGraph: function() {
+
+        var bondGraph = this.bondGraph = {};
+        var bonds = this.getBonds();
+        var nb = bonds.atomIndices1.length;
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+        var bondOrders = bonds.bondOrders;
+
+        var ai1, ai2; 
+        
+        for( var i = 0; i < nb; ++i ){
+            ai1 = atomIndices1[i];
+            ai2 = atomIndices2[i];
+
+            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
+            a1.push(ai2);
+
+            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
+            a2.push(ai1);
+        }      
+    },
+
+    /** 
+     * Calculates ring atoms within a residue
+     * Adaptation of RDKit's fastFindRings method by G. Landrum:
+     * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+     * 
+     * @param {ResidueProxy} r   - The residue for which we are to find rings
+     * @return {Object} ringData - contains ringFlags (1/0) and rings 
+     *                             (nested array)
+     * 
+     * Note this method finds all ring atoms, but in cases of fused or 
+     * connected rings will not detect all rings. 
+     * The resulting rings object will provide 'a ring' for each ring atom
+     * but which ring depends on atom order and connectivity
+     */
+    calculateRings: function() {
+
+        var bondGraph = this.getBondGraph();
+
+        var state = new Int8Array(this.atomCount),
+            flags = new Int8Array(this.atomCount),
+            rings = [],
+            visited = [];
+
+        function DFS( i, connected, from ) {
+
+            // Sanity check
+            if( state[ i ] ) { throw Error("DFS revisited atom"); }
+            state[ i ] = 1;
+            visited.push( i );
+            var nc = connected.length;
+
+            // For each neighbour
+            for( var ci = 0; ci < nc; ++ci ) {
+                var j = connected[ci];
+
+                // If unvisited:
+                if( state[ j ] === 0 ){
+
+                    // And has >= 2 neighbours:
+                    if( bondGraph[ j ] && bondGraph[ j ].length >= 2 ) {
+                        // Recurse
+                        DFS(j, bondGraph[ j ], i);
+                    } else {
+                        // Not interesting
+                        state[ j ] = 2;
+                    }
+
+                // Else unclosed ring:
+                } else if( state[ j ] === 1 ) {
+
+                    if( from && from != j ){
+                        var ring = [ j ];
+                        flags[ j ] = 1;
+                        rings.push( ring );
+                        for( var ki = visited.length-1; ki >= 0; --ki ){
+                            var k = visited[ ki ];
+                            if( k === j ){
+                                break; 
+                            }
+                            ring.push( k );
+                            flags[ k ] = 1;
+                        }
+                    }
+                }
+            }
+            state[ i ] = 2; // Completed processing for this atom
+
+            visited.pop();
+        } 
+
+        
+
+
+        for( var i = 0; i < this.atomCount; ++i ){
+
+            if( state[ i ] ){ continue; } // Already processed
+
+            var connected = bondGraph[ i ];
+            if( !connected || connected.length < 2 ){
+                // Finished
+                state[ i ] = 2;
+                continue;
+            }
+
+            visited.length = 0;
+            DFS( i, connected );
+        }
+
+        this.rings = { flags: flags,
+                       rings: rings };
+
+    },
+    
 
     /**
      * For bonds with order > 1, pick a reference atom

@@ -325,11 +325,8 @@ ResidueProxy.prototype = {
     },
 
     getRings: function() {
-        return this.residueType.getRings( this );
-
+        return this.residueType.getRings();
     },
-
-    //
 
     qualifiedName: function( noResname ){
         var name = "";
