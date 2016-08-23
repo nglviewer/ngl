@@ -42,7 +42,7 @@ function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
     v3addScalar( dim, dim, 1 );
 
     var maxSize = Math.pow( 10, 6 ) * 256;
-    var tmpSize = dim.x * dim.y * dim.z * 3;
+    var tmpSize = dim[ 0 ] * dim[ 1 ] * dim[ 2 ] * 3;
 
     if( maxSize <= tmpSize ){
 
