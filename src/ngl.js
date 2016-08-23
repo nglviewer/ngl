@@ -542,6 +542,7 @@ import XmlParser from "./parser/xml-parser.js";
 
 import Shape from "./geometry/shape.js";
 import Kdtree from "./geometry/kdtree.js";
+import SpatialHash from "./geometry/spatial-hash.js";
 
 //
 
@@ -742,6 +743,7 @@ export {
     Shape,
 
     Kdtree,
+    SpatialHash,
 
     /**
      * Signal class
