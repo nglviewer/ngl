@@ -66,6 +66,10 @@ ResidueProxy.prototype = {
         this.residueStore.atomCount[ this.index ] = value;
     },
 
+    get atomEnd () {
+        return this.atomOffset + this.atomCount - 1;
+    },
+
     //
 
     get modelIndex () {
