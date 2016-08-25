@@ -473,7 +473,7 @@ import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 import { superpose } from "./align/align-utils.js";
 import { guessElement } from "./structure/structure-utils.js";
 
-import { throttle, download, getQuery } from "./utils.js";
+import { throttle, download, getQuery, uniqueArray } from "./utils.js";
 import { ColorMaker } from "./utils/color-maker.js";
 import Queue from "./utils/queue.js";
 import Counter from "./utils/counter.js";
@@ -704,6 +704,7 @@ export {
     download,
     getQuery,
     getDataInfo,
+    uniqueArray,
 
     /**
      * Buffer representation class
