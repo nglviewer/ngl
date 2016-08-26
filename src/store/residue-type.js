@@ -206,8 +206,11 @@ ResidueType.prototype = {
             return ChemCompRna.indexOf( this.chemCompType ) !== -1;
         }else{
             return (
-                this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) ||
-                ( RnaBases.indexOf( this.resname ) !== -1 && ( this.hasAtomWithName( [ "O2'", "O2*" ] ) ) )
+                this.hasAtomWithName(
+                    [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
+                ) ||
+                ( RnaBases.indexOf( this.resname ) !== -1 &&
+                    ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
             );
         }
     },
@@ -218,7 +221,7 @@ ResidueType.prototype = {
         }else{
             return (
                 ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
-                    !this.hasAtomWithName( [ "O2'", "O2*" ] ) ) ||
+                    !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
                 DnaBases.indexOf( this.resname ) !== -1
             );
         }
