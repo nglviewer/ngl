@@ -333,6 +333,19 @@ Stage.prototype = {
                 atomCount *= 10;
             }
 
+            var colorScheme = "chainname";
+            var polymerChainnames = new Set();
+            var rp = structure.getResidueProxy();
+            structure.getModelProxy( 0 ).eachChain( function( cp ){
+                rp.index = cp.residueOffset;
+                if( rp.isPolymer() ){
+                    polymerChainnames.add( cp.chainname );
+                }
+            } );
+            if( polymerChainnames.size === 1 ){
+                colorScheme = "residueindex";
+            }
+
             if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
 
             if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
@@ -353,7 +366,7 @@ Stage.prototype = {
                     surfaceType: "sas",
                     probeRadius: 1.4,
                     scaleFactor: scaleFactor,
-                    colorScheme: "chainname",
+                    colorScheme: colorScheme,
                     colorScale: "RdYlBu",
                     useWorker: false
                 } );
@@ -362,7 +375,7 @@ Stage.prototype = {
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
-                    colorScheme: "chainname",
+                    colorScheme: colorScheme,
                     colorScale: "RdYlBu"
                 } );
 
@@ -371,7 +384,7 @@ Stage.prototype = {
                 object.addRepresentation( "backbone", {
                     quality: "low",
                     disableImpostor: true,
-                    colorScheme: "chainname",
+                    colorScheme: colorScheme,
                     colorScale: "RdYlBu",
                     scale: 2.0
                 } );
@@ -379,7 +392,7 @@ Stage.prototype = {
             }else if( atomCount > 80000 ){
 
                 object.addRepresentation( "backbone", {
-                    colorScheme: "chainname",
+                    colorScheme: colorScheme,
                     colorScale: "RdYlBu",
                     scale: 2.0
                 } );
@@ -389,7 +402,7 @@ Stage.prototype = {
                 var quality = atomCount < 15000 ? "high" : "medium";
 
                 object.addRepresentation( "cartoon", {
-                    color: "chainname",
+                    color: colorScheme,
                     colorScale: "RdYlBu",
                     scale: 0.7,
                     aspectRatio: 5,
@@ -397,7 +410,7 @@ Stage.prototype = {
                 } );
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
-                        color: "chainname",
+                        color: colorScheme,
                         colorScale: "RdYlBu",
                         quality: quality
                     } );
