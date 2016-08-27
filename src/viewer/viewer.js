@@ -1364,6 +1364,7 @@ function Viewer( eid ){
     this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
+    this.boundingBox = boundingBox;
 
     this.pick = pick;
     this.requestRender = requestRender;
