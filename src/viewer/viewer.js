@@ -414,6 +414,9 @@ function Viewer( eid ){
         renderer.domElement.addEventListener(
             'mousewheel', preventDefault, false
         );
+        renderer.domElement.addEventListener(
+            'wheel', preventDefault, false
+        );
         renderer.domElement.addEventListener(  // firefox
             'MozMousePixelScroll', preventDefault, false
         );
