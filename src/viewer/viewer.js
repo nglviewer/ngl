@@ -414,22 +414,6 @@ function Viewer( eid ){
 
     function initControls(){
 
-        function preventDefault( e ){
-            e.preventDefault();
-        }
-        renderer.domElement.addEventListener(
-            'mousewheel', preventDefault, false
-        );
-        renderer.domElement.addEventListener(
-            'wheel', preventDefault, false
-        );
-        renderer.domElement.addEventListener(  // firefox
-            'MozMousePixelScroll', preventDefault, false
-        );
-        renderer.domElement.addEventListener(
-            'touchmove', preventDefault, false
-        );
-
         controls = new TrackballControls( camera, renderer.domElement );
         controls.rotateSpeed = 2.0;
         controls.zoomSpeed = 1.2;

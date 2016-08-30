@@ -502,6 +502,8 @@ function TrackballControls( object, domElement ) {
         _this.dispatchEvent( startEvent );
         _this.dispatchEvent( endEvent );
 
+        event.stopPropagation();
+
     }
 
     function touchstart( event ) {
@@ -556,6 +558,8 @@ function TrackballControls( object, domElement ) {
                 break;
 
         }
+
+        event.stopPropagation();
 
     }
 
