@@ -347,6 +347,13 @@ function throttle( func, wait, options ){
 }
 
 
+/**
+ * Does a binary search to get the index of an element in the input array
+ * @param {Array} array - sorted array
+ * @param {Anything} element - element to search for in the array
+ * @param {Function} [compareFunction] - compare function
+ * @return {Number} the index of the element or -1 if not in the array
+ */
 var binarySearchIndexOf = function(){
     function _compareFunction( elm1, elm2 ){
         if( elm1 < elm2 ) return -1;
