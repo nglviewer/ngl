@@ -349,6 +349,12 @@ function throttle( func, wait, options ){
 
 /**
  * Does a binary search to get the index of an element in the input array
+ * @function
+ * @example
+ * var array = [ 1, 2, 3, 4, 5, 6 ];
+ * var element = 4;
+ * binarySearchIndexOf( array, element );  // returns 3
+ *
  * @param {Array} array - sorted array
  * @param {Anything} element - element to search for in the array
  * @param {Function} [compareFunction] - compare function
