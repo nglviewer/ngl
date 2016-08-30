@@ -1278,7 +1278,7 @@ function Viewer( eid ){
 
         _signals.orientationChanged.dispatch();
 
-    };
+    }
 
     var alignView = function(){
 
