@@ -424,6 +424,22 @@ function Viewer( eid ){
 
         controls.addEventListener( 'change', requestRender, false );
 
+        function preventDefault( e ){
+            e.preventDefault();
+        }
+        renderer.domElement.addEventListener(
+            'mousewheel', preventDefault, false
+        );
+        renderer.domElement.addEventListener(
+            'wheel', preventDefault, false
+        );
+        renderer.domElement.addEventListener(  // firefox
+            'MozMousePixelScroll', preventDefault, false
+        );
+        renderer.domElement.addEventListener(
+            'touchmove', preventDefault, false
+        );
+
         document.addEventListener(
             'mousemove', controls.update.bind( controls ), false
         );
