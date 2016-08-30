@@ -268,6 +268,10 @@ TextAtlas.prototype = {
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} attachment - attachment of the label, one of:
+ *                                 "bottom-left", "bottom-center", "bottom-right",
+ *                                 "middle-left", "middle-center", "middle-right",
+ *                                 "top-left", "top-center", "top-right"
  */
 
 
@@ -298,6 +302,7 @@ function TextBuffer( position, size, color, text, params ){
     this.xOffset = defaults( p.xOffset, 0.0 );
     this.yOffset = defaults( p.yOffset, 0.0 );
     this.zOffset = defaults( p.zOffset, 0.5 );
+    this.attachment = defaults( p.attachment, "bottom-left" );
 
     var n = position.length / 3;
 
@@ -418,13 +423,13 @@ TextBuffer.prototype = Object.assign( Object.create(
         var iCharAll = 0;
         var txt, iChar, nChar;
 
-        for( var v = 0; v < n; v++ ) {
+        for( var v = 0; v < n; ++v ) {
 
             o = 3 * v;
             txt = text[ v ];
             nChar = txt.length;
 
-            for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
+            for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
                 for( var m = 0; m < 4; m++ ) {
 
@@ -478,6 +483,7 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         var ta = this.textAtlas;
         var text = this.text;
+        var attachment = this.attachment;
 
         var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
         var inputMapping = this.geometry.attributes.mapping.array;
@@ -487,31 +493,58 @@ TextBuffer.prototype = Object.assign( Object.create(
         var c;
         var i;
         var iCharAll = 0;
-        var txt, xadvance, iChar, nChar;
+        var txt, xadvance, iChar, nChar, xShift, yShift;
 
-        for( var v = 0; v < n; v++ ) {
+        for( var v = 0; v < n; ++v ) {
 
             txt = text[ v ];
             xadvance = 0;
             nChar = txt.length;
 
-            for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
+            // calculate width
+            for( iChar = 0; iChar < nChar; ++iChar ) {
+                c = ta.mapped[ txt[ iChar ] ];
+                xadvance += c.w - 2 * ta.outline;
+            }
+
+            if( attachment.startsWith( "top" ) ){
+                yShift = ta.lineHeight / 1.25;
+            }else if( attachment.startsWith( "middle" ) ){
+                yShift = ta.lineHeight / 2.5;
+            }else{
+                yShift = 0;  // "bottom"
+            }
+
+            if( attachment.endsWith( "right" ) ){
+                xShift = xadvance;
+            }else if( attachment.endsWith( "center" ) ){
+                xShift = xadvance / 2;
+            }else{
+                xShift = 0;  // "left"
+            }
+
+            xShift += ta.outline;
+            yShift += ta.outline;
+
+            xadvance = 0;
+
+            for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
                 c = ta.mapped[ txt[ iChar ] ];
                 i = iCharAll * 2 * 4;
 
                 // top left
-                inputMapping[ i + 0 ] = xadvance - ta.outline;
-                inputMapping[ i + 1 ] = c.h - ta.outline;
+                inputMapping[ i + 0 ] = xadvance - xShift;
+                inputMapping[ i + 1 ] = c.h - yShift;
                 // bottom left
-                inputMapping[ i + 2 ] = xadvance - ta.outline;
-                inputMapping[ i + 3 ] = 0 - ta.outline;
+                inputMapping[ i + 2 ] = xadvance - xShift;
+                inputMapping[ i + 3 ] = 0 - yShift;
                 // top right
-                inputMapping[ i + 4 ] = xadvance + c.w - ta.outline;
-                inputMapping[ i + 5 ] = c.h - ta.outline;
+                inputMapping[ i + 4 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 5 ] = c.h - yShift;
                 // bottom right
-                inputMapping[ i + 6 ] = xadvance + c.w - ta.outline;
-                inputMapping[ i + 7 ] = 0 - ta.outline;
+                inputMapping[ i + 6 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 7 ] = 0 - yShift;
 
                 var texWidth = ta.width;
                 var texHeight = ta.height;
