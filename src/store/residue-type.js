@@ -5,7 +5,7 @@
  */
 
 
-import { calculateResidueRings } from "../structure/structure-utils.js";
+import { calculateResidueBonds } from "../structure/structure-utils.js";
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
@@ -360,7 +360,6 @@ ResidueType.prototype = {
         var nb = bonds.atomIndices1.length;
         var atomIndices1 = bonds.atomIndices1;
         var atomIndices2 = bonds.atomIndices2;
-        var bondOrders = bonds.bondOrders;
 
         var ai1, ai2; 
         
@@ -471,7 +470,7 @@ ResidueType.prototype = {
     /**
      * For bonds with order > 1, pick a reference atom
      */
-    assignBondReferenceAtomIndices: function( params ) {
+    assignBondReferenceAtomIndices: function() {
 
         var bondGraph = this.getBondGraph();
         var rings = this.getRings();
