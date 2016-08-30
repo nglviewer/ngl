@@ -275,6 +275,10 @@ TextAtlas.prototype = {
  * @property {Boolean} showBorder - show border/outline
  * @property {Color} borderColor - color of the border/outline
  * @property {Float} borderWidth - width of the border/outline
+ * @property {Boolean} showBackground - show background rectangle
+ * @property {Color} backgroundColor - color of the background
+ * @property {Float} backgroundMargin - width of the background
+ * @property {Float} backgroundOpacity - opacity of the background
  */
 
 
@@ -309,6 +313,10 @@ function TextBuffer( position, size, color, text, params ){
     this.showBorder = defaults( p.showBorder, false );
     this.borderColor = defaults( p.borderColor, "lightgrey" );
     this.borderWidth = defaults( p.borderWidth, 0.15 );
+    this.showBackground = defaults( p.showBackground, false );
+    this.backgroundColor = defaults( p.backgroundColor, "lightgrey" );
+    this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
+    this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
     var n = position.length / 3;
 
@@ -319,6 +327,7 @@ function TextBuffer( position, size, color, text, params ){
 
     this.text = text;
     this.count = charCount;
+    if( this.showBackground ) this.count += n;
     this.positionCount = n;
 
     this.vertexShader = "SDFFont.vert";
@@ -334,7 +343,9 @@ function TextBuffer( position, size, color, text, params ){
         "ortho": { value: false },
         "showBorder": { value: this.showBorder },
         "borderColor": { value: new Color( this.borderColor ) },
-        "borderWidth": { value: this.borderWidth }
+        "borderWidth": { value: this.borderWidth },
+        "backgroundColor": { value: new Color( this.backgroundColor ) },
+        "backgroundOpacity": { value: this.backgroundOpacity }
     } );
 
     this.addAttributes( {
@@ -373,7 +384,9 @@ TextBuffer.prototype = Object.assign( Object.create(
         zOffset: { uniform: true },
         showBorder: { uniform: true },
         borderColor: { uniform: true },
-        borderWidth: { uniform: true }
+        borderWidth: { uniform: true },
+        backgroundColor: { uniform: true },
+        backgroundOpacity: { uniform: true }
 
     }, Buffer.prototype.parameters ),
 
@@ -440,6 +453,7 @@ TextBuffer.prototype = Object.assign( Object.create(
             o = 3 * v;
             txt = text[ v ];
             nChar = txt.length;
+            if( this.showBackground ) nChar += 1;
 
             for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
@@ -496,16 +510,14 @@ TextBuffer.prototype = Object.assign( Object.create(
         var ta = this.textAtlas;
         var text = this.text;
         var attachment = this.attachment;
+        var margin = ( ta.lineHeight * this.backgroundMargin * 0.1 ) - 10;
 
         var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
         var inputMapping = this.geometry.attributes.mapping.array;
 
         var n = this.positionCount;
-
-        var c;
-        var i;
         var iCharAll = 0;
-        var txt, xadvance, iChar, nChar, xShift, yShift;
+        var c, i, txt, xadvance, iChar, nChar, xShift, yShift;
 
         for( var v = 0; v < n; ++v ) {
 
@@ -519,6 +531,7 @@ TextBuffer.prototype = Object.assign( Object.create(
                 xadvance += c.w - 2 * ta.outline;
             }
 
+            // attachment
             if( attachment.startsWith( "top" ) ){
                 yShift = ta.lineHeight / 1.25;
             }else if( attachment.startsWith( "middle" ) ){
@@ -526,7 +539,6 @@ TextBuffer.prototype = Object.assign( Object.create(
             }else{
                 yShift = 0;  // "bottom"
             }
-
             if( attachment.endsWith( "right" ) ){
                 xShift = xadvance;
             }else if( attachment.endsWith( "center" ) ){
@@ -534,9 +546,26 @@ TextBuffer.prototype = Object.assign( Object.create(
             }else{
                 xShift = 0;  // "left"
             }
-
             xShift += ta.outline;
             yShift += ta.outline;
+
+            // background
+            if( this.showBackground ){
+                i = iCharAll * 2 * 4;
+                inputMapping[ i + 0 ] = -ta.lineHeight/6 - xShift - margin;  // top left
+                inputMapping[ i + 1 ] = ta.lineHeight - yShift + margin;
+                inputMapping[ i + 2 ] = -ta.lineHeight/6 - xShift - margin;  // bottom left
+                inputMapping[ i + 3 ] = 0 - yShift - margin;
+                inputMapping[ i + 4 ] = xadvance + ta.lineHeight/6 - xShift + 2*ta.outline + margin;  // top right
+                inputMapping[ i + 5 ] = ta.lineHeight - yShift + margin;
+                inputMapping[ i + 6 ] = xadvance + ta.lineHeight/6 - xShift + 2*ta.outline + margin;  // bottom right
+                inputMapping[ i + 7 ] = 0 - yShift - margin;
+                inputTexCoord[ i + 0 ] = 10;
+                inputTexCoord[ i + 2 ] = 10;
+                inputTexCoord[ i + 4 ] = 10;
+                inputTexCoord[ i + 6 ] = 10;
+                iCharAll += 1;
+            }
 
             xadvance = 0;
 
@@ -545,17 +574,13 @@ TextBuffer.prototype = Object.assign( Object.create(
                 c = ta.mapped[ txt[ iChar ] ];
                 i = iCharAll * 2 * 4;
 
-                // top left
-                inputMapping[ i + 0 ] = xadvance - xShift;
+                inputMapping[ i + 0 ] = xadvance - xShift;  // top left
                 inputMapping[ i + 1 ] = c.h - yShift;
-                // bottom left
-                inputMapping[ i + 2 ] = xadvance - xShift;
+                inputMapping[ i + 2 ] = xadvance - xShift;  // bottom left
                 inputMapping[ i + 3 ] = 0 - yShift;
-                // top right
-                inputMapping[ i + 4 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 4 ] = xadvance + c.w - xShift;  // top right
                 inputMapping[ i + 5 ] = c.h - yShift;
-                // bottom right
-                inputMapping[ i + 6 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 6 ] = xadvance + c.w - xShift;  // bottom right
                 inputMapping[ i + 7 ] = 0 - yShift;
 
                 var texWidth = ta.width;

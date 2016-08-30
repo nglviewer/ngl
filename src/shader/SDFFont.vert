@@ -19,9 +19,14 @@ void main(void){
     #include color_vertex
     texCoord = inputTexCoord;
 
+    float _zOffset = zOffset;
+    if( texCoord.x == 10.0 ){
+        _zOffset -= 0.001;
+    }
+
     vec3 pos = position;
     if( ortho ){
-        pos += normalize( cameraPosition ) * zOffset;
+        pos += normalize( cameraPosition ) * _zOffset;
     }
     vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
@@ -29,7 +34,7 @@ void main(void){
     cameraCornerPos.x += xOffset;
     cameraCornerPos.y += yOffset;
     if( !ortho ){
-        cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * zOffset;
+        cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;
     }
 
     gl_Position = projectionMatrix * cameraCornerPos;

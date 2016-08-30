@@ -40,6 +40,10 @@ import TextBuffer from "../buffer/text-buffer.js";
  * @property {Boolean} showBorder - show border/outline
  * @property {Color} borderColor - color of the border/outline
  * @property {Float} borderWidth - width of the border/outline
+ * @property {Boolean} showBackground - show background rectangle
+ * @property {Color} backgroundColor - color of the background
+ * @property {Float} backgroundMargin - width of the background
+ * @property {Float} backgroundOpacity - opacity of the background
  */
 
 
@@ -128,7 +132,19 @@ LabelRepresentation.prototype = Object.assign( Object.create(
             type: "color", buffer: true
         },
         borderWidth: {
-            type: "number", precision: 2, max: 0.2, min: 0, buffer: true
+            type: "number", precision: 2, max: 0.3, min: 0, buffer: true
+        },
+        showBackground: {
+            type: "boolean", rebuild: true
+        },
+        backgroundColor: {
+            type: "color", buffer: true
+        },
+        backgroundMargin: {
+            type: "number", precision: 2, max: 2, min: 0, rebuild: true
+        },
+        backgroundOpacity: {
+            type: "range", step: 0.01, max: 1, min: 0, buffer: true
         },
 
     }, StructureRepresentation.prototype.parameters, {
@@ -161,6 +177,10 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.showBorder = defaults( p.showBorder, false );
         this.borderColor = defaults( p.borderColor, "lightgrey" );
         this.borderWidth = defaults( p.borderWidth, 0.15 );
+        this.showBackground = defaults( p.showBackground, false );
+        this.backgroundColor = defaults( p.backgroundColor, "lightgrey" );
+        this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
+        this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -195,7 +215,11 @@ LabelRepresentation.prototype = Object.assign( Object.create(
                 attachment: this.attachment,
                 showBorder: this.showBorder,
                 borderColor: this.borderColor,
-                borderWidth: this.borderWidth
+                borderWidth: this.borderWidth,
+                showBackground: this.showBackground,
+                backgroundColor: this.backgroundColor,
+                backgroundMargin: this.backgroundMargin,
+                backgroundOpacity: this.backgroundOpacity
             } )
         );
 
