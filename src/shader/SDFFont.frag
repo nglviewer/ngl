@@ -1,5 +1,8 @@
 uniform sampler2D fontTexture;
 uniform float opacity;
+uniform bool showBorder;
+uniform vec3 borderColor;
+uniform float borderWidth;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
@@ -19,6 +22,7 @@ void main(){
 
     // retrieve signed distance
     float sdf = texture2D( fontTexture, texCoord ).a;
+    if( showBorder ) sdf += borderWidth;
 
     // perform adaptive anti-aliasing of the edges
     float w = clamp(
@@ -34,6 +38,9 @@ void main(){
     a *= opacity;
 
     vec3 outgoingLight = vColor;
+    if( showBorder && sdf < ( 0.5 + borderWidth ) ){
+        outgoingLight = borderColor;
+    }
 
     gl_FragColor = vec4( outgoingLight, a );
 

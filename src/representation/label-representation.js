@@ -37,6 +37,9 @@ import TextBuffer from "../buffer/text-buffer.js";
  *                                 "bottom-left", "bottom-center", "bottom-right",
  *                                 "middle-left", "middle-center", "middle-right",
  *                                 "top-left", "top-center", "top-right"
+ * @property {Boolean} showBorder - show border/outline
+ * @property {Color} borderColor - color of the border/outline
+ * @property {Float} borderWidth - width of the border/outline
  */
 
 
@@ -117,7 +120,16 @@ LabelRepresentation.prototype = Object.assign( Object.create(
                 "top-right": "top-right"
             },
             rebuild: true
-        }
+        },
+        showBorder: {
+            type: "boolean", buffer: true
+        },
+        borderColor: {
+            type: "color", buffer: true
+        },
+        borderWidth: {
+            type: "number", precision: 2, max: 0.2, min: 0, buffer: true
+        },
 
     }, StructureRepresentation.prototype.parameters, {
 
@@ -146,6 +158,9 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.yOffset = defaults( p.yOffset, 0.0 );
         this.zOffset = defaults( p.zOffset, 0.5 );
         this.attachment = defaults( p.attachment, "bottom-left" );
+        this.showBorder = defaults( p.showBorder, false );
+        this.borderColor = defaults( p.borderColor, "lightgrey" );
+        this.borderWidth = defaults( p.borderWidth, 0.15 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -177,7 +192,10 @@ LabelRepresentation.prototype = Object.assign( Object.create(
                 xOffset: this.xOffset,
                 yOffset: this.yOffset,
                 zOffset: this.zOffset,
-                attachment: this.attachment
+                attachment: this.attachment,
+                showBorder: this.showBorder,
+                borderColor: this.borderColor,
+                borderWidth: this.borderWidth
             } )
         );
 

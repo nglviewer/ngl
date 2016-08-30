@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file, following t
 - chainname based color scheme
 - BondHash class to quickly get atoms connected to an atom
 - XmlParser parameter to use the browser's DOMParser
-- label attachment (top, middle, bottom; left, center, right)
+- attachment (top, middle, bottom; left, center, right) for LabelRepresentation/TextBuffer
+- border color and width for LabelRepresentation/TextBuffer
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis

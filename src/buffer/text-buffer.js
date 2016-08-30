@@ -5,7 +5,7 @@
  */
 
 
-import { CanvasTexture } from "../../lib/three.es6.js";
+import { Color, CanvasTexture } from "../../lib/three.es6.js";
 
 import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -272,6 +272,9 @@ TextAtlas.prototype = {
  *                                 "bottom-left", "bottom-center", "bottom-right",
  *                                 "middle-left", "middle-center", "middle-right",
  *                                 "top-left", "top-center", "top-right"
+ * @property {Boolean} showBorder - show border/outline
+ * @property {Color} borderColor - color of the border/outline
+ * @property {Float} borderWidth - width of the border/outline
  */
 
 
@@ -303,6 +306,9 @@ function TextBuffer( position, size, color, text, params ){
     this.yOffset = defaults( p.yOffset, 0.0 );
     this.zOffset = defaults( p.zOffset, 0.5 );
     this.attachment = defaults( p.attachment, "bottom-left" );
+    this.showBorder = defaults( p.showBorder, false );
+    this.borderColor = defaults( p.borderColor, "lightgrey" );
+    this.borderWidth = defaults( p.borderWidth, 0.15 );
 
     var n = position.length / 3;
 
@@ -326,6 +332,9 @@ function TextBuffer( position, size, color, text, params ){
         "yOffset": { value: this.yOffset },
         "zOffset": { value: this.zOffset },
         "ortho": { value: 0.0 }
+        "showBorder": { value: this.showBorder },
+        "borderColor": { value: new Color( this.borderColor ) },
+        "borderWidth": { value: this.borderWidth }
     } );
 
     this.addAttributes( {
@@ -361,7 +370,10 @@ TextBuffer.prototype = Object.assign( Object.create(
         sdf: { updateShader: true, uniform: true },
         xOffset: { uniform: true },
         yOffset: { uniform: true },
-        zOffset: { uniform: true }
+        zOffset: { uniform: true },
+        showBorder: { uniform: true },
+        borderColor: { uniform: true },
+        borderWidth: { uniform: true }
 
     }, Buffer.prototype.parameters ),
 
