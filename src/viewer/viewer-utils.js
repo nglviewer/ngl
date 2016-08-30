@@ -316,7 +316,7 @@ function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
 
     var canvasHeight = renderer.getSize().height;
     var pixelRatio = renderer.getPixelRatio();
-    var ortho = camera.type === "OrthographicCamera" ? 1.0 : 0.0;
+    var ortho = camera.type === "OrthographicCamera" ? true : false;
 
     projectionMatrixInverse.getInverse( camera.projectionMatrix );
     projectionMatrixTranspose.copy( camera.projectionMatrix ).transpose();

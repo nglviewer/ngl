@@ -331,7 +331,7 @@ function TextBuffer( position, size, color, text, params ){
         "xOffset": { value: this.xOffset },
         "yOffset": { value: this.yOffset },
         "zOffset": { value: this.zOffset },
-        "ortho": { value: 0.0 }
+        "ortho": { value: false },
         "showBorder": { value: this.showBorder },
         "borderColor": { value: new Color( this.borderColor ) },
         "borderWidth": { value: this.borderWidth }

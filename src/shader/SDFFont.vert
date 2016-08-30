@@ -2,7 +2,7 @@ uniform float nearClip;
 uniform float xOffset;
 uniform float yOffset;
 uniform float zOffset;
-uniform float ortho;
+uniform bool ortho;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
@@ -20,7 +20,7 @@ void main(void){
     texCoord = inputTexCoord;
 
     vec3 pos = position;
-    if( ortho != 0.0 ){
+    if( ortho ){
         pos += normalize( cameraPosition ) * zOffset;
     }
     vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
@@ -28,7 +28,7 @@ void main(void){
     cameraCornerPos.xy += mapping * inputSize * 0.01;
     cameraCornerPos.x += xOffset;
     cameraCornerPos.y += yOffset;
-    if( ortho == 0.0 ){
+    if( !ortho ){
         cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * zOffset;
     }
 
