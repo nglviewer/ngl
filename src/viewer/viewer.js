@@ -289,7 +289,11 @@ function Viewer( eid ){
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
                 format: RGBAFormat,
-                type: supportsHalfFloat ? HalfFloatType : FloatType
+                type: (
+                    supportsHalfFloat ? HalfFloatType :
+                        ( SupportsReadPixelsFloat ? FloatType : UnsignedByteType )
+                )
+
             }
         );
 
