@@ -143,7 +143,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
                 this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
-            this.__infoList.forEach( function( info, i ){
+            this.__infoList.forEach( function( info ){
                 info.molsurf.dispose();
             }.bind( this ) );
             this.__infoList.length = 0;
@@ -277,7 +277,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        this.__infoList.forEach( function( info, i ){
+        this.__infoList.forEach( function( info ){
             info.molsurf.dispose();
         }.bind( this ) );
         this.__infoList.length = 0;

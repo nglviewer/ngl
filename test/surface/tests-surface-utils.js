@@ -1,5 +1,7 @@
 
-import { computeVertexNormals } from "../../../src/surface/surface-utils.js";
+import { computeVertexNormals } from "../../src/surface/surface-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('surface/surface-utils', function() {

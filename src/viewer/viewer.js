@@ -21,7 +21,7 @@ import {
 
 import {
     Debug, Log, Browser, WebglErrorMessage,
-    ExtensionFragDepth, setExtensionFragDepth,
+    setExtensionFragDepth,
     SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
@@ -81,7 +81,7 @@ JitterVectors.forEach( function( offsetList ){
  * @class
  * @param {String} eid
  */
-function Viewer( eid, params ){
+function Viewer( eid ){
 
     var _signals = {
         orientationChanged: new Signal(),
@@ -119,7 +119,7 @@ function Viewer( eid, params ){
     var rotationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
     initScene();
 
-    var renderer, indexUint16, supportsHalfFloat;
+    var renderer, supportsHalfFloat;
     var pickingTarget, sampleTarget, holdTarget;
     var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
     if( initRenderer() === false ){
@@ -133,6 +133,8 @@ function Viewer( eid, params ){
 
     var boundingBoxMesh;
     var boundingBox = new Box3();
+    var boundingBoxSize = new Vector3();
+    var boundingBoxLength = 0;
     initHelper();
 
     // fog & background
@@ -238,7 +240,7 @@ function Viewer( eid, params ){
         // console.log( gl.getParameter(gl.SAMPLES) );
 
         setExtensionFragDepth( renderer.extensions.get( "EXT_frag_depth" ) );
-        indexUint16 = !renderer.extensions.get( 'OES_element_index_uint' );
+        renderer.extensions.get( 'OES_element_index_uint' );
 
         setSupportsReadPixelsFloat(
             ( renderer.extensions.get( 'OES_texture_float' ) &&
@@ -413,6 +415,9 @@ function Viewer( eid, params ){
         }
         renderer.domElement.addEventListener(
             'mousewheel', preventDefault, false
+        );
+        renderer.domElement.addEventListener(
+            'wheel', preventDefault, false
         );
         renderer.domElement.addEventListener(  // firefox
             'MozMousePixelScroll', preventDefault, false
@@ -601,20 +606,28 @@ function Viewer( eid, params ){
         }
 
         if( geometry ){
-            updateGeometry( geometry, matrix );
+            if( Array.isArray( geometry ) ){
+                geometry.forEach( function( g ){
+                    updateGeometry( g, matrix );
+                } );
+            }else{
+                updateGeometry( geometry, matrix );
+            }
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );
             backgroundGroup.traverse( updateNode );
         }
 
-        controls.maxDistance = boundingBox.size().length() * 10;
+        boundingBox.size( boundingBoxSize );
+        boundingBoxLength = boundingBoxSize.length();
+        controls.maxDistance = boundingBoxLength * 10;
 
     }
 
     function getImage(){
 
-        return new Promise( function( resolve, reject ){
+        return new Promise( function( resolve ){
             renderer.domElement.toBlob( resolve, "image/png" );
         } );
 
@@ -811,7 +824,7 @@ function Viewer( eid, params ){
         var sidewaysDirection = new Vector3();
         var moveDirection = new Vector3();
 
-        return function( axis, angle ){
+        return function rotate( axis, angle ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
@@ -839,7 +852,7 @@ function Viewer( eid, params ){
         var eye = new Vector3();
         var eyeDirection = new Vector3();
 
-        return function( distance, set ){
+        return function zoom( distance, set ){
 
             eye.copy( camera.position ).sub( controls.target );
             eyeDirection.copy( eye ).normalize();
@@ -871,7 +884,7 @@ function Viewer( eid, params ){
 
         var vector = new Vector3();
 
-        return function( position ){
+        return function center( position ){
 
             vector.copy( position ).sub( controls.target );
             translate( vector );
@@ -912,12 +925,12 @@ function Viewer( eid, params ){
         var pixelBufferFloat = new Float32Array( 4 );
         var pixelBufferUint = new Uint8Array( 4 );
 
-        return function( x, y ){
+        return function pick( x, y ){
 
             x *= window.devicePixelRatio;
             y *= window.devicePixelRatio;
 
-            var gid, object, instance, bondId;
+            var gid, object, instance;
             var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
             render( true );
@@ -987,7 +1000,7 @@ function Viewer( eid, params ){
 
         renderPending = true;
 
-        requestAnimationFrame( function(){
+        requestAnimationFrame( function requestRenderAnimation(){
             render();
             stats.update();
         } );
@@ -1009,7 +1022,7 @@ function Viewer( eid, params ){
             cDist = Math.abs( p.cameraZ );
         }
 
-        bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
+        bRadius = Math.max( 10, boundingBoxLength * 0.5 );
         bRadius += boundingBox.center( distVector ).length();
         // console.log( "bRadius", bRadius )
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
@@ -1067,7 +1080,7 @@ function Viewer( eid, params ){
     function __updateLights(){
 
         distVector.copy( camera.position ).sub( controls.target )
-            .normalize().multiplyScalar( 1000 );
+            .setLength( boundingBoxLength * 10 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
@@ -1217,64 +1230,55 @@ function Viewer( eid, params ){
 
     }
 
-    var centerView = function(){
+    function centerView( _zoom, position ){
 
-        var t = new Vector3();
-        var eye = new Vector3();
-        var eyeDirection = new Vector3();
-        var bbSize = new Vector3();
+        if( position === undefined ){
+            if( !boundingBox.isEmpty() ){
+                center( boundingBox.center() );
+            }
+        }else{
+            center( position );
+        }
 
-        return function( _zoom, position ){
+        if( _zoom ){
 
-            if( position === undefined ){
-                if( !boundingBox.isEmpty() ){
-                    center( boundingBox.center() );
-                }
+            var distance;
+
+            if( _zoom === true ){
+
+                // distance = boundingBoxLength;
+
+                var bbSize = boundingBoxSize;
+                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                distance = maxSize + Math.sqrt( minSize );
+
             }else{
-                center( position );
-            }
 
-            if( _zoom ){
-
-                var distance;
-
-                if( _zoom === true ){
-
-                    // distance = boundingBox.size( bbSize ).length();
-
-                    boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                    distance = maxSize + Math.sqrt( minSize );
-
-                }else{
-
-                    distance = _zoom;
-
-                }
-
-                var fov = degToRad( perspectiveCamera.fov );
-                var aspect = width / height;
-                var aspectFactor = ( height < width ? 1 : aspect );
-
-                distance = Math.abs(
-                    ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
-                );
-
-                distance += parameters.clipDist;
-
-                zoom( distance, true );
+                distance = _zoom;
 
             }
 
-            requestRender();
+            var fov = degToRad( perspectiveCamera.fov );
+            var aspect = width / height;
+            var aspectFactor = ( height < width ? 1 : aspect );
 
-            _signals.orientationChanged.dispatch();
+            distance = Math.abs(
+                ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+            );
 
-        };
+            distance += parameters.clipDist;
 
-    }();
+            zoom( distance, true );
+
+        }
+
+        requestRender();
+
+        _signals.orientationChanged.dispatch();
+
+    }
 
     var alignView = function(){
 
@@ -1284,7 +1288,7 @@ function Viewer( eid, params ){
         var vc = new Vector3();
         var vz = new Vector3( 0, 0, 1 );
 
-        return function( eye, up, position, zoom ){
+        return function alignView( eye, up, position, zoom ){
 
             controls.reset();
             centerView( zoom, position );
@@ -1361,6 +1365,7 @@ function Viewer( eid, params ){
     this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
+    this.boundingBox = boundingBox;
 
     this.pick = pick;
     this.requestRender = requestRender;

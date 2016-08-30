@@ -31,7 +31,6 @@ function onmessage( e ){
 
     var name = e.data.__name;
     var postId = e.data.__postId;
-    var Debug = e.data.__debug;
 
     if( name === undefined ){
 

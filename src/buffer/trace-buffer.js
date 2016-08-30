@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 import Buffer from "./buffer.js";
 
 

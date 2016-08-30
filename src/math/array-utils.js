@@ -297,7 +297,7 @@ function quicksortIP( arr, eleSize, orderElement, begin, end ){
 
                 i = j - 1;
 
-                while ( i >= left && arr[ i * eleSize + orderElement ] > swap[orderElement ] ) {
+                while ( i >= left && arr[ i * eleSize + orderElement ] > swap[ orderElement ] ) {
                     for ( x = 0; x < eleSize; x ++ ) {
                         arr[ ( i + 1 ) * eleSize + x ] = arr[ i * eleSize + x ];
                     }
@@ -371,6 +371,151 @@ function quicksortIP( arr, eleSize, orderElement, begin, end ){
 }
 
 
+function quicksortCmp( arr, cmp, begin, end ){
+
+    cmp = cmp || function cmp( a, b ){
+        if( a > b ) return 1;
+        if( a < b ) return -1;
+        return 0;
+    };
+    begin = begin || 0;
+    end = ( end || arr.length ) - 1;
+
+    var stack = [];
+    var sp = -1;
+    var left = begin;
+    var right = end;
+    var tmp = 0.0, tmp2 = 0.0;
+
+    function swap( a, b ){
+        tmp2 = arr[ a ];
+        arr[ a ] = arr[ b ];
+        arr[ b ] = tmp2;
+    }
+
+    var i, j;
+
+    while ( true ) {
+
+        if ( right - left <= 25 ) {
+
+            for ( j = left + 1; j <= right; ++j ) {
+
+                tmp = arr[ j ];
+                i = j - 1;
+
+                while ( i >= left && cmp( arr[ i ], tmp ) > 0 ) {
+                    arr[ i + 1 ] = arr[ i ];
+                    --i;
+                }
+
+                arr[ i + 1 ] = tmp;
+
+            }
+
+            if ( sp === -1 ) break;
+
+            right = stack[ sp-- ]; //?
+            left = stack[ sp-- ];
+
+        } else {
+
+            var median = ( left + right ) >> 1;
+
+            i = left + 1;
+            j = right;
+
+            swap( median, i );
+
+            if( cmp( arr[ left ], arr[ right ] ) > 0 ){
+                swap( left, right );
+            }
+
+            if( cmp( arr[ i ], arr[ right ] ) > 0 ){
+                swap( i, right );
+            }
+
+            if( cmp( arr[ left ], arr[ i ] ) > 0 ){
+                swap( left, i );
+            }
+
+            tmp = arr[ i ];
+
+            while( true ){
+                do i++; while( cmp( arr[ i ], tmp ) < 0 );
+                do j--; while( cmp( arr[ j ], tmp ) > 0 );
+                if( j < i ) break;
+                swap( i, j );
+            }
+
+            arr[ left + 1 ] = arr[ j ];
+            arr[ j ] = tmp;
+
+            if ( right - i + 1 >= j - left ){
+                stack[ ++sp ] = i;
+                stack[ ++sp ] = right;
+                right = j - 1;
+            } else {
+                stack[ ++sp ] = left;
+                stack[ ++sp ] = j - 1;
+                left = i;
+            }
+
+        }
+
+    }
+
+    return arr;
+
+}
+
+
+function quickselectCmp( arr, n, cmp, left, right ){
+
+    cmp = cmp || function cmp( a, b ){
+        if( a > b ) return 1;
+        if( a < b ) return -1;
+        return 0;
+    };
+    left = left || 0;
+    right = ( right || arr.length ) - 1;
+
+    var tmp, i, pivotIndex, pivotValue, storeIndex;
+
+    function swap( a, b ){
+        tmp = arr[ a ];
+        arr[ a ] = arr[ b ];
+        arr[ b ] = tmp;
+    }
+
+    while( true ){
+        if( left === right ){
+            return arr[ left ];
+        }
+        pivotIndex = ( left + right ) >> 1;
+        pivotValue = arr[ pivotIndex ];
+        swap( pivotIndex, right );
+        storeIndex = left;
+        for( i = left; i < right; ++i ){
+            if( cmp( arr[ i ], pivotValue ) < 0 ){
+                swap( storeIndex, i );
+                ++storeIndex;
+            }
+        }
+        swap( right, storeIndex );
+        pivotIndex = storeIndex;
+        if( n === pivotIndex ){
+            return arr[ n ];
+        }else if( n < pivotIndex ){
+            right = pivotIndex - 1;
+        }else{
+            left = pivotIndex + 1;
+        }
+    }
+
+}
+
+
 function arrayMax( array ){
 
     var max = -Infinity;
@@ -393,6 +538,26 @@ function arrayMin( array ){
 }
 
 
+function arraySorted( array ){
+
+    for( var i = 1, il = array.length; i < il; ++i ){
+        if( array[ i - 1 ] > array[ i ] ) return false;
+    }
+    return true;
+
+}
+
+
+function arraySortedCmp( array, cmp ){
+
+    for( var i = 1, il = array.length; i < il; ++i ){
+        if( cmp( array[ i - 1 ], array[ i ] ) > 0 ) return false;
+    }
+    return true;
+
+}
+
+
 export {
     circularMean,
     calculateCenterArray,
@@ -406,6 +571,10 @@ export {
     copyArray,
     copyWithin,
     quicksortIP,
+    quicksortCmp,
+    quickselectCmp,
     arrayMax,
-    arrayMin
+    arrayMin,
+    arraySorted,
+    arraySortedCmp
 };

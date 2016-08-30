@@ -167,7 +167,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    createData: function( sview ){
+    createData: function( /*sview*/ ){
 
         console.error( "createData not implemented" );
 
@@ -188,7 +188,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    updateData: function( what, data ){
+    updateData: function( /*what, data*/ ){
 
         console.error( "updateData not implemented" );
 
@@ -223,6 +223,12 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setSelection
+     * @param {String} string - selection string, see {@tutorial selection-language}
+     * @return {StructureRepresentation} this object
+     */
     setSelection: function( string, silent ){
 
         this.selection.setString( string, silent );
@@ -231,6 +237,20 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setParameters
+     * @param {StructureRepresentationParameters} params - structure parameter object
+     * @param {Object} [what] - buffer data attributes to be updated,
+     *                        note that this needs to be implemented in the
+     *                        derived classes. Generally it allows more
+     *                        fine-grained control over updating than
+     *                        forcing a rebuild.
+     * @param {Boolean} what.position - update position data
+     * @param {Boolean} what.color - update color data
+     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+     * @return {StructureRepresentation} this object
+     */
     setParameters: function( params, what, rebuild ){
 
         what = what || {};

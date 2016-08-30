@@ -47,7 +47,6 @@ SdfParser.prototype = Object.assign( Object.create(
         s.title = headerLines[ 1 ].trim();
 
         var frames = s.frames;
-        var boxes = s.boxes;
         var doFrames = false;
         var currentFrame, currentCoord;
 
@@ -159,7 +158,7 @@ SdfParser.prototype = Object.assign( Object.create(
 
         }
 
-        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 

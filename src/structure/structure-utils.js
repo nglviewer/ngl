@@ -355,7 +355,7 @@ var calculateSecondaryStructure = function(){
 
     };
 
-    return function( structure ){
+    return function calculateSecondaryStructure( structure ){
 
         if( Debug ) Log.time( "calculateSecondaryStructure" );
 
@@ -636,8 +636,6 @@ function calculateAtomBondMap( structure ){
 
     if( Debug ) Log.time( "calculateAtomBondMap" );
 
-    var atomStore = structure.atomStore;
-    var bondStore = structure.bondStore;
     var atomBondMap = [];
 
     structure.eachBond( function( bp ){
@@ -672,8 +670,6 @@ function calculateBondsWithin( structure, onlyAddRung ){
 
             var count = r.atomCount;
             var offset = r.atomOffset;
-            var end = offset + count;
-            var end1 = end - 1;
 
             if( count > 500 ){
                 Log.warn( "more than 500 atoms, skip residue for auto-bonding", r.qualifiedName() );
@@ -909,7 +905,7 @@ var guessElement = function(){
     var elm1 = [ "H", "C", "O", "N", "S", "P" ];
     var elm2 = [ "NA", "CL" ];
 
-    return function( atomName ){
+    return function guessElement( atomName ){
 
         var at = atomName.trim().toUpperCase();
         if( parseInt( at.charAt( 0 ) ) ) at = at.substr( 1 );

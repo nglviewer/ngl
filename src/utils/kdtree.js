@@ -6,238 +6,285 @@
 
 
 import BinaryHeap from "./binary-heap.js";
-import { quicksortIP } from "../math/array-utils.js";
 
 
 /**
  * Kdtree
  * @class
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>, 2016
  * @author Roman Bolzern <roman.bolzern@fhnw.ch>, 2013
  * @author I4DS http://www.fhnw.ch/i4ds, 2013
  * @license MIT License <http://www.opensource.org/licenses/mit-license.php>
  * @description
- * k-d Tree for typed arrays (e.g. for Float32Array), in-place
+ * k-d Tree for typed arrays of 3d points (e.g. for Float32Array), in-place
  * provides fast nearest neighbour search
- * useful e.g. for a custom shader and/or BufferGeometry, saves tons of memory
- * has no insert and remove, only buildup and nearest neighbour search
  *
  * Based on https://github.com/ubilabs/kd-tree-javascript by Ubilabs
- *
- * Requires typed array quicksort
  *
  * Further information (including mathematical properties)
  * http://en.wikipedia.org/wiki/Binary_tree
  * http://en.wikipedia.org/wiki/K-d_tree
  *
- * If you want to further minimize memory usage, remove Node.depth and replace
- * in search algorithm with a traversal to root node (see comments at Node)
- *
  * @example
  * points: [x, y, z, x, y, z, x, y, z, ...]
  * metric: function(a, b){
  *    return Math.pow(a[0]-b[0], 2) + Math.pow(a[1]-b[1], 2) + Math.pow(a[2]-b[2], 2);
- * }  //Manhatten distance
- * eleSize: 3 //because of (x, y, z)
+ * }
  *
  * @param {Float32Array} points - points
  * @param {Function} metric - metric
- * @param {Integer} eleSize - eleSize
- * @param {Integer} dimSize - dimSize
  */
-function Kdtree( points, metric, eleSize, dimSize ){
+function Kdtree( points, metric ){
 
-	var self = this;
+    var n = points.length / 3
+    var maxDepth = 0;
 
-	var maxDepth = 0;
+    var indices = new Uint32Array( n );
+    for( var i = 0; i < n; ++i ){
+        indices[ i ] = i;
+    }
+    var nodes = new Int32Array( n * 4 );
+    // pos, left, right, parent
 
-	function buildTree( depth, parent, arrBegin, arrEnd ){
+    var currentNode = 0;
+    var currentDim = 0;
 
-		var dim = depth % eleSize,
-			median,
-			node,
-			plength = ( arrEnd - arrBegin );
+    function buildTree( depth, parent, arrBegin, arrEnd ){
 
-		if( depth > maxDepth ) maxDepth = depth;
+        if( depth > maxDepth ) maxDepth = depth;
 
-		if( plength === 0 ) return null;
-		if( plength === 1 ) new Node( ( 0 + arrBegin ) * eleSize, parent );
+        var plength = arrEnd - arrBegin;
+        if( plength === 0 ){
+            return -1;
+        }
+        var nodeIndex = currentNode * 4;
+        currentNode += 1;
+        if( plength === 1 ){
+            nodes[ nodeIndex ] = arrBegin;
+            nodes[ nodeIndex + 1 ] = -1;
+            nodes[ nodeIndex + 2 ] = -1;
+            nodes[ nodeIndex + 3 ] = parent;
+            return nodeIndex;
+        }
+        // if( plength <= 32 ){
+        //     return nodeIndex;
+        // }
 
-		if( dim < dimSize ){
-			quicksortIP( points, eleSize, dim, arrBegin, arrEnd );
-		}
+        var arrMedian = arrBegin + Math.floor( plength / 2 );
+        currentDim = depth % 3;
 
-		median = Math.floor( plength / 2 );
+        // inlined quickselect function
+        var j, tmp, pivotIndex, pivotValue, storeIndex;
+        var left = arrBegin;
+        var right = arrEnd - 1;
+        while( right > left ){
+            pivotIndex = ( left + right ) >> 1;
+            pivotValue = points[ indices[ pivotIndex ] * 3 + currentDim ];
+            // swap( pivotIndex, right );
+            tmp = indices[ pivotIndex ];
+            indices[ pivotIndex ] = indices[ right ];
+            indices[ right ] = tmp;
+            storeIndex = left;
+            for( j = left; j < right; ++j ){
+                if( points[ indices[ j ] * 3 + currentDim ] < pivotValue ){
+                    // swap( storeIndex, j );
+                    tmp = indices[ storeIndex ];
+                    indices[ storeIndex ] = indices[ j ];
+                    indices[ j ] = tmp;
+                    ++storeIndex;
+                }
+            }
+            // swap( right, storeIndex );
+            tmp = indices[ right ];
+            indices[ right ] = indices[ storeIndex ];
+            indices[ storeIndex ] = tmp;
+            pivotIndex = storeIndex;
+            if( arrMedian === pivotIndex ){
+                break;
+            }else if( arrMedian < pivotIndex ){
+                right = pivotIndex - 1;
+            }else{
+                left = pivotIndex + 1;
+            }
+        }
 
-		node = new Node( ( median + arrBegin ) * eleSize, parent );
-		node.left = buildTree( depth + 1, node, arrBegin, arrBegin + median );
-		node.right = buildTree( depth + 1, node, arrBegin + median + 1, arrEnd );
+        nodes[ nodeIndex ] = arrMedian;
+        nodes[ nodeIndex + 1 ] = buildTree( depth + 1, nodeIndex, arrBegin, arrMedian );
+        nodes[ nodeIndex + 2 ] = buildTree( depth + 1, nodeIndex, arrMedian + 1, arrEnd );
+        nodes[ nodeIndex + 3 ] = parent;
+        return nodeIndex;
 
-		return node;
+    }
 
-	}
+    function getNodeDepth( nodeIndex ){
 
-	function getNodeDepth( node ){
+        var parentIndex = nodes[ nodeIndex + 3 ];
+        if( parentIndex === -1 ){
+            return 0;
+        }else{
+            return getNodeDepth( parentIndex ) + 1;
+        }
 
-		if( node.parent === null ){
-			return 0;
-		}else{
-			return getNodeDepth( node.parent ) + 1;
-		}
+    }
 
-	}
+    // TODO
+    // function getNodePos( node ){}
 
-	function getNodePos( node ){
+    var rootIndex = buildTree( 0, -1, 0, n );
 
-		// TODO
-		//
-	}
+    /**
+     * find nearest points
+     * @param {Array} point - array of size 3
+     * @param {Integer} maxNodes - max amount of nodes to return
+     * @param {Float} maxDistance - maximum distance of point to result nodes
+     * @return {Array} array of point, distance pairs
+     */
+    function nearest( point, maxNodes, maxDistance ){
 
-	this.root = buildTree( 0, null, 0, points.length / eleSize );
+        var bestNodes = new BinaryHeap(
+            function( e ){ return -e[ 1 ]; }
+        );
 
-	this.getMaxDepth = function(){ return maxDepth; };
+        function nearestSearch( nodeIndex ){
 
-	this.nearest = function( point, maxNodes, maxDistance ){
+            var bestChild, otherChild;
+            var dimension = getNodeDepth( nodeIndex ) % 3;
+            var pointIndex = indices[ nodes[ nodeIndex ] ] * 3;
+            var ownPoint = [
+                points[ pointIndex + 0 ],
+                points[ pointIndex + 1 ],
+                points[ pointIndex + 2 ]
+            ];
+            var ownDistance = metric( point, ownPoint );
 
-		/*  point: array of elements with size eleSize
-			maxNodes: max amount of nodes to return
-			maxDistance: maximum distance of point to result nodes
-		*/
+            function saveNode( nodeIndex, distance ){
+                bestNodes.push( [ nodeIndex, distance ] );
+                if( bestNodes.size() > maxNodes ){
+                    bestNodes.pop();
+                }
+            }
 
-		var i,
-			result,
-			bestNodes;
+            var leftIndex = nodes[ nodeIndex + 1 ];
+            var rightIndex = nodes[ nodeIndex + 2 ];
 
-		bestNodes = new BinaryHeap(
+            // if it's a leaf
+            if( rightIndex === -1 && leftIndex === -1 ){
+                if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
+                    ownDistance <= maxDistance
+                ){
+                    saveNode( nodeIndex, ownDistance );
+                }
+                return;
+            }
 
-			function ( e ) { return -e[ 1 ]; }
+            if( rightIndex === -1 ){
+                bestChild = leftIndex;
+            }else if ( leftIndex === -1 ){
+                bestChild = rightIndex;
+            }else {
+                if( point[ dimension ] <= points[ pointIndex + dimension ] ){
+                    bestChild = leftIndex;
+                } else {
+                    bestChild = rightIndex;
+                }
+            }
 
-		);
+            // recursive search
+            nearestSearch( bestChild );
 
-		function nearestSearch( node ) {
+            if( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) &&
+                ownDistance <= maxDistance
+            ){
+                saveNode( nodeIndex, ownDistance );
+            }
 
-			var bestChild,
-				dimension = getNodeDepth( node ) % eleSize,
-				ownPoint = [
-					points[ node.pos + 0 ],
-					points[ node.pos + 1 ],
-					points[ node.pos + 2 ]
-				],
-				ownDistance = metric( point, ownPoint ),
-				linearDistance = 0,
-				otherChild,
-				i,
-				linearPoint = [];
+            // if there's still room or the current distance is nearer than the best distance
 
-			function saveNode( node, distance ) {
-				bestNodes.push( [ node, distance ] );
-				if ( bestNodes.size() > maxNodes ) {
-					bestNodes.pop();
-				}
-			}
+            var linearPoint = [];
+            for( var i = 0; i < 3; i += 1 ){
+                if( i === dimension ){
+                    linearPoint[ i ] = point[ i ];
+                } else {
+                    linearPoint[ i ] = points[ pointIndex + i ];
+                }
+            }
+            var linearDistance = metric( linearPoint, ownPoint );
 
-			for ( i = 0; i < dimSize; i += 1 ) {
-				if ( i === getNodeDepth( node ) % eleSize ) {
-					linearPoint[ i ] = point[ i ];
-				} else {
-					linearPoint[ i ] = points[ node.pos + i ];
-				}
-			}
+            if( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) &&
+                Math.abs( linearDistance ) <= maxDistance
+            ){
+                if( bestChild === leftIndex ){
+                    otherChild = rightIndex;
+                } else {
+                    otherChild = leftIndex;
+                }
+                if( otherChild !== -1 ){
+                    nearestSearch( otherChild );
+                }
+            }
 
-			linearDistance = metric( linearPoint, ownPoint );
+        }
 
-			// if it's a leaf
+        nearestSearch( rootIndex );
 
-			if ( node.right === null && node.left === null ) {
-				if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance < maxDistance ) {
-					saveNode( node, ownDistance );
-				}
-				return;
-			}
+        var result = [];
+        for( var i = 0, il = Math.min( bestNodes.size(), maxNodes ); i < il; i += 1 ){
+            result.push( bestNodes.content[ i ] );
+        }
 
-			if ( node.right === null ) {
-				bestChild = node.left;
-			} else if ( node.left === null ) {
-				bestChild = node.right;
-			} else {
-				if ( point[ dimension ] < points[ node.pos + dimension ] ) {
-					bestChild = node.left;
-				} else {
-					bestChild = node.right;
-				}
-			}
+        return result;
 
-			// recursive search
+    }
 
-			nearestSearch( bestChild );
+    function verify( nodeIndex, depth ){
 
-			if ( ( bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ] ) && ownDistance <= maxDistance ) {
+        var count = 1;
 
-				saveNode( node, ownDistance );
+        if( nodeIndex === undefined ){
+            nodeIndex = rootIndex;
+            depth = 0;
+        }
 
-			}
+        if( nodeIndex === -1 ){
+            throw "node is null";
+        }
 
-			// if there's still room or the current distance is nearer than the best distance
+        var dim = depth % 3;
 
-			if ( ( bestNodes.size() < maxNodes || Math.abs( linearDistance ) < bestNodes.peek()[ 1 ] ) && Math.abs( linearDistance ) <= maxDistance ) {
+        var leftIndex = nodes[ nodeIndex + 1 ];
+        var rightIndex = nodes[ nodeIndex + 2 ];
 
-				if ( bestChild === node.left ) {
-					otherChild = node.right;
-				} else {
-					otherChild = node.left;
-				}
+        if( leftIndex !== -1 ){
+            if( points[ indices[ nodes[ leftIndex ] ] * 3 + dim ] >
+                points[ indices[ nodes[ nodeIndex ] ] * 3 + dim ]
+            ){
+                throw "left child is > parent!";
+            }
+            count += verify( leftIndex, depth + 1 );
+        }
 
-				if ( otherChild !== null ) {
-					nearestSearch( otherChild );
-				}
+        if( rightIndex !== -1 ){
+            if( points[ indices[ nodes[ rightIndex ] ] * 3 + dim ] <
+                points[ indices[ nodes[ nodeIndex ] ] * 3 + dim ]
+            ){
+                throw "right child is < parent!";
+            }
+            count += verify( rightIndex, depth + 1);
+        }
 
-			}
+        return count;
 
-		}
+    }
 
-		nearestSearch( self.root );
+    // API
 
-		result = [];
+    this.rootIndex = rootIndex;
+    this.maxDepth = maxDepth;
+    this.nearest = nearest;
+    this.indices = indices;
+    this.nodes = nodes;
+    this.verify = verify;
 
-		for ( i = 0; i < Math.min( bestNodes.size(), maxNodes ); i += 1 ) {
-			var inode = bestNodes.content[ i ];
-			if ( inode && inode[ 0 ] ) {
-				result.push( [ inode[ 0 ], inode[ 1 ] ] );
-			}
-		}
-
-		return result;
-
-	};
-
-}
-
-/**
- * Node
- * @class
- * @private
- * @description
- * If you need to free up additional memory and agree with an additional O( log n ) traversal time you can get rid of "depth" and "pos" in Node:
- * Depth can be easily done by adding 1 for every parent (care: root node has depth 0, not 1)
- * Pos is a bit tricky: Assuming the tree is balanced (which is the case when after we built it up), perform the following steps:
- *   By traversing to the root store the path e.g. in a bit pattern (01001011, 0 is left, 1 is right)
- *   From buildTree we know that "median = Math.floor( plength / 2 );", therefore for each bit...
- *     0: amountOfNodesRelevantForUs = Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *     1: amountOfNodesRelevantForUs = Math.ceil( (pamountOfNodesRelevantForUs - 1) / 2 );
- *        pos += Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *     when recursion done, we still need to add all left children of target node:
- *        pos += Math.floor( (pamountOfNodesRelevantForUs - 1) / 2 );
- *        and I think you need to +1 for the current position, not sure.. depends, try it out ^^
- *
- * I experienced that for 200'000 nodes you can get rid of 4 MB memory each, leading to 8 MB memory saved.
- *
- * @param {Integer} pos - index of position
- * @param {Integer} parent - index of parent Node
- */
-function Node( pos, parent ){
-	this.pos = pos;
-	this.left = null;
-	this.right = null;
-	this.parent = parent;
 }
 
 

@@ -218,10 +218,6 @@ Surface.prototype = {
             var n = index.length;
             var j = 0;
 
-            var ap1 = structure.getAtomProxy();
-            var ap2 = structure.getAtomProxy();
-            var ap3 = structure.getAtomProxy();
-
             for( var i = 0; i < n; i+=3 ){
 
                 var idx1 = index[ i     ];

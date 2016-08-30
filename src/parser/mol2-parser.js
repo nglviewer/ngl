@@ -43,7 +43,6 @@ Mol2Parser.prototype = Object.assign( Object.create(
         var asTrajectory = this.asTrajectory;
 
         var frames = s.frames;
-        var boxes = s.boxes;
         var doFrames = false;
         var currentFrame, currentCoord;
 
@@ -135,12 +134,12 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
                     }else if( moleculeLineNo === 2 ){
 
-                        var molType = line;
+                        // var molType = line;
                         // SMALL, BIOPOLYMER, PROTEIN, NUCLEIC_ACID, SACCHARIDE
 
                     }else if( moleculeLineNo === 3 ){
 
-                        var chargeType = line;
+                        // var chargeType = line;
                         // NO_CHARGES, DEL_RE, GASTEIGER, GAST_HUCK, HUCKEL,
                         // PULLMAN, GAUSS80_CHARGES, AMPAC_CHARGES,
                         // MULLIKEN_CHARGES, DICT_ CHARGES, MMFF94_CHARGES,
@@ -148,11 +147,11 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
                     }else if( moleculeLineNo === 4 ){
 
-                        var statusBits = line;
+                        // var statusBits = line;
 
                     }else if( moleculeLineNo === 5 ){
 
-                        var molComment = line;
+                        // var molComment = line;
 
                     }
 
@@ -222,7 +221,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
         }
 
-        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 

@@ -1,0 +1,18 @@
+{
+  "parser": "espree",
+  "extends": "eslint:recommended",
+  "rules": {
+    "no-console": "off",
+    "no-constant-condition": "off"
+  },
+  "env": {
+    "es6": true,
+    "node": true,
+    "mocha": true,
+    "browser": true,
+    "worker": true
+  },
+  "parserOptions": {
+    "sourceType": "module"
+  }
+}

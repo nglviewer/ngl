@@ -8,8 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
-    ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
 } from "../structure/structure-constants.js";
 

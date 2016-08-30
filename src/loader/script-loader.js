@@ -21,7 +21,7 @@ ScriptLoader.prototype = Object.assign( Object.create(
 
     constructor: ScriptLoader,
 
-    _load: function( resolve, reject ){
+    _load: function( resolve ){
 
         this.streamer.read( function(){
 

@@ -14,6 +14,29 @@ import SurfaceBuffer from "../buffer/surface-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
 
 
+/**
+ * Surface representation parameter object.
+ * @typedef {Object} SurfaceRepresentationParameters - surface representation parameters
+ * @mixes RepresentationParameters
+ *
+ * @property {String} isolevelType - Meaning of the isolevel value. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
+ * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
+ * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
+ * @property {Boolean} background - Render the surface in the background, unlit.
+ * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring of the transparency parameter.
+ * @property {Integer} boxSize - Size of the box to triangulate volume data in. Set to zero to triangulate the whole volume. For volume data only.
+ * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
+ */
+
+
+/**
+ * Surface representation object
+ * @class
+ * @extends Representation
+ * @param {Surface|Volume} surface - the surface or volume to be represented
+ * @param {Viewer} viewer - a viewer object
+ * @param {SurfaceRepresentationParameters} params - surface representation parameters
+ */
 function SurfaceRepresentation( surface, viewer, params ){
 
     Representation.call( this, surface, viewer, params );
@@ -33,7 +56,7 @@ function SurfaceRepresentation( surface, viewer, params ){
 
     this.setBox = ( function(){
         var position = new Vector3();
-        return function(){
+        return function setBox(){
             var target = viewer.controls.target;
             var group = viewer.rotationGroup.position;
             position.copy( group ).negate().add( target );
@@ -223,6 +246,20 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set representation parameters
+     * @alias SurfaceRepresentation#setParameters
+     * @param {SurfaceRepresentationParameters} params - surface parameter object
+     * @param {Object} [what] - buffer data attributes to be updated,
+     *                        note that this needs to be implemented in the
+     *                        derived classes. Generally it allows more
+     *                        fine-grained control over updating than
+     *                        forcing a rebuild.
+     * @param {Boolean} what.position - update position data
+     * @param {Boolean} what.color - update color data
+     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+     * @return {SurfaceRepresentation} this object
+     */
     setParameters: function( params, what, rebuild ){
 
         if( params && params.isolevelType !== undefined &&

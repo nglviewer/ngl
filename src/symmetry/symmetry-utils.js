@@ -7,6 +7,7 @@
 
 import { Matrix4 } from "../../lib/three.es6.js";
 
+import { Log } from "../globals.js";
 import { EncodedSymOp, SymOpCode } from "./symmetry-constants.js";
 
 

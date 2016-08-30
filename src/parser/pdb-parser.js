@@ -72,7 +72,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
         var line, recordName;
         var serial, chainname, resno, resname, occupancy,
-            inscode, atomname, element, hetero, bfactor, altloc;
+            inscode, atomname, hetero, bfactor, altloc;
 
         var startChain, startResi, startIcode;
         var endChain, endResi, endIcode;
@@ -313,7 +313,6 @@ PdbParser.prototype = Object.assign( Object.create(
 
                         var biomt = line.split( /\s+/ );
                         var row = parseInt( line[ 18 ] ) - 1;
-                        var mat = biomt[ 3 ].trim();
 
                         if( row === 0 ){
                             currentMatrix = new Matrix4();
@@ -450,7 +449,7 @@ PdbParser.prototype = Object.assign( Object.create(
                     var gamma = parseFloat( line.substr( 47, 7 ) );
 
                     var sGroup = line.substr( 55, 11 ).trim();
-                    var zValue = parseInt( line.substr( 66, 4 ) );
+                    // var zValue = parseInt( line.substr( 66, 4 ) );
 
                     var box = new Float32Array( 9 );
                     box[ 0 ] = aLength;
@@ -474,7 +473,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
         }
 
-        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 

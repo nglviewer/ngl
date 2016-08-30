@@ -37,11 +37,11 @@ if( !window.Promise ){
     while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
     while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
 
-    // Using `this` for web workers while maintaining compatibility with browser
+    // Using `self` for web workers while maintaining compatibility with browser
     // targeted script loaders such as Browserify or Webpack where the only way to
     // get to the global object is via `window`.
 
-} )( typeof window === 'undefined' ? this : window );
+} )( typeof window === 'undefined' ? self : window );
 
 
 if( !HTMLCanvasElement.prototype.toBlob ){
@@ -116,7 +116,7 @@ if( !Object.assign ){
         configurable: true,
         writable: true,
 
-        value: function(target, firstSource) {
+        value: function(target/*, firstSource*/) {
 
             "use strict";
             if (target === undefined || target === null)
@@ -177,7 +177,7 @@ if (!String.prototype.startsWith) {
                 var object = {};
                 var $defineProperty = Object.defineProperty;
                 result = $defineProperty(object, object, object) && $defineProperty;
-            } catch(error) {}
+            } catch(error) {}  // eslint-disable-line no-empty
             return result;
         }());
         var toString = {}.toString;
@@ -265,7 +265,7 @@ if (!String.prototype.endsWith) {
 
     if( !window.requestAnimationFrame ){
 
-        window.requestAnimationFrame = function( callback, element ){
+        window.requestAnimationFrame = function( callback/*, element*/ ){
 
             var currTime = new Date().getTime();
             var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
@@ -345,7 +345,7 @@ HTMLElement.prototype.getBoundingClientRect = function(){
 
     var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-    return function(){
+    return function getBoundingClientRect(){
         try{
             return _getBoundingClientRect.apply( this, arguments );
         }catch( e ){
@@ -370,7 +370,7 @@ if( WebGLRenderingContext ){
 
         var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
 
-        return function(){
+        return function getShaderParameter(){
 
             if( Debug ){
 
@@ -390,7 +390,7 @@ if( WebGLRenderingContext ){
 
         var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
 
-        return function(){
+        return function getShaderInfoLog(){
 
             if( Debug ){
 
@@ -410,7 +410,7 @@ if( WebGLRenderingContext ){
 
         var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
 
-        return function( program, pname ){
+        return function getProgramParameter( program, pname ){
 
             if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
 
@@ -430,7 +430,7 @@ if( WebGLRenderingContext ){
 
         var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
 
-        return function(){
+        return function getProgramInfoLog(){
 
             if( Debug ){
 
@@ -471,13 +471,16 @@ import RepresentationCollection from "./component/representation-collection.js";
 import Assembly from "./symmetry/assembly.js";
 import TrajectoryPlayer from "./trajectory/trajectory-player.js";
 import { superpose } from "./align/align-utils.js";
+import { guessElement } from "./structure/structure-utils.js";
 
-import { throttle, download, getQuery } from "./utils.js";
+import { throttle, download, getQuery, uniqueArray } from "./utils.js";
+import { ColorMaker } from "./utils/color-maker.js";
 import Queue from "./utils/queue.js";
 import Counter from "./utils/counter.js";
 
 //
 
+/* eslint-disable no-unused-vars */
 import AxesRepresentation from "./representation/axes-representation";
 import BackboneRepresentation from "./representation/backbone-representation";
 import BallAndStickRepresentation from "./representation/ballandstick-representation";
@@ -499,6 +502,7 @@ import SpacefillRepresentation from "./representation/spacefill-representation";
 import TraceRepresentation from "./representation/trace-representation";
 import TubeRepresentation from "./representation/tube-representation";
 import UnitcellRepresentation from "./representation/unitcell-representation";
+/* eslint-enable no-unused-vars */
 
 import BufferRepresentation from "./representation/buffer-representation";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
@@ -509,6 +513,7 @@ import SphereBuffer from "./buffer/sphere-buffer.js";
 
 //
 
+/* eslint-disable no-unused-vars */
 import GroParser from "./parser/gro-parser.js";
 import PdbParser from "./parser/pdb-parser.js";
 import PqrParser from "./parser/pqr-parser.js";
@@ -531,10 +536,13 @@ import TextParser from "./parser/text-parser.js";
 import CsvParser from "./parser/csv-parser.js";
 import JsonParser from "./parser/json-parser.js";
 import XmlParser from "./parser/xml-parser.js";
+/* eslint-enable no-unused-vars */
 
 //
 
 import Shape from "./geometry/shape.js";
+import Kdtree from "./geometry/kdtree.js";
+import SpatialHash from "./geometry/spatial-hash.js";
 
 //
 
@@ -546,7 +554,7 @@ DatasourceRegistry.add( "https", new PassThroughDatasource() );
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix3, Matrix4, Vector3, Quaternion, Color } from "../lib/three.es6.js";
+import { Matrix3, Matrix4, Vector3, Quaternion, Plane, Color } from "../lib/three.es6.js";
 
 //
 
@@ -637,6 +645,14 @@ var Version = "v0.9.0dev";
  */
 
 /**
+ * Plane class from three.js
+ * @name Plane
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Plane}
+ */
+
+/**
  * Color class from three.js
  * @name Color
  * @class
@@ -658,6 +674,7 @@ export {
     autoLoad,
     RepresentationRegistry,
     ColorMakerRegistry,
+    ColorMaker,
     Selection,
     PdbWriter,
     /**
@@ -679,6 +696,7 @@ export {
      * @see {@link superpose}
      */
     superpose,
+    guessElement,
 
     Queue,
     Counter,
@@ -686,6 +704,7 @@ export {
     download,
     getQuery,
     getDataInfo,
+    uniqueArray,
 
     /**
      * Buffer representation class
@@ -724,6 +743,9 @@ export {
      */
     Shape,
 
+    Kdtree,
+    SpatialHash,
+
     /**
      * Signal class
      * @see {@link Signal}
@@ -750,6 +772,11 @@ export {
      * @see {@link Quaternion}
      */
     Quaternion,
+    /**
+     * Plane class
+     * @see {@link Plane}
+     */
+    Plane,
     /**
      * Color class
      * @see {@link Color}

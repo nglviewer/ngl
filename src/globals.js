@@ -5,7 +5,7 @@
  */
 
 
-import { getBrowser, getQuery, boolean, defaults } from "./utils.js";
+import { getBrowser, getQuery, boolean } from "./utils.js";
 import Registry from "./utils/registry.js";
 import _GidPool from "./utils/gid-pool.js";
 import _WorkerRegistry from "./worker/worker-registry.js";
@@ -60,7 +60,6 @@ export {
     Debug,
     setDebug,
     WebglErrorMessage,
-    MainScriptFilePath,
     WorkerRegistry,
     ColorMakerRegistry,
     DatasourceRegistry,

@@ -6,8 +6,7 @@
 
 
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
-    ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
+    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     AA1
 } from "../structure/structure-constants.js";
@@ -65,6 +64,10 @@ ResidueProxy.prototype = {
     },
     set atomCount ( value ) {
         this.residueStore.atomCount[ this.index ] = value;
+    },
+
+    get atomEnd () {
+        return this.atomOffset + this.atomCount - 1;
     },
 
     //

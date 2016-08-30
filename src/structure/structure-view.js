@@ -9,7 +9,6 @@ import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
-import Bitset from "../utils/bitset.js";
 import Structure from "./structure.js";
 import Selection from "../selection.js";
 
@@ -131,11 +130,8 @@ StructureView.prototype = Object.assign( Object.create(
         this._rp = this.getResidueProxy();
         this._cp = this.getChainProxy();
 
-        // FIXME should selection be serializable?
         if( this.selection ){
-            this.selection.signals.stringChanged.add( function( string ){
-                this.refresh();
-            }, this );
+            this.selection.signals.stringChanged.add( this.refresh, this );
         }
 
         this.structure.signals.refreshed.add( this.refresh, this );
@@ -260,7 +256,7 @@ StructureView.prototype = Object.assign( Object.create(
      */
     eachResidueN: function( n, callback ){
 
-        console.error( "StructureView.eachResidueN() not implemented" );
+        console.error( "StructureView.eachResidueN() not implemented", n, callback );
 
     },
 
@@ -304,6 +300,12 @@ StructureView.prototype = Object.assign( Object.create(
     //
 
     dispose: function(){
+
+        if( this.selection ){
+            this.selection.signals.stringChanged.remove( this.refresh, this );
+        }
+
+        this.structure.signals.refreshed.remove( this.refresh, this );
 
         delete this.structure;
 

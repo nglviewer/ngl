@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 import StructureComponent from "./structure-component.js";
 import SurfaceComponent from "./surface-component.js";
 import ShapeComponent from "./shape-component.js";

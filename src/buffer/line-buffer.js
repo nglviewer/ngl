@@ -18,7 +18,6 @@ function LineBuffer( from, to, color, color2, params ){
     this.line = true;
 
     var n = this.size;
-    var n6 = n * 6;
     var nX = n * 2 * 2;
 
     this.attributeSize = nX;

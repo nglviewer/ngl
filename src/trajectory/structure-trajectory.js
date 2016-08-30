@@ -39,7 +39,7 @@ StructureTrajectory.prototype = Object.assign( Object.create(
 
         var coords;
         var structure = this.structure;
-        var frame = this.structure.frames[ i ];
+        var frame = structure.frames[ i ];
 
         if( this.atomIndices ){
 
@@ -65,8 +65,8 @@ StructureTrajectory.prototype = Object.assign( Object.create(
 
         }
 
-        var box = this.structure.boxes[ i ];
-        var numframes = this.structure.frames.length;
+        var box = structure.boxes[ i ];
+        var numframes = structure.frames.length;
 
         this.process( i, box, coords, numframes );
 

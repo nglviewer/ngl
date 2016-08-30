@@ -14,10 +14,7 @@ import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix, principalAxes } from "../math/matrix-utils.js";
-import Selection from "../selection.js";
 // import StructureView from "./structure-view.js";
-import Unitcell from "../symmetry/unitcell.js";
-import Assembly from "../symmetry/assembly.js";
 
 import BondHash from "../store/bond-hash.js";
 import BondStore from "../store/bond-store.js";
@@ -233,7 +230,7 @@ Structure.prototype = {
 
     //
 
-    getBondSet: function( selection ){
+    getBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -266,7 +263,7 @@ Structure.prototype = {
 
     },
 
-    getBackboneBondSet: function( selection ){
+    getBackboneBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -300,7 +297,7 @@ Structure.prototype = {
 
     },
 
-    getRungBondSet: function( selection ){
+    getRungBondSet: function( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -727,11 +724,13 @@ Structure.prototype = {
         }
 
         var i = 0;
+
         var j, i3, k, bondOrder, radius, multiRadius;
 
         var vt = new Vector3();
         var vShortening = new Vector3();
         var vShift = new Vector3();
+
         bondSet.forEach( function( index ){
             i3 = i * 3;
             bp.index = index;
@@ -740,12 +739,12 @@ Structure.prototype = {
             bondOrder = bp.bondOrder;
             if( position1 ){
                 if( multipleBond && bondOrder > 1 ){
-                    var radius = radiusFactory.atomRadius( ap1 );
+                    radius = radiusFactory.atomRadius( ap1 );
 
                     // Get shift Vector:
                     bp.calculateShiftDir( vShift );
                     if( asymmMulti ) {
-                        var multiRadius = radius / 2 * bondSpacing;
+                        multiRadius = radius / 2 * bondSpacing;
                         vShift.multiplyScalar( radius + multiRadius + 0.1 );
                         vShift.negate();
 
@@ -764,7 +763,7 @@ Structure.prototype = {
                             }
                         }
                     } else {
-                        var multiRadius = radius / bondOrder * bondSpacing;                    
+                        multiRadius = radius / bondOrder * bondSpacing;                    
                         vShift.multiplyScalar( radius - multiRadius );
 
                         if( bondOrder === 2 ){
@@ -815,7 +814,7 @@ Structure.prototype = {
             if( radius1 ){
                 radius1[ i ] = radiusFactory.atomRadius( ap1 );
                 if( multipleBond && bondOrder > 1 ){
-                    var multiRadius = radius1[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
+                    multiRadius = radius1[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
                     for( j = asymmMulti ? 1 : 0 ; j < bondOrder; ++j ){
                         radius1[ i + j ] = multiRadius;
                     }
@@ -824,7 +823,7 @@ Structure.prototype = {
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
                 if( multipleBond && bondOrder > 1 ){
-                    var multiRadius = radius2[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
+                    multiRadius = radius2[ i ] / ( bondSpacing * ( asymmMulti ? 2 : bondOrder )); 
                     for( j = asymmMulti ? 1 : 0 ; j < bondOrder; ++j ){
                         radius2[ i + j ] = multiRadius;
                     }

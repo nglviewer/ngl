@@ -33,6 +33,10 @@ import TextBuffer from "../buffer/text-buffer.js";
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} attachment - attachment of the label, one of:
+ *                                 "bottom-left", "bottom-center", "bottom-right",
+ *                                 "middle-left", "middle-center", "middle-right",
+ *                                 "top-left", "top-center", "top-right"
  */
 
 
@@ -99,6 +103,20 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         },
         zOffset: {
             type: "number", precision: 1, max: 20, min: -20, buffer: true
+        },
+        attachment: {
+            type: "select", options: {
+                "bottom-left": "bottom-left",
+                "bottom-center": "bottom-center",
+                "bottom-right": "bottom-right",
+                "middle-left": "middle-left",
+                "middle-center": "middle-center",
+                "middle-right": "middle-right",
+                "top-left": "top-left",
+                "top-center": "top-center",
+                "top-right": "top-right"
+            },
+            rebuild: true
         }
 
     }, StructureRepresentation.prototype.parameters, {
@@ -127,6 +145,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.xOffset = defaults( p.xOffset, 0.0 );
         this.yOffset = defaults( p.yOffset, 0.0 );
         this.zOffset = defaults( p.zOffset, 0.5 );
+        this.attachment = defaults( p.attachment, "bottom-left" );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -157,7 +176,8 @@ LabelRepresentation.prototype = Object.assign( Object.create(
                 sdf: this.sdf,
                 xOffset: this.xOffset,
                 yOffset: this.yOffset,
-                zOffset: this.zOffset
+                zOffset: this.zOffset,
+                attachment: this.attachment
             } )
         );
 

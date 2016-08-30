@@ -13,6 +13,23 @@ import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";
 
 
+var getTextAtlas = function(){
+
+    var cache = {};
+
+    return function getTextAtlas( params ){
+
+        var hash = JSON.stringify( params );
+
+        if( cache[ hash ] === undefined ){
+            cache[ hash ] = new TextAtlas( params );
+        }
+        return cache[ hash ];
+    }
+
+}();
+
+
 function TextAtlas( params ){
 
     // adapted from https://github.com/unconed/mathbox
@@ -43,7 +60,12 @@ function TextAtlas( params ){
     this.currentX = 0;
     this.currentY = 0;
 
-    this.build( p );
+    this.build();
+    this.populate();
+
+    this.texture = new CanvasTexture( this.canvas2 );
+    this.texture.flipY = false;
+    this.texture.needsUpdate = true;
 
 }
 
@@ -62,21 +84,12 @@ TextAtlas.prototype = {
         canvas.width = maxWidth;
         canvas.height = lineHeight;
 
-        // Font string
-        var quote = function(str) {
-            return "\"" + ( str.replace( /(['"\\])/g, "\\$1" ) ) + "\"";
-        };
-        var font = this.font.map( quote ).join( ", " );
-
         var ctx = canvas.getContext( "2d" );
         ctx.font = this.style + " " + this.variant + " " + this.weight + " " + this.size + "px " + this.font;
         ctx.fillStyle = "#FF0000";
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
         ctx.lineJoin = "round";
-
-        // document.body.appendChild( canvas );
-        // canvas.setAttribute( "style", "position: absolute; top: 0; left: 0; z-index: 100; border: 1px solid red; background: rgba(255,0,255,.25);" );
 
         var colors = [];
         var dilate = this.outline * 3;
@@ -101,8 +114,6 @@ TextAtlas.prototype = {
         this.canvas2.width = this.width;
         this.canvas2.height = this.height;
         this.context2 = this.canvas2.getContext( '2d' );
-        // document.body.appendChild( this.canvas2 );
-        // this.canvas2.setAttribute( "style", "position: absolute; bottom: 0; right: 0; z-index: 100; border: 1px solid green; background: rgba(255,0,255,.25);" );
 
     },
 
@@ -111,8 +122,6 @@ TextAtlas.prototype = {
         if( this.mapped[ text ] === undefined ){
 
             this.draw( text );
-
-            // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
             if( this.currentX + this.scratchW > this.width ){
                 this.currentX = 0;
@@ -227,10 +236,11 @@ TextAtlas.prototype = {
 
     },
 
-    dispose: function(){
+    populate: function(){
 
-        // document.body.removeChild( this.canvas );
-        // document.body.removeChild( this.canvas2 );
+        for( var i = 0; i < 256; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
 
     }
 
@@ -258,6 +268,10 @@ TextAtlas.prototype = {
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} attachment - attachment of the label, one of:
+ *                                 "bottom-left", "bottom-center", "bottom-right",
+ *                                 "middle-left", "middle-center", "middle-right",
+ *                                 "top-left", "top-center", "top-right"
  */
 
 
@@ -288,6 +302,7 @@ function TextBuffer( position, size, color, text, params ){
     this.xOffset = defaults( p.xOffset, 0.0 );
     this.yOffset = defaults( p.yOffset, 0.0 );
     this.zOffset = defaults( p.zOffset, 0.5 );
+    this.attachment = defaults( p.attachment, "bottom-left" );
 
     var n = position.length / 3;
 
@@ -354,20 +369,25 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         Buffer.prototype.makeMaterial.call( this );
 
-        this.material.extensions.derivatives = true;
-        this.material.lights = false;
-        this.material.uniforms.fontTexture.value = this.tex;
-        this.material.needsUpdate = true;
+        var tex = this.texture;
 
-        this.wireframeMaterial.extensions.derivatives = true;
-        this.wireframeMaterial.lights = false;
-        this.wireframeMaterial.uniforms.fontTexture.value = this.tex;
-        this.wireframeMaterial.needsUpdate = true;
+        var m = this.material;
+        m.extensions.derivatives = true;
+        m.lights = false;
+        m.uniforms.fontTexture.value = tex;
+        m.needsUpdate = true;
 
-        this.pickingMaterial.extensions.derivatives = true;
-        this.pickingMaterial.lights = false;
-        this.pickingMaterial.uniforms.fontTexture.value = this.tex;
-        this.pickingMaterial.needsUpdate = true;
+        var wm = this.wireframeMaterial;
+        wm.extensions.derivatives = true;
+        wm.lights = false;
+        wm.uniforms.fontTexture.value = tex;
+        wm.needsUpdate = true;
+
+        var pm = this.pickingMaterial;
+        pm.extensions.derivatives = true;
+        pm.lights = false;
+        pm.uniforms.fontTexture.value = tex;
+        pm.needsUpdate = true;
 
     },
 
@@ -399,19 +419,17 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         var n = this.positionCount;
 
-        var i, j, o;
+        var j, o;
         var iCharAll = 0;
         var txt, iChar, nChar;
 
-        for( var v = 0; v < n; v++ ) {
+        for( var v = 0; v < n; ++v ) {
 
             o = 3 * v;
             txt = text[ v ];
             nChar = txt.length;
 
-            for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
-
-                i = iCharAll * 2 * 4;
+            for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
                 for( var m = 0; m < 4; m++ ) {
 
@@ -449,10 +467,7 @@ TextBuffer.prototype = Object.assign( Object.create(
 
     makeTexture: function(){
 
-        if( this.tex ) this.tex.dispose();
-        if( this.ta ) this.ta.dispose();
-
-        var ta = new TextAtlas( {
+        this.textAtlas = getTextAtlas( {
             font: [ this.fontFamily ],
             style: this.fontStyle,
             weight: this.fontWeight,
@@ -460,22 +475,15 @@ TextBuffer.prototype = Object.assign( Object.create(
             outline: this.sdf ? 5 : 0
         } );
 
-        for( var i = 0; i < 256; ++i ){
-            ta.map( String.fromCharCode( i ) );
-        }
-
-        this.ta = ta;
-
-        this.tex = new CanvasTexture( ta.canvas2 );
-        this.tex.flipY = false;
-        this.tex.needsUpdate = true;
+        this.texture = this.textAtlas.texture;
 
     },
 
     makeMapping: function(){
 
-        var ta = this.ta;
+        var ta = this.textAtlas;
         var text = this.text;
+        var attachment = this.attachment;
 
         var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
         var inputMapping = this.geometry.attributes.mapping.array;
@@ -483,34 +491,60 @@ TextBuffer.prototype = Object.assign( Object.create(
         var n = this.positionCount;
 
         var c;
-        var i, j, o;
+        var i;
         var iCharAll = 0;
-        var txt, xadvance, iChar, nChar;
+        var txt, xadvance, iChar, nChar, xShift, yShift;
 
-        for( var v = 0; v < n; v++ ) {
+        for( var v = 0; v < n; ++v ) {
 
-            o = 3 * v;
             txt = text[ v ];
             xadvance = 0;
             nChar = txt.length;
 
-            for( iChar = 0; iChar < nChar; iChar++, iCharAll++ ) {
+            // calculate width
+            for( iChar = 0; iChar < nChar; ++iChar ) {
+                c = ta.mapped[ txt[ iChar ] ];
+                xadvance += c.w - 2 * ta.outline;
+            }
+
+            if( attachment.startsWith( "top" ) ){
+                yShift = ta.lineHeight / 1.25;
+            }else if( attachment.startsWith( "middle" ) ){
+                yShift = ta.lineHeight / 2.5;
+            }else{
+                yShift = 0;  // "bottom"
+            }
+
+            if( attachment.endsWith( "right" ) ){
+                xShift = xadvance;
+            }else if( attachment.endsWith( "center" ) ){
+                xShift = xadvance / 2;
+            }else{
+                xShift = 0;  // "left"
+            }
+
+            xShift += ta.outline;
+            yShift += ta.outline;
+
+            xadvance = 0;
+
+            for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
                 c = ta.mapped[ txt[ iChar ] ];
                 i = iCharAll * 2 * 4;
 
                 // top left
-                inputMapping[ i + 0 ] = xadvance - ta.outline;
-                inputMapping[ i + 1 ] = c.h - ta.outline;
+                inputMapping[ i + 0 ] = xadvance - xShift;
+                inputMapping[ i + 1 ] = c.h - yShift;
                 // bottom left
-                inputMapping[ i + 2 ] = xadvance - ta.outline;
-                inputMapping[ i + 3 ] = 0 - ta.outline;
+                inputMapping[ i + 2 ] = xadvance - xShift;
+                inputMapping[ i + 3 ] = 0 - yShift;
                 // top right
-                inputMapping[ i + 4 ] = xadvance + c.w - ta.outline;
-                inputMapping[ i + 5 ] = c.h - ta.outline;
+                inputMapping[ i + 4 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 5 ] = c.h - yShift;
                 // bottom right
-                inputMapping[ i + 6 ] = xadvance + c.w - ta.outline;
-                inputMapping[ i + 7 ] = 0 - ta.outline;
+                inputMapping[ i + 6 ] = xadvance + c.w - xShift;
+                inputMapping[ i + 7 ] = 0 - yShift;
 
                 var texWidth = ta.width;
                 var texHeight = ta.height;
@@ -559,20 +593,12 @@ TextBuffer.prototype = Object.assign( Object.create(
 
             this.makeTexture();
             this.makeMapping();
-            data.fontTexture = this.tex;
+            this.texture.needsUpdate = true;
+            data.fontTexture = this.texture;
 
         }
 
         Buffer.prototype.setUniforms.call( this, data );
-
-    },
-
-    dispose: function(){
-
-        Buffer.prototype.dispose.call( this );
-
-        if( this.tex ) this.tex.dispose();
-        if( this.ta ) this.ta.dispose();
 
     }
 

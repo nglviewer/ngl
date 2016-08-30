@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log, DatasourceRegistry } from "../globals.js";
+import { Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
 
 
@@ -79,7 +79,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
             "Content-type", "application/x-www-form-urlencoded"
         );
 
-        request.addEventListener( 'load', function( event ){
+        request.addEventListener( 'load', function(){
 
             var arrayBuffer = request.response;
             if( !arrayBuffer ){
@@ -88,7 +88,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
             }
 
             var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
-            var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
             var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
             var coords = new Float32Array( arrayBuffer, 11 * 4 );
 
@@ -111,7 +111,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
         var url = ds.getNumframesUrl( this.trajPath );
 
         request.open( "GET", url, true );
-        request.addEventListener( 'load', function( event ){
+        request.addEventListener( 'load', function(){
             this.setNumframes( parseInt( request.response ) );
         }.bind( this ), false );
         request.send( null );
@@ -139,7 +139,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
             "Content-type", "application/x-www-form-urlencoded"
         );
 
-        request.addEventListener( 'load', function( event ){
+        request.addEventListener( 'load', function(){
 
             Log.timeEnd( "loadPath" );
 

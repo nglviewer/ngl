@@ -159,7 +159,7 @@ TypedFastBitSet.prototype.set_range = function(from, to, value) {
 TypedFastBitSet.prototype.clear = function() {
   this.count = 0 | 0;
   this.length = 0 | 0;
-  this.words = new Uint32Array(count);
+  this.words = new Uint32Array(this.count);
   return this;
 };
 
@@ -178,7 +178,7 @@ TypedFastBitSet.prototype.remove_unsafe = function(index) {
 };
 
 // Return true if no bit is set
-TypedFastBitSet.prototype.isEmpty = function(index) {
+TypedFastBitSet.prototype.isEmpty = function() {
   var c = this.count;
   for (var  i = 0; i < c; i++) {
     if (this.words[i] !== 0) return false;
@@ -192,7 +192,7 @@ TypedFastBitSet.prototype.has = function(index) {
 };
 
 // Reduce the memory usage to a minimum
-TypedFastBitSet.prototype.trim = function(index) {
+TypedFastBitSet.prototype.trim = function() {
   while (this.count > 0) {
     if (this.words[this.count - 1] === 0)
       this.count--;

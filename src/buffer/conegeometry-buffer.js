@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Vector3, ConeGeometry, ConeBufferGeometry } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, ConeBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -23,14 +23,7 @@ function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
 
     var matrix = new Matrix4().makeRotationX( -Math.PI / 2  );
 
-    var geoCtor;
-    if( openEnded ){
-        geoCtor = ConeGeometry;
-    }else{
-        geoCtor = ConeBufferGeometry;
-    }
-
-    this.geo = new geoCtor(
+    this.geo = new ConeBufferGeometry(
         1,  // radius
         1,  // height
         radialSegments,  // radialSegments
@@ -47,7 +40,7 @@ function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
     this._to = new Float32Array( n );
     this._radius = new Float32Array( m );
 
-    // FIXME this contains a call to .setAttributes, 
+    // FIXME this contains a call to .setAttributes,
     GeometryBuffer.call(
         this, this._position, color, pickingColor, p
     );
@@ -76,7 +69,7 @@ ConeGeometryBuffer.prototype = Object.assign( Object.create(
         var target = new Vector3();
         var up = new Vector3( 0, 1, 0 );
 
-        return function( matrix, i, i3 ){
+        return function applyPositionTransform( matrix, i, i3 ){
 
             eye.fromArray( this._from, i3 );
             target.fromArray( this._to, i3 );

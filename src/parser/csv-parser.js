@@ -40,7 +40,7 @@ CsvParser.prototype = Object.assign( Object.create(
         var data = this.table.data;
         var reDelimiter = /\s*,\s*/;
 
-        this.streamer.eachChunkOfLines( function( chunk, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( chunk, chunkNo/*, chunkCount*/ ){
 
             var n = chunk.length;
 

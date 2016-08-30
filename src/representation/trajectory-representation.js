@@ -7,7 +7,6 @@
 
 import { Color } from "../../lib/three.es6.js";
 
-import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 

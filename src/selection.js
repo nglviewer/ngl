@@ -7,7 +7,6 @@
 
 import Signal from "../lib/signals.es6.js";
 
-import { Log, Debug } from "./globals.js";
 import { binarySearchIndexOf } from "./utils.js";
 
 
@@ -96,7 +95,6 @@ Selection.prototype = {
         var selection = this.selection;
         var selectionStack = [];
         var newSelection, oldSelection;
-        var andContext = null;
 
         string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
         if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
@@ -108,9 +106,8 @@ Selection.prototype = {
 
         var all = [ "*", "", "ALL" ];
 
-        var c, sele, i, error, not;
-        var atomname, chain, resno, resname, model, resi, altloc, inscode;
-        var j = 0;
+        var c, sele, i, not;
+        var atomname, chain, model, resi, altloc, inscode;
 
         var createNewContext = function( operator ){
 
@@ -126,7 +123,6 @@ Selection.prototype = {
                 selectionStack.push( selection );
                 selection = newSelection;
             }
-            j = 0;
 
         };
 
@@ -137,8 +133,6 @@ Selection.prototype = {
             if( selection === undefined ){
                 createNewContext( operator );
                 pushRule( oldSelection );
-            }else{
-                j = selection.rules.length;
             }
 
         };
@@ -146,7 +140,6 @@ Selection.prototype = {
         var pushRule = function( rule ){
 
             selection.rules.push( rule );
-            j += 1;
 
         };
 
@@ -573,6 +566,8 @@ Selection.prototype = {
                 }
                 indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
+                sele.atomindexFirst = indexList[ 0 ];
+                sele.atomindexLast = indexList[ indexList.length - 1 ];
                 pushRule( sele );
                 continue;
             }
@@ -727,7 +722,7 @@ Selection.prototype = {
         // ( x or y ) can short circuit on true
         // not ( x and y )
 
-        return function( entity ){
+        return function test( entity ){
 
             and = selection.operator === "AND";
             na = false;
@@ -939,7 +934,6 @@ Selection.prototype = {
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -954,6 +948,7 @@ Selection.prototype = {
             // returning -1 means the rule is not applicable
             if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
+                    s.atomindex===undefined &&
                     ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
             ) return -1;
 
@@ -970,6 +965,10 @@ Selection.prototype = {
                 if( s.keyword===kwd.ION && !r.isIon() ) return false;
                 if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) return false;
             }
+
+            if( s.atomindex!==undefined &&
+                    ( r.atomOffset > s.atomindexLast || r.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) return false;
@@ -1011,7 +1010,6 @@ Selection.prototype = {
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
                 if( s.inscode!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -1024,7 +1022,11 @@ Selection.prototype = {
         var fn = function( c, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.chainname===undefined && s.model===undefined ) return -1;
+            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined ) return -1;
+
+            if( s.atomindex!==undefined &&
+                    ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
 
@@ -1056,7 +1058,6 @@ Selection.prototype = {
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
                 if( s.inscode!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -1069,7 +1070,11 @@ Selection.prototype = {
         var fn = function( m, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.model===undefined ) return -1;
+            if( s.model===undefined && s.atomindex===undefined ) return -1;
+
+            if( s.atomindex!==undefined &&
+                    ( m.atomOffset > s.atomindexLast || m.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.model!==undefined && s.model!==m.index ) return false;
 

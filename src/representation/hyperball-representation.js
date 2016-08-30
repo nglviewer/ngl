@@ -5,7 +5,7 @@
  */
 
 
-import { ExtensionFragDepth, RepresentationRegistry } from "../globals.js";
+import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import LicoriceRepresentation from "./licorice-representation.js";

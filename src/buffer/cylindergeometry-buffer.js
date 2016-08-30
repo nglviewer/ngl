@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Vector3, CylinderGeometry, CylinderBufferGeometry } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, CylinderBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
@@ -23,14 +23,7 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     var matrix = new Matrix4().makeRotationX( Math.PI / 2  );
 
-    var geoCtor;
-    if( openEnded ){
-        geoCtor = CylinderGeometry;
-    }else{
-        geoCtor = CylinderBufferGeometry;
-    }
-
-    this.geo = new geoCtor(
+    this.geo = new CylinderBufferGeometry(
         1,  // radiusTop,
         1,  // radiusBottom,
         1,  // height,
@@ -82,7 +75,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
         var target = new Vector3();
         var up = new Vector3( 0, 1, 0 );
 
-        return function( matrix, i, i3 ){
+        return function applyPositionTransform( matrix, i, i3 ){
 
             eye.fromArray( this._from, i3 );
             target.fromArray( this._to, i3 );

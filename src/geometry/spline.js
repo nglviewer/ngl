@@ -159,7 +159,7 @@ function Interpolator( m, tension ){
         }
     }
 
-    this.getNormal = function( size, tan, norm, bin, offset, isCyclic, shift ){
+    this.getNormal = function( size, tan, norm, bin, offset, isCyclic ){
         vNorm.set( 0, 0, 1 );
         var n = size;
         var n1 = n - 1;

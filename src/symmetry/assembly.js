@@ -11,6 +11,15 @@ import { uniqueArray } from "../utils.js";
 import Selection from "../selection.js";
 
 
+function selectionFromChains( chainList ){
+    var sele = "";
+    if( chainList.length > 0 ){
+        sele = ":" + uniqueArray( chainList ).join( " OR :" );
+    }
+    return new Selection( sele );
+}
+
+
 /**
  * Assembly of transformed parts of a {@link Structure}
  * @class
@@ -118,6 +127,14 @@ Assembly.prototype = {
 
         return boundingBox;
 
+    },
+
+    getSelection: function(){
+        var chainList = [];
+        this.partList.forEach( function( part ){
+            chainList = chainList.concat( part.chainList );
+        } );
+        return selectionFromChains( chainList );
     }
 
 };
@@ -169,13 +186,7 @@ AssemblyPart.prototype = {
     },
 
     getSelection: function(){
-        if( this.chainList.length > 0 ){
-            var chainList = uniqueArray( this.chainList );
-            var sele = ":" + chainList.join( " OR :" );
-            return new Selection( sele );
-        }else{
-            return new Selection( "" );
-        }
+        return selectionFromChains( this.chainList );
     },
 
     getView: function( structure ){

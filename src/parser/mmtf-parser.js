@@ -351,7 +351,7 @@ MmtfParser.prototype = Object.assign( Object.create(
             var ncsName = "NCS";
             var ncsAssembly = new Assembly( ncsName );
             var ncsPart = ncsAssembly.addPart();
-            sd.ncsOperatorList.forEach( function( _operator, k ){
+            sd.ncsOperatorList.forEach( function( _operator ){
                 var matrix = new Matrix4().fromArray( _operator ).transpose();
                 ncsPart.matrixList.push( matrix );
             } );

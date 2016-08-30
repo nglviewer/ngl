@@ -125,25 +125,69 @@ function deepCopy( src ){
 
 function download( data, downloadName ){
 
+    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+
     if( !data ) return;
 
     downloadName = downloadName || "download";
 
-    var a = document.createElement( 'a' );
-    a.style.display = "hidden";
-    document.body.appendChild( a );
-    if( data instanceof Blob ){
-        a.href = URL.createObjectURL( data );
-    }else{
-        a.href = data;
-    }
-    a.download = downloadName;
-    a.target = "_blank";
-    a.click();
+    var isSafari = getBrowser() === "Safari";
+    var isChromeIos = /CriOS\/[\d]+/.test( window.navigator.userAgent );
 
-    document.body.removeChild( a );
-    if( data instanceof Blob ){
-        URL.revokeObjectURL( data );
+    var a = document.createElement( 'a' );
+
+    function openUrl( url ){
+        var opened = window.open( url, '_blank' );
+        if( !opened ){
+            window.location.href = url;
+        }
+    }
+
+    function open( str ){
+        openUrl( isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;') );
+    }
+
+    if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
+
+        // native saveAs in IE 10+
+        navigator.msSaveOrOpenBlob( data, downloadName );
+
+    }else if( ( isSafari || isChromeIos ) && window.FileReader ){
+
+        if( data instanceof Blob ){
+            // no downloading of blob urls in Safari
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                open( reader.result );
+            };
+            reader.readAsDataURL( data );
+        }else{
+            open( data );
+        }
+
+    }else{
+
+        if( data instanceof Blob ){
+            data = URL.createObjectURL( data );
+        }
+
+        if( "download" in a ){
+            // download link available
+            a.style.display = "hidden";
+            document.body.appendChild( a );
+            a.href = data;
+            a.download = downloadName;
+            a.target = "_blank";
+            a.click();
+            document.body.removeChild( a );
+        }else{
+            openUrl( data );
+        }
+
+        if( data instanceof Blob ){
+            URL.revokeObjectURL( data );
+        }
+
     }
 
 }
@@ -156,7 +200,7 @@ function submit( url, data, callback, onerror ){
         var xhr = new XMLHttpRequest();
         xhr.open( "POST", url );
 
-        xhr.addEventListener( 'load', function ( event ) {
+        xhr.addEventListener( 'load', function () {
 
             if ( xhr.status === 200 || xhr.status === 304 ) {
 
@@ -212,8 +256,8 @@ function getFileInfo( file ){
 
     var path, compressed, protocol;
 
-    if( ( self.File && file instanceof File ) ||
-        ( self.Blob && file instanceof self.Blob )
+    if( ( typeof File !== "undefined" && file instanceof File ) ||
+        ( typeof Blob !== "undefined" && file instanceof Blob )
     ){
         path = file.name || "";
     }else{
@@ -277,7 +321,7 @@ function throttle( func, wait, options ){
         if( !timeout ) context = args = null;
     };
 
-    return function(){
+    return function throttle(){
 
         var now = Date.now();
         if( !previous && options.leading === false ) previous = now;
@@ -309,7 +353,7 @@ var binarySearchIndexOf = function(){
         if( elm1 > elm2 ) return 1;
         return 0;
     }
-    return function( array, element, compareFunction ){
+    return function binarySearchIndexOf( array, element, compareFunction ){
         var low = 0;
         var high = array.length - 1;
         if( !compareFunction ) compareFunction = _compareFunction;
@@ -452,7 +496,6 @@ export {
     download,
     submit,
     open,
-    unicodeHelper,
     getFileInfo,
     throttle,
     binarySearchIndexOf,

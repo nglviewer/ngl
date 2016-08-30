@@ -7,14 +7,19 @@ All notable changes to this project will be documented in this file, following t
 - lazy representation parameter that only builds & updates the representation when visible
 - chainname based color scheme
 - BondHash class to quickly get atoms connected to an atom
+- XmlParser parameter to use the browser's DOMParser
+- label attachment (top, middle, bottom; left, center, right)
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis
 - ChainindexColorMaker colorscale domain on a per model basis
 - Fixed, initial parameters for a Buffer not taken into account
 - ignore bonds that are defined multiple times in PDB parser
+- updated mmtf lib to v1.0
+- use npm as the build system
 
 ### Removed
+- gulp as the build system
 
 
 ## [v0.8] - 2016-07-22

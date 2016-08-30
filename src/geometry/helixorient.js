@@ -179,7 +179,6 @@ Helixorient.prototype = {
         var _prevAxis = new Vector3();
 
         var _resdir = new Vector3();
-        var _crossdir = new Vector3();
         var _center = new Vector3( 0, 0, 0 );
 
         var type = "trace";

@@ -121,7 +121,7 @@ function Shape( name, params ){
             color = new Float32Array( color );
         }
         if( Array.isArray( index ) ){
-            var ctor = ( position && position.length ) > 65535 ? Unit32Array : Uint16Array;
+            var ctor = ( position && position.length ) > 65535 ? Uint32Array : Uint16Array;
             index = new ctor( index );
         }
         if( Array.isArray( normal ) ){

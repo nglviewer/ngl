@@ -7,7 +7,7 @@
 
 import Signal from "../lib/signals.es6.js";
 
-import { Debug, Log } from "./globals.js";
+import { Log } from "./globals.js";
 
 
 function Script( functionBody, name, path ){
@@ -56,13 +56,13 @@ Script.prototype = {
 
         var panel = {
 
-            add: function( element ){
+            add: function( /*element*/ ){
 
                 this.signals.elementAdded.dispatch( arguments );
 
             }.bind( this ),
 
-            remove: function( element ){
+            remove: function( /*element*/ ){
 
                 this.signals.elementRemoved.dispatch( arguments );
 
@@ -107,7 +107,7 @@ Script.prototype = {
         }
 
         function error(){
-            panel.add( new UI.Text( "ERROR" ) );
+            Log.error( "Script: Error executing script" );
             finish();
         }
 

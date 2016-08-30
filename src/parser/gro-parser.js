@@ -43,7 +43,6 @@ GroParser.prototype = Object.assign( Object.create(
 
         var frames = s.frames;
         var boxes = s.boxes;
-        var doFrames = false;
         var currentFrame, currentCoord;
 
         var firstLines = this.streamer.peekLines( 3 );
@@ -59,7 +58,7 @@ GroParser.prototype = Object.assign( Object.create(
 
         //
 
-        var atomname, resname, element, resno, serial;
+        var atomname, resname, resno, serial;
 
         var atomCount = parseInt( firstLines[ 1 ] );
         var modelLineCount = atomCount + 3;
@@ -161,7 +160,7 @@ GroParser.prototype = Object.assign( Object.create(
 
         }
 
-        this.streamer.eachChunkOfLines( function( lines, chunkNo, chunkCount ){
+        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 

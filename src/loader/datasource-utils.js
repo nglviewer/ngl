@@ -33,8 +33,9 @@ function StaticDatasource( baseUrl ){
 function RcsbDatasource(){
 
     var baseUrl = "//files.rcsb.org/download/";
-    var mmtfBaseUrl = "//mmtf.rcsb.org/v0.2/full/";
-    var bbMmtfBaseUrl = "//mmtf.rcsb.org/v0.2/reduced/";
+    var mmtfBaseUrl = "//mmtf.rcsb.org/v1.0/";
+    var mmtfFullUrl = mmtfBaseUrl + "full/";
+    var mmtfReducedUrl = mmtfBaseUrl + "reduced/";
 
     this.getUrl = function( src ){
         // valid path are
@@ -42,6 +43,7 @@ function RcsbDatasource(){
         // XXXX defaults to XXXX.cif
         var info = getFileInfo( src );
         var protocol = window.location.protocol;
+        var pdbid = info.name.substr( 0, 4 );
         var url;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
             ( info.compressed === false || info.compressed === "gz" )
@@ -50,16 +52,15 @@ function RcsbDatasource(){
         }else if( info.ext === "mmtf" ){
             protocol = "http:";
             if( info.base.endsWith( ".bb" ) ){
-                url = bbMmtfBaseUrl + info.name;
+                url = mmtfReducedUrl + pdbid;
             }else{
-                url = mmtfBaseUrl + info.name;
+                url = mmtfFullUrl + pdbid;
             }
         }else if( !info.ext ){
-            url = baseUrl + info.name + ".cif";
-            // url = mmtfBaseUrl + info.name + ".mmtf";
+            url = mmtfFullUrl + pdbid;
         }else{
             Log.warn( "unsupported ext", info.ext );
-            url = mmtfBaseUrl + info.name;
+            url = mmtfFullUrl + pdbid;
         }
         return protocol + url;
     };
@@ -77,6 +78,5 @@ function RcsbDatasource(){
 export {
     PassThroughDatasource,
     StaticDatasource,
-    RcsbDatasource,
-    getDataInfo
+    RcsbDatasource
 };

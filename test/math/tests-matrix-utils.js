@@ -1,5 +1,7 @@
 
-import { Matrix, svd } from "../../../src/math/matrix-utils.js";
+import { Matrix, svd } from "../../src/math/matrix-utils.js";
+
+import { assert } from 'chai';
 
 
 describe('math/matrix-utils', function() {
@@ -8,9 +10,9 @@ describe('math/matrix-utils', function() {
 describe('Matrix', function () {
     it('initialization', function () {
         var m = new Matrix( 5, 10 );
-        assert.equal(5, m.cols);
-        assert.equal(10, m.rows);
-        assert.equal(5 * 10, m.size);
+        assert.strictEqual(5, m.cols);
+        assert.strictEqual(10, m.rows);
+        assert.strictEqual(5 * 10, m.size);
     });
 });
 
@@ -37,10 +39,11 @@ describe('svd', function () {
 
         svd( A, W, U, V );
 
-        var Ux = [ 0.82, -0.58,  0, 0,
-                   0.58,  0.82,  0, 0,
-                   0,     0,     1, 0,
-                   0,     0,     0, 1 ];
+        // FIXME see below
+        // var Ux = [ 0.82, -0.58,  0, 0,
+        //            0.58,  0.82,  0, 0,
+        //            0,     0,     1, 0,
+        //            0,     0,     0, 1 ];
 
         var Vx = [ 0.40, -0.91,
                    0.91,  0.40 ];
@@ -54,7 +57,7 @@ describe('svd', function () {
 
         // assert.equal( U.data, Ux, "Passed!" );
 
-        // example data for U not the same, not sure way (AR)
+        // FIXME example data for U not the same, not sure way (AR)
         // assert.closeTo( U.data[0], Ux[0], 0.01 );
         // assert.closeTo( U.data[1], Ux[1], 0.01 );
         // assert.closeTo( U.data[2], Ux[2], 0.01 );

@@ -11,7 +11,6 @@ import {
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-    ChemCompOther, ChemCompNonPolymer, ChemCompHetero,
     AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames,
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
@@ -165,8 +164,11 @@ ResidueType.prototype = {
             return ChemCompRna.indexOf( this.chemCompType ) !== -1;
         }else{
             return (
-                this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*" ] ) ||
-                RnaBases.indexOf( this.resname ) !== -1
+                this.hasAtomWithName(
+                    [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
+                ) ||
+                ( RnaBases.indexOf( this.resname ) !== -1 &&
+                    ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
             );
         }
     },
@@ -177,7 +179,7 @@ ResidueType.prototype = {
         }else{
             return (
                 ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
-                    !this.hasAtomWithName( [ "O2'", "O2*" ] ) ) ||
+                    !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
                 DnaBases.indexOf( this.resname ) !== -1
             );
         }
@@ -312,7 +314,7 @@ ResidueType.prototype = {
         return undefined;
     },
 
-    hasAtomWithName: function( atomname ){
+    hasAtomWithName: function( /*atomname*/ ){
         var n = arguments.length;
         for( var i = 0; i < n; ++i ){
             if( arguments[ i ] === undefined ) continue;

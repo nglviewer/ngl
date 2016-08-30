@@ -21,7 +21,7 @@ ParserLoader.prototype = Object.assign( Object.create(
 
     constructor: ParserLoader,
 
-    _load: function( resolve, reject ){
+    _load: function( resolve ){
 
         var ParserClass = ParserRegistry.get( this.ext );
         var parser = new ParserClass( this.streamer, this.params );

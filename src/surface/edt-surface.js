@@ -5,7 +5,6 @@
  */
 
 
-import { VdwRadii } from "../structure/structure-constants.js";
 import { VolumeSurface } from "./volume.js";
 import Grid from "../geometry/grid.js";
 import {
@@ -17,7 +16,6 @@ import {
     m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 } from "../math/matrix-utils.js";
 import { degToRad } from "../math/math-utils.js";
-import { arrayMax } from "../math/array-utils.js";
 
 
 function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
@@ -44,7 +42,7 @@ function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
     v3addScalar( dim, dim, 1 );
 
     var maxSize = Math.pow( 10, 6 ) * 256;
-    var tmpSize = dim.x * dim.y * dim.z * 3;
+    var tmpSize = dim[ 0 ] * dim[ 1 ] * dim[ 2 ] * 3;
 
     if( maxSize <= tmpSize ){
 
@@ -146,8 +144,6 @@ function EDTSurface( coordList, radiusList, indexList ){
     var cutRadius;
     var setAtomID;
     var vpBits, vpDistance, vpAtomID;
-
-    var radiusProperty;
 
     function init( btype, _probeRadius, _scaleFactor, _cutoff, _setAtomID ){
 
@@ -340,7 +336,6 @@ function EDTSurface( coordList, radiusList, indexList ){
         var at = radiusList[ ri ];
         var depty_at = depty[ at ];
         var nind = 0;
-        var cnt = 0;
         var pWH = pWidth * pHeight;
         var n = widxz[ at ];
 
@@ -603,8 +598,6 @@ function EDTSurface( coordList, radiusList, indexList ){
 
         console.time( "EDTSurface fastdistancemap" );
 
-        var eliminate = 0;
-        var certificate;
         var i, j, k, n;
 
         var boundPoint = new Grid(
@@ -1012,7 +1005,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             for( i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
-                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+                vpBits[ i ] = ( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 
@@ -1025,7 +1018,7 @@ function EDTSurface( coordList, radiusList, indexList ){
                     vpBits[ i ] |= ISDONE;
                 }
                 vpBits[ i ] &= ~ISBOUND;
-                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+                vpBits[ i ] = ( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 
@@ -1038,7 +1031,7 @@ function EDTSurface( coordList, radiusList, indexList ){
                 }else if( ( vpBits[ i ] & ISBOUND ) && !( vpBits[ i ] & ISDONE ) ){
                     vpBits[ i ] |= ISDONE;
                 }
-                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+                vpBits[ i ] = ( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 
@@ -1047,7 +1040,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             for( i = 0; i < n; ++i ){
 
                 vpBits[ i ] &= ~ISBOUND;
-                vpBits[ i ] = !!( vpBits[ i ] & ISDONE ) ? 1 : 0;
+                vpBits[ i ] = ( vpBits[ i ] & ISDONE ) ? 1 : 0;
 
             }
 

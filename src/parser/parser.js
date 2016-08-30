@@ -7,7 +7,6 @@
 
 import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
-import Worker from "../worker/worker.js";
 
 
 function Parser( streamer, params ){

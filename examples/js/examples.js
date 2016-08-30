@@ -1259,6 +1259,63 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "spatialHash": function( stage ) {
+
+        stage.loadFile( "rcsb://3sn6.mmtf", {
+            defaultRepresentation: false
+        } ).then( function( o ){
+
+            // o.addRepresentation( "backbone", { lineOnly: true } );
+            o.addRepresentation( "cartoon", { quality: "low" } );
+            stage.centerView();
+
+            var radius = 8;
+            var s = o.structure;
+            var spatialHash = new NGL.SpatialHash( s.atomStore, s.boundingBox );
+
+            var spacefillRepr = o.addRepresentation( "ball+stick", { sele: "NONE"/*, radius: 0.5*/ } );
+
+            function getCenterArray(){
+                var position = new NGL.Vector3();
+                var target = stage.viewer.controls.target;
+                var group = stage.viewer.rotationGroup.position;
+                position.copy( group ).negate().add( target );
+                return position;
+            }
+
+            function getSele( pos ){
+                var within = spatialHash.within( pos.x, pos.y, pos.z, radius );
+                return within.length ? "@" + within.join( "," ) : "NONE";
+            }
+
+            var sphereBuffer = new NGL.SphereBuffer(
+                new Float32Array( getCenterArray().toArray() ),
+                new Float32Array( [ 1, 0.5, 1 ] ),
+                new Float32Array( [ radius ] )
+            );
+            o.addBufferRepresentation( sphereBuffer, { opacity: 0.5 } );
+
+            var prevSele = "";
+            var prevPos = new NGL.Vector3( Infinity, Infinity, Infinity );
+            stage.viewer.controls.addEventListener(
+                'change', function(){
+                    var pos = getCenterArray();
+                    if( pos.distanceTo( prevPos ) > 0.1 ){
+                        sphereBuffer.setAttributes( { "position": pos.toArray() } );
+                        prevPos = pos;
+                        var sele = getSele( pos );
+                        if( sele !== prevSele ){
+                            spacefillRepr.setSelection( sele );
+                            prevSele = sele;
+                        }
+                    }
+                }
+            );
+
+        } );
+
+    },
+
     "axes": function( stage ){
 
         stage.loadFile( "rcsb://3pqr.mmtf", {
@@ -1408,7 +1465,7 @@ NGL.ExampleRegistry.addDict( {
                 cylinderOnly: true
             } );
             stage.centerView();
-        });
+        } );
 
     },
 

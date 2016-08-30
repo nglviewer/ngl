@@ -300,7 +300,7 @@ ColorMakerRegistry.prototype = {
 
     addSelectionScheme: function( pairList, label ){
 
-        return this.addScheme( function( params ){
+        return this.addScheme( function(){
 
             var colorList = [];
             var selectionList = [];
@@ -392,7 +392,7 @@ ColorMaker.prototype = {
 
     },
 
-    atomColor: function( a ){
+    atomColor: function(){
 
         return 0xFFFFFF;
 
@@ -421,7 +421,7 @@ ColorMaker.prototype = {
 
     },
 
-    volumeColor: function( i ){
+    volumeColor: function(){
 
         return 0xFFFFFF;
 
@@ -435,7 +435,7 @@ ColorMaker.prototype = {
 
     },
 
-    positionColor: function( v ){
+    positionColor: function(){
 
         return 0xFFFFFF;
 
@@ -462,7 +462,6 @@ function VolumeColorMaker( params ){
     var data = volume.__data;
     var nx = volume.nx;
     var ny = volume.ny;
-    var nz = volume.nz;
     var vec = new Vector3();
 
     this.positionColor = function( v ){
@@ -524,7 +523,7 @@ function PickingColorMaker( params ){
 
     };
 
-    this.bondColor = function( b, fromTo ){
+    this.bondColor = function( b ){
 
         return GidPool.getGid( this.structure, offset + b.index );
 
@@ -547,7 +546,7 @@ function RandomColorMaker( params ){
 
     ColorMaker.call( this, params );
 
-    this.atomColor = function( a ){
+    this.atomColor = function(){
 
         return Math.random() * 0xFFFFFF;
 
