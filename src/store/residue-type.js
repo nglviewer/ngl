@@ -15,49 +15,6 @@ import {
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
-
-/**
- * Propagates a depth-first search.
- * The current set of neighbours bondGraph[visited[visited.length-1]] is
- * always checked.
- * If maxDepth is positive, search propagates (decrementing maxDepth).
- * TODO: Iterative deepening search instead?
- *
- * @private
- * @param {Array[]} bondGraph - bond graph, array of array of bonded atom indices
- * @param {Array} visited - current path of atoms
- * @param {Integer} maxDepth - max recursion depth
- * @return {Boolean} whether to propagate the search or not
- */
-function propagateSearch( bondGraph, visited, maxDepth ) {
-
-    var current = visited[visited.length-1];
-    var neighbours = bondGraph[current];
-
-    for (var i = 0; i < neighbours.length; ++i) {
-
-        // Does this close the ring?
-        if( visited.length >= 3 && visited[0] === neighbours[i] ) {
-            // Hoorah, this is a ring!
-            return true;
-        }
-        if( maxDepth > 0 ) {
-            if (visited.indexOf(neighbours[i]) !== -1) {
-                continue;
-            }
-            // Propagate
-            visited.push(neighbours[i]);
-            if (propagateSearch( bondGraph, visited, maxDepth-1)) {
-                return true;
-            }
-            visited.pop();
-        }
-
-    }
-
-}
-
-
 function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
     this.structure = structure;
@@ -67,6 +24,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.hetero = hetero ? 1 : 0;
     this.chemCompType = chemCompType;
     this.bonds = bonds;
+    this.rings = undefined;
     this.atomCount = atomTypeIdList.length;
 
     this.moleculeType = this.getMoleculeType();
@@ -374,11 +332,150 @@ ResidueType.prototype = {
         return this.bonds;
     },
 
+
+    getRings: function() {
+        if( this.rings === undefined ){
+            this.calculateRings();
+        }
+        return this.rings;
+    },
+
+    getBondGraph: function(){
+        if( this.bondGraph === undefined ){
+            this.calculateBondGraph();
+        }
+        return this.bondGraph;
+    },
+
+
+    /**
+     * @return {Object} bondGraph - represents the bonding in this
+     *   residue: { ai1: [ ai2, ai3, ...], ...}
+     *   
+     */
+    calculateBondGraph: function() {
+
+        var bondGraph = this.bondGraph = {};
+        var bonds = this.getBonds();
+        var nb = bonds.atomIndices1.length;
+        var atomIndices1 = bonds.atomIndices1;
+        var atomIndices2 = bonds.atomIndices2;
+
+        var ai1, ai2; 
+        
+        for( var i = 0; i < nb; ++i ){
+            ai1 = atomIndices1[i];
+            ai2 = atomIndices2[i];
+
+            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
+            a1.push(ai2);
+
+            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
+            a2.push(ai1);
+        }      
+    },
+
+    /** 
+     * Calculates ring atoms within a residue
+     * Adaptation of RDKit's fastFindRings method by G. Landrum:
+     * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+     * 
+     * @param {ResidueProxy} r   - The residue for which we are to find rings
+     * @return {Object} ringData - contains ringFlags (1/0) and rings 
+     *                             (nested array)
+     * 
+     * Note this method finds all ring atoms, but in cases of fused or 
+     * connected rings will not detect all rings. 
+     * The resulting rings object will provide 'a ring' for each ring atom
+     * but which ring depends on atom order and connectivity
+     */
+    calculateRings: function() {
+
+        var bondGraph = this.getBondGraph();
+
+        var state = new Int8Array(this.atomCount),
+            flags = new Int8Array(this.atomCount),
+            rings = [],
+            visited = [];
+
+        function DFS( i, connected, from ) {
+
+            // Sanity check
+            if( state[ i ] ) { throw Error("DFS revisited atom"); }
+            state[ i ] = 1;
+            visited.push( i );
+            var nc = connected.length;
+
+            // For each neighbour
+            for( var ci = 0; ci < nc; ++ci ) {
+                var j = connected[ci];
+
+                // If unvisited:
+                if( state[ j ] === 0 ){
+
+                    // And has >= 2 neighbours:
+                    if( bondGraph[ j ] && bondGraph[ j ].length >= 2 ) {
+                        // Recurse
+                        DFS(j, bondGraph[ j ], i);
+                    } else {
+                        // Not interesting
+                        state[ j ] = 2;
+                    }
+
+                // Else unclosed ring:
+                } else if( state[ j ] === 1 ) {
+
+                    if( from && from != j ){
+                        var ring = [ j ];
+                        flags[ j ] = 1;
+                        rings.push( ring );
+                        for( var ki = visited.length-1; ki >= 0; --ki ){
+                            var k = visited[ ki ];
+                            if( k === j ){
+                                break; 
+                            }
+                            ring.push( k );
+                            flags[ k ] = 1;
+                        }
+                    }
+                }
+            }
+            state[ i ] = 2; // Completed processing for this atom
+
+            visited.pop();
+        }
+
+
+        for( var i = 0; i < this.atomCount; ++i ){
+
+            if( state[ i ] ){ continue; } // Already processed
+
+            var connected = bondGraph[ i ];
+            if( !connected || connected.length < 2 ){
+                // Finished
+                state[ i ] = 2;
+                continue;
+            }
+
+            visited.length = 0;
+            DFS( i, connected );
+        }
+
+        this.rings = { flags: flags,
+                       rings: rings };
+
+    },
+    
+
     /**
      * For bonds with order > 1, pick a reference atom
      */
-    assignBondReferenceAtomIndices: function( params ) {
-        var p = Object.assign( { maxRingSize: 8 }, params );
+    assignBondReferenceAtomIndices: function() {
+
+        var bondGraph = this.getBondGraph();
+        var rings = this.getRings();
+        var ringFlags = rings.flags;
+        var ringData = rings.rings;
 
         var atomIndices1 = this.bonds.atomIndices1;
         var atomIndices2 = this.bonds.atomIndices2;
@@ -387,91 +484,75 @@ ResidueType.prototype = {
 
         var nb = this.bonds.atomIndices1.length;
 
-        // Various ways to do this - here we calculate the bondGraph. Might
-        // want to defer this, or build portions as needed using
-        // AtomProxy.getResidueBonds?
-        var bondGraph = {}; //{ ai1: [ ai2, ... ] }
-
         var i, j, ai1, ai2, ai3;
 
-        for( i = 0; i < nb; ++i ) {
-
-            ai1 = atomIndices1[i];
-            ai2 = atomIndices2[i];
-
-            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
-            a1.push(ai2);
-            //a1[ ai2 ] = bondOrders[i];
-
-            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
-            a2.push(ai1);
-            //[ ai1 ] = bondOrders[i];
-
-        }
-
+  
         bondReferenceAtomIndices.length = 0;  // reset array
 
         for( i = 0; i < nb; ++i ) {
 
+            // Not required for single bonds
+            if( bondOrders[i] <= 1 ) continue;
+
             ai1 = atomIndices1[i];
             ai2 = atomIndices2[i];
 
-            // Not required for single bonds
-            if ( bondOrders[i] <= 1 ) continue;
+            // Are both atoms in a ring?
+            if( ringFlags[ ai1 ] && ringFlags[ ai2 ] ){
+                // Select another ring atom
+                // I *think* we can simply take the first ring atom
+                // we find in a ring that contains either ai1 or ai2 
+                // where the ring atom is not ai1 or ai2
+                for( var ri = 0; ri < ringData.length; ++ri ){
 
-            // Check if atom is terminal?
-            if ( bondGraph[ai1].length === 1 ) {
+                    // Have we already found it?
+                    if( bondReferenceAtomIndices[i] !== undefined) { break; }
 
-                if ( bondGraph[ai2].length === 1 ) {
-                    // No reference atom can be found
-                    continue;
+                    var ring = ringData[ ri ];
+                    // Try to find this atom and reference atom in no more than 1 full
+                    // iteration through loop
+                    var refAtom = null, found = false;
+                    for( var rai = 0; rai < ring.length; ++rai ){
+                        ai3 = ring[ rai ];
+                        if( ai3 === ai1 || ai3 === ai2 ){
+                            found = true;
+                        } else {
+                            // refAtom is any other atom
+                            refAtom = ai3;
+                        }
+                        if( found && refAtom !== null ) {
+                          bondReferenceAtomIndices[i] = refAtom;
+                          break; 
+                        }
+                    }
                 }
+                if( bondReferenceAtomIndices[i] !== undefined ) { continue; }
+            }
 
-                // Take first bonded partner of a2 that isn't a1
-                for (j=0; j<bondGraph[ai2].length; j++) {
-                    ai3 = bondGraph[ai2][j];
-                    if (ai3 !== ai1) {
+            // Not a ring (or not one we can process), simply take the first
+            // neighbouring atom
+
+            if( bondGraph[ ai1 ].length > 1 ){
+                for( j = 0; j < bondGraph[ ai1 ].length; ++j ){
+                    ai3 = bondGraph[ ai1 ][ j ];
+                    if( ai3 !== ai2 ) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
                 }
                 continue;
 
-            }
-
-            if ( bondGraph[ai2].length === 1 ) {
-                // Reverse of above:
-                for (j=0; j<bondGraph[ai1].length; j++) {
-                    ai3 = bondGraph[ai1][j];
-                    if (ai3 !== ai2) {
+            } else if( bondGraph[ ai2 ].length > 1 ){
+                for( j = 0; j < bondGraph[ ai2 ].length; ++j ){
+                    ai3 = bondGraph[ ai2 ][ j ];
+                    if( ai3 !== ai1 ) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
                     }
                 }
                 continue;
-            }
 
-            var visited = [ai1, ai2];
-            var maxDepth = 1;
-            // Naive method (don't store intermediate results)
-            while (maxDepth < p.maxRingSize - 2) {
-                if( propagateSearch( bondGraph, visited, maxDepth ) ) {
-                    bondReferenceAtomIndices[i] = visited[2];
-                    break;
-                }
-                maxDepth += 1;
-            }
-
-            // Not a ring, just pick one atom:
-            if( bondReferenceAtomIndices[i] === undefined) {
-                for( j=0; j<bondGraph[ai1].length; j++) {
-                    ai3 = bondGraph[ai1][j];
-                    if (ai3 !== ai2) {
-                        bondReferenceAtomIndices[i] = ai3;
-                        break;
-                    }
-                }
-            }
+            } // No reference atom could be found (e.g. diatomic molecule/fragment)
         }
     },
 

@@ -45,11 +45,15 @@ LineRepresentation.prototype = Object.assign( Object.create(
     parameters: Object.assign( {
 
         multipleBond: {
-            type: "boolean", rebuild: true
+            type: "select", options: { "off" : "Off",
+                                       "symmetric" : "Symmetric",
+                                       "offset": "Offset" },
+            rebuild: true
         },
         bondSpacing: {
-            type: "number", precision: 2, max: 1.0, min: 0.5
+            type: "number", precision: 2, max: 2.0, min: 0.5
         }
+
 
     }, Representation.prototype.parameters, {
 
@@ -67,8 +71,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        this.multipleBond = defaults( p.multipleBond, false );
-        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
+        this.multipleBond = defaults( p.multipleBond, "off" );
+        this.bondSpacing = defaults( p.bondSpacing, 1.0 );
+
 
         StructureRepresentation.prototype.init.call( this, p );
 

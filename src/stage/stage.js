@@ -420,6 +420,8 @@ Stage.prototype = {
                     colorScheme: "element",
                     scale: 2.0,
                     aspectRatio: 1.5,
+                    bondScale: 0.3,
+                    bondSpacing: 0.75,
                     quality: quality
                 } );
 

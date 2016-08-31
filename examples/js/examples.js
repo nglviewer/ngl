@@ -1528,4 +1528,38 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    ringFlags: function( stage ) {
+
+        stage.loadFile( "rcsb://4w93.mmtf" ).then( function( o ){
+
+            o.addRepresentation( "line", { sele: "[3L9]" } );
+
+            // Do ring detection on residue with name 3L9
+
+            var s = o.structure;
+            var rp = s.getResidueProxy();
+            var ap = s.getAtomProxy();
+
+            s.eachResidue( function( _rp ) {
+                if (_rp.resname === '3L9') { rp.index = _rp.index }
+            });
+
+            var ringData = rp.getRings();
+            var ringAtomNames = [];
+            for (var i = 0; i< ringData.flags.length; i++) {
+                if (ringData.flags[i]) {
+                    ap.index = i + rp.atomOffset;
+                    ringAtomNames.push( "." + ap.atomname );
+                }
+            }
+
+            o.addRepresentation("spacefill", {
+                sele: "[3L9] and ( " + ringAtomNames.join(" ") + ")",
+                scale: 0.25
+            });
+          
+        })
+
+    }
+
 } );
