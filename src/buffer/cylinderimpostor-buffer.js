@@ -77,11 +77,11 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
 
     constructor: CylinderImpostorBuffer,
 
-    parameters: {
+    parameters: Object.assign( {
 
-        openEnded: { updateShader: true },
+        openEnded: { updateShader: true }
 
-    },
+    }, AlignedBoxBuffer.prototype.parameters ),
 
     getDefines: function( type ){
 
