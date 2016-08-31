@@ -143,8 +143,9 @@ void main(){
 
     ray_origin = mix( ray_origin, surface_point, ortho );
 
-    // test front cap
-    float cap_test = dot( new_point - base, axis );
+    // test caps
+    float front_cap_test = dot( tmp_point, axis );
+    float end_cap_test = dot((new_point - end_cyl), axis);
 
     // to calculate caps, simply check the angle between
     // the point of intersection - cylinder end vector
@@ -158,45 +159,59 @@ void main(){
     #endif
 
     // flat
-    if (cap_test < 0.0)
+    if (front_cap_test < 0.0)
     {
         // ray-plane intersection
         float dNV = dot(-axis, ray_direction);
         if (dNV < 0.0)
             discard;
         float near = dot(-axis, (base)) / dNV;
-        new_point = ray_direction * near + ray_origin;
+        vec3 front_point = ray_direction * near + ray_origin;
         // within the cap radius?
-        if (dot(new_point - base, new_point-base) > radius2)
+        if (dot(front_point - base, front_point-base) > radius2)
             discard;
 
         #ifdef CAP
+            new_point = front_point;
             _normal = axis;
         #else
-            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+            new_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
+            dNV = dot(-axis, ray_direction);
+            near = dot(axis, end_cyl) / dNV;
+            new_point2 = ray_direction * near + ray_origin;
+            if (dot(new_point2 - end_cyl, new_point2-base) < radius2)
+                discard;
+            interior = true;
         #endif
     }
 
     // test end cap
-    cap_test = dot((new_point - end_cyl), axis);
+
 
     // flat
-    if( cap_test > 0.0 )
+    if( end_cap_test > 0.0 )
     {
         // ray-plane intersection
         float dNV = dot(axis, ray_direction);
         if (dNV < 0.0)
             discard;
         float near = dot(axis, end_cyl) / dNV;
-        new_point = ray_direction * near + ray_origin;
+        vec3 end_point = ray_direction * near + ray_origin;
         // within the cap radius?
-        if( dot(new_point - end_cyl, new_point-base) > radius2 )
+        if( dot(end_point - end_cyl, end_point-base) > radius2 )
             discard;
 
         #ifdef CAP
+            new_point = end_point;
             _normal = axis;
         #else
-            _normal = -normalize( tmp_point2 - axis * dot(tmp_point2, axis) );
+            new_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
+            dNV = dot(-axis, ray_direction);
+            near = dot(-axis, (base)) / dNV;
+            new_point2 = ray_direction * near + ray_origin;
+            if (dot(new_point2 - base, new_point2-base) < radius2)
+                discard;
+            interior = true;
         #endif
     }
 
