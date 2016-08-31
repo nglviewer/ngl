@@ -1344,24 +1344,13 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "licorice", { sele: "[3L9]" } );
 
-            // Do ring detection on residue with name 3L9
-
-            var s = o.structure;
-            var rp = s.getResidueProxy();
-            var ap = s.getAtomProxy();
-
-            s.eachResidue( function( _rp ) {
-                if (_rp.resname === '3L9') { rp.index = _rp.index }
-            });
-
-            var ringData = rp.getRings();
+            // Get ring atoms for residue with name 3L9
             var ringAtomNames = [];
-            for (var i = 0; i< ringData.flags.length; i++) {
-                if (ringData.flags[i]) {
-                    ap.index = i + rp.atomOffset;
+            o.structure.eachAtom( function( ap ) {
+                if( ap.isRing() ){
                     ringAtomNames.push( "." + ap.atomname );
                 }
-            }
+            }, new NGL.Selection( "[3L9]" ));
 
             o.addRepresentation("spacefill", {
                 sele: "[3L9] and ( " + ringAtomNames.join(" ") + ")",

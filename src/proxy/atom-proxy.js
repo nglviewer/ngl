@@ -252,6 +252,11 @@ AtomProxy.prototype = {
         return this.residueType.moleculeType === SaccharideType;
     },
 
+    isRing: function(){
+        var ringFlags = this.residueType.getRings().flags;
+        return ringFlags[ this.index - this.residueAtomOffset ] === 1;
+    },
+
     distanceTo: function( atom ){
         var taa = this.atomStore;
         var aaa = atom.atomStore;

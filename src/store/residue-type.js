@@ -392,8 +392,8 @@ ResidueType.prototype = {
 
         var bondGraph = this.getBondGraph();
 
-        var state = new Int8Array(this.atomCount),
-            flags = new Int8Array(this.atomCount),
+        var state = new Int8Array( this.atomCount ),
+            flags = new Int8Array( this.atomCount ),
             rings = [],
             visited = [];
 
