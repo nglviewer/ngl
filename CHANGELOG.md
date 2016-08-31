@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file, following t
 - XmlParser parameter to use the browser's DOMParser
 - attachment (top, middle, bottom; left, center, right) for LabelRepresentation/TextBuffer
 - border color and width for LabelRepresentation/TextBuffer
+- colored background rectangle for LabelRepresentation/TextBuffer
 - "offset" style rendering of double/triple bonds (@fredludlow)
 
 ### Changed
