@@ -19,13 +19,13 @@ import LineBuffer from "../buffer/line-buffer.js";
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
- * @param {Boolean} params.multipleBond - whether or not to render multiple bonds
+ * @property {String} multipleBond - one off "off", "symmetric", "offset"
  * @param {Float} params.bondSpacing - spacing for multiple bond rendering
  * @param {null} params.flatShaded - not available
  * @param {null} params.side - not available
  * @param {null} params.wireframe - not available
  * @param {null} params.roughness - not available
- * @param {null} params.matelness - not available
+ * @param {null} params.metalness - not available
  * @param {null} params.diffuse - not available
  */
 function LineRepresentation( structure, viewer, params ){
@@ -45,10 +45,12 @@ LineRepresentation.prototype = Object.assign( Object.create(
     parameters: Object.assign( {
 
         multipleBond: {
-            type: "select", options: { "off" : "Off",
-                                       "symmetric" : "Symmetric",
-                                       "offset": "Offset" },
-            rebuild: true
+            type: "select", rebuild: true,
+            options: {
+                "off" : "off",
+                "symmetric" : "symmetric",
+                "offset": "offset"
+            }
         },
         bondSpacing: {
             type: "number", precision: 2, max: 2.0, min: 0.5
@@ -73,7 +75,6 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         this.multipleBond = defaults( p.multipleBond, "off" );
         this.bondSpacing = defaults( p.bondSpacing, 1.0 );
-
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -135,9 +136,7 @@ LineRepresentation.prototype = Object.assign( Object.create(
         var what = {};
 
         if( params && params.bondSpacing ){
-
             what.position = true;
-
         }
 
         StructureRepresentation.prototype.setParameters.call(

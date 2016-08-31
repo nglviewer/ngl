@@ -26,8 +26,9 @@ import LineBuffer from "../buffer/line-buffer.js";
  * @property {Float} aspectRatio - size difference between atom and bond radii
  * @property {Boolean} lineOnly - render only bonds, and only as lines
  * @property {Boolean} cylinderOnly - render only bonds (no atoms)
- * @property {Boolean} multipleBond - whether or not to render multiple bonds
+ * @property {String} multipleBond - one off "off", "symmetric", "offset"
  * @property {Float} bondSpacing - spacing for multiple bond rendering
+ * @property {Float} bondScale - scale/radius for multiple bond rendering
  */
 
 
@@ -71,14 +72,15 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", rebuild: true
         },
         multipleBond: {
-            type: "select", options: { "off" : "Off",
-                                       "symmetric" : "Symmetric",
-                                       "offset": "Offset" },
-            rebuild: true
+            type: "select", rebuild: true,
+            options: {
+                "off" : "off",
+                "symmetric" : "symmetric",
+                "offset": "offset"
+            }
         },
         bondScale: {
-            type: "number", precision: 2, max: 1.0, min: 0.01,
-            rebuild: true 
+            type: "number", precision: 2, max: 1.0, min: 0.01
         },
         bondSpacing: {
             type: "number", precision: 2, max: 2.0, min: 0.5
@@ -203,7 +205,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
     updateData: function( what, data ){
 
-        if( this.multipleBond && what && what.radius ){
+        if( this.multipleBond !== "off" && what && what.radius ){
             what.position = true;
         }
 
@@ -276,7 +278,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         var rebuild = false;
         var what = {};
 
-        if( params && ( params.aspectRatio || params.bondSpacing ) ){
+        if( params && ( params.aspectRatio || params.bondSpacing || params.bondScale ) ){
 
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){

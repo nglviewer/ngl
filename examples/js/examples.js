@@ -1226,7 +1226,7 @@ NGL.ExampleRegistry.addDict( {
     "bondOrders": function( stage ) {
 
         stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
-            o.addRepresentation( "licorice", { multipleBond: true } );
+            o.addRepresentation( "licorice", { multipleBond: "symmetric" } );
             stage.centerView();
         } );
 
@@ -1235,7 +1235,7 @@ NGL.ExampleRegistry.addDict( {
     "chemCompCif": function( stage ){
 
         stage.loadFile( "data://PRDCC_000001.cif" ).then( function( o ){
-            o.addRepresentation( "licorice", { sele: "/0", multipleBond: true } );
+            o.addRepresentation( "licorice", { sele: "/0", multipleBond: "symmetric" } );
             stage.centerView();
         } );
 
@@ -1335,6 +1335,42 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "surface", { visible: false, lazy: true } );
             stage.centerView();
         } );
+
+    },
+
+    ringFlags: function( stage ) {
+
+        stage.loadFile( "rcsb://4w93.mmtf" ).then( function( o ){
+
+            o.addRepresentation( "licorice", { sele: "[3L9]" } );
+
+            // Do ring detection on residue with name 3L9
+
+            var s = o.structure;
+            var rp = s.getResidueProxy();
+            var ap = s.getAtomProxy();
+
+            s.eachResidue( function( _rp ) {
+                if (_rp.resname === '3L9') { rp.index = _rp.index }
+            });
+
+            var ringData = rp.getRings();
+            var ringAtomNames = [];
+            for (var i = 0; i< ringData.flags.length; i++) {
+                if (ringData.flags[i]) {
+                    ap.index = i + rp.atomOffset;
+                    ringAtomNames.push( "." + ap.atomname );
+                }
+            }
+
+            o.addRepresentation("spacefill", {
+                sele: "[3L9] and ( " + ringAtomNames.join(" ") + ")",
+                scale: 0.25
+            });
+
+            stage.centerView();
+
+        })
 
     },
 
@@ -1525,40 +1561,6 @@ NGL.ExampleRegistry.addDict( {
             shapeComp.addRepresentation( "buffer" );
             stage.centerView();
         });
-
-    },
-
-    ringFlags: function( stage ) {
-
-        stage.loadFile( "rcsb://4w93.mmtf" ).then( function( o ){
-
-            o.addRepresentation( "line", { sele: "[3L9]" } );
-
-            // Do ring detection on residue with name 3L9
-
-            var s = o.structure;
-            var rp = s.getResidueProxy();
-            var ap = s.getAtomProxy();
-
-            s.eachResidue( function( _rp ) {
-                if (_rp.resname === '3L9') { rp.index = _rp.index }
-            });
-
-            var ringData = rp.getRings();
-            var ringAtomNames = [];
-            for (var i = 0; i< ringData.flags.length; i++) {
-                if (ringData.flags[i]) {
-                    ap.index = i + rp.atomOffset;
-                    ringAtomNames.push( "." + ap.atomname );
-                }
-            }
-
-            o.addRepresentation("spacefill", {
-                sele: "[3L9] and ( " + ringAtomNames.join(" ") + ")",
-                scale: 0.25
-            });
-          
-        })
 
     }
 

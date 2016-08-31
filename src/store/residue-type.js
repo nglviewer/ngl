@@ -1,6 +1,7 @@
 /**
  * @file Residue Type
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Fred Ludlow
  * @private
  */
 
@@ -332,7 +333,6 @@ ResidueType.prototype = {
         return this.bonds;
     },
 
-
     getRings: function() {
         if( this.rings === undefined ){
             this.calculateRings();
@@ -347,11 +347,10 @@ ResidueType.prototype = {
         return this.bondGraph;
     },
 
-
     /**
      * @return {Object} bondGraph - represents the bonding in this
      *   residue: { ai1: [ ai2, ai3, ...], ...}
-     *   
+     *
      */
     calculateBondGraph: function() {
 
@@ -361,8 +360,8 @@ ResidueType.prototype = {
         var atomIndices1 = bonds.atomIndices1;
         var atomIndices2 = bonds.atomIndices2;
 
-        var ai1, ai2; 
-        
+        var ai1, ai2;
+
         for( var i = 0; i < nb; ++i ){
             ai1 = atomIndices1[i];
             ai2 = atomIndices2[i];
@@ -372,20 +371,20 @@ ResidueType.prototype = {
 
             var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
             a2.push(ai1);
-        }      
+        }
     },
 
-    /** 
+    /**
      * Calculates ring atoms within a residue
      * Adaptation of RDKit's fastFindRings method by G. Landrum:
      * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
-     * 
+     *
      * @param {ResidueProxy} r   - The residue for which we are to find rings
-     * @return {Object} ringData - contains ringFlags (1/0) and rings 
+     * @return {Object} ringData - contains ringFlags (1/0) and rings
      *                             (nested array)
-     * 
-     * Note this method finds all ring atoms, but in cases of fused or 
-     * connected rings will not detect all rings. 
+     *
+     * Note this method finds all ring atoms, but in cases of fused or
+     * connected rings will not detect all rings.
      * The resulting rings object will provide 'a ring' for each ring atom
      * but which ring depends on atom order and connectivity
      */
@@ -432,7 +431,7 @@ ResidueType.prototype = {
                         for( var ki = visited.length-1; ki >= 0; --ki ){
                             var k = visited[ ki ];
                             if( k === j ){
-                                break; 
+                                break;
                             }
                             ring.push( k );
                             flags[ k ] = 1;
@@ -465,7 +464,6 @@ ResidueType.prototype = {
                        rings: rings };
 
     },
-    
 
     /**
      * For bonds with order > 1, pick a reference atom
@@ -486,7 +484,7 @@ ResidueType.prototype = {
 
         var i, j, ai1, ai2, ai3;
 
-  
+
         bondReferenceAtomIndices.length = 0;  // reset array
 
         for( i = 0; i < nb; ++i ) {
@@ -501,7 +499,7 @@ ResidueType.prototype = {
             if( ringFlags[ ai1 ] && ringFlags[ ai2 ] ){
                 // Select another ring atom
                 // I *think* we can simply take the first ring atom
-                // we find in a ring that contains either ai1 or ai2 
+                // we find in a ring that contains either ai1 or ai2
                 // where the ring atom is not ai1 or ai2
                 for( var ri = 0; ri < ringData.length; ++ri ){
 
@@ -522,7 +520,7 @@ ResidueType.prototype = {
                         }
                         if( found && refAtom !== null ) {
                           bondReferenceAtomIndices[i] = refAtom;
-                          break; 
+                          break;
                         }
                     }
                 }
