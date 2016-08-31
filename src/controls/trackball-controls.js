@@ -500,7 +500,7 @@ function TrackballControls( object, domElement ) {
 
             // Firefox
 
-            delta = - event.deltaY;
+            delta = - event.deltaY * 3;
 
         }
 
