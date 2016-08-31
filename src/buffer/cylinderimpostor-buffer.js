@@ -77,15 +77,21 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
 
     constructor: CylinderImpostorBuffer,
 
-    getMaterial: function( type ){
+    parameters: {
 
-        var material = Buffer.prototype.getMaterial.call( this, type );
+        openEnded: { updateShader: true },
+
+    },
+
+    getDefines: function( type ){
+
+        var defines = AlignedBoxBuffer.prototype.getDefines.call( this, type );
 
         if( !this.openEnded ){
-            material.defines.CAP = 1;
+            defines.CAP = 1;
         }
 
-        return material;
+        return defines;
 
     },
 
