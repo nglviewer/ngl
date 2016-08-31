@@ -71,10 +71,17 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", rebuild: true
         },
         multipleBond: {
-            type: "boolean", rebuild: true
+            type: "select", options: { "off" : "Off",
+                                       "symmetric" : "Symmetric",
+                                       "offset": "Offset" },
+            rebuild: true
+        },
+        bondScale: {
+            type: "number", precision: 2, max: 1.0, min: 0.01,
+            rebuild: true 
         },
         bondSpacing: {
-            type: "number", precision: 2, max: 1.0, min: 0.5
+            type: "number", precision: 2, max: 2.0, min: 0.5
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -87,8 +94,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
-        this.multipleBond = defaults( p.multipleBond, false );
-        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
+        this.multipleBond = defaults( p.multipleBond, "off" );
+        this.bondSpacing = defaults( p.bondSpacing, 1.0 );
+        this.bondScale = defaults( p.bondScale, 0.4 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -114,7 +122,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
-            bondSpacing: this.bondSpacing
+            bondSpacing: this.bondSpacing,
+            bondScale:  this.bondScale
         }, params );
 
         return StructureRepresentation.prototype.getBondParams.call( this, what, params );
