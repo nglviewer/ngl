@@ -181,6 +181,22 @@ AtomProxy.prototype = {
 
     },
 
+    eachBondedAtom: function( callback ){
+
+        var ap = this.structure._ap;
+        var idx = this.index;
+
+        this.eachBond( function( bp ){
+            if( idx !== bp.atomIndex1 ){
+                ap.index = bp.atomIndex1;
+            }else{
+                ap.index = bp.atomIndex2;
+            }
+            callback( ap );
+        } );
+
+    },
+
     //
 
     isBackbone: function(){
