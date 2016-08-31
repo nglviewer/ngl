@@ -9,7 +9,6 @@ import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
-import Buffer from "./buffer.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
