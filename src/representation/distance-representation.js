@@ -220,8 +220,8 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondData.color1,
             bondData.color2,
             bondData.radius,
-            bondData.pickingColor1,
-            bondData.pickingColor2,
+            undefined,
+            undefined,
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,
