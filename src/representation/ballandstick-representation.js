@@ -241,6 +241,11 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
                 cylinderData.color2 = bondData.color2;
             }
 
+            if( !what || what.pickingColor ){
+                cylinderData.pickingColor = bondData.pickingColor1;
+                cylinderData.pickingColor2 = bondData.pickingColor2;
+            }
+
             if( !what || what.radius ){
                 cylinderData.radius = bondData.radius;
             }
@@ -259,6 +264,10 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
                 if( !what || what.color ){
                     sphereData.color = atomData.color;
+                }
+
+                if( !what || what.pickingColor ){
+                    sphereData.pickingColor = atomData.pickingColor;
                 }
 
                 if( !what || what.radius ){

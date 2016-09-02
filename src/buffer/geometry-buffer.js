@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
+import { Matrix4, Matrix3, BufferAttribute } from "../../lib/three.es6.js";
 
 import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
@@ -77,12 +77,84 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
     applyPositionTransform: function(){},
 
+    resizeAttributes: function( count ){
+
+        var size = count * this.geoPositionCount;
+        var oldSize = this.size;
+        this.size = size;
+        this.positionCount = count;
+
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
+        var indexLength = count * this.geoFacesCount * 3;
+
+        if( size > oldSize ){
+
+            this.meshPosition = new Float32Array( this.size * 3 );
+            this.meshNormal = new Float32Array( this.size * 3 );
+            this.meshColor = new Float32Array( this.size * 3 );
+            this.meshPickingColor = new Float32Array( this.size * 3 );
+
+            geometry.addAttribute(
+                "position",
+                new BufferAttribute( this.meshPosition, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "normal",
+                new BufferAttribute( this.meshNormal, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "color",
+                new BufferAttribute( this.meshColor, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "pickingColor",
+                new BufferAttribute( this.meshPickingColor, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            var TypedArray = this.size > 65535 ? Uint32Array : Uint16Array;
+            this.meshIndex = new TypedArray( count * this.geoFacesCount * 3 );
+            this.makeIndex();
+
+            geometry.setIndex(
+                new BufferAttribute( this.meshIndex, 1 )
+                    .setDynamic( this.dynamic )
+            );
+
+        }else if( size < oldSize ){
+
+            var index = geometry.getIndex();
+            index.needsUpdate = indexLength > 0;
+            index.updateRange.count = indexLength;
+
+        }
+
+        geometry.setDrawRange( 0, indexLength );
+
+        attributes.position.updateRange.count = this.size * 3;
+        attributes.normal.updateRange.count = this.size * 3;
+        attributes.color.updateRange.count = this.size * 3;
+        attributes.pickingColor.updateRange.count = this.size * 3;
+
+    },
+
     setAttributes: function(){
 
         var matrix = new Matrix4();
         var normalMatrix = new Matrix3();
 
         return function setAttributes( data ){
+
+            if( data.position ){
+                this.resizeAttributes( data.position.length / 3 );
+            }
 
             var attributes = this.geometry.attributes;
 
@@ -96,19 +168,19 @@ GeometryBuffer.prototype = Object.assign( Object.create(
                 geoPosition = this.geoPosition;
                 meshPosition = this.meshPosition;
                 transformedGeoPosition = this.transformedGeoPosition;
-                attributes.position.needsUpdate = true;
+                attributes.position.needsUpdate = this.size > 0;
             }
 
             if( data.color ){
                 color = data.color;
                 meshColor = this.meshColor;
-                attributes.color.needsUpdate = true;
+                attributes.color.needsUpdate = this.size > 0;
             }
 
             if( data.pickingColor ){
                 pickingColor = data.pickingColor;
                 meshPickingColor = this.meshPickingColor;
-                attributes.pickingColor.needsUpdate = true;
+                attributes.pickingColor.needsUpdate = this.size > 0;
             }
 
             var updateNormals = !!( this.updateNormals && position );
@@ -118,7 +190,7 @@ GeometryBuffer.prototype = Object.assign( Object.create(
                 geoNormal = this.geoNormal;
                 meshNormal = this.meshNormal;
                 transformedGeoNormal = this.transformedGeoNormal;
-                attributes.normal.needsUpdate = true;
+                attributes.normal.needsUpdate = this.size > 0;
             }
 
             var n = this.positionCount;

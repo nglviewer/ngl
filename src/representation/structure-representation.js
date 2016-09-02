@@ -77,11 +77,11 @@ function StructureRepresentation( structure, viewer, params ){
         this.parameters.assembly = null;
     }
 
-    // must come after structureView to ensure selection change signals
-    // have already updated the structureView
-    this.selection.signals.stringChanged.add( function(){
-        this.build();
-    }.bind( this ) );
+    // // must come after structureView to ensure selection change signals
+    // // have already updated the structureView
+    // this.selection.signals.stringChanged.add( function(){
+    //     this.build();
+    // }.bind( this ) );
 
     this.build();
 
@@ -232,6 +232,12 @@ StructureRepresentation.prototype = Object.assign( Object.create(
     setSelection: function( string, silent ){
 
         this.selection.setString( string, silent );
+
+        if( this.dataList.length ){
+            this.update();
+        }else{
+            this.build();
+        }
 
         return this;
 

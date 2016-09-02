@@ -93,6 +93,27 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
 
         var n = this._position.length / 2;
         var m = this._radius.length / 2;
+
+        if( data.position1 ){
+
+            // if( data.position1.length > n ){
+
+                n = data.position1.length;
+                m = n / 3;
+
+                this._position = new Float32Array( n * 2 );
+                this._color = new Float32Array( n * 2 );
+                this._pickingColor = new Float32Array( n * 2 );
+                this._from = new Float32Array( n * 2 );
+                this._to = new Float32Array( n * 2 );
+                this._radius = new Float32Array( m * 2 );
+
+                this.__center = new Float32Array( n );
+
+            // }
+
+        }
+
         var geoData = {};
 
         if( data.position1 && data.position2 ){

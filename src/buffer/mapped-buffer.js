@@ -5,6 +5,8 @@
  */
 
 
+import { BufferAttribute } from "../../lib/three.es6.js";
+
 import Buffer from "./buffer.js";
 
 
@@ -40,29 +42,90 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
     constructor: MappedBuffer,
 
+    resizeAttributes: function( count ){
+
+        var oldCount = this.count;
+        this.count = count;
+        this.size = this.count;
+        this.attributeSize = this.count * this.mappingSize;
+
+        var name;
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
+        var mappingSize = this.mappingSize;
+        var indexLength = count * this.mappingIndicesSize;
+
+        if( count > oldCount ){
+
+            var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
+            this.index = new TypedArray( indexLength );
+            this.makeIndex();
+
+            geometry.setIndex(
+                new BufferAttribute( this.index, 1 )
+                    .setDynamic( this.dynamic )
+            );
+
+            for( name in attributes ){
+
+                var itemSize = attributes[ name ].itemSize;
+                var array = new Float32Array( count * mappingSize * itemSize );
+
+                geometry.addAttribute(
+                    name,
+                    new BufferAttribute( array, itemSize )
+                        .setDynamic( this.dynamic )
+                );
+
+            }
+
+            this.makeMapping();
+
+        }else if( count < oldCount ){
+
+            var index = geometry.getIndex();
+            index.needsUpdate = indexLength > 0;
+            index.updateRange.count = indexLength;
+
+        }
+
+        geometry.setDrawRange( 0, indexLength );
+
+        for( name in attributes ){
+
+            var a = attributes[ name ];
+            a.updateRange.count = count * mappingSize * a.itemSize;
+
+        }
+
+    },
+
     setAttributes: function( data ){
 
-        var count = this.count;
-        var mappingSize = this.mappingSize;
-        var attributes = this.geometry.attributes;
+        if( data.position ){
+            this.resizeAttributes( data.position.length / 3 );
+        }
 
-        var a, d, itemSize, array, n, i, j;
+        var mappingSize = this.mappingSize;
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
 
         for( var name in data ){
 
-            d = data[ name ];
-            a = attributes[ name ];
-            itemSize = a.itemSize;
-            array = a.array;
+            var d = data[ name ];
+            var itemSize = attributes[ name ].itemSize;
+
+            var count = this.count;
+            var array = attributes[ name ].array;
 
             for( var k = 0; k < count; ++k ) {
 
-                n = k * itemSize;
-                i = n * mappingSize;
+                var n = k * itemSize;
+                var i = n * mappingSize;
 
                 for( var l = 0; l < mappingSize; ++l ) {
 
-                    j = i + ( itemSize * l );
+                    var j = i + ( itemSize * l );
 
                     for( var m = 0; m < itemSize; ++m ) {
 
@@ -74,7 +137,8 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
             }
 
-            a.needsUpdate = true;
+            attributes[ name ].needsUpdate = count > 0;
+            attributes[ name ].updateRange.count = count * mappingSize * itemSize;
 
         }
 

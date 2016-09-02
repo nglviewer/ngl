@@ -74,6 +74,10 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
             sphereData.color = atomData.color;
         }
 
+        if( !what || what.pickingColor ){
+            sphereData.pickingColor = atomData.pickingColor;
+        }
+
         if( !what || what.radius ){
             sphereData.radius = atomData.radius;
         }

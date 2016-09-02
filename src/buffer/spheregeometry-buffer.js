@@ -17,6 +17,8 @@ function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
 
     var detail = defaults( p.sphereDetail, 1 );
 
+    this.updateNormals = true;
+
     this.geo = new IcosahedronGeometry( 1, detail );
     this._radius = radius;
 

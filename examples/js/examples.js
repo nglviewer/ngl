@@ -1261,19 +1261,21 @@ NGL.ExampleRegistry.addDict( {
 
     "spatialHash": function( stage ) {
 
+        // stage.loadFile( "rcsb://4v5a.mmtf", {
         stage.loadFile( "rcsb://3sn6.mmtf", {
             defaultRepresentation: false
         } ).then( function( o ){
 
             // o.addRepresentation( "backbone", { lineOnly: true } );
             o.addRepresentation( "cartoon", { quality: "low" } );
+
             stage.centerView();
 
-            var radius = 8;
+            var radius = 12;
             var s = o.structure;
             var spatialHash = new NGL.SpatialHash( s.atomStore, s.boundingBox );
 
-            var spacefillRepr = o.addRepresentation( "ball+stick", { sele: "NONE"/*, radius: 0.5*/ } );
+            var spacefillRepr = o.addRepresentation( "licorice", { cylinderOnly: true, disableImpostor: true, sele: "30" } );
 
             function getCenterArray(){
                 var position = new NGL.Vector3();
