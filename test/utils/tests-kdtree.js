@@ -4,7 +4,7 @@ import Kdtree from "../../src/utils/kdtree.js";
 import { assert } from 'chai';
 
 
-describe('math/array-utils', function() {
+describe('utils/kdtree', function() {
 
 
 describe('Kdtree', function () {
