@@ -36,8 +36,12 @@ GidPool.prototype = {
 
         object = this.getBaseObject( object );
 
-        this.objectList.push( object );
-        this.rangeList.push( this.allocateGidRange( object ) );
+        var gidRange = this.allocateGidRange( object );
+
+        if( gidRange ){
+            this.objectList.push( object );
+            this.rangeList.push( gidRange );
+        }
 
         return this;
 
@@ -121,9 +125,15 @@ GidPool.prototype = {
 
         object = this.getBaseObject( object );
 
-        var firstGid = this.nextGid;
+        var gidCount = this.getGidCount( object )
 
-        this.nextGid += this.getGidCount( object );
+        if( gidCount > Math.pow( 10, 7 ) ){
+            Log.warn( "GidPool.allocateGidRange: gidCount too large" );
+            return null;
+        }
+
+        var firstGid = this.nextGid;
+        this.nextGid += gidCount;
 
         if( this.nextGid > Math.pow( 2, 24 ) ){
             Log.error( "GidPool.allocateGidRange: GidPool overflown" );

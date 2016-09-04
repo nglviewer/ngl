@@ -7,7 +7,6 @@
 
 import { getBrowser, getQuery, boolean } from "./utils.js";
 import Registry from "./utils/registry.js";
-import _GidPool from "./utils/gid-pool.js";
 import _WorkerRegistry from "./worker/worker-registry.js";
 import { ColorMakerRegistry as _ColorMakerRegistry } from "./utils/color-maker.js";
 
@@ -38,8 +37,6 @@ function setDebug( value ){
     Debug = value;
 }
 
-var GidPool = new _GidPool();
-
 var WebglErrorMessage = "<div style=\"display:flex; align-items:center; justify-content:center; height:100%;\"><p style=\"padding:15px; text-align:center;\">Your browser/graphics card does not seem to support <a target=\"_blank\" href=\"https://en.wikipedia.org/wiki/WebGL\">WebGL</a>.<br /><br />Find out how to get it <a target=\"_blank\" href=\"http://get.webgl.org/\">here</a>.</p></div>";
 
 var WorkerRegistry = new _WorkerRegistry();
@@ -56,7 +53,6 @@ export {
     ExtensionFragDepth,
     setExtensionFragDepth,
     Log,
-    GidPool,
     Debug,
     setDebug,
     WebglErrorMessage,

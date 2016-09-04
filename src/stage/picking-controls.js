@@ -9,7 +9,7 @@ import { Vector2, Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
-import { GidPool, Debug, Log } from "../globals.js";
+import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 
 
@@ -26,7 +26,10 @@ import { defaults } from "../utils.js";
  */
 
 
-var PickingControls = function( viewer, params ){
+var PickingControls = function( stage, params ){
+
+    var viewer = stage.viewer;
+    var gidPool = stage.gidPool;
 
     var hoverTimeout = 50;
     setParameters( params );
@@ -72,7 +75,7 @@ var PickingControls = function( viewer, params ){
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
         var instance = pickingData.instance;
-        var picked = GidPool.getByGid( pickingData.gid );
+        var picked = gidPool.getByGid( pickingData.gid );
 
         var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){

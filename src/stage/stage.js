@@ -11,6 +11,7 @@ import Signal from "../../lib/signals.es6.js";
 import { Debug, Log } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
+import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
 import PickingControls from "./picking-controls.js";
 
@@ -126,11 +127,12 @@ function Stage( eid, params ){
     //
 
     /**
-     * Counter that keeps track of various potential long-running tasks,
+     * Counter that keeps track of various potentially long-running tasks,
      * including file loading and surface calculation.
      * @member {Counter}
      */
     this.tasks = new Counter();
+    this.gidPool = new GidPool();
     this.compList = [];
     this.defaultFileParams = {};
 
@@ -139,7 +141,7 @@ function Stage( eid, params ){
     this.viewer = new Viewer( eid );
     if( !this.viewer.renderer ) return;
 
-    this.pickingControls = new PickingControls( this.viewer );
+    this.pickingControls = new PickingControls( this );
     this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
     this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
 

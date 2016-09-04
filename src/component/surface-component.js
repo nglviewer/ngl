@@ -25,6 +25,10 @@ function SurfaceComponent( stage, surface, params ){
 
     this.surface = surface;
 
+    if( this.surface.type === "Volume" ){
+        this.stage.gidPool.addObject( this.surface );
+    }
+
 }
 
 SurfaceComponent.prototype = Object.assign( Object.create(
@@ -60,6 +64,10 @@ SurfaceComponent.prototype = Object.assign( Object.create(
     },
 
     dispose: function(){
+
+        if( this.surface.type === "Volume" ){
+            this.stage.gidPool.addObject( this.surface );
+        }
 
         this.surface.dispose();
 

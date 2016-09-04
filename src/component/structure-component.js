@@ -48,6 +48,8 @@ function StructureComponent( stage, structure, params ){
     this.initSelection( p.sele );
     this.setDefaultAssembly( p.assembly || "" );
 
+    this.stage.gidPool.addObject( this.structure );
+
 }
 
 StructureComponent.prototype = Object.assign( Object.create(
@@ -223,6 +225,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     },
 
     dispose: function(){
+
+        this.stage.gidPool.removeObject( this.structure );
 
         // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( function( traj ){

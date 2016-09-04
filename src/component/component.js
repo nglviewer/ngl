@@ -112,6 +112,7 @@ Component.prototype = {
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
         p.visible = defaults( p.visible, true );
+        p.gidPool = this.stage.gidPool;
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
         var repr = makeRepresentation( type, object, this.viewer, p2 );
