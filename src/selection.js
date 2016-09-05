@@ -566,6 +566,8 @@ Selection.prototype = {
                 }
                 indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
+                sele.atomindexFirst = indexList[ 0 ];
+                sele.atomindexLast = indexList[ indexList.length - 1 ];
                 pushRule( sele );
                 continue;
             }
@@ -932,7 +934,6 @@ Selection.prototype = {
                 if( s.atomname!==undefined ) return true;
                 if( s.element!==undefined ) return true;
                 if( s.altloc!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -947,6 +948,7 @@ Selection.prototype = {
             // returning -1 means the rule is not applicable
             if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
+                    s.atomindex===undefined &&
                     ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
             ) return -1;
 
@@ -963,6 +965,10 @@ Selection.prototype = {
                 if( s.keyword===kwd.ION && !r.isIon() ) return false;
                 if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) return false;
             }
+
+            if( s.atomindex!==undefined &&
+                    ( r.atomOffset > s.atomindexLast || r.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
             if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) return false;
@@ -1004,7 +1010,6 @@ Selection.prototype = {
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
                 if( s.inscode!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -1017,7 +1022,11 @@ Selection.prototype = {
         var fn = function( c, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.chainname===undefined && s.model===undefined ) return -1;
+            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined ) return -1;
+
+            if( s.atomindex!==undefined &&
+                    ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
 
@@ -1049,7 +1058,6 @@ Selection.prototype = {
                 if( s.altloc!==undefined ) return true;
                 if( s.sstruc!==undefined ) return true;
                 if( s.inscode!==undefined ) return true;
-                if( s.atomindex!==undefined ) return true;
                 return false;
             } );
 
@@ -1062,7 +1070,11 @@ Selection.prototype = {
         var fn = function( m, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.model===undefined ) return -1;
+            if( s.model===undefined && s.atomindex===undefined ) return -1;
+
+            if( s.atomindex!==undefined &&
+                    ( m.atomOffset > s.atomindexLast || m.atomEnd < s.atomindexFirst )
+            ) return false;
 
             if( s.model!==undefined && s.model!==m.index ) return false;
 

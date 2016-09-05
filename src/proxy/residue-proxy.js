@@ -66,6 +66,10 @@ ResidueProxy.prototype = {
         this.residueStore.atomCount[ this.index ] = value;
     },
 
+    get atomEnd () {
+        return this.atomOffset + this.atomCount - 1;
+    },
+
     //
 
     get modelIndex () {
@@ -323,7 +327,9 @@ ResidueProxy.prototype = {
         return this.residueType.getBonds( this );
     },
 
-    //
+    getRings: function() {
+        return this.residueType.getRings();
+    },
 
     qualifiedName: function( noResname ){
         var name = "";

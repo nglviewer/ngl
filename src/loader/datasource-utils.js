@@ -50,7 +50,6 @@ function RcsbDatasource(){
         ){
             url = baseUrl + info.path;
         }else if( info.ext === "mmtf" ){
-            protocol = "http:";
             if( info.base.endsWith( ".bb" ) ){
                 url = mmtfReducedUrl + pdbid;
             }else{

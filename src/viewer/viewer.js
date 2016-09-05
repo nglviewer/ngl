@@ -133,6 +133,8 @@ function Viewer( eid ){
 
     var boundingBoxMesh;
     var boundingBox = new Box3();
+    var boundingBoxSize = new Vector3();
+    var boundingBoxLength = 0;
     initHelper();
 
     // fog & background
@@ -287,7 +289,11 @@ function Viewer( eid ){
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
                 format: RGBAFormat,
-                type: supportsHalfFloat ? HalfFloatType : FloatType
+                type: (
+                    supportsHalfFloat ? HalfFloatType :
+                        ( SupportsReadPixelsFloat ? FloatType : UnsignedByteType )
+                )
+
             }
         );
 
@@ -408,19 +414,6 @@ function Viewer( eid ){
 
     function initControls(){
 
-        function preventDefault( e ){
-            e.preventDefault();
-        }
-        renderer.domElement.addEventListener(
-            'mousewheel', preventDefault, false
-        );
-        renderer.domElement.addEventListener(  // firefox
-            'MozMousePixelScroll', preventDefault, false
-        );
-        renderer.domElement.addEventListener(
-            'touchmove', preventDefault, false
-        );
-
         controls = new TrackballControls( camera, renderer.domElement );
         controls.rotateSpeed = 2.0;
         controls.zoomSpeed = 1.2;
@@ -430,6 +423,22 @@ function Viewer( eid ){
         controls.keys = [ 65, 83, 68 ];
 
         controls.addEventListener( 'change', requestRender, false );
+
+        function preventDefault( e ){
+            e.preventDefault();
+        }
+        renderer.domElement.addEventListener(
+            'mousewheel', preventDefault, false
+        );
+        renderer.domElement.addEventListener(
+            'wheel', preventDefault, false
+        );
+        renderer.domElement.addEventListener(  // firefox
+            'MozMousePixelScroll', preventDefault, false
+        );
+        renderer.domElement.addEventListener(
+            'touchmove', preventDefault, false
+        );
 
         document.addEventListener(
             'mousemove', controls.update.bind( controls ), false
@@ -614,7 +623,9 @@ function Viewer( eid ){
             backgroundGroup.traverse( updateNode );
         }
 
-        controls.maxDistance = boundingBox.size().length() * 10;
+        boundingBox.size( boundingBoxSize );
+        boundingBoxLength = boundingBoxSize.length();
+        controls.maxDistance = boundingBoxLength * 10;
 
     }
 
@@ -1015,7 +1026,7 @@ function Viewer( eid ){
             cDist = Math.abs( p.cameraZ );
         }
 
-        bRadius = Math.max( 10, boundingBox.size( distVector ).length() * 0.5 );
+        bRadius = Math.max( 10, boundingBoxLength * 0.5 );
         bRadius += boundingBox.center( distVector ).length();
         // console.log( "bRadius", bRadius )
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
@@ -1073,7 +1084,7 @@ function Viewer( eid ){
     function __updateLights(){
 
         distVector.copy( camera.position ).sub( controls.target )
-            .normalize().multiplyScalar( 1000 );
+            .setLength( boundingBoxLength * 10 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
@@ -1223,61 +1234,55 @@ function Viewer( eid ){
 
     }
 
-    var centerView = function(){
+    function centerView( _zoom, position ){
 
-        var bbSize = new Vector3();
+        if( position === undefined ){
+            if( !boundingBox.isEmpty() ){
+                center( boundingBox.center() );
+            }
+        }else{
+            center( position );
+        }
 
-        return function centerView( _zoom, position ){
+        if( _zoom ){
 
-            if( position === undefined ){
-                if( !boundingBox.isEmpty() ){
-                    center( boundingBox.center() );
-                }
+            var distance;
+
+            if( _zoom === true ){
+
+                // distance = boundingBoxLength;
+
+                var bbSize = boundingBoxSize;
+                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+                distance = maxSize + Math.sqrt( minSize );
+
             }else{
-                center( position );
-            }
 
-            if( _zoom ){
-
-                var distance;
-
-                if( _zoom === true ){
-
-                    // distance = boundingBox.size( bbSize ).length();
-
-                    boundingBox.size( bbSize );
-                    var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                    var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                    // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                    distance = maxSize + Math.sqrt( minSize );
-
-                }else{
-
-                    distance = _zoom;
-
-                }
-
-                var fov = degToRad( perspectiveCamera.fov );
-                var aspect = width / height;
-                var aspectFactor = ( height < width ? 1 : aspect );
-
-                distance = Math.abs(
-                    ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
-                );
-
-                distance += parameters.clipDist;
-
-                zoom( distance, true );
+                distance = _zoom;
 
             }
 
-            requestRender();
+            var fov = degToRad( perspectiveCamera.fov );
+            var aspect = width / height;
+            var aspectFactor = ( height < width ? 1 : aspect );
 
-            _signals.orientationChanged.dispatch();
+            distance = Math.abs(
+                ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+            );
 
-        };
+            distance += parameters.clipDist;
 
-    }();
+            zoom( distance, true );
+
+        }
+
+        requestRender();
+
+        _signals.orientationChanged.dispatch();
+
+    }
 
     var alignView = function(){
 
@@ -1364,6 +1369,7 @@ function Viewer( eid ){
     this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
+    this.boundingBox = boundingBox;
 
     this.pick = pick;
     this.requestRender = requestRender;

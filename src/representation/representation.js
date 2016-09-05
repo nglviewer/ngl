@@ -188,7 +188,7 @@ Representation.prototype = {
         }
         if( tp.openEnded === true ){
             tp.openEnded = {
-                type: "boolean", rebuild: "impostor"
+                type: "boolean", rebuild: "impostor", buffer: true
             };
         }
         if( tp.disableImpostor === true ){

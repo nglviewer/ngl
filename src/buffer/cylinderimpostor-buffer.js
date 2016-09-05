@@ -9,7 +9,6 @@ import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
-import Buffer from "./buffer.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
@@ -77,15 +76,21 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
 
     constructor: CylinderImpostorBuffer,
 
-    getMaterial: function( type ){
+    parameters: Object.assign( {
 
-        var material = Buffer.prototype.getMaterial.call( this, type );
+        openEnded: { updateShader: true }
+
+    }, AlignedBoxBuffer.prototype.parameters ),
+
+    getDefines: function( type ){
+
+        var defines = AlignedBoxBuffer.prototype.getDefines.call( this, type );
 
         if( !this.openEnded ){
-            material.defines.CAP = 1;
+            defines.CAP = 1;
         }
 
-        return material;
+        return defines;
 
     },
 

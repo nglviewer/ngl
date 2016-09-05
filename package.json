@@ -48,7 +48,8 @@
     "rollup": "^0.34.10",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-istanbul": "^1.0.0",
-    "rollup-watch": "^2.5.0"
+    "rollup-watch": "^2.5.0",
+    "uglify-js": "^2.6.0"
   },
   "dependencies": {}
 }

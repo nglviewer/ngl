@@ -26,8 +26,9 @@ import LineBuffer from "../buffer/line-buffer.js";
  * @property {Float} aspectRatio - size difference between atom and bond radii
  * @property {Boolean} lineOnly - render only bonds, and only as lines
  * @property {Boolean} cylinderOnly - render only bonds (no atoms)
- * @property {Boolean} multipleBond - whether or not to render multiple bonds
+ * @property {String} multipleBond - one off "off", "symmetric", "offset"
  * @property {Float} bondSpacing - spacing for multiple bond rendering
+ * @property {Float} bondScale - scale/radius for multiple bond rendering
  */
 
 
@@ -71,10 +72,18 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", rebuild: true
         },
         multipleBond: {
-            type: "boolean", rebuild: true
+            type: "select", rebuild: true,
+            options: {
+                "off" : "off",
+                "symmetric" : "symmetric",
+                "offset": "offset"
+            }
+        },
+        bondScale: {
+            type: "number", precision: 2, max: 1.0, min: 0.01
         },
         bondSpacing: {
-            type: "number", precision: 2, max: 1.0, min: 0.5
+            type: "number", precision: 2, max: 2.0, min: 0.5
         }
 
     }, StructureRepresentation.prototype.parameters ),
@@ -87,8 +96,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
         this.cylinderOnly = defaults( p.cylinderOnly, false );
-        this.multipleBond = defaults( p.multipleBond, false );
-        this.bondSpacing = defaults( p.bondSpacing, 0.85 );
+        this.multipleBond = defaults( p.multipleBond, "off" );
+        this.bondSpacing = defaults( p.bondSpacing, 1.0 );
+        this.bondScale = defaults( p.bondScale, 0.4 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -114,7 +124,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
-            bondSpacing: this.bondSpacing
+            bondSpacing: this.bondSpacing,
+            bondScale:  this.bondScale
         }, params );
 
         return StructureRepresentation.prototype.getBondParams.call( this, what, params );
@@ -194,7 +205,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
     updateData: function( what, data ){
 
-        if( this.multipleBond && what && what.radius ){
+        if( this.multipleBond !== "off" && what && what.radius ){
             what.position = true;
         }
 
@@ -267,7 +278,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         var rebuild = false;
         var what = {};
 
-        if( params && ( params.aspectRatio || params.bondSpacing ) ){
+        if( params && ( params.aspectRatio || params.bondSpacing || params.bondScale ) ){
 
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){

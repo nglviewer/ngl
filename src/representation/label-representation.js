@@ -33,6 +33,17 @@ import TextBuffer from "../buffer/text-buffer.js";
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} attachment - attachment of the label, one of:
+ *                                 "bottom-left", "bottom-center", "bottom-right",
+ *                                 "middle-left", "middle-center", "middle-right",
+ *                                 "top-left", "top-center", "top-right"
+ * @property {Boolean} showBorder - show border/outline
+ * @property {Color} borderColor - color of the border/outline
+ * @property {Float} borderWidth - width of the border/outline
+ * @property {Boolean} showBackground - show background rectangle
+ * @property {Color} backgroundColor - color of the background
+ * @property {Float} backgroundMargin - width of the background
+ * @property {Float} backgroundOpacity - opacity of the background
  */
 
 
@@ -99,7 +110,42 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         },
         zOffset: {
             type: "number", precision: 1, max: 20, min: -20, buffer: true
-        }
+        },
+        attachment: {
+            type: "select", options: {
+                "bottom-left": "bottom-left",
+                "bottom-center": "bottom-center",
+                "bottom-right": "bottom-right",
+                "middle-left": "middle-left",
+                "middle-center": "middle-center",
+                "middle-right": "middle-right",
+                "top-left": "top-left",
+                "top-center": "top-center",
+                "top-right": "top-right"
+            },
+            rebuild: true
+        },
+        showBorder: {
+            type: "boolean", buffer: true
+        },
+        borderColor: {
+            type: "color", buffer: true
+        },
+        borderWidth: {
+            type: "number", precision: 2, max: 0.3, min: 0, buffer: true
+        },
+        showBackground: {
+            type: "boolean", rebuild: true
+        },
+        backgroundColor: {
+            type: "color", buffer: true
+        },
+        backgroundMargin: {
+            type: "number", precision: 2, max: 2, min: 0, rebuild: true
+        },
+        backgroundOpacity: {
+            type: "range", step: 0.01, max: 1, min: 0, buffer: true
+        },
 
     }, StructureRepresentation.prototype.parameters, {
 
@@ -127,6 +173,14 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.xOffset = defaults( p.xOffset, 0.0 );
         this.yOffset = defaults( p.yOffset, 0.0 );
         this.zOffset = defaults( p.zOffset, 0.5 );
+        this.attachment = defaults( p.attachment, "bottom-left" );
+        this.showBorder = defaults( p.showBorder, false );
+        this.borderColor = defaults( p.borderColor, "lightgrey" );
+        this.borderWidth = defaults( p.borderWidth, 0.15 );
+        this.showBackground = defaults( p.showBackground, false );
+        this.backgroundColor = defaults( p.backgroundColor, "lightgrey" );
+        this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
+        this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
         StructureRepresentation.prototype.init.call( this, p );
 
@@ -157,7 +211,15 @@ LabelRepresentation.prototype = Object.assign( Object.create(
                 sdf: this.sdf,
                 xOffset: this.xOffset,
                 yOffset: this.yOffset,
-                zOffset: this.zOffset
+                zOffset: this.zOffset,
+                attachment: this.attachment,
+                showBorder: this.showBorder,
+                borderColor: this.borderColor,
+                borderWidth: this.borderWidth,
+                showBackground: this.showBackground,
+                backgroundColor: this.backgroundColor,
+                backgroundMargin: this.backgroundMargin,
+                backgroundOpacity: this.backgroundOpacity
             } )
         );
 

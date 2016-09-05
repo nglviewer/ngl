@@ -64,7 +64,8 @@ LabelFactory.prototype = {
                 break;
 
             case "res":
-                l = ( AA1[ a.resname.toUpperCase() ] || '' ) + a.resno;
+                var resname = a.resname.toUpperCase();
+                l = ( AA1[ resname ] || resname ) + a.resno;
                 break;
 
             case "text":

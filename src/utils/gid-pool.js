@@ -8,19 +8,19 @@
 import { Debug, Log } from "../globals.js";
 
 
-function GidPool(){
+function GidPool( name ){
+
+    this.name = name || "";
+
+    this.nextGid = 1;
+    this.objectList = [];
+    this.rangeList = [];
 
 }
 
 GidPool.prototype = {
 
     constructor: GidPool,
-
-    nextGid: 1,
-
-    objectList: [],
-
-    rangeList: [],
 
     getBaseObject: function( object ){
 
@@ -185,22 +185,22 @@ GidPool.prototype = {
 
             if( o.type === "Structure" ){
 
-                if( offset /*<=*/ < o.atomStore.count ){ // MJG off by one fix
+                if( offset < o.atomStore.count ){
 
                     entity = o.getAtomProxy( offset );
 
-                }else if( offset /*<=*/ < o.atomStore.count + o.bondStore.count ){  // MJG off by one fix
-                    
+                }else if( offset < o.atomStore.count + o.bondStore.count ){
+
                     offset -= o.atomStore.count;
                     entity = o.getBondProxy( offset );
 
-                }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
+                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count ){
 
                     offset -= ( o.atomStore.count + o.bondStore.count );
                     entity = o.getBondProxy( offset );
                     entity.bondStore = o.backboneBondStore;
 
-                }else if( offset <= o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
+                }else if( offset < o.atomStore.count + o.bondStore.count + o.backboneBondStore.count + o.rungBondStore.count ){
 
                     offset -= ( o.atomStore.count + o.bondStore.count + o.backboneBondStore.count );
                     entity = o.getBondProxy( offset );

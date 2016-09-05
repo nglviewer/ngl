@@ -56,6 +56,8 @@ function BondHash( bondStore, atomCount ){
 
     if( Debug ) Log.timeEnd( "BondHash init" );
 
+    // API
+
     this.countArray = countArray;
     this.offsetArray = offsetArray;
     this.indexArray = indexArray;

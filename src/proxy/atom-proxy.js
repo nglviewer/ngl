@@ -181,6 +181,22 @@ AtomProxy.prototype = {
 
     },
 
+    eachBondedAtom: function( callback ){
+
+        var ap = this.structure._ap;
+        var idx = this.index;
+
+        this.eachBond( function( bp ){
+            if( idx !== bp.atomIndex1 ){
+                ap.index = bp.atomIndex1;
+            }else{
+                ap.index = bp.atomIndex2;
+            }
+            callback( ap );
+        } );
+
+    },
+
     //
 
     isBackbone: function(){
@@ -250,6 +266,11 @@ AtomProxy.prototype = {
 
     isSaccharide: function(){
         return this.residueType.moleculeType === SaccharideType;
+    },
+
+    isRing: function(){
+        var ringFlags = this.residueType.getRings().flags;
+        return ringFlags[ this.index - this.residueAtomOffset ] === 1;
     },
 
     distanceTo: function( atom ){

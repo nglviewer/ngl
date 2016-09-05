@@ -1,5 +1,5 @@
 
-import { uint8ToLines } from "../src/utils.js";
+import { uint8ToLines, binarySearchIndexOf } from "../src/utils.js";
 
 import { assert } from 'chai';
 
@@ -39,6 +39,20 @@ describe('uint8ToLines', function () {
         var lines = uint8ToLines( bin );
         assert.strictEqual( 4, lines.length, "Passed!" );
         assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
+    });
+});
+
+
+describe('binarySearchIndexOf', function () {
+    it('basic', function () {
+
+        var array = [ 1, 2, 3, 4, 5, 6 ];
+        var element = 4;
+
+        var result = binarySearchIndexOf( array, element );
+
+        assert.equal( 3, result, "index of element in array" );
+
     });
 });
 
