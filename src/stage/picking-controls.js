@@ -106,7 +106,8 @@ var PickingControls = function( viewer, params ){
             "atom": pickedAtom,
             "bond": pickedBond,
             "volume": pickedVolume,
-            "instance": instance
+            "instance": instance,
+            "gid": pickingData.gid,
         };
     }
 

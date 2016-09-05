@@ -5,7 +5,7 @@
  */
 
 
-import { Log } from "../globals.js";
+import { Debug, Log } from "../globals.js";
 
 
 function GidPool(){
@@ -133,12 +133,12 @@ GidPool.prototype = {
 
     },
 
-    // freeGidRange: function( object ){
+    freeGidRange: function( object ){
 
-    //     object = this.getBaseObject( object );
-    //     // TODO
+        object = this.getBaseObject( object );
+        // TODO
 
-    // },
+    },
 
     getNextGid: function(){
 
@@ -185,12 +185,12 @@ GidPool.prototype = {
 
             if( o.type === "Structure" ){
 
-                if( offset <= o.atomStore.count ){
+                if( offset /*<=*/ < o.atomStore.count ){ // MJG off by one fix
 
                     entity = o.getAtomProxy( offset );
 
-                }else if( offset <= o.atomStore.count + o.bondStore.count ){
-
+                }else if( offset /*<=*/ < o.atomStore.count + o.bondStore.count ){  // MJG off by one fix
+                    
                     offset -= o.atomStore.count;
                     entity = o.getBondProxy( offset );
 

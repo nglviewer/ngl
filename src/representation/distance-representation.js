@@ -124,17 +124,24 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var ap2 = sview.getAtomProxy();
 
         var j = 0;
+        
+        this.nastyCache = this.nastyCache || {};
 
         atomPair.forEach( function( pair, i ){
 
             i -= j;
             var i3 = i * 3;
 
-            sele1.setString( pair[ 0 ] );
-            sele2.setString( pair[ 1 ] );
+            var nasty = this.nastyCache[pair[0]+"-"+pair[1]];
+            if (!nasty) {
+                sele1.setString( pair[ 0 ] );
+                sele2.setString( pair[ 1 ] );
 
-            var atomIndices1 = sview.getAtomIndices( sele1 );
-            var atomIndices2 = sview.getAtomIndices( sele2 );
+                nasty = {sel1: sview.getAtomIndices( sele1 ), sel2: sview.getAtomIndices( sele2 )};
+                this.nastyCache[pair[0]+"-"+pair[1]] = nasty;
+            }
+            var atomIndices1 = nasty.sel1;
+	        var atomIndices2 = nasty.sel2;
 
             if( atomIndices1.length && atomIndices2.length ){
 
