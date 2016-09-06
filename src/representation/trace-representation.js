@@ -50,7 +50,7 @@ TraceRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScheme = defaults( p.colorScheme, "chainname" );
         p.colorScale = defaults( p.colorScale, "RdYlBu" );
 
         if( p.quality === "low" ){

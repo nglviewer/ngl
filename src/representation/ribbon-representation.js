@@ -51,7 +51,7 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
     init: function( params ){
 
         var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "atomindex" );
+        p.colorScheme = defaults( p.colorScheme, "chainname" );
         p.colorScale = defaults( p.colorScale, "RdYlBu" );
         p.radius = defaults( p.radius, "sstruc" );
         p.scale = defaults( p.scale, 4.0 );
