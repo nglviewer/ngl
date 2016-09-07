@@ -64,7 +64,9 @@ function Representation( object, viewer, params ){
      * @member {Queue}
      * @private
      */
-    this.queue = new Queue( this.make.bind( this ) );
+    this.queue = new Queue( function( oldParams, callback ){
+        this.make( this.getParameters(), callback ) 
+    }.bind( this ) );
 
     /**
      * @member {Array}
