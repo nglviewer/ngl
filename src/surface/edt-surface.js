@@ -16,6 +16,7 @@ import {
     m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 } from "../math/matrix-utils.js";
 import { degToRad } from "../math/math-utils.js";
+import { getRadiusDict } from "./surface-utils.js";
 
 
 function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
@@ -104,15 +105,6 @@ getSurfaceGrid.__deps = [
 ];
 
 
-function getRadiusDict( radiusList ){
-
-    var radiusDict = {};
-    for( var i = 0, il = radiusList.length; i < il; ++i ){
-        radiusDict[ radiusList[ i ] ] = true;
-    }
-    return radiusDict;
-
-}
 
 
 function EDTSurface( coordList, radiusList, indexList ){

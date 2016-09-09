@@ -327,7 +327,19 @@ computeVertexNormals.__deps = [
 ];
 
 
+function getRadiusDict( radiusList ){
+
+    var radiusDict = {};
+    for( var i = 0, il = radiusList.length; i < il; ++i ){
+        radiusDict[ radiusList[ i ] ] = true;
+    }
+    return radiusDict;
+
+}
+
+
 export {
     laplacianSmooth,
-    computeVertexNormals
+    computeVertexNormals,
+    getRadiusDict
 };
