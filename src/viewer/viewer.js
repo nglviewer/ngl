@@ -468,15 +468,11 @@ function Viewer( eid ){
         // Log.time( "Viewer.add" );
 
         if( instanceList ){
-
             instanceList.forEach( function( instance ){
                 addBuffer( buffer, instance );
             } );
-
         }else{
-
             addBuffer( buffer );
-
         }
 
         if( buffer.background ){
