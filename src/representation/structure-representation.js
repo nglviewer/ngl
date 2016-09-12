@@ -130,15 +130,13 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
 
         if( p.quality === "auto" ){
-            var atomCount, instanceCount;
+            var atomCount;
             var s = this.structureView;
             var assembly = this.getAssembly();
             if( assembly ){
                 atomCount = assembly.getAtomCount( s );
-                instanceCount = assembly.getInstanceCount();
             }else{
                 atomCount = s.atomCount
-                instanceCount = 1;
             }
             if( typeof window.orientation !== 'undefined' ){
                 atomCount *= 4;

@@ -491,10 +491,7 @@ function Viewer( eid ){
             pickingGroup.add( buffer.pickingGroup );
         }
 
-        rotationGroup.updateMatrixWorld();
         if( Debug ) updateHelper();
-
-        // requestRender();
 
         // Log.timeEnd( "Viewer.add" );
 
