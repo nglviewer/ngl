@@ -183,7 +183,7 @@ Stage.prototype = {
             type: "color"
         },
         quality: {
-            type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
+            type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
         },
         sampleLevel: {
             type: "range", step: 1, max: 5, min: -1

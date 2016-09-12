@@ -129,6 +129,33 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.assembly = defaults( p.assembly, "default" );
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
 
+        if( p.quality === "auto" ){
+            var atomCount, instanceCount;
+            var s = this.structureView;
+            var assembly = this.getAssembly();
+            if( assembly ){
+                atomCount = assembly.getAtomCount( s );
+                instanceCount = assembly.getInstanceCount();
+            }else{
+                atomCount = s.atomCount
+                instanceCount = 1;
+            }
+            if( typeof window.orientation !== 'undefined' ){
+                atomCount *= 4;
+            }
+            var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+            if( backboneOnly ){
+                atomCount *= 10;
+            }
+            if( atomCount < 15000 ){
+                p.quality = "high";
+            }else if( atomCount < 80000 ){
+                p.quality = "medium";
+            }else{
+                p.quality = "low";
+            }
+        }
+
         Representation.prototype.init.call( this, p );
 
     },
