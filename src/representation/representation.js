@@ -53,6 +53,8 @@ function Representation( object, viewer, params ){
      */
     this.viewer = viewer;
 
+    this.gidPool = params ? params.gidPool : undefined;
+
     /**
      * Counter that keeps track of tasks related to the creation of
      * the representation, including surface calculations.
@@ -230,6 +232,8 @@ Representation.prototype = {
     getColorParams: function(){
 
         return {
+
+            gidPool: this.gidPool,
 
             scheme: this.colorScheme,
             scale: this.colorScale,

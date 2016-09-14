@@ -94,7 +94,7 @@ NGL.Preferences = function( id, defaultParams ){
 
     this.storage = {
         impostor: true,
-        quality: "medium",
+        quality: "auto",
         sampleLevel: 0,
         theme: "dark",
         backgroundColor: "black",

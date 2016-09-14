@@ -57,16 +57,6 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         p.radius = defaults( p.radius, "sstruc" );
         p.scale = defaults( p.scale, 0.7 );
 
-        if( p.quality === "low" ){
-            this.subdiv = 3;
-        }else if( p.quality === "medium" ){
-            this.subdiv = 6;
-        }else if( p.quality === "high" ){
-            this.subdiv = 12;
-        }else{
-            this.subdiv = defaults( p.subdiv, 6 );
-        }
-
         this.aspectRatio = defaults( p.aspectRatio, 5.0 );
         this.tension = defaults( p.tension, NaN );
         this.capped = defaults( p.capped, true );
@@ -75,7 +65,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         StructureRepresentation.prototype.init.call( this, p );
 
         if( p.quality === "low" ){
+            this.subdiv = 3;
             this.radialSegments = 6;
+        }else if( p.quality === "medium" ){
+            this.subdiv = 6;
+        }else if( p.quality === "high" ){
+            this.subdiv = 12;
+        }else{
+            this.subdiv = defaults( p.subdiv, 6 );
         }
 
     },

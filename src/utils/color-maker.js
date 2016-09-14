@@ -8,7 +8,6 @@
 import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import Selection from "../selection.js";
-import { GidPool } from "../globals.js";
 import { generateUUID } from "../math/math-utils.js";
 
 import {
@@ -349,6 +348,7 @@ function ColorMaker( params ){
     this.structure = p.structure;
     this.volume = p.volume;
     this.surface = p.surface;
+    this.gidPool = p.gidPool;
 
     if( this.structure ){
         this.atomProxy = this.structure.getAtomProxy();
@@ -517,21 +517,28 @@ function PickingColorMaker( params ){
         }
     }
 
+    if( !this.gidPool ){
+        console.warn( "no gidPool" );
+        this.gidPool = {
+            getGid: function(){ return 0; }
+        };
+    }
+
     this.atomColor = function( a ){
 
-        return GidPool.getGid( this.structure, a.index );
+        return this.gidPool.getGid( this.structure, a.index );
 
     };
 
     this.bondColor = function( b ){
 
-        return GidPool.getGid( this.structure, offset + b.index );
+        return this.gidPool.getGid( this.structure, offset + b.index );
 
     };
 
     this.volumeColor = function( i ){
 
-        return GidPool.getGid( this.volume, i );
+        return this.gidPool.getGid( this.volume, i );
 
     };
 

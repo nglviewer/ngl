@@ -8,7 +8,7 @@
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import { Debug, Log, ColorMakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
@@ -129,8 +129,6 @@ function Structure( name, path ){
     this.center = new Vector3();
     this.boundingBox = new Box3();
 
-    GidPool.addObject( this );
-
     this._bp = this.getBondProxy();
     this._ap = this.getAtomProxy();
     this._rp = this.getResidueProxy();
@@ -144,7 +142,7 @@ Structure.prototype = {
     type: "Structure",
 
     /**
-     * Updates atomSets and bondSets. Updates GidPool entry.
+     * Updates atomSets and bondSets.
      * @fires Structure#refreshed
      */
     refresh: function(){
@@ -173,8 +171,6 @@ Structure.prototype = {
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
-
-        GidPool.updateObject( this );
 
         if( Debug ) Log.timeEnd( "Structure.refresh" );
 
@@ -1014,12 +1010,10 @@ Structure.prototype = {
     },
 
     /**
-     * Removes structure from the GidPool. Calls dispose() method of property objects.
+     * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
      */
     dispose: function(){
-
-        GidPool.removeObject( this );
 
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;

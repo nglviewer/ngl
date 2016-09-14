@@ -468,15 +468,11 @@ function Viewer( eid ){
         // Log.time( "Viewer.add" );
 
         if( instanceList ){
-
             instanceList.forEach( function( instance ){
                 addBuffer( buffer, instance );
             } );
-
         }else{
-
             addBuffer( buffer );
-
         }
 
         if( buffer.background ){
@@ -491,10 +487,7 @@ function Viewer( eid ){
             pickingGroup.add( buffer.pickingGroup );
         }
 
-        rotationGroup.updateMatrixWorld();
         if( Debug ) updateHelper();
-
-        // requestRender();
 
         // Log.timeEnd( "Viewer.add" );
 

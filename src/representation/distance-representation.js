@@ -28,7 +28,11 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
- * @property {Array[]} atomPair - list of pairs of selection strings, see {@link Selection}
+ * @property {Array[]} atomPair - list of pairs of selection strings (see {@link Selection})
+ *                                or pairs of atom indices. Using atom indices is much more
+ *                                when the representation is updated often, e.g. by
+ *                                changing the selection or the atom positions, as their
+ *                                are no selection strings to be evaluated.
  * @property {Integer} radialSegments - cylinder quality (number of segments)
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  */
@@ -41,8 +45,10 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @example
  * stage.loadFile( "rcsb://1crn" ).then( function( o ){
  *     o.addRepresentation( "cartoon" );
- *     // any selection allowed, always takes the first atom a selection evaluates to
+ *     // either give selections (uses first selected atom) ...
  *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
+ *     // or atom indices
+ *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
  *     o.addRepresentation( "distance", { atomPair: atomPair } );
  *     stage.centerView();
  * } );
@@ -127,33 +133,45 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         atomPair.forEach( function( pair, i ){
 
-            i -= j;
-            var i3 = i * 3;
+            var v1 = pair[ 0 ];
+            var v2 = pair[ 1 ];
 
-            sele1.setString( pair[ 0 ] );
-            sele2.setString( pair[ 1 ] );
+            if( Number.isInteger( v1 ) && Number.isInteger( v2 ) ){
 
-            var atomIndices1 = sview.getAtomIndices( sele1 );
-            var atomIndices2 = sview.getAtomIndices( sele2 );
-
-            if( atomIndices1.length && atomIndices2.length ){
-
-                ap1.index = atomIndices1[ 0 ];
-                ap2.index = atomIndices2[ 0 ];
-
-                bondStore.addBond( ap1, ap2, 1 );
-
-                text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
-
-                position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
-                position[ i3 + 1 ] = ( ap1.y + ap2.y ) / 2;
-                position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
+                ap1.index = v1;
+                ap2.index = v2;
 
             }else{
 
-                j += 1;
+                sele1.setString( v1 );
+                sele2.setString( v2 );
+
+                var atomIndices1 = sview.getAtomIndices( sele1 );
+                var atomIndices2 = sview.getAtomIndices( sele2 );
+
+                if( atomIndices1.length && atomIndices2.length ){
+                    
+                    ap1.index = atomIndices1[ 0 ];
+                    ap2.index = atomIndices2[ 0 ];
+
+                }else{
+
+                    j += 1;
+                    return;
+
+                }
 
             }
+
+            bondStore.addBond( ap1, ap2, 1 );
+
+            i -= j;
+            text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
+
+            var i3 = i * 3;
+            position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
+            position[ i3 + 1 ] = ( ap1.y + ap2.y ) / 2;
+            position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
 
         }, this );
 
@@ -220,8 +238,8 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondData.color1,
             bondData.color2,
             bondData.radius,
-            bondData.pickingColor1,
-            bondData.pickingColor2,
+            undefined,
+            undefined,
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,

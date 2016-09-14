@@ -7,7 +7,7 @@
 
 import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
-import { Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
+import { WorkerRegistry, ColorMakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
@@ -93,10 +93,6 @@ function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.setData( data, nx, ny, nz, dataAtomindex );
 
-    if( this.__data.length <= Math.pow( 10, 7 ) ){
-        GidPool.addObject( this );
-    }
-
 }
 
 Volume.prototype = {
@@ -140,13 +136,6 @@ Volume.prototype = {
         delete this.__dataRms;
 
         if( this.worker ) this.worker.terminate();
-
-        if( this.__data.length <= Math.pow( 10, 7 ) ){
-            GidPool.updateObject( this, true );
-        }else{
-            Log.warn( "Volume too large (>10^7), not adding to GidPool" );
-            GidPool.removeObject( this );
-        }
 
     },
 
@@ -683,8 +672,6 @@ Volume.prototype = {
     dispose: function(){
 
         if( this.workerPool ) this.workerPool.terminate();
-
-        GidPool.removeObject( this );
 
     }
 
