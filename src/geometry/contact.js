@@ -5,7 +5,7 @@
  */
 
 
-import { Log } from "../globals.js";
+import { Debug, Log } from "../globals.js";
 import Bitset from "../utils/bitset.js";
 import Kdtree from "./kdtree.js";
 import BondStore from "../store/bond-store.js";
@@ -25,7 +25,7 @@ Contact.prototype = {
 
     within: function( maxDistance, minDistance ){
 
-        Log.time( "Contact within" );
+        if( Debug )  Log.time( "Contact within" );
 
         // var kdtree1 = this.kdtree1;
         var kdtree2 = this.kdtree2;
@@ -64,7 +64,7 @@ Contact.prototype = {
         var bondSet = new Bitset( bondStore.count );
         bondSet.set_all( true );
 
-        Log.timeEnd( "Contact within" );
+        if( Debug ) Log.timeEnd( "Contact within" );
 
         return {
             atomSet: atomSet,
