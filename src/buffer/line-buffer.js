@@ -5,6 +5,8 @@
  */
 
 
+import { BufferAttribute } from "../../lib/three.es6.js";
+
 import Buffer from "./buffer.js";
 
 
@@ -44,7 +46,49 @@ LineBuffer.prototype = Object.assign( Object.create(
 
     constructor: LineBuffer,
 
+    resizeAttributes: function( count ){
+
+        var size = count;
+        var oldSize = this.size;
+        this.size = size;
+
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
+        var nX = this.size * 2 * 2;
+
+        if( size > oldSize ){
+
+            this.linePosition = new Float32Array( nX * 3 );
+            this.lineColor = new Float32Array( nX * 3 );
+
+            geometry.addAttribute(
+                "position",
+                new BufferAttribute( this.linePosition, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "color",
+                new BufferAttribute( this.lineColor, 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+        }
+
+        geometry.setDrawRange( 0, nX );
+
+        attributes.position.updateRange.count = nX * 3;
+        attributes.color.updateRange.count = nX * 3;
+
+        this.setVisibility( nX > 0 );
+
+    },
+
     setAttributes: function( data ){
+
+        if( data.from ){
+            this.resizeAttributes( data.from.length / 3 );
+        }
 
         var from, to, color, color2;
         var aPosition, aColor;
@@ -55,14 +99,14 @@ LineBuffer.prototype = Object.assign( Object.create(
             from = data.from;
             to = data.to;
             aPosition = attributes.position.array;
-            attributes.position.needsUpdate = true;
+            attributes.position.needsUpdate = this.size > 0;
         }
 
         if( data.color && data.color2 ){
             color = data.color;
             color2 = data.color2;
             aColor = attributes.color.array;
-            attributes.color.needsUpdate = true;
+            attributes.color.needsUpdate = this.size > 0;
         }
 
         var n = this.size;
