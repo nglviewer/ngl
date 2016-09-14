@@ -17,6 +17,8 @@ function HelixorientRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
+    this.dynamic = false;
+
 }
 
 HelixorientRepresentation.prototype = Object.assign( Object.create(

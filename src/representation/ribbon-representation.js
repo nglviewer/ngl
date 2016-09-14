@@ -17,6 +17,7 @@ function RibbonRepresentation( structure, viewer, params ){
     StructureRepresentation.call( this, structure, viewer, params );
 
     this.defaultScale.sstruc *= 3.0;
+    this.dynamic = false;
 
 }
 

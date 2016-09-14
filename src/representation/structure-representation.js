@@ -83,6 +83,8 @@ function StructureRepresentation( structure, viewer, params ){
     //     this.build();
     // }.bind( this ) );
 
+    this.dynamic = true;
+
     this.build();
 
 }
@@ -258,7 +260,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
         this.selection.setString( string, silent );
 
-        if( this.dataList.length ){
+        if( this.dataList.length && this.dynamic ){
             this.update();
         }else{
             this.build();

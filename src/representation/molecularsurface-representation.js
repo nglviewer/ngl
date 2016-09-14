@@ -24,6 +24,8 @@ function MolecularSurfaceRepresentation( structure, viewer, params ){
         this.__forceNewMolsurf = true;
     }, this );
 
+    this.dynamic = false;
+
 }
 
 MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(

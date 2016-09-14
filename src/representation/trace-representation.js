@@ -17,6 +17,8 @@ function TraceRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
+    this.dynamic = false;
+
 }
 
 TraceRepresentation.prototype = Object.assign( Object.create(

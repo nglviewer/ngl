@@ -16,6 +16,8 @@ function CartoonRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
+    this.dynamic = false;
+
 }
 
 CartoonRepresentation.prototype = Object.assign( Object.create(

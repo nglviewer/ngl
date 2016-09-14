@@ -18,6 +18,8 @@ function RocketRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
+    this.dynamic = false;
+
 }
 
 RocketRepresentation.prototype = Object.assign( Object.create(

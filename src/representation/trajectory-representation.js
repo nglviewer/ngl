@@ -29,6 +29,8 @@ function TrajectoryRepresentation( trajectory, viewer, params ){
         this, trajectory.structure, viewer, params
     );
 
+    this.dynamic = false;
+
 }
 
 TrajectoryRepresentation.prototype = Object.assign( Object.create(
