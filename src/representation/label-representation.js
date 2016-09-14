@@ -186,10 +186,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
 
     },
 
-    createData: function( sview ){
-
-        var what = { position: true, color: true, radius: true };
-        var atomData = sview.getAtomData( this.getAtomParams( what ) );
+    getText: function( sview ){
 
         var text = [];
         var labelFactory = new LabelFactory(
@@ -199,11 +196,20 @@ LabelRepresentation.prototype = Object.assign( Object.create(
             text.push( labelFactory.atomLabel( ap ) );
         } );
 
+        return text;
+
+    },
+
+    createData: function( sview ){
+
+        var what = { position: true, color: true, radius: true };
+        var atomData = sview.getAtomData( this.getAtomParams( what ) );
+
         var textBuffer = new TextBuffer(
             atomData.position,
             atomData.radius,
             atomData.color,
-            text,
+            this.getText( sview ),
             this.getBufferParams( {
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,
@@ -244,6 +250,10 @@ LabelRepresentation.prototype = Object.assign( Object.create(
 
         if( !what || what.color ){
             textData.color = atomData.color;
+        }
+
+        if( !what || what.text ){
+            textData.text = this.getText( data.sview );
         }
 
         data.bufferList[ 0 ].setAttributes( textData );

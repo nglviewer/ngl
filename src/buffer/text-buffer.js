@@ -318,22 +318,17 @@ function TextBuffer( position, size, color, text, params ){
     this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
     this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
-    var n = position.length / 3;
-
-    var charCount = 0;
-    for( var i = 0; i < n; ++i ){
-        charCount += text[ i ].length;
-    }
-
     this.text = text;
-    this.count = charCount;
-    if( this.showBackground ) this.count += n;
-    this.positionCount = n;
+    this.count = this.getCount( position, text );
+    this.size = this.count;
+    this.positionCount = position.length / 3;
 
     this.vertexShader = "SDFFont.vert";
     this.fragmentShader = "SDFFont.frag";
 
     QuadBuffer.call( this, p );
+
+    this.makeTexture();
 
     this.addUniforms( {
         "fontTexture": { value: null },
@@ -359,7 +354,6 @@ function TextBuffer( position, size, color, text, params ){
         "color": color
     } );
 
-    this.makeTexture();
     this.makeMapping();
 
 }
@@ -413,6 +407,21 @@ TextBuffer.prototype = Object.assign( Object.create(
         pm.lights = false;
         pm.uniforms.fontTexture.value = tex;
         pm.needsUpdate = true;
+
+    },
+
+    getCount: function( position, text ){
+
+        var n = position.length / 3;
+
+        var count = 0;
+        for( var i = 0; i < n; ++i ){
+            count += text[ i ].length;
+        }
+
+        if( this.showBackground ) count += n;
+
+        return count;
 
     },
 
