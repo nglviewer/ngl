@@ -49,7 +49,7 @@ BoxBuffer.prototype = Object.assign( Object.create(
 
     MappedBuffer.prototype ), {
 
-    constructo: BoxBuffer
+    constructor: BoxBuffer
 
 } );
 
