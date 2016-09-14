@@ -140,7 +140,17 @@ HyperballStickImpostorBuffer.prototype = Object.assign( Object.create(
 
         shrink: { uniform: true }
 
-    }, BoxBuffer.prototype.parameters )
+    }, BoxBuffer.prototype.parameters ),
+
+    setAttributes: function( data ){
+
+        if( data && data.position1 && data.position2 ){
+            data.position = calculateCenterArray( data.position1, data.position2 );
+        }
+
+        BoxBuffer.prototype.setAttributes.call( this, data );
+
+    }
 
 } );
 

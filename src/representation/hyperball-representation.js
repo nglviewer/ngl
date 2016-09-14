@@ -130,6 +130,12 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
             stickData.color2 = bondData.color2;
         }
 
+        if( !what || what.pickingColor ){
+            sphereData.pickingColor = atomData.pickingColor;
+            stickData.pickingColor = bondData.pickingColor1;
+            stickData.pickingColor2 = bondData.pickingColor2;
+        }
+
         if( !what || what.radius ){
             sphereData.radius = atomData.radius;
             stickData.radius = bondData.radius1;
