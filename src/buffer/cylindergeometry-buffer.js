@@ -96,7 +96,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
 
         if( data.position1 ){
 
-            // if( data.position1.length > n ){
+            if( data.position1.length > n ){
 
                 n = data.position1.length;
                 m = n / 3;
@@ -110,7 +110,7 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
 
                 this.__center = new Float32Array( n );
 
-            // }
+            }
 
         }
 
