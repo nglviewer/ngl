@@ -164,6 +164,20 @@ PointBuffer.prototype = Object.assign( Object.create(
 
     },
 
+    setAttributes: function( data ){
+
+        Buffer.prototype.setAttributes.call( this, data );
+
+        if( data.position ){
+
+            this.geometry.setDrawRange( 0, data.position.length / 3 );
+
+            this.setVisibility( data.position.length > 0 );
+
+        }
+
+    },
+
     setUniforms: function( data ){
 
         if( data && data.edgeBleach !== undefined ){
