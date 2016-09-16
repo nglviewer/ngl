@@ -59,6 +59,8 @@ function LabelRepresentation( structure, viewer, params ){
 
     StructureRepresentation.call( this, structure, viewer, params );
 
+    this.dynamic = false;
+
 }
 
 LabelRepresentation.prototype = Object.assign( Object.create(

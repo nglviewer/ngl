@@ -5,7 +5,7 @@
  */
 
 
-import { Color, CanvasTexture } from "../../lib/three.es6.js";
+import { Color, CanvasTexture, BufferAttribute } from "../../lib/three.es6.js";
 
 import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -425,7 +425,62 @@ TextBuffer.prototype = Object.assign( Object.create(
 
     },
 
+    resizeAttributes: function( count ){
+
+        var size = count;
+        var oldSize = this.size;
+        this.size = size;
+        this.count = size;
+
+        var geometry = this.geometry;
+        var attributes = geometry.attributes;
+        var n = this.size;
+
+        if( size > oldSize ){
+
+            geometry.addAttribute(
+                "position",
+                new BufferAttribute( new Float32Array( n * 3 ), 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "color",
+                new BufferAttribute( new Float32Array( n * 3 ), 3 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "inputSize",
+                new BufferAttribute( new Float32Array( n ), 1 )
+                    .setDynamic( this.dynamic )
+            );
+
+            geometry.addAttribute(
+                "inputTexCoord",
+                new BufferAttribute( new Float32Array( n * 2 ), 2 )
+                    .setDynamic( this.dynamic )
+            );
+
+        }
+
+        geometry.setDrawRange( 0, n );
+
+        attributes.position.updateRange.count = n * 3;
+        attributes.color.updateRange.count = n * 3;
+        attributes.inputSize.updateRange.count = n;
+        attributes.inputTexCoord.updateRange.count = n * 2;
+
+        this.setVisibility( n > 0 );
+
+    },
+
     setAttributes: function( data ){
+
+        // if( data.position && data.text ){
+        //     this.positionCount = data.position.length / 3;
+        //     this.resizeAttributes( this.getCount( data.position, data.text ) );
+        // }
 
         var position, size, color;
         var aPosition, inputSize, aColor;
@@ -436,19 +491,19 @@ TextBuffer.prototype = Object.assign( Object.create(
         if( data.position ){
             position = data.position;
             aPosition = attributes.position.array;
-            attributes.position.needsUpdate = true;
+            attributes.position.needsUpdate = this.size > 0;
         }
 
         if( data.size ){
             size = data.size;
             inputSize = attributes.inputSize.array;
-            attributes.inputSize.needsUpdate = true;
+            attributes.inputSize.needsUpdate = this.size > 0;
         }
 
         if( data.color ){
             color = data.color;
             aColor = attributes.color.array;
-            attributes.color.needsUpdate = true;
+            attributes.color.needsUpdate = this.size > 0;
         }
 
         var n = this.positionCount;
@@ -497,6 +552,8 @@ TextBuffer.prototype = Object.assign( Object.create(
             }
 
         }
+
+        this.makeMapping();
 
     },
 
