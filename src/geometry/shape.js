@@ -80,6 +80,8 @@ function Shape( name, params ){
             elm = elm.toArray();
         }else if( elm.x !== undefined ){
             elm = [ elm.x, elm.y, elm.z ];
+        }else if( elm.r !== undefined ){
+            elm = [ elm.r, elm.g, elm.b ];
         }
         array.push.apply( array, elm );
 
