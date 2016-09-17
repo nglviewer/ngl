@@ -414,7 +414,7 @@ AtomProxy.prototype = {
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
         if( this.altloc ) name += "%" + this.altloc;
-        name += "/" + this.modelIndex;
+        if( this.structure.modelStore.count > 1 ) name += "/" + this.modelIndex;
         return name;
     },
 
