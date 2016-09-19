@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+import { Log } from "../globals.js";
 
 
 function GidPool( name ){
@@ -133,12 +133,12 @@ GidPool.prototype = {
 
     },
 
-    freeGidRange: function( object ){
+    //freeGidRange: function( object ){
 
-        object = this.getBaseObject( object );
-        // TODO
+    //    object = this.getBaseObject( object );
+    //    // TODO
 
-    },
+    //},
 
     getNextGid: function(){
 
