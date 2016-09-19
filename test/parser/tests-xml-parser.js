@@ -11,7 +11,7 @@ describe('parser/xml-parser', function() {
 
 describe('parsing', function () {
     it('basic', function () {
-        var path = __dirname + "/../../data/3dqbInfo.xml";
+        var path = __dirname + "/../data/3dqbInfo.xml";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var xmlParser = new XmlParser( streamer );

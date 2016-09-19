@@ -722,7 +722,7 @@ describe('selection', function () {
     var _1crnPdb;
 
     before(function() {
-        _1crnPdb = fs.readFileSync( __dirname + "/../data/1crn.pdb", "utf-8" );
+        _1crnPdb = fs.readFileSync( __dirname + "/data/1crn.pdb", "utf-8" );
     });
 
     it('backbone', function () {
@@ -830,7 +830,7 @@ describe('selection', function () {
     it('/1 PDB', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        var path = __dirname + "/../data/1LVZ.pdb";
+        var path = __dirname + "/data/1LVZ.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var pdbParser = new PdbParser( streamer );
@@ -846,7 +846,7 @@ describe('selection', function () {
     it('/1 CIF', function () {
         var sele = "/1";
         var selection = new Selection( sele );
-        var path = __dirname + "/../data/1LVZ.cif";
+        var path = __dirname + "/data/1LVZ.cif";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var cifParser = new CifParser( streamer );
