@@ -52,21 +52,13 @@ function getBrowser(){
 
     var ua = window.navigator.userAgent;
 
-    if ( /Arora/i.test( ua ) ) {
-
-        return 'Arora';
-
-    } else if ( /Opera|OPR/.test( ua ) ) {
+    if ( /Opera|OPR/.test( ua ) ) {
 
         return 'Opera';
 
     } else if ( /Chrome/i.test( ua ) ) {
 
         return 'Chrome';
-
-    } else if ( /Epiphany/i.test( ua ) ) {
-
-        return 'Epiphany';
 
     } else if ( /Firefox/i.test( ua ) ) {
 
@@ -79,10 +71,6 @@ function getBrowser(){
     } else if ( /MSIE/i.test( ua ) ) {
 
         return 'Internet Explorer';
-
-    } else if ( /Midori/i.test( ua ) ) {
-
-        return 'Midori';
 
     } else if ( /Safari/i.test( ua ) ) {
 
