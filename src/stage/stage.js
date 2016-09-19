@@ -339,9 +339,11 @@ Stage.prototype = {
             var polymerChainnames = new Set();
             var rp = structure.getResidueProxy();
             structure.getModelProxy( 0 ).eachChain( function( cp ){
-                rp.index = cp.residueOffset;
-                if( rp.isPolymer() ){
-                    polymerChainnames.add( cp.chainname );
+                if( cp.residueCount ){
+                    rp.index = cp.residueOffset;
+                    if( rp.isPolymer() ){
+                        polymerChainnames.add( cp.chainname );
+                    }
                 }
             } );
             if( polymerChainnames.size === 1 ){
