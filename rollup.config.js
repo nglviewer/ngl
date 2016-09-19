@@ -1,3 +1,4 @@
+import json from 'rollup-plugin-json';
 import istanbul from 'rollup-plugin-istanbul';
 
 var pkg = require('./package.json');
@@ -23,7 +24,7 @@ function glsl () {
 function text () {
   return {
     transform: function( code, id ) {
-      if ( !/\.(pdb|cif|csv|json|xml)$/.test( id ) ) return;
+      if ( !/\.(txt)$/.test( id ) ) return;
       return 'export default ' + JSON.stringify( code ) + ';';
     }
   };
@@ -33,7 +34,8 @@ export default {
   entry: 'src/ngl.js',
   plugins: [
     glsl(),
-    text()
+    text(),
+    json(),
     // istanbul({
     //   exclude: ['test/**/*', 'node_modules/**/*']
     // })

@@ -677,12 +677,7 @@ import { Matrix3, Matrix4, Vector3, Quaternion, Plane, Color } from "../lib/thre
 
 //
 
-/**
- * Version name
- * @static
- * @type {String}
- */
-var Version = "v0.9.0dev";
+import { version as Version } from "../package.json";
 
 
 /**
@@ -781,6 +776,11 @@ var Version = "v0.9.0dev";
 
 
 export {
+    /**
+     * Version name
+     * @static
+     * @type {String}
+     */
     Version,
     Debug,
     setDebug,
