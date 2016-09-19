@@ -403,20 +403,18 @@ Stage.prototype = {
 
             }else{
 
-                var quality = atomCount < 15000 ? "high" : "medium";
-
                 object.addRepresentation( "cartoon", {
                     color: colorScheme,
                     colorScale: "RdYlBu",
                     scale: 0.7,
                     aspectRatio: 5,
-                    quality: quality
+                    quality: "auto"
                 } );
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
                         color: colorScheme,
                         colorScale: "RdYlBu",
-                        quality: quality
+                        quality: "auto"
                     } );
                 }
                 object.addRepresentation( "ball+stick", {
@@ -426,7 +424,7 @@ Stage.prototype = {
                     aspectRatio: 1.5,
                     bondScale: 0.3,
                     bondSpacing: 0.75,
-                    quality: quality
+                    quality: "auto"
                 } );
 
             }
