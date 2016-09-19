@@ -47,7 +47,12 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
 
-        p.radius = defaults( p.radius, 0.5 );
+        var defaultRadius = 0.5;
+        if( this.structure.unitcell ){
+            defaultRadius = Math.cbrt( this.structure.unitcell.volume ) / 200;
+        }
+
+        p.radius = defaults( p.radius, defaultRadius );
         p.colorValue = defaults( p.colorValue, "orange" );
 
         StructureRepresentation.prototype.init.call( this, p );
