@@ -310,12 +310,10 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             )
         ){
             this.build( {
-                "__update": {
-                    "position": true,
-                    "color": true,
-                    "index": true,
-                    "normal": true
-                }
+                "position": true,
+                "color": true,
+                "index": true,
+                "normal": true
             } );
         }
 

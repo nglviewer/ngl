@@ -133,7 +133,9 @@ StructureComponent.prototype = Object.assign( Object.create(
     setDefaultAssembly: function( value ){
 
         this.defaultAssembly = value;
-        this.rebuildRepresentations();
+        this.reprList.forEach( function( repr ){
+            repr.setParameters( { defaultAssembly: this.defaultAssembly } );
+        }, this );
         this.signals.defaultAssemblyChanged.dispatch( value );
 
     },
@@ -145,13 +147,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     rebuildRepresentations: function(){
 
         this.reprList.forEach( function( repr ){
-
-            var p = repr.getParameters();
-            p.defaultAssembly = this.defaultAssembly;
-
-            repr.build( p );
-
-        }, this );
+            repr.build();
+        } );
 
     },
 

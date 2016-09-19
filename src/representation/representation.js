@@ -66,8 +66,8 @@ function Representation( object, viewer, params ){
      * @member {Queue}
      * @private
      */
-    this.queue = new Queue( function( oldParams, callback ){
-        this.make( this.getParameters(), callback ) 
+    this.queue = new Queue( function( updateWhat, callback ){
+        this.make( updateWhat, callback )
     }.bind( this ) );
 
     /**
@@ -308,7 +308,7 @@ Representation.prototype = {
 
     },
 
-    build: function( params ){
+    build: function( updateWhat ){
 
         if( this.lazy && !this.visible ){
             this.lazyProps.build = true;
@@ -316,12 +316,8 @@ Representation.prototype = {
         }
 
         if( !this.prepare ){
-            if( !params ){
-                params = this.getParameters();
-                delete params.quality;
-            }
             this.tasks.increment();
-            this.make( params, function(){} );
+            this.make();
             return;
         }
 
@@ -333,30 +329,21 @@ Representation.prototype = {
             this.tasks.increment();
         }
 
-        if( !params ){
-            params = this.getParameters();
-            delete params.quality;
-        }
-
-        this.queue.push( params );
+        this.queue.push( updateWhat || false );
 
     },
 
-    make: function( params, callback ){
+    make: function( updateWhat, callback ){
 
         if( Debug ) Log.time( "Representation.make " + this.type );
 
-        if( params && !params.__update ){
-            this.init( params );
-        }
-
         var _make = function(){
 
-            if( params.__update ){
-                this.update( params.__update );
+            if( updateWhat ){
+                this.update( updateWhat );
                 this.viewer.requestRender();
                 this.tasks.decrement();
-                callback();
+                if( callback ) callback();
             }else{
                 this.clear();
                 this.create();
@@ -365,7 +352,7 @@ Representation.prototype = {
                     this.attach( function(){
                         if( Debug ) Log.timeEnd( "Representation.attach " + this.type );
                         this.tasks.decrement();
-                        callback();
+                        if( callback ) callback();
                     }.bind( this ) );
                 }
             }

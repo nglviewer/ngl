@@ -106,7 +106,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        assembly: null
+        assembly: null,
+        defaultAssembly: {
+            type: "hidden"
+        }
 
     }, Representation.prototype.parameters ),
 
@@ -304,6 +307,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             if( !ExtensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
+        }
+
+        if( params && params.defaultAssembly !== undefined ){
+            rebuild = true;
         }
 
         Representation.prototype.setParameters.call(
