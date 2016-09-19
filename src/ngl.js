@@ -84,6 +84,13 @@ if( !HTMLCanvasElement.prototype.toBlob ){
 }
 
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/cbrt
+Math.cbrt = Math.cbrt || function( x ){
+    var y = Math.pow(Math.abs(x), 1/3);
+    return x < 0 ? -y : y;
+};
+
+
 if( !Number.isInteger ){
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
