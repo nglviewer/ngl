@@ -497,11 +497,21 @@ function Viewer( eid ){
 
         // Log.time( "Viewer.addBuffer" );
 
+        function setInstance( object ){
+            if( object.type === "Group" ){
+                object.children.forEach( function( child ){
+                    child.userData.instance = instance;
+                } );
+            }else{
+                object.userData.instance = instance;
+            }
+        }
+
         var mesh = buffer.getMesh();
         mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            mesh.userData.instance = instance;
+            setInstance( mesh );
         }
         buffer.group.add( mesh );
 
@@ -513,7 +523,7 @@ function Viewer( eid ){
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            wireframeMesh.userData.instance = instance;
+            setInstance( wireframeMesh );
         }
         buffer.wireframeGroup.add( wireframeMesh );
 
@@ -527,7 +537,7 @@ function Viewer( eid ){
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData.instance = instance;
+                setInstance( pickingMesh );
             }
             buffer.pickingGroup.add( pickingMesh );
 
