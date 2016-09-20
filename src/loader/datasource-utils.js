@@ -43,6 +43,7 @@ function RcsbDatasource(){
         // XXXX defaults to XXXX.cif
         var info = getFileInfo( src );
         var protocol = window.location.protocol;
+        if( protocol.match( /http(s)?:/gi ) === null ) protocol = "http:";
         var pdbid = info.name.substr( 0, 4 );
         var url;
         if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
