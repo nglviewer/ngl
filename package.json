@@ -6,12 +6,15 @@
   "scripts": {
     "prebuild": "eslint src test",
     "build": "rollup -c",
-    "build-min": "rollup -c && uglifyjs build/js/ngl.js -cm > dist/ngl.js",
-    "watch": "rollup -c -w",
     "pretest": "npm run build",
     "test": "mocha",
+    "preversion": "npm test",
+    "version": "npm run-script build-min && git add -A dist",
+    "postversion": "git push && git push --tags",
+    "prepublish": "npm test",
     "doc": "jsdoc -r -c doc/conf.json",
-    "prepublish": "npm test"
+    "watch": "rollup -c -w",
+    "build-min": "rollup -c && uglifyjs build/js/ngl.js -cm > dist/ngl.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {
@@ -22,7 +25,6 @@
     "url": "https://github.com/arose/ngl/issues"
   },
   "files": [
-    "src",
     "dist"
   ],
   "author": "Alexander Rose <alexander.rose@weirdbyte.de>",
