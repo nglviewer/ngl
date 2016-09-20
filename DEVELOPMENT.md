@@ -4,13 +4,9 @@ Making a Release
 
 Follow semantic versioning and make sure the changelog is up-to-date.
 
-Change the version number in:
+Use npm to update the version number, make a dist build, tag and push to github with `npm version [level]` using the appropriate level (e.g. major, minor, patch, prerelease, ...). Publish on npm using `npm publish`. For the prerelease level use `npm publish --tag next` (to avoid making a prerelease version the default for new installs from npm).
 
-- [src/ngl.js](src/ngl.js)
-- [README.md](README.md)
-- [CHANGELOG.md](CHANGELOG.md)
-
-Push to github. Make a release on github, tag the commit and copy the relevant info from the changelog file.
+For non prerelease level also update [README.md](README.md) and [CHANGELOG.md](CHANGELOG.md) and make a release on github including copying the relevant info from the changelog file there.
 
 
 
