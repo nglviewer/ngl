@@ -493,8 +493,8 @@ AVSurface.prototype = {
 
         this.projectPoints();
         this.projectTorii();
-        //this.fixNegatives();
-        //this.fixAtomIDs();
+        this.fixNegatives();
+        this.fixAtomIDs();
 
     },
 
