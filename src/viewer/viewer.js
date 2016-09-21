@@ -20,9 +20,8 @@ import {
 } from "../../lib/three.es6.js";
 
 import {
-    Debug, Log, Browser, WebglErrorMessage,
-    setExtensionFragDepth,
-    SupportsReadPixelsFloat, setSupportsReadPixelsFloat
+    Debug, Log, Browser, Mobile, WebglErrorMessage,
+    setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
@@ -289,7 +288,9 @@ function Viewer( eid ){
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
                 format: RGBAFormat,
-                type: (
+                // problems on mobile so use UnsignedByteType there
+                // see https://github.com/arose/ngl/issues/191
+                type: Mobile ? UnsignedByteType : (
                     supportsHalfFloat ? HalfFloatType :
                         ( SupportsReadPixelsFloat ? FloatType : UnsignedByteType )
                 )
