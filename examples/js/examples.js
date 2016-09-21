@@ -1364,6 +1364,20 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "avSurf": function( stage ){
+
+        stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
+            o.addRepresentation( "licorice", { multipleBond: "symmetric" } );
+
+            o.addRepresentation( "surface", { useWorker: false, sele: ".C15 OR .N16" } );
+
+            stage.centerView();
+        } );
+
+        
+
+    },
+
     "test": function( stage ){
 
         stage.loadFile( "rcsb://3pqr.cif", {

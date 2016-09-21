@@ -8,6 +8,7 @@
 import { WorkerRegistry } from "../globals.js";
 import Worker from "../worker/worker.js";
 import EDTSurface from "./edt-surface.js";
+import AVSurface from "./av-surface.js";
 import Surface from "./surface.js";
 
 
@@ -74,7 +75,7 @@ MolecularSurface.prototype = {
         var radiusList = atomData.radius;
         var indexList = atomData.index;
 
-        var edtsurf = new EDTSurface( coordList, radiusList, indexList );
+        var edtsurf = new AVSurface( coordList, radiusList, indexList );
         var sd = edtsurf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
         );
