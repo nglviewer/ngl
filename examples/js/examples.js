@@ -1366,10 +1366,20 @@ NGL.ExampleRegistry.addDict( {
 
     "avSurf": function( stage ){
 
-        stage.loadFile( "data://4umt_47w.sdf" ).then( function ( o ) {
-            o.addRepresentation( "licorice", { multipleBond: "symmetric" } );
+        stage.loadFile( "rcsb://2vts" ).then( function ( o ) {
+            o.addRepresentation( "line", { sele: "not hetero" })
+            o.addRepresentation( "licorice", { multipleBond: "symmetric",
+                                               sele: "hetero and (not water) "} );
 
-            o.addRepresentation( "surface", { useWorker: false, wireframe: true } );
+            
+
+            o.addRepresentation( "surface", { sele: "hetero and (not water)",
+                                              useWorker: false, wireframe: true,
+                                              color: "green" } );
+            o.addRepresentation( "surface", { sele: "not hetero",
+                                              useWorker: false, wireframe: true,
+                                              color: "grey" } );
+
 
             stage.centerView();
         } );
