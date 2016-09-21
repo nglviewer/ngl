@@ -14,7 +14,7 @@
     "prepublish": "npm test",
     "doc": "jsdoc -r -c doc/conf.json",
     "watch": "rollup -c -w",
-    "build-min": "rollup -c && uglifyjs build/js/ngl.js -cm > dist/ngl.js"
+    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {

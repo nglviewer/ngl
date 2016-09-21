@@ -43,7 +43,7 @@ export default {
   external: external,
   targets: [
     {
-      dest: "build/js/ngl.js",
+      dest: "build/js/ngl.dev.js",
       format: 'umd',
       moduleName: 'NGL',
       sourceMap: false
