@@ -13,7 +13,7 @@ import { ColorMakerRegistry as _ColorMakerRegistry } from "./utils/color-maker.j
 
 var Browser = getBrowser();
 
-var Mobile = typeof window.orientation !== 'undefined';
+var Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false;
 
 var SupportsReadPixelsFloat = false;
 function setSupportsReadPixelsFloat( value ){
