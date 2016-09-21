@@ -13,6 +13,8 @@ import { ColorMakerRegistry as _ColorMakerRegistry } from "./utils/color-maker.j
 
 var Browser = getBrowser();
 
+var Mobile = typeof window.orientation !== 'undefined';
+
 var SupportsReadPixelsFloat = false;
 function setSupportsReadPixelsFloat( value ){
     SupportsReadPixelsFloat = value;
@@ -48,6 +50,7 @@ var ParserRegistry = new Registry( "parser" );
 
 export {
     Browser,
+    Mobile,
     SupportsReadPixelsFloat,
     setSupportsReadPixelsFloat,
     ExtensionFragDepth,

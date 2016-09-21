@@ -5,7 +5,7 @@
  */
 
 
-import { ExtensionFragDepth } from "../globals.js";
+import { ExtensionFragDepth, Mobile } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Selection from "../selection.js";
@@ -141,7 +141,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             }else{
                 atomCount = s.atomCount
             }
-            if( typeof window.orientation !== 'undefined' ){
+            if( Mobile ){
                 atomCount *= 4;
             }
             var backboneOnly = s.atomStore.count / s.residueStore.count < 2;

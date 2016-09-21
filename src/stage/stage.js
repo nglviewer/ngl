@@ -8,7 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log } from "../globals.js";
+import { Debug, Log, Mobile } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
@@ -326,7 +326,7 @@ Stage.prototype = {
                 instanceCount = 1;
             }
 
-            if( typeof window.orientation !== 'undefined' ){
+            if( Mobile ){
                 atomCount *= 4;
             }
 
