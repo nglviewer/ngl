@@ -1003,7 +1003,7 @@ Structure.prototype = {
             if( cp.residueCount ){
                 chainnames.add( cp.chainname );
             }
-        } );
+        }, selection );
 
         return chainnames.size;
 
