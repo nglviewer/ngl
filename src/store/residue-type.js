@@ -54,7 +54,7 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
 
     var rungEndIndex;
-    if( PurinBases.indexOf( resname ) !== -1 ){
+    if( PurinBases.includes( resname ) ){
         rungEndIndex = this.getAtomIndexByName( "N1" );
     }else{
         rungEndIndex = this.getAtomIndexByName( "N3" );
@@ -93,7 +93,7 @@ ResidueType.prototype = {
         var atomTypeIdList = this.atomTypeIdList;
         for( var i = 0, il = this.atomCount; i < il; ++i ){
             var atomType = atomMap.get( atomTypeIdList[ i ] );
-            if( atomnameList.indexOf( atomType.atomname ) !== -1 ){
+            if( atomnameList.includes( atomType.atomname ) ){
                 backboneIndexList.push( i );
             }
         }
@@ -138,11 +138,11 @@ ResidueType.prototype = {
 
     isProtein: function(){
         if( this.chemCompType ){
-            return ChemCompProtein.indexOf( this.chemCompType ) !== -1;
+            return ChemCompProtein.includes( this.chemCompType );
         }else{
             return (
                 this.hasAtomWithName( "CA", "C", "N" ) ||
-                AA3.indexOf( this.resname ) !== -1
+                AA3.includes( this.resname )
             );
         }
     },
@@ -162,13 +162,13 @@ ResidueType.prototype = {
 
     isRna: function(){
         if( this.chemCompType ){
-            return ChemCompRna.indexOf( this.chemCompType ) !== -1;
+            return ChemCompRna.includes( this.chemCompType );
         }else{
             return (
                 this.hasAtomWithName(
                     [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
                 ) ||
-                ( RnaBases.indexOf( this.resname ) !== -1 &&
+                ( RnaBases.includes( this.resname ) &&
                     ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
             );
         }
@@ -176,12 +176,12 @@ ResidueType.prototype = {
 
     isDna: function(){
         if( this.chemCompType ){
-            return ChemCompDna.indexOf( this.chemCompType ) !== -1;
+            return ChemCompDna.includes( this.chemCompType );
         }else{
             return (
                 ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
                     !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
-                DnaBases.indexOf( this.resname ) !== -1
+                DnaBases.includes( this.resname )
             );
         }
     },
@@ -195,15 +195,15 @@ ResidueType.prototype = {
     },
 
     isIon: function(){
-        return IonNames.indexOf( this.resname ) !== -1;
+        return IonNames.includes( this.resname );
     },
 
     isWater: function(){
-        return WaterNames.indexOf( this.resname ) !== -1;
+        return WaterNames.includes( this.resname );
     },
 
     isSaccharide: function(){
-        return ChemCompSaccharide.indexOf( this.chemCompType ) !== -1;
+        return ChemCompSaccharide.includes( this.chemCompType );
     },
 
     hasBackboneAtoms: function( position, type ){
@@ -300,7 +300,7 @@ ResidueType.prototype = {
         if( Array.isArray( atomname ) ){
             for( i = 0; i < n; ++i ){
                 index = atomTypeIdList[ i ];
-                if( atomname.indexOf( atomMap.get( index ).atomname ) !== -1 ){
+                if( atomname.includes( atomMap.get( index ).atomname ) ){
                     return i;
                 }
             }

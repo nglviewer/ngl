@@ -275,7 +275,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var chemCompType = groupType.chemCompType.toUpperCase();
-            var hetFlag = ChemCompHetero.indexOf( chemCompType ) !== -1;
+            var hetFlag = ChemCompHetero.includes( chemCompType );
 
             var numGroupBonds = groupType.bondOrderList.length;
             var atomIndices1 = new Array( numGroupBonds );

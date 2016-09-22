@@ -279,7 +279,7 @@ Buffer.prototype = {
             if( list === undefined ){
                 edges[ a ] = [ b ];
                 return true;
-            }else if( list.indexOf( b ) === -1 ){
+            }else if( !list.includes( b ) ){
                 list.push( b );
                 return true;
             }

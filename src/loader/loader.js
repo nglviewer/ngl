@@ -13,8 +13,7 @@ function Loader( src, params ){
 
     var p = Object.assign( {}, params );
 
-    var binaryExtList = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ];
-    var binary = binaryExtList.indexOf( p.ext ) !== -1;
+    var binary = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ].includes( p.ext );
 
     this.compressed = p.compressed || false;
     this.binary = p.binary !== undefined ? p.binary : binary;

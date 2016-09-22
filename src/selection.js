@@ -647,7 +647,7 @@ Selection.prototype = {
                     inscode[0] = inscode[0].substr(1);
                     negate = true;
                 }
-                if( inscode[0].indexOf( "--" ) !== -1 ){
+                if( inscode[0].includes( "--" ) ){
                     inscode[0] = inscode[0].replace( "--", "-" );
                     negate2 = true;
                 }

@@ -717,7 +717,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 l.forEach( function( e ){
 
-                    if( e.indexOf( "-" ) !== -1 ){
+                    if( e.includes( "-" ) ){
 
                         var es = e.split( "-" );
 
@@ -747,7 +747,7 @@ CifParser.prototype = Object.assign( Object.create(
                 var md = {};
                 var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
 
-                if( oe.indexOf( ")(" || oe.indexOf( "(" ) > 0 ) !== -1 ){
+                if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
 
                     oe = oe.split( "(" );
 

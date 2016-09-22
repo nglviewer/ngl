@@ -46,7 +46,7 @@ function RcsbDatasource(){
         if( protocol.match( /http(s)?:/gi ) === null ) protocol = "http:";
         var pdbid = info.name.substr( 0, 4 );
         var url;
-        if( [ "pdb", "cif" ].indexOf( info.ext ) !== -1 &&
+        if( [ "pdb", "cif" ].includes( info.ext ) &&
             ( info.compressed === false || info.compressed === "gz" )
         ){
             url = baseUrl + info.path;

@@ -268,7 +268,7 @@ function getFileInfo( file ){
 
     var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-    if( compressedExtList.indexOf( ext ) !== -1 ){
+    if( compressedExtList.includes( ext ) ){
         compressed = ext;
         var n = path.length - ext.length - 1;
         ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();

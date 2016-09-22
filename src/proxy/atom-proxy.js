@@ -204,7 +204,7 @@ AtomProxy.prototype = {
         // console.log(backboneIndexList)
         if( backboneIndexList.length > 0 ){
             var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
-            return backboneIndexList.indexOf( this.index - atomOffset ) !== -1;
+            return backboneIndexList.includes( this.index - atomOffset );
         }else{
             return false;
         }

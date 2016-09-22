@@ -268,7 +268,7 @@ Representation.prototype = {
 
         var types = Object.keys( ColorMakerRegistry.getTypes() );
 
-        if( types.indexOf( value ) !== -1 ){
+        if( types.includes( value ) ){
 
             if( p ){
                 p.colorScheme = value;

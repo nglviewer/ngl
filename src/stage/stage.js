@@ -779,7 +779,7 @@ Stage.prototype = {
 
             if( repr.type === "script" ) return;
 
-            if( types.indexOf( repr.getType() ) === -1 ){
+            if( !types.includes( repr.getType() ) ){
                 return;
             }
 
@@ -811,9 +811,9 @@ Stage.prototype = {
 
             var p = repr.getParameters();
 
-            if( types.indexOf( repr.getType() ) === -1 ){
+            if( !types.includes( repr.getType() ) ){
 
-                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
+                if( !impostorTypes.includes( repr.getType() ) ){
                     return;
                 }
 
