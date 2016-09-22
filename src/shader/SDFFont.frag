@@ -22,7 +22,7 @@ const float gamma = 2.2;
 
 void main(){
 
-    if( texCoord.x == 10.0 ){
+    if( texCoord.x > 1.0 ){
 
         gl_FragColor = vec4( backgroundColor, backgroundOpacity );
 
