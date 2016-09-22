@@ -996,6 +996,19 @@ Structure.prototype = {
 
     },
 
+    getChainnameCount: function( selection ){
+
+        var chainnames = new Set();
+        this.eachChain( function( cp ){
+            if( cp.residueCount ){
+                chainnames.add( cp.chainname );
+            }
+        } );
+
+        return chainnames.size;
+
+    },
+
     //
 
     updatePosition: function( position ){

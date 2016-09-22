@@ -336,17 +336,7 @@ Stage.prototype = {
             }
 
             var colorScheme = "chainname";
-            var polymerChainnames = new Set();
-            var rp = structure.getResidueProxy();
-            structure.getModelProxy( 0 ).eachChain( function( cp ){
-                if( cp.residueCount ){
-                    rp.index = cp.residueOffset;
-                    if( rp.isPolymer() ){
-                        polymerChainnames.add( cp.chainname );
-                    }
-                }
-            } );
-            if( polymerChainnames.size === 1 ){
+            if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
             }
 
