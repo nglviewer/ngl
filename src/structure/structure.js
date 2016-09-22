@@ -739,7 +739,7 @@ Structure.prototype = {
                 if( isMulti && bondOrder > 1 ){
                     radius = radiusFactory.atomRadius( ap1 );
                     multiRadius = radius * bondScale / ( 0.5 * bondOrder );
-                    
+
                     bp.calculateShiftDir( vShift );
 
                     if( isOffset ) {
@@ -749,7 +749,7 @@ Structure.prototype = {
                         vShift.negate();
 
                         // Shortening is calculated so that neighbouring double
-                        // bonds on tetrahedral geometry (e.g. sulphonamide) 
+                        // bonds on tetrahedral geometry (e.g. sulphonamide)
                         // are not quite touching (arccos(1.9 / 2) ~ 109deg)
                         // but don't shorten beyond 10% each end or it looks odd
                         vShortening.subVectors( ap2, ap1 ).multiplyScalar(
@@ -771,7 +771,7 @@ Structure.prototype = {
 
                         absOffset = ( bondSpacing - bondScale ) * radius;
                         vShift.multiplyScalar( absOffset );
-                        
+
                         if( bondOrder === 2 ){
                             vt.addVectors( ap1, vShift ).toArray( position1, i3 );
                             vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
@@ -824,7 +824,7 @@ Structure.prototype = {
                     for( j = isOffset ? 1 : 0 ; j < bondOrder; ++j ){
                         radius1[ i + j ] = multiRadius;
                     }
-                } 
+                }
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
