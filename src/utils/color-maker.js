@@ -7,6 +7,7 @@
 
 import { Color, Vector3 } from "../../lib/three.es6.js";
 
+import { defaults } from "../utils.js";
 import Selection from "../selection.js";
 import { generateUUID } from "../math/math-utils.js";
 
@@ -340,10 +341,10 @@ function ColorMaker( params ){
 
     var p = params || {};
 
-    this.scale = p.scale || "uniform";
-    this.mode = p.mode || "hcl";
-    this.domain = p.domain || [ 0, 1 ];
-    this.value = new Color( p.value || 0xFFFFFF ).getHex();
+    this.scale = defaults( p.scale, "uniform" );
+    this.mode = defaults( p.mode, "hcl" );
+    this.domain = defaults( p.domain, [ 0, 1 ] );
+    this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
 
     this.structure = p.structure;
     this.volume = p.volume;
@@ -364,7 +365,7 @@ ColorMaker.prototype = {
 
         var p = params || {};
 
-        var scale = p.scale || this.scale;
+        var scale = defaults( p.scale, this.scale );
         if( scale === "rainbow" || scale === "roygb" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
@@ -373,8 +374,8 @@ ColorMaker.prototype = {
 
         return chroma
             .scale( scale )
-            .mode( p.mode || this.mode )
-            .domain( p.domain || this.domain )
+            .mode( defaults( p.mode, this.mode ) )
+            .domain( defaults( p.domain, this.domain ) )
             .out( "num" );
 
     },
