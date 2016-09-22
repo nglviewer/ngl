@@ -6,6 +6,7 @@
 
 import { getSurfaceGrid } from "./surface-utils.js";
 import { VolumeSurface } from "./volume.js";
+import { uniformArray } from "../math/array-utils.js";
 import { computeBoundingBox,
          v3multiplyScalar,
          v3cross, v3normalize } from "../math/vector-utils.js";
@@ -46,8 +47,6 @@ AVSurface.prototype = {
         this.y = new Float32Array( this.nAtoms );
         this.z = new Float32Array( this.nAtoms );
 
-
-
         for( var i = 0; i < this.nAtoms; i++ ) {
 
             var ci = 3 * i;
@@ -64,12 +63,11 @@ AVSurface.prototype = {
         this.probeRadius = defaults( probeRadius, 1.4 );
         this.scaleFactor = defaults( scaleFactor, 2.0 );
         this.setAtomID = defaults( setAtomID, true );
-        this.probePositions = defaults( probePositions, 40 );
+        this.probePositions = defaults( probePositions, 20 );
         
         this.r = new Float32Array( this.nAtoms );
         this.r2 = new Float32Array( this.nAtoms );
         
-
         for( var i = 0; i < this.r.length; i++ ){
             var r = this.radiusList[ i ] + this.probeRadius;
             this.r[ i ] = r;
@@ -96,9 +94,8 @@ AVSurface.prototype = {
         this.dim = surfGrid.dim;
         this.matrix = surfGrid.matrix;
         this.tran = surfGrid.tran;
-        
-        this.grid = new Float32Array( this.dim[0] * this.dim[1] * this.dim[2] );
-        this.grid.fill(-1001.0);
+
+        this.grid = uniformArray( this.dim[0] * this.dim[1] * this.dim[2], -1001.0 );
 
         this.atomIndex = new Int32Array( this.grid.length );
 
@@ -176,7 +173,6 @@ AVSurface.prototype = {
             if( this.singleAtomObscures( i, x, y, z ) && i != a && i != b ){
                 this.lastClip = i;
                 return i;
-
             }
         }
 
@@ -348,8 +344,7 @@ AVSurface.prototype = {
         v3normalize( mid, mid );
 
         // Create normal to line
-        var n1 = new Float32Array( 3 );
-        this._normalToLine(n1, mid);
+        var n1 = this._normalToLine( mid );
         v3normalize( n1, n1 );
 
         // Cross together for second normal vector
@@ -446,9 +441,9 @@ AVSurface.prototype = {
         }
     },
 
-    _normalToLine: function( out, p ) {
+    _normalToLine: function( p ) {
 
-        out.fill( 1.0 );
+        var out = new Float32Array( [ 1.0 , 1.0 , 1.0 ] );
         if( p[ 0 ] != 0 ) {
             out[ 0 ] = ( p[ 1 ] + p[ 2 ] ) / -p[ 0 ];
         }
@@ -458,6 +453,7 @@ AVSurface.prototype = {
         else if( p[ 2 ] != 0 ) {
             out[ 2 ] = ( p[ 0 ] + p[ 1 ] ) / -p[ 2 ];
         }
+        return out;
 
     },
 
@@ -489,12 +485,21 @@ AVSurface.prototype = {
 
         console.time( "AVSurface.getVolume" );
 
+        console.time( "AVSurface.init" );
         this.init( probeRadius, scaleFactor, setAtomID );
+        console.timeEnd( "AVSurface.init" );
 
+        console.time( "AVSurface.projectPoints" );
         this.projectPoints();
+        console.timeEnd( "AVSurface.projectPoints" );
+
+        console.time( "AVSurface.projectTorii" );
         this.projectTorii();
+        console.timeEnd( "AVSurface.projectTorii" );
         this.fixNegatives();
         this.fixAtomIDs();
+
+        console.timeEnd( "AVSurface.getVolume" );
 
     },
 
