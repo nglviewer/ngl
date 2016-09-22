@@ -38,6 +38,7 @@
   ],
   "devDependencies": {
     "babel-eslint": "^6.1.2",
+    "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-preset-es2015": "^6.13.2",
     "babel-register": "^6.11.6",
