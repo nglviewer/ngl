@@ -321,7 +321,11 @@ Structure.prototype = {
         var as;
         var n = this.atomStore.count;
 
-        if( selection === false ){
+        if( selection && selection.type === "Bitset" ){
+
+            as = selection;
+
+        }else if( selection === false ){
 
             as = new Bitset( n );
 
@@ -356,6 +360,53 @@ Structure.prototype = {
         }
 
         if( Debug ) Log.timeEnd( "Structure.getAtomSet" );
+
+        return as;
+
+    },
+
+    getAtomSetWithinSelection: function( selection, radius ){
+
+        var spatialHash = this.spatialHash;
+        var as = this.getAtomSet( false );
+        var ap = this.getAtomProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            ap.index = idx;
+            spatialHash.within( ap.x, ap.y, ap.z, radius ).forEach( function( idx2 ){
+                as.add_unsafe( idx2 );
+            } );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinPoint: function( point, radius ){
+
+        var p = point;
+        var as = this.getAtomSet( false );
+
+        this.spatialHash.within( p.x, p.y, p.z, radius ).forEach( function( idx ){
+            as.add_unsafe( idx );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinGroup: function( selection ){
+
+        var atomResidueIndex = this.atomStore.residueIndex;
+        var as = this.getAtomSet( false );
+        var rp = this.getResidueProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            rp.index = atomResidueIndex[ idx ];
+            for( var idx2 = rp.atomOffset; idx2 <= rp.atomEnd; ++idx2 ){
+                as.add_unsafe( idx2 );
+            }
+        } );
 
         return as;
 

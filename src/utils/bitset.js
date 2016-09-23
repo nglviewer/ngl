@@ -531,6 +531,13 @@ TypedFastBitSet.prototype.fromJSON = function(input) {
   return this;
 };
 
+TypedFastBitSet.prototype.toSeleString = function() {
+  var sele = this.array().join(',');
+  return sele ? "@" + sele : "NONE";
+};
+
+TypedFastBitSet.prototype.type = "Bitset";
+
 
 var Bitset = TypedFastBitSet;
 

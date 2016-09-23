@@ -1271,8 +1271,6 @@ NGL.ExampleRegistry.addDict( {
             stage.centerView();
 
             var radius = 8;
-            var spatialHash = o.structure.spatialHash;
-
             var spacefillRepr = o.addRepresentation( "ball+stick", { sele: "NONE"/*, radius: 0.5*/ } );
 
             function getCenterArray(){
@@ -1281,11 +1279,6 @@ NGL.ExampleRegistry.addDict( {
                 var group = stage.viewer.rotationGroup.position;
                 position.copy( group ).negate().add( target );
                 return position;
-            }
-
-            function getSele( pos ){
-                var within = spatialHash.within( pos.x, pos.y, pos.z, radius );
-                return within.length ? "@" + within.join( "," ) : "NONE";
             }
 
             var sphereBuffer = new NGL.SphereBuffer(
@@ -1303,7 +1296,7 @@ NGL.ExampleRegistry.addDict( {
                     if( pos.distanceTo( prevPos ) > 0.1 ){
                         sphereBuffer.setAttributes( { "position": pos.toArray() } );
                         prevPos = pos;
-                        var sele = getSele( pos );
+                        var sele = s.getAtomSetWithinPoint( pos, radius ).toSeleString();
                         if( sele !== prevSele ){
                             spacefillRepr.setSelection( sele );
                             prevSele = sele;
