@@ -63,7 +63,7 @@ AVSurface.prototype = {
         this.probeRadius = defaults( probeRadius, 1.4 );
         this.scaleFactor = defaults( scaleFactor, 2.0 );
         this.setAtomID = defaults( setAtomID, true );
-        this.probePositions = defaults( probePositions, 20 );
+        this.probePositions = defaults( probePositions, 24 );
         
         this.r = new Float32Array( this.nAtoms );
         this.r2 = new Float32Array( this.nAtoms );
@@ -235,23 +235,6 @@ AVSurface.prototype = {
             var maxy = Math.min( this.dim[ 1 ], iay + ng + 2 );
             var maxz = Math.min( this.dim[ 2 ], iaz + ng + 2 );
 
-            /*for( var iz = minx; iz < maxz; iz++ ) {
-
-                var dz = this.gridz[ iz ] - z;
-                var zoffset = this.dim[ 0 ] * this.dim[ 1 ] * iz;
-
-                for( var iy = miny; iy < maxy; iy++ ){
-
-                    var dy = this.gridy[ iy ] - y;
-                    var dzy2 = dz * dz + dy * dy;
-                    var yzoffset = zoffset + this.dim[ 0 ] * iy;
-
-                    for( var ix = minx; ix < maxx; ix++ ){
-                        var dx = this.gridx[ix] - x;
-                        var d2 = dzy2 + dx * dx;
-                        var idx = ix + yzoffset;
-
-            */
             for( var ix = minx; ix < maxx; ix++ ){
 
                 var dx = this.gridx[ ix ] - x;
@@ -267,11 +250,9 @@ AVSurface.prototype = {
 
                         var dz = this.gridz[ iz ] - z;
                         var d2 = dxy2 + dz * dz;
-                        var idx = iz + xyoffset;
 
-             
                         if( d2 < r2 ){
-
+                            var idx = iz + xyoffset;
                             
                             if( this.grid[idx] < 0.0 ){
                                 // Unvisited, make positive
@@ -521,5 +502,12 @@ AVSurface.prototype = {
 
 
 }
+
+AVSurface.__deps = [
+
+    getSurfaceGrid, VolumeSurface, uniformArray, computeBoundinxBox,
+    v3multiplyScalar, v3cross, v3normalize, SpatialHash, defaults
+
+];
 
 export default AVSurface;
