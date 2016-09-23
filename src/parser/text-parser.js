@@ -11,9 +11,7 @@ import Parser from "./parser.js";
 
 function TextParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.text = {
 
@@ -34,11 +32,9 @@ TextParser.prototype = Object.assign( Object.create(
 
     __objName: "text",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         this.text.data = this.streamer.asText();
-
-        callback();
 
     }
 

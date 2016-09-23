@@ -24,7 +24,7 @@ MrcParser.prototype = Object.assign( Object.create(
     constructor: MrcParser,
     type: "mrc",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // MRC
         // http://ami.scripps.edu/software/mrctools/mrc_specification.php
@@ -170,7 +170,6 @@ MrcParser.prototype = Object.assign( Object.create(
         v.setData( data, header.NX, header.NY, header.NZ );
 
         if( Debug ) Log.timeEnd( "MrcParser._parse " + this.name );
-        callback();
 
     },
 

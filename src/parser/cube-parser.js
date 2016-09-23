@@ -28,7 +28,7 @@ CubeParser.prototype = Object.assign( Object.create(
     constructor: CubeParser,
     type: "cube",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://paulbourke.net/dataformats/cube/
 
@@ -45,14 +45,14 @@ CubeParser.prototype = Object.assign( Object.create(
             return parseFloat( field );
         }
 
-        header.atomCount = Math.abs( headerhelper( 2, 0 ) ); //Number of atoms
-        header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor; //Position of origin of volumetric data
+        header.atomCount = Math.abs( headerhelper( 2, 0 ) );  // Number of atoms
+        header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor;  // Position of origin of volumetric data
         header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
         header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
-        header.NVX = headerhelper( 3, 0 ); //Number of voxels
+        header.NVX = headerhelper( 3, 0 );  // Number of voxels
         header.NVY = headerhelper( 4, 0 );
         header.NVZ = headerhelper( 5, 0 );
-        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor; //Axis vector
+        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor;  // Axis vector
         header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
         header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
 
@@ -92,7 +92,6 @@ CubeParser.prototype = Object.assign( Object.create(
         v.setData( data, header.NVZ, header.NVY, header.NVX );
 
         if( Debug ) Log.timeEnd( "CubeParser._parse " + this.name );
-        callback();
 
     },
 
@@ -123,6 +122,7 @@ CubeParser.prototype = Object.assign( Object.create(
 
 } );
 
+ParserRegistry.add( "cub", CubeParser );
 ParserRegistry.add( "cube", CubeParser );
 
 

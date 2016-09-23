@@ -23,7 +23,7 @@ DxbinParser.prototype = Object.assign( Object.create(
     constructor: DxbinParser,
     type: "dxbin",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
@@ -50,8 +50,6 @@ DxbinParser.prototype = Object.assign( Object.create(
         this.volume.setData( data, header.nz, header.ny, header.nx );
 
         if( Debug ) Log.timeEnd( "DxbinParser._parse " + this.name );
-
-        callback();
 
     }
 

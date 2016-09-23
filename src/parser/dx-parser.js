@@ -25,7 +25,7 @@ DxParser.prototype = Object.assign( Object.create(
     constructor: DxParser,
     type: "dx",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.poissonboltzmann.org/docs/file-format-info/
 
@@ -77,7 +77,6 @@ DxParser.prototype = Object.assign( Object.create(
         v.setData( data, header.nz, header.ny, header.nx );
 
         if( Debug ) Log.timeEnd( "DxParser._parse " + this.name );
-        callback();
 
     },
 

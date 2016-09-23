@@ -12,9 +12,7 @@ import { uint8ToString } from "../utils.js";
 
 function DcdParser( streamer, params ){
 
-    var p = params || {};
-
-    TrajectoryParser.call( this, streamer, p );
+    TrajectoryParser.call( this, streamer, params );
 
 }
 
@@ -25,7 +23,7 @@ DcdParser.prototype = Object.assign( Object.create(
     constructor: DcdParser,
     type: "dcd",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
 
@@ -140,7 +138,6 @@ DcdParser.prototype = Object.assign( Object.create(
         if( header.NAMNF > 0 ){
             // TODO read coordinates and indices of fixed atoms
             Log.error( "dcd format with fixed atoms unsupported, aborting" );
-            callback();
             return;
         }
 
@@ -194,7 +191,6 @@ DcdParser.prototype = Object.assign( Object.create(
         // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
         if( Debug ) Log.timeEnd( "DcdParser._parse " + this.name );
-        callback();
 
     },
 

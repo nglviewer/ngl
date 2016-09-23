@@ -19,11 +19,9 @@ function XmlParser( streamer, params ){
     Parser.call( this, streamer, p );
 
     this.xml = {
-
         name: this.name,
         path: this.path,
         data: {}
-
     };
 
 }
@@ -145,7 +143,7 @@ XmlParser.prototype = Object.assign( Object.create(
 
     },
 
-    _parse: function( callback ){
+    _parse: function(){
 
         if( Debug ) Log.time( "XmlParser._parse " + this.name );
 
@@ -157,8 +155,6 @@ XmlParser.prototype = Object.assign( Object.create(
         }
 
         if( Debug ) Log.timeEnd( "XmlParser._parse " + this.name );
-
-        callback();
 
     }
 

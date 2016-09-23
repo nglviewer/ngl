@@ -16,7 +16,6 @@ describe('parsing', function () {
         var streamer = new StringStreamer( str );
         var jsonParser = new JsonParser( streamer, { string: true } );
         return jsonParser.parse( function( json ){
-            console.log( json )
             assert.strictEqual( 42, json.data.foo, "Passed!" );
         } );
     });

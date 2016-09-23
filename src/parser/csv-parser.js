@@ -11,17 +11,13 @@ import Parser from "./parser.js";
 
  function CsvParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.table = {
-
         name: this.name,
         path: this.path,
         colNames: [],
         data: []
-
     };
 
 }
@@ -35,7 +31,7 @@ CsvParser.prototype = Object.assign( Object.create(
 
     __objName: "table",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         var data = this.table.data;
         var reDelimiter = /\s*,\s*/;
@@ -62,8 +58,6 @@ CsvParser.prototype = Object.assign( Object.create(
             }
 
         }.bind( this ) );
-
-        callback();
 
     }
 

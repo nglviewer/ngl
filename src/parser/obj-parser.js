@@ -428,9 +428,7 @@ OBJLoader.prototype = {
 
 function ObjParser( streamer, params ){
 
-    var p = params || {};
-
-    SurfaceParser.call( this, streamer, p );
+    SurfaceParser.call( this, streamer, params );
 
     this.loader = new OBJLoader();
 

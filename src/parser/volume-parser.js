@@ -13,9 +13,7 @@ import Volume from "../surface/volume.js";
 
 function VolumeParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.volume = new Volume( this.name, this.path );
 
