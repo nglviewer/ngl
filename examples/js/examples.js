@@ -1271,8 +1271,7 @@ NGL.ExampleRegistry.addDict( {
             stage.centerView();
 
             var radius = 8;
-            var s = o.structure;
-            var spatialHash = new NGL.SpatialHash( s.atomStore, s.boundingBox );
+            var spatialHash = o.structure.spatialHash;
 
             var spacefillRepr = o.addRepresentation( "ball+stick", { sele: "NONE"/*, radius: 0.5*/ } );
 

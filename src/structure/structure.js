@@ -14,6 +14,7 @@ import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix, principalAxes } from "../math/matrix-utils.js";
+import SpatialHash from "../geometry/spatial-hash.js";
 // import StructureView from "./structure-view.js";
 
 import BondHash from "../store/bond-hash.js";
@@ -115,6 +116,7 @@ function Structure( name, path ){
     this.residueMap = new ResidueMap( this );
 
     this.bondHash = undefined;
+    this.spatialHash = undefined;
 
     this.atomSet = undefined;
     this.bondSet = undefined;
@@ -140,6 +142,7 @@ Structure.prototype = {
         this.atomCount = this.atomStore.count;
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.center();
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
     },
 
