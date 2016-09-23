@@ -582,7 +582,7 @@ if( WebGLRenderingContext ){
 
 import {
     Debug, setDebug,
-    DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry
+    DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry, ParserRegistry
 } from "./globals.js";
 import {
     StaticDatasource, RcsbDatasource, PassThroughDatasource
@@ -793,6 +793,7 @@ export {
     setDebug,
     DatasourceRegistry,
     StaticDatasource,
+    ParserRegistry,
     /**
      * autoLoad function
      * @see {@link autoLoad}

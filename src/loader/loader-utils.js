@@ -5,7 +5,7 @@
  */
 
 
-import { DatasourceRegistry } from "../globals.js";
+import { DatasourceRegistry, ParserRegistry } from "../globals.js";
 import { getFileInfo } from "../utils.js";
 import ParserLoader from "./parser-loader.js";
 import ScriptLoader from "./script-loader.js";
@@ -24,44 +24,6 @@ function getDataInfo( src ){
     }
     return info;
 }
-
-
-var loaderMap = {
-
-    "gro": ParserLoader,
-    "pdb": ParserLoader,
-    "pdb1": ParserLoader,
-    "ent": ParserLoader,
-    "pqr": ParserLoader,
-    "cif": ParserLoader,
-    "mcif": ParserLoader,
-    "mmcif": ParserLoader,
-    "sdf": ParserLoader,
-    "mol2": ParserLoader,
-    "mmtf":  ParserLoader,
-
-    "dcd": ParserLoader,
-
-    "mrc": ParserLoader,
-    "ccp4": ParserLoader,
-    "map": ParserLoader,
-    "cube": ParserLoader,
-    "dx": ParserLoader,
-    "dxbin": ParserLoader,
-
-    "obj": ParserLoader,
-    "ply": ParserLoader,
-
-    "txt": ParserLoader,
-    "text": ParserLoader,
-    "csv": ParserLoader,
-    "json": ParserLoader,
-    "xml": ParserLoader,
-
-    "ngl": ScriptLoader,
-    "plugin": PluginLoader,
-
-};
 
 
 /**
@@ -93,9 +55,18 @@ var loaderMap = {
 function autoLoad( file, params ){
 
     var p = Object.assign( getDataInfo( file ), params );
-    var loader = new loaderMap[ p.ext ]( p.src, p );
 
-    if( loader ){
+    var loaderClass;
+    if( ParserRegistry.names.includes( p.ext ) ){
+        loaderClass = ParserLoader;
+    }else if( p.ext === "ngl" ){
+        loaderClass = ScriptLoader;
+    }else if( p.ext === "plugin" ){
+        loaderClass = PluginLoader;
+    }
+
+    if( loaderClass ){
+        var loader = new loaderClass( p.src, p );
         return loader.load();
     }else{
         return Promise.reject( "autoLoad: ext '" + p.ext + "' unknown" );
