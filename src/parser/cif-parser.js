@@ -13,7 +13,645 @@ import { HelixTypes } from "./pdb-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 import Selection from "../selection.js";
-import { assignResidueTypeBonds } from "../structure/structure-utils.js";
+import {
+    assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
+    calculateBonds, calculateSecondaryStructure
+} from "../structure/structure-utils.js";
+
+
+var reWhitespace = /\s+/;
+var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
+var reDoubleQuote = /"/g;
+var reTrimQuotes = /^['"]+|['"]+$/g;
+
+
+function ensureArray( dict, field ){
+    if( !Array.isArray( dict[ field ] ) ){
+        Object.keys( dict ).forEach( function( key ){
+            dict[ key ] = [ dict[ key ] ];
+        } );
+    }
+}
+
+
+function parseChemComp( cif, structure, structureBuilder ){
+
+    var atomStore = structure.atomStore;
+    var atomMap = structure.atomMap;
+
+    var i, n;
+    var cc = cif.chem_comp;
+    var cca = cif.chem_comp_atom;
+    var ccb = cif.chem_comp_bond;
+
+    if( cc ){
+
+        if( cc.name ){
+            structure.title = cc.name.trim().replace( reTrimQuotes, "" );
+        }
+        if( cc.id ){
+            structure.id = cc.id.trim().replace( reTrimQuotes, "" );
+        }
+
+    }
+
+    var atomnameDict = {};
+
+    if( cca ){
+
+        var atomname, element, resname, resno;
+        n = cca.comp_id.length;
+
+        for( i = 0; i < n; ++i ){
+
+            atomStore.growIfFull();
+
+            atomname = cca.atom_id[ i ];
+            element = cca.type_symbol[ i ];
+
+            atomnameDict[ atomname ] = i;
+            atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+            atomStore.x[ i ] = cca.model_Cartn_x[ i ];
+            atomStore.y[ i ] = cca.model_Cartn_y[ i ];
+            atomStore.z[ i ] = cca.model_Cartn_z[ i ];
+            atomStore.serial[ i ] = i;
+
+            resname = cca.pdbx_component_comp_id[ i ];
+            resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+            structureBuilder.addAtom( 0, "", resname, resno, 1 );
+
+        }
+
+        for( i = 0; i < n; ++i ){
+
+            var j = i + n;
+
+            atomStore.growIfFull();
+
+            atomname = cca.atom_id[ i ];
+            element = cca.type_symbol[ i ];
+
+            atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
+
+            atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ];
+            atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ];
+            atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ];
+            atomStore.serial[ j ] = j;
+
+            resname = cca.pdbx_component_comp_id[ i ];
+            resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
+
+            structureBuilder.addAtom( 1, "", resname, resno, 1 );
+
+        }
+
+    }
+
+    if( cca && ccb ){
+
+        var atomname1, atomname2, valueOrder, bondOrder;
+        n = ccb.comp_id.length;
+        var na = cca.comp_id.length;
+
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
+
+        for( i = 0; i < n; ++i ){
+
+            atomname1 = ccb.atom_id_1[ i ];
+            atomname2 = ccb.atom_id_2[ i ];
+            valueOrder = ccb.value_order[ i ].toLowerCase();
+
+            if( valueOrder === "?" ){
+                bondOrder = 1;  // assume single bond
+            }else if( valueOrder === "sing" ){
+                bondOrder = 1;
+            }else if( valueOrder === "doub" ){
+                bondOrder = 2;
+            }else if( valueOrder === "trip" ){
+                bondOrder = 3;
+            }else if( valueOrder === "quad" ){
+                bondOrder = 4;
+            }
+
+            ap1.index = atomnameDict[ atomname1 ];
+            ap2.index = atomnameDict[ atomname2 ];
+            structure.bondStore.growIfFull();
+            structure.bondStore.addBond( ap1, ap2, bondOrder );
+
+            ap1.index += na;
+            ap2.index += na;
+            structure.bondStore.growIfFull();
+            structure.bondStore.addBond( ap1, ap2, bondOrder );
+
+        }
+
+    }
+
+}
+
+
+function processSecondaryStructure( cif, structure, asymIdDict ){
+
+    var helices = [];
+    var sheets = [];
+
+    var i, il, begIcode, endIcode;
+
+    // get helices
+    var sc = cif.struct_conf;
+
+    if( sc ){
+
+
+        ensureArray( sc, "id" );
+
+        for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
+            var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
+            if( !Number.isNaN( helixType ) ){
+                begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
+                endIcode = sc.pdbx_end_PDB_ins_code[ i ];
+                helices.push( [
+                    asymIdDict[ sc.beg_label_asym_id[ i ] ],
+                    parseInt( sc.beg_auth_seq_id[ i ] ),
+                    begIcode === "?" ? "" : begIcode,
+                    asymIdDict[ sc.end_label_asym_id[ i ] ],
+                    parseInt( sc.end_auth_seq_id[ i ] ),
+                    endIcode === "?" ? "" : endIcode,
+                    ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 )
+                ] );
+            }
+        }
+
+    }
+
+    // get sheets
+    var ssr = cif.struct_sheet_range;
+
+    if( ssr ){
+
+        ensureArray( ssr, "id" );
+
+        for( i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
+            begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
+            endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
+            sheets.push( [
+                asymIdDict[ ssr.beg_label_asym_id[ i ] ],
+                parseInt( ssr.beg_auth_seq_id[ i ] ),
+                begIcode === "?" ? "" : begIcode,
+                asymIdDict[ ssr.end_label_asym_id[ i ] ],
+                parseInt( ssr.end_auth_seq_id[ i ] ),
+                endIcode === "?" ? "" : endIcode
+            ] );
+        }
+
+    }
+
+    if( sc || ssr ){
+        return {
+            helices: helices,
+            sheets: sheets
+        };
+    }else{
+        return false;
+    }
+
+}
+
+
+function processSymmetry( cif, structure, asymIdDict ){
+
+    // biomol & ncs processing
+    var operDict = {};
+    var biomolDict = structure.biomolDict;
+
+    if( cif.pdbx_struct_oper_list ){
+
+        var biomolOp = cif.pdbx_struct_oper_list;
+        ensureArray( biomolOp, "id" );
+
+        biomolOp.id.forEach( function( id, i ){
+
+            var m = new Matrix4();
+            var elms = m.elements;
+
+            elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
+            elms[  1 ] = parseFloat( biomolOp[ "matrix[1][2]" ][ i ] );
+            elms[  2 ] = parseFloat( biomolOp[ "matrix[1][3]" ][ i ] );
+
+            elms[  4 ] = parseFloat( biomolOp[ "matrix[2][1]" ][ i ] );
+            elms[  5 ] = parseFloat( biomolOp[ "matrix[2][2]" ][ i ] );
+            elms[  6 ] = parseFloat( biomolOp[ "matrix[2][3]" ][ i ] );
+
+            elms[  8 ] = parseFloat( biomolOp[ "matrix[3][1]" ][ i ] );
+            elms[  9 ] = parseFloat( biomolOp[ "matrix[3][2]" ][ i ] );
+            elms[ 10 ] = parseFloat( biomolOp[ "matrix[3][3]" ][ i ] );
+
+            elms[  3 ] = parseFloat( biomolOp[ "vector[1]" ][ i ] );
+            elms[  7 ] = parseFloat( biomolOp[ "vector[2]" ][ i ] );
+            elms[ 11 ] = parseFloat( biomolOp[ "vector[3]" ][ i ] );
+
+            m.transpose();
+
+            operDict[ id ] = m;
+
+        } );
+
+    }
+
+    if( cif.pdbx_struct_assembly_gen ){
+
+        var gen = cif.pdbx_struct_assembly_gen;
+        ensureArray( gen, "assembly_id" );
+
+        var getMatrixDict = function( expr ){
+
+            var matDict = {};
+
+            var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+
+            l.forEach( function( e ){
+
+                if( e.includes( "-" ) ){
+
+                    var es = e.split( "-" );
+
+                    var j = parseInt( es[ 0 ] );
+                    var m = parseInt( es[ 1 ] );
+
+                    for( ; j <= m; ++j ){
+
+                        matDict[ j ] = operDict[ j ];
+
+                    }
+
+                }else{
+
+                    matDict[ e ] = operDict[ e ];
+
+                }
+
+            } );
+
+            return matDict;
+
+        };
+
+        gen.assembly_id.forEach( function( id, i ){
+
+            var md = {};
+            var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
+
+            if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
+
+                oe = oe.split( "(" );
+
+                var md1 = getMatrixDict( oe[ 0 ] );
+                var md2 = getMatrixDict( oe[ 1 ] );
+
+                Object.keys( md1 ).forEach( function( k1 ){
+
+                    Object.keys( md2 ).forEach( function( k2 ){
+
+                        var mat = new Matrix4();
+
+                        mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
+                        md[ k1 + "x" + k2 ] = mat;
+
+                    } );
+
+                } );
+
+            }else{
+
+                md = getMatrixDict( oe );
+
+            }
+
+            var matrixList = [];
+            for( var k in md ){
+                matrixList.push( md[ k ] );
+            }
+
+            var name = id;
+            if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
+
+            var chainList = gen.asym_id_list[ i ].split( "," );
+            for( var j = 0, jl = chainList.length; j < jl; ++j ){
+                chainList[ j ] = asymIdDict[ chainList[ j ] ];
+            }
+
+            if( biomolDict[ name ] === undefined ){
+                biomolDict[ name ] = new Assembly( name );
+            }
+            biomolDict[ name ].addPart( matrixList, chainList );
+
+        } );
+
+    }
+
+    // non-crystallographic symmetry operations
+    if( cif.struct_ncs_oper ){
+
+        var ncsOp = cif.struct_ncs_oper;
+        ensureArray( ncsOp, "id" );
+
+        var ncsName = "NCS";
+        biomolDict[ ncsName ] = new Assembly( ncsName );
+        var ncsPart = biomolDict[ ncsName ].addPart();
+
+        ncsOp.id.forEach( function( id, i ){
+
+            // ignore 'given' operators
+            if( ncsOp.code[ i ] === "given" ) return;
+
+            var m = new Matrix4();
+            var elms = m.elements;
+
+            elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
+            elms[  1 ] = parseFloat( ncsOp[ "matrix[1][2]" ][ i ] );
+            elms[  2 ] = parseFloat( ncsOp[ "matrix[1][3]" ][ i ] );
+
+            elms[  4 ] = parseFloat( ncsOp[ "matrix[2][1]" ][ i ] );
+            elms[  5 ] = parseFloat( ncsOp[ "matrix[2][2]" ][ i ] );
+            elms[  6 ] = parseFloat( ncsOp[ "matrix[2][3]" ][ i ] );
+
+            elms[  8 ] = parseFloat( ncsOp[ "matrix[3][1]" ][ i ] );
+            elms[  9 ] = parseFloat( ncsOp[ "matrix[3][2]" ][ i ] );
+            elms[ 10 ] = parseFloat( ncsOp[ "matrix[3][3]" ][ i ] );
+
+            elms[  3 ] = parseFloat( ncsOp[ "vector[1]" ][ i ] );
+            elms[  7 ] = parseFloat( ncsOp[ "vector[2]" ][ i ] );
+            elms[ 11 ] = parseFloat( ncsOp[ "vector[3]" ][ i ] );
+
+            m.transpose();
+
+            ncsPart.matrixList.push( m );
+
+        } );
+
+        if( ncsPart.matrixList.length === 0 ){
+            delete biomolDict[ ncsName ];
+        }
+
+    }
+
+    // cell & symmetry
+    var unitcellDict = {};
+
+    if( cif.cell ){
+
+        var cell = cif.cell;
+
+        var a = parseFloat( cell.length_a );
+        var b = parseFloat( cell.length_b );
+        var c = parseFloat( cell.length_c );
+
+        var box = new Float32Array( 9 );
+        box[ 0 ] = a;
+        box[ 4 ] = b;
+        box[ 8 ] = c;
+        structure.boxes.push( box );
+
+        unitcellDict.a = a;
+        unitcellDict.b = b;
+        unitcellDict.c = c;
+        unitcellDict.alpha = parseFloat( cell.angle_alpha );
+        unitcellDict.beta = parseFloat( cell.angle_beta );
+        unitcellDict.gamma = parseFloat( cell.angle_gamma );
+
+    }
+
+    if( cif.symmetry ){
+
+        var symmetry = cif.symmetry;
+
+        var sGroup = symmetry[ "space_group_name_H-M" ];
+        if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
+            ( sGroup[0] === "'" || sGroup[0] === '"' )
+        ){
+            sGroup = sGroup.substring( 1, sGroup.length-1 );
+        }
+
+        unitcellDict.spacegroup = sGroup;
+
+    }
+
+    // origx
+    var origx = new Matrix4();
+
+    if( cif.database_PDB_matrix ){
+
+        var origxMat = cif.database_PDB_matrix;
+        var origxElms = origx.elements;
+
+        origxElms[  0 ] = parseFloat( origxMat[ "origx[1][1]" ] );
+        origxElms[  1 ] = parseFloat( origxMat[ "origx[1][2]" ] );
+        origxElms[  2 ] = parseFloat( origxMat[ "origx[1][3]" ] );
+
+        origxElms[  4 ] = parseFloat( origxMat[ "origx[2][1]" ] );
+        origxElms[  5 ] = parseFloat( origxMat[ "origx[2][2]" ] );
+        origxElms[  6 ] = parseFloat( origxMat[ "origx[2][3]" ] );
+
+        origxElms[  8 ] = parseFloat( origxMat[ "origx[3][1]" ] );
+        origxElms[  9 ] = parseFloat( origxMat[ "origx[3][2]" ] );
+        origxElms[ 10 ] = parseFloat( origxMat[ "origx[3][3]" ] );
+
+        origxElms[  3 ] = parseFloat( origxMat[ "origx_vector[1]" ] );
+        origxElms[  7 ] = parseFloat( origxMat[ "origx_vector[2]" ] );
+        origxElms[ 11 ] = parseFloat( origxMat[ "origx_vector[3]" ] );
+
+        origx.transpose();
+
+        unitcellDict.origx = origx;
+
+    }
+
+    // scale
+    var scale = new Matrix4();
+
+    if( cif.atom_sites ){
+
+        var scaleMat = cif.atom_sites;
+        var scaleElms = scale.elements;
+
+        scaleElms[  0 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][1]" ] );
+        scaleElms[  1 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][2]" ] );
+        scaleElms[  2 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][3]" ] );
+
+        scaleElms[  4 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][1]" ] );
+        scaleElms[  5 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][2]" ] );
+        scaleElms[  6 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][3]" ] );
+
+        scaleElms[  8 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][1]" ] );
+        scaleElms[  9 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][2]" ] );
+        scaleElms[ 10 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][3]" ] );
+
+        scaleElms[  3 ] = parseFloat( scaleMat[ "fract_transf_vector[1]" ] );
+        scaleElms[  7 ] = parseFloat( scaleMat[ "fract_transf_vector[2]" ] );
+        scaleElms[ 11 ] = parseFloat( scaleMat[ "fract_transf_vector[3]" ] );
+
+        scale.transpose();
+
+        unitcellDict.scale = scale;
+
+    }
+
+    if( unitcellDict.a !== undefined ){
+        structure.unitcell = new Unitcell(
+            unitcellDict.a, unitcellDict.b, unitcellDict.c,
+            unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
+            unitcellDict.spacegroup, unitcellDict.scale
+        );
+    }else{
+        structure.unitcell = undefined;
+    }
+
+}
+
+
+function processConnections( cif, structure, asymIdDict ){
+
+    // add connections
+    var sc = cif.struct_conn;
+
+    if( sc ){
+
+        ensureArray( sc, "id" );
+
+        var reDoubleQuote = /"/g;
+        var ap1 = structure.getAtomProxy();
+        var ap2 = structure.getAtomProxy();
+        var atomIndicesCache = {};
+
+        for( var i = 0, il = sc.id.length; i < il; ++i ){
+
+            // ignore:
+            // hydrog - hydrogen bond
+            // mismat - mismatched base pairs
+            // saltbr - ionic interaction
+
+            var conn_type_id = sc.conn_type_id[ i ];
+            if( conn_type_id === "hydrog" ||
+                conn_type_id === "mismat" ||
+                conn_type_id === "saltbr" ) continue;
+
+            // ignore bonds between symmetry mates
+            if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
+                sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
+
+            // process:
+            // covale - covalent bond
+            // covale_base -
+            //      covalent modification of a nucleotide base
+            // covale_phosphate -
+            //      covalent modification of a nucleotide phosphate
+            // covale_sugar -
+            //      covalent modification of a nucleotide sugar
+            // disulf - disulfide bridge
+            // metalc - metal coordination
+            // modres - covalent residue modification
+
+            var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
+            var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
+            var sele1 = (
+                sc.ptnr1_auth_seq_id[ i ] +
+                ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
+                ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
+                "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
+            );
+            var atomIndices1 = atomIndicesCache[ sele1 ];
+            if( !atomIndices1 ){
+                var selection1 = new Selection( sele1 );
+                if( selection1.selection.error ){
+                    Log.warn( "invalid selection for connection", sele1 );
+                    continue;
+                }
+                atomIndices1 = structure.getAtomIndices( selection1 );
+                atomIndicesCache[ sele1 ] = atomIndices1;
+            }
+
+            var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
+            var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
+            var sele2 = (
+                sc.ptnr2_auth_seq_id[ i ] +
+                ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
+                ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
+                "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
+                ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
+            );
+            var atomIndices2 = atomIndicesCache[ sele2 ];
+            if( !atomIndices2 ){
+                var selection2 = new Selection( sele2 );
+                if( selection2.selection.error ){
+                    Log.warn( "invalid selection for connection", sele2 );
+                    continue;
+                }
+                atomIndices2 = structure.getAtomIndices( selection2 );
+                atomIndicesCache[ sele2 ] = atomIndices2;
+            }
+
+            // cases with more than one atom per selection
+            // - #altloc1 to #altloc2
+            // - #model to #model
+            // - #altloc1 * #model to #altloc2 * #model
+
+            var k = atomIndices1.length;
+            var l = atomIndices2.length;
+
+            if( k > l ){
+                var tmpA = k;
+                k = l;
+                l = tmpA;
+                var tmpB = atomIndices1;
+                atomIndices1 = atomIndices2;
+                atomIndices2 = tmpB;
+            }
+
+            // console.log( k, l );
+
+            if( k === 0 || l === 0 ){
+                Log.warn( "no atoms found for", sele1, sele2 );
+                continue;
+            }
+
+            for( var j = 0; j < l; ++j ){
+
+                ap1.index = atomIndices1[ j % k ];
+                ap2.index = atomIndices2[ j ];
+
+                if( ap1 && ap2 ){
+                    var bondOrder;
+                    var valueOrder = sc.pdbx_value_order[ i ].toLowerCase();
+                    if( valueOrder === "?" ){
+                        bondOrder = 1;  // assume single bond
+                    }else if( valueOrder === "sing" ){
+                        bondOrder = 1;
+                    }else if( valueOrder === "doub" ){
+                        bondOrder = 2;
+                    }else if( valueOrder === "trip" ){
+                        bondOrder = 3;
+                    }else if( valueOrder === "quad" ){
+                        bondOrder = 4;
+                    }
+                    structure.bondStore.addBond( ap1, ap2, bondOrder );
+                }else{
+                    Log.log( "atoms for connection not found" );
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+
+//
 
 
 function CifParser( streamer, params ){
@@ -29,7 +667,7 @@ CifParser.prototype = Object.assign( Object.create(
     constructor: CifParser,
     type: "cif",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://mmcif.wwpdb.org/
 
@@ -51,13 +689,8 @@ CifParser.prototype = Object.assign( Object.create(
 
         //
 
-        var reWhitespace = /\s+/;
-        var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
-        var reDoubleQuote = /"/g;
-        var reTrimQuotes = /^['"]+|['"]+$/g;
-
         var cif = {};
-        this.cif = cif;
+        var asymIdDict = {};
 
         var pendingString = false;
         var currentString = null;
@@ -74,9 +707,6 @@ CifParser.prototype = Object.assign( Object.create(
             label_atom_id, label_comp_id, label_asym_id, label_alt_id,
             group_PDB, id, type_symbol, pdbx_PDB_model_num, pdbx_PDB_ins_code,
             Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv, occupancy;
-
-        var asymIdDict = {};
-        this.asymIdDict = asymIdDict;
 
         //
 
@@ -419,197 +1049,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                 }
 
-
             }
-
-        }
-
-        function postProcess(){
-
-            function _ensureArray( dict, field ){
-
-                if( !Array.isArray( dict[ field ] ) ){
-                    Object.keys( dict ).forEach( function( key ){
-                        dict[ key ] = [ dict[ key ] ];
-                    } );
-                }
-
-            }
-
-            var i, il, begIcode, endIcode;
-
-            // get helices
-            var sc = cif.struct_conf;
-
-            if( sc ){
-
-                var helices = s.helices;
-
-                // ensure data is in lists
-                _ensureArray( sc, "id" );
-
-                for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
-                    var helixType = parseInt( sc.pdbx_PDB_helix_class[ i ] );
-                    if( !Number.isNaN( helixType ) ){
-                        begIcode = sc.pdbx_beg_PDB_ins_code[ i ];
-                        endIcode = sc.pdbx_end_PDB_ins_code[ i ];
-                        helices.push( [
-                            asymIdDict[ sc.beg_label_asym_id[ i ] ],
-                            parseInt( sc.beg_auth_seq_id[ i ] ),
-                            begIcode === "?" ? "" : begIcode,
-                            asymIdDict[ sc.end_label_asym_id[ i ] ],
-                            parseInt( sc.end_auth_seq_id[ i ] ),
-                            endIcode === "?" ? "" : endIcode,
-                            ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 )
-                        ] );
-                    }
-                }
-
-            }
-
-            // get sheets
-            var ssr = cif.struct_sheet_range;
-
-            if( ssr ){
-
-                var sheets = s.sheets;
-
-                // ensure data is in lists
-                _ensureArray( ssr, "id" );
-
-                for( i = 0, il = ssr.beg_auth_seq_id.length; i < il; ++i ){
-                    begIcode = ssr.pdbx_beg_PDB_ins_code[ i ];
-                    endIcode = ssr.pdbx_end_PDB_ins_code[ i ];
-                    sheets.push( [
-                        asymIdDict[ ssr.beg_label_asym_id[ i ] ],
-                        parseInt( ssr.beg_auth_seq_id[ i ] ),
-                        begIcode === "?" ? "" : begIcode,
-                        asymIdDict[ ssr.end_label_asym_id[ i ] ],
-                        parseInt( ssr.end_auth_seq_id[ i ] ),
-                        endIcode === "?" ? "" : endIcode
-                    ] );
-                }
-
-            }
-
-        }
-
-        function parseChemComp(){
-
-            var i, n;
-            var cc = cif.chem_comp;
-            var cca = cif.chem_comp_atom;
-            var ccb = cif.chem_comp_bond;
-
-            if( cc ){
-
-                if( cc.name ){
-                    s.title = cc.name.trim().replace( reTrimQuotes, "" );
-                }
-                if( cc.id ){
-                    s.id = cc.id.trim().replace( reTrimQuotes, "" );
-                }
-
-            }
-
-            var atomnameDict = {};
-
-            if( cca ){
-
-                var atomname, element, resname, resno;
-                n = cca.comp_id.length;
-
-                for( i = 0; i < n; ++i ){
-
-                    atomStore.growIfFull();
-
-                    atomname = cca.atom_id[ i ];
-                    element = cca.type_symbol[ i ];
-
-                    atomnameDict[ atomname ] = i;
-                    atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
-
-                    atomStore.x[ i ] = cca.model_Cartn_x[ i ];
-                    atomStore.y[ i ] = cca.model_Cartn_y[ i ];
-                    atomStore.z[ i ] = cca.model_Cartn_z[ i ];
-                    atomStore.serial[ i ] = i;
-
-                    resname = cca.pdbx_component_comp_id[ i ];
-                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
-
-                    sb.addAtom( 0, "", resname, resno, 1 );
-
-                }
-
-                for( i = 0; i < n; ++i ){
-
-                    var j = i + n;
-
-                    atomStore.growIfFull();
-
-                    atomname = cca.atom_id[ i ];
-                    element = cca.type_symbol[ i ];
-
-                    atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
-
-                    atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ];
-                    atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ];
-                    atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ];
-                    atomStore.serial[ j ] = j;
-
-                    resname = cca.pdbx_component_comp_id[ i ];
-                    resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
-
-                    sb.addAtom( 1, "", resname, resno, 1 );
-
-                }
-
-            }
-
-            sb.finalize();
-
-            if( cca && ccb ){
-
-                var atomname1, atomname2, valueOrder, bondOrder;
-                n = ccb.comp_id.length;
-                var na = cca.comp_id.length;
-
-                var ap1 = s.getAtomProxy();
-                var ap2 = s.getAtomProxy();
-
-                for( i = 0; i < n; ++i ){
-
-                    atomname1 = ccb.atom_id_1[ i ];
-                    atomname2 = ccb.atom_id_2[ i ];
-                    valueOrder = ccb.value_order[ i ].toLowerCase();
-
-                    if( valueOrder === "?" ){
-                        bondOrder = 1;  // assume single bond
-                    }else if( valueOrder === "sing" ){
-                        bondOrder = 1;
-                    }else if( valueOrder === "doub" ){
-                        bondOrder = 2;
-                    }else if( valueOrder === "trip" ){
-                        bondOrder = 3;
-                    }else if( valueOrder === "quad" ){
-                        bondOrder = 4;
-                    }
-
-                    ap1.index = atomnameDict[ atomname1 ];
-                    ap2.index = atomnameDict[ atomname2 ];
-                    s.bondStore.growIfFull();
-                    s.bondStore.addBond( ap1, ap2, bondOrder );
-
-                    ap1.index += na;
-                    ap2.index += na;
-                    s.bondStore.growIfFull();
-                    s.bondStore.addBond( ap1, ap2, bondOrder );
-
-                }
-
-            }
-
-            s.refresh();
 
         }
 
@@ -619,13 +1059,17 @@ CifParser.prototype = Object.assign( Object.create(
 
         if( cif.chem_comp && cif.chem_comp_atom ){
 
-            parseChemComp();
-            this.dontAutoBond = true;
+            parseChemComp( cif, s, sb );
+            sb.finalize();
+            s.finalizeAtoms();
+            s.finalizeBonds();
             assignResidueTypeBonds( s );
 
         }else{
 
-            sb.finalize();
+            var secStruct = processSecondaryStructure( cif, s, asymIdDict );
+            processSymmetry( cif, s, asymIdDict )
+            processConnections( cif, s, asymIdDict );
 
             if( cif.struct && cif.struct.title ){
                 s.title = cif.struct.title.trim().replace( reTrimQuotes, "" );
@@ -634,462 +1078,20 @@ CifParser.prototype = Object.assign( Object.create(
                 s.id = cif.entry.id.trim().replace( reTrimQuotes, "" );
             }
 
-            postProcess();
+            sb.finalize();
+            s.finalizeAtoms();
+            calculateBonds( s );
+            s.finalizeBonds();
+
+            if( !secStruct ){
+                secStruct = calculateSecondaryStructure( s );
+            }
+            assignSecondaryStructure( s, secStruct );
+            buildUnitcellAssembly( s );
 
         }
 
         if( Debug ) Log.timeEnd( "CifParser._parse " + this.name );
-        callback();
-
-    },
-
-    _postProcess: function(){
-
-        if( Debug ) Log.time( "CifParser._postProcess" );
-
-        var s = this.structure;
-        var structure = this.structure;
-        var cif = this.cif;
-        var asymIdDict = this.asymIdDict;
-
-        function _ensureArray( dict, field ){
-
-            if( !Array.isArray( dict[ field ] ) ){
-                Object.keys( dict ).forEach( function( key ){
-                    dict[ key ] = [ dict[ key ] ];
-                } );
-            }
-
-        }
-
-        // biomol & ncs processing
-        var operDict = {};
-        var biomolDict = s.biomolDict;
-
-        if( cif.pdbx_struct_oper_list ){
-
-            var biomolOp = cif.pdbx_struct_oper_list;
-
-            // ensure data is in lists
-            _ensureArray( biomolOp, "id" );
-
-            biomolOp.id.forEach( function( id, i ){
-
-                var m = new Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( biomolOp[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( biomolOp[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( biomolOp[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( biomolOp[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( biomolOp[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( biomolOp[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( biomolOp[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( biomolOp[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( biomolOp[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( biomolOp[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( biomolOp[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( biomolOp[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                operDict[ id ] = m;
-
-            } );
-
-        }
-
-        if( cif.pdbx_struct_assembly_gen ){
-
-            var gen = cif.pdbx_struct_assembly_gen;
-
-            // ensure data is in lists
-            _ensureArray( gen, "assembly_id" );
-
-            var getMatrixDict = function( expr ){
-
-                var matDict = {};
-
-                var l = expr.replace( /[\(\)']/g, "" ).split( "," );
-
-                l.forEach( function( e ){
-
-                    if( e.includes( "-" ) ){
-
-                        var es = e.split( "-" );
-
-                        var j = parseInt( es[ 0 ] );
-                        var m = parseInt( es[ 1 ] );
-
-                        for( ; j <= m; ++j ){
-
-                            matDict[ j ] = operDict[ j ];
-
-                        }
-
-                    }else{
-
-                        matDict[ e ] = operDict[ e ];
-
-                    }
-
-                } );
-
-                return matDict;
-
-            };
-
-            gen.assembly_id.forEach( function( id, i ){
-
-                var md = {};
-                var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
-
-                if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
-
-                    oe = oe.split( "(" );
-
-                    var md1 = getMatrixDict( oe[ 0 ] );
-                    var md2 = getMatrixDict( oe[ 1 ] );
-
-                    Object.keys( md1 ).forEach( function( k1 ){
-
-                        Object.keys( md2 ).forEach( function( k2 ){
-
-                            var mat = new Matrix4();
-
-                            mat.multiplyMatrices( md1[ k1 ], md2[ k2 ] );
-                            md[ k1 + "x" + k2 ] = mat;
-
-                        } );
-
-                    } );
-
-                }else{
-
-                    md = getMatrixDict( oe );
-
-                }
-
-                var matrixList = [];
-                for( var k in md ){
-                    matrixList.push( md[ k ] );
-                }
-
-                var name = id;
-                if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
-
-                var chainList = gen.asym_id_list[ i ].split( "," );
-                for( var j = 0, jl = chainList.length; j < jl; ++j ){
-                    chainList[ j ] = asymIdDict[ chainList[ j ] ];
-                }
-
-                if( biomolDict[ name ] === undefined ){
-                    biomolDict[ name ] = new Assembly( name );
-                }
-                biomolDict[ name ].addPart( matrixList, chainList );
-
-            } );
-
-        }
-
-        // non-crystallographic symmetry operations
-        if( cif.struct_ncs_oper ){
-
-            var ncsOp = cif.struct_ncs_oper;
-
-            // ensure data is in lists
-            _ensureArray( ncsOp, "id" );
-
-            var ncsName = "NCS";
-            biomolDict[ ncsName ] = new Assembly( ncsName );
-            var ncsPart = biomolDict[ ncsName ].addPart();
-
-            ncsOp.id.forEach( function( id, i ){
-
-                // ignore 'given' operators
-                if( ncsOp.code[ i ] === "given" ) return;
-
-                var m = new Matrix4();
-                var elms = m.elements;
-
-                elms[  0 ] = parseFloat( ncsOp[ "matrix[1][1]" ][ i ] );
-                elms[  1 ] = parseFloat( ncsOp[ "matrix[1][2]" ][ i ] );
-                elms[  2 ] = parseFloat( ncsOp[ "matrix[1][3]" ][ i ] );
-
-                elms[  4 ] = parseFloat( ncsOp[ "matrix[2][1]" ][ i ] );
-                elms[  5 ] = parseFloat( ncsOp[ "matrix[2][2]" ][ i ] );
-                elms[  6 ] = parseFloat( ncsOp[ "matrix[2][3]" ][ i ] );
-
-                elms[  8 ] = parseFloat( ncsOp[ "matrix[3][1]" ][ i ] );
-                elms[  9 ] = parseFloat( ncsOp[ "matrix[3][2]" ][ i ] );
-                elms[ 10 ] = parseFloat( ncsOp[ "matrix[3][3]" ][ i ] );
-
-                elms[  3 ] = parseFloat( ncsOp[ "vector[1]" ][ i ] );
-                elms[  7 ] = parseFloat( ncsOp[ "vector[2]" ][ i ] );
-                elms[ 11 ] = parseFloat( ncsOp[ "vector[3]" ][ i ] );
-
-                m.transpose();
-
-                ncsPart.matrixList.push( m );
-
-            } );
-
-            if( ncsPart.matrixList.length === 0 ){
-                delete biomolDict[ ncsName ];
-            }
-
-        }
-
-        // cell & symmetry
-        var unitcellDict = {};
-
-        if( cif.cell ){
-
-            var cell = cif.cell;
-
-            var a = parseFloat( cell.length_a );
-            var b = parseFloat( cell.length_b );
-            var c = parseFloat( cell.length_c );
-
-            var box = new Float32Array( 9 );
-            box[ 0 ] = a;
-            box[ 4 ] = b;
-            box[ 8 ] = c;
-            structure.boxes.push( box );
-
-            unitcellDict.a = a;
-            unitcellDict.b = b;
-            unitcellDict.c = c;
-            unitcellDict.alpha = parseFloat( cell.angle_alpha );
-            unitcellDict.beta = parseFloat( cell.angle_beta );
-            unitcellDict.gamma = parseFloat( cell.angle_gamma );
-
-        }
-
-        if( cif.symmetry ){
-
-            var symmetry = cif.symmetry;
-
-            var sGroup = symmetry[ "space_group_name_H-M" ];
-            if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-                ( sGroup[0] === "'" || sGroup[0] === '"' )
-            ){
-                sGroup = sGroup.substring( 1, sGroup.length-1 );
-            }
-
-            unitcellDict.spacegroup = sGroup;
-
-        }
-
-        // origx
-        var origx = new Matrix4();
-
-        if( cif.database_PDB_matrix ){
-
-            var origxMat = cif.database_PDB_matrix;
-            var origxElms = origx.elements;
-
-            origxElms[  0 ] = parseFloat( origxMat[ "origx[1][1]" ] );
-            origxElms[  1 ] = parseFloat( origxMat[ "origx[1][2]" ] );
-            origxElms[  2 ] = parseFloat( origxMat[ "origx[1][3]" ] );
-
-            origxElms[  4 ] = parseFloat( origxMat[ "origx[2][1]" ] );
-            origxElms[  5 ] = parseFloat( origxMat[ "origx[2][2]" ] );
-            origxElms[  6 ] = parseFloat( origxMat[ "origx[2][3]" ] );
-
-            origxElms[  8 ] = parseFloat( origxMat[ "origx[3][1]" ] );
-            origxElms[  9 ] = parseFloat( origxMat[ "origx[3][2]" ] );
-            origxElms[ 10 ] = parseFloat( origxMat[ "origx[3][3]" ] );
-
-            origxElms[  3 ] = parseFloat( origxMat[ "origx_vector[1]" ] );
-            origxElms[  7 ] = parseFloat( origxMat[ "origx_vector[2]" ] );
-            origxElms[ 11 ] = parseFloat( origxMat[ "origx_vector[3]" ] );
-
-            origx.transpose();
-
-            unitcellDict.origx = origx;
-
-        }
-
-        // scale
-        var scale = new Matrix4();
-
-        if( cif.atom_sites ){
-
-            var scaleMat = cif.atom_sites;
-            var scaleElms = scale.elements;
-
-            scaleElms[  0 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][1]" ] );
-            scaleElms[  1 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][2]" ] );
-            scaleElms[  2 ] = parseFloat( scaleMat[ "fract_transf_matrix[1][3]" ] );
-
-            scaleElms[  4 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][1]" ] );
-            scaleElms[  5 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][2]" ] );
-            scaleElms[  6 ] = parseFloat( scaleMat[ "fract_transf_matrix[2][3]" ] );
-
-            scaleElms[  8 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][1]" ] );
-            scaleElms[  9 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][2]" ] );
-            scaleElms[ 10 ] = parseFloat( scaleMat[ "fract_transf_matrix[3][3]" ] );
-
-            scaleElms[  3 ] = parseFloat( scaleMat[ "fract_transf_vector[1]" ] );
-            scaleElms[  7 ] = parseFloat( scaleMat[ "fract_transf_vector[2]" ] );
-            scaleElms[ 11 ] = parseFloat( scaleMat[ "fract_transf_vector[3]" ] );
-
-            scale.transpose();
-
-            unitcellDict.scale = scale;
-
-        }
-
-        if( unitcellDict.a !== undefined ){
-            s.unitcell = new Unitcell(
-                unitcellDict.a, unitcellDict.b, unitcellDict.c,
-                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-                unitcellDict.spacegroup, unitcellDict.scale
-            );
-        }else{
-            s.unitcell = undefined;
-        }
-
-        // add connections
-        var sc = cif.struct_conn;
-
-        if( sc ){
-
-            // ensure data is in lists
-            _ensureArray( sc, "id" );
-
-            var reDoubleQuote = /"/g;
-            var ap1 = s.getAtomProxy();
-            var ap2 = s.getAtomProxy();
-            var atomIndicesCache = {};
-
-            for( var i = 0, il = sc.id.length; i < il; ++i ){
-
-                // ignore:
-                // hydrog - hydrogen bond
-                // mismat - mismatched base pairs
-                // saltbr - ionic interaction
-
-                var conn_type_id = sc.conn_type_id[ i ];
-                if( conn_type_id === "hydrog" ||
-                    conn_type_id === "mismat" ||
-                    conn_type_id === "saltbr" ) continue;
-
-                // ignore bonds between symmetry mates
-                if( sc.ptnr1_symmetry[ i ] !== "1_555" ||
-                    sc.ptnr2_symmetry[ i ] !== "1_555" ) continue;
-
-                // process:
-                // covale - covalent bond
-                // covale_base -
-                //      covalent modification of a nucleotide base
-                // covale_phosphate -
-                //      covalent modification of a nucleotide phosphate
-                // covale_sugar -
-                //      covalent modification of a nucleotide sugar
-                // disulf - disulfide bridge
-                // metalc - metal coordination
-                // modres - covalent residue modification
-
-                var inscode1 = sc.pdbx_ptnr1_PDB_ins_code[ i ];
-                var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
-                var sele1 = (
-                    sc.ptnr1_auth_seq_id[ i ] +
-                    ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
-                    ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
-                    "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                    ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
-                );
-                var atomIndices1 = atomIndicesCache[ sele1 ];
-                if( !atomIndices1 ){
-                    var selection1 = new Selection( sele1 );
-                    if( selection1.selection.error ){
-                        Log.warn( "invalid selection for connection", sele1 );
-                        continue;
-                    }
-                    atomIndices1 = s.getAtomIndices( selection1 );
-                    atomIndicesCache[ sele1 ] = atomIndices1;
-                }
-
-                var inscode2 = sc.pdbx_ptnr2_PDB_ins_code[ i ];
-                var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
-                var sele2 = (
-                    sc.ptnr2_auth_seq_id[ i ] +
-                    ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
-                    ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
-                    "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                    ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
-                );
-                var atomIndices2 = atomIndicesCache[ sele2 ];
-                if( !atomIndices2 ){
-                    var selection2 = new Selection( sele2 );
-                    if( selection2.selection.error ){
-                        Log.warn( "invalid selection for connection", sele2 );
-                        continue;
-                    }
-                    atomIndices2 = s.getAtomIndices( selection2 );
-                    atomIndicesCache[ sele2 ] = atomIndices2;
-                }
-
-                // cases with more than one atom per selection
-                // - #altloc1 to #altloc2
-                // - #model to #model
-                // - #altloc1 * #model to #altloc2 * #model
-
-                var k = atomIndices1.length;
-                var l = atomIndices2.length;
-
-                if( k > l ){
-                    var tmpA = k;
-                    k = l;
-                    l = tmpA;
-                    var tmpB = atomIndices1;
-                    atomIndices1 = atomIndices2;
-                    atomIndices2 = tmpB;
-                }
-
-                // console.log( k, l );
-
-                if( k === 0 || l === 0 ){
-                    Log.warn( "no atoms found for", sele1, sele2 );
-                    continue;
-                }
-
-                for( var j = 0; j < l; ++j ){
-
-                    ap1.index = atomIndices1[ j % k ];
-                    ap2.index = atomIndices2[ j ];
-
-                    if( ap1 && ap2 ){
-                        var bondOrder;
-                        var valueOrder = sc.pdbx_value_order[ i ].toLowerCase();
-                        if( valueOrder === "?" ){
-                            bondOrder = 1;  // assume single bond
-                        }else if( valueOrder === "sing" ){
-                            bondOrder = 1;
-                        }else if( valueOrder === "doub" ){
-                            bondOrder = 2;
-                        }else if( valueOrder === "trip" ){
-                            bondOrder = 3;
-                        }else if( valueOrder === "quad" ){
-                            bondOrder = 4;
-                        }
-                        s.bondStore.addBond( ap1, ap2, bondOrder );
-                    }else{
-                        Log.log( "atoms for connection not found" );
-                    }
-
-                }
-
-            }
-
-        }
-
-        if( Debug ) Log.timeEnd( "CifParser._postProcess" );
 
     }
 

@@ -34,13 +34,6 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
- * {@link Signal}, dispatched when Structure.refresh() is called
- * @example
- * structure.signals.refreshed( function(){ ... } );
- * @event Structure#refreshed
- */
-
-/**
  * Bond iterator callback
  * @callback bondCallback
  * @param {BondProxy} bondProxy - current bond proxy
@@ -100,7 +93,7 @@ function Structure( name, path ){
     this.title = "";
     this.id = "";
 
-    this.atomSetCache = {};
+    this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
     this.helices = [];
@@ -121,13 +114,13 @@ function Structure( name, path ){
     this.atomMap = new AtomMap( this );
     this.residueMap = new ResidueMap( this );
 
-    this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
+    this.bondHash = undefined;
 
-    this.atomSet = this.getAtomSet();
-    this.bondSet = this.getBondSet();
+    this.atomSet = undefined;
+    this.bondSet = undefined;
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
+    this.center = undefined;
+    this.boundingBox = undefined;
 
     this._bp = this.getBondProxy();
     this._ap = this.getAtomProxy();
@@ -141,21 +134,22 @@ Structure.prototype = {
     constructor: Structure,
     type: "Structure",
 
-    /**
-     * Updates atomSets and bondSets.
-     * @fires Structure#refreshed
-     */
-    refresh: function(){
+    finalizeAtoms: function(){
 
-        if( Debug ) Log.time( "Structure.refresh" );
+        this.atomSet = this.getAtomSet();
+        this.atomCount = this.atomStore.count;
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
 
+    },
+
+    finalizeBonds: function(){
+
+        this.bondSet = this.getBondSet();
+        this.bondCount = this.bondStore.count;
         this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
 
         this.atomSetCache = {};
-
-        this.atomSet = this.getAtomSet();
-        this.bondSet = this.getBondSet();
-
         if( !this.atomSetDict.rung ){
             this.atomSetDict.rung = this.getAtomSet( false );
         }
@@ -165,16 +159,6 @@ Structure.prototype = {
             var as2 = this.getAtomSet( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
-
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
-
-        if( Debug ) Log.timeEnd( "Structure.refresh" );
-
-        this.signals.refreshed.dispatch();
 
     },
 

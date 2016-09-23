@@ -55,7 +55,9 @@ function reorderAtoms( structure ){
 }
 
 
-function assignSecondaryStructure( structure ){
+function assignSecondaryStructure( structure, secStruct ){
+
+    if( !secStruct ) return;
 
     if( Debug ) Log.time( "assignSecondaryStructure" );
 
@@ -74,7 +76,7 @@ function assignSecondaryStructure( structure ){
 
     // helix assignment
 
-    var helices = structure.helices || [];
+    var helices = secStruct.helices;
 
     helices = helices.filter( function( h ){
         return binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
@@ -167,7 +169,7 @@ function assignSecondaryStructure( structure ){
 
     // sheet assignment
 
-    var sheets = structure.sheets || [];
+    var sheets = secStruct.sheets;
 
     sheets = sheets.filter( function( s ){
         return binarySearchIndexOf( chainnamesSorted, s[ 0 ] ) >= 0;
@@ -775,6 +777,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
 
 
 function buildUnitcellAssembly( structure ){
+
+    if( !structure.unitcell ) return;
 
     if( Debug ) Log.time( "buildUnitcellAssembly" );
 

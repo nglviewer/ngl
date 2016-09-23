@@ -11,6 +11,10 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
+import {
+    assignSecondaryStructure, buildUnitcellAssembly,
+    calculateBonds, calculateSecondaryStructure
+} from "../structure/structure-utils.js";
 
 
 // PDB helix record encoding
@@ -42,7 +46,7 @@ PdbParser.prototype = Object.assign( Object.create(
     constructor: PdbParser,
     type: "pdb",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.wwpdb.org/documentation/file-format.php
 
@@ -63,8 +67,6 @@ PdbParser.prototype = Object.assign( Object.create(
         var doFrames = false;
         var currentFrame, currentCoord;
 
-        var helices = s.helices;
-        var sheets = s.sheets;
         var biomolDict = s.biomolDict;
         var currentBiomol;
         var currentPart;
@@ -80,6 +82,13 @@ PdbParser.prototype = Object.assign( Object.create(
         var serialDict = {};
         var unitcellDict = {};
         var bondDict = {};
+
+        var secStruct = {
+            helices: [],
+            sheets: []
+        };
+        var helices = secStruct.helices;
+        var sheets = secStruct.sheets;
 
         s.hasConnect = false;
 
@@ -477,8 +486,6 @@ PdbParser.prototype = Object.assign( Object.create(
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        sb.finalize();
-
         if( unitcellDict.a !== undefined ){
             s.unitcell = new Unitcell(
                 unitcellDict.a, unitcellDict.b, unitcellDict.c,
@@ -489,8 +496,18 @@ PdbParser.prototype = Object.assign( Object.create(
             s.unitcell = undefined;
         }
 
+        sb.finalize();
+        s.finalizeAtoms();
+        calculateBonds( s );
+        s.finalizeBonds();
+
+        if( !helices.length && !sheets.length ){
+            secStruct = calculateSecondaryStructure( s );
+        }
+        assignSecondaryStructure( s, secStruct );
+        buildUnitcellAssembly( s );
+
         if( Debug ) Log.timeEnd( "PdbParser._parse " + this.name );
-        callback();
 
     }
 

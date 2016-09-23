@@ -6,18 +6,13 @@
 
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
 import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
 function SdfParser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -28,7 +23,7 @@ SdfParser.prototype = Object.assign( Object.create(
     constructor: SdfParser,
     type: "sdf",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
         // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
@@ -163,10 +158,11 @@ SdfParser.prototype = Object.assign( Object.create(
         } );
 
         sb.finalize();
-        s.unitcell = undefined;
+        s.finalizeAtoms();
+        s.finalizeBonds();
+        assignResidueTypeBonds( s );
 
         if( Debug ) Log.timeEnd( "SdfParser._parse " + this.name );
-        callback();
 
     },
 

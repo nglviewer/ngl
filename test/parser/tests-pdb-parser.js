@@ -10,6 +10,17 @@ describe('parser/pdb-parser', function() {
 
 
 describe('parsing', function () {
+    it('basic', function () {
+        var path = __dirname + "/../data/1crn.pdb";
+        var str = fs.readFileSync( path, "utf-8" );
+        var streamer = new StringStreamer( str );
+        var pdbParser = new PdbParser( streamer );
+        pdbParser.parse( function( structure ){
+            assert.strictEqual( structure.atomCount, 327 );
+            assert.strictEqual( structure.bondCount, 337 );
+        } );
+    });
+
     it('double bonds', function () {
         var path = __dirname + "/../data/doubleBonds.pdb";
         var str = fs.readFileSync( path, "utf-8" );

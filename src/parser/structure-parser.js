@@ -5,15 +5,10 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import Parser from "./parser.js";
 import Structure from "../structure/structure.js";
 import StructureBuilder from "../structure/structure-builder.js";
-import {
-    reorderAtoms, calculateChainnames, calculateBonds, calculateBondsBetween,
-    calculateSecondaryStructure, assignSecondaryStructure, buildUnitcellAssembly
-} from "../structure/structure-utils.js";
 
 
 function StructureParser( streamer, params ){
@@ -23,10 +18,6 @@ function StructureParser( streamer, params ){
     this.firstModelOnly = defaults( p.firstModelOnly, false );
     this.asTrajectory = defaults( p.asTrajectory, false );
     this.cAlphaOnly = defaults( p.cAlphaOnly, false );
-    this.reorderAtoms = defaults( p.reorderAtoms, false );
-    this.dontAutoBond = defaults( p.dontAutoBond, false );
-    this.autoBondBetween = defaults( p.autoBondBetween, false );
-    this.doAutoSS = defaults( p.doAutoSS, true );
 
     Parser.call( this, streamer, p );
 
@@ -43,51 +34,6 @@ StructureParser.prototype = Object.assign( Object.create(
     type: "structure",
 
     __objName: "structure",
-
-    _afterParse: function(){
-
-        if( Debug ) Log.time( "StructureParser._afterParse" );
-
-        var s = this.structure;
-        s.refresh();
-
-        if( this.reorderAtoms ){
-            reorderAtoms( s );
-        }
-
-        // check for chain names
-        calculateChainnames( s );
-
-        if( this.dontAutoBond ){
-            if( this.autoBondBetween ){
-                calculateBondsBetween( s );
-            }
-        }else{
-            calculateBonds( s );
-        }
-        s.refresh();
-
-        // check for secondary structure
-        if( this.doAutoSS && s.helices.length === 0 && s.sheets.length === 0 ){
-            calculateSecondaryStructure( s );
-        }
-
-        if( s.helices.length > 0 || s.sheets.length > 0 ){
-            assignSecondaryStructure( s );
-        }
-
-        this._postProcess();
-
-        if( s.unitcell ){
-            buildUnitcellAssembly( s );
-        }
-
-        if( Debug ) Log.timeEnd( "StructureParser._afterParse" );
-        if( Debug ) Log.log( this[ this.__objName ] );
-
-    },
-
-    _postProcess: function(){}
 
 } );
 

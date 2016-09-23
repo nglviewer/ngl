@@ -29,26 +29,18 @@ Parser.prototype = {
 
     parse: function( callback ){
 
-        var self = this;
-
         this.streamer.read( function(){
-            self._beforeParse();
-            self._parse( function(){
-                self._afterParse();
-                callback( self[ self.__objName ] );
-            } );
-        } );
+            this._beforeParse();
+            this._parse();
+            this._afterParse();
+            callback( this[ this.__objName ] );
+        }.bind( this ) );
 
         return this[ this.__objName ];
 
     },
 
-    _parse: function( callback ){
-
-        Log.warn( "Parser._parse not implemented" );
-        callback();
-
-    },
+    _parse: function(){},
 
     _beforeParse: function(){},
 

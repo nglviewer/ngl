@@ -8,9 +8,10 @@
 import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
-import { calculateBondsBetween, calculateBondsWithin } from "../structure/structure-utils.js";
+import {
+    buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
+} from "../structure/structure-utils.js";
 import { ChemCompHetero } from "../structure/structure-constants.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
@@ -33,13 +34,7 @@ var SstrucMap = {
 
 function MmtfParser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-    p.autoBondBetween = defaults( p.autoBondBetween, false );
-    p.doAutoSS = defaults( p.doAutoSS, false );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -50,7 +45,7 @@ MmtfParser.prototype = Object.assign( Object.create(
     constructor: MmtfParser,
     type: "mmtf",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://github.com/rcsb/mmtf
 
@@ -378,7 +373,10 @@ MmtfParser.prototype = Object.assign( Object.create(
         // calculate rung bonds
         calculateBondsWithin( s, true );
 
-        callback();
+        s.finalizeAtoms();
+        s.finalizeBonds();
+
+        buildUnitcellAssembly( s );
 
     }
 
