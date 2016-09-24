@@ -15,13 +15,12 @@ import { defaults } from "../utils.js";
 
 function AVSurface( coordList, radiusList, indexList ){
 
-    // Sort of analogous to EDTSurface
     // Field generation method adapted from AstexViewer (Mike Hartshorn) 
     // by Fred Ludlow. 
     // Other parts based heavily on NGL (Alexander Rose) EDT Surface class
     // 
-    // Constructor and getSurface should behave the same (though not all 
-    // arguments have a meaning in this version)
+    // Should work as a drop-in alternative to EDTSurface (though some of
+    // the EDT paramters are not relevant in this method). 
 
     this.coordList = coordList;
     this.radiusList = radiusList;
@@ -36,6 +35,13 @@ function AVSurface( coordList, radiusList, indexList ){
     this.max = bbox[1];
 
 }
+
+/* Probably a better way to do this? */
+function __InitAVSurfaceClass() {
+
+    if ( AVSurface.prototype.hasOwnProperty( "initializePositions" ) ) {
+        return;
+    }
 
 AVSurface.prototype = {
 
@@ -63,7 +69,7 @@ AVSurface.prototype = {
         this.probeRadius = defaults( probeRadius, 1.4 );
         this.scaleFactor = defaults( scaleFactor, 2.0 );
         this.setAtomID = defaults( setAtomID, true );
-        this.probePositions = defaults( probePositions, 24 );
+        this.probePositions = defaults( probePositions, 30);
         
         this.r = new Float32Array( this.nAtoms );
         this.r2 = new Float32Array( this.nAtoms );
@@ -346,6 +352,8 @@ AVSurface.prototype = {
 
         this.lastClip = -1;
 
+        var ng = 2 + Math.floor( this.probeRadius * this.scaleFactor );
+
         for( var i = 0; i < this.probePositions; i++ ){
 
             var cost = this.cosTable[ i ];
@@ -356,8 +364,6 @@ AVSurface.prototype = {
             var pz = mid[ 2 ] + cost * n1[ 2 ] + sint * n2[ 2 ];
 
             if( this.obscured( neighbours, px, py, pz, a, b ) == -1 ) {
-
-                var ng = 4 + Math.floor( this.probeRadius * this.scaleFactor );
 
                 // As above, iterate over our grid... 
                 // px, py, pz in grid coords
@@ -389,26 +395,6 @@ AVSurface.prototype = {
                             dz = pz - this.gridz[ iz ];
                             d2 = dxy2 + dz * dz;
                             var idx = iz + xyoffset;
-                /*
-                for( var iz = minz; iz < maxz; iz++ ){
-
-                    dz = pz - this.gridz[ iz ];
-                    var zoffset = this.dim[ 0 ] * this.dim[ 1 ] * iz;
-
-                    for( var iy = miny; iy < maxy; iy ++ ){
-
-                        dy = py - this.gridy[ iy ];
-                        var dzy2 = dz * dz + dy * dy;
-                        var yzoffset = zoffset + this.dim[ 0 ] * iy;
-
-
-                        for( var ix = minx; ix < maxx; ix++ ) {
-
-                            dx = px - this.gridx[ ix ];
-                            d2 = dzy2 + dx * dx;
-
-                            var idx = ix + yzoffset;
-                 */
                             var current = this.grid[ idx ];
 
                             if( current > 0.0 && d2 < ( current * current)){
@@ -503,11 +489,16 @@ AVSurface.prototype = {
 
 }
 
+}
+
+__InitAVSurfaceClass()
+
 AVSurface.__deps = [
 
-    getSurfaceGrid, VolumeSurface, uniformArray, computeBoundinxBox,
+    __InitAVSurfaceClass,
+    getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
     v3multiplyScalar, v3cross, v3normalize, SpatialHash, defaults
 
 ];
 
-export default AVSurface;
+export { AVSurface, __InitAVSurfaceClass };

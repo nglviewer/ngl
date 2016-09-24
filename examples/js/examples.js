@@ -1374,10 +1374,14 @@ NGL.ExampleRegistry.addDict( {
             
 
             o.addRepresentation( "surface", { sele: "hetero and (not water)",
-                                              useWorker: false, wireframe: true,
+                                              useWorker: true, wireframe: true,
+                                              surfaceType: "av",
+                                              linewidth: 1.0,
                                               color: "green" } );
             o.addRepresentation( "surface", { sele: "not hetero",
-                                              useWorker: false, wireframe: true,
+                                              useWorker: true, wireframe: true,
+                                              linewidth: 1.0,
+                                              surfaceType: "av",
                                               color: "grey" } );
 
 
