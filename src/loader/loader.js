@@ -31,7 +31,8 @@ function Loader( src, params ){
     var streamerParams = {
         compressed: this.compressed,
         binary: this.binary,
-        json: this.ext === "json"
+        json: this.ext === "json",
+        xml: this.ext === "xml"
     };
 
     if( ( typeof File !== "undefined" && src instanceof File ) ||

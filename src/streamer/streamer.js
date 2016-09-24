@@ -15,6 +15,7 @@ function Streamer( src, params ){
     this.compressed = defaults( p.compressed, false );
     this.binary = defaults( p.binary, false );
     this.json = defaults( p.json, false );
+    this.xml = defaults( p.xml, false );
 
     this.src = src;
     this.chunkSize = 1024 * 1024 * 10;

@@ -95,6 +95,8 @@ NetworkStreamer.prototype = Object.assign( Object.create(
             xhr.responseType = "arraybuffer";
         }else if( this.json ){
             xhr.responseType = "json";
+        }else if( this.xml ){
+            xhr.responseType = "document";
         }
         // xhr.crossOrigin = true;
 
