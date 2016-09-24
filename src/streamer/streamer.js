@@ -5,16 +5,16 @@
  */
 
 
-import { decompress, uint8ToString } from "../utils.js";
+import { decompress, uint8ToString, defaults } from "../utils.js";
 
 
 function Streamer( src, params ){
 
     var p = params || {};
 
-    this.compressed = p.compressed !== undefined ? p.compressed : false;
-    this.binary = p.binary !== undefined ? p.binary : false;
-    this.json = p.json !== undefined ? p.json : false;
+    this.compressed = defaults( p.compressed, false );
+    this.binary = defaults( p.binary, false );
+    this.json = defaults( p.json, false );
 
     this.src = src;
     this.chunkSize = 1024 * 1024 * 10;
@@ -36,6 +36,12 @@ Streamer.prototype = {
     type: "",
 
     __srcName: undefined,
+
+    isBinary: function(){
+
+        return this.binary || this.compressed;
+
+    },
 
     onload: function(){},
 
@@ -87,7 +93,7 @@ Streamer.prototype = {
 
         }else{
 
-            if( this.binary || this.compressed ){
+            if( this.isBinary() ){
                 return this.data.subarray( start, end );
             }else{
                 return this.data.substring( start, end );
@@ -111,7 +117,7 @@ Streamer.prototype = {
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
+        var newline = this.isBinary() ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var i;
         var count = 0;
@@ -138,7 +144,7 @@ Streamer.prototype = {
         var n = data.length;
 
         // FIXME does not work for multi-char newline
-        var newline = ( this.binary || this.compressed ) ? this.newline.charCodeAt( 0 ) : this.newline;
+        var newline = this.isBinary() ? this.newline.charCodeAt( 0 ) : this.newline;
 
         var count = 0;
         for( var i = 0; i < n; ++i ){
@@ -158,11 +164,7 @@ Streamer.prototype = {
 
     asText: function(){
 
-        if( this.binary || this.compressed ){
-            return uint8ToString( this.data );
-        }else{
-            return this.data;
-        }
+        return this.isBinary() ? uint8ToString( this.data ) : this.data;
 
     },
 
@@ -170,14 +172,14 @@ Streamer.prototype = {
 
         var newline = this.newline;
 
-        if( !this.binary && !this.compressed && chunk.length === this.data.length ){
+        if( !this.isBinary() && chunk.length === this.data.length ){
             return {
                 lines: chunk.split( newline ),
                 partialLine: ""
             };
         }
 
-        var str = ( this.binary || this.compressed ) ? uint8ToString( chunk ) : chunk;
+        var str = this.isBinary() ? uint8ToString( chunk ) : chunk;
         var lines = [];
         var idx = str.lastIndexOf( newline );
 

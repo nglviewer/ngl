@@ -5,6 +5,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import FileStreamer from "../streamer/file-streamer.js";
 import NetworkStreamer from "../streamer/network-streamer.js";
 
@@ -15,13 +16,13 @@ function Loader( src, params ){
 
     var binary = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ].includes( p.ext );
 
-    this.compressed = p.compressed || false;
-    this.binary = p.binary !== undefined ? p.binary : binary;
-    this.name = p.name || "";
-    this.ext = p.ext || "";
-    this.dir = p.dir || "";
-    this.path = p.path || "";
-    this.protocol = p.protocol || "";
+    this.compressed = defaults( p.compressed, false );
+    this.binary = defaults( p.binary, binary );
+    this.name = defaults( p.name, "" );
+    this.ext = defaults( p.ext, "" );
+    this.dir = defaults( p.dir, "" );
+    this.path = defaults( p.path, "" );
+    this.protocol = defaults( p.protocol, "" );
 
     this.params = params;
 

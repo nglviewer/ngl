@@ -47,7 +47,7 @@ NetworkStreamer.prototype = Object.assign( Object.create(
                 // when requesting from local file system
                 // the status in Google Chrome/Chromium is 0
                 xhr.status === 0
-             ){
+            ){
 
                 callback( xhr.response );
 
@@ -91,7 +91,7 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
         //
 
-        if( this.compressed || this.binary ){
+        if( this.isBinary() ){
             xhr.responseType = "arraybuffer";
         }else if( this.json ){
             xhr.responseType = "json";

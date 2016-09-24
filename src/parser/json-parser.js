@@ -37,7 +37,7 @@ JsonParser.prototype = Object.assign( Object.create(
 
     _parse: function(){
 
-        if( this.streamer.compressed || this.streamer.binary || this.string ){
+        if( this.streamer.isBinary() || this.string ){
             this.json.data = JSON.parse( this.streamer.asText() );
         }else{
             this.json.data = this.streamer.data;
