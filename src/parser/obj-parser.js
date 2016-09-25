@@ -232,6 +232,13 @@ OBJLoader.prototype = {
 
         }
 
+        if ( text.indexOf( '\\\n' ) !== - 1) {
+
+            // join lines separated by a line continuation character (\)
+            text = text.replace( /\\\n/g, '' );
+
+        }
+
         var i, l;
         var lines = text.split( '\n' );
         var line = '', lineFirstChar = '', lineSecondChar = '';
