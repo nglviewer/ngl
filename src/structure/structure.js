@@ -98,8 +98,6 @@ function Structure( name, path ){
     this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
-    this.helices = [];
-    this.sheets = [];
     this.unitcell = undefined;
 
     this.frames = [];
