@@ -244,9 +244,8 @@ TypedFastBitSet.prototype.sizeRange = function(offset, count) {
 };
 
 // Return an array with the set bit locations (values)
-// - use Uint32Array instead of Array, ASR
 TypedFastBitSet.prototype.array = function() {
-  var answer = new Uint32Array(this.size());
+  var answer = new Array(this.size());
   var pos = 0 | 0;
   var c = this.count | 0;
   for (var k = 0; k < c; ++k) {
