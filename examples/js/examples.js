@@ -1296,7 +1296,7 @@ NGL.ExampleRegistry.addDict( {
                     if( pos.distanceTo( prevPos ) > 0.1 ){
                         sphereBuffer.setAttributes( { "position": pos.toArray() } );
                         prevPos = pos;
-                        var sele = s.getAtomSetWithinPoint( pos, radius ).toSeleString();
+                        var sele = o.structure.getAtomSetWithinPoint( pos, radius ).toSeleString();
                         if( sele !== prevSele ){
                             spacefillRepr.setSelection( sele );
                             prevSele = sele;
