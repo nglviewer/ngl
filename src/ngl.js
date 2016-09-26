@@ -585,7 +585,7 @@ import {
     DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry, ParserRegistry
 } from "./globals.js";
 import {
-    StaticDatasource, RcsbDatasource, PassThroughDatasource
+    StaticDatasource, RcsbDatasource, PubchemDatasource, PassThroughDatasource
 } from "./loader/datasource-utils.js";
 import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Selection from "./selection.js";
@@ -673,6 +673,7 @@ import SpatialHash from "./geometry/spatial-hash.js";
 //
 
 DatasourceRegistry.add( "rcsb", new RcsbDatasource() );
+DatasourceRegistry.add( "pubchem", new PubchemDatasource() );
 DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
 DatasourceRegistry.add( "http", new PassThroughDatasource() );
 DatasourceRegistry.add( "https", new PassThroughDatasource() );

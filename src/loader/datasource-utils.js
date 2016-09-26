@@ -73,8 +73,37 @@ function RcsbDatasource(){
 }
 
 
+function PubchemDatasource(){
+
+    var baseUrl = "//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/";
+    var suffixUrl = "/SDF?record_type=3d";
+
+    this.getUrl = function( src ){
+        var info = getFileInfo( src );
+        var cid = info.name;
+        var url;
+        if( !info.ext || info.ext === "sdf" ){
+            url = baseUrl + cid + suffixUrl;
+        }else{
+            Log.warn( "unsupported ext", info.ext );
+            url = baseUrl + cid + suffixUrl;
+        }
+        return getProtocol() + url;
+    };
+
+    this.getExt = function( src ){
+        var info = getFileInfo( src );
+        if( !info.ext || info.ext === "sdf" ){
+            return "sdf";
+        }
+    };
+
+}
+
+
 export {
     PassThroughDatasource,
     StaticDatasource,
-    RcsbDatasource
+    RcsbDatasource,
+    PubchemDatasource
 };

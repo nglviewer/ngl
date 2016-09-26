@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file, following t
 - border color and width for LabelRepresentation/TextBuffer
 - colored background rectangle for LabelRepresentation/TextBuffer
 - "offset" style rendering of double/triple bonds (@fredludlow)
+- PubchemDatasource to load cid as sdf, pubchem://16490
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis
