@@ -93,6 +93,7 @@ function Structure( name, path ){
     this.path = path;
     this.title = "";
     this.id = "";
+    this.header = {};
 
     this.atomSetCache = undefined;
     this.atomSetDict = {};

@@ -56,6 +56,17 @@ MmtfParser.prototype = Object.assign( Object.create(
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
 
+        // structure header
+        var headerFields = [
+            "depositionDate", "releaseDate", "resolution",
+            "rFree", "rWork", "experimentalMethods"
+        ];
+        headerFields.forEach( function( name ){
+            if( sd[ name ] !== undefined ){
+                s.header[ name ] = sd[ name ];
+            }
+        } );
+
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
 

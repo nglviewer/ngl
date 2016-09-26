@@ -33,6 +33,10 @@ function ensureArray( dict, field ){
     }
 }
 
+function hasValue( d ){
+    return d !== "?";
+}
+
 
 function parseChemComp( cif, structure, structureBuilder ){
 
@@ -1076,6 +1080,46 @@ CifParser.prototype = Object.assign( Object.create(
             }
             if( cif.entry && cif.entry.id ){
                 s.id = cif.entry.id.trim().replace( reTrimQuotes, "" );
+            }
+
+            // structure header (mimicking biojava)
+            if( cif.database_PDB_rev ){
+                if( cif.database_PDB_rev.date ){
+                    ensureArray( cif.database_PDB_rev, "date" );
+                    var dates = cif.database_PDB_rev.date.filter( hasValue );
+                    if( dates.length ){
+                        s.header.releaseDate = dates[ dates.length - 1 ];
+                    }
+                }
+                if( cif.database_PDB_rev.date_original ){
+                    ensureArray( cif.database_PDB_rev, "date_original" );
+                    var depDates = cif.database_PDB_rev.date_original.filter( hasValue );
+                    if( depDates.length ){
+                        s.header.depositionDate = depDates[ depDates.length - 1 ];
+                    }
+                }
+            }
+            if( cif.reflns && cif.reflns.d_resolution_high ){
+                if( hasValue( cif.refine.d_resolution_high ) ){
+                    s.header.resolution = parseFloat( cif.reflns.d_resolution_high );
+                }
+            }
+
+            if( cif.refine && cif.refine.ls_R_factor_R_free ){
+                if( hasValue( cif.refine.ls_R_factor_R_free ) ){
+                    s.header.rFree = parseFloat( cif.refine.ls_R_factor_R_free );
+                }
+            }
+            if( cif.refine && cif.refine.ls_R_factor_R_work ){
+                if( hasValue( cif.refine.ls_R_factor_R_work ) ){
+                    s.header.rWork = parseFloat( cif.refine.ls_R_factor_R_work );
+                }
+            }
+            if( cif.exptl && cif.exptl.method ){
+                ensureArray( cif.exptl, "method" );
+                s.header.experimentalMethods = cif.exptl.method.map( function( m ){
+                    return m.replace( reTrimQuotes, "" );
+                } );
             }
 
             sb.finalize();
