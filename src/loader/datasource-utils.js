@@ -6,7 +6,7 @@
 
 
 import { Log } from "../globals.js";
-import { getFileInfo, getAbsolutePath } from "../utils.js";
+import { getFileInfo, getAbsolutePath, getProtocol } from "../utils.js";
 
 
 function PassThroughDatasource(){
@@ -42,8 +42,6 @@ function RcsbDatasource(){
         // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
         // XXXX defaults to XXXX.cif
         var info = getFileInfo( src );
-        var protocol = window.location.protocol;
-        if( protocol.match( /http(s)?:/gi ) === null ) protocol = "http:";
         var pdbid = info.name.substr( 0, 4 );
         var url;
         if( [ "pdb", "cif" ].includes( info.ext ) &&
@@ -62,7 +60,7 @@ function RcsbDatasource(){
             Log.warn( "unsupported ext", info.ext );
             url = mmtfFullUrl + pdbid;
         }
-        return protocol + url;
+        return getProtocol() + url;
     };
 
     this.getExt = function( src ){

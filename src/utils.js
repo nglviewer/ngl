@@ -46,6 +46,14 @@ function defaults( value, defaultValue ){
 }
 
 
+function getProtocol(){
+
+    var protocol = window.location.protocol;
+    return protocol.match( /http(s)?:/gi ) === null ? "http:" : protocol;
+
+}
+
+
 function getBrowser(){
 
     if( typeof window === "undefined" ) return false;
@@ -491,6 +499,7 @@ export {
     getQuery,
     boolean,
     defaults,
+    getProtocol,
     getBrowser,
     getAbsolutePath,
     deepCopy,
