@@ -42,7 +42,8 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
                 "vws": "vws",
                 "sas": "sas",
                 "ms": "ms",
-                "ses": "ses"
+                "ses": "ses",
+                "av": "av"
             }
         },
         probeRadius: {
