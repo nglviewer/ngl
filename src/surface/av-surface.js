@@ -13,6 +13,14 @@ import { computeBoundingBox,
 import SpatialHash from "../geometry/spatial-hash.js";
 import { defaults } from "../utils.js";
 
+function fillGridDim( a, start, step ){
+    
+    for( var i = 0; i < a.length; i ++ ) {
+        a[i] = start + (step * i);
+    }
+    
+}
+
 function AVSurface( coordList, radiusList, indexList ){
 
     // Field generation method adapted from AstexViewer (Mike Hartshorn) 
@@ -22,138 +30,138 @@ function AVSurface( coordList, radiusList, indexList ){
     // Should work as a drop-in alternative to EDTSurface (though some of
     // the EDT paramters are not relevant in this method). 
 
-    this.coordList = coordList;
-    this.radiusList = radiusList;
-    this.indexList = indexList;
+    var nAtoms = radiusList.length;
 
-    this.nAtoms = this.radiusList.length;
-
-    /* Setup constant attributes */
-    this.initializePositions();
-    var bbox = computeBoundingBox( coordList );
-    this.min = bbox[0];
-    this.max = bbox[1];
-
-}
-
-/* Probably a better way to do this? */
-function __InitAVSurfaceClass() {
-
-    if ( AVSurface.prototype.hasOwnProperty( "initializePositions" ) ) {
-        return;
+    var x = new Float32Array( nAtoms );
+    var y = new Float32Array( nAtoms );
+    var z = new Float32Array( nAtoms );
+    
+    for( var i = 0; i < nAtoms; i++ ) {
+        
+        var ci = 3 * i;
+        
+        x[ i ] = coordList[ ci ];
+        y[ i ] = coordList[ ci + 1 ];
+        z[ i ] = coordList[ ci + 2 ];
+        
     }
 
-AVSurface.prototype = {
 
-    constructor: AVSurface,
+    var bbox = computeBoundingBox( coordList );
+    var min = bbox[0];
+    var max = bbox[1];
 
-    initializePositions: function() {
+    var r, r2; // Atom positions, expanded radii (sqaured)
+    var maxRadius;
 
-        this.x = new Float32Array( this.nAtoms );
-        this.y = new Float32Array( this.nAtoms );
-        this.z = new Float32Array( this.nAtoms );
+    // Parameters
+    var probeRadius = 1.5;
+    var scaleFactor = 2.0;
+    var setAtomID = true;
+    var probePositions = 30;
 
-        for( var i = 0; i < this.nAtoms; i++ ) {
+    // Cache last value for obscured test
+    var lastClip = -1;
 
-            var ci = 3 * i;
+    // Grid params
+    var dim, matrix, grid, atomIndex;
 
-            this.x[ i ] = this.coordList[ ci ];
-            this.y[ i ] = this.coordList[ ci + 1 ];
-            this.z[ i ] = this.coordList[ ci + 2 ];
-            
-        }
-    },
+    // grid indices -> xyz coords
+    var gridx, gridy, gridz
 
-    init: function( probeRadius, scaleFactor, setAtomID, probePositions ) {
+    // Lookup tables:
+    var sinTable, cosTable;
 
-        this.probeRadius = defaults( probeRadius, 1.4 );
-        this.scaleFactor = defaults( scaleFactor, 2.0 );
-        this.setAtomID = defaults( setAtomID, true );
-        this.probePositions = defaults( probePositions, 30);
+    // Spatial Hash
+    var hash;
+
+    // Vectors for Torus Projection
+    var mid = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+    var n1 = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+    var n2 = new Float32Array( [ 0.0, 0.0, 0.0 ] );
+
+    var ngTorus;
+
+    function init( _probeRadius, _scaleFactor, _setAtomID, _probePositions ) {
+
+        probeRadius = defaults( _probeRadius, 1.4 );
+        scaleFactor = defaults( _scaleFactor, 2.0 );
+        setAtomID = defaults( _setAtomID, true );
+        probePositions = defaults( _probePositions, 30);
         
-        this.r = new Float32Array( this.nAtoms );
-        this.r2 = new Float32Array( this.nAtoms );
+        r = new Float32Array( nAtoms );
+        r2 = new Float32Array( nAtoms );
         
-        for( var i = 0; i < this.r.length; i++ ){
-            var r = this.radiusList[ i ] + this.probeRadius;
-            this.r[ i ] = r;
-            this.r2[ i ] = r * r;
+        for( var i = 0; i < r.length; i++ ){
+            var rExt = radiusList[ i ] + probeRadius;
+            r[ i ] = rExt;
+            r2[ i ] = rExt * rExt;
         }
 
-        this.maxRadius = Math.max.apply( null, this.r );
+        maxRadius = Math.max.apply( null, r );
 
-        this.initializeGrid();
-        this.initializeAngleTables();
-        this.initializeHash();
+        initializeGrid();
+        initializeAngleTables();
+        initializeHash();
 
-        this.lastClip = -1; 
+        lastClip = -1; 
 
-    },
 
-    initializeGrid: function() {
 
+    }
+
+    function initializeGrid() {
         var surfGrid = getSurfaceGrid(
-            this.min, this.max, this.maxRadius, this.scaleFactor, 0.0
+            min, max, maxRadius, scaleFactor, 0.0
         );
 
-        this.scaleFactor = surfGrid.scaleFactor;
-        this.dim = surfGrid.dim;
-        this.matrix = surfGrid.matrix;
-        this.tran = surfGrid.tran;
+        scaleFactor = surfGrid.scaleFactor;
+        dim = surfGrid.dim;
+        matrix = surfGrid.matrix;
 
-        this.grid = uniformArray( this.dim[0] * this.dim[1] * this.dim[2], -1001.0 );
+        ngTorus = 2 + Math.floor( probeRadius * scaleFactor );
 
-        this.atomIndex = new Int32Array( this.grid.length );
+        grid = uniformArray( dim[0] * dim[1] * dim[2], -1001.0 );
 
-        this.gridx = new Float32Array( this.dim[0] );
-        this.gridy = new Float32Array( this.dim[1] );
-        this.gridz = new Float32Array( this.dim[2] );
+        atomIndex = new Int32Array( grid.length );
 
-        this._fillGridDim( this.gridx, this.min[0], 1/this.scaleFactor );
-        this._fillGridDim( this.gridy, this.min[1], 1/this.scaleFactor );
-        this._fillGridDim( this.gridz, this.min[2], 1/this.scaleFactor );
+        gridx = new Float32Array( dim[0] );
+        gridy = new Float32Array( dim[1] );
+        gridz = new Float32Array( dim[2] );
 
-    },
+        fillGridDim( gridx, min[0], 1/scaleFactor );
+        fillGridDim( gridy, min[1], 1/scaleFactor );
+        fillGridDim( gridz, min[2], 1/scaleFactor );
 
-    initializeAngleTables: function() {
+    }
+
+    function initializeAngleTables() {
 
         var theta = 0.0;
-        var step = 2 * Math.PI / this.probePositions;
+        var step = 2 * Math.PI / probePositions;
 
-        this.cosTable = new Float32Array( this.probePositions );
-        this.sinTable = new Float32Array( this.probePositions );
-        for( var i = 0; i < this.probePositions; i++ ){
+        cosTable = new Float32Array( probePositions );
+        sinTable = new Float32Array( probePositions );
+        for( var i = 0; i < probePositions; i++ ){
 
-            this.cosTable[ i ] = Math.cos( theta );
-            this.sinTable[ i ] = Math.sin( theta );
+            cosTable[ i ] = Math.cos( theta );
+            sinTable[ i ] = Math.sin( theta );
 
             theta += step;
 
         }
-    },
+    }
 
-    _fillGridDim: function( a, start, step ){
+    function initializeHash() {
+        
+        var fakeStore = { x: x, y: y, z: z, count: nAtoms };
 
-        for( var i = 0; i < a.length; i ++ ) {
-            a[i] = start + (step * i);
-        }
+        hash = new SpatialHash( fakeStore, { min: min,
+                                             max: max } );
 
-    },
+    }
 
-    initializeHash: function() {
-
-        var fakeStore = { x: this.x,
-                          y: this.y,
-                          z: this.z,
-                          count: this.nAtoms
-                        };
-
-        this.hash = new SpatialHash( fakeStore, { min: this.min,
-                                                  max: this.max } );
-
-    },
-
-    obscured: function( neighbours, x, y, z, a, b ) {
+    function obscured( neighbours, x, y, z, a, b ) {
 
         // Is the point at x,y,z obscured by any of the atoms
         // specifeid by indices in neighbours. Ignore indices 
@@ -163,12 +171,12 @@ AVSurface.prototype = {
         // subsequent calls)
         var i;
 
-        if( this.lastClip != -1 ){
-            i = this.lastClip;
-            if( this.singleAtomObscures( i, x, y, z ) && i != a && i != b ){
+        if( lastClip != -1 ){
+            i = lastClip;
+            if( singleAtomObscures( i, x, y, z ) && i != a && i != b ){
                 return i;
             } else {
-                this.lastClip = -1;
+                lastClip = -1;
             }
         }
 
@@ -176,30 +184,31 @@ AVSurface.prototype = {
 
             i = neighbours[ ia ];
 
-            if( this.singleAtomObscures( i, x, y, z ) && i != a && i != b ){
-                this.lastClip = i;
+            if( singleAtomObscures( i, x, y, z ) && i != a && i != b ){
+                lastClip = i;
                 return i;
             }
         }
 
-        this.lastClip = -1;
+        lastClip = -1;
         return -1;
-    },
+    }
 
-    singleAtomObscures: function( ai, x, y, z ) {
+
+    function singleAtomObscures( ai, x, y, z ) {
 
         var ci = 3 * ai;
-        var r2 = this.r2[ ai ];
-        var dx = this.coordList[ ci ] - x;
-        var dy = this.coordList[ ci + 1 ] - y;
-        var dz = this.coordList[ ci + 2 ] - z;
+        var ra2 = r2[ ai ];
+        var dx = coordList[ ci ] - x;
+        var dy = coordList[ ci + 1 ] - y;
+        var dz = coordList[ ci + 2 ] - z;
         var d2 = dx * dx + dy * dy + dz * dz;
 
-        return ( d2 < r2 );
+        return ( d2 < ra2 );
 
-    },
+    }
 
-    projectPoints: function() {
+    function projectPoints() {
         // For each atom:
         //     Iterate over a subsection of the grid, for each point:
         //         If current value < 0.0, unvisited, set positive
@@ -209,24 +218,28 @@ AVSurface.prototype = {
         //             Calcualte delta distance and set grid value to minimum of
         //             itself and delta
 
-        for( var i = 0; i < this.nAtoms; i++ ) {
+        // Should we alias frequently accessed closure variables?? 
+        // Assume JS engine capable of optimizing this
+        // anyway...
 
-            var x = this.x[ i ];
-            var y = this.y[ i ];
-            var z = this.z[ i ];
-            var ra = this.r[ i ];
-            var r2 = this.r2[ i ];
+        for( var i = 0; i < nAtoms; i++ ) {
 
-            var neighbours = this.hash.within( x, y, z, this.maxRadius + ra );
+            var ax = x[ i ];
+            var ay = y[ i ];
+            var az = z[ i ];
+            var ar = r[ i ];
+            var ar2 = r2[ i ];
+
+            var neighbours = hash.within( ax, ay, az, maxRadius + ar );
 
             // Number of grid points, round this up...
-            var ng = Math.ceil(ra * this.scaleFactor );
+            var ng = Math.ceil(ar * scaleFactor );
 
             // Center of the atom, mapped to grid points (take floor) 
 
-            var iax = Math.floor( this.scaleFactor * ( x - this.min[ 0 ] ));
-            var iay = Math.floor( this.scaleFactor * ( y - this.min[ 1 ] ));
-            var iaz = Math.floor( this.scaleFactor * ( z - this.min[ 2 ] ));
+            var iax = Math.floor( scaleFactor * ( ax - min[ 0 ] ));
+            var iay = Math.floor( scaleFactor * ( ay - min[ 1 ] ));
+            var iaz = Math.floor( scaleFactor * ( az - min[ 2 ] ));
 
             // Extents of grid to consider for this atom
   
@@ -237,50 +250,50 @@ AVSurface.prototype = {
             // Add two to these points:
             // - iax are floor'd values so this ensures coverage
             // - these are loop limits (exclusive)
-            var maxx = Math.min( this.dim[ 0 ], iax + ng + 2 );
-            var maxy = Math.min( this.dim[ 1 ], iay + ng + 2 );
-            var maxz = Math.min( this.dim[ 2 ], iaz + ng + 2 );
+            var maxx = Math.min( dim[ 0 ], iax + ng + 2 );
+            var maxy = Math.min( dim[ 1 ], iay + ng + 2 );
+            var maxz = Math.min( dim[ 2 ], iaz + ng + 2 );
 
             for( var ix = minx; ix < maxx; ix++ ){
 
-                var dx = this.gridx[ ix ] - x;
-                var xoffset = this.dim[ 1 ] * this.dim[ 2 ] * ix;
+                var dx = gridx[ ix ] - ax;
+                var xoffset = dim[ 1 ] * dim[ 2 ] * ix;
 
                 for( var iy = miny; iy < maxy; iy++ ){
 
-                    var dy = this.gridy[ iy ] - y;
+                    var dy = gridy[ iy ] - ay;
                     var dxy2 = dx * dx + dy * dy;
-                    var xyoffset = xoffset + this.dim[ 2 ] * iy; 
+                    var xyoffset = xoffset + dim[ 2 ] * iy; 
 
                     for( var iz = minz; iz < maxz; iz++ ){
 
-                        var dz = this.gridz[ iz ] - z;
+                        var dz = gridz[ iz ] - az;
                         var d2 = dxy2 + dz * dz;
 
-                        if( d2 < r2 ){
+                        if( d2 < ar2 ){
                             var idx = iz + xyoffset;
                             
-                            if( this.grid[idx] < 0.0 ){
+                            if( grid[idx] < 0.0 ){
                                 // Unvisited, make positive
-                                this.grid[ idx ] = -this.grid[ idx ];
+                                grid[ idx ] = -grid[ idx ];
                             }
                             // Project on to the surface of the sphere
                             // sp is the projected point (dx,dy,dz)*(ra/d)
                             var d = Math.sqrt(d2);
-                            var ap = ra / d;
+                            var ap = ar / d;
                             var spx = dx * ap;
                             var spy = dy * ap;
                             var spz = dz * ap;
 
-                            spx += x;
-                            spy += y;
-                            spz += z;
+                            spx += ax;
+                            spy += ay;
+                            spz += az;
 
-                            if( this.obscured( neighbours, spx, spy, spz, i, -1 ) == -1 ) {
-                                var dd = ra - d;
-                                if( dd < this.grid[ idx ] ) {
-                                    this.grid[ idx ] = dd;
-                                    this.atomIndex[ idx ] = i;
+                            if( obscured( neighbours, spx, spy, spz, i, -1 ) == -1 ) {
+                                var dd = ar - d;
+                                if( dd < grid[ idx ] ) {
+                                    grid[ idx ] = dd;
+                                    if( setAtomID ) { atomIndex[ idx ] = i; }
                                 }
                             }
                         }
@@ -288,35 +301,33 @@ AVSurface.prototype = {
                 }
             }
         }
-    },
+    }
 
-    projectTorii: function() {
+    function projectTorii() {
 
-        for( var i = 0; i < this.nAtoms; i++ ){
+        for( var i = 0; i < nAtoms; i++ ){
 
-            var neighbours = this.hash.within(
-                this.x[ i ], this.y[ i ] , this.z[ i ],
-                this.maxRadius + this.r[ i ]
-            );
+            var neighbours = hash.within( x[ i ], y[ i ], z[ i ], maxRadius + r[ i ] );
 
             for( var ia = 0; ia < neighbours.length; ia ++ ) {
 
                 if( i < neighbours[ ia ] ){
 
-                    this.projectTorus(i, neighbours[ ia ], neighbours );
+                    projectTorus(i, neighbours[ ia ], neighbours );
 
                 }
             }
         }
-    },
+    }
 
-    projectTorus: function( a, b, neighbours ) {
 
-        var r1 = this.r[ a ];
-        var r2 = this.r[ b ];
-        var dx = this.x[ b ] - this.x[ a ];
-        var dy = this.y[ b ] - this.y[ a ];
-        var dz = this.z[ b ] - this.z[ a ];
+    function projectTorus( a, b, neighbours ) {
+
+        var r1 = r[ a ];
+        var r2 = r[ b ];
+        var dx = mid[0] = x[ b ] - x[ a ];
+        var dy = mid[1] = y[ b ] - y[ a ];
+        var dz = mid[2] = z[ b ] - z[ a ];
         var d2 = dx * dx + dy * dy + dz * dz;
         var d = Math.sqrt( d2 );
 
@@ -327,90 +338,89 @@ AVSurface.prototype = {
         // distance along a->b at intersection
         var dmp = r1 * cosA;
 
-        var mid = new Float32Array( [ dx, dy, dz ] );
         v3normalize( mid, mid );
 
         // Create normal to line
-        var n1 = this._normalToLine( mid );
+        normalToLine( n1, mid );
         v3normalize( n1, n1 );
 
         // Cross together for second normal vector
-        var n2 = new Float32Array( 3 );
         v3cross( n2, mid, n1 );
         v3normalize( n2, n2 );
 
         // r is radius of circle of intersection
-        var r = Math.sqrt( r1 * r1 - dmp * dmp );
+        var rInt = Math.sqrt( r1 * r1 - dmp * dmp );
 
-        v3multiplyScalar( n1, n1, r );
-        v3multiplyScalar( n2, n2, r );
+        v3multiplyScalar( n1, n1, rInt );
+        v3multiplyScalar( n2, n2, rInt );
         v3multiplyScalar( mid, mid, dmp );
         
-        mid[ 0 ] += this.x[ a ];
-        mid[ 1 ] += this.y[ a ];
-        mid[ 2 ] += this.z[ a ];
+        mid[ 0 ] += x[ a ];
+        mid[ 1 ] += y[ a ];
+        mid[ 2 ] += z[ a ];
 
-        this.lastClip = -1;
+        lastClip = -1;
 
-        var ng = 2 + Math.floor( this.probeRadius * this.scaleFactor );
+        var ng = ngTorus; 
 
-        for( var i = 0; i < this.probePositions; i++ ){
+        for( var i = 0; i < probePositions; i++ ){
 
-            var cost = this.cosTable[ i ];
-            var sint = this.sinTable[ i ];
+            var cost = cosTable[ i ];
+            var sint = sinTable[ i ];
 
             var px = mid[ 0 ] + cost * n1[ 0 ] + sint * n2[ 0 ];
             var py = mid[ 1 ] + cost * n1[ 1 ] + sint * n2[ 1 ];
             var pz = mid[ 2 ] + cost * n1[ 2 ] + sint * n2[ 2 ];
 
-            if( this.obscured( neighbours, px, py, pz, a, b ) == -1 ) {
+            if( obscured( neighbours, px, py, pz, a, b ) == -1 ) {
 
                 // As above, iterate over our grid... 
                 // px, py, pz in grid coords
-                var iax = Math.floor( this.scaleFactor * ( px - this.min[ 0 ] ));
-                var iay = Math.floor( this.scaleFactor * ( py - this.min[ 1 ] ));
-                var iaz = Math.floor( this.scaleFactor * ( pz - this.min[ 2 ] ));
+                var iax = Math.floor( scaleFactor * ( px - min[ 0 ] ));
+                var iay = Math.floor( scaleFactor * ( py - min[ 1 ] ));
+                var iaz = Math.floor( scaleFactor * ( pz - min[ 2 ] ));
 
                 var minx = Math.max( 0, iax - ng );
                 var miny = Math.max( 0, iay - ng );
                 var minz = Math.max( 0, iaz - ng );
                 
-                var maxx = Math.min( this.dim[ 0 ], iax + ng + 2 );
-                var maxy = Math.min( this.dim[ 1 ], iay + ng + 2 );
-                var maxz = Math.min( this.dim[ 2 ], iaz + ng + 2 );
+                var maxx = Math.min( dim[ 0 ], iax + ng + 2 );
+                var maxy = Math.min( dim[ 1 ], iay + ng + 2 );
+                var maxz = Math.min( dim[ 2 ], iaz + ng + 2 );
 
                 for( var ix = minx; ix < maxx; ix++ ){
 
-                    dx = px - this.gridx[ ix ];
-                    var xoffset = this.dim[ 1 ] * this.dim[ 2 ] * ix;
+                    dx = px - gridx[ ix ];
+                    var xoffset = dim[ 1 ] * dim[ 2 ] * ix;
 
                     for( var iy = miny; iy < maxy; iy++ ){
 
-                        dy = py - this.gridy[ iy ];
+                        dy = py - gridy[ iy ];
                         var dxy2 = dx * dx + dy * dy;
-                        var xyoffset = xoffset + this.dim[ 2 ] * iy; 
+                        var xyoffset = xoffset + dim[ 2 ] * iy; 
 
                         for( var iz = minz; iz < maxz; iz++ ){
 
-                            dz = pz - this.gridz[ iz ];
+                            dz = pz - gridz[ iz ];
                             d2 = dxy2 + dz * dz;
                             var idx = iz + xyoffset;
-                            var current = this.grid[ idx ];
+                            var current = grid[ idx ];
 
                             if( current > 0.0 && d2 < ( current * current)){
-                                this.grid[ idx ] = Math.sqrt( d2 );
-                                this.atomIndex[ idx ] = a;
+                                grid[ idx ] = Math.sqrt( d2 );
+                                if( setAtomID ) { atomIndex[ idx ] = a; }
                             }
                         }
                     }
                 }
             }
         }
-    },
+    }
 
-    _normalToLine: function( p ) {
 
-        var out = new Float32Array( [ 1.0 , 1.0 , 1.0 ] );
+    function normalToLine( out, p ) {
+
+        out[ 0 ] = out[ 1 ] = out[ 2 ] = 1.0;
         if( p[ 0 ] != 0 ) {
             out[ 0 ] = ( p[ 1 ] + p[ 2 ] ) / -p[ 0 ];
         }
@@ -422,27 +432,28 @@ AVSurface.prototype = {
         }
         return out;
 
-    },
+    }
 
-    fixNegatives: function() {
 
-        for( var i = 0; i < this.grid.length; i++ ){
-            if( this.grid[ i ] < 0 ) { this.grid[ i ] = 0 }
+    function fixNegatives() {
+
+        for( var i = 0; i < grid.length; i++ ){
+            if( grid[ i ] < 0 ) { grid[ i ] = 0 }
         }
 
-    },
+    }
 
-    /* Atom IDs are assigned to indices into coordlist- translate to indexlist */
-    fixAtomIDs: function() {
 
-        for( var i = 0; i < this.atomIndex.length; i++ ){
-            this.atomIndex[ i ] = this.indexList[ this.atomIndex[ i ] ];
+    function fixAtomIDs() {
+
+        for( var i = 0; i < atomIndex.length; i++ ){
+            atomIndex[ i ] = indexList[ atomIndex[ i ] ];
         }
 
-    },
+    }
 
 
-    getVolume: function( probeRadius, scaleFactor, setAtomID ) {
+    function getVolume( probeRadius, scaleFactor, setAtomID ) {
 
         // Basic steps are:
         // 1) Initialize
@@ -453,52 +464,48 @@ AVSurface.prototype = {
         console.time( "AVSurface.getVolume" );
 
         console.time( "AVSurface.init" );
-        this.init( probeRadius, scaleFactor, setAtomID );
+        init( probeRadius, scaleFactor, setAtomID );
         console.timeEnd( "AVSurface.init" );
 
         console.time( "AVSurface.projectPoints" );
-        this.projectPoints();
+        projectPoints();
         console.timeEnd( "AVSurface.projectPoints" );
 
         console.time( "AVSurface.projectTorii" );
-        this.projectTorii();
+        projectTorii();
         console.timeEnd( "AVSurface.projectTorii" );
-        this.fixNegatives();
-        this.fixAtomIDs();
+        fixNegatives();
+        fixAtomIDs();
 
         console.timeEnd( "AVSurface.getVolume" );
 
-    },
+    }
 
-    getSurface: function( type, probeRadius, scaleFactor, cutoff, setAtomID ) {
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID ) {
 
         // type and cutoff left in for compatibility with EDTSurface.getSurface
         // function signature
 
-        this.getVolume( probeRadius, scaleFactor, setAtomID );
+        getVolume( probeRadius, scaleFactor, setAtomID );
         
-        this.volsurf = new VolumeSurface(
-            this.grid, this.dim[ 2 ], this.dim[ 1 ], this.dim[ 0 ], this.atomIndex 
-            //this.grid, this.dim[ 0 ], this.dim[ 1 ], this.dim[ 2 ], this.atomIndex 
+        var volsurf = new VolumeSurface(
+            grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex 
         );
 
-        return this.volsurf.getSurface( this.probeRadius, false, undefined, this.matrix );
+        return volsurf.getSurface( probeRadius, false, undefined, matrix );
 
     }
 
 
-}
 
 }
-
-__InitAVSurfaceClass()
 
 AVSurface.__deps = [
 
-    __InitAVSurfaceClass,
+    fillGridDim,
     getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
     v3multiplyScalar, v3cross, v3normalize, SpatialHash, defaults
 
 ];
 
-export { AVSurface, __InitAVSurfaceClass };
+export { AVSurface, fillGridDim };

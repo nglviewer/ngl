@@ -5,7 +5,7 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+//import { Debug, Log } from "../globals.js";
 
 
 function SpatialHash( atomStore, boundingBox ){
