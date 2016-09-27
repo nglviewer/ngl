@@ -85,7 +85,10 @@ function AVSurface( coordList, radiusList, indexList ){
             r2[ i ] = rExt * rExt;
         }
 
-        maxRadius = Math.max.apply( null, r );
+        maxRadius = 0;
+        for( var j = 0; j < r.length; ++j ){
+            if( r[ j ] > maxRadius ) maxRadius = r[ j ];
+        }
 
         initializeGrid();
         initializeAngleTables();
