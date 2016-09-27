@@ -925,11 +925,11 @@ Structure.prototype = {
 
     //
 
-    getBoundingBox: function( selection ){
+    getBoundingBox: function( selection, box ){
 
         if( Debug ) Log.time( "getBoundingBox" );
 
-        var box = new Box3();
+        box = box || new Box3();
 
         var minX = +Infinity;
         var minY = +Infinity;
@@ -1056,6 +1056,14 @@ Structure.prototype = {
             ap.positionFromArray( position, i );
             i += 3;
         } );
+
+    },
+
+    refreshPosition: function(){
+
+        this.getBoundingBox( undefined, this.boundingBox );
+        this.boundingBox.center( this.center );
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
     },
 
