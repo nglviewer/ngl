@@ -1360,27 +1360,26 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "rcsb://2vts" ).then( function ( o ) {
             o.addRepresentation( "line", { sele: "not hetero" })
-            o.addRepresentation( "licorice", { multipleBond: "symmetric",
-                                               sele: "hetero and (not water) "} );
-
-            
-
-            o.addRepresentation( "surface", { sele: "hetero and (not water)",
-                                              useWorker: true, wireframe: true,
-                                              surfaceType: "av",
-                                              linewidth: 1.0,
-                                              color: "green" } );
-            o.addRepresentation( "surface", { sele: "not hetero",
-                                              useWorker: true, wireframe: true,
-                                              linewidth: 1.0,
-                                              surfaceType: "av",
-                                              color: "grey" } );
-
-
+            o.addRepresentation( "licorice", {
+                multipleBond: "symmetric",
+                sele: "hetero and (not water)"
+            } );
+            o.addRepresentation( "surface", {
+                sele: "hetero and (not water)",
+                useWorker: true,
+                wireframe: true,
+                surfaceType: "av",
+                linewidth: 1.0,
+                color: "green"
+            } );
+            o.addRepresentation( "surface", {
+                sele: "not hetero",
+                useWorker: false,
+                surfaceType: "av",
+                color: "grey"
+            } );
             stage.centerView();
         } );
-
-        
 
     },
 
