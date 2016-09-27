@@ -10,8 +10,6 @@
 
 function SpatialHash( atomStore, boundingBox ){
 
-    //if( Debug ) Log.time( "SpatialHash init" );
-
     var exp = 3;
 
     var bb = boundingBox;
@@ -71,7 +69,7 @@ function SpatialHash( atomStore, boundingBox ){
         }
     }
 
-    //if( Debug ) Log.timeEnd( "SpatialHash init" );
+    //
 
     function within( x, y, z, r ){
 

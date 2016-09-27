@@ -8,7 +8,7 @@
 import { WorkerRegistry } from "../globals.js";
 import Worker from "../worker/worker.js";
 import EDTSurface from "./edt-surface.js";
-import { AVSurface } from "./av-surface.js";
+import AVSurface from "./av-surface.js";
 import Surface from "./surface.js";
 
 
@@ -17,8 +17,8 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
     var a = e.data.args;
     var p = e.data.params;
     if( a && p ){
-        var SurfType = ( p.type == "av" ) ? AVSurface : EDTSurface;
-        var surf = new SurfType(a.coordList, a.radiusList, a.indexList );
+        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        var surf = new SurfClass(a.coordList, a.radiusList, a.indexList );
         var sd = surf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
         );
@@ -75,8 +75,8 @@ MolecularSurface.prototype = {
         var radiusList = atomData.radius;
         var indexList = atomData.index;
 
-        var SurfType = (p.type == "av") ? AVSurface : EDTSurface;
-        var surf = new SurfType( coordList, radiusList, indexList );
+        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        var surf = new SurfClass( coordList, radiusList, indexList );
         var sd = surf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
         );

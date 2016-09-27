@@ -7,13 +7,8 @@
 
 import { VolumeSurface } from "./volume.js";
 import Grid from "../geometry/grid.js";
-import {
-    computeBoundingBox,
-} from "../math/vector-utils.js";
+import { computeBoundingBox } from "../math/vector-utils.js";
 import { getRadiusDict, getSurfaceGrid } from "./surface-utils.js";
-
-
-
 
 
 function EDTSurface( coordList, radiusList, indexList ){
@@ -508,11 +503,9 @@ function EDTSurface( coordList, radiusList, indexList ){
         var cutRSq = cutRadius * cutRadius;
 
         var totalsurfacevox = 0;
-        var totalinnervox = 0;
+        // var totalinnervox = 0;
 
         var index;
-
-        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -536,20 +529,17 @@ function EDTSurface( coordList, radiusList, indexList ){
 
                             totalsurfacevox += 1;
 
-                        }else{
+                        }/*else{
 
                             totalinnervox += 1;
 
-                        }
+                        }*/
 
                     }
 
                 }
             }
         }
-
-        console.log( "totalsurfacevox", totalsurfacevox );
-        console.log( "totalinnervox", totalinnervox );
 
         var inarray = new Int32Array( 3 * totalsurfacevox );
         var positin = 0;
@@ -581,8 +571,6 @@ function EDTSurface( coordList, radiusList, indexList ){
 
             positout = fastoneshell( inarray, boundPoint, positin, outarray );
             positin = 0;
-
-            console.log( "positout", positout / 3 );
 
             for( i = 0, n = positout; i < n; i+=3 ){
 
@@ -648,8 +636,6 @@ function EDTSurface( coordList, radiusList, indexList ){
     }
 
     function fastoneshell( inarray, boundPoint, positin, outarray ){
-
-        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -744,8 +730,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part1", positout);
-
         for( i = 0, n = positin; i < n; i+=3 ){
 
             tx = inarray[ i     ];
@@ -817,8 +801,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part2", positout);
-
         for( i = 0, n = positin; i < n; i+=3 ){
 
             tx = inarray[ i     ];
@@ -889,8 +871,6 @@ function EDTSurface( coordList, radiusList, indexList ){
                 }
             }
         }
-
-        // console.log("part3", positout);
 
         return positout;
 
