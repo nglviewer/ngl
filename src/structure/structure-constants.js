@@ -274,7 +274,8 @@ var IonNames = [
 ];
 
 var SaccharideNames = [
-    "BOG", "BMA", "MAN", "NAG", "TRE"
+    "A2G", "BGC", "BNG", "BOG", "BMA", "CBI", "F6P", "FRU", "FUC", "GAL",
+    "GLC", "LAT", "MAN", "MMA", "NAG", "PRP", "RAM", "SUC", "TRE", "XYS"
 ];
 
 
