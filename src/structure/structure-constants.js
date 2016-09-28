@@ -270,7 +270,7 @@ var IonNames = [
     "3CO", "3NI", "4MO", "6MO", "AG", "AL", "AU", "AU3", "BA", "BR", "CA",
     "CD", "CE", "CL", "CO", "CR", "CU", "CU1", "CU3", "F", "FE", "FE2", "GA",
     "K", "LI", "MG", "MN", "MN3", "NA", "ND4", "NH4", "NI", "OH", "OHX", "RB",
-    "SR", "V", "Y1", "YT3", "ZN"
+    "SO4", "SR", "V", "Y1", "YT3", "ZN"
 ];
 
 
