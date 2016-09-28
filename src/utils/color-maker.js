@@ -12,6 +12,7 @@ import Selection from "../selection.js";
 import { generateUUID } from "../math/math-utils.js";
 
 import {
+    WaterType, IonType, ProteinType, RnaType, DnaType, SaccharideType,
     ResidueHydrophobicity, DefaultResidueHydrophobicity
 } from "../structure/structure-constants.js";
 
@@ -771,6 +772,36 @@ ModelindexColorMaker.prototype = ColorMaker.prototype;
 ModelindexColorMaker.prototype.constructor = ModelindexColorMaker;
 
 
+function MoleculeTypeColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+        switch( a.residueType.moleculeType ){
+            case WaterType:
+                return 0x386cb0;
+            case IonType:
+                return 0xf0027f;
+            case ProteinType:
+                return 0xbeaed4;
+            case RnaType:
+                return 0xfdc086;
+            case DnaType:
+                return 0xbf5b17;
+            case SaccharideType:
+                return 0x7fc97f
+            default:
+                return 0xffff99;
+        }
+    };
+
+}
+
+MoleculeTypeColorMaker.prototype = ColorMaker.prototype;
+
+MoleculeTypeColorMaker.prototype.constructor = MoleculeTypeColorMaker;
+
+
 function SstrucColorMaker( params ){
 
     ColorMaker.call( this, params );
@@ -976,6 +1007,7 @@ ColorMakerRegistry.types = {
     "chainindex": ChainindexColorMaker,
     "chainname": ChainnameColorMaker,
     "modelindex": ModelindexColorMaker,
+    "moleculetype": MoleculeTypeColorMaker,
     "sstruc": SstrucColorMaker,
     "element": ElementColorMaker,
     "resname": ResnameColorMaker,
