@@ -273,6 +273,10 @@ var IonNames = [
     "SO4", "SR", "V", "Y1", "YT3", "ZN"
 ];
 
+var SaccharideNames = [
+    "BOG", "BMA", "MAN", "NAG", "TRE"
+];
+
 
 var ProteinBackboneAtoms = [
     "CA", "C", "N", "O",
@@ -375,6 +379,7 @@ export {
     PurinBases,
     WaterNames,
     IonNames,
+    SaccharideNames,
 
     ProteinBackboneAtoms,
     NucleicBackboneAtoms,

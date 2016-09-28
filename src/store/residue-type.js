@@ -12,7 +12,7 @@ import {
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-    AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames,
+    AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
@@ -203,7 +203,11 @@ ResidueType.prototype = {
     },
 
     isSaccharide: function(){
-        return ChemCompSaccharide.includes( this.chemCompType );
+        if( this.chemCompType ){
+            return ChemCompSaccharide.includes( this.chemCompType );
+        }else{
+            return SaccharideNames.includes( this.resname );
+        }
     },
 
     hasBackboneAtoms: function( position, type ){
