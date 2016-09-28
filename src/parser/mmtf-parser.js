@@ -263,13 +263,14 @@ MmtfParser.prototype = Object.assign( Object.create(
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
         s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains * 4 );
+        s.chainStore.chainid = sd.chainIdList.subarray( 0, numChains * 4 );
 
         s.modelStore.length = numModels;
         s.modelStore.count = numModels;
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
-
+        //
 
         var groupTypeDict = {};
         for( i = 0, il = sd.groupList.length; i < il; ++i ){

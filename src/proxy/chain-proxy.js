@@ -88,6 +88,13 @@ ChainProxy.prototype = {
         this.chainStore.setChainname( this.index, value );
     },
 
+    get chainid () {
+        return this.chainStore.getChainid( this.index );
+    },
+    set chainid ( value ) {
+        this.chainStore.setChainid( this.index, value );
+    },
+
     //
 
     eachAtom: function( callback, selection ){

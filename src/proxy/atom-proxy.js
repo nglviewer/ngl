@@ -75,6 +75,9 @@ AtomProxy.prototype = {
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
     },
+    get chainid () {
+        return this.chainStore.getChainid( this.chainIndex );
+    },
 
     //
 

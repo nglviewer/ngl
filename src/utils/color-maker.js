@@ -749,6 +749,43 @@ ChainnameColorMaker.prototype = ColorMaker.prototype;
 ChainnameColorMaker.prototype.constructor = ChainnameColorMaker;
 
 
+function ChainidColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    var chainidDictPerModel = {};
+    var scalePerModel = {};
+
+    this.structure.eachModel( function( mp ){
+        var i = 0;
+        var chainidDict = {};
+        mp.eachChain( function( cp ){
+            if( chainidDict[ cp.chainid ] === undefined ){
+                chainidDict[ cp.chainid ] = i;
+                i += 1;
+            }
+        } );
+        this.domain = [ 0, i - 1 ];
+        chainidDictPerModel[ mp.index ] = chainidDict;
+        scalePerModel[ mp.index ] = this.getScale();
+    }.bind( this ) );
+
+    this.atomColor = function( a ){
+        var chainidDict = chainidDictPerModel[ a.modelIndex ];
+        return scalePerModel[ a.modelIndex ]( chainidDict[ a.chainid ] );
+    };
+
+}
+
+ChainidColorMaker.prototype = ColorMaker.prototype;
+
+ChainidColorMaker.prototype.constructor = ChainidColorMaker;
+
+
 function ModelindexColorMaker( params ){
 
     ColorMaker.call( this, params );
@@ -1006,6 +1043,7 @@ ColorMakerRegistry.types = {
     "residueindex": ResidueindexColorMaker,
     "chainindex": ChainindexColorMaker,
     "chainname": ChainnameColorMaker,
+    "chainid": ChainidColorMaker,
     "modelindex": ModelindexColorMaker,
     "moleculetype": MoleculeTypeColorMaker,
     "sstruc": SstrucColorMaker,
