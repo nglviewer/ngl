@@ -11,8 +11,151 @@ import { uniformArray } from "../math/array-utils.js";
 import {
     computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
 } from "../math/vector-utils.js";
-import SpatialHash from "../geometry/spatial-hash.js";
 import { defaults } from "../utils.js";
+
+
+/* 
+ * Modifed from SpatialHash
+ * 
+ * Main differences are:
+ * * Optimized grid size to ensure we only ever need to look +/-1 cell
+ * * Aware of atomic radii and will only output atoms within rAtom + rExtra
+ *   (see withinRadii method)
+ * 
+ * (Uses rounding rather than bitshifting as consequence of arbitrary grid size)
+ */
+function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
+
+    var nAtoms = atomsX.length;
+
+    var minX = min[ 0 ];
+    var minY = min[ 1 ];
+    var minZ = min[ 2 ];
+
+    var maxX = max[ 0 ];
+    var maxY = max[ 1 ];
+    var maxZ = max[ 2 ];
+
+    function hashFunc( w, minW) {
+       return Math.floor( ( w - minW ) / maxDistance );        
+    }
+
+    var iDim = hashFunc( maxX, minX ) + 1;
+    var jDim = hashFunc( maxY, minY ) + 1;
+    var kDim = hashFunc( maxZ, minZ ) + 1;
+
+    var nCells = iDim * jDim * kDim;
+
+    var ijDim = iDim * jDim;
+
+
+    /* Get cellID for cartesian x,y,z */
+    var cellID = function( x, y, z ) {
+        return ( hashFunc( x, minX ) * ijDim ) + ( hashFunc( y, minY )  * jDim ) + hashFunc( z, minZ );
+    }
+
+
+    /* Initial building, could probably be optimized further */
+    var preHash = []; // preHash[ cellID ] = [ atomId1, atomId2 ];
+
+    for( var i = 0; i < nAtoms; i++ ){
+
+        var cid = cellID( atomsX[ i ], atomsY[ i ], atomsZ[ i ] );
+
+        if( preHash[ cid ] === undefined ) {
+            preHash[ cid ] = [ i ];
+        } else {
+            preHash[ cid ].push( i );
+        }
+
+    }
+
+    var cellOffsets = new Uint32Array( nCells );
+    var cellLengths = new Uint16Array( nCells );
+    var data = new Uint32Array( nAtoms );
+
+    var offset = 0;
+    var maxCellLength = 0;
+
+    for( i = 0; i < nCells; i++ ) {
+
+        var start = cellOffsets[ i ] = offset;
+
+        var subArray = preHash[ i ];
+
+        if( subArray !== undefined ) {
+            for( var j = 0; j < subArray.length; j++ ){
+                data[ offset ] = subArray[ j ];
+                offset++;
+            }
+        }
+
+        var cellLength = offset - start;
+        cellLengths[ i ] = cellLength;
+
+        if (cellLength > maxCellLength) { maxCellLength = cellLength; }
+
+    }
+
+    // Maximum number of neighbours we could ever produce (27 adjacent cells of equal population)
+    this.neighbourListLength = ( 27 * maxCellLength ) + 1;
+
+    /**
+     * Populate the supplied out array with atom indices that are within rAtom + rExtra
+     * of x,y,z
+     * 
+     * -1 in out array indicates the end of the list
+     */
+    this.withinRadii = function( x, y, z, rExtra, out ) {
+
+        var outIdx = 0;
+
+        var nearI = hashFunc( x, minX );
+        var nearJ = hashFunc( y, minY );
+        var nearK = hashFunc( z, minZ );
+
+        var loI = Math.max( 0, nearI - 1 );
+        var loJ = Math.max( 0, nearJ - 1 );
+        var loK = Math.max( 0, nearK - 1 );
+
+        var hiI = Math.min( iDim, nearI + 1 );
+        var hiJ = Math.min( jDim, nearJ + 1 );
+        var hiK = Math.min( kDim, nearK + 1 );
+
+        for( var i = loI; i <= hiI; ++i ) {
+
+            var iOffset = i * ijDim;
+
+            for( var j = loJ; j <= hiJ; ++j ){
+
+                var jOffset = j * jDim;
+
+                for( var k = loK; k <= hiK; ++k ){
+
+                    var cid = iOffset + jOffset + k;
+
+                    var cellStart = cellOffsets[ cid ];
+                    var cellEnd = cellStart + cellLengths[ cid ];
+
+                    for( var dataIndex = cellStart; dataIndex < cellEnd; dataIndex++ ){
+
+                        var atomIndex = data[ dataIndex ];
+                        var dx = atomsX[ atomIndex ] - x;
+                        var dy = atomsY[ atomIndex ] - y;
+                        var dz = atomsZ[ atomIndex ] - z;
+                        var rSum = atomsR[ atomIndex ] + rExtra;
+
+                        if( (dx * dx + dy * dy + dz * dz ) <= ( rSum * rSum ) ){
+                            out[ outIdx++ ] = data[ dataIndex ];
+                        }
+                    }
+                }
+            }
+        }
+        // Add terminator
+        out[ outIdx ] = -1;
+    }
+}
 
 
 function AVSurface( coordList, radiusList, indexList ){
@@ -61,6 +204,9 @@ function AVSurface( coordList, radiusList, indexList ){
 
     // Spatial Hash
     var hash;
+
+    // Neighbour array to be filled by hash
+    var neighbours; 
 
     // Vectors for Torus Projection
     var mid = new Float32Array( [ 0.0, 0.0, 0.0 ] );
@@ -116,7 +262,7 @@ function AVSurface( coordList, radiusList, indexList ){
         dim = surfGrid.dim;
         matrix = surfGrid.matrix;
 
-        ngTorus = 2 + Math.floor( probeRadius * scaleFactor );
+        ngTorus = Math.min(5, 2 + Math.floor( probeRadius * scaleFactor ));
 
         grid = uniformArray( dim[0] * dim[1] * dim[2], -1001.0 );
 
@@ -140,24 +286,21 @@ function AVSurface( coordList, radiusList, indexList ){
         cosTable = new Float32Array( probePositions );
         sinTable = new Float32Array( probePositions );
         for( var i = 0; i < probePositions; i++ ){
-
             cosTable[ i ] = Math.cos( theta );
             sinTable[ i ] = Math.sin( theta );
-
             theta += step;
-
         }
 
     }
 
     function initializeHash() {
 
-        var fakeStore = { x: x, y: y, z: z, count: nAtoms };
-        hash = new SpatialHash( fakeStore, { min: min, max: max } );
+        hash = new AVHash( x, y, z, r, min, max, 2.01 * maxRadius );
+        neighbours = new Int32Array( hash.neighbourListLength );
 
     }
 
-    function obscured( neighbours, x, y, z, a, b ) {
+    function obscured( x, y, z, a, b ) {
 
         // Is the point at x,y,z obscured by any of the atoms
         // specifeid by indices in neighbours. Ignore indices
@@ -165,25 +308,27 @@ function AVSurface( coordList, radiusList, indexList ){
 
         // Cache the last clipped atom (as very often the same one in
         // subsequent calls)
-        var i;
+        var ai;
 
         if( lastClip !== -1 ){
-            i = lastClip;
-            if( singleAtomObscures( i, x, y, z ) && i !== a && i !== b ){
-                return i;
+            ai = lastClip;
+            if( ai !== a && ai !== b && singleAtomObscures( ai, x, y, z ) ){
+                return ai;
             } else {
                 lastClip = -1;
             }
         }
 
-        for( var ia = 0; ia < neighbours.length; ++ia ){
-            i = neighbours[ ia ];
-            if( singleAtomObscures( i, x, y, z ) && i !== a && i !== b ){
-                lastClip = i;
-                return i;
+        var ni = 0;
+        ai = neighbours[ ni ];
+        while( ai >= 0 ){
+            if( ai !== a && ai !== b && singleAtomObscures( ai, x, y, z ) ){
+                lastClip = ai;
+                return ai;
             }
+            ai = neighbours[ ++ni ];
         }
-
+        
         lastClip = -1;
 
         return -1;
@@ -226,7 +371,7 @@ function AVSurface( coordList, radiusList, indexList ){
             var ar = r[ i ];
             var ar2 = r2[ i ];
 
-            var neighbours = hash.within( ax, ay, az, maxRadius + ar );
+            hash.withinRadii( ax, ay, az, ar, neighbours );
 
             // Number of grid points, round this up...
             var ng = Math.ceil( ar * scaleFactor );
@@ -283,7 +428,7 @@ function AVSurface( coordList, radiusList, indexList ){
                             spy += ay;
                             spz += az;
 
-                            if( obscured( neighbours, spx, spy, spz, i, -1 ) === -1 ) {
+                            if( obscured( spx, spy, spz, i, -1 ) === -1 ) {
                                 var dd = ar - d;
                                 if( dd < grid[ idx ] ) {
                                     grid[ idx ] = dd;
@@ -301,22 +446,19 @@ function AVSurface( coordList, radiusList, indexList ){
     function projectTorii() {
 
         for( var i = 0; i < nAtoms; i++ ){
-
-            var neighbours = hash.within( x[ i ], y[ i ], z[ i ], maxRadius + r[ i ] );
-
-            for( var ia = 0; ia < neighbours.length; ia ++ ) {
-
-                if( i < neighbours[ ia ] ){
-
-                    projectTorus( i, neighbours[ ia ], neighbours );
-
+            hash.withinRadii( x[ i ], y[ i ], z[ i ], r[ i ], neighbours );
+            var ia = 0;
+            var ni = neighbours[ ia ];
+            while( ni >= 0 ) {
+                if( i < ni ){
+                    projectTorus( i, ni );
                 }
+                ni = neighbours[ ++ia ];
             }
         }
-
     }
 
-    function projectTorus( a, b, neighbours ) {
+    function projectTorus( a, b ) {
 
         var r1 = r[ a ];
         var r2 = r[ b ];
@@ -324,6 +466,10 @@ function AVSurface( coordList, radiusList, indexList ){
         var dy = mid[1] = y[ b ] - y[ a ];
         var dz = mid[2] = z[ b ] - z[ a ];
         var d2 = dx * dx + dy * dy + dz * dz;
+
+        // This check now redundant as already done in AVHash.withinRadii
+        // if( d2 > (( r1 + r2 ) * ( r1 + r2 )) ){ return; }
+
         var d = Math.sqrt( d2 );
 
         // Find angle between a->b vector and the circle
@@ -367,7 +513,7 @@ function AVSurface( coordList, radiusList, indexList ){
             var py = mid[ 1 ] + cost * n1[ 1 ] + sint * n2[ 1 ];
             var pz = mid[ 2 ] + cost * n1[ 2 ] + sint * n2[ 2 ];
 
-            if( obscured( neighbours, px, py, pz, a, b ) == -1 ) {
+            if( obscured( px, py, pz, a, b ) == -1 ) {
 
                 // As above, iterate over our grid...
                 // px, py, pz in grid coords
@@ -494,7 +640,9 @@ function AVSurface( coordList, radiusList, indexList ){
 }
 AVSurface.__deps = [
     getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
-    v3multiplyScalar, v3cross, v3normalize, SpatialHash, defaults
+    v3multiplyScalar, v3cross, v3normalize,
+    AVHash,
+    defaults
 ];
 
-export default AVSurface;
+export { AVSurface, AVHash };
