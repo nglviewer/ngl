@@ -21,7 +21,8 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 *   *dna*
 *   *hetero*
 *   *ion*
-*   *polymer* (protein or nucleic)
+*   *saccharide*/*sugar*
+*   *polymer*
 *   *water*
 *   *hydrogen*
 *   *helix*
