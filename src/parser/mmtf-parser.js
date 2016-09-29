@@ -13,6 +13,7 @@ import {
     buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
 } from "../structure/structure-utils.js";
 import { ChemCompHetero } from "../structure/structure-constants.js";
+import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
@@ -259,6 +260,7 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         s.chainStore.length = numChains;
         s.chainStore.count = numChains;
+        s.chainStore.entityIndex = new Uint16Array( numChains );
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
@@ -323,6 +325,14 @@ MmtfParser.prototype = Object.assign( Object.create(
         }
 
         //
+
+        if( sd.entityList ){
+            sd.entityList.forEach( function( e, i ){
+                s.entityList[ i ] = new Entity(
+                    s, i, e.description, e.type, e.chainIndexList
+                );
+            } );
+        }
 
         if( sd.bioAssemblyList ){
             sd.bioAssemblyList.forEach( function( _assembly, k ){

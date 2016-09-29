@@ -10,6 +10,7 @@ import { Matrix4 } from "../../lib/three.es6.js";
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import { HelixTypes } from "./pdb-parser.js";
+import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 import Selection from "../selection.js";
@@ -655,6 +656,25 @@ function processConnections( cif, structure, asymIdDict ){
 }
 
 
+function processEntities( cif, structure, chainIndexDict ){
+
+    if( cif.entity ){
+        ensureArray( cif.entity, "id" );
+        var e = cif.entity;
+        var n = e.id.length;
+        for( var i = 0; i < n; ++i ){
+            var description = e.pdbx_description[ i ];
+            var type = e.type[ i ];
+            var chainIndexList = Array.from( chainIndexDict[ e.id[ i ] ] );
+            structure.entityList[ i ] = new Entity(
+                structure, i, description, type, chainIndexList
+            );
+        }
+    }
+
+}
+
+
 //
 
 
@@ -693,6 +713,7 @@ CifParser.prototype = Object.assign( Object.create(
 
         var cif = {};
         var asymIdDict = {};
+        var chainIndexDict = {};
 
         var pendingString = false;
         var currentString = null;
@@ -706,7 +727,7 @@ CifParser.prototype = Object.assign( Object.create(
         var pointerNames = [];
 
         var auth_asym_id, auth_seq_id,
-            label_atom_id, label_comp_id, label_asym_id, label_alt_id,
+            label_atom_id, label_comp_id, label_asym_id, label_entity_id, label_alt_id,
             group_PDB, id, type_symbol, pdbx_PDB_model_num, pdbx_PDB_ins_code,
             Cartn_x, Cartn_y, Cartn_z, B_iso_or_equiv, occupancy;
 
@@ -887,6 +908,7 @@ CifParser.prototype = Object.assign( Object.create(
                                 label_atom_id = pointerNames.indexOf( "label_atom_id" );
                                 label_comp_id = pointerNames.indexOf( "label_comp_id" );
                                 label_asym_id = pointerNames.indexOf( "label_asym_id" );
+                                label_entity_id = pointerNames.indexOf( "label_entity_id" );
                                 label_alt_id = pointerNames.indexOf( "label_alt_id" );
                                 Cartn_x = pointerNames.indexOf( "Cartn_x" );
                                 Cartn_y = pointerNames.indexOf( "Cartn_y" );
@@ -1002,6 +1024,13 @@ CifParser.prototype = Object.assign( Object.create(
                             // chainname mapping: label_asym_id -> auth_asym_id
                             asymIdDict[ chainid ] = chainname;
 
+                            // entity mapping: chainIndex -> label_entity_id
+                            var entityId = ls[ label_entity_id ];
+                            if( !chainIndexDict[ entityId ] ){
+                                chainIndexDict[ entityId ] = new Set();
+                            }
+                            chainIndexDict[ entityId ].add( s.chainStore.count - 1 );
+
                             idx += 1;
 
                         }else{
@@ -1074,6 +1103,7 @@ CifParser.prototype = Object.assign( Object.create(
             var secStruct = processSecondaryStructure( cif, s, asymIdDict );
             processSymmetry( cif, s, asymIdDict )
             processConnections( cif, s, asymIdDict );
+            processEntities( cif, s, chainIndexDict );
 
             if( cif.struct && cif.struct.title ){
                 s.title = cif.struct.title.trim().replace( reTrimQuotes, "" );
