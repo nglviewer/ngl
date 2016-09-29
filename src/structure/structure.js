@@ -172,29 +172,15 @@ Structure.prototype = {
 
     },
 
-    getAtomProxy: function( index, tmp ){
+    getAtomProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpAtomProxy === undefined ){
-                this.__tmpAtomProxy = new AtomProxy( this, index );
-            }
-            return this.__tmpAtomProxy;
-        }else{
-            return new AtomProxy( this, index );
-        }
+        return new AtomProxy( this, index );
 
     },
 
-    getResidueProxy: function( index, tmp ){
+    getResidueProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpResidueProxy === undefined ){
-                this.__tmpResidueProxy = new ResidueProxy( this, index );
-            }
-            return this.__tmpResidueProxy;
-        }else{
-            return new ResidueProxy( this, index );
-        }
+        return new ResidueProxy( this, index );
 
     },
 
