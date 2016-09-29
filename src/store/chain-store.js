@@ -24,6 +24,7 @@ ChainStore.prototype = Object.assign( Object.create(
 
     __fields: [
 
+        [ "entityIndex", 1, "uint16" ],
         [ "modelIndex", 1, "uint16" ],
         [ "residueOffset", 1, "uint32" ],
         [ "residueCount", 1, "uint32" ],

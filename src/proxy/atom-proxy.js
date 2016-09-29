@@ -43,6 +43,12 @@ AtomProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.chainIndex ];
+    },
     get modelIndex () {
         return this.chainStore.modelIndex[ this.chainIndex ];
     },

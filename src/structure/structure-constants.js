@@ -5,6 +5,14 @@
  */
 
 
+// entity types
+var UnknownEntity = 0;
+var PolymerEntity = 1;
+var NonPolymerEntity = 2;
+var MacrolideEntity = 3;
+var WaterEntity = 4;
+
+
 // molecule types
 var UnknownType = 0;
 var WaterType = 1;
@@ -340,6 +348,12 @@ ResidueTypeAtoms[ UnknownBackboneType ] = {};
 
 
 export {
+    UnknownEntity,
+    PolymerEntity,
+    NonPolymerEntity,
+    MacrolideEntity,
+    WaterEntity,
+
     UnknownType,
     WaterType,
     IonType,

@@ -33,8 +33,18 @@ ChainProxy.prototype = {
     chainStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
     get model () {
         return this.structure.getModelProxy( this.modelIndex );
+    },
+
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.index ];
+    },
+    set entityIndex ( value ) {
+        this.chainStore.entityIndex[ this.index ] = value;
     },
 
     get modelIndex () {

@@ -89,6 +89,9 @@ StructureView.prototype = Object.assign( Object.create(
             biomolDict: {
                 get: function(){ return this.structure.biomolDict; }
             },
+            entityList: {
+                get: function(){ return this.structure.entityList; }
+            },
             unitcell: {
                 get: function(){ return this.structure.unitcell; }
             },

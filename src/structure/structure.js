@@ -98,6 +98,7 @@ function Structure( name, path ){
     this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
+    this.entityList = [];
     this.unitcell = undefined;
 
     this.frames = [];
@@ -408,6 +409,21 @@ Structure.prototype = {
     getStructure: function(){
 
         return this;
+
+    },
+
+    /**
+     * Entity iterator
+     * @param  {entityCallback} callback - the callback
+     * @param  {EntityType} type - entity type
+     */
+    eachEntity: function( callback, type ){
+
+        this.entityList.forEach( function( entity ){
+            if( type === undefined || entity.getEntityType() === type ){
+                callback( entity );
+            }
+        } );
 
     },
 
