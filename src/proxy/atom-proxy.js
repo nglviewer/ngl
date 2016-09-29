@@ -219,12 +219,16 @@ AtomProxy.prototype = {
     },
 
     isPolymer: function(){
-        var moleculeType = this.residueType.moleculeType;
-        return (
-            moleculeType === ProteinType ||
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-        );
+        if( this.structure.entityList.length > 0 ){
+            return this.entity.isPolymer();
+        }else{
+            var moleculeType = this.residueType.moleculeType;
+            return (
+                moleculeType === ProteinType ||
+                moleculeType === RnaType ||
+                moleculeType === DnaType
+            );
+        }
     },
 
     isSidechain: function(){

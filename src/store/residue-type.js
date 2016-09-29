@@ -186,10 +186,6 @@ ResidueType.prototype = {
         }
     },
 
-    isPolymer: function(){
-        return this.isProtein() || this.isNucleic();
-    },
-
     isHetero: function(){
         return this.hetero === 1;
     },
