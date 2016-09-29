@@ -689,8 +689,6 @@ CifParser.prototype = Object.assign( Object.create(
 
         var rawline, line;
 
-        s.hasConnect = false;
-
         //
 
         var cif = {};

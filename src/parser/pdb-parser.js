@@ -90,8 +90,6 @@ PdbParser.prototype = Object.assign( Object.create(
         var helices = secStruct.helices;
         var sheets = secStruct.sheets;
 
-        s.hasConnect = false;
-
         var atomMap = s.atomMap;
         var atomStore = s.atomStore;
         atomStore.resize( Math.round( this.streamer.data.length / 80 ) );
@@ -276,8 +274,6 @@ PdbParser.prototype = Object.assign( Object.create(
                         }
 
                     }
-
-                    s.hasConnect = true;
 
                 }else if( recordName === 'HELIX ' ){
 
