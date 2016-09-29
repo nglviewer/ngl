@@ -687,7 +687,7 @@ CifParser.prototype = Object.assign( Object.create(
         var frames = s.frames;
         var currentFrame, currentCoord;
 
-        var line;
+        var rawline, line;
 
         s.hasConnect = false;
 
@@ -726,7 +726,8 @@ CifParser.prototype = Object.assign( Object.create(
 
             for( var i = _i; i < _n; ++i ){
 
-                line = lines[i].trim();
+                rawline = lines[i];
+                line = rawline.trim();
 
                 if( ( !line && !pendingString && !pendingLoop ) || line[0]==="#" ){
 
@@ -864,7 +865,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         // Log.log( "STRING VALUE", line );
 
-                        currentString += " " + line;
+                        currentString += rawline;
 
                     }else if( pendingLoop ){
 
@@ -1023,7 +1024,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         }
 
-                    }else if( line[0]==="'" && line.substring( line.length-1 )==="'" ){
+                    }else if( line[0]==="'" && line[line.length-1]==="'" ){
 
                         // Log.log( "NEWLINE STRING", line );
 
@@ -1040,9 +1041,9 @@ CifParser.prototype = Object.assign( Object.create(
                         // Log.log( "NEWLINE VALUE", line );
 
                         if( currentName === false ){
-                            cif[ currentCategory ] = line.trim();
+                            cif[ currentCategory ] = line;
                         }else{
-                            cif[ currentCategory ][ currentName ] = line.trim();
+                            cif[ currentCategory ][ currentName ] = line;
                         }
 
                     }else{
