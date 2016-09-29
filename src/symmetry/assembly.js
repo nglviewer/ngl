@@ -90,7 +90,7 @@ Assembly.prototype = {
     },
 
     /**
-     * Determine if the assembly is contains the full and untransformed structure
+     * Determine if the assembly is the full and untransformed structure
      * @param  {Structure}  structure - the given structure
      * @return {Boolean} whether the assembly is identical to the structure
      */
