@@ -967,6 +967,7 @@ CifParser.prototype = Object.assign( Object.create(
                             var inscode = ls[ pdbx_PDB_ins_code ];
                             inscode = ( inscode === '?' ) ? '' : inscode;
                             var chainname = ls[ auth_asym_id ];
+                            var chainid = ls[ label_asym_id ];
                             var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
                             //
@@ -988,18 +989,18 @@ CifParser.prototype = Object.assign( Object.create(
                             atomStore.occupancy[ idx ] = isNaN( occ ) ? 0 : occ;
                             atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
 
-                            sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
+                            sb.addAtom( modelIdx, chainname, chainid, resname, resno, hetero, undefined, inscode );
 
                             if( Debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
                                 // actually a many-to-many mapping
-                                var assignedChainname = asymIdDict[ ls[ label_asym_id ] ];
+                                var assignedChainname = asymIdDict[ chainid ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
                                     Log.warn( assignedChainname, chainname );
                                 }
                             }
                             // chainname mapping: label_asym_id -> auth_asym_id
-                            asymIdDict[ ls[ label_asym_id ] ] = chainname;
+                            asymIdDict[ chainid ] = chainname;
 
                             idx += 1;
 

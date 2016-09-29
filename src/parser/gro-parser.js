@@ -149,7 +149,7 @@ GroParser.prototype = Object.assign( Object.create(
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = serial;
 
-                    sb.addAtom( modelIdx, "", resname, resno, 0, "l" );
+                    sb.addAtom( modelIdx, "", "", resname, resno, 0, "l" );
 
                     idx += 1;
 

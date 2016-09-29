@@ -8,7 +8,7 @@
 function StructureBuilder( structure ){
 
     var currentModelindex = null;
-    var currentChainname = null;
+    var currentChainid = null;
     var currentResname = null;
     var currentResno = null;
     var currentInscode = null;
@@ -41,7 +41,7 @@ function StructureBuilder( structure ){
         );
     }
 
-    this.addAtom = function( modelindex, chainname, resname, resno, hetero, sstruc, inscode ){
+    this.addAtom = function( modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode ){
 
         var addModel = false;
         var addChain = false;
@@ -54,7 +54,7 @@ function StructureBuilder( structure ){
             mi += 1;
             ci += 1;
             ri += 1;
-        }else if( currentChainname !== chainname ){
+        }else if( currentChainid !== chainid ){
             addChain = true;
             addResidue = true;
             ci += 1;
@@ -76,6 +76,7 @@ function StructureBuilder( structure ){
         if( addChain ){
             chainStore.growIfFull();
             chainStore.setChainname( ci, chainname );
+            chainStore.setChainid( ci, chainid );
             chainStore.residueOffset[ ci ] = ri;
             chainStore.residueCount[ ci ] = 0;
             chainStore.count += 1;
@@ -108,7 +109,7 @@ function StructureBuilder( structure ){
         residueStore.atomCount[ ri ] += 1;
 
         currentModelindex = modelindex;
-        currentChainname = chainname;
+        currentChainid = chainid;
         currentResname = resname;
         currentResno = resno;
         currentInscode = inscode;

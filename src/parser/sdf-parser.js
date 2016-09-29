@@ -128,7 +128,7 @@ SdfParser.prototype = Object.assign( Object.create(
                     atomStore.z[ idx ] = z;
                     atomStore.serial[ idx ] = idx;
 
-                    sb.addAtom( modelIdx, "", "HET", 1, 1 );
+                    sb.addAtom( modelIdx, "", "", "HET", 1, 1 );
 
                     idx += 1;
 

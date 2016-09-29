@@ -427,6 +427,7 @@ function calculateChainnames( structure ){
             chainStore.growIfFull();
             chainStore.modelIndex[ ci ] = mIndex;
             chainStore.setChainname( ci, chainname );
+            chainStore.setChainid( ci, chainname );
             chainStore.residueOffset[ ci ] = rOffset;
             chainStore.residueCount[ ci ] = rCount;
             chainStore.count += 1;

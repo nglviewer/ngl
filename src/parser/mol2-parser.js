@@ -196,7 +196,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
                     atomStore.serial[ idx ] = serial;
                     atomStore.bfactor[ idx ] = bfactor;
 
-                    sb.addAtom( modelIdx, "", resname, resno, 1 );
+                    sb.addAtom( modelIdx, "", "", resname, resno, 1 );
 
                     idx += 1;
 

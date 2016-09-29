@@ -220,7 +220,7 @@ PdbParser.prototype = Object.assign( Object.create(
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
                     atomStore.occupancy[ idx ] = isNaN( occupancy ) ? 0 : occupancy;
 
-                    sb.addAtom( modelIdx, chainname, resname, resno, hetero, undefined, inscode );
+                    sb.addAtom( modelIdx, chainname, chainname, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
 
