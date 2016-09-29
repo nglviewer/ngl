@@ -51,7 +51,7 @@ AtomProxy.prototype = {
     },
     get residue () {
         console.warn( "residue - might be expensive" );
-        return this.structure.getResidueProxy( this.residueIndex, false );
+        return this.structure.getResidueProxy( this.residueIndex );
     },
 
     get residueIndex () {
@@ -204,7 +204,6 @@ AtomProxy.prototype = {
 
     isBackbone: function(){
         var backboneIndexList = this.residueType.backboneIndexList;
-        // console.log(backboneIndexList)
         if( backboneIndexList.length > 0 ){
             var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
             return backboneIndexList.includes( this.index - atomOffset );
