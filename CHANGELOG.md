@@ -13,7 +13,8 @@ All notable changes to this project will be documented in this file, following t
 - colored background rectangle for LabelRepresentation/TextBuffer
 - "offset" style rendering of double/triple bonds (@fredludlow)
 - PubchemDatasource to load cid as sdf, pubchem://16490
-- moleculetype, chainid color schemes
+- basic entity support (type, description, chain mapping; mmcif, mmtf)
+- entitytype, moleculetype, chainid color schemes
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis
