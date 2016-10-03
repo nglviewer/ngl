@@ -65,6 +65,7 @@ NGL.createParameterInput = function( p ){
     }else if( p.type === "vector3" ){
 
         input = new UI.Vector3( p.value )
+            .setPrecision( p.precision );
 
     }else if( p.type === "hidden" ){
 

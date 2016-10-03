@@ -346,6 +346,16 @@ UI.Vector3.prototype.setValue = function( value ){
 
 };
 
+UI.Vector3.prototype.setPrecision = function ( precision ) {
+
+    this.xNumber.setPrecision( precision );
+    this.yNumber.setPrecision( precision );
+    this.zNumber.setPrecision( precision );
+
+    return this;
+
+};
+
 
 // Selection
 
