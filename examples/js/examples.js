@@ -805,10 +805,12 @@ NGL.ExampleRegistry.addDict( {
     "molsurfFilter": function( stage ){
 
         // stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
-        stage.loadFile( "rcsb://4cup" ).then( function( o ){
+        // stage.loadFile( "rcsb://4cup" ).then( function( o ){
+        stage.loadFile( "rcsb://4hhb" ).then( function( o ){
 
             // var ligSele = "RET";
-            var ligSele = "ZYB";
+            // var ligSele = "ZYB";
+            var ligSele = "HEM and :B";
             var sview = o.structure.getView( new NGL.Selection( ligSele ) );
             console.log( sview.center, o.structure.center )
             var filterSet = o.structure.getAtomSetWithinSelection( new NGL.Selection( ligSele ), 7 );
@@ -827,22 +829,12 @@ NGL.ExampleRegistry.addDict( {
                 sele: "polymer",
                 surfaceType: "ms",
                 colorScheme: "uniform",
-                opacity: 0.5,
+                opacity: 0.7,
                 opaqueBack: false,
                 // clipNear: 50,
                 clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
-                clipCenter: sview.center
+                clipCenter: sview.center,
                 // filterSele: filterSet.toSeleString()
-            } );
-
-            o.addRepresentation( "line", {
-                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
-                clipCenter: sview.center
-            } );
-
-            o.addRepresentation( "point", {
-                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
-                clipCenter: sview.center
             } );
 
             stage.tasks.onZeroOnce( function(){
