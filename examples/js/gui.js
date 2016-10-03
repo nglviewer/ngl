@@ -62,6 +62,10 @@ NGL.createParameterInput = function( p ){
         input = new UI.ColorPopupMenu( p.label )
             .setValue( p.value );
 
+    }else if( p.type === "vector3" ){
+
+        input = new UI.Vector3( p.value )
+
     }else if( p.type === "hidden" ){
 
         // nothing to display
