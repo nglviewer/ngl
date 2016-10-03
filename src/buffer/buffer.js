@@ -756,7 +756,9 @@ Buffer.prototype = {
             }
 
             if( u[ name ] !== undefined ){
-                if( u[ name ].value.set ){
+                if( u[ name ].value.isVector3 ){
+                    u[ name ].value.copy( data[ name ] );
+                }else if( u[ name ].value.set ){
                     u[ name ].value.set( data[ name ] );
                 }else{
                     u[ name ].value = data[ name ];
@@ -764,7 +766,9 @@ Buffer.prototype = {
             }
 
             if( wu[ name ] !== undefined ){
-                if( wu[ name ].value.set ){
+                if( wu[ name ].value.isVector3 ){
+                    wu[ name ].value.copy( data[ name ] );
+                }else if( wu[ name ].value.set ){
                     wu[ name ].value.set( data[ name ] );
                 }else{
                     wu[ name ].value = data[ name ];
@@ -772,7 +776,9 @@ Buffer.prototype = {
             }
 
             if( pu[ name ] !== undefined ){
-                if( pu[ name ].value.set ){
+                if( pu[ name ].value.isVector3 ){
+                    pu[ name ].value.copy( data[ name ] );
+                }else if( pu[ name ].value.set ){
                     pu[ name ].value.set( data[ name ] );
                 }else{
                     pu[ name ].value = data[ name ];
