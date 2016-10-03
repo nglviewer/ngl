@@ -1,6 +1,7 @@
 import json from 'rollup-plugin-json';
 import istanbul from 'rollup-plugin-istanbul';
 
+var fs = require('fs');
 var pkg = require('./package.json');
 var external = Object.keys(pkg.dependencies);
 
@@ -46,7 +47,11 @@ export default {
       dest: "build/js/ngl.dev.js",
       format: 'umd',
       moduleName: 'NGL',
-      sourceMap: false
+      sourceMap: false,
+      banner: (
+        fs.readFileSync( "src/polyfills.js", "utf-8" ).toString() +
+        fs.readFileSync( "lib/promise.js", "utf-8" ).toString()
+      )
     }
   ]
 };

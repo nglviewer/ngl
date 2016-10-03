@@ -4,6 +4,28 @@
  */
 
 
+HTMLElement.prototype.getBoundingClientRect = function(){
+
+    // workaround for ie11 behavior with disconnected dom nodes
+
+    var _getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+
+    return function getBoundingClientRect(){
+        try{
+            return _getBoundingClientRect.apply( this, arguments );
+        }catch( e ){
+            return {
+                top: 0,
+                left: 0,
+                width: this.width,
+                height: this.height
+            };
+        }
+    };
+
+}();
+
+
 NGL.Widget = function(){
 
 };
