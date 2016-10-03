@@ -381,6 +381,25 @@ Structure.prototype = {
 
     },
 
+    getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
+
+        volume.filterData( minValue, maxValue, outside );
+
+        var dp = volume.dataPosition;
+        var n = dp.length;
+        var r = volume.matrix.getMaxScaleOnAxis();
+        var as = this.getAtomSet( false );
+
+        for( var i = 0; i < n; i+=3 ){
+            this.spatialHash.within( dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r ).forEach( function( idx ){
+                as.add_unsafe( idx );
+            } );
+        }
+
+        return as;
+
+    },
+
     getAtomSetWithinGroup: function( selection ){
 
         var atomResidueIndex = this.atomStore.residueIndex;

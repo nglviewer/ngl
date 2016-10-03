@@ -887,18 +887,26 @@ NGL.ExampleRegistry.addDict( {
 
     "bigcube": function( stage ){
 
-        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ).then( function( o ){
+        Promise.all( [
+            stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ),
+            stage.loadFile( "data://rho-inactive_md-system.gro" )
+        ] ).then( function( oList ){
 
-            o.addRepresentation( "surface", { isolevel: 2.7 } );
-            // o.centerView();
+            var o1 = oList[ 0 ];
+            var o2 = oList[ 1 ];
 
-        } );
+            o1.addRepresentation( "surface", { isolevel: 2.7 } );
 
-        stage.loadFile( "data://rho-inactive_md-system.gro" ).then( function( o ){
+            o2.addRepresentation( "cartoon" );
+            o2.addRepresentation( "licorice", { sele: "hetero" } );
 
-            o.addRepresentation( "cartoon" );
-            o.addRepresentation( "licorice", { sele: "hetero" } );
-            o.centerView();
+            var as = o2.structure.getAtomSetWithinVolume(
+                o1.surface, 2, o1.surface.getValueForSigma( 2.7 )
+            );
+            var as2 = o2.structure.getAtomSetWithinGroup( as );
+            o2.addRepresentation( "ball+stick", { sele: as2.toSeleString() } );
+
+            stage.centerView();
 
         } );
 
