@@ -802,6 +802,69 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "molsurfFilter": function( stage ){
+
+        // stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+        stage.loadFile( "rcsb://4cup" ).then( function( o ){
+
+            // var ligSele = "RET";
+            var ligSele = "ZYB";
+            var sview = o.structure.getView( new NGL.Selection( ligSele ) );
+            console.log( sview.center, o.structure.center )
+            var filterSet = o.structure.getAtomSetWithinSelection( new NGL.Selection( ligSele ), 7 );
+            var filterSet2 = o.structure.getAtomSetWithinSelection( new NGL.Selection( ligSele ), 5 );
+            var groupSet = o.structure.getAtomSetWithinGroup( filterSet2 );
+
+            o.addRepresentation( "licorice", {
+                // clipNear: 50,
+                sele: groupSet.toSeleString()
+            } );
+            o.addRepresentation( "ball+stick", {
+                sele: ligSele
+            } );
+            // o.addRepresentation( "spacefill" );
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                surfaceType: "ms",
+                colorScheme: "uniform",
+                opacity: 0.5,
+                opaqueBack: false,
+                // clipNear: 50,
+                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                clipCenter: sview.center
+                // filterSele: filterSet.toSeleString()
+            } );
+
+            o.addRepresentation( "line", {
+                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                clipCenter: sview.center
+            } );
+
+            o.addRepresentation( "point", {
+                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                clipCenter: sview.center
+            } );
+
+            stage.tasks.onZeroOnce( function(){
+                o.centerView( true, ligSele )
+            } );
+
+        } );
+
+    },
+
+    "radiusClip": function( stage ){
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+
+            o.addRepresentation( "cartoon", {} );
+
+            // stage.centerView();
+
+        } );
+
+    },
+
     "cube": function( stage ){
 
         stage.loadFile( "data://acrolein1gs.cube.gz" ).then( function( o ){

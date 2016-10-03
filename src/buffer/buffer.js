@@ -6,7 +6,7 @@
 
 
 import {
-    Color,
+    Color, Vector3,
     FrontSide, BackSide, DoubleSide, VertexColors,
     BufferGeometry, BufferAttribute,
     UniformsUtils, UniformsLib, Uniform,
@@ -85,6 +85,8 @@ function Buffer( position, color, index, pickingColor, params ){
     this.side = defaults( p.side, "double" );
     this.opacity = defaults( p.opacity, 1.0 );
     this.clipNear = defaults( p.clipNear, 0 );
+    this.clipRadius = defaults( p.clipRadius, 0 );
+    this.clipCenter = defaults( p.clipCenter, new Vector3() );
     this.flatShaded = defaults( p.flatShaded, false );
     this.background = defaults( p.background, false );
     this.linewidth = defaults( p.linewidth, 1 );
@@ -126,7 +128,9 @@ function Buffer( position, color, index, pickingColor, params ){
             "fogNear": { value: 0.0 },
             "fogFar": { value: 0.0 },
             "opacity": { value: this.opacity },
-            "nearClip": { value: 0.0 }
+            "nearClip": { value: 0.0 },
+            "clipRadius": { value: this.clipRadius },
+            "clipCenter": { value: this.clipCenter }
         },
         {
             "emissive" : { value: new Color( 0x000000 ) },
@@ -168,6 +172,8 @@ Buffer.prototype = {
         side: { updateShader: true, property: true },
         opacity: { uniform: true },
         clipNear: { updateShader: true, property: true },
+        clipRadius: { updateShader: true, property: true, uniform: true },
+        clipCenter: { uniform: true },
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
@@ -482,6 +488,10 @@ Buffer.prototype = {
 
         if( this.clipNear ){
             defines.NEAR_CLIP = 1;
+        }
+
+        if( this.clipRadius ){
+            defines.RADIUS_CLIP = 1;
         }
 
         if( type === "picking" ){

@@ -29,8 +29,10 @@ import SphereImpostor_frag from "./SphereImpostor.frag";
 
 import DullInteriorFragment_glsl from "./chunk/dull_interior_fragment.glsl";
 import FogFragment_glsl from "./chunk/fog_fragment.glsl";
-import NearclipFragment_glsl from "./chunk/nearclip_fragment.glsl";
 import NearclipVertex_glsl from "./chunk/nearclip_vertex.glsl";
+import NearclipFragment_glsl from "./chunk/nearclip_fragment.glsl";
+import RadiusclipVertex_glsl from "./chunk/radiusclip_vertex.glsl";
+import RadiusclipFragment_glsl from "./chunk/radiusclip_fragment.glsl";
 import OpaqueBackFragment_glsl from "./chunk/opaque_back_fragment.glsl";
 
 
@@ -66,8 +68,10 @@ var Resources = {
     // shader chunks
     'shader/chunk/dull_interior_fragment.glsl': DullInteriorFragment_glsl,
     'shader/chunk/fog_fragment.glsl': FogFragment_glsl,
-    'shader/chunk/nearclip_fragment.glsl': NearclipFragment_glsl,
     'shader/chunk/nearclip_vertex.glsl': NearclipVertex_glsl,
+    'shader/chunk/nearclip_fragment.glsl': NearclipFragment_glsl,
+    'shader/chunk/radiusclip_vertex.glsl': RadiusclipVertex_glsl,
+    'shader/chunk/radiusclip_fragment.glsl': RadiusclipFragment_glsl,
     'shader/chunk/opaque_back_fragment.glsl': OpaqueBackFragment_glsl,
 
 };
