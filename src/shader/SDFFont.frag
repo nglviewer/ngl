@@ -5,6 +5,7 @@ uniform vec3 borderColor;
 uniform float borderWidth;
 uniform vec3 backgroundColor;
 uniform float backgroundOpacity;
+uniform float nearClip;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
@@ -21,6 +22,8 @@ varying vec2 texCoord;
 const float gamma = 2.2;
 
 void main(){
+
+    #include nearclip_fragment
 
     if( texCoord.x > 1.0 ){
 
