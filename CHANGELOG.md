@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file, following t
 - "offset" style rendering of double/triple bonds (@fredludlow)
 - PubchemDatasource to load cid as sdf, pubchem://16490
 - basic entity support (type, description, chain mapping; mmcif, mmtf)
-- entitytype, moleculetype, chainid color schemes
+- entitytype, moleculetype, chainid, polymer color schemes
 
 ### Changed
 - ResidueindexColorMaker colorscale domain on a per chain basis

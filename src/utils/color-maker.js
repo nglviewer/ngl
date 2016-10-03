@@ -787,6 +787,37 @@ ChainidColorMaker.prototype = ColorMaker.prototype;
 ChainidColorMaker.prototype.constructor = ChainidColorMaker;
 
 
+function PolymerColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    var polymerDict = {};
+    var i = 0;
+
+    this.structure.eachEntity( function( e ){
+        polymerDict[ e.index ] = i;
+        i += 1;
+    }, PolymerEntity );
+
+    this.domain = [ 0, i - 1 ];
+
+    var polymerScale = this.getScale();
+
+    this.atomColor = function( a ){
+        return polymerScale( polymerDict[ a.entityIndex ] );
+    };
+
+}
+
+PolymerColorMaker.prototype = ColorMaker.prototype;
+
+PolymerColorMaker.prototype.constructor = PolymerColorMaker;
+
+
 function ModelindexColorMaker( params ){
 
     ColorMaker.call( this, params );
@@ -1073,6 +1104,7 @@ ColorMakerRegistry.types = {
     "chainindex": ChainindexColorMaker,
     "chainname": ChainnameColorMaker,
     "chainid": ChainidColorMaker,
+    "polymer": PolymerColorMaker,
     "modelindex": ModelindexColorMaker,
     "entitytype": EntityTypeColorMaker,
     "moleculetype": MoleculeTypeColorMaker,

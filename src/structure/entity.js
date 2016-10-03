@@ -38,6 +38,7 @@ function entityTypeFromString( string ){
 function Entity( structure, index, description, type, chainIndexList ){
 
     this.structure = structure;
+    this.index = index;
     this.description = description || "";
     this.entityType = entityTypeFromString( type || "" );
     this.chainIndexList = chainIndexList || [];
