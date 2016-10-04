@@ -33,29 +33,27 @@ import Counter from "./utils/counter.js";
 
 //
 
-/* eslint-disable no-unused-vars */
-import AxesRepresentation from "./representation/axes-representation";
-import BackboneRepresentation from "./representation/backbone-representation";
-import BallAndStickRepresentation from "./representation/ballandstick-representation";
-import BaseRepresentation from "./representation/base-representation";
-import CartoonRepresentation from "./representation/cartoon-representation";
-import ContactRepresentation from "./representation/contact-representation";
-import DistanceRepresentation from "./representation/distance-representation";
-import HelixorientRepresentation from "./representation/helixorient-representation";
-import HyperballRepresentation from "./representation/hyperball-representation";
-import LabelRepresentation from "./representation/label-representation";
-import LicoriceRepresentation from "./representation/licorice-representation";
-import LineRepresentation from "./representation/line-representation";
-import MolecularSurfaceRepresentation from "./representation/molecularsurface-representation";
-import PointRepresentation from "./representation/point-representation";
-import RibbonRepresentation from "./representation/ribbon-representation";
-import RocketRepresentation from "./representation/rocket-representation";
-import RopeRepresentation from "./representation/rope-representation";
-import SpacefillRepresentation from "./representation/spacefill-representation";
-import TraceRepresentation from "./representation/trace-representation";
-import TubeRepresentation from "./representation/tube-representation";
-import UnitcellRepresentation from "./representation/unitcell-representation";
-/* eslint-enable no-unused-vars */
+import "./representation/axes-representation";
+import "./representation/backbone-representation";
+import "./representation/ballandstick-representation";
+import "./representation/base-representation";
+import "./representation/cartoon-representation";
+import "./representation/contact-representation";
+import "./representation/distance-representation";
+import "./representation/helixorient-representation";
+import "./representation/hyperball-representation";
+import "./representation/label-representation";
+import "./representation/licorice-representation";
+import "./representation/line-representation";
+import "./representation/molecularsurface-representation";
+import "./representation/point-representation";
+import "./representation/ribbon-representation";
+import "./representation/rocket-representation";
+import "./representation/rope-representation";
+import "./representation/spacefill-representation";
+import "./representation/trace-representation";
+import "./representation/tube-representation";
+import "./representation/unitcell-representation";
 
 import BufferRepresentation from "./representation/buffer-representation";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
@@ -66,30 +64,28 @@ import SphereBuffer from "./buffer/sphere-buffer.js";
 
 //
 
-/* eslint-disable no-unused-vars */
-import GroParser from "./parser/gro-parser.js";
-import PdbParser from "./parser/pdb-parser.js";
-import PqrParser from "./parser/pqr-parser.js";
-import CifParser from "./parser/cif-parser.js";
-import SdfParser from "./parser/sdf-parser.js";
-import Mol2Parser from "./parser/mol2-parser.js";
-import MmtfParser from "./parser/mmtf-parser.js";
+import "./parser/gro-parser.js";
+import "./parser/pdb-parser.js";
+import "./parser/pqr-parser.js";
+import "./parser/cif-parser.js";
+import "./parser/sdf-parser.js";
+import "./parser/mol2-parser.js";
+import "./parser/mmtf-parser.js";
 
-import DcdParser from "./parser/dcd-parser.js";
+import "./parser/dcd-parser.js";
 
-import MrcParser from "./parser/mrc-parser.js";
-import CubeParser from "./parser/cube-parser.js";
-import DxParser from "./parser/dx-parser.js";
-import DxbinParser from "./parser/dxbin-parser.js";
+import "./parser/mrc-parser.js";
+import "./parser/cube-parser.js";
+import "./parser/dx-parser.js";
+import "./parser/dxbin-parser.js";
 
-import PlyParser from "./parser/ply-parser.js";
-import ObjParser from "./parser/obj-parser.js";
+import "./parser/ply-parser.js";
+import "./parser/obj-parser.js";
 
-import TextParser from "./parser/text-parser.js";
-import CsvParser from "./parser/csv-parser.js";
-import JsonParser from "./parser/json-parser.js";
-import XmlParser from "./parser/xml-parser.js";
-/* eslint-enable no-unused-vars */
+import "./parser/text-parser.js";
+import "./parser/csv-parser.js";
+import "./parser/json-parser.js";
+import "./parser/xml-parser.js";
 
 //
 
