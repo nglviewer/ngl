@@ -1380,6 +1380,9 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             var axes = o.addRepresentation( "axes" );
             axes.repr.align();
+            o.addRepresentation( "axes", { sele: "RET" } );
+            o.addRepresentation( "ball+stick", { sele: "RET" } );
+            stage.centerView();
         } );
 
     },
