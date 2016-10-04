@@ -51,11 +51,7 @@ function StructureView( structure, selection ){
     this.center = new Vector3();
     this.boundingBox = new Box3();
 
-    // to allow creating an empty object to call .fromJSON onto
-    if( !structure && !selection ) return;
-
     this.init();
-
     this.refresh();
 
 }
