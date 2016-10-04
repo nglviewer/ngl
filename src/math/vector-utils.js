@@ -106,24 +106,17 @@ function isPointOnSegment( p, l1, l2 ){
 }
 
 
-var pointVectorIntersection = function(){
+function projectPointOnVector( point, vector, origin ){
 
-    var v = new Vector3();
-    var v1 = new Vector3();
+    if( origin ){
+        point.sub( origin ).projectOnVector( vector ).add( origin );
+    }else{
+        point.projectOnVector( vector );
+    }
 
-    return function pointVectorIntersection( point, origin, vector ){
+    return point;
 
-        v.copy( vector );
-        v1.subVectors( point, origin );
-        var distOriginI = Math.cos( v.angleTo( v1 ) ) * v1.length();
-        var vectorI = v.normalize().multiplyScalar( distOriginI );
-        var pointI = new Vector3().addVectors( vectorI, origin );
-
-        return pointI;
-
-    };
-
-}();
+}
 
 
 function computeBoundingBox( array ){
@@ -317,7 +310,7 @@ export {
     lineLineIntersect,
     calculateMeanVector3,
     isPointOnSegment,
-    pointVectorIntersection,
+    projectPointOnVector,
     computeBoundingBox,
     applyMatrix4toVector3array,
     applyMatrix3toVector3array,

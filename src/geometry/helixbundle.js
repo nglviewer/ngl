@@ -10,7 +10,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Helixorient from "./helixorient.js";
-import { calculateMeanVector3, pointVectorIntersection } from "../math/vector-utils.js";
+import { calculateMeanVector3, projectPointOnVector } from "../math/vector-utils.js";
 
 
 function Helixbundle( polymer ){
@@ -116,10 +116,10 @@ Helixbundle.prototype = {
                 _center = calculateMeanVector3( tmpCenter );
 
                 _beg.fromArray( tmpCenter );
-                _beg = pointVectorIntersection( _beg, _center, _axis );
+                projectPointOnVector( _beg, _axis, _center );
 
                 _end.fromArray( tmpCenter, tmpCenter.length - 3 );
-                _end = pointVectorIntersection( _end, _center, _axis );
+                projectPointOnVector( _end, _axis, _center );
 
                 _axis.subVectors( _end, _beg );
 
