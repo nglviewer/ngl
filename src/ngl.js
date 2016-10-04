@@ -95,6 +95,10 @@ import SpatialHash from "./geometry/spatial-hash.js";
 
 //
 
+import "./utils/gzip-decompressor.js";
+
+//
+
 import "./datasource/rcsb-datasource.js";
 import "./datasource/pubchem-datasource.js";
 import "./datasource/passthrough-datasource.js";

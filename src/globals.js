@@ -47,6 +47,7 @@ var DatasourceRegistry = new Registry( "datasource" );
 var RepresentationRegistry = new Registry( "representatation" );
 var ParserRegistry = new Registry( "parser" );
 var ShaderRegistry = new Registry( "shader");
+var DecompressorRegistry = new Registry( "decompressor");
 
 
 export {
@@ -65,5 +66,6 @@ export {
     DatasourceRegistry,
     RepresentationRegistry,
     ParserRegistry,
-    ShaderRegistry
+    ShaderRegistry,
+    DecompressorRegistry
 };

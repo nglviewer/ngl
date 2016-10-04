@@ -5,6 +5,9 @@
  */
 
 
+import { defaults } from "../utils.js";
+
+
 function Registry( name ){
 
     var dict = {};
@@ -12,11 +15,11 @@ function Registry( name ){
     this.name = name;
 
     this.add = function( key, value ){
-        dict[ key.toLowerCase() ] = value;
+        dict[ defaults( key, "" ).toString().toLowerCase() ] = value;
     };
 
     this.get = function( key ){
-        return dict[ key === undefined ? "" : key.toLowerCase() ];
+        return dict[ defaults( key, "" ).toString().toLowerCase() ];
     };
 
     Object.defineProperties( this, {

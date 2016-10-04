@@ -5,7 +5,8 @@
  */
 
 
-import { decompress, uint8ToString, defaults } from "../utils.js";
+import { DecompressorRegistry } from "../globals.js";
+import { uint8ToString, defaults } from "../utils.js";
 
 
 function Streamer( src, params ){
@@ -54,13 +55,15 @@ Streamer.prototype = {
 
         this._read( function( data ){
 
-            if( this.compressed ){
+            var decompressFn = DecompressorRegistry.get( this.compressed );
 
-                this.data = decompress( data );
+            if( this.compressed && decompressFn ){
+
+                this.data = decompressFn( data );
 
             }else{
 
-                if( this.binary && data instanceof ArrayBuffer ){
+                if( ( this.binary || this.compressed ) && data instanceof ArrayBuffer ){
                     data = new Uint8Array( data );
                 }
                 this.data = data;
