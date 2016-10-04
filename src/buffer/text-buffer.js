@@ -7,6 +7,9 @@
 
 import { Color, CanvasTexture } from "../../lib/three.es6.js";
 
+import "../shader/SDFFont.vert";
+import "../shader/SDFFont.frag";
+
 import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";

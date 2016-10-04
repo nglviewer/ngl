@@ -19,6 +19,11 @@ import {
     LineSegments
 } from "../../lib/three.es6.js";
 
+import "../shader/BasicLine.vert";
+import "../shader/BasicLine.frag";
+import "../shader/Quad.vert";
+import "../shader/Quad.frag";
+
 import {
     Debug, Log, Browser, Mobile, WebglErrorMessage,
     setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
