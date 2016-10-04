@@ -1378,10 +1378,15 @@ NGL.ExampleRegistry.addDict( {
             assembly: "BU1"
         } ).then( function( o ){
             o.addRepresentation( "cartoon" );
-            var axes = o.addRepresentation( "axes" );
+            var axes = o.addRepresentation( "axes", { visible: false } );
             axes.repr.align();
-            o.addRepresentation( "axes", { sele: "RET" } );
+            o.addRepresentation( "axes", {
+                sele: "RET", showAxes: false, showBox: true, radius: 0.2
+            } );
             o.addRepresentation( "ball+stick", { sele: "RET" } );
+            o.addRepresentation( "axes", {
+                sele: ":B and backbone", showAxes: false, showBox: true, radius: 0.2
+            } );
             stage.centerView();
         } );
 
