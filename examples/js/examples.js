@@ -845,18 +845,6 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
-    "radiusClip": function( stage ){
-
-        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
-
-            o.addRepresentation( "cartoon", {} );
-
-            // stage.centerView();
-
-        } );
-
-    },
-
     "cube": function( stage ){
 
         stage.loadFile( "data://acrolein1gs.cube.gz" ).then( function( o ){
@@ -1569,78 +1557,6 @@ NGL.ExampleRegistry.addDict( {
             animate();
 
         } );
-
-    },
-
-    "test2": function( stage ) {
-
-        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
-            o.addRepresentation( "backbone", {
-                disableImpostor: true,
-                openEnded: false,
-                cylinderOnly: true
-            } );
-            stage.centerView();
-        } );
-
-    },
-
-    "test3": function( stage ) {
-
-        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
-            o.addRepresentation( "cartoon" );
-            var arrowBuffer = new NGL.ArrowBuffer(
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
-                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0.5 ])  // radius
-            );
-            o.addBufferRepresentation( arrowBuffer );
-            var coneBuffer = new NGL.ConeBuffer(
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
-                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0.5 ])  // radius
-            );
-            var cylinderBuffer = new NGL.CylinderBuffer(
-                new Float32Array([ -3, 0, 0, 0, -2, 1 ]),  // from
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color2
-                new Float32Array([ 0.5, 0.25 ]),  // radius
-                undefined,
-                undefined,
-                {
-                    disableImpostor: true,
-                    openEnded: false
-                }
-            );
-            var ellipsoidBuffer = new NGL.EllipsoidBuffer(
-                new Float32Array([ 6, 0, 0 ]),  // position
-                new Float32Array([ 1, 0, 0 ]),  // color
-                new Float32Array([ 1 ]),  // radius
-                new Float32Array([ 3, 0, 0 ]),  // majorAxis
-                new Float32Array([ 0, 2, 0 ])  // minorAxis
-            );
-            // o.addBufferRepresentation( [
-            //     coneBuffer,
-            //     cylinderBuffer,
-            //     ellipsoidBuffer
-            // ] );
-            var shape = new NGL.Shape( "shape", { disableImpostor: true } );
-            shape.addMesh(
-                [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
-                [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0 ]
-            );
-            shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
-            shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
-            shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-            shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
-            shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
-            var shapeComp = stage.addComponentFromObject( shape );
-            shapeComp.addRepresentation( "buffer" );
-            stage.centerView();
-        });
 
     }
 
