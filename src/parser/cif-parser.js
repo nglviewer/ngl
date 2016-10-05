@@ -85,7 +85,7 @@ function parseChemComp( cif, structure, structureBuilder ){
             resname = cca.pdbx_component_comp_id[ i ];
             resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
 
-            structureBuilder.addAtom( 0, "", resname, resno, 1 );
+            structureBuilder.addAtom( 0, "", "", resname, resno, 1 );
 
         }
 
@@ -108,7 +108,7 @@ function parseChemComp( cif, structure, structureBuilder ){
             resname = cca.pdbx_component_comp_id[ i ];
             resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1;
 
-            structureBuilder.addAtom( 1, "", resname, resno, 1 );
+            structureBuilder.addAtom( 1, "", "", resname, resno, 1 );
 
         }
 
