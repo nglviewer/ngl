@@ -5,6 +5,8 @@
  */
 
 
+import { Vector3, Box3 } from "../../lib/three.es6.js";
+
 import { defaults } from "../utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -46,6 +48,12 @@ function Shape( name, params ){
     var radialSegments = defaults( p.radialSegments, 50 );
     var disableImpostor = defaults( p.disableImpostor, false );
     var openEnded = defaults( p.openEnded, false );
+
+    var center = new Vector3();
+    var boundingBox = new Box3();
+
+    var tmpVec = new Vector3();
+    var tmpBox = new Box3();
 
     var bufferList = [];
 
@@ -133,6 +141,9 @@ function Shape( name, params ){
         var meshBuffer = new MeshBuffer( position, color, index, normal );
         bufferList.push( meshBuffer );
 
+        tmpBox.setFromArray( position );
+        boundingBox.union( tmpBox );
+
     }
 
     /**
@@ -151,6 +162,8 @@ function Shape( name, params ){
         addElement( position, spherePosition );
         addElement( color, sphereColor );
         sphereRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
     }
 
@@ -175,6 +188,8 @@ function Shape( name, params ){
         addElement( majorAxis, ellipsoidMajorAxis );
         addElement( minorAxis, ellipsoidMinorAxis );
 
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+
     }
 
     /**
@@ -195,6 +210,9 @@ function Shape( name, params ){
         addElement( to, cylinderTo );
         addElement( color, cylinderColor );
         cylinderRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -217,6 +235,9 @@ function Shape( name, params ){
         addElement( color, coneColor );
         coneRadius.push( radius );
 
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
+
     }
 
     /**
@@ -237,6 +258,9 @@ function Shape( name, params ){
         addElement( to, arrowTo );
         addElement( color, arrowColor );
         arrowRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -364,6 +388,13 @@ function Shape( name, params ){
     }
 
     // API
+
+    Object.defineProperties( this, {
+        center: {
+            get: function(){ return boundingBox.center( center ); }
+        },
+    } );
+    this.boundingBox = boundingBox;
 
     this.addBuffer = addBuffer;
     this.addMesh = addMesh;

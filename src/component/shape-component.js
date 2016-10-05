@@ -60,6 +60,37 @@ ShapeComponent.prototype = Object.assign( Object.create(
 
     },
 
+    centerView: function( zoom ){
+
+        zoom = defaults( zoom, true );
+
+        var center = this.getCenter();
+
+        if( zoom ){
+
+            var bb = this.shape.boundingBox;
+            var bbSize = bb.size();
+            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
+            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
+
+            // zoom = bb.size().length();
+
+        }
+
+        this.viewer.centerView( zoom, center );
+
+        return this;
+
+    },
+
+    getCenter: function(){
+
+        return this.shape.center;
+
+    },
+
     dispose: function(){
 
         this.shape.dispose();
