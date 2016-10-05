@@ -140,12 +140,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
         if( this.showBox ){
 
-            var offset2 = offset * 2;
-            var addCorner = function( v ){
-                v.toArray( vertexPosition, offset2 );
-                offset2 += 3;
-            }
-
             var ax1 = new Vector3().subVectors( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] ).normalize();
             var ax2 = new Vector3().subVectors( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] ).normalize();
             var ax3 = new Vector3().subVectors( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] ).normalize();
@@ -189,53 +183,23 @@ AxesRepresentation.prototype = Object.assign( Object.create(
                 }
             } );
 
-            v.copy( pa[3] )
-                .addScaledVector( ax1, d1a )
-                .addScaledVector( ax2, d2a )
-                .addScaledVector( ax3, d3a );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, d1a )
-                .addScaledVector( ax2, d2a )
-                .addScaledVector( ax3, -d3b );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, d1a )
-                .addScaledVector( ax2, -d2b )
-                .addScaledVector( ax3, -d3b );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, d1a )
-                .addScaledVector( ax2, -d2b )
-                .addScaledVector( ax3, d3a );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, -d1b )
-                .addScaledVector( ax2, -d2b )
-                .addScaledVector( ax3, -d3b );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, -d1b )
-                .addScaledVector( ax2, -d2b )
-                .addScaledVector( ax3, d3a );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, -d1b )
-                .addScaledVector( ax2, d2a )
-                .addScaledVector( ax3, d3a );
-            addCorner( v );
-
-            v.copy( pa[3] )
-                .addScaledVector( ax1, -d1b )
-                .addScaledVector( ax2, d2a )
-                .addScaledVector( ax3, -d3b );
-            addCorner( v );
+            var offset2 = offset * 2;
+            var addCorner = function( d1, d2, d3 ){
+                v.copy( pa[3] )
+                    .addScaledVector( ax1, d1 )
+                    .addScaledVector( ax2, d2 )
+                    .addScaledVector( ax3, d3 );
+                v.toArray( vertexPosition, offset2 );
+                offset2 += 3;
+            }
+            addCorner( d1a, d2a, d3a );
+            addCorner( d1a, d2a, -d3b );
+            addCorner( d1a, -d2b, -d3b );
+            addCorner( d1a, -d2b, d3a );
+            addCorner( -d1b, -d2b, -d3b );
+            addCorner( -d1b, -d2b, d3a );
+            addCorner( -d1b, d2a, d3a );
+            addCorner( -d1b, d2a, -d3b );
 
             var edgeOffset = offset;
             var addEdge = function( a, b ){
