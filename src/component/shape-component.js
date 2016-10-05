@@ -5,6 +5,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
@@ -19,7 +20,7 @@ import Component from "./component.js";
 function ShapeComponent( stage, shape, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : shape.name;
+    p.name = defaults( p.name, shape.name );
 
     Component.call( this, stage, p );
 

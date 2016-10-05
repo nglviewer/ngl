@@ -5,6 +5,7 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 import TrajectoryComponent from "./trajectory-component.js";
 import { makeTrajectory } from "../trajectory/trajectory-utils.js";
@@ -33,7 +34,7 @@ import { superpose } from "../align/align-utils.js";
 function StructureComponent( stage, structure, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : structure.name;
+    p.name = defaults( p.name, structure.name );
 
     Component.call( this, stage, p );
 
@@ -239,7 +240,7 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     centerView: function( zoom, sele ){
 
-        zoom = zoom !== undefined ? zoom : true;
+        zoom = defaults( zoom, true );
 
         var center = this.getCenter( sele );
 
