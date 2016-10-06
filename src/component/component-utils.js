@@ -8,6 +8,7 @@
 import { Log } from "../globals.js";
 import StructureComponent from "./structure-component.js";
 import SurfaceComponent from "./surface-component.js";
+import VolumeComponent from "./volume-component.js";
 import ShapeComponent from "./shape-component.js";
 import ScriptComponent from "./script-component.js";
 
@@ -16,25 +17,30 @@ function makeComponent( stage, object, params ){
 
     var component;
 
-    if( object.type === "Structure" ){
+    switch( object.type ){
 
-        component = new StructureComponent( stage, object, params );
+        case "Structure":
+            component = new StructureComponent( stage, object, params );
+            break;
 
-    }else if( object.type == "Surface" || object.type === "Volume" ){
+        case "Surface":
+            component = new SurfaceComponent( stage, object, params );
+            break;
 
-        component = new SurfaceComponent( stage, object, params );
+        case "Volume":
+            component = new VolumeComponent( stage, object, params );
+            break;
 
-    }else if( object.type === "Shape" ){
+        case "Shape":
+            component = new ShapeComponent( stage, object, params );
+            break;
 
-        component = new ShapeComponent( stage, object, params );
+        case "Script":
+            component = new ScriptComponent( stage, object, params );
+            break;
 
-    }else if( object.type === "Script" ){
-
-        component = new ScriptComponent( stage, object, params );
-
-    }else{
-
-        Log.warn( "makeComponent: object type unknown", object );
+        default:
+            Log.warn( "makeComponent: object type unknown", object );
 
     }
 

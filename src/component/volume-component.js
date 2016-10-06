@@ -1,5 +1,5 @@
 /**
- * @file Surface Component
+ * @file Volume Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
@@ -10,59 +10,61 @@ import Component from "./component.js";
 
 
 /**
- * Component wrapping a Surface object
+ * Component wrapping a Volume object
  * @class
  * @extends Component
  * @param {Stage} stage - stage object the component belongs to
- * @param {Surface} surface - surface object to wrap
+ * @param {Volume} volume - volume object to wrap
  * @param {ComponentParameters} params - component parameters
  */
-function SurfaceComponent( stage, surface, params ){
+function VolumeComponent( stage, volume, params ){
 
     var p = params || {};
-    p.name = defaults( p.name, surface.name );
+    p.name = defaults( p.name, volume.name );
 
     Component.call( this, stage, p );
 
-    this.surface = surface;
+    this.volume = volume;
+    this.stage.gidPool.addObject( this.volume );
 
 }
 
-SurfaceComponent.prototype = Object.assign( Object.create(
+VolumeComponent.prototype = Object.assign( Object.create(
 
     Component.prototype ), {
 
-    constructor: SurfaceComponent,
+    constructor: VolumeComponent,
 
     /**
      * Component type
-     * @alias SurfaceComponent#type
+     * @alias VolumeComponent#type
      * @constant
      * @type {String}
      * @default
      */
-    type: "surface",
+    type: "volume",
 
     /**
-     * Add a new surface representation to the component
-     * @alias SurfaceComponent#addRepresentation
+     * Add a new volume representation to the component
+     * @alias VolumeComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
      *                        surface, dot.
-     * @param {SurfaceRepresentationParameters} params - representation parameters
+     * @param {VolumeRepresentationParameters} params - representation parameters
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
     addRepresentation: function( type, params ){
 
         return Component.prototype.addRepresentation.call(
-            this, type, this.surface, params
+            this, type, this.volume, params
         );
 
     },
 
     dispose: function(){
 
-        this.surface.dispose();
+        this.stage.gidPool.removeObject( this.volume );
+        this.volume.dispose();
 
         Component.prototype.dispose.call( this );
 
@@ -70,10 +72,10 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 
     centerView: function( zoom ){
 
-        var center = this.surface.center;
+        var center = this.volume.center;
 
         if( zoom ){
-            zoom = this.surface.boundingBox.size().length();
+            zoom = this.volume.boundingBox.size().length();
         }
 
         this.viewer.centerView( zoom, center );
@@ -83,4 +85,4 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 } );
 
 
-export default SurfaceComponent;
+export default VolumeComponent;
