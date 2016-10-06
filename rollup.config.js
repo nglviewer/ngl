@@ -1,6 +1,5 @@
 import json from 'rollup-plugin-json';
 
-var fs = require('fs');
 var path = require('path');
 var pkg = require('./package.json');
 var external = Object.keys(pkg.dependencies);
