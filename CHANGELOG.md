@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased]
+## [v0.9.1] - 2016-10-06
 ### Changed
 - removed (wrongly added) ngl2.js from dist folder
 - fixed chemComp cif parser not passing chainid
@@ -208,7 +208,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
-[Unreleased]: https://github.com/arose/ngl/compare/v0.9.0...HEAD
+[v0.9.1]: https://github.com/arose/ngl/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/arose/ngl/compare/v0.8...v0.9.0
 [v0.8]: https://github.com/arose/ngl/compare/v0.7.1a...v0.8
 [v0.7.1a]: https://github.com/arose/ngl/compare/v0.7.1...v0.7.1a
