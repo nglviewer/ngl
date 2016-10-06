@@ -38,6 +38,25 @@ function hasValue( d ){
     return d !== "?";
 }
 
+function cifDefaults( value, defaultValue ){
+    return hasValue( value ) ? value : defaultValue;
+}
+
+function getBondOrder( valueOrder ){
+    switch( valueOrder.toLowerCase() ){
+        case "?":  // assume single bond
+        case "sing":
+            return 1;
+        case "doub":
+            return 2;
+        case "trip":
+            return 3;
+        case "quad":
+            return 4;
+    }
+    return 0;
+}
+
 
 function parseChemComp( cif, structure, structureBuilder ){
 
@@ -116,7 +135,7 @@ function parseChemComp( cif, structure, structureBuilder ){
 
     if( cca && ccb ){
 
-        var atomname1, atomname2, valueOrder, bondOrder;
+        var atomname1, atomname2, bondOrder;
         n = ccb.comp_id.length;
         var na = cca.comp_id.length;
 
@@ -127,19 +146,7 @@ function parseChemComp( cif, structure, structureBuilder ){
 
             atomname1 = ccb.atom_id_1[ i ];
             atomname2 = ccb.atom_id_2[ i ];
-            valueOrder = ccb.value_order[ i ].toLowerCase();
-
-            if( valueOrder === "?" ){
-                bondOrder = 1;  // assume single bond
-            }else if( valueOrder === "sing" ){
-                bondOrder = 1;
-            }else if( valueOrder === "doub" ){
-                bondOrder = 2;
-            }else if( valueOrder === "trip" ){
-                bondOrder = 3;
-            }else if( valueOrder === "quad" ){
-                bondOrder = 4;
-            }
+            bondOrder = getBondOrder( ccb.value_order[ i ] );
 
             ap1.index = atomnameDict[ atomname1 ];
             ap2.index = atomnameDict[ atomname2 ];
@@ -170,7 +177,6 @@ function processSecondaryStructure( cif, structure, asymIdDict ){
 
     if( sc ){
 
-
         ensureArray( sc, "id" );
 
         for( i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i ){
@@ -181,10 +187,10 @@ function processSecondaryStructure( cif, structure, asymIdDict ){
                 helices.push( [
                     asymIdDict[ sc.beg_label_asym_id[ i ] ],
                     parseInt( sc.beg_auth_seq_id[ i ] ),
-                    begIcode === "?" ? "" : begIcode,
+                    cifDefaults( begIcode, "" ),
                     asymIdDict[ sc.end_label_asym_id[ i ] ],
                     parseInt( sc.end_auth_seq_id[ i ] ),
-                    endIcode === "?" ? "" : endIcode,
+                    cifDefaults( endIcode, "" ),
                     ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 )
                 ] );
             }
@@ -205,10 +211,10 @@ function processSecondaryStructure( cif, structure, asymIdDict ){
             sheets.push( [
                 asymIdDict[ ssr.beg_label_asym_id[ i ] ],
                 parseInt( ssr.beg_auth_seq_id[ i ] ),
-                begIcode === "?" ? "" : begIcode,
+                cifDefaults( begIcode, "" ),
                 asymIdDict[ ssr.end_label_asym_id[ i ] ],
                 parseInt( ssr.end_auth_seq_id[ i ] ),
-                endIcode === "?" ? "" : endIcode
+                cifDefaults( endIcode, "" )
             ] );
         }
 
@@ -563,10 +569,10 @@ function processConnections( cif, structure, asymIdDict ){
             var altloc1 = sc.pdbx_ptnr1_label_alt_id[ i ];
             var sele1 = (
                 sc.ptnr1_auth_seq_id[ i ] +
-                ( inscode1 === "?" ? "" : ( "^" + inscode1 ) ) +
+                ( hasValue( inscode1 ) ? ( "^" + inscode1 ) : "" ) +
                 ":" + asymIdDict[ sc.ptnr1_label_asym_id[ i ] ] +
                 "." + sc.ptnr1_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                ( altloc1 === "?" ? "" : ( "%" + altloc1 ) )
+                ( hasValue( altloc1 ) ? ( "%" + altloc1 ) : "" )
             );
             var atomIndices1 = atomIndicesCache[ sele1 ];
             if( !atomIndices1 ){
@@ -583,10 +589,10 @@ function processConnections( cif, structure, asymIdDict ){
             var altloc2 = sc.pdbx_ptnr2_label_alt_id[ i ];
             var sele2 = (
                 sc.ptnr2_auth_seq_id[ i ] +
-                ( inscode2 === "?" ? "" : ( "^" + inscode2 ) ) +
+                ( hasValue( inscode2 ) ? ( "^" + inscode2 ) : "" ) +
                 ":" + asymIdDict[ sc.ptnr2_label_asym_id[ i ] ] +
                 "." + sc.ptnr2_label_atom_id[ i ].replace( reDoubleQuote, '' ) +
-                ( altloc2 === "?" ? "" : ( "%" + altloc2 ) )
+                ( hasValue( altloc2 ) ? ( "%" + altloc2 ) : "" )
             );
             var atomIndices2 = atomIndicesCache[ sele2 ];
             if( !atomIndices2 ){
@@ -629,20 +635,9 @@ function processConnections( cif, structure, asymIdDict ){
                 ap2.index = atomIndices2[ j ];
 
                 if( ap1 && ap2 ){
-                    var bondOrder;
-                    var valueOrder = sc.pdbx_value_order[ i ].toLowerCase();
-                    if( valueOrder === "?" ){
-                        bondOrder = 1;  // assume single bond
-                    }else if( valueOrder === "sing" ){
-                        bondOrder = 1;
-                    }else if( valueOrder === "doub" ){
-                        bondOrder = 2;
-                    }else if( valueOrder === "trip" ){
-                        bondOrder = 3;
-                    }else if( valueOrder === "quad" ){
-                        bondOrder = 4;
-                    }
-                    structure.bondStore.addBond( ap1, ap2, bondOrder );
+                    structure.bondStore.addBond(
+                        ap1, ap2, getBondOrder( sc.pdbx_value_order[ i ] )
+                    );
                 }else{
                     Log.log( "atoms for connection not found" );
                 }
