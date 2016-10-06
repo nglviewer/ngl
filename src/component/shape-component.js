@@ -5,6 +5,7 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Component from "./component.js";
 
@@ -100,6 +101,8 @@ ShapeComponent.prototype = Object.assign( Object.create(
     }
 
 } );
+
+ComponentRegistry.add( "shape", ShapeComponent );
 
 
 export default ShapeComponent;

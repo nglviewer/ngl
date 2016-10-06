@@ -5,6 +5,7 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Component from "./component.js";
 
@@ -81,6 +82,8 @@ SurfaceComponent.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ComponentRegistry.add( "surface", SurfaceComponent );
 
 
 export default SurfaceComponent;

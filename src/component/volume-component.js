@@ -5,6 +5,7 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Component from "./component.js";
 
@@ -83,6 +84,8 @@ VolumeComponent.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ComponentRegistry.add( "volume", VolumeComponent );
 
 
 export default VolumeComponent;
