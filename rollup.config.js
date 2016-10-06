@@ -59,11 +59,7 @@ export default {
       dest: "build/js/ngl.dev.js",
       format: 'umd',
       moduleName: 'NGL',
-      sourceMap: false,
-      banner: (
-        fs.readFileSync( "src/polyfills.js", "utf-8" ).toString() +
-        fs.readFileSync( "lib/promise.js", "utf-8" ).toString()
-      )
+      sourceMap: false
     }
   ]
 };

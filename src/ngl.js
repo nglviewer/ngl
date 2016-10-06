@@ -5,6 +5,13 @@
  */
 
 
+import "./polyfills";
+import _Promise from "../lib/promise.es6.js";
+if( !window.Promise ){
+    window.Promise = _Promise;
+}
+
+
 /**
  * The NGL module. These members are available in the `NGL` namespace when using the {@link https://github.com/umdjs/umd|UMD} build in the `ngl.js` file.
  * @module NGL
