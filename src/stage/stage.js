@@ -531,17 +531,15 @@ Stage.prototype = {
 
     addComponentFromObject: function( object, params ){
 
-        var component;
         var CompClass = ComponentRegistry.get( object.type );
 
         if( CompClass ){
-            component = new CompClass( this, object, params );
-        }else{
-            Log.warn( "no component for object type", object.type );
+            var component = new CompClass( this, object, params );
+            this.addComponent( component );
+            return component
         }
-        this.addComponent( component );
 
-        return component;
+        Log.warn( "no component for object type", object.type );
 
     },
 
