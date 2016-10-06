@@ -963,12 +963,6 @@ NGL.OverviewWidget = function( stage, preferences ){
                 ).setMarginLeft( "5px" )
         ) );
 
-    // addIcon( "file", "In front of atom-selection input fields." );
-
-    // addIcon( "bookmark", "In front of atom-selection input fields." );
-
-    // addIcon( "database", "In front of atom-selection input fields." );
-
     return container;
 
 };
@@ -1168,30 +1162,35 @@ NGL.SidebarWidget = function( stage ){
 
         var widget;
 
-        if( component.type === "structure" ){
+        switch( component.type ){
 
-            widget = new NGL.StructureComponentWidget( component, stage );
+            case "structure":
+                widget = new NGL.StructureComponentWidget( component, stage );
+                break;
 
-        }else if( component.type === "surface" ){
+            case "surface":
+                widget = new NGL.SurfaceComponentWidget( component, stage );
+                break;
 
-            widget = new NGL.SurfaceComponentWidget( component, stage );
+            case "volume":
+                widget = new NGL.VolumeComponentWidget( component, stage );
+                break;
 
-        }else if( component.type === "shape" ){
+            case "shape":
+                widget = new NGL.ShapeComponentWidget( component, stage );
+                break;
 
-            widget = new NGL.ShapeComponentWidget( component, stage );
+            case "script":
+                widget = new NGL.ScriptComponentWidget( component, stage );
+                break;
 
-        }else if( component.type === "script" ){
+            case "component":
+                widget = new NGL.ComponentWidget( component, stage );
+                break;
 
-            widget = new NGL.ScriptComponentWidget( component, stage );
-
-        }else if( component.type === "component" ){
-
-            widget = new NGL.ComponentWidget( component, stage );
-
-        }else{
-
-            console.warn( "NGL.SidebarWidget: component type unknown", component );
-            return;
+            default:
+                console.warn( "NGL.SidebarWidget: component type unknown", component );
+                return;
 
         }
 
@@ -1665,6 +1664,65 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .addMenuEntry( "Representation", repr )
         .addMenuEntry(
             "File", new UI.Text( component.surface.path )
+                        .setMaxWidth( "100px" )
+                        .setWordWrap( "break-word" ) );
+
+    // Fill container
+
+    container
+        .addStatic( componentPanel )
+        .add( reprContainer );
+
+    return container;
+
+};
+
+
+NGL.VolumeComponentWidget = function( component, stage ){
+
+    var signals = component.signals;
+    var container = new UI.CollapsibleIconPanel( "minus-square", "plus-square" );
+
+    var reprContainer = new UI.Panel();
+
+    signals.representationAdded.add( function( repr ){
+
+        reprContainer.add(
+            new NGL.RepresentationComponentWidget( repr, stage )
+        );
+
+    } );
+
+    // Add representation
+
+    var repr = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( (function(){
+
+            var reprOptions = {
+                "": "[ add ]",
+                "surface": "surface",
+                "dot": "dot"
+            };
+            return reprOptions;
+
+        })() )
+        .onChange( function(){
+
+            component.addRepresentation( repr.getValue() );
+            repr.setValue( "" );
+            componentPanel.setMenuDisplay( "none" );
+
+        } );
+
+    // Component panel
+
+    var componentPanel = new UI.ComponentPanel( component )
+        .setDisplay( "inline-block" )
+        .setMargin( "0px" )
+        .addMenuEntry( "Representation", repr )
+        .addMenuEntry(
+            "File", new UI.Text( component.volume.path )
                         .setMaxWidth( "100px" )
                         .setWordWrap( "break-word" ) );
 
