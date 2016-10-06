@@ -1,5 +1,4 @@
 import json from 'rollup-plugin-json';
-import istanbul from 'rollup-plugin-istanbul';
 
 var fs = require('fs');
 var path = require('path');
@@ -48,10 +47,7 @@ export default {
   plugins: [
     glsl(),
     text(),
-    json(),
-    // istanbul({
-    //   exclude: ['test/**/*', 'node_modules/**/*']
-    // })
+    json()
   ],
   external: external,
   targets: [
