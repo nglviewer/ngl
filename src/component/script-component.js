@@ -5,6 +5,8 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
@@ -19,7 +21,7 @@ import Component from "./component.js";
 function ScriptComponent( stage, script, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : script.name;
+    p.name = defaults( p.name, script.name );
 
     Component.call( this, stage, p );
 
@@ -73,6 +75,8 @@ ScriptComponent.prototype = Object.assign( Object.create(
     getCenter: function(){}
 
 } );
+
+ComponentRegistry.add( "script", ScriptComponent );
 
 
 export default ScriptComponent;

@@ -5,6 +5,7 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Component from "./component.js";
 import TrajectoryComponent from "./trajectory-component.js";
@@ -312,6 +313,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ComponentRegistry.add( "structure", StructureComponent );
 
 
 export default StructureComponent;

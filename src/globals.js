@@ -46,8 +46,9 @@ var ColorMakerRegistry = new _ColorMakerRegistry();
 var DatasourceRegistry = new Registry( "datasource" );
 var RepresentationRegistry = new Registry( "representatation" );
 var ParserRegistry = new Registry( "parser" );
-var ShaderRegistry = new Registry( "shader");
-var DecompressorRegistry = new Registry( "decompressor");
+var ShaderRegistry = new Registry( "shader" );
+var DecompressorRegistry = new Registry( "decompressor" );
+var ComponentRegistry = new Registry( "component" );
 
 
 export {
@@ -67,5 +68,6 @@ export {
     RepresentationRegistry,
     ParserRegistry,
     ShaderRegistry,
-    DecompressorRegistry
+    DecompressorRegistry,
+    ComponentRegistry
 };

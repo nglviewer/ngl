@@ -33,6 +33,14 @@ import Counter from "./utils/counter.js";
 
 //
 
+import "./component/script-component";
+import "./component/shape-component";
+import "./component/structure-component";
+import "./component/surface-component";
+import "./component/volume-component";
+
+//
+
 import "./representation/axes-representation";
 import "./representation/backbone-representation";
 import "./representation/ballandstick-representation";
