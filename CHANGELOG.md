@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [v0.9.2] - 2016-10-06
+### Changed
+- fix, moved polyfills back inside the bundle
+
+
 ## [v0.9.1] - 2016-10-06
 ### Changed
 - removed (wrongly added) ngl2.js from dist folder
@@ -208,6 +213,7 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
+[v0.9.2]: https://github.com/arose/ngl/compare/v0.9.1...v0.9.2
 [v0.9.1]: https://github.com/arose/ngl/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/arose/ngl/compare/v0.8...v0.9.0
 [v0.8]: https://github.com/arose/ngl/compare/v0.7.1a...v0.8
