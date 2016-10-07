@@ -130,6 +130,9 @@ StructureView.prototype = Object.assign( Object.create(
 
             bondHash: {
                 get: function(){ return this.structure.bondHash; }
+            },
+            spatialHash: {
+                get: function(){ return this.structure.spatialHash; }
             }
         } );
 
