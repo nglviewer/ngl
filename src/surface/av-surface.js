@@ -181,6 +181,10 @@ function AVSurface( coordList, radiusList, indexList ){
     }
 
     var bbox = computeBoundingBox( coordList );
+    if( coordList.length === 0 ){
+        bbox[ 0 ].set( [ 0, 0, 0 ] );
+        bbox[ 1 ].set( [ 0, 0, 0 ] );
+    }
     var min = bbox[0];
     var max = bbox[1];
 
