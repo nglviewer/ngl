@@ -70,7 +70,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", buffer: true
         },
         filterSele: {
-            type: "text"
+            type: "text", rebuild: true
         },
         volume: {
             type: "hidden"
@@ -120,14 +120,11 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
             if( this.filterSele ){
                 var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
-                console.log( sviewFilter.center, sviewFilter.boundingBox.size().length() / 2 );
-                var asWithin = sview.getAtomSetWithinPoint(
-                    sviewFilter.center, sviewFilter.boundingBox.size().length() / 2
-                );
-                console.log(asWithin.toSeleString())
-                console.log(sview.getAtomSetWithinSelection( asWithin, 0.1 ).toSeleString())
+                var bbSize = sviewFilter.boundingBox.size();
+                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, maxDim / 2 );
                 sview = sview.getView(
-                    new Selection( sview.getAtomSetWithinSelection( asWithin, 0.1 ).toSeleString() )
+                    new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
                 );
                 // this.filterSele = "";
             }

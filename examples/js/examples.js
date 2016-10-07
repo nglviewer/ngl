@@ -831,10 +831,22 @@ NGL.ExampleRegistry.addDict( {
                 colorScheme: "uniform",
                 opacity: 0.7,
                 opaqueBack: false,
+                useWorker: false,
                 // clipNear: 50,
                 // clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
                 clipCenter: sview.center,
                 filterSele: filterSet.toSeleString()
+                // filterSele: groupSet.toSeleString()
+            } );
+
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                surfaceType: "ms",
+                color: "lime",
+                opacity: 0.7,
+                wireframe: true,
+                clipRadius: sview.boundingBox.size().length() / 2 + 5,
+                clipCenter: sview.center
             } );
 
             stage.tasks.onZeroOnce( function(){
