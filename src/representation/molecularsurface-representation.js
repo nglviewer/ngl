@@ -11,6 +11,7 @@ import StructureRepresentation from "./structure-representation.js";
 import MolecularSurface from "../surface/molecular-surface.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
+import Selection from "../selection.js";
 
 
 function MolecularSurfaceRepresentation( structure, viewer, params ){
@@ -116,6 +117,20 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( !info.molsurf || info.sele !== sview.selection.string ){
+
+            if( this.filterSele ){
+                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                console.log( sviewFilter.center, sviewFilter.boundingBox.size().length() / 2 );
+                var asWithin = sview.getAtomSetWithinPoint(
+                    sviewFilter.center, sviewFilter.boundingBox.size().length() / 2
+                );
+                console.log(asWithin.toSeleString())
+                console.log(sview.getAtomSetWithinSelection( asWithin, 0.1 ).toSeleString())
+                sview = sview.getView(
+                    new Selection( sview.getAtomSetWithinSelection( asWithin, 0.1 ).toSeleString() )
+                );
+                // this.filterSele = "";
+            }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );

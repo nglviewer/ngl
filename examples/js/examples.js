@@ -832,9 +832,9 @@ NGL.ExampleRegistry.addDict( {
                 opacity: 0.7,
                 opaqueBack: false,
                 // clipNear: 50,
-                clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                // clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
                 clipCenter: sview.center,
-                // filterSele: filterSet.toSeleString()
+                filterSele: filterSet.toSeleString()
             } );
 
             stage.tasks.onZeroOnce( function(){
