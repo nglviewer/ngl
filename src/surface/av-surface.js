@@ -14,14 +14,14 @@ import {
 import { defaults } from "../utils.js";
 
 
-/* 
+/*
  * Modifed from SpatialHash
- * 
+ *
  * Main differences are:
  * * Optimized grid size to ensure we only ever need to look +/-1 cell
  * * Aware of atomic radii and will only output atoms within rAtom + rExtra
  *   (see withinRadii method)
- * 
+ *
  * (Uses rounding rather than bitshifting as consequence of arbitrary grid size)
  */
 function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
@@ -37,7 +37,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
     var maxZ = max[ 2 ];
 
     function hashFunc( w, minW) {
-       return Math.floor( ( w - minW ) / maxDistance );        
+       return Math.floor( ( w - minW ) / maxDistance );
     }
 
     var iDim = hashFunc( maxX, minX ) + 1;
@@ -103,7 +103,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
     /**
      * Populate the supplied out array with atom indices that are within rAtom + rExtra
      * of x,y,z
-     * 
+     *
      * -1 in out array indicates the end of the list
      */
     this.withinRadii = function( x, y, z, rExtra, out ) {
@@ -210,7 +210,7 @@ function AVSurface( coordList, radiusList, indexList ){
     var hash;
 
     // Neighbour array to be filled by hash
-    var neighbours; 
+    var neighbours;
 
     // Vectors for Torus Projection
     var mid = new Float32Array( [ 0.0, 0.0, 0.0 ] );
@@ -332,7 +332,7 @@ function AVSurface( coordList, radiusList, indexList ){
             }
             ai = neighbours[ ++ni ];
         }
-        
+
         lastClip = -1;
 
         return -1;
