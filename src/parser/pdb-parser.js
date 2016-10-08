@@ -105,7 +105,7 @@ PdbParser.prototype = Object.assign( Object.create(
             "EC", "ENGINEERED", "MUTATION", "OTHER_DETAILS"
         ];
         var chainDict = {};
-        var chainIdx, chainid, inPolymerChain;
+        var chainIdx, chainid;
         var currentChainname, currentResno, currentResname, currentInscode;
 
         var secStruct = {
