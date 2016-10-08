@@ -779,7 +779,11 @@ CifParser.prototype = Object.assign( Object.create(
 
                         }else{
 
-                            cif[ currentCategory ][ currentName ] = currentString;
+                            if( currentName === false ){
+                                cif[ currentCategory ] = currentString;
+                            }else{
+                                cif[ currentCategory ][ currentName ] = currentString;
+                            }
 
                         }
 
@@ -851,7 +855,6 @@ CifParser.prototype = Object.assign( Object.create(
                         if( keyParts.length === 1 ){
 
                             name = false;
-                            if( !cif[ category ] ) cif[ category ] = [];
                             cif[ category ] = value;
 
                         }else{
