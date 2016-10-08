@@ -9,6 +9,7 @@ import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
+import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 import {
@@ -83,6 +84,30 @@ PdbParser.prototype = Object.assign( Object.create(
         var unitcellDict = {};
         var bondDict = {};
 
+        var entityDataList = [];
+        var currentEntityData;
+        var currentEntityKey;
+        // MOL_ID                 Numbers each component; also used in  SOURCE to associate
+        //                        the information.
+        // MOLECULE               Name of the macromolecule.
+        // CHAIN                  Comma-separated list of chain  identifier(s).
+        // FRAGMENT               Specifies a domain or region of the  molecule.
+        // SYNONYM                Comma-separated list of synonyms for  the MOLECULE.
+        // EC                     The Enzyme Commission number associated  with the molecule.
+        //                        If there is more than one EC number,  they are presented
+        //                        as a comma-separated list.
+        // ENGINEERED             Indicates that the molecule was  produced using
+        //                        recombinant technology or by purely  chemical synthesis.
+        // MUTATION               Indicates if there is a mutation.
+        // OTHER_DETAILS          Additional comments.
+        var entityKeyList = [
+            "MOL_ID", "MOLECULE", "CHAIN", "FRAGMENT", "SYNONYM",
+            "EC", "ENGINEERED", "MUTATION", "OTHER_DETAILS"
+        ];
+        var chainDict = {};
+        var chainIdx, chainid, inPolymerChain;
+        var currentChainname, currentResno, currentResname, currentInscode;
+
         var secStruct = {
             helices: [],
             sheets: []
@@ -132,6 +157,9 @@ PdbParser.prototype = Object.assign( Object.create(
                             if( !firstModelOnly ) serialDict = {};
 
                         }
+
+                        chainIdx = 1;
+                        chainid = chainIdx.toString();
 
                     }
 
@@ -220,7 +248,25 @@ PdbParser.prototype = Object.assign( Object.create(
                     atomStore.altloc[ idx ] = altloc.charCodeAt( 0 );
                     atomStore.occupancy[ idx ] = isNaN( occupancy ) ? 0 : occupancy;
 
-                    sb.addAtom( modelIdx, chainname, chainname, resname, resno, hetero, undefined, inscode );
+                    if( hetero ){
+
+                        if( currentChainname !== chainname || currentResno !== resno ||
+                            currentResname !== resname || currentInscode !== inscode
+                        ){
+
+                            chainIdx += 1;
+                            chainid = chainIdx.toString();
+
+                            currentChainname = chainname;
+                            currentResno = resno;
+                            currentResname = resname;
+                            currentInscode = inscode;
+
+                        }
+
+                    }
+
+                    sb.addAtom( modelIdx, chainname, chainid, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
 
@@ -304,6 +350,50 @@ PdbParser.prototype = Object.assign( Object.create(
                         endChain, endResi, endIcode
                     ] );
 
+                }else if( recordName === 'COMPND' ){
+
+                    var comp = line.substr( 10, 70 ).trim();
+                    var keyEnd = comp.indexOf( ":" );
+                    var key = comp.substring( 0, keyEnd );
+                    var value;
+
+                    if( entityKeyList.includes( key ) ){
+                        currentEntityKey = key;
+                        value = comp.substring( keyEnd + 2 );
+                    }else{
+                        value = comp;
+                    }
+                    value = value.replace( /;$/, "" );
+
+                    if( currentEntityKey === "MOL_ID" ){
+
+                        currentEntityData = {
+                            chainList: [],
+                            name: ""
+                        };
+                        entityDataList.push( currentEntityData );
+
+                    }else if( currentEntityKey === "MOLECULE" ){
+
+                        if( currentEntityData.name ) currentEntityData.name += " ";
+                        currentEntityData.name += value;
+
+                    }else if( currentEntityKey === "CHAIN" ){
+
+                        Array.prototype.push.apply(
+                            currentEntityData.chainList,
+                            value.split( /\s*,\s*/ )
+                        );
+
+                    }
+
+                }else if( line.startsWith( 'TER' ) ){
+
+                    var cp = s.getChainProxy( s.chainStore.count - 1 );
+                    chainDict[ cp.chainname ] = cp.index;
+                    chainIdx += 1;
+                    chainid = chainIdx.toString();
+
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
                     if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
@@ -360,7 +450,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     pendingStart = true;
 
-                }else if( recordName === 'ENDMDL' || line.substr( 0, 3 ) === 'END' ){
+                }else if( recordName === 'ENDMDL' || line.startsWith( 'END' ) ){
 
                     if( pendingStart ) continue;
 
@@ -481,6 +571,36 @@ PdbParser.prototype = Object.assign( Object.create(
         this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
             _parseChunkOfLines( 0, lines.length, lines );
         } );
+
+        //
+
+        if( entityDataList.length ){
+
+            s.eachChain( function( cp ){
+                cp.entityIndex = entityDataList.length;
+            } );
+
+            entityDataList.forEach( function( e, i ){
+                var chainIndexList = e.chainList.map( function( chainname ){
+                    return chainDict[ chainname ];
+                } );
+                s.entityList.push( new Entity(
+                    s, i, e.name, "polymer", chainIndexList
+                ) );
+            } );
+
+            s.eachChain( function( cp ){
+                if( cp.entityIndex === entityDataList.length ){
+                    // TODO check for water, use resname
+                    s.entityList.push( new Entity(
+                        s, s.entityList.length, "UNKNOWN", "non-polymer", [ cp.index ]
+                    ) );
+                }
+            } );
+
+        }
+
+        //
 
         if( unitcellDict.a !== undefined ){
             s.unitcell = new Unitcell(
