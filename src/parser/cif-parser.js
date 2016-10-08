@@ -714,6 +714,7 @@ CifParser.prototype = Object.assign( Object.create(
         var currentString = null;
         var pendingValue = false;
         var pendingLoop = false;
+        var pendingName = false;
         var loopPointers = [];
         var currentLoopIndex = null;
         var currentCategory = null;
@@ -804,6 +805,7 @@ CifParser.prototype = Object.assign( Object.create(
                     // Log.log( "LOOP START" );
 
                     pendingLoop = true;
+                    pendingName = true;
                     loopPointers.length = 0;
                     pointerNames.length = 0;
                     currentLoopIndex = 0;
@@ -811,6 +813,10 @@ CifParser.prototype = Object.assign( Object.create(
                 }else if( line[0]==="_" ){
 
                     var keyParts, category, name;
+
+                    if( pendingLoop && !pendingName ){
+                        pendingLoop = false;
+                    }
 
                     if( pendingLoop ){
 
@@ -1049,6 +1055,8 @@ CifParser.prototype = Object.assign( Object.create(
                             currentLoopIndex += nn;
 
                         }
+
+                        pendingName = false;
 
                     }else if( line[0]==="'" && line[line.length-1]==="'" ){
 
