@@ -107,7 +107,7 @@ PdbParser.prototype = Object.assign( Object.create(
         ];
         var chainDict = {};
         var hetnameDict = {};
-        var chainIdx, chainid;
+        var chainIdx, chainid, newChain;
         var currentChainname, currentResno, currentResname, currentInscode;
 
         var secStruct = {
@@ -162,10 +162,11 @@ PdbParser.prototype = Object.assign( Object.create(
 
                         chainIdx = 1;
                         chainid = chainIdx.toString();
+                        newChain = true;
+
+                        pendingStart = false;
 
                     }
-
-                    pendingStart = false;
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
@@ -229,7 +230,7 @@ PdbParser.prototype = Object.assign( Object.create(
                         serial = parseInt( line.substr( 6, 5 ) );
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                        chainname = line[ 21 ].trim();
+                        chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
                         resno = parseInt( line.substr( 22, 4 ) );
                         inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
@@ -260,20 +261,25 @@ PdbParser.prototype = Object.assign( Object.create(
                             chainIdx += 1;
                             chainid = chainIdx.toString();
 
-                            currentChainname = chainname;
                             currentResno = resno;
                             currentResname = resname;
                             currentInscode = inscode;
 
                         }
 
+                    }else if( !newChain && currentChainname !== chainname ){
+
+                        chainIdx += 1;
+                        chainid = chainIdx.toString();
+
                     }
 
                     sb.addAtom( modelIdx, chainname, chainid, resname, resno, hetero, undefined, inscode );
 
                     serialDict[ serial ] = idx;
-
                     idx += 1;
+                    newChain = false;
+                    currentChainname = chainname;
 
                 }else if( recordName === 'CONECT' ){
 
@@ -400,6 +406,7 @@ PdbParser.prototype = Object.assign( Object.create(
                     chainDict[ cp.chainname ] = cp.index;
                     chainIdx += 1;
                     chainid = chainIdx.toString();
+                    newChain = true;
 
                 }else if( recordName === 'REMARK' && line.substr( 7, 3 ) === '350' ){
 
