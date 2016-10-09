@@ -12,6 +12,7 @@ import StructureParser from "./structure-parser.js";
 import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
+import { WaterNames } from "../structure/structure-constants.js";
 import {
     assignSecondaryStructure, buildUnitcellAssembly,
     calculateBonds, calculateSecondaryStructure
@@ -105,6 +106,7 @@ PdbParser.prototype = Object.assign( Object.create(
             "EC", "ENGINEERED", "MUTATION", "OTHER_DETAILS"
         ];
         var chainDict = {};
+        var hetnameDict = {};
         var chainIdx, chainid;
         var currentChainname, currentResno, currentResname, currentInscode;
 
@@ -250,8 +252,9 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     if( hetero ){
 
-                        if( currentChainname !== chainname || currentResno !== resno ||
-                            currentResname !== resname || currentInscode !== inscode
+                        if( currentChainname !== chainname || currentResname !== resname ||
+                            ( !WaterNames.includes( resname ) &&
+                                ( currentResno !== resno || currentInscode !== inscode ) )
                         ){
 
                             chainIdx += 1;
@@ -349,6 +352,10 @@ PdbParser.prototype = Object.assign( Object.create(
                         startChain, startResi, startIcode,
                         endChain, endResi, endIcode
                     ] );
+
+                }else if( recordName === 'HETNAM' ){
+
+                    hetnameDict[ line.substr( 11, 3 ) ] = line.substr( 15 ).trim();
 
                 }else if( recordName === 'COMPND' ){
 
@@ -574,10 +581,12 @@ PdbParser.prototype = Object.assign( Object.create(
 
         //
 
+        var en = entityDataList.length;
+
         if( entityDataList.length ){
 
             s.eachChain( function( cp ){
-                cp.entityIndex = entityDataList.length;
+                cp.entityIndex = en;
             } );
 
             entityDataList.forEach( function( e, i ){
@@ -589,13 +598,32 @@ PdbParser.prototype = Object.assign( Object.create(
                 ) );
             } );
 
+            var ei = entityDataList.length;
+            var rp = s.getResidueProxy();
+            var residueDict = {};
+
             s.eachChain( function( cp ){
-                if( cp.entityIndex === entityDataList.length ){
-                    // TODO check for water, use resname
-                    s.entityList.push( new Entity(
-                        s, s.entityList.length, "UNKNOWN", "non-polymer", [ cp.index ]
-                    ) );
+                if( cp.entityIndex === en ){
+                    rp.index = cp.residueOffset;
+                    if( !residueDict[ rp.resname ] ){
+                        residueDict[ rp.resname ] = []
+                    }
+                    residueDict[ rp.resname ].push( cp.index );
                 }
+            } );
+
+            Object.keys( residueDict ).forEach( function( resname ){
+                var chainList = residueDict[ resname ];
+                var type = "non-polymer";
+                var name = hetnameDict[ resname ] || resname;
+                if( WaterNames.includes( resname ) ){
+                    name = "water";
+                    type = "water";
+                }
+                s.entityList.push( new Entity(
+                    s, ei, name, type, chainList
+                ) );
+                ei += 1;
             } );
 
         }
