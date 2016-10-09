@@ -272,7 +272,9 @@ var DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
 var PurinBases = [ "A", "G", "DA", "DG" ];
 
-var WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
+var WaterNames = [
+    "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O", "TIP3", "TIP4"
+];
 
 // all chemical components with the word "ion" in their name, Sep 2016
 //
