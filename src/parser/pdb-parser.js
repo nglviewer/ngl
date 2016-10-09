@@ -15,7 +15,7 @@ import Assembly from "../symmetry/assembly.js";
 import { WaterNames } from "../structure/structure-constants.js";
 import {
     assignSecondaryStructure, buildUnitcellAssembly,
-    calculateBonds, calculateSecondaryStructure
+    calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from "../structure/structure-utils.js";
 
 
@@ -642,6 +642,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
         sb.finalize();
         s.finalizeAtoms();
+        calculateChainnames( s );
         calculateBonds( s );
         s.finalizeBonds();
 
