@@ -646,9 +646,10 @@ PdbParser.prototype = Object.assign( Object.create(
         s.finalizeBonds();
 
         if( !helices.length && !sheets.length ){
-            secStruct = calculateSecondaryStructure( s );
+            calculateSecondaryStructure( s );
+        }else{
+            assignSecondaryStructure( s, secStruct );
         }
-        assignSecondaryStructure( s, secStruct );
         buildUnitcellAssembly( s );
 
         if( Debug ) Log.timeEnd( "PdbParser._parse " + this.name );

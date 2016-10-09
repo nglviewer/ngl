@@ -7,7 +7,7 @@
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import {
-    assignResidueTypeBonds, assignSecondaryStructure,
+    assignResidueTypeBonds,
     calculateChainnames, calculateSecondaryStructure,
     calculateBondsBetween, calculateBondsWithin
 } from "../structure/structure-utils.js";
@@ -231,7 +231,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
         calculateBondsBetween( s, true );
         s.finalizeBonds();
         assignResidueTypeBonds( s );
-        assignSecondaryStructure( s, calculateSecondaryStructure( s ) );
+        calculateSecondaryStructure( s );
 
         if( Debug ) Log.timeEnd( "Mol2Parser._parse " + this.name );
 

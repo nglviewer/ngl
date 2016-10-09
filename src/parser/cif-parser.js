@@ -1164,9 +1164,10 @@ CifParser.prototype = Object.assign( Object.create(
             s.finalizeBonds();
 
             if( !secStruct ){
-                secStruct = calculateSecondaryStructure( s );
+                calculateSecondaryStructure( s );
+            }else{
+                assignSecondaryStructure( s, secStruct );
             }
-            assignSecondaryStructure( s, secStruct );
             buildUnitcellAssembly( s );
 
         }

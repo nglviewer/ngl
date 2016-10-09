@@ -9,8 +9,8 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
 import Unitcell from "../symmetry/unitcell.js";
 import {
-    assignSecondaryStructure, buildUnitcellAssembly,
-    calculateBonds, calculateChainnames, calculateSecondaryStructure
+    buildUnitcellAssembly, calculateBonds,
+    calculateChainnames, calculateSecondaryStructure
 } from "../structure/structure-utils.js";
 
 
@@ -174,7 +174,7 @@ GroParser.prototype = Object.assign( Object.create(
         calculateBonds( s );
         s.finalizeBonds();
 
-        assignSecondaryStructure( s, calculateSecondaryStructure( s ) );
+        calculateSecondaryStructure( s );
         buildUnitcellAssembly( s );
 
         if( Debug ) Log.timeEnd( "GroParser._parse " + this.name );
