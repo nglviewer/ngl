@@ -35,6 +35,18 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
+ * Structure header object.
+ * @typedef {Object} StructureHeader - structure meta data
+ * @property {String} [releaseDate] - release data, YYYY-MM-DD
+ * @property {String} [depositionDate] - deposition data, YYYY-MM-DD
+ * @property {Float} [resolution] - experimental resolution
+ * @property {Float} [rFree] - r-free value
+ * @property {Float} [rWork] - r-work value
+ * @property {String[]} [experimentalMethods] - experimental methods
+ */
+
+
+/**
  * Bond iterator callback
  * @callback bondCallback
  * @param {BondProxy} bondProxy - current bond proxy
@@ -93,12 +105,18 @@ function Structure( name, path ){
     this.path = path;
     this.title = "";
     this.id = "";
+    /**
+     * @member {StructureHeader}
+     */
     this.header = {};
 
     this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
     this.entityList = [];
+    /**
+     * @member {Unitcell}
+     */
     this.unitcell = undefined;
 
     this.frames = [];
@@ -112,16 +130,34 @@ function Structure( name, path ){
     this.chainStore = new ChainStore( 0 );
     this.modelStore = new ModelStore( 0 );
 
+    /**
+     * @member {AtomMap}
+     */
     this.atomMap = new AtomMap( this );
+    /**
+     * @member {ResidueMap}
+     */
     this.residueMap = new ResidueMap( this );
 
+    /**
+     * @member {BondHash}
+     */
     this.bondHash = undefined;
+    /**
+     * @member {SpatialHash}
+     */
     this.spatialHash = undefined;
 
     this.atomSet = undefined;
     this.bondSet = undefined;
 
+    /**
+     * @member {Vector3}
+     */
     this.center = undefined;
+    /**
+     * @member {Box3}
+     */
     this.boundingBox = undefined;
 
     this._bp = this.getBondProxy();
