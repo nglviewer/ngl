@@ -1062,7 +1062,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         // Log.log( "NEWLINE STRING", line );
 
-                        var str = line.substring( 1, line.length - 2 );
+                        var str = line.substring( 1, line.length - 1 );
 
                         if( currentName === false ){
                             cif[ currentCategory ] = str;
