@@ -242,6 +242,7 @@ Stage.prototype = {
      * Set stage parameters
      * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
+     * @return {Stage} this object
      */
     setParameters: function( params ){
 
@@ -707,6 +708,7 @@ Stage.prototype = {
      *
      * @param {Number[]|Vector3} axis - the axis to spin around
      * @param {Number} angle - amount to spin per render call
+     * @return {undefined}
      */
     setSpin: function( axis, angle ){
 

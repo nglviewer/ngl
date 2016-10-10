@@ -946,6 +946,7 @@ var guessElement = function(){
 /**
  * Assigns ResidueType bonds.
  * @param {Structure} structure - the structure object
+ * @return {undefined}
  */
 function assignResidueTypeBonds( structure ){
 

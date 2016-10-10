@@ -100,6 +100,7 @@ function Shape( name, params ){
      * @instance
      * @memberof Shape
      * @param {Buffer} buffer - buffer object
+     * @return {undefined}
      */
     function addBuffer( buffer ){
 
@@ -121,6 +122,7 @@ function Shape( name, params ){
      * @param {Float32Array|Array} color - colors
      * @param {Uint32Array|Uint16Array|Array} [index] - indices
      * @param {Float32Array|Array} [normal] - normals
+     * @return {undefined}
      */
     function addMesh( position, color, index, normal ){
 
@@ -156,6 +158,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addSphere( position, color, radius ){
 
@@ -179,6 +182,7 @@ function Shape( name, params ){
      * @param {Float} radius - radius value
      * @param {Vector3|Array} majorAxis - major axis vector or array
      * @param {Vector3|Array} minorAxis - minor axis vector or array
+     * @return {undefined}
      */
     function addEllipsoid( position, color, radius, majorAxis, minorAxis ){
 
@@ -203,6 +207,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCylinder( from, to, color, radius ){
 
@@ -227,6 +232,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCone( from, to, color, radius ){
 
@@ -251,6 +257,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addArrow( from, to, color, radius ){
 

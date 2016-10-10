@@ -471,6 +471,7 @@ Structure.prototype = {
      * Entity iterator
      * @param  {entityCallback} callback - the callback
      * @param  {EntityType} type - entity type
+     * @return {undefined}
      */
     eachEntity: function( callback, type ){
 
@@ -486,6 +487,7 @@ Structure.prototype = {
      * Bond iterator
      * @param  {bondCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachBond: function( callback, selection ){
 
@@ -519,6 +521,7 @@ Structure.prototype = {
      * Atom iterator
      * @param  {atomCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachAtom: function( callback, selection ){
 
@@ -541,6 +544,7 @@ Structure.prototype = {
      * Residue iterator
      * @param  {residueCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachResidue: function( callback, selection ){
 
@@ -577,6 +581,7 @@ Structure.prototype = {
      * Multi-residue iterator
      * @param {Integer} n - window size
      * @param  {residueListCallback} callback - the callback
+     * @return {undefined}
      */
     eachResidueN: function( n, callback ){
 
@@ -603,6 +608,7 @@ Structure.prototype = {
      * Polymer iterator
      * @param  {polymerCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachPolymer: function( callback, selection ){
 
@@ -630,6 +636,7 @@ Structure.prototype = {
      * Chain iterator
      * @param  {chainCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachChain: function( callback, selection ){
 
@@ -652,6 +659,7 @@ Structure.prototype = {
      * Model iterator
      * @param  {modelCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachModel: function( callback, selection ){
 
@@ -1127,6 +1135,7 @@ Structure.prototype = {
     /**
      * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
+     * @return {undefined}
      */
     dispose: function(){
 

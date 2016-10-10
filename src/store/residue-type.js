@@ -350,7 +350,6 @@ ResidueType.prototype = {
     /**
      * @return {Object} bondGraph - represents the bonding in this
      *   residue: { ai1: [ ai2, ai3, ...], ...}
-     *
      */
     calculateBondGraph: function() {
 
@@ -387,6 +386,8 @@ ResidueType.prototype = {
      * connected rings will not detect all rings.
      * The resulting rings object will provide 'a ring' for each ring atom
      * but which ring depends on atom order and connectivity
+     *
+     * @return {undefined}
      */
     calculateRings: function() {
 
@@ -467,6 +468,7 @@ ResidueType.prototype = {
 
     /**
      * For bonds with order > 1, pick a reference atom
+     * @return {undefined}
      */
     assignBondReferenceAtomIndices: function() {
 

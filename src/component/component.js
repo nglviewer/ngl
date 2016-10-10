@@ -137,6 +137,7 @@ Component.prototype = {
      * Removes a representation component
      * @fires Component#representationRemoved
      * @param {RepresentationComponent} repr - the representation component
+     * @return {undefined}
      */
     removeRepresentation: function( repr ){
 

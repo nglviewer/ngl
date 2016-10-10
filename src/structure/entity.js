@@ -31,6 +31,7 @@ function entityTypeFromString( string ){
  * Entity of a {@link Structure}
  * @class
  * @param {Structure} structure - structure the entity belongs to
+ * @param {Integer} index - index within structure.entityList
  * @param {String} description - entity description
  * @param {String} type - entity type
  * @param {Array} chainIndexList - entity chainIndexList

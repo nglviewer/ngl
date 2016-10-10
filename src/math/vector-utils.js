@@ -14,11 +14,11 @@ import { EPS } from "./math-constants.js";
  * Converted to JavaScript from
  * {@link http://paulbourke.net/geometry/pointlineplane/lineline.c}
  *
- * @param  {Vector3} p1
- * @param  {Vector3} p2
- * @param  {Vector3} p3
- * @param  {Vector3} p4
- * @return {Array.<Vector3, Vector3>}
+ * @param  {Vector3} p1 - point 1
+ * @param  {Vector3} p2 - point 2
+ * @param  {Vector3} p3 - point 3
+ * @param  {Vector3} p4 - point 4
+ * @return {Array.<Vector3, Vector3>|null} the two intersection points
  */
 function lineLineIntersect( p1, p2, p3, p4 ){
 

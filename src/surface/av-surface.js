@@ -14,15 +14,23 @@ import {
 import { defaults } from "../utils.js";
 
 
-/*
+/**
  * Modifed from SpatialHash
  *
  * Main differences are:
- * * Optimized grid size to ensure we only ever need to look +/-1 cell
- * * Aware of atomic radii and will only output atoms within rAtom + rExtra
+ * - Optimized grid size to ensure we only ever need to look +/-1 cell
+ * - Aware of atomic radii and will only output atoms within rAtom + rExtra
  *   (see withinRadii method)
  *
  * (Uses rounding rather than bitshifting as consequence of arbitrary grid size)
+ * @class
+ * @param {Float32Array} atomsX - x coordinates
+ * @param {Float32Array} atomsY - y coordinates
+ * @param {Float32Array} atomsZ - z coordinates
+ * @param {Float32Array} atomsR - atom radii
+ * @param {Float32Array} min - xyz min coordinates
+ * @param {Float32Array} max - xyz max coordinates
+ * @param {Float} maxDistance - max distance
  */
 function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
 
@@ -105,6 +113,13 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
      * of x,y,z
      *
      * -1 in out array indicates the end of the list
+     *
+     * @param  {Float} x - x coordinate
+     * @param  {Float} y - y coordinate
+     * @param  {Float} z - z coordinate
+     * @param  {Float} rExtra - additional radius
+     * @param  {Float32Array} out - pre-allocated output array
+     * @return {undefined}
      */
     this.withinRadii = function( x, y, z, rExtra, out ) {
 

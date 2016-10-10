@@ -67,7 +67,8 @@ var PickingControls = function( stage, params ){
 
     /**
      * pick helper function
-     * @param  {Object} mouse
+     * @param  {Object} mouse - mouse data
+     * @param  {Boolean} [clicked] - flag indication if there was a mouse click
      * @return {PickingData} picking data
      */
     function pick( mouse, clicked ){

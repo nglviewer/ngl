@@ -107,6 +107,7 @@ Volume.prototype = {
      * @param {Integer} ny - y dimension of the 3d volume
      * @param {Integer} nz - z dimension of the 3d volume
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setData: function( data, nx, ny, nz, dataAtomindex ){
 
@@ -142,6 +143,7 @@ Volume.prototype = {
     /**
      * set transformation matrix
      * @param {Matrix4} matrix - 4x4 transformation matrix
+     * @return {undefined}
      */
     setMatrix: function( matrix ){
 
@@ -199,6 +201,7 @@ Volume.prototype = {
     /**
      * set atom indices
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setDataAtomindex: function( dataAtomindex ){
 

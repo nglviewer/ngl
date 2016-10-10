@@ -151,6 +151,7 @@ StructureView.prototype = Object.assign( Object.create(
     /**
      * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
      * @fires StructureView#refreshed
+     * @return {undefined}
      */
     refresh: function(){
 
@@ -267,10 +268,11 @@ StructureView.prototype = Object.assign( Object.create(
     /**
      * Not implemented
      * @alias StructureView#eachResidueN
+     * @return {undefined}
      */
-    eachResidueN: function( n, callback ){
+    eachResidueN: function( /*n, callback*/ ){
 
-        console.error( "StructureView.eachResidueN() not implemented", n, callback );
+        console.error( "StructureView.eachResidueN() not implemented" );
 
     },
 

@@ -171,7 +171,7 @@ JitterVectors.forEach( function( offsetList ){
 /**
  * [Viewer description]
  * @class
- * @param {String} eid
+ * @param {String} eid - dom element id
  */
 function Viewer( eid ){
 

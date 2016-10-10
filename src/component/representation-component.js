@@ -91,12 +91,14 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#addRepresentation
+     * @return {undefined}
      */
     addRepresentation: function(){},
 
     /**
      * @ignore
      * @alias RepresentationComponent#removeRepresentation
+     * @return {undefined}
      */
     removeRepresentation: function(){},
 
@@ -218,6 +220,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#getCenter
+     * @return {undefined}
      */
     getCenter: function(){}
 
