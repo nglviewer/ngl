@@ -1136,11 +1136,14 @@ CifParser.prototype = Object.assign( Object.create(
                 }
             }
             if( cif.reflns && cif.reflns.d_resolution_high ){
-                if( hasValue( cif.refine.d_resolution_high ) ){
+                if( hasValue( cif.reflns.d_resolution_high ) ){
                     s.header.resolution = parseFloat( cif.reflns.d_resolution_high );
                 }
+            }else if( cif.refine && cif.refine.ls_d_res_high ){
+                if( hasValue( cif.refine.ls_d_res_high ) ){
+                    s.header.resolution = parseFloat( cif.refine.ls_d_res_high );
+                }
             }
-
             if( cif.refine && cif.refine.ls_R_factor_R_free ){
                 if( hasValue( cif.refine.ls_R_factor_R_free ) ){
                     s.header.rFree = parseFloat( cif.refine.ls_R_factor_R_free );
