@@ -60,8 +60,17 @@ describe('parsing', function () {
             ] );
             assert.deepEqual( structure.frames, [] );
             assert.deepEqual( structure.header, {} );
+            // TODO
+            // assert.deepEqual( structure.header, {
+            //     "depositionDate": "1981-04-30",
+            //     "releaseDate": "2012-07-11",
+            //     "experimentalMethods": [
+            //         "X-RAY DIFFRACTION"
+            //     ],
+            //     "resolution": 1.5
+            // } );
             assert.strictEqual( structure.id, "1CRN" );
-            // assert.strictEqual( structure.name, "1crn.pdb" );
+            assert.strictEqual( structure.title, "WATER STRUCTURE OF A HYDROPHOBIC PROTEIN AT ATOMIC RESOLUTION. PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN" );
 
             assert.strictEqual( structure.atomMap.list.length, 27 );
             assert.strictEqual( Object.keys( structure.biomolDict ).length, 3 );
