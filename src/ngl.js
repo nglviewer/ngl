@@ -122,7 +122,7 @@ import StaticDatasource from "./datasource/static-datasource.js";
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix3, Matrix4, Vector3, Quaternion, Plane, Color } from "../lib/three.es6.js";
+import { Matrix3, Matrix4, Vector3, Box3, Quaternion, Plane, Color } from "../lib/three.es6.js";
 
 //
 
@@ -197,6 +197,14 @@ import { version as Version } from "../package.json";
  * @class
  * @global
  * @see {@link http://threejs.org/docs/#Reference/Math/Vector3}
+ */
+
+/**
+ * 3d vector class from three.js
+ * @name Box3
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Box3}
  */
 
 /**
@@ -337,6 +345,11 @@ export {
      * @see {@link Vector3}
      */
     Vector3,
+    /**
+     * Box3 class
+     * @see {@link Box3}
+     */
+    Box3,
     /**
      * Quaternion class
      * @see {@link Quaternion}
