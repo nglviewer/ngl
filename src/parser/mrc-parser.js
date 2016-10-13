@@ -169,15 +169,14 @@ MrcParser.prototype = Object.assign( Object.create(
                 header.NX * header.NY * header.NZ
             );          
         }else{
-            data = new Int8Array(
+
+            //CONVERT DATA ( Convert from 32Array to 8 Array)
+            data = new Float32Array( new Int8Array(
                 bin, 256 * 4 + header.NSYMBT,
                 header.NX * header.NY * header.NZ
-            );
+            ) );
         }
 
-
-        //CONVERT DATA ( Convert from 32Array to 8 Array)
-        data = new Int8Array(data);
         
 
         v.setData( data, header.NX, header.NY, header.NZ );

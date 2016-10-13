@@ -744,6 +744,18 @@ NGL.ExampleRegistry.addDict( {
 
         } );
 
+        // mode 0 data
+        stage.loadFile( "data://3pqr-mode0.ccp4" ).then( function( o ){
+
+            o.addRepresentation( "surface", {
+                wireframe: true,
+                color: "tomato",
+                boxSize: 10
+            } );
+            o.centerView();
+
+        } );
+
         stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
             o.addRepresentation( "line", {
