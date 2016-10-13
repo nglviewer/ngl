@@ -255,6 +255,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * Set representation parameters
      * @alias StructureRepresentation#setSelection
      * @param {String} string - selection string, see {@tutorial selection-language}
+     * @param {Boolean} [silent] - don't trigger a change event in the selection
      * @return {StructureRepresentation} this object
      */
     setSelection: function( string, silent ){

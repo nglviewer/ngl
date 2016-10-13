@@ -5,29 +5,27 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
 /**
- * Component wrapping a Surface or Volume object
+ * Component wrapping a Surface object
  * @class
  * @extends Component
  * @param {Stage} stage - stage object the component belongs to
- * @param {Surface|Volume} surface - surface or volume object to wrap
+ * @param {Surface} surface - surface object to wrap
  * @param {ComponentParameters} params - component parameters
  */
 function SurfaceComponent( stage, surface, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : surface.name;
+    p.name = defaults( p.name, surface.name );
 
     Component.call( this, stage, p );
 
     this.surface = surface;
-
-    if( this.surface.type === "Volume" ){
-        this.stage.gidPool.addObject( this.surface );
-    }
 
 }
 
@@ -65,10 +63,6 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        if( this.surface.type === "Volume" ){
-            this.stage.gidPool.addObject( this.surface );
-        }
-
         this.surface.dispose();
 
         Component.prototype.dispose.call( this );
@@ -88,6 +82,8 @@ SurfaceComponent.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ComponentRegistry.add( "surface", SurfaceComponent );
 
 
 export default SurfaceComponent;

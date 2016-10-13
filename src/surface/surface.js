@@ -68,6 +68,7 @@ Surface.prototype = {
      * @param {Float32Array} normal - surface normals
      * @param {Float32Array} color - surface colors
      * @param {Int32Array} atomindex - atom indices
+     * @return {undefined}
      */
     set: function( position, index, normal, color, atomindex ){
 

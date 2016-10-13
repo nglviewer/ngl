@@ -5,6 +5,8 @@
  */
 
 
+import { ComponentRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 import TrajectoryComponent from "./trajectory-component.js";
 import { makeTrajectory } from "../trajectory/trajectory-utils.js";
@@ -33,7 +35,7 @@ import { superpose } from "../align/align-utils.js";
 function StructureComponent( stage, structure, params ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : structure.name;
+    p.name = defaults( p.name, structure.name );
 
     Component.call( this, stage, p );
 
@@ -78,7 +80,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Initialize selection
      * @private
-     * @param {String} string - selection string
+     * @param {String} sele - selection string
+     * @return {undefined}
      */
     initSelection: function( sele ){
 
@@ -115,6 +118,7 @@ StructureComponent.prototype = Object.assign( Object.create(
      * Set selection of {@link StructureComponent#structureView}
      * @alias StructureComponent#setSelection
      * @param {String} string - selection string
+     * @return {StructureComponent} this object
      */
     setSelection: function( string ){
 
@@ -129,6 +133,7 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @alias StructureComponent#setDefaultAssembly
      * @fires StructureComponent#defaultAssemblyChanged
      * @param {String} value - assembly name
+     * @return {undefined}
      */
     setDefaultAssembly: function( value ){
 
@@ -143,6 +148,7 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Rebuild all representations
      * @alias StructureComponent#rebuildRepresentations
+     * @return {undefined}
      */
     rebuildRepresentations: function(){
 
@@ -155,6 +161,7 @@ StructureComponent.prototype = Object.assign( Object.create(
     /**
      * Rebuild all trajectories
      * @alias StructureComponent#rebuildTrajectories
+     * @return {undefined}
      */
     rebuildTrajectories: function(){
 
@@ -239,7 +246,7 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     centerView: function( zoom, sele ){
 
-        zoom = zoom !== undefined ? zoom : true;
+        zoom = defaults( zoom, true );
 
         var center = this.getCenter( sele );
 
@@ -311,6 +318,8 @@ StructureComponent.prototype = Object.assign( Object.create(
     },
 
 } );
+
+ComponentRegistry.add( "structure", StructureComponent );
 
 
 export default StructureComponent;

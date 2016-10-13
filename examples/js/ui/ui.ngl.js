@@ -292,6 +292,71 @@ UI.ColorPopupMenu.prototype.dispose = function(){
 };
 
 
+// Vector3
+
+UI.Vector3 = function( value ){
+
+    UI.Panel.call( this ).setDisplay( "inline-block" );
+
+    this.xNumber = new UI.Number().setWidth( "40px" );
+    this.yNumber = new UI.Number().setWidth( "40px" );
+    this.zNumber = new UI.Number().setWidth( "40px" );
+
+    this.add( this.xNumber, this.yNumber, this.zNumber );
+    this.setValue( value );
+
+    var changeEvent = document.createEvent( 'Event' );
+    changeEvent.initEvent( 'change', true, true );
+
+    this.xNumber.onChange( function(){
+        this.dom.dispatchEvent( changeEvent );
+    }.bind( this ) );
+    this.yNumber.onChange( function(){
+        this.dom.dispatchEvent( changeEvent );
+    }.bind( this ) );
+    this.zNumber.onChange( function(){
+        this.dom.dispatchEvent( changeEvent );
+    }.bind( this ) );
+
+    return this;
+
+};
+
+UI.Vector3.prototype = Object.create( UI.Panel.prototype );
+
+UI.Vector3.prototype.getValue = function(){
+
+    return {
+        x: this.xNumber.getValue(),
+        y: this.yNumber.getValue(),
+        z: this.zNumber.getValue()
+    };
+
+};
+
+UI.Vector3.prototype.setValue = function( value ){
+
+    if( value ){
+        this.xNumber.setValue( value.x );
+        this.yNumber.setValue( value.y );
+        this.zNumber.setValue( value.z );
+    }
+
+    return this;
+
+};
+
+UI.Vector3.prototype.setPrecision = function ( precision ) {
+
+    this.xNumber.setPrecision( precision );
+    this.yNumber.setPrecision( precision );
+    this.zNumber.setPrecision( precision );
+
+    return this;
+
+};
+
+
 // Selection
 
 UI.SelectionInput = function( selection ){

@@ -51,11 +51,7 @@ function StructureView( structure, selection ){
     this.center = new Vector3();
     this.boundingBox = new Box3();
 
-    // to allow creating an empty object to call .fromJSON onto
-    if( !structure && !selection ) return;
-
     this.init();
-
     this.refresh();
 
 }
@@ -134,6 +130,9 @@ StructureView.prototype = Object.assign( Object.create(
 
             bondHash: {
                 get: function(){ return this.structure.bondHash; }
+            },
+            spatialHash: {
+                get: function(){ return this.structure.spatialHash; }
             }
         } );
 
@@ -152,6 +151,7 @@ StructureView.prototype = Object.assign( Object.create(
     /**
      * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
      * @fires StructureView#refreshed
+     * @return {undefined}
      */
     refresh: function(){
 
@@ -268,10 +268,11 @@ StructureView.prototype = Object.assign( Object.create(
     /**
      * Not implemented
      * @alias StructureView#eachResidueN
+     * @return {undefined}
      */
-    eachResidueN: function( n, callback ){
+    eachResidueN: function( /*n, callback*/ ){
 
-        console.error( "StructureView.eachResidueN() not implemented", n, callback );
+        console.error( "StructureView.eachResidueN() not implemented" );
 
     },
 

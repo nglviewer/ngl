@@ -19,6 +19,11 @@ import {
     LineSegments
 } from "../../lib/three.es6.js";
 
+import "../shader/BasicLine.vert";
+import "../shader/BasicLine.frag";
+import "../shader/Quad.vert";
+import "../shader/Quad.frag";
+
 import {
     Debug, Log, Browser, Mobile, WebglErrorMessage,
     setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
@@ -32,6 +37,94 @@ import {
 } from "./viewer-utils";
 
 import Signal from "../../lib/signals.es6.js";
+
+
+if( WebGLRenderingContext ){
+
+    // wrap WebGL debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function getShaderParameter(){
+
+            if( Debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function getShaderInfoLog(){
+
+            if( Debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function getProgramParameter( program, pname ){
+
+            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function getProgramInfoLog(){
+
+            if( Debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+}
 
 
 var JitterVectors = [
@@ -78,7 +171,7 @@ JitterVectors.forEach( function( offsetList ){
 /**
  * [Viewer description]
  * @class
- * @param {String} eid
+ * @param {String} eid - dom element id
  */
 function Viewer( eid ){
 

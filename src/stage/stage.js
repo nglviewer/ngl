@@ -8,7 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log, Mobile } from "../globals.js";
+import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
@@ -21,7 +21,6 @@ import RepresentationComponent from "../component/representation-component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
-import { makeComponent } from "../component/component-utils.js";
 import { autoLoad } from "../loader/loader-utils";
 
 
@@ -243,6 +242,7 @@ Stage.prototype = {
      * Set stage parameters
      * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
+     * @return {Stage} this object
      */
     setParameters: function( params ){
 
@@ -532,11 +532,15 @@ Stage.prototype = {
 
     addComponentFromObject: function( object, params ){
 
-        var component = makeComponent( this, object, params );
+        var CompClass = ComponentRegistry.get( object.type );
 
-        this.addComponent( component );
+        if( CompClass ){
+            var component = new CompClass( this, object, params );
+            this.addComponent( component );
+            return component
+        }
 
-        return component;
+        Log.warn( "no component for object type", object.type );
 
     },
 
@@ -704,6 +708,7 @@ Stage.prototype = {
      *
      * @param {Number[]|Vector3} axis - the axis to spin around
      * @param {Number} angle - amount to spin per render call
+     * @return {undefined}
      */
     setSpin: function( axis, angle ){
 

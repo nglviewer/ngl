@@ -6,7 +6,7 @@
 
 
 import {
-    Color,
+    Color, Vector3,
     FrontSide, BackSide, DoubleSide, VertexColors,
     BufferGeometry, BufferAttribute,
     UniformsUtils, UniformsLib, Uniform,
@@ -85,6 +85,8 @@ function Buffer( position, color, index, pickingColor, params ){
     this.side = defaults( p.side, "double" );
     this.opacity = defaults( p.opacity, 1.0 );
     this.clipNear = defaults( p.clipNear, 0 );
+    this.clipRadius = defaults( p.clipRadius, 0 );
+    this.clipCenter = defaults( p.clipCenter, new Vector3() );
     this.flatShaded = defaults( p.flatShaded, false );
     this.background = defaults( p.background, false );
     this.linewidth = defaults( p.linewidth, 1 );
@@ -126,7 +128,9 @@ function Buffer( position, color, index, pickingColor, params ){
             "fogNear": { value: 0.0 },
             "fogFar": { value: 0.0 },
             "opacity": { value: this.opacity },
-            "nearClip": { value: 0.0 }
+            "nearClip": { value: 0.0 },
+            "clipRadius": { value: this.clipRadius },
+            "clipCenter": { value: this.clipCenter }
         },
         {
             "emissive" : { value: new Color( 0x000000 ) },
@@ -168,6 +172,8 @@ Buffer.prototype = {
         side: { updateShader: true, property: true },
         opacity: { uniform: true },
         clipNear: { updateShader: true, property: true },
+        clipRadius: { updateShader: true, property: true, uniform: true },
+        clipCenter: { uniform: true },
         flatShaded: { updateShader: true },
         background: { updateShader: true },
         linewidth: { property: true },
@@ -484,6 +490,10 @@ Buffer.prototype = {
             defines.NEAR_CLIP = 1;
         }
 
+        if( this.clipRadius ){
+            defines.RADIUS_CLIP = 1;
+        }
+
         if( type === "picking" ){
 
             defines.PICKING = 1;
@@ -607,6 +617,7 @@ Buffer.prototype = {
     /**
      * Set buffer parameters
      * @param {BufferParameters} params - buffer parameters object
+     * @return {undefined}
      */
     setParameters: function( params ){
 
@@ -756,7 +767,9 @@ Buffer.prototype = {
             }
 
             if( u[ name ] !== undefined ){
-                if( u[ name ].value.set ){
+                if( u[ name ].value.isVector3 ){
+                    u[ name ].value.copy( data[ name ] );
+                }else if( u[ name ].value.set ){
                     u[ name ].value.set( data[ name ] );
                 }else{
                     u[ name ].value = data[ name ];
@@ -764,7 +777,9 @@ Buffer.prototype = {
             }
 
             if( wu[ name ] !== undefined ){
-                if( wu[ name ].value.set ){
+                if( wu[ name ].value.isVector3 ){
+                    wu[ name ].value.copy( data[ name ] );
+                }else if( wu[ name ].value.set ){
                     wu[ name ].value.set( data[ name ] );
                 }else{
                     wu[ name ].value = data[ name ];
@@ -772,7 +787,9 @@ Buffer.prototype = {
             }
 
             if( pu[ name ] !== undefined ){
-                if( pu[ name ].value.set ){
+                if( pu[ name ].value.isVector3 ){
+                    pu[ name ].value.copy( data[ name ] );
+                }else if( pu[ name ].value.set ){
                     pu[ name ].value.set( data[ name ] );
                 }else{
                     pu[ name ].value = data[ name ];
@@ -824,6 +841,7 @@ Buffer.prototype = {
     /**
      * Set buffer visibility
      * @param {Boolean} value - visibility value
+     * @return {undefined}
      */
     setVisibility: function( value ){
 
@@ -851,6 +869,7 @@ Buffer.prototype = {
 
     /**
      * Free buffer resources
+     * @return {undefined}
      */
     dispose: function(){
 

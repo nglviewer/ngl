@@ -35,6 +35,18 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
+ * Structure header object.
+ * @typedef {Object} StructureHeader - structure meta data
+ * @property {String} [releaseDate] - release data, YYYY-MM-DD
+ * @property {String} [depositionDate] - deposition data, YYYY-MM-DD
+ * @property {Float} [resolution] - experimental resolution
+ * @property {Float} [rFree] - r-free value
+ * @property {Float} [rWork] - r-work value
+ * @property {String[]} [experimentalMethods] - experimental methods
+ */
+
+
+/**
  * Bond iterator callback
  * @callback bondCallback
  * @param {BondProxy} bondProxy - current bond proxy
@@ -93,12 +105,18 @@ function Structure( name, path ){
     this.path = path;
     this.title = "";
     this.id = "";
+    /**
+     * @member {StructureHeader}
+     */
     this.header = {};
 
     this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
     this.entityList = [];
+    /**
+     * @member {Unitcell}
+     */
     this.unitcell = undefined;
 
     this.frames = [];
@@ -112,16 +130,34 @@ function Structure( name, path ){
     this.chainStore = new ChainStore( 0 );
     this.modelStore = new ModelStore( 0 );
 
+    /**
+     * @member {AtomMap}
+     */
     this.atomMap = new AtomMap( this );
+    /**
+     * @member {ResidueMap}
+     */
     this.residueMap = new ResidueMap( this );
 
+    /**
+     * @member {BondHash}
+     */
     this.bondHash = undefined;
+    /**
+     * @member {SpatialHash}
+     */
     this.spatialHash = undefined;
 
     this.atomSet = undefined;
     this.bondSet = undefined;
 
+    /**
+     * @member {Vector3}
+     */
     this.center = undefined;
+    /**
+     * @member {Box3}
+     */
     this.boundingBox = undefined;
 
     this._bp = this.getBondProxy();
@@ -381,6 +417,25 @@ Structure.prototype = {
 
     },
 
+    getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
+
+        volume.filterData( minValue, maxValue, outside );
+
+        var dp = volume.dataPosition;
+        var n = dp.length;
+        var r = volume.matrix.getMaxScaleOnAxis();
+        var as = this.getAtomSet( false );
+
+        for( var i = 0; i < n; i+=3 ){
+            this.spatialHash.within( dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r ).forEach( function( idx ){
+                as.add_unsafe( idx );
+            } );
+        }
+
+        return as;
+
+    },
+
     getAtomSetWithinGroup: function( selection ){
 
         var atomResidueIndex = this.atomStore.residueIndex;
@@ -416,6 +471,7 @@ Structure.prototype = {
      * Entity iterator
      * @param  {entityCallback} callback - the callback
      * @param  {EntityType} type - entity type
+     * @return {undefined}
      */
     eachEntity: function( callback, type ){
 
@@ -431,6 +487,7 @@ Structure.prototype = {
      * Bond iterator
      * @param  {bondCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachBond: function( callback, selection ){
 
@@ -464,6 +521,7 @@ Structure.prototype = {
      * Atom iterator
      * @param  {atomCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachAtom: function( callback, selection ){
 
@@ -486,6 +544,7 @@ Structure.prototype = {
      * Residue iterator
      * @param  {residueCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachResidue: function( callback, selection ){
 
@@ -522,6 +581,7 @@ Structure.prototype = {
      * Multi-residue iterator
      * @param {Integer} n - window size
      * @param  {residueListCallback} callback - the callback
+     * @return {undefined}
      */
     eachResidueN: function( n, callback ){
 
@@ -548,6 +608,7 @@ Structure.prototype = {
      * Polymer iterator
      * @param  {polymerCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachPolymer: function( callback, selection ){
 
@@ -575,6 +636,7 @@ Structure.prototype = {
      * Chain iterator
      * @param  {chainCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachChain: function( callback, selection ){
 
@@ -597,6 +659,7 @@ Structure.prototype = {
      * Model iterator
      * @param  {modelCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachModel: function( callback, selection ){
 
@@ -1072,6 +1135,7 @@ Structure.prototype = {
     /**
      * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
+     * @return {undefined}
      */
     dispose: function(){
 

@@ -1,7 +1,12 @@
 uniform float opacity;
 uniform float nearClip;
+uniform float clipRadius;
 
 varying vec3 vViewPosition;
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
+#endif
 
 #include common
 #include color_pars_fragment
@@ -10,6 +15,7 @@ varying vec3 vViewPosition;
 void main(){
 
     #include nearclip_fragment
+    #include radiusclip_fragment
 
     gl_FragColor = vec4( vColor, opacity );
 

@@ -6,9 +6,14 @@ uniform float roughness;
 uniform float metalness;
 uniform float opacity;
 uniform float nearClip;
+uniform float clipRadius;
 
-#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
     varying vec3 vViewPosition;
+#endif
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
 #endif
 
 #if defined( PICKING )
@@ -31,6 +36,7 @@ uniform float nearClip;
 void main(){
 
     #include nearclip_fragment
+    #include radiusclip_fragment
 
     #if defined( PICKING )
 

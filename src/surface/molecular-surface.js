@@ -8,7 +8,7 @@
 import { WorkerRegistry } from "../globals.js";
 import Worker from "../worker/worker.js";
 import EDTSurface from "./edt-surface.js";
-import AVSurface from "./av-surface.js";
+import { AVSurface } from "./av-surface.js";
 import Surface from "./surface.js";
 
 

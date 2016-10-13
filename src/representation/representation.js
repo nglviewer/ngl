@@ -5,7 +5,7 @@
  */
 
 
-import { Color } from "../../lib/three.es6.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -20,6 +20,8 @@ import Counter from "../utils/counter.js";
  *                            otherwise defer changes until set visible again
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
+ * @property {Integer} clipRadius - radius of clipping sphere
+ * @property {Vector3} clipCenter - position of for spherical clipping
  * @property {Boolean} flatShaded - render flat shaded
  * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
  * @property {String} side - which triangle sides to render, "front" front-side,
@@ -66,9 +68,7 @@ function Representation( object, viewer, params ){
      * @member {Queue}
      * @private
      */
-    this.queue = new Queue( function( updateWhat, callback ){
-        this.make( updateWhat, callback )
-    }.bind( this ) );
+    this.queue = new Queue( this.make.bind( this ) );
 
     /**
      * @member {Array}
@@ -94,6 +94,12 @@ Representation.prototype = {
 
         clipNear: {
             type: "range", step: 1, max: 100, min: 0, buffer: true
+        },
+        clipRadius: {
+            type: "number", precision: 1, max: 1000, min: 0, buffer: true
+        },
+        clipCenter: {
+            type: "vector3", precision: 1, buffer: true
         },
         flatShaded: {
             type: "boolean", buffer: true
@@ -148,6 +154,8 @@ Representation.prototype = {
         var p = params || {};
 
         this.clipNear = defaults( p.clipNear, 0 );
+        this.clipRadius = defaults( p.clipRadius, 0 );
+        this.clipCenter = defaults( p.clipCenter, new Vector3() );
         this.flatShaded = defaults( p.flatShaded, false );
         this.side = defaults( p.side, "double" );
         this.opacity = defaults( p.opacity, 1.0 );
@@ -250,6 +258,8 @@ Representation.prototype = {
         return Object.assign( {
 
             clipNear: this.clipNear,
+            clipRadius: this.clipRadius,
+            clipCenter: this.clipCenter,
             flatShaded: this.flatShaded,
             opacity: this.opacity,
             side: this.side,

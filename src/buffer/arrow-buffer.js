@@ -193,6 +193,7 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     /**
      * Set buffer parameters
      * @param {BufferParameters} params - buffer parameters object
+     * @return {undefined}
      */
     this.setParameters = function( params ){
 

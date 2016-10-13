@@ -802,6 +802,61 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "molsurfFilter": function( stage ){
+
+        // stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+        // stage.loadFile( "rcsb://4cup" ).then( function( o ){
+        stage.loadFile( "rcsb://4hhb" ).then( function( o ){
+
+            // var ligSele = "RET";
+            // var ligSele = "ZYB";
+            var ligSele = "HEM and :B";
+            var sview = o.structure.getView( new NGL.Selection( ligSele ) );
+            console.log( sview.center, o.structure.center )
+            var filterSet = o.structure.getAtomSetWithinSelection( new NGL.Selection( ligSele ), 7 );
+            var filterSet2 = o.structure.getAtomSetWithinSelection( new NGL.Selection( ligSele ), 5 );
+            var groupSet = o.structure.getAtomSetWithinGroup( filterSet2 );
+
+            o.addRepresentation( "licorice", {
+                // clipNear: 50,
+                sele: groupSet.toSeleString()
+            } );
+            o.addRepresentation( "ball+stick", {
+                sele: ligSele
+            } );
+            // o.addRepresentation( "spacefill" );
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                surfaceType: "ms",
+                colorScheme: "uniform",
+                opacity: 0.7,
+                opaqueBack: false,
+                useWorker: false,
+                // clipNear: 50,
+                // clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                clipCenter: sview.center,
+                filterSele: filterSet.toSeleString()
+                // filterSele: groupSet.toSeleString()
+            } );
+
+            o.addRepresentation( "surface", {
+                sele: "polymer",
+                surfaceType: "ms",
+                color: "lime",
+                opacity: 0.7,
+                wireframe: true,
+                clipRadius: sview.boundingBox.size().length() / 2 + 5,
+                clipCenter: sview.center
+            } );
+
+            stage.tasks.onZeroOnce( function(){
+                o.centerView( true, ligSele )
+            } );
+
+        } );
+
+    },
+
     "cube": function( stage ){
 
         stage.loadFile( "data://acrolein1gs.cube.gz" ).then( function( o ){
@@ -824,18 +879,26 @@ NGL.ExampleRegistry.addDict( {
 
     "bigcube": function( stage ){
 
-        stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ).then( function( o ){
+        Promise.all( [
+            stage.loadFile( "data://rho-inactive_md-hydration.cube.gz" ),
+            stage.loadFile( "data://rho-inactive_md-system.gro" )
+        ] ).then( function( oList ){
 
-            o.addRepresentation( "surface", { isolevel: 2.7 } );
-            // o.centerView();
+            var o1 = oList[ 0 ];
+            var o2 = oList[ 1 ];
 
-        } );
+            o1.addRepresentation( "surface", { isolevel: 2.7 } );
 
-        stage.loadFile( "data://rho-inactive_md-system.gro" ).then( function( o ){
+            o2.addRepresentation( "cartoon" );
+            o2.addRepresentation( "licorice", { sele: "hetero" } );
 
-            o.addRepresentation( "cartoon" );
-            o.addRepresentation( "licorice", { sele: "hetero" } );
-            o.centerView();
+            var as = o2.structure.getAtomSetWithinVolume(
+                o1.surface, 2, o1.surface.getValueForSigma( 2.7 )
+            );
+            var as2 = o2.structure.getAtomSetWithinGroup( as );
+            o2.addRepresentation( "ball+stick", { sele: as2.toSeleString() } );
+
+            stage.centerView();
 
         } );
 
@@ -1315,8 +1378,16 @@ NGL.ExampleRegistry.addDict( {
             assembly: "BU1"
         } ).then( function( o ){
             o.addRepresentation( "cartoon" );
-            var axes = o.addRepresentation( "axes" );
+            var axes = o.addRepresentation( "axes", { visible: false } );
             axes.repr.align();
+            o.addRepresentation( "axes", {
+                sele: "RET", showAxes: false, showBox: true, radius: 0.2
+            } );
+            o.addRepresentation( "ball+stick", { sele: "RET" } );
+            o.addRepresentation( "axes", {
+                sele: ":B and backbone", showAxes: false, showBox: true, radius: 0.2
+            } );
+            stage.centerView();
         } );
 
     },
@@ -1498,78 +1569,6 @@ NGL.ExampleRegistry.addDict( {
             animate();
 
         } );
-
-    },
-
-    "test2": function( stage ) {
-
-        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
-            o.addRepresentation( "backbone", {
-                disableImpostor: true,
-                openEnded: false,
-                cylinderOnly: true
-            } );
-            stage.centerView();
-        } );
-
-    },
-
-    "test3": function( stage ) {
-
-        stage.loadFile( "data://1crn.cif" ).then( function ( o ) {
-            o.addRepresentation( "cartoon" );
-            var arrowBuffer = new NGL.ArrowBuffer(
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
-                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0.5 ])  // radius
-            );
-            o.addBufferRepresentation( arrowBuffer );
-            var coneBuffer = new NGL.ConeBuffer(
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // from
-                new Float32Array([ 3, 0, 0, 0, 2, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0.5 ])  // radius
-            );
-            var cylinderBuffer = new NGL.CylinderBuffer(
-                new Float32Array([ -3, 0, 0, 0, -2, 1 ]),  // from
-                new Float32Array([ 0, 0, 0, 0, 0, 1 ]),  // to
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color
-                new Float32Array([ 1, 0, 0, 0, 1, 0 ]),  // color2
-                new Float32Array([ 0.5, 0.25 ]),  // radius
-                undefined,
-                undefined,
-                {
-                    disableImpostor: true,
-                    openEnded: false
-                }
-            );
-            var ellipsoidBuffer = new NGL.EllipsoidBuffer(
-                new Float32Array([ 6, 0, 0 ]),  // position
-                new Float32Array([ 1, 0, 0 ]),  // color
-                new Float32Array([ 1 ]),  // radius
-                new Float32Array([ 3, 0, 0 ]),  // majorAxis
-                new Float32Array([ 0, 2, 0 ])  // minorAxis
-            );
-            // o.addBufferRepresentation( [
-            //     coneBuffer,
-            //     cylinderBuffer,
-            //     ellipsoidBuffer
-            // ] );
-            var shape = new NGL.Shape( "shape", { disableImpostor: true } );
-            shape.addMesh(
-                [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
-                [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0 ]
-            );
-            shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
-            shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
-            shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-            shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
-            shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
-            var shapeComp = stage.addComponentFromObject( shape );
-            shapeComp.addRepresentation( "buffer" );
-            stage.centerView();
-        });
 
     }
 

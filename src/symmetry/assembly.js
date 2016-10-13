@@ -48,6 +48,7 @@ Assembly.prototype = {
      *
      * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
      * @param {String[]} chainList - array of chain names
+     * @return {AssemblyPart} the added assembly part
      */
     addPart: function( matrixList, chainList ){
         var part = new AssemblyPart( matrixList, chainList );

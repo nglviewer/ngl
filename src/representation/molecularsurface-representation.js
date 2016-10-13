@@ -11,6 +11,7 @@ import StructureRepresentation from "./structure-representation.js";
 import MolecularSurface from "../surface/molecular-surface.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
+import Selection from "../selection.js";
 
 
 function MolecularSurfaceRepresentation( structure, viewer, params ){
@@ -69,7 +70,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", buffer: true
         },
         filterSele: {
-            type: "text"
+            type: "text", rebuild: true
         },
         volume: {
             type: "hidden"
@@ -116,6 +117,17 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( !info.molsurf || info.sele !== sview.selection.string ){
+
+            if( this.filterSele ){
+                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                var bbSize = sviewFilter.boundingBox.size();
+                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, maxDim / 2 );
+                sview = sview.getView(
+                    new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
+                );
+                // this.filterSele = "";
+            }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );

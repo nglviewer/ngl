@@ -3,7 +3,8 @@
   "extends": "eslint:recommended",
   "rules": {
     "no-console": "off",
-    "no-constant-condition": "off"
+    "no-constant-condition": "off",
+    "valid-jsdoc": "error"
   },
   "env": {
     "es6": true,

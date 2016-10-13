@@ -5,9 +5,6 @@
  */
 
 
-import { ungzip } from "../lib/pako_inflate.es6.js";
-
-
 function getQuery( id ){
 
     if( typeof window === "undefined" ) return undefined;
@@ -476,25 +473,6 @@ function uint8ToLines( u8a, chunkSize, newline ){
 }
 
 
-function decompress( data ){
-
-    var decompressedData;
-
-    if( data instanceof ArrayBuffer ){
-        data = new Uint8Array( data );
-    }
-
-    try{
-        decompressedData = ungzip( data );
-    }catch( e ){
-        decompressedData = data;  // assume it is already uncompressed
-    }
-
-    return decompressedData;
-
-}
-
-
 export {
     getQuery,
     boolean,
@@ -512,6 +490,5 @@ export {
     dataURItoImage,
     uniqueArray,
     uint8ToString,
-    uint8ToLines,
-    decompress
+    uint8ToLines
 };

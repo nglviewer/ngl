@@ -514,7 +514,7 @@ function calculateChainnames( structure ){
                     }
 
                     // new chain for the last residue of the structure
-                    if( rp2.index === residueStore.count - 1 ){
+                    if( rp2.index === residueStore.count - 1 && rEnd !== rp2.index ){
                         chainData.push( {
                             mIndex: mi,
                             chainname: getName( i ),
@@ -946,6 +946,7 @@ var guessElement = function(){
 /**
  * Assigns ResidueType bonds.
  * @param {Structure} structure - the structure object
+ * @return {undefined}
  */
 function assignResidueTypeBonds( structure ){
 

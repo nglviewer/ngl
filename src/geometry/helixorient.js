@@ -10,7 +10,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 import { ColorMakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
-import { pointVectorIntersection } from "../math/vector-utils.js";
+import { projectPointOnVector } from "../math/vector-utils.js";
 
 
 function Helixorient( polymer ){
@@ -174,6 +174,7 @@ Helixorient.prototype = {
 
         var v1 = new Vector3();
         var v2 = new Vector3();
+        var vt = new Vector3();
 
         var _axis = new Vector3();
         var _prevAxis = new Vector3();
@@ -258,8 +259,9 @@ Helixorient.prototype = {
         // _center.copy( res[ 0 ].getTraceAtom() );
         a1.index = polymer.getAtomIndexByType( 0, type );
         _center.copy( a1 );
-        v1 = pointVectorIntersection( _center, v1, _axis );
-        v1.toArray( center, 0 );
+        vt.copy( a1 );
+        projectPointOnVector( vt, _axis, v1 );
+        vt.toArray( center, 0 );
 
         // calc first resdir
         _resdir.subVectors( _center, v1 );
@@ -273,8 +275,9 @@ Helixorient.prototype = {
         // _center.copy( res[ n - 1 ].getTraceAtom() );
         a1.index = polymer.getAtomIndexByType( n - 1, type );
         _center.copy( a1 );
-        v1 = pointVectorIntersection( _center, v1, _axis );
-        v1.toArray( center, 3 * n - 3 );
+        vt.copy( a1 );
+        projectPointOnVector( vt, _axis, v1 );
+        vt.toArray( center, 3 * n - 3 );
 
         // calc last three resdir
         for( i = n - 3; i < n; ++i ){

@@ -1,1 +1,1 @@
---reporter test/istanbul.reporter.js --recursive --compilers js:babel-register
+--recursive --compilers js:babel-register

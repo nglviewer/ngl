@@ -7,6 +7,9 @@
 
 import { Matrix4 } from "../../lib/three.es6.js";
 
+import "../shader/SphereImpostor.vert";
+import "../shader/SphereImpostor.frag";
+
 import QuadBuffer from "./quad-buffer.js";
 
 

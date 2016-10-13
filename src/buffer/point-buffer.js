@@ -7,6 +7,9 @@
 
 import { DataTexture, NormalBlending } from "../../lib/three.es6.js";
 
+import "../shader/Point.vert";
+import "../shader/Point.frag";
+
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 
