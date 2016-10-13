@@ -162,10 +162,23 @@ MrcParser.prototype = Object.assign( Object.create(
         // Log.log( header )
 
         // FIXME depends on mode
-        var data = new Float32Array(
-            bin, 256 * 4 + header.NSYMBT,
-            header.NX * header.NY * header.NZ
-        );
+        var data;
+        if ( header.MODE === 2){
+            data = new Float32Array(
+                bin, 256 * 4 + header.NSYMBT,
+                header.NX * header.NY * header.NZ
+            );          
+        }else{
+            data = new Int8Array(
+                bin, 256 * 4 + header.NSYMBT,
+                header.NX * header.NY * header.NZ
+            );
+        }
+
+
+        //CONVERT DATA ( Convert from 32Array to 8 Array)
+        data = new Int8Array(data);
+        
 
         v.setData( data, header.NX, header.NY, header.NZ );
 

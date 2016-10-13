@@ -10,7 +10,7 @@ describe('parser/mrc-parser', function() {
 
 
 describe('parsing', function () {
-    it.skip('basic', function () {
+    it('basic', function () {
         var path = __dirname + "/../data/TODO.mrc";
         var bin = fs.readFileSync( path );
         var streamer = new BinaryStreamer( bin );
