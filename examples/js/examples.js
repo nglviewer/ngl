@@ -50,7 +50,9 @@ NGL.ExampleRegistry.addDict( {
             asTrajectory: true,
             sele: "50-100"
         } ).then( function( o ){
-            o.addTrajectory();
+            var trajComp = o.addTrajectory();
+            var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
+            player.play();
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "helixorient" );
             // o.addRepresentation( "rope" );
@@ -1168,14 +1170,12 @@ NGL.ExampleRegistry.addDict( {
             o.centerView();
 
             var framesPromise = NGL.autoLoad( "data://ala3.dcd" );
-            o.addTrajectory( framesPromise );
+            var trajComp = o.addTrajectory( framesPromise );
 
-            // FIXME
-            // .setParameters( {
-            //     "centerPbc": false,
-            //     "removePbc": false,
-            //     "superpose": true
-            // } );
+            framesPromise.then( function(){
+                var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
+                player.play();
+            } );
 
         } );
 
