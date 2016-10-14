@@ -755,6 +755,26 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "slice": function( stage ){
+
+        stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
+
+            o.addRepresentation( "slice", {
+
+            } );
+            stage.centerView();
+
+        } );
+
+        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+
+            o.addRepresentation( "licorice" );
+            stage.centerView();
+
+        } );
+
+    },
+
     "map": function( stage ){
 
         stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){

@@ -70,7 +70,55 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        var sliceBuffer = new ImageBuffer();
+        var v = this.volume;
+        v.makeDataPosition();
+        var dp = v.getDataPosition();
+
+        function index( x, y, z, i ){
+            return ( ( ( ( x * v.ny ) + y ) * v.nx ) + z ) * 3 + i;
+        }
+
+        var x = 30;
+        var y = v.ny-1;
+        var z = v.nz-1;
+
+        var position = new Float32Array([
+            dp[ index( x, 0, 0, 0 ) ], dp[ index( x, 0, 0, 1 ) ], dp[ index( x, 0, 0, 2 ) ],
+            dp[ index( x, y, 0, 0 ) ], dp[ index( x, y, 0, 1 ) ], dp[ index( x, y, 0, 2 ) ],
+            dp[ index( x, y, z, 0 ) ], dp[ index( x, y, z, 1 ) ], dp[ index( x, y, z, 2 ) ],
+            dp[ index( x, y, 0, 0 ) ], dp[ index( x, y, 0, 1 ) ], dp[ index( x, y, 0, 2 ) ]
+        ]);
+
+        // var position = new Float32Array([
+        //     -10, 10, 0,
+        //     10, 10, 0,
+        //     -10, -10, 0,
+        //     10, -10, 0
+        // ]);
+
+        var width = v.ny;
+        var height = v.nz
+        var data = new Uint8Array( width * height * 4 );
+
+        var x = 0;
+        var y = 0;
+
+        for ( var i = 0, il = data.length; i < il; i += 4 ) {
+
+            data[ i     ] = 100;
+            data[ i + 1 ] = 0;
+            data[ i + 2 ] = 100;
+            data[ i + 3 ] = 255;
+
+            if( ++x === width ){
+                x = 0;
+                y++;
+            }
+
+        }
+        console.log(data)
+
+        var sliceBuffer = new ImageBuffer( position, data, width, height );
 
         this.bufferList.push( sliceBuffer );
 
