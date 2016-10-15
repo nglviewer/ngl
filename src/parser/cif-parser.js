@@ -71,7 +71,7 @@ function parseChemComp( cif, structure, structureBuilder ){
 
             atomStore.growIfFull();
 
-            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );;
+            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );
             element = cca.type_symbol[ i ];
 
             atomnameDict[ atomname ] = i;
@@ -95,7 +95,7 @@ function parseChemComp( cif, structure, structureBuilder ){
 
             atomStore.growIfFull();
 
-            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );;
+            atomname = cca.atom_id[ i ].replace( reDoubleQuote, '' );
             element = cca.type_symbol[ i ];
 
             atomStore.atomTypeId[ j ] = atomMap.add( atomname, element );
@@ -125,8 +125,8 @@ function parseChemComp( cif, structure, structureBuilder ){
 
         for( i = 0; i < n; ++i ){
 
-            atomname1 = ccb.atom_id_1[ i ].replace( reDoubleQuote, '' );;
-            atomname2 = ccb.atom_id_2[ i ].replace( reDoubleQuote, '' );;
+            atomname1 = ccb.atom_id_1[ i ].replace( reDoubleQuote, '' );
+            atomname2 = ccb.atom_id_2[ i ].replace( reDoubleQuote, '' );
             valueOrder = ccb.value_order[ i ].toLowerCase();
 
             if( valueOrder === "?" ){
