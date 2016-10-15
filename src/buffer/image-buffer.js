@@ -5,7 +5,7 @@
  */
 
 
-import { BufferAttribute, DataTexture, NormalBlending } from "../../lib/three.es6.js";
+import { BufferAttribute, DataTexture, NormalBlending, NearestFilter, LinearFilter } from "../../lib/three.es6.js";
 
 import "../shader/Image.vert";
 import "../shader/Image.frag";
@@ -40,6 +40,9 @@ function ImageBuffer( position, data, width, height, params ){
     this.forceTransparent = true;
 
     this.tex = new DataTexture( data, width, height );
+    this.tex.minFilter = LinearFilter;
+    this.tex.magFilter = LinearFilter;
+    this.tex.flipY = true;
     this.tex.needsUpdate = true;
 
     this.addUniforms( {

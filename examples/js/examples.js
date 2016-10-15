@@ -762,6 +762,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "slice", {
 
             } );
+            o.addRepresentation( "surface" );
             stage.centerView();
 
         } );
@@ -769,6 +770,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 
             o.addRepresentation( "licorice" );
+            o.addRepresentation( "cartoon" );
             stage.centerView();
 
         } );
