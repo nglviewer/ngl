@@ -11,6 +11,8 @@ varying vec3 vViewPosition;
     varying vec3 vClipCenter;
 #endif
 
+#include fog_pars_fragment
+
 
 #if defined( CUBIC_INTERPOLATION )
 
@@ -106,5 +108,10 @@ void main(){
     #endif
 
     gl_FragColor.a *= opacity;
+
+    if( gl_FragColor.a < 0.01 )
+        discard;
+
+    #include fog_fragment
 
 }
