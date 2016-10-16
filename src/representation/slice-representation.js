@@ -127,7 +127,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         var position = new Float32Array( 4 * 3 );
         var width, height;
-        var x0, y0, z0, nx, ny, nz;
+        var x, y, z;
 
         var x0 = 0, y0 = 0, z0 = 0;
         var nx = v.nx, ny = v.ny, nz = v.nz;
@@ -135,9 +135,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         if( this.dimension === "x" ){
 
-            var x = pos( v.nx );
-            var y = v.ny-1;
-            var z = v.nz-1;
+            x = pos( v.nx );
+            y = v.ny-1;
+            z = v.nz-1;
 
             width = v.nz;
             height = v.ny;
@@ -152,9 +152,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         }else if( this.dimension === "y" ){
 
-            var x = v.nx-1;
-            var y = pos( v.ny );
-            var z = v.nz-1;
+            x = v.nx-1;
+            y = pos( v.ny );
+            z = v.nz-1;
 
             width = v.nz;
             height = v.nx;
@@ -169,9 +169,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         }else if( this.dimension === "z" ){
 
-            var x = v.nx-1;
-            var y = v.ny-1;
-            var z = pos( v.nz );
+            x = v.nx-1;
+            y = v.ny-1;
+            z = pos( v.nz );
 
             width = v.nx;
             height = v.ny;
