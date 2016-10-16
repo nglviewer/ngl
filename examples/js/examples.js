@@ -757,6 +757,28 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "slice": function( stage ){
+
+        stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
+
+            o.addRepresentation( "slice", {
+
+            } );
+            o.addRepresentation( "surface" );
+            stage.centerView();
+
+        } );
+
+        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+
+            o.addRepresentation( "licorice" );
+            o.addRepresentation( "cartoon" );
+            stage.centerView();
+
+        } );
+
+    },
+
     "map": function( stage ){
 
         stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){
@@ -895,7 +917,7 @@ NGL.ExampleRegistry.addDict( {
             o2.addRepresentation( "licorice", { sele: "hetero" } );
 
             var as = o2.structure.getAtomSetWithinVolume(
-                o1.surface, 2, o1.surface.getValueForSigma( 2.7 )
+                o1.volume, 2, o1.volume.getValueForSigma( 2.7 )
             );
             var as2 = o2.structure.getAtomSetWithinGroup( as );
             o2.addRepresentation( "ball+stick", { sele: as2.toSeleString() } );

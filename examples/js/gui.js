@@ -1702,7 +1702,8 @@ NGL.VolumeComponentWidget = function( component, stage ){
             var reprOptions = {
                 "": "[ add ]",
                 "surface": "surface",
-                "dot": "dot"
+                "dot": "dot",
+                "slice": "slice"
             };
             return reprOptions;
 
