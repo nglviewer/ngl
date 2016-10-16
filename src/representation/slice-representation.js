@@ -86,7 +86,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         Representation.prototype.init.call( this, p );
 
         this.colorScheme = "value";
-        this.dimension = "x";
+        this.dimension = defaults( p.dimension, "x" );
         this.filter = defaults( p.filter, "cubic-bspline" );
         this.position = defaults( p.position, 30 );
         this.thresholdType = defaults( p.thresholdType, "sigma" );
@@ -221,7 +221,10 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         }
 
         var sliceBuffer = new ImageBuffer(
-            position, data, width, height, { filter: this.filter }
+            position, data, width, height,
+            this.getBufferParams( {
+                filter: this.filter
+            } )
         );
 
         this.bufferList.push( sliceBuffer );
