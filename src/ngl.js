@@ -93,6 +93,7 @@ import "./parser/mrc-parser.js";
 import "./parser/cube-parser.js";
 import "./parser/dx-parser.js";
 import "./parser/dxbin-parser.js";
+import "./parser/xplor-parser.js";
 
 import "./parser/ply-parser.js";
 import "./parser/obj-parser.js";

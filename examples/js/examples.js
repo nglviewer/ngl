@@ -1476,6 +1476,26 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "cns": function( stage ){
+
+        stage.loadFile( "data://3pqr.cns" ).then( function( o ){
+
+            o.addRepresentation( "surface", {
+                visible: true, isolevel: 2.0, opacity: 0.6
+            } );
+            // o.centerView();
+
+        } );
+
+        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+
+            o.addRepresentation( "cartoon" );
+            o.centerView();
+
+        } );
+
+    },
+
     "test": function( stage ){
 
         stage.loadFile( "rcsb://3pqr.cif", {
