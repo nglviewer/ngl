@@ -5,6 +5,9 @@
  */
 
 
+import { Vector3 } from "../../lib/three.es6.js";
+
+import { ColorMakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import ImageBuffer from "../buffer/image-buffer.js";
@@ -30,9 +33,23 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     parameters: Object.assign( {
 
+        filter: {
+            type: "select", buffer: true, options: {
+                "nearest": "nearest",
+                "linear": "linear",
+                "cubic-bspline": "cubic-bspline",
+                "cubic-catmulrom": "cubic-catmulrom",
+                "cubic-mitchell": "cubic-mitchell"
+            }
+        },
         position: {
-            type: "integer", precision: 1, max: 100, min: 1,
+            type: "range", step: 0.1, max: 100, min: 1,
             rebuild: true
+        },
+        dimension: {
+            type: "select", rebuild: true, options: {
+                "x": "x", "y": "y", "z": "z"
+            }
         },
         thresholdType: {
             type: "select", rebuild: true, options: {
@@ -42,6 +59,21 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         thresholdMin: {
             type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
         },
+        thresholdMax: {
+            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+        },
+
+    }, Representation.prototype.parameters, {
+
+        flatShaded: null,
+        side: null,
+        wireframe: null,
+        linewidth: null,
+        colorScheme: null,
+
+        roughness: null,
+        metalness: null,
+        diffuse: null,
 
     } ),
 
@@ -49,14 +81,17 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "value" );
+        p.colorScale = defaults( p.colorScale, "Spectral" );
 
         Representation.prototype.init.call( this, p );
 
         this.colorScheme = "value";
         this.dimension = "x";
+        this.filter = defaults( p.filter, "cubic-bspline" );
         this.position = defaults( p.position, 30 );
         this.thresholdType = defaults( p.thresholdType, "sigma" );
         this.thresholdMin = defaults( p.thresholdMin, -Infinity );
+        this.thresholdMax = defaults( p.thresholdMax, Infinity );
 
     },
 
@@ -76,51 +111,118 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
+        var p = this.position;
         var v = this.volume;
-        v.makeDataPosition();
-        var dp = v.getDataPosition();
-        var dc = v.getDataColor( this.getColorParams() );
+        v.filterData( -Infinity, Infinity, false );
         var d = v.data;
+        var m = v.matrix;
+
+        function pos( dimLen ){
+            return Math.round( ( dimLen  / 100 ) * ( p - 1 ) )
+        }
 
         function index( x, y, z, i ){
             return ( z * v.ny * v.nx + y * v.nx + x ) * 3 + i;
         }
 
-        var x = this.position;
-        var y = v.ny-1;
-        var z = v.nz-1;
+        var position = new Float32Array( 4 * 3 );
+        var width, height;
+        var x0, y0, z0, nx, ny, nz;
 
-        var position = new Float32Array([
-            dp[ index( x, 0, 0, 0 ) ], dp[ index( x, 0, 0, 1 ) ], dp[ index( x, 0, 0, 2 ) ],
-            dp[ index( x, y, 0, 0 ) ], dp[ index( x, y, 0, 1 ) ], dp[ index( x, y, 0, 2 ) ],
-            dp[ index( x, 0, z, 0 ) ], dp[ index( x, 0, z, 1 ) ], dp[ index( x, 0, z, 2 ) ],
-            dp[ index( x, y, z, 0 ) ], dp[ index( x, y, z, 1 ) ], dp[ index( x, y, z, 2 ) ]
-        ]);
+        var x0 = 0, y0 = 0, z0 = 0;
+        var nx = v.nx, ny = v.ny, nz = v.nz;
+        var vec = new Vector3();
 
-        var i = 0;
-        var data = new Uint8Array( v.ny * v.nz * 4 );
+        if( this.dimension === "x" ){
 
-        var min;
-        if( this.thresholdType === "sigma" ){
-            min = v.getValueForSigma( this.thresholdMin );
-        }else{
-            min = this.thresholdMin;
+            var x = pos( v.nx );
+            var y = v.ny-1;
+            var z = v.nz-1;
+
+            width = v.nz;
+            height = v.ny;
+
+            x0 = x;
+            nx = x0 + 1;
+
+            vec.set( x, 0, 0 ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
+        }else if( this.dimension === "y" ){
+
+            var x = v.nx-1;
+            var y = pos( v.ny );
+            var z = v.nz-1;
+
+            width = v.nz;
+            height = v.nx;
+
+            y0 = y;
+            ny = y0 + 1;
+
+            vec.set( 0, y, 0 ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
+        }else if( this.dimension === "z" ){
+
+            var x = v.nx-1;
+            var y = v.ny-1;
+            var z = pos( v.nz );
+
+            width = v.nx;
+            height = v.ny;
+
+            z0 = z;
+            nz = z0 + 1;
+
+            vec.set( 0, 0, z ).applyMatrix4( m ).toArray( position, 0 );
+            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 3 );
+            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+
         }
 
-        for ( var iy = 0; iy < v.ny; ++iy ) {
-            for ( var iz = 0; iz < v.nz; ++iz ) {
+        var i = 0;
+        var data = new Uint8Array( width * height * 4 );
 
-                data[ i     ] = Math.round( dc[ index( x, iy, iz, 0 ) ] * 255 );
-                data[ i + 1 ] = Math.round( dc[ index( x, iy, iz, 1 ) ] * 255 );
-                data[ i + 2 ] = Math.round( dc[ index( x, iy, iz, 2 ) ] * 255 );
-                data[ i + 3 ] = d[ index( x, iy, iz, 0 ) / 3 ] > min ? 255 : 0;
+        var min, max;
+        if( this.thresholdType === "sigma" ){
+            min = v.getValueForSigma( this.thresholdMin );
+            max = v.getValueForSigma( this.thresholdMax );
+        }else{
+            min = this.thresholdMin;
+            max = this.thresholdMax;
+        }
 
-                i += 4;
+        var cp = this.getColorParams( { volume: v } );
+        cp.domain = [ v.getDataMin(), v.getDataMax() ];
+        var colorMaker = ColorMakerRegistry.getScheme( cp );
+        var tmp = new Float32Array( 3 );
 
+        for ( var iy = y0; iy < ny; ++iy ) {
+            for ( var ix = x0; ix < nx; ++ix ) {
+                for ( var iz = z0; iz < nz; ++iz ) {
+
+                    var idx = index( ix, iy, iz, 0 ) / 3;
+                    var val = d[ idx ];
+                    colorMaker.volumeColorToArray( idx, tmp );
+                    data[ i     ] = Math.round( tmp[ 0 ] * 255 );
+                    data[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
+                    data[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
+                    data[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+                    i += 4;
+
+                }
             }
         }
 
-        var sliceBuffer = new ImageBuffer( position, data, v.nz, v.ny );
+        var sliceBuffer = new ImageBuffer(
+            position, data, width, height, { filter: this.filter }
+        );
 
         this.bufferList.push( sliceBuffer );
 
