@@ -16,7 +16,7 @@ import Selection from "../selection.js";
 /**
  * {@link Signal}, dispatched when StructureView.refresh() is called
  * @example
- * structureView.signals.refreshed( function(){ ... } );
+ * structureView.signals.refreshed.add( function(){ ... } );
  * @event StructureView#refreshed
  */
 

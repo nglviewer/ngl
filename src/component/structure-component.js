@@ -18,7 +18,7 @@ import { superpose } from "../align/align-utils.js";
 /**
  * {@link Signal}, dispatched when the default assembly is changed
  * @example
- * structureComponent.signals.defaultAssemblyChanged( function( value ){ ... } );
+ * structureComponent.signals.defaultAssemblyChanged.add( function( value ){ ... } );
  * @event StructureComponent#defaultAssemblyChanged
  * @type {String}
  */
