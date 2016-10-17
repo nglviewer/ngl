@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file, following t
 ## [Unreleased]
 ### Added
 - volume slice representation including interpolation support
+- xplor/cns volume file parser
 
 
 ## [v0.9.3] - 2016-10-14
