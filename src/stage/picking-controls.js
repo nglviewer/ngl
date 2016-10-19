@@ -16,6 +16,7 @@ import { defaults } from "../utils.js";
 /**
  * Picking data object.
  * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
  * @property {AtomProxy} [pickedAtom] - picked atom
  * @property {BondProxy} [pickedBond] - picked bond
  * @property {Volume} [pickedVolume] - picked volume
@@ -47,6 +48,7 @@ var PickingControls = function( stage, params ){
         canvasPosition: new Vector2(),
         moving: false,
         hovering: true,
+        scrolled: false,
         lastMoved: Infinity,
         which: undefined,
         distance: function(){
@@ -110,7 +112,8 @@ var PickingControls = function( stage, params ){
             "atom": pickedAtom,
             "bond": pickedBond,
             "volume": pickedVolume,
-            "instance": instance
+            "instance": instance,
+            "canvasPosition": mouse.canvasPosition.clone()
         };
     }
 
@@ -118,8 +121,9 @@ var PickingControls = function( stage, params ){
         if( performance.now() - mouse.lastMoved > hoverTimeout ){
             mouse.moving = false;
         }
-        if( !mouse.moving && !mouse.hovering ){
+        if( mouse.scrolled || ( !mouse.moving && !mouse.hovering ) ){
             mouse.hovering = true;
+            mouse.scrolled = false;
             var pd = pick( mouse );
             signals.hovered.dispatch( pd );
             // if( Debug ) Log.log( "hovered", pd );
@@ -157,6 +161,15 @@ var PickingControls = function( stage, params ){
         signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
     } );
+
+    function scrolled( e ){
+        setTimeout( function(){
+            mouse.scrolled = true;
+        }, hoverTimeout );
+    }
+    viewer.renderer.domElement.addEventListener( 'mousewheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'wheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'MozMousePixelScroll', scrolled );
 
     // API
 

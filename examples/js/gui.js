@@ -369,6 +369,27 @@ NGL.StageWidget = function( stage ){
 };
 
 
+NGL.getPickingMessage = function( d, prefix ){
+    var msg;
+    if( d.atom ){
+        msg = "atom: " +
+            d.atom.qualifiedName() +
+            " (" + d.atom.structure.name + ")";
+    }else if( d.bond ){
+        msg = "bond: " +
+            d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
+            " (" + d.bond.structure.name + ")";
+    }else if( d.volume ){
+        msg = "volume: " +
+            d.volume.value.toPrecision( 3 ) +
+            " (" + d.volume.volume.name + ")";
+    }else{
+        msg = "nothing";
+    }
+    return prefix ? prefix + " " + msg : msg;
+};
+
+
 // Viewport
 
 NGL.ViewportWidget = function( stage ){
@@ -404,6 +425,33 @@ NGL.ViewportWidget = function( stage ){
 
     }, false );
 
+    // tooltip
+
+    var tooltipText = new UI.Text();
+
+    var tooltipPanel = new UI.OverlayPanel()
+        .setPosition( "absolute" )
+        .setDisplay( "none" )
+        .setOpacity( "0.9" )
+        .add( tooltipText );
+
+    stage.signals.hovered.add( function( d ){
+        var text = NGL.getPickingMessage( d, "" );
+        if( text !== "nothing" ){
+            d.canvasPosition.addScalar( 5 );
+            tooltipText.setValue( text );
+            tooltipPanel
+                .setBottom( d.canvasPosition.y  + "px" )
+                .setLeft( d.canvasPosition.x + "px" )
+                .setDisplay( "block" );
+        }else{
+            tooltipPanel.setDisplay( "none" );
+        }
+
+    } );
+
+    container.add( tooltipPanel );
+
     return container;
 
 };
@@ -414,55 +462,35 @@ NGL.ViewportWidget = function( stage ){
 NGL.ToolbarWidget = function( stage ){
 
     var container = new UI.Panel();
-    var messagePanel1 = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
-    var messagePanel2 = new UI.Panel().setDisplay( "inline" ).setFloat( "left" );
-    var statsPanel = new UI.Panel().setDisplay( "inline" ).setFloat( "right" );
 
-    function getPickingMessage( d, prefix ){
-        var msg;
-        if( d.atom ){
-            msg = "atom: " +
-                d.atom.qualifiedName() +
-                " (" + d.atom.structure.name + ")";
-        }else if( d.bond ){
-            msg = "bond: " +
-                d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-                " (" + d.bond.structure.name + ")";
-        }else if( d.volume ){
-            msg = "volume: " +
-                d.volume.value.toPrecision( 3 ) +
-                " (" + d.volume.volume.name + ")";
-        }else{
-            msg = "nothing";
-        }
-        return prefix + " " + msg;
-    }
+    var messageText = new UI.Text();
+    var messagePanel = new UI.Panel()
+        .setDisplay( "inline" )
+        .setFloat( "left" )
+        .add( messageText );
+
+    var statsText = new UI.Text();
+    var statsPanel = new UI.Panel()
+        .setDisplay( "inline" )
+        .setFloat( "right" )
+        .add( statsText );
 
     stage.signals.clicked.add( function( d ){
-        messagePanel1
-            .clear()
-            .add( new UI.Text( getPickingMessage( d, "Clicked" ) ) );
-    } );
-
-    stage.signals.hovered.add( function( d ){
-        messagePanel2
-            .clear()
-            .add( new UI.Text( getPickingMessage( d, "Hovered" ) ) );
+        messageText.setValue( NGL.getPickingMessage( d, "Clicked" ) );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){
-        statsPanel.clear();
         if( NGL.Debug ){
-            statsPanel.add(
-                new UI.Text(
-                    stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
-                    stage.viewer.stats.lastFps + " fps"
-                )
+            statsText.setValue(
+                stage.viewer.stats.lastDuration.toFixed( 2 ) + " ms | " +
+                stage.viewer.stats.lastFps + " fps"
             );
+        }else{
+            statsText.setValue( "" );
         }
     } );
 
-    container.add( messagePanel1, messagePanel2, statsPanel );
+    container.add( messagePanel, statsPanel );
 
     return container;
 
