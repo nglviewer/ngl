@@ -1463,13 +1463,14 @@ NGL.ExampleRegistry.addDict( {
                 wireframe: true,
                 surfaceType: "av",
                 linewidth: 1.0,
-                color: "green"
+                colorScheme: "element",
+                colorValue: "#0f0"
             } );
             o.addRepresentation( "surface", {
                 sele: "not hetero",
                 useWorker: false,
                 surfaceType: "av",
-                color: "grey"
+                colorScheme: "bfactor"
             } );
             stage.centerView();
         } );

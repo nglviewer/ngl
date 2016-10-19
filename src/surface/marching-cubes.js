@@ -410,7 +410,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -449,7 +449,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * yd ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * yd ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
@@ -488,7 +488,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             }
 
-            if( atomindex ) atomindexArray[ count ] = atomindex[ q + mu * zd ];
+            if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * zd ];
 
             vertexIndex[ q ] = count;
             ilist[ offset ] = count;
