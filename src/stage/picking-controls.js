@@ -162,7 +162,7 @@ var PickingControls = function( stage, params ){
         if( Debug ) Log.log( "clicked", pd );
     } );
 
-    function scrolled( e ){
+    function scrolled(){
         setTimeout( function(){
             mouse.scrolled = true;
         }, hoverTimeout );
