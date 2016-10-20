@@ -26,7 +26,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is added
  * @example
- * component.signals.representationAdded( function( representationComponent ){ ... } );
+ * component.signals.representationAdded.add( function( representationComponent ){ ... } );
  * @event Component#representationAdded
  * @type {RepresentationComponent}
  */
@@ -34,7 +34,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is removed
  * @example
- * component.signals.representationRemoved( function( representationComponent ){ ... } );
+ * component.signals.representationRemoved.add( function( representationComponent ){ ... } );
  * @event Component#representationRemoved
  * @type {RepresentationComponent}
  */
@@ -42,7 +42,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when the visibility changes
  * @example
- * component.signals.visibilityChanged( function( value ){ ... } );
+ * component.signals.visibilityChanged.add( function( value ){ ... } );
  * @event Component#visibilityChanged
  * @type {Boolean}
  */

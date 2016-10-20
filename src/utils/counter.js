@@ -13,7 +13,7 @@ import Signal from "../../lib/signals.es6.js";
 /**
  * {@link Signal}, dispatched when the `count` changes
  * @example
- * counter.signals.countChanged( function( delta ){ ... } );
+ * counter.signals.countChanged.add( function( delta ){ ... } );
  * @event Counter#countChanged
  * @type {Integer}
  */

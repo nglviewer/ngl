@@ -1181,7 +1181,7 @@ function Viewer( eid ){
     function __updateLights(){
 
         distVector.copy( camera.position ).sub( controls.target )
-            .setLength( boundingBoxLength * 10 );
+            .setLength( boundingBoxLength * 100 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );

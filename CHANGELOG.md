@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased]
+### Added
+- volume slice representation including interpolation support
+- xplor/cns volume file parser
+
+
+## [v0.9.3] - 2016-10-14
+### Changed
+- increased light distance from camera, to fix unlit rendering
+- remove double quotes from atomnames in chemComp cif parser
+
+
 ## [v0.9.2] - 2016-10-06
 ### Changed
 - fix, moved polyfills back inside the bundle
@@ -213,6 +225,8 @@ All notable changes to this project will be documented in this file, following t
 - Initial release
 
 
+[Unreleased]: https://github.com/arose/ngl/compare/v0.9.3...HEAD
+[v0.9.3]: https://github.com/arose/ngl/compare/v0.9.2...v0.9.3
 [v0.9.2]: https://github.com/arose/ngl/compare/v0.9.1...v0.9.2
 [v0.9.1]: https://github.com/arose/ngl/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/arose/ngl/compare/v0.8...v0.9.0

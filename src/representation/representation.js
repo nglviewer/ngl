@@ -237,9 +237,9 @@ Representation.prototype = {
 
     },
 
-    getColorParams: function(){
+    getColorParams: function( p ){
 
-        return {
+        return Object.assign( {
 
             gidPool: this.gidPool,
 
@@ -249,7 +249,7 @@ Representation.prototype = {
             domain: this.colorDomain,
             mode: this.colorMode,
 
-        };
+        }, p );
 
     },
 

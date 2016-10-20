@@ -1,5 +1,5 @@
 
-Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory]. At the end of this page is an embedded NGL viewer for trying out the selection language.
+Selections (or 'Sele' for short) strings can be input at various places in the user interface or when scripting. They are used to limit which atoms/residues are shown in a [molecular representation]{@tutorial molecular-representations} or what atoms are loaded from a trajectory.
 
 
 ## Example

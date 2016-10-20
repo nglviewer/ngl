@@ -1,6 +1,6 @@
 
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/master/LICENSE)
-[![Version](http://img.shields.io/badge/version-0.9.2-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.9.2)
+[![Version](http://img.shields.io/badge/version-0.9.3-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.9.3)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
 [![npm version](https://badge.fury.io/js/ngl.svg)](https://badge.fury.io/js/ngl)
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)

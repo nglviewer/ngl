@@ -16,7 +16,13 @@ import Shape from "../geometry/shape.js";
 import BufferRepresentation from "./buffer-representation.js";
 import SurfaceRepresentation from "./surface-representation.js";
 import DotRepresentation from "./dot-representation.js";
+import SliceRepresentation from "./slice-representation.js";
 import TrajectoryRepresentation from "./trajectory-representation.js";
+
+
+function logReprUnknown( type ){
+    Log.error( "makeRepresentation: representation type " + type + " unknown" );
+}
 
 
 function makeRepresentation( type, object, viewer, params ){
@@ -30,31 +36,32 @@ function makeRepresentation( type, object, viewer, params ){
         ReprClass = RepresentationRegistry.get( type );
 
         if( !ReprClass ){
-
-            Log.error(
-                "makeRepresentation: representation type " + type + " unknown"
-            );
+            logReprUnknown( type );
             return;
-
         }
 
-    }else if( object instanceof Surface || object instanceof Volume ){
+    }else if( object instanceof Surface ){
 
         if( type === "surface" ){
-
             ReprClass = SurfaceRepresentation;
-
         }else if( type === "dot" ){
-
             ReprClass = DotRepresentation;
-
         }else{
-
-            Log.error(
-                "makeRepresentation: representation type " + type + " unknown"
-            );
+            logReprUnknown( type );
             return;
+        }
 
+    }else if( object instanceof Volume ){
+
+        if( type === "surface" ){
+            ReprClass = SurfaceRepresentation;
+        }else if( type === "dot" ){
+            ReprClass = DotRepresentation;
+        }else if( type === "slice" ){
+            ReprClass = SliceRepresentation;
+        }else{
+            logReprUnknown( type );
+            return;
         }
 
     }else if( object instanceof Trajectory ){
@@ -72,9 +79,7 @@ function makeRepresentation( type, object, viewer, params ){
 
     }else{
 
-        Log.error(
-            "makeRepresentation: object " + object + " unknown"
-        );
+        Log.error( "makeRepresentation: object " + object + " unknown" );
         return;
 
     }

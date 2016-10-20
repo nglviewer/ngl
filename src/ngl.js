@@ -93,6 +93,7 @@ import "./parser/mrc-parser.js";
 import "./parser/cube-parser.js";
 import "./parser/dx-parser.js";
 import "./parser/dxbin-parser.js";
+import "./parser/xplor-parser.js";
 
 import "./parser/ply-parser.js";
 import "./parser/obj-parser.js";
@@ -122,7 +123,9 @@ import StaticDatasource from "./datasource/static-datasource.js";
 //
 
 import Signal from "../lib/signals.es6.js";
-import { Matrix3, Matrix4, Vector3, Box3, Quaternion, Plane, Color } from "../lib/three.es6.js";
+import {
+    Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Plane, Color
+} from "../lib/three.es6.js";
 
 //
 
@@ -189,6 +192,14 @@ import { version as Version } from "../package.json";
  * @class
  * @global
  * @see {@link http://threejs.org/docs/#Reference/Math/Matrix4}
+ */
+
+/**
+ * 2d vector class from three.js
+ * @name Vector2
+ * @class
+ * @global
+ * @see {@link http://threejs.org/docs/#Reference/Math/Vector2}
  */
 
 /**
@@ -340,6 +351,11 @@ export {
      * @see {@link Matrix4}
      */
     Matrix4,
+    /**
+     * Vector2 class
+     * @see {@link Vector2}
+     */
+    Vector2,
     /**
      * Vector3 class
      * @see {@link Vector3}

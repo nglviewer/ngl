@@ -30,7 +30,7 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 /**
  * {@link Signal}, dispatched when parameters change
  * @example
- * component.signals.parametersChanged( function( params ){ ... } );
+ * component.signals.parametersChanged.add( function( params ){ ... } );
  * @event RepresentationComponent#parametersChanged
  * @type {RepresentationParameters}
  */
