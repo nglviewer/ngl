@@ -55,7 +55,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when stage parameters change {@link Signal}
  * @example
- * stage.signals.parametersChanged( function( stageParameters ){ ... } );
+ * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
  * @event Stage#parametersChanged
  * @type {StageParameters}
  */
@@ -63,7 +63,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when the fullscreen is entered or left
  * @example
- * stage.signals.fullscreenChanged( function( isFullscreen ){ ... } );
+ * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
  * @event Stage#fullscreenChanged
  * @type {Boolean}
  */
@@ -71,7 +71,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when a component is added to the stage
  * @example
- * stage.signals.componentAdded( function( component ){ ... } );
+ * stage.signals.componentAdded.add( function( component ){ ... } );
  * @event Stage#componentAdded
  * @type {Component}
  */
@@ -79,7 +79,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when a component is removed from the stage
  * @example
- * stage.signals.componentRemoved( function( component ){ ... } );
+ * stage.signals.componentRemoved.add( function( component ){ ... } );
  * @event Stage#componentRemoved
  * @type {Component}
  */
@@ -87,7 +87,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched upon clicking in the viewer canvas
  * @example
- * stage.signals.clicked( function( pickingData ){ ... } );
+ * stage.signals.clicked.add( function( pickingData ){ ... } );
  * @event Stage#clicked
  * @type {PickingData}
  */
@@ -95,7 +95,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched upon hovering over the viewer canvas
  * @example
- * stage.signals.hovered( function( pickingData ){ ... } );
+ * stage.signals.hovered.add( function( pickingData ){ ... } );
  * @event Stage#hovered
  * @type {PickingData}
  */

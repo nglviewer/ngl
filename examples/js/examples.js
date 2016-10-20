@@ -50,7 +50,9 @@ NGL.ExampleRegistry.addDict( {
             asTrajectory: true,
             sele: "50-100"
         } ).then( function( o ){
-            o.addTrajectory();
+            var trajComp = o.addTrajectory();
+            var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
+            player.play();
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "helixorient" );
             // o.addRepresentation( "rope" );
@@ -767,6 +769,28 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "slice": function( stage ){
+
+        stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
+
+            o.addRepresentation( "slice", {
+
+            } );
+            o.addRepresentation( "surface" );
+            stage.centerView();
+
+        } );
+
+        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+
+            o.addRepresentation( "licorice" );
+            o.addRepresentation( "cartoon" );
+            stage.centerView();
+
+        } );
+
+    },
+
     "map": function( stage ){
 
         stage.loadFile( "data://emd_2682.map.gz" ).then( function( o ){
@@ -905,7 +929,7 @@ NGL.ExampleRegistry.addDict( {
             o2.addRepresentation( "licorice", { sele: "hetero" } );
 
             var as = o2.structure.getAtomSetWithinVolume(
-                o1.surface, 2, o1.surface.getValueForSigma( 2.7 )
+                o1.volume, 2, o1.volume.getValueForSigma( 2.7 )
             );
             var as2 = o2.structure.getAtomSetWithinGroup( as );
             o2.addRepresentation( "ball+stick", { sele: as2.toSeleString() } );
@@ -1180,14 +1204,12 @@ NGL.ExampleRegistry.addDict( {
             o.centerView();
 
             var framesPromise = NGL.autoLoad( "data://ala3.dcd" );
-            o.addTrajectory( framesPromise );
+            var trajComp = o.addTrajectory( framesPromise );
 
-            // FIXME
-            // .setParameters( {
-            //     "centerPbc": false,
-            //     "removePbc": false,
-            //     "superpose": true
-            // } );
+            framesPromise.then( function(){
+                var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
+                player.play();
+            } );
 
         } );
 
@@ -1249,7 +1271,7 @@ NGL.ExampleRegistry.addDict( {
                 colorDomain: [ -1, 0, 1 ]
             } );
             pqr.addRepresentation( "surface", {
-                volume: dxbin.surface,
+                volume: dxbin.volume,
                 colorScheme: "volume",
                 colorScale: "rwb",
                 colorDomain: [ -5, 0, 5 ]
@@ -1453,15 +1475,36 @@ NGL.ExampleRegistry.addDict( {
                 wireframe: true,
                 surfaceType: "av",
                 linewidth: 1.0,
-                color: "green"
+                colorScheme: "element",
+                colorValue: "#0f0"
             } );
             o.addRepresentation( "surface", {
                 sele: "not hetero",
                 useWorker: false,
                 surfaceType: "av",
-                color: "grey"
+                colorScheme: "bfactor"
             } );
             stage.centerView();
+        } );
+
+    },
+
+    "cns": function( stage ){
+
+        stage.loadFile( "data://3pqr.cns" ).then( function( o ){
+
+            o.addRepresentation( "surface", {
+                visible: true, isolevel: 2.0, opacity: 0.6
+            } );
+            // o.centerView();
+
+        } );
+
+        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
+
+            o.addRepresentation( "cartoon" );
+            o.centerView();
+
         } );
 
     },
