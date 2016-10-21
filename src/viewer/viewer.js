@@ -39,7 +39,7 @@ import {
 import Signal from "../../lib/signals.es6.js";
 
 
-if( WebGLRenderingContext ){
+if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
 
     // wrap WebGL debug function used by three.js and
     // ignore calls to them when the debug flag is not set

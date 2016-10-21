@@ -7,7 +7,7 @@
 
 import "./polyfills";
 import _Promise from "../lib/promise.es6.js";
-if( !window.Promise ){
+if( typeof window !== 'undefined' && !window.Promise ){
     window.Promise = _Promise;
 }
 

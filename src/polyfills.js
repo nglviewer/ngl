@@ -8,37 +8,37 @@
 //////////////
 // Polyfills
 
-( function( global ) {
+if( typeof window !== "undefined" ){
 
-    'use strict';
+    ( function() {
 
-    // Console-polyfill. MIT license.
-    // https://github.com/paulmillr/console-polyfill
-    // Make it safe to do console.log() always.
+        'use strict';
 
-    global.console = global.console || {};
-    var con = global.console;
-    var prop, method;
-    var empty = {};
-    var dummy = function(){};
-    var properties = 'memory'.split( ',' );
-    var methods = (
-        'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
-        'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
-        'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
-    ).split(',');
+        // Console-polyfill. MIT license.
+        // https://github.com/paulmillr/console-polyfill
+        // Make it safe to do console.log() always.
 
-    while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
-    while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
+        window.console = window.console || {};
+        var con = window.console;
+        var prop, method;
+        var empty = {};
+        var dummy = function(){};
+        var properties = 'memory'.split( ',' );
+        var methods = (
+            'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+            'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+            'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
+        ).split(',');
 
-    // Using `self` for web workers while maintaining compatibility with browser
-    // targeted script loaders such as Browserify or Webpack where the only way to
-    // get to the global object is via `window`.
+        while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
+        while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
 
-} )( typeof window === 'undefined' ? self : window );
+    } )();
+
+}
 
 
-if( !HTMLCanvasElement.prototype.toBlob ){
+if( typeof HTMLCanvasElement !== "undefined" && !HTMLCanvasElement.prototype.toBlob ){
 
     // http://code.google.com/p/chromium/issues/detail?id=67587#57
 
@@ -374,61 +374,65 @@ if (!Array.from) {
 }
 
 
-( function() {
+if( typeof window !== "undefined" ){
 
-    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+    ( function() {
 
-    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+        // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+        // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 
-    // MIT license
+        // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
 
-    var lastTime = 0;
-    var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
+        // MIT license
 
-    for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
+        var lastTime = 0;
+        var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
 
-        window.requestAnimationFrame = (
-            window[ vendors[ x ] + 'RequestAnimationFrame' ]
-        );
+        for( var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x ){
 
-        window.cancelAnimationFrame = (
-            window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
-            window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
-        );
+            window.requestAnimationFrame = (
+                window[ vendors[ x ] + 'RequestAnimationFrame' ]
+            );
 
-    }
+            window.cancelAnimationFrame = (
+                window[ vendors[ x ] + 'CancelAnimationFrame' ] ||
+                window[ vendors[ x ] + 'CancelRequestAnimationFrame' ]
+            );
 
-    if( !window.requestAnimationFrame ){
+        }
 
-        window.requestAnimationFrame = function( callback/*, element*/ ){
+        if( !window.requestAnimationFrame ){
 
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
+            window.requestAnimationFrame = function( callback/*, element*/ ){
 
-            var id = window.setTimeout( function(){
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
 
-                callback( currTime + timeToCall );
+                var id = window.setTimeout( function(){
 
-            }, timeToCall );
+                    callback( currTime + timeToCall );
 
-            lastTime = currTime + timeToCall;
+                }, timeToCall );
 
-            return id;
+                lastTime = currTime + timeToCall;
 
-        };
+                return id;
 
-    }
+            };
 
-    if( !window.cancelAnimationFrame ){
+        }
 
-        window.cancelAnimationFrame = function( id ){
-            clearTimeout( id );
-        };
+        if( !window.cancelAnimationFrame ){
 
-    }
+            window.cancelAnimationFrame = function( id ){
+                clearTimeout( id );
+            };
 
-}() );
+        }
+
+    }() );
+
+}
 
 
 if ( Function.prototype.name === undefined && Object.defineProperty !== undefined ) {
@@ -449,25 +453,28 @@ if ( Function.prototype.name === undefined && Object.defineProperty !== undefine
 }
 
 
-if ( self.performance === undefined ) {
+if( typeof window !== "undefined" ){
 
-    self.performance = {};
+    if ( window.performance === undefined ) {
+
+        self.performance = {};
+
+    }
+
+    if ( window.performance.now === undefined ) {
+
+        ( function () {
+
+            var start = Date.now();
+
+            window.performance.now = function () {
+
+                return Date.now() - start;
+
+            };
+
+        } )();
+
+    }
 
 }
-
-if ( self.performance.now === undefined ) {
-
-    ( function () {
-
-        var start = Date.now();
-
-        self.performance.now = function () {
-
-            return Date.now() - start;
-
-        };
-
-    } )();
-
-}
-
