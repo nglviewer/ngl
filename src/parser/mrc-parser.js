@@ -161,23 +161,39 @@ MrcParser.prototype = Object.assign( Object.create(
 
         // Log.log( header )
 
-        // FIXME depends on mode
         var data;
-        if ( header.MODE === 2){
+        if( header.MODE === 2 ){
+
             data = new Float32Array(
                 bin, 256 * 4 + header.NSYMBT,
                 header.NX * header.NY * header.NZ
-            );          
-        }else{
+            );
 
-            //CONVERT DATA ( Convert from 32Array to 8 Array)
+        }else if( header.MODE === 0 ){
+
             data = new Float32Array( new Int8Array(
                 bin, 256 * 4 + header.NSYMBT,
                 header.NX * header.NY * header.NZ
             ) );
-        }
 
-        
+            // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
+            // if the file was converted by mapmode2to0 - scale the data
+            var b1 = 1;
+            var b0 = 0;
+            if( intView[ 39 ] === -128 && intView[ 40 ] === 127 ){
+                // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
+                b1 = ( header.DMAX - header.DMIN ) / 255.0;
+                b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
+                for( var j = 0, jl = data.length; j < jl; ++j ){
+                    data[ j ] = b1 * data[ j ] + b0;
+                }
+            }
+
+        }else{
+
+            console.error( "MrcParser unknown mode", header.MODE );
+
+        }
 
         v.setData( data, header.NX, header.NY, header.NZ );
 
