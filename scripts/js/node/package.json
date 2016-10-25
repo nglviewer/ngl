@@ -1,0 +1,10 @@
+{
+  "name": "ngl-scripts",
+  "version": "0.0.0",
+  "dependencies": {
+    "argparse": "^1.0.9",
+    "download": "^5.0.2",
+    "file-api": "^0.10.4",
+    "performance-now": "^0.2.0"
+  }
+}
