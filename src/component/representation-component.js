@@ -155,6 +155,15 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set selection
+     * @alias RepresentationComponent#update
+     * @param {Object} what - flags indicating what attributes to update
+     * @param {Boolean} what.position - update position attribute
+     * @param {Boolean} what.color - update color attribute
+     * @param {Boolean} what.radius - update radius attribute
+     * @return {RepresentationComponent} this object
+     */
     update: function( what ){
 
         this.repr.update( what );
