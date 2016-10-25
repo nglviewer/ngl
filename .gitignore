@@ -1,5 +1,4 @@
 
-*.sublime-project
 *.sublime-workspace
 
 build/
