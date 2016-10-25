@@ -4,7 +4,8 @@
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
   "scripts": {
-    "prebuild": "eslint src test",
+    "lint": "eslint src test",
+    "prebuild": "npm run-script lint",
     "build": "rollup -c",
     "pretest": "npm run build",
     "test": "mocha",

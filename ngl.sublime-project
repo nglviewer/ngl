@@ -14,8 +14,23 @@
     "build_systems":
     [
         {
-            "name": "NPM Test",
+            "name": "Lint",
+            "shell_cmd": "npm run-script lint",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Test",
             "shell_cmd": "npm test",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Build",
+            "shell_cmd": "npm run-script build",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Watch",
+            "shell_cmd": "npm run-script watch",
             "working_dir": "${project_path}",
         }
     ]
