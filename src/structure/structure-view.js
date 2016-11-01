@@ -313,6 +313,12 @@ StructureView.prototype = Object.assign( Object.create(
 
     },
 
+    refreshPosition: function(){
+
+        return this.structure.refreshPosition();
+
+    },
+
     //
 
     dispose: function(){
