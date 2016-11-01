@@ -24,6 +24,15 @@ import RepresentationCollection from "../component/representation-collection.js"
 import { autoLoad } from "../loader/loader-utils";
 
 
+function matchName( name, comp ){
+    if( name instanceof RegExp ){
+        return comp.name.match( name ) !== null;
+    }else{
+        return comp.name === name;
+    }
+}
+
+
 /**
  * Stage parameter object.
  * @typedef {Object} StageParameters - stage parameters
@@ -856,7 +865,7 @@ Stage.prototype = {
 
         this.eachComponent( function( comp ){
 
-            if( name === undefined || comp.name.match( name ) !== null ){
+            if( name === undefined || matchName( name, comp ) ){
                 compList.push( comp );
             }
 
@@ -882,11 +891,11 @@ Stage.prototype = {
 
         this.eachRepresentation( function( repr, comp ){
 
-            if( compName !== undefined && comp.name.match( compName ) === null ){
+            if( compName !== undefined && !matchName( compName, comp ) ){
                 return;
             }
 
-            if( reprName === undefined || repr.name.match( reprName ) !== null ){
+            if( reprName === undefined || matchName( reprName, repr ) ){
                 reprList.push( repr );
             }
 
