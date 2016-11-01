@@ -59,6 +59,7 @@ CubeParser.prototype = Object.assign( Object.create(
         var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
         var count = 0;
         var lineNo = 0;
+        var oribitalFlag = headerhelper( 2, 0 ) > 0 ? 0 : 1;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -66,7 +67,7 @@ CubeParser.prototype = Object.assign( Object.create(
 
                 var line = lines[ i ].trim();
 
-                if( line !== "" && lineNo >= header.atomCount + 6 ){
+                if( line !== "" && lineNo >= header.atomCount + 6 + oribitalFlag ){
 
                     line = line.split( reWhitespace );
                     for( var j = 0, lj = line.length; j < lj; ++j ){
