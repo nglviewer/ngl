@@ -347,7 +347,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         }
 
         if( !vertexIndex ){
-            vertexIndex = new Int32Array( n );
+            vertexIndex = new Int32Array( n * 3 );
         }
 
         count = 0;
@@ -389,7 +389,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        if( vertexIndex[ 3*q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -412,14 +412,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ 3*q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ 3*q ];
 
         }
 
@@ -427,7 +427,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntY( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        if( vertexIndex[ 3*q + 1 ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -451,14 +451,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * yd ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ 3*q + 1 ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ 3*q + 1 ];
 
         }
 
@@ -466,7 +466,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntZ( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ q ] < 0 ){
+        if( vertexIndex[ 3*q + 2 ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -490,14 +490,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * zd ];
 
-            vertexIndex[ q ] = count;
+            vertexIndex[ 3*q + 2 ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ q ];
+            ilist[ offset ] = vertexIndex[ 3*q + 2 ];
 
         }
 
@@ -756,8 +756,10 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             for ( y = yBeg2; y < yEnd2; ++y ) {
                 y_offset = z_offset + yd * y;
                 for ( x = xBeg2; x < xEnd2; ++x ) {
-                    q = y_offset + x;
+                    q = 3 * ( y_offset + x );
                     vertexIndex[ q ] = -1;
+                    vertexIndex[ q + 1 ] = -1;
+                    vertexIndex[ q + 2 ] = -1;
                 }
             }
         }
