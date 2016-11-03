@@ -49,7 +49,8 @@ function Surface( name, path, data ){
             data.index,
             data.normal,
             data.color,
-            data.atomindex
+            data.atomindex,
+            data.line
         );
 
     }
@@ -70,7 +71,7 @@ Surface.prototype = {
      * @param {Int32Array} atomindex - atom indices
      * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex ){
+    set: function( position, index, normal, color, atomindex, line ){
 
         this.position = position;
         this.index = index;
@@ -79,6 +80,7 @@ Surface.prototype = {
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
+        this.line = line
 
     },
 
@@ -252,6 +254,45 @@ Surface.prototype = {
     getAtomindex: function(){
 
         return this.atomindex;
+
+    },
+
+    getLinePositionData: function( sele, sview ) {
+        var from, to;
+
+        var n = this.index.length / 2;
+        var n3 = 3 * n;
+
+        from = new Float32Array( n3 );
+        to = new Float32Array( n3 );
+
+        var index = this.index;
+        var position = this.position;
+        for( var i = 0; i < n; i++ ){
+
+            var _from =  3 * index[ 2*i ];
+            var _to = 3 * index[ 2 * i + 1 ];
+
+            from[ 3 * i ] = position[  _from ];
+            from[ 3 * i + 1 ] = position[ _from + 1 ];
+            from[ 3 * i + 2 ] = position[ _from + 2 ];
+
+            to[ 3 * i ] = position[ _to ];
+            to[ 3 * i + 1 ] = position[ _to + 1 ];
+            to[ 3 * i + 2 ] = position[ _to + 2 ];
+
+        }
+        
+        return {from: from, to: to};
+    },
+
+    getLineColorData: function( params ) {
+
+        var tc = new Color(params.value);
+        // TODO: Other color modes
+        var array = uniformArray3( this.index.length / 2, tc.r, tc.g, tc.b );
+        return { color: array,
+                 color2: array }
 
     },
 

@@ -303,6 +303,39 @@ function getTriTable(){
     ] );
 }
 
+// Triangles are constructed between points on cube edges. 
+// allowedContours[edge1][edge1] indicates which lines from a given
+// triangle should be shown in line mode.
+// Values are bitmasks. In loop over cubes we represent another bitmask
+// indicating whether our current cell is the first z-value (1), 
+// first y-value (2) or first z-value (4) of the current loop. 
+// We draw all lines on leading faces but only draw trailing face lines the first
+// time through the loop
+// A value of 8 below means the edge is always drawn (leading face)
+
+// E.g. the first row, lines between edge0 and other edges in the bottom 
+// x-y plane are only drawn for the first value of z, edges in the 
+// x-z plane are only drawn for the first value of y. No other lines
+// are drawn as they're redundant
+// The line between edge 1 and 5 is always drawn as it's on the leading edge 
+function getAllowedContours() { return [
+
+    [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
+    [ 4, 0, 4, 4, 0, 8, 0, 0, 0, 8, 8, 0 ], // 0 2 3 5 9 10
+    [ 4, 4, 0, 4, 0, 0, 8, 0, 0, 0, 8, 8 ], // 0 1 3 6 10 11
+    [ 4, 4, 4, 0, 0, 0, 0, 1, 1, 0, 0, 1 ], // 0 1 2 7 8 11
+    [ 2, 0, 0, 0, 0, 8, 8, 8, 2, 2, 0, 0 ], // 0 5 6 7 8 9
+    [ 0, 8, 0, 0, 8, 0, 8, 8, 0, 8, 8, 0 ], // And rotate it
+    [ 0, 0, 8, 0, 8, 8, 0, 8, 0, 0, 8, 8 ],
+    [ 0, 0, 0, 1, 8, 8, 8, 0, 1, 0, 0, 1 ],
+    [ 2, 0, 0, 1, 2, 0, 0, 1, 0, 2, 0, 1 ], // 0 3 4 7 9 11
+    [ 2, 8, 0, 0, 2, 8, 0, 0, 2, 0, 8, 0 ], // And rotate some more
+    [ 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 0, 8 ],
+    [ 0, 0, 8, 1, 0, 0, 8, 1, 1, 0, 8, 0 ]
+    
+]}
+
+
 
 function MarchingCubes( field, nx, ny, nz, atomindex ){
 
@@ -314,6 +347,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var isolevel = 0;
     var noNormals = false;
+    var contour = false;
 
     var n = nx * ny * nz;
 
@@ -333,14 +367,16 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     var edgeTable = getEdgeTable();
     var triTable = getTriTable();
+    var allowedContours = getAllowedContours();
 
 
     //
 
-    this.triangulate = function( _isolevel, _noNormals, _box ){
+    this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
 
         isolevel = _isolevel;
         noNormals = _noNormals;
+        contour = true; // hard-coded for now
 
         if( !noNormals && !normalCache ){
             normalCache = new Float32Array( n * 3 );
@@ -379,6 +415,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             normal: noNormals ? undefined : new Float32Array( normalArray ),
             index: new TypedArray( indexArray ),
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
+            line: contour
         };
 
     };
@@ -517,7 +554,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     }
 
-    function polygonize( fx, fy, fz, q ) {
+    function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
         var q1 = q + 1,
@@ -684,24 +721,47 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
 
-        var o1, o2, o3, i = 0;
+        var i = 0;
+        
+        if( contour ){
 
-        // here is where triangles are created
+            var e1, e2;
+            while( triTable[ cubeindex + i + 1 ] != -1 ){
+                
+                e1 = triTable[ cubeindex + i ];
+                e2 = triTable[ cubeindex + i + 1 ];
+                
+                if( allowedContours[ e1 ][ e2 ] ){
+                    
+                    indexArray[ icount++ ] = ilist[ e1 ];
+                    indexArray[ icount++ ] = ilist[ e2 ];
+                    
+                }
+                i += 1;
+            }
 
-        while ( triTable[ cubeindex + i ] != -1 ) {
 
-            o1 = cubeindex + i;
-            o2 = o1 + 1;
-            o3 = o1 + 2;
+        } else {
 
-            // FIXME normals flipping (see above) and vertex order reversal
-            indexArray[ icount ]     = ilist[ triTable[ o2 ] ];
-            indexArray[ icount + 1 ] = ilist[ triTable[ o1 ] ];
-            indexArray[ icount + 2 ] = ilist[ triTable[ o3 ] ];
-
-            icount += 3;
-            i += 3;
-
+            var o1, o2, o3;
+            
+            // here is where triangles are created
+            
+            while ( triTable[ cubeindex + i ] != -1 ) {
+                
+                o1 = cubeindex + i;
+                o2 = o1 + 1;
+                o3 = o1 + 2;
+                
+                // FIXME normals flipping (see above) and vertex order reversal
+                indexArray[ icount ]     = ilist[ triTable[ o2 ] ];
+                indexArray[ icount + 1 ] = ilist[ triTable[ o1 ] ];
+                indexArray[ icount + 2 ] = ilist[ triTable[ o3 ] ];
+                
+                icount += 3;
+                i += 3;
+                
+            }
         }
 
     }
@@ -891,14 +951,16 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         }
 
         // polygonize part of the grid
-
-        for ( z = zBeg; z < zEnd; ++z ) {
+        var edgeFilter = 15;
+        for ( z = zBeg; z < zEnd; ++z, edgeFilter &=~4 ) {
             z_offset = zd * z;
-            for ( y = yBeg; y < yEnd; ++y ) {
+            edgeFilter |= 2;
+            for ( y = yBeg; y < yEnd; ++y, edgeFilter &=~2 ) {
                 y_offset = z_offset + yd * y;
-                for ( x = xBeg; x < xEnd; ++x ) {
+                edgeFilter |= 1
+                for ( x = xBeg; x < xEnd; ++x, edgeFilter &=~1 ) {
                     q = y_offset + x;
-                    polygonize( x, y, z, q );
+                    polygonize( x, y, z, q, edgeFilter );
                 }
             }
         }

@@ -1471,19 +1471,19 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.addRepresentation( "surface", {
                 sele: "hetero and (not water)",
-                useWorker: true,
+                useWorker: false,
                 wireframe: true,
                 surfaceType: "av",
                 linewidth: 1.0,
                 colorScheme: "element",
                 colorValue: "#0f0"
             } );
-            o.addRepresentation( "surface", {
+            /*o.addRepresentation( "surface", {
                 sele: "not hetero",
                 useWorker: false,
                 surfaceType: "av",
                 colorScheme: "bfactor"
-            } );
+            } );*/
             stage.centerView();
         } );
 
