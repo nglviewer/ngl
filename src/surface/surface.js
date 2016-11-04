@@ -24,6 +24,7 @@ import Selection from "../selection.js";
  * @param {Float32Array} data.normal - surface normals
  * @param {Float32Array} data.color - surface colors
  * @param {Int32Array} data.atomindex - atom indices
+ * @param {boolean} data.contour - contour mode flag
  */
 function Surface( name, path, data ){
 
@@ -69,6 +70,7 @@ Surface.prototype = {
      * @param {Float32Array} normal - surface normals
      * @param {Float32Array} color - surface colors
      * @param {Int32Array} atomindex - atom indices
+     * @param {boolean} contour - contour mode flag
      * @return {undefined}
      */
     set: function( position, index, normal, color, atomindex, contour ){

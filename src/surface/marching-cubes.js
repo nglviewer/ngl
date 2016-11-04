@@ -567,7 +567,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     }
 
-    function polygonize( fx, fy, fz, q, edgeFilter ) {
+    function polygonize( fx, fy, fz, q ) {
 
         // cache indices
         var q1 = q + 1,
