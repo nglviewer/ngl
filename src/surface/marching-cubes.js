@@ -834,10 +834,15 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             for ( y = yBeg2; y < yEnd2; ++y ) {
                 y_offset = z_offset + yd * y;
                 for ( x = xBeg2; x < xEnd2; ++x ) {
-                    q = 3 * ( y_offset + x );
-                    vertexIndex[ q ] = -1;
-                    vertexIndex[ q + 1 ] = -1;
-                    vertexIndex[ q + 2 ] = -1;
+                    if( contour ) {
+                        q = 3 * ( y_offset + x );
+                        vertexIndex[ q ] = -1;
+                        vertexIndex[ q + 1 ] = -1;
+                        vertexIndex[ q + 2 ] = -1;
+                    } else {
+                        q = ( y_offset + x );
+                        vertexIndex[ q ] = -1;
+                    }
                 }
             }
         }
