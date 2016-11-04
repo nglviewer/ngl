@@ -154,7 +154,7 @@ function EDTSurface( coordList, radiusList, indexList ){
 
     };
 
-    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth ){
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour ){
 
         var vd = this.getVolume(
             type, probeRadius, scaleFactor, cutoff, setAtomID
@@ -164,7 +164,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
         );
 
-        return volsurf.getSurface( 1, smooth, undefined, matrix );
+        return volsurf.getSurface( 1, smooth, undefined, matrix, contour );
 
     };
 

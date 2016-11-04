@@ -306,8 +306,10 @@ function getTriTable(){
 // Triangles are constructed between points on cube edges. 
 // allowedContours[edge1][edge1] indicates which lines from a given
 // triangle should be shown in line mode.
-// Values are bitmasks. In loop over cubes we represent another bitmask
-// indicating whether our current cell is the first z-value (1), 
+
+// Values are bitmasks, but not currently used, the idea is that:
+// In loop over cubes we use another bitmask
+// indicating whether our current cell is the first x-value (1), 
 // first y-value (2) or first z-value (4) of the current loop. 
 // We draw all lines on leading faces but only draw trailing face lines the first
 // time through the loop
@@ -318,6 +320,9 @@ function getTriTable(){
 // x-z plane are only drawn for the first value of y. No other lines
 // are drawn as they're redundant
 // The line between edge 1 and 5 is always drawn as it's on the leading edge 
+
+// Turns out this isn't quite right...
+
 function getAllowedContours() { return [
 
     [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
@@ -334,8 +339,6 @@ function getAllowedContours() { return [
     [ 0, 0, 8, 1, 0, 0, 8, 1, 1, 0, 8, 0 ]
     
 ]}
-
-
 
 function MarchingCubes( field, nx, ny, nz, atomindex ){
 
@@ -375,15 +378,19 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
 
         isolevel = _isolevel;
-        noNormals = _noNormals;
-        contour = true; // hard-coded for now
+        contour = _contour;
+        // Normals currently disabled in contour mode for performance (unused)
+        noNormals = _noNormals || contour;
 
         if( !noNormals && !normalCache ){
             normalCache = new Float32Array( n * 3 );
         }
 
         if( !vertexIndex ){
-            vertexIndex = new Int32Array( n * 3 );
+            // In contour mode we want all drawn edges parallel to one axis,
+            // so interpolation must be calculated in each dimension (rather
+            // than re-using a single interpolated vertex)
+            vertexIndex = new Int32Array( contour ? n * 3 : n );
         }
 
         count = 0;
@@ -415,7 +422,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             normal: noNormals ? undefined : new Float32Array( normalArray ),
             index: new TypedArray( indexArray ),
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
-            line: contour
+            contour: contour
         };
 
     };
@@ -426,7 +433,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ 3*q ] < 0 ){
+        var _q = contour ? 3 * q : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -449,14 +458,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) ];
 
-            vertexIndex[ 3*q ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ 3*q ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -464,7 +473,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntY( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ 3*q + 1 ] < 0 ){
+        var _q = contour ? 3 * q + 1 : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -488,14 +499,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * yd ];
 
-            vertexIndex[ 3*q + 1 ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ 3*q + 1 ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -503,7 +514,9 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function VIntZ( q, offset, x, y, z, valp1, valp2 ) {
 
-        if( vertexIndex[ 3*q + 2 ] < 0 ){
+        var _q = contour ? 3 * q + 2 : q;
+
+        if( vertexIndex[ _q ] < 0 ){
 
             var mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
             var nc = normalCache;
@@ -527,14 +540,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             if( atomindex ) atomindexArray[ count ] = atomindex[ q + Math.round( mu ) * zd ];
 
-            vertexIndex[ 3*q + 2 ] = count;
+            vertexIndex[ _q ] = count;
             ilist[ offset ] = count;
 
             count += 1;
 
         }else{
 
-            ilist[ offset ] = vertexIndex[ 3*q + 2 ];
+            ilist[ offset ] = vertexIndex[ _q ];
 
         }
 
@@ -718,20 +731,26 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
 
         }
-
-        cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
+        
+        var triIndex = cubeindex << 4;  // re-purpose cubeindex into an offset into triTable
 
         var i = 0;
         
         if( contour ){
 
-            var e1, e2;
-            while( triTable[ cubeindex + i + 1 ] != -1 ){
+            var e1, e2, done = false;
+            while( !done ){
                 
-                e1 = triTable[ cubeindex + i ];
-                e2 = triTable[ cubeindex + i + 1 ];
-                
-                if( allowedContours[ e1 ][ e2 ] ){
+                e1 = triTable[ triIndex + i ];
+                e2 = triTable[ triIndex + i + 1 ];
+                if( e2 === -1 ){
+                    done = true;
+                    e2 = triTable[ triIndex ];
+                }
+
+                // edgeFilter bitmask not quite working...
+                //if( allowedContours[ e1 ][ e2 ] & edgeFilter ) {
+                if( allowedContours[ e1 ][ e2 ] ) {
                     
                     indexArray[ icount++ ] = ilist[ e1 ];
                     indexArray[ icount++ ] = ilist[ e2 ];
@@ -740,16 +759,15 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
                 i += 1;
             }
 
-
         } else {
 
             var o1, o2, o3;
             
             // here is where triangles are created
             
-            while ( triTable[ cubeindex + i ] != -1 ) {
+            while ( triTable[ triIndex + i ] != -1 ) {
                 
-                o1 = cubeindex + i;
+                o1 = triIndex + i;
                 o2 = o1 + 1;
                 o3 = o1 + 2;
                 
@@ -968,7 +986,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     }
 
 }
-MarchingCubes.__deps = [ getEdgeTable, getTriTable ];
+MarchingCubes.__deps = [ getEdgeTable, getTriTable, getAllowedContours ];
 
 
 export default MarchingCubes;

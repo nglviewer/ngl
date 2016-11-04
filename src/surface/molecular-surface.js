@@ -20,7 +20,7 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
         var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
         var surf = new SurfClass(a.coordList, a.radiusList, a.indexList );
         var sd = surf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
@@ -78,7 +78,7 @@ MolecularSurface.prototype = {
         var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
         var surf = new SurfClass( coordList, radiusList, indexList );
         var sd = surf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth
+            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
 
         return this.makeSurface( sd, p );

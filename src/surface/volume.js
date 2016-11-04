@@ -21,8 +21,8 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box, matrix ){
-        var sd = mc.triangulate( isolevel, smooth, box );
+    function getSurface( isolevel, smooth, box, matrix, contour ){
+        var sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
@@ -56,7 +56,7 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix );
+        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );

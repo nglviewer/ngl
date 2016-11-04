@@ -50,7 +50,7 @@ function Surface( name, path, data ){
             data.normal,
             data.color,
             data.atomindex,
-            data.line
+            data.contour
         );
 
     }
@@ -71,7 +71,7 @@ Surface.prototype = {
      * @param {Int32Array} atomindex - atom indices
      * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex, line ){
+    set: function( position, index, normal, color, atomindex, contour ){
 
         this.position = position;
         this.index = index;
@@ -80,7 +80,7 @@ Surface.prototype = {
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
-        this.line = line
+        this.contour = contour;
 
     },
 
@@ -220,26 +220,34 @@ Surface.prototype = {
             var index = this.index;
             var n = index.length;
             var j = 0;
+            var a;
 
-            for( var i = 0; i < n; i+=3 ){
+            var elementSize = this.contour ? 2 : 3;
 
-                var idx1 = index[ i     ];
-                var idx2 = index[ i + 1 ];
-                var idx3 = index[ i + 2 ];
+            for( var i = 0; i < n; i += elementSize ){
 
-                var ai1 = atomindex[ idx1 ];
-                var ai2 = atomindex[ idx2 ];
-                var ai3 = atomindex[ idx3 ];
+                var include = true;
 
-                if( as.has( ai1 ) && as.has( ai2 ) && as.has( ai3 ) ){
-                    filteredIndex[ j     ] = idx1;
-                    filteredIndex[ j + 1 ] = idx2;
-                    filteredIndex[ j + 2 ] = idx3;
-                    j += 3;
+                for( a = 0 ; a < elementSize; a++ ){
+
+                    var idx = index[ i + a ];
+                    var ai = atomindex[ idx ];
+                    if( !as.has( ai ) ){
+                        include = false;
+                        break;
+                    }
+                }
+
+                if( !include ) { continue ; }
+
+                for( a = 0; a < elementSize; a ++, j++ ){
+
+                    filteredIndex[ j ] = index[ i + a ];
+                    
                 }
 
             }
-
+           
             var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
             return new TypedArray( filteredIndex );
 
@@ -254,45 +262,6 @@ Surface.prototype = {
     getAtomindex: function(){
 
         return this.atomindex;
-
-    },
-
-    getLinePositionData: function( sele, sview ) {
-        var from, to;
-
-        var n = this.index.length / 2;
-        var n3 = 3 * n;
-
-        from = new Float32Array( n3 );
-        to = new Float32Array( n3 );
-
-        var index = this.index;
-        var position = this.position;
-        for( var i = 0; i < n; i++ ){
-
-            var _from =  3 * index[ 2*i ];
-            var _to = 3 * index[ 2 * i + 1 ];
-
-            from[ 3 * i ] = position[  _from ];
-            from[ 3 * i + 1 ] = position[ _from + 1 ];
-            from[ 3 * i + 2 ] = position[ _from + 2 ];
-
-            to[ 3 * i ] = position[ _to ];
-            to[ 3 * i + 1 ] = position[ _to + 1 ];
-            to[ 3 * i + 2 ] = position[ _to + 2 ];
-
-        }
-        
-        return {from: from, to: to};
-    },
-
-    getLineColorData: function( params ) {
-
-        var tc = new Color(params.value);
-        // TODO: Other color modes
-        var array = uniformArray3( this.index.length / 2, tc.r, tc.g, tc.b );
-        return { color: array,
-                 color2: array }
 
     },
 
