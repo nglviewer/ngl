@@ -72,6 +72,15 @@ Single expressions may be left out as long as the order (see above) is kept, for
 ```
 
 
+### Atomindex
+
+A list of atom indices can be given as a comma seperated list (no spaces in between) prefixed with the `@` character.
+
+```
+@0,1,4,5,11,23,42
+```
+
+
 ### Logical operators (in order of binding strength)
 
 *   *NOT*
