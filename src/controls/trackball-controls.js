@@ -498,9 +498,9 @@ function TrackballControls( object, domElement ) {
 
         } else {
 
-            // Firefox
+            // Firefox or IE 11
 
-            delta = - event.deltaY * 3;
+            delta = - event.deltaY / ( event.deltaMode ? 0.33 : 30 );
 
         }
 
