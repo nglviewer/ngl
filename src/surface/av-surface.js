@@ -54,12 +54,12 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
 
     var nCells = iDim * jDim * kDim;
 
-    var ijDim = iDim * jDim;
+    var jkDim = jDim * kDim;
 
 
     /* Get cellID for cartesian x,y,z */
     var cellID = function( x, y, z ) {
-        return ( hashFunc( x, minX ) * ijDim ) + ( hashFunc( y, minY )  * jDim ) + hashFunc( z, minZ );
+        return ((( hashFunc( x, minX ) * jDim ) + hashFunc( y, minY ) )  * kDim ) + hashFunc( z, minZ );
     }
 
 
@@ -139,11 +139,11 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
 
         for( var i = loI; i <= hiI; ++i ) {
 
-            var iOffset = i * ijDim;
+            var iOffset = i * jkDim;
 
             for( var j = loJ; j <= hiJ; ++j ){
 
-                var jOffset = j * jDim;
+                var jOffset = j * kDim;
 
                 for( var k = loK; k <= hiK; ++k ){
 
