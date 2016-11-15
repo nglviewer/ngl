@@ -1133,16 +1133,24 @@ function Viewer( eid ){
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
-        camera.near = Math.max( 0.1, p.clipDist, cDist - ( bRadius * nearFactor ) );
-        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
-
-        // fog
 
         var fogNearFactor = ( 50 - p.fogNear ) / 50;
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
+
+        var near = cDist - ( bRadius * nearFactor );
+        var fogNear = cDist - ( bRadius * fogNearFactor );
+
+        if( camera.type === "PerspectiveCamera" ){
+            near = Math.max( p.clipDist, 0.1, near );
+            fogNear = Math.max( 0.1, fogNear );
+        }
+
+        camera.near = near;
+        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
+
         var fog = scene.fog;
         fog.color.set( p.fogColor );
-        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
+        fog.near = fogNear;
         fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
 
     }
