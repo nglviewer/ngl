@@ -1133,8 +1133,8 @@ function Viewer( eid ){
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
-        camera.near = Math.max( 0.1, p.clipDist, cDist - ( bRadius * nearFactor ) );
-        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
+        camera.near = cDist - ( bRadius * nearFactor );
+        camera.far = cDist + ( bRadius * farFactor );
 
         // fog
 
@@ -1142,8 +1142,19 @@ function Viewer( eid ){
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
         var fog = scene.fog;
         fog.color.set( p.fogColor );
-        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
-        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
+        fog.near = cDist - ( bRadius * fogNearFactor );
+        fog.far = cDist + ( bRadius * fogFarFactor );
+
+        if( camera.type === "PerspectiveCamera" ){
+            camera.near = Math.max( 0.1, p.clipDist, camera.near );
+            camera.far = Math.max( 1, camera.far );
+            fog.near = Math.max( 0.1, fog.near );
+            fog.far = Math.max( 1, fog.far );
+        }else if( camera.type === "OrthographicCamera" ){
+            if( p.clipNear === 0 && p.clipDist > 0 && cDist + camera.zoom > 2 * -p.clipDist ){
+                camera.near += camera.zoom + p.clipDist;
+            }
+        }
 
     }
 
