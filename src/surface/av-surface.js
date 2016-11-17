@@ -641,7 +641,7 @@ function AVSurface( coordList, radiusList, indexList ){
 
     }
 
-    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID/*, smooth*/ ) {
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour ) {
 
         // type and cutoff left in for compatibility with EDTSurface.getSurface
         // function signature
@@ -652,7 +652,7 @@ function AVSurface( coordList, radiusList, indexList ){
             grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
         );
 
-        return volsurf.getSurface( probeRadius, false, undefined, matrix );
+        return volsurf.getSurface( probeRadius, false, undefined, matrix, contour );
 
     }
 

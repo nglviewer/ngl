@@ -1496,20 +1496,24 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.addRepresentation( "surface", {
                 sele: "hetero and (not water)",
-                useWorker: true,
-                wireframe: true,
                 surfaceType: "av",
-                linewidth: 1.0,
+                contour: true,
                 colorScheme: "element",
-                colorValue: "#0f0"
+                colorValue: "#0f0",
+                useWorker: false
             } );
             o.addRepresentation( "surface", {
                 sele: "not hetero",
-                useWorker: false,
                 surfaceType: "av",
-                colorScheme: "bfactor"
+                colorScheme: "bfactor",
+                contour: true,
+                filterSele: "10 OR 11 OR 12 OR 13 OR 14 OR 18 OR 31 OR 33 OR "
+                            + "64 OR 80 OR 81 OR 82 OR 83 OR 84 OR 85 OR 86 OR "
+                            + "129 OR 131 OR 132 OR 134 OR 144 OR 145"
             } );
-            stage.centerView();
+            stage.setOrientation([[ 28.4, 1.2, 60.2],
+                                  [ 53.9, 49.2, 81.1],
+                                  [-0.7, 0.064,0.71]]);
         } );
 
     },
