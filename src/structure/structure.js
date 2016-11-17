@@ -1098,6 +1098,11 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get number of unique chainnames
+     * @param  {Selection} selection - limit count to selection
+     * @return {Integer} count
+     */
     getChainnameCount: function( selection ){
 
         var chainnames = new Set();

@@ -22,6 +22,8 @@ function ChainProxy( structure, index ){
     this.residueStore = structure.residueStore;
     this.index = index;
 
+    this.__residueProxy = this.structure.getResidueProxy();
+
 }
 
 ChainProxy.prototype = {
@@ -103,6 +105,51 @@ ChainProxy.prototype = {
     },
     set chainid ( value ) {
         this.chainStore.setChainid( this.index, value );
+    },
+
+    //
+
+    get __firstResidueProxy () {
+        this.__residueProxy.index = this.residueOffset;
+        return this.__residueProxy;
+    },
+
+    //
+
+    isProtein: function(){
+        return this.__firstResidueProxy.isProtein();
+    },
+
+    isNucleic: function(){
+        return this.__firstResidueProxy.isNucleic();
+    },
+
+    isRna: function(){
+        return this.__firstResidueProxy.isRna();
+    },
+
+    isDna: function(){
+        return this.__firstResidueProxy.isDna();
+    },
+
+    isPolymer: function(){
+        return this.__firstResidueProxy.isPolymer();
+    },
+
+    isHetero: function(){
+        return this.__firstResidueProxy.isHetero();
+    },
+
+    isWater: function(){
+        return this.__firstResidueProxy.isWater();
+    },
+
+    isIon: function(){
+        return this.__firstResidueProxy.isIon();
+    },
+
+    isSaccharide: function(){
+        return this.__firstResidueProxy.isSaccharide();
     },
 
     //
