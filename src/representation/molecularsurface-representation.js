@@ -199,23 +199,25 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         var info = this.__infoList[ i ];
 
+        var position = info.surface.getPosition();
+        var color = info.surface.getColor( this.getColorParams() );
+        var index = info.surface.getFilteredIndex( this.filterSele, sview );
+
         if( info.surface.contour ){
 
             var contourBuffer = new ContourBuffer(
-                info.surface.getPosition(),
-                info.surface.getColor( this.getColorParams() ),
-                info.surface.getFilteredIndex( this.filterSele, sview ),
-                this.getBufferParams( {} )
+                position, color, index,
+                this.getBufferParams( {
+                    wireframe: false
+                } )
             );
 
             return { bufferList: [ contourBuffer ], info: info };
-            
+
         } else {
-        
+
             var surfaceBuffer = new SurfaceBuffer(
-                info.surface.getPosition(),
-                info.surface.getColor( this.getColorParams() ),
-                info.surface.getFilteredIndex( this.filterSele, sview ),
+                position, color, index,
                 info.surface.getNormal(),
                 info.surface.getPickingColor( this.getColorParams() ),
                 this.getBufferParams( {
@@ -224,9 +226,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
                     dullInterior: false
                 } )
             );
-        
+
             var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
-            
+
             return {
                 bufferList: [ doubleSidedBuffer ],
                 info: info
@@ -267,6 +269,14 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         if( params && params.volume !== undefined ){
             what.color = true;
+        }
+
+        // forbid setting wireframe to true when contour is true
+        if( params && params.wireframe && (
+                params.contour || ( params.contour === undefined && this.contour )
+            )
+        ){
+            params.wireframe = false;
         }
 
         StructureRepresentation.prototype.setParameters.call(
