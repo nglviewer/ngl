@@ -9,7 +9,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
-import { getFileInfo, deepCopy } from "../utils.js";
+import { defaults, getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
@@ -520,7 +520,17 @@ Stage.prototype = {
 
         };
 
-        return autoLoad( path, p ).then( onLoadFn, onErrorFn );
+        var ext = defaults( p.ext, getFileInfo( path ).ext );
+        var excludeExtList = [ "dcd" ];
+        var promise;
+
+        if( excludeExtList.includes( ext ) ){
+            promise = Promise.reject( "loadFile: ext '" + ext + "' can't be loaded" );
+        }else{
+            promise = autoLoad( path, p );
+        }
+
+        return promise.then( onLoadFn, onErrorFn );
 
     },
 
