@@ -1017,7 +1017,6 @@ function getTraceStructure( structure ){
 
     var atomStore = ts.atomStore;
     var atomMap = ts.atomMap;
-    var bondStore = ts.bondStore;
     var idx = 0;
 
     var traceSelection = new Selection( "( protein and .CA ) or ( nucleic or .P )" );
@@ -1057,7 +1056,7 @@ function getTraceStructure( structure ){
 
         console.log( rp.qualifiedName() );  // some debug output
         // add residue bonds here
-        // bondStore.addBond( ap1, ap2, order );
+        // ts.bondStore.addBond( ap1, ap2, order );
 
     } );
 
