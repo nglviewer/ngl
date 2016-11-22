@@ -16,6 +16,7 @@ import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix, principalAxes } from "../math/matrix-utils.js";
 import SpatialHash from "../geometry/spatial-hash.js";
 // import StructureView from "./structure-view.js";
+import { getTraceStructure } from "./structure-utils.js";
 
 import BondHash from "../store/bond-hash.js";
 import BondStore from "../store/bond-store.js";
@@ -198,6 +199,14 @@ Structure.prototype = {
             var as2 = this.getAtomSet( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
+
+    },
+
+    //
+
+    getTraceStructure: function(){
+
+        return getTraceStructure( this );
 
     },
 

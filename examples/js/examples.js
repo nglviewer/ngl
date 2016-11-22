@@ -1538,6 +1538,23 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "getTrace": function( stage ){
+
+        NGL.autoLoad( "data://1crn.pdb" ).then( function( structure ){
+
+            var traceStructure = structure.getTraceStructure();
+            var o = stage.addComponentFromObject( traceStructure );
+            // stage.defaultFileRepresentation( o );
+            o.addRepresentation( "backbone" );
+            o.addRepresentation( "cartoon" );
+            o.addRepresentation( "ball+stick" );
+
+            stage.centerView();
+
+        } );
+
+    },
+
     "test": function( stage ){
 
         stage.loadFile( "rcsb://3pqr.cif", {

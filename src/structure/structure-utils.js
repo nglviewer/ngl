@@ -13,7 +13,10 @@ import Helixbundle from "../geometry/helixbundle.js";
 import Kdtree from "../geometry/kdtree.js";
 import { getSymmetryOperations } from "../symmetry/symmetry-utils.js";
 import Assembly from "../symmetry/assembly.js";
+import Selection from "../selection.js";
 
+import Structure from "./structure.js";
+import StructureBuilder from "./structure-builder.js";
 import { UnknownBackboneType } from "./structure-constants";
 
 
@@ -1007,6 +1010,86 @@ function assignResidueTypeBonds( structure ){
 }
 
 
+function getTraceStructure( structure ){
+
+    var ts = new Structure();
+    var sb = new StructureBuilder( ts );
+
+    var atomStore = ts.atomStore;
+    var atomMap = ts.atomMap;
+    var bondStore = ts.bondStore;
+    var idx = 0;
+
+    var traceSelection = new Selection( "( protein and .CA ) or ( nucleic or .P )" );
+
+    // note that atom and residue proxie objects (ap, rp) are reused in each
+    // iteration, so when you need a proxie for another iteration you must
+    // copy it with ap.clone()
+
+    structure.eachAtom( function( ap ){
+
+        atomStore.growIfFull();
+        atomStore.atomTypeId[ idx ] = atomMap.add( ap.atomname );
+
+        atomStore.x[ idx ] = ap.x;
+        atomStore.y[ idx ] = ap.y;
+        atomStore.z[ idx ] = ap.z;
+        atomStore.serial[ idx ] = ap.serial;
+
+        sb.addAtom(
+            ap.modelIndex,
+            ap.chainname,
+            ap.chainid,
+            ap.resname,
+            ap.resno,
+            ap.hetero,
+            ap.sstruc,
+            ap.inscode
+        );
+
+        idx += 1;
+
+    }, traceSelection );
+
+    //
+
+    structure.eachResidue( function( rp ){
+
+        console.log( rp.qualifiedName() );  // some debug output
+        // add residue bonds here
+        // bondStore.addBond( ap1, ap2, order );
+
+    } );
+
+    //
+
+    sb.finalize();
+    ts.finalizeAtoms();
+    // add bonds between residues as long as the trace atoms have standard names
+    calculateBondsBetween( ts );
+    ts.finalizeBonds();
+
+    //
+
+    atomMap.list.forEach( function( atomType ){
+
+        console.log( atomType );  // some debug output
+
+        // note that each atomType is defined by atomname and element,
+        // so don't change either! you may change vdw or covalent radius
+        // but be aware that those radii are used to determine if two
+        // atoms are connected or not
+
+        // atomType.vdw = 3
+        // atomType.covalent = 2
+
+    } );
+
+    return ts;
+
+}
+
+
 export {
 	reorderAtoms,
 	assignSecondaryStructure,
@@ -1018,5 +1101,6 @@ export {
 	calculateBondsBetween,
 	buildUnitcellAssembly,
     guessElement,
-    assignResidueTypeBonds
+    assignResidueTypeBonds,
+    getTraceStructure
 };
