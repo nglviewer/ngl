@@ -527,13 +527,20 @@ NGL.MenubarWidget = function( stage, preferences ){
 NGL.MenubarFileWidget = function( stage ){
 
     var fileTypesOpen = NGL.ParserRegistry.names.concat( [ "ngl", "gz" ] );
+    var dcdIndex = fileTypesOpen.indexOf( "dcd" );
+    if( dcdIndex !== -1 ) fileTypesOpen.splice( dcdIndex, 1 );  // disallow dcd files
     var fileTypesImport = fileTypesOpen;
 
     function fileInputOnChange( e ){
         var fn = function( file, callback ){
-            stage.loadFile( file, {
-                defaultRepresentation: true
-            } ).then( function(){ callback(); } );
+            var ext = file.name.split('.').pop().toLowerCase();
+            if( fileTypesImport.includes( ext ) ){
+                stage.loadFile( file, {
+                    defaultRepresentation: true
+                } ).then( function(){ callback(); } );
+            }else{
+                console.error( "unknown filetype: " + ext );
+            }
         }
         var queue = new NGL.Queue( fn, e.target.files );
     }
@@ -563,13 +570,13 @@ NGL.MenubarFileWidget = function( stage ){
         var dirWidget;
         function onListingClick( info ){
             var ext = info.path.split('.').pop().toLowerCase();
-            if( fileTypesImport.indexOf( ext ) !== -1 ){
+            if( fileTypesImport.includes( ext ) ){
                 stage.loadFile( datasource.getUrl( info.path ), {
                     defaultRepresentation: true
                 } );
                 dirWidget.dispose();
             }else{
-                NGL.log( "unknown filetype: " + ext );
+                console.error( "unknown filetype: " + ext );
             }
         }
 
