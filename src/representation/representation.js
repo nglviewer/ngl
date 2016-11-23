@@ -400,6 +400,8 @@ Representation.prototype = {
         if( this.visible ){
 
             var lazyProps = this.lazyProps;
+            var bufferParams = lazyProps.bufferParams;
+            var what = lazyProps.what;
 
             if( lazyProps.build ){
 
@@ -407,9 +409,11 @@ Representation.prototype = {
                 this.build();
                 return;
 
-            }else if( lazyProps.bufferParams || lazyProps.what ){
+            }else if( Object.keys( bufferParams ).length || Object.keys( what ).length ){
 
-                this.updateParameters( lazyProps.bufferParams, lazyProps.what );
+                lazyProps.bufferParams = {};
+                lazyProps.what = {};
+                this.updateParameters( bufferParams, what );
 
             }
 
