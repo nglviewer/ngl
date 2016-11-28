@@ -303,7 +303,9 @@ var IonNames = [
     "PO4", "PR", "PT", "PT4", "PTN", "RB", "RH3", "RHD", "RU", "SB", "SCN", "SE4",
     "SEK", "SM", "SMO", "SO3", "SO4", "SR", "T1A", "TB", "TBA", "TCN", "TEA", "TH",
     "THE", "TL", "TMA", "TRA", "UNX", "V", "VN3", "VO4", "W", "WO5", "Y1", "YB",
-    "YB2", "YH", "YT3", "ZCM", "ZN", "ZN2", "ZN3", "ZNO", "ZO3"
+    "YB2", "YH", "YT3", "ZCM", "ZN", "ZN2", "ZN3", "ZNO", "ZO3",
+    // additional ion names
+    "OHX"
 ];
 
 // all chemical components with the word "%saccharide%" in their type, Sep 2016
