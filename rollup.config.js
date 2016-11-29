@@ -6,6 +6,7 @@ var external = Object.keys(pkg.dependencies);
 
 function glsl () {
   return {
+    name: "glsl",
     transform: function( code, id ) {
       if ( !/\.(glsl|frag|vert)$/.test( id ) ) return;
       var src, key;
@@ -27,16 +28,19 @@ function glsl () {
           .replace( / *\n */g, '\n' )
       );
       var register = "ShaderRegistry.add('" + key + "', " + shader + ");";
-      return registryImport + register;
+      code = registryImport + register;
+      return { code: code, map: { mappings: "" } };
     }
   };
 }
 
 function text () {
   return {
+    name: "text",
     transform: function( code, id ) {
       if ( !/\.(txt)$/.test( id ) ) return;
-      return 'export default ' + JSON.stringify( code ) + ';';
+      code = 'export default ' + JSON.stringify( code ) + ';';
+      return { code: code, map: { mappings: "" } };
     }
   };
 }
@@ -54,7 +58,7 @@ export default {
       dest: "build/js/ngl.dev.js",
       format: 'umd',
       moduleName: 'NGL',
-      sourceMap: false
+      sourceMap: true
     }
   ]
 };
