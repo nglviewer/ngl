@@ -521,11 +521,10 @@ Stage.prototype = {
         };
 
         var ext = defaults( p.ext, getFileInfo( path ).ext );
-        var excludeExtList = [ "dcd" ];
         var promise;
 
-        if( excludeExtList.includes( ext ) ){
-            promise = Promise.reject( "loadFile: ext '" + ext + "' can't be loaded" );
+        if( ext === "dcd" ){
+            promise = Promise.reject( "loadFile: ext 'dcd' must be loaded into a structure component" );
         }else{
             promise = autoLoad( path, p );
         }
