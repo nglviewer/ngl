@@ -195,15 +195,17 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
-    addTrajectory: function( trajPath, sele, i ){
+    /**
+     * Add a new trajectory component to the structure
+     * @param {String|Frames} trajPath - path or frames object
+     * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
+     * @return {TrajectoryComponent} the created trajectory component object
+     */
+    addTrajectory: function( trajPath, params ){
 
-        var params = { "i": i };
+        var traj = makeTrajectory( trajPath, this.structureView, params );
 
-        var traj = makeTrajectory(
-            trajPath, this.structureView, sele
-        );
-
-        traj.signals.frameChanged.add( function( /*value*/ ){
+        traj.signals.frameChanged.add( function(){
             this.updateRepresentations( { "position": true } );
         }, this );
 

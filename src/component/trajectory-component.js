@@ -5,13 +5,34 @@
  */
 
 
+import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
+/**
+ * Trajectory component parameter object.
+ * @typedef {Object} TrajectoryComponentParameters - component parameters
+ *
+ * @property {String} name - component name
+ * @property {Integer} initialFrame - initial frame the trajectory is set to
+ * @property {Integer} defaultStep - default step size to be used by trajectory players
+ * @property {Integer} defaultTimeout - default timeout to be used by trajectory players
+ */
+
+
+/**
+ * Component wrapping a trajectory object
+ * @class
+ * @extends Component
+ * @param {Stage} stage - stage object the component belongs to
+ * @param {Trajectory} trajectory - the trajectory object
+ * @param {TrajectoryComponentParameters} params - component parameters
+ * @param {StructureComponent} parent - the parent structure
+ */
 function TrajectoryComponent( stage, trajectory, params, parent ){
 
     var p = params || {};
-    p.name = p.name !== undefined ? p.name : trajectory.name;
+    p.name = defaults( p.name, trajectory.name );
 
     Component.call( this, stage, p );
 
@@ -19,32 +40,27 @@ function TrajectoryComponent( stage, trajectory, params, parent ){
     this.parent = parent;
     this.status = "loaded";
 
+    this.defaultStep = defaults( p.defaultStep, undefined );
+    this.defaultTimeout = defaults( p.defaultTimeout, 50 );
+
     // signals
 
     trajectory.signals.frameChanged.add( function( i ){
-
         this.signals.frameChanged.dispatch( i );
-
     }, this );
 
     trajectory.signals.playerChanged.add( function( player ){
-
         this.signals.playerChanged.dispatch( player );
-
     }, this );
 
     trajectory.signals.gotNumframes.add( function( n ){
-
         this.signals.gotNumframes.dispatch( n );
-
     }, this );
 
     //
 
-    if( p.i !== undefined ){
-
-        this.setFrame( p.i );
-
+    if( p.initialFrame !== undefined ){
+        this.setFrame( p.initialFrame );
     }
 
 }

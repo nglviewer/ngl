@@ -10,21 +10,21 @@ import StructureTrajectory from "./structure-trajectory.js";
 import RemoteTrajectory from "./remote-trajectory.js";
 
 
-function makeTrajectory( trajSrc, structure, sele ){
+function makeTrajectory( trajSrc, structure, params ){
 
     var traj;
 
-    if( ( trajSrc && trajSrc.type === "frames" ) || trajSrc instanceof Promise ){
+    if( trajSrc && trajSrc.type === "Frames" ){
 
-        traj = new FramesTrajectory( trajSrc, structure, sele );
+        traj = new FramesTrajectory( trajSrc, structure, params );
 
     }else if( !trajSrc && structure.frames ){
 
-        traj = new StructureTrajectory( trajSrc, structure, sele );
+        traj = new StructureTrajectory( trajSrc, structure, params );
 
     }else{
 
-        traj = new RemoteTrajectory( trajSrc, structure, sele );
+        traj = new RemoteTrajectory( trajSrc, structure, params );
 
     }
 

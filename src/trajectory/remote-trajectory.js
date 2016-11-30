@@ -9,9 +9,9 @@ import { Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
 
 
-function RemoteTrajectory( trajPath, structure, selectionString ){
+function RemoteTrajectory( trajPath, structure, params ){
 
-    Trajectory.call( this, trajPath, structure, selectionString );
+    Trajectory.call( this, trajPath, structure, params );
 
 }
 

@@ -51,8 +51,7 @@ NGL.ExampleRegistry.addDict( {
             sele: "50-100"
         } ).then( function( o ){
             var trajComp = o.addTrajectory();
-            var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
-            player.play();
+            trajComp.trajectory.player.play();
             o.addRepresentation( "cartoon" );
             // o.addRepresentation( "helixorient" );
             // o.addRepresentation( "rope" );
@@ -1228,13 +1227,10 @@ NGL.ExampleRegistry.addDict( {
             } );
             o.centerView();
 
-            var framesPromise = NGL.autoLoad( "data://ala3.dcd" );
-            var trajComp = o.addTrajectory( framesPromise );
-
-            framesPromise.then( function(){
-                var player = new NGL.TrajectoryPlayer( trajComp.trajectory );
-                player.play();
-            } );
+            NGL.autoLoad( "data://ala3.dcd" ).then( function( frames ){
+                var trajComp = o.addTrajectory( frames );
+                trajComp.trajectory.player.play();
+            });
 
         } );
 
@@ -1248,20 +1244,17 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "surface", { visible: false, lazy: true } );
             o.centerView();
 
-            var framesPromise = NGL.autoLoad( "data://md_1u19.dcd.gz" );
-            o.addTrajectory( framesPromise );
-
-            // var framesPromise = NGL.autoLoad( "data://md_1u19.dcd.gz" )
-            //     .then( function( frames ){
-            //         o.addTrajectory( frames );
-            //     } )
-
-            // FIXME
-            // .setParameters( {
-            //     "centerPbc": false,
-            //     "removePbc": false,
-            //     "superpose": true
-            // } );
+            NGL.autoLoad( "data://md_1u19.dcd.gz" ).then( function( frames ){
+                o.addTrajectory( frames, {
+                    initialFrame: 100,
+                    defaultTimeout: 500,
+                    defaultStep: undefined,
+                    centerPbc: false,
+                    removePbc: false,
+                    superpose: true,
+                    sele: "backbone and not hydrogen"
+                } );
+            } );
 
         } );
 

@@ -1533,17 +1533,15 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     function fileInputOnChange( e ){
         var fn = function( file, callback ){
-            var framesPromise = NGL.autoLoad( file )
-                .then( function( frames ){
-                    callback();
-                    return frames;  // pass through
-                } );
-            component.addTrajectory( framesPromise );
+            NGL.autoLoad( file ).then( function( frames ){
+                component.addTrajectory( frames );
+                callback();
+            } );
         }
         var queue = new NGL.Queue( fn, e.target.files );
     }
 
-    var fileInput = document.createElement("input");
+    var fileInput = document.createElement( "input" );
     fileInput.type = "file";
     fileInput.multiple = true;
     fileInput.style.display = "none";
@@ -2042,11 +2040,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     // } );
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     signals.disposed.add( function(){
@@ -2070,8 +2066,15 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
-        // 1000 = n / step
-        step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
+        frame.setValue( traj.currentFrame );
+        frameRange.setValue( traj.currentFrame );
+
+        if( component.defaultStep !== undefined ){
+            step.setValue( component.defaultStep );
+        }else{
+            // 1000 = n / step
+            step.setValue( Math.ceil( ( value + 1 ) / 100 ) );
+        }
 
         player.step = step.getValue();
         player.end = value;
@@ -2081,12 +2084,9 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     signals.gotNumframes.add( init );
 
     signals.frameChanged.add( function( value ){
-
         frame.setValue( value );
         frameRange.setValue( value );
-
         numframes.clear().add( frame.setWidth( "70px" ) );
-
     } );
 
     // Name
@@ -2104,10 +2104,8 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
         .setWidth( "70px" )
         .setRange( -1, -1 )
         .onChange( function( e ){
-
             traj.setFrame( frame.getValue() );
             menu.setMenuDisplay( "none" );
-
         } );
 
     var step = new UI.Integer( 1 )
@@ -2133,14 +2131,10 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             }
 
             if( traj.player && traj.player._running ){
-
                 traj.setPlayer();
                 traj.setFrame( value );
-
             }else if( !traj.inProgress ){
-
                 traj.setFrame( value );
-
             }
 
         } );
@@ -2153,9 +2147,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             "spline": "spline",
         } )
         .onChange( function(){
-
             player.interpolateType = interpolateType.getValue();
-
         } );
 
     var interpolateStep = new UI.Integer( 5 )
@@ -2167,7 +2159,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     // player
 
-    var timeout = new UI.Integer( 50 )
+    var timeout = new UI.Integer( component.defaultTimeout || 50 )
         .setWidth( "30px" )
         .setRange( 10, 1000 )
         .onChange( function(){
@@ -2177,6 +2169,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     var player = new NGL.TrajectoryPlayer(
         traj, step.getValue(), timeout.getValue(), 0, traj.numframes
     );
+    traj.setPlayer( player );
 
     var playerButton = new UI.ToggleIcon( true, "play", "pause" )
         .setMarginRight( "10px" )
@@ -2210,9 +2203,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             "backward": "backward",
         } )
         .onChange( function(){
-
             player.direction = playDirection.getValue();
-
         } );
 
     var playMode = new UI.Select()
@@ -2222,9 +2213,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             "once": "once",
         } )
         .onChange( function(){
-
             player.mode = playMode.getValue();
-
         } );
 
     // Selection
@@ -2237,21 +2226,21 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     // Options
 
-    var setCenterPbc = new UI.Checkbox( traj.params.centerPbc )
+    var setCenterPbc = new UI.Checkbox( traj.centerPbc )
         .onChange( function(){
             component.setParameters( {
                 "centerPbc": setCenterPbc.getValue()
             } );
         } );
 
-    var setRemovePbc = new UI.Checkbox( traj.params.removePbc )
+    var setRemovePbc = new UI.Checkbox( traj.removePbc )
         .onChange( function(){
             component.setParameters( {
                 "removePbc": setRemovePbc.getValue()
             } );
         } );
 
-    var setSuperpose = new UI.Checkbox( traj.params.superpose )
+    var setSuperpose = new UI.Checkbox( traj.superpose )
         .onChange( function(){
             component.setParameters( {
                 "superpose": setSuperpose.getValue()

@@ -18,6 +18,7 @@ function Frames( name, path ){
 Frames.prototype = {
 
     constructor: Frames,
+    type: "Frames",
 
 };
 

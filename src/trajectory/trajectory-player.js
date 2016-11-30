@@ -7,6 +7,8 @@
 
 import Signal from "../../lib/signals.es6.js";
 
+import { defaults } from "../utils.js";
+
 
 function TrajectoryPlayer( traj, step, timeout, start, end ){
 
@@ -21,17 +23,18 @@ function TrajectoryPlayer( traj, step, timeout, start, end ){
         }
     }, this );
 
+    var n = traj.numframes;
+
     this.traj = traj;
-    this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
-    this.timeout = timeout || 50;
-    this.start = start || 0;
-    this.end = end || traj.numframes - 1;
-    this.end = Math.min( this.end, traj.numframes - 1 );
+    this.step = defaults( step, Math.ceil( ( n + 1 ) / 100 ) );
+    this.timeout = defaults( timeout, 50 );
+    this.start = defaults( start, 0 );
+    this.end = Math.min( defaults( end, n - 1 ), n - 1 );
     this.interpolateType = "";
     this.interpolateStep = 5;
 
-    this.mode = "loop"; // loop, once
-    this.direction = "forward"; // forward, backward
+    this.mode = "loop";  // loop, once
+    this.direction = "forward";  // forward, backward
 
     this._stopFlag = false;
     this._running = false;
