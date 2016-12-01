@@ -32,6 +32,11 @@
             "name": "Watch",
             "shell_cmd": "npm run-script watch",
             "working_dir": "${project_path}",
+        },
+        {
+            "name": "Rollup",
+            "shell_cmd": "rollup -c",
+            "working_dir": "${project_path}",
         }
     ]
 }
