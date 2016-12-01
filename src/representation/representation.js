@@ -530,9 +530,7 @@ Representation.prototype = {
         };
 
         Object.keys( this.parameters ).forEach( function( name ){
-            if( this.parameters.type === "button" ){
-                params[ name ] = this[ name ].bind( this );
-            }else{
+            if( this.parameters[ name ] !== null ){
                 params[ name ] = this[ name ];
             }
         }, this );
