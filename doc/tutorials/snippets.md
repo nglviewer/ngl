@@ -51,7 +51,7 @@ var schemeId = NGL.ColorMakerRegistry.addSelectionScheme( [
     [ "white", "*" ]
 ], "Transmembrane 3dqb" );
 
-stage.loadFile( "data://3dqb.pdb" ).then( function( o ){
+stage.loadFile( "rcsb://3dqb.pdb" ).then( function( o ){
     o.addRepresentation( "cartoon", { color: schemeId } );  // pass schemeId here
     o.centerView();
 } );
@@ -75,9 +75,27 @@ var schemeId = NGL.ColorMakerRegistry.addScheme( function( params ){
     };
 } );
 
-stage.loadFile( "data://3dqb.pdb" ).then( function( o ){
+stage.loadFile( "rcsb://3dqb.pdb" ).then( function( o ){
     o.addRepresentation( "cartoon", { color: schemeId } );  // pass schemeId here
     o.centerView();
 } );
 ```
 
+
+## Distance-based selection
+
+Get a selection of atoms that are within a certain distance of another selection.
+
+```
+stage.loadFile( "rcsb://3pqr" ).then( function( o ){
+    // get all atoms within 5 Angstrom of retinal
+    var selection = new NGL.Selection( "RET" );
+    var radius = 5;
+    var atomSet = o.structure.getAtomSetWithinSelection( selection, radius );
+    // expand selection to complete groups
+    var atomSet2 = o.structure.getAtomSetWithinGroup( atomSet );
+    o.addRepresentation( "licorice", { sele: atomSet2.toSeleString() } );
+    o.addRepresentation( "cartoon" );
+    o.centerView();
+} );
+```

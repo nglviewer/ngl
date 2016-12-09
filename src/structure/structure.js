@@ -387,6 +387,12 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get set of atom around a set of atoms from a selection
+     * @param  {Selection} selection - the selection object
+     * @param  {Number} radius - radius to select within
+     * @return {BitSet} set of atoms
+     */
     getAtomSetWithinSelection: function( selection, radius ){
 
         var spatialHash = this.spatialHash;
