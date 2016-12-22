@@ -565,29 +565,20 @@ Stage.prototype = {
     removeComponent: function( component ){
 
         var idx = this.compList.indexOf( component );
-
         if( idx !== -1 ){
-
             this.compList.splice( idx, 1 );
-
+            component.dispose();
+            this.signals.componentRemoved.dispatch( component );
         }
-
-        component.dispose();
-
-        this.signals.componentRemoved.dispatch( component );
 
     },
 
     removeAllComponents: function( type ){
 
         this.compList.slice().forEach( function( o ){
-
             if( !type || o.type === type ){
-
                 this.removeComponent( o );
-
             }
-
         }, this );
 
     },

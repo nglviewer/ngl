@@ -133,6 +133,12 @@ Component.prototype = {
 
     },
 
+    hasRepresentation: function( repr ){
+
+        return this.reprList.indexOf( repr ) !== -1;
+
+    },
+
     /**
      * Removes a representation component
      * @fires Component#representationRemoved
@@ -142,12 +148,11 @@ Component.prototype = {
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
-
         if( idx !== -1 ){
             this.reprList.splice( idx, 1 );
+            repr.dispose();
+            this.signals.representationRemoved.dispatch( repr );
         }
-
-        this.signals.representationRemoved.dispatch( repr );
 
     },
 
@@ -161,21 +166,31 @@ Component.prototype = {
 
     },
 
-    clearRepresentations: function(){
+    /**
+     * Removes all representation components
+     * @fires Component#representationRemoved
+     * @return {undefined}
+     */
+    removeAllRepresentations: function(){
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
-            repr.dispose();
-        } );
+            this.removeRepresentation( repr );
+        }, this );
+
+    },
+
+    clearRepresentations: function(){
+
+        console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
+        this.removeAllRepresentations();
 
     },
 
     dispose: function(){
 
-        this.clearRepresentations();
-
+        this.removeAllRepresentations();
         delete this.reprList;
-
         this.signals.disposed.dispatch();
 
     },

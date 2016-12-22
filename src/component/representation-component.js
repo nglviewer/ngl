@@ -102,6 +102,13 @@ RepresentationComponent.prototype = Object.assign( Object.create(
      */
     removeRepresentation: function(){},
 
+    /**
+     * @ignore
+     * @alias RepresentationComponent#hasRepresentation
+     * @return {undefined}
+     */
+    hasRepresentation: function(){},
+
     disposeRepresentation: function(){
 
         if( this.repr ){
@@ -113,12 +120,12 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        if( this.parent ){
+        if( this.parent && this.parent.hasRepresentation( this ) ){
             this.parent.removeRepresentation( this );
+        }else{
+            this.disposeRepresentation();
+            this.signals.disposed.dispatch();
         }
-        this.disposeRepresentation();
-        delete this.reprArgs;
-        this.signals.disposed.dispatch();
 
     },
 
