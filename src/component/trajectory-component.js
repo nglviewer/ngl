@@ -17,6 +17,10 @@ import Component from "./component.js";
  * @property {Integer} initialFrame - initial frame the trajectory is set to
  * @property {Integer} defaultStep - default step size to be used by trajectory players
  * @property {Integer} defaultTimeout - default timeout to be used by trajectory players
+ * @property {String} defaultInterpolateType - one of "" (empty string), "linear" or "spline"
+ * @property {Integer} defaultInterpolateStep - window size used for interpolation
+ * @property {String} defaultMode - either "loop" or "once"
+ * @property {String} defaultDirection - either "forward" or "backward"
  */
 
 
@@ -42,6 +46,10 @@ function TrajectoryComponent( stage, trajectory, params, parent ){
 
     this.defaultStep = defaults( p.defaultStep, undefined );
     this.defaultTimeout = defaults( p.defaultTimeout, 50 );
+    this.defaultInterpolateType = defaults( p.defaultInterpolateType, "" );
+    this.defaultInterpolateStep = defaults( p.defaultInterpolateStep, 5 );
+    this.defaultMode = defaults( p.defaultMode, "loop" );
+    this.defaultDirection = defaults( p.defaultDirection, "forward" );
 
     // signals
 

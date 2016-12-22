@@ -2146,29 +2146,59 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
             "linear": "linear",
             "spline": "spline",
         } )
+        .setValue( component.defaultInterpolateType )
         .onChange( function(){
             player.interpolateType = interpolateType.getValue();
         } );
 
-    var interpolateStep = new UI.Integer( 5 )
+    var interpolateStep = new UI.Integer( component.defaultInterpolateStep )
         .setWidth( "30px" )
         .setRange( 1, 50 )
         .onChange( function(){
             player.interpolateStep = interpolateStep.getValue();
         } );
 
+    var playDirection = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "forward": "forward",
+            "backward": "backward",
+        } )
+        .setValue( component.defaultDirection )
+        .onChange( function(){
+            player.direction = playDirection.getValue();
+        } );
+
+    var playMode = new UI.Select()
+        .setColor( '#444' )
+        .setOptions( {
+            "loop": "loop",
+            "once": "once",
+        } )
+        .setValue( component.defaultMode )
+        .onChange( function(){
+            player.mode = playMode.getValue();
+        } );
+
     // player
 
-    var timeout = new UI.Integer( component.defaultTimeout || 50 )
+    var timeout = new UI.Integer( component.defaultTimeout )
         .setWidth( "30px" )
         .setRange( 10, 1000 )
         .onChange( function(){
             player.timeout = timeout.getValue();
         } );
 
-    var player = new NGL.TrajectoryPlayer(
-        traj, step.getValue(), timeout.getValue(), 0, traj.numframes
-    );
+    var player = new NGL.TrajectoryPlayer( traj, {
+        step: step.getValue(),
+        timeout: timeout.getValue(),
+        start: 0,
+        end: traj.numframes,
+        interpolateType: interpolateType.getValue(),
+        interpolateStep: interpolateStep.getValue(),
+        direction: playDirection.getValue(),
+        mode: playMode.getValue()
+    } );
     traj.setPlayer( player );
 
     var playerButton = new UI.ToggleIcon( true, "play", "pause" )
@@ -2195,26 +2225,6 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     frameRow.add( playerButton );
     frameRow.add( frameRange );
-
-    var playDirection = new UI.Select()
-        .setColor( '#444' )
-        .setOptions( {
-            "forward": "forward",
-            "backward": "backward",
-        } )
-        .onChange( function(){
-            player.direction = playDirection.getValue();
-        } );
-
-    var playMode = new UI.Select()
-        .setColor( '#444' )
-        .setOptions( {
-            "loop": "loop",
-            "once": "once",
-        } )
-        .onChange( function(){
-            player.mode = playMode.getValue();
-        } );
 
     // Selection
 

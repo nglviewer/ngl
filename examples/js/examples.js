@@ -1247,8 +1247,10 @@ NGL.ExampleRegistry.addDict( {
             NGL.autoLoad( "data://md_1u19.dcd.gz" ).then( function( frames ){
                 o.addTrajectory( frames, {
                     initialFrame: 100,
-                    defaultTimeout: 500,
+                    defaultTimeout: 100,
                     defaultStep: undefined,
+                    defaultInterpolateType: "spline",
+                    defaultDirection: "forward",
                     centerPbc: false,
                     removePbc: false,
                     superpose: true,
