@@ -2046,10 +2046,8 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     } );
 
     signals.disposed.add( function(){
-
         menu.dispose();
         container.dispose();
-
     } );
 
     var numframes = new UI.Panel()
@@ -2091,8 +2089,12 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
 
     // Name
 
-    var name = new UI.EllipsisText( traj.name )
+    var name = new UI.EllipsisText( component.name )
         .setWidth( "108px" );
+
+    signals.nameChanged.add( function( value ){
+        name.setValue( value );
+    } );
 
     container.addStatic( name );
     container.addStatic( numframes );

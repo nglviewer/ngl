@@ -10,13 +10,13 @@ import Trajectory from "./trajectory.js";
 
 function FramesTrajectory( frames, structure, params ){
 
+    Trajectory.call( this, "", structure, params );
+
     this.name = frames.name;
     this.path = frames.path;
 
     this.frames = frames.coordinates;
     this.boxes = frames.boxes;
-
-    Trajectory.call( this, "", structure, params );
 
 }
 
