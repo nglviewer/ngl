@@ -57,7 +57,8 @@ function matchName( name, comp ){
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered} signal is fired
+ * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
+ *                                      signal is fired, set to -1 to ignore hovering
  */
 
 
@@ -242,7 +243,7 @@ Stage.prototype = {
             type: "number", precision: 2, max: 10, min: 0
         },
         hoverTimeout: {
-            type: "integer", max: 10000, min: 10
+            type: "integer", max: 10000, min: -1
         },
 
     },

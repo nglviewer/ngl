@@ -122,11 +122,11 @@ var PickingControls = function( stage, params ){
             mouse.moving = false;
         }
         if( mouse.scrolled || ( !mouse.moving && !mouse.hovering ) ){
-            mouse.hovering = true;
             mouse.scrolled = false;
-            var pd = pick( mouse );
-            signals.hovered.dispatch( pd );
-            // if( Debug ) Log.log( "hovered", pd );
+            if( hoverTimeout !== -1 ){
+                mouse.hovering = true;
+                signals.hovered.dispatch( pick( mouse ) );
+            }
         }
         requestAnimationFrame( listen );
     }
