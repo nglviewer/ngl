@@ -152,6 +152,7 @@ var PickingControls = function( viewer, params ){
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
         var pd = pick( mouse, true );
         mouse.which = undefined;
+        pd.ctrlKey = e.ctrlKey;
         signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
     } );
