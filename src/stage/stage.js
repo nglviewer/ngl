@@ -39,6 +39,7 @@ function matchName( name, comp ){
  * @property {Color} backgroundColor - background color
  * @property {Integer} sampleLevel - sampling level for antialiasing, between -1 and 5;
  *                                   -1: no sampling, 0: only sampling when not moving
+ * @property {Boolean} workerDefault - default value for useWorker parameter of representations
  * @property {Float} rotateSpeed - camera-controls rotation speed, between 0 and 10
  * @property {Float} zoomSpeed - camera-controls zoom speed, between 0 and 10
  * @property {Float} panSpeed - camera-controls pan speed, between 0 and 10
@@ -157,6 +158,7 @@ function Stage( eid, params ){
     var p = Object.assign( {
         impostor: true,
         quality: "medium",
+        workerDefault: true,
         sampleLevel: 0,
         backgroundColor: "black",
         rotateSpeed: 2.0,
@@ -198,6 +200,9 @@ Stage.prototype = {
             type: "range", step: 1, max: 5, min: -1
         },
         impostor: {
+            type: "boolean"
+        },
+        workerDefault: {
             type: "boolean"
         },
         rotateSpeed: {

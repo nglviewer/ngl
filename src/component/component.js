@@ -111,6 +111,7 @@ Component.prototype = {
         var sp = this.stage.getParameters();
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
+        p.useWorker = defaults( p.useWorker, sp.workerDefault );
         p.visible = defaults( p.visible, true );
         p.gidPool = this.stage.gidPool;
 
