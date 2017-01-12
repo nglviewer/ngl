@@ -43,6 +43,12 @@ AtomProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.chainIndex ];
+    },
     get modelIndex () {
         return this.chainStore.modelIndex[ this.chainIndex ];
     },
@@ -51,7 +57,7 @@ AtomProxy.prototype = {
     },
     get residue () {
         console.warn( "residue - might be expensive" );
-        return this.structure.getResidueProxy( this.residueIndex, false );
+        return this.structure.getResidueProxy( this.residueIndex );
     },
 
     get residueIndex () {
@@ -74,6 +80,9 @@ AtomProxy.prototype = {
     },
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
+    },
+    get chainid () {
+        return this.chainStore.getChainid( this.chainIndex );
     },
 
     //
@@ -201,22 +210,25 @@ AtomProxy.prototype = {
 
     isBackbone: function(){
         var backboneIndexList = this.residueType.backboneIndexList;
-        // console.log(backboneIndexList)
         if( backboneIndexList.length > 0 ){
             var atomOffset = this.residueStore.atomOffset[ this.residueIndex ];
-            return backboneIndexList.indexOf( this.index - atomOffset ) !== -1;
+            return backboneIndexList.includes( this.index - atomOffset );
         }else{
             return false;
         }
     },
 
     isPolymer: function(){
-        var moleculeType = this.residueType.moleculeType;
-        return (
-            moleculeType === ProteinType ||
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-        );
+        if( this.structure.entityList.length > 0 ){
+            return this.entity.isPolymer();
+        }else{
+            var moleculeType = this.residueType.moleculeType;
+            return (
+                moleculeType === ProteinType ||
+                moleculeType === RnaType ||
+                moleculeType === DnaType
+            );
+        }
     },
 
     isSidechain: function(){
@@ -414,7 +426,7 @@ AtomProxy.prototype = {
         if( this.chainname ) name += ":" + this.chainname;
         if( this.atomname ) name += "." + this.atomname;
         if( this.altloc ) name += "%" + this.altloc;
-        name += "/" + this.modelIndex;
+        if( this.structure.modelStore.count > 1 ) name += "/" + this.modelIndex;
         return name;
     },
 

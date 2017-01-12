@@ -12,7 +12,7 @@ describe('writer/pdb-writer', function() {
 
 describe('writing', function () {
     it('getString', function () {
-        var path = __dirname + "/../../data/1crn.pdb";
+        var path = __dirname + "/../data/1crn.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var pdbParser = new PdbParser( streamer );
@@ -26,7 +26,7 @@ describe('writing', function () {
     });
 
     it.skip('getBlob', function () {
-        var path = __dirname + "/../../data/1crn.pdb";
+        var path = __dirname + "/../data/1crn.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var pdbParser = new PdbParser( streamer );

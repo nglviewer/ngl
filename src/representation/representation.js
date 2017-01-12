@@ -5,7 +5,7 @@
  */
 
 
-import { Color } from "../../lib/three.es6.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -20,6 +20,8 @@ import Counter from "../utils/counter.js";
  *                            otherwise defer changes until set visible again
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
+ * @property {Integer} clipRadius - radius of clipping sphere
+ * @property {Vector3} clipCenter - position of for spherical clipping
  * @property {Boolean} flatShaded - render flat shaded
  * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
  * @property {String} side - which triangle sides to render, "front" front-side,
@@ -52,6 +54,8 @@ function Representation( object, viewer, params ){
      * @member {Viewer}
      */
     this.viewer = viewer;
+
+    this.gidPool = params ? params.gidPool : undefined;
 
     /**
      * Counter that keeps track of tasks related to the creation of
@@ -90,6 +94,12 @@ Representation.prototype = {
 
         clipNear: {
             type: "range", step: 1, max: 100, min: 0, buffer: true
+        },
+        clipRadius: {
+            type: "number", precision: 1, max: 1000, min: 0, buffer: true
+        },
+        clipCenter: {
+            type: "vector3", precision: 1, buffer: true
         },
         flatShaded: {
             type: "boolean", buffer: true
@@ -144,6 +154,8 @@ Representation.prototype = {
         var p = params || {};
 
         this.clipNear = defaults( p.clipNear, 0 );
+        this.clipRadius = defaults( p.clipRadius, 0 );
+        this.clipCenter = defaults( p.clipCenter, new Vector3() );
         this.flatShaded = defaults( p.flatShaded, false );
         this.side = defaults( p.side, "double" );
         this.opacity = defaults( p.opacity, 1.0 );
@@ -225,9 +237,11 @@ Representation.prototype = {
 
     },
 
-    getColorParams: function(){
+    getColorParams: function( p ){
 
-        return {
+        return Object.assign( {
+
+            gidPool: this.gidPool,
 
             scheme: this.colorScheme,
             scale: this.colorScale,
@@ -235,7 +249,7 @@ Representation.prototype = {
             domain: this.colorDomain,
             mode: this.colorMode,
 
-        };
+        }, p );
 
     },
 
@@ -244,6 +258,8 @@ Representation.prototype = {
         return Object.assign( {
 
             clipNear: this.clipNear,
+            clipRadius: this.clipRadius,
+            clipCenter: this.clipCenter,
             flatShaded: this.flatShaded,
             opacity: this.opacity,
             side: this.side,
@@ -262,7 +278,7 @@ Representation.prototype = {
 
         var types = Object.keys( ColorMakerRegistry.getTypes() );
 
-        if( types.indexOf( value ) !== -1 ){
+        if( types.includes( value ) ){
 
             if( p ){
                 p.colorScheme = value;
@@ -302,7 +318,7 @@ Representation.prototype = {
 
     },
 
-    build: function( params ){
+    build: function( updateWhat ){
 
         if( this.lazy && !this.visible ){
             this.lazyProps.build = true;
@@ -310,12 +326,8 @@ Representation.prototype = {
         }
 
         if( !this.prepare ){
-            if( !params ){
-                params = this.getParameters();
-                delete params.quality;
-            }
             this.tasks.increment();
-            this.make( params, function(){} );
+            this.make();
             return;
         }
 
@@ -327,30 +339,21 @@ Representation.prototype = {
             this.tasks.increment();
         }
 
-        if( !params ){
-            params = this.getParameters();
-            delete params.quality;
-        }
-
-        this.queue.push( params );
+        this.queue.push( updateWhat || false );
 
     },
 
-    make: function( params, callback ){
+    make: function( updateWhat, callback ){
 
         if( Debug ) Log.time( "Representation.make " + this.type );
 
-        if( params && !params.__update ){
-            this.init( params );
-        }
-
         var _make = function(){
 
-            if( params.__update ){
-                this.update( params.__update );
+            if( updateWhat ){
+                this.update( updateWhat );
                 this.viewer.requestRender();
                 this.tasks.decrement();
-                callback();
+                if( callback ) callback();
             }else{
                 this.clear();
                 this.create();
@@ -359,7 +362,7 @@ Representation.prototype = {
                     this.attach( function(){
                         if( Debug ) Log.timeEnd( "Representation.attach " + this.type );
                         this.tasks.decrement();
-                        callback();
+                        if( callback ) callback();
                     }.bind( this ) );
                 }
             }
@@ -397,6 +400,8 @@ Representation.prototype = {
         if( this.visible ){
 
             var lazyProps = this.lazyProps;
+            var bufferParams = lazyProps.bufferParams;
+            var what = lazyProps.what;
 
             if( lazyProps.build ){
 
@@ -404,9 +409,11 @@ Representation.prototype = {
                 this.build();
                 return;
 
-            }else if( lazyProps.bufferParams || lazyProps.what ){
+            }else if( Object.keys( bufferParams ).length || Object.keys( what ).length ){
 
-                this.updateParameters( lazyProps.bufferParams, lazyProps.what );
+                lazyProps.bufferParams = {};
+                lazyProps.what = {};
+                this.updateParameters( bufferParams, what );
 
             }
 
@@ -523,9 +530,7 @@ Representation.prototype = {
         };
 
         Object.keys( this.parameters ).forEach( function( name ){
-            if( this.parameters.type === "button" ){
-                params[ name ] = this[ name ].bind( this );
-            }else{
+            if( this.parameters[ name ] !== null ){
                 params[ name ] = this[ name ];
             }
         }, this );

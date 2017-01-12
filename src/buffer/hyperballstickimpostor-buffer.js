@@ -7,6 +7,9 @@
 
 import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
+import "../shader/HyperballStickImpostor.vert";
+import "../shader/HyperballStickImpostor.frag";
+
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";

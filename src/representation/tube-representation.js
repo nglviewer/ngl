@@ -36,6 +36,10 @@ TubeRepresentation.prototype = Object.assign( Object.create(
 
         CartoonRepresentation.prototype.init.call( this, p );
 
+        if( p.quality === "low" ){
+            this.radialSegments = 5;
+        }
+
     },
 
     getSplineParams: function( /*params*/ ){

@@ -11,7 +11,7 @@
 </head>
 <body>
     <!-- NGL -->
-    <script src="../build/js/ngl.js"></script>
+    <script src="../build/js/ngl.dev.js"></script>
 
     <!-- UI -->
     <script src="js/lib/signals.min.js"></script>
@@ -40,8 +40,9 @@
             "apbs", "plugins/apbs.plugin"
         );
 
+        var stage;
         document.addEventListener( "DOMContentLoaded", function(){
-            var stage = new NGL.Stage();
+            stage = new NGL.Stage();
             NGL.StageWidget( stage );
             var example = NGL.getQuery( "example" );
             if( example ) NGL.ExampleRegistry.load( example, stage );

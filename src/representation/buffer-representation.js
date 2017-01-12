@@ -14,7 +14,7 @@ import Representation from "./representation.js";
  * @extends Representation
  * @param {SphereBuffer|CylinderBuffer} buffer - a buffer object
  * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params- representation parameters
+ * @param {RepresentationParameters} params - representation parameters
  */
 function BufferRepresentation( buffer, viewer, params ){
 

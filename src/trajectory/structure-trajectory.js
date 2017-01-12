@@ -8,12 +8,12 @@
 import Trajectory from "./trajectory.js";
 
 
-function StructureTrajectory( trajPath, structure, selectionString ){
+function StructureTrajectory( trajPath, structure, params ){
 
     // if( !trajPath ) trajPath = structure.path;
     trajPath = "";
 
-    Trajectory.call( this, trajPath, structure, selectionString );
+    Trajectory.call( this, trajPath, structure, params );
 
 }
 

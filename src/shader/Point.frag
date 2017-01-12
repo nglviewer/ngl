@@ -1,7 +1,13 @@
 uniform vec3 diffuse;
 uniform float opacity;
+uniform float nearClip;
+uniform float clipRadius;
 
 varying vec3 vViewPosition;
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
+#endif
 
 #ifdef USE_MAP
     uniform sampler2D map;
@@ -12,6 +18,9 @@ varying vec3 vViewPosition;
 #include fog_pars_fragment
 
 void main(){
+
+    #include nearclip_fragment
+    #include radiusclip_fragment
 
     vec3 outgoingLight = vec3( 0.0 );
     vec4 diffuseColor = vec4( diffuse, 1.0 );

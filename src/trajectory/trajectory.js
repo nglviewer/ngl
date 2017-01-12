@@ -9,15 +9,101 @@ import Signal from "../../lib/signals.es6.js";
 
 
 import { Log } from "../globals.js";
+import { defaults } from "../utils.js";
 import Queue from "../utils/queue.js";
 import { circularMean } from "../math/array-utils.js";
 import Selection from "../selection.js";
 import Superposition from "../align/superposition.js";
 
 
-// TODO params handling in constructor and getParameters method
+function centerPbc( coords, mean, box ){
 
-function Trajectory( trajPath, structure, selectionString ){
+    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+        return;
+    }
+
+    var i;
+    var n = coords.length;
+
+    var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
+    var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
+
+    var fx = - mx + bx + bx / 2;
+    var fy = - my + by + by / 2;
+    var fz = - mz + bz + bz / 2;
+
+    for( i = 0; i < n; i += 3 ){
+        coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
+        coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
+        coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
+    }
+
+}
+
+
+function removePbc( x, box ){
+
+    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
+        return;
+    }
+
+    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
+    // in-place
+
+    var i, j, d, dist;
+    var n = x.length;
+
+    for( i = 3; i < n; i += 3 ){
+
+        for( j = 0; j < 3; ++j ){
+
+            dist = x[ i + j ] - x[ i - 3 + j ];
+
+            if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
+
+                if( dist > 0 ){
+
+                    for( d = 0; d < 3; ++d ){
+                        x[ i + d ] -= box[ j * 3 + d ];
+                    }
+
+                }else{
+
+                    for( d = 0; d < 3; ++d ){
+                        x[ i + d ] += box[ j * 3 + d ];
+                    }
+
+                }
+            }
+
+        }
+
+    }
+
+    return x;
+
+}
+
+
+/**
+ * Trajectory parameter object.
+ * @typedef {Object} TrajectoryParameters - parameters
+ *
+ * @property {String} sele - to restrict atoms used for superposition
+ * @property {Boolean} centerPbc - center on initial frame
+ * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
+ * @property {Boolean} superpose - superpose on initial frame
+ */
+
+
+/**
+ * Trajectory object for tying frames and structure together
+ * @class
+ * @param {String|Frames} trajPath - trajectory source
+ * @param {Structure} structure - the structure object
+ * @param {TrajectoryParameters} params - trajectory parameters
+ */
+function Trajectory( trajPath, structure, params ){
 
     this.signals = {
         gotNumframes: new Signal(),
@@ -26,17 +112,17 @@ function Trajectory( trajPath, structure, selectionString ){
         playerChanged: new Signal(),
     };
 
-    this.params = {
-        centerPbc: true,
-        removePbc: true,
-        superpose: true
-    };
+    var p = params || {};
+    p.centerPbc = defaults( p.centerPbc, true );
+    p.removePbc = defaults( p.removePbc, true );
+    p.superpose = defaults( p.superpose, true );
+    this.setParameters( p );
 
     this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
     // selection to restrict atoms used for superposition
     this.selection = new Selection(
-        selectionString || "backbone and not hydrogen"
+        defaults( p.sele, "backbone and not hydrogen" )
     );
 
     this.selection.signals.stringChanged.add( function(){
@@ -187,28 +273,21 @@ Trajectory.prototype = {
     setParameters: function( params ){
 
         var p = params;
-        var tp = this.params;
         var resetCache = false;
 
-        if( p.centerPbc !== undefined && p.centerPbc !== tp.centerPbc ){
-
-            tp.centerPbc = p.centerPbc;
+        if( p.centerPbc !== undefined && p.centerPbc !== this.centerPbc ){
+            this.centerPbc = p.centerPbc;
             resetCache = true;
-
         }
 
-        if( p.removePbc !== undefined && p.removePbc !== tp.removePbc ){
-
-            tp.removePbc = p.removePbc;
+        if( p.removePbc !== undefined && p.removePbc !== this.removePbc ){
+            this.removePbc = p.removePbc;
             resetCache = true;
-
         }
 
-        if( p.superpose !== undefined && p.superpose !== tp.superpose ){
-
-            tp.superpose = p.superpose;
+        if( p.superpose !== undefined && p.superpose !== this.superpose ){
+            this.superpose = p.superpose;
             resetCache = true;
-
         }
 
         if( resetCache ) this.resetCache();
@@ -408,74 +487,7 @@ Trajectory.prototype = {
 
     },
 
-    centerPbc: function( coords, mean, box ){
-
-        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-            return;
-        }
-
-        var i;
-        var n = coords.length;
-
-        var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
-        var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
-
-        var fx = - mx + bx + bx / 2;
-        var fy = - my + by + by / 2;
-        var fz = - mz + bz + bz / 2;
-
-        for( i = 0; i < n; i += 3 ){
-            coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
-            coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
-            coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
-        }
-
-    },
-
-    removePbc: function( x, box ){
-
-        if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-            return;
-        }
-
-        // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
-        // in-place
-
-        var i, j, d, dist;
-        var n = x.length;
-
-        for( i = 3; i < n; i += 3 ){
-
-            for( j = 0; j < 3; ++j ){
-
-                dist = x[ i + j ] - x[ i - 3 + j ];
-
-                if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
-
-                    if( dist > 0 ){
-
-                        for( d = 0; d < 3; ++d ){
-                            x[ i + d ] -= box[ j * 3 + d ];
-                        }
-
-                    }else{
-
-                        for( d = 0; d < 3; ++d ){
-                            x[ i + d ] += box[ j * 3 + d ];
-                        }
-
-                    }
-                }
-
-            }
-
-        }
-
-        return x;
-
-    },
-
-    superpose: function( x ){
+    doSuperpose: function( x ){
 
         var i, j;
         var n = this.indices.length * 3;
@@ -505,22 +517,22 @@ Trajectory.prototype = {
 
         if( box ){
 
-            if( this.backboneIndices.length > 0 && this.params.centerPbc ){
+            if( this.backboneIndices.length > 0 && this.centerPbc ){
                 var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
                 var mean = this.getCircularMean(
                     this.backboneIndices, coords, box2
                 );
-                this.centerPbc( coords, mean, box2 );
+                centerPbc( coords, mean, box2 );
             }
 
-            if( this.params.removePbc ){
-                this.removePbc( coords, box );
+            if( this.removePbc ){
+                removePbc( coords, box );
             }
 
         }
 
-        if( this.indices.length > 0 && this.params.superpose ){
-            this.superpose( coords );
+        if( this.indices.length > 0 && this.superpose ){
+            this.doSuperpose( coords );
         }
 
         this.frameCache[ i ] = coords;

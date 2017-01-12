@@ -8,10 +8,12 @@
 import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
-import { calculateBondsBetween, calculateBondsWithin } from "../structure/structure-utils.js";
+import {
+    buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
+} from "../structure/structure-utils.js";
 import { ChemCompHetero } from "../structure/structure-constants.js";
+import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
 import Assembly from "../symmetry/assembly.js";
 
@@ -33,13 +35,7 @@ var SstrucMap = {
 
 function MmtfParser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-    p.autoBondBetween = defaults( p.autoBondBetween, false );
-    p.doAutoSS = defaults( p.doAutoSS, false );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -50,7 +46,7 @@ MmtfParser.prototype = Object.assign( Object.create(
     constructor: MmtfParser,
     type: "mmtf",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // https://github.com/rcsb/mmtf
 
@@ -60,6 +56,17 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         var s = this.structure;
         var sd = decodeMmtf( decodeMsgpack( this.streamer.data ) );
+
+        // structure header
+        var headerFields = [
+            "depositionDate", "releaseDate", "resolution",
+            "rFree", "rWork", "experimentalMethods"
+        ];
+        headerFields.forEach( function( name ){
+            if( sd[ name ] !== undefined ){
+                s.header[ name ] = sd[ name ];
+            }
+        } );
 
         var numBonds, numAtoms, numGroups, numChains, numModels;
         var chainsPerModel;
@@ -253,17 +260,19 @@ MmtfParser.prototype = Object.assign( Object.create(
 
         s.chainStore.length = numChains;
         s.chainStore.count = numChains;
+        s.chainStore.entityIndex = new Uint16Array( numChains );
         s.chainStore.modelIndex = cModelIndex;
         s.chainStore.residueOffset = cGroupOffset;
         s.chainStore.residueCount = cGroupCount;
         s.chainStore.chainname = sd.chainNameList.subarray( 0, numChains * 4 );
+        s.chainStore.chainid = sd.chainIdList.subarray( 0, numChains * 4 );
 
         s.modelStore.length = numModels;
         s.modelStore.count = numModels;
         s.modelStore.chainOffset = mChainOffset;
         s.modelStore.chainCount = mChainCount;
 
-
+        //
 
         var groupTypeDict = {};
         for( i = 0, il = sd.groupList.length; i < il; ++i ){
@@ -275,7 +284,7 @@ MmtfParser.prototype = Object.assign( Object.create(
                 atomTypeIdList.push( s.atomMap.add( atomname, element ) );
             }
             var chemCompType = groupType.chemCompType.toUpperCase();
-            var hetFlag = ChemCompHetero.indexOf( chemCompType ) !== -1;
+            var hetFlag = ChemCompHetero.includes( chemCompType );
 
             var numGroupBonds = groupType.bondOrderList.length;
             var atomIndices1 = new Array( numGroupBonds );
@@ -316,6 +325,14 @@ MmtfParser.prototype = Object.assign( Object.create(
         }
 
         //
+
+        if( sd.entityList ){
+            sd.entityList.forEach( function( e, i ){
+                s.entityList[ i ] = new Entity(
+                    s, i, e.description, e.type, e.chainIndexList
+                );
+            } );
+        }
 
         if( sd.bioAssemblyList ){
             sd.bioAssemblyList.forEach( function( _assembly, k ){
@@ -378,7 +395,10 @@ MmtfParser.prototype = Object.assign( Object.create(
         // calculate rung bonds
         calculateBondsWithin( s, true );
 
-        callback();
+        s.finalizeAtoms();
+        s.finalizeBonds();
+
+        buildUnitcellAssembly( s );
 
     }
 

@@ -1,4 +1,6 @@
 uniform float nearClip;
+uniform float clipRadius;
+uniform vec3 clipCenter;
 uniform float xOffset;
 uniform float yOffset;
 uniform float zOffset;
@@ -6,6 +8,10 @@ uniform bool ortho;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
+#endif
 
 attribute vec2 mapping;
 attribute vec2 inputTexCoord;
@@ -41,6 +47,11 @@ void main(void){
 
     vViewPosition = -cameraCornerPos.xyz;
 
+    #if defined( RADIUS_CLIP )
+        vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;
+    #endif
+
     #include nearclip_vertex
+    #include radiusclip_vertex
 
 }

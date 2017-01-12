@@ -4,13 +4,9 @@ Making a Release
 
 Follow semantic versioning and make sure the changelog is up-to-date.
 
-Change the version number in:
+Use npm to update the version number, make a dist build, tag and push to github with `npm version [level]` using the appropriate level (e.g. major, minor, patch, prerelease, ...). Publish on npm using `npm publish`. For the prerelease level use `npm publish --tag next` (to avoid making a prerelease version the default for new installs from npm).
 
-- [src/ngl.js](src/ngl.js)
-- [README.md](README.md)
-- [CHANGELOG.md](CHANGELOG.md)
-
-Push to github. Make a release on github, tag the commit and copy the relevant info from the changelog file.
+For non prerelease level also update [README.md](README.md) and [CHANGELOG.md](CHANGELOG.md) and make a release on github including copying the relevant info from the changelog file there.
 
 
 
@@ -31,7 +27,7 @@ The source code ([src/](src/)) is organized into ES6 modules (see http://explori
 Building
 --------
 
-The JavaScript package manager [npm](https://www.npmjs.com/) is used as a build tool. The necessary dependencies can be installed with `npm install`. A non-minified build ([build/js/ngl.js](build/js/ngl.js)) can be created with `npm run-script build`. A minified file for distribution ([dist/ngl.js](dist/ngl.js)) can be created with `npm run-script build-min`. For development `npm run-script watch` can be called to watch source files and trigger a rebuild upon changes to them. The documentation can be build with `npm run-script doc`. Tests can be run with `npm test`.
+The JavaScript package manager [npm](https://www.npmjs.com/) is used as a build tool. The necessary dependencies can be installed with `npm install`. For development, a non-minified build `build/js/ngl.dev.js` can be created with `npm run-script build`. A minified file for distribution ([dist/ngl.js](dist/ngl.js)) can be created with `npm run-script build-min`. For development `npm run-script watch` can be called to watch source files and trigger a rebuild upon changes to them. The documentation can be build with `npm run-script doc`. Tests can be run with `npm test`.
 
 A smaller build can be created by using [three-jsnext](https://github.com/rollup/three-jsnext). To enable this clone the three-jsnext repository to be a sibling directory of the ngl repository and then change the import `from` line at the end of [lib/three.es6.js](lib/three.es6.js) to point to [three-jsnext-import.js](lib/three-jsnext-import.js). Finally, rebuild.
 

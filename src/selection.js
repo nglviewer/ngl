@@ -647,7 +647,7 @@ Selection.prototype = {
                     inscode[0] = inscode[0].substr(1);
                     negate = true;
                 }
-                if( inscode[0].indexOf( "--" ) !== -1 ){
+                if( inscode[0].includes( "--" ) ){
                     inscode[0] = inscode[0].replace( "--", "-" );
                     negate2 = true;
                 }
@@ -996,12 +996,17 @@ Selection.prototype = {
 
         var selection;
 
+        var chainKeywordList = [
+            kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
+            kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
+        ];
+
         if( chainOnly ){
 
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined ) return true;
+                if( s.keyword!==undefined && !chainKeywordList.includes( s.keyword ) ) return true;
                 // if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
@@ -1022,7 +1027,21 @@ Selection.prototype = {
         var fn = function( c, s ){
 
             // returning -1 means the rule is not applicable
-            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined ) return -1;
+            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
+                    ( s.keyword===undefined || !chainKeywordList.includes( s.keyword ) )
+            ) return -1;
+
+            if( s.keyword!==undefined ){
+                if( s.keyword===kwd.HETERO && !c.isHetero() ) return false;
+                if( s.keyword===kwd.PROTEIN && !c.isProtein() ) return false;
+                if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) return false;
+                if( s.keyword===kwd.RNA && !c.isRna() ) return false;
+                if( s.keyword===kwd.DNA && !c.isDna() ) return false;
+                if( s.keyword===kwd.POLYMER && !c.isPolymer() ) return false;
+                if( s.keyword===kwd.WATER && !c.isWater() ) return false;
+                if( s.keyword===kwd.ION && !c.isIon() ) return false;
+                if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) return false;
+            }
 
             if( s.atomindex!==undefined &&
                     ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )

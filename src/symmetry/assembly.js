@@ -48,6 +48,7 @@ Assembly.prototype = {
      *
      * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
      * @param {String[]} chainList - array of chain names
+     * @return {AssemblyPart} the added assembly part
      */
     addPart: function( matrixList, chainList ){
         var part = new AssemblyPart( matrixList, chainList );
@@ -90,7 +91,7 @@ Assembly.prototype = {
     },
 
     /**
-     * Determine if the assembly is contains the full and untransformed structure
+     * Determine if the assembly is the full and untransformed structure
      * @param  {Structure}  structure - the given structure
      * @return {Boolean} whether the assembly is identical to the structure
      */
@@ -158,7 +159,7 @@ AssemblyPart.prototype = {
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
-            if( chainList.length === 0 || chainList.indexOf( cp.chainname ) !== -1 ){
+            if( chainList.length === 0 || chainList.includes( cp.chainname ) ){
                 atomCount += cp.atomCount;
             }
         } );

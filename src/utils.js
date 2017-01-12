@@ -5,9 +5,6 @@
  */
 
 
-import { ungzip } from "../lib/pako_inflate.es6.js";
-
-
 function getQuery( id ){
 
     if( typeof window === "undefined" ) return undefined;
@@ -46,27 +43,27 @@ function defaults( value, defaultValue ){
 }
 
 
+function getProtocol(){
+
+    var protocol = window.location.protocol;
+    return protocol.match( /http(s)?:/gi ) === null ? "http:" : protocol;
+
+}
+
+
 function getBrowser(){
 
     if( typeof window === "undefined" ) return false;
 
     var ua = window.navigator.userAgent;
 
-    if ( /Arora/i.test( ua ) ) {
-
-        return 'Arora';
-
-    } else if ( /Opera|OPR/.test( ua ) ) {
+    if ( /Opera|OPR/.test( ua ) ) {
 
         return 'Opera';
 
     } else if ( /Chrome/i.test( ua ) ) {
 
         return 'Chrome';
-
-    } else if ( /Epiphany/i.test( ua ) ) {
-
-        return 'Epiphany';
 
     } else if ( /Firefox/i.test( ua ) ) {
 
@@ -79,10 +76,6 @@ function getBrowser(){
     } else if ( /MSIE/i.test( ua ) ) {
 
         return 'Internet Explorer';
-
-    } else if ( /Midori/i.test( ua ) ) {
-
-        return 'Midori';
 
     } else if ( /Safari/i.test( ua ) ) {
 
@@ -280,7 +273,7 @@ function getFileInfo( file ){
 
     var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-    if( compressedExtList.indexOf( ext ) !== -1 ){
+    if( compressedExtList.includes( ext ) ){
         compressed = ext;
         var n = path.length - ext.length - 1;
         ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
@@ -480,29 +473,11 @@ function uint8ToLines( u8a, chunkSize, newline ){
 }
 
 
-function decompress( data ){
-
-    var decompressedData;
-
-    if( data instanceof ArrayBuffer ){
-        data = new Uint8Array( data );
-    }
-
-    try{
-        decompressedData = ungzip( data );
-    }catch( e ){
-        decompressedData = data;  // assume it is already uncompressed
-    }
-
-    return decompressedData;
-
-}
-
-
 export {
     getQuery,
     boolean,
     defaults,
+    getProtocol,
     getBrowser,
     getAbsolutePath,
     deepCopy,
@@ -515,6 +490,5 @@ export {
     dataURItoImage,
     uniqueArray,
     uint8ToString,
-    uint8ToLines,
-    decompress
+    uint8ToLines
 };

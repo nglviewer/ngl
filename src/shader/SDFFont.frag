@@ -5,9 +5,15 @@ uniform vec3 borderColor;
 uniform float borderWidth;
 uniform vec3 backgroundColor;
 uniform float backgroundOpacity;
+uniform float nearClip;
+uniform float clipRadius;
 
 varying vec3 vViewPosition;
 varying vec2 texCoord;
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
+#endif
 
 #include common
 #include color_pars_fragment
@@ -22,7 +28,10 @@ const float gamma = 2.2;
 
 void main(){
 
-    if( texCoord.x == 10.0 ){
+    #include nearclip_fragment
+    #include radiusclip_fragment
+
+    if( texCoord.x > 1.0 ){
 
         gl_FragColor = vec4( backgroundColor, backgroundOpacity );
 

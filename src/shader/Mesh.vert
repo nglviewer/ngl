@@ -1,9 +1,14 @@
 #define STANDARD
 
 uniform float nearClip;
+uniform vec3 clipCenter;
 
-#if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
     varying vec3 vViewPosition;
+#endif
+
+#if defined( RADIUS_CLIP )
+    varying vec3 vClipCenter;
 #endif
 
 #if defined( PICKING )
@@ -39,8 +44,12 @@ void main(){
     #include begin_vertex
     #include project_vertex
 
-    #if defined( NEAR_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+    #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
         vViewPosition = -mvPosition.xyz;
+    #endif
+
+    #if defined( RADIUS_CLIP )
+        vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;
     #endif
 
     #include nearclip_vertex

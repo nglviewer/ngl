@@ -5,6 +5,9 @@
  */
 
 
+import "../shader/Mesh.vert";
+import "../shader/Mesh.frag";
+
 import Buffer from "./buffer.js";
 
 

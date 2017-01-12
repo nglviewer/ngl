@@ -30,7 +30,7 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 /**
  * {@link Signal}, dispatched when parameters change
  * @example
- * component.signals.parametersChanged( function( params ){ ... } );
+ * component.signals.parametersChanged.add( function( params ){ ... } );
  * @event RepresentationComponent#parametersChanged
  * @type {RepresentationParameters}
  */
@@ -91,14 +91,23 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#addRepresentation
+     * @return {undefined}
      */
     addRepresentation: function(){},
 
     /**
      * @ignore
      * @alias RepresentationComponent#removeRepresentation
+     * @return {undefined}
      */
     removeRepresentation: function(){},
+
+    /**
+     * @ignore
+     * @alias RepresentationComponent#hasRepresentation
+     * @return {undefined}
+     */
+    hasRepresentation: function(){},
 
     disposeRepresentation: function(){
 
@@ -111,12 +120,12 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        if( this.parent ){
+        if( this.parent && this.parent.hasRepresentation( this ) ){
             this.parent.removeRepresentation( this );
+        }else{
+            this.disposeRepresentation();
+            this.signals.disposed.dispatch();
         }
-        this.disposeRepresentation();
-        delete this.reprArgs;
-        this.signals.disposed.dispatch();
 
     },
 
@@ -153,6 +162,15 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Set selection
+     * @alias RepresentationComponent#update
+     * @param {Object} what - flags indicating what attributes to update
+     * @param {Boolean} what.position - update position attribute
+     * @param {Boolean} what.color - update color attribute
+     * @param {Boolean} what.radius - update radius attribute
+     * @return {RepresentationComponent} this object
+     */
     update: function( what ){
 
         this.repr.update( what );
@@ -218,6 +236,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
     /**
      * @ignore
      * @alias RepresentationComponent#getCenter
+     * @return {undefined}
      */
     getCenter: function(){}
 

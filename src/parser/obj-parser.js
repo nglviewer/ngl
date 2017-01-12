@@ -223,14 +223,19 @@ OBJLoader.prototype = {
 
     parse: function ( text ) {
 
-        console.time( 'OBJLoader' );
-
         var state = this._createParserState();
 
         if ( text.indexOf( '\r\n' ) !== - 1 ) {
 
             // This is faster than String.split with regex that splits on both
-            text = text.replace( '\r\n', '\n' );
+            text = text.replace( /\r\n/g, '\n' );
+
+        }
+
+        if ( text.indexOf( '\\\n' ) !== - 1) {
+
+            // join lines separated by a line continuation character (\)
+            text = text.replace( /\\\n/g, '' );
 
         }
 
@@ -417,8 +422,6 @@ OBJLoader.prototype = {
 
         }
 
-        console.timeEnd( 'OBJLoader' );
-
         return container;
 
     }
@@ -428,9 +431,7 @@ OBJLoader.prototype = {
 
 function ObjParser( streamer, params ){
 
-    var p = params || {};
-
-    SurfaceParser.call( this, streamer, p );
+    SurfaceParser.call( this, streamer, params );
 
     this.loader = new OBJLoader();
 

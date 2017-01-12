@@ -5,6 +5,14 @@
  */
 
 
+// entity types
+var UnknownEntity = 0;
+var PolymerEntity = 1;
+var NonPolymerEntity = 2;
+var MacrolideEntity = 3;
+var WaterEntity = 4;
+
+
 // molecule types
 var UnknownType = 0;
 var WaterType = 1;
@@ -264,13 +272,101 @@ var DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
 var PurinBases = [ "A", "G", "DA", "DG" ];
 
-var WaterNames = [ "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O" ];
+var WaterNames = [
+    "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O", "TIP3", "TIP4"
+];
 
+// all chemical components with the word "ion" in their name, Sep 2016
+//
+// SET SESSION group_concat_max_len = 1000000;
+// SELECT GROUP_CONCAT(id_ ORDER BY id_ ASC SEPARATOR '", "') from
+// (
+//     SELECT count(obj_id) as c, id_
+//     FROM pdb.chem_comp WHERE name LIKE "% ION%"
+//     GROUP BY id_
+// ) AS t1;
 var IonNames = [
-    "3CO", "3NI", "4MO", "6MO", "AG", "AL", "AU", "AU3", "BA", "BR", "CA",
-    "CD", "CE", "CL", "CO", "CR", "CU", "CU1", "CU3", "F", "FE", "FE2", "GA",
-    "K", "LI", "MG", "MN", "MN3", "NA", "ND4", "NH4", "NI", "OH", "OHX", "RB",
-    "SR", "V", "Y1", "YT3", "ZN"
+    "118", "119", "1AL", "1CU", "2FK", "2HP", "2OF", "3CO",
+    "3MT", "3NI", "3OF", "3P8", "4MO", "4PU", "543", "6MO", "ACT", "AG", "AL",
+    "ALF", "AM", "ATH", "AU", "AU3", "AUC", "AZI", "BA", "BCT", "BEF", "BF4", "BO4",
+    "BR", "BS3", "BSY", "CA", "CAC", "CD", "CD1", "CD3", "CD5", "CE", "CHT", "CL",
+    "CO", "CO3", "CO5", "CON", "CR", "CS", "CSB", "CU", "CU1", "CU3", "CUA", "CUZ",
+    "CYN", "DME", "DMI", "DSC", "DTI", "DY", "E4N", "EDR", "EMC", "ER3", "EU",
+    "EU3", "F", "FE", "FE2", "FPO", "GA", "GD3", "GEP", "HAI", "HG", "HGC", "IN",
+    "IOD", "IR", "IR3", "IRI", "IUM", "K", "KO4", "LA", "LCO", "LCP", "LI", "LU",
+    "MAC", "MG", "MH2", "MH3", "MLI", "MLT", "MMC", "MN", "MN3", "MN5", "MN6",
+    "MO1", "MO2", "MO3", "MO4", "MO5", "MO6", "MOO", "MOS", "MOW", "MW1", "MW2",
+    "MW3", "NA", "NA2", "NA5", "NA6", "NAO", "NAW", "NCO", "NET", "NH4", "NI",
+    "NI1", "NI2", "NI3", "NO2", "NO3", "NRU", "O4M", "OAA", "OC1", "OC2", "OC3",
+    "OC4", "OC5", "OC6", "OC7", "OC8", "OCL", "OCM", "OCN", "OCO", "OF1", "OF2",
+    "OF3", "OH", "OS", "OS4", "OXL", "PB", "PBM", "PD", "PDV", "PER", "PI", "PO3",
+    "PO4", "PR", "PT", "PT4", "PTN", "RB", "RH3", "RHD", "RU", "SB", "SCN", "SE4",
+    "SEK", "SM", "SMO", "SO3", "SO4", "SR", "T1A", "TB", "TBA", "TCN", "TEA", "TH",
+    "THE", "TL", "TMA", "TRA", "UNX", "V", "VN3", "VO4", "W", "WO5", "Y1", "YB",
+    "YB2", "YH", "YT3", "ZCM", "ZN", "ZN2", "ZN3", "ZNO", "ZO3",
+    // additional ion names
+    "OHX"
+];
+
+// all chemical components with the word "%saccharide%" in their type, Sep 2016
+//
+// SET SESSION group_concat_max_len = 1000000;
+// select GROUP_CONCAT(id_ ORDER BY id_ ASC SEPARATOR '", "') from
+// (
+//     SELECT count(obj_id), id_
+//     FROM pdb.chem_comp WHERE type like "%SACCHARIDE%"
+//     GROUP BY id_
+// ) AS t1;
+var SaccharideNames = [
+    "045", "0AT", "0BD", "0MK", "0NZ", "0TS", "0V4", "0XY", "0YT", "10M",
+    "147", "149", "14T", "15L", "16G", "18T", "18Y", "1AR", "1BW", "1GL", "1GN",
+    "1JB", "1LL", "1NA", "1S3", "26M", "26Q", "26R", "26V", "26W", "26Y", "27C",
+    "289", "291", "293", "2DG", "2F8", "2FG", "2FL", "2FP", "2GL", "2M4", "2M5",
+    "32O", "34V", "3CM", "3DO", "3DY", "3FM", "3LR", "3MF", "3MG", "3SA", "3ZW",
+    "46D", "46M", "46Z", "48Z", "4CQ", "4GC", "4NN", "50A", "5DI", "5GF", "5MM",
+    "5RP", "5SA", "5SP", "64K", "6PG", "6SA", "7JZ", "7SA", "A1Q", "A2G", "AAB",
+    "AAL", "AAO", "ABC", "ABD", "ABE", "ABF", "ABL", "ACG", "ACI", "ACR", "ACX",
+    "ADA", "ADG", "ADR", "AF1", "AFD", "AFL", "AFO", "AFP", "AFR", "AGC", "AGH",
+    "AGL", "AHR", "AIG", "ALL", "ALX", "AMU", "AOG", "AOS", "ARA", "ARB", "ARE",
+    "ARI", "ASG", "ASO", "AXP", "AXR", "B0D", "B16", "B2G", "B4G", "B6D", "B8D",
+    "B9D", "BBK", "BCD", "BDG", "BDP", "BDR", "BEM", "BFP", "BGC", "BGL", "BGP",
+    "BGS", "BHG", "BMA", "BMX", "BNG", "BNX", "BOG", "BRI", "BXF", "BXP", "BXX",
+    "BXY", "C3X", "C4X", "C5X", "CAP", "CBI", "CBK", "CBS", "CDR", "CEG", "CGF",
+    "CHO", "CR1", "CR6", "CRA", "CT3", "CTO", "CTR", "CTT", "D6G", "DAF", "DAG",
+    "DDA", "DDB", "DDL", "DEL", "DFR", "DFX", "DG0", "DGC", "DGD", "DGM", "DGS",
+    "DIG", "DLF", "DLG", "DMU", "DNO", "DOM", "DP5", "DQQ", "DQR", "DR2", "DR3",
+    "DR4", "DRI", "DSR", "DT6", "DVC", "E4P", "E5G", "EAG", "EBG", "EBQ", "EGA",
+    "EJT", "EPG", "ERE", "ERI", "F1P", "F1X", "F6P", "FBP", "FCA", "FCB", "FCT",
+    "FDP", "FDQ", "FFC", "FIX", "FMO", "FRU", "FSI", "FU4", "FUB", "FUC", "FUD",
+    "FUL", "FXP", "G16", "G1P", "G2F", "G3I", "G4D", "G4S", "G6D", "G6P", "G6S",
+    "GAC", "GAD", "GAL", "GC1", "GC4", "GCD", "GCN", "GCO", "GCS", "GCT", "GCU",
+    "GCV", "GCW", "GCX", "GE1", "GFG", "GFP", "GIV", "GL0", "GL2", "GL5", "GL6",
+    "GL7", "GL9", "GLA", "GLB", "GLC", "GLD", "GLF", "GLG", "GLO", "GLP", "GLS",
+    "GLT", "GLW", "GMH", "GN1", "GNX", "GP1", "GP4", "GPH", "GPM", "GQ1", "GQ2",
+    "GQ4", "GS1", "GS4", "GSA", "GSD", "GTE", "GTH", "GTK", "GTR", "GTZ", "GU0",
+    "GU1", "GU2", "GU3", "GU4", "GU5", "GU6", "GU8", "GU9", "GUF", "GUP", "GUZ",
+    "GYP", "GYV", "H2P", "HDL", "HMS", "HS2", "HSD", "HSG", "HSH", "HSJ", "HSQ",
+    "HSR", "HSU", "HSX", "HSY", "HSZ", "IAB", "IDG", "IDR", "IDS", "IDT", "IDU",
+    "IDX", "IDY", "IMK", "IN1", "IPT", "ISL", "KBG", "KD2", "KDA", "KDM", "KDO",
+    "KFN", "KO1", "KO2", "KTU", "L6S", "LAG", "LAI", "LAK", "LAO", "LAT", "LB2",
+    "LBT", "LCN", "LDY", "LGC", "LGU", "LM2", "LMT", "LMU", "LOG", "LOX", "LPK",
+    "LSM", "LTM", "LVZ", "LXB", "LXZ", "M1F", "M3M", "M6P", "M8C", "MA1", "MA2",
+    "MA3", "MAB", "MAG", "MAL", "MAN", "MAT", "MAV", "MAW", "MBG", "MCU", "MDA",
+    "MDM", "MDP", "MFA", "MFB", "MFU", "MG5", "MGA", "MGL", "MLB", "MMA", "MMN",
+    "MN0", "MRP", "MTT", "MUG", "MVP", "MXY", "N1L", "N9S", "NAA", "NAG", "NBG",
+    "NDG", "NED", "NG1", "NG6", "NGA", "NGB", "NGC", "NGE", "NGF", "NGL", "NGS",
+    "NGY", "NHF", "NM6", "NM9", "NTF", "NTO", "NTP", "NXD", "NYT", "OPG", "OPM",
+    "ORP", "OX2", "P3M", "P53", "P6P", "PA5", "PNA", "PNG", "PNW", "PRP", "PSJ",
+    "PSV", "PTQ", "QDK", "QPS", "QV4", "R1P", "R1X", "R2B", "R5P", "RAA", "RAE",
+    "RAF", "RAM", "RAO", "RAT", "RB5", "RBL", "RCD", "RDP", "REL", "RER", "RF5",
+    "RG1", "RGG", "RHA", "RIB", "RIP", "RNS", "RNT", "ROB", "ROR", "RPA", "RST",
+    "RUB", "RUU", "RZM", "S6P", "S7P", "SA0", "SCR", "SDD", "SF6", "SF9", "SG4",
+    "SG5", "SG6", "SG7", "SGA", "SGC", "SGD", "SGN", "SGS", "SHB", "SHG", "SI3",
+    "SIO", "SOE", "SOL", "SSG", "SUC", "SUP", "SUS", "T6P", "T6T", "TAG", "TCB",
+    "TDG", "TGK", "TGY", "TH1", "TIA", "TM5", "TM6", "TM9", "TMR", "TMX", "TOA",
+    "TOC", "TRE", "TYV", "UCD", "UDC", "VG1", "X0X", "X1X", "X2F", "X4S", "X5S",
+    "X6X", "XBP", "XDN", "XDP", "XIF", "XIM", "XLF", "XLS", "XMM", "XUL", "XXR",
+    "XYP", "XYS", "YO5", "Z3Q", "Z6J", "Z9M", "ZDC", "ZDM"
 ];
 
 
@@ -335,6 +431,12 @@ ResidueTypeAtoms[ UnknownBackboneType ] = {};
 
 
 export {
+    UnknownEntity,
+    PolymerEntity,
+    NonPolymerEntity,
+    MacrolideEntity,
+    WaterEntity,
+
     UnknownType,
     WaterType,
     IonType,
@@ -375,6 +477,7 @@ export {
     PurinBases,
     WaterNames,
     IonNames,
+    SaccharideNames,
 
     ProteinBackboneAtoms,
     NucleicBackboneAtoms,

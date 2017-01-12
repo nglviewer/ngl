@@ -41,6 +41,12 @@ ResidueProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    get entity () {
+        return this.structure.entityList[ this.entityIndex ];
+    },
+    get entityIndex () {
+        return this.chainStore.entityIndex[ this.chainIndex ];
+    },
     get chain () {
         return this.structure.getChainProxy( this.chainIndex );
     },
@@ -77,6 +83,9 @@ ResidueProxy.prototype = {
     },
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
+    },
+    get chainid () {
+        return this.chainStore.getChainid( this.chainIndex );
     },
 
     //
@@ -202,12 +211,16 @@ ResidueProxy.prototype = {
     },
 
     isPolymer: function(){
-        var moleculeType = this.residueType.moleculeType;
-        return (
-            moleculeType === ProteinType ||
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-        );
+        if( this.structure.entityList.length > 0 ){
+            return this.entity.isPolymer();
+        }else{
+            var moleculeType = this.residueType.moleculeType;
+            return (
+                moleculeType === ProteinType ||
+                moleculeType === RnaType ||
+                moleculeType === DnaType
+            );
+        }
     },
 
     isHetero: function(){

@@ -5,6 +5,9 @@
  */
 
 
+import "../shader/Line.vert";
+import "../shader/Line.frag";
+
 import Buffer from "./buffer.js";
 
 

@@ -11,7 +11,7 @@
         function load( o ){
             stage.loadFile( blob, { ext: "mmtf", defaultRepresentation: true } );
         }
-        var url = "http://mmtf.rcsb.org/v0.2/full/3sn6.mmtf";
+        var url = "http://mmtf.rcsb.org/v1.0/full/3sn6";
         var xhr = new XMLHttpRequest();
         xhr.open( "GET", url, true );
         xhr.addEventListener( 'load', function( event ){
@@ -21,7 +21,7 @@
         xhr.responseType = "arraybuffer";
         xhr.send( null );
     </script>
-    <script src="../build/js/ngl.js"></script>
+    <script src="../build/js/ngl.dev.js"></script>
     <script>
         document.addEventListener( "DOMContentLoaded", function(){
             stage = new NGL.Stage( "viewport" );

@@ -19,11 +19,9 @@ function XmlParser( streamer, params ){
     Parser.call( this, streamer, p );
 
     this.xml = {
-
         name: this.name,
         path: this.path,
         data: {}
-
     };
 
 }
@@ -145,20 +143,21 @@ XmlParser.prototype = Object.assign( Object.create(
 
     },
 
-    _parse: function( callback ){
+    _parse: function(){
 
         if( Debug ) Log.time( "XmlParser._parse " + this.name );
 
-        var text = this.streamer.asText();
         if( this.useDomParser ){
-            this.xml.data = this.__domParser( text );
+            if( this.streamer.isBinary() || this.string ){
+                this.xml.data = this.__domParser( this.streamer.asText() );
+            }else{
+                this.xml.data = this.streamer.data;
+            }
         }else{
-            this.xml.data = this.__xmlParser( text );
+            this.xml.data = this.__xmlParser( this.streamer.asText() );
         }
 
         if( Debug ) Log.timeEnd( "XmlParser._parse " + this.name );
-
-        callback();
 
     }
 

@@ -7,11 +7,13 @@
 
 import { Color, Vector3 } from "../../lib/three.es6.js";
 
+import { defaults } from "../utils.js";
 import Selection from "../selection.js";
-import { GidPool } from "../globals.js";
 import { generateUUID } from "../math/math-utils.js";
 
 import {
+    PolymerEntity, NonPolymerEntity, MacrolideEntity, WaterEntity,
+    WaterType, IonType, ProteinType, RnaType, DnaType, SaccharideType,
     ResidueHydrophobicity, DefaultResidueHydrophobicity
 } from "../structure/structure-constants.js";
 
@@ -341,14 +343,15 @@ function ColorMaker( params ){
 
     var p = params || {};
 
-    this.scale = p.scale || "uniform";
-    this.mode = p.mode || "hcl";
-    this.domain = p.domain || [ 0, 1 ];
-    this.value = new Color( p.value || 0xFFFFFF ).getHex();
+    this.scale = defaults( p.scale, "uniform" );
+    this.mode = defaults( p.mode, "hcl" );
+    this.domain = defaults( p.domain, [ 0, 1 ] );
+    this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
 
     this.structure = p.structure;
     this.volume = p.volume;
     this.surface = p.surface;
+    this.gidPool = p.gidPool;
 
     if( this.structure ){
         this.atomProxy = this.structure.getAtomProxy();
@@ -364,7 +367,7 @@ ColorMaker.prototype = {
 
         var p = params || {};
 
-        var scale = p.scale || this.scale;
+        var scale = defaults( p.scale, this.scale );
         if( scale === "rainbow" || scale === "roygb" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
@@ -373,8 +376,8 @@ ColorMaker.prototype = {
 
         return chroma
             .scale( scale )
-            .mode( p.mode || this.mode )
-            .domain( p.domain || this.domain )
+            .mode( defaults( p.mode, this.mode ) )
+            .domain( defaults( p.domain, this.domain ) )
             .out( "num" );
 
     },
@@ -517,21 +520,28 @@ function PickingColorMaker( params ){
         }
     }
 
+    if( !this.gidPool ){
+        console.warn( "no gidPool" );
+        this.gidPool = {
+            getGid: function(){ return 0; }
+        };
+    }
+
     this.atomColor = function( a ){
 
-        return GidPool.getGid( this.structure, a.index );
+        return this.gidPool.getGid( this.structure, a.index );
 
     };
 
     this.bondColor = function( b ){
 
-        return GidPool.getGid( this.structure, offset + b.index );
+        return this.gidPool.getGid( this.structure, offset + b.index );
 
     };
 
     this.volumeColor = function( i ){
 
-        return GidPool.getGid( this.volume, i );
+        return this.gidPool.getGid( this.volume, i );
 
     };
 
@@ -740,6 +750,66 @@ ChainnameColorMaker.prototype = ColorMaker.prototype;
 ChainnameColorMaker.prototype.constructor = ChainnameColorMaker;
 
 
+function ChainidColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+
+    var chainidDictPerModel = {};
+    var scalePerModel = {};
+
+    this.structure.eachModel( function( mp ){
+        var i = 0;
+        var chainidDict = {};
+        mp.eachChain( function( cp ){
+            if( chainidDict[ cp.chainid ] === undefined ){
+                chainidDict[ cp.chainid ] = i;
+                i += 1;
+            }
+        } );
+        this.domain = [ 0, i - 1 ];
+        chainidDictPerModel[ mp.index ] = chainidDict;
+        scalePerModel[ mp.index ] = this.getScale();
+    }.bind( this ) );
+
+    this.atomColor = function( a ){
+        var chainidDict = chainidDictPerModel[ a.modelIndex ];
+        return scalePerModel[ a.modelIndex ]( chainidDict[ a.chainid ] );
+    };
+
+}
+
+ChainidColorMaker.prototype = ColorMaker.prototype;
+
+ChainidColorMaker.prototype.constructor = ChainidColorMaker;
+
+
+function EntityindexColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    if( !params.scale ){
+        this.scale = "Spectral";
+    }
+    if( !params.domain ){
+        this.domain = [ 0, this.structure.entityList.length - 1 ];
+    }
+    var entityindexScale = this.getScale();
+
+    this.atomColor = function( a ){
+        return entityindexScale( a.entityIndex );
+    };
+
+}
+
+EntityindexColorMaker.prototype = ColorMaker.prototype;
+
+EntityindexColorMaker.prototype.constructor = EntityindexColorMaker;
+
+
 function ModelindexColorMaker( params ){
 
     ColorMaker.call( this, params );
@@ -761,6 +831,64 @@ function ModelindexColorMaker( params ){
 ModelindexColorMaker.prototype = ColorMaker.prototype;
 
 ModelindexColorMaker.prototype.constructor = ModelindexColorMaker;
+
+
+function EntityTypeColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+        var e = a.entity;
+        var et = e ? e.entityType : undefined;
+        switch( et ){
+            case PolymerEntity:
+                return 0x7fc97f;
+            case NonPolymerEntity:
+                return 0xfdc086;
+            case MacrolideEntity:
+                return 0xbeaed4;
+            case WaterEntity:
+                return 0x386cb0;
+            default:
+                return 0xffff99;
+        }
+    };
+
+}
+
+EntityTypeColorMaker.prototype = ColorMaker.prototype;
+
+EntityTypeColorMaker.prototype.constructor = EntityTypeColorMaker;
+
+
+function MoleculeTypeColorMaker( params ){
+
+    ColorMaker.call( this, params );
+
+    this.atomColor = function( a ){
+        switch( a.residueType.moleculeType ){
+            case WaterType:
+                return 0x386cb0;
+            case IonType:
+                return 0xf0027f;
+            case ProteinType:
+                return 0xbeaed4;
+            case RnaType:
+                return 0xfdc086;
+            case DnaType:
+                return 0xbf5b17;
+            case SaccharideType:
+                return 0x7fc97f
+            default:
+                return 0xffff99;
+        }
+    };
+
+}
+
+MoleculeTypeColorMaker.prototype = ColorMaker.prototype;
+
+MoleculeTypeColorMaker.prototype.constructor = MoleculeTypeColorMaker;
 
 
 function SstrucColorMaker( params ){
@@ -967,7 +1095,11 @@ ColorMakerRegistry.types = {
     "residueindex": ResidueindexColorMaker,
     "chainindex": ChainindexColorMaker,
     "chainname": ChainnameColorMaker,
+    "chainid": ChainidColorMaker,
+    "entityindex": EntityindexColorMaker,
     "modelindex": ModelindexColorMaker,
+    "entitytype": EntityTypeColorMaker,
+    "moleculetype": MoleculeTypeColorMaker,
     "sstruc": SstrucColorMaker,
     "element": ElementColorMaker,
     "resname": ResnameColorMaker,

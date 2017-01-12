@@ -8,12 +8,13 @@
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log, GidPool, ColorMakerRegistry } from "../globals.js";
+import { Debug, Log, ColorMakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix, principalAxes } from "../math/matrix-utils.js";
+import SpatialHash from "../geometry/spatial-hash.js";
 // import StructureView from "./structure-view.js";
 
 import BondHash from "../store/bond-hash.js";
@@ -34,11 +35,16 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
- * {@link Signal}, dispatched when Structure.refresh() is called
- * @example
- * structure.signals.refreshed( function(){ ... } );
- * @event Structure#refreshed
+ * Structure header object.
+ * @typedef {Object} StructureHeader - structure meta data
+ * @property {String} [releaseDate] - release data, YYYY-MM-DD
+ * @property {String} [depositionDate] - deposition data, YYYY-MM-DD
+ * @property {Float} [resolution] - experimental resolution
+ * @property {Float} [rFree] - r-free value
+ * @property {Float} [rWork] - r-work value
+ * @property {String[]} [experimentalMethods] - experimental methods
  */
+
 
 /**
  * Bond iterator callback
@@ -99,12 +105,18 @@ function Structure( name, path ){
     this.path = path;
     this.title = "";
     this.id = "";
+    /**
+     * @member {StructureHeader}
+     */
+    this.header = {};
 
-    this.atomSetCache = {};
+    this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
-    this.helices = [];
-    this.sheets = [];
+    this.entityList = [];
+    /**
+     * @member {Unitcell}
+     */
     this.unitcell = undefined;
 
     this.frames = [];
@@ -118,18 +130,35 @@ function Structure( name, path ){
     this.chainStore = new ChainStore( 0 );
     this.modelStore = new ModelStore( 0 );
 
+    /**
+     * @member {AtomMap}
+     */
     this.atomMap = new AtomMap( this );
+    /**
+     * @member {ResidueMap}
+     */
     this.residueMap = new ResidueMap( this );
 
-    this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
+    /**
+     * @member {BondHash}
+     */
+    this.bondHash = undefined;
+    /**
+     * @member {SpatialHash}
+     */
+    this.spatialHash = undefined;
 
-    this.atomSet = this.getAtomSet();
-    this.bondSet = this.getBondSet();
+    this.atomSet = undefined;
+    this.bondSet = undefined;
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
-
-    GidPool.addObject( this );
+    /**
+     * @member {Vector3}
+     */
+    this.center = undefined;
+    /**
+     * @member {Box3}
+     */
+    this.boundingBox = undefined;
 
     this._bp = this.getBondProxy();
     this._ap = this.getAtomProxy();
@@ -143,21 +172,23 @@ Structure.prototype = {
     constructor: Structure,
     type: "Structure",
 
-    /**
-     * Updates atomSets and bondSets. Updates GidPool entry.
-     * @fires Structure#refreshed
-     */
-    refresh: function(){
+    finalizeAtoms: function(){
 
-        if( Debug ) Log.time( "Structure.refresh" );
+        this.atomSet = this.getAtomSet();
+        this.atomCount = this.atomStore.count;
+        this.boundingBox = this.getBoundingBox();
+        this.center = this.boundingBox.center();
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
+    },
+
+    finalizeBonds: function(){
+
+        this.bondSet = this.getBondSet();
+        this.bondCount = this.bondStore.count;
         this.bondHash = new BondHash( this.bondStore, this.atomStore.count );
 
         this.atomSetCache = {};
-
-        this.atomSet = this.getAtomSet();
-        this.bondSet = this.getBondSet();
-
         if( !this.atomSetDict.rung ){
             this.atomSetDict.rung = this.getAtomSet( false );
         }
@@ -167,18 +198,6 @@ Structure.prototype = {
             var as2 = this.getAtomSet( false );
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
-
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
-
-        GidPool.updateObject( this );
-
-        if( Debug ) Log.timeEnd( "Structure.refresh" );
-
-        this.signals.refreshed.dispatch();
 
     },
 
@@ -190,29 +209,15 @@ Structure.prototype = {
 
     },
 
-    getAtomProxy: function( index, tmp ){
+    getAtomProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpAtomProxy === undefined ){
-                this.__tmpAtomProxy = new AtomProxy( this, index );
-            }
-            return this.__tmpAtomProxy;
-        }else{
-            return new AtomProxy( this, index );
-        }
+        return new AtomProxy( this, index );
 
     },
 
-    getResidueProxy: function( index, tmp ){
+    getResidueProxy: function( index ){
 
-        if( tmp ){
-            if( this.__tmpResidueProxy === undefined ){
-                this.__tmpResidueProxy = new ResidueProxy( this, index );
-            }
-            return this.__tmpResidueProxy;
-        }else{
-            return new ResidueProxy( this, index );
-        }
+        return new ResidueProxy( this, index );
 
     },
 
@@ -338,7 +343,11 @@ Structure.prototype = {
         var as;
         var n = this.atomStore.count;
 
-        if( selection === false ){
+        if( selection && selection.type === "Bitset" ){
+
+            as = selection;
+
+        }else if( selection === false ){
 
             as = new Bitset( n );
 
@@ -378,6 +387,78 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get set of atom around a set of atoms from a selection
+     * @param  {Selection} selection - the selection object
+     * @param  {Number} radius - radius to select within
+     * @return {BitSet} set of atoms
+     */
+    getAtomSetWithinSelection: function( selection, radius ){
+
+        var spatialHash = this.spatialHash;
+        var as = this.getAtomSet( false );
+        var ap = this.getAtomProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            ap.index = idx;
+            spatialHash.within( ap.x, ap.y, ap.z, radius ).forEach( function( idx2 ){
+                as.add_unsafe( idx2 );
+            } );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinPoint: function( point, radius ){
+
+        var p = point;
+        var as = this.getAtomSet( false );
+
+        this.spatialHash.within( p.x, p.y, p.z, radius ).forEach( function( idx ){
+            as.add_unsafe( idx );
+        } );
+
+        return as;
+
+    },
+
+    getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
+
+        volume.filterData( minValue, maxValue, outside );
+
+        var dp = volume.dataPosition;
+        var n = dp.length;
+        var r = volume.matrix.getMaxScaleOnAxis();
+        var as = this.getAtomSet( false );
+
+        for( var i = 0; i < n; i+=3 ){
+            this.spatialHash.within( dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r ).forEach( function( idx ){
+                as.add_unsafe( idx );
+            } );
+        }
+
+        return as;
+
+    },
+
+    getAtomSetWithinGroup: function( selection ){
+
+        var atomResidueIndex = this.atomStore.residueIndex;
+        var as = this.getAtomSet( false );
+        var rp = this.getResidueProxy();
+
+        this.getAtomSet( selection ).forEach( function( idx ){
+            rp.index = atomResidueIndex[ idx ];
+            for( var idx2 = rp.atomOffset; idx2 <= rp.atomEnd; ++idx2 ){
+                as.add_unsafe( idx2 );
+            }
+        } );
+
+        return as;
+
+    },
+
     //
 
     getSelection: function(){
@@ -393,9 +474,26 @@ Structure.prototype = {
     },
 
     /**
+     * Entity iterator
+     * @param  {entityCallback} callback - the callback
+     * @param  {EntityType} type - entity type
+     * @return {undefined}
+     */
+    eachEntity: function( callback, type ){
+
+        this.entityList.forEach( function( entity ){
+            if( type === undefined || entity.getEntityType() === type ){
+                callback( entity );
+            }
+        } );
+
+    },
+
+    /**
      * Bond iterator
      * @param  {bondCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachBond: function( callback, selection ){
 
@@ -429,6 +527,7 @@ Structure.prototype = {
      * Atom iterator
      * @param  {atomCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachAtom: function( callback, selection ){
 
@@ -451,6 +550,7 @@ Structure.prototype = {
      * Residue iterator
      * @param  {residueCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachResidue: function( callback, selection ){
 
@@ -487,6 +587,7 @@ Structure.prototype = {
      * Multi-residue iterator
      * @param {Integer} n - window size
      * @param  {residueListCallback} callback - the callback
+     * @return {undefined}
      */
     eachResidueN: function( n, callback ){
 
@@ -513,6 +614,7 @@ Structure.prototype = {
      * Polymer iterator
      * @param  {polymerCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachPolymer: function( callback, selection ){
 
@@ -540,6 +642,7 @@ Structure.prototype = {
      * Chain iterator
      * @param  {chainCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachChain: function( callback, selection ){
 
@@ -562,6 +665,7 @@ Structure.prototype = {
      * Model iterator
      * @param  {modelCallback} callback - the callback
      * @param  {Selection} [selection] - the selection
+     * @return {undefined}
      */
     eachModel: function( callback, selection ){
 
@@ -743,7 +847,7 @@ Structure.prototype = {
                 if( isMulti && bondOrder > 1 ){
                     radius = radiusFactory.atomRadius( ap1 );
                     multiRadius = radius * bondScale / ( 0.5 * bondOrder );
-                    
+
                     bp.calculateShiftDir( vShift );
 
                     if( isOffset ) {
@@ -753,7 +857,7 @@ Structure.prototype = {
                         vShift.negate();
 
                         // Shortening is calculated so that neighbouring double
-                        // bonds on tetrahedral geometry (e.g. sulphonamide) 
+                        // bonds on tetrahedral geometry (e.g. sulphonamide)
                         // are not quite touching (arccos(1.9 / 2) ~ 109deg)
                         // but don't shorten beyond 10% each end or it looks odd
                         vShortening.subVectors( ap2, ap1 ).multiplyScalar(
@@ -775,7 +879,7 @@ Structure.prototype = {
 
                         absOffset = ( bondSpacing - bondScale ) * radius;
                         vShift.multiplyScalar( absOffset );
-                        
+
                         if( bondOrder === 2 ){
                             vt.addVectors( ap1, vShift ).toArray( position1, i3 );
                             vt.subVectors( ap1, vShift ).toArray( position1, i3 + 3 );
@@ -828,7 +932,7 @@ Structure.prototype = {
                     for( j = isOffset ? 1 : 0 ; j < bondOrder; ++j ){
                         radius1[ i + j ] = multiRadius;
                     }
-                } 
+                }
             }
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
@@ -892,11 +996,11 @@ Structure.prototype = {
 
     //
 
-    getBoundingBox: function( selection ){
+    getBoundingBox: function( selection, box ){
 
         if( Debug ) Log.time( "getBoundingBox" );
 
-        var box = new Box3();
+        box = box || new Box3();
 
         var minX = +Infinity;
         var minY = +Infinity;
@@ -1000,6 +1104,24 @@ Structure.prototype = {
 
     },
 
+    /**
+     * Get number of unique chainnames
+     * @param  {Selection} selection - limit count to selection
+     * @return {Integer} count
+     */
+    getChainnameCount: function( selection ){
+
+        var chainnames = new Set();
+        this.eachChain( function( cp ){
+            if( cp.residueCount ){
+                chainnames.add( cp.chainname );
+            }
+        }, selection );
+
+        return chainnames.size;
+
+    },
+
     //
 
     updatePosition: function( position ){
@@ -1013,13 +1135,20 @@ Structure.prototype = {
 
     },
 
+    refreshPosition: function(){
+
+        this.getBoundingBox( undefined, this.boundingBox );
+        this.boundingBox.center( this.center );
+        this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
+
+    },
+
     /**
-     * Removes structure from the GidPool. Calls dispose() method of property objects.
+     * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
+     * @return {undefined}
      */
     dispose: function(){
-
-        GidPool.removeObject( this );
 
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;

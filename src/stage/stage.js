@@ -8,9 +8,10 @@
 import { Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log } from "../globals.js";
-import { getFileInfo, deepCopy } from "../utils.js";
+import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
+import { defaults, getFileInfo, deepCopy } from "../utils.js";
 import Counter from "../utils/counter.js";
+import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
 import PickingControls from "./picking-controls.js";
 
@@ -20,8 +21,16 @@ import RepresentationComponent from "../component/representation-component.js";
 import Collection from "../component/collection.js";
 import ComponentCollection from "../component/component-collection.js";
 import RepresentationCollection from "../component/representation-collection.js";
-import { makeComponent } from "../component/component-utils.js";
 import { autoLoad } from "../loader/loader-utils";
+
+
+function matchName( name, comp ){
+    if( name instanceof RegExp ){
+        return comp.name.match( name ) !== null;
+    }else{
+        return comp.name === name;
+    }
+}
 
 
 /**
@@ -30,6 +39,7 @@ import { autoLoad } from "../loader/loader-utils";
  * @property {Color} backgroundColor - background color
  * @property {Integer} sampleLevel - sampling level for antialiasing, between -1 and 5;
  *                                   -1: no sampling, 0: only sampling when not moving
+ * @property {Boolean} workerDefault - default value for useWorker parameter of representations
  * @property {Float} rotateSpeed - camera-controls rotation speed, between 0 and 10
  * @property {Float} zoomSpeed - camera-controls zoom speed, between 0 and 10
  * @property {Float} panSpeed - camera-controls pan speed, between 0 and 10
@@ -48,14 +58,15 @@ import { autoLoad } from "../loader/loader-utils";
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered} signal is fired
+ * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
+ *                                      signal is fired, set to -1 to ignore hovering
  */
 
 
 /**
  * {@link Signal}, dispatched when stage parameters change {@link Signal}
  * @example
- * stage.signals.parametersChanged( function( stageParameters ){ ... } );
+ * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
  * @event Stage#parametersChanged
  * @type {StageParameters}
  */
@@ -63,7 +74,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when the fullscreen is entered or left
  * @example
- * stage.signals.fullscreenChanged( function( isFullscreen ){ ... } );
+ * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
  * @event Stage#fullscreenChanged
  * @type {Boolean}
  */
@@ -71,7 +82,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when a component is added to the stage
  * @example
- * stage.signals.componentAdded( function( component ){ ... } );
+ * stage.signals.componentAdded.add( function( component ){ ... } );
  * @event Stage#componentAdded
  * @type {Component}
  */
@@ -79,7 +90,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched when a component is removed from the stage
  * @example
- * stage.signals.componentRemoved( function( component ){ ... } );
+ * stage.signals.componentRemoved.add( function( component ){ ... } );
  * @event Stage#componentRemoved
  * @type {Component}
  */
@@ -87,7 +98,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched upon clicking in the viewer canvas
  * @example
- * stage.signals.clicked( function( pickingData ){ ... } );
+ * stage.signals.clicked.add( function( pickingData ){ ... } );
  * @event Stage#clicked
  * @type {PickingData}
  */
@@ -95,7 +106,7 @@ import { autoLoad } from "../loader/loader-utils";
 /**
  * {@link Signal}, dispatched upon hovering over the viewer canvas
  * @example
- * stage.signals.hovered( function( pickingData ){ ... } );
+ * stage.signals.hovered.add( function( pickingData ){ ... } );
  * @event Stage#hovered
  * @type {PickingData}
  */
@@ -126,11 +137,12 @@ function Stage( eid, params ){
     //
 
     /**
-     * Counter that keeps track of various potential long-running tasks,
+     * Counter that keeps track of various potentially long-running tasks,
      * including file loading and surface calculation.
      * @member {Counter}
      */
     this.tasks = new Counter();
+    this.gidPool = new GidPool();
     this.compList = [];
     this.defaultFileParams = {};
 
@@ -139,13 +151,14 @@ function Stage( eid, params ){
     this.viewer = new Viewer( eid );
     if( !this.viewer.renderer ) return;
 
-    this.pickingControls = new PickingControls( this.viewer );
+    this.pickingControls = new PickingControls( this );
     this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
     this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
 
     var p = Object.assign( {
         impostor: true,
         quality: "medium",
+        workerDefault: true,
         sampleLevel: 0,
         backgroundColor: "black",
         rotateSpeed: 2.0,
@@ -181,12 +194,15 @@ Stage.prototype = {
             type: "color"
         },
         quality: {
-            type: "select", options: { "low": "low", "medium": "medium", "high": "high" }
+            type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
         },
         sampleLevel: {
             type: "range", step: 1, max: 5, min: -1
         },
         impostor: {
+            type: "boolean"
+        },
+        workerDefault: {
             type: "boolean"
         },
         rotateSpeed: {
@@ -232,7 +248,7 @@ Stage.prototype = {
             type: "number", precision: 2, max: 10, min: 0
         },
         hoverTimeout: {
-            type: "integer", max: 10000, min: 10
+            type: "integer", max: 10000, min: -1
         },
 
     },
@@ -241,6 +257,7 @@ Stage.prototype = {
      * Set stage parameters
      * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
+     * @return {Stage} this object
      */
     setParameters: function( params ){
 
@@ -324,7 +341,7 @@ Stage.prototype = {
                 instanceCount = 1;
             }
 
-            if( typeof window.orientation !== 'undefined' ){
+            if( Mobile ){
                 atomCount *= 4;
             }
 
@@ -334,15 +351,7 @@ Stage.prototype = {
             }
 
             var colorScheme = "chainname";
-            var polymerChainnames = new Set();
-            var rp = structure.getResidueProxy();
-            structure.getModelProxy( 0 ).eachChain( function( cp ){
-                rp.index = cp.residueOffset;
-                if( rp.isPolymer() ){
-                    polymerChainnames.add( cp.chainname );
-                }
-            } );
-            if( polymerChainnames.size === 1 ){
+            if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
             }
 
@@ -399,20 +408,18 @@ Stage.prototype = {
 
             }else{
 
-                var quality = atomCount < 15000 ? "high" : "medium";
-
                 object.addRepresentation( "cartoon", {
                     color: colorScheme,
                     colorScale: "RdYlBu",
                     scale: 0.7,
                     aspectRatio: 5,
-                    quality: quality
+                    quality: "auto"
                 } );
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
                         color: colorScheme,
                         colorScale: "RdYlBu",
-                        quality: quality
+                        quality: "auto"
                     } );
                 }
                 object.addRepresentation( "ball+stick", {
@@ -422,7 +429,7 @@ Stage.prototype = {
                     aspectRatio: 1.5,
                     bondScale: 0.3,
                     bondSpacing: 0.75,
-                    quality: quality
+                    quality: "auto"
                 } );
 
             }
@@ -519,7 +526,16 @@ Stage.prototype = {
 
         };
 
-        return autoLoad( path, p ).then( onLoadFn, onErrorFn );
+        var ext = defaults( p.ext, getFileInfo( path ).ext );
+        var promise;
+
+        if( ext === "dcd" ){
+            promise = Promise.reject( "loadFile: ext 'dcd' must be loaded into a structure component" );
+        }else{
+            promise = autoLoad( path, p );
+        }
+
+        return promise.then( onLoadFn, onErrorFn );
 
     },
 
@@ -540,40 +556,35 @@ Stage.prototype = {
 
     addComponentFromObject: function( object, params ){
 
-        var component = makeComponent( this, object, params );
+        var CompClass = ComponentRegistry.get( object.type );
 
-        this.addComponent( component );
+        if( CompClass ){
+            var component = new CompClass( this, object, params );
+            this.addComponent( component );
+            return component
+        }
 
-        return component;
+        Log.warn( "no component for object type", object.type );
 
     },
 
     removeComponent: function( component ){
 
         var idx = this.compList.indexOf( component );
-
         if( idx !== -1 ){
-
             this.compList.splice( idx, 1 );
-
+            component.dispose();
+            this.signals.componentRemoved.dispatch( component );
         }
-
-        component.dispose();
-
-        this.signals.componentRemoved.dispatch( component );
 
     },
 
     removeAllComponents: function( type ){
 
         this.compList.slice().forEach( function( o ){
-
             if( !type || o.type === type ){
-
                 this.removeComponent( o );
-
             }
-
         }, this );
 
     },
@@ -712,6 +723,7 @@ Stage.prototype = {
      *
      * @param {Number[]|Vector3} axis - the axis to spin around
      * @param {Number} angle - amount to spin per render call
+     * @return {undefined}
      */
     setSpin: function( axis, angle ){
 
@@ -777,7 +789,7 @@ Stage.prototype = {
 
             if( repr.type === "script" ) return;
 
-            if( types.indexOf( repr.getType() ) === -1 ){
+            if( !types.includes( repr.getType() ) ){
                 return;
             }
 
@@ -809,9 +821,9 @@ Stage.prototype = {
 
             var p = repr.getParameters();
 
-            if( types.indexOf( repr.getType() ) === -1 ){
+            if( !types.includes( repr.getType() ) ){
 
-                if( impostorTypes.indexOf( repr.getType() ) === -1 ){
+                if( !impostorTypes.includes( repr.getType() ) ){
                     return;
                 }
 
@@ -859,7 +871,7 @@ Stage.prototype = {
 
         this.eachComponent( function( comp ){
 
-            if( name === undefined || comp.name.match( name ) !== null ){
+            if( name === undefined || matchName( name, comp ) ){
                 compList.push( comp );
             }
 
@@ -885,11 +897,11 @@ Stage.prototype = {
 
         this.eachRepresentation( function( repr, comp ){
 
-            if( compName !== undefined && comp.name.match( compName ) === null ){
+            if( compName !== undefined && !matchName( compName, comp ) ){
                 return;
             }
 
-            if( reprName === undefined || repr.name.match( reprName ) !== null ){
+            if( reprName === undefined || matchName( reprName, repr ) ){
                 reprList.push( repr );
             }
 

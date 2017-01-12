@@ -24,6 +24,7 @@ import Selection from "../selection.js";
  * @param {Float32Array} data.normal - surface normals
  * @param {Float32Array} data.color - surface colors
  * @param {Int32Array} data.atomindex - atom indices
+ * @param {boolean} data.contour - contour mode flag
  */
 function Surface( name, path, data ){
 
@@ -49,7 +50,8 @@ function Surface( name, path, data ){
             data.index,
             data.normal,
             data.color,
-            data.atomindex
+            data.atomindex,
+            data.contour
         );
 
     }
@@ -68,8 +70,10 @@ Surface.prototype = {
      * @param {Float32Array} normal - surface normals
      * @param {Float32Array} color - surface colors
      * @param {Int32Array} atomindex - atom indices
+     * @param {boolean} contour - contour mode flag
+     * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex ){
+    set: function( position, index, normal, color, atomindex, contour ){
 
         this.position = position;
         this.index = index;
@@ -78,6 +82,7 @@ Surface.prototype = {
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
+        this.contour = contour;
 
     },
 
@@ -217,26 +222,34 @@ Surface.prototype = {
             var index = this.index;
             var n = index.length;
             var j = 0;
+            var a;
 
-            for( var i = 0; i < n; i+=3 ){
+            var elementSize = this.contour ? 2 : 3;
 
-                var idx1 = index[ i     ];
-                var idx2 = index[ i + 1 ];
-                var idx3 = index[ i + 2 ];
+            for( var i = 0; i < n; i += elementSize ){
 
-                var ai1 = atomindex[ idx1 ];
-                var ai2 = atomindex[ idx2 ];
-                var ai3 = atomindex[ idx3 ];
+                var include = true;
 
-                if( as.has( ai1 ) && as.has( ai2 ) && as.has( ai3 ) ){
-                    filteredIndex[ j     ] = idx1;
-                    filteredIndex[ j + 1 ] = idx2;
-                    filteredIndex[ j + 2 ] = idx3;
-                    j += 3;
+                for( a = 0 ; a < elementSize; a++ ){
+
+                    var idx = index[ i + a ];
+                    var ai = atomindex[ idx ];
+                    if( !as.has( ai ) ){
+                        include = false;
+                        break;
+                    }
+                }
+
+                if( !include ) { continue ; }
+
+                for( a = 0; a < elementSize; a ++, j++ ){
+
+                    filteredIndex[ j ] = index[ i + a ];
+                    
                 }
 
             }
-
+           
             var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
             return new TypedArray( filteredIndex );
 

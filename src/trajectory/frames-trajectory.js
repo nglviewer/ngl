@@ -8,24 +8,15 @@
 import Trajectory from "./trajectory.js";
 
 
-function FramesTrajectory( frames, structure, selectionString ){
+function FramesTrajectory( frames, structure, params ){
 
-    if( frames instanceof Promise ){
+    Trajectory.call( this, "", structure, params );
 
-        frames.then( function( _frames ){
+    this.name = frames.name;
+    this.path = frames.path;
 
-            this.setFrames( _frames );
-            this.getNumframes();
-
-        }.bind( this ) );
-
-    }else{
-
-        this.setFrames( frames );
-
-    }
-
-    Trajectory.call( this, "", structure, selectionString );
+    this.frames = frames.coordinates;
+    this.boxes = frames.boxes;
 
 }
 
@@ -36,16 +27,6 @@ FramesTrajectory.prototype = Object.assign( Object.create(
     constructor: FramesTrajectory,
 
     type: "frames",
-
-    setFrames: function( frames ){
-
-        this.name = frames.name;
-        this.path = frames.path;
-
-        this.frames = frames.coordinates;
-        this.boxes = frames.boxes;
-
-    },
 
     makeAtomIndices:  function(){
 

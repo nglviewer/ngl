@@ -11,9 +11,7 @@ import Frames from "../trajectory/frames.js";
 
 function TrajectoryParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.frames = new Frames( this.name, this.path );
 

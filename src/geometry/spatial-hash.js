@@ -5,12 +5,10 @@
  */
 
 
-import { Debug, Log } from "../globals.js";
+//import { Debug, Log } from "../globals.js";
 
 
 function SpatialHash( atomStore, boundingBox ){
-
-    if( Debug ) Log.time( "SpatialHash init" );
 
     var exp = 3;
 
@@ -71,7 +69,7 @@ function SpatialHash( atomStore, boundingBox ){
         }
     }
 
-    if( Debug ) Log.timeEnd( "SpatialHash init" );
+    //
 
     function within( x, y, z, r ){
 

@@ -10,7 +10,9 @@ import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import MolecularSurface from "../surface/molecular-surface.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
+import ContourBuffer from "../buffer/contour-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
+import Selection from "../selection.js";
 
 
 function MolecularSurfaceRepresentation( structure, viewer, params ){
@@ -42,7 +44,8 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
                 "vws": "vws",
                 "sas": "sas",
                 "ms": "ms",
-                "ses": "ses"
+                "ses": "ses",
+                "av": "av"
             }
         },
         probeRadius: {
@@ -61,6 +64,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "number", precision: 2, max: 50, min: 0,
             rebuild: true
         },
+        contour: {
+            type: "boolean", rebuild: true
+        },
         background: {
             type: "boolean", rebuild: true  // FIXME
         },
@@ -68,7 +74,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "boolean", buffer: true
         },
         filterSele: {
-            type: "text"
+            type: "text", rebuild: true
         },
         volume: {
             type: "hidden"
@@ -96,6 +102,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.smooth = defaults( p.smooth, 2 );
         this.scaleFactor = defaults( p.scaleFactor, 2.0 );
         this.cutoff = defaults( p.cutoff, 0.0 );
+        this.contour = defaults( p.contour, false );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.filterSele = defaults( p.filterSele, "" );
@@ -115,6 +122,17 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( !info.molsurf || info.sele !== sview.selection.string ){
+
+            if( this.filterSele ){
+                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                var bbSize = sviewFilter.boundingBox.size();
+                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, maxDim / 2 );
+                sview = sview.getView(
+                    new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
+                );
+                // this.filterSele = "";
+            }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );
@@ -181,24 +199,41 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         var info = this.__infoList[ i ];
 
-        var surfaceBuffer = new SurfaceBuffer(
-            info.surface.getPosition(),
-            info.surface.getColor( this.getColorParams() ),
-            info.surface.getFilteredIndex( this.filterSele, sview ),
-            info.surface.getNormal(),
-            info.surface.getPickingColor( this.getColorParams() ),
-            this.getBufferParams( {
-                background: this.background,
-                opaqueBack: this.opaqueBack,
-                dullInterior: false
-            } )
-        );
-        var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+        var position = info.surface.getPosition();
+        var color = info.surface.getColor( this.getColorParams() );
+        var index = info.surface.getFilteredIndex( this.filterSele, sview );
 
-        return {
-            bufferList: [ doubleSidedBuffer ],
-            info: info
-        };
+        if( info.surface.contour ){
+
+            var contourBuffer = new ContourBuffer(
+                position, color, index,
+                this.getBufferParams( {
+                    wireframe: false
+                } )
+            );
+
+            return { bufferList: [ contourBuffer ], info: info };
+
+        } else {
+
+            var surfaceBuffer = new SurfaceBuffer(
+                position, color, index,
+                info.surface.getNormal(),
+                info.surface.getPickingColor( this.getColorParams() ),
+                this.getBufferParams( {
+                    background: this.background,
+                    opaqueBack: this.opaqueBack,
+                    dullInterior: false
+                } )
+            );
+
+            var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+
+            return {
+                bufferList: [ doubleSidedBuffer ],
+                info: info
+            };
+        }
 
     },
 
@@ -236,6 +271,14 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             what.color = true;
         }
 
+        // forbid setting wireframe to true when contour is true
+        if( params && params.wireframe && (
+                params.contour || ( params.contour === undefined && this.contour )
+            )
+        ){
+            params.wireframe = false;
+        }
+
         StructureRepresentation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -250,8 +293,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             type: this.surfaceType,
             probeRadius: this.probeRadius,
             scaleFactor: this.scaleFactor,
-            smooth: this.smooth,
+            smooth: this.smooth && !this.contour,
             cutoff: this.cutoff,
+            contour: this.contour,
             useWorker: this.useWorker
         }, params );
 

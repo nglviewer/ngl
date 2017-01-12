@@ -55,7 +55,9 @@ function reorderAtoms( structure ){
 }
 
 
-function assignSecondaryStructure( structure ){
+function assignSecondaryStructure( structure, secStruct ){
+
+    if( !secStruct ) return;
 
     if( Debug ) Log.time( "assignSecondaryStructure" );
 
@@ -74,7 +76,7 @@ function assignSecondaryStructure( structure ){
 
     // helix assignment
 
-    var helices = structure.helices || [];
+    var helices = secStruct.helices;
 
     helices = helices.filter( function( h ){
         return binarySearchIndexOf( chainnamesSorted, h[ 0 ] ) >= 0;
@@ -167,7 +169,7 @@ function assignSecondaryStructure( structure ){
 
     // sheet assignment
 
-    var sheets = structure.sheets || [];
+    var sheets = secStruct.sheets;
 
     sheets = sheets.filter( function( s ){
         return binarySearchIndexOf( chainnamesSorted, s[ 0 ] ) >= 0;
@@ -425,6 +427,7 @@ function calculateChainnames( structure ){
             chainStore.growIfFull();
             chainStore.modelIndex[ ci ] = mIndex;
             chainStore.setChainname( ci, chainname );
+            chainStore.setChainid( ci, chainname );
             chainStore.residueOffset[ ci ] = rOffset;
             chainStore.residueCount[ ci ] = rCount;
             chainStore.count += 1;
@@ -511,7 +514,7 @@ function calculateChainnames( structure ){
                     }
 
                     // new chain for the last residue of the structure
-                    if( rp2.index === residueStore.count - 1 ){
+                    if( rp2.index === residueStore.count - 1 && rEnd !== rp2.index ){
                         chainData.push( {
                             mIndex: mi,
                             chainname: getName( i ),
@@ -776,6 +779,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
 
 function buildUnitcellAssembly( structure ){
 
+    if( !structure.unitcell ) return;
+
     if( Debug ) Log.time( "buildUnitcellAssembly" );
 
     var uc = structure.unitcell;
@@ -941,6 +946,7 @@ var guessElement = function(){
 /**
  * Assigns ResidueType bonds.
  * @param {Structure} structure - the structure object
+ * @return {undefined}
  */
 function assignResidueTypeBonds( structure ){
 

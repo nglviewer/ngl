@@ -61,7 +61,7 @@ RadiusFactory.prototype = {
                     r = 0.25;
                 }else if( sstruc === "b" ){
                     r = 0.25;
-                }else if( NucleicBackboneAtoms.indexOf( a.atomname ) !== -1 ){
+                }else if( NucleicBackboneAtoms.includes( a.atomname ) ){
                     r = 0.4;
                 }else{
                     r = 0.1;

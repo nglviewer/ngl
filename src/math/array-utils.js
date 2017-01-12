@@ -262,6 +262,7 @@ var temp = new Float32Array( 4 );
  * @param {Integer} orderElement - index of element used for sorting, < eleSize
  * @param {Integer} [begin] - start index for range to be sorted
  * @param {Integer} [end] - end index for range to be sorted
+ * @return {TypedArray} the input array
  */
 function quicksortIP( arr, eleSize, orderElement, begin, end ){
 

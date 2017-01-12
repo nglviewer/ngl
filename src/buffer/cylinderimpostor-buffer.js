@@ -7,6 +7,9 @@
 
 import { Matrix4, Uniform } from "../../lib/three.es6.js";
 
+import "../shader/CylinderImpostor.vert";
+import "../shader/CylinderImpostor.frag";
+
 import { defaults } from "../utils.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";

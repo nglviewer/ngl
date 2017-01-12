@@ -6,18 +6,17 @@
 
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import { assignResidueTypeBonds } from "../structure/structure-utils.js";
+import {
+    assignResidueTypeBonds,
+    calculateChainnames, calculateSecondaryStructure,
+    calculateBondsBetween, calculateBondsWithin
+} from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
 function Mol2Parser( streamer, params ){
 
-    var p = params || {};
-
-    p.dontAutoBond = defaults( p.dontAutoBond, true );
-
-    StructureParser.call( this, streamer, p );
+    StructureParser.call( this, streamer, params );
 
 }
 
@@ -28,7 +27,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
     constructor: Mol2Parser,
     type: "mol2",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         // http://www.tripos.com/data/support/mol2.pdf
 
@@ -197,7 +196,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
                     atomStore.serial[ idx ] = serial;
                     atomStore.bfactor[ idx ] = bfactor;
 
-                    sb.addAtom( modelIdx, "", resname, resno, 1 );
+                    sb.addAtom( modelIdx, "", "", resname, resno, 1 );
 
                     idx += 1;
 
@@ -226,16 +225,15 @@ Mol2Parser.prototype = Object.assign( Object.create(
         } );
 
         sb.finalize();
-        s.unitcell = undefined;
+        s.finalizeAtoms();
+        calculateChainnames( s );
+        calculateBondsWithin( s, true );
+        calculateBondsBetween( s, true );
+        s.finalizeBonds();
+        assignResidueTypeBonds( s );
+        calculateSecondaryStructure( s );
 
         if( Debug ) Log.timeEnd( "Mol2Parser._parse " + this.name );
-        callback();
-
-    },
-
-    _postProcess: function(){
-
-        assignResidueTypeBonds( this.structure );
 
     }
 

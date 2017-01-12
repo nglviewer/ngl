@@ -1,5 +1,5 @@
 
-Selections (or 'Sele' for short) strings can be input at various places in the [page:User-interface user interface] or when scripting. They are used to limit which atoms/residues are shown in a [page:Molecular-representations molecular representation] or what atoms are loaded from a [page:Trajectory-access trajectory]. At the end of this page is an embedded NGL viewer for trying out the selection language.
+Selections (or 'Sele' for short) strings can be input at various places in the user interface or when scripting. They are used to limit which atoms/residues are shown in a [molecular representation]{@tutorial molecular-representations} or what atoms are loaded from a trajectory.
 
 
 ## Example
@@ -21,7 +21,8 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 *   *dna*
 *   *hetero*
 *   *ion*
-*   *polymer* (protein or nucleic)
+*   *saccharide*/*sugar*
+*   *polymer*
 *   *water*
 *   *hydrogen*
 *   *helix*
@@ -68,6 +69,15 @@ Single expressions may be left out as long as the order (see above) is kept, for
 
 ```
 :A/0 # select chain A from model 0
+```
+
+
+### Atomindex
+
+A list of atom indices can be given as a comma seperated list (no spaces in between) prefixed with the `@` character.
+
+```
+@0,1,4,5,11,23,42
 ```
 
 

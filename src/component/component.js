@@ -26,7 +26,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is added
  * @example
- * component.signals.representationAdded( function( representationComponent ){ ... } );
+ * component.signals.representationAdded.add( function( representationComponent ){ ... } );
  * @event Component#representationAdded
  * @type {RepresentationComponent}
  */
@@ -34,7 +34,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when a representation is removed
  * @example
- * component.signals.representationRemoved( function( representationComponent ){ ... } );
+ * component.signals.representationRemoved.add( function( representationComponent ){ ... } );
  * @event Component#representationRemoved
  * @type {RepresentationComponent}
  */
@@ -42,7 +42,7 @@ var nextComponentId = 0;
 /**
  * {@link Signal}, dispatched when the visibility changes
  * @example
- * component.signals.visibilityChanged( function( value ){ ... } );
+ * component.signals.visibilityChanged.add( function( value ){ ... } );
  * @event Component#visibilityChanged
  * @type {Boolean}
  */
@@ -111,7 +111,9 @@ Component.prototype = {
         var sp = this.stage.getParameters();
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
+        p.useWorker = defaults( p.useWorker, sp.workerDefault );
         p.visible = defaults( p.visible, true );
+        p.gidPool = this.stage.gidPool;
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
         var repr = makeRepresentation( type, object, this.viewer, p2 );
@@ -132,20 +134,26 @@ Component.prototype = {
 
     },
 
+    hasRepresentation: function( repr ){
+
+        return this.reprList.indexOf( repr ) !== -1;
+
+    },
+
     /**
      * Removes a representation component
      * @fires Component#representationRemoved
      * @param {RepresentationComponent} repr - the representation component
+     * @return {undefined}
      */
     removeRepresentation: function( repr ){
 
         var idx = this.reprList.indexOf( repr );
-
         if( idx !== -1 ){
             this.reprList.splice( idx, 1 );
+            repr.dispose();
+            this.signals.representationRemoved.dispatch( repr );
         }
-
-        this.signals.representationRemoved.dispatch( repr );
 
     },
 
@@ -159,21 +167,31 @@ Component.prototype = {
 
     },
 
-    clearRepresentations: function(){
+    /**
+     * Removes all representation components
+     * @fires Component#representationRemoved
+     * @return {undefined}
+     */
+    removeAllRepresentations: function(){
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
-            repr.dispose();
-        } );
+            this.removeRepresentation( repr );
+        }, this );
+
+    },
+
+    clearRepresentations: function(){
+
+        console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
+        this.removeAllRepresentations();
 
     },
 
     dispose: function(){
 
-        this.clearRepresentations();
-
+        this.removeAllRepresentations();
         delete this.reprList;
-
         this.signals.disposed.dispatch();
 
     },

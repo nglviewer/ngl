@@ -7,112 +7,8 @@
 
 import { VolumeSurface } from "./volume.js";
 import Grid from "../geometry/grid.js";
-import {
-    computeBoundingBox,
-    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
-    v3floor, v3ceil, v3sub, v3negate
-} from "../math/vector-utils.js";
-import {
-    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
-} from "../math/matrix-utils.js";
-import { degToRad } from "../math/math-utils.js";
-
-
-function getSurfaceGrid( min, max, maxRadius, scaleFactor, extraMargin ){
-
-    // need margin to avoid boundary/round off effects
-    var margin = ( 1 / scaleFactor ) * 3;
-    margin += maxRadius;
-
-    v3subScalar( min, min, extraMargin + margin );
-    v3addScalar( max, max, extraMargin + margin );
-
-    v3multiplyScalar( min, min, scaleFactor );
-    v3floor( min, min );
-    v3divideScalar( min, min, scaleFactor );
-
-    v3multiplyScalar( max, max, scaleFactor );
-    v3ceil( max, max );
-    v3divideScalar( max, max, scaleFactor );
-
-    var dim = new Float32Array( 3 );
-    v3sub( dim, max, min );
-    v3multiplyScalar( dim, dim, scaleFactor );
-    v3ceil( dim, dim );
-    v3addScalar( dim, dim, 1 );
-
-    var maxSize = Math.pow( 10, 6 ) * 256;
-    var tmpSize = dim[ 0 ] * dim[ 1 ] * dim[ 2 ] * 3;
-
-    if( maxSize <= tmpSize ){
-
-        scaleFactor *= Math.pow( maxSize / tmpSize, 1/3 );
-
-        v3multiplyScalar( min, min, scaleFactor );
-        v3floor( min, min );
-        v3divideScalar( min, min, scaleFactor );
-
-        v3multiplyScalar( max, max, scaleFactor );
-        v3ceil( max, max );
-        v3divideScalar( max, max, scaleFactor );
-
-        v3sub( dim, max, min );
-        v3multiplyScalar( dim, dim, scaleFactor );
-        v3ceil( dim, dim );
-        v3addScalar( dim, dim, 1 );
-
-    }
-
-    var tran = new Float32Array( min );
-    v3negate( tran, tran );
-
-    // coordinate transformation matrix
-    var matrix = m4new();
-    var mroty = m4new();
-    m4makeRotationY( mroty, degToRad( 90 ) );
-    m4multiply( matrix, matrix, mroty );
-
-    var mscale = m4new();
-    m4makeScale( mscale,
-        -1 / scaleFactor,
-        1 / scaleFactor,
-        1 / scaleFactor
-    );
-    m4multiply( matrix, matrix, mscale );
-
-    var mtrans = m4new();
-    m4makeTranslation( mtrans,
-        -scaleFactor * tran[2],
-        -scaleFactor * tran[1],
-        -scaleFactor * tran[0]
-    );
-    m4multiply( matrix, matrix, mtrans );
-
-    return {
-        dim: dim,
-        tran: tran,
-        matrix: matrix,
-        scaleFactor: scaleFactor
-    };
-
-}
-getSurfaceGrid.__deps = [
-    degToRad,
-    v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
-    v3floor, v3ceil, v3sub, v3negate,
-    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
-];
-
-
-function getRadiusDict( radiusList ){
-
-    var radiusDict = {};
-    for( var i = 0, il = radiusList.length; i < il; ++i ){
-        radiusDict[ radiusList[ i ] ] = true;
-    }
-    return radiusDict;
-
-}
+import { computeBoundingBox } from "../math/vector-utils.js";
+import { getRadiusDict, getSurfaceGrid } from "./surface-utils.js";
 
 
 function EDTSurface( coordList, radiusList, indexList ){
@@ -134,6 +30,10 @@ function EDTSurface( coordList, radiusList, indexList ){
 
     var radiusDict = getRadiusDict( radiusList );
     var bbox = computeBoundingBox( coordList );
+    if( coordList.length === 0 ){
+        bbox[ 0 ].set( [ 0, 0, 0 ] );
+        bbox[ 1 ].set( [ 0, 0, 0 ] );
+    }
     var min = bbox[ 0 ];
     var max = bbox[ 1 ];
 
@@ -254,7 +154,7 @@ function EDTSurface( coordList, radiusList, indexList ){
 
     };
 
-    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth ){
+    this.getSurface = function( type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour ){
 
         var vd = this.getVolume(
             type, probeRadius, scaleFactor, cutoff, setAtomID
@@ -264,7 +164,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
         );
 
-        return volsurf.getSurface( 1, smooth, undefined, matrix );
+        return volsurf.getSurface( 1, smooth, undefined, matrix, contour );
 
     };
 
@@ -607,11 +507,9 @@ function EDTSurface( coordList, radiusList, indexList ){
         var cutRSq = cutRadius * cutRadius;
 
         var totalsurfacevox = 0;
-        var totalinnervox = 0;
+        // var totalinnervox = 0;
 
         var index;
-
-        console.log( "l, w, h", pLength, pWidth, pHeight );
 
         for( i = 0; i < pLength; ++i ){
             for( j = 0; j < pWidth; ++j ){
@@ -635,20 +533,17 @@ function EDTSurface( coordList, radiusList, indexList ){
 
                             totalsurfacevox += 1;
 
-                        }else{
+                        }/*else{
 
                             totalinnervox += 1;
 
-                        }
+                        }*/
 
                     }
 
                 }
             }
         }
-
-        console.log( "totalsurfacevox", totalsurfacevox );
-        console.log( "totalinnervox", totalinnervox );
 
         var inarray = new Int32Array( 3 * totalsurfacevox );
         var positin = 0;
@@ -680,8 +575,6 @@ function EDTSurface( coordList, radiusList, indexList ){
 
             positout = fastoneshell( inarray, boundPoint, positin, outarray );
             positin = 0;
-
-            console.log( "positout", positout / 3 );
 
             for( i = 0, n = positout; i < n; i+=3 ){
 
@@ -747,8 +640,6 @@ function EDTSurface( coordList, radiusList, indexList ){
     }
 
     function fastoneshell( inarray, boundPoint, positin, outarray ){
-
-        console.log( "positin", positin / 3 );
 
         // *allocout,voxel2
         // ***boundPoint, int*
@@ -843,8 +734,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part1", positout);
-
         for( i = 0, n = positin; i < n; i+=3 ){
 
             tx = inarray[ i     ];
@@ -916,8 +805,6 @@ function EDTSurface( coordList, radiusList, indexList ){
             }
         }
 
-        // console.log("part2", positout);
-
         for( i = 0, n = positin; i < n; i+=3 ){
 
             tx = inarray[ i     ];
@@ -988,8 +875,6 @@ function EDTSurface( coordList, radiusList, indexList ){
                 }
             }
         }
-
-        // console.log("part3", positout);
 
         return positout;
 

@@ -19,10 +19,14 @@ import {
     LineSegments
 } from "../../lib/three.es6.js";
 
+import "../shader/BasicLine.vert";
+import "../shader/BasicLine.frag";
+import "../shader/Quad.vert";
+import "../shader/Quad.frag";
+
 import {
-    Debug, Log, Browser, WebglErrorMessage,
-    setExtensionFragDepth,
-    SupportsReadPixelsFloat, setSupportsReadPixelsFloat
+    Debug, Log, Browser, Mobile, WebglErrorMessage,
+    setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
@@ -33,6 +37,94 @@ import {
 } from "./viewer-utils";
 
 import Signal from "../../lib/signals.es6.js";
+
+
+if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
+
+    // wrap WebGL debug function used by three.js and
+    // ignore calls to them when the debug flag is not set
+
+    WebGLRenderingContext.prototype.getShaderParameter = function(){
+
+        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+
+        return function getShaderParameter(){
+
+            if( Debug ){
+
+                return _getShaderParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
+
+        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
+
+        return function getShaderInfoLog(){
+
+            if( Debug ){
+
+                return _getShaderInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramParameter = function(){
+
+        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
+
+        return function getProgramParameter( program, pname ){
+
+            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
+
+                return _getProgramParameter.apply( this, arguments );
+
+            }else{
+
+                return true;
+
+            }
+
+        };
+
+    }();
+
+    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
+
+        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
+
+        return function getProgramInfoLog(){
+
+            if( Debug ){
+
+                return _getProgramInfoLog.apply( this, arguments );
+
+            }else{
+
+                return '';
+
+            }
+
+        };
+
+    }();
+
+}
 
 
 var JitterVectors = [
@@ -79,7 +171,7 @@ JitterVectors.forEach( function( offsetList ){
 /**
  * [Viewer description]
  * @class
- * @param {String} eid
+ * @param {String} eid - dom element id
  */
 function Viewer( eid ){
 
@@ -289,7 +381,9 @@ function Viewer( eid ){
                 minFilter: NearestFilter,
                 magFilter: NearestFilter,
                 format: RGBAFormat,
-                type: (
+                // problems on mobile so use UnsignedByteType there
+                // see https://github.com/arose/ngl/issues/191
+                type: Mobile ? UnsignedByteType : (
                     supportsHalfFloat ? HalfFloatType :
                         ( SupportsReadPixelsFloat ? FloatType : UnsignedByteType )
                 )
@@ -468,15 +562,11 @@ function Viewer( eid ){
         // Log.time( "Viewer.add" );
 
         if( instanceList ){
-
             instanceList.forEach( function( instance ){
                 addBuffer( buffer, instance );
             } );
-
         }else{
-
             addBuffer( buffer );
-
         }
 
         if( buffer.background ){
@@ -491,10 +581,7 @@ function Viewer( eid ){
             pickingGroup.add( buffer.pickingGroup );
         }
 
-        rotationGroup.updateMatrixWorld();
         if( Debug ) updateHelper();
-
-        // requestRender();
 
         // Log.timeEnd( "Viewer.add" );
 
@@ -504,11 +591,21 @@ function Viewer( eid ){
 
         // Log.time( "Viewer.addBuffer" );
 
+        function setInstance( object ){
+            if( object.type === "Group" ){
+                object.children.forEach( function( child ){
+                    child.userData.instance = instance;
+                } );
+            }else{
+                object.userData.instance = instance;
+            }
+        }
+
         var mesh = buffer.getMesh();
         mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            mesh.userData.instance = instance;
+            setInstance( mesh );
         }
         buffer.group.add( mesh );
 
@@ -520,7 +617,7 @@ function Viewer( eid ){
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            wireframeMesh.userData.instance = instance;
+            setInstance( wireframeMesh );
         }
         buffer.wireframeGroup.add( wireframeMesh );
 
@@ -534,7 +631,7 @@ function Viewer( eid ){
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                pickingMesh.userData.instance = instance;
+                setInstance( pickingMesh );
             }
             buffer.pickingGroup.add( pickingMesh );
 
@@ -1036,8 +1133,8 @@ function Viewer( eid ){
 
         var nearFactor = ( 50 - p.clipNear ) / 50;
         var farFactor = - ( 50 - p.clipFar ) / 50;
-        camera.near = Math.max( 0.1, p.clipDist, cDist - ( bRadius * nearFactor ) );
-        camera.far = Math.max( 1, cDist + ( bRadius * farFactor ) );
+        camera.near = cDist - ( bRadius * nearFactor );
+        camera.far = cDist + ( bRadius * farFactor );
 
         // fog
 
@@ -1045,8 +1142,19 @@ function Viewer( eid ){
         var fogFarFactor = - ( 50 - p.fogFar ) / 50;
         var fog = scene.fog;
         fog.color.set( p.fogColor );
-        fog.near = Math.max( 0.1, cDist - ( bRadius * fogNearFactor ) );
-        fog.far = Math.max( 1, cDist + ( bRadius * fogFarFactor ) );
+        fog.near = cDist - ( bRadius * fogNearFactor );
+        fog.far = cDist + ( bRadius * fogFarFactor );
+
+        if( camera.type === "PerspectiveCamera" ){
+            camera.near = Math.max( 0.1, p.clipDist, camera.near );
+            camera.far = Math.max( 1, camera.far );
+            fog.near = Math.max( 0.1, fog.near );
+            fog.far = Math.max( 1, fog.far );
+        }else if( camera.type === "OrthographicCamera" ){
+            if( p.clipNear === 0 && p.clipDist > 0 && cDist + camera.zoom > 2 * -p.clipDist ){
+                camera.near += camera.zoom + p.clipDist;
+            }
+        }
 
     }
 
@@ -1084,7 +1192,7 @@ function Viewer( eid ){
     function __updateLights(){
 
         distVector.copy( camera.position ).sub( controls.target )
-            .setLength( boundingBoxLength * 10 );
+            .setLength( boundingBoxLength * 100 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );

@@ -13,7 +13,7 @@ import Signal from "../../lib/signals.es6.js";
 /**
  * {@link Signal}, dispatched when the `count` changes
  * @example
- * counter.signals.countChanged( function( delta ){ ... } );
+ * counter.signals.countChanged.add( function( delta ){ ... } );
  * @event Counter#countChanged
  * @type {Integer}
  */
@@ -41,6 +41,7 @@ Counter.prototype = {
 
     /**
      * Set the `count` to zero
+     * @return {undefined}
      */
     clear: function(){
 
@@ -52,6 +53,7 @@ Counter.prototype = {
      * Change the `count`
      * @fires Counter#countChanged
      * @param {Integer} delta - count change
+     * @return {undefined}
      */
     change: function( delta ){
 
@@ -66,6 +68,7 @@ Counter.prototype = {
 
     /**
      * Increments the `count` by one.
+     * @return {undefined}
      */
     increment: function(){
 
@@ -75,6 +78,7 @@ Counter.prototype = {
 
     /**
      * Decrements the `count` by one.
+     * @return {undefined}
      */
     decrement: function(){
 
@@ -86,6 +90,7 @@ Counter.prototype = {
      * Listen to another counter object and change this `count` by the
      * same amount
      * @param  {Counter} counter - the counter object to listen to
+     * @return {undefined}
      */
     listen: function( counter ){
 
@@ -97,6 +102,7 @@ Counter.prototype = {
     /**
      * Stop listening to the other counter object
      * @param  {Counter} counter - the counter object to stop listening to
+     * @return {undefined}
      */
     unlisten: function( counter ){
 
@@ -111,6 +117,7 @@ Counter.prototype = {
      * Invole the callback function once, when the `count` becomes zero
      * @param  {Function} callback - the callback function
      * @param  {Object}   context - the context for the callback function
+     * @return {undefined}
      */
     onZeroOnce: function( callback, context ){
 

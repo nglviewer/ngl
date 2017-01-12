@@ -478,9 +478,7 @@ PLYLoader.prototype = {
 
 function PlyParser( streamer, params ){
 
-    var p = params || {};
-
-    SurfaceParser.call( this, streamer, p );
+    SurfaceParser.call( this, streamer, params );
 
     this.loader = new PLYLoader();
 

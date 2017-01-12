@@ -5,7 +5,7 @@
  */
 
 
-import { ExtensionFragDepth } from "../globals.js";
+import { ExtensionFragDepth, Mobile } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Selection from "../selection.js";
@@ -106,7 +106,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         scale: {
             type: "number", precision: 3, max: 10.0, min: 0.001
         },
-        assembly: null
+        assembly: null,
+        defaultAssembly: {
+            type: "hidden"
+        }
 
     }, Representation.prototype.parameters ),
 
@@ -128,6 +131,31 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.scale = defaults( p.scale, 1.0 );
         this.assembly = defaults( p.assembly, "default" );
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
+
+        if( p.quality === "auto" ){
+            var atomCount;
+            var s = this.structureView;
+            var assembly = this.getAssembly();
+            if( assembly ){
+                atomCount = assembly.getAtomCount( s );
+            }else{
+                atomCount = s.atomCount
+            }
+            if( Mobile ){
+                atomCount *= 4;
+            }
+            var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+            if( backboneOnly ){
+                atomCount *= 10;
+            }
+            if( atomCount < 15000 ){
+                p.quality = "high";
+            }else if( atomCount < 80000 ){
+                p.quality = "medium";
+            }else{
+                p.quality = "low";
+            }
+        }
 
         Representation.prototype.init.call( this, p );
 
@@ -227,6 +255,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * Set representation parameters
      * @alias StructureRepresentation#setSelection
      * @param {String} string - selection string, see {@tutorial selection-language}
+     * @param {Boolean} [silent] - don't trigger a change event in the selection
      * @return {StructureRepresentation} this object
      */
     setSelection: function( string, silent ){
@@ -279,6 +308,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             if( !ExtensionFragDepth || this.disableImpostor ){
                 rebuild = true;
             }
+        }
+
+        if( params && params.defaultAssembly !== undefined ){
+            rebuild = true;
         }
 
         Representation.prototype.setParameters.call(

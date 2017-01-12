@@ -19,6 +19,7 @@ import Superposition from "./superposition.js";
  * @param  {Boolean} [align] - guide the superposition by a sequence alignment
  * @param  {String} [sele1] - selection string for structure 1
  * @param  {String} [sele2] - selection string for structure 2
+ * @return {undefined}
  */
 function superpose( s1, s2, align, sele1, sele2 ){
 
@@ -141,7 +142,7 @@ function superpose( s1, s2, align, sele1, sele2 ){
 
     var superpose = new Superposition( atoms1, atoms2 );
     superpose.transform( s1 );
-    s1.getStructure().refresh();
+    s1.refreshPosition();
 
 }
 

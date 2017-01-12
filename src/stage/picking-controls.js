@@ -9,13 +9,14 @@ import { Vector2, Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { RightMouseButton, MiddleMouseButton } from "../constants.js";
-import { GidPool, Debug, Log } from "../globals.js";
+import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 
 
 /**
  * Picking data object.
  * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
  * @property {AtomProxy} [pickedAtom] - picked atom
  * @property {BondProxy} [pickedBond] - picked bond
  * @property {Volume} [pickedVolume] - picked volume
@@ -26,7 +27,10 @@ import { defaults } from "../utils.js";
  */
 
 
-var PickingControls = function( viewer, params ){
+var PickingControls = function( stage, params ){
+
+    var viewer = stage.viewer;
+    var gidPool = stage.gidPool;
 
     var hoverTimeout = 50;
     setParameters( params );
@@ -44,6 +48,7 @@ var PickingControls = function( viewer, params ){
         canvasPosition: new Vector2(),
         moving: false,
         hovering: true,
+        scrolled: false,
         lastMoved: Infinity,
         which: undefined,
         distance: function(){
@@ -64,7 +69,8 @@ var PickingControls = function( viewer, params ){
 
     /**
      * pick helper function
-     * @param  {Object} mouse
+     * @param  {Object} mouse - mouse data
+     * @param  {Boolean} [clicked] - flag indication if there was a mouse click
      * @return {PickingData} picking data
      */
     function pick( mouse, clicked ){
@@ -72,7 +78,7 @@ var PickingControls = function( viewer, params ){
             mouse.canvasPosition.x, mouse.canvasPosition.y
         );
         var instance = pickingData.instance;
-        var picked = GidPool.getByGid( pickingData.gid );
+        var picked = gidPool.getByGid( pickingData.gid );
 
         var pickedAtom, pickedBond, pickedVolume;
         if( picked && picked.type === "AtomProxy" ){
@@ -108,7 +114,7 @@ var PickingControls = function( viewer, params ){
             "volume": pickedVolume,
             "instance": instance,
             "gid": pickingData.gid,
-            "mouse": {x: mouse.canvasPosition.x, y: mouse.canvasPosition.y},
+            "canvasPosition": mouse.canvasPosition.clone()
         };
     }
 
@@ -116,11 +122,12 @@ var PickingControls = function( viewer, params ){
         if( performance.now() - mouse.lastMoved > hoverTimeout ){
             mouse.moving = false;
         }
-        if( !mouse.moving && !mouse.hovering ){
-            mouse.hovering = true;
-            var pd = pick( mouse );
-            signals.hovered.dispatch( pd );
-            // if( Debug ) Log.log( "hovered", pd );
+        if( mouse.scrolled || ( !mouse.moving && !mouse.hovering ) ){
+            mouse.scrolled = false;
+            if( hoverTimeout !== -1 ){
+                mouse.hovering = true;
+                signals.hovered.dispatch( pick( mouse ) );
+            }
         }
         requestAnimationFrame( listen );
     }
@@ -156,6 +163,15 @@ var PickingControls = function( viewer, params ){
         signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
     } );
+
+    function scrolled(){
+        setTimeout( function(){
+            mouse.scrolled = true;
+        }, hoverTimeout );
+    }
+    viewer.renderer.domElement.addEventListener( 'mousewheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'wheel', scrolled );
+    viewer.renderer.domElement.addEventListener( 'MozMousePixelScroll', scrolled );
 
     // API
 

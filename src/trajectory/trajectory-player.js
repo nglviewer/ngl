@@ -7,13 +7,38 @@
 
 import Signal from "../../lib/signals.es6.js";
 
+import { defaults } from "../utils.js";
 
-function TrajectoryPlayer( traj, step, timeout, start, end ){
+
+/**
+ * Trajectory player parameter object.
+ * @typedef {Object} TrajectoryPlayerParameters - parameters
+ *
+ * @property {Integer} step - how many frames to skip when playing
+ * @property {Integer} timeout - how many milliseconds to wait between playing frames
+ * @property {Integer} start - first frame to play
+ * @property {Integer} end - last frame to play
+ * @property {String} interpolateType - one of "" (empty string), "linear" or "spline"
+ * @property {Integer} interpolateStep - window size used for interpolation
+ * @property {String} mode - either "loop" or "once"
+ * @property {String} direction - either "forward" or "backward"
+ */
+
+
+/**
+ * Trajectory player to animate coordinate frames
+ * @class
+ * @param {Trajectory} traj - the trajectory
+ * @param {TrajectoryPlayerParameters} [params] - parameter object
+ */
+function TrajectoryPlayer( traj, params ){
 
     this.signals = {
         startedRunning: new Signal(),
         haltedRunning: new Signal()
     };
+
+    var p = Object.assign( {}, params );
 
     traj.signals.playerChanged.add( function( player ){
         if( player !== this ){
@@ -21,17 +46,17 @@ function TrajectoryPlayer( traj, step, timeout, start, end ){
         }
     }, this );
 
+    var n = traj.numframes;
     this.traj = traj;
-    this.step = step || Math.ceil( ( traj.numframes + 1 ) / 100 );
-    this.timeout = timeout || 50;
-    this.start = start || 0;
-    this.end = end || traj.numframes - 1;
-    this.end = Math.min( this.end, traj.numframes - 1 );
-    this.interpolateType = "";
-    this.interpolateStep = 5;
+    this.start = defaults( p.start, 0 );
+    this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
 
-    this.mode = "loop"; // loop, once
-    this.direction = "forward"; // forward, backward
+    this.step = defaults( p.step, Math.ceil( ( n + 1 ) / 100 ) );
+    this.timeout = defaults( p.timeout, 50 );
+    this.interpolateType = defaults( p.interpolateType, "" );
+    this.interpolateStep = defaults( p.interpolateStep, 5 );
+    this.mode = defaults( p.mode, "loop" );  // loop, once
+    this.direction = defaults( p.direction, "forward" );  // forward, backward
 
     this._stopFlag = false;
     this._running = false;

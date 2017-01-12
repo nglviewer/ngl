@@ -20,7 +20,7 @@ describe('initialization', function () {
 
     before(function() {
         _BaceCgProteinAtomistic = fs.readFileSync(
-            __dirname + "/../../data/BaceCgProteinAtomistic.pdb", "utf-8"
+            __dirname + "/../data/BaceCgProteinAtomistic.pdb", "utf-8"
         );
     });
 
@@ -47,7 +47,7 @@ describe('initialization', function () {
     });
 
     it('selection relying on automatic chain names', function () {
-        var path = __dirname + "/../../data/Bace1Trimer-inDPPC.gro";
+        var path = __dirname + "/../data/Bace1Trimer-inDPPC.gro";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var groParser = new GroParser( streamer );
@@ -60,7 +60,7 @@ describe('initialization', function () {
     });
 
     it('selection with chains', function () {
-        var path = __dirname + "/../../data/3SN6.cif";
+        var path = __dirname + "/../data/3SN6.cif";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
         var cifParser = new CifParser( streamer );

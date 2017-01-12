@@ -7,7 +7,7 @@
 
 import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
-import { Log, WorkerRegistry, ColorMakerRegistry, GidPool } from "../globals.js";
+import { WorkerRegistry, ColorMakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
@@ -21,8 +21,8 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box, matrix ){
-        var sd = mc.triangulate( isolevel, smooth, box );
+    function getSurface( isolevel, smooth, box, matrix, contour ){
+        var sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
@@ -56,7 +56,7 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix );
+        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
@@ -93,10 +93,6 @@ function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
 
     this.setData( data, nx, ny, nz, dataAtomindex );
 
-    if( this.__data.length <= Math.pow( 10, 7 ) ){
-        GidPool.addObject( this );
-    }
-
 }
 
 Volume.prototype = {
@@ -111,6 +107,7 @@ Volume.prototype = {
      * @param {Integer} ny - y dimension of the 3d volume
      * @param {Integer} nz - z dimension of the 3d volume
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setData: function( data, nx, ny, nz, dataAtomindex ){
 
@@ -141,18 +138,12 @@ Volume.prototype = {
 
         if( this.worker ) this.worker.terminate();
 
-        if( this.__data.length <= Math.pow( 10, 7 ) ){
-            GidPool.updateObject( this, true );
-        }else{
-            Log.warn( "Volume too large (>10^7), not adding to GidPool" );
-            GidPool.removeObject( this );
-        }
-
     },
 
     /**
      * set transformation matrix
      * @param {Matrix4} matrix - 4x4 transformation matrix
+     * @return {undefined}
      */
     setMatrix: function( matrix ){
 
@@ -210,6 +201,7 @@ Volume.prototype = {
     /**
      * set atom indices
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @return {undefined}
      */
     setDataAtomindex: function( dataAtomindex ){
 
@@ -683,8 +675,6 @@ Volume.prototype = {
     dispose: function(){
 
         if( this.workerPool ) this.workerPool.terminate();
-
-        GidPool.removeObject( this );
 
     }
 

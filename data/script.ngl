@@ -17,7 +17,7 @@ Promise.all( [
     } ),
 
     stage.loadFile( "data://3dqb.pdb", {
-        name: "PDB entry 3DQB"
+        name: "3DQB"
     } ).then( function( o ){
         o.addRepresentation( "cartoon" );
         o.addRepresentation( "hyperball", { sele: "1-100", name: "resno 1-100" } );

@@ -1,0 +1,42 @@
+{
+    "folders":
+    [
+        {
+            "path": "."
+        }
+    ],
+    "settings":
+    {
+        "tab_size": 4,
+        "translate_tabs_to_spaces": false,
+        "trim_trailing_white_space_on_save": true
+    },
+    "build_systems":
+    [
+        {
+            "name": "Lint",
+            "shell_cmd": "npm run-script lint",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Test",
+            "shell_cmd": "npm test",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Build",
+            "shell_cmd": "npm run-script build",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Watch",
+            "shell_cmd": "npm run-script watch",
+            "working_dir": "${project_path}",
+        },
+        {
+            "name": "Rollup",
+            "shell_cmd": "rollup -c",
+            "working_dir": "${project_path}",
+        }
+    ]
+}

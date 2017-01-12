@@ -14,6 +14,14 @@ import Selection from "../selection.js";
 
 
 /**
+ * {@link Signal}, dispatched when StructureView.refresh() is called
+ * @example
+ * structureView.signals.refreshed.add( function(){ ... } );
+ * @event StructureView#refreshed
+ */
+
+
+/**
  * Get view on structure restricted to the selection
  * @param  {Selection} selection - the selection
  * @return {StructureView} the view on the structure
@@ -43,11 +51,7 @@ function StructureView( structure, selection ){
     this.center = new Vector3();
     this.boundingBox = new Box3();
 
-    // to allow creating an empty object to call .fromJSON onto
-    if( !structure && !selection ) return;
-
     this.init();
-
     this.refresh();
 
 }
@@ -80,6 +84,9 @@ StructureView.prototype = Object.assign( Object.create(
             },
             biomolDict: {
                 get: function(){ return this.structure.biomolDict; }
+            },
+            entityList: {
+                get: function(){ return this.structure.entityList; }
             },
             unitcell: {
                 get: function(){ return this.structure.unitcell; }
@@ -123,6 +130,9 @@ StructureView.prototype = Object.assign( Object.create(
 
             bondHash: {
                 get: function(){ return this.structure.bondHash; }
+            },
+            spatialHash: {
+                get: function(){ return this.structure.spatialHash; }
             }
         } );
 
@@ -138,6 +148,11 @@ StructureView.prototype = Object.assign( Object.create(
 
     },
 
+    /**
+     * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
+     * @fires StructureView#refreshed
+     * @return {undefined}
+     */
     refresh: function(){
 
         if( Debug ) Log.time( "StructureView.refresh" );
@@ -253,10 +268,11 @@ StructureView.prototype = Object.assign( Object.create(
     /**
      * Not implemented
      * @alias StructureView#eachResidueN
+     * @return {undefined}
      */
-    eachResidueN: function( n, callback ){
+    eachResidueN: function( /*n, callback*/ ){
 
-        console.error( "StructureView.eachResidueN() not implemented", n, callback );
+        console.error( "StructureView.eachResidueN() not implemented" );
 
     },
 
@@ -294,6 +310,12 @@ StructureView.prototype = Object.assign( Object.create(
     getAtomIndices: function( selection ){
 
         return this.structure.getAtomIndices( this.getSelection( selection ) );
+
+    },
+
+    refreshPosition: function(){
+
+        return this.structure.refreshPosition();
 
     },
 

@@ -11,9 +11,7 @@ import Surface from "../surface/surface.js";
 
 function SurfaceParser( streamer, params ){
 
-    var p = params || {};
-
-    Parser.call( this, streamer, p );
+    Parser.call( this, streamer, params );
 
     this.loader = undefined;
     this.surface = new Surface( this.name, this.path );
@@ -29,13 +27,11 @@ SurfaceParser.prototype = Object.assign( Object.create(
 
     __objName: "surface",
 
-    _parse: function( callback ){
+    _parse: function(){
 
         var geometry = this.loader.parse( this.streamer.asText() );
 
         this.surface.fromGeometry( geometry );
-
-        callback();
 
     }
 

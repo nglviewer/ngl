@@ -7,6 +7,9 @@
 
 import { BufferAttribute } from "../../lib/three.es6.js";
 
+import "../shader/Ribbon.vert";
+import "../shader/Mesh.frag";
+
 import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
 

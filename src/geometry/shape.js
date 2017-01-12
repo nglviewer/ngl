@@ -5,6 +5,8 @@
  */
 
 
+import { Vector3, Box3 } from "../../lib/three.es6.js";
+
 import { defaults } from "../utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -47,6 +49,12 @@ function Shape( name, params ){
     var disableImpostor = defaults( p.disableImpostor, false );
     var openEnded = defaults( p.openEnded, false );
 
+    var center = new Vector3();
+    var boundingBox = new Box3();
+
+    var tmpVec = new Vector3();
+    var tmpBox = new Box3();
+
     var bufferList = [];
 
     var spherePosition = [];
@@ -80,6 +88,8 @@ function Shape( name, params ){
             elm = elm.toArray();
         }else if( elm.x !== undefined ){
             elm = [ elm.x, elm.y, elm.z ];
+        }else if( elm.r !== undefined ){
+            elm = [ elm.r, elm.g, elm.b ];
         }
         array.push.apply( array, elm );
 
@@ -90,6 +100,7 @@ function Shape( name, params ){
      * @instance
      * @memberof Shape
      * @param {Buffer} buffer - buffer object
+     * @return {undefined}
      */
     function addBuffer( buffer ){
 
@@ -111,6 +122,7 @@ function Shape( name, params ){
      * @param {Float32Array|Array} color - colors
      * @param {Uint32Array|Uint16Array|Array} [index] - indices
      * @param {Float32Array|Array} [normal] - normals
+     * @return {undefined}
      */
     function addMesh( position, color, index, normal ){
 
@@ -131,6 +143,9 @@ function Shape( name, params ){
         var meshBuffer = new MeshBuffer( position, color, index, normal );
         bufferList.push( meshBuffer );
 
+        tmpBox.setFromArray( position );
+        boundingBox.union( tmpBox );
+
     }
 
     /**
@@ -143,12 +158,15 @@ function Shape( name, params ){
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addSphere( position, color, radius ){
 
         addElement( position, spherePosition );
         addElement( color, sphereColor );
         sphereRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
     }
 
@@ -164,6 +182,7 @@ function Shape( name, params ){
      * @param {Float} radius - radius value
      * @param {Vector3|Array} majorAxis - major axis vector or array
      * @param {Vector3|Array} minorAxis - minor axis vector or array
+     * @return {undefined}
      */
     function addEllipsoid( position, color, radius, majorAxis, minorAxis ){
 
@@ -172,6 +191,8 @@ function Shape( name, params ){
         ellipsoidRadius.push( radius );
         addElement( majorAxis, ellipsoidMajorAxis );
         addElement( minorAxis, ellipsoidMinorAxis );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
     }
 
@@ -186,6 +207,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCylinder( from, to, color, radius ){
 
@@ -193,6 +215,9 @@ function Shape( name, params ){
         addElement( to, cylinderTo );
         addElement( color, cylinderColor );
         cylinderRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -207,6 +232,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addCone( from, to, color, radius ){
 
@@ -214,6 +240,9 @@ function Shape( name, params ){
         addElement( to, coneTo );
         addElement( color, coneColor );
         coneRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -228,6 +257,7 @@ function Shape( name, params ){
      * @param {Vector3|Array} to - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @return {undefined}
      */
     function addArrow( from, to, color, radius ){
 
@@ -235,6 +265,9 @@ function Shape( name, params ){
         addElement( to, arrowTo );
         addElement( color, arrowColor );
         arrowRadius.push( radius );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
 
     }
 
@@ -362,6 +395,13 @@ function Shape( name, params ){
     }
 
     // API
+
+    Object.defineProperties( this, {
+        center: {
+            get: function(){ return boundingBox.center( center ); }
+        },
+    } );
+    this.boundingBox = boundingBox;
 
     this.addBuffer = addBuffer;
     this.addMesh = addMesh;
