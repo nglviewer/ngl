@@ -174,9 +174,9 @@ AtomProxy.prototype = {
 
     //
 
-    eachBond: function( callback ){
+    eachBond: function( callback, bp ){
 
-        var bp = this.structure._bp;
+        bp = bp || this.structure._bp;
         var idx = this.index;
         var bondHash = this.bondHash;
         var indexArray = bondHash.indexArray;
@@ -190,9 +190,9 @@ AtomProxy.prototype = {
 
     },
 
-    eachBondedAtom: function( callback ){
+    eachBondedAtom: function( callback, ap ){
 
-        var ap = this.structure._ap;
+        ap = ap || this.structure._ap;
         var idx = this.index;
 
         this.eachBond( function( bp ){
