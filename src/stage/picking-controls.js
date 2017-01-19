@@ -17,6 +17,10 @@ import { defaults } from "../utils.js";
  * Picking data object.
  * @typedef {Object} PickingData - picking data
  * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
+ * @property {Boolean} [altKey] - whether the alt key was pressed
+ * @property {Boolean} [ctrlKey] - whether the control key was pressed
+ * @property {Boolean} [metaKey] - whether the meta key was pressed
+ * @property {Boolean} [shiftKey] - whether the shift key was pressed
  * @property {AtomProxy} [atom] - picked atom
  * @property {BondProxy} [bond] - picked bond
  * @property {Volume} [volume] - picked volume
@@ -51,6 +55,10 @@ var PickingControls = function( stage, params ){
         scrolled: false,
         lastMoved: Infinity,
         which: undefined,
+        altKey: undefined,
+        ctrlKey: undefined,
+        metaKey: undefined,
+        shiftKey: undefined,
         distance: function(){
             return mouse.position.distanceTo( mouse.down );
         },
@@ -113,7 +121,11 @@ var PickingControls = function( stage, params ){
             "bond": pickedBond,
             "volume": pickedVolume,
             "instance": instance,
-            "canvasPosition": mouse.canvasPosition.clone()
+            "canvasPosition": mouse.canvasPosition.clone(),
+            "altKey": mouse.altKey,
+            "ctrlKey": mouse.ctrlKey,
+            "metaKey": mouse.metaKey,
+            "shiftKey": mouse.shiftKey
         };
     }
 
@@ -132,9 +144,17 @@ var PickingControls = function( stage, params ){
     }
     listen();
 
+    function setKeys( e ){
+        mouse.altKey = e.altKey;
+        mouse.ctrlKey = e.ctrlKey;
+        mouse.metaKey = e.metaKey;
+        mouse.shiftKey = e.shiftKey;
+    }
+
     viewer.renderer.domElement.addEventListener( 'mousemove', function( e ){
         e.preventDefault();
         // e.stopPropagation();
+        setKeys( e );
         mouse.moving = true;
         mouse.hovering = false;
         mouse.lastMoved = performance.now();
@@ -145,6 +165,7 @@ var PickingControls = function( stage, params ){
     viewer.renderer.domElement.addEventListener( 'mousedown', function( e ){
         e.preventDefault();
         // e.stopPropagation();
+        setKeys( e );
         mouse.moving = false;
         mouse.hovering = false;
         mouse.down.set( e.layerX, e.layerY );
@@ -155,6 +176,7 @@ var PickingControls = function( stage, params ){
     viewer.renderer.domElement.addEventListener( 'mouseup', function( e ){
         e.preventDefault();
         // e.stopPropagation();
+        setKeys( e );
         if( mouse.distance() > 3 || e.which === RightMouseButton ) return;
         var pd = pick( mouse, true );
         mouse.which = undefined;
