@@ -17,9 +17,9 @@ import { defaults } from "../utils.js";
  * Picking data object.
  * @typedef {Object} PickingData - picking data
  * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
- * @property {AtomProxy} [pickedAtom] - picked atom
- * @property {BondProxy} [pickedBond] - picked bond
- * @property {Volume} [pickedVolume] - picked volume
+ * @property {AtomProxy} [atom] - picked atom
+ * @property {BondProxy} [bond] - picked bond
+ * @property {Volume} [volume] - picked volume
  * @property {Object} [instance] - instance data
  * @property {Integer} instance.id - instance id
  * @property {String|Integer} instance.name - instance name
