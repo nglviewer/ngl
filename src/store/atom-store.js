@@ -8,9 +8,15 @@
 import Store from "./store.js";
 
 
-function AtomStore( sizeOrObject ){
+/**
+ * Atom store class
+ * @class
+ * @extends Store
+ * @param {Integer} [size] - initial size
+ */
+function AtomStore( size ){
 
-    Store.call( this, sizeOrObject );
+    Store.call( this, size );
 
 }
 

@@ -8,9 +8,15 @@
 import Store from "./store.js";
 
 
-function ChainStore( sizeOrObject ){
+/**
+ * Chain store class
+ * @class
+ * @extends Store
+ * @param {Integer} [size] - initial size
+ */
+function ChainStore( size ){
 
-    Store.call( this, sizeOrObject );
+    Store.call( this, size );
 
 }
 
