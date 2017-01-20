@@ -21,6 +21,11 @@ import {
  */
 function AtomProxy( structure, index ){
 
+    /**
+     * The structure the atom belongs to.
+     * @readonly
+     * @member {Structure}
+     */
     this.structure = structure;
     this.chainStore = structure.chainStore;
     this.residueStore = structure.residueStore;
@@ -28,6 +33,11 @@ function AtomProxy( structure, index ){
     this.residueMap = structure.residueMap;
     this.atomMap = structure.atomMap;
     this.bondHash = structure.bondHash;
+
+    /**
+     * The index of the atom, pointing to the data in the corresponding {@link AtomStore}
+     * @member {Integer}
+     */
     this.index = index;
 
 }
@@ -43,6 +53,10 @@ AtomProxy.prototype = {
     atomStore: undefined,
     index: undefined,
 
+    /**
+     * @readonly
+     * @member {Entity}
+     */
     get entity () {
         return this.structure.entityList[ this.entityIndex ];
     },
@@ -55,6 +69,10 @@ AtomProxy.prototype = {
     get chainIndex () {
         return this.residueStore.chainIndex[ this.residueIndex ];
     },
+    /**
+     * @readonly
+     * @member {ResidueProxy}
+     */
     get residue () {
         console.warn( "residue - might be expensive" );
         return this.structure.getResidueProxy( this.residueIndex );
@@ -69,27 +87,60 @@ AtomProxy.prototype = {
 
     //
 
+    /**
+     * Secondary structure code
+     * @readonly
+     * @member {String}
+     */
     get sstruc () {
         return this.residueStore.getSstruc( this.residueIndex );
     },
+    /**
+     * Insertion code
+     * @readonly
+     * @member {String}
+     */
     get inscode () {
         return this.residueStore.getInscode( this.residueIndex );
     },
+    /**
+     * Residue number/label
+     * @readonly
+     * @member {Integer}
+     */
     get resno () {
         return this.residueStore.resno[ this.residueIndex ];
     },
+    /**
+     * Chain name
+     * @readonly
+     * @member {String}
+     */
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
     },
+    /**
+     * Chain id
+     * @readonly
+     * @member {String}
+     */
     get chainid () {
         return this.chainStore.getChainid( this.chainIndex );
     },
 
     //
 
+    /**
+     * @readonly
+     * @member {ResidueType}
+     */
     get residueType () {
         return this.residueMap.get( this.residueStore.residueTypeId[ this.residueIndex ] );
     },
+    /**
+     * @readonly
+     * @member {AtomType}
+     */
     get atomType () {
         return  this.atomMap.get( this.atomStore.atomTypeId[ this.index ] );
     },
@@ -99,30 +150,64 @@ AtomProxy.prototype = {
 
     //
 
+    /**
+     * Residue name
+     * @readonly
+     * @member {String}
+     */
     get resname () {
         return this.residueType.resname;
     },
+    /**
+     * Hetero flag
+     * @readonly
+     * @member {Boolean}
+     */
     get hetero () {
         return this.residueType.hetero;
     },
 
     //
 
+    /**
+     * Atom name
+     * @readonly
+     * @member {String}
+     */
     get atomname () {
         return this.atomType.atomname;
     },
+    /**
+     * Element
+     * @readonly
+     * @member {String}
+     */
     get element () {
         return this.atomType.element;
     },
+    /**
+     * Van-der-Waals radius
+     * @readonly
+     * @member {Float}
+     */
     get vdw () {
         return this.atomType.vdw;
     },
+    /**
+     * Covalent radius
+     * @readonly
+     * @member {Float}
+     */
     get covalent () {
         return this.atomType.covalent;
     },
 
     //
 
+    /**
+     * X coordinate
+     * @member {Float}
+     */
     get x () {
         return this.atomStore.x[ this.index ];
     },
@@ -130,6 +215,10 @@ AtomProxy.prototype = {
         this.atomStore.x[ this.index ] = value;
     },
 
+    /**
+     * Y coordinate
+     * @member {Float}
+     */
     get y () {
         return this.atomStore.y[ this.index ];
     },
@@ -137,6 +226,10 @@ AtomProxy.prototype = {
         this.atomStore.y[ this.index ] = value;
     },
 
+    /**
+     * Z coordinate
+     * @member {Float}
+     */
     get z () {
         return this.atomStore.z[ this.index ];
     },
@@ -144,6 +237,10 @@ AtomProxy.prototype = {
         this.atomStore.z[ this.index ] = value;
     },
 
+    /**
+     * Serial number
+     * @member {Integer}
+     */
     get serial () {
         return this.atomStore.serial[ this.index ];
     },
@@ -151,6 +248,10 @@ AtomProxy.prototype = {
         this.atomStore.serial[ this.index ] = value;
     },
 
+    /**
+     * B-factor value
+     * @member {Float}
+     */
     get bfactor () {
         return this.atomStore.bfactor[ this.index ];
     },
@@ -158,6 +259,10 @@ AtomProxy.prototype = {
         this.atomStore.bfactor[ this.index ] = value;
     },
 
+    /**
+     * Occupancy value
+     * @member {Float}
+     */
     get occupancy () {
         return this.atomStore.occupancy[ this.index ];
     },
@@ -165,6 +270,10 @@ AtomProxy.prototype = {
         this.atomStore.occupancy[ this.index ] = value;
     },
 
+    /**
+     * Alternate location identifier
+     * @member {String}
+     */
     get altloc () {
         return this.atomStore.getAltloc( this.index );
     },
