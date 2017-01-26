@@ -909,11 +909,17 @@ function SstrucColorMaker( params ){
             return StructureColors.piHelix;
         }else if( sstruc === "e" || sstruc === "b" ){
             return StructureColors.betaStrand;
+        }else if( sstruc === "t" ){
+            return StructureColors.betaTurn;
         }else{
             rp.index = ap.residueIndex;
-            if( rp.isNucleic() ){
+            if( rp.isDna() ){
                 return StructureColors.dna;
-            }else if( rp.isProtein() || sstruc === "s" || sstruc === "t" || sstruc === "l" ){
+            }else if( rp.isRna() ){
+                return StructureColors.rna;
+            }else if( rp.isSaccharide() ){
+                return StructureColors.carbohydrate;
+            }else if( rp.isProtein() || sstruc === "s" || sstruc === "l" ){
                 return StructureColors.coil;
             }else{
                 return DefaultStructureColor;
