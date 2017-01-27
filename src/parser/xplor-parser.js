@@ -60,9 +60,9 @@ XplorParser.prototype = Object.assign( Object.create(
         header.CMAX = gridInfo[ 8 ];
 
         var cellInfo = parseNumberLine( headerLines[ infoStart + 1 ] );
-        header.a = cellInfo[ 0 ];
-        header.b = cellInfo[ 1 ];
-        header.c = cellInfo[ 2 ];
+        header.a = cellInfo[ 0 ] * this.voxelSize;
+        header.b = cellInfo[ 1 ] * this.voxelSize;
+        header.c = cellInfo[ 2 ] * this.voxelSize;
         header.alpha = cellInfo[ 3 ];
         header.beta = cellInfo[ 4 ];
         header.gamma = cellInfo[ 5 ];

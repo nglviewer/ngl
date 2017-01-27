@@ -52,9 +52,9 @@ CubeParser.prototype = Object.assign( Object.create(
         header.NVX = headerhelper( 3, 0 );  // Number of voxels
         header.NVY = headerhelper( 4, 0 );
         header.NVZ = headerhelper( 5, 0 );
-        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor;  // Axis vector
-        header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor;
-        header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor;
+        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor * this.voxelSize;  // Axis vector
+        header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor * this.voxelSize;
+        header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor * this.voxelSize;
 
         var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
         var count = 0;

@@ -116,11 +116,11 @@ DxParser.prototype = Object.assign( Object.create(
                 ls = line.split( reWhitespace );
 
                 if( deltaLineCount === 0 ){
-                    header.hx = parseFloat( ls[ 1 ] );
+                    header.hx = parseFloat( ls[ 1 ] ) * this.voxelSize;
                 }else if( deltaLineCount === 1 ){
-                    header.hy = parseFloat( ls[ 2 ] );
+                    header.hy = parseFloat( ls[ 2 ] ) * this.voxelSize;
                 }else if( deltaLineCount === 2 ){
-                    header.hz = parseFloat( ls[ 3 ] );
+                    header.hz = parseFloat( ls[ 3 ] ) * this.voxelSize;
                 }
 
                 deltaLineCount += 1;
