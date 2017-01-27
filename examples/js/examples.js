@@ -1541,7 +1541,6 @@ NGL.ExampleRegistry.addDict( {
         ]).then( function( l ){
             var betaGal = l[ 0 ];
             var localResolution = l[ 1 ];
-            console.log(l)
             betaGal.addRepresentation( "surface", {
                 colorVolume: localResolution.volume,
                 colorScheme: "volume",
