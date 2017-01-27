@@ -1291,7 +1291,7 @@ NGL.ExampleRegistry.addDict( {
                 colorDomain: [ -1, 0, 1 ]
             } );
             pqr.addRepresentation( "surface", {
-                volume: dxbin.volume,
+                colorVolume: dxbin.volume,
                 colorScheme: "volume",
                 colorScale: "rwb",
                 colorDomain: [ -5, 0, 5 ]

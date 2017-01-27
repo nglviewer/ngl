@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file, following t
 - volume slice representation including interpolation support
 - xplor/cns volume file parser
 
+### Changed
+- renamed `volume` parameter in molecular surface representation to `colorVolume`
+
 
 ## [v0.9.3] - 2016-10-14
 ### Changed
