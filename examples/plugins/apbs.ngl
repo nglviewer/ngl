@@ -23,8 +23,8 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
     } );
 
     var molsurfRepr = pqrComp.addRepresentation( "surface", {
-        volume: dxComp.volume,
         surfaceType: "sas",
+        colorVolume: dxComp.volume,
         colorScheme: "volume",
         colorScale: "rwb",
         colorDomain: [ -molsurfColor, 0, molsurfColor ],
