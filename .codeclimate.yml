@@ -11,10 +11,11 @@ engines:
 ratings:
    paths:
    - "src/**/*"
-## exclude external library builds
 exclude_paths:
-- "lib/*"
+- "data/**/*"
 - "dist/*"
-- "test/**/*"
+- "doc/**/*"
 - "examples/**/*"
+- "lib/*"
 - "scripts/**/*"
+- "test/**/*"
