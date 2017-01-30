@@ -8,6 +8,9 @@ engines:
     config:
       languages:
       - javascript
+ratings:
+   paths:
+   - "src/**/*"
 ## exclude external library builds
 exclude_paths:
 - "lib/*"
