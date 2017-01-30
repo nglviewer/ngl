@@ -1,0 +1,3 @@
+## exclude external library builds
+exclude_paths:
+- "lib/"
