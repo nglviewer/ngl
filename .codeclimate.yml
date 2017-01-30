@@ -6,6 +6,7 @@ engines:
   duplication:
     enabled: true
     config:
+      languages:
       - javascript
 ## exclude external library builds
 exclude_paths:
