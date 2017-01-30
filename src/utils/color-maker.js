@@ -178,15 +178,15 @@ var ColorMakerModes = {
 };
 
 
-function ColorMakerRegistry(){
+class ColorMakerRegistry{
 
-}
+    constructor(){
 
-ColorMakerRegistry.prototype = {
+        this.userSchemes = {};
 
-    userSchemes: {},
+    }
 
-    getScheme: function( params ){
+    getScheme( params ){
 
         var p = params || {};
 
@@ -210,18 +210,18 @@ ColorMakerRegistry.prototype = {
 
         return new schemeClass( params );
 
-    },
+    }
 
-    getPickingScheme: function( params ){
+    getPickingScheme( params ){
 
         var p = Object.assign( params || {} );
         p.scheme = "picking";
 
         return this.getScheme( p );
 
-    },
+    }
 
-    getTypes: function(){
+    getTypes(){
 
         var types = {};
 
@@ -235,21 +235,21 @@ ColorMakerRegistry.prototype = {
 
         return types;
 
-    },
+    }
 
-    getScales: function(){
+    getScales(){
 
         return ColorMakerScales;
 
-    },
+    }
 
-    getModes: function(){
+    getModes(){
 
         return ColorMakerModes;
 
-    },
+    }
 
-    addScheme: function( scheme, label ){
+    addScheme( scheme, label ){
 
         if( !( scheme instanceof ColorMaker ) ){
 
@@ -264,16 +264,16 @@ ColorMakerRegistry.prototype = {
 
         return id;
 
-    },
+    }
 
-    removeScheme: function( id ){
+    removeScheme( id ){
 
         delete this.userSchemes[ id ];
         // this.signals.typesChanged.dispatch();
 
-    },
+    }
 
-    createScheme: function( constructor, label ){
+    createScheme( constructor, label ){
 
         var _ColorMaker = function( params ){
 
@@ -291,9 +291,9 @@ ColorMakerRegistry.prototype = {
 
         return _ColorMaker;
 
-    },
+    }
 
-    addSelectionScheme: function( pairList, label ){
+    addSelectionScheme( pairList, label ){
 
         return this.addScheme( function(){
 
@@ -329,34 +329,32 @@ ColorMakerRegistry.prototype = {
 
     }
 
-};
-
-
-function ColorMaker( params ){
-
-    var p = params || {};
-
-    this.scale = defaults( p.scale, "uniform" );
-    this.mode = defaults( p.mode, "hcl" );
-    this.domain = defaults( p.domain, [ 0, 1 ] );
-    this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
-
-    this.structure = p.structure;
-    this.volume = p.volume;
-    this.surface = p.surface;
-    this.gidPool = p.gidPool;
-
-    if( this.structure ){
-        this.atomProxy = this.structure.getAtomProxy();
-    }
-
 }
 
-ColorMaker.prototype = {
 
-    constructor: ColorMaker,
+class ColorMaker{
 
-    getScale: function( params ){
+    constructor( params ){
+
+        var p = params || {};
+
+        this.scale = defaults( p.scale, "uniform" );
+        this.mode = defaults( p.mode, "hcl" );
+        this.domain = defaults( p.domain, [ 0, 1 ] );
+        this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
+
+        this.structure = p.structure;
+        this.volume = p.volume;
+        this.surface = p.surface;
+        this.gidPool = p.gidPool;
+
+        if( this.structure ){
+            this.atomProxy = this.structure.getAtomProxy();
+        }
+
+    }
+
+    getScale( params ){
 
         var p = params || {};
 
@@ -373,9 +371,9 @@ ColorMaker.prototype = {
             .domain( defaults( p.domain, this.domain ) )
             .out( "num" );
 
-    },
+    }
 
-    colorToArray: function( color, array, offset ){
+    colorToArray( color, array, offset ){
 
         if( array === undefined ) array = [];
         if( offset === undefined ) offset = 0;
@@ -386,58 +384,58 @@ ColorMaker.prototype = {
 
         return array;
 
-    },
+    }
 
-    atomColor: function(){
+    atomColor(){
 
         return 0xFFFFFF;
 
-    },
+    }
 
-    atomColorToArray: function( a, array, offset ){
+    atomColorToArray( a, array, offset ){
 
         return this.colorToArray(
             this.atomColor( a ), array, offset
         );
 
-    },
+    }
 
-    bondColor: function( b, fromTo ){
+    bondColor( b, fromTo ){
 
         this.atomProxy.index = fromTo ? b.atomIndex1 : b.atomIndex2;
         return this.atomColor( this.atomProxy );
 
-    },
+    }
 
-    bondColorToArray: function( b, fromTo, array, offset ){
+    bondColorToArray( b, fromTo, array, offset ){
 
         return this.colorToArray(
             this.bondColor( b, fromTo ), array, offset
         );
 
-    },
+    }
 
-    volumeColor: function(){
+    volumeColor(){
 
         return 0xFFFFFF;
 
-    },
+    }
 
-    volumeColorToArray: function( i, array, offset ){
+    volumeColorToArray( i, array, offset ){
 
         return this.colorToArray(
             this.volumeColor( i ), array, offset
         );
 
-    },
+    }
 
-    positionColor: function(){
+    positionColor(){
 
         return 0xFFFFFF;
 
-    },
+    }
 
-    positionColorToArray: function( v, array, offset ){
+    positionColorToArray( v, array, offset ){
 
         return this.colorToArray(
             this.positionColor( v ), array, offset
@@ -445,643 +443,643 @@ ColorMaker.prototype = {
 
     }
 
-};
-
-
-function VolumeColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    var valueScale = this.getScale();
-    var volume = this.volume;
-    var inverseMatrix = volume.inverseMatrix;
-    var data = volume.__data;
-    var nx = volume.nx;
-    var ny = volume.ny;
-    var vec = new Vector3();
-
-    this.positionColor = function( v ){
-
-        vec.copy( v );
-        vec.applyMatrix4( inverseMatrix );
-        vec.round();
-
-        var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
-
-        return valueScale( data[ index ] );
-
-    };
-
 }
 
-VolumeColorMaker.prototype = ColorMaker.prototype;
 
-VolumeColorMaker.prototype.constructor = VolumeColorMaker;
+class VolumeColorMaker extends ColorMaker{
 
+    constructor( params ){
 
-function ValueColorMaker( params ){
+        super( params );
 
-    ColorMaker.call( this, params );
+        var valueScale = this.getScale();
+        var volume = this.volume;
+        var inverseMatrix = volume.inverseMatrix;
+        var data = volume.__data;
+        var nx = volume.nx;
+        var ny = volume.ny;
+        var vec = new Vector3();
 
-    var valueScale = this.getScale();
+        this.positionColor = function( v ){
 
-    this.volumeColor = function( i ){
+            vec.copy( v );
+            vec.applyMatrix4( inverseMatrix );
+            vec.round();
 
-        return valueScale( this.volume.data[ i ] );
+            var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
 
-    };
+            return valueScale( data[ index ] );
 
-}
-
-ValueColorMaker.prototype = ColorMaker.prototype;
-
-ValueColorMaker.prototype.constructor = ValueColorMaker;
-
-
-function PickingColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    var offset;
-    if( this.structure ){
-        offset = this.structure.atomStore.count;
-        if( params.backbone ){
-            offset += this.structure.bondStore.count;
-        }else if( params.rung ){
-            offset += this.structure.bondStore.count;
-            offset += this.structure.backboneBondStore.count;
-        }
-    }
-
-    if( !this.gidPool ){
-        console.warn( "no gidPool" );
-        this.gidPool = {
-            getGid: function(){ return 0; }
-        };
-    }
-
-    this.atomColor = function( a ){
-
-        return this.gidPool.getGid( this.structure, a.index );
-
-    };
-
-    this.bondColor = function( b ){
-
-        return this.gidPool.getGid( this.structure, offset + b.index );
-
-    };
-
-    this.volumeColor = function( i ){
-
-        return this.gidPool.getGid( this.volume, i );
-
-    };
-
-}
-
-PickingColorMaker.prototype = ColorMaker.prototype;
-
-PickingColorMaker.prototype.constructor = PickingColorMaker;
-
-
-function RandomColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    this.atomColor = function(){
-
-        return Math.random() * 0xFFFFFF;
-
-    };
-
-}
-
-RandomColorMaker.prototype = ColorMaker.prototype;
-
-RandomColorMaker.prototype.constructor = RandomColorMaker;
-
-
-function UniformColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    var color = this.value;
-
-    this.atomColor = function(){
-
-        return color;
-
-    };
-
-    this.bondColor = function(){
-
-        return color;
-
-    };
-
-    this.valueColor = function(){
-
-        return color;
-
-    };
-
-}
-
-UniformColorMaker.prototype = ColorMaker.prototype;
-
-UniformColorMaker.prototype.constructor = UniformColorMaker;
-
-
-function AtomindexColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
-
-        var scalePerModel = {};
-
-        this.structure.eachModel( function( mp ){
-            this.domain = [ mp.atomOffset, mp.atomEnd ];
-            scalePerModel[ mp.index ] = this.getScale();
-        }.bind( this ) );
-
-        this.atomColor = function( a ){
-            return scalePerModel[ a.modelIndex ]( a.index );
-        };
-
-    }else{
-
-        var atomindexScale = this.getScale();
-
-        this.atomColor = function( a ){
-            return atomindexScale( a.index );
         };
 
     }
 
 }
 
-AtomindexColorMaker.prototype = ColorMaker.prototype;
 
-AtomindexColorMaker.prototype.constructor = AtomindexColorMaker;
+class ValueColorMaker extends ColorMaker{
 
+    constructor( params ){
 
-function ResidueindexColorMaker( params ){
+        super( params );
 
-    ColorMaker.call( this, params );
+        var valueScale = this.getScale();
 
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
+        this.volumeColor = function( i ){
 
-        // this.domain = [ 0, this.structure.residueStore.count ];
+            return valueScale( this.volume.data[ i ] );
 
-        var scalePerChain = {};
-
-        this.structure.eachChain( function( cp ){
-            this.domain = [ cp.residueOffset, cp.residueEnd ];
-            scalePerChain[ cp.index ] = this.getScale();
-        }.bind( this ) );
-
-        this.atomColor = function( a ){
-            return scalePerChain[ a.chainIndex ]( a.residueIndex );
-        };
-
-    }else{
-
-        var residueindexScale = this.getScale();
-
-        this.atomColor = function( a ){
-            return residueindexScale( a.residueIndex );
         };
 
     }
 
 }
 
-ResidueindexColorMaker.prototype = ColorMaker.prototype;
 
-ResidueindexColorMaker.prototype.constructor = ResidueindexColorMaker;
+class PickingColorMaker extends ColorMaker{
 
+    constructor( params ){
 
-function ChainindexColorMaker( params ){
+        super( params );
 
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "Spectral";
-    }
-    if( !params.domain ){
-
-        var scalePerModel = {};
-
-        this.structure.eachModel( function( mp ){
-            this.domain = [ mp.chainOffset, mp.chainEnd ];
-            scalePerModel[ mp.index ] = this.getScale();
-        }.bind( this ) );
-
-        this.atomColor = function( a ){
-            return scalePerModel[ a.modelIndex ]( a.chainIndex );
-        };
-
-    }else{
-
-        var chainindexScale = this.getScale();
-
-        this.atomColor = function( a ){
-            return chainindexScale( a.chainIndex );
-        };
-
-    }
-
-}
-
-ChainindexColorMaker.prototype = ColorMaker.prototype;
-
-ChainindexColorMaker.prototype.constructor = ChainindexColorMaker;
-
-
-function ChainnameColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "Spectral";
-    }
-
-    var chainnameDictPerModel = {};
-    var scalePerModel = {};
-
-    this.structure.eachModel( function( mp ){
-        var i = 0;
-        var chainnameDict = {};
-        mp.eachChain( function( cp ){
-            if( chainnameDict[ cp.chainname ] === undefined ){
-                chainnameDict[ cp.chainname ] = i;
-                i += 1;
+        var offset;
+        if( this.structure ){
+            offset = this.structure.atomStore.count;
+            if( params.backbone ){
+                offset += this.structure.bondStore.count;
+            }else if( params.rung ){
+                offset += this.structure.bondStore.count;
+                offset += this.structure.backboneBondStore.count;
             }
-        } );
-        this.domain = [ 0, i - 1 ];
-        chainnameDictPerModel[ mp.index ] = chainnameDict;
-        scalePerModel[ mp.index ] = this.getScale();
-    }.bind( this ) );
-
-    this.atomColor = function( a ){
-        var chainnameDict = chainnameDictPerModel[ a.modelIndex ];
-        return scalePerModel[ a.modelIndex ]( chainnameDict[ a.chainname ] );
-    };
-
-}
-
-ChainnameColorMaker.prototype = ColorMaker.prototype;
-
-ChainnameColorMaker.prototype.constructor = ChainnameColorMaker;
-
-
-function ChainidColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "Spectral";
-    }
-
-    var chainidDictPerModel = {};
-    var scalePerModel = {};
-
-    this.structure.eachModel( function( mp ){
-        var i = 0;
-        var chainidDict = {};
-        mp.eachChain( function( cp ){
-            if( chainidDict[ cp.chainid ] === undefined ){
-                chainidDict[ cp.chainid ] = i;
-                i += 1;
-            }
-        } );
-        this.domain = [ 0, i - 1 ];
-        chainidDictPerModel[ mp.index ] = chainidDict;
-        scalePerModel[ mp.index ] = this.getScale();
-    }.bind( this ) );
-
-    this.atomColor = function( a ){
-        var chainidDict = chainidDictPerModel[ a.modelIndex ];
-        return scalePerModel[ a.modelIndex ]( chainidDict[ a.chainid ] );
-    };
-
-}
-
-ChainidColorMaker.prototype = ColorMaker.prototype;
-
-ChainidColorMaker.prototype.constructor = ChainidColorMaker;
-
-
-function EntityindexColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "Spectral";
-    }
-    if( !params.domain ){
-        this.domain = [ 0, this.structure.entityList.length - 1 ];
-    }
-    var entityindexScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return entityindexScale( a.entityIndex );
-    };
-
-}
-
-EntityindexColorMaker.prototype = ColorMaker.prototype;
-
-EntityindexColorMaker.prototype.constructor = EntityindexColorMaker;
-
-
-function ModelindexColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "roygb";
-    }
-    if( !params.domain ){
-        this.domain = [ 0, this.structure.modelStore.count ];
-    }
-    var modelindexScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return modelindexScale( a.modelIndex );
-    };
-
-}
-
-ModelindexColorMaker.prototype = ColorMaker.prototype;
-
-ModelindexColorMaker.prototype.constructor = ModelindexColorMaker;
-
-
-function EntityTypeColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    this.atomColor = function( a ){
-        var e = a.entity;
-        var et = e ? e.entityType : undefined;
-        switch( et ){
-            case PolymerEntity:
-                return 0x7fc97f;
-            case NonPolymerEntity:
-                return 0xfdc086;
-            case MacrolideEntity:
-                return 0xbeaed4;
-            case WaterEntity:
-                return 0x386cb0;
-            default:
-                return 0xffff99;
         }
-    };
 
-}
-
-EntityTypeColorMaker.prototype = ColorMaker.prototype;
-
-EntityTypeColorMaker.prototype.constructor = EntityTypeColorMaker;
-
-
-function MoleculeTypeColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    this.atomColor = function( a ){
-        switch( a.residueType.moleculeType ){
-            case WaterType:
-                return 0x386cb0;
-            case IonType:
-                return 0xf0027f;
-            case ProteinType:
-                return 0xbeaed4;
-            case RnaType:
-                return 0xfdc086;
-            case DnaType:
-                return 0xbf5b17;
-            case SaccharideType:
-                return 0x7fc97f
-            default:
-                return 0xffff99;
+        if( !this.gidPool ){
+            console.warn( "no gidPool" );
+            this.gidPool = {
+                getGid: function(){ return 0; }
+            };
         }
-    };
+
+        this.atomColor = function( a ){
+
+            return this.gidPool.getGid( this.structure, a.index );
+
+        };
+
+        this.bondColor = function( b ){
+
+            return this.gidPool.getGid( this.structure, offset + b.index );
+
+        };
+
+        this.volumeColor = function( i ){
+
+            return this.gidPool.getGid( this.volume, i );
+
+        };
+
+    }
 
 }
 
-MoleculeTypeColorMaker.prototype = ColorMaker.prototype;
 
-MoleculeTypeColorMaker.prototype.constructor = MoleculeTypeColorMaker;
+class RandomColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        this.atomColor = function(){
+
+            return Math.random() * 0xFFFFFF;
+
+        };
+
+    }
+
+}
 
 
-function SstrucColorMaker( params ){
+class UniformColorMaker extends ColorMaker{
 
-    ColorMaker.call( this, params );
+    constructor( params ){
 
-    var rp = this.structure.getResidueProxy();
+        super( params );
 
-    this.atomColor = function( ap ){
+        var color = this.value;
 
-        var sstruc = ap.sstruc;
+        this.atomColor = function(){
 
-        if( sstruc === "h" ){
-            return StructureColors.alphaHelix;
-        }else if( sstruc === "g" ){
-            return StructureColors.threeTenHelix;
-        }else if( sstruc === "i" ){
-            return StructureColors.piHelix;
-        }else if( sstruc === "e" || sstruc === "b" ){
-            return StructureColors.betaStrand;
-        }else if( sstruc === "t" ){
-            return StructureColors.betaTurn;
+            return color;
+
+        };
+
+        this.bondColor = function(){
+
+            return color;
+
+        };
+
+        this.valueColor = function(){
+
+            return color;
+
+        };
+
+    }
+
+}
+
+
+class AtomindexColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "roygb";
+        }
+        if( !params.domain ){
+
+            var scalePerModel = {};
+
+            this.structure.eachModel( function( mp ){
+                this.domain = [ mp.atomOffset, mp.atomEnd ];
+                scalePerModel[ mp.index ] = this.getScale();
+            }.bind( this ) );
+
+            this.atomColor = function( a ){
+                return scalePerModel[ a.modelIndex ]( a.index );
+            };
+
         }else{
-            rp.index = ap.residueIndex;
-            if( rp.isDna() ){
-                return StructureColors.dna;
-            }else if( rp.isRna() ){
-                return StructureColors.rna;
-            }else if( rp.isSaccharide() ){
-                return StructureColors.carbohydrate;
-            }else if( rp.isProtein() || sstruc === "s" || sstruc === "l" ){
-                return StructureColors.coil;
+
+            var atomindexScale = this.getScale();
+
+            this.atomColor = function( a ){
+                return atomindexScale( a.index );
+            };
+
+        }
+
+    }
+
+}
+
+
+class ResidueindexColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "roygb";
+        }
+        if( !params.domain ){
+
+            // this.domain = [ 0, this.structure.residueStore.count ];
+
+            var scalePerChain = {};
+
+            this.structure.eachChain( function( cp ){
+                this.domain = [ cp.residueOffset, cp.residueEnd ];
+                scalePerChain[ cp.index ] = this.getScale();
+            }.bind( this ) );
+
+            this.atomColor = function( a ){
+                return scalePerChain[ a.chainIndex ]( a.residueIndex );
+            };
+
+        }else{
+
+            var residueindexScale = this.getScale();
+
+            this.atomColor = function( a ){
+                return residueindexScale( a.residueIndex );
+            };
+
+        }
+
+    }
+
+}
+
+
+class ChainindexColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "Spectral";
+        }
+        if( !params.domain ){
+
+            var scalePerModel = {};
+
+            this.structure.eachModel( function( mp ){
+                this.domain = [ mp.chainOffset, mp.chainEnd ];
+                scalePerModel[ mp.index ] = this.getScale();
+            }.bind( this ) );
+
+            this.atomColor = function( a ){
+                return scalePerModel[ a.modelIndex ]( a.chainIndex );
+            };
+
+        }else{
+
+            var chainindexScale = this.getScale();
+
+            this.atomColor = function( a ){
+                return chainindexScale( a.chainIndex );
+            };
+
+        }
+
+    }
+
+}
+
+
+class ChainnameColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "Spectral";
+        }
+
+        var chainnameDictPerModel = {};
+        var scalePerModel = {};
+
+        this.structure.eachModel( function( mp ){
+            var i = 0;
+            var chainnameDict = {};
+            mp.eachChain( function( cp ){
+                if( chainnameDict[ cp.chainname ] === undefined ){
+                    chainnameDict[ cp.chainname ] = i;
+                    i += 1;
+                }
+            } );
+            this.domain = [ 0, i - 1 ];
+            chainnameDictPerModel[ mp.index ] = chainnameDict;
+            scalePerModel[ mp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            var chainnameDict = chainnameDictPerModel[ a.modelIndex ];
+            return scalePerModel[ a.modelIndex ]( chainnameDict[ a.chainname ] );
+        };
+
+    }
+
+}
+
+
+class ChainidColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "Spectral";
+        }
+
+        var chainidDictPerModel = {};
+        var scalePerModel = {};
+
+        this.structure.eachModel( function( mp ){
+            var i = 0;
+            var chainidDict = {};
+            mp.eachChain( function( cp ){
+                if( chainidDict[ cp.chainid ] === undefined ){
+                    chainidDict[ cp.chainid ] = i;
+                    i += 1;
+                }
+            } );
+            this.domain = [ 0, i - 1 ];
+            chainidDictPerModel[ mp.index ] = chainidDict;
+            scalePerModel[ mp.index ] = this.getScale();
+        }.bind( this ) );
+
+        this.atomColor = function( a ){
+            var chainidDict = chainidDictPerModel[ a.modelIndex ];
+            return scalePerModel[ a.modelIndex ]( chainidDict[ a.chainid ] );
+        };
+
+    }
+
+}
+
+
+class EntityindexColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "Spectral";
+        }
+        if( !params.domain ){
+            this.domain = [ 0, this.structure.entityList.length - 1 ];
+        }
+        var entityindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return entityindexScale( a.entityIndex );
+        };
+
+    }
+
+}
+
+
+class ModelindexColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "roygb";
+        }
+        if( !params.domain ){
+            this.domain = [ 0, this.structure.modelStore.count ];
+        }
+        var modelindexScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return modelindexScale( a.modelIndex );
+        };
+
+    }
+
+}
+
+
+class EntityTypeColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        this.atomColor = function( a ){
+            var e = a.entity;
+            var et = e ? e.entityType : undefined;
+            switch( et ){
+                case PolymerEntity:
+                    return 0x7fc97f;
+                case NonPolymerEntity:
+                    return 0xfdc086;
+                case MacrolideEntity:
+                    return 0xbeaed4;
+                case WaterEntity:
+                    return 0x386cb0;
+                default:
+                    return 0xffff99;
+            }
+        };
+
+    }
+
+}
+
+
+class MoleculeTypeColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        this.atomColor = function( a ){
+            switch( a.residueType.moleculeType ){
+                case WaterType:
+                    return 0x386cb0;
+                case IonType:
+                    return 0xf0027f;
+                case ProteinType:
+                    return 0xbeaed4;
+                case RnaType:
+                    return 0xfdc086;
+                case DnaType:
+                    return 0xbf5b17;
+                case SaccharideType:
+                    return 0x7fc97f
+                default:
+                    return 0xffff99;
+            }
+        };
+
+    }
+
+}
+
+
+class SstrucColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        var rp = this.structure.getResidueProxy();
+
+        this.atomColor = function( ap ){
+
+            var sstruc = ap.sstruc;
+
+            if( sstruc === "h" ){
+                return StructureColors.alphaHelix;
+            }else if( sstruc === "g" ){
+                return StructureColors.threeTenHelix;
+            }else if( sstruc === "i" ){
+                return StructureColors.piHelix;
+            }else if( sstruc === "e" || sstruc === "b" ){
+                return StructureColors.betaStrand;
+            }else if( sstruc === "t" ){
+                return StructureColors.betaTurn;
             }else{
-                return DefaultStructureColor;
+                rp.index = ap.residueIndex;
+                if( rp.isDna() ){
+                    return StructureColors.dna;
+                }else if( rp.isRna() ){
+                    return StructureColors.rna;
+                }else if( rp.isSaccharide() ){
+                    return StructureColors.carbohydrate;
+                }else if( rp.isProtein() || sstruc === "s" || sstruc === "l" ){
+                    return StructureColors.coil;
+                }else{
+                    return DefaultStructureColor;
+                }
             }
+
+        };
+
+    }
+
+}
+
+
+class ElementColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        var colorValue = this.value;
+        if( params.value === undefined ){
+            colorValue = ElementColors.C;
         }
 
-    };
+        this.atomColor = function( a ){
+
+            var element = a.element;
+
+            if( element === "C" ){
+                return colorValue;
+            }else{
+                return ElementColors[ element ] || DefaultElementColor;
+            }
+
+        };
+
+    }
 
 }
 
-SstrucColorMaker.prototype = ColorMaker.prototype;
 
-SstrucColorMaker.prototype.constructor = SstrucColorMaker;
+class ResnameColorMaker extends ColorMaker{
 
+    constructor( params ){
 
-function ElementColorMaker( params ){
+        super( params );
 
-    ColorMaker.call( this, params );
+        this.atomColor = function( a ){
+            return ResidueColors[ a.resname ] || DefaultResidueColor;
+        };
 
-    var colorValue = this.value;
-    if( params.value === undefined ){
-        colorValue = ElementColors.C;
     }
 
-    this.atomColor = function( a ){
+}
 
-        var element = a.element;
 
-        if( element === "C" ){
-            return colorValue;
-        }else{
-            return ElementColors[ element ] || DefaultElementColor;
+class BfactorColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "OrRd";
         }
 
-    };
+        if( !params.domain ){
 
-}
+            var selection;
+            var min = Infinity;
+            var max = -Infinity;
 
-ElementColorMaker.prototype = ColorMaker.prototype;
+            if( params.sele ){
+                selection = new Selection( params.sele );
+            }
 
-ElementColorMaker.prototype.constructor = ElementColorMaker;
+            this.structure.eachAtom( function( a ){
+                var bfactor = a.bfactor;
+                min = Math.min( min, bfactor );
+                max = Math.max( max, bfactor );
+            }, selection );
 
-
-function ResnameColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    this.atomColor = function( a ){
-        return ResidueColors[ a.resname ] || DefaultResidueColor;
-    };
-
-}
-
-ResnameColorMaker.prototype = ColorMaker.prototype;
-
-ResnameColorMaker.prototype.constructor = ResnameColorMaker;
-
-
-function BfactorColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "OrRd";
-    }
-
-    if( !params.domain ){
-
-        var selection;
-        var min = Infinity;
-        var max = -Infinity;
-
-        if( params.sele ){
-            selection = new Selection( params.sele );
-        }
-
-        this.structure.eachAtom( function( a ){
-            var bfactor = a.bfactor;
-            min = Math.min( min, bfactor );
-            max = Math.max( max, bfactor );
-        }, selection );
-
-        this.domain = [ min, max ];
-
-    }
-
-    var bfactorScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return bfactorScale( a.bfactor );
-    };
-
-}
-
-BfactorColorMaker.prototype = ColorMaker.prototype;
-
-BfactorColorMaker.prototype.constructor = BfactorColorMaker;
-
-
-function OccupancyColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "PuBu";
-    }
-
-    if( !params.domain ){
-        this.domain = [ 0.0, 1.0 ];
-    }
-
-    var occupancyScale = this.getScale();
-
-    this.atomColor = function( a ){
-        return occupancyScale( a.occupancy );
-    };
-
-}
-
-OccupancyColorMaker.prototype = ColorMaker.prototype;
-
-OccupancyColorMaker.prototype.constructor = OccupancyColorMaker;
-
-
-function HydrophobicityColorMaker( params ){
-
-    ColorMaker.call( this, params );
-
-    if( !params.scale ){
-        this.scale = "RdYlGn";
-    }
-
-    var name;
-    var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
-
-    var resHF = {};
-    for( name in ResidueHydrophobicity ){
-        resHF[ name ] = ResidueHydrophobicity[ name ][ idx ];
-    }
-
-    if( !params.domain ){
-
-        var val;
-        var min = Infinity;
-        var max = -Infinity;
-
-        for( name in resHF ){
-
-            val = resHF[ name ];
-            min = Math.min( min, val );
-            max = Math.max( max, val );
+            this.domain = [ min, max ];
 
         }
 
-        this.domain = [ min, 0, max ];
+        var bfactorScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return bfactorScale( a.bfactor );
+        };
 
     }
 
-    var hfScale = this.getScale();
+}
 
-    this.atomColor = function( a ){
-        return hfScale( resHF[ a.resname ] || DefaultResidueHydrophobicity );
-    };
+
+class OccupancyColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "PuBu";
+        }
+
+        if( !params.domain ){
+            this.domain = [ 0.0, 1.0 ];
+        }
+
+        var occupancyScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return occupancyScale( a.occupancy );
+        };
+
+    }
 
 }
 
-HydrophobicityColorMaker.prototype = ColorMaker.prototype;
 
-HydrophobicityColorMaker.prototype.constructor = HydrophobicityColorMaker;
+class HydrophobicityColorMaker extends ColorMaker{
+
+    constructor( params ){
+
+        super( params );
+
+        if( !params.scale ){
+            this.scale = "RdYlGn";
+        }
+
+        var name;
+        var idx = 0;  // 0: DGwif, 1: DGwoct, 2: Oct-IF
+
+        var resHF = {};
+        for( name in ResidueHydrophobicity ){
+            resHF[ name ] = ResidueHydrophobicity[ name ][ idx ];
+        }
+
+        if( !params.domain ){
+
+            var val;
+            var min = Infinity;
+            var max = -Infinity;
+
+            for( name in resHF ){
+
+                val = resHF[ name ];
+                min = Math.min( min, val );
+                max = Math.max( max, val );
+
+            }
+
+            this.domain = [ min, 0, max ];
+
+        }
+
+        var hfScale = this.getScale();
+
+        this.atomColor = function( a ){
+            return hfScale( resHF[ a.resname ] || DefaultResidueHydrophobicity );
+        };
+
+    }
+
+}
 
 
 var ColorMakerTypes = {
