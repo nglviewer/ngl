@@ -18,7 +18,6 @@ import {
 } from "../structure/structure-constants.js";
 
 import chroma from "../../lib/chroma.es6.js";
-// import Signal from "../../lib/signals.es6.js";
 
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -185,12 +184,6 @@ function ColorMakerRegistry(){
 
 ColorMakerRegistry.prototype = {
 
-    signals: {
-
-        // typesChanged: new Signal(),
-
-    },
-
     userSchemes: {},
 
     getScheme: function( params ){
@@ -268,7 +261,6 @@ ColorMakerRegistry.prototype = {
         var id = "" + generateUUID() + "|" + label;
 
         this.userSchemes[ id ] = scheme;
-        // this.signals.typesChanged.dispatch();
 
         return id;
 
