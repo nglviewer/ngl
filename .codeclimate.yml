@@ -1,3 +1,10 @@
+engines:
+  eslint:
+    enabled: true
+  fixme:
+    enabled: true
+  duplication:
+    enabled: true
 ## exclude external library builds
 exclude_paths:
 - "lib/*"
