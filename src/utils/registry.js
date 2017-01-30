@@ -8,25 +8,29 @@
 import { defaults } from "../utils.js";
 
 
-function Registry( name ){
+function toLowerCaseString( value ){
+    return defaults( value, "" ).toString().toLowerCase();
+}
 
-    var dict = {};
 
-    this.name = name;
+class Registry{
 
-    this.add = function( key, value ){
-        dict[ defaults( key, "" ).toString().toLowerCase() ] = value;
-    };
+    constructor( name ){
+        this.name = name;
+        this._dict = {};
+    }
 
-    this.get = function( key ){
-        return dict[ defaults( key, "" ).toString().toLowerCase() ];
-    };
+    add( key, value ){
+        this._dict[ toLowerCaseString( key ) ] = value;
+    }
 
-    Object.defineProperties( this, {
-        names: {
-            get: function(){ return Object.keys( dict ); }
-        }
-    } );
+    get( key ){
+        return this._dict[ toLowerCaseString( key ) ];
+    }
+
+    get names(){
+        return Object.keys( this._dict );
+    }
 
 }
 
