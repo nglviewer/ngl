@@ -114,6 +114,71 @@ var StructureColors = {
 var DefaultStructureColor = 0x808080;
 
 
+var ColorMakerScales = {
+
+    "": "",
+
+    // Sequential
+    "OrRd": "[S] Orange-Red",
+    "PuBu": "[S] Purple-Blue",
+    "BuPu": "[S] Blue-Purple",
+    "Oranges": "[S] Oranges",
+    "BuGn": "[S] Blue-Green",
+    "YlOrBr": "[S] Yellow-Orange-Brown",
+    "YlGn": "[S] Yellow-Green",
+    "Reds": "[S] Reds",
+    "RdPu": "[S] Red-Purple",
+    "Greens": "[S] Greens",
+    "YlGnBu": "[S] Yellow-Green-Blue",
+    "Purples": "[S] Purples",
+    "GnBu": "[S] Green-Blue",
+    "Greys": "[S] Greys",
+    "YlOrRd": "[S] Yellow-Orange-Red",
+    "PuRd": "[S] Purple-Red",
+    "Blues": "[S] Blues",
+    "PuBuGn": "[S] Purple-Blue-Green",
+
+    // Diverging
+    "Spectral": "[D] Spectral",
+    "RdYlGn": "[D] Red-Yellow-Green",
+    "RdBu": "[D] Red-Blue",
+    "PiYG": "[D] Pink-Yellowgreen",
+    "PRGn": "[D] Purplered-Green",
+    "RdYlBu": "[D] Red-Yellow-Blue",
+    "BrBG": "[D] Brown-Bluegreen",
+    "RdGy": "[D] Red-Grey",
+    "PuOr": "[D] Purple-Orange",
+
+    // Qualitative
+    "Set1": "[Q] Set1",
+    "Set2": "[Q] Set2",
+    "Set3": "[Q] Set3",
+    "Dark2": "[Q] Dark2",
+    "Paired": "[Q] Paired",
+    "Pastel1": "[Q] Pastel1",
+    "Pastel2": "[Q] Pastel2",
+    "Accent": "[Q] Accent",
+
+    // Other
+    "roygb": "[?] Rainbow",
+    "rwb": "[?] Red-White-Blue",
+
+};
+
+var ColorMakerModes = {
+
+    "": "",
+
+    "rgb": "Red Green Blue",
+    "hsv": "Hue Saturation Value",
+    "hsl": "Hue Saturation Lightness",
+    "hsi": "Hue Saturation Intensity",
+    "lab": "CIE L*a*b*",
+    "hcl": "Hue Chroma Lightness"
+
+};
+
+
 function ColorMakerRegistry(){
 
 }
@@ -123,70 +188,6 @@ ColorMakerRegistry.prototype = {
     signals: {
 
         // typesChanged: new Signal(),
-
-    },
-
-    scales: {
-
-        "": "",
-
-        // Sequential
-        "OrRd": "[S] Orange-Red",
-        "PuBu": "[S] Purple-Blue",
-        "BuPu": "[S] Blue-Purple",
-        "Oranges": "[S] Oranges",
-        "BuGn": "[S] Blue-Green",
-        "YlOrBr": "[S] Yellow-Orange-Brown",
-        "YlGn": "[S] Yellow-Green",
-        "Reds": "[S] Reds",
-        "RdPu": "[S] Red-Purple",
-        "Greens": "[S] Greens",
-        "YlGnBu": "[S] Yellow-Green-Blue",
-        "Purples": "[S] Purples",
-        "GnBu": "[S] Green-Blue",
-        "Greys": "[S] Greys",
-        "YlOrRd": "[S] Yellow-Orange-Red",
-        "PuRd": "[S] Purple-Red",
-        "Blues": "[S] Blues",
-        "PuBuGn": "[S] Purple-Blue-Green",
-
-        // Diverging
-        "Spectral": "[D] Spectral",
-        "RdYlGn": "[D] Red-Yellow-Green",
-        "RdBu": "[D] Red-Blue",
-        "PiYG": "[D] Pink-Yellowgreen",
-        "PRGn": "[D] Purplered-Green",
-        "RdYlBu": "[D] Red-Yellow-Blue",
-        "BrBG": "[D] Brown-Bluegreen",
-        "RdGy": "[D] Red-Grey",
-        "PuOr": "[D] Purple-Orange",
-
-        // Qualitative
-        "Set1": "[Q] Set1",
-        "Set2": "[Q] Set2",
-        "Set3": "[Q] Set3",
-        "Dark2": "[Q] Dark2",
-        "Paired": "[Q] Paired",
-        "Pastel1": "[Q] Pastel1",
-        "Pastel2": "[Q] Pastel2",
-        "Accent": "[Q] Accent",
-
-        // Other
-        "roygb": "[?] Rainbow",
-        "rwb": "[?] Red-White-Blue",
-
-    },
-
-    modes: {
-
-        "": "",
-
-        "rgb": "Red Green Blue",
-        "hsv": "Hue Saturation Value",
-        "hsl": "Hue Saturation Lightness",
-        "hsi": "Hue Saturation Intensity",
-        "lab": "CIE L*a*b*",
-        "hcl": "Hue Chroma Lightness"
 
     },
 
@@ -200,9 +201,9 @@ ColorMakerRegistry.prototype = {
 
         var schemeClass;
 
-        if( id in ColorMakerRegistry.types ){
+        if( id in ColorMakerTypes ){
 
-            schemeClass = ColorMakerRegistry.types[ id ];
+            schemeClass = ColorMakerTypes[ id ];
 
         }else if( id in this.userSchemes ){
 
@@ -231,7 +232,7 @@ ColorMakerRegistry.prototype = {
 
         var types = {};
 
-        Object.keys( ColorMakerRegistry.types ).forEach( function( k ){
+        Object.keys( ColorMakerTypes ).forEach( function( k ){
             types[ k ] = k;
         } );
 
@@ -245,13 +246,13 @@ ColorMakerRegistry.prototype = {
 
     getScales: function(){
 
-        return this.scales;
+        return ColorMakerScales;
 
     },
 
     getModes: function(){
 
-        return this.modes;
+        return ColorMakerModes;
 
     },
 
@@ -1091,7 +1092,7 @@ HydrophobicityColorMaker.prototype = ColorMaker.prototype;
 HydrophobicityColorMaker.prototype.constructor = HydrophobicityColorMaker;
 
 
-ColorMakerRegistry.types = {
+var ColorMakerTypes = {
 
     "": ColorMaker,
     "picking": PickingColorMaker,
