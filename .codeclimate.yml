@@ -5,6 +5,8 @@ engines:
     enabled: true
   duplication:
     enabled: true
+    config:
+      - javascript
 ## exclude external library builds
 exclude_paths:
 - "lib/*"
