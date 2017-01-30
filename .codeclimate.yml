@@ -1,3 +1,7 @@
 ## exclude external library builds
 exclude_paths:
 - "lib/*"
+- "dist/*"
+- "test/**/*"
+- "examples/**/*"
+- "scripts/**/*"
