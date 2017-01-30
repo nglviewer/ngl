@@ -1,3 +1,4 @@
+import buble from 'rollup-plugin-buble';
 import json from 'rollup-plugin-json';
 
 var path = require('path');
@@ -50,7 +51,8 @@ export default {
   plugins: [
     glsl(),
     text(),
-    json()
+    json(),
+    buble()
   ],
   external: external,
   targets: [
