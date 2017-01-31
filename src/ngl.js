@@ -19,7 +19,7 @@ if( typeof window !== 'undefined' && !window.Promise ){
 
 import {
     Debug, setDebug,
-    DatasourceRegistry, RepresentationRegistry, ColorMakerRegistry, ParserRegistry
+    ColormakerRegistry, DatasourceRegistry, ParserRegistry, RepresentationRegistry
 } from "./globals.js";
 import { autoLoad, getDataInfo } from "./loader/loader-utils.js";
 import Selection from "./selection.js";
@@ -34,43 +34,67 @@ import { superpose } from "./align/align-utils.js";
 import { guessElement } from "./structure/structure-utils.js";
 
 import { throttle, download, getQuery, uniqueArray, getFileInfo } from "./utils.js";
-import { ColorMaker } from "./utils/color-maker.js";
 import Queue from "./utils/queue.js";
 import Counter from "./utils/counter.js";
 
 //
 
-import "./component/script-component";
-import "./component/shape-component";
-import "./component/structure-component";
-import "./component/surface-component";
-import "./component/volume-component";
+import Colormaker from "./color/colormaker.js";
+
+import "./color/atomindex-colormaker.js";
+import "./color/bfactor-colormaker.js";
+import "./color/chainid-colormaker.js";
+import "./color/chainindex-colormaker.js";
+import "./color/chainname-colormaker.js";
+import "./color/element-colormaker.js";
+import "./color/entityindex-colormaker.js";
+import "./color/entitytype-colormaker.js";
+import "./color/hydrophobicity-colormaker.js";
+import "./color/modelindex-colormaker.js";
+import "./color/moleculetype-colormaker.js";
+import "./color/occupancy-colormaker.js";
+import "./color/picking-colormaker.js";
+import "./color/random-colormaker.js";
+import "./color/residueindex-colormaker.js";
+import "./color/resname-colormaker.js";
+import "./color/sstruc-colormaker.js";
+import "./color/uniform-colormaker.js";
+import "./color/value-colormaker.js";
+import "./color/volume-colormaker.js";
 
 //
 
-import "./representation/axes-representation";
-import "./representation/backbone-representation";
-import "./representation/ballandstick-representation";
-import "./representation/base-representation";
-import "./representation/cartoon-representation";
-import "./representation/contact-representation";
-import "./representation/distance-representation";
-import "./representation/helixorient-representation";
-import "./representation/hyperball-representation";
-import "./representation/label-representation";
-import "./representation/licorice-representation";
-import "./representation/line-representation";
-import "./representation/molecularsurface-representation";
-import "./representation/point-representation";
-import "./representation/ribbon-representation";
-import "./representation/rocket-representation";
-import "./representation/rope-representation";
-import "./representation/spacefill-representation";
-import "./representation/trace-representation";
-import "./representation/tube-representation";
-import "./representation/unitcell-representation";
+import "./component/script-component.js";
+import "./component/shape-component.js";
+import "./component/structure-component.js";
+import "./component/surface-component.js";
+import "./component/volume-component.js";
 
-import BufferRepresentation from "./representation/buffer-representation";
+//
+
+import "./representation/axes-representation.js";
+import "./representation/backbone-representation.js";
+import "./representation/ballandstick-representation.js";
+import "./representation/base-representation.js";
+import "./representation/cartoon-representation.js";
+import "./representation/contact-representation.js";
+import "./representation/distance-representation.js";
+import "./representation/helixorient-representation.js";
+import "./representation/hyperball-representation.js";
+import "./representation/label-representation.js";
+import "./representation/licorice-representation.js";
+import "./representation/line-representation.js";
+import "./representation/molecularsurface-representation.js";
+import "./representation/point-representation.js";
+import "./representation/ribbon-representation.js";
+import "./representation/rocket-representation.js";
+import "./representation/rope-representation.js";
+import "./representation/spacefill-representation.js";
+import "./representation/trace-representation.js";
+import "./representation/tube-representation.js";
+import "./representation/unitcell-representation.js";
+
+import BufferRepresentation from "./representation/buffer-representation.js";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
 import ConeBuffer from "./buffer/cone-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
@@ -261,8 +285,8 @@ export {
      */
     autoLoad,
     RepresentationRegistry,
-    ColorMakerRegistry,
-    ColorMaker,
+    ColormakerRegistry,
+    Colormaker,
     Selection,
     PdbWriter,
     /**

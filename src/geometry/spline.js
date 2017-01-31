@@ -7,7 +7,7 @@
 
 import { Vector3 } from "../../lib/three.es6.js";
 
-import { ColorMakerRegistry } from "../globals.js";
+import { ColormakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 
@@ -460,15 +460,15 @@ Spline.prototype = {
         var p = params || {};
         p.structure = polymer.structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( p );
+        var colormaker = ColormakerRegistry.getScheme( p );
+        var pickingColormaker = ColormakerRegistry.getPickingScheme( p );
 
         function colFn( item, array, offset ){
-            colorMaker.atomColorToArray( item, array, offset );
+            colormaker.atomColorToArray( item, array, offset );
         }
 
         function pcolFn( item, array, offset ){
-            pickingColorMaker.atomColorToArray( item, array, offset );
+            pickingColormaker.atomColorToArray( item, array, offset );
         }
 
         this.interpolator.getColor(

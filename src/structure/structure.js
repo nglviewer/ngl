@@ -8,7 +8,7 @@
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { Debug, Log, ColorMakerRegistry } from "../globals.js";
+import { Debug, Log, ColormakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
@@ -707,7 +707,7 @@ Structure.prototype = {
         var what = p.what;
         var atomSet = defaults( p.atomSet, this.atomSet );
 
-        var radiusFactory, colorMaker, pickingColorMaker;
+        var radiusFactory, colormaker, pickingColormaker;
         var position, color, pickingColor, radius, index;
 
         var atomData = {};
@@ -721,13 +721,13 @@ Structure.prototype = {
         if( !what || what.color ){
             color = new Float32Array( atomCount * 3 );
             atomData.color = color;
-            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
+            colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
             pickingColor = new Float32Array( atomCount * 3 );
             atomData.pickingColor = pickingColor;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColormaker = ColormakerRegistry.getScheme( pickingColorParams );
         }
         if( !what || what.radius ){
             radius = new Float32Array( atomCount );
@@ -746,10 +746,10 @@ Structure.prototype = {
                 ap.positionToArray( position, i3 );
             }
             if( color ){
-                colorMaker.atomColorToArray( ap, color, i3 );
+                colormaker.atomColorToArray( ap, color, i3 );
             }
             if( pickingColor ){
-                pickingColorMaker.atomColorToArray( ap, pickingColor, i3 );
+                pickingColormaker.atomColorToArray( ap, pickingColor, i3 );
             }
             if( radius ){
                 radius[ i ] = radiusFactory.atomRadius( ap );
@@ -775,7 +775,7 @@ Structure.prototype = {
         var bondScale = defaults( p.bondScale, 0.4 );
         var bondSpacing = defaults( p.bondSpacing, 1.0 );
 
-        var radiusFactory, colorMaker, pickingColorMaker;
+        var radiusFactory, colormaker, pickingColormaker;
         var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
 
         var bondData = {};
@@ -805,7 +805,7 @@ Structure.prototype = {
             color2 = new Float32Array( bondCount * 3 );
             bondData.color1 = color1;
             bondData.color2 = color2;
-            colorMaker = ColorMakerRegistry.getScheme( p.colorParams );
+            colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
             pickingColor1 = new Float32Array( bondCount * 3 );
@@ -813,7 +813,7 @@ Structure.prototype = {
             bondData.pickingColor1 = pickingColor1;
             bondData.pickingColor2 = pickingColor2;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColorMaker = ColorMakerRegistry.getScheme( pickingColorParams );
+            pickingColormaker = ColormakerRegistry.getScheme( pickingColorParams );
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
@@ -904,8 +904,8 @@ Structure.prototype = {
                 }
             }
             if( color1 ){
-                colorMaker.bondColorToArray( bp, 1, color1, i3 );
-                colorMaker.bondColorToArray( bp, 0, color2, i3 );
+                colormaker.bondColorToArray( bp, 1, color1, i3 );
+                colormaker.bondColorToArray( bp, 0, color2, i3 );
                 if( isMulti && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         k = j * 3 + i3;
@@ -915,8 +915,8 @@ Structure.prototype = {
                 }
             }
             if( pickingColor1 ){
-                pickingColorMaker.bondColorToArray( bp, 1, pickingColor1, i3 );
-                pickingColorMaker.bondColorToArray( bp, 0, pickingColor2, i3 );
+                pickingColormaker.bondColorToArray( bp, 1, pickingColor1, i3 );
+                pickingColormaker.bondColorToArray( bp, 0, pickingColor2, i3 );
                 if( isMulti && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
                         k = j * 3 + i3;

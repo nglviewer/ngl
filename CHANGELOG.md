@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file, following t
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`
+- renamed colormaker classes from colorMaker to colormaker, i.e. removed camel case
+- renamed ColormakerRegistry.getTypes to .getSchemes
+- colormaker subclasses now auto-register with ColormakerRegistry
 
 
 ## [v0.9.3] - 2016-10-14

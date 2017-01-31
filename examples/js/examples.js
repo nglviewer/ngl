@@ -1016,7 +1016,7 @@ NGL.ExampleRegistry.addDict( {
 
     "selectionColoring": function( stage ){
 
-        var schemeId = NGL.ColorMakerRegistry.addSelectionScheme( [
+        var schemeId = NGL.ColormakerRegistry.addSelectionScheme( [
             [ "red", "64-74 or 134-154 or 222-254 or 310-310 or 322-326" ],
             [ "green", "311-322" ],
             [ "yellow", "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309" ],
@@ -1033,7 +1033,7 @@ NGL.ExampleRegistry.addDict( {
 
     "customColoring": function( stage ){
 
-        var schemeId = NGL.ColorMakerRegistry.addScheme( function( params ){
+        var schemeId = NGL.ColormakerRegistry.addScheme( function( params ){
             this.atomColor = function( atom ){
                 if( atom.serial < 1000 ){
                     return 0x0000FF;  // blue

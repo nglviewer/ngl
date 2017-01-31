@@ -7,7 +7,7 @@
 
 import { Vector3 } from "../../lib/three.es6.js";
 
-import { ColorMakerRegistry } from "../globals.js";
+import { ColormakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 import { projectPointOnVector } from "../math/vector-utils.js";
@@ -96,8 +96,8 @@ Helixorient.prototype = {
         var p = params || {};
         p.structure = structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( p );
+        var colormaker = ColormakerRegistry.getScheme( p );
+        var pickingColormaker = ColormakerRegistry.getPickingScheme( p );
 
         var rp = structure.getResidueProxy();
         var ap = structure.getAtomProxy();
@@ -108,8 +108,8 @@ Helixorient.prototype = {
             ap.index = rp.traceAtomIndex;
 
             var i3 = i * 3;
-            colorMaker.atomColorToArray( ap, col, i3 );
-            pickingColorMaker.atomColorToArray( ap, pcol, i3 );
+            colormaker.atomColorToArray( ap, col, i3 );
+            pickingColormaker.atomColorToArray( ap, pcol, i3 );
 
         }
 

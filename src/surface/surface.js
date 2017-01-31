@@ -8,7 +8,7 @@
 import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
-import { ColorMakerRegistry } from "../globals.js";
+import { ColormakerRegistry } from "../globals.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import Selection from "../selection.js";
 
@@ -141,13 +141,13 @@ Surface.prototype = {
         var p = params || {};
 
         var n = this.size;
-        var i, array, colorMaker;
+        var i, array, colormaker;
 
         if( p.scheme === "volume" ){
 
             var v = new Vector3();
             var pos = this.position;
-            colorMaker = ColorMakerRegistry.getScheme( p );
+            colormaker = ColormakerRegistry.getScheme( p );
 
             array = new Float32Array( n * 3 );
 
@@ -155,7 +155,7 @@ Surface.prototype = {
 
                 var i3 = i * 3;
                 v.set( pos[ i3 ], pos[ i3 + 1 ], pos[ i3 + 2 ] );
-                colorMaker.positionColorToArray( v, array, i3 );
+                colormaker.positionColorToArray( v, array, i3 );
 
             }
 
@@ -163,13 +163,13 @@ Surface.prototype = {
 
             p.surface = this;  // FIXME should this be p.surface???
             array = new Float32Array( n * 3 );
-            colorMaker = ColorMakerRegistry.getScheme( p );
+            colormaker = ColormakerRegistry.getScheme( p );
             var atomProxy = p.structure.getAtomProxy();
             var atomindex = this.atomindex;
 
             for( i = 0; i < n; ++i ){
                 atomProxy.index = atomindex[ i ];
-                colorMaker.atomColorToArray( atomProxy, array, i * 3 );
+                colormaker.atomColorToArray( atomProxy, array, i * 3 );
             }
 
         }else{
@@ -245,11 +245,11 @@ Surface.prototype = {
                 for( a = 0; a < elementSize; a ++, j++ ){
 
                     filteredIndex[ j ] = index[ i + a ];
-                    
+
                 }
 
             }
-           
+
             var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
             return new TypedArray( filteredIndex );
 

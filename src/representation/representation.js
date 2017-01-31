@@ -7,7 +7,7 @@
 
 import { Color, Vector3 } from "../../lib/three.es6.js";
 
-import { Debug, Log, ColorMakerRegistry, ExtensionFragDepth } from "../globals.js";
+import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
 import Queue from "../utils/queue.js";
 import Counter from "../utils/counter.js";
@@ -76,6 +76,10 @@ function Representation( object, viewer, params ){
      */
     this.bufferList = [];
 
+    if( this.parameters.colorScheme ){
+        this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
+    }
+
     this.init( params );
 
 }
@@ -120,11 +124,11 @@ Representation.prototype = {
 
         colorScheme: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getTypes()
+            options: {}
         },
         colorScale: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getScales()
+            options: ColormakerRegistry.getScales()
         },
         colorValue: {
             type: "color", update: "color"
@@ -134,7 +138,7 @@ Representation.prototype = {
         },
         colorMode: {
             type: "select", update: "color",
-            options: ColorMakerRegistry.getModes()
+            options: ColormakerRegistry.getModes()
         },
 
         roughness: {
@@ -276,7 +280,7 @@ Representation.prototype = {
 
     setColor: function( value, p ){
 
-        var types = Object.keys( ColorMakerRegistry.getTypes() );
+        var types = Object.keys( ColormakerRegistry.getSchemes() );
 
         if( types.includes( value ) ){
 
