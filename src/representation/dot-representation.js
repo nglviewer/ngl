@@ -108,9 +108,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
                 "": "",
                 "value": "value",
                 "uniform": "uniform",
-                // "value-min": "value-min",
-                // "deviation": "deviation",
-                // "size": "size"
+                "random": "random"
             }
         },
 

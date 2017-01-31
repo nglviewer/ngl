@@ -9,17 +9,45 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Class for making random colors
+ * @extends Colormaker
+ */
 class RandomColormaker extends Colormaker{
 
     constructor( params ){
 
         super( params );
 
-        this.atomColor = function(){
+    }
 
-            return Math.random() * 0xFFFFFF;
+    /**
+     * get color for an atom
+     * @return {Integer} random hex color
+     */
+    atomColor(){
 
-        };
+        return Math.random() * 0xFFFFFF;
+
+    }
+
+    /**
+     * get color for volume cell
+     * @return {Integer} random hex color
+     */
+    volumeColor(){
+
+        return Math.random() * 0xFFFFFF;
+
+    }
+
+    /**
+     * get color for coordinates in space
+     * @return {Integer} random hex color
+     */
+    positionColor(){
+
+        return Math.random() * 0xFFFFFF;
 
     }
 

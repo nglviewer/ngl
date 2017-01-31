@@ -148,15 +148,21 @@ Surface.prototype = {
             var v = new Vector3();
             var pos = this.position;
             colormaker = ColormakerRegistry.getScheme( p );
-
             array = new Float32Array( n * 3 );
 
             for( i = 0; i < n; ++i ){
-
                 var i3 = i * 3;
                 v.set( pos[ i3 ], pos[ i3 + 1 ], pos[ i3 + 2 ] );
                 colormaker.positionColorToArray( v, array, i3 );
+            }
 
+        }else if( p.scheme === "random" ){
+
+            colormaker = ColormakerRegistry.getScheme( p );
+            array = new Float32Array( n * 3 );
+
+            for( i = 0; i < n; ++i ){
+                colormaker.volumeColorToArray( i, array, i * 3 );
             }
 
         }else if( this.atomindex ){
