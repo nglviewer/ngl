@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file, following t
 
 ## [Unreleased]
 ### Added
+- buble, for transpiling some ES2015 features (e.g. classes, arrow functions, ...)
 - volume slice representation including interpolation support
 - xplor/cns volume file parser
 - `colorVolume` parameter for surface representation of volume data
