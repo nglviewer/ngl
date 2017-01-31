@@ -25,9 +25,9 @@ class VolumeColormaker extends Colormaker{
         var ny = volume.ny;
         var vec = new Vector3();
 
-        this.positionColor = function( v ){
+        this.positionColor = function( coords ){
 
-            vec.copy( v );
+            vec.copy( coords );
             vec.applyMatrix4( inverseMatrix );
             vec.round();
 

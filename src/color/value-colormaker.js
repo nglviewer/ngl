@@ -17,9 +17,9 @@ class ValueColormaker extends Colormaker{
 
         var valueScale = this.getScale();
 
-        this.volumeColor = function( i ){
+        this.volumeColor = function( index ){
 
-            return valueScale( this.volume.data[ i ] );
+            return valueScale( this.volume.data[ index ] );
 
         };
 
