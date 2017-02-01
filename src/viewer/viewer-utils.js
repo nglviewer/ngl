@@ -103,6 +103,22 @@ function _trimCanvas( canvas, r, g, b, a ){
 }
 
 
+/**
+ * Image parameter object.
+ * @typedef {Object} ImageParameters - image generation parameters
+ * @property {Boolean} trim - trim the image
+ * @property {Integer} factor - scaling factor to apply to the viewer canvas
+ * @property {Boolean} antialias - antialias the image
+ * @property {Boolean} transparent - transparent image background
+ */
+
+
+/**
+ * Make image from what is shown in a viewer canvas
+ * @param  {Viewer} viewer - the viewer
+ * @param  {ImageParameters} params - parameters object
+ * @return {Promise} A Promise object that resolves to an image {@link Blob}.
+ */
 function makeImage( viewer, params ){
 
     var p = params || {};

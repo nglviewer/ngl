@@ -539,6 +539,11 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Add the given component to the stage
+     * @param {Component} component - the component to add
+     * @return {undefined}
+     */
     addComponent: function( component ){
 
         if( !component ){
@@ -554,6 +559,12 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Create a component from the given object and add to the stage
+     * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
+     * @param {ComponentParameters} params - parameter object
+     * @return {Component} the created component
+     */
     addComponentFromObject: function( object, params ){
 
         var CompClass = ComponentRegistry.get( object.type );
@@ -568,6 +579,11 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Remove the given component
+     * @param  {Component} component - the component to remove
+     * @return {undefined}
+     */
     removeComponent: function( component ){
 
         var idx = this.compList.indexOf( component );
@@ -579,6 +595,11 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Remove all components from the stage
+     * @param  {String} [type] - component type to remove
+     * @return {undefined}
+     */
     removeAllComponents: function( type ){
 
         this.compList.slice().forEach( function( o ){
@@ -692,6 +713,10 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Center the whole scene
+     * @return {undefined}
+     */
     centerView: function(){
 
         if( this.tasks.count > 0 ){
@@ -751,6 +776,11 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Make image from what is shown in a viewer canvas
+     * @param  {ImageParameters} params - image generation parameters
+     * @return {Promise} A Promise object that resolves to an image {@link Blob}.
+     */
     makeImage: function( params ){
 
         var viewer = this.viewer;
@@ -841,6 +871,12 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Iterator over each component and executing the callback
+     * @param  {Function} callback - function to execute
+     * @param  {String}   type - limit iteration to components of this type
+     * @return {undefined}
+     */
     eachComponent: function( callback, type ){
 
         this.compList.forEach( function( o, i ){
@@ -853,7 +889,13 @@ Stage.prototype = {
 
     },
 
-    eachRepresentation: function( callback, componentType ){
+    /**
+     * Iterator over each representation and executing the callback
+     * @param  {Function} callback - function to execute
+     * @param  {String}   type - limit iteration to components of this type
+     * @return {undefined}
+     */
+    eachRepresentation: function( callback, type ){
 
         this.eachComponent( function( comp ){
 
@@ -861,11 +903,17 @@ Stage.prototype = {
                 callback( repr, comp );
             } );
 
-        }, componentType );
+        }, type );
 
     },
 
-    getComponentsByName: function( name, componentType ){
+    /**
+     * Get collection of components by name
+     * @param  {String|RegExp}   name - the component name
+     * @param  {String} type - limit iteration to components of this type
+     * @return {ComponentCollection} collection of selected components
+     */
+    getComponentsByName: function( name, type ){
 
         var compList = [];
 
@@ -875,13 +923,19 @@ Stage.prototype = {
                 compList.push( comp );
             }
 
-        }, componentType );
+        }, type );
 
         return new ComponentCollection( compList );
 
     },
 
-    getRepresentationsByName: function( name, componentType ){
+    /**
+     * Get collection of representations by name
+     * @param  {String|RegExp}   name - the representation name
+     * @param  {String} type - limit iteration to components of this type
+     * @return {RepresentationCollection} collection of selected components
+     */
+    getRepresentationsByName: function( name, type ){
 
         var compName, reprName;
 
@@ -905,12 +959,17 @@ Stage.prototype = {
                 reprList.push( repr );
             }
 
-        }, componentType );
+        }, type );
 
         return new RepresentationCollection( reprList );
 
     },
 
+    /**
+     * Get collection of components and representations by name
+     * @param  {String|RegExp}   name - the component or representation name
+     * @return {Collection} collection of selected components and representations
+     */
     getAnythingByName: function( name ){
 
         var compList = this.getComponentsByName( name ).list;
@@ -920,6 +979,10 @@ Stage.prototype = {
 
     },
 
+    /**
+     * Cleanup when disposing of a stage object
+     * @return {undefined}
+     */
     dispose: function(){
 
         this.tasks.dispose();
