@@ -100,6 +100,7 @@ import ConeBuffer from "./buffer/cone-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
 import EllipsoidBuffer from "./buffer/ellipsoid-buffer.js";
 import SphereBuffer from "./buffer/sphere-buffer.js";
+import TextBuffer from "./buffer/text-buffer.js";
 
 //
 
@@ -349,6 +350,11 @@ export {
      * @see {@link ArrowBuffer}
      */
     ArrowBuffer,
+    /**
+     * Text buffer class
+     * @see {@link TextBuffer}
+     */
+    TextBuffer,
 
     /**
      * Shape class
