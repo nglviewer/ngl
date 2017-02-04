@@ -49,7 +49,11 @@ NetworkStreamer.prototype = Object.assign( Object.create(
                 xhr.status === 0
             ){
 
-                callback( xhr.response );
+                try {
+                    callback( xhr.response );
+                } catch (e) {
+                    this.onerror(e);
+                }
 
             } else {
 
