@@ -51,7 +51,7 @@ class Script{
         }catch( e ){
 
             Log.error( "Script compilation failed", e );
-            this.fn = null;
+            this.fn = function(){};
 
         }
 
@@ -66,10 +66,9 @@ class Script{
     /**
      * Execute the script
      * @param  {Stage} stage - the stage context
-     * @param  {Function} [onFinish] - function to run when the script finishes
-     * @return {undefined}
+     * @return {Promise} - resolve when script finished running
      */
-    call( stage, onFinish ){
+    call( stage ){
 
         var panel = {
 
@@ -93,7 +92,7 @@ class Script{
 
         };
 
-        if( this.fn ){
+        return new Promise( ( resolve, reject ) => {
 
             var args = [
                 stage, panel,
@@ -103,30 +102,16 @@ class Script{
             try{
 
                 this.fn.apply( null, args );
-                finish();
+                resolve();
 
             }catch( e ){
 
                 Log.error( "Script.fn", e );
-                error();
+                reject( e );
 
             }
 
-        }else{
-
-            Log.log( "Script.call no function available" );
-            finish();
-
-        }
-
-        function finish(){
-            if( typeof onFinish === "function" ) onFinish();
-        }
-
-        function error(){
-            Log.error( "Script: Error executing script" );
-            finish();
-        }
+        } );
 
     }
 

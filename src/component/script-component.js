@@ -50,14 +50,10 @@ ScriptComponent.prototype = Object.assign( Object.create(
 
     run: function(){
 
-        var scope = this;
-
         this.setStatus( "running" );
 
-        this.script.call( this.stage, function(){
-
-            scope.setStatus( "finished" );
-
+        this.script.call( this.stage ).then( () => {
+            this.setStatus( "finished" );
         } );
 
         this.setStatus( "called" );
