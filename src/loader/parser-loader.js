@@ -21,12 +21,12 @@ ParserLoader.prototype = Object.assign( Object.create(
 
     constructor: ParserLoader,
 
-    _load: function( resolve ){
+    load: function(){
 
         var ParserClass = ParserRegistry.get( this.ext );
         var parser = new ParserClass( this.streamer, this.params );
 
-        parser.parse( resolve );
+        return parser.parse();
 
     }
 

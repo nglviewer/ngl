@@ -55,23 +55,7 @@ Loader.prototype = {
 
     load: function(){
 
-        return new Promise( function( resolve, reject ){
-
-            this.streamer.onerror = reject;
-
-            try{
-                this._load( resolve, reject );
-            }catch( e ){
-                reject( e );
-            }
-
-        }.bind( this ) );
-
-    },
-
-    _load: function( resolve, reject ){
-
-        reject( "not implemented" );
+        return new Promise.reject( "not implemented" );
 
     }
 

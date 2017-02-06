@@ -21,15 +21,15 @@ ScriptLoader.prototype = Object.assign( Object.create(
 
     constructor: ScriptLoader,
 
-    _load: function( resolve ){
+    load: function(){
 
-        this.streamer.read( function(){
+        return this.streamer.read().then( () => {
 
-            var text = this.streamer.asText();
-            var script = new Script( text, this.name, this.path );
-            resolve( script );
+            return new Script(
+                this.streamer.asText(), this.name, this.path
+            );
 
-        }.bind( this ) );
+        } );
 
     }
 
