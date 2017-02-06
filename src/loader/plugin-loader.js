@@ -10,19 +10,17 @@ import { autoLoad } from "./loader-utils.js";
 import Script from "../script.js";
 
 
-function PluginLoader( src, params ){
+/**
+ * Plugin loader class
+ * @extends Loader
+ */
+class PluginLoader extends Loader{
 
-    Loader.call( this, src, params );
-
-}
-
-PluginLoader.prototype = Object.assign( Object.create(
-
-    Loader.prototype ), {
-
-    constructor: PluginLoader,
-
-    load: function(){
+    /**
+     * Load plugin
+     * @return {Promise} resolves to the loaded plugin {@link Script}
+     */
+    load(){
 
         var basePath;
         if( this.protocol ){
@@ -61,7 +59,7 @@ PluginLoader.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default PluginLoader;

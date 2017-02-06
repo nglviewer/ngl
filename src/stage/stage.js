@@ -122,7 +122,7 @@ class Stage{
     /**
      * Create a Stage instance
      * @param {String} eid - document id
-     * @param {StageParameters} params -
+     * @param {StageParameters} params - parameters object
      */
     constructor( eid, params ){
 
@@ -474,8 +474,7 @@ class Stage{
      *
      * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
-     * @param  {Object} params - loading parameters
-     * @param  {String} params.ext - file extension, determines file type
+     * @param  {LoaderParameters} params - loading parameters
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
      * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
      *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,

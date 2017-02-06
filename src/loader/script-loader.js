@@ -9,19 +9,17 @@ import Loader from "./loader.js";
 import Script from "../script.js";
 
 
-function ScriptLoader( src, params ){
+/**
+ * Script loader class
+ * @extends Loader
+ */
+class ScriptLoader extends Loader{
 
-    Loader.call( this, src, params );
-
-}
-
-ScriptLoader.prototype = Object.assign( Object.create(
-
-    Loader.prototype ), {
-
-    constructor: ScriptLoader,
-
-    load: function(){
+    /**
+     * Load script
+     * @return {Promise} resolves to the loaded {@link Script}
+     */
+    load(){
 
         return this.streamer.read().then( () => {
 
@@ -33,7 +31,7 @@ ScriptLoader.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default ScriptLoader;
