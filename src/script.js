@@ -10,49 +10,66 @@ import Signal from "../lib/signals.es6.js";
 import { Log } from "./globals.js";
 
 
-function Script( functionBody, name, path ){
+/**
+ * Script class
+ */
+class Script{
 
-    this.signals = {
+    /**
+     * Create a script instance
+     * @param {String} functionBody - the function source
+     * @param {String} name - name of the script
+     * @param {String} path - path of the script
+     */
+    constructor( functionBody, name, path ){
 
-        elementAdded: new Signal(),
-        elementRemoved: new Signal(),
-        nameChanged: new Signal(),
+        this.signals = {
 
-    };
+            elementAdded: new Signal(),
+            elementRemoved: new Signal(),
+            nameChanged: new Signal(),
 
-    this.name = name;
-    this.path = path;
-    this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+        };
 
-    try {
+        this.name = name;
+        this.path = path;
+        this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-        // supress warning about string evaluation as code
-        // jshint evil:true
-        this.fn = new Function(
+        try {
 
-            'stage', 'panel',
-            '__name__', '__path__', '__dir__',
+            // supress warning about string evaluation as code
+            // jshint evil:true
+            this.fn = new Function(
 
-            functionBody
+                'stage', 'panel',
+                '__name__', '__path__', '__dir__',
 
-        );
+                functionBody
 
-    }catch( e ){
+            );
 
-        Log.error( "Script compilation failed", e );
-        this.fn = null;
+        }catch( e ){
+
+            Log.error( "Script compilation failed", e );
+            this.fn = null;
+
+        }
 
     }
 
-}
+    /**
+     * Object type
+     * @readonly
+     */
+    get type(){ return "Script"; }
 
-Script.prototype = {
-
-    constructor: Script,
-
-    type: "Script",
-
-    call: function( stage, onFinish ){
+    /**
+     * Execute the script
+     * @param  {Stage} stage - the stage context
+     * @param  {Function} [onFinish] - function to run when the script finishes
+     * @return {undefined}
+     */
+    call( stage, onFinish ){
 
         var panel = {
 
@@ -113,7 +130,7 @@ Script.prototype = {
 
     }
 
-};
+}
 
 
 export default Script;
