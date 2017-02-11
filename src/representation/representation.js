@@ -16,28 +16,30 @@ import Counter from "../utils/counter.js";
 /**
  * Representation parameter object.
  * @typedef {Object} RepresentationParameters - representation parameters
- * @property {Boolean} lazy - only build & update the representation when visible
+ * @property {Boolean} [lazy] - only build & update the representation when visible
  *                            otherwise defer changes until set visible again
- * @property {Integer} clipNear - position of camera near/front clipping plane
+ * @property {Integer} [clipNear] - position of camera near/front clipping plane
  *                                in percent of scene bounding box
- * @property {Integer} clipRadius - radius of clipping sphere
- * @property {Vector3} clipCenter - position of for spherical clipping
- * @property {Boolean} flatShaded - render flat shaded
- * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
- * @property {String} side - which triangle sides to render, "front" front-side,
+ * @property {Integer} [clipRadius] - radius of clipping sphere
+ * @property {Vector3} [clipCenter] - position of for spherical clipping
+ * @property {Boolean} [flatShaded] - render flat shaded
+ * @property {Float} [opacity] - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {String} [side] - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
- * @property {Boolean} wireframe - render as wireframe
- * @property {Integer} linewidth - width of lines (when applicable)
- * @property {String} colorScheme - color scheme
- * @property {String} colorScale - color scale
- * @property {Color} colorValue - color value
- * @property {Integer[]} colorDomain - scale value range
+ * @property {Boolean} [wireframe] - render as wireframe
+ * @property {Integer} [linewidth] - width of lines (when applicable)
+ * @property {String} [colorScheme] - color scheme
+ * @property {String} [colorScale] - color scale, either a string for a
+ *                                 predefined scale or an array of
+ *                                 colors to be used as the scale
+ * @property {Color} [colorValue] - color value
+ * @property {Integer[]} [colorDomain] - scale value range
  * @property {Integer} colorDomain.0 - min value
  * @property {Integer} colorDomain.1 - max value
- * @property {String} colorMode - color mode
- * @property {Float} roughness - how rough the material is, between 0 and 1
- * @property {Float} metalness - how metallic the material is, between 0 and 1
- * @property {Color} diffuse - diffuse color for lighting
+ * @property {String} [colorMode] - color mode, one of rgb, hsv, hsl, hsi, lab, hcl
+ * @property {Float} [roughness] - how rough the material is, between 0 and 1
+ * @property {Float} [metalness] - how metallic the material is, between 0 and 1
+ * @property {Color} [diffuse] - diffuse color for lighting
  */
 
 

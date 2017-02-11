@@ -15,9 +15,13 @@ import chroma from "../../lib/chroma.es6.js";
 /**
  * Colormaker parameter object.
  * @typedef {Object} ColormakerParameters - colormaker parameters
- * @property {String} [scale] - color scale
+ * @property {String|Array} [scale] - color scale, either a string for a
+ *                                    predefined scale or an array of
+ *                                    colors to be used as the scale
  * @property {String} [mode] - color mode, one of rgb, hsv, hsl, hsi, lab, hcl
- * @property {Array} [domain] - color scale domain
+ * @property {Integer[]} [colorDomain] - scale value range
+ * @property {Integer} colorDomain.0 - min value
+ * @property {Integer} colorDomain.1 - max value
  * @property {Color|String|Integer} [value] - color value
  * @property {Structure} [structure] - structure object
  * @property {Volume} [volume] - volume object
