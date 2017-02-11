@@ -11,30 +11,16 @@ import Colormaker from "./colormaker.js";
 
 class UniformColormaker extends Colormaker{
 
-    constructor( params ){
+    atomColor(){
+        return this.value;
+    }
 
-        super( params );
+    bondColor(){
+        return this.value;
+    }
 
-        var color = this.value;
-
-        this.atomColor = function(){
-
-            return color;
-
-        };
-
-        this.bondColor = function(){
-
-            return color;
-
-        };
-
-        this.valueColor = function(){
-
-            return color;
-
-        };
-
+    valueColor(){
+        return this.value;
     }
 
 }

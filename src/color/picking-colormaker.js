@@ -15,14 +15,13 @@ class PickingColormaker extends Colormaker{
 
         super( params );
 
-        var offset;
         if( this.structure ){
-            offset = this.structure.atomStore.count;
+            this.offset = this.structure.atomStore.count;
             if( params.backbone ){
-                offset += this.structure.bondStore.count;
+                this.offset += this.structure.bondStore.count;
             }else if( params.rung ){
-                offset += this.structure.bondStore.count;
-                offset += this.structure.backboneBondStore.count;
+                this.offset += this.structure.bondStore.count;
+                this.offset += this.structure.backboneBondStore.count;
             }
         }
 
@@ -33,24 +32,18 @@ class PickingColormaker extends Colormaker{
             };
         }
 
-        this.atomColor = function( a ){
+    }
 
-            return this.gidPool.getGid( this.structure, a.index );
+    atomColor( a ){
+        return this.gidPool.getGid( this.structure, a.index );
+    }
 
-        };
+    bondColor( b ){
+        return this.gidPool.getGid( this.structure, this.offset + b.index );
+    }
 
-        this.bondColor = function( b ){
-
-            return this.gidPool.getGid( this.structure, offset + b.index );
-
-        };
-
-        this.volumeColor = function( i ){
-
-            return this.gidPool.getGid( this.volume, i );
-
-        };
-
+    volumeColor( i ){
+        return this.gidPool.getGid( this.volume, i );
     }
 
 }

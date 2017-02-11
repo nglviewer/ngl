@@ -6,6 +6,7 @@
 
 
 import { ColormakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Colormaker from "./colormaker.js";
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -46,22 +47,19 @@ class ElementColormaker extends Colormaker{
 
         super( params );
 
-        var colorValue = this.value;
-        if( params.value === undefined ){
-            colorValue = ElementColors.C;
+        this.value = defaults( this.value, ElementColors.C );
+
+    }
+
+    atomColor( a ){
+
+        var element = a.element;
+
+        if( element === "C" ){
+            return this.value;
+        }else{
+            return ElementColors[ element ] || DefaultElementColor;
         }
-
-        this.atomColor = function( a ){
-
-            var element = a.element;
-
-            if( element === "C" ){
-                return colorValue;
-            }else{
-                return ElementColors[ element ] || DefaultElementColor;
-            }
-
-        };
 
     }
 

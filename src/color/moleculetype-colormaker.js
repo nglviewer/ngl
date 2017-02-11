@@ -15,29 +15,23 @@ import {
 
 class MoleculetypeColormaker extends Colormaker{
 
-    constructor( params ){
-
-        super( params );
-
-        this.atomColor = function( a ){
-            switch( a.residueType.moleculeType ){
-                case WaterType:
-                    return 0x386cb0;
-                case IonType:
-                    return 0xf0027f;
-                case ProteinType:
-                    return 0xbeaed4;
-                case RnaType:
-                    return 0xfdc086;
-                case DnaType:
-                    return 0xbf5b17;
-                case SaccharideType:
-                    return 0x7fc97f
-                default:
-                    return 0xffff99;
-            }
-        };
-
+    atomColor( a ){
+        switch( a.residueType.moleculeType ){
+            case WaterType:
+                return 0x386cb0;
+            case IonType:
+                return 0xf0027f;
+            case ProteinType:
+                return 0xbeaed4;
+            case RnaType:
+                return 0xfdc086;
+            case DnaType:
+                return 0xbf5b17;
+            case SaccharideType:
+                return 0x7fc97f
+            default:
+                return 0xffff99;
+        }
     }
 
 }

@@ -17,25 +17,35 @@ class VolumeColormaker extends Colormaker{
 
         super( params );
 
-        var valueScale = this.getScale();
         var volume = this.volume;
-        var inverseMatrix = volume.inverseMatrix;
-        var data = volume.__data;
-        var nx = volume.nx;
-        var ny = volume.ny;
-        var vec = new Vector3();
 
-        this.positionColor = function( coords ){
+        if( volume && volume.inverseMatrix ){
 
-            vec.copy( coords );
-            vec.applyMatrix4( inverseMatrix );
-            vec.round();
+            var valueScale = this.getScale();
+            var inverseMatrix = volume.inverseMatrix;
+            var data = volume.__data;
+            var nx = volume.nx;
+            var ny = volume.ny;
+            var vec = new Vector3();
 
-            var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
+            this.positionColor = function( coords ){
 
-            return valueScale( data[ index ] );
+                vec.copy( coords );
+                vec.applyMatrix4( inverseMatrix );
+                vec.round();
 
-        };
+                var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
+
+                return valueScale( data[ index ] );
+
+            };
+
+        }else{
+
+            var colorValue = this.value;
+            this.positionColor = function(){ return colorValue; };
+
+        }
 
     }
 

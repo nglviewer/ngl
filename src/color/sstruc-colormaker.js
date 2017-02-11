@@ -31,38 +31,39 @@ class SstrucColormaker extends Colormaker{
 
         super( params );
 
-        var rp = this.structure.getResidueProxy();
+        this.rp = this.structure.getResidueProxy();
 
-        this.atomColor = function( ap ){
+    }
 
-            var sstruc = ap.sstruc;
+    atomColor( ap ){
 
-            if( sstruc === "h" ){
-                return StructureColors.alphaHelix;
-            }else if( sstruc === "g" ){
-                return StructureColors.threeTenHelix;
-            }else if( sstruc === "i" ){
-                return StructureColors.piHelix;
-            }else if( sstruc === "e" || sstruc === "b" ){
-                return StructureColors.betaStrand;
-            }else if( sstruc === "t" ){
-                return StructureColors.betaTurn;
+        var sstruc = ap.sstruc;
+        var rp = this.rp;
+
+        if( sstruc === "h" ){
+            return StructureColors.alphaHelix;
+        }else if( sstruc === "g" ){
+            return StructureColors.threeTenHelix;
+        }else if( sstruc === "i" ){
+            return StructureColors.piHelix;
+        }else if( sstruc === "e" || sstruc === "b" ){
+            return StructureColors.betaStrand;
+        }else if( sstruc === "t" ){
+            return StructureColors.betaTurn;
+        }else{
+            rp.index = ap.residueIndex;
+            if( rp.isDna() ){
+                return StructureColors.dna;
+            }else if( rp.isRna() ){
+                return StructureColors.rna;
+            }else if( rp.isSaccharide() ){
+                return StructureColors.carbohydrate;
+            }else if( rp.isProtein() || sstruc === "s" || sstruc === "l" ){
+                return StructureColors.coil;
             }else{
-                rp.index = ap.residueIndex;
-                if( rp.isDna() ){
-                    return StructureColors.dna;
-                }else if( rp.isRna() ){
-                    return StructureColors.rna;
-                }else if( rp.isSaccharide() ){
-                    return StructureColors.carbohydrate;
-                }else if( rp.isProtein() || sstruc === "s" || sstruc === "l" ){
-                    return StructureColors.coil;
-                }else{
-                    return DefaultStructureColor;
-                }
+                return DefaultStructureColor;
             }
-
-        };
+        }
 
     }
 

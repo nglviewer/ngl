@@ -15,20 +15,12 @@ import Colormaker from "./colormaker.js";
  */
 class RandomColormaker extends Colormaker{
 
-    constructor( params ){
-
-        super( params );
-
-    }
-
     /**
      * get color for an atom
      * @return {Integer} random hex color
      */
     atomColor(){
-
         return Math.random() * 0xFFFFFF;
-
     }
 
     /**
@@ -36,9 +28,7 @@ class RandomColormaker extends Colormaker{
      * @return {Integer} random hex color
      */
     volumeColor(){
-
         return Math.random() * 0xFFFFFF;
-
     }
 
     /**
@@ -46,9 +36,7 @@ class RandomColormaker extends Colormaker{
      * @return {Integer} random hex color
      */
     positionColor(){
-
         return Math.random() * 0xFFFFFF;
-
     }
 
 }

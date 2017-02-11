@@ -55,14 +55,8 @@ var DefaultResidueColor = 0xFF00FF;
 
 class ResnameColormaker extends Colormaker{
 
-    constructor( params ){
-
-        super( params );
-
-        this.atomColor = function( a ){
-            return ResidueColors[ a.resname ] || DefaultResidueColor;
-        };
-
+    atomColor( a ){
+        return ResidueColors[ a.resname ] || DefaultResidueColor;
     }
 
 }
