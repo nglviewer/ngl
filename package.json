@@ -16,6 +16,7 @@
     "devpublish": "npm publish --tag next",
     "doc": "jsdoc -r -c doc/conf.json",
     "watch": "rollup -c -w",
+    "deploy": "./scripts/deploy.sh",
     "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
