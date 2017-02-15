@@ -10,49 +10,65 @@ import Signal from "../lib/signals.es6.js";
 import { Log } from "./globals.js";
 
 
-function Script( functionBody, name, path ){
+/**
+ * Script class
+ */
+class Script{
 
-    this.signals = {
+    /**
+     * Create a script instance
+     * @param {String} functionBody - the function source
+     * @param {String} name - name of the script
+     * @param {String} path - path of the script
+     */
+    constructor( functionBody, name, path ){
 
-        elementAdded: new Signal(),
-        elementRemoved: new Signal(),
-        nameChanged: new Signal(),
+        this.signals = {
 
-    };
+            elementAdded: new Signal(),
+            elementRemoved: new Signal(),
+            nameChanged: new Signal(),
 
-    this.name = name;
-    this.path = path;
-    this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+        };
 
-    try {
+        this.name = name;
+        this.path = path;
+        this.dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
 
-        // supress warning about string evaluation as code
-        // jshint evil:true
-        this.fn = new Function(
+        try {
 
-            'stage', 'panel',
-            '__name__', '__path__', '__dir__',
+            // supress warning about string evaluation as code
+            // jshint evil:true
+            this.fn = new Function(
 
-            functionBody
+                'stage', 'panel',
+                '__name__', '__path__', '__dir__',
 
-        );
+                functionBody
 
-    }catch( e ){
+            );
 
-        Log.error( "Script compilation failed", e );
-        this.fn = null;
+        }catch( e ){
+
+            Log.error( "Script compilation failed", e );
+            this.fn = function(){};
+
+        }
 
     }
 
-}
+    /**
+     * Object type
+     * @readonly
+     */
+    get type(){ return "Script"; }
 
-Script.prototype = {
-
-    constructor: Script,
-
-    type: "Script",
-
-    call: function( stage, onFinish ){
+    /**
+     * Execute the script
+     * @param  {Stage} stage - the stage context
+     * @return {Promise} - resolve when script finished running
+     */
+    call( stage ){
 
         var panel = {
 
@@ -76,7 +92,7 @@ Script.prototype = {
 
         };
 
-        if( this.fn ){
+        return new Promise( ( resolve, reject ) => {
 
             var args = [
                 stage, panel,
@@ -86,34 +102,20 @@ Script.prototype = {
             try{
 
                 this.fn.apply( null, args );
-                finish();
+                resolve();
 
             }catch( e ){
 
                 Log.error( "Script.fn", e );
-                error();
+                reject( e );
 
             }
 
-        }else{
-
-            Log.log( "Script.call no function available" );
-            finish();
-
-        }
-
-        function finish(){
-            if( typeof onFinish === "function" ) onFinish();
-        }
-
-        function error(){
-            Log.error( "Script: Error executing script" );
-            finish();
-        }
+        } );
 
     }
 
-};
+}
 
 
 export default Script;

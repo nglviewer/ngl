@@ -51,31 +51,40 @@ Streamer.prototype = {
 
     onerror: function(){},
 
-    read: function( callback ){
+    read: function(){
 
-        this._read( function( data ){
+        return new Promise( ( resolve, reject ) => {
 
-            var decompressFn = DecompressorRegistry.get( this.compressed );
+            try{
 
-            if( this.compressed && decompressFn ){
+                this._read( data => {
 
-                this.data = decompressFn( data );
+                    var decompressFn = DecompressorRegistry.get( this.compressed );
 
-            }else{
+                    if( this.compressed && decompressFn ){
 
-                if( ( this.binary || this.compressed ) && data instanceof ArrayBuffer ){
-                    data = new Uint8Array( data );
-                }
-                this.data = data;
+                        this.data = decompressFn( data );
+
+                    }else{
+
+                        if( ( this.binary || this.compressed ) && data instanceof ArrayBuffer ){
+                            data = new Uint8Array( data );
+                        }
+                        this.data = data;
+
+                    }
+
+                    resolve( this.data );
+
+                } );
+
+            }catch( e ){
+
+                reject( e );
 
             }
 
-            if( typeof this.onload === "function" ){
-                this.onload( this.data );
-            }
-            callback();
-
-        }.bind( this ) );
+        } );
 
     },
 

@@ -7,7 +7,7 @@
 
 import { Vector3 } from "../../lib/three.es6.js";
 
-import { ColorMakerRegistry } from "../globals.js";
+import { ColormakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import ImageBuffer from "../buffer/image-buffer.js";
@@ -200,7 +200,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         var cp = this.getColorParams( { volume: v } );
         cp.domain = [ v.getDataMin(), v.getDataMax() ];
-        var colorMaker = ColorMakerRegistry.getScheme( cp );
+        var colormaker = ColormakerRegistry.getScheme( cp );
         var tmp = new Float32Array( 3 );
 
         for ( var iy = y0; iy < ny; ++iy ) {
@@ -209,7 +209,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
                     var idx = index( ix, iy, iz, 0 ) / 3;
                     var val = d[ idx ];
-                    colorMaker.volumeColorToArray( idx, tmp );
+                    colormaker.volumeColorToArray( idx, tmp );
                     data[ i     ] = Math.round( tmp[ 0 ] * 255 );
                     data[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
                     data[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );

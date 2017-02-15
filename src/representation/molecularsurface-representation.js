@@ -76,7 +76,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         filterSele: {
             type: "text", rebuild: true
         },
-        volume: {
+        colorVolume: {
             type: "hidden"
         },
         useWorker: {
@@ -106,7 +106,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.filterSele = defaults( p.filterSele, "" );
-        this.volume = defaults( p.volume, undefined );
+        this.colorVolume = defaults( p.colorVolume, undefined );
         this.useWorker = defaults( p.useWorker, true );
 
         StructureRepresentation.prototype.init.call( this, params );
@@ -267,7 +267,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             what.index = true;
         }
 
-        if( params && params.volume !== undefined ){
+        if( params && params.colorVolume !== undefined ){
             what.color = true;
         }
 
@@ -307,7 +307,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         var p = StructureRepresentation.prototype.getColorParams.call( this );
 
-        p.volume = this.volume;
+        p.volume = this.colorVolume;
 
         return p;
 

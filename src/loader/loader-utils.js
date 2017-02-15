@@ -48,8 +48,7 @@ function getDataInfo( src ){
  * NGL.autoLoad( file );
  *
  * @param  {String|File|Blob} file - either a URL or an object containing the file data
- * @param  {Object} params - loading parameters
- * @param  {String} params.ext - file extension, determines file type
+ * @param  {LoaderParameters} params - loading parameters
  * @return {Promise} Promise resolves to the loaded data
  */
 function autoLoad( file, params ){

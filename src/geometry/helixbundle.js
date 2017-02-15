@@ -7,7 +7,7 @@
 
 import { Vector3 } from "../../lib/three.es6.js";
 
-import { ColorMakerRegistry } from "../globals.js";
+import { ColormakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Helixorient from "./helixorient.js";
 import { calculateMeanVector3, projectPointOnVector } from "../math/vector-utils.js";
@@ -42,8 +42,8 @@ Helixbundle.prototype = {
         var cp = colorParams || {};
         cp.structure = structure;
 
-        var colorMaker = ColorMakerRegistry.getScheme( cp );
-        var pickingColorMaker = ColorMakerRegistry.getPickingScheme( cp );
+        var colormaker = ColormakerRegistry.getScheme( cp );
+        var pickingColormaker = ColormakerRegistry.getPickingScheme( cp );
 
         var radiusFactory = new RadiusFactory( radius, scale );
 
@@ -128,8 +128,8 @@ Helixbundle.prototype = {
                 _beg.toArray( beg, k );
                 _end.toArray( end, k );
 
-                colorMaker.atomColorToArray( ap, col, k );
-                pickingColorMaker.atomColorToArray( ap, pcol, k );
+                colormaker.atomColorToArray( ap, col, k );
+                pickingColormaker.atomColorToArray( ap, pcol, k );
 
                 size.push( radiusFactory.atomRadius( ap ) );
 

@@ -7,7 +7,7 @@
 
 import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
-import { WorkerRegistry, ColorMakerRegistry } from "../globals.js";
+import { WorkerRegistry, ColormakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { uniformArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
@@ -478,7 +478,7 @@ Volume.prototype = {
         p.scale = p.scale || 'Spectral';
         p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
 
-        var colorMaker = ColorMakerRegistry.getScheme( p );
+        var colormaker = ColormakerRegistry.getScheme( p );
 
         var n = this.dataPosition.length / 3;
         var array = new Float32Array( n * 3 );
@@ -488,10 +488,10 @@ Volume.prototype = {
 
         for( var i = 0; i < n; ++i ){
 
-            colorMaker.volumeColorToArray( i, array, i * 3 );
+            colormaker.volumeColorToArray( i, array, i * 3 );
 
             // a = atoms[ atomindex[ i ] ];
-            // if( a ) colorMaker.atomColorToArray( a, array, i * 3 );
+            // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
 
         }
 

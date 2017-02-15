@@ -1,0 +1,21 @@
+engines:
+  eslint:
+    enabled: true
+  fixme:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - javascript
+ratings:
+   paths:
+   - "src/**/*"
+exclude_paths:
+- "data/**/*"
+- "dist/*"
+- "doc/**/*"
+- "examples/**/*"
+- "lib/*"
+- "scripts/**/*"
+- "test/**/*"

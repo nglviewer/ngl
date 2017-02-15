@@ -9,28 +9,27 @@ import { ParserRegistry } from "../globals.js";
 import Loader from "./loader.js";
 
 
-function ParserLoader( src, params ){
+/**
+ * Parser loader class
+ * @extends Loader
+ */
+class ParserLoader extends Loader{
 
-    Loader.call( this, src, params );
-
-}
-
-ParserLoader.prototype = Object.assign( Object.create(
-
-    Loader.prototype ), {
-
-    constructor: ParserLoader,
-
-    _load: function( resolve ){
+    /**
+     * Load parsed object
+     * @return {Promise} resolves to the loaded & parsed {@link Structure},
+     *                   {@link Volume}, {@link Surface} or data object
+     */
+    load(){
 
         var ParserClass = ParserRegistry.get( this.ext );
         var parser = new ParserClass( this.streamer, this.params );
 
-        parser.parse( resolve );
+        return parser.parse();
 
     }
 
-} );
+}
 
 
 export default ParserLoader;

@@ -16,6 +16,18 @@ import {
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from "../structure/structure-constants.js";
 
+
+/**
+ * Residue type class
+ * @class
+ * @param {Structure} structure - the structure object
+ * @param {String} resname - name of the residue
+ * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
+ *                                 to the atoms of the residue
+ * @param {Boolean} hetero - hetero flag
+ * @param {String} chemCompType - chemical component type
+ * @param {Object} [bonds] - TODO
+ */
 function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
     this.structure = structure;

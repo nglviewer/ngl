@@ -2,9 +2,9 @@
   "parser": "espree",
   "extends": "eslint:recommended",
   "rules": {
-    "no-console": "off",
-    "no-constant-condition": "off",
-    "valid-jsdoc": "error"
+    "no-console": 0,
+    "no-constant-condition": 0,
+    "valid-jsdoc": 2
   },
   "env": {
     "es6": true,

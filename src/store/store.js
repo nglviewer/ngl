@@ -8,19 +8,20 @@
 import { Log } from "../globals.js";
 
 
-function Store( sizeOrObject ){
+/**
+ * Store class
+ * @class
+ * @param {Integer} [size] - initial size
+ */
+function Store( size ){
 
-    if( sizeOrObject === undefined ){
+    if( Number.isInteger( size ) ){
 
-        this.init( 0 );
-
-    }else if( Number.isInteger( sizeOrObject ) ){
-
-        this.init( sizeOrObject );
+        this.init( size );
 
     }else{
 
-        this.fromJSON( sizeOrObject );
+        this.init( 0 );
 
     }
 

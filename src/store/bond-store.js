@@ -8,9 +8,15 @@
 import Store from "./store.js";
 
 
-function BondStore( sizeOrObject ){
+/**
+ * Bond store class
+ * @class
+ * @extends Store
+ * @param {Integer} [size] - initial size
+ */
+function BondStore( size ){
 
-    Store.call( this, sizeOrObject );
+    Store.call( this, size );
 
 }
 

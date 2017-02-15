@@ -27,16 +27,16 @@ Parser.prototype = {
 
     __objName: "",
 
-    parse: function( callback ){
+    parse: function(){
 
-        this.streamer.read( function(){
+        return this.streamer.read().then( () => {
+
             this._beforeParse();
             this._parse();
             this._afterParse();
-            callback( this[ this.__objName ] );
-        }.bind( this ) );
+            return this[ this.__objName ];
 
-        return this[ this.__objName ];
+        } );
 
     },
 

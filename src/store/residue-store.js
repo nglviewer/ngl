@@ -8,9 +8,15 @@
 import Store from "./store.js";
 
 
-function ResidueStore( sizeOrObject ){
+/**
+ * Residue store class
+ * @class
+ * @extends Store
+ * @param {Integer} [size] - initial size
+ */
+function ResidueStore( size ){
 
-    Store.call( this, sizeOrObject );
+    Store.call( this, size );
 
 }
 

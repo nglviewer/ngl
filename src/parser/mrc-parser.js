@@ -99,9 +99,9 @@ MrcParser.prototype = Object.assign( Object.create(
         header.MZ = intView[ 9 ];  // intervals along z
 
         // cell length (Angstroms in CCP4)
-        header.xlen = floatView[ 10 ];
-        header.ylen = floatView[ 11 ];
-        header.zlen = floatView[ 12 ];
+        header.xlen = floatView[ 10 ] * this.voxelSize;
+        header.ylen = floatView[ 11 ] * this.voxelSize;
+        header.zlen = floatView[ 12 ] * this.voxelSize;
 
         // cell angle (Degrees)
         header.alpha = floatView[ 13 ];

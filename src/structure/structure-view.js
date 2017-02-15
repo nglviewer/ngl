@@ -136,6 +136,7 @@ StructureView.prototype = Object.assign( Object.create(
             }
         } );
 
+        this._bp = this.getBondProxy();
         this._ap = this.getAtomProxy();
         this._rp = this.getResidueProxy();
         this._cp = this.getChainProxy();

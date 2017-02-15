@@ -9,7 +9,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
-import { defaults, getFileInfo, deepCopy } from "../utils.js";
+import { defaults, getFileInfo } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
@@ -113,145 +113,142 @@ function matchName( name, comp ){
 
 
 /**
- * Stage objects are central for creating molecular scenes with NGL.
- * @class
+ * Stage class, central for creating molecular scenes with NGL.
  * @example
  *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
- *
- * @param {String} eid - document id
- * @param {StageParameters} params -
  */
-function Stage( eid, params ){
-
-    this.signals = {
-        parametersChanged: new Signal(),
-        fullscreenChanged: new Signal(),
-
-        componentAdded: new Signal(),
-        componentRemoved: new Signal(),
-
-        clicked: new Signal(),
-        hovered: new Signal()
-    };
-
-    //
+class Stage{
 
     /**
-     * Counter that keeps track of various potentially long-running tasks,
-     * including file loading and surface calculation.
-     * @member {Counter}
+     * Create a Stage instance
+     * @param {String} eid - document id
+     * @param {StageParameters} params - parameters object
      */
-    this.tasks = new Counter();
-    this.gidPool = new GidPool();
-    this.compList = [];
-    this.defaultFileParams = {};
+    constructor( eid, params ){
 
-    //
+        this.signals = {
+            parametersChanged: new Signal(),
+            fullscreenChanged: new Signal(),
 
-    this.viewer = new Viewer( eid );
-    if( !this.viewer.renderer ) return;
+            componentAdded: new Signal(),
+            componentRemoved: new Signal(),
 
-    this.pickingControls = new PickingControls( this );
-    this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
-    this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
+            clicked: new Signal(),
+            hovered: new Signal()
+        };
 
-    var p = Object.assign( {
-        impostor: true,
-        quality: "medium",
-        workerDefault: true,
-        sampleLevel: 0,
-        backgroundColor: "black",
-        rotateSpeed: 2.0,
-        zoomSpeed: 1.2,
-        panSpeed: 0.8,
-        clipNear: 0,
-        clipFar: 100,
-        clipDist: 10,
-        fogNear: 50,
-        fogFar: 100,
-        cameraFov: 40,
-        cameraType: "perspective",
-        lightColor: 0xdddddd,
-        lightIntensity: 1.0,
-        ambientColor: 0xdddddd,
-        ambientIntensity: 0.2,
-        hoverTimeout: 500,
-    }, params );
-    this.parameters = deepCopy( Stage.prototype.parameters );
-    this.setParameters( p );  // must come after the viewer has been instantiated
+        //
 
-    this.viewer.animate();
+        /**
+         * Counter that keeps track of various potentially long-running tasks,
+         * including file loading and surface calculation.
+         * @member {Counter}
+         */
+        this.tasks = new Counter();
+        this.gidPool = new GidPool();
+        this.compList = [];
+        this.defaultFileParams = {};
 
-}
+        //
 
-Stage.prototype = {
+        this.viewer = new Viewer( eid );
+        if( !this.viewer.renderer ) return;
 
-    constructor: Stage,
+        this.pickingControls = new PickingControls( this );
+        this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
+        this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
 
-    parameters: {
+        var p = Object.assign( {
+            impostor: true,
+            quality: "medium",
+            workerDefault: true,
+            sampleLevel: 0,
+            backgroundColor: "black",
+            rotateSpeed: 2.0,
+            zoomSpeed: 1.2,
+            panSpeed: 0.8,
+            clipNear: 0,
+            clipFar: 100,
+            clipDist: 10,
+            fogNear: 50,
+            fogFar: 100,
+            cameraFov: 40,
+            cameraType: "perspective",
+            lightColor: 0xdddddd,
+            lightIntensity: 1.0,
+            ambientColor: 0xdddddd,
+            ambientIntensity: 0.2,
+            hoverTimeout: 500,
+        }, params );
 
-        backgroundColor: {
-            type: "color"
-        },
-        quality: {
-            type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
-        },
-        sampleLevel: {
-            type: "range", step: 1, max: 5, min: -1
-        },
-        impostor: {
-            type: "boolean"
-        },
-        workerDefault: {
-            type: "boolean"
-        },
-        rotateSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        zoomSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        panSpeed: {
-            type: "number", precision: 1, max: 10, min: 0
-        },
-        clipNear: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        clipFar: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        clipDist: {
-            type: "integer", max: 200, min: 0
-        },
-        fogNear: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        fogFar: {
-            type: "range", step: 1, max: 100, min: 0
-        },
-        cameraType: {
-            type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
-        },
-        cameraFov: {
-            type: "range", step: 1, max: 120, min: 15
-        },
-        lightColor: {
-            type: "color"
-        },
-        lightIntensity: {
-            type: "number", precision: 2, max: 10, min: 0
-        },
-        ambientColor: {
-            type: "color"
-        },
-        ambientIntensity: {
-            type: "number", precision: 2, max: 10, min: 0
-        },
-        hoverTimeout: {
-            type: "integer", max: 10000, min: -1
-        },
+        this.parameters = {
+            backgroundColor: {
+                type: "color"
+            },
+            quality: {
+                type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+            },
+            sampleLevel: {
+                type: "range", step: 1, max: 5, min: -1
+            },
+            impostor: {
+                type: "boolean"
+            },
+            workerDefault: {
+                type: "boolean"
+            },
+            rotateSpeed: {
+                type: "number", precision: 1, max: 10, min: 0
+            },
+            zoomSpeed: {
+                type: "number", precision: 1, max: 10, min: 0
+            },
+            panSpeed: {
+                type: "number", precision: 1, max: 10, min: 0
+            },
+            clipNear: {
+                type: "range", step: 1, max: 100, min: 0
+            },
+            clipFar: {
+                type: "range", step: 1, max: 100, min: 0
+            },
+            clipDist: {
+                type: "integer", max: 200, min: 0
+            },
+            fogNear: {
+                type: "range", step: 1, max: 100, min: 0
+            },
+            fogFar: {
+                type: "range", step: 1, max: 100, min: 0
+            },
+            cameraType: {
+                type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+            },
+            cameraFov: {
+                type: "range", step: 1, max: 120, min: 15
+            },
+            lightColor: {
+                type: "color"
+            },
+            lightIntensity: {
+                type: "number", precision: 2, max: 10, min: 0
+            },
+            ambientColor: {
+                type: "color"
+            },
+            ambientIntensity: {
+                type: "number", precision: 2, max: 10, min: 0
+            },
+            hoverTimeout: {
+                type: "integer", max: 10000, min: -1
+            },
+        };
 
-    },
+        this.setParameters( p );  // must come after the viewer has been instantiated
+
+        this.viewer.animate();
+
+    }
 
     /**
      * Set stage parameters
@@ -259,7 +256,7 @@ Stage.prototype = {
      * @param {StageParameters} params - stage parameters
      * @return {Stage} this object
      */
-    setParameters: function( params ){
+    setParameters( params ){
 
         var p = Object.assign( {}, params );
         var tp = this.parameters;
@@ -301,13 +298,13 @@ Stage.prototype = {
 
         return this;
 
-    },
+    }
 
     /**
      * Get stage parameters
      * @return {StageParameters} parameter object
      */
-    getParameters: function(){
+    getParameters(){
 
         var params = {};
         for( var name in this.parameters ){
@@ -315,14 +312,14 @@ Stage.prototype = {
         }
         return params;
 
-    },
+    }
 
     /**
      * Create default representations for the given component
      * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
      * @return {undefined}
      */
-    defaultFileRepresentation: function( object ){
+    defaultFileRepresentation( object ){
 
         if( object.type === "structure" ){
 
@@ -446,7 +443,7 @@ Stage.prototype = {
 
         }
 
-    },
+    }
 
     /**
      * Load a file onto the stage
@@ -477,14 +474,13 @@ Stage.prototype = {
      *
      * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
-     * @param  {Object} params - loading parameters
-     * @param  {String} params.ext - file extension, determines file type
+     * @param  {LoaderParameters} params - loading parameters
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
      * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
      *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
      *                   depending on the type of the loaded file.
      */
-    loadFile: function( path, params ){
+    loadFile( path, params ){
 
         var p = Object.assign( {}, this.defaultFileParams, params );
 
@@ -537,9 +533,14 @@ Stage.prototype = {
 
         return promise.then( onLoadFn, onErrorFn );
 
-    },
+    }
 
-    addComponent: function( component ){
+    /**
+     * Add the given component to the stage
+     * @param {Component} component - the component to add
+     * @return {undefined}
+     */
+    addComponent( component ){
 
         if( !component ){
 
@@ -552,9 +553,15 @@ Stage.prototype = {
 
         this.signals.componentAdded.dispatch( component );
 
-    },
+    }
 
-    addComponentFromObject: function( object, params ){
+    /**
+     * Create a component from the given object and add to the stage
+     * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
+     * @param {ComponentParameters} params - parameter object
+     * @return {Component} the created component
+     */
+    addComponentFromObject( object, params ){
 
         var CompClass = ComponentRegistry.get( object.type );
 
@@ -566,9 +573,14 @@ Stage.prototype = {
 
         Log.warn( "no component for object type", object.type );
 
-    },
+    }
 
-    removeComponent: function( component ){
+    /**
+     * Remove the given component
+     * @param  {Component} component - the component to remove
+     * @return {undefined}
+     */
+    removeComponent( component ){
 
         var idx = this.compList.indexOf( component );
         if( idx !== -1 ){
@@ -577,9 +589,14 @@ Stage.prototype = {
             this.signals.componentRemoved.dispatch( component );
         }
 
-    },
+    }
 
-    removeAllComponents: function( type ){
+    /**
+     * Remove all components from the stage
+     * @param  {String} [type] - component type to remove
+     * @return {undefined}
+     */
+    removeAllComponents( type ){
 
         this.compList.slice().forEach( function( o ){
             if( !type || o.type === type ){
@@ -587,17 +604,17 @@ Stage.prototype = {
             }
         }, this );
 
-    },
+    }
 
     /**
      * Handle any size-changes of the container element
      * @return {undefined}
      */
-    handleResize: function(){
+    handleResize(){
 
         this.viewer.handleResize();
 
-    },
+    }
 
     /**
      * Toggle fullscreen
@@ -606,7 +623,7 @@ Stage.prototype = {
      *                               defaults to the viewer container
      * @return {undefined}
      */
-    toggleFullscreen: function( element ){
+    toggleFullscreen( element ){
 
         if( !document.fullscreenEnabled && !document.mozFullScreenEnabled &&
             !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
@@ -690,9 +707,13 @@ Stage.prototype = {
 
         }
 
-    },
+    }
 
-    centerView: function(){
+    /**
+     * Center the whole scene
+     * @return {undefined}
+     */
+    centerView(){
 
         if( this.tasks.count > 0 ){
 
@@ -714,7 +735,7 @@ Stage.prototype = {
 
         this.viewer.centerView( true );
 
-    },
+    }
 
     /**
      * Spin the whole scene around an axis at the center
@@ -725,7 +746,7 @@ Stage.prototype = {
      * @param {Number} angle - amount to spin per render call
      * @return {undefined}
      */
-    setSpin: function( axis, angle ){
+    setSpin( axis, angle ){
 
         if( Array.isArray( axis ) ){
             axis = new Vector3().fromArray( axis );
@@ -733,9 +754,9 @@ Stage.prototype = {
 
         this.viewer.setSpin( axis, angle );
 
-    },
+    }
 
-    setOrientation: function( orientation ){
+    setOrientation( orientation ){
 
         this.tasks.onZeroOnce( function(){
 
@@ -743,15 +764,20 @@ Stage.prototype = {
 
         }, this );
 
-    },
+    }
 
-    getOrientation: function(){
+    getOrientation(){
 
         return this.viewer.getOrientation();
 
-    },
+    }
 
-    makeImage: function( params ){
+    /**
+     * Make image from what is shown in a viewer canvas
+     * @param  {ImageParameters} params - image generation parameters
+     * @return {Promise} A Promise object that resolves to an image {@link Blob}.
+     */
+    makeImage( params ){
 
         var viewer = this.viewer;
         var tasks = this.tasks;
@@ -773,9 +799,9 @@ Stage.prototype = {
 
         } );
 
-    },
+    }
 
-    setImpostor: function( value ) {
+    setImpostor( value ) {
 
         this.parameters.impostor.value = value;
 
@@ -799,9 +825,9 @@ Stage.prototype = {
 
         } );
 
-    },
+    }
 
-    setQuality: function( value ) {
+    setQuality( value ) {
 
         this.parameters.quality.value = value;
 
@@ -839,9 +865,15 @@ Stage.prototype = {
 
         } );
 
-    },
+    }
 
-    eachComponent: function( callback, type ){
+    /**
+     * Iterator over each component and executing the callback
+     * @param  {Function} callback - function to execute
+     * @param  {String}   type - limit iteration to components of this type
+     * @return {undefined}
+     */
+    eachComponent( callback, type ){
 
         this.compList.forEach( function( o, i ){
 
@@ -851,9 +883,15 @@ Stage.prototype = {
 
         } );
 
-    },
+    }
 
-    eachRepresentation: function( callback, componentType ){
+    /**
+     * Iterator over each representation and executing the callback
+     * @param  {Function} callback - function to execute
+     * @param  {String}   type - limit iteration to components of this type
+     * @return {undefined}
+     */
+    eachRepresentation( callback, type ){
 
         this.eachComponent( function( comp ){
 
@@ -861,11 +899,17 @@ Stage.prototype = {
                 callback( repr, comp );
             } );
 
-        }, componentType );
+        }, type );
 
-    },
+    }
 
-    getComponentsByName: function( name, componentType ){
+    /**
+     * Get collection of components by name
+     * @param  {String|RegExp}   name - the component name
+     * @param  {String} type - limit iteration to components of this type
+     * @return {ComponentCollection} collection of selected components
+     */
+    getComponentsByName( name, type ){
 
         var compList = [];
 
@@ -875,13 +919,19 @@ Stage.prototype = {
                 compList.push( comp );
             }
 
-        }, componentType );
+        }, type );
 
         return new ComponentCollection( compList );
 
-    },
+    }
 
-    getRepresentationsByName: function( name, componentType ){
+    /**
+     * Get collection of representations by name
+     * @param  {String|RegExp}   name - the representation name
+     * @param  {String} type - limit iteration to components of this type
+     * @return {RepresentationCollection} collection of selected components
+     */
+    getRepresentationsByName( name, type ){
 
         var compName, reprName;
 
@@ -905,28 +955,37 @@ Stage.prototype = {
                 reprList.push( repr );
             }
 
-        }, componentType );
+        }, type );
 
         return new RepresentationCollection( reprList );
 
-    },
+    }
 
-    getAnythingByName: function( name ){
+    /**
+     * Get collection of components and representations by name
+     * @param  {String|RegExp}   name - the component or representation name
+     * @return {Collection} collection of selected components and representations
+     */
+    getAnythingByName( name ){
 
         var compList = this.getComponentsByName( name ).list;
         var reprList = this.getRepresentationsByName( name ).list;
 
         return new Collection( compList.concat( reprList ) );
 
-    },
+    }
 
-    dispose: function(){
+    /**
+     * Cleanup when disposing of a stage object
+     * @return {undefined}
+     */
+    dispose(){
 
         this.tasks.dispose();
 
     }
 
-};
+}
 
 
 export default Stage;

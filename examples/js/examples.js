@@ -1016,7 +1016,7 @@ NGL.ExampleRegistry.addDict( {
 
     "selectionColoring": function( stage ){
 
-        var schemeId = NGL.ColorMakerRegistry.addSelectionScheme( [
+        var schemeId = NGL.ColormakerRegistry.addSelectionScheme( [
             [ "red", "64-74 or 134-154 or 222-254 or 310-310 or 322-326" ],
             [ "green", "311-322" ],
             [ "yellow", "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309" ],
@@ -1033,7 +1033,7 @@ NGL.ExampleRegistry.addDict( {
 
     "customColoring": function( stage ){
 
-        var schemeId = NGL.ColorMakerRegistry.addScheme( function( params ){
+        var schemeId = NGL.ColormakerRegistry.addScheme( function( params ){
             this.atomColor = function( atom ){
                 if( atom.serial < 1000 ){
                     return 0x0000FF;  // blue
@@ -1291,7 +1291,7 @@ NGL.ExampleRegistry.addDict( {
                 colorDomain: [ -1, 0, 1 ]
             } );
             pqr.addRepresentation( "surface", {
-                volume: dxbin.volume,
+                colorVolume: dxbin.volume,
                 colorScheme: "volume",
                 colorScale: "rwb",
                 colorDomain: [ -5, 0, 5 ]
@@ -1529,6 +1529,35 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             o.centerView();
 
+        } );
+
+    },
+
+    "localRes": function( stage ){
+
+        Promise.all([
+            stage.loadFile( "data://betaGal.mrc" ),
+            stage.loadFile( "data://localResolution.mrc", { voxelSize: 3.54 } )
+        ]).then( function( l ){
+            var betaGal = l[ 0 ];
+            var localResolution = l[ 1 ];
+            betaGal.addRepresentation( "surface", {
+                colorVolume: localResolution.volume,
+                colorScheme: "volume",
+                colorScale: "rwb",
+                colorDomain: [ 7, 14 ]
+            } );
+            localResolution.addRepresentation( "dot", {
+                thresholdMin: 0,
+                thresholdMax: 8,
+                thresholdType: "value",
+                dotType: "sphere",
+                radius: 0.6,
+                colorScheme: "value",
+                colorScale: "rwb",
+                colorDomain: [ 7, 14 ]
+            } );
+            stage.centerView();
         } );
 
     },

@@ -10,19 +10,17 @@ import { autoLoad } from "./loader-utils.js";
 import Script from "../script.js";
 
 
-function PluginLoader( src, params ){
+/**
+ * Plugin loader class
+ * @extends Loader
+ */
+class PluginLoader extends Loader{
 
-    Loader.call( this, src, params );
-
-}
-
-PluginLoader.prototype = Object.assign( Object.create(
-
-    Loader.prototype ), {
-
-    constructor: PluginLoader,
-
-    _load: function( resolve ){
+    /**
+     * Load plugin
+     * @return {Promise} resolves to the loaded plugin {@link Script}
+     */
+    load(){
 
         var basePath;
         if( this.protocol ){
@@ -31,7 +29,7 @@ PluginLoader.prototype = Object.assign( Object.create(
             basePath = this.dir;
         }
 
-        this.streamer.read( function(){
+        return this.streamer.read().then( () => {
 
             var manifest = JSON.parse( this.streamer.asText() );
             var promiseList = [];
@@ -46,23 +44,22 @@ PluginLoader.prototype = Object.assign( Object.create(
 
             } );
 
-            Promise.all( promiseList ).then( function( dataList ){
+            return Promise.all( promiseList ).then( dataList => {
 
                 var text = dataList.reduce( function( text, value ){
                     return text + "\n\n" + value.data;
                 }, "" );
                 text += manifest.source || "";
 
-                var script = new Script( text, this.name, this.path );
-                resolve( script );
+                return new Script( text, this.name, this.path );
 
-            }.bind( this ) );
+            } );
 
-        }.bind( this ) );
+        } );
 
     }
 
-} );
+}
 
 
 export default PluginLoader;

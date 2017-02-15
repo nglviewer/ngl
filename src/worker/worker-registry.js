@@ -8,27 +8,29 @@
 import { makeWorkerBlob } from "./worker-utils.js";
 
 
-function WorkerRegistry(){
+class WorkerRegistry{
 
-    this.activeWorkerCount = 0;
+    constructor(){
+        this.activeWorkerCount = 0;
 
-    var funcDict = {};
-    var depsDict = {};
-    var blobDict = {};
+        this._funcDict = {};
+        this._depsDict = {};
+        this._blobDict = {};
+    }
 
-    this.add = function( name, func, deps ){
-        funcDict[ name ] = func;
-        depsDict[ name ] = deps;
-    };
+    add( name, func, deps ){
+        this._funcDict[ name ] = func;
+        this._depsDict[ name ] = deps;
+    }
 
-    this.get = function( name ){
-        if( !blobDict[ name ] ){
-            blobDict[ name ] = makeWorkerBlob(
-                funcDict[ name ], depsDict[ name ]
+    get( name ){
+        if( !this._blobDict[ name ] ){
+            this._blobDict[ name ] = makeWorkerBlob(
+                this._funcDict[ name ], this._depsDict[ name ]
             );
         }
-        return blobDict[ name ];
-    };
+        return this._blobDict[ name ];
+    }
 
 }
 
