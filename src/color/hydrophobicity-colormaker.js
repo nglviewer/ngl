@@ -60,7 +60,7 @@ class HydrophobicityColormaker extends Colormaker{
 }
 
 
-ColormakerRegistry.add( "modelindex", HydrophobicityColormaker );
+ColormakerRegistry.add( "hydrophobicity", HydrophobicityColormaker );
 
 
 export default HydrophobicityColormaker;
