@@ -113,6 +113,9 @@ function Structure( name, path ){
     this.atomSetCache = undefined;
     this.atomSetDict = {};
     this.biomolDict = {};
+    /**
+     * @member {Entity[]}
+     */
     this.entityList = [];
     /**
      * @member {Unitcell}
