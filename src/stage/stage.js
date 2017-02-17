@@ -13,6 +13,7 @@ import { defaults, getFileInfo } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
+import MouseObserver from "./mouse-observer.js";
 import PickingBehavior from "./picking-behavior.js";
 
 import Component from "../component/component.js";
@@ -62,9 +63,27 @@ function matchName( name, comp ){
  *                                      signal is fired, set to -1 to ignore hovering
  */
 
+/**
+ * Picking data object.
+ * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
+ * @property {Boolean} [altKey] - whether the alt key was pressed
+ * @property {Boolean} [ctrlKey] - whether the control key was pressed
+ * @property {Boolean} [metaKey] - whether the meta key was pressed
+ * @property {Boolean} [shiftKey] - whether the shift key was pressed
+ * @property {AtomProxy} [atom] - picked atom
+ * @property {BondProxy} [bond] - picked bond
+ * @property {Volume} [volume] - picked volume
+ * @property {Object} [instance] - instance data
+ * @property {Integer} instance.id - instance id
+ * @property {String|Integer} instance.name - instance name
+ * @property {Matrix4} instance.matrix - transformation matrix of the instance
+ * @property {Vector3} position - xyz position of the picked object
+ */
+
 
 /**
- * {@link Signal}, dispatched when stage parameters change {@link Signal}
+ * {@link Signal}, dispatched when stage parameters change
  * @example
  * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
  * @event Stage#parametersChanged
@@ -154,6 +173,10 @@ class Stage{
         this.viewer = new Viewer( eid );
         if( !this.viewer.renderer ) return;
 
+        /**
+         * @member {MouseObserver}
+         */
+        this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
         this.pickingBehavior = new PickingBehavior( this );
 
         var p = Object.assign( {
@@ -280,7 +303,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
-        pickingBehavior.setParameters( { hoverTimeout: p.hoverTimeout } );
+        this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );
@@ -863,6 +886,58 @@ class Stage{
 
         } );
 
+    }
+
+    /**
+     * get picking data
+     * @param {Number} x - canvas x coordinate
+     * @param {Number} y - canvas y coordinate
+     * @return {PickingData} picking data
+     */
+    pick( x, y ){
+        var mouse = this.mouseObserver;
+        var pickingData = this.viewer.pick( x, y );
+        var instance = pickingData.instance;
+        var picked = this.gidPool.getByGid( pickingData.gid );
+
+        var pickedAtom, pickedBond, pickedVolume;
+        if( picked && picked.type === "AtomProxy" ){
+            pickedAtom = picked;
+        }else if( picked && picked.type === "BondProxy" ){
+            pickedBond = picked;
+        }else if( picked && picked.volume.type === "Volume" ){
+            pickedVolume = picked;
+        }
+
+        var position;
+        if( pickedAtom || pickedBond || pickedVolume ){
+            position = new Vector3();
+            if( pickedAtom ){
+                position.copy( pickedAtom );
+            }else if( pickedBond ){
+                position.copy( pickedBond.atom1 )
+                    .add( pickedBond.atom2 )
+                    .multiplyScalar( 0.5 );
+            }else if( pickedVolume ){
+                position.copy( pickedVolume );
+            }
+            if( instance ){
+                position.applyProjection( instance.matrix );
+            }
+        }
+
+        return {
+            "atom": pickedAtom,
+            "bond": pickedBond,
+            "volume": pickedVolume,
+            "instance": instance,
+            "position": position,
+            "canvasPosition": mouse.canvasPosition.clone(),
+            "altKey": mouse.altKey,
+            "ctrlKey": mouse.ctrlKey,
+            "metaKey":  mouse.metaKey,
+            "shiftKey":  mouse.shiftKey
+        };
     }
 
     /**
