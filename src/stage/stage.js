@@ -13,7 +13,7 @@ import { defaults, getFileInfo } from "../utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
-import PickingControls from "./picking-controls.js";
+import PickingBehavior from "./picking-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -154,9 +154,7 @@ class Stage{
         this.viewer = new Viewer( eid );
         if( !this.viewer.renderer ) return;
 
-        this.pickingControls = new PickingControls( this );
-        this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
-        this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
+        this.pickingBehavior = new PickingBehavior( this );
 
         var p = Object.assign( {
             impostor: true,
@@ -262,7 +260,7 @@ class Stage{
         var tp = this.parameters;
         var viewer = this.viewer;
         var controls = viewer.controls;
-        var pickingControls = this.pickingControls;
+        var pickingBehavior = this.pickingBehavior;
 
         for( var name in p ){
 
@@ -282,7 +280,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
-        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
+        pickingBehavior.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );
