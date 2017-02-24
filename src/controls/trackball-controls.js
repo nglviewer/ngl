@@ -8,7 +8,6 @@
 import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { degToRad } from "../math/math-utils.js";
 
 
 class TrackballControls{
