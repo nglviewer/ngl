@@ -77,7 +77,7 @@ SurfaceComponent.prototype = Object.assign( Object.create(
             zoom = this.surface.boundingBox.size().length();
         }
 
-        this.viewer.centerView( zoom, center );
+        this.stage.centerView( zoom, center );
 
     },
 

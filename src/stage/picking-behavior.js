@@ -5,11 +5,8 @@
  */
 
 
-import { Vector2, Vector3 } from "../../lib/three.es6.js";
-
-import { RightMouseButton, MiddleMouseButton } from "../constants.js";
+import { MiddleMouseButton } from "../constants.js";
 import { Debug, Log } from "../globals.js";
-import { defaults } from "../utils.js";
 
 
 class PickingBehavior{
@@ -18,7 +15,6 @@ class PickingBehavior{
 
         this.stage = stage;
         this.mouse = stage.mouseObserver;
-        this.gidPool = stage.gidPool;
 
         this.mouse.signals.clicked.add( this.onClick, this );
         this.mouse.signals.hovered.add( this.onHover, this );
@@ -26,7 +22,7 @@ class PickingBehavior{
     }
 
     pick(){
-        return this.stage.pick(
+        return this.stage.pickingControls.pick(
             this.mouse.canvasPosition.x, this.mouse.canvasPosition.y
         );
     }
@@ -34,7 +30,7 @@ class PickingBehavior{
     onClick(){
         var pd = this.pick();
         if( pd.position && this.mouse.which === MiddleMouseButton ){
-            this.stage.viewer.centerView( false, pd.position );
+            this.stage.animationControls.move( pd.position );
         }
         this.stage.signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
@@ -49,7 +45,7 @@ class PickingBehavior{
         this.mouse.signals.hovered.remove( this.onHover, this );
     }
 
-};
+}
 
 
 export default PickingBehavior;

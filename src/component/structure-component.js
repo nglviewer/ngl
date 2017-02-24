@@ -272,7 +272,7 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         }
 
-        this.viewer.centerView( zoom, center );
+        this.stage.centerView( zoom, center );
 
         return this;
 

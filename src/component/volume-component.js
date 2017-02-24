@@ -79,7 +79,7 @@ VolumeComponent.prototype = Object.assign( Object.create(
             zoom = this.volume.boundingBox.size().length();
         }
 
-        this.viewer.centerView( zoom, center );
+        this.stage.centerView( zoom, center );
 
     },
 

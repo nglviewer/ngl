@@ -14,7 +14,13 @@ import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
 import MouseObserver from "./mouse-observer.js";
+
+import TrackballControls from "../controls/trackball-controls.js";
+import PickingControls from "../controls/picking-controls.js";
+import ViewerControls from "../controls/viewer-controls.js";
+
 import PickingBehavior from "./picking-behavior.js";
+import MouseBehavior from "./mouse-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -148,6 +154,7 @@ class Stage{
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
+            orientationChanged: new Signal(),
 
             componentAdded: new Signal(),
             componentRemoved: new Signal(),
@@ -177,7 +184,13 @@ class Stage{
          * @member {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
+
+        this.viewerControls = new ViewerControls( this );
+        this.trackballControls = new TrackballControls( this );
+        this.pickingControls = new PickingControls( this );
+
         this.pickingBehavior = new PickingBehavior( this );
+        this.mouseBehavior = new MouseBehavior( this );
 
         var p = Object.assign( {
             impostor: true,
@@ -282,8 +295,7 @@ class Stage{
         var p = Object.assign( {}, params );
         var tp = this.parameters;
         var viewer = this.viewer;
-        var controls = viewer.controls;
-        var pickingBehavior = this.pickingBehavior;
+        var controls = this.trackballControls;
 
         for( var name in p ){
 
@@ -732,29 +744,28 @@ class Stage{
 
     /**
      * Center the whole scene
+     * @param  {Boolean} [zoom] - flag for automatic zoom
+     * @param  {Vector3} [position] - where to center
      * @return {undefined}
      */
-    centerView(){
+    centerView( zoom, position ){
+
+        zoom = defaults( zoom, true );
 
         if( this.tasks.count > 0 ){
 
             var centerFn = function( delta, count ){
-
                 if( count === 0 ){
-
                     this.tasks.signals.countChanged.remove( centerFn, this );
-
                 }
-
-                this.viewer.centerView( true );
-
+                this.viewerControls.centerView( zoom, position );
             };
 
             this.tasks.signals.countChanged.add( centerFn, this );
 
         }
 
-        this.viewer.centerView( true );
+        this.viewerControls.centerView( zoom, position );
 
     }
 
@@ -886,58 +897,6 @@ class Stage{
 
         } );
 
-    }
-
-    /**
-     * get picking data
-     * @param {Number} x - canvas x coordinate
-     * @param {Number} y - canvas y coordinate
-     * @return {PickingData} picking data
-     */
-    pick( x, y ){
-        var mouse = this.mouseObserver;
-        var pickingData = this.viewer.pick( x, y );
-        var instance = pickingData.instance;
-        var picked = this.gidPool.getByGid( pickingData.gid );
-
-        var pickedAtom, pickedBond, pickedVolume;
-        if( picked && picked.type === "AtomProxy" ){
-            pickedAtom = picked;
-        }else if( picked && picked.type === "BondProxy" ){
-            pickedBond = picked;
-        }else if( picked && picked.volume.type === "Volume" ){
-            pickedVolume = picked;
-        }
-
-        var position;
-        if( pickedAtom || pickedBond || pickedVolume ){
-            position = new Vector3();
-            if( pickedAtom ){
-                position.copy( pickedAtom );
-            }else if( pickedBond ){
-                position.copy( pickedBond.atom1 )
-                    .add( pickedBond.atom2 )
-                    .multiplyScalar( 0.5 );
-            }else if( pickedVolume ){
-                position.copy( pickedVolume );
-            }
-            if( instance ){
-                position.applyProjection( instance.matrix );
-            }
-        }
-
-        return {
-            "atom": pickedAtom,
-            "bond": pickedBond,
-            "volume": pickedVolume,
-            "instance": instance,
-            "position": position,
-            "canvasPosition": mouse.canvasPosition.clone(),
-            "altKey": mouse.altKey,
-            "ctrlKey": mouse.ctrlKey,
-            "metaKey":  mouse.metaKey,
-            "shiftKey":  mouse.shiftKey
-        };
     }
 
     /**
