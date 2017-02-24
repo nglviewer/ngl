@@ -18,9 +18,11 @@ import MouseObserver from "./mouse-observer.js";
 import TrackballControls from "../controls/trackball-controls.js";
 import PickingControls from "../controls/picking-controls.js";
 import ViewerControls from "../controls/viewer-controls.js";
+import AnimationControls from "../controls/animation-controls.js";
 
 import PickingBehavior from "./picking-behavior.js";
 import MouseBehavior from "./mouse-behavior.js";
+import AnimationBehavior from "./animation-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -188,9 +190,13 @@ class Stage{
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
+        this.animationControls = new AnimationControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
         this.mouseBehavior = new MouseBehavior( this );
+        this.animationBehavior = new AnimationBehavior( this );
+
+        this.spinAnimation = this.animationControls.spin( null );
 
         var p = Object.assign( {
             impostor: true,
@@ -784,7 +790,8 @@ class Stage{
             axis = new Vector3().fromArray( axis );
         }
 
-        this.viewer.setSpin( axis, angle );
+        this.spinAnimation.axis = axis;
+        this.spinAnimation.angle = angle;
 
     }
 
