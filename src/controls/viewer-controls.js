@@ -59,7 +59,12 @@ class ViewerControls{
 
     zoom( delta ){
 
-        this.viewer.camera.position.z *= 1 - delta;
+        var camera = this.viewer.camera;
+        if( camera.fov === undefined ){
+            camera.zoom /= 1 - delta;
+        } else {
+            camera.position.z *= 1 - delta;
+        }
         this.viewer.requestRender();
 
     }
