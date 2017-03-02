@@ -156,7 +156,6 @@ class ColormakerRegistry{
     addScheme( scheme, label ){
 
         if( !( scheme instanceof Colormaker ) ){
-            console.log("FOO", scheme, label)
             scheme = this.createScheme( scheme, label );
         }
 
