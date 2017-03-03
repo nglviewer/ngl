@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Matrix4, Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
@@ -39,27 +39,32 @@ CubeParser.prototype = Object.assign( Object.create(
         var header = {};
         var reWhitespace = /\s+/;
         var bohrToAngstromFactor = 0.529177210859;
+        var scaleFactor = bohrToAngstromFactor * this.voxelSize;
 
-        function headerhelper( k, l ) {
+        function h( k, l ) {
             var field = headerLines[ k ].trim().split( reWhitespace )[ l ];
             return parseFloat( field );
         }
 
-        header.atomCount = Math.abs( headerhelper( 2, 0 ) );  // Number of atoms
-        header.originX = headerhelper( 2, 1 ) * bohrToAngstromFactor;  // Position of origin of volumetric data
-        header.originY = headerhelper( 2, 2 ) * bohrToAngstromFactor;
-        header.originZ = headerhelper( 2, 3 ) * bohrToAngstromFactor;
-        header.NVX = headerhelper( 3, 0 );  // Number of voxels
-        header.NVY = headerhelper( 4, 0 );
-        header.NVZ = headerhelper( 5, 0 );
-        header.AVX = headerhelper( 3, 1 ) * bohrToAngstromFactor * this.voxelSize;  // Axis vector
-        header.AVY = headerhelper( 4, 2 ) * bohrToAngstromFactor * this.voxelSize;
-        header.AVZ = headerhelper( 5, 3 ) * bohrToAngstromFactor * this.voxelSize;
+        header.atomCount = Math.abs( h( 2, 0 ) );  // Number of atoms
+        header.originX = h( 2, 1 ) * bohrToAngstromFactor;  // Position of origin of volumetric data
+        header.originY = h( 2, 2 ) * bohrToAngstromFactor;
+        header.originZ = h( 2, 3 ) * bohrToAngstromFactor;
+        header.NVX = h( 3, 0 );  // Number of voxels
+        header.NVY = h( 4, 0 );
+        header.NVZ = h( 5, 0 );
+
+        header.basisX = new Vector3(
+            h( 3, 1 ), h( 3, 2 ), h( 3, 3 ) ).multiplyScalar( scaleFactor );
+        header.basisY = new Vector3(
+            h( 4, 1 ), h( 4, 2 ), h( 4, 3 ) ).multiplyScalar( scaleFactor );
+        header.basisZ = new Vector3(
+            h( 5, 1 ), h( 5, 2 ), h( 5, 3 ) ).multiplyScalar( scaleFactor );
 
         var data = new Float32Array( header.NVX * header.NVY * header.NVZ );
         var count = 0;
         var lineNo = 0;
-        var oribitalFlag = headerhelper( 2, 0 ) > 0 ? 0 : 1;
+        var oribitalFlag = h( 2, 0 ) > 0 ? 0 : 1;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
@@ -102,18 +107,16 @@ CubeParser.prototype = Object.assign( Object.create(
         var matrix = new Matrix4();
 
         matrix.multiply(
-            new Matrix4().makeRotationY( degToRad( 90 ) )
-        );
-
-        matrix.multiply(
             new Matrix4().makeTranslation(
-                -h.originZ, h.originY, h.originX
+                h.originX, h.originY, h.originZ
             )
         );
 
         matrix.multiply(
-            new Matrix4().makeScale(
-                -h.AVZ, h.AVY, h.AVX
+            new Matrix4().makeBasis(
+                h.basisZ,
+                h.basisY,
+                h.basisX
             )
         );
 
