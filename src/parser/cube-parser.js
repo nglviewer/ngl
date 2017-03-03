@@ -8,7 +8,6 @@
 import { Matrix4, Vector3 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
-import { degToRad } from "../math/math-utils.js";
 import VolumeParser from "./volume-parser.js";
 
 
