@@ -377,12 +377,13 @@ MmtfParser.prototype = Object.assign( Object.create(
             }
         }
 
-        if( sd.unitCell && Array.isArray( sd.unitCell ) && sd.unitCell[ 0 ] ){
-            s.unitcell = new Unitcell(
-                sd.unitCell[ 0 ], sd.unitCell[ 1 ], sd.unitCell[ 2 ],
-                sd.unitCell[ 3 ], sd.unitCell[ 4 ], sd.unitCell[ 5 ],
-                sd.spaceGroup
-            );
+        var uc = sd.unitCell;
+        if( uc && Array.isArray( uc ) && uc[ 0 ] ){
+            s.unitcell = new Unitcell({
+                a: uc[ 0 ], b: uc[ 1 ], c: uc[ 2 ],
+                alpha: uc[ 3 ], beta: uc[ 4 ], gamma: uc[ 5 ],
+                spacegroup: sd.spaceGroup
+            });
         }else{
             s.unitcell = undefined;
         }

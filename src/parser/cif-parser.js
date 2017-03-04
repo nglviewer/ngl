@@ -511,11 +511,7 @@ function processSymmetry( cif, structure, asymIdDict ){
     }
 
     if( unitcellDict.a !== undefined ){
-        structure.unitcell = new Unitcell(
-            unitcellDict.a, unitcellDict.b, unitcellDict.c,
-            unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-            unitcellDict.spacegroup, unitcellDict.scale
-        );
+        structure.unitcell = new Unitcell( unitcellDict );
     }else{
         structure.unitcell = undefined;
     }

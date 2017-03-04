@@ -638,11 +638,7 @@ PdbParser.prototype = Object.assign( Object.create(
         //
 
         if( unitcellDict.a !== undefined ){
-            s.unitcell = new Unitcell(
-                unitcellDict.a, unitcellDict.b, unitcellDict.c,
-                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-                unitcellDict.spacegroup, unitcellDict.scale
-            );
+            s.unitcell = new Unitcell( unitcellDict );
         }else{
             s.unitcell = undefined;
         }
