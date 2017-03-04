@@ -86,7 +86,8 @@ function matchName( name, comp ){
  * @property {Integer} instance.id - instance id
  * @property {String|Integer} instance.name - instance name
  * @property {Matrix4} instance.matrix - transformation matrix of the instance
- * @property {Vector3} position - xyz position of the picked object
+ * @property {Vector3} [position] - xyz position of the picked object
+ * @property {Component} [component] - component holding the picked object
  */
 
 
@@ -959,6 +960,27 @@ class Stage{
             }
 
         }, type );
+
+        return new ComponentCollection( compList );
+
+    }
+
+    /**
+     * Get collection of components by object
+     * @param  {Object} object - the object to find
+     * @return {ComponentCollection} collection of selected components
+     */
+    getComponentsByObject( object ){
+
+        var compList = [];
+
+        this.eachComponent( function( comp ){
+
+            if( comp[ comp.type ] === object ){
+                compList.push( comp );
+            }
+
+        } );
 
         return new ComponentCollection( compList );
 
