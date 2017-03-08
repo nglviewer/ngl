@@ -28,7 +28,7 @@ class MouseBehavior{
 
     onDrag( x, y ){
 
-        if( event.which === RightMouseButton ){
+        if( this.mouse.which === RightMouseButton ){
             this.controls.pan( x, y );
         }else{
             this.controls.rotate( x, y );
