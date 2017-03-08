@@ -26,48 +26,51 @@ import { defaults } from "../utils.js";
 
 
 /**
- * Trajectory player to animate coordinate frames
- * @class
- * @param {Trajectory} traj - the trajectory
- * @param {TrajectoryPlayerParameters} [params] - parameter object
+ * Trajectory player for animating coordinate frames
+ * @example
+ * var player = new NGL.TrajectoryPlayer( trajComp.trajectory, { step: 1, timeout: 50 } );
+ * player.play();
  */
-function TrajectoryPlayer( traj, params ){
+class TrajectoryPlayer{
 
-    this.signals = {
-        startedRunning: new Signal(),
-        haltedRunning: new Signal()
-    };
+    /**
+     * make trajectory player
+     * @param {Trajectory} traj - the trajectory
+     * @param {TrajectoryPlayerParameters} [params] - parameter object
+     */
+    constructor( traj, params ){
 
-    var p = Object.assign( {}, params );
+        this.signals = {
+            startedRunning: new Signal(),
+            haltedRunning: new Signal()
+        };
 
-    traj.signals.playerChanged.add( function( player ){
-        if( player !== this ){
-            this.pause();
-        }
-    }, this );
+        var p = Object.assign( {}, params );
 
-    var n = traj.numframes;
-    this.traj = traj;
-    this.start = defaults( p.start, 0 );
-    this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
+        traj.signals.playerChanged.add( function( player ){
+            if( player !== this ){
+                this.pause();
+            }
+        }, this );
 
-    this.step = defaults( p.step, Math.ceil( ( n + 1 ) / 100 ) );
-    this.timeout = defaults( p.timeout, 50 );
-    this.interpolateType = defaults( p.interpolateType, "" );
-    this.interpolateStep = defaults( p.interpolateStep, 5 );
-    this.mode = defaults( p.mode, "loop" );  // loop, once
-    this.direction = defaults( p.direction, "forward" );  // forward, backward
+        var n = traj.numframes;
+        this.traj = traj;
+        this.start = defaults( p.start, 0 );
+        this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
 
-    this._stopFlag = false;
-    this._running = false;
+        this.step = defaults( p.step, Math.ceil( ( n + 1 ) / 100 ) );
+        this.timeout = defaults( p.timeout, 50 );
+        this.interpolateType = defaults( p.interpolateType, "" );
+        this.interpolateStep = defaults( p.interpolateStep, 5 );
+        this.mode = defaults( p.mode, "loop" );  // loop, once
+        this.direction = defaults( p.direction, "forward" );  // forward, backward
 
-}
+        this._stopFlag = false;
+        this._running = false;
 
-TrajectoryPlayer.prototype = {
+    }
 
-    constructor: TrajectoryPlayer,
-
-    _animate: function(){
+    _animate(){
 
         var i;
         this._running = true;
@@ -146,9 +149,9 @@ TrajectoryPlayer.prototype = {
 
         }
 
-    },
+    }
 
-    _interpolate: function( i, ip, ipp, ippp, d, t ){
+    _interpolate( i, ip, ipp, ippp, d, t ){
 
         t += d;
 
@@ -171,9 +174,13 @@ TrajectoryPlayer.prototype = {
 
         }
 
-    },
+    }
 
-    toggle: function(){
+    /**
+     * toggle between playing and pausing the animation
+     * @return {undefined}
+     */
+    toggle(){
 
         if( this._running ){
             this.pause();
@@ -181,9 +188,13 @@ TrajectoryPlayer.prototype = {
             this.play();
         }
 
-    },
+    }
 
-    play: function(){
+    /**
+     * start the animation
+     * @return {undefined}
+     */
+    play(){
 
         if( !this._running ){
 
@@ -216,25 +227,33 @@ TrajectoryPlayer.prototype = {
 
         }
 
-    },
+    }
 
-    pause: function(){
+    /**
+     * pause the animation
+     * @return {undefined}
+     */
+    pause(){
 
         if( this._running ){
             this._stopFlag = true;
             this.signals.haltedRunning.dispatch();
         }
 
-    },
+    }
 
-    stop: function(){
+    /**
+     * stop the animation (pause and return to start-frame)
+     * @return {undefined}
+     */
+    stop(){
 
         this.traj.setFrame( this.start );
         this.pause();
 
     }
 
-};
+}
 
 
 export default TrajectoryPlayer;
