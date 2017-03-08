@@ -63,10 +63,12 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
             bufferList.push(
 
                 new SphereBuffer(
-                    position.center,
-                    color.color,
-                    size.size,
-                    color.pickingColor,
+                    {
+                        position: position.center,
+                        color: color.color,
+                        radius: size.size,
+                        pickingColor: color.pickingColor
+                    },
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,
                         disableImpostor: this.disableImpostor,
@@ -75,8 +77,10 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                 ),
 
                 new VectorBuffer(
-                    position.center,
-                    position.axis,
+                    {
+                        position: position.center,
+                        vector: position.axis
+                    },
                     this.getBufferParams({
                         color: "skyblue",
                         scale: 1
@@ -84,8 +88,10 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                 ),
 
                 new VectorBuffer(
-                    position.center,
-                    position.resdir,
+                    {
+                        position: position.center,
+                        vector: position.resdir
+                    },
                     this.getBufferParams({
                         color: "lightgreen",
                         scale: 1

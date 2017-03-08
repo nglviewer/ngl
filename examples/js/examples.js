@@ -1223,6 +1223,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "protein" } );
             o.addRepresentation( "distance", {
                 atomPair: atomPair,
+                labelColor: "skyblue",
                 color: "skyblue"
             } );
             o.centerView();

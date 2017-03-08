@@ -11,7 +11,8 @@ import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function EllipsoidGeometryBuffer( position, color, radius, majorAxis, minorAxis, pickingColor, params ){
+// position, color, radius, majorAxis, minorAxis, pickingColor
+function EllipsoidGeometryBuffer( data, params ){
 
     var p = params || {};
 
@@ -20,11 +21,11 @@ function EllipsoidGeometryBuffer( position, color, radius, majorAxis, minorAxis,
     this.updateNormals = true;
 
     this.geo = new IcosahedronGeometry( 1, detail );
-    this._radius = radius;
-    this._majorAxis = majorAxis;
-    this._minorAxis = minorAxis;
+    this._radius = data.radius;
+    this._majorAxis = data.majorAxis;
+    this._minorAxis = data.minorAxis;
 
-    GeometryBuffer.call( this, position, color, pickingColor, p );
+    GeometryBuffer.call( this, data, p );
 
 }
 

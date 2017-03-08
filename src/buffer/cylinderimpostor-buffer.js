@@ -11,81 +11,71 @@ import "../shader/CylinderImpostor.vert";
 import "../shader/CylinderImpostor.frag";
 
 import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
-function CylinderImpostorBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
+class CylinderImpostorBuffer extends AlignedBoxBuffer{
 
-    var p = params || {};
+    /**
+     * make cylinder impostor buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position1 - from positions
+     * @param  {Float32Array} data.position2 - to positions
+     * @param  {Float32Array} data.color - from colors
+     * @param  {Float32Array} data.color2 - to colors
+     * @param  {Float32Array} data.radius - radii
+     * @param  {Float32Array} data.pickingColor - from pickingColor
+     * @param  {Float32Array} data.pickingColor2 - to pickingColor2
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.openEnded = defaults( p.openEnded, false );
+        super( data, params );
 
-    this.impostor = true;
-    this.count = from.length / 3;
-    this.vertexShader = "CylinderImpostor.vert";
-    this.fragmentShader = "CylinderImpostor.frag";
+        var p = params || {};
 
-    AlignedBoxBuffer.call( this, p );
+        this.openEnded = defaults( p.openEnded, false );
 
-    var modelViewMatrixInverse = new Uniform( new Matrix4() )
-        .onUpdate( function( object/*, camera*/ ){
-            this.value.getInverse( object.modelViewMatrix );
+        var modelViewMatrixInverse = new Uniform( new Matrix4() )
+            .onUpdate( function( object/*, camera*/ ){
+                this.value.getInverse( object.modelViewMatrix );
+            } );
+
+        this.addUniforms( {
+            "modelViewMatrixInverse": modelViewMatrixInverse,
+            "ortho": { value: 0.0 },
         } );
-
-    this.addUniforms( {
-        "modelViewMatrixInverse": modelViewMatrixInverse,
-        "ortho": { value: 0.0 },
-    } );
-
-    this.addAttributes( {
-        "position1": { type: "v3", value: null },
-        "position2": { type: "v3", value: null },
-        "color2": { type: "c", value: null },
-        "radius": { type: "f", value: null },
-    } );
-
-    this.setAttributes( {
-        "position1": from,
-        "position2": to,
-        "color": color,
-        "color2": color2,
-        "radius": radius
-    } );
-
-    if( pickingColor ){
 
         this.addAttributes( {
-            "pickingColor": { type: "c", value: null },
-            "pickingColor2": { type: "c", value: null },
+            "position1": { type: "v3", value: null },
+            "position2": { type: "v3", value: null },
+            "color2": { type: "c", value: null },
+            "radius": { type: "f", value: null },
         } );
 
-        this.setAttributes( {
-            "pickingColor": pickingColor,
-            "pickingColor2": pickingColor2,
-        } );
+        if( data.pickingColor2 ){
+            this.addAttributes( {
+                "pickingColor2": { type: "c", value: null }
+            } );
+        }
 
-        this.pickable = true;
+        this.setAttributes( data );
+
+        this.makeMapping();
 
     }
 
-    this.makeMapping();
+    get parameters (){
 
-}
+        return Object.assign( {
 
-CylinderImpostorBuffer.prototype = Object.assign( Object.create(
+            openEnded: { updateShader: true }
 
-    AlignedBoxBuffer.prototype ), {
+        }, super.parameters );
 
-    constructor: CylinderImpostorBuffer,
+    }
 
-    parameters: Object.assign( {
-
-        openEnded: { updateShader: true }
-
-    }, AlignedBoxBuffer.prototype.parameters ),
-
-    getDefines: function( type ){
+    getDefines( type ){
 
         var defines = AlignedBoxBuffer.prototype.getDefines.call( this, type );
 
@@ -95,19 +85,13 @@ CylinderImpostorBuffer.prototype = Object.assign( Object.create(
 
         return defines;
 
-    },
-
-    setAttributes: function( data ){
-
-        if( data && data.position1 && data.position2 ){
-            data.position = calculateCenterArray( data.position1, data.position2 );
-        }
-
-        AlignedBoxBuffer.prototype.setAttributes.call( this, data );
-
     }
 
-} );
+    get impostor (){ return true; }
+    get vertexShader (){ return "CylinderImpostor.vert"; }
+    get fragmentShader (){ return "CylinderImpostor.frag"; }
+
+}
 
 
 export default CylinderImpostorBuffer;

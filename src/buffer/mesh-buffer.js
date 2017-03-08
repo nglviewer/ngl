@@ -11,34 +11,37 @@ import "../shader/Mesh.frag";
 import Buffer from "./buffer.js";
 
 
-function MeshBuffer( position, color, index, normal, pickingColor, params ){
+class MeshBuffer extends Buffer{
 
-    var p = params || {};
+    /**
+     * make mesh buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.index - triangle indices
+     * @param  {Float32Array} data.normal - radii
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.size = position ? position.length / 3 : 0;
-    this.attributeSize = this.size;
-    this.vertexShader = 'Mesh.vert';
-    this.fragmentShader = 'Mesh.frag';
+        super( data, params );
 
-    Buffer.call( this, position, color, index, pickingColor, p );
+        var d = data || {};
 
-    this.addAttributes( {
-        "normal": { type: "v3", value: normal },
-    } );
+        this.addAttributes( {
+            "normal": { type: "v3", value: d.normal },
+        } );
 
-    if( normal === undefined ){
-        this.geometry.computeVertexNormals();
+        if( d.normal === undefined ){
+            this.geometry.computeVertexNormals();
+        }
+
     }
 
+    get vertexShader (){ return "Mesh.vert"; }
+    get fragmentShader (){ return "Mesh.frag"; }
+
 }
-
-MeshBuffer.prototype = Object.assign( Object.create(
-
-    Buffer.prototype ), {
-
-    constructor: MeshBuffer
-
-} );
 
 
 export default MeshBuffer;

@@ -68,14 +68,8 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
 
     createData: function( sview ){
 
-        var atomData = sview.getAtomData( this.getAtomParams() );
-        var bondData = sview.getBondData( this.getBondParams() );
-
         var sphereBuffer = new SphereBuffer(
-            atomData.position,
-            atomData.color,
-            atomData.radius,
-            atomData.pickingColor,
+            sview.getAtomData( this.getAtomParams() ),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 disableImpostor: this.disableImpostor,
@@ -86,14 +80,7 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
         this.__center = new Float32Array( sview.bondCount * 3 );
 
         var stickBuffer = new HyperballStickBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            bondData.radius1,
-            bondData.radius2,
-            bondData.pickingColor1,
-            bondData.pickingColor2,
+            sview.getBondData( this.getBondParams() ),
             this.getBufferParams( {
                 shrink: this.shrink,
                 radialSegments: this.radialSegments,

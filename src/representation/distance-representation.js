@@ -150,7 +150,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
                 var atomIndices2 = sview.getAtomIndices( sele2 );
 
                 if( atomIndices1.length && atomIndices2.length ){
-                    
+
                     ap1.index = atomIndices1[ 0 ];
                     ap2.index = atomIndices2[ 0 ];
 
@@ -210,10 +210,12 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var c = new Color( this.labelColor );
 
         this.textBuffer = new TextBuffer(
-            distanceData.position,
-            uniformArray( n, this.labelSize ),
-            uniformArray3( n, c.r, c.g, c.b ),
-            distanceData.text,
+            {
+                position: distanceData.position,
+                size: uniformArray( n, this.labelSize ),
+                color: uniformArray3( n, c.r, c.g, c.b ),
+                text: distanceData.text
+            },
             this.getBufferParams( {
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,
@@ -233,13 +235,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var bondData = this.getBondData( this.structureView, undefined, bondParams );
 
         this.cylinderBuffer = new CylinderBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            bondData.radius,
-            undefined,
-            undefined,
+            bondData,
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,

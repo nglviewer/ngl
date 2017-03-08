@@ -57,28 +57,16 @@ function getThreeSide( side ){
 /**
  * Buffer base class
  * @class
- * @param {Float32Array} position - positions
- *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
- * @param {Float32Array} color - colors
- *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {Int32Array} [index] - triangle indices
- *                                 [a1,b1,c1, a2,b2,c2, ..., aN,bN,cN]
- * @param {Float32Array} [pickingColor] - picking colors
- *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param  {Object} data - attribute object
+ * @param  {Float32Array} data.position - positions
+ * @param  {Float32Array} data.color - colors
+ * @param  {Float32Array} data.index - triangle indices
  * @param {BufferParameters} params - parameters object
  */
-function Buffer( position, color, index, pickingColor, params ){
+function Buffer( data, params ){
 
+    var d = data || {};
     var p = params || {};
-
-    // required properties:
-    // - size
-    // - attributeSize
-    // - vertexShader
-    // - fragmentShader
-
-    this.pickable = false;
-    this.dynamic = true;
 
     this.opaqueBack = defaults( p.opaqueBack, false );
     this.dullInterior = defaults( p.dullInterior, false );
@@ -99,27 +87,8 @@ function Buffer( position, color, index, pickingColor, params ){
 
     this.geometry = new BufferGeometry();
 
-    this.addAttributes( {
-        "position": { type: "v3", value: position },
-        "color": { type: "c", value: color },
-    } );
-
     this.indexVersion = 0;
     this.wireframeIndexVersion = -1;
-
-    if( index ){
-        this.geometry.setIndex(
-            new BufferAttribute( index, 1 )
-        );
-        this.geometry.getIndex().setDynamic( this.dynamic );
-    }
-
-    if( pickingColor ){
-        this.addAttributes( {
-            "pickingColor": { type: "c", value: pickingColor },
-        } );
-        this.pickable = true;
-    }
 
     this.uniforms = UniformsUtils.merge( [
         UniformsLib.common,
@@ -157,6 +126,26 @@ function Buffer( position, color, index, pickingColor, params ){
     this.wireframeGroup = new Group();
     this.pickingGroup = new Group();
 
+    //
+
+    var position = d.position || d.position1;
+    this._positionDataSize = position ? position.length / 3 : 0;
+
+    this.addAttributes( {
+        "position": { type: "v3", value: d.position },
+        "color": { type: "c", value: d.color },
+    } );
+
+    if( d.index ){
+        this.initIndex( d.index );
+    }
+
+    if( d.pickingColor ){
+        this.addAttributes( {
+            "pickingColor": { type: "c", value: d.pickingColor },
+        } );
+    }
+
     this.makeWireframeGeometry();
 
 }
@@ -185,8 +174,39 @@ Buffer.prototype = {
     },
 
     get transparent () {
-
         return this.opacity < 1 || this.forceTransparent;
+    },
+
+    get size () {
+        return this._positionDataSize;
+    },
+
+    get attributeSize () {
+        return this.size;
+    },
+
+    get pickable (){
+        return !!this.geometry.attributes.pickingColor;
+    },
+
+    get dynamic (){ return true; },
+
+    /**
+     * @abstract
+     */
+    get vertexShader (){},
+
+    /**
+     * @abstract
+     */
+    get fragmentShader (){},
+
+    initIndex: function( index ){
+
+        this.geometry.setIndex(
+            new BufferAttribute( index, 1 )
+        );
+        this.geometry.getIndex().setDynamic( this.dynamic );
 
     },
 

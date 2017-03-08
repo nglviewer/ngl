@@ -117,13 +117,18 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         addEdge( 3, 6 );
 
         return {
-            vertexPosition: vertexPosition,
-            vertexColor: vertexColor,
-            vertexRadius: vertexRadius,
-            edgePosition1: edgePosition1,
-            edgePosition2: edgePosition2,
-            edgeColor: edgeColor,
-            edgeRadius: edgeRadius
+            vertex: {
+                position: vertexPosition,
+                color: vertexColor,
+                radius: vertexRadius
+            },
+            edge: {
+                position1: edgePosition1,
+                position2: edgePosition2,
+                color: edgeColor,
+                color2: edgeColor,
+                radius: edgeRadius
+            }
         };
 
     },
@@ -135,10 +140,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         var unitcellData = this.getUnitcellData( structure );
 
         this.sphereBuffer = new SphereBuffer(
-            unitcellData.vertexPosition,
-            unitcellData.vertexColor,
-            unitcellData.vertexRadius,
-            undefined,
+            unitcellData.vertex,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 disableImpostor: this.disableImpostor,
@@ -147,13 +149,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         );
 
         this.cylinderBuffer = new CylinderBuffer(
-            unitcellData.edgePosition1,
-            unitcellData.edgePosition2,
-            unitcellData.edgeColor,
-            unitcellData.edgeColor,
-            unitcellData.edgeRadius,
-            undefined,
-            undefined,
+            unitcellData.edge,
             this.getBufferParams( {
                 openEnded: true,
                 radialSegments: this.radialSegments,

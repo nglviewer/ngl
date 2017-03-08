@@ -7,48 +7,47 @@
 
 import { Color } from "../../lib/three.es6.js";
 
+import "../shader/Line.vert";
+import "../shader/Line.frag";
+
+import { defaults } from "../utils.js";
 import { uniformArray3 } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
 
 
-function VectorBuffer( position, vector, params ){
+class VectorBuffer extends Buffer{
 
-    var p = params || {};
+    /**
+     * make vector buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.vector - vectors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.size = position.length / 3;
-    this.vertexShader = 'Line.vert';
-    this.fragmentShader = 'Line.frag';
-    this.line = true;
+        var p = params || {};
 
-    var n = this.size;
-    var n2 = n * 2;
+        var n = data.position.length / 3;
+        var n2 = n * 2;
 
-    this.attributeSize = n2;
+        var color = new Color( defaults( p.color, "grey" ) );
 
-    this.scale = p.scale || 1;
-    var color = new Color( p.color || "grey" );
+        var linePosition = new Float32Array( n2 * 3 );
+        var lineColor = uniformArray3( n2, color.r, color.g, color.b );
 
-    this.linePosition = new Float32Array( n2 * 3 );
-    this.lineColor = uniformArray3( n2, color.r, color.g, color.b );
+        super( {
+            position: linePosition,
+            color: lineColor
+        }, p );
 
-    Buffer.call(
-        this, this.linePosition, this.lineColor, undefined, undefined, p
-    );
+        this.scale = defaults( p.scale, 1 );
 
-    this.setAttributes( {
-        position: position,
-        vector: vector
-    } );
+        this.setAttributes( data );
 
-}
+    }
 
-VectorBuffer.prototype = Object.assign( Object.create(
-
-    Buffer.prototype ), {
-
-    constructor: VectorBuffer,
-
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         var attributes = this.geometry.attributes;
 
@@ -62,7 +61,7 @@ VectorBuffer.prototype = Object.assign( Object.create(
             attributes.position.needsUpdate = true;
         }
 
-        var n = this.size;
+        var n = this.size / 2;
         var scale = this.scale;
 
         var i, j;
@@ -87,7 +86,11 @@ VectorBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get line (){ return true; }
+    get vertexShader (){ return "Line.vert"; }
+    get fragmentShader (){ return "Line.frag"; }
+
+}
 
 
 export default VectorBuffer;

@@ -102,12 +102,14 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
 
             bufferList.push(
                 new RibbonBuffer(
-                    subPos.position,
-                    subOri.binormal,
-                    subOri.normal,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
+                    {
+                        position: subPos.position,
+                        normal: subOri.binormal,
+                        dir: subOri.normal,
+                        color: subCol.color,
+                        size: subSize.size,
+                        pickingColor: subCol.pickingColor
+                    },
                     this.getBufferParams()
                 )
             );

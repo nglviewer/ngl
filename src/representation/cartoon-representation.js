@@ -125,13 +125,7 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
 
             bufferList.push(
                 new TubeMeshBuffer(
-                    subPos.position,
-                    subOri.normal,
-                    subOri.binormal,
-                    subOri.tangent,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
+                    Object.assign( {}, subPos, subOri, subCol, subSize ),
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
                         aspectRatio: this.getAspectRatio( polymer ),

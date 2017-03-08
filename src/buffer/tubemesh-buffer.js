@@ -8,312 +8,321 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function TubeMeshBuffer( position, normal, binormal, tangent, color, size, pickingColor, params ){
+var vTangent = new Vector3();
+var vMeshNormal = new Vector3();
 
-    var p = params || {};
 
-    this.aspectRatio = defaults( p.aspectRatio, 1.0 );
-    this.radialSegments = defaults( p.radialSegments, 4 );
-    this.capped = defaults( p.capped, false );
+class TubeMeshBuffer extends MeshBuffer{
 
-    this.capVertices = this.capped ? this.radialSegments : 0;
-    this.capTriangles = this.capped ? this.radialSegments - 2 : 0;
+    /**
+     * make tube mesh buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.normal - normals
+     * @param  {Float32Array} data.binormal - binormals
+     * @param  {Float32Array} data.tangent - tangents
+     * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.size - sizes
+     * @param  {Float32Array} data.pickingColor - pickingColors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    var n = position.length / 3;
-    var n1 = n - 1;
+        var d = data || {};
+        var p = params || {};
 
-    var x = n * this.radialSegments * 3 + 2 * this.capVertices * 3;
+        var radialSegments = defaults( p.radialSegments, 4 );
+        var capped = defaults( p.capped, false );
 
-    this.size2 = n;
+        var capVertices = capped ? radialSegments : 0;
+        var capTriangles = capped ? radialSegments - 2 : 0;
 
-    this.meshPosition = new Float32Array( x );
-    this.meshColor = new Float32Array( x );
-    this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+        var n = d.position.length / 3;
+        var n1 = n - 1;
+        var x = n * radialSegments * 3 + 2 * capVertices * 3;
 
-    var xi = n1 * 2 * this.radialSegments * 3 + 2 * this.capTriangles * 3;
-    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
-    this.meshIndex = new TypedArray( xi );
-    this.makeIndex();
+        var meshPosition = new Float32Array( x );
+        var meshColor = new Float32Array( x );
+        var meshNormal = new Float32Array( x );
+        var meshPickingColor = d.pickingColor ? new Float32Array( x ) : undefined;
 
-    MeshBuffer.call(
-        this, this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, p
-    );
+        var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
+        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
+        var meshIndex = new TypedArray( xi );
 
-    this.setAttributes( {
-        position: position,
-        normal: normal,
-        binormal: binormal,
-        tangent: tangent,
-        color: color,
-        size: size,
-        pickingColor: pickingColor
-    } );
+        super( {
+            position: meshPosition,
+            color: meshColor,
+            index: meshIndex,
+            normal: meshNormal,
+            pickingColor: meshPickingColor
+        }, p );
 
-}
+        //
 
-TubeMeshBuffer.prototype = Object.assign( Object.create(
+        this.aspectRatio = defaults( p.aspectRatio, 1.0 );
+        this.radialSegments = radialSegments;
+        this.capped = capped;
 
-    Buffer.prototype ), {
+        this.capVertices = capVertices;
+        this.capTriangles = capTriangles;
+        this.size2 = n;
 
-    constructor: TubeMeshBuffer,
+        this.setAttributes( d );
 
-    setAttributes: function(){
+        this.meshIndex = meshIndex;
+        this.makeIndex();
 
-        var vTangent = new Vector3();
-        var vMeshNormal = new Vector3();
 
-        return function setAttributes( data ){
+    }
 
-            var aspectRatio = this.aspectRatio;
+    setAttributes( data ){
 
-            var n = this.size2;
-            var n1 = n - 1;
-            var radialSegments = this.radialSegments;
+        var aspectRatio = this.aspectRatio;
 
-            var attributes = this.geometry.attributes;
+        var n = this.size2;
+        var n1 = n - 1;
+        var radialSegments = this.radialSegments;
 
-            var position, normal, binormal, tangent, color, size, pickingColor;
-            var meshPosition, meshColor, meshNormal, meshPickingColor;
+        var attributes = this.geometry.attributes;
 
-            if( data.position ){
+        var position, normal, binormal, tangent, color, size, pickingColor;
+        var meshPosition, meshColor, meshNormal, meshPickingColor;
 
-                position = data.position;
-                normal = data.normal;
-                binormal = data.binormal;
-                tangent = data.tangent;
-                size = data.size;
+        if( data.position ){
 
-                meshPosition = attributes.position.array;
-                meshNormal = attributes.normal.array;
+            position = data.position;
+            normal = data.normal;
+            binormal = data.binormal;
+            tangent = data.tangent;
+            size = data.size;
 
-                attributes.position.needsUpdate = true;
-                attributes.normal.needsUpdate = true;
+            meshPosition = attributes.position.array;
+            meshNormal = attributes.normal.array;
+
+            attributes.position.needsUpdate = true;
+            attributes.normal.needsUpdate = true;
+
+        }
+
+        if( data.color ){
+
+            color = data.color;
+            meshColor = attributes.color.array;
+            attributes.color.needsUpdate = true;
+
+        }
+
+        if( data.pickingColor ){
+
+            pickingColor = data.pickingColor;
+            meshPickingColor = attributes.pickingColor.array;
+            attributes.pickingColor.needsUpdate = true;
+
+        }
+
+        var i, j, k, l, s, t;
+        var v, cx, cy;
+        var cx1, cy1, cx2, cy2;
+        var radius;
+
+        var normX, normY, normZ;
+        var biX, biY, biZ;
+        var posX, posY, posZ;
+
+        var cxArr = [];
+        var cyArr = [];
+        var cx1Arr = [];
+        var cy1Arr = [];
+        var cx2Arr = [];
+        var cy2Arr = [];
+
+        if( position ){
+
+            for( j = 0; j < radialSegments; ++j ){
+
+                v = ( j / radialSegments ) * 2 * Math.PI;
+
+                cxArr[ j ] = aspectRatio * Math.cos( v );
+                cyArr[ j ] = Math.sin( v );
+
+                cx1Arr[ j ] = aspectRatio * Math.cos( v - 0.01 );
+                cy1Arr[ j ] = Math.sin( v - 0.01 );
+                cx2Arr[ j ] = aspectRatio * Math.cos( v + 0.01 );
+                cy2Arr[ j ] = Math.sin( v + 0.01 );
 
             }
 
-            if( data.color ){
+        }
 
-                color = data.color;
-                meshColor = attributes.color.array;
-                attributes.color.needsUpdate = true;
+        for( i = 0; i < n; ++i ){
 
-            }
-
-            if( data.pickingColor ){
-
-                pickingColor = data.pickingColor;
-                meshPickingColor = attributes.pickingColor.array;
-                attributes.pickingColor.needsUpdate = true;
-
-            }
-
-            var i, j, k, l, s, t;
-            var v, cx, cy;
-            var cx1, cy1, cx2, cy2;
-            var radius;
-
-            var normX, normY, normZ;
-            var biX, biY, biZ;
-            var posX, posY, posZ;
-
-            var cxArr = [];
-            var cyArr = [];
-            var cx1Arr = [];
-            var cy1Arr = [];
-            var cx2Arr = [];
-            var cy2Arr = [];
+            k = i * 3;
+            l = k * radialSegments;
 
             if( position ){
 
-                for( j = 0; j < radialSegments; ++j ){
+                vTangent.set(
+                    tangent[ k ], tangent[ k + 1 ], tangent[ k + 2 ]
+                );
 
-                    v = ( j / radialSegments ) * 2 * Math.PI;
+                normX = normal[ k     ];
+                normY = normal[ k + 1 ];
+                normZ = normal[ k + 2 ];
 
-                    cxArr[ j ] = aspectRatio * Math.cos( v );
-                    cyArr[ j ] = Math.sin( v );
+                biX = binormal[ k     ];
+                biY = binormal[ k + 1 ];
+                biZ = binormal[ k + 2 ];
 
-                    cx1Arr[ j ] = aspectRatio * Math.cos( v - 0.01 );
-                    cy1Arr[ j ] = Math.sin( v - 0.01 );
-                    cx2Arr[ j ] = aspectRatio * Math.cos( v + 0.01 );
-                    cy2Arr[ j ] = Math.sin( v + 0.01 );
+                posX = position[ k     ];
+                posY = position[ k + 1 ];
+                posZ = position[ k + 2 ];
 
-                }
-
-            }
-
-            for( i = 0; i < n; ++i ){
-
-                k = i * 3;
-                l = k * radialSegments;
-
-                if( position ){
-
-                    vTangent.set(
-                        tangent[ k ], tangent[ k + 1 ], tangent[ k + 2 ]
-                    );
-
-                    normX = normal[ k     ];
-                    normY = normal[ k + 1 ];
-                    normZ = normal[ k + 2 ];
-
-                    biX = binormal[ k     ];
-                    biY = binormal[ k + 1 ];
-                    biZ = binormal[ k + 2 ];
-
-                    posX = position[ k     ];
-                    posY = position[ k + 1 ];
-                    posZ = position[ k + 2 ];
-
-                    radius = size[ i ];
-
-                }
-
-                for( j = 0; j < radialSegments; ++j ){
-
-                    s = l + j * 3;
-
-                    if( position ){
-
-                        cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
-                        cy = radius * cyArr[ j ];
-
-                        cx1 = -radius * cx1Arr[ j ];
-                        cy1 = radius * cy1Arr[ j ];
-                        cx2 = -radius * cx2Arr[ j ];
-                        cy2 = radius * cy2Arr[ j ];
-
-                        meshPosition[ s     ] = posX + cx * normX + cy * biX;
-                        meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
-                        meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
-
-                        // TODO half of these are symmetric
-                        vMeshNormal.set(
-                            // ellipse tangent approximated as vector from/to adjacent points
-                            ( cx2 * normX + cy2 * biX ) -
-                                ( cx1 * normX + cy1 * biX ),
-                            ( cx2 * normY + cy2 * biY ) -
-                                ( cx1 * normY + cy1 * biY ),
-                            ( cx2 * normZ + cy2 * biZ ) -
-                                ( cx1 * normZ + cy1 * biZ )
-                        ).cross( vTangent );
-
-                        meshNormal[ s     ] = vMeshNormal.x;
-                        meshNormal[ s + 1 ] = vMeshNormal.y;
-                        meshNormal[ s + 2 ] = vMeshNormal.z;
-
-                    }
-
-                    if( color ){
-
-                        meshColor[ s     ] = color[ k     ];
-                        meshColor[ s + 1 ] = color[ k + 1 ];
-                        meshColor[ s + 2 ] = color[ k + 2 ];
-
-                    }
-
-                    if( pickingColor ){
-
-                        meshPickingColor[ s     ] = pickingColor[ k     ];
-                        meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
-                        meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
-
-                    }
-
-                }
+                radius = size[ i ];
 
             }
-
-            // front cap
-
-            k = 0;
-            l = n * 3 * radialSegments;
 
             for( j = 0; j < radialSegments; ++j ){
 
-                s = k + j * 3;
-                t = l + j * 3;
+                s = l + j * 3;
 
                 if( position ){
 
-                    meshPosition[ t     ] = meshPosition[ s     ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+                    cx = -radius * cxArr[ j ]; // TODO: Hack: Negating it so it faces outside.
+                    cy = radius * cyArr[ j ];
 
-                    meshNormal[ t     ] = tangent[ k     ];
-                    meshNormal[ t + 1 ] = tangent[ k + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ k + 2 ];
+                    cx1 = -radius * cx1Arr[ j ];
+                    cy1 = radius * cy1Arr[ j ];
+                    cx2 = -radius * cx2Arr[ j ];
+                    cy2 = radius * cy2Arr[ j ];
+
+                    meshPosition[ s     ] = posX + cx * normX + cy * biX;
+                    meshPosition[ s + 1 ] = posY + cx * normY + cy * biY;
+                    meshPosition[ s + 2 ] = posZ + cx * normZ + cy * biZ;
+
+                    // TODO half of these are symmetric
+                    vMeshNormal.set(
+                        // ellipse tangent approximated as vector from/to adjacent points
+                        ( cx2 * normX + cy2 * biX ) -
+                            ( cx1 * normX + cy1 * biX ),
+                        ( cx2 * normY + cy2 * biY ) -
+                            ( cx1 * normY + cy1 * biY ),
+                        ( cx2 * normZ + cy2 * biZ ) -
+                            ( cx1 * normZ + cy1 * biZ )
+                    ).cross( vTangent );
+
+                    meshNormal[ s     ] = vMeshNormal.x;
+                    meshNormal[ s + 1 ] = vMeshNormal.y;
+                    meshNormal[ s + 2 ] = vMeshNormal.z;
 
                 }
 
                 if( color ){
 
-                    meshColor[ t     ] = meshColor[ s     ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
+                    meshColor[ s     ] = color[ k     ];
+                    meshColor[ s + 1 ] = color[ k + 1 ];
+                    meshColor[ s + 2 ] = color[ k + 2 ];
 
                 }
 
                 if( pickingColor ){
 
-                    meshPickingColor[ t     ] = meshPickingColor[ s     ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+                    meshPickingColor[ s     ] = pickingColor[ k     ];
+                    meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
+                    meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
 
                 }
 
             }
 
-            // back cap
+        }
 
-            k = ( n - 1 ) * 3 * radialSegments;
-            l = ( n + 1 ) * 3 * radialSegments;
+        // front cap
 
-            for( j = 0; j < radialSegments; ++j ){
+        k = 0;
+        l = n * 3 * radialSegments;
 
-                s = k + j * 3;
-                t = l + j * 3;
+        for( j = 0; j < radialSegments; ++j ){
 
-                if( position ){
+            s = k + j * 3;
+            t = l + j * 3;
 
-                    meshPosition[ t     ] = meshPosition[ s     ];
-                    meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
-                    meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+            if( position ){
 
-                    meshNormal[ t     ] = tangent[ n1 * 3     ];
-                    meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
-                    meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
 
-                }
-
-                if( color ){
-
-                    meshColor[ t     ] = meshColor[ s     ];
-                    meshColor[ t + 1 ] = meshColor[ s + 1 ];
-                    meshColor[ t + 2 ] = meshColor[ s + 2 ];
-
-                }
-
-                if( pickingColor ){
-
-                    meshPickingColor[ t     ] = meshPickingColor[ s     ];
-                    meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                    meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
-
-                }
+                meshNormal[ t     ] = tangent[ k     ];
+                meshNormal[ t + 1 ] = tangent[ k + 1 ];
+                meshNormal[ t + 2 ] = tangent[ k + 2 ];
 
             }
 
-        };
+            if( color ){
 
-    }(),
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
 
-    makeIndex: function(){
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
+            }
+
+        }
+
+        // back cap
+
+        k = ( n - 1 ) * 3 * radialSegments;
+        l = ( n + 1 ) * 3 * radialSegments;
+
+        for( j = 0; j < radialSegments; ++j ){
+
+            s = k + j * 3;
+            t = l + j * 3;
+
+            if( position ){
+
+                meshPosition[ t     ] = meshPosition[ s     ];
+                meshPosition[ t + 1 ] = meshPosition[ s + 1 ];
+                meshPosition[ t + 2 ] = meshPosition[ s + 2 ];
+
+                meshNormal[ t     ] = tangent[ n1 * 3     ];
+                meshNormal[ t + 1 ] = tangent[ n1 * 3 + 1 ];
+                meshNormal[ t + 2 ] = tangent[ n1 * 3 + 2 ];
+
+            }
+
+            if( color ){
+
+                meshColor[ t     ] = meshColor[ s     ];
+                meshColor[ t + 1 ] = meshColor[ s + 1 ];
+                meshColor[ t + 2 ] = meshColor[ s + 2 ];
+
+            }
+
+            if( pickingColor ){
+
+                meshPickingColor[ t     ] = meshPickingColor[ s     ];
+                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
+                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
+            }
+
+        }
+
+    }
+
+    makeIndex(){
 
         var meshIndex = this.meshIndex;
 
@@ -404,7 +413,7 @@ TubeMeshBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default TubeMeshBuffer;

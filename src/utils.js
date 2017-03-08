@@ -43,6 +43,15 @@ function defaults( value, defaultValue ){
 }
 
 
+function pick( object ){
+
+    var properties = [].slice.call( arguments, 1 );
+
+    return properties.reduce( ( a, e ) => ( a[ e ] = object[ e ], a ), {} );
+
+}
+
+
 function getProtocol(){
 
     var protocol = window.location.protocol;
@@ -477,6 +486,7 @@ export {
     getQuery,
     boolean,
     defaults,
+    pick,
     getProtocol,
     getBrowser,
     getAbsolutePath,

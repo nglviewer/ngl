@@ -7,42 +7,86 @@
 
 import Buffer from "./buffer.js";
 
+import { calculateCenterArray } from "../math/array-utils.js";
 
-function MappedBuffer( params ){
 
-    // required
-    // - mapping
-    // - mappingType
-    // - mappingSize
-    // - mappingItemSize
-    // - mappingIndices
-    // - mappingIndicesSize
+class MappedBuffer extends Buffer{
 
-    this.size = this.count;
-    this.attributeSize = this.count * this.mappingSize;
+    constructor( data, params ){
 
-    var n = this.count * this.mappingIndicesSize;
-    var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
-    this.index = new TypedArray( n );
-    this.makeIndex();
+        super( data, params );
 
-    Buffer.call( this, null, null, this.index, null, params );
+        var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
+        this.index = new TypedArray( this.indexSize );
+        this.makeIndex();
+        this.initIndex( this.index, 1 );
 
-    this.addAttributes( {
-        "mapping": { type: this.mappingType, value: null },
-    } );
+        this.addAttributes( {
+            "mapping": { type: this.mappingType, value: null },
+        } );
 
-}
+    }
 
-MappedBuffer.prototype = Object.assign( Object.create(
+    get attributeSize () {
+        return this.size * this.mappingSize;
+    }
 
-    Buffer.prototype ), {
+    get indexSize () {
+        return this.size * this.mappingIndicesSize;
+    }
 
-    constructor: MappedBuffer,
+    /**
+     * @abstract
+     */
+    get mapping (){}
 
-    setAttributes: function( data ){
+    /**
+     * @abstract
+     */
+    get mappingIndices (){}
 
-        var count = this.count;
+    /**
+     * @abstract
+     */
+    get mappingIndicesSize (){}
+
+    /**
+     * @abstract
+     */
+    get mappingType (){}
+
+    /**
+     * @abstract
+     */
+    get mappingSize (){}
+
+    /**
+     * @abstract
+     */
+    get mappingItemSize (){}
+
+    addAttributes( attributes ){
+
+        var nullValueAttributes = {};
+        for( var name in attributes ){
+            var a = attributes[ name ];
+            nullValueAttributes[ name ] = {
+                type: a.type,
+                value: null
+            };
+        }
+
+        super.addAttributes( nullValueAttributes );
+
+    }
+
+    setAttributes( data ){
+
+        if( data && !data.position && data.position1 && data.position2 ){
+            data.position = calculateCenterArray( data.position1, data.position2 );
+        }
+
+        var size = this.size;
         var mappingSize = this.mappingSize;
         var attributes = this.geometry.attributes;
 
@@ -50,12 +94,14 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
         for( var name in data ){
 
+            if( name === "index" ) continue;
+
             d = data[ name ];
             a = attributes[ name ];
             itemSize = a.itemSize;
             array = a.array;
 
-            for( var k = 0; k < count; ++k ) {
+            for( var k = 0; k < size; ++k ) {
 
                 n = k * itemSize;
                 i = n * mappingSize;
@@ -65,9 +111,7 @@ MappedBuffer.prototype = Object.assign( Object.create(
                     j = i + ( itemSize * l );
 
                     for( var m = 0; m < itemSize; ++m ) {
-
                         array[ j + m ] = d[ n + m ];
-
                     }
 
                 }
@@ -78,28 +122,26 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    makeMapping: function(){
+    makeMapping(){
 
-        var count = this.count;
+        var size = this.size;
         var mapping = this.mapping;
         var mappingSize = this.mappingSize;
         var mappingItemSize = this.mappingItemSize;
 
         var aMapping = this.geometry.attributes.mapping.array;
 
-        for( var v = 0; v < count; v++ ) {
-
+        for( var v = 0; v < size; v++ ) {
             aMapping.set( mapping, v * mappingItemSize * mappingSize );
-
         }
 
-    },
+    }
 
-    makeIndex: function(){
+    makeIndex(){
 
-        var count = this.count;
+        var size = this.size;
         var mappingSize = this.mappingSize;
         var mappingIndices = this.mappingIndices;
         var mappingIndicesSize = this.mappingIndicesSize;
@@ -108,7 +150,7 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
         var ix, it;
 
-        for( var v = 0; v < count; v++ ) {
+        for( var v = 0; v < size; v++ ) {
 
             ix = v * mappingIndicesSize;
             it = v * mappingSize;
@@ -123,7 +165,7 @@ MappedBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default MappedBuffer;

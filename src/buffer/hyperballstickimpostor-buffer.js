@@ -11,7 +11,6 @@ import "../shader/HyperballStickImpostor.vert";
 import "../shader/HyperballStickImpostor.frag";
 
 import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
 import BoxBuffer from "./box-buffer.js";
 
 
@@ -66,86 +65,79 @@ function matrixCalc( object, camera ){
 }
 
 
-function HyperballStickImpostorBuffer( position1, position2, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
+class HyperballStickImpostorBuffer extends BoxBuffer{
 
-    var p = params || {};
+    /**
+     * make hyperball stick impostor buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position1 - from positions
+     * @param  {Float32Array} data.position2 - to positions
+     * @param  {Float32Array} data.color - from colors
+     * @param  {Float32Array} data.color2 - to colors
+     * @param  {Float32Array} data.radius1 - from radii
+     * @param  {Float32Array} data.radius2 - to radii
+     * @param  {Float32Array} data.pickingColor - from pickingColor
+     * @param  {Float32Array} data.pickingColor2 - to pickingColor2
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    var shrink = defaults( p.shrink, 0.14 );
+        super( data, params );
 
-    this.impostor = true;
-    this.count = position1.length / 3;
-    this.vertexShader = "HyperballStickImpostor.vert";
-    this.fragmentShader = "HyperballStickImpostor.frag";
+        var d = data || {};
+        var p = params || {};
 
-    BoxBuffer.call( this, p );
+        var shrink = defaults( p.shrink, 0.14 );
 
-    var modelViewProjectionMatrix = new Uniform( new Matrix4() )
-        .onUpdate( matrixCalc );
-    var modelViewProjectionMatrixInverse = new Uniform( new Matrix4() )
-        .onUpdate( matrixCalc );
-    var modelViewMatrixInverseTranspose = new Uniform( new Matrix4() )
-        .onUpdate( matrixCalc );
+        var modelViewProjectionMatrix = new Uniform( new Matrix4() )
+            .onUpdate( matrixCalc );
+        var modelViewProjectionMatrixInverse = new Uniform( new Matrix4() )
+            .onUpdate( matrixCalc );
+        var modelViewMatrixInverseTranspose = new Uniform( new Matrix4() )
+            .onUpdate( matrixCalc );
 
-    this.addUniforms( {
-        "modelViewProjectionMatrix": modelViewProjectionMatrix,
-        "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
-        "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
-        "shrink": { value: shrink },
-    } );
-
-    this.addAttributes( {
-        "color": { type: "c", value: null },
-        "color2": { type: "c", value: null },
-        "radius": { type: "f", value: null },
-        "radius2": { type: "f", value: null },
-        "position1": { type: "v3", value: null },
-        "position2": { type: "v3", value: null },
-    } );
-
-    this.setAttributes( {
-        "color": color,
-        "color2": color2,
-        "radius": radius1,
-        "radius2": radius2,
-        "position1": position1,
-        "position2": position2,
-
-        "position": calculateCenterArray( position1, position2 ),
-    } );
-
-    if( pickingColor ){
+        this.addUniforms( {
+            "modelViewProjectionMatrix": modelViewProjectionMatrix,
+            "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
+            "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
+            "shrink": { value: shrink },
+        } );
 
         this.addAttributes( {
-            "pickingColor": { type: "c", value: null },
-            "pickingColor2": { type: "c", value: null },
+            "position1": { type: "v3", value: null },
+            "position2": { type: "v3", value: null },
+            "color2": { type: "c", value: null },
+            "radius": { type: "f", value: null },
+            "radius2": { type: "f", value: null }
         } );
 
-        this.setAttributes( {
-            "pickingColor": pickingColor,
-            "pickingColor2": pickingColor2,
-        } );
+        if( d.pickingColor2 ){
+            this.addAttributes( {
+                "pickingColor2": { type: "c", value: null }
+            } );
+        }
 
-        this.pickable = true;
+        this.setAttributes( d );
+
+        this.makeMapping();
 
     }
 
-    this.makeMapping();
+    get parameters (){
+
+        return Object.assign( {
+
+            shrink: { uniform: true }
+
+        }, super.parameters );
+
+    }
+
+    get impostor (){ return true; }
+    get vertexShader (){ return "HyperballStickImpostor.vert"; }
+    get fragmentShader (){ return "HyperballStickImpostor.frag"; }
 
 }
-
-HyperballStickImpostorBuffer.prototype = Object.assign( Object.create(
-
-    BoxBuffer.prototype ), {
-
-    constructor: HyperballStickImpostorBuffer,
-
-    parameters: Object.assign( {
-
-        shrink: { uniform: true }
-
-    }, BoxBuffer.prototype.parameters )
-
-} );
 
 
 export default HyperballStickImpostorBuffer;

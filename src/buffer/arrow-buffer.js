@@ -17,20 +17,22 @@ import ConeBuffer from "./cone-buffer.js";
  * Arrow buffer
  * @class
  * @augments {Buffer}
- * @param {Float32Array} from - from positions
+ * @param {Object} data - buffer data
+ * @param {Float32Array} data.position1 - from positions
  *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
- * @param {Float32Array} to - to positions
+ * @param {Float32Array} data.position2 - to positions
  *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
- * @param {Float32Array} color - colors
+ * @param {Float32Array} data.color - colors
  *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {Float32Array} radius - radii
+ * @param {Float32Array} data.radius - radii
  *                               [r1, r2, ..., rN]
- * @param {Float32Array} [pickingColor] - picking colors
+ * @param {Float32Array} [data.pickingColor] - picking colors
  *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
  * @param {BufferParams} [params] - parameters object
  */
-function ArrowBuffer( from, to, color, radius, pickingColor, params ){
+function ArrowBuffer( data, params ){
 
+    var d = data || {};
     var p = params || {};
 
     var aspectRatio = defaults( p.aspectRatio, 1.5 );
@@ -38,25 +40,13 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     var openEnded = defaults( p.openEnded, false );
     var disableImpostor = defaults( p.disableImpostor, false );
 
-    var splitPosition = new Float32Array( from.length );
-    var cylinderRadius = new Float32Array( radius.length );
+    var splitPosition = new Float32Array( d.position1.length );
+    var cylinderRadius = new Float32Array( d.radius.length );
 
-    var attr = makeAttributes( {
-        from: from,
-        to: to,
-        color: color,
-        radius: radius,
-        pickingColor: pickingColor
-    } );
+    var attr = makeAttributes( d );
 
     var cylinderBuffer = new CylinderBuffer(
-        attr.cylinderFrom,
-        attr.cylinderTo,
-        attr.cylinderColor,
-        attr.cylinderColor2,
-        attr.cylinderRadius,
-        attr.cylinderPickingColor,
-        attr.cylinderPickingColor2,
+        attr.cylinder,
         {
             radialSegments: radialSegments,
             openEnded: openEnded,
@@ -65,11 +55,7 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     );
 
     var coneBuffer = new ConeBuffer(
-        attr.coneFrom,
-        attr.coneTo,
-        attr.coneColor,
-        attr.coneRadius,
-        attr.conePickingColor,
+        attr.cone,
         {
             radialSegments: radialSegments,
             openEnded: openEnded,
@@ -80,24 +66,25 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
     function makeAttributes( data ){
 
         var i, il;
-        var attr = {};
+        var cylinder = {};
+        var cone = {};
 
         if( data.radius ){
             for( i = 0, il = cylinderRadius.length; i < il; ++i ){
                 cylinderRadius[ i ] = data.radius[ i ] / aspectRatio;
             }
-            attr.cylinderRadius = cylinderRadius;
-            attr.coneRadius = data.radius;
+            cylinder.radius = cylinderRadius;
+            cone.radius = data.radius;
         }
 
-        if( data.from && data.to ){
+        if( data.position1 && data.position2 ){
             var vFrom = new Vector3();
             var vTo = new Vector3();
             var vDir = new Vector3();
             var vSplit = new Vector3();
             for( i = 0, il = splitPosition.length; i < il; i += 3 ){
-                vFrom.fromArray( data.from, i );
-                vTo.fromArray( data.to, i );
+                vFrom.fromArray( data.position1, i );
+                vTo.fromArray( data.position2, i );
                 vDir.subVectors( vFrom, vTo );
                 var fullLength = vDir.length();
                 var coneLength = cylinderRadius[ i / 3 ] * aspectRatio * 2;
@@ -106,25 +93,28 @@ function ArrowBuffer( from, to, color, radius, pickingColor, params ){
                 vSplit.copy( vTo ).add( vDir );
                 vSplit.toArray( splitPosition, i );
             }
-            attr.cylinderFrom = data.from;
-            attr.cylinderTo = splitPosition;
-            attr.coneFrom = splitPosition;
-            attr.coneTo = data.to;
+            cylinder.position1 = data.position1;
+            cylinder.position2 = splitPosition;
+            cone.position1 = splitPosition;
+            cone.position2 = data.position2;
         }
 
         if( data.color ){
-            attr.cylinderColor = data.color;
-            attr.cylinderColor2 = data.color;
-            attr.coneColor = data.color;
+            cylinder.color = data.color;
+            cylinder.color2 = data.color;
+            cone.color = data.color;
         }
 
         if( data.pickingColor ){
-            attr.cylinderPickingColor = data.pickingColor;
-            attr.cylinderPickingColor2 = data.pickingColor;
-            attr.conePickingColor = data.pickingColor;
+            cylinder.pickingColor = data.pickingColor;
+            cylinder.pickingColor2 = data.pickingColor;
+            cone.pickingColor = data.pickingColor;
         }
 
-        return attr;
+        return {
+            cylinder: cylinder,
+            cone: cone
+        };
 
     }
 

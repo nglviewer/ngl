@@ -204,9 +204,9 @@ Surface.prototype = {
 
     },
 
-    getSize: function( size ){
+    getSize: function( size, scale ){
 
-        return uniformArray( this.size, size );
+        return uniformArray( this.size, size * scale );
 
     },
 

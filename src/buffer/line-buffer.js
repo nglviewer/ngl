@@ -11,52 +11,41 @@ import "../shader/Line.frag";
 import Buffer from "./buffer.js";
 
 
-function LineBuffer( from, to, color, color2, params ){
+class LineBuffer extends Buffer{
 
-    var p = params || {};
+    /**
+     * make line buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position1 - from positions
+     * @param  {Float32Array} data.position2 - to positions
+     * @param  {Float32Array} data.color - from colors
+     * @param  {Float32Array} data.color2 - to colors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.size = from.length / 3;
-    this.vertexShader = 'Line.vert';
-    this.fragmentShader = 'Line.frag';
-    this.line = true;
+        var size = data.position1.length / 3;
+        var attrSize = size * 4;
 
-    var n = this.size;
-    var nX = n * 2 * 2;
+        super( {
+            position: new Float32Array( attrSize * 3 ),
+            color: new Float32Array( attrSize * 3 )
+        }, params );
 
-    this.attributeSize = nX;
+        this.setAttributes( data );
 
-    this.linePosition = new Float32Array( nX * 3 );
-    this.lineColor = new Float32Array( nX * 3 );
+    }
 
-    Buffer.call(
-        this, this.linePosition, this.lineColor, undefined, undefined, p
-    );
+    setAttributes( data ){
 
-    this.setAttributes( {
-        from: from,
-        to: to,
-        color: color,
-        color2: color2
-    } );
-
-}
-
-LineBuffer.prototype = Object.assign( Object.create(
-
-    Buffer.prototype ), {
-
-    constructor: LineBuffer,
-
-    setAttributes: function( data ){
-
-        var from, to, color, color2;
+        var position1, position2, color, color2;
         var aPosition, aColor;
 
         var attributes = this.geometry.attributes;
 
-        if( data.from && data.to ){
-            from = data.from;
-            to = data.to;
+        if( data.position1 && data.position2 ){
+            position1 = data.position1;
+            position2 = data.position2;
             aPosition = attributes.position.array;
             attributes.position.needsUpdate = true;
         }
@@ -69,26 +58,24 @@ LineBuffer.prototype = Object.assign( Object.create(
         }
 
         var n = this.size;
-        var n6 = n * 6;
 
-        var i, j, i2;
+        var i, j;
         var x, y, z, x1, y1, z1, x2, y2, z2;
 
         for( var v = 0; v < n; v++ ){
 
             j = v * 3;
-            i = v * 2 * 3;
-            i2 = i + n6;
+            i = v * 4 * 3;
 
-            if( from && to ){
+            if( position1 && position2 ){
 
-                x1 = from[ j     ];
-                y1 = from[ j + 1 ];
-                z1 = from[ j + 2 ];
+                x1 = position1[ j     ];
+                y1 = position1[ j + 1 ];
+                z1 = position1[ j + 2 ];
 
-                x2 = to[ j     ];
-                y2 = to[ j + 1 ];
-                z2 = to[ j + 2 ];
+                x2 = position2[ j     ];
+                y2 = position2[ j + 1 ];
+                z2 = position2[ j + 2 ];
 
                 x = ( x1 + x2 ) / 2.0;
                 y = ( y1 + y2 ) / 2.0;
@@ -101,12 +88,12 @@ LineBuffer.prototype = Object.assign( Object.create(
                 aPosition[ i + 4 ] = y;
                 aPosition[ i + 5 ] = z;
 
-                aPosition[ i2     ] = x;
-                aPosition[ i2 + 1 ] = y;
-                aPosition[ i2 + 2 ] = z;
-                aPosition[ i2 + 3 ] = x2;
-                aPosition[ i2 + 4 ] = y2;
-                aPosition[ i2 + 5 ] = z2;
+                aPosition[ i +  6 ] = x;
+                aPosition[ i +  7 ] = y;
+                aPosition[ i +  8 ] = z;
+                aPosition[ i +  9 ] = x2;
+                aPosition[ i + 10 ] = y2;
+                aPosition[ i + 11 ] = z2;
 
             }
 
@@ -116,9 +103,9 @@ LineBuffer.prototype = Object.assign( Object.create(
                 aColor[ i + 1 ] = aColor[ i + 4 ] = color[ j + 1 ];
                 aColor[ i + 2 ] = aColor[ i + 5 ] = color[ j + 2 ];
 
-                aColor[ i2     ] = aColor[ i2 + 3 ] = color2[ j     ];
-                aColor[ i2 + 1 ] = aColor[ i2 + 4 ] = color2[ j + 1 ];
-                aColor[ i2 + 2 ] = aColor[ i2 + 5 ] = color2[ j + 2 ];
+                aColor[ i + 6 ] = aColor[ i +  9 ] = color2[ j     ];
+                aColor[ i + 7 ] = aColor[ i + 10 ] = color2[ j + 1 ];
+                aColor[ i + 8 ] = aColor[ i + 11 ] = color2[ j + 2 ];
 
             }
 
@@ -126,7 +113,11 @@ LineBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get line (){ return true; }
+    get vertexShader (){ return "Line.vert"; }
+    get fragmentShader (){ return "Line.frag"; }
+
+}
 
 
 export default LineBuffer;

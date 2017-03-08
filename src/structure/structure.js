@@ -806,14 +806,14 @@ Structure.prototype = {
         if( !what || what.color ){
             color1 = new Float32Array( bondCount * 3 );
             color2 = new Float32Array( bondCount * 3 );
-            bondData.color1 = color1;
+            bondData.color = color1;
             bondData.color2 = color2;
             colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
             pickingColor1 = new Float32Array( bondCount * 3 );
             pickingColor2 = new Float32Array( bondCount * 3 );
-            bondData.pickingColor1 = pickingColor1;
+            bondData.pickingColor = pickingColor1;
             bondData.pickingColor2 = pickingColor2;
             var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
             pickingColormaker = ColormakerRegistry.getScheme( pickingColorParams );
@@ -823,12 +823,10 @@ Structure.prototype = {
         }
         if( !what || what.radius ){
             radius1 = new Float32Array( bondCount );
+            bondData.radius = radius1;
             if( p.radius2 ){
                 radius2 = new Float32Array( bondCount );
-                bondData.radius1 = radius1;
                 bondData.radius2 = radius2;
-            }else{
-                bondData.radius = radius1;
             }
         }
 

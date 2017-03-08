@@ -200,10 +200,12 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         } );
 
         var textBuffer = new TextBuffer(
-            atomData.position,
-            atomData.radius,
-            atomData.color,
-            text,
+            {
+                position: atomData.position,
+                size: atomData.radius,
+                color: atomData.color,
+                text
+            },
             this.getBufferParams( {
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,

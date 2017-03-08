@@ -7,18 +7,20 @@
 
 import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
 
+import { pick } from "../utils.js";
 import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function GeometryBuffer( position, color, pickingColor, params ){
+// position, color, pickingColor
+function GeometryBuffer( data, params ){
 
     var p = params || {};
 
     // required property of subclasses
     var geo = this.geo;
 
-    var n = position.length / 3;
+    var n = data.position.length / 3;
     var m, o;
 
     if( geo.vertices && geo.faces ){
@@ -35,7 +37,7 @@ function GeometryBuffer( position, color, pickingColor, params ){
         o = this.geoIndex.length / 3;
     }
 
-    this.size = n * m;
+    var size = n * m;
     this.positionCount = n;
     this.geoPositionCount = m;
     this.geoFacesCount = o;
@@ -43,27 +45,28 @@ function GeometryBuffer( position, color, pickingColor, params ){
     this.transformedGeoPosition = new Float32Array( m * 3 );
     this.transformedGeoNormal = new Float32Array( m * 3 );
 
-    this.meshPosition = new Float32Array( this.size * 3 );
-    this.meshNormal = new Float32Array( this.size * 3 );
-    this.meshColor = new Float32Array( this.size * 3 );
-    this.meshPickingColor = new Float32Array( this.size * 3 );
+    this.meshPosition = new Float32Array( size * 3 );
+    this.meshNormal = new Float32Array( size * 3 );
+    this.meshColor = new Float32Array( size * 3 );
+    this.meshPickingColor = new Float32Array( size * 3 );
 
     var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
     this.meshIndex = new TypedArray( n * o * 3 );
     this.makeIndex();
 
-    MeshBuffer.call(
-        this, this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, p
-    );
+    MeshBuffer.call( this, {
+        position: this.meshPosition,
+        color: this.meshColor,
+        index: this.meshIndex,
+        normal: this.meshNormal,
+        pickingColor: this.meshPickingColor
+    }, p );
 
     this.initNormals = true;
 
-    this.setAttributes( {
-        position: position,
-        color: color,
-        pickingColor: pickingColor
-    } );
+    this.setAttributes(
+        pick( data, "position", "color", "pickingColor" )
+    );
 
     this.initNormals = false;
 

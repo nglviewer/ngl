@@ -12,7 +12,8 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
+// position1, position2, color, radius, pickingColor
+function ConeGeometryBuffer( data, params ){
 
     var p = params || {};
 
@@ -32,8 +33,8 @@ function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
     );
     this.geo.applyMatrix( matrix );
 
-    var n = from.length;
-    var m = radius.length;
+    var n = data.position1.length;
+    var m = data.radius.length;
 
     this._position = new Float32Array( n );
     this._from = new Float32Array( n );
@@ -41,17 +42,13 @@ function ConeGeometryBuffer( from, to, color, radius, pickingColor, params ){
     this._radius = new Float32Array( m );
 
     // FIXME this contains a call to .setAttributes,
-    GeometryBuffer.call(
-        this, this._position, color, pickingColor, p
-    );
+    GeometryBuffer.call( this, {
+        position: this._position,
+        color: data.color,
+        pickingColor: data.pickingColor
+    }, p );
 
-    this.setAttributes( {
-        "position1": from,
-        "position2": to,
-        "color": color,
-        "radius": radius,
-        "pickingColor": pickingColor
-    } );
+    this.setAttributes( data );
 
 }
 

@@ -5,65 +5,69 @@
  */
 
 
-import { BufferAttribute } from "../../lib/three.es6.js";
-
 import "../shader/Ribbon.vert";
-import "../shader/Mesh.frag";
 
-import Buffer from "./buffer.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function RibbonBuffer( position, normal, dir, color, size, pickingColor, params ){
+const quadIndices = new Uint16Array([
+    0, 1, 2,
+    1, 3, 2
+]);
 
-    var p = params || {};
 
-    var n = ( position.length / 3 ) - 1;
-    var n4 = n * 4;
-    var x = n4 * 3;
+class RibbonBuffer extends MeshBuffer{
 
-    this.meshPosition = new Float32Array( x );
-    this.meshColor = new Float32Array( x );
-    this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+    /**
+     * make tube mesh buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.normal - normals
+     * @param  {Float32Array} data.dir - binormals
+     * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.size - sizes
+     * @param  {Float32Array} data.pickingColor - pickingColors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
-    this.meshIndex = new TypedArray( x );
-    this.makeIndex();
+        var d = data || {};
 
-    MeshBuffer.call(
-        this, this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, p
-    );
+        var n = ( d.position.length / 3 ) - 1;
+        var n4 = n * 4;
+        var x = n4 * 3;
 
-    this.vertexShader = 'Ribbon.vert';
-    this.fragmentShader = 'Mesh.frag';
+        var meshPosition = new Float32Array( x );
+        var meshColor = new Float32Array( x );
+        var meshNormal = new Float32Array( x );
+        var meshPickingColor = d.pickingColor ? new Float32Array( x ) : undefined;
 
-    this.geometry.addAttribute(
-        'dir', new BufferAttribute( new Float32Array( x ), 3 )
-    );
-    this.geometry.addAttribute(
-        'size', new BufferAttribute( new Float32Array( n4 ), 1 )
-    );
+        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
+        var meshIndex = new TypedArray( x );
 
-    this.setAttributes( {
-        position: position,
-        normal: normal,
-        dir: dir,
-        color: color,
-        size: size,
-        pickingColor: pickingColor
-    } );
+        super( {
+            position: meshPosition,
+            color: meshColor,
+            index: meshIndex,
+            normal: meshNormal,
+            pickingColor: meshPickingColor
+        }, params );
 
-}
+        this.addAttributes( {
+            "dir": { type: "v3", value: new Float32Array( x ) },
+        } );
+        this.addAttributes( {
+            "size": { type: "f", value: new Float32Array( n4 ) },
+        } );
 
-RibbonBuffer.prototype = Object.assign( Object.create(
+        this.setAttributes( d );
 
-    Buffer.prototype ), {
+        this.meshIndex = meshIndex;
+        this.makeIndex();
 
-    constructor: RibbonBuffer,
+    }
 
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         var n4 = this.size;
         var n = n4 / 4;
@@ -212,17 +216,12 @@ RibbonBuffer.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    makeIndex: function(){
+    makeIndex(){
 
         var meshIndex = this.meshIndex;
         var n = meshIndex.length / 4 / 3;
-
-        var quadIndices = new Uint16Array([
-            0, 1, 2,
-            1, 3, 2
-        ]);
 
         var s, v, ix, it;
 
@@ -240,7 +239,9 @@ RibbonBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get vertexShader (){ return "Ribbon.vert"; }
+
+}
 
 
 export default RibbonBuffer;

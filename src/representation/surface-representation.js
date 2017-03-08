@@ -198,14 +198,22 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    getSurfaceData: function(){
+
+        return {
+            position: this.surface.getPosition(),
+            color: this.surface.getColor( this.getColorParams() ),
+            index: this.surface.getIndex(),
+            normal: this.surface.getNormal(),
+            // pickingColor: this.surface.getPickingColor( this.getColorParams() )
+        };
+
+    },
+
     create: function(){
 
         var surfaceBuffer = new SurfaceBuffer(
-            this.surface.getPosition(),
-            this.surface.getColor( this.getColorParams() ),
-            this.surface.getIndex(),
-            this.surface.getNormal(),
-            undefined,  // this.surface.getPickingColor( this.getColorParams() ),
+            this.getSurfaceData(),
             this.getBufferParams( {
                 background: this.background,
                 opaqueBack: this.opaqueBack,

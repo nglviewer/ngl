@@ -198,15 +198,18 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
     createData: function( sview, i ){
 
         var info = this.__infoList[ i ];
+        var surface = info.surface;
 
-        var position = info.surface.getPosition();
-        var color = info.surface.getColor( this.getColorParams() );
-        var index = info.surface.getFilteredIndex( this.filterSele, sview );
+        var surfaceData = {
+            position: surface.getPosition(),
+            color: surface.getColor( this.getColorParams() ),
+            index: surface.getFilteredIndex( this.filterSele, sview )
+        };
 
-        if( info.surface.contour ){
+        if( surface.contour ){
 
             var contourBuffer = new ContourBuffer(
-                position, color, index,
+                surfaceData,
                 this.getBufferParams( {
                     wireframe: false
                 } )
@@ -216,10 +219,11 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         } else {
 
+            surfaceData.normal = surface.getNormal();
+            surfaceData.pickingColor = surface.getPickingColor( this.getColorParams() );
+
             var surfaceBuffer = new SurfaceBuffer(
-                position, color, index,
-                info.surface.getNormal(),
-                info.surface.getPickingColor( this.getColorParams() ),
+                surfaceData,
                 this.getBufferParams( {
                     background: this.background,
                     opaqueBack: this.opaqueBack,

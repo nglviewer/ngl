@@ -103,13 +103,15 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         } );
 
         var cylinderBuffer = new CylinderBuffer(
-            axisData.begin,
-            axisData.end,
-            axisData.color,
-            axisData.color,
-            axisData.size,
-            axisData.pickingColor,
-            axisData.pickingColor,
+            {
+                position1: axisData.begin,
+                position2: axisData.end,
+                color: axisData.color,
+                color2: axisData.color,
+                radius: axisData.size,
+                pickingColor: axisData.pickingColor,
+                pickingColor2: axisData.pickingColor
+            },
             this.getBufferParams( {
                 openEnded: this.openEnded,
                 radialSegments: this.radialSegments,

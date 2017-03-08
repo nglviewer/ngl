@@ -8,36 +8,29 @@
 import MappedBuffer from "./mapped-buffer.js";
 
 
-function QuadBuffer( params ){
+const mapping = new Float32Array([
+    -1.0,  1.0,
+    -1.0, -1.0,
+     1.0,  1.0,
+     1.0, -1.0
+]);
 
-    this.mapping = new Float32Array([
-        -1.0,  1.0,
-        -1.0, -1.0,
-         1.0,  1.0,
-         1.0, -1.0
-    ]);
+const mappingIndices = new Uint16Array([
+    0, 1, 2,
+    1, 3, 2
+]);
 
-    this.mappingIndices = new Uint16Array([
-        0, 1, 2,
-        1, 3, 2
-    ]);
 
-    this.mappingIndicesSize = 6;
-    this.mappingType = "v2";
-    this.mappingSize = 4;
-    this.mappingItemSize = 2;
+class QuadBuffer extends MappedBuffer{
 
-    MappedBuffer.call( this, params );
+    get mapping (){ return mapping; }
+    get mappingIndices (){ return mappingIndices; }
+    get mappingIndicesSize (){ return 6; }
+    get mappingType (){ return "v2"; }
+    get mappingSize (){ return 4; }
+    get mappingItemSize (){ return 2; }
 
 }
-
-QuadBuffer.prototype = Object.assign( Object.create(
-
-    MappedBuffer.prototype ), {
-
-    constructor: QuadBuffer
-
-} );
 
 
 export default QuadBuffer;

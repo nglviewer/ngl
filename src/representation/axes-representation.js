@@ -225,13 +225,18 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         }
 
         return {
-            vertexPosition: vertexPosition,
-            vertexColor: vertexColor,
-            vertexRadius: vertexRadius,
-            edgePosition1: edgePosition1,
-            edgePosition2: edgePosition2,
-            edgeColor: edgeColor,
-            edgeRadius: edgeRadius
+            vertex: {
+                position: vertexPosition,
+                color: vertexColor,
+                radius: vertexRadius
+            },
+            edge: {
+                position1: edgePosition1,
+                position2: edgePosition2,
+                color: edgeColor,
+                color2: edgeColor,
+                radius: edgeRadius
+            }
         };
 
     },
@@ -241,10 +246,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var axesData = this.getAxesData( this.structureView );
 
         this.sphereBuffer = new SphereBuffer(
-            axesData.vertexPosition,
-            axesData.vertexColor,
-            axesData.vertexRadius,
-            undefined,
+            axesData.vertex,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 disableImpostor: this.disableImpostor,
@@ -253,13 +255,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         );
 
         this.cylinderBuffer = new CylinderBuffer(
-            axesData.edgePosition1,
-            axesData.edgePosition2,
-            axesData.edgeColor,
-            axesData.edgeColor,
-            axesData.edgeRadius,
-            undefined,
-            undefined,
+            axesData.edge,
             this.getBufferParams( {
                 openEnded: true,
                 radialSegments: this.radialSegments,
@@ -282,20 +278,20 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var cylinderData = {};
 
         if( !what || what.position ){
-            sphereData.position = axesData.vertexPosition;
-            cylinderData.position1 = axesData.edgePosition1;
-            cylinderData.position2 = axesData.edgePosition2;
+            sphereData.position = axesData.vertex.position;
+            cylinderData.position1 = axesData.edge.position1;
+            cylinderData.position2 = axesData.edge.position2;
         }
 
         if( !what || what.color ){
-            sphereData.color = axesData.vertexColor;
-            cylinderData.color = axesData.edgeColor;
-            cylinderData.color2 = axesData.edgeColor;
+            sphereData.color = axesData.vertex.color;
+            cylinderData.color = axesData.edge.color;
+            cylinderData.color2 = axesData.edge.color;
         }
 
         if( !what || what.radius ){
-            sphereData.radius = axesData.vertexRadius;
-            cylinderData.radius = axesData.edgeRadius;
+            sphereData.radius = axesData.vertex.radius;
+            cylinderData.radius = axesData.edge.radius;
         }
 
         this.sphereBuffer.setAttributes( sphereData );

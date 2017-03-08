@@ -30,45 +30,40 @@ var quadUvs = new Float32Array([
 ]);
 
 
-function ImageBuffer( position, data, width, height, params ){
+class ImageBuffer extends Buffer{
 
-    var p = params || {};
+    constructor( position, data, width, height, params ){
 
-    this.size = 4;
-    this.attributeSize = this.size;
-    this.vertexShader = 'Image.vert';
-    this.fragmentShader = 'Image.frag';
+        var p = params || {};
 
-    Buffer.call( this, position, undefined, quadIndices, undefined, p );
+        super( { position, index: quadIndices }, p );
 
-    this.forceTransparent = true;
-    this.filter = defaults( p.filter, "nearest" );
+        this.forceTransparent = true;
+        this.filter = defaults( p.filter, "nearest" );
 
-    this.tex = new DataTexture( data, width, height );
-    this.tex.flipY = true;
+        this.tex = new DataTexture( data, width, height );
+        this.tex.flipY = true;
 
-    this.addUniforms( {
-        "map": { value: null },
-        "mapSize": { value: new Vector2( width, height ) }
-    } );
+        this.addUniforms( {
+            "map": { value: null },
+            "mapSize": { value: new Vector2( width, height ) }
+        } );
 
-    this.geometry.addAttribute( 'uv', new BufferAttribute( quadUvs, 2 ) );
+        this.geometry.addAttribute( 'uv', new BufferAttribute( quadUvs, 2 ) );
 
-}
+    }
 
-ImageBuffer.prototype = Object.assign( Object.create(
+    get parameters (){
 
-    Buffer.prototype ), {
+        return Object.assign( {
 
-    constructor: ImageBuffer,
+            filter: { updateShader: true, uniform: true }
 
-    parameters: Object.assign( {
+        }, super.parameters );
 
-        filter: { updateShader: true, uniform: true },
+    }
 
-    }, Buffer.prototype.parameters ),
-
-    getDefines: function( type ){
+    getDefines( type ){
 
         var defines = Buffer.prototype.getDefines.call( this, type );
 
@@ -85,9 +80,9 @@ ImageBuffer.prototype = Object.assign( Object.create(
 
         return defines;
 
-    },
+    }
 
-    updateTexture: function(){
+    updateTexture(){
 
         var tex = this.tex;
 
@@ -110,9 +105,9 @@ ImageBuffer.prototype = Object.assign( Object.create(
 
         tex.needsUpdate = true;
 
-    },
+    }
 
-    makeMaterial: function(){
+    makeMaterial(){
 
         Buffer.prototype.makeMaterial.call( this );
 
@@ -133,9 +128,9 @@ ImageBuffer.prototype = Object.assign( Object.create(
         pm.blending = NormalBlending;
         pm.needsUpdate = true;
 
-    },
+    }
 
-    setUniforms: function( data ){
+    setUniforms( data ){
 
         if( data && data.filter !== undefined ){
 
@@ -144,11 +139,14 @@ ImageBuffer.prototype = Object.assign( Object.create(
 
         }
 
-        Buffer.prototype.setUniforms.call( this, data );
+        super.setUniforms( data );
 
-    },
+    }
 
-} );
+    get vertexShader (){ return "Image.vert"; }
+    get fragmentShader (){ return "Image.frag"; }
+
+}
 
 
 export default ImageBuffer;

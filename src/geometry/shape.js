@@ -140,7 +140,9 @@ function Shape( name, params ){
             normal = new Float32Array( normal );
         }
 
-        var meshBuffer = new MeshBuffer( position, color, index, normal );
+        var meshBuffer = new MeshBuffer( {
+            position, color, index, normal
+        } );
         bufferList.push( meshBuffer );
 
         tmpBox.setFromArray( position );
@@ -277,10 +279,11 @@ function Shape( name, params ){
 
         if( spherePosition.length ){
             var sphereBuffer = new SphereBuffer(
-                new Float32Array( spherePosition ),
-                new Float32Array( sphereColor ),
-                new Float32Array( sphereRadius ),
-                undefined,  // pickingColor
+                {
+                    position: new Float32Array( spherePosition ),
+                    color: new Float32Array( sphereColor ),
+                    radius: new Float32Array( sphereRadius )
+                },
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -291,12 +294,13 @@ function Shape( name, params ){
 
         if( ellipsoidPosition.length ){
             var ellipsoidBuffer = new EllipsoidBuffer(
-                new Float32Array( ellipsoidPosition ),
-                new Float32Array( ellipsoidColor ),
-                new Float32Array( ellipsoidRadius ),
-                new Float32Array( ellipsoidMajorAxis ),
-                new Float32Array( ellipsoidMinorAxis ),
-                undefined,  // pickingColor
+                {
+                    position: new Float32Array( ellipsoidPosition ),
+                    color: new Float32Array( ellipsoidColor ),
+                    radius: new Float32Array( ellipsoidRadius ),
+                    majorAxis: new Float32Array( ellipsoidMajorAxis ),
+                    minorAxis: new Float32Array( ellipsoidMinorAxis )
+                },
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -307,13 +311,13 @@ function Shape( name, params ){
 
         if( cylinderFrom.length ){
             var cylinderBuffer = new CylinderBuffer(
-                new Float32Array( cylinderFrom ),
-                new Float32Array( cylinderTo ),
-                new Float32Array( cylinderColor ),
-                new Float32Array( cylinderColor ),
-                new Float32Array( cylinderRadius ),
-                undefined,  // pickingColor
-                undefined,  // pickingColor2
+                {
+                    position1: new Float32Array( cylinderFrom ),
+                    position2: new Float32Array( cylinderTo ),
+                    color: new Float32Array( cylinderColor ),
+                    color2: new Float32Array( cylinderColor ),
+                    radius: new Float32Array( cylinderRadius )
+                },
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -325,11 +329,12 @@ function Shape( name, params ){
 
         if( coneFrom.length ){
             var coneBuffer = new ConeBuffer(
-                new Float32Array( coneFrom ),
-                new Float32Array( coneTo ),
-                new Float32Array( coneColor ),
-                new Float32Array( coneRadius ),
-                undefined,  // pickingColor
+                {
+                    position1: new Float32Array( coneFrom ),
+                    position2: new Float32Array( coneTo ),
+                    color: new Float32Array( coneColor ),
+                    radius: new Float32Array( coneRadius )
+                },
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -341,11 +346,12 @@ function Shape( name, params ){
 
         if( arrowFrom.length ){
             var arrowBuffer = new ArrowBuffer(
-                new Float32Array( arrowFrom ),
-                new Float32Array( arrowTo ),
-                new Float32Array( arrowColor ),
-                new Float32Array( arrowRadius ),
-                undefined,  // pickingColor
+                {
+                    position1: new Float32Array( arrowFrom ),
+                    position2: new Float32Array( arrowTo ),
+                    color: new Float32Array( arrowColor ),
+                    radius: new Float32Array( arrowRadius )
+                },
                 {
                     aspectRatio: aspectRatio,
                     radialSegments: radialSegments,

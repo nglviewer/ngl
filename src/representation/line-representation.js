@@ -98,11 +98,7 @@ LineRepresentation.prototype = Object.assign( Object.create(
         var bondData = sview.getBondData( this.getBondParams( what ) );
 
         var lineBuffer = new LineBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            this.getBufferParams()
+            bondData, this.getBufferParams()
         );
 
         return {
@@ -117,12 +113,12 @@ LineRepresentation.prototype = Object.assign( Object.create(
         var lineData = {};
 
         if( !what || what.position ){
-            lineData.from = bondData.position1;
-            lineData.to = bondData.position2;
+            lineData.position1 = bondData.position1;
+            lineData.position2 = bondData.position2;
         }
 
         if( !what || what.color ){
-            lineData.color = bondData.color1;
+            lineData.color = bondData.color;
             lineData.color2 = bondData.color2;
         }
 

@@ -11,16 +11,17 @@ import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function SphereGeometryBuffer( position, color, radius, pickingColor, params ){
+// position, color, radius, pickingColor
+function SphereGeometryBuffer( data, params ){
 
     var p = params || {};
 
     var detail = defaults( p.sphereDetail, 1 );
 
     this.geo = new IcosahedronGeometry( 1, detail );
-    this._radius = radius;
+    this._radius = data.radius;
 
-    GeometryBuffer.call( this, position, color, pickingColor, p );
+    GeometryBuffer.call( this, data, p );
 
 }
 

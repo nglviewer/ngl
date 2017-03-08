@@ -12,7 +12,8 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
+// from, to, color, color2, radius, pickingColor, pickingColor2
+function CylinderGeometryBuffer( data, params ){
 
     var p = params || {};
 
@@ -33,8 +34,8 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
     );
     this.geo.applyMatrix( matrix );
 
-    var n = from.length;
-    var m = radius.length;
+    var n = data.position1.length;
+    var m = data.radius.length;
 
     this._position = new Float32Array( n * 2 );
     this._color = new Float32Array( n * 2 );
@@ -45,19 +46,13 @@ function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, 
 
     this.__center = new Float32Array( n );
 
-    GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor, p
-    );
+    GeometryBuffer.call( this, {
+        position: this._position,
+        color: this._color,
+        pickingColor: this._pickingColor
+    }, p );
 
-    this.setAttributes( {
-        "position1": from,
-        "position2": to,
-        "color": color,
-        "color2": color2,
-        "radius": radius,
-        "pickingColor": pickingColor,
-        "pickingColor2": pickingColor2
-    } );
+    this.setAttributes( data );
 
 }
 
