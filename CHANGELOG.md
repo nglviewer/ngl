@@ -9,13 +9,14 @@ All notable changes to this project will be documented in this file, following t
 - xplor/cns volume file parser
 - `colorVolume` parameter for surface representation of volume data
 - `voxelSize` parameter for volume file parser
-
+- support for non orthogonal cell in cube file parser
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`
 - renamed colormaker classes from colorMaker to colormaker, i.e. removed camel case
 - renamed ColormakerRegistry.getTypes to .getSchemes
 - colormaker subclasses now auto-register with ColormakerRegistry
+- refactored buffer classes to use a data object as input
 
 
 ## [v0.9.3] - 2016-10-14
