@@ -191,7 +191,7 @@ MrcParser.prototype = Object.assign( Object.create(
 
         }else{
 
-            console.error( "MrcParser unknown mode", header.MODE );
+            Log.error( "MrcParser unknown mode", header.MODE );
 
         }
 
