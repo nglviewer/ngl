@@ -524,5 +524,6 @@ export {
     dataURItoImage,
     uniqueArray,
     uint8ToString,
-    uint8ToLines
+    uint8ToLines,
+    getTypedArray
 };
