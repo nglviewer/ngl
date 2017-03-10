@@ -23,6 +23,10 @@ class UniformColormaker extends Colormaker{
         return this.value;
     }
 
+    volumeColor(){
+        return this.value;
+    }
+
 }
 
 
