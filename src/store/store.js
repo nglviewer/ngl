@@ -5,7 +5,7 @@
  */
 
 
-import { Log } from "../globals.js";
+import { getTypedArray } from "../utils.js";
 
 
 /**
@@ -45,40 +45,7 @@ Store.prototype = {
             var arrayType = this.__fields[ i ][ 2 ];
             var arraySize = this.length * itemSize;
 
-            switch( arrayType ){
-
-                case "int8":
-                    this[ name ] = new Int8Array( arraySize );
-                    break;
-
-                case "int16":
-                    this[ name ] = new Int16Array( arraySize );
-                    break;
-
-                case "int32":
-                    this[ name ] = new Int32Array( arraySize );
-                    break;
-
-                case "uint8":
-                    this[ name ] = new Uint8Array( arraySize );
-                    break;
-
-                case "uint16":
-                    this[ name ] = new Uint16Array( arraySize );
-                    break;
-
-                case "uint32":
-                    this[ name ] = new Uint32Array( arraySize );
-                    break;
-
-                case "float32":
-                    this[ name ] = new Float32Array( arraySize );
-                    break;
-
-                default:
-                    Log.warn( "arrayType unknown: " + arrayType );
-
-            }
+            this[ name ] = getTypedArray( arrayType, arraySize );
 
         }
 

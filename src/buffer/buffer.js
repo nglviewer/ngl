@@ -16,7 +16,7 @@ import {
 
 import { Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
-import { defaults } from "../utils.js";
+import { defaults, getTypedArray } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -52,6 +52,10 @@ function getThreeSide( side ){
         return DoubleSide;
     }
 }
+
+const itemSize = {
+    "f": 1, "v2": 2, "v3": 3, "c": 3
+};
 
 
 /**
@@ -565,18 +569,15 @@ Buffer.prototype = {
 
     addAttributes: function( attributes ){
 
-        var itemSize = {
-            "f": 1, "v2": 2, "v3": 3, "c": 3
-        };
-
         for( var name in attributes ){
 
             var buf;
             var a = attributes[ name ];
+            var arraySize = this.attributeSize * itemSize[ a.type ];
 
             if( a.value ){
 
-                if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
+                if( arraySize !== a.value.length ){
                     Log.error( "attribute value has wrong length", name );
                 }
 
@@ -584,9 +585,7 @@ Buffer.prototype = {
 
             }else{
 
-                buf = new Float32Array(
-                    this.attributeSize * itemSize[ a.type ]
-                );
+                buf = getTypedArray( "float32", arraySize );
 
             }
 

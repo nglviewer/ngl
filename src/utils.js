@@ -482,6 +482,30 @@ function uint8ToLines( u8a, chunkSize, newline ){
 }
 
 
+function getTypedArray( arrayType, arraySize ){
+
+    switch( arrayType ){
+        case "int8":
+            return new Int8Array( arraySize );
+        case "int16":
+            return new Int16Array( arraySize );
+        case "int32":
+            return new Int32Array( arraySize );
+        case "uint8":
+            return new Uint8Array( arraySize );
+        case "uint16":
+            return new Uint16Array( arraySize );
+        case "uint32":
+            return new Uint32Array( arraySize );
+        case "float32":
+            return new Float32Array( arraySize );
+        default:
+            throw "arrayType unknown: " + arrayType;
+    }
+
+}
+
+
 export {
     getQuery,
     boolean,
