@@ -159,7 +159,7 @@ MrcParser.prototype = Object.assign( Object.create(
 
         v.header = header;
 
-        // Log.log( header )
+        // Log.log( header );
 
         var data;
         if( header.MODE === 2 ){
@@ -191,7 +191,7 @@ MrcParser.prototype = Object.assign( Object.create(
 
         }else{
 
-            console.error( "MrcParser unknown mode", header.MODE );
+            Log.error( "MrcParser unknown mode", header.MODE );
 
         }
 

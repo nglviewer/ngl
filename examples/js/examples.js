@@ -1575,6 +1575,20 @@ NGL.ExampleRegistry.addDict( {
             stage.centerView();
         } );
 
+    },
+
+    "dsn6": function( stage ){
+
+        stage.loadFile( "data://3str-2fofc.dsn6" ).then( function( o ){
+            o.addRepresentation( "surface" );
+            stage.centerView();
+        } );
+
+        stage.loadFile( "data://3str.cif" ).then( function( o ){
+            o.addRepresentation( "licorice" );
+            stage.centerView();
+        } );
+
     }
 
 } );

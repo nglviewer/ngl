@@ -20,6 +20,11 @@ import NetworkStreamer from "../streamer/network-streamer.js";
  */
 
 
+const binaryFileExtensions = [
+    "mmtf", "dcd", "mrc", "ccp4", "map", "dsn6", "dxbin"
+];
+
+
 /**
  * Loader base class
  */
@@ -34,7 +39,7 @@ class Loader{
 
         var p = Object.assign( {}, params );
 
-        var binary = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ].includes( p.ext );
+        var binary = binaryFileExtensions.includes( p.ext );
 
         this.compressed = defaults( p.compressed, false );
         this.binary = defaults( p.binary, binary );
