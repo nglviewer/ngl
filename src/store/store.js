@@ -5,6 +5,7 @@
  */
 
 
+import { Log } from "../globals.js";
 import { getTypedArray } from "../utils.js";
 
 
