@@ -133,28 +133,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
 
         if( p.quality === "auto" ){
-            var atomCount;
-            var s = this.structureView;
-            var assembly = this.getAssembly();
-            if( assembly ){
-                atomCount = assembly.getAtomCount( s );
-            }else{
-                atomCount = s.atomCount
-            }
-            if( Mobile ){
-                atomCount *= 4;
-            }
-            var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
-            if( backboneOnly ){
-                atomCount *= 10;
-            }
-            if( atomCount < 15000 ){
-                p.quality = "high";
-            }else if( atomCount < 80000 ){
-                p.quality = "medium";
-            }else{
-                p.quality = "low";
-            }
+            p.quality = this.getQuality();
         }
 
         Representation.prototype.init.call( this, p );
@@ -165,6 +144,34 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
         var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         return this.structure.biomolDict[ name ];
+
+    },
+
+    getQuality: function(){
+
+        var atomCount;
+        var s = this.structureView;
+        var assembly = this.getAssembly();
+        if( assembly ){
+            atomCount = assembly.getAtomCount( s );
+        }else{
+            atomCount = s.atomCount
+        }
+        if( Mobile ){
+            atomCount *= 4;
+        }
+        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+        if( backboneOnly ){
+            atomCount *= 10;
+        }
+
+        if( atomCount < 15000 ){
+            return "high";
+        }else if( atomCount < 80000 ){
+            return "medium";
+        }else{
+            return "low";
+        }
 
     },
 
