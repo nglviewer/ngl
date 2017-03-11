@@ -1017,10 +1017,22 @@ NGL.ExampleRegistry.addDict( {
     "selectionColoring": function( stage ){
 
         var schemeId = NGL.ColormakerRegistry.addSelectionScheme( [
-            [ "red", "64-74 or 134-154 or 222-254 or 310-310 or 322-326" ],
+            [
+                "atomindex",
+                "64-74 or 134-154 or 222-254 or 310-310 or 322-326",
+                { scale: ['firebrick', 'red', 'orangered'] }
+            ],
             [ "green", "311-322" ],
-            [ "yellow", "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309" ],
-            [ "blue", "1-39 or 96-112 or 174-201 or 278-288" ],
+            [
+                "atomindex",
+                "40-63 or 75-95 or 112-133 or 155-173 or 202-221 or 255-277 or 289-309",
+                { scale: ['gold', 'yellow', 'lightyellow'] }
+            ],
+            [
+                "atomindex",
+                "1-39 or 96-112 or 174-201 or 278-288",
+                { scale: ['blue', 'dodgerblue', 'cyan'] }
+            ],
             [ "white", "*" ]
         ], "TMDET 3dqb" );
 
@@ -1572,6 +1584,25 @@ NGL.ExampleRegistry.addDict( {
 
         stage.loadFile( "data://bromobenzene.pdb" ).then( function( o ){
             o.addRepresentation( "ball+stick" );
+            stage.centerView();
+        } );
+
+    },
+
+    "dsn6": function( stage ){
+
+        stage.loadFile( "data://3str-2fofc.dsn6" ).then( function( o ){
+            o.addRepresentation( "surface", { wireframe: true, color: "tomato" } );
+            stage.centerView();
+        } );
+
+        stage.loadFile( "data://3str-2fofc.brix" ).then( function( o ){
+            o.addRepresentation( "surface" );
+            stage.centerView();
+        } );
+
+        stage.loadFile( "data://3str.cif" ).then( function( o ){
+            o.addRepresentation( "licorice" );
             stage.centerView();
         } );
 

@@ -50,11 +50,11 @@
     "eslint": "^3.2.2",
     "jsdoc": "^3.4.3",
     "mocha": "^3.1.1",
-    "rollup": "^0.41.1",
+    "rollup": "^0.41.5",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-json": "^2.0.2",
-    "rollup-watch": "^3.2.0",
+    "rollup-watch": "^3.2.2",
     "uglify-js": "^2.6.0"
   },
   "dependencies": {}

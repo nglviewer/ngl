@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file, following t
 - `colorVolume` parameter for surface representation of volume data
 - `voxelSize` parameter for volume file parser
 - support for non orthogonal cell in cube file parser
+- dsn6/brix volume file parser
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`

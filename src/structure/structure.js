@@ -561,8 +561,8 @@ Structure.prototype = {
         if( selection && selection.test ){
             var mn = this.modelStore.count;
             var mp = this.getModelProxy();
-            if( selection.modelOnlyTest ){
-                var modelOnlyTest = selection.modelOnlyTest;
+            var modelOnlyTest = selection.modelOnlyTest;
+            if( modelOnlyTest ){
                 for( i = 0; i < mn; ++i ){
                     mp.index = i;
                     if( modelOnlyTest( mp ) ){

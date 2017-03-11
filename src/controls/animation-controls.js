@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
+import { clamp } from "../math/math-utils.js";
 
 
 class Animation{
@@ -65,9 +66,10 @@ class MoveAnimation extends Animation{
     tick( stats ){
 
         var elapsed = stats.currentTime - this.startTime;
-        var alpha = Math.min( 1, elapsed / this.duration );
+        var alpha = clamp( elapsed / this.duration, 0, 1 );
 
         this.controls.position.lerpVectors( this.from, this.to, alpha ).negate();
+        this.controls.viewer.requestRender();
 
         return alpha === 1;
 
@@ -84,6 +86,7 @@ class AnimationControls{
         this.controls = stage.viewerControls;
 
         this.animationList = [];
+        this.finishedList = [];
 
     }
 
@@ -106,15 +109,25 @@ class AnimationControls{
 
     run( stats ){
 
-        var list = this.animationList.slice();
+        const finishedList = this.finishedList;
+        const animationList = this.animationList;
 
-        for( var i = 0, n = list.length; i < n; ++i ){
-            var animation = list[ i ];
-            var finished = animation.tick( stats );
-            if( finished ) this.remove( animation );
+        const n = animationList.length;
+        for( let i = 0; i < n; ++i ){
+            const animation = animationList[ i ];
+            // tick returns true when finished
+            if( animation.tick( stats ) ){
+                finishedList.push( animation );
+            }
         }
 
-        this.viewer.requestRender();
+        const m = finishedList.length;
+        if( m ){
+            for( let j = 0; j < m; ++j ){
+                this.remove( finishedList[ j ] );
+            }
+            finishedList.length = 0;
+        }
 
     }
 
