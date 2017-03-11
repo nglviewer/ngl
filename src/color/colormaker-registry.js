@@ -194,11 +194,11 @@ class ColormakerRegistry{
 
     }
 
-    addSelectionScheme( pairList, label ){
+    addSelectionScheme( dataList, label ){
 
         class MySelectionColormaker extends SelectionColormaker{
             constructor( params ){
-                super( Object.assign( { pairList: pairList }, params ) );
+                super( Object.assign( { dataList: dataList }, params ) );
             }
         }
 
