@@ -20,15 +20,13 @@ class SelectionColormaker extends Colormaker{
 
         this.pairList = params.pairList || [];
 
-        this.colorList = [];
+        this.colormakerList = [];
         this.selectionList = [];
-        
-        this.schemesList = ColormakerRegistry.getSchemes();
 
         this.pairList.forEach( pair => {
-            let schemeProperties = ( this.schemesList.hasOwnProperty( pair[ 0 ] ) )?
+            let schemeProperties = ( ColormakerRegistry.hasScheme( pair[ 0 ] ) )?
                 { 
-                    scheme: this.schemesList[ pair[ 0 ] ],
+                    scheme: pair[ 0 ],
                     structure: this.structure, 
                     value: 0x909090 
                 }
@@ -38,10 +36,9 @@ class SelectionColormaker extends Colormaker{
                     value: new Color( pair[ 0 ] ).getHex() 
                 };
             
-            let param = pair[2] || {};
-            Object.assign( schemeProperties, param )
+            Object.assign( schemeProperties, pair[ 2 ] )
 
-            this.colorList.push( ColormakerRegistry.getScheme( schemeProperties ) );
+            this.colormakerList.push( ColormakerRegistry.getScheme( schemeProperties ) );
             
             this.selectionList.push( new Selection( pair[ 1 ] ) );
         } );
@@ -52,7 +49,7 @@ class SelectionColormaker extends Colormaker{
 
         for( var i = 0, n = this.pairList.length; i < n; ++i ){
             if( this.selectionList[ i ].test( a ) ){
-                return this.colorList[ i ].atomColor( a );
+                return this.colormakerList[ i ].atomColor( a );
             }
         }
         return 0xFFFFFF;
