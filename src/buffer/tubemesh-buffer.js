@@ -89,8 +89,8 @@ class TubeMeshBuffer extends MeshBuffer{
 
         var attributes = this.geometry.attributes;
 
-        var position, normal, binormal, tangent, color, size, pickingColor;
-        var meshPosition, meshColor, meshNormal, meshPickingColor;
+        var position, normal, binormal, tangent, color, size, pickingColor, flag;
+        var meshPosition, meshColor, meshNormal, meshPickingColor, meshFlag;
 
         if( data.position ){
 
@@ -121,6 +121,14 @@ class TubeMeshBuffer extends MeshBuffer{
             pickingColor = data.pickingColor;
             meshPickingColor = attributes.pickingColor.array;
             attributes.pickingColor.needsUpdate = true;
+
+        }
+
+        if( data.flag ){
+
+            flag = data.flag;
+            meshFlag = attributes.flag.array;
+            attributes.flag.needsUpdate = true;
 
         }
 
@@ -236,6 +244,14 @@ class TubeMeshBuffer extends MeshBuffer{
 
                 }
 
+                if( flag ){
+
+                    meshFlag[ s     ] = flag[ k     ];
+                    meshFlag[ s + 1 ] = flag[ k + 1 ];
+                    meshFlag[ s + 2 ] = flag[ k + 2 ];
+
+                }
+
             }
 
         }
@@ -278,6 +294,14 @@ class TubeMeshBuffer extends MeshBuffer{
 
             }
 
+            if( flag ){
+
+                meshFlag[ t     ] = meshFlag[ s     ];
+                meshFlag[ t + 1 ] = meshFlag[ s + 1 ];
+                meshFlag[ t + 2 ] = meshFlag[ s + 2 ];
+
+            }
+
         }
 
         // back cap
@@ -315,6 +339,14 @@ class TubeMeshBuffer extends MeshBuffer{
                 meshPickingColor[ t     ] = meshPickingColor[ s     ];
                 meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
                 meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+
+            }
+
+            if( flag ){
+
+                meshFlag[ t     ] = meshFlag[ s     ];
+                meshFlag[ t + 1 ] = meshFlag[ s + 1 ];
+                meshFlag[ t + 2 ] = meshFlag[ s + 2 ];
 
             }
 

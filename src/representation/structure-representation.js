@@ -109,6 +109,18 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         assembly: null,
         defaultAssembly: {
             type: "hidden"
+        },
+        pickedColor: {
+            type: "color", buffer: true
+        },
+        hoveredColor: {
+            type: "color", buffer: true
+        },
+        pickedSele: {
+            type: "text", update: "flag"
+        },
+        hoveredSele: {
+            type: "text", update: "flag"
         }
 
     }, Representation.prototype.parameters ),
@@ -131,6 +143,10 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.scale = defaults( p.scale, 1.0 );
         this.assembly = defaults( p.assembly, "default" );
         this.defaultAssembly = defaults( p.defaultAssembly, "" );
+        this.pickedColor = defaults( p.pickedColor, 0xff0000 );
+        this.hoveredColor = defaults( p.hoveredColor, 0x00ff00 );
+        this.pickedSele = defaults( p.pickedSele, "" );
+        this.hoveredSele = defaults( p.hoveredSele, "" );
 
         if( p.quality === "auto" ){
             p.quality = this.getQuality();
@@ -235,6 +251,15 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         p.structure = this.structure;
 
         return p;
+
+    },
+
+    getFlagParams: function(){
+
+        return {
+            pickedSele: this.pickedSele,
+            hoveredSele: this.hoveredSele
+        };
 
     },
 

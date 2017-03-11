@@ -37,7 +37,20 @@ class PickingBehavior{
     }
 
     onHover(){
-        this.stage.signals.hovered.dispatch( this.pick() );
+        var pd = this.pick();
+        var sele = "", obj;
+        if( pd.component && pd.component.type === "structure" ){
+            if( pd.atom ){
+                sele = "@" + pd.atom.index;
+            }
+            obj = pd.component;
+        }else{
+            obj = this.stage;
+        }
+        obj.eachRepresentation( function( reprComp ){
+            reprComp.setParameters( { hoveredSele: sele } );
+        } );
+        this.stage.signals.hovered.dispatch( pd );
     }
 
     dispose(){

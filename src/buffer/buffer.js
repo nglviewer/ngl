@@ -88,6 +88,8 @@ function Buffer( data, params ){
     this.metalness = defaults( p.metalness, 0.0 );
     this.diffuse = defaults( p.diffuse, 0xffffff );
     this.forceTransparent = defaults( p.forceTransparent, false );
+    this.pickedColor = defaults( p.pickedColor, 0xff0000 );
+    this.hoveredColor = defaults( p.hoveredColor, 0x00ff00 );
 
     this.geometry = new BufferGeometry();
 
@@ -109,6 +111,10 @@ function Buffer( data, params ){
             "emissive" : { value: new Color( 0x000000 ) },
             "roughness": { value: this.roughness },
             "metalness": { value: this.metalness }
+        },
+        {
+            "pickedColor" : { value: new Color( this.pickedColor ) },
+            "hoveredColor" : { value: new Color( this.hoveredColor ) }
         },
         UniformsLib.ambient,
         UniformsLib.lights
@@ -138,6 +144,7 @@ function Buffer( data, params ){
     this.addAttributes( {
         "position": { type: "v3", value: d.position },
         "color": { type: "c", value: d.color },
+        "flag": { type: "f", value: d.flag }
     } );
 
     if( d.index ){
@@ -174,6 +181,8 @@ Buffer.prototype = {
         roughness: { uniform: true },
         metalness: { uniform: true },
         diffuse: { uniform: true },
+        pickedColor: { uniform: true },
+        hoveredColor: { uniform: true }
 
     },
 

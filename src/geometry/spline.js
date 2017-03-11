@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
+import Selection from "../selection.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 
@@ -353,6 +354,42 @@ function Interpolator( m, tension ){
         size[ k ] = size[ k - 1 ];
     };
 
+    //
+
+    function interpolateFlag( item1, item2, flagFn, flag, offset ){
+        var j;
+        for( j = 0; j < m2; ++j ){
+            flag[ offset + j ] = flagFn( item1 );
+        }
+        for( j = m2; j < m; ++j ){
+            flag[ offset + j ] = flagFn( item2 );
+        }
+    }
+
+    this.getFlag = function( iterator, flagFn, flag, offset, isCyclic ){
+        iterator.reset();
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolateFlag( i0, i1, flagFn, flag, k );
+            k += m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolateFlag( i0, i1, flagFn, flag, k );
+            k += m;
+        }
+        //
+        flag[ k ] = flag[ k - 1 ];
+    };
+
 }
 
 
@@ -529,6 +566,41 @@ Spline.prototype = {
 
         return {
             "size": size
+        };
+
+    },
+
+    getSubdividedFlag: function( params ){
+
+        var p = params || {};
+
+        var ps = new Selection( p.pickedSele );
+        var hs = new Selection( p.hoveredSele );
+
+        var m = this.subdiv;
+        var polymer = this.polymer;
+        var n = polymer.residueCount;
+        var n1 = n - 1;
+        var nFlag = n1 * m + 1;
+        if( polymer.isCyclic ) nFlag += m;
+
+        var flag = new Float32Array( nFlag );
+        var iterator = this.getAtomIterator( "trace" );
+
+        function flagFn( item ){
+            if( hs.test && hs.test( item ) ){
+                return 2.0;
+            }else if( ps.test && ps.test( item ) ){
+                return 1.0;
+            }
+        }
+
+        this.interpolator.getFlag(
+            iterator, flagFn, flag, 0, polymer.isCyclic
+        );
+
+        return {
+            "flag": flag
         };
 
     },

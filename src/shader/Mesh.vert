@@ -2,6 +2,8 @@
 
 uniform float nearClip;
 uniform vec3 clipCenter;
+uniform vec3 pickedColor;
+uniform vec3 hoveredColor;
 
 #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
     varying vec3 vViewPosition;
@@ -22,6 +24,8 @@ uniform vec3 clipCenter;
         varying vec3 vNormal;
     #endif
 #endif
+
+attribute float flag;
 
 #include common
 
@@ -50,6 +54,14 @@ void main(){
 
     #if defined( RADIUS_CLIP )
         vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;
+    #endif
+
+    #if !defined( PICKING )
+        if( flag == 1.0 ){
+            vColor = pickedColor;
+        }else if( flag == 2.0 ){
+            vColor = hoveredColor;
+        }
     #endif
 
     #include nearclip_vertex

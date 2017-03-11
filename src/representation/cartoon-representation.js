@@ -122,10 +122,11 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this.getColorParams() );
             var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
+            var subFlag = spline.getSubdividedFlag( this.getFlagParams() );
 
             bufferList.push(
                 new TubeMeshBuffer(
-                    Object.assign( {}, subPos, subOri, subCol, subSize ),
+                    Object.assign( {}, subPos, subOri, subCol, subSize, subFlag ),
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
                         aspectRatio: this.getAspectRatio( polymer ),
@@ -178,6 +179,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
 
                 bufferData.color = subCol.color;
                 bufferData.pickingColor = subCol.pickingColor;
+
+            }
+
+            if( what.flag ){
+
+                var subFlag = spline.getSubdividedFlag( this.getFlagParams() );
+
+                bufferData.flag = subFlag.flag;
 
             }
 
