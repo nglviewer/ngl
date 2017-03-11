@@ -21,7 +21,7 @@ import NetworkStreamer from "../streamer/network-streamer.js";
 
 
 const binaryFileExtensions = [
-    "mmtf", "dcd", "mrc", "ccp4", "map", "dsn6", "dxbin"
+    "mmtf", "dcd", "mrc", "ccp4", "map", "dsn6", "brix", "dxbin"
 ];
 
 

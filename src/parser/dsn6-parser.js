@@ -27,7 +27,8 @@ Dsn6Parser.prototype = Object.assign( Object.create(
 
     _parse: function(){
 
-        // http://www.uoxray.uoregon.edu/tnt/manual/node104.html
+        // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
+        // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
 
         if( Debug ) Log.time( "Dsn6Parser._parse " + this.name );
 
@@ -39,51 +40,82 @@ Dsn6Parser.prototype = Object.assign( Object.create(
 
         var v = this.volume;
         var header = {};
+        var divisor, summand;
 
         var intView = new Int16Array( bin );
         var byteView = new Uint8Array( bin );
+        var brixStr = String.fromCharCode.apply( null, byteView.subarray( 0, 512 ) );
 
-        // swap byte order when big endian
-        if( intView[ 18 ] !== 100 ){
-            for( let i = 0, n = intView.length; i < n; ++i ){
-                const val = intView[ i ];
-                intView[ i ] = ( ( val & 0xff ) << 8 ) | ( ( val >> 8 ) & 0xff );
+        if( brixStr.startsWith( ":-)" ) ){
+
+            header.xStart = parseInt( brixStr.substr( 10, 5 ) );  // NXSTART
+            header.yStart = parseInt( brixStr.substr( 15, 5 ) );
+            header.zStart = parseInt( brixStr.substr( 20, 5 ) );
+
+            header.xExtent = parseInt( brixStr.substr( 32, 5 ) );  // NX
+            header.yExtent = parseInt( brixStr.substr( 38, 5 ) );
+            header.zExtent = parseInt( brixStr.substr( 42, 5 ) );
+
+            header.xRate = parseInt( brixStr.substr( 52, 5 ) );  // MX
+            header.yRate = parseInt( brixStr.substr( 58, 5 ) );
+            header.zRate = parseInt( brixStr.substr( 62, 5 ) );
+
+            header.xlen = parseFloat( brixStr.substr( 73, 10 ) ) * this.voxelSize;
+            header.ylen = parseFloat( brixStr.substr( 83, 10 ) ) * this.voxelSize;
+            header.zlen = parseFloat( brixStr.substr( 93, 10 ) ) * this.voxelSize;
+
+            header.alpha = parseFloat( brixStr.substr( 103, 10 ) );
+            header.beta  = parseFloat( brixStr.substr( 113, 10 ) );
+            header.gamma = parseFloat( brixStr.substr( 123, 10 ) );
+
+            divisor = parseFloat( brixStr.substr( 138, 12 ) ) / 100;
+            summand = parseInt( brixStr.substr( 155, 8 ) );
+
+        }else{
+
+            // swap byte order when big endian
+            if( intView[ 18 ] !== 100 ){
+                for( let i = 0, n = intView.length; i < n; ++i ){
+                    const val = intView[ i ];
+                    intView[ i ] = ( ( val & 0xff ) << 8 ) | ( ( val >> 8 ) & 0xff );
+                }
             }
+
+            header.xStart = intView[ 0 ];  // NXSTART
+            header.yStart = intView[ 1 ];
+            header.zStart = intView[ 2 ];
+
+            header.xExtent = intView[ 3 ];  // NX
+            header.yExtent = intView[ 4 ];
+            header.zExtent = intView[ 5 ];
+
+            header.xRate = intView[ 6 ];  // MX
+            header.yRate = intView[ 7 ];
+            header.zRate = intView[ 8 ];
+
+            var factor = 1 / intView[ 17 ];
+            var scalingFactor = factor * this.voxelSize;
+
+            header.xlen = intView[ 9 ] * scalingFactor;
+            header.ylen = intView[ 10 ] * scalingFactor;
+            header.zlen = intView[ 11 ] * scalingFactor;
+
+            header.alpha = intView[ 12 ] * factor;
+            header.beta  = intView[ 13 ] * factor;
+            header.gamma = intView[ 14 ] * factor;
+
+            divisor = intView[ 15 ] / 100;
+            summand = intView[ 16 ];
+
         }
-
-        header.xStart = intView[ 0 ];  // NXSTART
-        header.yStart = intView[ 1 ];
-        header.zStart = intView[ 2 ];
-
-        header.xExtent = intView[ 3 ];  // NX
-        header.yExtent = intView[ 4 ];
-        header.zExtent = intView[ 5 ];
-
-        header.xRate = intView[ 6 ];  // MX
-        header.yRate = intView[ 7 ];
-        header.zRate = intView[ 8 ];
-
-        var factor = 1 / intView[ 17 ];
-        var scalingFactor = factor * this.voxelSize;
-
-        header.xlen = intView[ 9 ] * scalingFactor;
-        header.ylen = intView[ 10 ] * scalingFactor;
-        header.zlen = intView[ 11 ] * scalingFactor;
-
-        header.alpha = intView[ 12 ] * factor;
-        header.beta  = intView[ 13 ] * factor;
-        header.gamma = intView[ 14 ] * factor;
 
         v.header = header;
 
-        // Log.log( header );
+        Log.log( header, divisor, summand );
 
         var data = new Float32Array(
             header.xExtent * header.yExtent * header.zExtent
         );
-
-        var divisor = intView[ 15 ] / 100;
-        var summand = intView[ 16 ];
 
         var offset = 512;
         var xBlocks = Math.ceil( header.xExtent / 8 );
@@ -203,6 +235,7 @@ Dsn6Parser.prototype = Object.assign( Object.create(
 } );
 
 ParserRegistry.add( "dsn6", Dsn6Parser );
+ParserRegistry.add( "brix", Dsn6Parser );
 
 
 export default Dsn6Parser;
