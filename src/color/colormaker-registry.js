@@ -206,6 +206,10 @@ class ColormakerRegistry{
 
     }
 
+    hasScheme( id ) {
+        return id in this.schemes || id in this.userSchemes;
+    }
+
 }
 
 
