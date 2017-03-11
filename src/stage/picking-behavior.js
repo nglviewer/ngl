@@ -30,7 +30,7 @@ class PickingBehavior{
     onClick(){
         var pd = this.pick();
         if( pd.position && this.mouse.which === MiddleMouseButton ){
-            this.stage.animationControls.move( pd.position );
+            this.stage.animationControls.move( pd.position.clone() );
         }
         this.stage.signals.clicked.dispatch( pd );
         if( Debug ) Log.log( "clicked", pd );
