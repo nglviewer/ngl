@@ -5,9 +5,15 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { degToRad } from "../math/math-utils.js";
+
+
+const tmpRotateMatrix = new Matrix4();
+const tmpRotateVector = new Vector3();
+const tmpZoomVector = new Vector3();
+const tmpCenterVector = new Vector3();
 
 
 class ViewerControls{
@@ -59,7 +65,7 @@ class ViewerControls{
 
     zoom( delta ){
 
-        var camera = this.viewer.camera;
+        const camera = this.viewer.camera;
         if( camera.fov === undefined ){
             camera.zoom /= 1 - delta;
         } else {
@@ -71,10 +77,10 @@ class ViewerControls{
 
     rotate( axis, angle ){
 
-        var m = new Matrix4().getInverse( this.viewer.rotationGroup.matrix );
-        var axis2 = axis.clone().applyMatrix4( m );
+        tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
+        tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
 
-        this.viewer.rotationGroup.rotateOnAxis( axis2, angle );
+        this.viewer.rotationGroup.rotateOnAxis( tmpRotateVector, angle );
         this.viewer.requestRender();
 
     }
@@ -89,23 +95,23 @@ class ViewerControls{
     centerScene(){
 
         if( !this.viewer.boundingBox.isEmpty() ){
-            this.center( this.viewer.boundingBox.center() );
+            this.center( this.viewer.boundingBox.center( tmpCenterVector ) );
         }
 
     }
 
     zoomScene(){
 
-        var bbSize = this.viewer.boundingBox.size();
-        var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-        var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-        var distance = maxSize + Math.sqrt( minSize );
+        const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
+        const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+        const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+        let distance = maxSize + Math.sqrt( minSize );
 
-        var fov = degToRad( this.viewer.perspectiveCamera.fov );
-        var width = this.viewer.width;
-        var height = this.viewer.height;
-        var aspect = width / height;
-        var aspectFactor = ( height < width ? 1 : aspect );
+        const fov = degToRad( this.viewer.perspectiveCamera.fov );
+        const width = this.viewer.width;
+        const height = this.viewer.height;
+        const aspect = width / height;
+        const aspectFactor = ( height < width ? 1 : aspect );
 
         distance = Math.abs(
             ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )

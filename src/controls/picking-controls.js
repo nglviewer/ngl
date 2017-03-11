@@ -5,7 +5,11 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
+import { Vector2, Vector3 } from "../../lib/three.es6.js";
+
+
+const tmpObjectPosition = new Vector3();
+const tmpCanvasPosition = new Vector2();
 
 
 class PickingControls{
@@ -40,37 +44,38 @@ class PickingControls{
             pickedVolume = picked;
         }
 
-        var position, object, component;
+        var object, component;
         if( pickedAtom || pickedBond || pickedVolume ){
-            position = new Vector3();
             if( pickedAtom ){
-                position.copy( pickedAtom );
+                tmpObjectPosition.copy( pickedAtom );
                 object = pickedAtom.structure;
             }else if( pickedBond ){
-                position.copy( pickedBond.atom1 )
+                tmpObjectPosition.copy( pickedBond.atom1 )
                     .add( pickedBond.atom2 )
                     .multiplyScalar( 0.5 );
                 object = pickedBond.structure;
             }else if( pickedVolume ){
-                position.copy( pickedVolume );
+                tmpObjectPosition.copy( pickedVolume );
                 object = pickedVolume.volume;
             }
             if( instance ){
-                position.applyProjection( instance.matrix );
+                tmpObjectPosition.applyProjection( instance.matrix );
             }
             if( object ){
                 component = this.stage.getComponentsByObject( object ).list[ 0 ];
             }
         }
 
+        tmpCanvasPosition.copy( mouse.canvasPosition );
+
         return {
             "atom": pickedAtom,
             "bond": pickedBond,
             "volume": pickedVolume,
             "instance": instance,
-            "position": position,
+            "position": tmpObjectPosition,
             "component": component,
-            "canvasPosition": mouse.canvasPosition.clone(),
+            "canvasPosition": tmpCanvasPosition,
             "altKey": mouse.altKey,
             "ctrlKey": mouse.ctrlKey,
             "metaKey":  mouse.metaKey,

@@ -1234,35 +1234,47 @@ function Viewer( eid ){
 
     }();
 
-    function getOrientation(){
+    var getOrientation = function(){
 
-        var m = rotationGroup.matrix.clone();
-        var s = camera.position.z;
-        m.scale( new Vector3( s, s, s ) );
-        m.setPosition( translationGroup.position );
+        var m = new Matrix4();
+        var s = new Vector3();
 
-        return m.toArray();
+        return function getOrientation(){
 
-    }
+            m.copy( rotationGroup.matrix );
+            var z = camera.position.z;
+            m.scale( s.set( z, z, z ) );
+            m.setPosition( translationGroup.position );
 
-    function setOrientation( orientation ){
+            return m.toArray();
 
-        var m = new Matrix4().fromArray( orientation );
+        }
+
+    }();
+
+    var setOrientation = function(){
+
+        var m = new Matrix4();
         var p = new Vector3();
         var q = new Quaternion();
         var s = new Vector3();
 
-        m.decompose( p, q, s )
+        return function setOrientation( orientation ){
 
-        rotationGroup.setRotationFromQuaternion( q );
-        translationGroup.position.copy( p );
-        camera.position.z = -s.z;
+            m.fromArray( orientation );
+            m.decompose( p, q, s )
 
-        requestRender();
+            rotationGroup.setRotationFromQuaternion( q );
+            translationGroup.position.copy( p );
+            camera.position.z = -s.z;
 
-        signals.orientationChanged.dispatch();
+            requestRender();
 
-    }
+            signals.orientationChanged.dispatch();
+
+        }
+
+    }();
 
     // API
 
