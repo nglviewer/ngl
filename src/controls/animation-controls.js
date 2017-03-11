@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
+import { clamp } from "../math/math-utils.js";
 
 
 class Animation{
@@ -65,9 +66,10 @@ class MoveAnimation extends Animation{
     tick( stats ){
 
         var elapsed = stats.currentTime - this.startTime;
-        var alpha = Math.min( 1, elapsed / this.duration );
+        var alpha = clamp( elapsed / this.duration, 0, 1 );
 
         this.controls.position.lerpVectors( this.from, this.to, alpha ).negate();
+        this.controls.viewer.requestRender();
 
         return alpha === 1;
 

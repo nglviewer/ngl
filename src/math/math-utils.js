@@ -44,8 +44,14 @@ var generateUUID = function(){
 }();
 
 
+function clamp( value, min, max ){
+    return Math.max( min, Math.min( max, value ) );
+}
+
+
 export {
     degToRad,
     radToDeg,
-    generateUUID
+    generateUUID,
+    clamp
 };
