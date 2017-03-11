@@ -84,6 +84,7 @@ class AnimationControls{
         this.controls = stage.viewerControls;
 
         this.animationList = [];
+        this.finishedList = [];
 
     }
 
@@ -106,15 +107,25 @@ class AnimationControls{
 
     run( stats ){
 
-        var list = this.animationList.slice();
+        const finishedList = this.finishedList;
+        const animationList = this.animationList;
 
-        for( var i = 0, n = list.length; i < n; ++i ){
-            var animation = list[ i ];
-            var finished = animation.tick( stats );
-            if( finished ) this.remove( animation );
+        const n = animationList.length;
+        for( let i = 0; i < n; ++i ){
+            const animation = animationList[ i ];
+            // tick returns true when finished
+            if( animation.tick( stats ) ){
+                finishedList.push( animation );
+            }
         }
 
-        this.viewer.requestRender();
+        const m = finishedList.length;
+        if( m ){
+            for( let j = 0; j < m; ++j ){
+                this.remove( finishedList[ j ] );
+            }
+            finishedList.length = 0;
+        }
 
     }
 
