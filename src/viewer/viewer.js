@@ -627,7 +627,7 @@ function Viewer( eid ){
                 camera = orthographicCamera;
                 camera.position.copy( perspectiveCamera.position );
                 camera.up.copy( perspectiveCamera.up );
-                __updateZoom();
+                updateZoom();
             }
         }else{  // p.cameraType === "perspective"
             if( camera !== perspectiveCamera ){
@@ -838,6 +838,16 @@ function Viewer( eid ){
 
     }
 
+    function updateZoom(){
+
+        __updateClipping();
+        var fov = degToRad( perspectiveCamera.fov );
+        var hyperfocus = ( camera.near + camera.far ) / 2;
+        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        orthographicCamera.zoom = height / _height;
+
+    }
+
     function __updateClipping(){
 
         var p = parameters;
@@ -886,16 +896,6 @@ function Viewer( eid ){
                 camera.near += camera.zoom + p.clipDist;
             }
         }
-
-    }
-
-    function __updateZoom(){
-
-        __updateClipping();
-        var fov = degToRad( perspectiveCamera.fov );
-        var hyperfocus = ( camera.near + camera.far ) / 2;
-        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
-        orthographicCamera.zoom = height / _height;
 
     }
 
@@ -1103,6 +1103,7 @@ function Viewer( eid ){
     this.requestRender = requestRender;
     this.render = render;
     this.animate = animate;
+    this.updateZoom = updateZoom;
     this.updateHelper = updateHelper;
 
     this.renderer = renderer;

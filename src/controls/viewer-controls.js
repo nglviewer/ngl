@@ -133,12 +133,19 @@ class ViewerControls{
      */
     zoom( delta ){
 
-        const camera = this.viewer.camera;
-        if( camera.fov === undefined ){
-            camera.zoom /= 1 - delta;
-        } else {
-            camera.position.z *= 1 - delta;
-        }
+        this.distance( this.viewer.camera.position.z * ( 1 - delta ) );
+
+    }
+
+    /**
+     * camera distance
+     * @param  {Number} z - distance
+     * @return {undefined}
+     */
+    distance( z ){
+
+        this.viewer.camera.position.z = z;
+        this.viewer.updateZoom();
         this.viewer.requestRender();
 
     }
