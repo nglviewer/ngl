@@ -798,22 +798,6 @@ class Stage{
 
     }
 
-    setOrientation( orientation ){
-
-        this.tasks.onZeroOnce( function(){
-
-            this.viewer.setOrientation( orientation );
-
-        }, this );
-
-    }
-
-    getOrientation(){
-
-        return this.viewer.getOrientation();
-
-    }
-
     /**
      * Make image from what is shown in a viewer canvas
      * @param  {ImageParameters} params - image generation parameters

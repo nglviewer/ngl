@@ -5,11 +5,16 @@
  */
 
 
-import { Vector3, Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 
 import { degToRad } from "../math/math-utils.js";
 
 
+const tmpQ = new Quaternion();
+const tmpP = new Vector3();
+const tmpS = new Vector3();
+
+const tmpScaleVector = new Vector3();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
 const tmpZoomVector = new Vector3();
@@ -42,13 +47,26 @@ class ViewerControls{
 
     setOrientation( orientation ){
 
-        this.viewer.setOrientation( orientation );
+        orientation.decompose( tmpP, tmpQ, tmpS )
+
+        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
+        this.viewer.translationGroup.position.copy( tmpP );
+        this.viewer.camera.position.z = -tmpS.z;
+
+        this.viewer.requestRender();
 
     }
 
-    getOrientation(){
+    getOrientation( optionalTarget ){
 
-        return this.viewer.getOrientation();
+        const m = optionalTarget || new Matrix4();
+
+        m.copy( this.viewer.rotationGroup.matrix );
+        const z = -this.viewer.camera.position.z;
+        m.scale( tmpScaleVector.set( z, z, z ) );
+        m.setPosition( this.viewer.translationGroup.position );
+
+        return m;
 
     }
 

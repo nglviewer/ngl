@@ -7,7 +7,7 @@
 
 import {
     PerspectiveCamera, OrthographicCamera,
-    Box3, Vector3, Quaternion, Matrix4, Color,
+    Box3, Vector3, Color,
     WebGLRenderer, WebGLRenderTarget,
     NearestFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
@@ -1074,48 +1074,6 @@ function Viewer( eid ){
 
     }
 
-    var getOrientation = function(){
-
-        var m = new Matrix4();
-        var s = new Vector3();
-
-        return function getOrientation(){
-
-            m.copy( rotationGroup.matrix );
-            var z = camera.position.z;
-            m.scale( s.set( z, z, z ) );
-            m.setPosition( translationGroup.position );
-
-            return m.toArray();
-
-        }
-
-    }();
-
-    var setOrientation = function(){
-
-        var m = new Matrix4();
-        var p = new Vector3();
-        var q = new Quaternion();
-        var s = new Vector3();
-
-        return function setOrientation( orientation ){
-
-            m.fromArray( orientation );
-            m.decompose( p, q, s )
-
-            rotationGroup.setRotationFromQuaternion( q );
-            translationGroup.position.copy( p );
-            camera.position.z = -s.z;
-
-            requestRender();
-
-            signals.orientationChanged.dispatch();
-
-        }
-
-    }();
-
     // API
 
     this.container = container;
@@ -1141,10 +1099,6 @@ function Viewer( eid ){
     this.setSize = setSize;
     this.handleResize = handleResize;
 
-    this.getOrientation = getOrientation;
-    this.setOrientation = setOrientation;
-    this.boundingBox = boundingBox;
-
     this.pick = pick;
     this.requestRender = requestRender;
     this.render = render;
@@ -1154,6 +1108,7 @@ function Viewer( eid ){
     this.renderer = renderer;
     this.scene = scene;
     this.perspectiveCamera = perspectiveCamera;
+    this.boundingBox = boundingBox;
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },
