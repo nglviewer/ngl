@@ -385,7 +385,49 @@ function binarySearchIndexOf( array, element, compareFunction=lexicographicCompa
     }
     return -low - 1;
 }
+
+
+function binarySearchForLeftRange( array, leftRange ){
+    let high = array.length - 1;
+    if( array[ high ] < leftRange ) return -1;
+    let low = 0;
+    while( low <= high ){
+        const mid = ( low + high ) >> 1;
+        if( array[ mid ] >= leftRange ){
+            high = mid - 1;
+        }else{
+            low = mid + 1;
         }
+    }
+    return high + 1;
+}
+
+
+function binarySearchForRightRange( array, rightRange ){
+    if( array[ 0 ] > rightRange ) return -1;
+    let low = 0;
+    let high = array.length - 1;
+    while( low <= high ){
+        const mid = ( low + high ) >> 1;
+        if( array[ mid ] > rightRange ){
+            high = mid - 1;
+        }else{
+            low = mid + 1;
+        }
+    }
+    return low - 1;
+}
+
+
+function rangeInSortedArray( array, min, max ){
+    const indexLeft = binarySearchForLeftRange( array, min );
+    const indexRight = binarySearchForRightRange( array, max );
+    if( indexLeft === -1 || indexRight === -1 || indexLeft > indexRight ){
+        return 0;
+    }else{
+        return indexRight - indexLeft + 1;
+    }
+}
 
 
 function dataURItoImage( dataURI ){
@@ -521,6 +563,7 @@ export {
     getFileInfo,
     throttle,
     binarySearchIndexOf,
+    rangeInSortedArray,
     dataURItoImage,
     uniqueArray,
     uint8ToString,
