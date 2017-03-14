@@ -349,6 +349,13 @@ function throttle( func, wait, options ){
 }
 
 
+function lexicographicCompare( elm1, elm2 ){
+    if( elm1 < elm2 ) return -1;
+    if( elm1 > elm2 ) return 1;
+    return 0;
+}
+
+
 /**
  * Does a binary search to get the index of an element in the input array
  * @function
@@ -362,30 +369,23 @@ function throttle( func, wait, options ){
  * @param {Function} [compareFunction] - compare function
  * @return {Number} the index of the element or -1 if not in the array
  */
-var binarySearchIndexOf = function(){
-    function _compareFunction( elm1, elm2 ){
-        if( elm1 < elm2 ) return -1;
-        if( elm1 > elm2 ) return 1;
-        return 0;
-    }
-    return function binarySearchIndexOf( array, element, compareFunction ){
-        var low = 0;
-        var high = array.length - 1;
-        if( !compareFunction ) compareFunction = _compareFunction;
-        while( low <= high ){
-            var i = ( low + high ) >> 1;
-            var cmp = compareFunction( element, array[ i ] );
-            if( cmp > 0 ){
-                low = i + 1;
-            }else if( cmp < 0 ){
-                high = i - 1;
-            } else {
-                return i;
-            }
+function binarySearchIndexOf( array, element, compareFunction=lexicographicCompare ){
+    let low = 0;
+    let high = array.length - 1;
+    while( low <= high ){
+        const mid = ( low + high ) >> 1;
+        const cmp = compareFunction( element, array[ mid ] );
+        if( cmp > 0 ){
+            low = mid + 1;
+        }else if( cmp < 0 ){
+            high = mid - 1;
+        } else {
+            return mid;
         }
-        return -low - 1;
-    };
-}();
+    }
+    return -low - 1;
+}
+        }
 
 
 function dataURItoImage( dataURI ){
