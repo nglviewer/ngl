@@ -724,9 +724,21 @@ NGL.MenubarViewWidget = function( stage, preferences ){
 
     function onGetOrientationClick(){
         window.prompt(
-            "Orientation",
-            JSON.stringify( stage.viewer.getOrientation() )
+            "Get orientation",
+            JSON.stringify(
+                stage.viewerControls.getOrientation().toArray(),
+                function( k, v) {
+                    return v.toFixed ? Number( v.toFixed( 3 ) ) : v;
+                }
+            )
         );
+    }
+
+    function onSetOrientationClick(){
+        var orientation = new NGL.Matrix4().fromArray(
+            JSON.parse( window.prompt( "Set orientation" ) )
+        );
+        stage.viewerControls.setOrientation( orientation );
     }
 
     stage.signals.fullscreenChanged.add( function( isFullscreen ){
@@ -756,7 +768,8 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         createOption( 'Spin on', onSpinOnClick ),
         createOption( 'Spin off', onSpinOffClick ),
         createDivider(),
-        createOption( 'Orientation', onGetOrientationClick ),
+        createOption( 'Get orientation', onGetOrientationClick ),
+        createOption( 'Set orientation', onSetOrientationClick ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
