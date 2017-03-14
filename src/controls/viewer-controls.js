@@ -12,7 +12,7 @@ import { degToRad } from "../math/math-utils.js";
 
 /**
  * Scene orientation matrix, a 4x4 transformation matrix with rotation part
- * used for scene rotation, scale part for scene camera position and
+ * used for scene rotation, scale part for scene camera distance and
  * position part for scene translation
  * @typedef {Matrix4} OrientationMatrix - orientation matrix
  */
@@ -48,6 +48,7 @@ class ViewerControls{
     /**
      * scene center position
      * @member
+     * @readOnly
      * @type {Vector3}
      */
     get position(){
@@ -59,6 +60,7 @@ class ViewerControls{
     /**
      * scene rotation
      * @member
+     * @readOnly
      * @type {Quaternion}
      */
     get rotation(){
@@ -104,24 +106,24 @@ class ViewerControls{
 
     /**
      * translate scene
-     * @param  {Vector3} v - translation vector
+     * @param  {Vector3} vector - translation vector
      * @return {undefined}
      */
-    translate( v ){
+    translate( vector ){
 
-        this.viewer.translationGroup.position.add( v );
+        this.viewer.translationGroup.position.add( vector );
         this.viewer.requestRender();
 
     }
 
     /**
      * center scene
-     * @param  {Vector3} v - center position
+     * @param  {Vector3} position - center position
      * @return {undefined}
      */
-    center( v ){
+    center( position ){
 
-        this.viewer.translationGroup.position.copy( v ).negate();
+        this.viewer.translationGroup.position.copy( position ).negate();
         this.viewer.requestRender();
 
     }
