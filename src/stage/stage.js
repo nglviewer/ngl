@@ -199,6 +199,8 @@ class Stage{
 
         this.spinAnimation = this.animationControls.spin( null );
 
+        this.viewer.controls = this.viewerControls;
+
         var p = Object.assign( {
             impostor: true,
             quality: "medium",

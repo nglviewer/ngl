@@ -1074,38 +1074,6 @@ function Viewer( eid ){
 
     }
 
-    var alignView = function(){
-
-        // var currentEye = new Vector3();
-        // var currentUp = new Vector3();
-        // var vn = new Vector3();
-        // var vc = new Vector3();
-        // var vz = new Vector3( 0, 0, 1 );
-
-        return function alignView( /*eye, up, position, zoom*/ ){
-
-            // controls.reset();
-            // centerView( zoom, position );
-
-            // currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            // vn.crossVectors( currentEye, eye );
-            // rotate( vn, -currentEye.angleTo( eye ) );
-
-            // currentUp.copy( camera.up ).normalize();
-            // vc.crossVectors( currentUp, up ).normalize();
-
-            // var angle = currentUp.angleTo( up );
-            // if( vz.dot( vc ) < 0 ) angle *= -1;
-
-            // currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            // if( currentEye.dot( vz ) < 0 ) angle *= -1;
-
-            // rotate( vz, angle );
-
-        };
-
-    }();
-
     var getOrientation = function(){
 
         var m = new Matrix4();
@@ -1173,7 +1141,6 @@ function Viewer( eid ){
     this.setSize = setSize;
     this.handleResize = handleResize;
 
-    this.alignView = alignView;
     this.getOrientation = getOrientation;
     this.setOrientation = setOrientation;
     this.boundingBox = boundingBox;

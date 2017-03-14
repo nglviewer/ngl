@@ -5,7 +5,7 @@
  */
 
 
-import { Color, Vector3 } from "../../lib/three.es6.js";
+import { Color, Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -86,10 +86,12 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var pa = this.getPrincipalAxes( this.structureView );
 
         var v1 = new Vector3().copy( pa[0][1] ).sub( pa[0][0] ).normalize();
-        // var v2 = new Vector3().copy( pa[1][1] ).sub( pa[1][0] ).normalize();
+        var v2 = new Vector3().copy( pa[1][1] ).sub( pa[1][0] ).normalize();
         var v3 = new Vector3().copy( pa[2][1] ).sub( pa[2][0] ).normalize();
 
-        this.viewer.alignView( v3, v1, pa[ 3 ], true );
+        var basis = new Matrix4().makeBasis( v2, v1, v3 );
+
+        this.viewer.controls.alignView( basis, pa[ 3 ], true );
 
     },
 
