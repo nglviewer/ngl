@@ -7,7 +7,7 @@
 
 import Signal from "../lib/signals.es6.js";
 
-import { binarySearchIndexOf } from "./utils.js";
+import { binarySearchIndexOf, rangeInSortedArray } from "./utils.js";
 
 
 var kwd = {
@@ -566,8 +566,6 @@ Selection.prototype = {
                 }
                 indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
-                sele.atomindexFirst = indexList[ 0 ];
-                sele.atomindexLast = indexList[ indexList.length - 1 ];
                 pushRule( sele );
                 continue;
             }
@@ -967,7 +965,7 @@ Selection.prototype = {
             }
 
             if( s.atomindex!==undefined &&
-                    ( r.atomOffset > s.atomindexLast || r.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
             ) return false;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
@@ -1044,7 +1042,7 @@ Selection.prototype = {
             }
 
             if( s.atomindex!==undefined &&
-                    ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
             ) return false;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
@@ -1092,7 +1090,7 @@ Selection.prototype = {
             if( s.model===undefined && s.atomindex===undefined ) return -1;
 
             if( s.atomindex!==undefined &&
-                    ( m.atomOffset > s.atomindexLast || m.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
             ) return false;
 
             if( s.model!==undefined && s.model!==m.index ) return false;
