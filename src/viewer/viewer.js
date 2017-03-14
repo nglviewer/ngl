@@ -31,6 +31,7 @@ import {
 import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
 import { getShader } from "../shader/shader-utils.js";
+import { JitterVectors } from "./viewer-constants.js";
 import {
     makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
 } from "./viewer-utils";
@@ -38,137 +39,8 @@ import {
 import Signal from "../../lib/signals.es6.js";
 
 
-if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
-
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
-
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
-
-        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
-
-        return function getShaderParameter(){
-
-            if( Debug ){
-
-                return _getShaderParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function getShaderInfoLog(){
-
-            if( Debug ){
-
-                return _getShaderInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function getProgramParameter( program, pname ){
-
-            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
-
-                return _getProgramParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function getProgramInfoLog(){
-
-            if( Debug ){
-
-                return _getProgramInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-}
-
-
-var JitterVectors = [
-    [
-        [ 0, 0 ]
-    ],
-    [
-        [ 4, 4 ], [ - 4, - 4 ]
-    ],
-    [
-        [ - 2, - 6 ], [ 6, - 2 ], [ - 6, 2 ], [ 2, 6 ]
-    ],
-    [
-        [ 1, - 3 ], [ - 1, 3 ], [ 5, 1 ], [ - 3, - 5 ],
-        [ - 5, 5 ], [ - 7, - 1 ], [ 3, 7 ], [ 7, - 7 ]
-    ],
-    [
-        [ 1, 1 ], [ - 1, - 3 ], [ - 3, 2 ], [ 4, - 1 ],
-        [ - 5, - 2 ], [ 2, 5 ], [ 5, 3 ], [ 3, - 5 ],
-        [ - 2, 6 ], [ 0, - 7 ], [ - 4, - 6 ], [ - 6, 4 ],
-        [ - 8, 0 ], [ 7, - 4 ], [ 6, 7 ], [ - 7, - 8 ]
-    ],
-    [
-        [ - 4, - 7 ], [ - 7, - 5 ], [ - 3, - 5 ], [ - 5, - 4 ],
-        [ - 1, - 4 ], [ - 2, - 2 ], [ - 6, - 1 ], [ - 4, 0 ],
-        [ - 7, 1 ], [ - 1, 2 ], [ - 6, 3 ], [ - 3, 3 ],
-        [ - 7, 6 ], [ - 3, 6 ], [ - 5, 7 ], [ - 1, 7 ],
-        [ 5, - 7 ], [ 1, - 6 ], [ 6, - 5 ], [ 4, - 4 ],
-        [ 2, - 3 ], [ 7, - 2 ], [ 1, - 1 ], [ 4, - 1 ],
-        [ 2, 1 ], [ 6, 2 ], [ 0, 4 ], [ 4, 4 ],
-        [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
-    ]
-];
-
-JitterVectors.forEach( function( offsetList ){
-    offsetList.forEach( function( offset ){
-        // 0.0625 = 1 / 16
-        offset[ 0 ] *= 0.0625;
-        offset[ 1 ] *= 0.0625;
-    } );
-} );
-
-
 /**
- * [Viewer description]
+ * Viewer class
  * @class
  * @param {String} eid - dom element id
  */
