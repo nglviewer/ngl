@@ -188,6 +188,9 @@ class Stage{
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
 
+        /**
+         * @member {ViewerControls}
+         */
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );

@@ -10,6 +10,14 @@ import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 import { degToRad } from "../math/math-utils.js";
 
 
+/**
+ * Scene orientation matrix, a 4x4 transformation matrix with rotation part
+ * used for scene rotation, scale part for scene camera position and
+ * position part for scene translation
+ * @typedef {Matrix4} OrientationMatrix - orientation matrix
+ */
+
+
 const tmpQ = new Quaternion();
 const tmpP = new Vector3();
 const tmpS = new Vector3();
@@ -26,6 +34,10 @@ const negateVector = new Vector3( -1, -1, -1 );
 
 class ViewerControls{
 
+    /**
+     * create viewer controls
+     * @param  {Stage} stage - the stage object
+     */
     constructor( stage ){
 
         this.stage = stage;
@@ -33,18 +45,33 @@ class ViewerControls{
 
     }
 
+    /**
+     * scene center position
+     * @member
+     * @type {Vector3}
+     */
     get position(){
 
         return this.viewer.translationGroup.position;
 
     }
 
+    /**
+     * scene rotation
+     * @member
+     * @type {Quaternion}
+     */
     get rotation(){
 
         return this.viewer.rotationGroup.quaternion;
 
     }
 
+    /**
+     * set scene orientation
+     * @param {OrientationMatrix} orientation - scene orientation
+     * @return {undefined}
+     */
     setOrientation( orientation ){
 
         orientation.decompose( tmpP, tmpQ, tmpS )
@@ -57,6 +84,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * get scene orientation
+     * @param {Matrix4} optionalTarget - pre-allocated target matrix
+     * @return {OrientationMatrix} scene orientation
+     */
     getOrientation( optionalTarget ){
 
         const m = optionalTarget || new Matrix4();
@@ -70,6 +102,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * translate scene
+     * @param  {Vector3} v - translation vector
+     * @return {undefined}
+     */
     translate( v ){
 
         this.viewer.translationGroup.position.add( v );
@@ -77,6 +114,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * center scene
+     * @param  {Vector3} v - center position
+     * @return {undefined}
+     */
     center( v ){
 
         this.viewer.translationGroup.position.copy( v ).negate();
@@ -84,6 +126,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * zoom scene
+     * @param  {Number} delta - zoom change
+     * @return {undefined}
+     */
     zoom( delta ){
 
         const camera = this.viewer.camera;
@@ -96,6 +143,12 @@ class ViewerControls{
 
     }
 
+    /**
+     * rotate scene on axis
+     * @param  {Vector3} axis - rotation axis
+     * @param  {Number} angle - amount to rotate
+     * @return {undefined}
+     */
     rotate( axis, angle ){
 
         tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
@@ -106,6 +159,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * align scene to basis matrix
+     * @param  {Matrix4} basis - basis matrix
+     * @return {undefined}
+     */
     align( basis ){
 
         tmpAlignMatrix.getInverse( basis );
@@ -118,6 +176,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * apply rotation matrix to scene
+     * @param  {Matrix4} matrix - rotation matrix
+     * @return {undefined}
+     */
     applyMatrix( matrix ){
 
         this.viewer.rotationGroup.applyMatrix( matrix );
@@ -125,6 +188,10 @@ class ViewerControls{
 
     }
 
+    /**
+     * auto-center scene
+     * @return {undefined}
+     */
     centerScene(){
 
         if( !this.viewer.boundingBox.isEmpty() ){
@@ -133,6 +200,10 @@ class ViewerControls{
 
     }
 
+    /**
+     * auto-zoom scene
+     * @return {undefined}
+     */
     zoomScene(){
 
         const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
@@ -157,6 +228,12 @@ class ViewerControls{
 
     }
 
+    /**
+     * apply scene center-view
+     * @param  {Boolean} zoom - flag to indicate auto-zoom
+     * @param  {Vector3} position - center position
+     * @return {undefined}
+     */
     centerView( zoom, position ){
 
         if( position === undefined ){
@@ -170,6 +247,13 @@ class ViewerControls{
 
     }
 
+    /**
+     * apply scene align-view
+     * @param  {Matrix4} basis - basis matrix
+     * @param  {Vector3} position - center position
+     * @param  {Boolean} zoom - flag to indicate auto-zoom
+     * @return {undefined}
+     */
     alignView( basis, position, zoom ){
 
         this.align( basis );
