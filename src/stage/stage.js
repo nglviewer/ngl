@@ -10,6 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
+import { degToRad } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
@@ -40,6 +41,8 @@ function matchName( name, comp ){
         return comp.name === name;
     }
 }
+
+const tmpZoomVector = new Vector3();
 
 
 /**
@@ -798,6 +801,27 @@ class Stage{
 
         this.spinAnimation.axis = axis;
         this.spinAnimation.angle = angle;
+
+    }
+
+    getOptimalDistance(){
+
+        const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
+        const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+        const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+        let distance = maxSize + Math.sqrt( minSize );
+
+        const fov = degToRad( this.viewer.perspectiveCamera.fov );
+        const width = this.viewer.width;
+        const height = this.viewer.height;
+        const aspect = width / height;
+        const aspectFactor = ( height < width ? 1 : aspect );
+
+        distance = Math.abs(
+            ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+        );
+        distance += this.parameters.clipDist.value;
+        return distance;
 
     }
 

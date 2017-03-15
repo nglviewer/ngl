@@ -7,8 +7,6 @@
 
 import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 
-import { degToRad } from "../math/math-utils.js";
-
 
 /**
  * Scene orientation matrix, a 4x4 transformation matrix with rotation part
@@ -25,7 +23,6 @@ const tmpS = new Vector3();
 const tmpScaleVector = new Vector3();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
-const tmpZoomVector = new Vector3();
 const tmpCenterVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
@@ -215,25 +212,7 @@ class ViewerControls{
      */
     zoomScene(){
 
-        const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
-        const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-        const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-        let distance = maxSize + Math.sqrt( minSize );
-
-        const fov = degToRad( this.viewer.perspectiveCamera.fov );
-        const width = this.viewer.width;
-        const height = this.viewer.height;
-        const aspect = width / height;
-        const aspectFactor = ( height < width ? 1 : aspect );
-
-        distance = Math.abs(
-            ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
-        );
-
-        distance += this.stage.parameters.clipDist.value;
-
-        this.viewer.camera.position.z = -distance;
-        this.viewer.requestRender();
+        this.distance( -this.stage.getOptimalDistance() );
 
     }
 
