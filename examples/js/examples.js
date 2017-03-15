@@ -1445,8 +1445,6 @@ NGL.ExampleRegistry.addDict( {
             assembly: "BU1"
         } ).then( function( o ){
             o.addRepresentation( "cartoon" );
-            var axes = o.addRepresentation( "axes", { visible: false } );
-            axes.repr.align();
             o.addRepresentation( "axes", {
                 sele: "RET", showAxes: false, showBox: true, radius: 0.2
             } );
@@ -1455,6 +1453,8 @@ NGL.ExampleRegistry.addDict( {
                 sele: ":B and backbone", showAxes: false, showBox: true, radius: 0.2
             } );
             stage.centerView();
+            var pa = o.structure.getPrincipalAxes();
+            stage.animationControls.rotate( pa.getRotationQuaternion(), 1500 );
         } );
 
     },

@@ -13,7 +13,8 @@ import { defaults } from "../utils.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
-import { Matrix, principalAxes } from "../math/matrix-utils.js";
+import { Matrix } from "../math/matrix-utils.js";
+import PrincipalAxes from "../math/principal-axes.js"
 import SpatialHash from "../geometry/spatial-hash.js";
 // import StructureView from "./structure-view.js";
 
@@ -1053,7 +1054,7 @@ Structure.prototype = {
 
         if( Debug ) Log.timeEnd( "getPrincipalAxes" );
 
-        return principalAxes( coords );
+        return new PrincipalAxes( coords );
 
     },
 
