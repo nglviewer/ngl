@@ -49,9 +49,15 @@ function clamp( value, min, max ){
 }
 
 
+function lerp( start, stop, alpha ){
+    return start + ( stop - start ) * alpha;
+}
+
+
 export {
     degToRad,
     radToDeg,
     generateUUID,
-    clamp
+    clamp,
+    lerp
 };
