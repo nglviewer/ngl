@@ -8,7 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { clamp } from "../math/math-utils.js";
+import { clamp, lerp } from "../math/math-utils.js";
 
 
 class Animation{
@@ -78,10 +78,37 @@ class MoveAnimation extends Animation{
 }
 
 
+class ZoomAnimation extends Animation{
+
+    constructor( controls, start, stop, duration ){
+
+        super( controls );
+
+        this.start = start;
+        this.stop = stop;
+        this.duration = defaults( duration, 1000 );
+
+    }
+
+    tick( stats ){
+
+        var elapsed = stats.currentTime - this.startTime;
+        var alpha = clamp( elapsed / this.duration, 0, 1 );
+
+        this.controls.distance( lerp( this.start, this.stop, alpha ) );
+
+        return alpha === 1;
+
+    }
+
+}
+
+
 class AnimationControls{
 
     constructor( stage ){
 
+        this.stage = stage;
         this.viewer = stage.viewer;
         this.controls = stage.viewerControls;
 
@@ -147,6 +174,25 @@ class AnimationControls{
         this.add( animation );
 
         return animation;
+
+    }
+
+    zoom( stop, duration ){
+
+        var start = this.controls.viewer.camera.position.z;
+        var animation = new ZoomAnimation( this.controls, start, stop, duration );
+        this.add( animation );
+
+        return animation;
+
+    }
+
+    zoomMove( to, stop, duration ){
+
+        return [
+            this.move( to, duration ),
+            this.zoom( stop, duration )
+        ];
 
     }
 
