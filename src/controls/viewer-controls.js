@@ -26,8 +26,6 @@ const tmpRotateVector = new Vector3();
 const tmpCenterVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
-const negateVector = new Vector3( -1, -1, -1 );
-
 
 class ViewerControls{
 
@@ -185,9 +183,6 @@ class ViewerControls{
     align( basis ){
 
         tmpAlignMatrix.getInverse( basis );
-        if( tmpAlignMatrix.determinant() < 0 ){
-            tmpAlignMatrix.scale( negateVector );
-        }
 
         this.viewer.rotationGroup.setRotationFromMatrix( tmpAlignMatrix );
         this.viewer.requestRender();
