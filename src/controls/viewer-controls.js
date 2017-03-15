@@ -166,6 +166,18 @@ class ViewerControls{
     }
 
     /**
+     * rotate scene
+     * @param  {Quaternion} quaternion - rotation quaternion
+     * @return {undefined}
+     */
+    rotate( quaternion ){
+
+        this.viewer.rotationGroup.setRotationFromQuaternion( quaternion );
+        this.viewer.requestRender();
+
+    }
+
+    /**
      * align scene to basis matrix
      * @param  {Matrix4} basis - basis matrix
      * @return {undefined}

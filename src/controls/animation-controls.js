@@ -5,7 +5,7 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
+import { Vector3, Quaternion } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import { clamp, lerp } from "../math/math-utils.js";
@@ -117,6 +117,30 @@ class ZoomAnimation extends Animation{
 }
 
 
+class RotateAnimation extends Animation{
+
+    _init( rotateFrom, rotateTo ){
+
+        this.rotateFrom = rotateFrom;
+        this.rotateTo = rotateTo;
+
+        this._currentRotation = new Quaternion();
+
+    }
+
+    _tick( /*stats*/ ){
+
+        this._currentRotation
+            .copy( this.rotateFrom )
+            .slerp( this.rotateTo, this.alpha );
+
+        this.controls.rotate( this._currentRotation );
+
+    }
+
+}
+
+
 class AnimationControls{
 
     constructor( stage ){
@@ -177,6 +201,16 @@ class AnimationControls{
 
         return this.add(
             new SpinAnimation( duration, this.controls, axis, angle )
+        );
+
+    }
+
+    rotate( rotateTo, duration ){
+
+        const rotateFrom = this.viewer.rotationGroup.quaternion.clone();
+
+        return this.add(
+            new RotateAnimation( duration, this.controls, rotateFrom, rotateTo )
         );
 
     }
