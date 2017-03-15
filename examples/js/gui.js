@@ -74,11 +74,6 @@ NGL.createParameterInput = function( p ){
             .setOptions( p.options )
             .setValue( p.value );
 
-    }else if( p.type === "button" ){
-
-        input = new UI.Button( p.label )
-            .onClick( function(){ p.value(); } );
-
     }else if( p.type === "color" ){
 
         input = new UI.ColorPopupMenu( p.label )
@@ -1630,6 +1625,13 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     setSuperposeOptions();
 
+    // Principal axes
+
+    var alignAxes = new UI.Button( "align" ).onClick( function(){
+        var pa = component.structure.getPrincipalAxes();
+        stage.animationControls.rotate( pa.getRotationQuaternion() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1645,7 +1647,8 @@ NGL.StructureComponentWidget = function( component, stage ){
                         .setOverflow( "auto" )
                         //.setWordWrap( "break-word" )
         )
-        .addMenuEntry( "Trajectory", traj );
+        .addMenuEntry( "Trajectory", traj )
+        .addMenuEntry( "Principal axes", alignAxes );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
@@ -1991,12 +1994,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         if( !repr.parameters[ name ] ) return;
         var p = Object.assign( {}, repr.parameters[ name ] );
-
-        if( p.type === "button" ){
-            p.value = rp[ name ].bind( repr );
-        }else{
-            p.value = rp[ name ];
-        }
+        p.value = rp[ name ];
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 

@@ -38,9 +38,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         sphereDetail: true,
         radialSegments: true,
         disableImpostor: true,
-        align: {
-            type: "button"
-        },
         showAxes: {
             type: "boolean", rebuild: true
         },
@@ -76,13 +73,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         }
 
         return this.structureView.getPrincipalAxes( selection );
-
-    },
-
-    align: function(){
-
-        var pa = this.getPrincipalAxes( this.structureView );
-        this.viewer.controls.alignView( pa.getBasisMatrix(), pa.center, true );
 
     },
 
