@@ -193,7 +193,7 @@ class AnimationControls{
 
     zoom( zoomTo, duration ){
 
-        const zoomFrom = this.controls.viewer.camera.position.z;
+        const zoomFrom = this.viewer.camera.position.z;
 
         return this.add(
             new ZoomAnimation( duration, this.controls, zoomFrom, zoomTo )
