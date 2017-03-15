@@ -24,7 +24,7 @@ class TrackballControls{
 
         this.rotateSpeed = defaults( p.rotateSpeed, 2.0 );
         this.zoomSpeed = defaults( p.zoomSpeed, 1.2 );
-        this.panSpeed = defaults( p.panSpeed, 0.8 );
+        this.panSpeed = defaults( p.panSpeed, 1.0 );
 
         this.viewer = stage.viewer;
         this.viewerControls = stage.viewerControls;
@@ -39,7 +39,16 @@ class TrackballControls{
 
     pan( x, y ){
 
-        tmpPanVector.set( x, y, 0 ).multiplyScalar( this.panSpeed * 0.2 );
+        tmpPanVector.set( x, y, 0 );
+        const camera = this.viewer.camera;
+        if( camera.fov === undefined ){
+            tmpPanVector.multiplyScalar( 1 / camera.zoom );
+        } else {
+            var unitHeight = -2.0 * camera.position.z *
+                        Math.tan( camera.fov * Math.PI / 360 );
+            tmpPanVector.multiplyScalar( unitHeight / this.viewer.height );
+        }
+        tmpPanVector.multiplyScalar( this.panSpeed );
         tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
         tmpPanVector.applyMatrix4( tmpPanMatrix );
 
