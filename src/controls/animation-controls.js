@@ -13,14 +13,38 @@ import { clamp, lerp } from "../math/math-utils.js";
 
 class Animation{
 
-    constructor( controls ){
+    constructor( duration, controls, ...args ){
 
+        this.duration = defaults( duration, 1000 );
         this.controls = controls;
+
         this.startTime = performance.now();
+        this.elapsedTime = 0;
+
+        this._init( ...args );
 
     }
 
-    tick( /*stats*/ ){
+    /**
+     * init animation
+     * @abstract
+     */
+    _init(){}
+
+    /**
+     * called on every tick
+     * @abstract
+     */
+    _tick(){}
+
+    tick( stats ){
+
+        this.elapsedTime = stats.currentTime - this.startTime;
+        this.alpha = clamp( this.elapsedTime / this.duration, 0, 1 );
+
+        this._tick( stats );
+
+        return this.alpha === 1;
 
     }
 
@@ -29,20 +53,24 @@ class Animation{
 
 class SpinAnimation extends Animation{
 
-    constructor( controls, axis, angle ){
+    constructor( duration, ...args ){
 
-        super( controls );
+        super( defaults( duration, Infinity ), ...args );
+
+    }
+
+    _init( axis, angle ){
 
         this.axis = defaults( axis, new Vector3( 0, 1, 0 ) );
         this.angle = defaults( angle, 0.01 );
 
     }
 
-    tick( stats ){
+    _tick( stats ){
 
         if( !this.axis || !this.angle ) return;
 
-        this.controls.rotate(
+        this.controls.spin(
             this.axis, this.angle * stats.lastDuration / 16
         );
 
@@ -53,25 +81,18 @@ class SpinAnimation extends Animation{
 
 class MoveAnimation extends Animation{
 
-    constructor( controls, from, to, duration ){
+    _init( moveFrom, moveTo ){
 
-        super( controls );
-
-        this.from = defaults( from, new Vector3() );
-        this.to = defaults( to, new Vector3() );
-        this.duration = defaults( duration, 1000 );
+        this.moveFrom = defaults( moveFrom, new Vector3() );
+        this.moveTo = defaults( moveTo, new Vector3() );
 
     }
 
-    tick( stats ){
+    _tick( /*stats*/ ){
 
-        var elapsed = stats.currentTime - this.startTime;
-        var alpha = clamp( elapsed / this.duration, 0, 1 );
-
-        this.controls.position.lerpVectors( this.from, this.to, alpha ).negate();
+        this.controls.position.lerpVectors(
+            this.moveFrom, this.moveTo, this.alpha ).negate();
         this.controls.viewer.requestRender();
-
-        return alpha === 1;
 
     }
 
@@ -80,24 +101,16 @@ class MoveAnimation extends Animation{
 
 class ZoomAnimation extends Animation{
 
-    constructor( controls, start, stop, duration ){
+    _init( zoomFrom, zoomTo ){
 
-        super( controls );
-
-        this.start = start;
-        this.stop = stop;
-        this.duration = defaults( duration, 1000 );
+        this.zoomFrom = zoomFrom;
+        this.zoomTo = zoomTo;
 
     }
 
-    tick( stats ){
+    _tick( /*stats*/ ){
 
-        var elapsed = stats.currentTime - this.startTime;
-        var alpha = clamp( elapsed / this.duration, 0, 1 );
-
-        this.controls.distance( lerp( this.start, this.stop, alpha ) );
-
-        return alpha === 1;
+        this.controls.distance( lerp( this.zoomFrom, this.zoomTo, this.alpha ) );
 
     }
 
@@ -121,12 +134,14 @@ class AnimationControls{
 
         this.animationList.push( animation );
 
+        return animation;
+
     }
 
     remove( animation ){
 
-        var list = this.animationList;
-        var index = list.indexOf( animation );
+        const list = this.animationList;
+        const index = list.indexOf( animation );
 
         if( index > -1 ){
             list.splice( index, 1 );
@@ -158,40 +173,39 @@ class AnimationControls{
 
     }
 
-    spin( axis, angle ){
+    spin( axis, angle, duration ){
 
-        var animation = new SpinAnimation( this.controls, axis, angle );
-        this.add( animation );
-
-        return animation;
-
-    }
-
-    move( to, duration ){
-
-        var from = this.controls.position.clone().negate();
-        var animation = new MoveAnimation( this.controls, from, to, duration );
-        this.add( animation );
-
-        return animation;
+        return this.add(
+            new SpinAnimation( duration, this.controls, axis, angle )
+        );
 
     }
 
-    zoom( stop, duration ){
+    move( moveTo, duration ){
 
-        var start = this.controls.viewer.camera.position.z;
-        var animation = new ZoomAnimation( this.controls, start, stop, duration );
-        this.add( animation );
+        const moveFrom = this.controls.position.clone().negate();
 
-        return animation;
+        return this.add(
+            new MoveAnimation( duration, this.controls, moveFrom, moveTo )
+        );
 
     }
 
-    zoomMove( to, stop, duration ){
+    zoom( zoomTo, duration ){
+
+        const zoomFrom = this.controls.viewer.camera.position.z;
+
+        return this.add(
+            new ZoomAnimation( duration, this.controls, zoomFrom, zoomTo )
+        );
+
+    }
+
+    zoomMove( moveTo, zoomTo, duration ){
 
         return [
-            this.move( to, duration ),
-            this.zoom( stop, duration )
+            this.move( moveTo, duration ),
+            this.zoom( zoomTo, duration )
         ];
 
     }

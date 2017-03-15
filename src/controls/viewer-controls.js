@@ -150,12 +150,12 @@ class ViewerControls{
     }
 
     /**
-     * rotate scene on axis
+     * spin scene on axis
      * @param  {Vector3} axis - rotation axis
-     * @param  {Number} angle - amount to rotate
+     * @param  {Number} angle - amount to spin
      * @return {undefined}
      */
-    rotate( axis, angle ){
+    spin( axis, angle ){
 
         tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
         tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
