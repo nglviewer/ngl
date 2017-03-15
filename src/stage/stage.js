@@ -207,7 +207,7 @@ class Stage{
             backgroundColor: "black",
             rotateSpeed: 2.0,
             zoomSpeed: 1.2,
-            panSpeed: 0.8,
+            panSpeed: 1.0,
             clipNear: 0,
             clipFar: 100,
             clipDist: 10,
