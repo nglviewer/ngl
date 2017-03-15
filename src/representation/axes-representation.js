@@ -76,8 +76,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             selection = assembly.partList[ 0 ].getSelection();
         }
 
-        // return this.structureView.getPrincipalAxes( selection );  // FIXME
-        return this.structureView.getView( selection ).getPrincipalAxes();
+        return this.structureView.getPrincipalAxes( selection );
 
     },
 
