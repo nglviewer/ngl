@@ -5,7 +5,7 @@
  */
 
 
-import { Color, Vector3, Matrix4 } from "../../lib/three.es6.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";

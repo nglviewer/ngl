@@ -7,7 +7,6 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
 import { v3new, v3cross } from "./vector-utils.js";
 
 

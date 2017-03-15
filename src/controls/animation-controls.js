@@ -28,12 +28,14 @@ class Animation{
     /**
      * init animation
      * @abstract
+     * @return {undefined}
      */
     _init(){}
 
     /**
      * called on every tick
      * @abstract
+     * @return {undefined}
      */
     _tick(){}
 
