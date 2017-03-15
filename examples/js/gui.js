@@ -1295,7 +1295,7 @@ NGL.SidebarWidget = function( stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            stage.centerView();
+            stage.animationControls.autoZoomMove();
 
         } );
 

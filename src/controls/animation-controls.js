@@ -196,6 +196,16 @@ class AnimationControls{
 
     }
 
+    autoZoomMove( duration ){
+
+        return this.zoomMove(
+            this.viewer.boundingBox.center(),
+            -this.stage.getOptimalDistance(),
+            duration
+        );
+
+    }
+
     dispose(){
 
         this.animationList.length = 0;
