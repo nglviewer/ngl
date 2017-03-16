@@ -197,6 +197,9 @@ class Stage{
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
+        /**
+         * @member {AnimationControls}
+         */
         this.animationControls = new AnimationControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
