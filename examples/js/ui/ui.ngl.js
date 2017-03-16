@@ -561,7 +561,13 @@ UI.ComponentPanel = function( component ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            component.centerView( true );
+            if( component.type === "structure" ){
+                var center = component.getCenter();
+                var zoom = component.getZoom();
+                stage.animationControls.zoomMove( center, zoom );
+            }else{
+                component.centerView( true );
+            }
 
         } );
 
