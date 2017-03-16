@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint src test",
     "prebuild": "npm run-script lint",
-    "build": "rollup -c && cp build/js/ngl.esm.js dist/ngl.esm.js",
+    "build": "rollup -c",
     "pretest": "npm run build",
     "test": "mocha",
     "preversion": "npm test",
@@ -18,7 +18,7 @@
     "doc": "jsdoc -r -c doc/conf.json",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh",
-    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js"
+    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {

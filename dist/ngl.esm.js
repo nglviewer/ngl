@@ -37415,12 +37415,6 @@ var LineCurve3 = Curve.create(
 
 );
 
-Object.defineProperty( exports, 'AudioContext', {
-    get: function () {
-        return exports.getAudioContext();
-    }
-});
-
 // changed to be usable as an es6 module, ASR
 
 /**
