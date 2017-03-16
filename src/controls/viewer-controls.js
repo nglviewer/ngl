@@ -17,6 +17,14 @@ import Signal from "../../lib/signals.es6.js";
  */
 
 
+/**
+ * {@link Signal}, dispatched when viewer controls change
+ * @example
+ * viewerControls.signals.changed.add( function(){ ... } );
+ * @event ViewerControls#changed
+ */
+
+
 const tmpQ = new Quaternion();
 const tmpP = new Vector3();
 const tmpS = new Vector3();
@@ -41,7 +49,7 @@ class ViewerControls{
 
         this.signals = {
             changed: new Signal()
-        }
+        };
 
     }
 
@@ -69,6 +77,11 @@ class ViewerControls{
 
     }
 
+    /**
+     * Trigger render and emit changed event
+     * @fires ViewerControls#changed
+     * @return {undefined}
+     */
     changed(){
 
         this.viewer.requestRender();
