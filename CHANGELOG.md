@@ -19,6 +19,9 @@ All notable changes to this project will be documented in this file, following t
 - colormaker subclasses now auto-register with ColormakerRegistry
 - refactored buffer classes to use a data object as input
 
+### Removed
+- stage/component.centerView method, use .autoView instead
+
 
 ## [v0.9.3] - 2016-10-14
 ### Changed

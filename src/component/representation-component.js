@@ -235,6 +235,10 @@ class RepresentationComponent extends Component{
      */
     getCenter(){}
 
+    getZoom(){}
+
+    getBox(){}
+
 }
 
 

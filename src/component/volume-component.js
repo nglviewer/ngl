@@ -56,24 +56,24 @@ class VolumeComponent extends Component{
 
     }
 
+    getBox(){
+
+        return this.volume.boundingBox;
+
+    }
+
+    getCenter(){
+
+        return this.volume.center;
+
+    }
+
     dispose(){
 
         this.stage.gidPool.removeObject( this.volume );
         this.volume.dispose();
 
         super.dispose();
-
-    }
-
-    centerView( zoom ){
-
-        var center = this.volume.center;
-
-        if( zoom ){
-            zoom = this.volume.boundingBox.size().length();
-        }
-
-        this.stage.centerView( zoom, center );
 
     }
 

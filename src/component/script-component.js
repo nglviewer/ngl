@@ -63,6 +63,10 @@ class ScriptComponent extends Component{
 
     getCenter(){}
 
+    getZoom(){}
+
+    getBox(){}
+
 }
 
 ComponentRegistry.add( "script", ScriptComponent );

@@ -231,61 +231,6 @@ class ViewerControls{
 
     }
 
-    /**
-     * auto-center scene
-     * @return {undefined}
-     */
-    centerScene(){
-
-        if( !this.viewer.boundingBox.isEmpty() ){
-            this.center( this.viewer.boundingBox.center( tmpCenterVector ) );
-        }
-
-    }
-
-    /**
-     * auto-zoom scene
-     * @return {undefined}
-     */
-    zoomScene(){
-
-        this.distance( this.stage.getOptimalZoom() );
-
-    }
-
-    /**
-     * apply scene center-view
-     * @param  {Boolean} zoom - flag to indicate auto-zoom
-     * @param  {Vector3} position - center position
-     * @return {undefined}
-     */
-    centerView( zoom, position ){
-
-        if( position === undefined ){
-            this.centerScene();
-        }else{
-            this.center( position );
-        }
-        if( zoom ){
-            this.zoomScene();
-        }
-
-    }
-
-    /**
-     * apply scene align-view
-     * @param  {Matrix4} basis - basis matrix
-     * @param  {Vector3} position - center position
-     * @param  {Boolean} zoom - flag to indicate auto-zoom
-     * @return {undefined}
-     */
-    alignView( basis, position, zoom ){
-
-        this.align( basis );
-        this.centerView( zoom, position );
-
-    }
-
 }
 
 

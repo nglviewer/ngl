@@ -26,9 +26,9 @@ ComponentCollection.prototype = Object.assign( Object.create(
 
     },
 
-    centerView: function( zoom, sele ){
+    autoView: function( duration ){
 
-        return this._invoke( "centerView", [ zoom, sele ] );
+        return this._invoke( "autoView", [ duration ] );
 
     }
 

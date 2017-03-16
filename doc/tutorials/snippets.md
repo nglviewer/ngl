@@ -53,7 +53,7 @@ var schemeId = NGL.ColormakerRegistry.addSelectionScheme( [
 
 stage.loadFile( "rcsb://3dqb.pdb" ).then( function( o ){
     o.addRepresentation( "cartoon", { color: schemeId } );  // pass schemeId here
-    o.centerView();
+    o.autoView();
 } );
 ```
 
@@ -77,7 +77,7 @@ var schemeId = NGL.ColormakerRegistry.addScheme( function( params ){
 
 stage.loadFile( "rcsb://3dqb.pdb" ).then( function( o ){
     o.addRepresentation( "cartoon", { color: schemeId } );  // pass schemeId here
-    o.centerView();
+    o.autoView();
 } );
 ```
 
@@ -96,6 +96,6 @@ stage.loadFile( "rcsb://3pqr" ).then( function( o ){
     var atomSet2 = o.structure.getAtomSetWithinGroup( atomSet );
     o.addRepresentation( "licorice", { sele: atomSet2.toSeleString() } );
     o.addRepresentation( "cartoon" );
-    o.centerView();
+    o.autoView();
 } );
 ```

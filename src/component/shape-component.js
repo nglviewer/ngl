@@ -53,28 +53,9 @@ class ShapeComponent extends Component{
 
     }
 
-    centerView( zoom ){
+    getBox(){
 
-        zoom = defaults( zoom, true );
-
-        var center = this.getCenter();
-
-        if( zoom ){
-
-            var bb = this.shape.boundingBox;
-            var bbSize = bb.size();
-            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
-
-            // zoom = bb.size().length();
-
-        }
-
-        this.stage.centerView( zoom, center );
-
-        return this;
+        return this.shape.boundingBox;
 
     }
 

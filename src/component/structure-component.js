@@ -239,20 +239,22 @@ class StructureComponent extends Component{
 
     }
 
-    centerView( zoom, sele ){
+    autoView( sele, duration ){
 
-        zoom = defaults( zoom, true );
+        if( Number.isInteger( sele ) ){
+            duration = sele;
+            sele = undefined;
+        }
 
-        var center = this.getCenter( sele );
-        if( zoom ) zoom = this.getZoom( sele );
-
-        this.stage.centerView( zoom, center );
-
-        return this;
+        this.stage.animationControls.zoomMove(
+            this.getCenter( sele ),
+            this.getZoom( sele ),
+            defaults( duration, 0 )
+        );
 
     }
 
-    getZoom( sele ){
+    getBox( sele ){
 
         var bb;
 
@@ -262,7 +264,7 @@ class StructureComponent extends Component{
             bb = this.structureView.boundingBox;
         }
 
-        return this.stage.calculateOptimalZoom( bb );
+        return bb;
 
     }
 

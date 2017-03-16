@@ -94,7 +94,7 @@ class MoveAnimation extends Animation{
 
         this.controls.position.lerpVectors(
             this.moveFrom, this.moveTo, this.alpha ).negate();
-        this.controls.viewer.requestRender();
+        this.controls.changed();
 
     }
 
@@ -294,21 +294,6 @@ class AnimationControls{
             this.move( moveTo, duration ),
             this.zoom( zoomTo, duration )
         ];
-
-    }
-
-    /**
-     * Add a zoom and a move animation with automatic targets
-     * @param  {Number} duration - animation time in milliseconds
-     * @return {Array} the animations
-     */
-    autoZoomMove( duration ){
-
-        return this.zoomMove(
-            this.viewer.boundingBox.center(),
-            this.stage.getOptimalZoom(),
-            duration
-        );
 
     }
 

@@ -706,7 +706,7 @@ NGL.MenubarViewWidget = function( stage, preferences ){
     }
 
     function onCenterOptionClick(){
-        stage.centerView();
+        stage.autoView( 1000 );
     }
 
     function onSpinOnClick(){
@@ -1289,7 +1289,7 @@ NGL.SidebarWidget = function( stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            stage.animationControls.autoZoomMove();
+            stage.autoView( 1000 );
 
         } );
 
@@ -1617,7 +1617,7 @@ NGL.StructureComponentWidget = function( component, stage ){
                 stage.compList[ superpose.getValue() ],
                 true
             );
-            component.centerView();
+            component.autoView( 1000 );
             superpose.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
         } );

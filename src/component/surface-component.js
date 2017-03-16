@@ -53,22 +53,22 @@ class SurfaceComponent extends Component{
 
     }
 
+    getBox(){
+
+        return this.surface.boundingBox;
+
+    }
+
+    getCenter(){
+
+        return this.surface.center;
+
+    }
+
     dispose(){
 
         this.surface.dispose();
         super.dispose();
-
-    }
-
-    centerView( zoom ){
-
-        var center = this.surface.center;
-
-        if( zoom ){
-            zoom = this.surface.boundingBox.size().length();
-        }
-
-        this.stage.centerView( zoom, center );
 
     }
 

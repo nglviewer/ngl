@@ -227,15 +227,31 @@ class Component{
 
     }
 
-    getZoom(){
+    getBox(){
 
-        // log.warn( "not implemented" )
+        // console.warn( "not implemented" )
 
     }
 
     getCenter(){
 
-        // log.warn( "not implemented" )
+        return this.getBox().center();
+
+    }
+
+    getZoom(){
+
+        return this.stage.getZoomForBox( this.getBox( ...arguments ) );
+
+    }
+
+    autoView( duration ){
+
+        this.stage.animationControls.zoomMove(
+            this.getCenter(),
+            this.getZoom(),
+            defaults( duration, 0 )
+        );
 
     }
 
