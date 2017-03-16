@@ -5,12 +5,13 @@
  * @private
  */
 
+
+import Signal from "../../lib/signals.es6.js";
+
 import { defaults } from "../utils.js";
 import { generateUUID } from "../math/math-utils.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
-
-import Signal from "../../lib/signals.es6.js";
 
 
 let nextComponentId = 0;
