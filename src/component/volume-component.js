@@ -10,31 +10,27 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
-/**
- * Component wrapping a Volume object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Volume} volume - volume object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function VolumeComponent( stage, volume, params ){
+class VolumeComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, volume.name );
+    /**
+     * Create component wrapping a volume object
+     * @class
+     * @extends Component
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Volume} volume - volume object to wrap
+     * @param {ComponentParameters} params - component parameters
+     */
+    constructor( stage, volume, params ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, volume.name );
 
-    this.volume = volume;
-    this.stage.gidPool.addObject( this.volume );
+        super( stage, p );
 
-}
+        this.volume = volume;
+        this.stage.gidPool.addObject( this.volume );
 
-VolumeComponent.prototype = Object.assign( Object.create(
-
-    Component.prototype ), {
-
-    constructor: VolumeComponent,
+    }
 
     /**
      * Component type
@@ -43,7 +39,7 @@ VolumeComponent.prototype = Object.assign( Object.create(
      * @type {String}
      * @default
      */
-    type: "volume",
+    get type(){ return "volume"; }
 
     /**
      * Add a new volume representation to the component
@@ -54,24 +50,22 @@ VolumeComponent.prototype = Object.assign( Object.create(
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, params ){
+    addRepresentation( type, params ){
 
-        return Component.prototype.addRepresentation.call(
-            this, type, this.volume, params
-        );
+        return super.addRepresentation( type, this.volume, params );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.stage.gidPool.removeObject( this.volume );
         this.volume.dispose();
 
-        Component.prototype.dispose.call( this );
+        super.dispose();
 
-    },
+    }
 
-    centerView: function( zoom ){
+    centerView( zoom ){
 
         var center = this.volume.center;
 
@@ -81,9 +75,9 @@ VolumeComponent.prototype = Object.assign( Object.create(
 
         this.stage.centerView( zoom, center );
 
-    },
+    }
 
-} );
+}
 
 ComponentRegistry.add( "volume", VolumeComponent );
 

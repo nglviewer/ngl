@@ -13,7 +13,12 @@ import { makeRepresentation } from "../representation/representation-utils.js";
 import Signal from "../../lib/signals.es6.js";
 
 
-var nextComponentId = 0;
+let nextComponentId = 0;
+
+const SignalNames = [
+    "representationAdded", "representationRemoved", "visibilityChanged",
+    "statusChanged", "nameChanged", "disposed"
+];
 
 
 /**
@@ -48,53 +53,39 @@ var nextComponentId = 0;
  */
 
 
-/**
- * Component base class
- * @class
- * @param {Stage} stage - stage object the component belongs to
- * @param {ComponentParameters} params - parameter object
- */
-function Component( stage, params ){
+class Component{
 
-    Object.defineProperty( this, 'id', { value: nextComponentId++ } );
+    /**
+     * Create component
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {ComponentParameters} params - parameter object
+     */
+    constructor( stage, params ){
 
-    var p = params || {};
+        Object.defineProperty( this, 'id', { value: nextComponentId++ } );
 
-    this.name = p.name;
-    this.uuid = generateUUID();
-    this.visible = p.visible !== undefined ? p.visible : true;
+        var p = params || {};
 
-    // construct instance signals
-    var signalNames = Object.keys( this.signals );
-    this.signals = {};
-    signalNames.forEach( function( name ){
-        this.signals[ name ] = new Signal();
-    }, this );
+        this.name = p.name;
+        this.uuid = generateUUID();
+        this.visible = p.visible !== undefined ? p.visible : true;
 
-    this.stage = stage;
-    this.viewer = stage.viewer;
+        // construct instance signals
+        this.signals = {};
+        this._signalNames.forEach( name => {
+            this.signals[ name ] = new Signal();
+        } );
 
-    this.reprList = [];
+        this.stage = stage;
+        this.viewer = stage.viewer;
 
-}
+        this.reprList = [];
 
-Component.prototype = {
+    }
 
-    constructor: Component,
+    get type(){ return "component"; }
 
-    type: "component",
-
-    signals: {
-
-        representationAdded: null,
-        representationRemoved: null,
-        visibilityChanged: null,
-
-        statusChanged: null,
-        nameChanged: null,
-        disposed: null,
-
-    },
+    get _signalNames(){ return SignalNames; }
 
     /**
      * Add a new representation to the component
@@ -105,7 +96,7 @@ Component.prototype = {
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, object, params ){
+    addRepresentation( type, object, params ){
 
         var p = params || {};
         var sp = this.stage.getParameters();
@@ -124,21 +115,21 @@ Component.prototype = {
 
         return reprComp;
 
-    },
+    }
 
-    addBufferRepresentation: function( buffer, params ){
+    addBufferRepresentation( buffer, params ){
 
         return Component.prototype.addRepresentation.call(
             this, "buffer", buffer, params
         );
 
-    },
+    }
 
-    hasRepresentation: function( repr ){
+    hasRepresentation( repr ){
 
         return this.reprList.indexOf( repr ) !== -1;
 
-    },
+    }
 
     /**
      * Removes a representation component
@@ -146,7 +137,7 @@ Component.prototype = {
      * @param {RepresentationComponent} repr - the representation component
      * @return {undefined}
      */
-    removeRepresentation: function( repr ){
+    removeRepresentation( repr ){
 
         var idx = this.reprList.indexOf( repr );
         if( idx !== -1 ){
@@ -155,9 +146,9 @@ Component.prototype = {
             this.signals.representationRemoved.dispatch( repr );
         }
 
-    },
+    }
 
-    updateRepresentations: function( what ){
+    updateRepresentations( what ){
 
         this.reprList.forEach( function( repr ){
             repr.update( what );
@@ -165,36 +156,36 @@ Component.prototype = {
 
         this.stage.viewer.requestRender();
 
-    },
+    }
 
     /**
      * Removes all representation components
      * @fires Component#representationRemoved
      * @return {undefined}
      */
-    removeAllRepresentations: function(){
+    removeAllRepresentations(){
 
         // copy via .slice because side effects may change reprList
         this.reprList.slice().forEach( function( repr ){
             this.removeRepresentation( repr );
         }, this );
 
-    },
+    }
 
-    clearRepresentations: function(){
+    clearRepresentations(){
 
         console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
         this.removeAllRepresentations();
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.removeAllRepresentations();
         delete this.reprList;
         this.signals.disposed.dispatch();
 
-    },
+    }
 
     /**
      * Set the visibility of the component, including added representations
@@ -202,7 +193,7 @@ Component.prototype = {
      * @param {Boolean} value - visibility flag
      * @return {Component} this object
      */
-    setVisibility: function( value ){
+    setVisibility( value ){
 
         this.visible = value;
 
@@ -214,39 +205,45 @@ Component.prototype = {
 
         return this;
 
-    },
+    }
 
-    setStatus: function( value ){
+    setStatus( value ){
 
         this.status = value;
         this.signals.statusChanged.dispatch( value );
 
         return this;
 
-    },
+    }
 
-    setName: function( value ){
+    setName( value ){
 
         this.name = value;
         this.signals.nameChanged.dispatch( value );
 
         return this;
 
-    },
+    }
 
-    getCenter: function(){
+    getZoom(){
 
         // log.warn( "not implemented" )
 
-    },
+    }
 
-    eachRepresentation: function( callback ){
+    getCenter(){
+
+        // log.warn( "not implemented" )
+
+    }
+
+    eachRepresentation( callback ){
 
         this.reprList.forEach( callback );
 
     }
 
-};
+}
 
 
 export default Component;

@@ -10,30 +10,24 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
-/**
- * Component wrapping a Surface object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Surface} surface - surface object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function SurfaceComponent( stage, surface, params ){
+class SurfaceComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, surface.name );
+    /**
+     * Create component wrapping a surface object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Surface} surface - surface object to wrap
+     * @param {ComponentParameters} params - component parameters
+     */
+    constructor( stage, surface, params ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, surface.name );
 
-    this.surface = surface;
+        super( stage, p );
 
-}
+        this.surface = surface;
 
-SurfaceComponent.prototype = Object.assign( Object.create(
-
-    Component.prototype ), {
-
-    constructor: SurfaceComponent,
+    }
 
     /**
      * Component type
@@ -42,7 +36,7 @@ SurfaceComponent.prototype = Object.assign( Object.create(
      * @type {String}
      * @default
      */
-    type: "surface",
+    get type(){ return "surface"; }
 
     /**
      * Add a new surface representation to the component
@@ -53,23 +47,20 @@ SurfaceComponent.prototype = Object.assign( Object.create(
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, params ){
+    addRepresentation( type, params ){
 
-        return Component.prototype.addRepresentation.call(
-            this, type, this.surface, params
-        );
+        return super.addRepresentation( type, this.surface, params );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.surface.dispose();
+        super.dispose();
 
-        Component.prototype.dispose.call( this );
+    }
 
-    },
-
-    centerView: function( zoom ){
+    centerView( zoom ){
 
         var center = this.surface.center;
 
@@ -79,9 +70,9 @@ SurfaceComponent.prototype = Object.assign( Object.create(
 
         this.stage.centerView( zoom, center );
 
-    },
+    }
 
-} );
+}
 
 ComponentRegistry.add( "surface", SurfaceComponent );
 

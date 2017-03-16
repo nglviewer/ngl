@@ -10,30 +10,24 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
-/**
- * Component wrapping a shape object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Shape} shape - shape object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function ShapeComponent( stage, shape, params ){
+class ShapeComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, shape.name );
+    /**
+     * Create component wrapping a shape object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Shape} shape - shape object to wrap
+     * @param {ComponentParameters} params - component parameters
+     */
+    constructor( stage, shape, params ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, shape.name );
 
-    this.shape = shape;
+        super( stage, p );
 
-}
+        this.shape = shape;
 
-ShapeComponent.prototype = Object.assign( Object.create(
-
-    Component.prototype ), {
-
-    constructor: ShapeComponent,
+    }
 
     /**
      * Component type
@@ -42,7 +36,7 @@ ShapeComponent.prototype = Object.assign( Object.create(
      * @type {String}
      * @default
      */
-    type: "shape",
+    get type(){ return "shape"; }
 
     /**
      * Add a new shape representation to the component
@@ -53,15 +47,15 @@ ShapeComponent.prototype = Object.assign( Object.create(
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, params ){
+    addRepresentation( type, params ){
 
         return Component.prototype.addRepresentation.call(
             this, type, this.shape, params
         );
 
-    },
+    }
 
-    centerView: function( zoom ){
+    centerView( zoom ){
 
         zoom = defaults( zoom, true );
 
@@ -84,15 +78,15 @@ ShapeComponent.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    getCenter: function(){
+    getCenter(){
 
         return this.shape.center;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.shape.dispose();
 
@@ -100,7 +94,7 @@ ShapeComponent.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ComponentRegistry.add( "shape", ShapeComponent );
 
