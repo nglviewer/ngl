@@ -804,9 +804,9 @@ class Stage{
 
     }
 
-    getOptimalDistance(){
+    calculateOptimalZoom( boundingBox ){
 
-        const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
+        const bbSize = boundingBox.size( tmpZoomVector );
         const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
         const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
         let distance = maxSize + Math.sqrt( minSize );
@@ -821,7 +821,13 @@ class Stage{
             ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
         );
         distance += this.parameters.clipDist.value;
-        return distance;
+        return -distance;
+
+    }
+
+    getOptimalZoom(){
+
+        return this.calculateOptimalZoom( this.viewer.boundingBox );
 
     }
 

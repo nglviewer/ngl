@@ -250,7 +250,7 @@ class AnimationControls{
 
         return this.zoomMove(
             this.viewer.boundingBox.center(),
-            -this.stage.getOptimalDistance(),
+            this.stage.getOptimalZoom(),
             duration
         );
 

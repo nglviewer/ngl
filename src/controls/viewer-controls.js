@@ -219,7 +219,7 @@ class ViewerControls{
      */
     zoomScene(){
 
-        this.distance( -this.stage.getOptimalDistance() );
+        this.distance( this.stage.getOptimalZoom() );
 
     }
 
