@@ -33,7 +33,6 @@ const tmpScaleVector = new Vector3();
 const tmpOrientMatrix = new Matrix4();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
-const tmpCenterVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
 
