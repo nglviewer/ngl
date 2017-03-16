@@ -47,8 +47,7 @@ import Signal from "../../lib/signals.es6.js";
 function Viewer( eid ){
 
     var signals = {
-        orientationChanged: new Signal(),
-        ticked: new Signal(),
+        ticked: new Signal()
     };
 
     var container;

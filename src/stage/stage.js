@@ -160,7 +160,6 @@ class Stage{
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
-            orientationChanged: new Signal(),
 
             componentAdded: new Signal(),
             componentRemoved: new Signal(),
