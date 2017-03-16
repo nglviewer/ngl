@@ -3,6 +3,7 @@
   "version": "0.10.0-dev.6",
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
+  "module": "dist/ngl.esm.js",
   "scripts": {
     "lint": "eslint src test",
     "prebuild": "npm run-script lint",
@@ -17,7 +18,7 @@
     "doc": "jsdoc -r -c doc/conf.json",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh",
-    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js"
+    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {

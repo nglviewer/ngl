@@ -61,6 +61,12 @@ export default {
       format: 'umd',
       moduleName: 'NGL',
       sourceMap: true
+    },
+    {
+      dest: "build/js/ngl.esm.js",
+      format: 'es',
+      moduleName: 'NGL',
+      sourceMap: true
     }
   ]
 };
