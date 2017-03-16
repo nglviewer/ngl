@@ -8,6 +8,7 @@
 import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
+import { degToRad } from "../math/math-utils.js";
 
 
 const tmpRotateXMatrix = new Matrix4();
@@ -20,7 +21,7 @@ class TrackballControls{
 
     constructor( stage, params ){
 
-        var p = params || {};
+        const p = params || {};
 
         this.rotateSpeed = defaults( p.rotateSpeed, 2.0 );
         this.zoomSpeed = defaults( p.zoomSpeed, 1.2 );
@@ -39,16 +40,19 @@ class TrackballControls{
 
     pan( x, y ){
 
-        tmpPanVector.set( x, y, 0 );
+        let scaleFactor;
         const camera = this.viewer.camera;
-        if( camera.fov === undefined ){
-            tmpPanVector.multiplyScalar( 1 / camera.zoom );
+
+        if( camera.type === "OrthographicCamera" ){
+            scaleFactor = 1 / camera.zoom;
         } else {
-            var unitHeight = -2.0 * camera.position.z *
-                        Math.tan( camera.fov * Math.PI / 360 );
-            tmpPanVector.multiplyScalar( unitHeight / this.viewer.height );
+            const fov = degToRad( camera.fov )
+            const unitHeight = -2.0 * camera.position.z * Math.tan( fov / 2 );
+            scaleFactor = unitHeight / this.viewer.height;
         }
-        tmpPanVector.multiplyScalar( this.panSpeed );
+
+        tmpPanVector.set( x, y, 0 );
+        tmpPanVector.multiplyScalar( this.panSpeed * scaleFactor );
         tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
         tmpPanVector.applyMatrix4( tmpPanMatrix );
 
