@@ -56,7 +56,7 @@ const SignalNames = [
 class Component{
 
     /**
-     * Create component
+     * Base class for components
      * @param {Stage} stage - stage object the component belongs to
      * @param {ComponentParameters} params - parameter object
      */
@@ -119,7 +119,10 @@ class Component{
 
     addBufferRepresentation( buffer, params ){
 
-        return this.addRepresentation( "buffer", buffer, params );
+        // always use component base class method
+        return Component.prototype.addRepresentation.call(
+            this, "buffer", buffer, params
+        );
 
     }
 
