@@ -3,10 +3,11 @@
   "version": "0.10.0-dev.6",
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
+  "module": "dist/ngl.esm.js",
   "scripts": {
     "lint": "eslint src test",
     "prebuild": "npm run-script lint",
-    "build": "rollup -c",
+    "build": "rollup -c && cp build/js/ngl.esm.js dist/ngl.esm.js",
     "pretest": "npm run build",
     "test": "mocha",
     "preversion": "npm test",
