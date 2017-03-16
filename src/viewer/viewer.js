@@ -7,7 +7,7 @@
 
 import {
     PerspectiveCamera, OrthographicCamera,
-    Box3, Vector3, Quaternion, Matrix4, Color,
+    Box3, Vector3, Color,
     WebGLRenderer, WebGLRenderTarget,
     NearestFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
@@ -31,6 +31,7 @@ import {
 import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
 import { getShader } from "../shader/shader-utils.js";
+import { JitterVectors } from "./viewer-constants.js";
 import {
     makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
 } from "./viewer-utils";
@@ -38,137 +39,8 @@ import {
 import Signal from "../../lib/signals.es6.js";
 
 
-if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
-
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
-
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
-
-        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
-
-        return function getShaderParameter(){
-
-            if( Debug ){
-
-                return _getShaderParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function getShaderInfoLog(){
-
-            if( Debug ){
-
-                return _getShaderInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function getProgramParameter( program, pname ){
-
-            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
-
-                return _getProgramParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function getProgramInfoLog(){
-
-            if( Debug ){
-
-                return _getProgramInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-}
-
-
-var JitterVectors = [
-    [
-        [ 0, 0 ]
-    ],
-    [
-        [ 4, 4 ], [ - 4, - 4 ]
-    ],
-    [
-        [ - 2, - 6 ], [ 6, - 2 ], [ - 6, 2 ], [ 2, 6 ]
-    ],
-    [
-        [ 1, - 3 ], [ - 1, 3 ], [ 5, 1 ], [ - 3, - 5 ],
-        [ - 5, 5 ], [ - 7, - 1 ], [ 3, 7 ], [ 7, - 7 ]
-    ],
-    [
-        [ 1, 1 ], [ - 1, - 3 ], [ - 3, 2 ], [ 4, - 1 ],
-        [ - 5, - 2 ], [ 2, 5 ], [ 5, 3 ], [ 3, - 5 ],
-        [ - 2, 6 ], [ 0, - 7 ], [ - 4, - 6 ], [ - 6, 4 ],
-        [ - 8, 0 ], [ 7, - 4 ], [ 6, 7 ], [ - 7, - 8 ]
-    ],
-    [
-        [ - 4, - 7 ], [ - 7, - 5 ], [ - 3, - 5 ], [ - 5, - 4 ],
-        [ - 1, - 4 ], [ - 2, - 2 ], [ - 6, - 1 ], [ - 4, 0 ],
-        [ - 7, 1 ], [ - 1, 2 ], [ - 6, 3 ], [ - 3, 3 ],
-        [ - 7, 6 ], [ - 3, 6 ], [ - 5, 7 ], [ - 1, 7 ],
-        [ 5, - 7 ], [ 1, - 6 ], [ 6, - 5 ], [ 4, - 4 ],
-        [ 2, - 3 ], [ 7, - 2 ], [ 1, - 1 ], [ 4, - 1 ],
-        [ 2, 1 ], [ 6, 2 ], [ 0, 4 ], [ 4, 4 ],
-        [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
-    ]
-];
-
-JitterVectors.forEach( function( offsetList ){
-    offsetList.forEach( function( offset ){
-        // 0.0625 = 1 / 16
-        offset[ 0 ] *= 0.0625;
-        offset[ 1 ] *= 0.0625;
-    } );
-} );
-
-
 /**
- * [Viewer description]
+ * Viewer class
  * @class
  * @param {String} eid - dom element id
  */
@@ -755,7 +627,7 @@ function Viewer( eid ){
                 camera = orthographicCamera;
                 camera.position.copy( perspectiveCamera.position );
                 camera.up.copy( perspectiveCamera.up );
-                __updateZoom();
+                updateZoom();
             }
         }else{  // p.cameraType === "perspective"
             if( camera !== perspectiveCamera ){
@@ -966,6 +838,16 @@ function Viewer( eid ){
 
     }
 
+    function updateZoom(){
+
+        __updateClipping();
+        var fov = degToRad( perspectiveCamera.fov );
+        var hyperfocus = ( camera.near + camera.far ) / 2;
+        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        orthographicCamera.zoom = height / _height;
+
+    }
+
     function __updateClipping(){
 
         var p = parameters;
@@ -1014,16 +896,6 @@ function Viewer( eid ){
                 camera.near += camera.zoom + p.clipDist;
             }
         }
-
-    }
-
-    function __updateZoom(){
-
-        __updateClipping();
-        var fov = degToRad( perspectiveCamera.fov );
-        var hyperfocus = ( camera.near + camera.far ) / 2;
-        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
-        orthographicCamera.zoom = height / _height;
 
     }
 
@@ -1202,80 +1074,6 @@ function Viewer( eid ){
 
     }
 
-    var alignView = function(){
-
-        // var currentEye = new Vector3();
-        // var currentUp = new Vector3();
-        // var vn = new Vector3();
-        // var vc = new Vector3();
-        // var vz = new Vector3( 0, 0, 1 );
-
-        return function alignView( /*eye, up, position, zoom*/ ){
-
-            // controls.reset();
-            // centerView( zoom, position );
-
-            // currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            // vn.crossVectors( currentEye, eye );
-            // rotate( vn, -currentEye.angleTo( eye ) );
-
-            // currentUp.copy( camera.up ).normalize();
-            // vc.crossVectors( currentUp, up ).normalize();
-
-            // var angle = currentUp.angleTo( up );
-            // if( vz.dot( vc ) < 0 ) angle *= -1;
-
-            // currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            // if( currentEye.dot( vz ) < 0 ) angle *= -1;
-
-            // rotate( vz, angle );
-
-        };
-
-    }();
-
-    var getOrientation = function(){
-
-        var m = new Matrix4();
-        var s = new Vector3();
-
-        return function getOrientation(){
-
-            m.copy( rotationGroup.matrix );
-            var z = camera.position.z;
-            m.scale( s.set( z, z, z ) );
-            m.setPosition( translationGroup.position );
-
-            return m.toArray();
-
-        }
-
-    }();
-
-    var setOrientation = function(){
-
-        var m = new Matrix4();
-        var p = new Vector3();
-        var q = new Quaternion();
-        var s = new Vector3();
-
-        return function setOrientation( orientation ){
-
-            m.fromArray( orientation );
-            m.decompose( p, q, s )
-
-            rotationGroup.setRotationFromQuaternion( q );
-            translationGroup.position.copy( p );
-            camera.position.z = -s.z;
-
-            requestRender();
-
-            signals.orientationChanged.dispatch();
-
-        }
-
-    }();
-
     // API
 
     this.container = container;
@@ -1301,20 +1099,17 @@ function Viewer( eid ){
     this.setSize = setSize;
     this.handleResize = handleResize;
 
-    this.alignView = alignView;
-    this.getOrientation = getOrientation;
-    this.setOrientation = setOrientation;
-    this.boundingBox = boundingBox;
-
     this.pick = pick;
     this.requestRender = requestRender;
     this.render = render;
     this.animate = animate;
+    this.updateZoom = updateZoom;
     this.updateHelper = updateHelper;
 
     this.renderer = renderer;
     this.scene = scene;
     this.perspectiveCamera = perspectiveCamera;
+    this.boundingBox = boundingBox;
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },

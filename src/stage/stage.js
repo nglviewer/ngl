@@ -10,6 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
+import { degToRad } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
 import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
@@ -40,6 +41,8 @@ function matchName( name, comp ){
         return comp.name === name;
     }
 }
+
+const tmpZoomVector = new Vector3();
 
 
 /**
@@ -188,6 +191,9 @@ class Stage{
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
 
+        /**
+         * @member {ViewerControls}
+         */
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
@@ -199,6 +205,8 @@ class Stage{
 
         this.spinAnimation = this.animationControls.spin( null );
 
+        this.viewer.controls = this.viewerControls;
+
         var p = Object.assign( {
             impostor: true,
             quality: "medium",
@@ -207,7 +215,7 @@ class Stage{
             backgroundColor: "black",
             rotateSpeed: 2.0,
             zoomSpeed: 1.2,
-            panSpeed: 0.8,
+            panSpeed: 1.0,
             clipNear: 0,
             clipFar: 100,
             clipDist: 10,
@@ -796,19 +804,24 @@ class Stage{
 
     }
 
-    setOrientation( orientation ){
+    getOptimalDistance(){
 
-        this.tasks.onZeroOnce( function(){
+        const bbSize = this.viewer.boundingBox.size( tmpZoomVector );
+        const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+        const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+        let distance = maxSize + Math.sqrt( minSize );
 
-            this.viewer.setOrientation( orientation );
+        const fov = degToRad( this.viewer.perspectiveCamera.fov );
+        const width = this.viewer.width;
+        const height = this.viewer.height;
+        const aspect = width / height;
+        const aspectFactor = ( height < width ? 1 : aspect );
 
-        }, this );
-
-    }
-
-    getOrientation(){
-
-        return this.viewer.getOrientation();
+        distance = Math.abs(
+            ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+        );
+        distance += this.parameters.clipDist.value;
+        return distance;
 
     }
 
