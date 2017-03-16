@@ -723,17 +723,16 @@ NGL.MenubarViewWidget = function( stage, preferences ){
             JSON.stringify(
                 stage.viewerControls.getOrientation().toArray(),
                 function( k, v) {
-                    return v.toFixed ? Number( v.toFixed( 3 ) ) : v;
+                    return v.toFixed ? Number( v.toFixed( 2 ) ) : v;
                 }
             )
         );
     }
 
     function onSetOrientationClick(){
-        var orientation = new NGL.Matrix4().fromArray(
+        stage.viewerControls.orient(
             JSON.parse( window.prompt( "Set orientation" ) )
         );
-        stage.viewerControls.setOrientation( orientation );
     }
 
     stage.signals.fullscreenChanged.add( function( isFullscreen ){

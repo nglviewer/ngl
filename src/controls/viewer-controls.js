@@ -30,6 +30,7 @@ const tmpP = new Vector3();
 const tmpS = new Vector3();
 
 const tmpScaleVector = new Vector3();
+const tmpOrientMatrix = new Matrix4();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
 const tmpCenterVector = new Vector3();
@@ -90,23 +91,6 @@ class ViewerControls{
     }
 
     /**
-     * set scene orientation
-     * @param {OrientationMatrix} orientation - scene orientation
-     * @return {undefined}
-     */
-    setOrientation( orientation ){
-
-        orientation.decompose( tmpP, tmpQ, tmpS )
-
-        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
-        this.viewer.translationGroup.position.copy( tmpP );
-        this.viewer.camera.position.z = -tmpS.z;
-
-        this.changed();
-
-    }
-
-    /**
      * get scene orientation
      * @param {Matrix4} optionalTarget - pre-allocated target matrix
      * @return {OrientationMatrix} scene orientation
@@ -121,6 +105,27 @@ class ViewerControls{
         m.setPosition( this.viewer.translationGroup.position );
 
         return m;
+
+    }
+
+    /**
+     * set scene orientation
+     * @param {OrientationMatrix} orientation - scene orientation
+     * @return {undefined}
+     */
+    orient( orientation ){
+
+        if( Array.isArray( orientation ) ){
+            orientation = tmpOrientMatrix.fromArray( orientation );
+        }
+
+        orientation.decompose( tmpP, tmpQ, tmpS )
+
+        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
+        this.viewer.translationGroup.position.copy( tmpP );
+        this.viewer.camera.position.z = -tmpS.z;
+
+        this.changed();
 
     }
 
