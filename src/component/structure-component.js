@@ -251,26 +251,7 @@ StructureComponent.prototype = Object.assign( Object.create(
         zoom = defaults( zoom, true );
 
         var center = this.getCenter( sele );
-
-        if( zoom ){
-
-            var bb;
-
-            if( sele ){
-                bb = this.structureView.getBoundingBox( new Selection( sele ) );
-            }else{
-                bb = this.structureView.boundingBox;
-            }
-
-            var bbSize = bb.size();
-            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
-
-            // zoom = bb.size().length();
-
-        }
+        if( zoom ) zoom = this.getZoom( sele );
 
         this.stage.centerView( zoom, center );
 
@@ -278,16 +259,26 @@ StructureComponent.prototype = Object.assign( Object.create(
 
     },
 
+    getZoom: function( sele ){
+
+        var bb;
+
+        if( sele ){
+            bb = this.structureView.getBoundingBox( new Selection( sele ) );
+        }else{
+            bb = this.structureView.boundingBox;
+        }
+
+        return this.stage.calculateOptimalZoom( bb );
+
+    },
+
     getCenter: function( sele ){
 
         if( sele ){
-
             return this.structure.atomCenter( new Selection( sele ) );
-
         }else{
-
             return this.structure.center;
-
         }
 
     },

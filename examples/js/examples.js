@@ -115,7 +115,10 @@ NGL.ExampleRegistry.addDict( {
                 color: "lightgreen"
             } );
             o.addRepresentation( "licorice", { sele: "*", scale: 1.0 } );
-            o.centerView();
+
+            var center = o.getCenter( "101" );
+            var zoom = o.getZoom( "101" );
+            stage.animationControls.zoomMove( center, zoom );
 
         } );
 
