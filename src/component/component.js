@@ -119,9 +119,7 @@ class Component{
 
     addBufferRepresentation( buffer, params ){
 
-        return Component.prototype.addRepresentation.call(
-            this, "buffer", buffer, params
-        );
+        return this.addRepresentation( "buffer", buffer, params );
 
     }
 

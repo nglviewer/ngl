@@ -49,9 +49,7 @@ class ShapeComponent extends Component{
      */
     addRepresentation( type, params ){
 
-        return Component.prototype.addRepresentation.call(
-            this, type, this.shape, params
-        );
+        return super.addRepresentation( type, this.shape, params );
 
     }
 
@@ -89,8 +87,7 @@ class ShapeComponent extends Component{
     dispose(){
 
         this.shape.dispose();
-
-        Component.prototype.dispose.call( this );
+        super.dispose();
 
     }
 
