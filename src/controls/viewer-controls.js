@@ -6,6 +6,7 @@
 
 
 import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
+import Signal from "../../lib/signals.es6.js";
 
 
 /**
@@ -38,6 +39,10 @@ class ViewerControls{
         this.stage = stage;
         this.viewer = stage.viewer;
 
+        this.signals = {
+            changed: new Signal()
+        }
+
     }
 
     /**
@@ -64,6 +69,13 @@ class ViewerControls{
 
     }
 
+    changed(){
+
+        this.viewer.requestRender();
+        this.signals.changed.dispatch();
+
+    }
+
     /**
      * set scene orientation
      * @param {OrientationMatrix} orientation - scene orientation
@@ -77,7 +89,7 @@ class ViewerControls{
         this.viewer.translationGroup.position.copy( tmpP );
         this.viewer.camera.position.z = -tmpS.z;
 
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -107,7 +119,7 @@ class ViewerControls{
     translate( vector ){
 
         this.viewer.translationGroup.position.add( vector );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -119,7 +131,7 @@ class ViewerControls{
     center( position ){
 
         this.viewer.translationGroup.position.copy( position ).negate();
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -143,7 +155,7 @@ class ViewerControls{
 
         this.viewer.camera.position.z = z;
         this.viewer.updateZoom();
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -159,7 +171,7 @@ class ViewerControls{
         tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
 
         this.viewer.rotationGroup.rotateOnAxis( tmpRotateVector, angle );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -171,7 +183,7 @@ class ViewerControls{
     rotate( quaternion ){
 
         this.viewer.rotationGroup.setRotationFromQuaternion( quaternion );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -185,7 +197,7 @@ class ViewerControls{
         tmpAlignMatrix.getInverse( basis );
 
         this.viewer.rotationGroup.setRotationFromMatrix( tmpAlignMatrix );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -197,7 +209,7 @@ class ViewerControls{
     applyMatrix( matrix ){
 
         this.viewer.rotationGroup.applyMatrix( matrix );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
