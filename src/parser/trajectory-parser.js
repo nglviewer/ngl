@@ -9,24 +9,20 @@ import Parser from "./parser.js";
 import Frames from "../trajectory/frames.js";
 
 
-function TrajectoryParser( streamer, params ){
+class TrajectoryParser extends Parser{
 
-    Parser.call( this, streamer, params );
+    constructor( streamer, params ){
 
-    this.frames = new Frames( this.name, this.path );
+        super( streamer, params );
+
+        this.frames = new Frames( this.name, this.path );
+
+    }
+
+    get type (){ return "trajectory"; }
+    get __objName(){ return "frames"; }
 
 }
-
-TrajectoryParser.prototype = Object.assign( Object.create(
-
-    Parser.prototype ), {
-
-    constructor: TrajectoryParser,
-    type: "trajectory",
-
-    __objName: "frames"
-
-} );
 
 
 export default TrajectoryParser;

@@ -14,20 +14,11 @@ import {
 import StructureParser from "./structure-parser.js";
 
 
-function Mol2Parser( streamer, params ){
+class Mol2Parser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "mol2"; }
 
-}
-
-Mol2Parser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: Mol2Parser,
-    type: "mol2",
-
-    _parse: function(){
+    _parse(){
 
         // http://www.tripos.com/data/support/mol2.pdf
 
@@ -237,7 +228,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "mol2", Mol2Parser );
 

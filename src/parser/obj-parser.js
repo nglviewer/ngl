@@ -429,22 +429,15 @@ OBJLoader.prototype = {
 };
 
 
-function ObjParser( streamer, params ){
+class ObjParser extends SurfaceParser{
 
-    SurfaceParser.call( this, streamer, params );
+    get type (){ return "obj"; }
 
-    this.loader = new OBJLoader();
+    getLoader(){
+        return new OBJLoader();
+    }
 
 }
-
-ObjParser.prototype = Object.assign( Object.create(
-
-    SurfaceParser.prototype ), {
-
-    constructor: ObjParser,
-    type: "obj"
-
-} );
 
 ParserRegistry.add( "obj", ObjParser );
 

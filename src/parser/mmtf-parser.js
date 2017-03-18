@@ -20,7 +20,7 @@ import Assembly from "../symmetry/assembly.js";
 import { decodeMsgpack, decodeMmtf } from "../../lib/mmtf.es6.js";
 
 
-var SstrucMap = {
+const SstrucMap = {
     "0": "i".charCodeAt( 0 ),  // pi helix
     "1": "s".charCodeAt( 0 ),  // bend
     "2": "h".charCodeAt( 0 ),  // alpha helix
@@ -33,20 +33,11 @@ var SstrucMap = {
 };
 
 
-function MmtfParser( streamer, params ){
+class MmtfParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "mmtf"; }
 
-}
-
-MmtfParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: MmtfParser,
-    type: "mmtf",
-
-    _parse: function(){
+    _parse(){
 
         // https://github.com/rcsb/mmtf
 
@@ -403,7 +394,7 @@ MmtfParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "mmtf", MmtfParser );
 

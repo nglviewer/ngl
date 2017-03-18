@@ -11,31 +11,27 @@ import Structure from "../structure/structure.js";
 import StructureBuilder from "../structure/structure-builder.js";
 
 
-function StructureParser( streamer, params ){
+class StructureParser extends Parser{
 
-    var p = params || {};
+    constructor( streamer, params ){
 
-    this.firstModelOnly = defaults( p.firstModelOnly, false );
-    this.asTrajectory = defaults( p.asTrajectory, false );
-    this.cAlphaOnly = defaults( p.cAlphaOnly, false );
+        var p = params || {};
 
-    Parser.call( this, streamer, p );
+        super( streamer, p );
 
-    this.structure = new Structure( this.name, this.path );
-    this.structureBuilder = new StructureBuilder( this.structure );
+        this.firstModelOnly = defaults( p.firstModelOnly, false );
+        this.asTrajectory = defaults( p.asTrajectory, false );
+        this.cAlphaOnly = defaults( p.cAlphaOnly, false );
+
+        this.structure = new Structure( this.name, this.path );
+        this.structureBuilder = new StructureBuilder( this.structure );
+
+    }
+
+    get type (){ return "structure"; }
+    get __objName(){ return "structure"; }
 
 }
-
-StructureParser.prototype = Object.assign( Object.create(
-
-    Parser.prototype ), {
-
-    constructor: StructureParser,
-    type: "structure",
-
-    __objName: "structure",
-
-} );
 
 
 export default StructureParser;
