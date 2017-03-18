@@ -54,21 +54,15 @@ function SurfaceRepresentation( surface, viewer, params ){
     this.box = new Box3();
     this.__box = new Box3();
 
-    this.setBox = ( function(){
-        var position = new Vector3();
-        return function setBox(){
-            var target = viewer.controls.target;
-            var group = viewer.rotationGroup.position;
-            position.copy( group ).negate().add( target );
-            if( !position.equals( this.boxCenter ) ){
-                this.setParameters( { "boxCenter": position } );
-            }
-        }.bind( this );
-    }.bind( this ) )();
+    this._position = new Vector3();
+    this.setBox = function setBox(){
+        this._position.copy( viewer.translationGroup.position ).negate();
+        if( !this._position.equals( this.boxCenter ) ){
+            this.setParameters( { "boxCenter": this._position } );
+        }
+    };
 
-    this.viewer.signals.orientationChanged.add(
-        this.setBox
-    );
+    this.viewer.signals.ticked.add( this.setBox, this );
 
     this.build();
 
@@ -349,9 +343,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        this.viewer.signals.orientationChanged.remove(
-            this.setBox
-        );
+        this.viewer.signals.ticked.remove( this.setBox, this );
 
         Representation.prototype.dispose.call( this );
 

@@ -11,20 +11,11 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 
 
-function XplorParser( streamer, params ){
+class XplorParser extends VolumeParser{
 
-    VolumeParser.call( this, streamer, params );
+    get type (){ return "xplor"; }
 
-}
-
-XplorParser.prototype = Object.assign( Object.create(
-
-    VolumeParser.prototype ), {
-
-    constructor: XplorParser,
-    type: "xplor",
-
-    _parse: function(){
+    _parse(){
 
         // http://hincklab.uthscsa.edu/html/soft_packs/msi_docs/insight980/xplor/formats.html
         // http://www.mrc-lmb.cam.ac.uk/public/xtal/doc/cns/cns_1.3/tutorial/formats/maps/text.html
@@ -107,9 +98,9 @@ XplorParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "XplorParser._parse " + this.name );
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         var h = this.volume.header;
 
@@ -174,7 +165,7 @@ XplorParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "xplor", XplorParser );
 ParserRegistry.add( "cns", XplorParser );

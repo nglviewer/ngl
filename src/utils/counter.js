@@ -21,33 +21,32 @@ import Signal from "../../lib/signals.es6.js";
 
 /**
  * Counter class for keeping track of counts
- * @class
  */
-function Counter(){
+class Counter{
 
-    /**
-     * The `count`
-     * @member {Integer}
-     */
-    this.count = 0;
+    constructor(){
 
-    this.signals = {
-        countChanged: new Signal(),
-    };
+        /**
+         * The `count`
+         * @member {Integer}
+         */
+        this.count = 0;
 
-}
+        this.signals = {
+            countChanged: new Signal(),
+        };
 
-Counter.prototype = {
+    }
 
     /**
      * Set the `count` to zero
      * @return {undefined}
      */
-    clear: function(){
+    clear(){
 
         this.change( -this.count );
 
-    },
+    }
 
     /**
      * Change the `count`
@@ -55,7 +54,7 @@ Counter.prototype = {
      * @param {Integer} delta - count change
      * @return {undefined}
      */
-    change: function( delta ){
+    change( delta ){
 
         this.count += delta;
         this.signals.countChanged.dispatch( delta, this.count );
@@ -64,27 +63,27 @@ Counter.prototype = {
             Log.warn( "Counter.count below zero", this.count );
         }
 
-    },
+    }
 
     /**
      * Increments the `count` by one.
      * @return {undefined}
      */
-    increment: function(){
+    increment(){
 
         this.change( 1 );
 
-    },
+    }
 
     /**
      * Decrements the `count` by one.
      * @return {undefined}
      */
-    decrement: function(){
+    decrement(){
 
         this.change( -1 );
 
-    },
+    }
 
     /**
      * Listen to another counter object and change this `count` by the
@@ -92,26 +91,26 @@ Counter.prototype = {
      * @param  {Counter} counter - the counter object to listen to
      * @return {undefined}
      */
-    listen: function( counter ){
+    listen( counter ){
 
         this.change( counter.count );
         counter.signals.countChanged.add( this.change, this );
 
-    },
+    }
 
     /**
      * Stop listening to the other counter object
      * @param  {Counter} counter - the counter object to stop listening to
      * @return {undefined}
      */
-    unlisten: function( counter ){
+    unlisten( counter ){
 
         var countChanged = counter.signals.countChanged;
         if( countChanged.has( this.change, this ) ){
             countChanged.remove( this.change, this );
         }
 
-    },
+    }
 
     /**
      * Invole the callback function once, when the `count` becomes zero
@@ -119,7 +118,7 @@ Counter.prototype = {
      * @param  {Object}   context - the context for the callback function
      * @return {undefined}
      */
-    onZeroOnce: function( callback, context ){
+    onZeroOnce( callback, context ){
 
         if( this.count === 0 ){
 
@@ -139,16 +138,16 @@ Counter.prototype = {
 
         }
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.clear();
         this.signals.countChanged.dispose();
 
     }
 
-};
+}
 
 
 export default Counter;

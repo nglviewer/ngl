@@ -11,52 +11,43 @@ import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-// position, color, radius, pickingColor
-function SphereGeometryBuffer( data, params ){
+const scale = new Vector3();
 
-    var p = params || {};
 
-    var detail = defaults( p.sphereDetail, 1 );
+class SphereGeometryBuffer extends GeometryBuffer{
 
-    this.geo = new IcosahedronGeometry( 1, detail );
-    this._radius = data.radius;
+    // position, color, radius, pickingColor
+    constructor( data, params ){
 
-    GeometryBuffer.call( this, data, p );
+        const p = params || {};
+        const detail = defaults( p.sphereDetail, 1 );
+        const geo = new IcosahedronGeometry( 1, detail );
 
-}
+        super( data, p, geo );
 
-SphereGeometryBuffer.prototype = Object.assign( Object.create(
+        this.setAttributes( data, true );
 
-    GeometryBuffer.prototype ), {
+    }
 
-    constructor: SphereGeometryBuffer,
+    applyPositionTransform( matrix, i ){
 
-    applyPositionTransform: function(){
+        const r = this._radius[ i ];
+        scale.set( r, r, r );
+        matrix.scale( scale );
 
-        var r;
-        var scale = new Vector3();
+    }
 
-        return function applyPositionTransform( matrix, i ){
-
-            r = this._radius[ i ];
-            scale.set( r, r, r );
-            matrix.scale( scale );
-
-        };
-
-    }(),
-
-    setAttributes: function( data ){
+    setAttributes( data, initNormals ){
 
         if( data.radius ){
             this._radius = data.radius;
         }
 
-        GeometryBuffer.prototype.setAttributes.call( this, data );
+        super.setAttributes( data, initNormals );
 
     }
 
-} );
+}
 
 
 export default SphereGeometryBuffer;

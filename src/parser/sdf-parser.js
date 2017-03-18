@@ -10,20 +10,11 @@ import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
-function SdfParser( streamer, params ){
+class SdfParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "sdf"; }
 
-}
-
-SdfParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: SdfParser,
-    type: "sdf",
-
-    _parse: function(){
+    _parse(){
 
         // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
         // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
@@ -164,15 +155,15 @@ SdfParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "SdfParser._parse " + this.name );
 
-    },
+    }
 
-    _postProcess: function(){
+    _postProcess(){
 
         assignResidueTypeBonds( this.structure );
 
     }
 
-} );
+}
 
 ParserRegistry.add( "sdf", SdfParser );
 

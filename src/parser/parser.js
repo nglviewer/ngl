@@ -9,25 +9,23 @@ import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 
 
-function Parser( streamer, params ){
+class Parser{
 
-    var p = params || {};
+    constructor( streamer, params ){
 
-    this.streamer = streamer;
+        var p = params || {};
 
-    this.name = defaults( p.name, "" );
-    this.path = defaults( p.path, "" );
+        this.streamer = streamer;
 
-}
+        this.name = defaults( p.name, "" );
+        this.path = defaults( p.path, "" );
 
-Parser.prototype = {
+    }
 
-    constructor: Parser,
-    type: "",
+    get type (){ return ""; }
+    get __objName (){ return ""; }
 
-    __objName: "",
-
-    parse: function(){
+    parse(){
 
         return this.streamer.read().then( () => {
 
@@ -38,19 +36,19 @@ Parser.prototype = {
 
         } );
 
-    },
+    }
 
-    _parse: function(){},
+    _parse(){}
 
-    _beforeParse: function(){},
+    _beforeParse(){}
 
-    _afterParse: function(){
+    _afterParse(){
 
         if( Debug ) Log.log( this[ this.__objName ] );
 
     }
 
-};
+}
 
 
 export default Parser;

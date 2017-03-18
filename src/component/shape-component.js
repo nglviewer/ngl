@@ -10,30 +10,24 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
-/**
- * Component wrapping a shape object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Shape} shape - shape object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function ShapeComponent( stage, shape, params ){
+class ShapeComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, shape.name );
+    /**
+     * Create component wrapping a shape object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Shape} shape - shape object to wrap
+     * @param {ComponentParameters} params - component parameters
+     */
+    constructor( stage, shape, params ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, shape.name );
 
-    this.shape = shape;
+        super( stage, p );
 
-}
+        this.shape = shape;
 
-ShapeComponent.prototype = Object.assign( Object.create(
-
-    Component.prototype ), {
-
-    constructor: ShapeComponent,
+    }
 
     /**
      * Component type
@@ -42,7 +36,7 @@ ShapeComponent.prototype = Object.assign( Object.create(
      * @type {String}
      * @default
      */
-    type: "shape",
+    get type(){ return "shape"; }
 
     /**
      * Add a new shape representation to the component
@@ -53,54 +47,32 @@ ShapeComponent.prototype = Object.assign( Object.create(
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, params ){
+    addRepresentation( type, params ){
 
-        return Component.prototype.addRepresentation.call(
-            this, type, this.shape, params
-        );
-
-    },
-
-    centerView: function( zoom ){
-
-        zoom = defaults( zoom, true );
-
-        var center = this.getCenter();
-
-        if( zoom ){
-
-            var bb = this.shape.boundingBox;
-            var bbSize = bb.size();
-            var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-            var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-            // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-            zoom = Math.max( 1, maxSize + ( minSize / 2 ) );  // object size
-
-            // zoom = bb.size().length();
-
-        }
-
-        this.stage.centerView( zoom, center );
-
-        return this;
-
-    },
-
-    getCenter: function(){
-
-        return this.shape.center;
-
-    },
-
-    dispose: function(){
-
-        this.shape.dispose();
-
-        Component.prototype.dispose.call( this );
+        return super.addRepresentation( type, this.shape, params );
 
     }
 
-} );
+    getBox(){
+
+        return this.shape.boundingBox;
+
+    }
+
+    getCenter(){
+
+        return this.shape.center;
+
+    }
+
+    dispose(){
+
+        this.shape.dispose();
+        super.dispose();
+
+    }
+
+}
 
 ComponentRegistry.add( "shape", ShapeComponent );
 

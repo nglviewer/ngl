@@ -8,41 +8,33 @@
 import Trajectory from "./trajectory.js";
 
 
-function FramesTrajectory( frames, structure, params ){
+class FramesTrajectory extends Trajectory{
 
-    Trajectory.call( this, "", structure, params );
+    constructor( frames, structure, params ){
 
-    this.name = frames.name;
-    this.path = frames.path;
+        super( "", structure, params );
 
-    this.frames = frames.coordinates;
-    this.boxes = frames.boxes;
+        this.name = frames.name;
+        this.path = frames.path;
 
-}
+        this.frames = frames.coordinates;
+        this.boxes = frames.boxes;
 
-FramesTrajectory.prototype = Object.assign( Object.create(
+    }
 
-    Trajectory.prototype ), {
+    get type (){ return "frames"; }
 
-    constructor: FramesTrajectory,
-
-    type: "frames",
-
-    makeAtomIndices:  function(){
+    makeAtomIndices(){
 
         if( this.structure.type === "StructureView" ){
-
             this.atomIndices = this.structure.getAtomIndices();
-
         }else{
-
             this.atomIndices = null;
-
         }
 
-    },
+    }
 
-    _loadFrame: function( i, callback ){
+    _loadFrame( i, callback ){
 
         var coords;
         var frame = this.frames[ i ];
@@ -82,19 +74,17 @@ FramesTrajectory.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    getNumframes: function(){
+    getNumframes(){
 
         if( this.frames ){
-
             this.setNumframes( this.frames.length );
-
         }
 
-    },
+    }
 
-    getPath: function( index, callback ){
+    getPath( index, callback ){
 
         var i, j, f;
         var n = this.numframes;
@@ -117,7 +107,7 @@ FramesTrajectory.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default FramesTrajectory;

@@ -94,7 +94,7 @@ class MoveAnimation extends Animation{
 
         this.controls.position.lerpVectors(
             this.moveFrom, this.moveTo, this.alpha ).negate();
-        this.controls.viewer.requestRender();
+        this.controls.changed();
 
     }
 
@@ -145,6 +145,10 @@ class RotateAnimation extends Animation{
 
 class AnimationControls{
 
+    /**
+     * create animation controls
+     * @param  {Stage} stage - the stage object
+     */
     constructor( stage ){
 
         this.stage = stage;
@@ -156,6 +160,11 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add an animation
+     * @param {Animation} animation - the animation
+     * @return {Animation} the animation
+     */
     add( animation ){
 
         this.animationList.push( animation );
@@ -164,6 +173,11 @@ class AnimationControls{
 
     }
 
+    /**
+     * Remove an animation
+     * @param {Animation} animation - the animation
+     * @return {undefined}
+     */
     remove( animation ){
 
         const list = this.animationList;
@@ -175,6 +189,11 @@ class AnimationControls{
 
     }
 
+    /**
+     * Run all animations
+     * @param  {Stats} stats - a viewer stats objects
+     * @return {undefined}
+     */
     run( stats ){
 
         const finishedList = this.finishedList;
@@ -199,6 +218,13 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add a spin animation
+     * @param  {Vector3} axis - axis to spin around
+     * @param  {Number} angle - amount to spin
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {SpinAnimation} the animation
+     */
     spin( axis, angle, duration ){
 
         return this.add(
@@ -207,6 +233,12 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add a rotate animation
+     * @param  {Quaternion} rotateTo - target rotation
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {RotateAnimation} the animation
+     */
     rotate( rotateTo, duration ){
 
         const rotateFrom = this.viewer.rotationGroup.quaternion.clone();
@@ -217,6 +249,12 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add a move animation
+     * @param  {Vector3} moveTo - target position
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {MoveAnimation} the animation
+     */
     move( moveTo, duration ){
 
         const moveFrom = this.controls.position.clone().negate();
@@ -227,6 +265,12 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add a zoom animation
+     * @param  {Number} zoomTo - target distance
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {ZoomAnimation} the animation
+     */
     zoom( zoomTo, duration ){
 
         const zoomFrom = this.viewer.camera.position.z;
@@ -237,6 +281,13 @@ class AnimationControls{
 
     }
 
+    /**
+     * Add a zoom and a move animation
+     * @param  {Vector3} moveTo - target position
+     * @param  {Number} zoomTo - target distance
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {Array} the animations
+     */
     zoomMove( moveTo, zoomTo, duration ){
 
         return [
@@ -246,19 +297,19 @@ class AnimationControls{
 
     }
 
-    autoZoomMove( duration ){
+    /**
+     * Clear all animations
+     * @return {undefined}
+     */
+    clear(){
 
-        return this.zoomMove(
-            this.viewer.boundingBox.center(),
-            this.stage.getOptimalZoom(),
-            duration
-        );
+        this.animationList.length = 0;
 
     }
 
     dispose(){
 
-        this.animationList.length = 0;
+        this.clear();
 
     }
 

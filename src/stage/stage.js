@@ -160,7 +160,6 @@ class Stage{
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
-            orientationChanged: new Signal(),
 
             componentAdded: new Signal(),
             componentRemoved: new Signal(),
@@ -197,6 +196,9 @@ class Stage{
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
+        /**
+         * @member {AnimationControls}
+         */
         this.animationControls = new AnimationControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
@@ -204,8 +206,6 @@ class Stage{
         this.animationBehavior = new AnimationBehavior( this );
 
         this.spinAnimation = this.animationControls.spin( null );
-
-        this.viewer.controls = this.viewerControls;
 
         var p = Object.assign( {
             impostor: true,
@@ -479,7 +479,7 @@ class Stage{
 
             }
 
-            this.centerView();
+            this.autoView();
 
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
@@ -487,7 +487,7 @@ class Stage{
         }else if( object.type === "surface" || object.type === "volume" ){
 
             object.addRepresentation( "surface" );
-            this.centerView();
+            this.autoView();
 
         }
 
@@ -758,33 +758,6 @@ class Stage{
     }
 
     /**
-     * Center the whole scene
-     * @param  {Boolean} [zoom] - flag for automatic zoom
-     * @param  {Vector3} [position] - where to center
-     * @return {undefined}
-     */
-    centerView( zoom, position ){
-
-        zoom = defaults( zoom, true );
-
-        if( this.tasks.count > 0 ){
-
-            var centerFn = function( delta, count ){
-                if( count === 0 ){
-                    this.tasks.signals.countChanged.remove( centerFn, this );
-                }
-                this.viewerControls.centerView( zoom, position );
-            };
-
-            this.tasks.signals.countChanged.add( centerFn, this );
-
-        }
-
-        this.viewerControls.centerView( zoom, position );
-
-    }
-
-    /**
      * Spin the whole scene around an axis at the center
      * @example
      * stage.setSpin( [ 0, 1, 0 ], 0.01 );
@@ -804,7 +777,7 @@ class Stage{
 
     }
 
-    calculateOptimalZoom( boundingBox ){
+    getZoomForBox( boundingBox ){
 
         const bbSize = boundingBox.size( tmpZoomVector );
         const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
@@ -825,9 +798,36 @@ class Stage{
 
     }
 
-    getOptimalZoom(){
+    getBox(){
 
-        return this.calculateOptimalZoom( this.viewer.boundingBox );
+        return this.viewer.boundingBox;
+
+    }
+
+    getZoom(){
+
+        return this.getZoomForBox( this.getBox() );
+
+    }
+
+    getCenter(){
+
+        return this.getBox().center();
+
+    }
+
+    /**
+     * Add a zoom and a move animation with automatic targets
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {undefined}
+     */
+    autoView( duration ){
+
+        this.animationControls.zoomMove(
+            this.getCenter(),
+            this.getZoom(),
+            defaults( duration, 0 )
+        );
 
     }
 

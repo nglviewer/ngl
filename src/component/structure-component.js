@@ -15,6 +15,11 @@ import StructureView from "../structure/structure-view.js";
 import { superpose } from "../align/align-utils.js";
 
 
+const SignalNames = [
+    "trajectoryAdded", "trajectoryRemoved", "defaultAssemblyChanged"
+];
+
+
 /**
  * {@link Signal}, dispatched when the default assembly is changed
  * @example
@@ -24,41 +29,35 @@ import { superpose } from "../align/align-utils.js";
  */
 
 
-/**
- * Component wrapping a Structure object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Structure} structure - structure object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function StructureComponent( stage, structure, params ){
-
-    var p = params || {};
-    p.name = defaults( p.name, structure.name );
-
-    Component.call( this, stage, p );
+class StructureComponent extends Component{
 
     /**
-     * The wrapped structure
-     * @alias StructureComponent#structure
-     * @member {Structure}
+     * Create component wrapping a structure object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Structure} structure - structure object to wrap
+     * @param {ComponentParameters} params - component parameters
      */
-    this.structure = structure;
+    constructor( stage, structure, params ){
 
-    this.trajList = [];
-    this.initSelection( p.sele );
-    this.setDefaultAssembly( p.assembly || "" );
+        var p = params || {};
+        p.name = defaults( p.name, structure.name );
 
-    this.stage.gidPool.addObject( this.structure );
+        super( stage, p );
 
-}
+        /**
+         * The wrapped structure
+         * @alias StructureComponent#structure
+         * @member {Structure}
+         */
+        this.structure = structure;
 
-StructureComponent.prototype = Object.assign( Object.create(
+        this.trajList = [];
+        this.initSelection( p.sele );
+        this.setDefaultAssembly( p.assembly || "" );
 
-    Component.prototype ), {
+        this.stage.gidPool.addObject( this.structure );
 
-    constructor: StructureComponent,
+    }
 
     /**
      * Component type
@@ -67,15 +66,11 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @type {String}
      * @default
      */
-    type: "structure",
+    get type(){ return "structure"; }
 
-    signals: Object.assign( {
-
-        trajectoryAdded: null,
-        trajectoryRemoved: null,
-        defaultAssemblyChanged: null
-
-    }, Component.prototype.signals ),
+    get _signalNames(){
+        return super._signalNames.concat( SignalNames );
+    }
 
     /**
      * Initialize selection
@@ -83,7 +78,7 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @param {String} sele - selection string
      * @return {undefined}
      */
-    initSelection: function( sele ){
+    initSelection( sele ){
 
         /**
          * Selection for {@link StructureComponent#structureView}
@@ -103,16 +98,16 @@ StructureComponent.prototype = Object.assign( Object.create(
             this.structure, this.selection
         );
 
-        this.selection.signals.stringChanged.add( function( /*string*/ ){
+        this.selection.signals.stringChanged.add( () => {
 
             this.structureView.setSelection( this.selection );
 
             this.rebuildRepresentations();
             this.rebuildTrajectories();
 
-        }, this );
+        } );
 
-    },
+    }
 
     /**
      * Set selection of {@link StructureComponent#structureView}
@@ -120,13 +115,13 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @param {String} string - selection string
      * @return {StructureComponent} this object
      */
-    setSelection: function( string ){
+    setSelection( string ){
 
         this.selection.setString( string );
 
         return this;
 
-    },
+    }
 
     /**
      * Set the default assembly
@@ -135,41 +130,41 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @param {String} value - assembly name
      * @return {undefined}
      */
-    setDefaultAssembly: function( value ){
+    setDefaultAssembly( value ){
 
         this.defaultAssembly = value;
-        this.reprList.forEach( function( repr ){
+        this.reprList.forEach( repr => {
             repr.setParameters( { defaultAssembly: this.defaultAssembly } );
-        }, this );
+        } );
         this.signals.defaultAssemblyChanged.dispatch( value );
 
-    },
+    }
 
     /**
      * Rebuild all representations
      * @alias StructureComponent#rebuildRepresentations
      * @return {undefined}
      */
-    rebuildRepresentations: function(){
+    rebuildRepresentations(){
 
-        this.reprList.forEach( function( repr ){
+        this.reprList.forEach( repr => {
             repr.build();
         } );
 
-    },
+    }
 
     /**
      * Rebuild all trajectories
      * @alias StructureComponent#rebuildTrajectories
      * @return {undefined}
      */
-    rebuildTrajectories: function(){
+    rebuildTrajectories(){
 
-        this.trajList.slice().forEach( function( trajComp ){
+        this.trajList.slice().forEach( trajComp => {
             trajComp.trajectory.setStructure( this.structureView );
-        }, this );
+        } );
 
-    },
+    }
 
     /**
      * Add a new structure representation to the component
@@ -184,16 +179,14 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation: function( type, params ){
+    addRepresentation( type, params ){
 
         var p = params || {};
         p.defaultAssembly = this.defaultAssembly;
 
-        return Component.prototype.addRepresentation.call(
-            this, type, this.structureView, p
-        );
+        return super.addRepresentation( type, this.structureView, p );
 
-    },
+    }
 
     /**
      * Add a new trajectory component to the structure
@@ -201,13 +194,13 @@ StructureComponent.prototype = Object.assign( Object.create(
      * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
      * @return {TrajectoryComponent} the created trajectory component object
      */
-    addTrajectory: function( trajPath, params ){
+    addTrajectory( trajPath, params ){
 
         var traj = makeTrajectory( trajPath, this.structureView, params );
 
-        traj.signals.frameChanged.add( function(){
+        traj.signals.frameChanged.add( () => {
             this.updateRepresentations( { "position": true } );
-        }, this );
+        } );
 
         var trajComp = new TrajectoryComponent( this.stage, traj, params, this );
         this.trajList.push( trajComp );
@@ -215,9 +208,9 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         return trajComp;
 
-    },
+    }
 
-    removeTrajectory: function( traj ){
+    removeTrajectory( traj ){
 
         var idx = this.trajList.indexOf( traj );
         if( idx !== -1 ){
@@ -228,38 +221,40 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         this.signals.trajectoryRemoved.dispatch( traj );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.stage.gidPool.removeObject( this.structure );
 
         // copy via .slice because side effects may change trajList
-        this.trajList.slice().forEach( function( traj ){
+        this.trajList.slice().forEach( traj => {
             traj.dispose();
         } );
 
         this.trajList.length = 0;
         this.structure.dispose();
 
-        Component.prototype.dispose.call( this );
+        super.dispose();
 
-    },
+    }
 
-    centerView: function( zoom, sele ){
+    autoView( sele, duration ){
 
-        zoom = defaults( zoom, true );
+        if( Number.isInteger( sele ) ){
+            duration = sele;
+            sele = undefined;
+        }
 
-        var center = this.getCenter( sele );
-        if( zoom ) zoom = this.getZoom( sele );
+        this.stage.animationControls.zoomMove(
+            this.getCenter( sele ),
+            this.getZoom( sele ),
+            defaults( duration, 0 )
+        );
 
-        this.stage.centerView( zoom, center );
+    }
 
-        return this;
-
-    },
-
-    getZoom: function( sele ){
+    getBox( sele ){
 
         var bb;
 
@@ -269,11 +264,11 @@ StructureComponent.prototype = Object.assign( Object.create(
             bb = this.structureView.boundingBox;
         }
 
-        return this.stage.calculateOptimalZoom( bb );
+        return bb;
 
-    },
+    }
 
-    getCenter: function( sele ){
+    getCenter( sele ){
 
         if( sele ){
             return this.structure.atomCenter( new Selection( sele ) );
@@ -281,9 +276,9 @@ StructureComponent.prototype = Object.assign( Object.create(
             return this.structure.center;
         }
 
-    },
+    }
 
-    superpose: function( component, align, sele1, sele2 ){
+    superpose( component, align, sele1, sele2 ){
 
         superpose(
             this.structureView, component.structureView, align, sele1, sele2
@@ -293,24 +288,22 @@ StructureComponent.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    setVisibility: function( value ){
+    setVisibility( value ){
 
-        Component.prototype.setVisibility.call( this, value );
+        super.setVisibility( value );
 
-        this.trajList.forEach( function( traj ){
-
+        this.trajList.forEach( traj => {
             // FIXME ???
             traj.setVisibility( value );
-
         } );
 
         return this;
 
-    },
+    }
 
-} );
+}
 
 ComponentRegistry.add( "structure", StructureComponent );
 

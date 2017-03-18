@@ -12,20 +12,11 @@ import { degToRad } from "../math/math-utils.js";
 import VolumeParser from "./volume-parser.js";
 
 
-function Dsn6Parser( streamer, params ){
+class Dsn6Parser extends VolumeParser{
 
-    VolumeParser.call( this, streamer, params );
+    get type (){ return "dsn6"; }
 
-}
-
-Dsn6Parser.prototype = Object.assign( Object.create(
-
-    VolumeParser.prototype ), {
-
-    constructor: Dsn6Parser,
-    type: "dsn6",
-
-    _parse: function(){
+    _parse(){
 
         // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
         // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
@@ -157,9 +148,9 @@ Dsn6Parser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "Dsn6Parser._parse " + this.name );
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         var h = this.volume.header;
 
@@ -232,7 +223,7 @@ Dsn6Parser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "dsn6", Dsn6Parser );
 ParserRegistry.add( "brix", Dsn6Parser );

@@ -9,25 +9,21 @@ import Parser from "./parser.js";
 import Surface from "../surface/surface.js";
 
 
-function SurfaceParser( streamer, params ){
+class SurfaceParser extends Parser{
 
-    Parser.call( this, streamer, params );
+    constructor( streamer, params ){
 
-    this.loader = undefined;
-    this.surface = new Surface( this.name, this.path );
+        super( streamer, params );
 
-}
+        this.loader = this.getLoader();
+        this.surface = new Surface( this.name, this.path );
 
-SurfaceParser.prototype = Object.assign( Object.create(
+    }
 
-    Parser.prototype ), {
+    get type (){ return "surface"; }
+    get __objName (){ return "surface"; }
 
-    constructor: SurfaceParser,
-    type: "surface",
-
-    __objName: "surface",
-
-    _parse: function(){
+    _parse(){
 
         var geometry = this.loader.parse( this.streamer.asText() );
 
@@ -35,7 +31,7 @@ SurfaceParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default SurfaceParser;

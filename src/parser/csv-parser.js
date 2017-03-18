@@ -9,29 +9,25 @@ import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
- function CsvParser( streamer, params ){
+class CsvParser extends Parser{
 
-    Parser.call( this, streamer, params );
+    constructor( streamer, params ){
 
-    this.table = {
-        name: this.name,
-        path: this.path,
-        colNames: [],
-        data: []
-    };
+        super( streamer, params );
 
-}
+        this.table = {
+            name: this.name,
+            path: this.path,
+            colNames: [],
+            data: []
+        };
 
-CsvParser.prototype = Object.assign( Object.create(
+    }
 
-    Parser.prototype ), {
+    get type (){ return "csv"; }
+    get __objName(){ return "table"; }
 
-    constructor: CsvParser,
-    type: "csv",
-
-    __objName: "table",
-
-    _parse: function(){
+    _parse(){
 
         var data = this.table.data;
         var reDelimiter = /\s*,\s*/;
@@ -61,7 +57,7 @@ CsvParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "csv", CsvParser );
 

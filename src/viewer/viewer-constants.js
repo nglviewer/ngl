@@ -10,64 +10,46 @@ import { Debug } from "../globals.js";
 
 if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
 
+    const wrcp = WebGLRenderingContext.prototype;
+
     // wrap WebGL debug function used by three.js and
     // ignore calls to them when the debug flag is not set
 
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
+    const _getShaderParameter = wrcp.getShaderParameter;
+    wrcp.getShaderParameter = function getShaderParameter(){
+        if( Debug ){
+            return _getShaderParameter.apply( this, arguments );
+        }else{
+            return true;
+        }
+    };
 
-        const _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
+    const _getShaderInfoLog = wrcp.getShaderInfoLog;
+    wrcp.getShaderInfoLog = function getShaderInfoLog(){
+        if( Debug ){
+            return _getShaderInfoLog.apply( this, arguments );
+        }else{
+            return '';
+        }
+    };
 
-        return function getShaderParameter(){
-            if( Debug ){
-                return _getShaderParameter.apply( this, arguments );
-            }else{
-                return true;
-            }
-        };
+    const _getProgramParameter = wrcp.getProgramParameter;
+    wrcp.getProgramParameter = function getProgramParameter( program, pname ){
+        if( Debug || pname !== wrcp.LINK_STATUS ){
+            return _getProgramParameter.apply( this, arguments );
+        }else{
+            return true;
+        }
+    };
 
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        const _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function getShaderInfoLog(){
-            if( Debug ){
-                return _getShaderInfoLog.apply( this, arguments );
-            }else{
-                return '';
-            }
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        const _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function getProgramParameter( program, pname ){
-            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
-                return _getProgramParameter.apply( this, arguments );
-            }else{
-                return true;
-            }
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        const _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function getProgramInfoLog(){
-            if( Debug ){
-                return _getProgramInfoLog.apply( this, arguments );
-            }else{
-                return '';
-            }
-        };
-
-    }();
+    const _getProgramInfoLog = wrcp.getProgramInfoLog;
+    wrcp.getProgramInfoLog = function getProgramInfoLog(){
+        if( Debug ){
+            return _getProgramInfoLog.apply( this, arguments );
+        }else{
+            return '';
+        }
+    };
 
 }
 

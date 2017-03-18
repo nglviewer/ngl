@@ -10,20 +10,11 @@ import { uint8ToLines } from "../utils.js";
 import DxParser from "./dx-parser.js";
 
 
-function DxbinParser( streamer, params ){
+class DxbinParser extends DxParser{
 
-    DxParser.call( this, streamer, params );
+    get type (){ return "dxbin"; }
 
-}
-
-DxbinParser.prototype = Object.assign( Object.create(
-
-    DxParser.prototype ), {
-
-    constructor: DxbinParser,
-    type: "dxbin",
-
-    _parse: function(){
+    _parse(){
 
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
@@ -53,7 +44,7 @@ DxbinParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "dxbin", DxbinParser );
 

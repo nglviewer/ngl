@@ -20,7 +20,7 @@ import {
 
 
 // PDB helix record encoding
-var HelixTypes = {
+const HelixTypes = {
     1: "h",  // Right-handed alpha (default)
     2: "h",  // Right-handed omega
     3: "i",  // Right-handed pi
@@ -35,20 +35,11 @@ var HelixTypes = {
 };
 
 
-function PdbParser( streamer, params ){
+class PdbParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "pdb"; }
 
-}
-
-PdbParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: PdbParser,
-    type: "pdb",
-
-    _parse: function(){
+    _parse(){
 
         // http://www.wwpdb.org/documentation/file-format.php
 
@@ -660,7 +651,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "pdb", PdbParser );
 ParserRegistry.add( "pdb1", PdbParser );

@@ -11,23 +11,14 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 
 
-function CubeParser( streamer, params ){
+// @author Johanna Tiemann <johanna.tiemann@googlemail.com>
+// @author Alexander Rose <alexander.rose@weirdbyte.de>
 
-    // @author Johanna Tiemann <johanna.tiemann@googlemail.com>
-    // @author Alexander Rose <alexander.rose@weirdbyte.de>
+class CubeParser extends VolumeParser{
 
-    VolumeParser.call( this, streamer, params );
+    get type (){ return "cube"; }
 
-}
-
-CubeParser.prototype = Object.assign( Object.create(
-
-    VolumeParser.prototype ), {
-
-    constructor: CubeParser,
-    type: "cube",
-
-    _parse: function(){
+    _parse(){
 
         // http://paulbourke.net/dataformats/cube/
 
@@ -98,9 +89,9 @@ CubeParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "CubeParser._parse " + this.name );
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         var h = this.volume.header;
         var matrix = new Matrix4();
@@ -123,7 +114,7 @@ CubeParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "cub", CubeParser );
 ParserRegistry.add( "cube", CubeParser );

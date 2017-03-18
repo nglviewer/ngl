@@ -8,21 +8,11 @@
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function SurfaceBuffer(){
+class SurfaceBuffer extends MeshBuffer{
 
-    MeshBuffer.apply( this, arguments );
+	get type (){ return "surface"; }
 
 }
-
-SurfaceBuffer.prototype = Object.assign( Object.create(
-
-    MeshBuffer.prototype ), {
-
-    constructor: SurfaceBuffer,
-
-    type: "surface"
-
-} );
 
 
 export default SurfaceBuffer;

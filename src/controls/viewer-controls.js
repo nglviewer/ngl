@@ -6,6 +6,7 @@
 
 
 import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
+import Signal from "../../lib/signals.es6.js";
 
 
 /**
@@ -16,14 +17,22 @@ import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
  */
 
 
+/**
+ * {@link Signal}, dispatched when viewer controls change
+ * @example
+ * viewerControls.signals.changed.add( function(){ ... } );
+ * @event ViewerControls#changed
+ */
+
+
 const tmpQ = new Quaternion();
 const tmpP = new Vector3();
 const tmpS = new Vector3();
 
 const tmpScaleVector = new Vector3();
+const tmpOrientMatrix = new Matrix4();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
-const tmpCenterVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
 
@@ -37,6 +46,10 @@ class ViewerControls{
 
         this.stage = stage;
         this.viewer = stage.viewer;
+
+        this.signals = {
+            changed: new Signal()
+        };
 
     }
 
@@ -65,19 +78,14 @@ class ViewerControls{
     }
 
     /**
-     * set scene orientation
-     * @param {OrientationMatrix} orientation - scene orientation
+     * Trigger render and emit changed event
+     * @fires ViewerControls#changed
      * @return {undefined}
      */
-    setOrientation( orientation ){
-
-        orientation.decompose( tmpP, tmpQ, tmpS )
-
-        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
-        this.viewer.translationGroup.position.copy( tmpP );
-        this.viewer.camera.position.z = -tmpS.z;
+    changed(){
 
         this.viewer.requestRender();
+        this.signals.changed.dispatch();
 
     }
 
@@ -100,6 +108,27 @@ class ViewerControls{
     }
 
     /**
+     * set scene orientation
+     * @param {OrientationMatrix} orientation - scene orientation
+     * @return {undefined}
+     */
+    orient( orientation ){
+
+        if( Array.isArray( orientation ) ){
+            orientation = tmpOrientMatrix.fromArray( orientation );
+        }
+
+        orientation.decompose( tmpP, tmpQ, tmpS )
+
+        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
+        this.viewer.translationGroup.position.copy( tmpP );
+        this.viewer.camera.position.z = -tmpS.z;
+
+        this.changed();
+
+    }
+
+    /**
      * translate scene
      * @param  {Vector3} vector - translation vector
      * @return {undefined}
@@ -107,7 +136,7 @@ class ViewerControls{
     translate( vector ){
 
         this.viewer.translationGroup.position.add( vector );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -119,7 +148,7 @@ class ViewerControls{
     center( position ){
 
         this.viewer.translationGroup.position.copy( position ).negate();
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -143,7 +172,7 @@ class ViewerControls{
 
         this.viewer.camera.position.z = z;
         this.viewer.updateZoom();
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -159,7 +188,7 @@ class ViewerControls{
         tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
 
         this.viewer.rotationGroup.rotateOnAxis( tmpRotateVector, angle );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -171,7 +200,7 @@ class ViewerControls{
     rotate( quaternion ){
 
         this.viewer.rotationGroup.setRotationFromQuaternion( quaternion );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -185,7 +214,7 @@ class ViewerControls{
         tmpAlignMatrix.getInverse( basis );
 
         this.viewer.rotationGroup.setRotationFromMatrix( tmpAlignMatrix );
-        this.viewer.requestRender();
+        this.changed();
 
     }
 
@@ -197,62 +226,7 @@ class ViewerControls{
     applyMatrix( matrix ){
 
         this.viewer.rotationGroup.applyMatrix( matrix );
-        this.viewer.requestRender();
-
-    }
-
-    /**
-     * auto-center scene
-     * @return {undefined}
-     */
-    centerScene(){
-
-        if( !this.viewer.boundingBox.isEmpty() ){
-            this.center( this.viewer.boundingBox.center( tmpCenterVector ) );
-        }
-
-    }
-
-    /**
-     * auto-zoom scene
-     * @return {undefined}
-     */
-    zoomScene(){
-
-        this.distance( this.stage.getOptimalZoom() );
-
-    }
-
-    /**
-     * apply scene center-view
-     * @param  {Boolean} zoom - flag to indicate auto-zoom
-     * @param  {Vector3} position - center position
-     * @return {undefined}
-     */
-    centerView( zoom, position ){
-
-        if( position === undefined ){
-            this.centerScene();
-        }else{
-            this.center( position );
-        }
-        if( zoom ){
-            this.zoomScene();
-        }
-
-    }
-
-    /**
-     * apply scene align-view
-     * @param  {Matrix4} basis - basis matrix
-     * @param  {Vector3} position - center position
-     * @param  {Boolean} zoom - flag to indicate auto-zoom
-     * @return {undefined}
-     */
-    alignView( basis, position, zoom ){
-
-        this.align( basis );
-        this.centerView( zoom, position );
+        this.changed();
 
     }
 

@@ -6,26 +6,16 @@
 
 
 import { ParserRegistry } from "../globals.js";
-import StructureParser from "./structure-parser.js";
 import PdbParser from "./pdb-parser.js";
 
 
-function PqrParser( streamer, params ){
+// http://www.poissonboltzmann.org/docs/file-format-info/
 
-    StructureParser.call( this, streamer, params );
+class PqrParser extends PdbParser{
 
-    // http://www.poissonboltzmann.org/docs/file-format-info/
+    get type (){ return "pqr"; }
 
 }
-
-PqrParser.prototype = Object.assign( Object.create(
-
-    PdbParser.prototype ), {
-
-    constructor: PqrParser,
-    type: "pqr",
-
-} );
 
 ParserRegistry.add( "pqr", PqrParser );
 

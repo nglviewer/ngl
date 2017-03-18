@@ -11,20 +11,11 @@ import { Debug, Log, ParserRegistry } from "../globals.js";
 import VolumeParser from "./volume-parser.js";
 
 
-function MrcParser( streamer, params ){
+class MrcParser extends VolumeParser{
 
-    VolumeParser.call( this, streamer, params );
+    get type (){ return "mrc"; }
 
-}
-
-MrcParser.prototype = Object.assign( Object.create(
-
-    VolumeParser.prototype ), {
-
-    constructor: MrcParser,
-    type: "mrc",
-
-    _parse: function(){
+    _parse(){
 
         // MRC
         // http://ami.scripps.edu/software/mrctools/mrc_specification.php
@@ -199,9 +190,9 @@ MrcParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "MrcParser._parse " + this.name );
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         var h = this.volume.header;
 
@@ -270,7 +261,7 @@ MrcParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "mrc", MrcParser );
 ParserRegistry.add( "ccp4", MrcParser );

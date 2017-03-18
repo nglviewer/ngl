@@ -20,10 +20,10 @@ import {
 } from "../structure/structure-utils.js";
 
 
-var reWhitespace = /\s+/;
-var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
-var reDoubleQuote = /"/g;
-var reTrimQuotes = /^['"]+|['"]+$/g;
+const reWhitespace = /\s+/;
+const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
+const reDoubleQuote = /"/g;
+const reTrimQuotes = /^['"]+|['"]+$/g;
 
 
 function ensureArray( dict, field ){
@@ -669,20 +669,11 @@ function processEntities( cif, structure, chainIndexDict ){
 //
 
 
-function CifParser( streamer, params ){
+class CifParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "cif"; }
 
-}
-
-CifParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: CifParser,
-    type: "cif",
-
-    _parse: function(){
+    _parse(){
 
         // http://mmcif.wwpdb.org/
 
@@ -1175,7 +1166,7 @@ CifParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "cif", CifParser );
 ParserRegistry.add( "mcif", CifParser );

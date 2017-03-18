@@ -8,31 +8,21 @@
 import Collection from "./collection.js";
 
 
-function RepresentationCollection( reprList ){
+class RepresentationCollection extends Collection{
 
-    Collection.call( this, reprList );
-
-}
-
-RepresentationCollection.prototype = Object.assign( Object.create(
-
-    Collection.prototype ), {
-
-    constructor: RepresentationCollection,
-
-    setParameters: function( params ){
+    setParameters( params ){
 
         return this._invoke( "setParameters", [ params ] );
 
-    },
+    }
 
-    setColor: function( color ){
+    setColor( color ){
 
         return this._invoke( "setColor", [ color ] );
 
     }
 
-} );
+}
 
 
 export default RepresentationCollection;

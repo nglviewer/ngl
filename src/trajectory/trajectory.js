@@ -12,6 +12,7 @@ import { Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import Queue from "../utils/queue.js";
 import { circularMean } from "../math/array-utils.js";
+import { lerp, spline } from "../math/math-utils.js";
 import Selection from "../selection.js";
 import Superposition from "../align/superposition.js";
 
@@ -103,48 +104,46 @@ function removePbc( x, box ){
  * @param {Structure} structure - the structure object
  * @param {TrajectoryParameters} params - trajectory parameters
  */
-function Trajectory( trajPath, structure, params ){
+class Trajectory{
 
-    this.signals = {
-        gotNumframes: new Signal(),
-        frameChanged: new Signal(),
-        selectionChanged: new Signal(),
-        playerChanged: new Signal(),
-    };
+    constructor( trajPath, structure, params ){
 
-    var p = params || {};
-    p.centerPbc = defaults( p.centerPbc, true );
-    p.removePbc = defaults( p.removePbc, true );
-    p.superpose = defaults( p.superpose, true );
-    this.setParameters( p );
+        this.signals = {
+            gotNumframes: new Signal(),
+            frameChanged: new Signal(),
+            selectionChanged: new Signal(),
+            playerChanged: new Signal(),
+        };
 
-    this.name = trajPath.replace( /^.*[\\\/]/, '' );
+        var p = params || {};
+        p.centerPbc = defaults( p.centerPbc, true );
+        p.removePbc = defaults( p.removePbc, true );
+        p.superpose = defaults( p.superpose, true );
+        this.setParameters( p );
 
-    // selection to restrict atoms used for superposition
-    this.selection = new Selection(
-        defaults( p.sele, "backbone and not hydrogen" )
-    );
+        this.name = trajPath.replace( /^.*[\\\/]/, '' );
 
-    this.selection.signals.stringChanged.add( function(){
-        this.makeIndices();
-        this.resetCache();
-    }, this );
+        // selection to restrict atoms used for superposition
+        this.selection = new Selection(
+            defaults( p.sele, "backbone and not hydrogen" )
+        );
 
-    // should come after this.selection is set
-    this.setStructure( structure );
+        this.selection.signals.stringChanged.add( function(){
+            this.makeIndices();
+            this.resetCache();
+        }, this );
 
-    this.trajPath = trajPath;
+        // should come after this.selection is set
+        this.setStructure( structure );
 
-    this.numframes = undefined;
-    this.getNumframes();
+        this.trajPath = trajPath;
 
-}
+        this.numframes = undefined;
+        this.getNumframes();
 
-Trajectory.prototype = {
+    }
 
-    constructor: Trajectory,
-
-    setStructure: function( structure ){
+    setStructure( structure ){
 
         this.structure = structure;
         this.atomCount = structure.atomCount;
@@ -164,9 +163,9 @@ Trajectory.prototype = {
         this.frameCacheSize = 0;
         this.currentFrame = -1;
 
-    },
+    }
 
-    saveInitialStructure: function(){
+    saveInitialStructure(){
 
         var i = 0;
         var initialStructure = new Float32Array( 3 * this.atomCount );
@@ -183,17 +182,17 @@ Trajectory.prototype = {
 
         this.initialStructure = initialStructure;
 
-    },
+    }
 
-    setSelection: function( string ){
+    setSelection( string ){
 
         this.selection.setString( string );
 
         return this;
 
-    },
+    }
 
-    getIndices: function( selection ){
+    getIndices( selection ){
 
         var indices;
 
@@ -218,9 +217,9 @@ Trajectory.prototype = {
 
         return indices;
 
-    },
+    }
 
-    makeIndices: function(){
+    makeIndices(){
 
         // indices to restrict atoms used for superposition
         this.indices = this.getIndices( this.selection );
@@ -244,21 +243,21 @@ Trajectory.prototype = {
 
         }
 
-    },
+    }
 
-    makeAtomIndices: function(){
+    makeAtomIndices(){
 
         Log.error( "Trajectory.makeAtomIndices not implemented" );
 
-    },
+    }
 
-    getNumframes: function(){
+    getNumframes(){
 
         Log.error( "Trajectory.loadFrame not implemented" );
 
-    },
+    }
 
-    resetCache: function(){
+    resetCache(){
 
         this.frameCache = [];
         this.boxCache = [];
@@ -268,9 +267,9 @@ Trajectory.prototype = {
 
         return this;
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var p = params;
         var resetCache = false;
@@ -292,9 +291,9 @@ Trajectory.prototype = {
 
         if( resetCache ) this.resetCache();
 
-    },
+    }
 
-    setFrame: function( i, callback ){
+    setFrame( i, callback ){
 
         if( i === undefined ) return this;
 
@@ -318,85 +317,62 @@ Trajectory.prototype = {
 
         return this;
 
-    },
+    }
 
-    interpolate: function(){
+    interpolate( i, ip, ipp, ippp, t, type, callback ){
 
-        var spline = function( p0, p1, p2, p3, t, tension ) {
+        var fc = this.frameCache;
 
-            var v0 = ( p2 - p0 ) * tension;
-            var v1 = ( p3 - p1 ) * tension;
-            var t2 = t * t;
-            var t3 = t * t2;
+        var c = fc[ i ];
+        var cp = fc[ ip ];
+        var cpp = fc[ ipp ];
+        var cppp = fc[ ippp ];
 
-            return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-                   ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-                   v0 * t + p1;
+        var j;
+        var m = c.length;
+        var coords = new Float32Array( m );
 
-        };
+        if( type === "spline" ){
 
-        var lerp = function( a, b, t ) {
+            for( j = 0; j < m; j += 3 ){
 
-            return a + ( b - a ) * t;
-
-        };
-
-        return function interpolate( i, ip, ipp, ippp, t, type, callback ){
-
-            var fc = this.frameCache;
-
-            var c = fc[ i ];
-            var cp = fc[ ip ];
-            var cpp = fc[ ipp ];
-            var cppp = fc[ ippp ];
-
-            var j;
-            var m = c.length;
-            var coords = new Float32Array( m );
-
-            if( type === "spline" ){
-
-                for( j = 0; j < m; j += 3 ){
-
-                    coords[ j + 0 ] = spline(
-                        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-                    );
-                    coords[ j + 1 ] = spline(
-                        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-                    );
-                    coords[ j + 2 ] = spline(
-                        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-                    );
-
-                }
-
-            }else{
-
-                for( j = 0; j < m; j += 3 ){
-
-                    coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
-                    coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
-                    coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
-
-                }
+                coords[ j + 0 ] = spline(
+                    cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+                );
+                coords[ j + 1 ] = spline(
+                    cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+                );
+                coords[ j + 2 ] = spline(
+                    cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+                );
 
             }
 
-            this.structure.updatePosition( coords );
-            this.currentFrame = i;
-            this.signals.frameChanged.dispatch( i );
+        }else{
 
-            if( typeof callback === "function" ){
+            for( j = 0; j < m; j += 3 ){
 
-                callback();
+                coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
+                coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
+                coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
 
             }
 
-        };
+        }
 
-    }(),
+        this.structure.updatePosition( coords );
+        this.currentFrame = i;
+        this.signals.frameChanged.dispatch( i );
 
-    setFrameInterpolated: function( i, ip, ipp, ippp, t, type, callback ){
+        if( typeof callback === "function" ){
+
+            callback();
+
+        }
+
+    }
+
+    setFrameInterpolated( i, ip, ipp, ippp, t, type, callback ){
 
         if( i === undefined ) return this;
 
@@ -425,9 +401,9 @@ Trajectory.prototype = {
 
         return this;
 
-    },
+    }
 
-    loadFrame: function( i, callback ){
+    loadFrame( i, callback ){
 
         if( Array.isArray( i ) ){
 
@@ -444,15 +420,15 @@ Trajectory.prototype = {
 
         }
 
-    },
+    }
 
-    _loadFrame: function( i, callback ){
+    _loadFrame( i, callback ){
 
         Log.error( "Trajectory._loadFrame not implemented", i, callback );
 
-    },
+    }
 
-    updateStructure: function( i, callback ){
+    updateStructure( i, callback ){
 
         if( this._disposed ) return;
 
@@ -475,9 +451,9 @@ Trajectory.prototype = {
         this.inProgress = false;
         this.signals.frameChanged.dispatch( i );
 
-    },
+    }
 
-    getCircularMean: function( indices, coords, box ){
+    getCircularMean( indices, coords, box ){
 
         return [
             circularMean( coords, box[ 0 ], 3, 0, indices ),
@@ -485,9 +461,9 @@ Trajectory.prototype = {
             circularMean( coords, box[ 2 ], 3, 2, indices )
         ];
 
-    },
+    }
 
-    doSuperpose: function( x ){
+    doSuperpose( x ){
 
         var i, j;
         var n = this.indices.length * 3;
@@ -509,9 +485,9 @@ Trajectory.prototype = {
         var sp = new Superposition( coords1, coords2 );
         sp.transform( x );
 
-    },
+    }
 
-    process: function( i, box, coords, numframes ){
+    process( i, box, coords, numframes ){
 
         this.setNumframes( numframes );
 
@@ -539,9 +515,9 @@ Trajectory.prototype = {
         this.boxCache[ i ] = box;
         this.frameCacheSize += 1;
 
-    },
+    }
 
-    setNumframes: function( n ){
+    setNumframes( n ){
 
         if( n !== this.numframes ){
 
@@ -550,30 +526,30 @@ Trajectory.prototype = {
 
         }
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.frameCache = [];  // aid GC
         this._disposed = true;
         if( this.player ) this.player.stop();
 
-    },
+    }
 
-    setPlayer: function( player ){
+    setPlayer( player ){
 
         this.player = player;
         this.signals.playerChanged.dispatch( player );
 
-    },
+    }
 
-    getPath: function( index, callback ){
+    getPath( index, callback ){
 
         Log.error( "Trajectory.getPath not implemented", index, callback );
 
     }
 
-};
+}
 
 
 export default Trajectory;

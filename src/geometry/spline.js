@@ -10,6 +10,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 import { ColormakerRegistry } from "../globals.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
+import { spline } from "../math/math-utils.js";
 
 
 function Interpolator( m, tension ){
@@ -20,26 +21,16 @@ function Interpolator( m, tension ){
     var vec1 = new Vector3();
     var vec2 = new Vector3();
 
-    function interpolate( p0, p1, p2, p3, t ) {
-        var v0 = ( p2 - p0 ) * tension;
-        var v1 = ( p3 - p1 ) * tension;
-        var t2 = t * t;
-        var t3 = t * t2;
-        return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-               ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-               v0 * t + p1;
-    }
-
     function interpolateToArr( v0, v1, v2, v3, t, arr, offset ){
-        arr[ offset + 0 ] = interpolate( v0.x, v1.x, v2.x, v3.x, t );
-        arr[ offset + 1 ] = interpolate( v0.y, v1.y, v2.y, v3.y, t );
-        arr[ offset + 2 ] = interpolate( v0.z, v1.z, v2.z, v3.z, t );
+        arr[ offset + 0 ] = spline( v0.x, v1.x, v2.x, v3.x, t, tension );
+        arr[ offset + 1 ] = spline( v0.y, v1.y, v2.y, v3.y, t, tension );
+        arr[ offset + 2 ] = spline( v0.z, v1.z, v2.z, v3.z, t, tension );
     }
 
     function interpolateToVec( v0, v1, v2, v3, t, vec ){
-        vec.x = interpolate( v0.x, v1.x, v2.x, v3.x, t );
-        vec.y = interpolate( v0.y, v1.y, v2.y, v3.y, t );
-        vec.z = interpolate( v0.z, v1.z, v2.z, v3.z, t );
+        vec.x = spline( v0.x, v1.x, v2.x, v3.x, t, tension );
+        vec.y = spline( v0.y, v1.y, v2.y, v3.y, t, tension );
+        vec.z = spline( v0.z, v1.z, v2.z, v3.z, t, tension );
     }
 
     function interpolatePosition( v0, v1, v2, v3, pos, offset ){

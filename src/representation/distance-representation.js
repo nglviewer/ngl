@@ -50,7 +50,7 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  *     // or atom indices
  *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
  *     o.addRepresentation( "distance", { atomPair: atomPair } );
- *     stage.centerView();
+ *     stage.autoView();
  * } );
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object

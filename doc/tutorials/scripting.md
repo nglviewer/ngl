@@ -7,7 +7,7 @@ Load the structure of PDB entry *1CRN* from [RCSB](http://www.rcsb.org/), add a 
 ```
 stage.loadFile( "rcsb://1CRN", function( o ){
 	o.addRepresentation( "cartoon" );
-	o.centerView();
+	o.autoView();
 } );
 ```
 Here, *o* is a *StructureComponent* instance.
