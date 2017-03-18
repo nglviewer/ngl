@@ -5,22 +5,21 @@
  */
 
 
-function Frames( name, path ){
+class Frames{
 
-    this.name = name;
-    this.path = path;
+    constructor( name, path ){
 
-    this.coordinates = [];
-    this.boxes = [];
+        this.name = name;
+        this.path = path;
+
+        this.coordinates = [];
+        this.boxes = [];
+
+    }
+
+    get type (){ return "Frames"; }
 
 }
-
-Frames.prototype = {
-
-    constructor: Frames,
-    type: "Frames",
-
-};
 
 
 export default Frames;
