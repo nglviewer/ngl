@@ -11,65 +11,59 @@ import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-// position, color, radius, majorAxis, minorAxis, pickingColor
-function EllipsoidGeometryBuffer( data, params ){
+const scale = new Vector3();
+const target = new Vector3();
+const up = new Vector3();
+const eye = new Vector3( 0, 0, 0 );
 
-    var p = params || {};
 
-    var detail = defaults( p.sphereDetail, 2 );
+class EllipsoidGeometryBuffer extends GeometryBuffer{
 
-    this.updateNormals = true;
+    // position, color, radius, majorAxis, minorAxis, pickingColor
+    constructor( data, params ){
 
-    this.geo = new IcosahedronGeometry( 1, detail );
-    this._radius = data.radius;
-    this._majorAxis = data.majorAxis;
-    this._minorAxis = data.minorAxis;
+        const p = params || {};
+        const detail = defaults( p.sphereDetail, 2 );
+        const geo = new IcosahedronGeometry( 1, detail );
 
-    GeometryBuffer.call( this, data, p );
+        super( data, p, geo );
 
-}
+        this.setAttributes( data, true );
 
-EllipsoidGeometryBuffer.prototype = Object.assign( Object.create(
+    }
 
-    GeometryBuffer.prototype ), {
+    applyPositionTransform( matrix, i, i3 ){
 
-    constructor: EllipsoidGeometryBuffer,
+        target.fromArray( this._majorAxis, i3 );
+        up.fromArray( this._minorAxis, i3 );
+        matrix.lookAt( eye, target, up );
 
-    applyPositionTransform: function(){
+        scale.set( this._radius[ i ], up.length(), target.length() );
+        matrix.scale( scale );
 
-        var scale = new Vector3();
-        var target = new Vector3();
-        var up = new Vector3();
-        var eye = new Vector3( 0, 0, 0 );
+    }
 
-        return function applyPositionTransform( matrix, i, i3 ){
+    setAttributes( data, initNormals ){
 
-            target.fromArray( this._majorAxis, i3 );
-            up.fromArray( this._minorAxis, i3 );
-            matrix.lookAt( eye, target, up );
-
-            scale.set( this._radius[ i ], up.length(), target.length() );
-            matrix.scale( scale );
-
-        };
-
-    }(),
-
-    setAttributes: function( data ){
+        if( data.radius ){
+            this._radius = data.radius;
+        }
 
         if( data.majorAxis ){
-            this.majorAxis = data.majorAxis;
+            this._majorAxis = data.majorAxis;
         }
 
         if( data.minorAxis ){
             this._minorAxis = data.minorAxis;
         }
 
-        GeometryBuffer.prototype.setAttributes.call( this, data );
+        super.setAttributes( data, initNormals );
 
     }
 
-} );
+    get updateNormals (){ return true; }
+
+}
 
 
 export default EllipsoidGeometryBuffer;

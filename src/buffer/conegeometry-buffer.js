@@ -12,75 +12,65 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-// position1, position2, color, radius, pickingColor
-function ConeGeometryBuffer( data, params ){
+const scale = new Vector3();
+const eye = new Vector3();
+const target = new Vector3();
+const up = new Vector3( 0, 1, 0 );
 
-    var p = params || {};
 
-    var radialSegments = defaults( p.radialSegments, 60 );
-    var openEnded = defaults( p.openEnded, false );
+class ConeGeometryBuffer extends GeometryBuffer{
 
-    this.updateNormals = true;
+    // position1, position2, color, radius, pickingColor
+    constructor( data, params ){
 
-    var matrix = new Matrix4().makeRotationX( -Math.PI / 2  );
+        const p = params || {};
 
-    this.geo = new ConeBufferGeometry(
-        1,  // radius
-        1,  // height
-        radialSegments,  // radialSegments
-        1,  // heightSegments
-        openEnded  // openEnded
-    );
-    this.geo.applyMatrix( matrix );
+        const radialSegments = defaults( p.radialSegments, 60 );
+        const openEnded = defaults( p.openEnded, false );
+        const matrix = new Matrix4().makeRotationX( -Math.PI / 2  );
 
-    var n = data.position1.length;
-    var m = data.radius.length;
+        const geo = new ConeBufferGeometry(
+            1,  // radius
+            1,  // height
+            radialSegments,  // radialSegments
+            1,  // heightSegments
+            openEnded  // openEnded
+        );
+        geo.applyMatrix( matrix );
 
-    this._position = new Float32Array( n );
-    this._from = new Float32Array( n );
-    this._to = new Float32Array( n );
-    this._radius = new Float32Array( m );
+        const n = data.position1.length;
+        const m = data.radius.length;
 
-    // FIXME this contains a call to .setAttributes,
-    GeometryBuffer.call( this, {
-        position: this._position,
-        color: data.color,
-        pickingColor: data.pickingColor
-    }, p );
+        const position = new Float32Array( n );
 
-    this.setAttributes( data );
+        super( {
+            position: position,
+            color: data.color,
+            pickingColor: data.pickingColor
+        }, p, geo );
 
-}
+        this._position = position;
+        this._from = new Float32Array( n );
+        this._to = new Float32Array( n );
+        this._radius = new Float32Array( m );
 
-ConeGeometryBuffer.prototype = Object.assign( Object.create(
+        this.setAttributes( data, true );
 
-    GeometryBuffer.prototype ), {
+    }
 
-    constructor: ConeGeometryBuffer,
+    applyPositionTransform( matrix, i, i3 ){
 
-    applyPositionTransform: function(){
+        eye.fromArray( this._from, i3 );
+        target.fromArray( this._to, i3 );
+        matrix.lookAt( eye, target, up );
 
-        var r;
-        var scale = new Vector3();
-        var eye = new Vector3();
-        var target = new Vector3();
-        var up = new Vector3( 0, 1, 0 );
+        const r = this._radius[ i ];
+        scale.set( r, r, eye.distanceTo( target ) );
+        matrix.scale( scale );
 
-        return function applyPositionTransform( matrix, i, i3 ){
+    }
 
-            eye.fromArray( this._from, i3 );
-            target.fromArray( this._to, i3 );
-            matrix.lookAt( eye, target, up );
-
-            r = this._radius[ i ];
-            scale.set( r, r, eye.distanceTo( target ) );
-            matrix.scale( scale );
-
-        };
-
-    }(),
-
-    setAttributes: function( data ){
+    setAttributes( data, initNormals ){
 
         var geoData = {};
 
@@ -105,11 +95,13 @@ ConeGeometryBuffer.prototype = Object.assign( Object.create(
             this._radius.set( data.radius );
         }
 
-        GeometryBuffer.prototype.setAttributes.call( this, geoData );
+        super.setAttributes( geoData, initNormals );
 
     }
 
-} );
+    get updateNormals (){ return true; }
+
+}
 
 
 export default ConeGeometryBuffer;

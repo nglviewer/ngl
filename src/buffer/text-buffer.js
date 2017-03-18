@@ -15,67 +15,59 @@ import { defaults } from "../utils.js";
 import QuadBuffer from "./quad-buffer.js";
 
 
-var getTextAtlas = function(){
+const TextAtlasCache = {};
 
-    var cache = {};
-
-    return function getTextAtlas( params ){
-
-        var hash = JSON.stringify( params );
-
-        if( cache[ hash ] === undefined ){
-            cache[ hash ] = new TextAtlas( params );
-        }
-        return cache[ hash ];
+function getTextAtlas( params ){
+    var hash = JSON.stringify( params );
+    if( TextAtlasCache[ hash ] === undefined ){
+        TextAtlasCache[ hash ] = new TextAtlas( params );
     }
-
-}();
-
-
-function TextAtlas( params ){
-
-    // adapted from https://github.com/unconed/mathbox
-    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
-
-    var p = Object.assign( {}, params );
-
-    this.font = defaults( p.font, [ 'sans-serif' ] );
-    this.size = defaults( p.size, 36 );
-    this.style = defaults( p.style, 'normal' );
-    this.variant = defaults( p.variant, 'normal' );
-    this.weight = defaults( p.weight, 'normal' );
-    this.outline = defaults( p.outline, 0 );
-    this.width = defaults( p.width, 1024 );
-    this.height = defaults( p.height, 1024 );
-
-    this.gamma = 1;
-    if( typeof navigator !== 'undefined' ){
-        var ua = navigator.userAgent;
-        if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
-            this.gamma = 0.5;
-        }
-    }
-
-    this.mapped = {};
-    this.scratchW = 0;
-    this.scratchH = 0;
-    this.currentX = 0;
-    this.currentY = 0;
-
-    this.build();
-    this.populate();
-
-    this.texture = new CanvasTexture( this.canvas2 );
-    this.texture.flipY = false;
-    this.texture.needsUpdate = true;
-
+    return TextAtlasCache[ hash ];
 }
 
-TextAtlas.prototype = {
 
-    constructor: TextAtlas,
+class TextAtlas{
 
-    build: function(){
+    constructor( params ){
+
+        // adapted from https://github.com/unconed/mathbox
+        // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+
+        var p = Object.assign( {}, params );
+
+        this.font = defaults( p.font, [ 'sans-serif' ] );
+        this.size = defaults( p.size, 36 );
+        this.style = defaults( p.style, 'normal' );
+        this.variant = defaults( p.variant, 'normal' );
+        this.weight = defaults( p.weight, 'normal' );
+        this.outline = defaults( p.outline, 0 );
+        this.width = defaults( p.width, 1024 );
+        this.height = defaults( p.height, 1024 );
+
+        this.gamma = 1;
+        if( typeof navigator !== 'undefined' ){
+            var ua = navigator.userAgent;
+            if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
+                this.gamma = 0.5;
+            }
+        }
+
+        this.mapped = {};
+        this.scratchW = 0;
+        this.scratchH = 0;
+        this.currentX = 0;
+        this.currentY = 0;
+
+        this.build();
+        this.populate();
+
+        this.texture = new CanvasTexture( this.canvas2 );
+        this.texture.flipY = false;
+        this.texture.needsUpdate = true;
+
+    }
+
+    build(){
 
         // Prepare line-height with room for outline and descenders/ascenders
         var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
@@ -117,9 +109,9 @@ TextAtlas.prototype = {
         this.canvas2.height = this.height;
         this.context2 = this.canvas2.getContext( '2d' );
 
-    },
+    }
 
-    map: function( text ){
+    map( text ){
 
         if( this.mapped[ text ] === undefined ){
 
@@ -154,9 +146,9 @@ TextAtlas.prototype = {
 
         return this.mapped[ text ];
 
-    },
+    }
 
-    draw: function( text ){
+    draw( text ){
 
         var h = this.lineHeight;
         var o = this.outline;
@@ -236,9 +228,9 @@ TextAtlas.prototype = {
         this.scratchW = w;
         this.scratchH = h;
 
-    },
+    }
 
-    populate: function(){
+    populate(){
 
         for( var i = 0; i < 256; ++i ){
             this.map( String.fromCharCode( i ) );
@@ -246,7 +238,7 @@ TextAtlas.prototype = {
 
     }
 
-};
+}
 
 
 /**
