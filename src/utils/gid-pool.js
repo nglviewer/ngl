@@ -8,21 +8,19 @@
 import { Log } from "../globals.js";
 
 
-function GidPool( name ){
+class GidPool{
 
-    this.name = name || "";
+    constructor( name ){
 
-    this.nextGid = 1;
-    this.objectList = [];
-    this.rangeList = [];
+        this.name = name || "";
 
-}
+        this.nextGid = 1;
+        this.objectList = [];
+        this.rangeList = [];
 
-GidPool.prototype = {
+    }
 
-    constructor: GidPool,
-
-    getBaseObject: function( object ){
+    getBaseObject( object ){
 
         if( object.type === "StructureView" ){
             object = object.getStructure();
@@ -30,9 +28,9 @@ GidPool.prototype = {
 
         return object;
 
-    },
+    }
 
-    addObject: function( object ){
+    addObject( object ){
 
         object = this.getBaseObject( object );
 
@@ -45,9 +43,9 @@ GidPool.prototype = {
 
         return this;
 
-    },
+    }
 
-    removeObject: function( object ){
+    removeObject( object ){
 
         object = this.getBaseObject( object );
 
@@ -66,9 +64,9 @@ GidPool.prototype = {
 
         return this;
 
-    },
+    }
 
-    updateObject: function( object, silent ){
+    updateObject( object, silent ){
 
         object = this.getBaseObject( object );
 
@@ -96,9 +94,9 @@ GidPool.prototype = {
 
         return this;
 
-    },
+    }
 
-    getGidCount: function( object ){
+    getGidCount( object ){
 
         object = this.getBaseObject( object );
 
@@ -119,9 +117,9 @@ GidPool.prototype = {
 
         return count;
 
-    },
+    }
 
-    allocateGidRange: function( object ){
+    allocateGidRange( object ){
 
         object = this.getBaseObject( object );
 
@@ -141,22 +139,22 @@ GidPool.prototype = {
 
         return [ firstGid, this.nextGid ];
 
-    },
+    }
 
-    // freeGidRange: function( object ){
+    // freeGidRange( object ){
 
     //     object = this.getBaseObject( object );
     //     // TODO
 
-    // },
+    // }
 
-    getNextGid: function(){
+    getNextGid(){
 
         return this.nextGid++;
 
-    },
+    }
 
-    getGid: function( object, offset ){
+    getGid( object, offset ){
 
         object = this.getBaseObject( object );
         offset = offset || 0;
@@ -179,9 +177,9 @@ GidPool.prototype = {
 
         return gid;
 
-    },
+    }
 
-    getByGid: function( gid ){
+    getByGid( gid ){
 
         var entity;
 
@@ -245,7 +243,7 @@ GidPool.prototype = {
 
     }
 
-};
+}
 
 
 export default GidPool;

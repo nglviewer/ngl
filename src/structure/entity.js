@@ -27,57 +27,55 @@ function entityTypeFromString( string ){
 }
 
 
-/**
- * Entity of a {@link Structure}
- * @class
- * @param {Structure} structure - structure the entity belongs to
- * @param {Integer} index - index within structure.entityList
- * @param {String} description - entity description
- * @param {String} type - entity type
- * @param {Array} chainIndexList - entity chainIndexList
- */
-function Entity( structure, index, description, type, chainIndexList ){
+class Entity{
 
-    this.structure = structure;
-    this.index = index;
-    this.description = description || "";
-    this.entityType = entityTypeFromString( type || "" );
-    this.chainIndexList = chainIndexList || [];
+    /**
+     * Create a entity of a {@link Structure}
+     * @param {Structure} structure - structure the entity belongs to
+     * @param {Integer} index - index within structure.entityList
+     * @param {String} description - entity description
+     * @param {String} type - entity type
+     * @param {Array} chainIndexList - entity chainIndexList
+     */
+    constructor( structure, index, description, type, chainIndexList ){
 
-    chainIndexList.forEach( function( ci ){
-        structure.chainStore.entityIndex[ ci ] = index;
-    } );
+        this.structure = structure;
+        this.index = index;
+        this.description = description || "";
+        this.entityType = entityTypeFromString( type || "" );
+        this.chainIndexList = chainIndexList || [];
 
-}
+        chainIndexList.forEach( function( ci ){
+            structure.chainStore.entityIndex[ ci ] = index;
+        } );
 
-Entity.prototype = {
+    }
 
-    constructor: Entity,
-    type: "Entity",
+    get type (){ return "Entity"; }
 
-    getEntityType: function(){
+    getEntityType(){
         return this.entityType;
-    },
+    }
 
-    isPolymer: function(){
+    isPolymer(){
         return this.entityType === PolymerEntity;
-    },
+    }
 
-    isNonPolymer: function(){
+    isNonPolymer(){
         return this.entityType === NonPolymerEntity;
-    },
+    }
 
-    isMacrolide: function(){
+    isMacrolide(){
         return this.entityType === MacrolideEntity;
-    },
+    }
 
-    isWater: function(){
+    isWater(){
         return this.entityType === WaterEntity;
-    },
+    }
 
-    eachChain: function( callback ){
+    eachChain( callback ){
 
-        var cp = this.structure.getChainProxy();
+        const cp = this.structure.getChainProxy();
 
         this.chainIndexList.forEach( function( index ){
             cp.index = index;
@@ -86,7 +84,7 @@ Entity.prototype = {
 
     }
 
-};
+}
 
 
 export default Entity;
