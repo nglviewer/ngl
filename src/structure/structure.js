@@ -366,16 +366,16 @@ Structure.prototype = {
 
             if( seleString in this.atomSetCache ){
 
-                as = this.atomSetCache[ seleString ];
-
+                as = this.atomSetCache[ seleString ].clone();
+                
             }else{
 
                 as = new Bitset( n );
                 this.eachAtom( function( ap ){
                     as.add_unsafe( ap.index );
                 }, selection );
-                this.atomSetCache[ seleString ] = as;
-
+                this.atomSetCache[ seleString ] = as.clone();
+                
             }
 
         }else{
