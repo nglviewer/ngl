@@ -89,9 +89,9 @@ TypedFastBitSet.prototype.flip_unsafe = function(index) {
 
 // Flip all bits, added by ASR
 TypedFastBitSet.prototype.flip_all = function() {
+  // FIXME sets values beyond this.length
   var count = this.count;
   var k = 0 | 0;
-  var bs = 32 - this.length % 32;
   for (; k + 7 < count; k += 8) {
     this.words[k    ] = ~this.words[k    ];
     this.words[k + 1] = ~this.words[k + 1];
@@ -102,10 +102,9 @@ TypedFastBitSet.prototype.flip_all = function() {
     this.words[k + 6] = ~this.words[k + 6];
     this.words[k + 7] = ~this.words[k + 7];
   }
-  for (; k < count-1; ++k) {
+  for (; k < count; ++k) {
     this.words[k] = ~this.words[k];
   }
-  this.words[count-1] = (~(this.words[count-1] << bs)) >>> bs
   return this;
 };
 
