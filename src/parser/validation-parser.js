@@ -1,0 +1,46 @@
+/**
+ * @file Validation Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+import { Debug, Log, ParserRegistry } from "../globals.js";
+import XmlParser from "./xml-parser.js";
+import Validation from "../structure/validation.js";
+
+
+class ValidationParser extends XmlParser{
+
+    constructor( streamer, params ){
+
+        const p = params || {};
+
+        super( streamer, p );
+
+        this.useDomParser = true;
+        this.validation = new Validation( this.name, this.path );
+
+    }
+
+    get __objName (){ return "validation"; }
+
+    _parse(){
+
+        super._parse();
+        console.log(this.xml.data)
+
+        if( Debug ) Log.time( "ValidationParser._parse " + this.name );
+
+        this.validation.fromXml( this.xml.data );
+
+        if( Debug ) Log.timeEnd( "ValidationParser._parse " + this.name );
+
+    }
+
+}
+
+ParserRegistry.add( "validation", ValidationParser );
+
+
+export default ValidationParser;

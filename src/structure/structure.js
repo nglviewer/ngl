@@ -126,6 +126,11 @@ function Structure( name, path ){
     this.frames = [];
     this.boxes = [];
 
+    /**
+     * @member {Validation}
+     */
+    this.validation = undefined;
+
     this.bondStore = new BondStore( 0 );
     this.backboneBondStore = new BondStore( 0 );
     this.rungBondStore = new BondStore( 0 );

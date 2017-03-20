@@ -46,9 +46,11 @@ import "./color/bfactor-colormaker.js";
 import "./color/chainid-colormaker.js";
 import "./color/chainindex-colormaker.js";
 import "./color/chainname-colormaker.js";
+import "./color/densityfit-colormaker.js";
 import "./color/element-colormaker.js";
 import "./color/entityindex-colormaker.js";
 import "./color/entitytype-colormaker.js";
+import "./color/geoquality-colormaker.js";
 import "./color/hydrophobicity-colormaker.js";
 import "./color/modelindex-colormaker.js";
 import "./color/moleculetype-colormaker.js";
@@ -93,6 +95,7 @@ import "./representation/spacefill-representation.js";
 import "./representation/trace-representation.js";
 import "./representation/tube-representation.js";
 import "./representation/unitcell-representation.js";
+import "./representation/validation-representation.js";
 
 import BufferRepresentation from "./representation/buffer-representation.js";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
@@ -128,6 +131,8 @@ import "./parser/text-parser.js";
 import "./parser/csv-parser.js";
 import "./parser/json-parser.js";
 import "./parser/xml-parser.js";
+
+import "./parser/validation-parser.js";
 
 //
 
