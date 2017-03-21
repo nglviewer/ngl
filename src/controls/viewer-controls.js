@@ -123,7 +123,7 @@ class ViewerControls{
         this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
         this.viewer.translationGroup.position.copy( tmpP );
         this.viewer.camera.position.z = -tmpS.z;
-
+        this.viewer.updateZoom();
         this.changed();
 
     }
