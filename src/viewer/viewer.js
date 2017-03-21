@@ -151,15 +151,14 @@ function Viewer( eid ){
         var lookAt = new Vector3( 0, 0, 0 );
 
         perspectiveCamera = new PerspectiveCamera(
-            parameters.cameraFov, width / height, 0.1, 10000
+            parameters.cameraFov, width / height
         );
         perspectiveCamera.position.z = parameters.cameraZ;
         perspectiveCamera.lookAt( lookAt );
 
         orthographicCamera = new OrthographicCamera(
             width / -2, width / 2,
-            height / 2, height / -2,
-            0.1, 10000
+            height / 2, height / -2
         );
         orthographicCamera.position.z = parameters.cameraZ;
         orthographicCamera.lookAt( lookAt );
@@ -637,8 +636,6 @@ function Viewer( eid ){
         }
 
         perspectiveCamera.fov = p.cameraFov;
-        // controls.object = camera;
-        // camera.lookAt( controls.target );
         camera.updateProjectionMatrix();
 
         requestRender();
@@ -839,10 +836,8 @@ function Viewer( eid ){
 
     function updateZoom(){
 
-        __updateClipping();
         var fov = degToRad( perspectiveCamera.fov );
-        var hyperfocus = ( camera.near + camera.far ) / 2;
-        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        var _height = 2 * Math.tan( fov / 2 ) * -camera.position.z;
         orthographicCamera.zoom = height / _height;
 
     }
