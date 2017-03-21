@@ -8,7 +8,7 @@
 import { Vector3, Quaternion } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { clamp, lerp } from "../math/math-utils.js";
+import { lerp, smoothstep } from "../math/math-utils.js";
 
 
 class Animation{
@@ -42,7 +42,7 @@ class Animation{
     tick( stats ){
 
         this.elapsedTime = stats.currentTime - this.startTime;
-        this.alpha = clamp( this.elapsedTime / this.duration, 0, 1 );
+        this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
 
         this._tick( stats );
 
