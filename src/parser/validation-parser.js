@@ -28,7 +28,6 @@ class ValidationParser extends XmlParser{
     _parse(){
 
         super._parse();
-        console.log(this.xml.data)
 
         if( Debug ) Log.time( "ValidationParser._parse " + this.name );
 
