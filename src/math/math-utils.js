@@ -57,6 +57,11 @@ function lerp( start, stop, alpha ){
 }
 
 
+function quadFactor( t, eout ){
+    return lerp( t, t * ( 2 - t ), eout );
+}
+
+
 function spline( p0, p1, p2, p3, t, tension ) {
     var v0 = ( p2 - p0 ) * tension;
     var v1 = ( p3 - p1 ) * tension;
@@ -75,5 +80,6 @@ export {
     countSetBits,
     clamp,
     lerp,
+    quadFactor,
     spline
 };
