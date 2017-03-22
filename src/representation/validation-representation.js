@@ -12,45 +12,32 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
 /**
- * Validation representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters
+ * Validation representation
  */
-function ValidationRepresentation( structure, viewer, params ){
+class ValidationRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    get type (){ return "validation"; }
 
-}
+    get parameters (){
 
-ValidationRepresentation.prototype = Object.assign( Object.create(
+        return Object.assign( super.parameters, {
+            radiusType: null,
+            radius: null,
+            scale: null
+        } );
 
-    StructureRepresentation.prototype ), {
+    }
 
-    constructor: ValidationRepresentation,
-
-    type: "validation",
-
-    parameters: Object.assign( {
-
-        radiusType: null,
-        radius: null,
-        scale: null
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorValue = defaults( p.colorValue, "#f0027f" );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         if( !sview.validation ) return;
 
@@ -67,15 +54,15 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ cylinderBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( /*what, data*/ ){
+    updateData( /*what, data*/ ){
 
         this.build();
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "validation", ValidationRepresentation );
