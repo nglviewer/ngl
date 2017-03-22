@@ -245,6 +245,7 @@ class Validation{
         const p = params || {};
 
         const s = p.structure;
+        const as = s.atomSet;
         const c = new Color( defaults( p.color, "#f0027f" ) );
 
         const ap1 = s.getAtomProxy();
@@ -282,7 +283,8 @@ class Validation{
             ap1.index = atomDict[ c.sele1 ];
             ap2.index = atomDict[ c.sele2 ];
 
-            if( ap1.index === undefined || ap2.index === undefined ) continue;
+            if( !as.has( ap1.index ) || !as.has( ap1.index ) ||
+                ap1.index === undefined || ap2.index === undefined ) continue;
 
             vDir.subVectors( ap2, ap1 ).setLength( ap1.vdw );
             vPos1.copy( ap1 ).add( vDir );
