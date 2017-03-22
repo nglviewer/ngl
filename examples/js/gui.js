@@ -1534,11 +1534,11 @@ NGL.StructureComponentWidget = function( component, stage ){
             componentPanel.setMenuDisplay( "none" );
         } );
 
-    // Import trajectory
+    // Open trajectory
 
     var trajExt = [ "dcd", "dcd.gz" ];
 
-    function fileInputOnChange( e ){
+    function framesInputOnChange( e ){
         var fn = function( file, callback ){
             NGL.autoLoad( file ).then( function( frames ){
                 component.addTrajectory( frames );
@@ -1548,15 +1548,15 @@ NGL.StructureComponentWidget = function( component, stage ){
         var queue = new NGL.Queue( fn, e.target.files );
     }
 
-    var fileInput = document.createElement( "input" );
-    fileInput.type = "file";
-    fileInput.multiple = true;
-    fileInput.style.display = "none";
-    fileInput.accept = "." + trajExt.join( ",." );
-    fileInput.addEventListener( 'change', fileInputOnChange, false );
+    var framesInput = document.createElement( "input" );
+    framesInput.type = "file";
+    framesInput.multiple = true;
+    framesInput.style.display = "none";
+    framesInput.accept = "." + trajExt.join( ",." );
+    framesInput.addEventListener( 'change', framesInputOnChange, false );
 
-    var traj = new UI.Button( "import" ).onClick( function(){
-        fileInput.click();
+    var traj = new UI.Button( "open" ).onClick( function(){
+        framesInput.click();
         componentPanel.setMenuDisplay( "none" );
     } );
 
@@ -1631,6 +1631,29 @@ NGL.StructureComponentWidget = function( component, stage ){
         stage.animationControls.rotate( pa.getRotationQuaternion() );
     } );
 
+    // Open validation
+
+    function validationInputOnChange( e ){
+        var fn = function( file, callback ){
+            NGL.autoLoad( file, { ext: "validation" } ).then( function( validation ){
+                component.structure.validation = validation;
+                callback();
+            } );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
+    }
+
+    var validationInput = document.createElement( "input" );
+    validationInput.type = "file";
+    validationInput.style.display = "none";
+    validationInput.accept = ".xml";
+    validationInput.addEventListener( 'change', validationInputOnChange, false );
+
+    var vali = new UI.Button( "open" ).onClick( function(){
+        validationInput.click();
+        componentPanel.setMenuDisplay( "none" );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1647,7 +1670,8 @@ NGL.StructureComponentWidget = function( component, stage ){
                         //.setWordWrap( "break-word" )
         )
         .addMenuEntry( "Trajectory", traj )
-        .addMenuEntry( "Principal axes", alignAxes );
+        .addMenuEntry( "Principal axes", alignAxes )
+        .addMenuEntry( "Validation", vali );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
