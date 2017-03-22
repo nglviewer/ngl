@@ -22,7 +22,7 @@ class DensityfitColormaker extends Colormaker{
         this.rsrzScale = this.getScale( { domain: [ 2, 0 ] } );
         this.rsccScale = this.getScale( { domain: [ 0.678, 1.0 ] } );
 
-        var val = params.structure.validation || {};
+        const val = params.structure.validation || {};
         this.rsrzDict = val.rsrzDict || {};
         this.rsccDict = val.rsccDict || {};
 

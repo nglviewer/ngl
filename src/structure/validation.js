@@ -11,7 +11,6 @@ import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray3 } from "../math/array-utils.js";
 import { guessElement } from "../structure/structure-utils.js";
-import Selection from "../selection.js";
 
 
 function getSele( a, atomname, useAltcode ){
@@ -103,7 +102,6 @@ class Validation{
         this.clashDict = {};
         this.geoDict = {};
         this.geoAtomDict = {};
-        this.resDict = {};
         this.atomDict = {};
         this.clashSele = "NONE";
 
@@ -118,7 +116,6 @@ class Validation{
         const clashDict = this.clashDict;
         const geoDict = this.geoDict;
         const geoAtomDict = this.geoAtomDict;
-        const resDict = this.resDict;
         const atomDict = this.atomDict;
 
         const groups = xml.getElementsByTagName( "ModelledSubgroup" );
