@@ -245,6 +245,11 @@ class Component{
 
     }
 
+    /**
+     * Automatically center and zoom the component
+     * @param  {Integer} [duration] - duration of the animation, defaults to 0
+     * @return {undefined}
+     */
     autoView( duration ){
 
         this.stage.animationControls.zoomMove(

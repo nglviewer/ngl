@@ -818,7 +818,7 @@ class Stage{
 
     /**
      * Add a zoom and a move animation with automatic targets
-     * @param  {Number} duration - animation time in milliseconds
+     * @param  {Integer} duration - animation time in milliseconds
      * @return {undefined}
      */
     autoView( duration ){
