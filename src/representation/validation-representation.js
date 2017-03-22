@@ -32,6 +32,14 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
 
     type: "validation",
 
+    parameters: Object.assign( {
+
+        radiusType: null,
+        radius: null,
+        scale: null
+
+    }, StructureRepresentation.prototype.parameters ),
+
     createData: function( sview ){
 
         if( !sview.validation ) return;
