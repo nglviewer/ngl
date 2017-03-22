@@ -6,6 +6,7 @@
 
 
 import { RepresentationRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
@@ -40,11 +41,23 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
 
     }, StructureRepresentation.prototype.parameters ),
 
+    init: function( params ){
+
+        var p = params || {};
+        p.colorValue = defaults( p.colorValue, "#f0027f" );
+
+        StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
     createData: function( sview ){
 
         if( !sview.validation ) return;
 
-        var clashData = sview.validation.getClashData( { structure: sview } );
+        var clashData = sview.validation.getClashData( {
+            structure: sview,
+            color: this.colorValue
+        } );
 
         var cylinderBuffer = new CylinderBuffer(
             clashData, this.getBufferParams( { openEnded: false } )
@@ -53,6 +66,12 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
         return {
             bufferList: [ cylinderBuffer ]
         };
+
+    },
+
+    updateData: function( /*what, data*/ ){
+
+        this.build();
 
     }
 
