@@ -8,6 +8,8 @@
 import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
+import { ensureVector3, ensureMatrix4, ensureQuaternion } from "../utils.js";
+
 
 /**
  * Scene orientation matrix, a 4x4 transformation matrix with rotation part
@@ -30,7 +32,6 @@ const tmpP = new Vector3();
 const tmpS = new Vector3();
 
 const tmpScaleVector = new Vector3();
-const tmpOrientMatrix = new Matrix4();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
@@ -109,16 +110,12 @@ class ViewerControls{
 
     /**
      * set scene orientation
-     * @param {OrientationMatrix} orientation - scene orientation
+     * @param {OrientationMatrix|Array} orientation - scene orientation
      * @return {undefined}
      */
     orient( orientation ){
 
-        if( Array.isArray( orientation ) ){
-            orientation = tmpOrientMatrix.fromArray( orientation );
-        }
-
-        orientation.decompose( tmpP, tmpQ, tmpS )
+        ensureMatrix4( orientation ).decompose( tmpP, tmpQ, tmpS )
 
         this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
         this.viewer.translationGroup.position.copy( tmpP );
@@ -130,24 +127,26 @@ class ViewerControls{
 
     /**
      * translate scene
-     * @param  {Vector3} vector - translation vector
+     * @param  {Vector3|Array} vector - translation vector
      * @return {undefined}
      */
     translate( vector ){
 
-        this.viewer.translationGroup.position.add( vector );
+        this.viewer.translationGroup.position
+            .add( ensureVector3( vector ) );
         this.changed();
 
     }
 
     /**
      * center scene
-     * @param  {Vector3} position - center position
+     * @param  {Vector3|Array} position - center position
      * @return {undefined}
      */
     center( position ){
 
-        this.viewer.translationGroup.position.copy( position ).negate();
+        this.viewer.translationGroup.position
+            .copy( ensureVector3( position ) ).negate();
         this.changed();
 
     }
@@ -178,14 +177,15 @@ class ViewerControls{
 
     /**
      * spin scene on axis
-     * @param  {Vector3} axis - rotation axis
+     * @param  {Vector3|Array} axis - rotation axis
      * @param  {Number} angle - amount to spin
      * @return {undefined}
      */
     spin( axis, angle ){
 
         tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
-        tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
+        tmpRotateVector
+            .copy( ensureVector3( axis ) ).applyMatrix4( tmpRotateMatrix );
 
         this.viewer.rotationGroup.rotateOnAxis( tmpRotateVector, angle );
         this.changed();
@@ -194,24 +194,25 @@ class ViewerControls{
 
     /**
      * rotate scene
-     * @param  {Quaternion} quaternion - rotation quaternion
+     * @param  {Quaternion|Array} quaternion - rotation quaternion
      * @return {undefined}
      */
     rotate( quaternion ){
 
-        this.viewer.rotationGroup.setRotationFromQuaternion( quaternion );
+        this.viewer.rotationGroup
+            .setRotationFromQuaternion( ensureQuaternion( quaternion ) );
         this.changed();
 
     }
 
     /**
      * align scene to basis matrix
-     * @param  {Matrix4} basis - basis matrix
+     * @param  {Matrix4|Array} basis - basis matrix
      * @return {undefined}
      */
     align( basis ){
 
-        tmpAlignMatrix.getInverse( basis );
+        tmpAlignMatrix.getInverse( ensureMatrix4( basis ) );
 
         this.viewer.rotationGroup.setRotationFromMatrix( tmpAlignMatrix );
         this.changed();
@@ -220,12 +221,12 @@ class ViewerControls{
 
     /**
      * apply rotation matrix to scene
-     * @param  {Matrix4} matrix - rotation matrix
+     * @param  {Matrix4|Array} matrix - rotation matrix
      * @return {undefined}
      */
     applyMatrix( matrix ){
 
-        this.viewer.rotationGroup.applyMatrix( matrix );
+        this.viewer.rotationGroup.applyMatrix( ensureMatrix4( matrix ) );
         this.changed();
 
     }
