@@ -707,664 +707,6 @@ Promise$1._setUnhandledRejectionFn = function _setUnhandledRejectionFn(fn) {
   onUnhandledRejection = fn;
 };
 
-/**
- * @file Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function getQuery( id ){
-
-    if( typeof window === "undefined" ) { return undefined; }
-
-    var a = new RegExp( id + "=([^&#=]*)" );
-    var m = a.exec( window.location.search );
-
-    if( m ){
-        return decodeURIComponent( m[1] );
-    }else{
-        return undefined;
-    }
-
-}
-
-
-function boolean( value ){
-
-    if( !value ){
-        return false;
-    }
-
-    if( typeof value === "string" ){
-        return /^1|true|t|yes|y$/i.test( value );
-    }
-
-    return true;
-
-}
-
-
-function defaults( value, defaultValue ){
-
-    return value !== undefined ? value : defaultValue;
-
-}
-
-
-function getProtocol(){
-
-    var protocol = window.location.protocol;
-    return protocol.match( /http(s)?:/gi ) === null ? "http:" : protocol;
-
-}
-
-
-function getBrowser(){
-
-    if( typeof window === "undefined" ) { return false; }
-
-    var ua = window.navigator.userAgent;
-
-    if ( /Opera|OPR/.test( ua ) ) {
-
-        return 'Opera';
-
-    } else if ( /Chrome/i.test( ua ) ) {
-
-        return 'Chrome';
-
-    } else if ( /Firefox/i.test( ua ) ) {
-
-        return 'Firefox';
-
-    } else if ( /Mobile(\/.*)? Safari/i.test( ua ) ) {
-
-        return 'Mobile Safari';
-
-    } else if ( /MSIE/i.test( ua ) ) {
-
-        return 'Internet Explorer';
-
-    } else if ( /Safari/i.test( ua ) ) {
-
-        return 'Safari';
-
-    }
-
-    return false;
-
-}
-
-
-function getAbsolutePath( relativePath ){
-
-    var loc = window.location;
-    var pn = loc.pathname;
-    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
-
-    return loc.origin + basePath + relativePath;
-
-}
-
-
-function download( data, downloadName ){
-
-    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
-
-    if( !data ) { return; }
-
-    downloadName = downloadName || "download";
-
-    var isSafari = getBrowser() === "Safari";
-    var isChromeIos = /CriOS\/[\d]+/.test( window.navigator.userAgent );
-
-    var a = document.createElement( 'a' );
-
-    function openUrl( url ){
-        var opened = window.open( url, '_blank' );
-        if( !opened ){
-            window.location.href = url;
-        }
-    }
-
-    function open( str ){
-        openUrl( isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;') );
-    }
-
-    if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
-
-        // native saveAs in IE 10+
-        navigator.msSaveOrOpenBlob( data, downloadName );
-
-    }else if( ( isSafari || isChromeIos ) && window.FileReader ){
-
-        if( data instanceof Blob ){
-            // no downloading of blob urls in Safari
-            var reader = new FileReader();
-            reader.onloadend = function() {
-                open( reader.result );
-            };
-            reader.readAsDataURL( data );
-        }else{
-            open( data );
-        }
-
-    }else{
-
-        if( data instanceof Blob ){
-            data = URL.createObjectURL( data );
-        }
-
-        if( "download" in a ){
-            // download link available
-            a.style.display = "hidden";
-            document.body.appendChild( a );
-            a.href = data;
-            a.download = downloadName;
-            a.target = "_blank";
-            a.click();
-            document.body.removeChild( a );
-        }else{
-            openUrl( data );
-        }
-
-        if( data instanceof Blob ){
-            URL.revokeObjectURL( data );
-        }
-
-    }
-
-}
-
-
-function getFileInfo( file ){
-
-    var compressedExtList = [ "gz" ];
-
-    var path, compressed, protocol;
-
-    if( ( typeof File !== "undefined" && file instanceof File ) ||
-        ( typeof Blob !== "undefined" && file instanceof Blob )
-    ){
-        path = file.name || "";
-    }else{
-        path = file;
-    }
-    var queryIndex = path.lastIndexOf( '?' );
-    path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
-
-    var name = path.replace( /^.*[\\\/]/, '' );
-    var base = name.substring( 0, name.lastIndexOf( '.' ) );
-
-    var nameSplit = name.split( '.' );
-    var ext = nameSplit.length > 1 ? nameSplit.pop().toLowerCase() : "";
-
-    var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
-    if( protocolMatch ){
-        protocol = protocolMatch[ 1 ].toLowerCase();
-        path = protocolMatch[ 2 ];
-    }
-
-    var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
-
-    if( compressedExtList.includes( ext ) ){
-        compressed = ext;
-        var n = path.length - ext.length - 1;
-        ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
-        var m = base.length - ext.length - 1;
-        base = base.substr( 0, m );
-    }else{
-        compressed = false;
-    }
-
-    return {
-        "path": path,
-        "name": name,
-        "ext": ext,
-        "base": base,
-        "dir": dir,
-        "compressed": compressed,
-        "protocol": protocol,
-        "src": file
-    };
-
-}
-
-
-function throttle( func, wait, options ){
-
-    // from http://underscorejs.org/docs/underscore.html
-
-    var context, args, result;
-    var timeout = null;
-    var previous = 0;
-
-    if( !options ) { options = {}; }
-
-    var later = function(){
-        previous = options.leading === false ? 0 : Date.now();
-        timeout = null;
-        result = func.apply( context, args );
-        if( !timeout ) { context = args = null; }
-    };
-
-    return function throttle(){
-
-        var now = Date.now();
-        if( !previous && options.leading === false ) { previous = now; }
-        var remaining = wait - ( now - previous );
-        context = this;
-        args = arguments;
-        if( remaining <= 0 || remaining > wait ){
-            if( timeout ){
-                clearTimeout( timeout );
-                timeout = null;
-            }
-            previous = now;
-            result = func.apply(context, args);
-            if( !timeout ) { context = args = null; }
-        }else if( !timeout && options.trailing !== false ){
-            timeout = setTimeout( later, remaining );
-        }
-
-        return result;
-
-    };
-
-}
-
-
-function lexicographicCompare( elm1, elm2 ){
-    if( elm1 < elm2 ) { return -1; }
-    if( elm1 > elm2 ) { return 1; }
-    return 0;
-}
-
-
-/**
- * Does a binary search to get the index of an element in the input array
- * @function
- * @example
- * var array = [ 1, 2, 3, 4, 5, 6 ];
- * var element = 4;
- * binarySearchIndexOf( array, element );  // returns 3
- *
- * @param {Array} array - sorted array
- * @param {Anything} element - element to search for in the array
- * @param {Function} [compareFunction] - compare function
- * @return {Number} the index of the element or -1 if not in the array
- */
-function binarySearchIndexOf( array, element, compareFunction ){
-    if ( compareFunction === void 0 ) compareFunction=lexicographicCompare;
-
-    var low = 0;
-    var high = array.length - 1;
-    while( low <= high ){
-        var mid = ( low + high ) >> 1;
-        var cmp = compareFunction( element, array[ mid ] );
-        if( cmp > 0 ){
-            low = mid + 1;
-        }else if( cmp < 0 ){
-            high = mid - 1;
-        } else {
-            return mid;
-        }
-    }
-    return -low - 1;
-}
-
-
-function binarySearchForLeftRange( array, leftRange ){
-    var high = array.length - 1;
-    if( array[ high ] < leftRange ) { return -1; }
-    var low = 0;
-    while( low <= high ){
-        var mid = ( low + high ) >> 1;
-        if( array[ mid ] >= leftRange ){
-            high = mid - 1;
-        }else{
-            low = mid + 1;
-        }
-    }
-    return high + 1;
-}
-
-
-function binarySearchForRightRange( array, rightRange ){
-    if( array[ 0 ] > rightRange ) { return -1; }
-    var low = 0;
-    var high = array.length - 1;
-    while( low <= high ){
-        var mid = ( low + high ) >> 1;
-        if( array[ mid ] > rightRange ){
-            high = mid - 1;
-        }else{
-            low = mid + 1;
-        }
-    }
-    return low - 1;
-}
-
-
-function rangeInSortedArray( array, min, max ){
-    var indexLeft = binarySearchForLeftRange( array, min );
-    var indexRight = binarySearchForRightRange( array, max );
-    if( indexLeft === -1 || indexRight === -1 || indexLeft > indexRight ){
-        return 0;
-    }else{
-        return indexRight - indexLeft + 1;
-    }
-}
-
-
-function uniqueArray( array ){
-    return array.sort().filter( function( value, index, sorted ){
-        return ( index === 0 ) || ( value !== sorted[ index - 1 ] );
-    } );
-}
-
-
-// String/arraybuffer conversion
-
-function uint8ToString( u8a ){
-
-    var chunkSize = 0x7000;
-
-    if( u8a.length > chunkSize ){
-
-      var c = [];
-
-      for(var i = 0; i < u8a.length; i += chunkSize) {
-
-        c.push( String.fromCharCode.apply(
-          null, u8a.subarray( i, i + chunkSize )
-        ) );
-
-      }
-
-      return c.join("");
-
-    }else{
-
-      return String.fromCharCode.apply( null, u8a );
-
-    }
-
-}
-
-
-function uint8ToLines( u8a, chunkSize, newline ){
-
-    chunkSize = chunkSize !== undefined ? chunkSize : 1024 * 1024 * 10;
-    newline = newline !== undefined ? newline : "\n";
-
-    var partialLine = "";
-    var lines = [];
-
-    for( var i = 0; i < u8a.length; i += chunkSize ){
-
-        var str = uint8ToString( u8a.subarray( i, i + chunkSize ) );
-        var idx = str.lastIndexOf( newline );
-
-        if( idx === -1 ){
-
-            partialLine += str;
-
-        }else{
-
-            var str2 = partialLine + str.substr( 0, idx );
-            lines = lines.concat( str2.split( newline ) );
-
-            if( idx === str.length - newline.length ){
-
-                partialLine = "";
-
-            }else{
-
-                partialLine = str.substr( idx + newline.length );
-
-            }
-
-        }
-
-    }
-
-    if( partialLine !== "" ){
-
-        lines.push( partialLine );
-
-    }
-
-    return lines;
-
-}
-
-
-function getTypedArray( arrayType, arraySize ){
-
-    switch( arrayType ){
-        case "int8":
-            return new Int8Array( arraySize );
-        case "int16":
-            return new Int16Array( arraySize );
-        case "int32":
-            return new Int32Array( arraySize );
-        case "uint8":
-            return new Uint8Array( arraySize );
-        case "uint16":
-            return new Uint16Array( arraySize );
-        case "uint32":
-            return new Uint32Array( arraySize );
-        case "float32":
-            return new Float32Array( arraySize );
-        default:
-            throw "arrayType unknown: " + arrayType;
-    }
-
-}
-
-/**
- * @file Registry
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function toLowerCaseString( value ){
-    return defaults( value, "" ).toString().toLowerCase();
-}
-
-
-var Registry = function Registry( name ){
-    this.name = name;
-    this._dict = {};
-};
-
-var prototypeAccessors = { names: {} };
-
-Registry.prototype.add = function add ( key, value ){
-    this._dict[ toLowerCaseString( key ) ] = value;
-};
-
-Registry.prototype.get = function get ( key ){
-    return this._dict[ toLowerCaseString( key ) ];
-};
-
-prototypeAccessors.names.get = function (){
-    return Object.keys( this._dict );
-};
-
-Object.defineProperties( Registry.prototype, prototypeAccessors );
-
-/**
- * @file Worker Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function getWorkerDeps( vars ){
-    var deps = vars;
-    vars.forEach( function( sym ){
-        if( sym.__deps ){
-            Array.prototype.push.apply( deps, getWorkerDeps( sym.__deps ) );
-        }
-    } );
-    return deps;
-}
-
-
-function makeWorkerString( vars ){
-    var deps = uniqueArray( getWorkerDeps( vars ) );
-    return deps.map( function( sym ){
-        return sym.toString();
-    } ).join( "\n\n\n" );
-}
-
-
-function onmessage( e ){
-
-    var name = e.data.__name;
-    var postId = e.data.__postId;
-
-    if( name === undefined ){
-
-        console.error( "message __name undefined" );
-
-    }else if( self.func === undefined ){
-
-        console.error( "worker func undefined", name );
-
-    }else{
-
-        var callback = function( aMessage, transferList ){
-
-            aMessage = aMessage || {};
-            if( postId !== undefined ) { aMessage.__postId = postId; }
-
-            try{
-                self.postMessage( aMessage, transferList );
-            }catch( error ){
-                console.error( "self.postMessage:", error );
-                self.postMessage( aMessage );
-            }
-
-        };
-
-        self.func( e, callback );
-
-    }
-
-}
-
-
-function makeWorkerBlob( func, deps ){
-    var str = "'use strict';\n\n" + makeWorkerString( deps );
-    str += "\n\n\nself.func = " + func.toString() + ";";
-    str += "\n\n\nself.onmessage = " + onmessage.toString() + ";";
-    // console.log( str );
-    return new Blob( [ str ], { type: "application/javascript" } );
-}
-
-/**
- * @file Worker Registry
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-var WorkerRegistry$1 = function WorkerRegistry(){
-    this.activeWorkerCount = 0;
-
-    this._funcDict = {};
-    this._depsDict = {};
-    this._blobDict = {};
-};
-
-WorkerRegistry$1.prototype.add = function add ( name, func, deps ){
-    this._funcDict[ name ] = func;
-    this._depsDict[ name ] = deps;
-};
-
-WorkerRegistry$1.prototype.get = function get ( name ){
-    if( !this._blobDict[ name ] ){
-        this._blobDict[ name ] = makeWorkerBlob(
-            this._funcDict[ name ], this._depsDict[ name ]
-        );
-    }
-    return this._blobDict[ name ];
-};
-
-/**
- * @file Math Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-
-function degToRad( deg ){
-    return deg * 0.01745;  // deg * Math.PI / 180
-}
-
-function radToDeg( rad ){
-    return rad * 57.29578;  // rad * 180 / Math.PI
-}
-
-
-// http://www.broofa.com/Tools/Math.uuid.htm
-var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
-var uuid = new Array( 36 );
-
-function generateUUID(){
-
-    var rnd = 0, r;
-
-    for( var i = 0; i < 36; i ++ ){
-        if( i === 8 || i === 13 || i === 18 || i === 23 ){
-            uuid[ i ] = '-';
-        }else if( i === 14 ){
-            uuid[ i ] = '4';
-        }else{
-            if( rnd <= 0x02 ) { rnd = 0x2000000 + ( Math.random() * 0x1000000 ) | 0; }
-            r = rnd & 0xf;
-            rnd = rnd >> 4;
-            uuid[ i ] = chars[ ( i === 19 ) ? ( r & 0x3 ) | 0x8 : r ];
-        }
-    }
-
-    return uuid.join( '' );
-
-}
-
-
-function countSetBits( i ){
-    i = i - ( ( i >> 1 ) & 0x55555555 );
-    i = ( i & 0x33333333 ) + ( ( i >> 2 ) & 0x33333333 );
-    return ( ( ( i + ( i >> 4 ) ) & 0x0F0F0F0F ) * 0x01010101 ) >> 24;
-}
-
-
-function clamp( value, min, max ){
-    return Math.max( min, Math.min( max, value ) );
-}
-
-
-function lerp( start, stop, alpha ){
-    return start + ( stop - start ) * alpha;
-}
-
-
-function spline( p0, p1, p2, p3, t, tension ) {
-    var v0 = ( p2 - p0 ) * tension;
-    var v1 = ( p3 - p1 ) * tension;
-    var t2 = t * t;
-    var t3 = t * t2;
-    return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
-           ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
-           v0 * t + p1;
-}
-
 // Polyfills
 
 if ( Number.EPSILON === undefined ) {
@@ -37424,6 +36766,695 @@ var LineCurve3 = Curve.create(
 
 );
 
+/**
+ * @file Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function getQuery( id ){
+
+    if( typeof window === "undefined" ) { return undefined; }
+
+    var a = new RegExp( id + "=([^&#=]*)" );
+    var m = a.exec( window.location.search );
+
+    if( m ){
+        return decodeURIComponent( m[1] );
+    }else{
+        return undefined;
+    }
+
+}
+
+
+function boolean( value ){
+
+    if( !value ){
+        return false;
+    }
+
+    if( typeof value === "string" ){
+        return /^1|true|t|yes|y$/i.test( value );
+    }
+
+    return true;
+
+}
+
+
+function defaults( value, defaultValue ){
+
+    return value !== undefined ? value : defaultValue;
+
+}
+
+
+function getProtocol(){
+
+    var protocol = window.location.protocol;
+    return protocol.match( /http(s)?:/gi ) === null ? "http:" : protocol;
+
+}
+
+
+function getBrowser(){
+
+    if( typeof window === "undefined" ) { return false; }
+
+    var ua = window.navigator.userAgent;
+
+    if ( /Opera|OPR/.test( ua ) ) {
+
+        return 'Opera';
+
+    } else if ( /Chrome/i.test( ua ) ) {
+
+        return 'Chrome';
+
+    } else if ( /Firefox/i.test( ua ) ) {
+
+        return 'Firefox';
+
+    } else if ( /Mobile(\/.*)? Safari/i.test( ua ) ) {
+
+        return 'Mobile Safari';
+
+    } else if ( /MSIE/i.test( ua ) ) {
+
+        return 'Internet Explorer';
+
+    } else if ( /Safari/i.test( ua ) ) {
+
+        return 'Safari';
+
+    }
+
+    return false;
+
+}
+
+
+function getAbsolutePath( relativePath ){
+
+    var loc = window.location;
+    var pn = loc.pathname;
+    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+
+    return loc.origin + basePath + relativePath;
+
+}
+
+
+function download( data, downloadName ){
+
+    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+
+    if( !data ) { return; }
+
+    downloadName = downloadName || "download";
+
+    var isSafari = getBrowser() === "Safari";
+    var isChromeIos = /CriOS\/[\d]+/.test( window.navigator.userAgent );
+
+    var a = document.createElement( 'a' );
+
+    function openUrl( url ){
+        var opened = window.open( url, '_blank' );
+        if( !opened ){
+            window.location.href = url;
+        }
+    }
+
+    function open( str ){
+        openUrl( isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;') );
+    }
+
+    if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
+
+        // native saveAs in IE 10+
+        navigator.msSaveOrOpenBlob( data, downloadName );
+
+    }else if( ( isSafari || isChromeIos ) && window.FileReader ){
+
+        if( data instanceof Blob ){
+            // no downloading of blob urls in Safari
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                open( reader.result );
+            };
+            reader.readAsDataURL( data );
+        }else{
+            open( data );
+        }
+
+    }else{
+
+        if( data instanceof Blob ){
+            data = URL.createObjectURL( data );
+        }
+
+        if( "download" in a ){
+            // download link available
+            a.style.display = "hidden";
+            document.body.appendChild( a );
+            a.href = data;
+            a.download = downloadName;
+            a.target = "_blank";
+            a.click();
+            document.body.removeChild( a );
+        }else{
+            openUrl( data );
+        }
+
+        if( data instanceof Blob ){
+            URL.revokeObjectURL( data );
+        }
+
+    }
+
+}
+
+
+function getFileInfo( file ){
+
+    var compressedExtList = [ "gz" ];
+
+    var path, compressed, protocol;
+
+    if( ( typeof File !== "undefined" && file instanceof File ) ||
+        ( typeof Blob !== "undefined" && file instanceof Blob )
+    ){
+        path = file.name || "";
+    }else{
+        path = file;
+    }
+    var queryIndex = path.lastIndexOf( '?' );
+    path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
+
+    var name = path.replace( /^.*[\\\/]/, '' );
+    var base = name.substring( 0, name.lastIndexOf( '.' ) );
+
+    var nameSplit = name.split( '.' );
+    var ext = nameSplit.length > 1 ? nameSplit.pop().toLowerCase() : "";
+
+    var protocolMatch = path.match( /^(.+):\/\/(.+)$/ );
+    if( protocolMatch ){
+        protocol = protocolMatch[ 1 ].toLowerCase();
+        path = protocolMatch[ 2 ];
+    }
+
+    var dir = path.substring( 0, path.lastIndexOf( '/' ) + 1 );
+
+    if( compressedExtList.includes( ext ) ){
+        compressed = ext;
+        var n = path.length - ext.length - 1;
+        ext = path.substr( 0, n ).split( '.' ).pop().toLowerCase();
+        var m = base.length - ext.length - 1;
+        base = base.substr( 0, m );
+    }else{
+        compressed = false;
+    }
+
+    return {
+        "path": path,
+        "name": name,
+        "ext": ext,
+        "base": base,
+        "dir": dir,
+        "compressed": compressed,
+        "protocol": protocol,
+        "src": file
+    };
+
+}
+
+
+function throttle( func, wait, options ){
+
+    // from http://underscorejs.org/docs/underscore.html
+
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+
+    if( !options ) { options = {}; }
+
+    var later = function(){
+        previous = options.leading === false ? 0 : Date.now();
+        timeout = null;
+        result = func.apply( context, args );
+        if( !timeout ) { context = args = null; }
+    };
+
+    return function throttle(){
+
+        var now = Date.now();
+        if( !previous && options.leading === false ) { previous = now; }
+        var remaining = wait - ( now - previous );
+        context = this;
+        args = arguments;
+        if( remaining <= 0 || remaining > wait ){
+            if( timeout ){
+                clearTimeout( timeout );
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if( !timeout ) { context = args = null; }
+        }else if( !timeout && options.trailing !== false ){
+            timeout = setTimeout( later, remaining );
+        }
+
+        return result;
+
+    };
+
+}
+
+
+function lexicographicCompare( elm1, elm2 ){
+    if( elm1 < elm2 ) { return -1; }
+    if( elm1 > elm2 ) { return 1; }
+    return 0;
+}
+
+
+/**
+ * Does a binary search to get the index of an element in the input array
+ * @function
+ * @example
+ * var array = [ 1, 2, 3, 4, 5, 6 ];
+ * var element = 4;
+ * binarySearchIndexOf( array, element );  // returns 3
+ *
+ * @param {Array} array - sorted array
+ * @param {Anything} element - element to search for in the array
+ * @param {Function} [compareFunction] - compare function
+ * @return {Number} the index of the element or -1 if not in the array
+ */
+function binarySearchIndexOf( array, element, compareFunction ){
+    if ( compareFunction === void 0 ) compareFunction=lexicographicCompare;
+
+    var low = 0;
+    var high = array.length - 1;
+    while( low <= high ){
+        var mid = ( low + high ) >> 1;
+        var cmp = compareFunction( element, array[ mid ] );
+        if( cmp > 0 ){
+            low = mid + 1;
+        }else if( cmp < 0 ){
+            high = mid - 1;
+        } else {
+            return mid;
+        }
+    }
+    return -low - 1;
+}
+
+
+function binarySearchForLeftRange( array, leftRange ){
+    var high = array.length - 1;
+    if( array[ high ] < leftRange ) { return -1; }
+    var low = 0;
+    while( low <= high ){
+        var mid = ( low + high ) >> 1;
+        if( array[ mid ] >= leftRange ){
+            high = mid - 1;
+        }else{
+            low = mid + 1;
+        }
+    }
+    return high + 1;
+}
+
+
+function binarySearchForRightRange( array, rightRange ){
+    if( array[ 0 ] > rightRange ) { return -1; }
+    var low = 0;
+    var high = array.length - 1;
+    while( low <= high ){
+        var mid = ( low + high ) >> 1;
+        if( array[ mid ] > rightRange ){
+            high = mid - 1;
+        }else{
+            low = mid + 1;
+        }
+    }
+    return low - 1;
+}
+
+
+function rangeInSortedArray( array, min, max ){
+    var indexLeft = binarySearchForLeftRange( array, min );
+    var indexRight = binarySearchForRightRange( array, max );
+    if( indexLeft === -1 || indexRight === -1 || indexLeft > indexRight ){
+        return 0;
+    }else{
+        return indexRight - indexLeft + 1;
+    }
+}
+
+
+function uniqueArray( array ){
+    return array.sort().filter( function( value, index, sorted ){
+        return ( index === 0 ) || ( value !== sorted[ index - 1 ] );
+    } );
+}
+
+
+// String/arraybuffer conversion
+
+function uint8ToString( u8a ){
+
+    var chunkSize = 0x7000;
+
+    if( u8a.length > chunkSize ){
+
+      var c = [];
+
+      for(var i = 0; i < u8a.length; i += chunkSize) {
+
+        c.push( String.fromCharCode.apply(
+          null, u8a.subarray( i, i + chunkSize )
+        ) );
+
+      }
+
+      return c.join("");
+
+    }else{
+
+      return String.fromCharCode.apply( null, u8a );
+
+    }
+
+}
+
+
+function uint8ToLines( u8a, chunkSize, newline ){
+
+    chunkSize = chunkSize !== undefined ? chunkSize : 1024 * 1024 * 10;
+    newline = newline !== undefined ? newline : "\n";
+
+    var partialLine = "";
+    var lines = [];
+
+    for( var i = 0; i < u8a.length; i += chunkSize ){
+
+        var str = uint8ToString( u8a.subarray( i, i + chunkSize ) );
+        var idx = str.lastIndexOf( newline );
+
+        if( idx === -1 ){
+
+            partialLine += str;
+
+        }else{
+
+            var str2 = partialLine + str.substr( 0, idx );
+            lines = lines.concat( str2.split( newline ) );
+
+            if( idx === str.length - newline.length ){
+
+                partialLine = "";
+
+            }else{
+
+                partialLine = str.substr( idx + newline.length );
+
+            }
+
+        }
+
+    }
+
+    if( partialLine !== "" ){
+
+        lines.push( partialLine );
+
+    }
+
+    return lines;
+
+}
+
+
+function getTypedArray( arrayType, arraySize ){
+
+    switch( arrayType ){
+        case "int8":
+            return new Int8Array( arraySize );
+        case "int16":
+            return new Int16Array( arraySize );
+        case "int32":
+            return new Int32Array( arraySize );
+        case "uint8":
+            return new Uint8Array( arraySize );
+        case "uint16":
+            return new Uint16Array( arraySize );
+        case "uint32":
+            return new Uint32Array( arraySize );
+        case "float32":
+            return new Float32Array( arraySize );
+        default:
+            throw "arrayType unknown: " + arrayType;
+    }
+
+}
+
+
+function ensureVector3( v ){
+    return v instanceof Vector3 ? v : new Vector3().fromArray( v );
+}
+
+
+function ensureMatrix4( m ){
+    return m instanceof Matrix4 ? m : new Matrix4().fromArray( m );
+}
+
+
+function ensureQuaternion( q ){
+    return q instanceof Quaternion ? q : new Quaternion().fromArray( q );
+}
+
+/**
+ * @file Registry
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function toLowerCaseString( value ){
+    return defaults( value, "" ).toString().toLowerCase();
+}
+
+
+var Registry = function Registry( name ){
+    this.name = name;
+    this._dict = {};
+};
+
+var prototypeAccessors = { names: {} };
+
+Registry.prototype.add = function add ( key, value ){
+    this._dict[ toLowerCaseString( key ) ] = value;
+};
+
+Registry.prototype.get = function get ( key ){
+    return this._dict[ toLowerCaseString( key ) ];
+};
+
+prototypeAccessors.names.get = function (){
+    return Object.keys( this._dict );
+};
+
+Object.defineProperties( Registry.prototype, prototypeAccessors );
+
+/**
+ * @file Worker Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function getWorkerDeps( vars ){
+    var deps = vars;
+    vars.forEach( function( sym ){
+        if( sym.__deps ){
+            Array.prototype.push.apply( deps, getWorkerDeps( sym.__deps ) );
+        }
+    } );
+    return deps;
+}
+
+
+function makeWorkerString( vars ){
+    var deps = uniqueArray( getWorkerDeps( vars ) );
+    return deps.map( function( sym ){
+        return sym.toString();
+    } ).join( "\n\n\n" );
+}
+
+
+function onmessage( e ){
+
+    var name = e.data.__name;
+    var postId = e.data.__postId;
+
+    if( name === undefined ){
+
+        console.error( "message __name undefined" );
+
+    }else if( self.func === undefined ){
+
+        console.error( "worker func undefined", name );
+
+    }else{
+
+        var callback = function( aMessage, transferList ){
+
+            aMessage = aMessage || {};
+            if( postId !== undefined ) { aMessage.__postId = postId; }
+
+            try{
+                self.postMessage( aMessage, transferList );
+            }catch( error ){
+                console.error( "self.postMessage:", error );
+                self.postMessage( aMessage );
+            }
+
+        };
+
+        self.func( e, callback );
+
+    }
+
+}
+
+
+function makeWorkerBlob( func, deps ){
+    var str = "'use strict';\n\n" + makeWorkerString( deps );
+    str += "\n\n\nself.func = " + func.toString() + ";";
+    str += "\n\n\nself.onmessage = " + onmessage.toString() + ";";
+    // console.log( str );
+    return new Blob( [ str ], { type: "application/javascript" } );
+}
+
+/**
+ * @file Worker Registry
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+var WorkerRegistry$1 = function WorkerRegistry(){
+    this.activeWorkerCount = 0;
+
+    this._funcDict = {};
+    this._depsDict = {};
+    this._blobDict = {};
+};
+
+WorkerRegistry$1.prototype.add = function add ( name, func, deps ){
+    this._funcDict[ name ] = func;
+    this._depsDict[ name ] = deps;
+};
+
+WorkerRegistry$1.prototype.get = function get ( name ){
+    if( !this._blobDict[ name ] ){
+        this._blobDict[ name ] = makeWorkerBlob(
+            this._funcDict[ name ], this._depsDict[ name ]
+        );
+    }
+    return this._blobDict[ name ];
+};
+
+/**
+ * @file Math Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function degToRad( deg ){
+    return deg * 0.01745;  // deg * Math.PI / 180
+}
+
+function radToDeg( rad ){
+    return rad * 57.29578;  // rad * 180 / Math.PI
+}
+
+
+// http://www.broofa.com/Tools/Math.uuid.htm
+var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
+var uuid = new Array( 36 );
+
+function generateUUID(){
+
+    var rnd = 0, r;
+
+    for( var i = 0; i < 36; i ++ ){
+        if( i === 8 || i === 13 || i === 18 || i === 23 ){
+            uuid[ i ] = '-';
+        }else if( i === 14 ){
+            uuid[ i ] = '4';
+        }else{
+            if( rnd <= 0x02 ) { rnd = 0x2000000 + ( Math.random() * 0x1000000 ) | 0; }
+            r = rnd & 0xf;
+            rnd = rnd >> 4;
+            uuid[ i ] = chars[ ( i === 19 ) ? ( r & 0x3 ) | 0x8 : r ];
+        }
+    }
+
+    return uuid.join( '' );
+
+}
+
+
+function countSetBits( i ){
+    i = i - ( ( i >> 1 ) & 0x55555555 );
+    i = ( i & 0x33333333 ) + ( ( i >> 2 ) & 0x33333333 );
+    return ( ( ( i + ( i >> 4 ) ) & 0x0F0F0F0F ) * 0x01010101 ) >> 24;
+}
+
+
+function normalize( value, min, max ){
+    return ( value - min ) / ( max - min );
+}
+
+
+function clamp( value, min, max ){
+    return Math.max( min, Math.min( max, value ) );
+}
+
+
+function saturate( value ){
+    return clamp( value, 0, 1 );
+}
+
+
+function lerp( start, stop, alpha ){
+    return start + ( stop - start ) * alpha;
+}
+
+
+function spline( p0, p1, p2, p3, t, tension ) {
+    var v0 = ( p2 - p0 ) * tension;
+    var v1 = ( p3 - p1 ) * tension;
+    var t2 = t * t;
+    var t3 = t * t2;
+    return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 +
+           ( -3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 +
+           v0 * t + p1;
+}
+
+
+function smoothstep( min, max, x ){
+    x = saturate( normalize( x, min, max ) );
+    return x * x * ( 3 - 2 * x );
+}
+
 // changed to be usable as an es6 module, ASR
 
 /**
@@ -44799,15 +44830,14 @@ function Viewer( eid ){
         var lookAt = new Vector3( 0, 0, 0 );
 
         perspectiveCamera = new PerspectiveCamera(
-            parameters.cameraFov, width / height, 0.1, 10000
+            parameters.cameraFov, width / height
         );
         perspectiveCamera.position.z = parameters.cameraZ;
         perspectiveCamera.lookAt( lookAt );
 
         orthographicCamera = new OrthographicCamera(
             width / -2, width / 2,
-            height / 2, height / -2,
-            0.1, 10000
+            height / 2, height / -2
         );
         orthographicCamera.position.z = parameters.cameraZ;
         orthographicCamera.lookAt( lookAt );
@@ -45285,8 +45315,6 @@ function Viewer( eid ){
         }
 
         perspectiveCamera.fov = p.cameraFov;
-        // controls.object = camera;
-        // camera.lookAt( controls.target );
         camera.updateProjectionMatrix();
 
         requestRender();
@@ -45487,10 +45515,8 @@ function Viewer( eid ){
 
     function updateZoom(){
 
-        __updateClipping();
         var fov = degToRad( perspectiveCamera.fov );
-        var hyperfocus = ( camera.near + camera.far ) / 2;
-        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
+        var _height = 2 * Math.tan( fov / 2 ) * -camera.position.z;
         orthographicCamera.zoom = height / _height;
 
     }
@@ -46172,7 +46198,6 @@ var tmpP = new Vector3();
 var tmpS = new Vector3();
 
 var tmpScaleVector = new Vector3();
-var tmpOrientMatrix = new Matrix4();
 var tmpRotateMatrix = new Matrix4();
 var tmpRotateVector = new Vector3();
 var tmpAlignMatrix = new Matrix4();
@@ -46247,45 +46272,43 @@ ViewerControls.prototype.getOrientation = function getOrientation ( optionalTarg
 
 /**
  * set scene orientation
- * @param {OrientationMatrix} orientation - scene orientation
+ * @param {OrientationMatrix|Array} orientation - scene orientation
  * @return {undefined}
  */
 ViewerControls.prototype.orient = function orient ( orientation ){
 
-    if( Array.isArray( orientation ) ){
-        orientation = tmpOrientMatrix.fromArray( orientation );
-    }
-
-    orientation.decompose( tmpP, tmpQ, tmpS );
+    ensureMatrix4( orientation ).decompose( tmpP, tmpQ, tmpS );
 
     this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
     this.viewer.translationGroup.position.copy( tmpP );
     this.viewer.camera.position.z = -tmpS.z;
-
+    this.viewer.updateZoom();
     this.changed();
 
 };
 
 /**
  * translate scene
- * @param  {Vector3} vector - translation vector
+ * @param  {Vector3|Array} vector - translation vector
  * @return {undefined}
  */
 ViewerControls.prototype.translate = function translate ( vector ){
 
-    this.viewer.translationGroup.position.add( vector );
+    this.viewer.translationGroup.position
+        .add( ensureVector3( vector ) );
     this.changed();
 
 };
 
 /**
  * center scene
- * @param  {Vector3} position - center position
+ * @param  {Vector3|Array} position - center position
  * @return {undefined}
  */
 ViewerControls.prototype.center = function center ( position ){
 
-    this.viewer.translationGroup.position.copy( position ).negate();
+    this.viewer.translationGroup.position
+        .copy( ensureVector3( position ) ).negate();
     this.changed();
 
 };
@@ -46316,14 +46339,15 @@ ViewerControls.prototype.distance = function distance ( z ){
 
 /**
  * spin scene on axis
- * @param  {Vector3} axis - rotation axis
+ * @param  {Vector3|Array} axis - rotation axis
  * @param  {Number} angle - amount to spin
  * @return {undefined}
  */
 ViewerControls.prototype.spin = function spin ( axis, angle ){
 
     tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
-    tmpRotateVector.copy( axis ).applyMatrix4( tmpRotateMatrix );
+    tmpRotateVector
+        .copy( ensureVector3( axis ) ).applyMatrix4( tmpRotateMatrix );
 
     this.viewer.rotationGroup.rotateOnAxis( tmpRotateVector, angle );
     this.changed();
@@ -46332,24 +46356,25 @@ ViewerControls.prototype.spin = function spin ( axis, angle ){
 
 /**
  * rotate scene
- * @param  {Quaternion} quaternion - rotation quaternion
+ * @param  {Quaternion|Array} quaternion - rotation quaternion
  * @return {undefined}
  */
 ViewerControls.prototype.rotate = function rotate ( quaternion ){
 
-    this.viewer.rotationGroup.setRotationFromQuaternion( quaternion );
+    this.viewer.rotationGroup
+        .setRotationFromQuaternion( ensureQuaternion( quaternion ) );
     this.changed();
 
 };
 
 /**
  * align scene to basis matrix
- * @param  {Matrix4} basis - basis matrix
+ * @param  {Matrix4|Array} basis - basis matrix
  * @return {undefined}
  */
 ViewerControls.prototype.align = function align ( basis ){
 
-    tmpAlignMatrix.getInverse( basis );
+    tmpAlignMatrix.getInverse( ensureMatrix4( basis ) );
 
     this.viewer.rotationGroup.setRotationFromMatrix( tmpAlignMatrix );
     this.changed();
@@ -46358,12 +46383,12 @@ ViewerControls.prototype.align = function align ( basis ){
 
 /**
  * apply rotation matrix to scene
- * @param  {Matrix4} matrix - rotation matrix
+ * @param  {Matrix4|Array} matrix - rotation matrix
  * @return {undefined}
  */
 ViewerControls.prototype.applyMatrix = function applyMatrix ( matrix ){
 
-    this.viewer.rotationGroup.applyMatrix( matrix );
+    this.viewer.rotationGroup.applyMatrix( ensureMatrix4( matrix ) );
     this.changed();
 
 };
@@ -46410,7 +46435,7 @@ Animation.prototype._tick = function _tick (){};
 Animation.prototype.tick = function tick ( stats ){
 
     this.elapsedTime = stats.currentTime - this.startTime;
-    this.alpha = clamp( this.elapsedTime / this.duration, 0, 1 );
+    this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
 
     this._tick( stats );
 
@@ -46435,7 +46460,11 @@ var SpinAnimation = (function (Animation) {
 
     SpinAnimation.prototype._init = function _init ( axis, angle ){
 
-        this.axis = defaults( axis, new Vector3( 0, 1, 0 ) );
+        if( Array.isArray( axis ) ){
+            this.axis = new Vector3().fromArray( axis );
+        }else{
+            this.axis = defaults( axis, new Vector3( 0, 1, 0 ) );
+        }
         this.angle = defaults( angle, 0.01 );
 
     };
@@ -46465,8 +46494,8 @@ var MoveAnimation = (function (Animation) {
 
     MoveAnimation.prototype._init = function _init ( moveFrom, moveTo ){
 
-        this.moveFrom = defaults( moveFrom, new Vector3() );
-        this.moveTo = defaults( moveTo, new Vector3() );
+        this.moveFrom = ensureVector3( defaults( moveFrom, new Vector3() ) );
+        this.moveTo = ensureVector3( defaults( moveTo, new Vector3() ) );
 
     };
 
@@ -46519,8 +46548,8 @@ var RotateAnimation = (function (Animation) {
 
     RotateAnimation.prototype._init = function _init ( rotateFrom, rotateTo ){
 
-        this.rotateFrom = rotateFrom;
-        this.rotateTo = rotateTo;
+        this.rotateFrom = ensureQuaternion( rotateFrom );
+        this.rotateTo = ensureQuaternion( rotateTo );
 
         this._currentRotation = new Quaternion();
 
@@ -64982,6 +65011,11 @@ Component.prototype.getZoom = function getZoom (){
 
 };
 
+/**
+ * Automatically center and zoom the component
+ * @param  {Integer} [duration] - duration of the animation, defaults to 0
+ * @return {undefined}
+ */
 Component.prototype.autoView = function autoView ( duration ){
 
     this.stage.animationControls.zoomMove(
@@ -66169,7 +66203,7 @@ Stage.prototype.getCenter = function getCenter (){
 
 /**
  * Add a zoom and a move animation with automatic targets
- * @param  {Number} duration - animation time in milliseconds
+ * @param  {Integer} duration - animation time in milliseconds
  * @return {undefined}
  */
 Stage.prototype.autoView = function autoView ( duration ){
@@ -69551,6 +69585,12 @@ var StructureComponent = (function (Component$$1) {
 
     };
 
+    /**
+     * Automatically center and zoom the component
+     * @param  {String|Integer} [sele] - selection string or duration if integer
+     * @param  {Integer} [duration] - duration of the animation, defaults to 0
+     * @return {undefined}
+     */
     StructureComponent.prototype.autoView = function autoView ( sele, duration ){
 
         if( Number.isInteger( sele ) ){
@@ -77718,11 +77758,31 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
 
     type: "validation",
 
+    parameters: Object.assign( {
+
+        radiusType: null,
+        radius: null,
+        scale: null
+
+    }, StructureRepresentation.prototype.parameters ),
+
+    init: function( params ){
+
+        var p = params || {};
+        p.colorValue = defaults( p.colorValue, "#f0027f" );
+
+        StructureRepresentation.prototype.init.call( this, p );
+
+    },
+
     createData: function( sview ){
 
         if( !sview.validation ) { return; }
 
-        var clashData = sview.validation.getClashData( { structure: sview } );
+        var clashData = sview.validation.getClashData( {
+            structure: sview,
+            color: this.colorValue
+        } );
 
         var cylinderBuffer = new CylinderBuffer(
             clashData, this.getBufferParams( { openEnded: false } )
@@ -77731,6 +77791,12 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
         return {
             bufferList: [ cylinderBuffer ]
         };
+
+    },
+
+    updateData: function( /*what, data*/ ){
+
+        this.build();
 
     }
 
@@ -84420,10 +84486,10 @@ var XmlParser = (function (Parser$$1) {
         if( Debug ) { Log.time( "XmlParser._parse " + this.name ); }
 
         if( this.useDomParser ){
-            if( this.streamer.isBinary() || this.string ){
-                this.xml.data = this.__domParser( this.streamer.asText() );
-            }else{
+            if( this.streamer.data instanceof Document ){
                 this.xml.data = this.streamer.data;
+            }else{
+                this.xml.data = this.__domParser( this.streamer.asText() );
             }
         }else{
             this.xml.data = this.__xmlParser( this.streamer.asText() );
@@ -84466,6 +84532,10 @@ function setBitDict( dict, key, bit ){
     }else{
         dict[ key ] |= bit;
     }
+}
+
+function hasAttrValue( attr, value ){
+    return attr !== undefined && attr.value === value;
 }
 
 
@@ -84588,15 +84658,15 @@ Validation.prototype.fromXml = function fromXml ( xml ){
                 geoProblemCount += 1;
             }
 
-            if( ga$1.rota !== undefined && ga$1.rota.value === "OUTLIER" ){
+            if( hasAttrValue( ga$1.rota, "OUTLIER" ) ){
                 geoProblemCount += 1;
             }
 
-            if( ga$1.rama !== undefined && ga$1.rama.value === "OUTLIER" ){
+            if( hasAttrValue( ga$1.rota, "OUTLIER" ) ){
                 geoProblemCount += 1;
             }
 
-            if( ga$1.RNApucker !== undefined && ga$1.RNApucker.value === "outlier" ){
+            if( hasAttrValue( ga$1.RNApucker, "outlier" ) ){
                 geoProblemCount += 1;
             }
 
@@ -84737,7 +84807,6 @@ var ValidationParser = (function (XmlParser$$1) {
     ValidationParser.prototype._parse = function _parse (){
 
         XmlParser$$1.prototype._parse.call(this);
-        console.log(this.xml.data);
 
         if( Debug ) { Log.time( "ValidationParser._parse " + this.name ); }
 
@@ -87880,7 +87949,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.7";
+var version$1 = "0.10.0-dev.8";
 
 /**
  * @file ngl
