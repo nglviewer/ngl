@@ -34,6 +34,10 @@ function setBitDict( dict, key, bit ){
     }
 }
 
+function hasAttrValue( attr, value ){
+    return attr !== undefined && attr.value === value;
+}
+
 
 class Validation{
 
@@ -65,17 +69,17 @@ class Validation{
 
         for( i = 0, il = groups.length; i < il; ++i ){
 
-            let g = groups[ i ];
-            let ga = g.attributes;
+            const g = groups[ i ];
+            const ga = g.attributes;
 
-            let sele = getSele( ga );
+            const sele = getSele( ga );
 
-            let clashes = g.getElementsByTagName( "clash" );
+            const clashes = g.getElementsByTagName( "clash" );
 
             for( j = 0, jl = clashes.length; j < jl; ++j ){
 
-                let ca = clashes[ j ].attributes;
-                let cid = parseInt( ca.cid.value );
+                const ca = clashes[ j ].attributes;
+                const cid = parseInt( ca.cid.value );
 
                 if( clashDict[ cid ] === undefined ){
                     clashDict[ cid ] = {
@@ -97,10 +101,10 @@ class Validation{
 
         for( i = 0, il = groups.length; i < il; ++i ){
 
-            let g = groups[ i ];
-            let ga = g.attributes;
+            const g = groups[ i ];
+            const ga = g.attributes;
 
-            let sele = getSele( ga );
+            const sele = getSele( ga );
             if( ga.rsrz !== undefined ){
                 rsrzDict[ sele ] = parseFloat( ga.rsrz.value );
             }
@@ -108,19 +112,19 @@ class Validation{
                 rsccDict[ sele ] = parseFloat( ga.rscc.value );
             }
 
-            let isPolymer = ga.seq.value !== ".";
-            let clashAtoms = [];
+            const isPolymer = ga.seq.value !== ".";
+            const clashAtoms = [];
             let geoProblemCount = 0;
 
-            let clashes = g.getElementsByTagName( "clash" );
+            const clashes = g.getElementsByTagName( "clash" );
 
             for( j = 0, jl = clashes.length; j < jl; ++j ){
 
-                let ca = clashes[ j ].attributes;
-                let cid = parseInt( ca.cid.value );
+                const ca = clashes[ j ].attributes;
+                const cid = parseInt( ca.cid.value );
 
                 if( clashDict[ cid ] !== undefined ){
-                    let c = clashDict[ cid ];
+                    const c = clashDict[ cid ];
                     if( c.res1 === c.res2 ||
                         c.atom1 === undefined ||
                         c.atom2 === undefined ||
@@ -141,30 +145,30 @@ class Validation{
                     geoProblemCount += 1;
                 }
 
-                let angleOutliers = g.getElementsByTagName( "angle-outlier" );
+                const angleOutliers = g.getElementsByTagName( "angle-outlier" );
                 if( angleOutliers.length > 0 ){
                     geoProblemCount += 1;
                 }
 
-                let bondOutliers = g.getElementsByTagName( "bond-outlier" );
+                const bondOutliers = g.getElementsByTagName( "bond-outlier" );
                 if( bondOutliers.length > 0 ){
                     geoProblemCount += 1;
                 }
 
-                let planeOutliers = g.getElementsByTagName( "plane-outlier" );
+                const planeOutliers = g.getElementsByTagName( "plane-outlier" );
                 if( planeOutliers.length > 0 ){
                     geoProblemCount += 1;
                 }
 
-                if( ga.rota !== undefined && ga.rota.value === "OUTLIER" ){
+                if( hasAttrValue( ga.rota, "OUTLIER" ) ){
                     geoProblemCount += 1;
                 }
 
-                if( ga.rama !== undefined && ga.rama.value === "OUTLIER" ){
+                if( hasAttrValue( ga.rota, "OUTLIER" ) ){
                     geoProblemCount += 1;
                 }
 
-                if( ga.RNApucker !== undefined && ga.RNApucker.value === "outlier" ){
+                if( hasAttrValue( ga.RNApucker, "outlier" ) ){
                     geoProblemCount += 1;
                 }
 
@@ -174,12 +178,12 @@ class Validation{
 
             }else{
 
-                let mogBondOutliers = g.getElementsByTagName( "mog-bond-outlier" );
-                let mogAngleOutliers = g.getElementsByTagName( "mog-angle-outlier" );
+                const mogBondOutliers = g.getElementsByTagName( "mog-bond-outlier" );
+                const mogAngleOutliers = g.getElementsByTagName( "mog-angle-outlier" );
 
                 if( mogBondOutliers.length > 0 || mogAngleOutliers.length > 0 || clashes.length > 0 ){
 
-                    let atomDict = {};
+                    const atomDict = {};
                     geoAtomDict[ sele ] = atomDict;
 
                     for( j = 0, jl = clashAtoms.length; j < jl; ++j ){
@@ -187,14 +191,14 @@ class Validation{
                     }
 
                     for( j = 0, jl = mogBondOutliers.length; j < jl; ++j ){
-                        let mbo = mogBondOutliers[ j ].attributes;
+                        const mbo = mogBondOutliers[ j ].attributes;
                         mbo.atoms.value.split( "," ).forEach( function( atomname ){
                             setBitDict( atomDict, atomname, 2 );
                         } );
                     }
 
                     for( j = 0, jl = mogAngleOutliers.length; j < jl; ++j ){
-                        let mao = mogAngleOutliers[ j ].attributes;
+                        const mao = mogAngleOutliers[ j ].attributes;
                         mao.atoms.value.split( "," ).forEach( function( atomname ){
                             setBitDict( atomDict, atomname, 4 );
                         } );
