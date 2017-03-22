@@ -7,6 +7,7 @@
 
 import { Vector3, Color } from "../../lib/three.es6.js";
 
+import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray3 } from "../math/array-utils.js";
 import { guessElement } from "../structure/structure-utils.js";
@@ -38,6 +39,57 @@ function hasAttrValue( attr, value ){
     return attr !== undefined && attr.value === value;
 }
 
+function getAtomSele( ap ){
+    const icode = ap.inscode;
+    const chain = ap.chainname;
+    const atomname = ap.atomname;
+    const altcode = ap.altloc;
+    let sele = ap.resno;
+    if( icode ) sele += "^" + icode;
+    if( chain ) sele += ":" + chain;
+    if( atomname ) sele += "." + atomname;
+    if( altcode ) sele += "%" + altcode;
+    sele += "/" + ap.modelIndex;
+    return sele;
+}
+
+function getProblemCount( clashAtoms, g, ga ){
+    let geoProblemCount = 0;
+
+    if( clashAtoms.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    const angleOutliers = g.getElementsByTagName( "angle-outlier" );
+    if( angleOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    const bondOutliers = g.getElementsByTagName( "bond-outlier" );
+    if( bondOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    const planeOutliers = g.getElementsByTagName( "plane-outlier" );
+    if( planeOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.rota, "OUTLIER" ) ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.rota, "OUTLIER" ) ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.RNApucker, "outlier" ) ){
+        geoProblemCount += 1;
+    }
+
+    return geoProblemCount;
+}
+
 
 class Validation{
 
@@ -51,55 +103,32 @@ class Validation{
         this.clashDict = {};
         this.geoDict = {};
         this.geoAtomDict = {};
+        this.resDict = {};
+        this.atomDict = {};
         this.clashSele = "NONE";
 
     }
 
     fromXml( xml ){
 
+        if( Debug ) Log.time( "Validation.fromXml" );
+
         const rsrzDict = this.rsrzDict;
         const rsccDict = this.rsccDict;
         const clashDict = this.clashDict;
         const geoDict = this.geoDict;
         const geoAtomDict = this.geoAtomDict;
+        const resDict = this.resDict;
+        const atomDict = this.atomDict;
 
         const groups = xml.getElementsByTagName( "ModelledSubgroup" );
 
-        let i, il, j, jl;
+        const _clashDict = {};
+        const clashList = [];
 
-        for( i = 0, il = groups.length; i < il; ++i ){
+        if( Debug ) Log.time( "Validation.fromXml#clashDict" );
 
-            const g = groups[ i ];
-            const ga = g.attributes;
-
-            const sele = getSele( ga );
-
-            const clashes = g.getElementsByTagName( "clash" );
-
-            for( j = 0, jl = clashes.length; j < jl; ++j ){
-
-                const ca = clashes[ j ].attributes;
-                const cid = parseInt( ca.cid.value );
-
-                if( clashDict[ cid ] === undefined ){
-                    clashDict[ cid ] = {
-                        mag: parseFloat( ca.clashmag.value ),
-                        dist: parseFloat( ca.dist.value ),
-                        sele1: getSele( ga, ca.atom.value, true ),
-                        atom1: ca.atom.value,
-                        res1: sele
-                    };
-                }else{
-                    clashDict[ cid ].sele2 = getSele( ga, ca.atom.value, true );
-                    clashDict[ cid ].atom2 = ca.atom.value;
-                    clashDict[ cid ].res2 = sele;
-                }
-
-            }
-
-        }
-
-        for( i = 0, il = groups.length; i < il; ++i ){
+        for( let i = 0, il = groups.length; i < il; ++i ){
 
             const g = groups[ i ];
             const ga = g.attributes;
@@ -111,67 +140,60 @@ class Validation{
             if( ga.rscc !== undefined ){
                 rsccDict[ sele ] = parseFloat( ga.rscc.value );
             }
+            ga.sele = sele;
 
-            const isPolymer = ga.seq.value !== ".";
             const clashAtoms = [];
-            let geoProblemCount = 0;
+            ga.clashAtoms = clashAtoms;
 
             const clashes = g.getElementsByTagName( "clash" );
 
-            for( j = 0, jl = clashes.length; j < jl; ++j ){
+            for( let j = 0, jl = clashes.length; j < jl; ++j ){
 
                 const ca = clashes[ j ].attributes;
-                const cid = parseInt( ca.cid.value );
+                const atom = ca.atom.value;
 
-                if( clashDict[ cid ] !== undefined ){
-                    const c = clashDict[ cid ];
-                    if( c.res1 === c.res2 ||
-                        c.atom1 === undefined ||
-                        c.atom2 === undefined ||
-                        guessElement( c.atom1 ) === "H" ||
-                        guessElement( c.atom2 ) === "H"
-                    ){
-                        delete clashDict[ cid ];
+                if( guessElement( atom ) !== "H" ){
+
+                    const cid = ca.cid.value;
+                    const atomSele = getSele( ga, atom, true );
+                    atomDict[ atomSele ] = true;
+
+                    if( _clashDict[ cid ] === undefined ){
+                        _clashDict[ cid ] = {
+                            sele1: atomSele,
+                            atom1: atom,
+                            res1: sele
+                        };
                     }else{
-                        clashAtoms.push( ca.atom.value );
+                        const c = _clashDict[ cid ];
+                        c.sele2 = atomSele;
+                        c.atom2 = atom;
+                        c.res2 = sele;
+                        clashList.push( c.res1, c.res2 );
+                        clashDict[ cid ] = c;
+                        clashAtoms.push( c.atom1, atom );
                     }
+
                 }
 
             }
 
+        }
+
+        if( Debug ) Log.timeEnd( "Validation.fromXml#clashDict" );
+
+        for( let i = 0, il = groups.length; i < il; ++i ){
+
+            const g = groups[ i ];
+            const ga = g.attributes;
+
+            const sele = ga.sele;
+            const clashAtoms = ga.clashAtoms;
+            const isPolymer = ga.seq.value !== ".";
+
             if( isPolymer ){
 
-                if( clashAtoms.length > 0 ){
-                    geoProblemCount += 1;
-                }
-
-                const angleOutliers = g.getElementsByTagName( "angle-outlier" );
-                if( angleOutliers.length > 0 ){
-                    geoProblemCount += 1;
-                }
-
-                const bondOutliers = g.getElementsByTagName( "bond-outlier" );
-                if( bondOutliers.length > 0 ){
-                    geoProblemCount += 1;
-                }
-
-                const planeOutliers = g.getElementsByTagName( "plane-outlier" );
-                if( planeOutliers.length > 0 ){
-                    geoProblemCount += 1;
-                }
-
-                if( hasAttrValue( ga.rota, "OUTLIER" ) ){
-                    geoProblemCount += 1;
-                }
-
-                if( hasAttrValue( ga.rota, "OUTLIER" ) ){
-                    geoProblemCount += 1;
-                }
-
-                if( hasAttrValue( ga.RNApucker, "outlier" ) ){
-                    geoProblemCount += 1;
-                }
-
+                const geoProblemCount = getProblemCount( clashAtoms, g, ga );
                 if( geoProblemCount > 0 ){
                     geoDict[ sele ] = geoProblemCount;
                 }
@@ -181,23 +203,23 @@ class Validation{
                 const mogBondOutliers = g.getElementsByTagName( "mog-bond-outlier" );
                 const mogAngleOutliers = g.getElementsByTagName( "mog-angle-outlier" );
 
-                if( mogBondOutliers.length > 0 || mogAngleOutliers.length > 0 || clashes.length > 0 ){
+                if( mogBondOutliers.length > 0 || mogAngleOutliers.length > 0 || clashAtoms.length > 0 ){
 
                     const atomDict = {};
                     geoAtomDict[ sele ] = atomDict;
 
-                    for( j = 0, jl = clashAtoms.length; j < jl; ++j ){
-                        setBitDict( atomDict, clashAtoms[ j ], 1 );
+                    for( let j = 0, jl = clashAtoms.length; j < jl; ++j ){
+                        setBitDict( atomDict, clashAtoms[ jl ], 1 );
                     }
 
-                    for( j = 0, jl = mogBondOutliers.length; j < jl; ++j ){
+                    for( let j = 0, jl = mogBondOutliers.length; j < jl; ++j ){
                         const mbo = mogBondOutliers[ j ].attributes;
                         mbo.atoms.value.split( "," ).forEach( function( atomname ){
                             setBitDict( atomDict, atomname, 2 );
                         } );
                     }
 
-                    for( j = 0, jl = mogAngleOutliers.length; j < jl; ++j ){
+                    for( let j = 0, jl = mogAngleOutliers.length; j < jl; ++j ){
                         const mao = mogAngleOutliers[ j ].attributes;
                         mao.atoms.value.split( "," ).forEach( function( atomname ){
                             setBitDict( atomDict, atomname, 4 );
@@ -210,17 +232,15 @@ class Validation{
 
         }
 
-        const clashList = [];
-        for( let k in clashDict ){
-            const c = clashDict[ k ];
-            clashList.push( c.res1, c.res2 );
-        }
-
         this.clashSele = clashList.length ? clashList.join( " OR " ) : "NONE";
+
+        if( Debug ) Log.timeEnd( "Validation.fromXml" );
 
     }
 
     getClashData( params ){
+
+        if( Debug ) Log.time( "Validation.getClashData" );
 
         const p = params || {};
 
@@ -241,13 +261,26 @@ class Validation{
         const color = uniformArray3( n, c.r, c.g, c.b );
         const radius = new Float32Array( n );
 
+        if( Debug ) Log.time( "Validation.getClashData#atomDict" );
+
+        const atomDict = this.atomDict;
+
+        s.eachAtom( function( ap ){
+            const sele = getAtomSele( ap );
+            if( atomDict[ sele ] === true ){
+                atomDict[ sele ] = ap.index;
+            }
+        } );
+
+        if( Debug ) Log.timeEnd( "Validation.getClashData#atomDict" );
+
         let i = 0;
 
         for( let k in clashDict ){
 
             const c = clashDict[ k ];
-            ap1.index = s.getAtomIndices( new Selection( c.sele1 ) )[ 0 ];
-            ap2.index = s.getAtomIndices( new Selection( c.sele2 ) )[ 0 ];
+            ap1.index = atomDict[ c.sele1 ];
+            ap2.index = atomDict[ c.sele2 ];
 
             if( ap1.index === undefined || ap2.index === undefined ) continue;
 
@@ -268,6 +301,8 @@ class Validation{
             ++i;
 
         }
+
+        if( Debug ) Log.timeEnd( "Validation.getClashData" );
 
         return {
             position1: position1,
