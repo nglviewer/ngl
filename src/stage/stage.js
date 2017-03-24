@@ -152,7 +152,7 @@ class Stage{
 
     /**
      * Create a Stage instance
-     * @param {String} eid - document id
+     * @param {String|Element} [idOrElement] - dom id or element
      * @param {StageParameters} params - parameters object
      */
     constructor( eid, params ){
