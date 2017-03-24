@@ -379,8 +379,6 @@ class MmtfParser extends StructureParser{
             s.unitcell = undefined;
         }
 
-        if( Debug ) Log.timeEnd( "MmtfParser._parse " + this.name );
-
         // calculate backbone bonds
         calculateBondsBetween( s, true );
 
@@ -391,6 +389,8 @@ class MmtfParser extends StructureParser{
         s.finalizeBonds();
 
         buildUnitcellAssembly( s );
+
+        if( Debug ) Log.timeEnd( "MmtfParser._parse " + this.name );
 
     }
 
