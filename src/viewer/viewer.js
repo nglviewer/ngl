@@ -42,23 +42,25 @@ import Signal from "../../lib/signals.es6.js";
 /**
  * Viewer class
  * @class
- * @param {String} eid - dom element id
+ * @param {String|Element} [idOrElement] - dom id or element
  */
-function Viewer( eid ){
+function Viewer( idOrElement ){
 
     var signals = {
         ticked: new Signal()
     };
 
     var container;
-    if( eid ){
-        container = document.getElementById( eid );
+    if( typeof idOrElement === "string" ){
+        container = document.getElementById( idOrElement );
+    }else if( idOrElement instanceof Element ){
+        container = idOrElement;
     }else{
         container = document.createElement( 'div' );
     }
 
     var width, height;
-    if ( container === document ) {
+    if ( container === document.body ) {
         width = window.innerWidth || 1;
         height = window.innerHeight || 1;
     } else {
@@ -684,7 +686,7 @@ function Viewer( eid ){
 
     function handleResize(){
 
-        if( container === document ){
+        if( container === document.body ){
             setSize( window.innerWidth, window.innerHeight );
         }else{
             var box = container.getBoundingClientRect();
