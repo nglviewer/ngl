@@ -11,6 +11,8 @@ global.performance = { now: now };
 var doChunked = require( "../lib/utils.js" ).doChunked;
 
 
+const mmtfExt = [ "mmtf", "bb.mmtf" ];
+
 function parseIdListFile( path ){
     return fs.readFileSync( path, "utf8" ).trim().split( "\n" );
 }
@@ -20,6 +22,8 @@ function getUrl( id, format, gz ){
         return "http://files.rcsb.org/download/" + id + ".cif" + ( gz ? ".gz" : "" );
     }else if( format === "pdb" ){
         return "http://files.rcsb.org/download/" + id + ".pdb" + ( gz ? ".gz" : "" );
+    }else if( format === "bb.mmtf" ){
+        return "http://mmtf.rcsb.org/v1.0/reduced/" + id;
     }else{
         return "http://mmtf.rcsb.org/v1.0/full/" + id;
     }
@@ -39,7 +43,7 @@ function downloadIds( idList, options ){
         var fileName = name + "." + format + ( gz ? ".gz" : "" );
         var ds = download( url, undefined, { pool: pool } );
         var os = fs.createWriteStream( outPath + "/" + fileName );
-        if( format === "mmtf" && gz ){
+        if( mmtfExt.includes( format ) && gz ){
             ds.pipe( zlib.createGzip() ).pipe( os );
         }else{
             ds.pipe( os );
@@ -61,7 +65,7 @@ function downloadIdsChunked( idList, options ){
 
 var parser = new ArgumentParser( {
     addHelp: true,
-    description: "Download MMTF, mmCIF or PDB files."
+    description: "Download MMTF (full or reduced), mmCIF or PDB files."
 } );
 parser.addArgument( "--idListFile", {
     help: "file in path"
@@ -70,7 +74,7 @@ parser.addArgument( "--outDir", {
     help: "dir out path"
 });
 parser.addArgument( "--format", {
-    help: "MMTF, mmCIF or PDB"
+    help: "mmtf, bb.mmtf, mmcif or pdb"
 });
 parser.addArgument( "--gz", {
     action: "storeTrue",
