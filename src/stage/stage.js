@@ -479,17 +479,16 @@ class Stage{
 
             }
 
-            this.autoView();
-
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
 
         }else if( object.type === "surface" || object.type === "volume" ){
 
             object.addRepresentation( "surface" );
-            this.autoView();
 
         }
+
+        this.tasks.onZeroOnce( this.autoView, this );
 
     }
 
