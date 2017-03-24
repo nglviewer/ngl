@@ -155,7 +155,7 @@ class Stage{
      * @param {String|Element} [idOrElement] - dom id or element
      * @param {StageParameters} params - parameters object
      */
-    constructor( eid, params ){
+    constructor( idOrElement, params ){
 
         this.signals = {
             parametersChanged: new Signal(),
@@ -182,7 +182,7 @@ class Stage{
 
         //
 
-        this.viewer = new Viewer( eid );
+        this.viewer = new Viewer( idOrElement );
         if( !this.viewer.renderer ) return;
 
         /**
