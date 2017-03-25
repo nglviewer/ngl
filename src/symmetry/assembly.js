@@ -55,6 +55,18 @@ class Assembly{
         return part;
     }
 
+    getCount( structure, methodName ){
+
+        var count = 0;
+
+        this.partList.forEach( function( part ){
+            count += part[ methodName ]( structure );
+        } );
+
+        return count;
+
+    }
+
     /**
      * Get the number of atom for a given structure
      * @param  {Structure} structure - the given structure
@@ -62,13 +74,18 @@ class Assembly{
      */
     getAtomCount( structure ){
 
-        var atomCount = 0;
+        return this.getCount( structure, "getAtomCount" );
 
-        this.partList.forEach( function( part ){
-            atomCount += part.getAtomCount( structure );
-        } );
+    }
 
-        return atomCount;
+    /**
+     * Get the number of residues for a given structure
+     * @param  {Structure} structure - the given structure
+     * @return {Integer} number of residues in the assembly
+     */
+    getResidueCount( structure ){
+
+        return this.getCount( structure, "getResidueCount" );
 
     }
 
@@ -151,18 +168,30 @@ class AssemblyPart{
 
     get type (){ return "AssemblyPart"; }
 
-    getAtomCount( structure ){
+    getCount( structure, propertyName ){
 
-        var atomCount = 0;
+        var count = 0;
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
             if( chainList.length === 0 || chainList.includes( cp.chainname ) ){
-                atomCount += cp.atomCount;
+                count += cp[ propertyName ];
             }
         } );
 
-        return this.matrixList.length * atomCount;
+        return this.matrixList.length * count;
+
+    }
+
+    getAtomCount( structure ){
+
+        return this.getCount( structure, "atomCount" );
+
+    }
+
+    getResidueCount( structure ){
+
+        return this.getCount( structure, "residueCount" );
 
     }
 
