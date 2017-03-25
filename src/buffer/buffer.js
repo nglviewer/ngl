@@ -17,6 +17,7 @@ import {
 import { Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
 import { defaults, getTypedArray } from "../utils.js";
+import { serialArray } from "../math/array-utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -134,11 +135,13 @@ class Buffer{
         //
 
         var position = d.position || d.position1;
-        this._positionDataSize = position ? position.length / 3 : 0;
+        var n = position ? position.length / 3 : 0;
+        this._positionDataSize = n;
 
         this.addAttributes( {
             "position": { type: "v3", value: d.position },
             "color": { type: "c", value: d.color },
+            "vertexId": { type: "f", value: serialArray( n ) },
         } );
 
         if( d.index ){
