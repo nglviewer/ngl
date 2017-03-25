@@ -373,16 +373,18 @@ class Stage{
 
             object.setSelection( "/0" );
 
-            var atomCount, instanceCount;
+            var atomCount, residueCount, instanceCount;
             var structure = object.structure;
 
             if( structure.biomolDict.BU1 ){
                 var assembly = structure.biomolDict.BU1;
                 atomCount = assembly.getAtomCount( structure );
+                residueCount = assembly.getResidueCount( structure );
                 instanceCount = assembly.getInstanceCount();
                 object.setDefaultAssembly( "BU1" );
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
+                residueCount = structure.getModelProxy( 0 ).residueCount;
                 instanceCount = 1;
             }
 
@@ -402,7 +404,21 @@ class Stage{
 
             if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
 
-            if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
+            if( residueCount / instanceCount < 4 ){
+
+                object.addRepresentation( "ball+stick", {
+                    colorScheme: "element",
+                    scale: 2.0,
+                    aspectRatio: 1.5,
+                    bondScale: 0.3,
+                    bondSpacing: 0.75,
+                    quality: "auto"
+                } );
+
+            }else if(
+                ( instanceCount > 5 && atomCount > 15000 ) ||
+                atomCount > 700000
+            ){
 
                 var scaleFactor = (
                     Math.min(
