@@ -665,7 +665,7 @@ function calculateBondsWithin( structure, onlyAddRung ){
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
     var bp = structure.getBondProxy();
-    var atomBondMap = calculateAtomBondMap( structure );
+    var atomBondMap = onlyAddRung ? null : calculateAtomBondMap( structure );
 
     structure.eachResidue( function( r ){
 

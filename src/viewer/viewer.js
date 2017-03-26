@@ -39,26 +39,32 @@ import {
 import Signal from "../../lib/signals.es6.js";
 
 
+const pixelBufferFloat = new Float32Array( 4 );
+const pixelBufferUint = new Uint8Array( 4 );
+
+
 /**
  * Viewer class
  * @class
- * @param {String} eid - dom element id
+ * @param {String|Element} [idOrElement] - dom id or element
  */
-function Viewer( eid ){
+function Viewer( idOrElement ){
 
     var signals = {
         ticked: new Signal()
     };
 
     var container;
-    if( eid ){
-        container = document.getElementById( eid );
+    if( typeof idOrElement === "string" ){
+        container = document.getElementById( idOrElement );
+    }else if( idOrElement instanceof Element ){
+        container = idOrElement;
     }else{
         container = document.createElement( 'div' );
     }
 
     var width, height;
-    if ( container === document ) {
+    if ( container === document.body ) {
         width = window.innerWidth || 1;
         height = window.innerHeight || 1;
     } else {
@@ -684,7 +690,7 @@ function Viewer( eid ){
 
     function handleResize(){
 
-        if( container === document ){
+        if( container === document.body ){
             setSize( window.innerWidth, window.innerHeight );
         }else{
             var box = container.getBoundingClientRect();
@@ -747,70 +753,63 @@ function Viewer( eid ){
 
     }
 
-    var pick = function(){
+    function pick( x, y ){
 
-        var pixelBufferFloat = new Float32Array( 4 );
-        var pixelBufferUint = new Uint8Array( 4 );
+        x *= window.devicePixelRatio;
+        y *= window.devicePixelRatio;
 
-        return function pick( x, y ){
+        var gid, object, instance;
+        var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            x *= window.devicePixelRatio;
-            y *= window.devicePixelRatio;
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, x, y, 1, 1, pixelBuffer
+        );
 
-            var gid, object, instance;
-            var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+        if( SupportsReadPixelsFloat ){
+            gid =
+                ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+        }else{
+            gid =
+                ( pixelBuffer[0] << 16 ) |
+                ( pixelBuffer[1] << 8 ) |
+                ( pixelBuffer[2] );
+        }
 
-            render( true );
-            renderer.readRenderTargetPixels(
-                pickingTarget, x, y, 1, 1, pixelBuffer
-            );
+        object = pickingGroup.getObjectById(
+            Math.round( pixelBuffer[ 3 ] )
+        );
 
-            if( SupportsReadPixelsFloat ){
-                gid =
-                    ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
-                    ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
-                    ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
-            }else{
-                gid =
-                    ( pixelBuffer[0] << 16 ) |
-                    ( pixelBuffer[1] << 8 ) |
-                    ( pixelBuffer[2] );
-            }
+        if( object && object.userData.instance ){
+            instance = object.userData.instance;
+        }
 
-            object = pickingGroup.getObjectById(
-                Math.round( pixelBuffer[ 3 ] )
-            );
+        // if( Debug ){
+        //     var rgba = Array.apply( [], pixelBuffer );
+        //     Log.log( pixelBuffer );
+        //     Log.log(
+        //         "picked color",
+        //         [
+        //             ( rgba[0] ).toPrecision(2),
+        //             ( rgba[1] ).toPrecision(2),
+        //             ( rgba[2] ).toPrecision(2),
+        //             ( rgba[3] ).toPrecision(2)
+        //         ]
+        //     );
+        //     Log.log( "picked gid", gid );
+        //     Log.log( "picked instance", instance );
+        //     Log.log( "picked position", x, y );
+        //     Log.log( "devicePixelRatio", window.devicePixelRatio );
+        // }
 
-            if( object && object.userData.instance ){
-                instance = object.userData.instance;
-            }
-
-            // if( Debug ){
-            //     var rgba = Array.apply( [], pixelBuffer );
-            //     Log.log( pixelBuffer );
-            //     Log.log(
-            //         "picked color",
-            //         [
-            //             ( rgba[0] ).toPrecision(2),
-            //             ( rgba[1] ).toPrecision(2),
-            //             ( rgba[2] ).toPrecision(2),
-            //             ( rgba[3] ).toPrecision(2)
-            //         ]
-            //     );
-            //     Log.log( "picked gid", gid );
-            //     Log.log( "picked instance", instance );
-            //     Log.log( "picked position", x, y );
-            //     Log.log( "devicePixelRatio", window.devicePixelRatio );
-            // }
-
-            return {
-                "gid": gid,
-                "instance": instance
-            };
-
+        return {
+            "gid": gid,
+            "instance": instance
         };
 
-    }();
+    }
 
     function requestRender(){
 

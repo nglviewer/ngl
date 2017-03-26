@@ -307,11 +307,11 @@ class Validation{
         if( Debug ) Log.timeEnd( "Validation.getClashData" );
 
         return {
-            position1: position1,
-            position2: position2,
-            color: color,
-            color2: color,
-            radius: radius
+            position1: position1.subarray( 0, i * 3 ),
+            position2: position2.subarray( 0, i * 3 ),
+            color: color.subarray( 0, i * 3 ),
+            color2: color.subarray( 0, i * 3 ),
+            radius: radius.subarray( 0, i )
         };
 
     }
