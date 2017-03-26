@@ -28,6 +28,7 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} labelUnit - distance unit (e.g. 'angstrom' or 'nm')
  * @property {Array[]} atomPair - list of pairs of selection strings (see {@link Selection})
  *                                or pairs of atom indices. Using atom indices is much more
  *                                when the representation is updated often, e.g. by
@@ -86,6 +87,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         labelZOffset: {
             type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
         },
+        labelUnit: {
+            type: "string"
+        },
         atomPair: {
             type: "hidden", rebuild: true
         },
@@ -110,6 +114,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.labelColor = defaults( p.labelColor, 0xFFFFFF );
         this.labelVisible = defaults( p.labelVisible, true );
         this.labelZOffset = defaults( p.labelZOffset, 0.5 );
+        this.labelUnit = defaults( p.labelUnit, "" );
         this.atomPair = defaults( p.atomPair, [] );
 
         StructureRepresentation.prototype.init.call( this, p );
@@ -166,7 +171,19 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondStore.addBond( ap1, ap2, 1 );
 
             i -= j;
-            text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
+            var d = ap1.distanceTo( ap2 )
+            switch (this.labelUnit) {
+                case "angstrom":
+                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode(197); //0x212B fails in TextBuffer
+                    break;
+                case "nm":
+                    text[ i ] = (d / 10).toFixed( 2 ) + " nm";
+                    break;
+                default:
+                    text[ i ] = d.toFixed( 2 );
+                    break;
+            }
+            
 
             var i3 = i * 3;
             position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
