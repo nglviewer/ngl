@@ -239,6 +239,12 @@ class StructureComponent extends Component{
 
     }
 
+    /**
+     * Automatically center and zoom the component
+     * @param  {String|Integer} [sele] - selection string or duration if integer
+     * @param  {Integer} [duration] - duration of the animation, defaults to 0
+     * @return {undefined}
+     */
     autoView( sele, duration ){
 
         if( Number.isInteger( sele ) ){

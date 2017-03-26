@@ -8,7 +8,7 @@ var ArgumentParser = require('argparse').ArgumentParser;
 var now = require( "performance-now" );
 global.performance = { now: now };
 
-var doChunked = require( "../lib.js" ).doChunked;
+var doChunked = require( "../lib/utils.js" ).doChunked;
 
 
 function parseIdListFile( path ){
@@ -18,6 +18,8 @@ function parseIdListFile( path ){
 function getUrl( id, format, gz ){
     if( format === "mmcif" ){
         return "http://files.rcsb.org/download/" + id + ".cif" + ( gz ? ".gz" : "" );
+    }else if( format === "pdb" ){
+        return "http://files.rcsb.org/download/" + id + ".pdb" + ( gz ? ".gz" : "" );
     }else{
         return "http://mmtf.rcsb.org/v1.0/full/" + id;
     }
@@ -43,7 +45,9 @@ function downloadIds( idList, options ){
             ds.pipe( os );
         }
         return ds;
-    } ) );
+    } ) ).catch( function( e ){
+        console.error( e )
+    } );
 }
 
 function downloadIdsChunked( idList, options ){
@@ -57,7 +61,7 @@ function downloadIdsChunked( idList, options ){
 
 var parser = new ArgumentParser( {
     addHelp: true,
-    description: "Download MMTF or mmCIF files."
+    description: "Download MMTF, mmCIF or PDB files."
 } );
 parser.addArgument( "--idListFile", {
     help: "file in path"
@@ -66,11 +70,11 @@ parser.addArgument( "--outDir", {
     help: "dir out path"
 });
 parser.addArgument( "--format", {
-    help: "MMTF or mmCIF"
+    help: "MMTF, mmCIF or PDB"
 });
 parser.addArgument( "--gz", {
     action: "storeTrue",
-    help: "MMTF or mmCIF"
+    help: "gzip use"
 });
 var args = parser.parseArgs();
 

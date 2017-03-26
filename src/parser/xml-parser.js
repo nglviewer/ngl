@@ -50,10 +50,10 @@ class XmlParser extends Parser{
         if( Debug ) Log.time( "XmlParser._parse " + this.name );
 
         if( this.useDomParser ){
-            if( this.streamer.isBinary() || this.string ){
-                this.xml.data = this.__domParser( this.streamer.asText() );
-            }else{
+            if( this.streamer.data instanceof Document ){
                 this.xml.data = this.streamer.data;
+            }else{
+                this.xml.data = this.__domParser( this.streamer.asText() );
             }
         }else{
             this.xml.data = this.__xmlParser( this.streamer.asText() );

@@ -40,8 +40,25 @@ function generateUUID(){
 }
 
 
+function countSetBits( i ){
+    i = i - ( ( i >> 1 ) & 0x55555555 );
+    i = ( i & 0x33333333 ) + ( ( i >> 2 ) & 0x33333333 );
+    return ( ( ( i + ( i >> 4 ) ) & 0x0F0F0F0F ) * 0x01010101 ) >> 24;
+}
+
+
+function normalize( value, min, max ){
+    return ( value - min ) / ( max - min );
+}
+
+
 function clamp( value, min, max ){
     return Math.max( min, Math.min( max, value ) );
+}
+
+
+function saturate( value ){
+    return clamp( value, 0, 1 );
 }
 
 
@@ -61,11 +78,40 @@ function spline( p0, p1, p2, p3, t, tension ) {
 }
 
 
+function smoothstep( min, max, x ){
+    x = saturate( normalize( x, min, max ) );
+    return x * x * ( 3 - 2 * x );
+}
+
+
+function smootherstep( min, max, x ) {
+    x = saturate( normalize( x, min, max ) );
+    return x * x * x * ( x * ( x * 6 - 15 ) + 10 );
+}
+
+
+function smootheststep( min, max, x ) {
+    x = saturate( normalize( x, min, max ) );
+    return (
+        -20 * Math.pow( x, 7 ) +
+         70 * Math.pow( x, 6 ) -
+         84 * Math.pow( x, 5 ) +
+         35 * Math.pow( x, 4 )
+    );
+}
+
+
 export {
     degToRad,
     radToDeg,
     generateUUID,
+    countSetBits,
+    normalize,
     clamp,
+    saturate,
     lerp,
-    spline
+    spline,
+    smoothstep,
+    smootherstep,
+    smootheststep
 };

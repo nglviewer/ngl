@@ -24,6 +24,14 @@ const binaryFileExtensions = [
     "mmtf", "dcd", "mrc", "ccp4", "map", "dsn6", "brix", "dxbin"
 ];
 
+const jsonFileTypes = [
+    "json"
+];
+
+const xmlFileTypes = [
+    "xml", "validation"
+];
+
 
 /**
  * Loader base class
@@ -56,8 +64,8 @@ class Loader{
         var streamerParams = {
             compressed: this.compressed,
             binary: this.binary,
-            json: this.ext === "json",
-            xml: this.ext === "xml"
+            json: jsonFileTypes.includes( this.ext ),
+            xml: xmlFileTypes.includes( this.ext )
         };
 
         if( ( typeof File !== "undefined" && src instanceof File ) ||

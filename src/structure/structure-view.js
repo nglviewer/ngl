@@ -99,6 +99,10 @@ StructureView.prototype = Object.assign( Object.create(
                 get: function(){ return this.structure.boxes; }
             },
 
+            validation: {
+                get: function(){ return this.structure.validation; }
+            },
+
             bondStore: {
                 get: function(){ return this.structure.bondStore; }
             },

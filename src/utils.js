@@ -5,6 +5,9 @@
  */
 
 
+import { Vector3, Matrix4, Quaternion } from "../lib/three.es6.js";
+
+
 function getQuery( id ){
 
     if( typeof window === "undefined" ) return undefined;
@@ -548,6 +551,21 @@ function getTypedArray( arrayType, arraySize ){
 }
 
 
+function ensureVector3( v ){
+    return v instanceof Vector3 ? v : new Vector3().fromArray( v );
+}
+
+
+function ensureMatrix4( m ){
+    return m instanceof Matrix4 ? m : new Matrix4().fromArray( m );
+}
+
+
+function ensureQuaternion( q ){
+    return q instanceof Quaternion ? q : new Quaternion().fromArray( q );
+}
+
+
 export {
     getQuery,
     boolean,
@@ -568,5 +586,8 @@ export {
     uniqueArray,
     uint8ToString,
     uint8ToLines,
-    getTypedArray
+    getTypedArray,
+    ensureVector3,
+    ensureMatrix4,
+    ensureQuaternion
 };
