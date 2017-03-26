@@ -28,7 +28,9 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
- * @property {String} labelUnit - distance unit (e.g. 'angstrom' or 'nm')
+ * @property {String} labelUnit - distance unit (e.g. "angstrom" or "nm"). If set, a distance
+ *                                symbol is appended to the label (i.e. 'nm' or '\u00C5'). In case of 'nm', the
+ *                                distance value is computed in nanometers instead of Angstroms.
  * @property {Array[]} atomPair - list of pairs of selection strings (see {@link Selection})
  *                                or pairs of atom indices. Using atom indices is much more
  *                                when the representation is updated often, e.g. by
