@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/gro-parser', function() {
+describe( 'parser/gro-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/1crn.gro";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -19,8 +19,8 @@ describe('parsing', function () {
             assert.strictEqual( structure.atomCount, 327 );
             assert.strictEqual( structure.bondCount, 334 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

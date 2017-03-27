@@ -17,11 +17,11 @@ function checkEntity( e0, e1 ){
 }
 
 
-describe('parser/pdb-parser', function() {
+describe( 'parser/pdb-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/1crn.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -52,11 +52,11 @@ describe('parsing', function () {
             );
 
             assert.deepEqual( structure.boxes, [
-                new Float32Array([
+                new Float32Array( [
                     40.959999084472656, 0, 0,
                     0, 18.649999618530273, 0,
                     0, 0, 22.520000457763672
-                ])
+                ] )
             ] );
             assert.deepEqual( structure.frames, [] );
             assert.deepEqual( structure.header, {} );
@@ -81,9 +81,9 @@ describe('parsing', function () {
             assert.strictEqual( structure.entityList.length, 1 );
             assert.ok( structure.spatialHash !== undefined );
         } );
-    });
+    } );
 
-    it('entity', function () {
+    it( 'entity', function () {
         var path = __dirname + "/../data/3pqr.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -115,9 +115,9 @@ describe('parsing', function () {
                 index: 11
             } );
         } );
-    });
+    } );
 
-    it('double bonds', function () {
+    it( 'double bonds', function () {
         var path = __dirname + "/../data/doubleBonds.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -134,8 +134,8 @@ describe('parsing', function () {
             assert.strictEqual( bs.atomIndex2[ 26 ], 20 );
             assert.strictEqual( bs.bondOrder[ 26 ], 2 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

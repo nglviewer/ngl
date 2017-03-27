@@ -4,11 +4,11 @@ import GidPool from "../../src/utils/gid-pool.js";
 import { assert } from 'chai';
 
 
-describe('utils/gid-pool', function() {
+describe( 'utils/gid-pool', function() {
 
 
-describe('GidPool', function () {
-    it('basic', function () {
+describe( 'GidPool', function () {
+    it( 'basic', function () {
 
         function AtomProxy( index ){
             this.type = "AtomProxy";
@@ -80,8 +80,8 @@ describe('GidPool', function () {
         assert.deepEqual( gidPool.objectList, [], "objectList" );
         assert.equal( gidPool.getByGid( 0 ), undefined );
 
-    });
-});
+    } );
+} );
 
 
-});
+} );

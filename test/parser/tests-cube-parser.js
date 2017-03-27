@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/cube-parser', function() {
+describe( 'parser/cube-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/h2o-elf.cube";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -20,8 +20,8 @@ describe('parsing', function () {
             assert.strictEqual( volume.ny, 40 );
             assert.strictEqual( volume.nz, 40 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

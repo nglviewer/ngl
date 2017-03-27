@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('structure/structure', function() {
+describe( 'structure/structure', function() {
 
 
-describe('iteration', function () {
-    it('polymer no chains', function () {
+describe( 'iteration', function () {
+    it( 'polymer no chains', function () {
         var path = __dirname + "/../data/BaceCgProteinAtomistic.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -22,8 +22,8 @@ describe('iteration', function () {
             } );
             assert.strictEqual( i, 3, "Passed!" );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

@@ -4,11 +4,11 @@ import Kdtree from "../../src/utils/kdtree.js";
 import { assert } from 'chai';
 
 
-describe('utils/kdtree', function() {
+describe( 'utils/kdtree', function() {
 
 
-describe('Kdtree', function () {
-    it('basic', function () {
+describe( 'Kdtree', function () {
+    it( 'basic', function () {
 
         var points = [
             3, 0, 5,
@@ -48,8 +48,8 @@ describe('Kdtree', function () {
         check( [ 7, 6, 0 ], [ 7, 6, 0 ] );
         check( [ 3, 5, 7 ], [ 3, 5, 7 ] );
 
-    });
-});
+    } );
+} );
 
 
-});
+} );

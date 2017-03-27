@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/dxbin-parser', function() {
+describe( 'parser/dxbin-parser', function() {
 
 
-describe('parsing', function () {
-    it.skip('basic', function () {
+describe( 'parsing', function () {
+    it.skip( 'basic', function () {
         var path = __dirname + "/../data/TODO.dxbin";
         var bin = fs.readFileSync( path );
         var streamer = new BinaryStreamer( bin );
@@ -20,8 +20,8 @@ describe('parsing', function () {
             assert.strictEqual( volume.ny, 40 );
             assert.strictEqual( volume.nz, 40 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

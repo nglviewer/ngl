@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/mmtf-parser', function() {
+describe( 'parser/mmtf-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/1crn.mmtf";
         var bin = fs.readFileSync( path );
         var streamer = new BinaryStreamer( bin );
@@ -68,8 +68,8 @@ describe('parsing', function () {
             assert.strictEqual( structure.entityList.length, 1 );
             assert.ok( structure.spatialHash !== undefined );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );
