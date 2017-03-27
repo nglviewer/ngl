@@ -90,7 +90,8 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
         },
         labelUnit: {
-            type: "string"
+            type: "select", rebuild: true,
+            options: { "": "", angstrom: "angstrom", nm: "nm" },
         },
         atomPair: {
             type: "hidden", rebuild: true
@@ -176,16 +177,17 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             var d = ap1.distanceTo( ap2 )
             switch (this.labelUnit) {
                 case "angstrom":
-                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode(197); //0x212B fails in TextBuffer
+                    // 0x212B fails in TextBuffer
+                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 197 );
                     break;
                 case "nm":
-                    text[ i ] = (d / 10).toFixed( 2 ) + " nm";
+                    text[ i ] = ( d / 10 ).toFixed( 2 ) + " nm";
                     break;
                 default:
                     text[ i ] = d.toFixed( 2 );
                     break;
             }
-            
+
 
             var i3 = i * 3;
             position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;

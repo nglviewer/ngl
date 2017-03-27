@@ -1155,7 +1155,8 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon" );
             o.addRepresentation( "distance", {
                 atomPair: atomPair,
-                color: "skyblue"
+                color: "skyblue",
+                labelUnit: "nm"
             } );
 
             o.autoView();
