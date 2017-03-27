@@ -717,7 +717,7 @@ Structure.prototype = {
         var atomSet = defaults( p.atomSet, this.atomSet );
 
         var radiusFactory, colormaker, pickingColormaker;
-        var position, color, pickingColor, radius, index;
+        var position, color, picking, radius, index;
 
         var atomData = {};
         var ap = this.getAtomProxy();
@@ -733,10 +733,8 @@ Structure.prototype = {
             colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
         if( !what || what.pickingColor ){
-            pickingColor = new Float32Array( atomCount * 3 );
-            atomData.pickingColor = pickingColor;
-            var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColormaker = ColormakerRegistry.getScheme( pickingColorParams );
+            picking = new Float32Array( atomCount );
+            atomData.picking = picking;
         }
         if( !what || what.radius ){
             radius = new Float32Array( atomCount );
