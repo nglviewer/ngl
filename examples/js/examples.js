@@ -428,6 +428,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "licorice", {
                 sele: "nucleic", color: "element", visible: false
             } );
+            o.addRepresentation( "spacefill", { sele: "nucleic", color: "picking" } );
 
             o.autoView( "nucleic" );
 

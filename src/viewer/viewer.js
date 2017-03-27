@@ -758,7 +758,7 @@ function Viewer( idOrElement ){
         x *= window.devicePixelRatio;
         y *= window.devicePixelRatio;
 
-        var gid, object, instance;
+        var vid, gid, object, instance;
         var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
         render( true );
@@ -767,12 +767,12 @@ function Viewer( idOrElement ){
         );
 
         if( SupportsReadPixelsFloat ){
-            gid =
+            vid =
                 ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                 ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
                 ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
         }else{
-            gid =
+            vid =
                 ( pixelBuffer[0] << 16 ) |
                 ( pixelBuffer[1] << 8 ) |
                 ( pixelBuffer[2] );
@@ -784,6 +784,17 @@ function Viewer( idOrElement ){
 
         if( object && object.userData.instance ){
             instance = object.userData.instance;
+        }
+
+        if( object ){
+            var buf = object.userData.buffer;
+            if( buf.pickingColor ){
+                var pc = buf.pickingColor;
+                gid =
+                    ( ( Math.round( pc[ vid * 3 + 0 ] * 255 ) << 16 ) & 0xFF0000 ) |
+                    ( ( Math.round( pc[ vid * 3 + 1 ] * 255 ) << 8 ) & 0x00FF00 ) |
+                    ( ( Math.round( pc[ vid * 3 + 2 ] * 255 ) ) & 0x0000FF );
+            }
         }
 
         // if( Debug ){
@@ -798,6 +809,7 @@ function Viewer( idOrElement ){
         //             ( rgba[3] ).toPrecision(2)
         //         ]
         //     );
+        //     Log.log( "picked vid", vid );
         //     Log.log( "picked gid", gid );
         //     Log.log( "picked instance", instance );
         //     Log.log( "picked position", x, y );

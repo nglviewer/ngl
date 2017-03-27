@@ -138,11 +138,15 @@ class Buffer{
         var n = position ? position.length / 3 : 0;
         this._positionDataSize = n;
 
+        var vertexId = serialArray( n );
+
         this.addAttributes( {
             "position": { type: "v3", value: d.position },
             "color": { type: "c", value: d.color },
-            "vertexId": { type: "f", value: serialArray( n ) },
+            "vertexId": { type: "f", value: vertexId },
         } );
+
+        this.setAttributes( { vertexId: vertexId } );
 
         if( d.index ){
             this.initIndex( d.index );
@@ -152,6 +156,7 @@ class Buffer{
             this.addAttributes( {
                 "pickingColor": { type: "c", value: d.pickingColor },
             } );
+            this.pickingColor = d.pickingColor;
         }
 
         this.makeWireframeGeometry();

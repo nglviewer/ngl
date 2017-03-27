@@ -80,6 +80,12 @@ class MappedBuffer extends Buffer{
 
     }
 
+    getAttributeIndex( dataIndex ){
+
+        return dataIndex * 3 * this.mappingSize;
+
+    }
+
     setAttributes( data ){
 
         if( data && !data.position && data.position1 && data.position2 ){
