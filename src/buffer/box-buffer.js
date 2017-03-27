@@ -8,7 +8,7 @@
 import MappedBuffer from "./mapped-buffer.js";
 
 
-const mapping = new Float32Array([
+const mapping = new Float32Array( [
     -1.0, -1.0, -1.0,
      1.0, -1.0, -1.0,
      1.0, -1.0,  1.0,
@@ -17,9 +17,9 @@ const mapping = new Float32Array([
      1.0,  1.0, -1.0,
      1.0,  1.0,  1.0,
     -1.0,  1.0,  1.0
-]);
+] );
 
-const mappingIndices = new Uint16Array([
+const mappingIndices = new Uint16Array( [
     0, 1, 2,
     0, 2, 3,
     1, 5, 6,
@@ -32,7 +32,7 @@ const mappingIndices = new Uint16Array([
     0, 4, 5,
     3, 2, 6,
     3, 6, 7
-]);
+] );
 
 
 class BoxBuffer extends MappedBuffer{

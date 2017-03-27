@@ -166,7 +166,7 @@ class TextAtlas{
         var w = Math.min( max, Math.ceil( m.width + 2 * x + 1 ) );
 
         // Clear scratch area
-        ctx.clearRect(0, 0, w, h);
+        ctx.clearRect( 0, 0, w, h );
 
         var i, il, j, imageData, data;
 
@@ -573,9 +573,9 @@ class TextBuffer extends QuadBuffer{
 
                 var texCoords = [
                     c.x/texWidth, c.y/texHeight,             // top left
-                    c.x/texWidth, (c.y+c.h)/texHeight,       // bottom left
-                    (c.x+c.w)/texWidth, c.y/texHeight,       // top right
-                    (c.x+c.w)/texWidth, (c.y+c.h)/texHeight  // bottom right
+                    c.x/texWidth, ( c.y+c.h )/texHeight,       // bottom left
+                    ( c.x+c.w )/texWidth, c.y/texHeight,       // top right
+                    ( c.x+c.w )/texWidth, ( c.y+c.h )/texHeight  // bottom right
                 ];
                 inputTexCoord.set( texCoords, i );
 

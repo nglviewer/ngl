@@ -232,7 +232,7 @@ OBJLoader.prototype = {
 
         }
 
-        if ( text.indexOf( '\\\n' ) !== - 1) {
+        if ( text.indexOf( '\\\n' ) !== - 1 ) {
 
             // join lines separated by a line continuation character (\)
             text = text.replace( /\\\n/g, '' );

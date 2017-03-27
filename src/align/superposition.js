@@ -40,7 +40,7 @@ class Superposition{
 
         this.tmp = new Matrix( 3, 3 );
         this.c = new Matrix( 3, 3 );
-        this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ]);
+        this.c.data.set( [ 1, 0, 0, 0, 1, 0, 0, 0, -1 ] );
 
         // prep coords
 

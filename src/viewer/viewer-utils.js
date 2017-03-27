@@ -17,7 +17,7 @@ function _trimCanvas( canvas, r, g, b, a ){
     var canvasWidth = canvas.width;
 
     var ctx = canvas.getContext( '2d' );
-    var pixels = ctx.getImageData(0, 0, canvasWidth, canvasHeight ).data;
+    var pixels = ctx.getImageData( 0, 0, canvasWidth, canvasHeight ).data;
 
     var x, y, doBreak, off;
 

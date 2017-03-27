@@ -44,7 +44,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
     var maxY = max[ 1 ];
     var maxZ = max[ 2 ];
 
-    function hashFunc( w, minW) {
+    function hashFunc( w, minW ) {
        return Math.floor( ( w - minW ) / maxDistance );
     }
 
@@ -59,7 +59,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
 
     /* Get cellID for cartesian x,y,z */
     var cellID = function( x, y, z ) {
-        return ((( hashFunc( x, minX ) * jDim ) + hashFunc( y, minY ) )  * kDim ) + hashFunc( z, minZ );
+        return ( ( ( hashFunc( x, minX ) * jDim ) + hashFunc( y, minY ) )  * kDim ) + hashFunc( z, minZ );
     }
 
 
@@ -101,7 +101,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
         var cellLength = offset - start;
         cellLengths[ i ] = cellLength;
 
-        if (cellLength > maxCellLength) { maxCellLength = cellLength; }
+        if ( cellLength > maxCellLength ) { maxCellLength = cellLength; }
 
     }
 
@@ -160,7 +160,7 @@ function AVHash( atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance ) {
                         var dz = atomsZ[ atomIndex ] - z;
                         var rSum = atomsR[ atomIndex ] + rExtra;
 
-                        if( (dx * dx + dy * dy + dz * dz ) <= ( rSum * rSum ) ){
+                        if( ( dx * dx + dy * dy + dz * dz ) <= ( rSum * rSum ) ){
                             out[ outIdx++ ] = data[ dataIndex ];
                         }
                     }
@@ -266,7 +266,7 @@ function AVSurface( coordList, radiusList, indexList ){
     function fillGridDim( a, start, step ){
 
         for( var i = 0; i < a.length; i ++ ) {
-            a[i] = start + (step * i);
+            a[i] = start + ( step * i );
         }
 
     }
@@ -281,7 +281,7 @@ function AVSurface( coordList, radiusList, indexList ){
         dim = surfGrid.dim;
         matrix = surfGrid.matrix;
 
-        ngTorus = Math.min(5, 2 + Math.floor( probeRadius * scaleFactor ));
+        ngTorus = Math.min( 5, 2 + Math.floor( probeRadius * scaleFactor ) );
 
         grid = uniformArray( dim[0] * dim[1] * dim[2], -1001.0 );
 
@@ -396,9 +396,9 @@ function AVSurface( coordList, radiusList, indexList ){
             var ng = Math.ceil( ar * scaleFactor );
 
             // Center of the atom, mapped to grid points (take floor)
-            var iax = Math.floor( scaleFactor * ( ax - min[ 0 ] ));
-            var iay = Math.floor( scaleFactor * ( ay - min[ 1 ] ));
-            var iaz = Math.floor( scaleFactor * ( az - min[ 2 ] ));
+            var iax = Math.floor( scaleFactor * ( ax - min[ 0 ] ) );
+            var iay = Math.floor( scaleFactor * ( ay - min[ 1 ] ) );
+            var iaz = Math.floor( scaleFactor * ( az - min[ 2 ] ) );
 
             // Extents of grid to consider for this atom
             var minx = Math.max( 0, iax - ng );
@@ -536,9 +536,9 @@ function AVSurface( coordList, radiusList, indexList ){
 
                 // As above, iterate over our grid...
                 // px, py, pz in grid coords
-                var iax = Math.floor( scaleFactor * ( px - min[ 0 ] ));
-                var iay = Math.floor( scaleFactor * ( py - min[ 1 ] ));
-                var iaz = Math.floor( scaleFactor * ( pz - min[ 2 ] ));
+                var iax = Math.floor( scaleFactor * ( px - min[ 0 ] ) );
+                var iay = Math.floor( scaleFactor * ( py - min[ 1 ] ) );
+                var iaz = Math.floor( scaleFactor * ( pz - min[ 2 ] ) );
 
                 var minx = Math.max( 0, iax - ng );
                 var miny = Math.max( 0, iay - ng );
@@ -566,7 +566,7 @@ function AVSurface( coordList, radiusList, indexList ){
                             var idx = iz + xyoffset;
                             var current = grid[ idx ];
 
-                            if( current > 0.0 && d2 < ( current * current)){
+                            if( current > 0.0 && d2 < ( current * current ) ){
                                 grid[ idx ] = Math.sqrt( d2 );
                                 if( setAtomID ) atomIndex[ idx ] = a;
                             }

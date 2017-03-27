@@ -370,11 +370,11 @@ class MmtfParser extends StructureParser{
 
         var uc = sd.unitCell;
         if( uc && Array.isArray( uc ) && uc[ 0 ] ){
-            s.unitcell = new Unitcell({
+            s.unitcell = new Unitcell( {
                 a: uc[ 0 ], b: uc[ 1 ], c: uc[ 2 ],
                 alpha: uc[ 3 ], beta: uc[ 4 ], gamma: uc[ 5 ],
                 spacegroup: sd.spaceGroup
-            });
+            } );
         }else{
             s.unitcell = undefined;
         }

@@ -81,10 +81,10 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         position: position.center,
                         vector: position.axis
                     },
-                    this.getBufferParams({
+                    this.getBufferParams( {
                         color: "skyblue",
                         scale: 1
-                    })
+                    } )
                 ),
 
                 new VectorBuffer(
@@ -92,10 +92,10 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         position: position.center,
                         vector: position.resdir
                     },
-                    this.getBufferParams({
+                    this.getBufferParams( {
                         color: "lightgreen",
                         scale: 1
-                    })
+                    } )
                 )
 
             );

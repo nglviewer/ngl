@@ -8,21 +8,21 @@
 import MappedBuffer from "./mapped-buffer.js";
 
 
-const mapping = new Float32Array([
+const mapping = new Float32Array( [
     -1.0,  1.0, -1.0,
     -1.0, -1.0, -1.0,
      1.0,  1.0, -1.0,
      1.0,  1.0,  1.0,
      1.0, -1.0, -1.0,
      1.0, -1.0,  1.0
-]);
+] );
 
-const mappingIndices = new Uint16Array([
+const mappingIndices = new Uint16Array( [
     0, 1, 2,
     1, 4, 2,
     2, 4, 3,
     4, 5, 3
-]);
+] );
 
 
 class AlignedBoxBuffer extends MappedBuffer{

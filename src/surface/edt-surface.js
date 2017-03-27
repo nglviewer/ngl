@@ -98,19 +98,19 @@ function EDTSurface( coordList, radiusList, indexList ){
     var ISBOUND = 4;
 
     var nb = [
-        new Int32Array([  1,  0,  0 ]), new Int32Array([ -1,  0,  0 ]),
-        new Int32Array([  0,  1,  0 ]), new Int32Array([  0, -1,  0 ]),
-        new Int32Array([  0,  0,  1 ]), new Int32Array([  0,  0, -1 ]),
-        new Int32Array([  1,  1,  0 ]), new Int32Array([  1, -1,  0 ]),
-        new Int32Array([ -1,  1,  0 ]), new Int32Array([ -1, -1,  0 ]),
-        new Int32Array([  1,  0,  1 ]), new Int32Array([  1,  0, -1 ]),
-        new Int32Array([ -1,  0,  1 ]), new Int32Array([ -1,  0, -1 ]),
-        new Int32Array([  0,  1,  1 ]), new Int32Array([  0,  1, -1 ]),
-        new Int32Array([  0, -1,  1 ]), new Int32Array([  0, -1, -1 ]),
-        new Int32Array([  1,  1,  1 ]), new Int32Array([  1,  1, -1 ]),
-        new Int32Array([  1, -1,  1 ]), new Int32Array([ -1,  1,  1 ]),
-        new Int32Array([  1, -1, -1 ]), new Int32Array([ -1, -1,  1 ]),
-        new Int32Array([ -1,  1, -1 ]), new Int32Array([ -1, -1, -1 ])
+        new Int32Array( [  1,  0,  0 ] ), new Int32Array( [ -1,  0,  0 ] ),
+        new Int32Array( [  0,  1,  0 ] ), new Int32Array( [  0, -1,  0 ] ),
+        new Int32Array( [  0,  0,  1 ] ), new Int32Array( [  0,  0, -1 ] ),
+        new Int32Array( [  1,  1,  0 ] ), new Int32Array( [  1, -1,  0 ] ),
+        new Int32Array( [ -1,  1,  0 ] ), new Int32Array( [ -1, -1,  0 ] ),
+        new Int32Array( [  1,  0,  1 ] ), new Int32Array( [  1,  0, -1 ] ),
+        new Int32Array( [ -1,  0,  1 ] ), new Int32Array( [ -1,  0, -1 ] ),
+        new Int32Array( [  0,  1,  1 ] ), new Int32Array( [  0,  1, -1 ] ),
+        new Int32Array( [  0, -1,  1 ] ), new Int32Array( [  0, -1, -1 ] ),
+        new Int32Array( [  1,  1,  1 ] ), new Int32Array( [  1,  1, -1 ] ),
+        new Int32Array( [  1, -1,  1 ] ), new Int32Array( [ -1,  1,  1 ] ),
+        new Int32Array( [  1, -1, -1 ] ), new Int32Array( [ -1, -1,  1 ] ),
+        new Int32Array( [ -1,  1, -1 ] ), new Int32Array( [ -1, -1, -1 ] )
     ];
 
     //
@@ -741,7 +741,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             tz = inarray[ i + 2 ];
             boundPoint.toArray( tx, ty, tz, bp );
 
-            for (j = 6; j < 18; j++) {
+            for ( j = 6; j < 18; j++ ) {
 
                 nb_j = nb[ j ];
                 tnv_ix = tx + nb_j[ 0 ];
@@ -755,7 +755,7 @@ function EDTSurface( coordList, radiusList, indexList ){
 
                     index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
-                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                    if ( ( vpBits[index] & INOUT ) && !( vpBits[index] & ISDONE ) ) {
 
                         boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                         dx = tnv_ix - bp[ 0 ];
@@ -773,7 +773,7 @@ function EDTSurface( coordList, radiusList, indexList ){
                         outarray[ positout + 2 ] = tnv_iz;
                         positout += 3;
 
-                    } else if ((vpBits[index] & INOUT) && (vpBits[index] & ISDONE)) {
+                    } else if ( ( vpBits[index] & INOUT ) && ( vpBits[index] & ISDONE ) ) {
 
                         dx = tnv_ix - bp[ 0 ];
                         dy = tnv_iy - bp[ 1 ];
@@ -781,12 +781,12 @@ function EDTSurface( coordList, radiusList, indexList ){
                         square = dx * dx + dy * dy + dz * dz;
                         //square = Math.sqrt( square );
 
-                        if (square < vpDistance[index]) {
+                        if ( square < vpDistance[index] ) {
 
                             boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
 
-                            if (!(vpBits[index] & ISBOUND)) {
+                            if ( !( vpBits[index] & ISBOUND ) ) {
 
                                 vpBits[index] |= ISBOUND;
 
@@ -812,7 +812,7 @@ function EDTSurface( coordList, radiusList, indexList ){
             tz = inarray[ i + 2 ];
             boundPoint.toArray( tx, ty, tz, bp );
 
-            for (j = 18; j < 26; j++) {
+            for ( j = 18; j < 26; j++ ) {
 
                 nb_j = nb[ j ];
                 tnv_ix = tx + nb_j[ 0 ];
@@ -826,7 +826,7 @@ function EDTSurface( coordList, radiusList, indexList ){
 
                     index = tnv_ix * pWH + pHeight * tnv_iy + tnv_iz;
 
-                    if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
+                    if ( ( vpBits[index] & INOUT ) && !( vpBits[index] & ISDONE ) ) {
 
                         boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                         dx = tnv_ix - bp[ 0 ];
@@ -844,7 +844,7 @@ function EDTSurface( coordList, radiusList, indexList ){
                         outarray[ positout + 2 ] = tnv_iz;
                         positout += 3;
 
-                    } else if ((vpBits[index] & INOUT)  && (vpBits[index] & ISDONE)) {
+                    } else if ( ( vpBits[index] & INOUT )  && ( vpBits[index] & ISDONE ) ) {
 
                         dx = tnv_ix - bp[ 0 ];
                         dy = tnv_iy - bp[ 1 ];
@@ -852,12 +852,12 @@ function EDTSurface( coordList, radiusList, indexList ){
                         square = dx * dx + dy * dy + dz * dz;
                         //square = Math.sqrt( square );
 
-                        if (square < vpDistance[index]) {
+                        if ( square < vpDistance[index] ) {
 
                             boundPoint.fromArray( tnv_ix, tnv_iy, tnv_iz, bp );
                             vpDistance[index] = square;
 
-                            if (!(vpBits[index] & ISBOUND)) {
+                            if ( !( vpBits[index] & ISBOUND ) ) {
 
                                 vpBits[index] |= ISBOUND;
 

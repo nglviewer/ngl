@@ -811,7 +811,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         // init part of the vertexIndex
         // (takes a significant amount of time to do for all)
 
-        var xBeg2 = Math.max( 0, xBeg - 2);
+        var xBeg2 = Math.max( 0, xBeg - 2 );
         var yBeg2 = Math.max( 0, yBeg - 2 );
         var zBeg2 = Math.max( 0, zBeg - 2 );
 
@@ -943,7 +943,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         if( noNormals ){
 
-            xBeg = Math.max( 0, __xBeg - 1);
+            xBeg = Math.max( 0, __xBeg - 1 );
             yBeg = Math.max( 0, __yBeg - 1 );
             zBeg = Math.max( 0, __zBeg - 1 );
 

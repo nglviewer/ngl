@@ -16,7 +16,7 @@ const reAttr = /([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/;
 
 
 function strip( val ){
-    return val.replace(reStrip, '');
+    return val.replace( reStrip, '' );
 }
 
 
@@ -35,25 +35,25 @@ function parseXml( xml ){
     }
 
     function declaration(){
-        const m = match(/^<\?xml\s*/);
-        if (!m) return;
+        const m = match( /^<\?xml\s*/ );
+        if ( !m ) return;
         // tag
         const node = {
             attributes: {}
         };
         // attributes
-        while (!(eos() || is('?>'))) {
+        while ( !( eos() || is( '?>' ) ) ) {
             const attr = attribute();
-            if (!attr) return node;
+            if ( !attr ) return node;
             node.attributes[attr.name] = attr.value;
         }
-        match(/\?>\s*/);
+        match( /\?>\s*/ );
         return node;
     }
 
     function tag(){
-        const m = match(reTag);
-        if (!m) return;
+        const m = match( reTag );
+        if ( !m ) return;
         // name
         const node = {
             name: m[1],
@@ -61,44 +61,44 @@ function parseXml( xml ){
             children: []
         };
         // attributes
-        while (!(eos() || is('>') || is('?>') || is('/>'))) {
+        while ( !( eos() || is( '>' ) || is( '?>' ) || is( '/>' ) ) ) {
             var attr = attribute();
-            if (!attr) return node;
+            if ( !attr ) return node;
             node.attributes[attr.name] = attr.value;
         }
         // self closing tag
-        if (match(/^\s*\/>\s*/)) {
+        if ( match( /^\s*\/>\s*/ ) ) {
             return node;
         }
-        match(/\??>\s*/);
+        match( /\??>\s*/ );
         // content
         node.content = content();
         // children
         let child;
-        while ((child = tag())) {
-            node.children.push(child);
+        while ( ( child = tag() ) ) {
+            node.children.push( child );
         }
         // closing
-        match(/^<\/[\w-:.]+>\s*/);
+        match( /^<\/[\w-:.]+>\s*/ );
         return node;
     }
 
     function content(){
-        const m = match(reContent);
-        if (m) return m[1];
+        const m = match( reContent );
+        if ( m ) return m[1];
         return '';
     }
 
     function attribute(){
-        const m = match(reAttr);
-        if (!m) return;
-        return { name: m[1], value: strip(m[2]) };
+        const m = match( reAttr );
+        if ( !m ) return;
+        return { name: m[1], value: strip( m[2] ) };
     }
 
     function match( re ){
-        const m = xml.match(re);
-        if (!m) return;
-        xml = xml.slice(m[0].length);
+        const m = xml.match( re );
+        if ( !m ) return;
+        xml = xml.slice( m[0].length );
         return m;
     }
 
@@ -107,7 +107,7 @@ function parseXml( xml ){
     }
 
     function is( prefix ){
-        return 0 === xml.indexOf(prefix);
+        return 0 === xml.indexOf( prefix );
     }
 
 }

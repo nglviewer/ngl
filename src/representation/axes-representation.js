@@ -126,7 +126,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             var v = new Vector3();
             var { d1a, d2a, d3a, d1b, d2b, d3b } = pa.getProjectedScaleForAtoms( sview );
 
-            console.log(d1a, d2a, d3a, d1b, d2b, d3b)
+            console.log( d1a, d2a, d3a, d1b, d2b, d3b )
 
             var offset2 = offset * 2;
             var addCorner = function( d1, d2, d3 ){

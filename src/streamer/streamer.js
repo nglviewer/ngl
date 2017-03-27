@@ -151,7 +151,7 @@ Streamer.prototype = {
 
     lineCount: function(){
 
-        console.warn("lineCount - deprecated");
+        console.warn( "lineCount - deprecated" );
 
         var data = this.data;
         var n = data.length;

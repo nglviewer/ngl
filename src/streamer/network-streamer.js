@@ -51,8 +51,8 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
                 try {
                     callback( xhr.response );
-                } catch (e) {
-                    this.onerror(e);
+                } catch ( e ) {
+                    this.onerror( e );
                 }
 
             } else {

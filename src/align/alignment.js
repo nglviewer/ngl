@@ -192,7 +192,7 @@ class Alignment{
 
         } else {
 
-            Log.warn('Alignment: no subst matrix');
+            Log.warn( 'Alignment: no subst matrix' );
 
             return function scoreNoSubstMat( i, j ){
 
@@ -213,7 +213,7 @@ class Alignment{
 
         this.initMatrices();
 
-        var gap0 = this.gap(0);
+        var gap0 = this.gap( 0 );
         var scoreFn = this.makeScoreFn();
         var gapExtensionPenalty = this.gapExtensionPenalty;
 
@@ -261,7 +261,7 @@ class Alignment{
 
         if( Debug ) Log.timeEnd( "Alignment.calc" );
 
-        if( Debug ) Log.log(this.S, this.V, this.H);
+        if( Debug ) Log.log( this.S, this.V, this.H );
 
     }
 
@@ -289,14 +289,14 @@ class Alignment{
             this.score = this.H[i][j];
         }
 
-        if( Debug ) Log.log("Alignment: SCORE", this.score);
-        if( Debug ) Log.log("Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j]);
+        if( Debug ) Log.log( "Alignment: SCORE", this.score );
+        if( Debug ) Log.log( "Alignment: S, V, H", this.S[i][j], this.V[i][j], this.H[i][j] );
 
         while( i > 0 && j > 0 ){
 
             if( mat === "S" ){
 
-                if( this.S[i][j] === this.S[i-1][j-1] + scoreFn(i-1, j-1) ){
+                if( this.S[i][j] === this.S[i-1][j-1] + scoreFn( i-1, j-1 ) ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --i;
@@ -319,7 +319,7 @@ class Alignment{
                     this.ali2 = '-' + this.ali2;
                     --i;
                     mat = "V";
-                }else if( this.V[i][j] === this.S[i-1][j] + this.gap(0) ){
+                }else if( this.V[i][j] === this.S[i-1][j] + this.gap( 0 ) ){
                     this.ali1 = this.seq1[i-1] + this.ali1;
                     this.ali2 = '-' + this.ali2;
                     --i;
@@ -336,7 +336,7 @@ class Alignment{
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --j;
                     mat = "H";
-                }else if( this.H[i][j] === this.S[i][j-1] + this.gap(0) ){
+                }else if( this.H[i][j] === this.S[i][j-1] + this.gap( 0 ) ){
                     this.ali1 = '-' + this.ali1;
                     this.ali2 = this.seq2[j-1] + this.ali2;
                     --j;
@@ -348,7 +348,7 @@ class Alignment{
 
             }else{
 
-                Log.error('Alignment: no matrix');
+                Log.error( 'Alignment: no matrix' );
 
             }
 
@@ -372,7 +372,7 @@ class Alignment{
 
         if( Debug ) Log.timeEnd( "Alignment.trace" );
 
-        if( Debug ) Log.log([this.ali1, this.ali2]);
+        if( Debug ) Log.log( [this.ali1, this.ali2] );
 
     }
 

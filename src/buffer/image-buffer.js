@@ -17,17 +17,17 @@ import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 
 
-var quadIndices = new Uint16Array([
+var quadIndices = new Uint16Array( [
     0, 1, 2,
     1, 3, 2
-]);
+] );
 
-var quadUvs = new Float32Array([
+var quadUvs = new Float32Array( [
     0, 1,
     0, 0,
     1, 1,
     1, 0
-]);
+] );
 
 
 class ImageBuffer extends Buffer{

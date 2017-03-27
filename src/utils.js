@@ -104,7 +104,7 @@ function getAbsolutePath( relativePath ){
 
     var loc = window.location;
     var pn = loc.pathname;
-    var basePath = pn.substring( 0, pn.lastIndexOf("/") + 1 );
+    var basePath = pn.substring( 0, pn.lastIndexOf( "/" ) + 1 );
 
     return loc.origin + basePath + relativePath;
 
@@ -149,7 +149,7 @@ function download( data, downloadName ){
     }
 
     function open( str ){
-        openUrl( isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;') );
+        openUrl( isChromeIos ? str : str.replace( /^data:[^;]*;/, 'data:attachment/file;' ) );
     }
 
     if( typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob ){
@@ -238,7 +238,7 @@ function open( callback, extensionList ){
 
     extensionList = extensionList || [ "*" ];
 
-    var fileInput = document.createElement("input");
+    var fileInput = document.createElement( "input" );
     fileInput.type = "file";
     fileInput.multiple = true;
     fileInput.style.display = "hidden";
@@ -339,7 +339,7 @@ function throttle( func, wait, options ){
                 timeout = null;
             }
             previous = now;
-            result = func.apply(context, args);
+            result = func.apply( context, args );
             if( !timeout ) context = args = null;
         }else if( !timeout && options.trailing !== false ){
             timeout = setTimeout( later, remaining );
@@ -461,7 +461,7 @@ function uint8ToString( u8a ){
 
       var c = [];
 
-      for(var i = 0; i < u8a.length; i += chunkSize) {
+      for( var i = 0; i < u8a.length; i += chunkSize ) {
 
         c.push( String.fromCharCode.apply(
           null, u8a.subarray( i, i + chunkSize )
@@ -469,7 +469,7 @@ function uint8ToString( u8a ){
 
       }
 
-      return c.join("");
+      return c.join( "" );
 
     }else{
 

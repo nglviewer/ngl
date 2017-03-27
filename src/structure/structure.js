@@ -874,12 +874,12 @@ Structure.prototype = {
                         ap2.positionToArray( position2, i3 );
 
                         if( bondOrder >= 2 ){
-                            vt.addVectors( ap1, vShift ).add(vShortening).toArray( position1, i3 + 3);
-                            vt.addVectors( ap2, vShift ).sub(vShortening).toArray( position2, i3 + 3);
+                            vt.addVectors( ap1, vShift ).add( vShortening ).toArray( position1, i3 + 3 );
+                            vt.addVectors( ap2, vShift ).sub( vShortening ).toArray( position2, i3 + 3 );
 
                             if( bondOrder >= 3 ){
-                                vt.subVectors( ap1, vShift ).add(vShortening).toArray( position1, i3 + 6 );
-                                vt.subVectors( ap2, vShift ).sub(vShortening).toArray( position2, i3 + 6 );
+                                vt.subVectors( ap1, vShift ).add( vShortening ).toArray( position1, i3 + 6 );
+                                vt.subVectors( ap2, vShift ).sub( vShortening ).toArray( position2, i3 + 6 );
                             }
                         }
                     } else {
@@ -935,7 +935,7 @@ Structure.prototype = {
             if( radius1 ){
                 radius1[ i ] = radiusFactory.atomRadius( ap1 );
                 if( isMulti && bondOrder > 1 ){
-                    multiRadius = radius1[ i ] * bondScale / ( isOffset ? 1 : ( 0.5 * bondOrder ));
+                    multiRadius = radius1[ i ] * bondScale / ( isOffset ? 1 : ( 0.5 * bondOrder ) );
                     for( j = isOffset ? 1 : 0 ; j < bondOrder; ++j ){
                         radius1[ i + j ] = multiRadius;
                     }
@@ -944,7 +944,7 @@ Structure.prototype = {
             if( radius2 ){
                 radius2[ i ] = radiusFactory.atomRadius( ap2 );
                 if( isMulti && bondOrder > 1 ){
-                    multiRadius = radius2[ i ] * bondScale / ( isOffset ? 1 : ( 0.5 * bondOrder ));
+                    multiRadius = radius2[ i ] * bondScale / ( isOffset ? 1 : ( 0.5 * bondOrder ) );
                     for( j = isOffset ? 1 : 0 ; j < bondOrder; ++j ){
                         radius2[ i + j ] = multiRadius;
                     }

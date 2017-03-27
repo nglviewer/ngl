@@ -809,7 +809,7 @@ class CifParser extends StructureParser{
 
                         // Log.log( "LOOP KEY", line );
 
-                        keyParts = line.split(".");
+                        keyParts = line.split( "." );
                         category = keyParts[ 0 ].substring( 1 );
                         name = keyParts[ 1 ];
 
@@ -841,7 +841,7 @@ class CifParser extends StructureParser{
                         var keyValuePair = line.match( reQuotedWhitespace );
                         var key = keyValuePair[ 0 ];
                         var value = keyValuePair[ 1 ];
-                        keyParts = key.split(".");
+                        keyParts = key.split( "." );
                         category = keyParts[ 0 ].substring( 1 );
                         name = keyParts[ 1 ];
 

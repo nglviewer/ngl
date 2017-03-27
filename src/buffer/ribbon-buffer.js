@@ -10,10 +10,10 @@ import "../shader/Ribbon.vert";
 import MeshBuffer from "./mesh-buffer.js";
 
 
-const quadIndices = new Uint16Array([
+const quadIndices = new Uint16Array( [
     0, 1, 2,
     1, 3, 2
-]);
+] );
 
 
 class RibbonBuffer extends MeshBuffer{

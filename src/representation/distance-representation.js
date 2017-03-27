@@ -175,7 +175,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
             i -= j;
             var d = ap1.distanceTo( ap2 )
-            switch (this.labelUnit) {
+            switch ( this.labelUnit ) {
                 case "angstrom":
                     // 0x212B fails in TextBuffer
                     text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 197 );
