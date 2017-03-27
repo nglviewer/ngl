@@ -386,11 +386,13 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             normalCache = new Float32Array( n * 3 );
         }
 
-        if( !vertexIndex ){
+        var vIndexLength = contour ? n * 3 : n;
+      
+        if( !vertexIndex || vertexIndex.length != vIndexLength ){
             // In contour mode we want all drawn edges parallel to one axis,
             // so interpolation must be calculated in each dimension (rather
             // than re-using a single interpolated vertex)
-            vertexIndex = new Int32Array( contour ? n * 3 : n );
+            vertexIndex = new Int32Array( vIndexLength );
         }
 
         count = 0;

@@ -101,6 +101,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         colorVolume: {
             type: "hidden"
         },
+        contour: {
+            type: "boolean"
+        },
         useWorker: {
             type: "boolean", rebuild: true
         }
@@ -120,6 +123,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.boxSize = defaults( p.boxSize, 0 );
         this.colorVolume = defaults( p.colorVolume, undefined );
+        this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
 
         Representation.prototype.init.call( this, p );
@@ -172,13 +176,14 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
-                        isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        onSurfaceFinish
+                        isolevel, this.smooth, this.boxCenter, this.boxSize, 
+                        this.contour, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
-                            isolevel, this.smooth, this.boxCenter, this.boxSize
+                            isolevel, this.smooth, this.boxCenter, this.boxSize,
+                            this.contour
                         )
                     );
                 }
