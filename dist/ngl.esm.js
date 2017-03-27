@@ -44204,6 +44204,23 @@ function uniformArray3( n, a, b, c ){
 }
 
 
+function serialArray( n, j ){
+    if ( j === void 0 ) j = 0;
+
+
+    var array = new Float32Array( n );
+
+    for( var i = 0; i < n; ++i ){
+
+        array[ i ] = j + i;
+
+    }
+
+    return array;
+
+}
+
+
 function calculateMinArray( array1, array2 ){
 
     var n = array1.length;
@@ -44718,26 +44735,32 @@ function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
  */
 
 
+var pixelBufferFloat = new Float32Array( 4 );
+var pixelBufferUint = new Uint8Array( 4 );
+
+
 /**
  * Viewer class
  * @class
- * @param {String} eid - dom element id
+ * @param {String|Element} [idOrElement] - dom id or element
  */
-function Viewer( eid ){
+function Viewer( idOrElement ){
 
     var signals = {
         ticked: new Signal()
     };
 
     var container;
-    if( eid ){
-        container = document.getElementById( eid );
+    if( typeof idOrElement === "string" ){
+        container = document.getElementById( idOrElement );
+    }else if( idOrElement instanceof Element ){
+        container = idOrElement;
     }else{
         container = document.createElement( 'div' );
     }
 
     var width, height;
-    if ( container === document ) {
+    if ( container === document.body ) {
         width = window.innerWidth || 1;
         height = window.innerHeight || 1;
     } else {
@@ -45363,7 +45386,7 @@ function Viewer( eid ){
 
     function handleResize(){
 
-        if( container === document ){
+        if( container === document.body ){
             setSize( window.innerWidth, window.innerHeight );
         }else{
             var box = container.getBoundingClientRect();
@@ -45426,70 +45449,63 @@ function Viewer( eid ){
 
     }
 
-    var pick = function(){
+    function pick( x, y ){
 
-        var pixelBufferFloat = new Float32Array( 4 );
-        var pixelBufferUint = new Uint8Array( 4 );
+        x *= window.devicePixelRatio;
+        y *= window.devicePixelRatio;
 
-        return function pick( x, y ){
+        var gid, object, instance;
+        var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            x *= window.devicePixelRatio;
-            y *= window.devicePixelRatio;
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, x, y, 1, 1, pixelBuffer
+        );
 
-            var gid, object, instance;
-            var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+        if( SupportsReadPixelsFloat ){
+            gid =
+                ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+        }else{
+            gid =
+                ( pixelBuffer[0] << 16 ) |
+                ( pixelBuffer[1] << 8 ) |
+                ( pixelBuffer[2] );
+        }
 
-            render( true );
-            renderer.readRenderTargetPixels(
-                pickingTarget, x, y, 1, 1, pixelBuffer
-            );
+        object = pickingGroup.getObjectById(
+            Math.round( pixelBuffer[ 3 ] )
+        );
 
-            if( SupportsReadPixelsFloat ){
-                gid =
-                    ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
-                    ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
-                    ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
-            }else{
-                gid =
-                    ( pixelBuffer[0] << 16 ) |
-                    ( pixelBuffer[1] << 8 ) |
-                    ( pixelBuffer[2] );
-            }
+        if( object && object.userData.instance ){
+            instance = object.userData.instance;
+        }
 
-            object = pickingGroup.getObjectById(
-                Math.round( pixelBuffer[ 3 ] )
-            );
+        // if( Debug ){
+        //     var rgba = Array.apply( [], pixelBuffer );
+        //     Log.log( pixelBuffer );
+        //     Log.log(
+        //         "picked color",
+        //         [
+        //             ( rgba[0] ).toPrecision(2),
+        //             ( rgba[1] ).toPrecision(2),
+        //             ( rgba[2] ).toPrecision(2),
+        //             ( rgba[3] ).toPrecision(2)
+        //         ]
+        //     );
+        //     Log.log( "picked gid", gid );
+        //     Log.log( "picked instance", instance );
+        //     Log.log( "picked position", x, y );
+        //     Log.log( "devicePixelRatio", window.devicePixelRatio );
+        // }
 
-            if( object && object.userData.instance ){
-                instance = object.userData.instance;
-            }
-
-            // if( Debug ){
-            //     var rgba = Array.apply( [], pixelBuffer );
-            //     Log.log( pixelBuffer );
-            //     Log.log(
-            //         "picked color",
-            //         [
-            //             ( rgba[0] ).toPrecision(2),
-            //             ( rgba[1] ).toPrecision(2),
-            //             ( rgba[2] ).toPrecision(2),
-            //             ( rgba[3] ).toPrecision(2)
-            //         ]
-            //     );
-            //     Log.log( "picked gid", gid );
-            //     Log.log( "picked instance", instance );
-            //     Log.log( "picked position", x, y );
-            //     Log.log( "devicePixelRatio", window.devicePixelRatio );
-            // }
-
-            return {
-                "gid": gid,
-                "instance": instance
-            };
-
+        return {
+            "gid": gid,
+            "instance": instance
         };
 
-    }();
+    }
 
     function requestRender(){
 
@@ -51047,6 +51063,18 @@ Assembly.prototype.addPart = function addPart ( matrixList, chainList ){
     return part;
 };
 
+Assembly.prototype.getCount = function getCount ( structure, methodName ){
+
+    var count = 0;
+
+    this.partList.forEach( function( part ){
+        count += part[ methodName ]( structure );
+    } );
+
+    return count;
+
+};
+
 /**
  * Get the number of atom for a given structure
  * @param  {Structure} structure - the given structure
@@ -51054,13 +51082,18 @@ Assembly.prototype.addPart = function addPart ( matrixList, chainList ){
  */
 Assembly.prototype.getAtomCount = function getAtomCount ( structure ){
 
-    var atomCount = 0;
+    return this.getCount( structure, "getAtomCount" );
 
-    this.partList.forEach( function( part ){
-        atomCount += part.getAtomCount( structure );
-    } );
+};
 
-    return atomCount;
+/**
+ * Get the number of residues for a given structure
+ * @param  {Structure} structure - the given structure
+ * @return {Integer} number of residues in the assembly
+ */
+Assembly.prototype.getResidueCount = function getResidueCount ( structure ){
+
+    return this.getCount( structure, "getResidueCount" );
 
 };
 
@@ -51143,18 +51176,30 @@ var prototypeAccessors$1$1 = { type: {} };
 
 prototypeAccessors$1$1.type.get = function (){ return "AssemblyPart"; };
 
-AssemblyPart.prototype.getAtomCount = function getAtomCount ( structure ){
+AssemblyPart.prototype.getCount = function getCount ( structure, propertyName ){
 
-    var atomCount = 0;
+    var count = 0;
     var chainList = this.chainList;
 
     structure.eachChain( function( cp ){
         if( chainList.length === 0 || chainList.includes( cp.chainname ) ){
-            atomCount += cp.atomCount;
+            count += cp[ propertyName ];
         }
     } );
 
-    return this.matrixList.length * atomCount;
+    return this.matrixList.length * count;
+
+};
+
+AssemblyPart.prototype.getAtomCount = function getAtomCount ( structure ){
+
+    return this.getCount( structure, "atomCount" );
+
+};
+
+AssemblyPart.prototype.getResidueCount = function getResidueCount ( structure ){
+
+    return this.getCount( structure, "residueCount" );
 
 };
 
@@ -51822,7 +51867,7 @@ function calculateBondsWithin( structure, onlyAddRung ){
     var a1 = structure.getAtomProxy();
     var a2 = structure.getAtomProxy();
     var bp = structure.getBondProxy();
-    var atomBondMap = calculateAtomBondMap( structure );
+    var atomBondMap = onlyAddRung ? null : calculateAtomBondMap( structure );
 
     structure.eachResidue( function( r ){
 
@@ -59326,11 +59371,13 @@ var Buffer = function Buffer( data, params ){
     //
 
     var position = d.position || d.position1;
-    this._positionDataSize = position ? position.length / 3 : 0;
+    var n = position ? position.length / 3 : 0;
+    this._positionDataSize = n;
 
     this.addAttributes( {
         "position": { type: "v3", value: d.position },
         "color": { type: "c", value: d.color },
+        "vertexId": { type: "f", value: serialArray( n ) },
     } );
 
     if( d.index ){
@@ -65538,7 +65585,7 @@ var tmpZoomVector = new Vector3();
  * @example
  *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
-var Stage = function Stage( eid, params ){
+var Stage = function Stage( idOrElement, params ){
 
     this.signals = {
         parametersChanged: new Signal(),
@@ -65565,7 +65612,7 @@ var Stage = function Stage( eid, params ){
 
     //
 
-    this.viewer = new Viewer( eid );
+    this.viewer = new Viewer( idOrElement );
     if( !this.viewer.renderer ) { return; }
 
     /**
@@ -65758,16 +65805,18 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
 
         object.setSelection( "/0" );
 
-        var atomCount, instanceCount;
+        var atomCount, residueCount, instanceCount;
         var structure = object.structure;
 
         if( structure.biomolDict.BU1 ){
             var assembly = structure.biomolDict.BU1;
             atomCount = assembly.getAtomCount( structure );
+            residueCount = assembly.getResidueCount( structure );
             instanceCount = assembly.getInstanceCount();
             object.setDefaultAssembly( "BU1" );
         }else{
             atomCount = structure.getModelProxy( 0 ).atomCount;
+            residueCount = structure.getModelProxy( 0 ).residueCount;
             instanceCount = 1;
         }
 
@@ -65787,7 +65836,21 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
 
         if( Debug ) { console.log( atomCount, instanceCount, backboneOnly ); }
 
-        if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
+        if( residueCount / instanceCount < 4 ){
+
+            object.addRepresentation( "ball+stick", {
+                colorScheme: "element",
+                scale: 2.0,
+                aspectRatio: 1.5,
+                bondScale: 0.3,
+                bondSpacing: 0.75,
+                quality: "auto"
+            } );
+
+        }else if(
+            ( instanceCount > 5 && atomCount > 15000 ) ||
+            atomCount > 700000
+        ){
 
             var scaleFactor = (
                 Math.min(
@@ -65864,17 +65927,16 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
 
         }
 
-        this.autoView();
-
         // add frames as trajectory
         if( object.structure.frames.length ) { object.addTrajectory(); }
 
     }else if( object.type === "surface" || object.type === "volume" ){
 
         object.addRepresentation( "surface" );
-        this.autoView();
 
     }
+
+    this.tasks.onZeroOnce( this.autoView, this );
 
 };
 
@@ -77737,45 +77799,41 @@ RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
 
 
 /**
- * Validation representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters
+ * Validation representation
  */
-function ValidationRepresentation( structure, viewer, params ){
+var ValidationRepresentation = (function (StructureRepresentation$$1) {
+    function ValidationRepresentation () {
+        StructureRepresentation$$1.apply(this, arguments);
+    }
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    if ( StructureRepresentation$$1 ) ValidationRepresentation.__proto__ = StructureRepresentation$$1;
+    ValidationRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    ValidationRepresentation.prototype.constructor = ValidationRepresentation;
 
-}
+    var prototypeAccessors = { type: {},parameters: {} };
 
-ValidationRepresentation.prototype = Object.assign( Object.create(
+    prototypeAccessors.type.get = function (){ return "validation"; };
 
-    StructureRepresentation.prototype ), {
+    prototypeAccessors.parameters.get = function (){
 
-    constructor: ValidationRepresentation,
+        return Object.assign.call( this, StructureRepresentation$$1.prototype.parameters, {
+            radiusType: null,
+            radius: null,
+            scale: null
+        } );
 
-    type: "validation",
+    };
 
-    parameters: Object.assign( {
-
-        radiusType: null,
-        radius: null,
-        scale: null
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    ValidationRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorValue = defaults( p.colorValue, "#f0027f" );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    ValidationRepresentation.prototype.createData = function createData ( sview ){
 
         if( !sview.validation ) { return; }
 
@@ -77792,15 +77850,18 @@ ValidationRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ cylinderBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( /*what, data*/ ){
+    ValidationRepresentation.prototype.updateData = function updateData ( /*what, data*/ ){
 
         this.build();
 
-    }
+    };
 
-} );
+    Object.defineProperties( ValidationRepresentation.prototype, prototypeAccessors );
+
+    return ValidationRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "validation", ValidationRepresentation );
@@ -78399,8 +78460,14 @@ var HelixTypes = {
 
 
 var PdbParser = (function (StructureParser$$1) {
-    function PdbParser () {
-        StructureParser$$1.apply(this, arguments);
+    function PdbParser( streamer, params ){
+
+        var p = params || {};
+
+        StructureParser$$1.call( this, streamer, p );
+
+        this.hex = defaults( p.hex, false );
+
     }
 
     if ( StructureParser$$1 ) PdbParser.__proto__ = StructureParser$$1;
@@ -78422,6 +78489,10 @@ var PdbParser = (function (StructureParser$$1) {
 
         var s = this.structure;
         var sb = this.structureBuilder;
+
+        var hex = this.hex;
+        var serialRadix = 10;
+        var resnoRadix = 10;
 
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
@@ -78590,11 +78661,17 @@ var PdbParser = (function (StructureParser$$1) {
 
                     }else{
 
-                        serial = parseInt( line.substr( 6, 5 ) );
+                        serial = parseInt( line.substr( 6, 5 ), serialRadix );
+                        if( hex && serial === 99999 ){
+                            serialRadix = 16;
+                        }
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
-                        resno = parseInt( line.substr( 22, 4 ) );
+                        resno = parseInt( line.substr( 22, 4 ), resnoRadix );
+                        if( hex && resno === 9999 ){
+                            resnoRadix = 16;
+                        }
                         inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
                         bfactor = parseFloat( line.substr( 60, 6 ) );
@@ -81798,8 +81875,6 @@ var MmtfParser = (function (StructureParser$$1) {
             s.unitcell = undefined;
         }
 
-        if( Debug ) { Log.timeEnd( "MmtfParser._parse " + this.name ); }
-
         // calculate backbone bonds
         calculateBondsBetween( s, true );
 
@@ -81810,6 +81885,8 @@ var MmtfParser = (function (StructureParser$$1) {
         s.finalizeBonds();
 
         buildUnitcellAssembly( s );
+
+        if( Debug ) { Log.timeEnd( "MmtfParser._parse " + this.name ); }
 
     };
 
@@ -84538,6 +84615,61 @@ function hasAttrValue( attr, value ){
     return attr !== undefined && attr.value === value;
 }
 
+function getAtomSele( ap ){
+    var icode = ap.inscode;
+    var chain = ap.chainname;
+    var atomname = ap.atomname;
+    var altcode = ap.altloc;
+    var sele = ap.resno;
+    if( icode ) { sele += "^" + icode; }
+    if( chain ) { sele += ":" + chain; }
+    if( atomname ) { sele += "." + atomname; }
+    if( altcode ) { sele += "%" + altcode; }
+    sele += "/" + ap.modelIndex;
+    return sele;
+}
+
+function getProblemCount( clashDict, g, ga ){
+    var geoProblemCount = 0;
+
+    var clashes = g.getElementsByTagName( "clash" );
+    for( var j = 0, jl = clashes.length; j < jl; ++j ){
+        if( clashDict[ clashes[ j ].attributes.cid.value ] ){
+            geoProblemCount += 1;
+            break;
+        }
+    }
+
+    var angleOutliers = g.getElementsByTagName( "angle-outlier" );
+    if( angleOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    var bondOutliers = g.getElementsByTagName( "bond-outlier" );
+    if( bondOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    var planeOutliers = g.getElementsByTagName( "plane-outlier" );
+    if( planeOutliers.length > 0 ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.rota, "OUTLIER" ) ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.rama, "OUTLIER" ) ){
+        geoProblemCount += 1;
+    }
+
+    if( hasAttrValue( ga.RNApucker, "outlier" ) ){
+        geoProblemCount += 1;
+    }
+
+    return geoProblemCount;
+}
+
 
 var Validation = function Validation( name, path ){
 
@@ -84549,156 +84681,123 @@ var Validation = function Validation( name, path ){
     this.clashDict = {};
     this.geoDict = {};
     this.geoAtomDict = {};
+    this.atomDict = {};
     this.clashSele = "NONE";
 
 };
 
 Validation.prototype.fromXml = function fromXml ( xml ){
 
+    if( Debug ) { Log.time( "Validation.fromXml" ); }
+
     var rsrzDict = this.rsrzDict;
     var rsccDict = this.rsccDict;
     var clashDict = this.clashDict;
     var geoDict = this.geoDict;
     var geoAtomDict = this.geoAtomDict;
+    var atomDict = this.atomDict;
 
     var groups = xml.getElementsByTagName( "ModelledSubgroup" );
 
-    var i, il, j, jl;
+    var _clashDict = {};
+    var clashList = [];
 
-    for( i = 0, il = groups.length; i < il; ++i ){
+    if( Debug ) { Log.time( "Validation.fromXml#clashDict" ); }
+
+    for( var i = 0, il = groups.length; i < il; ++i ){
 
         var g = groups[ i ];
         var ga = g.attributes;
 
         var sele = getSele( ga );
+        if( ga.rsrz !== undefined ){
+            rsrzDict[ sele ] = parseFloat( ga.rsrz.value );
+        }
+        if( ga.rscc !== undefined ){
+            rsccDict[ sele ] = parseFloat( ga.rscc.value );
+        }
+        ga.sele = sele;
 
         var clashes = g.getElementsByTagName( "clash" );
 
-        for( j = 0, jl = clashes.length; j < jl; ++j ){
+        for( var j = 0, jl = clashes.length; j < jl; ++j ){
 
             var ca = clashes[ j ].attributes;
-            var cid = parseInt( ca.cid.value );
+            var atom = ca.atom.value;
 
-            if( clashDict[ cid ] === undefined ){
-                clashDict[ cid ] = {
-                    mag: parseFloat( ca.clashmag.value ),
-                    dist: parseFloat( ca.dist.value ),
-                    sele1: getSele( ga, ca.atom.value, true ),
-                    atom1: ca.atom.value,
-                    res1: sele
-                };
-            }else{
-                clashDict[ cid ].sele2 = getSele( ga, ca.atom.value, true );
-                clashDict[ cid ].atom2 = ca.atom.value;
-                clashDict[ cid ].res2 = sele;
+            if( guessElement( atom ) !== "H" ){
+
+                var cid = ca.cid.value;
+                var atomSele = getSele( ga, atom, true );
+                atomDict[ atomSele ] = true;
+
+                if( _clashDict[ cid ] === undefined ){
+                    _clashDict[ cid ] = {
+                        sele1: atomSele,
+                        res1: sele
+                    };
+                }else{
+                    var c = _clashDict[ cid ];
+                    if( c.res1 !== sele ){
+                        c.sele2 = atomSele;
+                        c.res2 = sele;
+                        clashList.push( c.res1, sele );
+                        clashDict[ cid ] = c;
+                    }
+                }
+
             }
 
         }
 
     }
 
-    for( i = 0, il = groups.length; i < il; ++i ){
+    if( Debug ) { Log.timeEnd( "Validation.fromXml#clashDict" ); }
 
-        var g$1 = groups[ i ];
+    for( var i$1 = 0, il$1 = groups.length; i$1 < il$1; ++i$1 ){
+
+        var g$1 = groups[ i$1 ];
         var ga$1 = g$1.attributes;
 
-        var sele$1 = getSele( ga$1 );
-        if( ga$1.rsrz !== undefined ){
-            rsrzDict[ sele$1 ] = parseFloat( ga$1.rsrz.value );
-        }
-        if( ga$1.rscc !== undefined ){
-            rsccDict[ sele$1 ] = parseFloat( ga$1.rscc.value );
-        }
-
+        var sele$1 = ga$1.sele;
         var isPolymer = ga$1.seq.value !== ".";
-        var clashAtoms = [];
-        var geoProblemCount = 0;
-
-        var clashes$1 = g$1.getElementsByTagName( "clash" );
-
-        for( j = 0, jl = clashes$1.length; j < jl; ++j ){
-
-            var ca$1 = clashes$1[ j ].attributes;
-            var cid$1 = parseInt( ca$1.cid.value );
-
-            if( clashDict[ cid$1 ] !== undefined ){
-                var c = clashDict[ cid$1 ];
-                if( c.res1 === c.res2 ||
-                    c.atom1 === undefined ||
-                    c.atom2 === undefined ||
-                    guessElement( c.atom1 ) === "H" ||
-                    guessElement( c.atom2 ) === "H"
-                ){
-                    delete clashDict[ cid$1 ];
-                }else{
-                    clashAtoms.push( ca$1.atom.value );
-                }
-            }
-
-        }
 
         if( isPolymer ){
 
-            if( clashAtoms.length > 0 ){
-                geoProblemCount += 1;
-            }
-
-            var angleOutliers = g$1.getElementsByTagName( "angle-outlier" );
-            if( angleOutliers.length > 0 ){
-                geoProblemCount += 1;
-            }
-
-            var bondOutliers = g$1.getElementsByTagName( "bond-outlier" );
-            if( bondOutliers.length > 0 ){
-                geoProblemCount += 1;
-            }
-
-            var planeOutliers = g$1.getElementsByTagName( "plane-outlier" );
-            if( planeOutliers.length > 0 ){
-                geoProblemCount += 1;
-            }
-
-            if( hasAttrValue( ga$1.rota, "OUTLIER" ) ){
-                geoProblemCount += 1;
-            }
-
-            if( hasAttrValue( ga$1.rota, "OUTLIER" ) ){
-                geoProblemCount += 1;
-            }
-
-            if( hasAttrValue( ga$1.RNApucker, "outlier" ) ){
-                geoProblemCount += 1;
-            }
-
+            var geoProblemCount = getProblemCount( clashDict, g$1, ga$1 );
             if( geoProblemCount > 0 ){
                 geoDict[ sele$1 ] = geoProblemCount;
             }
 
         }else{
 
+            var clashes$1 = g$1.getElementsByTagName( "clash" );
             var mogBondOutliers = g$1.getElementsByTagName( "mog-bond-outlier" );
             var mogAngleOutliers = g$1.getElementsByTagName( "mog-angle-outlier" );
 
             if( mogBondOutliers.length > 0 || mogAngleOutliers.length > 0 || clashes$1.length > 0 ){
 
-                var atomDict = {};
-                geoAtomDict[ sele$1 ] = atomDict;
+                var atomDict$1 = {};
+                geoAtomDict[ sele$1 ] = atomDict$1;
 
-                for( j = 0, jl = clashAtoms.length; j < jl; ++j ){
-                    setBitDict( atomDict, clashAtoms[ j ], 1 );
+                for( var j$1 = 0, jl$1 = clashes$1.length; j$1 < jl$1; ++j$1 ){
+                    var ca$1 = clashes$1[ j$1 ].attributes;
+                    if( clashDict[ ca$1.cid.value ] ){
+                        setBitDict( atomDict$1, ca$1.atom.value, 1 );
+                    }
                 }
 
-                for( j = 0, jl = mogBondOutliers.length; j < jl; ++j ){
-                    var mbo = mogBondOutliers[ j ].attributes;
+                for( var j$2 = 0, jl$2 = mogBondOutliers.length; j$2 < jl$2; ++j$2 ){
+                    var mbo = mogBondOutliers[ j$2 ].attributes;
                     mbo.atoms.value.split( "," ).forEach( function( atomname ){
-                        setBitDict( atomDict, atomname, 2 );
+                        setBitDict( atomDict$1, atomname, 2 );
                     } );
                 }
 
-                for( j = 0, jl = mogAngleOutliers.length; j < jl; ++j ){
-                    var mao = mogAngleOutliers[ j ].attributes;
+                for( var j$3 = 0, jl$3 = mogAngleOutliers.length; j$3 < jl$3; ++j$3 ){
+                    var mao = mogAngleOutliers[ j$3 ].attributes;
                     mao.atoms.value.split( "," ).forEach( function( atomname ){
-                        setBitDict( atomDict, atomname, 4 );
+                        setBitDict( atomDict$1, atomname, 4 );
                     } );
                 }
 
@@ -84708,21 +84807,20 @@ Validation.prototype.fromXml = function fromXml ( xml ){
 
     }
 
-    var clashList = [];
-    for( var k in clashDict ){
-        var c$1 = clashDict[ k ];
-        clashList.push( c$1.res1, c$1.res2 );
-    }
-
     this.clashSele = clashList.length ? clashList.join( " OR " ) : "NONE";
+
+    if( Debug ) { Log.timeEnd( "Validation.fromXml" ); }
 
 };
 
 Validation.prototype.getClashData = function getClashData ( params ){
 
+    if( Debug ) { Log.time( "Validation.getClashData" ); }
+
     var p = params || {};
 
     var s = p.structure;
+    var as = s.atomSet;
     var c = new Color( defaults( p.color, "#f0027f" ) );
 
     var ap1 = s.getAtomProxy();
@@ -84739,15 +84837,29 @@ Validation.prototype.getClashData = function getClashData ( params ){
     var color = uniformArray3( n, c.r, c.g, c.b );
     var radius = new Float32Array( n );
 
+    if( Debug ) { Log.time( "Validation.getClashData#atomDict" ); }
+
+    var atomDict = this.atomDict;
+
+    s.eachAtom( function( ap ){
+        var sele = getAtomSele( ap );
+        if( atomDict[ sele ] === true ){
+            atomDict[ sele ] = ap.index;
+        }
+    } );
+
+    if( Debug ) { Log.timeEnd( "Validation.getClashData#atomDict" ); }
+
     var i = 0;
 
     for( var k in clashDict ){
 
         var c$1 = clashDict[ k ];
-        ap1.index = s.getAtomIndices( new Selection$1( c$1.sele1 ) )[ 0 ];
-        ap2.index = s.getAtomIndices( new Selection$1( c$1.sele2 ) )[ 0 ];
+        ap1.index = atomDict[ c$1.sele1 ];
+        ap2.index = atomDict[ c$1.sele2 ];
 
-        if( ap1.index === undefined || ap2.index === undefined ) { continue; }
+        if( !as.has( ap1.index ) || !as.has( ap2.index ) ||
+            ap1.index === undefined || ap2.index === undefined ) { continue; }
 
         vDir.subVectors( ap2, ap1 ).setLength( ap1.vdw );
         vPos1.copy( ap1 ).add( vDir );
@@ -84767,12 +84879,14 @@ Validation.prototype.getClashData = function getClashData ( params ){
 
     }
 
+    if( Debug ) { Log.timeEnd( "Validation.getClashData" ); }
+
     return {
-        position1: position1,
-        position2: position2,
-        color: color,
-        color2: color,
-        radius: radius
+        position1: position1.subarray( 0, i * 3 ),
+        position2: position2.subarray( 0, i * 3 ),
+        color: color.subarray( 0, i * 3 ),
+        color2: color.subarray( 0, i * 3 ),
+        radius: radius.subarray( 0, i )
     };
 
 };
@@ -87949,7 +88063,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.8";
+var version$1 = "0.10.0-dev.9";
 
 /**
  * @file ngl
