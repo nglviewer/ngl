@@ -499,8 +499,6 @@ function Viewer( idOrElement ){
 
         function updateGeometry( geometry, matrix ){
 
-            if( geometry.attributes.position.count === 0 ) return;
-
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
@@ -519,8 +517,7 @@ function Viewer( idOrElement ){
                 geoBoundingBox.expandByScalar( 5 );
             }
 
-            boundingBox.expandByPoint( geoBoundingBox.min );
-            boundingBox.expandByPoint( geoBoundingBox.max );
+            boundingBox.union( geoBoundingBox );
 
         }
 
@@ -537,13 +534,7 @@ function Viewer( idOrElement ){
         }
 
         if( geometry ){
-            if( Array.isArray( geometry ) ){
-                geometry.forEach( function( g ){
-                    updateGeometry( g, matrix );
-                } );
-            }else{
-                updateGeometry( geometry, matrix );
-            }
+            updateGeometry( geometry, matrix );
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );

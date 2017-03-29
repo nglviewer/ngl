@@ -106,6 +106,12 @@ function Shape( name, params ){
 
         bufferList.push( buffer );
 
+        var geometry = buffer.geometry;
+        if( !geometry.boundingBox ){
+            geometry.computeBoundingBox();
+        }
+        boundingBox.union( geometry.boundingBox );
+
     }
 
     /**

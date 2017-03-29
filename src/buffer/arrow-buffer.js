@@ -11,6 +11,7 @@ import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 import CylinderBuffer from "./cylinder-buffer.js";
 import ConeBuffer from "./cone-buffer.js";
+import GeometryGroup from "../viewer/geometry-group.js";
 
 
 class ArrowBuffer{
@@ -60,10 +61,10 @@ class ArrowBuffer{
             }
         );
 
-        this.geometry = [
+        this.geometry = new GeometryGroup( [
             this.cylinderBuffer.geometry,
             this.coneBuffer.geometry
-        ];
+        ] );
 
         this.group = new Group();
         this.wireframeGroup = new Group();
