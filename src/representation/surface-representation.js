@@ -12,6 +12,7 @@ import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
+import ContourBuffer from "../buffer/contour-buffer.js";
 
 
 /**
@@ -102,7 +103,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             type: "hidden"
         },
         contour: {
-            type: "boolean"
+            type: "boolean", rebuild: true
         },
         useWorker: {
             type: "boolean", rebuild: true
@@ -159,12 +160,14 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
+                this.__contour !== this.contour ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
             ){
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
+                this.__contour = this.contour;
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
@@ -211,17 +214,31 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        var surfaceBuffer = new SurfaceBuffer(
-            this.getSurfaceData(),
-            this.getBufferParams( {
-                background: this.background,
-                opaqueBack: this.opaqueBack,
-                dullInterior: false,
-            } )
-        );
-        var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+        var sd = this.getSurfaceData();
 
-        this.bufferList.push( doubleSidedBuffer );
+        var buffer;
+
+        if( this.contour ){
+
+            buffer = new ContourBuffer(
+                sd, this.getBufferParams( {
+                    wireframe: false
+            } ) );
+
+        } else {
+
+            var surfaceBuffer = new SurfaceBuffer(
+                sd, this.getBufferParams( {
+                    background: this.background,
+                    opaqueBack: this.opaqueBack,
+                    dullInterior: false
+                } ) );
+            
+            buffer = new DoubleSidedBuffer( surfaceBuffer );
+            
+        }
+
+        this.bufferList.push( buffer );
 
     },
 
@@ -304,6 +321,13 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             delete params.boxCenter;
         }
 
+        // Forbid wireframe && contour as in molsurface
+        if( params && params.wireframe && (
+            params.contour || ( params.contour === undefined && this.contour )
+        )){
+            params.wireframe = false;
+        }
+
         Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -324,11 +348,11 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                     !this.__box.equals( this.box ) )
             )
         ){
-            this.build( {
+            this.build( { 
                 "position": true,
                 "color": true,
                 "index": true,
-                "normal": true
+                "normal": !this.contour
             } );
         }
 
