@@ -428,6 +428,7 @@ NGL.ViewportWidget = function( stage ){
         .setPosition( "absolute" )
         .setDisplay( "none" )
         .setOpacity( "0.9" )
+        .setPointerEvents( "none" )
         .add( tooltipText );
 
     stage.signals.hovered.add( function( d ){
