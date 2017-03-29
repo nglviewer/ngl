@@ -73,7 +73,8 @@ function Viewer( idOrElement ){
         height = box.height || 1;
     }
 
-    var rendering, renderPending, sampleLevel, isStill, cDist, bRadius;
+    var rendering, renderPending, lastRenderedPicking, isStill;
+    var sampleLevel, cDist, bRadius;
 
     var parameters;
     initParams();
@@ -1055,12 +1056,13 @@ function Viewer( idOrElement ){
         updateInfo( true );
 
         if( picking ){
-            __renderPickingGroup();
+            if( !lastRenderedPicking ) __renderPickingGroup();
         }else if( sampleLevel > 0 ){
             __renderMultiSample();
         }else{
             __renderModelGroup();
         }
+        lastRenderedPicking = picking;
 
         rendering = false;
         renderPending = false;
