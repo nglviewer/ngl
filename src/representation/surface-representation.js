@@ -324,7 +324,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         // Forbid wireframe && contour as in molsurface
         if( params && params.wireframe && (
             params.contour || ( params.contour === undefined && this.contour )
-        )){
+        ) ){
             params.wireframe = false;
         }
 
