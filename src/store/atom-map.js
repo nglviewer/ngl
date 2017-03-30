@@ -19,7 +19,12 @@ function AtomMap( structure ){
     }
 
     function add( atomname, element ){
-        element = element || guessElement( atomname );
+        atomname = atomname.toUpperCase();
+        if( !element ){
+            element = guessElement( atomname );
+        }else{
+            element = element.toUpperCase();
+        }
         var hash = getHash( atomname, element );
         var id = idDict[ hash ];
         if( id === undefined ){
