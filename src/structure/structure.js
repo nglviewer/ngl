@@ -717,7 +717,7 @@ Structure.prototype = {
         var atomSet = defaults( p.atomSet, this.atomSet );
 
         var radiusFactory, colormaker, pickingColormaker;
-        var position, color, picking, radius, index;
+        var position, color, picking, pickingColor, radius, index;
 
         var atomData = {};
         var ap = this.getAtomProxy();
