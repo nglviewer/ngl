@@ -24,8 +24,7 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
      * @param  {Float32Array} data.color - from colors
      * @param  {Float32Array} data.color2 - to colors
      * @param  {Float32Array} data.radius - radii
-     * @param  {Float32Array} data.pickingColor - from pickingColor
-     * @param  {Float32Array} data.pickingColor2 - to pickingColor2
+     * @param  {Float32Array} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -53,14 +52,7 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
             "radius": { type: "f", value: null },
         } );
 
-        if( data.pickingColor2 ){
-            this.addAttributes( {
-                "pickingColor2": { type: "c", value: null }
-            } );
-        }
-
         this.setAttributes( data );
-
         this.makeMapping();
 
     }

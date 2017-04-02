@@ -19,7 +19,7 @@ const eye = new Vector3( 0, 0, 0 );
 
 class EllipsoidGeometryBuffer extends GeometryBuffer{
 
-    // position, color, radius, majorAxis, minorAxis, pickingColor
+    // position, color, radius, majorAxis, minorAxis, picking
     constructor( data, params ){
 
         const p = params || {};

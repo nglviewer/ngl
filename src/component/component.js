@@ -105,7 +105,6 @@ class Component{
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
         p.useWorker = defaults( p.useWorker, sp.workerDefault );
         p.visible = defaults( p.visible, true );
-        p.gidPool = this.stage.gidPool;
 
         var p2 = Object.assign( {}, p, { visible: this.visible && p.visible } );
         var repr = makeRepresentation( type, object, this.viewer, p2 );

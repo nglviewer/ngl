@@ -7,6 +7,7 @@
 
 import "../shader/Ribbon.vert";
 
+import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
@@ -26,7 +27,7 @@ class RibbonBuffer extends MeshBuffer{
      * @param  {Float32Array} data.dir - binormals
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.pickingColor - pickingColors
+     * @param  {Float32Array} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -40,7 +41,6 @@ class RibbonBuffer extends MeshBuffer{
         var meshPosition = new Float32Array( x );
         var meshColor = new Float32Array( x );
         var meshNormal = new Float32Array( x );
-        var meshPickingColor = d.pickingColor ? new Float32Array( x ) : undefined;
 
         var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
         var meshIndex = new TypedArray( x );
@@ -50,7 +50,7 @@ class RibbonBuffer extends MeshBuffer{
             color: meshColor,
             index: meshIndex,
             normal: meshNormal,
-            pickingColor: meshPickingColor
+            picking: d.picking
         }, params );
 
         this.addAttributes( {
@@ -60,6 +60,7 @@ class RibbonBuffer extends MeshBuffer{
             "size": { type: "f", value: new Float32Array( n4 ) },
         } );
 
+        d.primitiveId = serialArray( n );
         this.setAttributes( d );
 
         this.meshIndex = meshIndex;
@@ -74,8 +75,8 @@ class RibbonBuffer extends MeshBuffer{
 
         var attributes = this.geometry.attributes;
 
-        var position, normal, size, dir, color, pickingColor;
-        var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
+        var position, normal, size, dir, color, primitiveId;
+        var aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId;
 
         if( data.position ){
             position = data.position;
@@ -107,10 +108,10 @@ class RibbonBuffer extends MeshBuffer{
             attributes.color.needsUpdate = true;
         }
 
-        if( data.pickingColor ){
-            pickingColor = data.pickingColor;
-            aPickingColor = attributes.pickingColor.array;
-            attributes.pickingColor.needsUpdate = true;
+        if( data.primitiveId ){
+            primitiveId = data.primitiveId;
+            aPrimitiveId = attributes.primitiveId.array;
+            attributes.primitiveId.needsUpdate = true;
         }
 
         var v, i, k, p, l, v3;
@@ -124,7 +125,6 @@ class RibbonBuffer extends MeshBuffer{
             l = v * 4;
 
             if( position ){
-
                 aPosition[ k     ] = aPosition[ k + 3 ] = position[ v3     ];
                 aPosition[ k + 1 ] = aPosition[ k + 4 ] = position[ v3 + 1 ];
                 aPosition[ k + 2 ] = aPosition[ k + 5 ] = position[ v3 + 2 ];
@@ -132,11 +132,9 @@ class RibbonBuffer extends MeshBuffer{
                 aPosition[ k + 6 ] = aPosition[ k +  9 ] = position[ v3 + 3 ];
                 aPosition[ k + 7 ] = aPosition[ k + 10 ] = position[ v3 + 4 ];
                 aPosition[ k + 8 ] = aPosition[ k + 11 ] = position[ v3 + 5 ];
-
             }
 
             if( normal ){
-
                 aNormal[ k     ] = aNormal[ k + 3 ] = -normal[ v3     ];
                 aNormal[ k + 1 ] = aNormal[ k + 4 ] = -normal[ v3 + 1 ];
                 aNormal[ k + 2 ] = aNormal[ k + 5 ] = -normal[ v3 + 2 ];
@@ -144,7 +142,6 @@ class RibbonBuffer extends MeshBuffer{
                 aNormal[ k + 6 ] = aNormal[ k +  9 ] = -normal[ v3 + 3 ];
                 aNormal[ k + 7 ] = aNormal[ k + 10 ] = -normal[ v3 + 4 ];
                 aNormal[ k + 8 ] = aNormal[ k + 11 ] = -normal[ v3 + 5 ];
-
             }
 
 
@@ -153,19 +150,13 @@ class RibbonBuffer extends MeshBuffer{
                 p = k + 3 * i;
 
                 if( color ){
-
                     aColor[ p     ] = color[ v3     ];
                     aColor[ p + 1 ] = color[ v3 + 1 ];
                     aColor[ p + 2 ] = color[ v3 + 2 ];
-
                 }
 
-                if( pickingColor ){
-
-                    aPickingColor[ p     ] = pickingColor[ v3     ];
-                    aPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
-                    aPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
-
+                if( primitiveId ){
+                    aPrimitiveId[ l + i ] = primitiveId[ v ];
                 }
 
             }
@@ -175,19 +166,15 @@ class RibbonBuffer extends MeshBuffer{
                 currSize = size[ v ];
 
                 if( prevSize !== size[ v ] ){
-
                     aSize[ l     ] = prevSize;
                     aSize[ l + 1 ] = prevSize;
                     aSize[ l + 2 ] = currSize;
                     aSize[ l + 3 ] = currSize;
-
                 }else{
-
                     aSize[ l     ] = currSize;
                     aSize[ l + 1 ] = currSize;
                     aSize[ l + 2 ] = currSize;
                     aSize[ l + 3 ] = currSize;
-
                 }
 
                 prevSize = currSize;

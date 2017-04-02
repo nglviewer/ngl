@@ -100,7 +100,7 @@ class MappedBuffer extends Buffer{
 
         for( var name in data ){
 
-            if( name === "index" ) continue;
+            if( name === "index" || name === "picking" ) continue;
 
             d = data[ name ];
             a = attributes[ name ];

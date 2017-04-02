@@ -16,7 +16,7 @@ const scale = new Vector3();
 
 class SphereGeometryBuffer extends GeometryBuffer{
 
-    // position, color, radius, pickingColor
+    // position, color, radius, picking
     constructor( data, params ){
 
         const p = params || {};

@@ -17,7 +17,7 @@ const normalMatrix = new Matrix3();
 
 class GeometryBuffer extends MeshBuffer{
 
-    // position, color, pickingColor
+    // position, color, picking
     constructor( data, params, geo ){
 
         var p = params || {};
@@ -45,7 +45,7 @@ class GeometryBuffer extends MeshBuffer{
         const meshPosition = new Float32Array( size * 3 );
         const meshNormal = new Float32Array( size * 3 );
         const meshColor = new Float32Array( size * 3 );
-        const meshPickingColor = new Float32Array( size * 3 );
+        const meshPicking = new Float32Array( size );
 
         const TypedArray = size > 65535 ? Uint32Array : Uint16Array;
         const meshIndex = new TypedArray( n * o * 3 );
@@ -55,7 +55,7 @@ class GeometryBuffer extends MeshBuffer{
             color: meshColor,
             index: meshIndex,
             normal: meshNormal,
-            pickingColor: meshPickingColor
+            picking: meshPicking
         }, p );
 
         this.geoPosition = geoPosition;
@@ -73,7 +73,7 @@ class GeometryBuffer extends MeshBuffer{
         this.meshColor = meshColor;
         this.meshIndex = meshIndex;
         this.meshNormal = meshNormal;
-        this.meshPickingColor = meshPickingColor;
+        this.meshPicking = meshPicking;
 
         this.meshIndex = meshIndex;
         this.makeIndex();
@@ -86,10 +86,10 @@ class GeometryBuffer extends MeshBuffer{
 
         var attributes = this.geometry.attributes;
 
-        var position, color, pickingColor;
+        var position, color, picking;
         var geoPosition, geoNormal;
         var transformedGeoPosition, transformedGeoNormal;
-        var meshPosition, meshColor, meshPickingColor, meshNormal;
+        var meshPosition, meshColor, meshPicking, meshNormal;
 
         var updateNormals = this.updateNormals;
 
@@ -113,10 +113,10 @@ class GeometryBuffer extends MeshBuffer{
             attributes.color.needsUpdate = true;
         }
 
-        if( data.pickingColor ){
-            pickingColor = data.pickingColor;
-            meshPickingColor = this.meshPickingColor;
-            attributes.pickingColor.needsUpdate = true;
+        if( data.picking ){
+            picking = data.picking;
+            meshPicking = this.meshPicking;
+            attributes.picking.needsUpdate = true;
         }
 
         var n = this.positionCount;
@@ -169,15 +169,11 @@ class GeometryBuffer extends MeshBuffer{
 
             }
 
-            if( pickingColor ){
+            if( picking ){
 
                 for( j = 0; j < m; ++j ){
 
-                    l = k + 3 * j;
-
-                    meshPickingColor[ l     ] = pickingColor[ i3     ];
-                    meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
-                    meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
+                    meshPicking[ i * m + j ] = picking[ i ];
 
                 }
 

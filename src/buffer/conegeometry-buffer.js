@@ -20,7 +20,7 @@ const up = new Vector3( 0, 1, 0 );
 
 class ConeGeometryBuffer extends GeometryBuffer{
 
-    // position1, position2, color, radius, pickingColor
+    // position1, position2, color, radius, picking
     constructor( data, params ){
 
         const p = params || {};
@@ -46,7 +46,7 @@ class ConeGeometryBuffer extends GeometryBuffer{
         super( {
             position: position,
             color: data.color,
-            pickingColor: data.pickingColor
+            picking: data.picking
         }, p, geo );
 
         this._position = position;
@@ -87,8 +87,8 @@ class ConeGeometryBuffer extends GeometryBuffer{
             geoData.color = data.color;
         }
 
-        if( data.pickingColor ){
-            geoData.pickingColor = data.pickingColor;
+        if( data.picking ){
+            geoData.picking = data.picking;
         }
 
         if( data.radius ){

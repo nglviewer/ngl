@@ -220,7 +220,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         } else {
 
             surfaceData.normal = surface.getNormal();
-            surfaceData.pickingColor = surface.getPickingColor( this.getColorParams() );
+            surfaceData.picking = surface.getPicking( sview.getStructure() );
 
             var surfaceBuffer = new SurfaceBuffer(
                 surfaceData,

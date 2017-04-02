@@ -59,6 +59,7 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
             var position = helixorient.getPosition();
             var color = helixorient.getColor( this.getColorParams() );
             var size = helixorient.getSize( this.radius, this.scale );
+            var picking = helixorient.getPicking();
 
             bufferList.push(
 
@@ -67,7 +68,7 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         position: position.center,
                         color: color.color,
                         radius: size.size,
-                        pickingColor: color.pickingColor
+                        picking: picking.picking
                     },
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,

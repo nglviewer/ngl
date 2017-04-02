@@ -20,7 +20,7 @@ const up = new Vector3( 0, 1, 0 );
 
 class CylinderGeometryBuffer extends GeometryBuffer{
 
-    // from, to, color, color2, radius, pickingColor, pickingColor2
+    // from, to, color, color2, radius, picking
     constructor( data, params ){
 
         const p = params || {};
@@ -44,19 +44,19 @@ class CylinderGeometryBuffer extends GeometryBuffer{
 
         const position = new Float32Array( n * 2 );
         const color = new Float32Array( n * 2 );
-        const pickingColor = new Float32Array( n * 2 );
+        const picking = new Float32Array( ( n * 2 ) / 3 );
 
         super( {
             position: position,
             color: color,
-            pickingColor: pickingColor
+            picking: picking
         }, p, geo );
 
         this.__center = new Float32Array( n );
 
         this._position = position;
         this._color = color;
-        this._pickingColor = pickingColor;
+        this._picking = picking;
         this._from = new Float32Array( n * 2 );
         this._to = new Float32Array( n * 2 );
         this._radius = new Float32Array( m * 2 );
@@ -106,10 +106,10 @@ class CylinderGeometryBuffer extends GeometryBuffer{
             geoData.color = this._color;
         }
 
-        if( data.pickingColor && data.pickingColor2 ){
-            this._pickingColor.set( data.pickingColor );
-            this._pickingColor.set( data.pickingColor2, n );
-            geoData.pickingColor = this._pickingColor;
+        if( data.picking ){
+            this._picking.set( data.picking );
+            this._picking.set( data.picking, n );
+            geoData.picking = this._picking;
         }
 
         if( data.radius ){
