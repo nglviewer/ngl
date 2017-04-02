@@ -316,21 +316,19 @@ ResidueProxy.prototype = {
         return undefined;
     },
 
-    getPreviousConnectedResidue: function( rp ){
+    getPreviousConnectedResidue: function(){
         var rOffset = this.chainStore.residueOffset[ this.chainIndex ];
         var prevIndex = this.index - 1;
         if( prevIndex >= rOffset ){
-            if( rp === undefined ) rp = this.structure.getResidueProxy();
-            rp.index = prevIndex;
-            if( rp.connectedTo( this ) ){
-                return rp;
+            var rpPrev = this.structure.getResidueProxy( prevIndex );
+            if( rpPrev.connectedTo( this ) ){
+                return rpPrev;
             }
         }else if( prevIndex === rOffset - 1 ){  // cyclic
-            if( rp === undefined ) rp = this.structure.getResidueProxy();
             var rCount = this.chainStore.residueCount[ this.chainIndex ];
-            rp.index = rOffset + rCount - 1;
-            if( rp.connectedTo( this ) ){
-                return rp;
+            var rpLast = this.structure.getResidueProxy( rOffset + rCount - 1 );
+            if( rpLast.connectedTo( this ) ){
+                return rpLast;
             }
         }
         return undefined;

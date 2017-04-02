@@ -25,6 +25,8 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
         var sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
+        }
+        if( smooth || contour ){
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
         if( matrix ){
@@ -247,7 +249,7 @@ Volume.prototype = {
 
     },
 
-    getSurface: function( isolevel, smooth, center, size ){
+    getSurface: function( isolevel, smooth, center, size, contour ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -261,13 +263,13 @@ Volume.prototype = {
         }
 
         var box = this.__getBox( center, size );
-        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements );
+        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements, contour );
 
         return this.makeSurface( sd, isolevel, smooth );
 
     },
 
-    getSurfaceWorker: function( isolevel, smooth, center, size, callback ){
+    getSurfaceWorker: function( isolevel, smooth, center, size, contour, callback ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -293,7 +295,8 @@ Volume.prototype = {
                 isolevel: isolevel,
                 smooth: smooth,
                 box: this.__getBox( center, size ),
-                matrix: this.matrix.elements
+                matrix: this.matrix.elements,
+                contour: contour
             };
 
             worker.post( msg, undefined,
