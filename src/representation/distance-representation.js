@@ -347,7 +347,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             what.labelSize = true;
         }
 
-        if( params && params.labelColor ){
+        if( params && ( params.labelColor || params.labelColor === 0x000000 ) ){
             what.labelColor = true;
         }
 
