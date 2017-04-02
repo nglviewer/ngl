@@ -199,7 +199,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             color: this.surface.getColor( this.getColorParams() ),
             index: this.surface.getIndex(),
             normal: this.surface.getNormal(),
-            // pickingColor: this.surface.getPickingColor( this.getColorParams() )
+            picking: this.surface.getPicking()
         };
 
     },

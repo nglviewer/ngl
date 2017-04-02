@@ -265,21 +265,19 @@ function Interpolator( m, tension ){
 
     //
 
-    function interpolateColor( item1, item2, colFn, pcolFn, col, pcol, offset ){
+    function interpolateColor( item1, item2, colFn, col, offset ){
         var j, l;
         for( j = 0; j < m2; ++j ){
             l = offset + j * 3;
             colFn( item1, col, l );  // itemColorToArray
-            pcolFn( item1, pcol, l );  // itemPickingColorToArray
         }
         for( j = m2; j < m; ++j ){
             l = offset + j * 3;
             colFn( item2, col, l );  // itemColorToArray
-            pcolFn( item2, pcol, l );  // itemPickingColorToArray
         }
     }
 
-    this.getColor = function( iterator, colFn, pcolFn, col, pcol, offset, isCyclic ){
+    this.getColor = function( iterator, colFn, col, offset, isCyclic ){
         iterator.reset();
         var i0 = iterator.next();  // first element not needed, replaced in the loop
         var i1 = iterator.next();
@@ -290,22 +288,55 @@ function Interpolator( m, tension ){
         for( var i = 0; i < n1; ++i ){
             i0 = i1;
             i1 = iterator.next();
-            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            interpolateColor( i0, i1, colFn, col, k );
             k += 3 * m;
         }
         if( isCyclic ){
             i0 = iterator.get( n - 1 );
             i1 = iterator.get( 0 );
-            interpolateColor( i0, i1, colFn, pcolFn, col, pcol, k );
+            interpolateColor( i0, i1, colFn, col, k );
             k += 3 * m;
         }
         //
         col[ k     ] = col[ k - 3 ];
         col[ k + 1 ] = col[ k - 2 ];
         col[ k + 2 ] = col[ k - 1 ];
-        pcol[ k     ] = pcol[ k - 3 ];
-        pcol[ k + 1 ] = pcol[ k - 2 ];
-        pcol[ k + 2 ] = pcol[ k - 1 ];
+    };
+
+    //
+
+    function interpolatePicking( item1, item2, pickFn, pick, offset ){
+        var j;
+        for( j = 0; j < m2; ++j ){
+            pick[ offset + j ] = pickFn( item1 );
+        }
+        for( j = m2; j < m; ++j ){
+            pick[ offset + j ] = pickFn( item2 );
+        }
+    }
+
+    this.getPicking = function( iterator, pickFn, pick, offset, isCyclic ){
+        iterator.reset();
+        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        var i1 = iterator.next();
+        //
+        var n = iterator.size;
+        var n1 = n - 1;
+        var k = offset || 0;
+        for( var i = 0; i < n1; ++i ){
+            i0 = i1;
+            i1 = iterator.next();
+            interpolatePicking( i0, i1, pickFn, pick, k );
+            k += m;
+        }
+        if( isCyclic ){
+            i0 = iterator.get( n - 1 );
+            i1 = iterator.get( 0 );
+            interpolatePicking( i0, i1, pickFn, pick, k );
+            k += m;
+        }
+        //
+        pick[ k ] = pick[ k - 1 ];
     };
 
     //
@@ -445,30 +476,53 @@ Spline.prototype = {
         if( polymer.isCyclic ) nCol += m * 3;
 
         var col = new Float32Array( nCol );
-        var pcol = new Float32Array( nCol );
         var iterator = this.getAtomIterator( "trace" );
 
         var p = params || {};
         p.structure = polymer.structure;
 
         var colormaker = ColormakerRegistry.getScheme( p );
-        var pickingColormaker = ColormakerRegistry.getPickingScheme( p );
 
         function colFn( item, array, offset ){
             colormaker.atomColorToArray( item, array, offset );
         }
 
-        function pcolFn( item, array, offset ){
-            pickingColormaker.atomColorToArray( item, array, offset );
-        }
-
         this.interpolator.getColor(
-            iterator, colFn, pcolFn, col, pcol, 0, polymer.isCyclic
+            iterator, colFn, col, 0, polymer.isCyclic
         );
 
         return {
             "color": col,
-            "pickingColor": pcol
+        };
+
+    },
+
+    getSubdividedPicking: function(){
+
+        var m = this.subdiv;
+        var polymer = this.polymer;
+        var n = polymer.residueCount;
+        var n1 = n - 1;
+        var nCol = n1 * m + 1;
+        if( polymer.isCyclic ) nCol += m;
+
+        var structure = polymer.structure;
+        var iterator = this.getAtomIterator( "trace" );
+
+        var pick = new Float32Array( nCol );
+        pick.object = structure;
+        pick.type = "atom"
+
+        function pickFn( item ){
+            return item.index;
+        }
+
+        this.interpolator.getPicking(
+            iterator, pickFn, pick, 0, polymer.isCyclic
+        );
+
+        return {
+            "picking": pick
         };
 
     },

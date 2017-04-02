@@ -15,7 +15,8 @@ attribute vec3 dir;
 attribute float size;
 
 #ifdef PICKING
-    attribute vec3 pickingColor;
+    #include unpack_color
+    attribute float primitiveId;
     varying vec3 vPickingColor;
 #else
     #include color_pars_vertex
@@ -29,7 +30,7 @@ attribute float size;
 void main(void){
 
     #ifdef PICKING
-        vPickingColor = pickingColor;
+        vPickingColor = unpackColor( primitiveId );
     #else
         #include color_vertex
         #include beginnormal_vertex

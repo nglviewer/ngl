@@ -55,8 +55,6 @@ class StructureComponent extends Component{
         this.initSelection( p.sele );
         this.setDefaultAssembly( p.assembly || "" );
 
-        this.stage.gidPool.addObject( this.structure );
-
     }
 
     /**
@@ -224,8 +222,6 @@ class StructureComponent extends Component{
     }
 
     dispose(){
-
-        this.stage.gidPool.removeObject( this.structure );
 
         // copy via .slice because side effects may change trajList
         this.trajList.slice().forEach( traj => {

@@ -43,7 +43,6 @@ Helixbundle.prototype = {
         cp.structure = structure;
 
         var colormaker = ColormakerRegistry.getScheme( cp );
-        var pickingColormaker = ColormakerRegistry.getPickingScheme( cp );
 
         var radiusFactory = new RadiusFactory( radius, scale );
 
@@ -55,7 +54,7 @@ Helixbundle.prototype = {
         var beg = [];
         var end = [];
         var col = [];
-        var pcol = [];
+        var pick = [];
         var size = [];
         var residueOffset = [];
         var residueCount = [];
@@ -129,7 +128,8 @@ Helixbundle.prototype = {
                 _end.toArray( end, k );
 
                 colormaker.atomColorToArray( ap, col, k );
-                pickingColormaker.atomColorToArray( ap, pcol, k );
+
+                pick.push( ap.index );
 
                 size.push( radiusFactory.atomRadius( ap ) );
 
@@ -144,13 +144,17 @@ Helixbundle.prototype = {
 
         }
 
+        var picking = new Float32Array( pick );
+        picking.object = structure;
+        picking.type = "atom"
+
         return {
             "axis": new Float32Array( axis ),
             "center": new Float32Array( center ),
             "begin": new Float32Array( beg ),
             "end": new Float32Array( end ),
             "color": new Float32Array( col ),
-            "pickingColor": new Float32Array( pcol ),
+            "picking": picking,
             "size": new Float32Array( size ),
             "residueOffset": residueOffset,
             "residueCount": residueCount

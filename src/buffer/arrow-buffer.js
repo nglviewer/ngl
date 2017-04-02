@@ -23,7 +23,7 @@ class ArrowBuffer{
      * @param {Float32Array} data.position2 - to positions
      * @param {Float32Array} data.color - colors
      * @param {Float32Array} data.radius - radii
-     * @param {Float32Array} [data.pickingColor] - picking colors
+     * @param {Float32Array} [data.picking] - picking ids
      * @param {BufferParams} [params] - parameters object
      */
     constructor( data, params ){
@@ -69,6 +69,8 @@ class ArrowBuffer{
         this.group = new Group();
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
+
+        this.picking = d.picking;
 
     }
 
@@ -119,10 +121,9 @@ class ArrowBuffer{
             cone.color = data.color;
         }
 
-        if( data.pickingColor ){
-            cylinder.pickingColor = data.pickingColor;
-            cylinder.pickingColor2 = data.pickingColor;
-            cone.pickingColor = data.pickingColor;
+        if( data.primitiveId ){
+            cylinder.primitiveId = data.primitiveId;
+            cone.primitiveId = data.primitiveId;
         }
 
         return {
@@ -164,21 +165,20 @@ class ArrowBuffer{
         var attr = this.makeAttributes( data );
 
         this.cylinderBuffer.setAttributes( {
-            position1: attr.cylinderFrom,
-            position2: attr.cylinderTo,
-            color: attr.cylinderColor,
-            color2: attr.cylinderColor2,
-            radius: attr.radius,
-            pickingColor: attr.cylinderPickingColor,
-            pickingColor2: attr.cylinderPickingColor2,
+            position1: attr.cylinder.position1,
+            position2: attr.cylinder.position2,
+            color: attr.cylinder.color,
+            color2: attr.cylinder.color2,
+            radius: attr.cylinder.radius,
+            primitiveId: attr.cylinder.primitiveId
         } );
 
         this.coneBuffer.setAttributes( {
-            position1: attr.coneFrom,
-            position2: attr.coneTo,
-            color: attr.coneColor,
-            radius: attr.coneRadius.radius,
-            pickingColor: attr.conePickingColor
+            position1: attr.cone.position1,
+            position2: attr.cone.position2,
+            color: attr.cone.color,
+            radius: attr.cone.radius,
+            primitiveId: attr.cone.primitiveId
         } );
 
     }

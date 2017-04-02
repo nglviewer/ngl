@@ -9,7 +9,7 @@ import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
 import { WorkerRegistry, ColormakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
-import { uniformArray } from "../math/array-utils";
+import { uniformArray, serialArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
 import { applyMatrix4toVector3array, applyMatrix3toVector3array } from "../math/vector-utils.js";
@@ -499,12 +499,13 @@ Volume.prototype = {
 
     },
 
-    getPickingDataColor: function( params ){
+    getDataPicking: function(){
 
-        var p = Object.assign( params || {} );
-        p.scheme = "picking";
+        const picking = serialArray( this.dataPosition.length / 3 );
+        picking.object = this;
+        picking.type = "volume";
 
-        return this.getDataColor( p );
+        return picking;
 
     },
 

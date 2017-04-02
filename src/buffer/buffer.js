@@ -138,26 +138,20 @@ class Buffer{
         var n = position ? position.length / 3 : 0;
         this._positionDataSize = n;
 
-        var vertexId = serialArray( n );
+        var primitiveId = serialArray( this._positionDataSize );
 
         this.addAttributes( {
             "position": { type: "v3", value: d.position },
             "color": { type: "c", value: d.color },
-            "vertexId": { type: "f", value: vertexId },
+            "primitiveId": { type: "f", value: primitiveId },
         } );
 
-        this.setAttributes( { vertexId: vertexId } );
+        this.setAttributes( { primitiveId: primitiveId } );
 
         if( d.index ){
             this.initIndex( d.index );
         }
-
-        if( d.pickingColor ){
-            this.addAttributes( {
-                "pickingColor": { type: "c", value: d.pickingColor },
-            } );
-            this.pickingColor = d.pickingColor;
-        }
+        this.picking = d.picking;
 
         this.makeWireframeGeometry();
 
@@ -197,7 +191,7 @@ class Buffer{
     }
 
     get pickable (){
-        return !!this.geometry.attributes.pickingColor;
+        return !!this.picking;
     }
 
     get dynamic (){ return true; }
@@ -720,6 +714,8 @@ class Buffer{
         var attributes = geometry.attributes;
 
         for( var name in data ){
+
+            if( name === "picking" ) continue;
 
             var array = data[ name ];
             var length = array.length;

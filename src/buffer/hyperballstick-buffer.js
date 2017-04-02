@@ -11,7 +11,7 @@ import CylinderGeometryBuffer from "./cylindergeometry-buffer.js";
 import HyperballStickImpostorBuffer from "./hyperballstickimpostor-buffer.js";
 
 
-// from, to, color, color2, radius1, radius2, pickingColor, pickingColor2
+// from, to, color, color2, radius1, radius2, picking
 function HyperballStickBuffer( data, params ){
 
     if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){

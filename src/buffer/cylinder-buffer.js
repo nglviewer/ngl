@@ -16,19 +16,11 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
  * @augments {Buffer}
  * @param {Object} data - buffer data
  * @param {Float32Array} data.position1 - from positions
- *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
  * @param {Float32Array} data.position2 - to positions
- *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
  * @param {Float32Array} data.color - from colors
- *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
  * @param {Float32Array} data.color2 - to colors
- *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
  * @param {Float32Array} data.radius - radii
- *                               [r1, r2, ..., rN]
- * @param {Float32Array} [data.pickingColor] - from picking colors
- *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {Float32Array} [data.pickingColor2] - to picking colors
- *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
+ * @param {Float32Array} [data.picking] - from picking ids
  * @param {BufferParams} [params] - parameters object
  */
 function CylinderBuffer( data, params ){

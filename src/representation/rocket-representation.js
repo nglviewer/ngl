@@ -88,7 +88,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             end: new Float32Array( length * 3 ),
             size: new Float32Array( length ),
             color: new Float32Array( length * 3 ),
-            pickingColor: new Float32Array( length * 3 ),
+            picking: new Float32Array( length ),
         };
 
         var offset = 0;
@@ -98,7 +98,9 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData.end.set( axis.end, offset * 3 );
             axisData.size.set( axis.size, offset );
             axisData.color.set( axis.color, offset * 3 );
-            axisData.pickingColor.set( axis.pickingColor, offset * 3 );
+            axisData.picking.set( axis.picking, offset );
+            axisData.picking.object = axis.picking.object;
+            axisData.picking.type = axis.picking.type;
             offset += axis.size.length;
         } );
 
@@ -109,8 +111,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
                 color: axisData.color,
                 color2: axisData.color,
                 radius: axisData.size,
-                pickingColor: axisData.pickingColor,
-                pickingColor2: axisData.pickingColor
+                picking: axisData.picking,
             },
             this.getBufferParams( {
                 openEnded: this.openEnded,

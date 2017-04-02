@@ -48,7 +48,6 @@ varying vec4 w;
 #ifdef PICKING
     uniform float objectId;
     varying vec3 vPickingColor;
-    varying vec3 vPickingColor2;
 #else
     varying vec3 vColor1;
     varying vec3 vColor2;
@@ -62,26 +61,12 @@ varying vec4 w;
 bool interior = false;
 
 float distSq3( vec3 v3a, vec3 v3b ){
-
     return (
         ( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +
         ( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +
         ( v3a.z - v3b.z ) * ( v3a.z - v3b.z )
     );
-
 }
-
-// round caps
-// http://sourceforge.net/p/pymol/code/HEAD/tree/trunk/pymol/data/shaders/cylinder.fs
-
-// void main2(void)
-// {
-//     #ifdef PICKING
-//         gl_FragColor = vec4( vPickingColor, 1.0 );
-//     #else
-//         gl_FragColor = vec4( vColor, 1.0 );
-//     #endif
-// }
 
 // Calculate depth based on the given camera position.
 float calcDepth( in vec3 cameraPos ){
@@ -258,19 +243,7 @@ void main(){
 
     #ifdef PICKING
 
-        if( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){
-            if( b < 0.0 ){
-                gl_FragColor = vec4( vPickingColor, objectId );
-            }else{
-                gl_FragColor = vec4( vPickingColor2, objectId );
-            }
-        }else{
-            if( b > 0.0 ){
-                gl_FragColor = vec4( vPickingColor, objectId );
-            }else{
-                gl_FragColor = vec4( vPickingColor2, objectId );
-            }
-        }
+        gl_FragColor = vec4( vPickingColor, objectId );
 
     #else
 

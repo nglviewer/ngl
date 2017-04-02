@@ -55,7 +55,6 @@ import "./color/hydrophobicity-colormaker.js";
 import "./color/modelindex-colormaker.js";
 import "./color/moleculetype-colormaker.js";
 import "./color/occupancy-colormaker.js";
-import "./color/picking-colormaker.js";
 import "./color/random-colormaker.js";
 import "./color/residueindex-colormaker.js";
 import "./color/resname-colormaker.js";

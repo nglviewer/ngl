@@ -38,12 +38,10 @@ varying vec3 V;
 varying vec4 w;
 
 #ifdef PICKING
-    attribute vec3 pickingColor;
-    attribute vec3 pickingColor2;
+    #include unpack_color
+    attribute float primitiveId;
     varying vec3 vPickingColor;
-    varying vec3 vPickingColor2;
 #else
-    // attribute vec3 color;
     attribute vec3 color2;
     varying vec3 vColor1;
     varying vec3 vColor2;
@@ -55,8 +53,7 @@ uniform float ortho;
 void main(){
 
     #ifdef PICKING
-        vPickingColor = pickingColor;
-        vPickingColor2 = pickingColor2;
+        vPickingColor = unpackColor( primitiveId );
     #else
         vColor1 = color;
         vColor2 = color2;

@@ -18,7 +18,6 @@ class PickingControls{
 
         this.stage = stage;
         this.viewer = stage.viewer;
-        this.gidPool = stage.gidPool;
         this.mouseObserver = stage.mouseObserver;
 
     }
@@ -30,21 +29,32 @@ class PickingControls{
      * @return {PickingData} picking data
      */
     pick( x, y ){
-        var mouse = this.mouseObserver;
-        var pickingData = this.viewer.pick( x, y );
-        var instance = pickingData.instance;
-        var picked = this.gidPool.getByGid( pickingData.gid );
+        const mouse = this.mouseObserver;
+        const pickingData = this.viewer.pick( x, y );
+        const instance = pickingData.instance;
 
-        var pickedAtom, pickedBond, pickedVolume;
-        if( picked && picked.type === "AtomProxy" ){
-            pickedAtom = picked;
-        }else if( picked && picked.type === "BondProxy" ){
-            pickedBond = picked;
-        }else if( picked && picked.volume.type === "Volume" ){
-            pickedVolume = picked;
+        let pickedAtom, pickedBond, pickedVolume;
+        if( pickingData.picker ){
+            const p = pickingData.picker;
+            const o = p.object;
+            const idx = p[ pickingData.pid ];
+            if( p.type === "atom" ){
+                pickedAtom = o.getAtomProxy( idx );
+            }else if( p.type === "bond" ){
+                pickedBond = o.getBondProxy( idx );
+            }else if( p.type === "volume" ){
+                pickedVolume = {
+                    volume: o,
+                    index: idx,
+                    value: o.data[ idx ],
+                    x: o.dataPosition[ idx * 3 ],
+                    y: o.dataPosition[ idx * 3 + 1 ],
+                    z: o.dataPosition[ idx * 3 + 2 ],
+                };
+            }
         }
 
-        var object, component;
+        let object, component;
         if( pickedAtom || pickedBond || pickedVolume ){
             if( pickedAtom ){
                 tmpObjectPosition.copy( pickedAtom );

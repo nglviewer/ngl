@@ -28,7 +28,6 @@ class VolumeComponent extends Component{
         super( stage, p );
 
         this.volume = volume;
-        this.stage.gidPool.addObject( this.volume );
 
     }
 
@@ -70,7 +69,6 @@ class VolumeComponent extends Component{
 
     dispose(){
 
-        this.stage.gidPool.removeObject( this.volume );
         this.volume.dispose();
 
         super.dispose();

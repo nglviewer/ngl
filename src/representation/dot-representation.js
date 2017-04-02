@@ -144,12 +144,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
     attach: function( callback ){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
-
+        } );
         this.setVisibility( this.visible );
 
         callback();
@@ -178,7 +175,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
             dotData.color = volume.getDataColor( this.getColorParams() );
             if( this.dotType === "sphere" ){
                 dotData.radius = volume.getDataSize( this.radius, this.scale );
-                dotData.pickingColor = volume.getPickingDataColor( this.getColorParams() );
+                dotData.picking = volume.getDataPicking();
             }
 
         }else{
@@ -188,7 +185,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
             dotData.color = surface.getColor( this.getColorParams() );
             if( this.dotType === "sphere" ){
                 dotData.radius = surface.getSize( this.radius, this.scale );
-                dotData.pickingColor = surface.getPickingColor( this.getColorParams() );
+                dotData.picking = surface.getPicking();
             }
 
         }

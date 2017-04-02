@@ -10,8 +10,8 @@ attribute vec2 mapping;
 attribute float radius;
 
 #ifdef PICKING
-    // attribute vec3 pickingColor;
-    attribute float vertexId;
+    #include unpack_color
+    attribute float primitiveId;
     varying vec3 vPickingColor;
 #else
     #include color_pars_vertex
@@ -37,14 +37,6 @@ mat4 transpose( in mat4 inMatrix ) {
         vec4(i0.w, i1.w, i2.w, i3.w)
     );
     return outMatrix;
-}
-
-vec3 unpackColor(float f) {
-    vec3 color;
-    color.r = floor(f / 256.0 / 256.0);
-    color.g = floor((f - color.r * 256.0 * 256.0) / 256.0);
-    color.b = floor(f - color.r * 256.0 * 256.0 - color.g * 256.0);
-    return color / 255.0;
 }
 
 //------------------------------------------------------------------------------
@@ -121,8 +113,7 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
 void main(void){
 
     #ifdef PICKING
-        // vPickingColor = pickingColor;
-        vPickingColor = unpackColor(vertexId);
+        vPickingColor = unpackColor( primitiveId );
     #else
         #include color_vertex
     #endif

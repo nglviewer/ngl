@@ -12,7 +12,6 @@ import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
 import { degToRad } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
-import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
 import MouseObserver from "./mouse-observer.js";
 
@@ -176,7 +175,6 @@ class Stage{
          * @member {Counter}
          */
         this.tasks = new Counter();
-        this.gidPool = new GidPool();
         this.compList = [];
         this.defaultFileParams = {};
 

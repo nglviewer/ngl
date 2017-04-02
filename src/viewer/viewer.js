@@ -421,48 +421,44 @@ function Viewer( idOrElement ){
 
         // Log.time( "Viewer.addBuffer" );
 
-        function setInstance( object ){
-            if( object.type === "Group" ){
-                object.children.forEach( function( child ){
-                    child.userData.instance = instance;
-                } );
+        function setUserData( object ){
+            if( object instanceof Group ){
+                object.children.forEach( setUserData );
             }else{
+                object.userData.buffer = buffer;
                 object.userData.instance = instance;
             }
         }
 
         var mesh = buffer.getMesh();
-        mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            setInstance( mesh );
         }
+        setUserData( mesh );
         buffer.group.add( mesh );
 
         var wireframeMesh = buffer.getWireframeMesh();
-        wireframeMesh.userData.buffer = buffer;
         if( instance ){
             // wireframeMesh.applyMatrix( instance.matrix );
             wireframeMesh.matrix.copy( mesh.matrix );
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            setInstance( wireframeMesh );
         }
+        setUserData( wireframeMesh );
         buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
             var pickingMesh = buffer.getPickingMesh();
-            pickingMesh.userData.buffer = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                setInstance( pickingMesh );
             }
+            setUserData( pickingMesh );
             buffer.pickingGroup.add( pickingMesh );
 
         }
@@ -750,8 +746,8 @@ function Viewer( idOrElement ){
         x *= window.devicePixelRatio;
         y *= window.devicePixelRatio;
 
-        var vid, gid, object, instance;
-        var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+        let pid, instance, picker;
+        const pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
         render( true );
         renderer.readRenderTargetPixels(
@@ -759,58 +755,43 @@ function Viewer( idOrElement ){
         );
 
         if( SupportsReadPixelsFloat ){
-            vid =
+            pid =
                 ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
                 ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
                 ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
         }else{
-            vid =
+            pid =
                 ( pixelBuffer[0] << 16 ) |
                 ( pixelBuffer[1] << 8 ) |
                 ( pixelBuffer[2] );
         }
 
-        object = pickingGroup.getObjectById(
-            Math.round( pixelBuffer[ 3 ] )
-        );
-
-        if( object && object.userData.instance ){
-            instance = object.userData.instance;
-        }
-
+        const oid = Math.round( pixelBuffer[ 3 ] );
+        const object = pickingGroup.getObjectById( oid );
         if( object ){
-            var buf = object.userData.buffer;
-            if( buf.pickingColor ){
-                var pc = buf.pickingColor;
-                gid =
-                    ( ( Math.round( pc[ vid * 3 + 0 ] * 255 ) << 16 ) & 0xFF0000 ) |
-                    ( ( Math.round( pc[ vid * 3 + 1 ] * 255 ) << 8 ) & 0x00FF00 ) |
-                    ( ( Math.round( pc[ vid * 3 + 2 ] * 255 ) ) & 0x0000FF );
-            }
+            instance = object.userData.instance;
+            picker = object.userData.buffer.picking;
         }
 
         // if( Debug ){
-        //     var rgba = Array.apply( [], pixelBuffer );
+        //     const rgba = Array.apply( [], pixelBuffer );
         //     Log.log( pixelBuffer );
         //     Log.log(
         //         "picked color",
-        //         [
-        //             ( rgba[0] ).toPrecision(2),
-        //             ( rgba[1] ).toPrecision(2),
-        //             ( rgba[2] ).toPrecision(2),
-        //             ( rgba[3] ).toPrecision(2)
-        //         ]
+        //         rgba.map( c => { return c.toPrecision( 2 ) } )
         //     );
-        //     Log.log( "picked vid", vid );
+        //     Log.log( "picked pid", pid );
         //     Log.log( "picked gid", gid );
+        //     Log.log( "picked oid", oid );
         //     Log.log( "picked instance", instance );
         //     Log.log( "picked position", x, y );
         //     Log.log( "devicePixelRatio", window.devicePixelRatio );
         // }
 
         return {
-            "gid": gid,
-            "instance": instance
+            "pid": pid,
+            "instance": instance,
+            "picker": picker
         };
 
     }

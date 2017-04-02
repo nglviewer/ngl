@@ -17,7 +17,7 @@ import ConeGeometryBuffer from "./conegeometry-buffer.js";
  * @param {Float32Array} data.position2 - to positions
  * @param {Float32Array} data.color - colors
  * @param {Float32Array} data.radius - radii
- * @param {Float32Array} [data.pickingColor] - picking colors
+ * @param {Float32Array} [data.picking] - picking ids
  * @param {BufferParams} [params] - parameters object
  */
 function ConeBuffer( data, params ){

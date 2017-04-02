@@ -91,13 +91,11 @@ Helixorient.prototype = {
         var residueIndexStart = polymer.residueIndexStart;
 
         var col = new Float32Array( n * 3 );
-        var pcol = new Float32Array( n * 3 );
 
         var p = params || {};
         p.structure = structure;
 
         var colormaker = ColormakerRegistry.getScheme( p );
-        var pickingColormaker = ColormakerRegistry.getPickingScheme( p );
 
         var rp = structure.getResidueProxy();
         var ap = structure.getAtomProxy();
@@ -107,15 +105,38 @@ Helixorient.prototype = {
             rp.index = residueIndexStart + i;
             ap.index = rp.traceAtomIndex;
 
-            var i3 = i * 3;
-            colormaker.atomColorToArray( ap, col, i3 );
-            pickingColormaker.atomColorToArray( ap, pcol, i3 );
+            colormaker.atomColorToArray( ap, col, i * 3 );
 
         }
 
         return {
-            "color": col,
-            "pickingColor": pcol
+            "color": col
+        };
+
+    },
+
+    getPicking: function(){
+
+        var polymer = this.polymer;
+        var structure = polymer.structure;
+        var n = polymer.residueCount;
+        var residueIndexStart = polymer.residueIndexStart;
+
+        var pick = new Float32Array( n );
+        pick.object = structure;
+        pick.type = "atom"
+
+        var rp = structure.getResidueProxy();
+
+        for( var i = 0; i < n; ++i ){
+
+            rp.index = residueIndexStart + i;
+            pick[ i ] = rp.traceAtomIndex;
+
+        }
+
+        return {
+            "picking": pick
         };
 
     },

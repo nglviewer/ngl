@@ -31,7 +31,7 @@ class DoubleSidedBuffer{
         this.wireframe = buffer.wireframe;
         this.visible = buffer.visible;
         this.geometry = buffer.geometry;
-        this.pickable = buffer.pickable;
+        this.picking = buffer.picking;
         this.background = buffer.background;
 
         this.group = new Group();
@@ -47,6 +47,7 @@ class DoubleSidedBuffer{
         frontBuffer.makeMaterial();
         backBuffer.makeMaterial();
 
+        backBuffer.picking = buffer.picking;
         backBuffer.geometry = buffer.geometry;
         backBuffer.wireframeGeometry = buffer.wireframeGeometry;
         backBuffer.setParameters( buffer.getParameters() );
@@ -64,6 +65,10 @@ class DoubleSidedBuffer{
         this.frontBuffer = frontBuffer;
         this.backBuffer = backBuffer;
 
+    }
+
+    get pickable (){
+        return !!this.picking;
     }
 
     getMesh( picking ){

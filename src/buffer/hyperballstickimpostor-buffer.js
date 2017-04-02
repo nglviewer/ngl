@@ -76,8 +76,7 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
      * @param  {Float32Array} data.color2 - to colors
      * @param  {Float32Array} data.radius1 - from radii
      * @param  {Float32Array} data.radius2 - to radii
-     * @param  {Float32Array} data.pickingColor - from pickingColor
-     * @param  {Float32Array} data.pickingColor2 - to pickingColor2
+     * @param  {Float32Array} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -110,12 +109,6 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
             "radius": { type: "f", value: null },
             "radius2": { type: "f", value: null }
         } );
-
-        if( d.pickingColor2 ){
-            this.addAttributes( {
-                "pickingColor2": { type: "c", value: null }
-            } );
-        }
 
         this.setAttributes( d );
 

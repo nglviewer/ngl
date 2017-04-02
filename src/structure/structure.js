@@ -716,7 +716,7 @@ Structure.prototype = {
         var what = p.what;
         var atomSet = defaults( p.atomSet, this.atomSet );
 
-        var radiusFactory, colormaker, pickingColormaker;
+        var radiusFactory, colormaker;
         var position, color, picking, radius, index;
 
         var atomData = {};
@@ -732,8 +732,10 @@ Structure.prototype = {
             atomData.color = color;
             colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
-        if( !what || what.pickingColor ){
+        if( !what || what.picking ){
             picking = new Float32Array( atomCount );
+            picking.object = this;
+            picking.type = "atom";
             atomData.picking = picking;
         }
         if( !what || what.radius ){
@@ -746,7 +748,7 @@ Structure.prototype = {
             atomData.index = index;
         }
 
-        atomSet.forEach( function( idx, i ){
+        atomSet.forEach( ( idx, i ) => {
             var i3 = i * 3;
             ap.index = idx;
             if( position ){
@@ -755,8 +757,8 @@ Structure.prototype = {
             if( color ){
                 colormaker.atomColorToArray( ap, color, i3 );
             }
-            if( pickingColor ){
-                pickingColormaker.atomColorToArray( ap, pickingColor, i3 );
+            if( picking ){
+                picking[ i ] = idx;
             }
             if( radius ){
                 radius[ i ] = radiusFactory.atomRadius( ap );
@@ -777,13 +779,13 @@ Structure.prototype = {
         var what = p.what;
         var bondSet = defaults( p.bondSet, this.bondSet );
         var multipleBond = defaults( p.multipleBond, "off" );
-        var isMulti = ( multipleBond !== "off" );
-        var isOffset = ( multipleBond === "offset" );
+        var isMulti = multipleBond !== "off";
+        var isOffset = multipleBond === "offset";
         var bondScale = defaults( p.bondScale, 0.4 );
         var bondSpacing = defaults( p.bondSpacing, 1.0 );
 
-        var radiusFactory, colormaker, pickingColormaker;
-        var position1, position2, color1, color2, pickingColor1, pickingColor2, radius1, radius2;
+        var radiusFactory, colormaker;
+        var position1, position2, color1, color2, picking, radius1, radius2;
 
         var bondData = {};
         var bp = this.getBondProxy();
@@ -814,13 +816,11 @@ Structure.prototype = {
             bondData.color2 = color2;
             colormaker = ColormakerRegistry.getScheme( p.colorParams );
         }
-        if( !what || what.pickingColor ){
-            pickingColor1 = new Float32Array( bondCount * 3 );
-            pickingColor2 = new Float32Array( bondCount * 3 );
-            bondData.pickingColor = pickingColor1;
-            bondData.pickingColor2 = pickingColor2;
-            var pickingColorParams = Object.assign( p.colorParams, { scheme: "picking" } );
-            pickingColormaker = ColormakerRegistry.getScheme( pickingColorParams );
+        if( !what || what.picking ){
+            picking = new Float32Array( bondCount );
+            picking.object = this;
+            picking.type = "bond";
+            bondData.picking = picking;
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );
@@ -842,7 +842,7 @@ Structure.prototype = {
         var vShortening = new Vector3();
         var vShift = new Vector3();
 
-        bondSet.forEach( function( index ){
+        bondSet.forEach( index => {
             i3 = i * 3;
             bp.index = index;
             ap1.index = bp.atomIndex1;
@@ -919,14 +919,11 @@ Structure.prototype = {
                     }
                 }
             }
-            if( pickingColor1 ){
-                pickingColormaker.bondColorToArray( bp, 1, pickingColor1, i3 );
-                pickingColormaker.bondColorToArray( bp, 0, pickingColor2, i3 );
+            if( picking ){
+                picking[ i ] = index;
                 if( isMulti && bondOrder > 1 ){
                     for( j = 1; j < bondOrder; ++j ){
-                        k = j * 3 + i3;
-                        copyWithin( pickingColor1, i3, k, 3 );
-                        copyWithin( pickingColor2, i3, k, 3 );
+                        picking[ i + j ] = index;
                     }
                 }
             }
@@ -948,9 +945,7 @@ Structure.prototype = {
                     }
                 }
             }
-
             i += isMulti ? bondOrder : 1;
-
         } );
 
         return bondData;

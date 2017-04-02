@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
+import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
@@ -26,7 +27,7 @@ class TubeMeshBuffer extends MeshBuffer{
      * @param  {Float32Array} data.tangent - tangents
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.pickingColor - pickingColors
+     * @param  {Float32Array} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -47,7 +48,6 @@ class TubeMeshBuffer extends MeshBuffer{
         var meshPosition = new Float32Array( x );
         var meshColor = new Float32Array( x );
         var meshNormal = new Float32Array( x );
-        var meshPickingColor = d.pickingColor ? new Float32Array( x ) : undefined;
 
         var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
         var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
@@ -58,7 +58,7 @@ class TubeMeshBuffer extends MeshBuffer{
             color: meshColor,
             index: meshIndex,
             normal: meshNormal,
-            pickingColor: meshPickingColor
+            picking: d.picking
         }, p );
 
         //
@@ -71,6 +71,7 @@ class TubeMeshBuffer extends MeshBuffer{
         this.capTriangles = capTriangles;
         this.size2 = n;
 
+        d.primitiveId = serialArray( n );
         this.setAttributes( d );
 
         this.meshIndex = meshIndex;
@@ -89,11 +90,10 @@ class TubeMeshBuffer extends MeshBuffer{
 
         var attributes = this.geometry.attributes;
 
-        var position, normal, binormal, tangent, color, size, pickingColor;
-        var meshPosition, meshColor, meshNormal, meshPickingColor;
+        var position, normal, binormal, tangent, color, size, primitiveId;
+        var meshPosition, meshColor, meshNormal, meshPrimitiveId;
 
         if( data.position ){
-
             position = data.position;
             normal = data.normal;
             binormal = data.binormal;
@@ -105,23 +105,18 @@ class TubeMeshBuffer extends MeshBuffer{
 
             attributes.position.needsUpdate = true;
             attributes.normal.needsUpdate = true;
-
         }
 
         if( data.color ){
-
             color = data.color;
             meshColor = attributes.color.array;
             attributes.color.needsUpdate = true;
-
         }
 
-        if( data.pickingColor ){
-
-            pickingColor = data.pickingColor;
-            meshPickingColor = attributes.pickingColor.array;
-            attributes.pickingColor.needsUpdate = true;
-
+        if( data.primitiveId ){
+            primitiveId = data.primitiveId;
+            meshPrimitiveId = attributes.primitiveId.array;
+            attributes.primitiveId.needsUpdate = true;
         }
 
         var i, j, k, l, s, t;
@@ -228,11 +223,9 @@ class TubeMeshBuffer extends MeshBuffer{
 
                 }
 
-                if( pickingColor ){
+                if( primitiveId ){
 
-                    meshPickingColor[ s     ] = pickingColor[ k     ];
-                    meshPickingColor[ s + 1 ] = pickingColor[ k + 1 ];
-                    meshPickingColor[ s + 2 ] = pickingColor[ k + 2 ];
+                    meshPrimitiveId[ i * radialSegments + j ] = primitiveId[ i ];
 
                 }
 
@@ -270,11 +263,9 @@ class TubeMeshBuffer extends MeshBuffer{
 
             }
 
-            if( pickingColor ){
+            if( primitiveId ){
 
-                meshPickingColor[ t     ] = meshPickingColor[ s     ];
-                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+                meshPrimitiveId[ n * radialSegments + j ] = meshPrimitiveId[ 0 + j ];
 
             }
 
@@ -310,11 +301,9 @@ class TubeMeshBuffer extends MeshBuffer{
 
             }
 
-            if( pickingColor ){
+            if( primitiveId ){
 
-                meshPickingColor[ t     ] = meshPickingColor[ s     ];
-                meshPickingColor[ t + 1 ] = meshPickingColor[ s + 1 ];
-                meshPickingColor[ t + 2 ] = meshPickingColor[ s + 2 ];
+                meshPrimitiveId[ ( n + 1 ) * radialSegments + j ] = meshPrimitiveId[ ( n - 1 ) * radialSegments + j ];
 
             }
 
