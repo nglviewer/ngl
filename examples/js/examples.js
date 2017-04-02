@@ -716,7 +716,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                wireframe: true,
+                contour: true,
                 color: "skyblue",
                 boxSize: 10
             } );
@@ -750,7 +750,7 @@ NGL.ExampleRegistry.addDict( {
         stage.loadFile( "data://3pqr-mode0.ccp4" ).then( function( o ){
 
             o.addRepresentation( "surface", {
-                wireframe: true,
+                contour: true,
                 color: "tomato",
                 boxSize: 10
             } );
