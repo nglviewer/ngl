@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
+import { AtomPicker } from "../utils/picker.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import Helixorient from "./helixorient.js";
 import { calculateMeanVector3, projectPointOnVector } from "../math/vector-utils.js";
@@ -145,8 +146,6 @@ Helixbundle.prototype = {
         }
 
         var picking = new Float32Array( pick );
-        picking.object = structure;
-        picking.type = "atom"
 
         return {
             "axis": new Float32Array( axis ),
@@ -154,7 +153,7 @@ Helixbundle.prototype = {
             "begin": new Float32Array( beg ),
             "end": new Float32Array( end ),
             "color": new Float32Array( col ),
-            "picking": picking,
+            "picking": new AtomPicker( picking, structure ),
             "size": new Float32Array( size ),
             "residueOffset": residueOffset,
             "residueCount": residueCount

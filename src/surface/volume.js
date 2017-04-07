@@ -9,6 +9,7 @@ import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
 import { WorkerRegistry, ColormakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
+import { VolumePicker } from "../utils/picker.js";
 import { uniformArray, serialArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
@@ -505,10 +506,7 @@ Volume.prototype = {
     getDataPicking: function(){
 
         const picking = serialArray( this.dataPosition.length / 3 );
-        picking.object = this;
-        picking.type = "volume";
-
-        return picking;
+        return new VolumePicker( picking, this );
 
     },
 

@@ -9,6 +9,7 @@ import { Vector3, Color } from "../../lib/three.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import { defaults } from "../utils.js";
+import { ClashPicker } from "../utils/picker.js";
 import { uniformArray3 } from "../math/array-utils.js";
 import { guessElement } from "../structure/structure-utils.js";
 
@@ -104,12 +105,15 @@ class Validation{
         this.rsrzDict = {};
         this.rsccDict = {};
         this.clashDict = {};
+        this.clashArray = [];
         this.geoDict = {};
         this.geoAtomDict = {};
         this.atomDict = {};
         this.clashSele = "NONE";
 
     }
+
+    get type (){ return "validation"; }
 
     fromXml( xml ){
 
@@ -118,6 +122,7 @@ class Validation{
         const rsrzDict = this.rsrzDict;
         const rsccDict = this.rsccDict;
         const clashDict = this.clashDict;
+        const clashArray = this.clashArray;
         const geoDict = this.geoDict;
         const geoAtomDict = this.geoAtomDict;
         const atomDict = this.atomDict;
@@ -168,6 +173,7 @@ class Validation{
                             c.res2 = sele;
                             clashList.push( c.res1, sele );
                             clashDict[ cid ] = c;
+                            clashArray.push( c );
                         }
                     }
 
@@ -254,13 +260,14 @@ class Validation{
         const vPos1 = new Vector3();
         const vPos2 = new Vector3();
 
-        const clashDict = this.clashDict;
-        const n = Object.keys( clashDict ).length;
+        const clashArray = this.clashArray;
+        const n = clashArray.length;
 
         const position1 = new Float32Array( n * 3 );
         const position2 = new Float32Array( n * 3 );
         const color = uniformArray3( n, c.r, c.g, c.b );
         const radius = new Float32Array( n );
+        const picking = new Float32Array( n );
 
         if( Debug ) Log.time( "Validation.getClashData#atomDict" );
 
@@ -277,14 +284,13 @@ class Validation{
 
         let i = 0;
 
-        for( let k in clashDict ){
+        clashArray.forEach( function( c, idx ){
 
-            const c = clashDict[ k ];
             ap1.index = atomDict[ c.sele1 ];
             ap2.index = atomDict[ c.sele2 ];
 
             if( !as.has( ap1.index ) || !as.has( ap2.index ) ||
-                ap1.index === undefined || ap2.index === undefined ) continue;
+                ap1.index === undefined || ap2.index === undefined ) return;
 
             vDir.subVectors( ap2, ap1 ).setLength( ap1.vdw );
             vPos1.copy( ap1 ).add( vDir );
@@ -299,10 +305,11 @@ class Validation{
             vPos1.toArray( position1, i * 3 );
             vPos2.toArray( position2, i * 3 );
             radius[ i ] = ( r1 + r2 ) / 2;
+            picking[ i ] = idx;
 
             ++i;
 
-        }
+        } );
 
         if( Debug ) Log.timeEnd( "Validation.getClashData" );
 
@@ -311,7 +318,8 @@ class Validation{
             position2: position2.subarray( 0, i * 3 ),
             color: color.subarray( 0, i * 3 ),
             color2: color.subarray( 0, i * 3 ),
-            radius: radius.subarray( 0, i )
+            radius: radius.subarray( 0, i ),
+            picking: new ClashPicker( picking.subarray( 0, i ), this )
         };
 
     }

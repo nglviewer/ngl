@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
+import { AtomPicker } from "../utils/picker.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 import { spline } from "../math/math-utils.js";
@@ -508,10 +509,7 @@ Spline.prototype = {
 
         var structure = polymer.structure;
         var iterator = this.getAtomIterator( "trace" );
-
         var pick = new Float32Array( nCol );
-        pick.object = structure;
-        pick.type = "atom"
 
         function pickFn( item ){
             return item.index;
@@ -522,7 +520,7 @@ Spline.prototype = {
         );
 
         return {
-            "picking": pick
+            "picking": new AtomPicker( pick, structure )
         };
 
     },

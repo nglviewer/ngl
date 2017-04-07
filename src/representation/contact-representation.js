@@ -7,6 +7,7 @@
 
 import { defaults } from "../utils.js";
 import { RepresentationRegistry } from "../globals.js";
+import { ContactPicker } from "../utils/picker.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import { polarContacts, polarBackboneContacts } from "../geometry/contact-utils.js";
@@ -79,7 +80,15 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
     getBondData: function( sview, what, params ){
 
-        return sview.getBondData( this.getBondParams( what, params ) );
+        var bondData = sview.getBondData( this.getBondParams( what, params ) );
+        if( bondData.picking ){
+            bondData.picking = new ContactPicker(
+                bondData.picking.array,
+                bondData.picking.structure,
+                params.bondStore
+            );
+        }
+        return bondData;
 
     },
 
@@ -87,14 +96,11 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
         var contactData = this.getContactData( sview );
 
-        var bondParams = {
-            bondSet: contactData.bondSet,
-            bondStore: contactData.bondStore
-        };
-        var bondData = this.getBondData( sview, undefined, bondParams );
-
         var cylinderBuffer = new CylinderBuffer(
-            bondData,
+            this.getBondData( sview, undefined, {
+                bondSet: contactData.bondSet,
+                bondStore: contactData.bondStore
+            } ),
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,

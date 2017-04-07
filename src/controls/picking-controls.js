@@ -5,11 +5,108 @@
  */
 
 
-import { Vector2, Vector3 } from "../../lib/three.es6.js";
+function closer( x, a, b ){
+    return x.distanceTo( a ) < x.distanceTo( b ) ;
+}
 
 
-const tmpObjectPosition = new Vector3();
-const tmpCanvasPosition = new Vector2();
+/**
+ * Picking data object.
+ * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
+ * @property {Boolean} [altKey] - whether the alt key was pressed
+ * @property {Boolean} [ctrlKey] - whether the control key was pressed
+ * @property {Boolean} [metaKey] - whether the meta key was pressed
+ * @property {Boolean} [shiftKey] - whether the shift key was pressed
+ * @property {AtomProxy} [atom] - picked atom
+ * @property {BondProxy} [bond] - picked bond
+ * @property {Volume} [volume] - picked volume
+ * @property {Object} [instance] - instance data
+ * @property {Integer} instance.id - instance id
+ * @property {String|Integer} instance.name - instance name
+ * @property {Matrix4} instance.matrix - transformation matrix of the instance
+ * @property {Vector3} [position] - xyz position of the picked object
+ * @property {Component} [component] - component holding the picked object
+ */
+
+
+/**
+ * Picking proxy class.
+ */
+class PickingProxy{
+
+    /**
+     * [constructor description]
+     * @param  {Object} pickingData - picking data
+     * @param  {Stage} stage - stage object
+     */
+    constructor( pickingData, stage ){
+
+        this.pid = pickingData.pid;
+        this.picker = pickingData.picker;
+        this.instance = pickingData.instance;
+
+        this.controls = stage.viewerControls;
+        this.mouse = stage.mouseObserver;
+
+    }
+
+    get type (){ return this.picker.type; }
+
+    get altKey (){ return this.mouse.altKey; }
+    get ctrlKey (){ return this.mouse.ctrlKey; }
+    get metaKey (){ return this.mouse.metaKey; }
+    get shiftKey (){ return this.mouse.shiftKey; }
+    get canvasPosition (){ return this.mouse.canvasPosition; }
+
+    get component (){
+        return this.stage.getComponentsByObject( this.picker.data ).list[ 0 ];
+    }
+
+    get object (){
+        return this.picker.getObject( this.pid );
+    }
+
+    get position (){
+        return this.picker.getPosition( this.pid );
+    }
+
+    get atom (){
+        return this._objectIfType( "atom" );
+    }
+
+    get bond (){
+        return this._objectIfType( "bond" );
+    }
+
+    get closestBondAtom (){
+
+        if( this.type !== "bond" ) return undefined;
+
+        const bond = this.bond;
+        const controls = this.controls;
+        const cp = this.canvasPosition;
+
+        const acp1 = controls.getPositionOnCanvas( bond.atom1 );
+        const acp2 = controls.getPositionOnCanvas( bond.atom2 );
+
+        return closer( cp, acp1, acp2 ) ? bond.atom1 : bond.atom2;
+
+    }
+
+    get volume (){
+        return this._objectIfType( "volume" );
+    }
+
+    get clash (){
+        return this._objectIfType( "clash" );
+    }
+
+    _objectIfType( type ){
+        return this.type === type ? this.object : undefined;
+    }
+
+}
 
 
 class PickingControls{
@@ -18,7 +115,6 @@ class PickingControls{
 
         this.stage = stage;
         this.viewer = stage.viewer;
-        this.mouseObserver = stage.mouseObserver;
 
     }
 
@@ -26,71 +122,16 @@ class PickingControls{
      * get picking data
      * @param {Number} x - canvas x coordinate
      * @param {Number} y - canvas y coordinate
-     * @return {PickingData} picking data
+     * @return {PickingProxy|undefined} picking proxy
      */
     pick( x, y ){
-        const mouse = this.mouseObserver;
+
         const pickingData = this.viewer.pick( x, y );
-        const instance = pickingData.instance;
 
-        let pickedAtom, pickedBond, pickedVolume;
-        if( pickingData.picker ){
-            const p = pickingData.picker;
-            const o = p.object;
-            const idx = p[ pickingData.pid ];
-            if( p.type === "atom" ){
-                pickedAtom = o.getAtomProxy( idx );
-            }else if( p.type === "bond" ){
-                pickedBond = o.getBondProxy( idx );
-            }else if( p.type === "volume" ){
-                pickedVolume = {
-                    volume: o,
-                    index: idx,
-                    value: o.data[ idx ],
-                    x: o.dataPosition[ idx * 3 ],
-                    y: o.dataPosition[ idx * 3 + 1 ],
-                    z: o.dataPosition[ idx * 3 + 2 ],
-                };
-            }
+        if( pickingData.picker && pickingData.pid !== undefined ){
+            return new PickingProxy( pickingData, this.stage );
         }
 
-        let object, component;
-        if( pickedAtom || pickedBond || pickedVolume ){
-            if( pickedAtom ){
-                tmpObjectPosition.copy( pickedAtom );
-                object = pickedAtom.structure;
-            }else if( pickedBond ){
-                tmpObjectPosition.copy( pickedBond.atom1 )
-                    .add( pickedBond.atom2 )
-                    .multiplyScalar( 0.5 );
-                object = pickedBond.structure;
-            }else if( pickedVolume ){
-                tmpObjectPosition.copy( pickedVolume );
-                object = pickedVolume.volume;
-            }
-            if( instance ){
-                tmpObjectPosition.applyProjection( instance.matrix );
-            }
-            if( object ){
-                component = this.stage.getComponentsByObject( object ).list[ 0 ];
-            }
-        }
-
-        tmpCanvasPosition.copy( mouse.canvasPosition );
-
-        return {
-            "atom": pickedAtom,
-            "bond": pickedBond,
-            "volume": pickedVolume,
-            "instance": instance,
-            "position": tmpObjectPosition,
-            "component": component,
-            "canvasPosition": tmpCanvasPosition,
-            "altKey": mouse.altKey,
-            "ctrlKey": mouse.ctrlKey,
-            "metaKey":  mouse.metaKey,
-            "shiftKey":  mouse.shiftKey
-        };
     }
 
 }

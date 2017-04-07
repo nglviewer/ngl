@@ -22,18 +22,17 @@ class PickingBehavior{
     }
 
     pick(){
-        return this.stage.pickingControls.pick(
-            this.mouse.canvasPosition.x, this.mouse.canvasPosition.y
-        );
+        const cp = this.mouse.canvasPosition;
+        return this.stage.pickingControls.pick( cp.x, cp.y );
     }
 
     onClick(){
-        var pd = this.pick();
-        if( pd.position && this.mouse.which === MiddleMouseButton ){
-            this.stage.animationControls.move( pd.position.clone() );
+        var pp = this.pick();
+        if( pp && this.mouse.which === MiddleMouseButton ){
+            this.stage.animationControls.move( pp.position.clone() );
         }
-        this.stage.signals.clicked.dispatch( pd );
-        if( Debug ) Log.log( "clicked", pd );
+        this.stage.signals.clicked.dispatch( pp );
+        if( Debug ) Log.log( "clicked", pp );
     }
 
     onHover(){

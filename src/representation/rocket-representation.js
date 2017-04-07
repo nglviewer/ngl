@@ -7,6 +7,7 @@
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { AtomPicker } from "../utils/picker.js";
 import StructureRepresentation from "./structure-representation.js";
 import Helixbundle from "../geometry/helixbundle.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
@@ -98,11 +99,15 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData.end.set( axis.end, offset * 3 );
             axisData.size.set( axis.size, offset );
             axisData.color.set( axis.color, offset * 3 );
-            axisData.picking.set( axis.picking, offset );
-            axisData.picking.object = axis.picking.object;
-            axisData.picking.type = axis.picking.type;
+            axisData.picking.set( axis.picking.array, offset );
             offset += axis.size.length;
         } );
+
+        if( length ){
+            axisData.picking = new AtomPicker(
+                axisData.picking, sview.getStructure()
+            );
+        }
 
         var cylinderBuffer = new CylinderBuffer(
             {

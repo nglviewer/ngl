@@ -73,25 +73,6 @@ const tmpZoomVector = new Vector3();
  *                                      signal is fired, set to -1 to ignore hovering
  */
 
-/**
- * Picking data object.
- * @typedef {Object} PickingData - picking data
- * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
- * @property {Boolean} [altKey] - whether the alt key was pressed
- * @property {Boolean} [ctrlKey] - whether the control key was pressed
- * @property {Boolean} [metaKey] - whether the meta key was pressed
- * @property {Boolean} [shiftKey] - whether the shift key was pressed
- * @property {AtomProxy} [atom] - picked atom
- * @property {BondProxy} [bond] - picked bond
- * @property {Volume} [volume] - picked volume
- * @property {Object} [instance] - instance data
- * @property {Integer} instance.id - instance id
- * @property {String|Integer} instance.name - instance name
- * @property {Matrix4} instance.matrix - transformation matrix of the instance
- * @property {Vector3} [position] - xyz position of the picked object
- * @property {Component} [component] - component holding the picked object
- */
-
 
 /**
  * {@link Signal}, dispatched when stage parameters change
@@ -128,17 +109,17 @@ const tmpZoomVector = new Vector3();
 /**
  * {@link Signal}, dispatched upon clicking in the viewer canvas
  * @example
- * stage.signals.clicked.add( function( pickingData ){ ... } );
+ * stage.signals.clicked.add( function( pickingProxy ){ ... } );
  * @event Stage#clicked
- * @type {PickingData}
+ * @type {PickingProxy}
  */
 
 /**
  * {@link Signal}, dispatched upon hovering over the viewer canvas
  * @example
- * stage.signals.hovered.add( function( pickingData ){ ... } );
+ * stage.signals.hovered.add( function( pickingProxy ){ ... } );
  * @event Stage#hovered
- * @type {PickingData}
+ * @type {PickingProxy}
  */
 
 
