@@ -153,7 +153,7 @@ class SurfacePicker extends Picker{
         };
     }
 
-    _getPosition( pid ){
+    _getPosition( /*pid*/ ){
         return this.surface.center.clone();
         // const p = this.surface.getPosition();
         // const idx = this.getIndex( pid );
