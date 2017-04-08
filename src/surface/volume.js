@@ -242,9 +242,11 @@ Volume.prototype = {
 
     makeSurface: function( sd, isolevel, smooth ){
 
-        var surface = new Surface( "", "", sd );
+        var name = this.name + "@" + isolevel.toPrecision( 2 );
+        var surface = new Surface( name, "", sd );
         surface.info.isolevel = isolevel;
         surface.info.smooth = smooth;
+        surface.info.volume = this;
 
         return surface;
 
