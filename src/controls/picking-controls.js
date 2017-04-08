@@ -94,12 +94,16 @@ class PickingProxy{
 
     }
 
-    get volume (){
-        return this._objectIfType( "volume" );
-    }
-
     get clash (){
         return this._objectIfType( "clash" );
+    }
+
+    get surface (){
+        return this._objectIfType( "surface" );
+    }
+
+    get volume (){
+        return this._objectIfType( "volume" );
     }
 
     _objectIfType( type ){

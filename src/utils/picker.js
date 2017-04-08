@@ -105,6 +105,68 @@ class ContactPicker extends BondPicker{
 }
 
 
+class ClashPicker extends Picker{
+
+    constructor( array, validation ){
+        super( array );
+        this.validation = validation;
+    }
+
+    get type (){ return "clash"; }
+    get data (){ return this.validation; }
+
+    getObject( pid ){
+        const val = this.validation;
+        const idx = this.getIndex( pid );
+        return {
+            validation: val,
+            index: idx,
+            clash: val.clashArray[ idx ]
+        };
+    }
+
+    // TODO
+    // _getPosition( pid ){
+    //     const idx = this.getIndex( pid );
+    //     return new Vector3();
+    // }
+
+}
+
+
+class SurfacePicker extends Picker{
+
+    constructor( array, surface ){
+        super( array );
+        this.surface = surface;
+    }
+
+    get type (){ return "surface"; }
+    get data (){ return this.surface; }
+
+    getObject( pid ){
+        const surf = this.surface;
+        const idx = this.getIndex( pid );
+        return {
+            surface: surf,
+            index: idx
+        };
+    }
+
+    _getPosition( pid ){
+        return this.surface.center.clone();
+        // const p = this.surface.getPosition();
+        // const idx = this.getIndex( pid );
+        // return new Vector3(
+        //     p[ idx * 3 ],
+        //     p[ idx * 3 + 1 ],
+        //     p[ idx * 3 + 2 ]
+        // );
+    }
+
+}
+
+
 class VolumePicker extends Picker{
 
     constructor( array, volume ){
@@ -138,40 +200,12 @@ class VolumePicker extends Picker{
 }
 
 
-class ClashPicker extends Picker{
-
-    constructor( array, validation ){
-        super( array );
-        this.validation = validation;
-    }
-
-    get type (){ return "clash"; }
-    get data (){ return this.validation; }
-
-    getObject( pid ){
-        const val = this.validation;
-        const idx = this.getIndex( pid );
-        return {
-            validation: val,
-            index: idx,
-            clash: val.clashArray[ idx ]
-        };
-    }
-
-    // TODO
-    // _getPosition( pid ){
-    //     const idx = this.getIndex( pid );
-    //     return new Vector3();
-    // }
-
-}
-
-
 export {
     Picker,
     AtomPicker,
     BondPicker,
     ContactPicker,
-    VolumePicker,
-    ClashPicker
+    ClashPicker,
+    SurfacePicker,
+    VolumePicker
 };

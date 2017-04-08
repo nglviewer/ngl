@@ -179,7 +179,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
-                        isolevel, this.smooth, this.boxCenter, this.boxSize, 
+                        isolevel, this.smooth, this.boxCenter, this.boxSize,
                         this.contour, onSurfaceFinish
                     );
                 }else{
@@ -233,9 +233,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                     opaqueBack: this.opaqueBack,
                     dullInterior: false
                 } ) );
-            
+
             buffer = new DoubleSidedBuffer( surfaceBuffer );
-            
+
         }
 
         this.bufferList.push( buffer );
@@ -348,7 +348,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                     !this.__box.equals( this.box ) )
             )
         ){
-            this.build( { 
+            this.build( {
                 "position": true,
                 "color": true,
                 "index": true,
