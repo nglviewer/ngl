@@ -14,6 +14,9 @@ import {
 import StructureParser from "./structure-parser.js";
 
 
+const reWhitespace = /\s+/;
+
+
 class Mol2Parser extends StructureParser{
 
     get type (){ return "mol2"; }
@@ -23,8 +26,6 @@ class Mol2Parser extends StructureParser{
         // http://www.tripos.com/data/support/mol2.pdf
 
         if( Debug ) Log.time( "Mol2Parser._parse " + this.name );
-
-        var reWhitespace = /\s+/;
 
         var s = this.structure;
         var sb = this.structureBuilder;

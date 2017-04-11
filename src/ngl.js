@@ -106,30 +106,30 @@ import TextBuffer from "./buffer/text-buffer.js";
 
 //
 
+import "./parser/cif-parser.js";
 import "./parser/gro-parser.js";
+import "./parser/mmtf-parser.js";
+import "./parser/mol2-parser.js";
 import "./parser/pdb-parser.js";
 import "./parser/pqr-parser.js";
-import "./parser/cif-parser.js";
 import "./parser/psf-parser.js";
 import "./parser/sdf-parser.js";
-import "./parser/mol2-parser.js";
-import "./parser/mmtf-parser.js";
 
 import "./parser/dcd-parser.js";
 
-import "./parser/mrc-parser.js";
 import "./parser/cube-parser.js";
 import "./parser/dsn6-parser.js";
 import "./parser/dx-parser.js";
 import "./parser/dxbin-parser.js";
+import "./parser/mrc-parser.js";
 import "./parser/xplor-parser.js";
 
-import "./parser/ply-parser.js";
 import "./parser/obj-parser.js";
+import "./parser/ply-parser.js";
 
-import "./parser/text-parser.js";
 import "./parser/csv-parser.js";
 import "./parser/json-parser.js";
+import "./parser/text-parser.js";
 import "./parser/xml-parser.js";
 
 import "./parser/validation-parser.js";

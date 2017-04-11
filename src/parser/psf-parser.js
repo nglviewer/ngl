@@ -5,15 +5,10 @@
  */
 
 
-import { Box3, Vector3 } from "../../lib/three.es6.js";
-
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
-import Unitcell from "../symmetry/unitcell.js";
 import {
-    assignResidueTypeBonds,
-    calculateChainnames, calculateSecondaryStructure,
-    calculateBondsBetween, calculateBondsWithin
+    assignResidueTypeBonds, calculateChainnames
 } from "../structure/structure-utils.js";
 
 
@@ -96,7 +91,18 @@ class PsfParser extends StructureParser{
                 }else if( mode === TitleMode ){
 
                     title.push( line.replace( reTitle, "" ).trim() );
-                    console.log( line )
+
+                }else if( mode === AngleMode ){
+
+                    // not currently used
+
+                }else if( mode === DihedralMode ){
+
+                    // not currently used
+
+                }else if( mode === ImproperMode ){
+
+                    // not currently used
 
                 }else if( line.includes( "!NATOM" ) ){
 
@@ -149,8 +155,8 @@ class PsfParser extends StructureParser{
         s.bondStore.bondOrder = bBondOrder;
 
         sb.finalize();
-        calculateChainnames( s );
         s.finalizeAtoms();
+        calculateChainnames( s );
         s.finalizeBonds();
         assignResidueTypeBonds( s );
 
