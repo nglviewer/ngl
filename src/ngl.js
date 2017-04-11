@@ -110,6 +110,7 @@ import "./parser/gro-parser.js";
 import "./parser/pdb-parser.js";
 import "./parser/pqr-parser.js";
 import "./parser/cif-parser.js";
+import "./parser/psf-parser.js";
 import "./parser/sdf-parser.js";
 import "./parser/mol2-parser.js";
 import "./parser/mmtf-parser.js";
