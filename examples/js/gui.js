@@ -375,13 +375,15 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.structure.name + ")";
+        }else if( d.clash ){
+            var c = d.clash.clash;
+            msg = "clash: " + c.sele1 + " - " + c.sele2;
+        }else if( d.surface ){
+            msg = "surface: " + d.surface.surface.name;
         }else if( d.volume ){
             msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +
                 " (" + d.volume.volume.name + ")";
-        }else if( d.clash ){
-            var c = d.clash.clash;
-            msg = "clash: " + c.sele1 + " - " + c.sele2;
         }
     }
     return prefix ? prefix + " " + msg : msg;
