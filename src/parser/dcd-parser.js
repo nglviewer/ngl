@@ -10,20 +10,11 @@ import TrajectoryParser from "./trajectory-parser.js";
 import { uint8ToString } from "../utils.js";
 
 
-function DcdParser( streamer, params ){
+class DcdParser extends TrajectoryParser{
 
-    TrajectoryParser.call( this, streamer, params );
+    get type (){ return "dcd"; }
 
-}
-
-DcdParser.prototype = Object.assign( Object.create(
-
-    TrajectoryParser.prototype ), {
-
-    constructor: DcdParser,
-    type: "dcd",
-
-    _parse: function(){
+    _parse(){
 
         // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
 
@@ -192,9 +183,9 @@ DcdParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "DcdParser._parse " + this.name );
 
-    },
+    }
 
-} );
+}
 
 ParserRegistry.add( "dcd", DcdParser );
 

@@ -9,21 +9,11 @@ import { Log, DatasourceRegistry } from "../globals.js";
 import Trajectory from "./trajectory.js";
 
 
-function RemoteTrajectory( trajPath, structure, params ){
+class RemoteTrajectory extends Trajectory{
 
-    Trajectory.call( this, trajPath, structure, params );
+    get type (){ return "remote"; }
 
-}
-
-RemoteTrajectory.prototype = Object.assign( Object.create(
-
-    Trajectory.prototype ), {
-
-    constructor: RemoteTrajectory,
-
-    type: "remote",
-
-    makeAtomIndices: function(){
+    makeAtomIndices(){
 
         var atomIndices = [];
 
@@ -61,9 +51,9 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
         this.atomIndices = atomIndices;
 
-    },
+    }
 
-    _loadFrame: function( i, callback ){
+    _loadFrame( i, callback ){
 
         // TODO implement max frameCache size, re-use arrays
 
@@ -101,9 +91,9 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
         request.send( params );
 
-    },
+    }
 
-    getNumframes: function(){
+    getNumframes(){
 
         var request = new XMLHttpRequest();
 
@@ -116,9 +106,9 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
         }.bind( this ), false );
         request.send( null );
 
-    },
+    }
 
-    getPath: function( index, callback ){
+    getPath( index, callback ){
 
         if( this.pathCache[ index ] ){
             callback( this.pathCache[ index ] );
@@ -160,7 +150,7 @@ RemoteTrajectory.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default RemoteTrajectory;

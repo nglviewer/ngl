@@ -10,45 +10,37 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
-/**
- * Component wrapping a Script object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Script} script - script object to wrap
- * @param {ComponentParameters} params - component parameters
- */
-function ScriptComponent( stage, script, params ){
+class ScriptComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, script.name );
+    /**
+     * Create component wrapping a script object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Script} script - script object to wrap
+     * @param {ComponentParameters} params - component parameters
+     */
+    constructor( stage, script, params ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, script.name );
 
-    this.script = script;
-    this.status = "loaded";
+        super( stage, p );
 
-    this.script.signals.nameChanged.add( function( value ){
+        this.script = script;
+        this.status = "loaded";
 
-        this.setName( value );
+        this.script.signals.nameChanged.add( value => {
+            this.setName( value );
+        } );
 
-    }, this );
+    }
 
-}
+    get type(){ return "script"; }
 
-ScriptComponent.prototype = Object.assign( Object.create(
+    addRepresentation(){}
 
-    Component.prototype ), {
+    removeRepresentation(){}
 
-    constructor: ScriptComponent,
-
-    type: "script",
-
-    addRepresentation: function( /*type*/ ){},
-
-    removeRepresentation: function( /*repr*/ ){},
-
-    run: function(){
+    run(){
 
         this.setStatus( "running" );
 
@@ -58,19 +50,24 @@ ScriptComponent.prototype = Object.assign( Object.create(
 
         this.setStatus( "called" );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
+        // TODO dispose script
         this.signals.disposed.dispatch();
 
-    },
+    }
 
-    setVisibility: function( /*value*/ ){},
+    setVisibility(){}
 
-    getCenter: function(){}
+    getCenter(){}
 
-} );
+    getZoom(){}
+
+    getBox(){}
+
+}
 
 ComponentRegistry.add( "script", ScriptComponent );
 

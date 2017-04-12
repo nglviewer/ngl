@@ -74,11 +74,6 @@ NGL.createParameterInput = function( p ){
             .setOptions( p.options )
             .setValue( p.value );
 
-    }else if( p.type === "button" ){
-
-        input = new UI.Button( p.label )
-            .onClick( function(){ p.value(); } );
-
     }else if( p.type === "color" ){
 
         input = new UI.ColorPopupMenu( p.label )
@@ -433,6 +428,7 @@ NGL.ViewportWidget = function( stage ){
         .setPosition( "absolute" )
         .setDisplay( "none" )
         .setOpacity( "0.9" )
+        .setPointerEvents( "none" )
         .add( tooltipText );
 
     stage.signals.hovered.add( function( d ){
@@ -639,18 +635,6 @@ NGL.MenubarFileWidget = function( stage ){
         stage.defaultFileParams.cAlphaOnly = e.target.checked;
     }
 
-    function onReorderAtomsChange( e ){
-        stage.defaultFileParams.reorderAtoms = e.target.checked;
-    }
-
-    function onDontAutoBondChange( e ){
-        stage.defaultFileParams.dontAutoBond = e.target.checked;
-    }
-
-    function onUseWorkerChange( e ){
-        stage.defaultFileParams.useWorker = e.target.checked;
-    }
-
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
@@ -664,9 +648,6 @@ NGL.MenubarFileWidget = function( stage ){
         createCheckbox( 'asTrajectory', false, onAsTrajectoryChange ),
         createCheckbox( 'firstModelOnly', false, onFirstModelOnlyChange ),
         createCheckbox( 'cAlphaOnly', false, onCAlphaOnlyChange ),
-        createCheckbox( 'reorderAtoms', false, onReorderAtomsChange ),
-        createCheckbox( 'dontAutoBond', false, onDontAutoBondChange ),
-        createCheckbox( 'useWorker', false, onUseWorkerChange ),
         createDivider(),
         createOption( 'Screenshot', onScreenshotOptionClick, 'camera' ),
         createOption( 'Export image...', onExportImageOptionClick ),
@@ -711,7 +692,7 @@ NGL.MenubarViewWidget = function( stage, preferences ){
     }
 
     function onCenterOptionClick(){
-        stage.centerView();
+        stage.autoView( 1000 );
     }
 
     function onSpinOnClick(){
@@ -724,8 +705,19 @@ NGL.MenubarViewWidget = function( stage, preferences ){
 
     function onGetOrientationClick(){
         window.prompt(
-            "Orientation",
-            JSON.stringify( stage.viewer.getOrientation() )
+            "Get orientation",
+            JSON.stringify(
+                stage.viewerControls.getOrientation().toArray(),
+                function( k, v) {
+                    return v.toFixed ? Number( v.toFixed( 2 ) ) : v;
+                }
+            )
+        );
+    }
+
+    function onSetOrientationClick(){
+        stage.viewerControls.orient(
+            JSON.parse( window.prompt( "Set orientation" ) )
         );
     }
 
@@ -756,7 +748,8 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         createOption( 'Spin on', onSpinOnClick ),
         createOption( 'Spin off', onSpinOffClick ),
         createDivider(),
-        createOption( 'Orientation', onGetOrientationClick ),
+        createOption( 'Get orientation', onGetOrientationClick ),
+        createOption( 'Set orientation', onSetOrientationClick ),
     ];
 
     var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
@@ -1282,7 +1275,7 @@ NGL.SidebarWidget = function( stage ){
         .setMarginLeft( "10px" )
         .onClick( function(){
 
-            stage.centerView();
+            stage.autoView( 1000 );
 
         } );
 
@@ -1527,11 +1520,11 @@ NGL.StructureComponentWidget = function( component, stage ){
             componentPanel.setMenuDisplay( "none" );
         } );
 
-    // Import trajectory
+    // Open trajectory
 
     var trajExt = [ "dcd", "dcd.gz" ];
 
-    function fileInputOnChange( e ){
+    function framesInputOnChange( e ){
         var fn = function( file, callback ){
             NGL.autoLoad( file ).then( function( frames ){
                 component.addTrajectory( frames );
@@ -1541,15 +1534,15 @@ NGL.StructureComponentWidget = function( component, stage ){
         var queue = new NGL.Queue( fn, e.target.files );
     }
 
-    var fileInput = document.createElement( "input" );
-    fileInput.type = "file";
-    fileInput.multiple = true;
-    fileInput.style.display = "none";
-    fileInput.accept = "." + trajExt.join( ",." );
-    fileInput.addEventListener( 'change', fileInputOnChange, false );
+    var framesInput = document.createElement( "input" );
+    framesInput.type = "file";
+    framesInput.multiple = true;
+    framesInput.style.display = "none";
+    framesInput.accept = "." + trajExt.join( ",." );
+    framesInput.addEventListener( 'change', framesInputOnChange, false );
 
-    var traj = new UI.Button( "import" ).onClick( function(){
-        fileInput.click();
+    var traj = new UI.Button( "open" ).onClick( function(){
+        framesInput.click();
         componentPanel.setMenuDisplay( "none" );
     } );
 
@@ -1610,12 +1603,42 @@ NGL.StructureComponentWidget = function( component, stage ){
                 stage.compList[ superpose.getValue() ],
                 true
             );
-            component.centerView();
+            component.autoView( 1000 );
             superpose.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
         } );
 
     setSuperposeOptions();
+
+    // Principal axes
+
+    var alignAxes = new UI.Button( "align" ).onClick( function(){
+        var pa = component.structure.getPrincipalAxes();
+        stage.animationControls.rotate( pa.getRotationQuaternion() );
+    } );
+
+    // Open validation
+
+    function validationInputOnChange( e ){
+        var fn = function( file, callback ){
+            NGL.autoLoad( file, { ext: "validation" } ).then( function( validation ){
+                component.structure.validation = validation;
+                callback();
+            } );
+        }
+        var queue = new NGL.Queue( fn, e.target.files );
+    }
+
+    var validationInput = document.createElement( "input" );
+    validationInput.type = "file";
+    validationInput.style.display = "none";
+    validationInput.accept = ".xml";
+    validationInput.addEventListener( 'change', validationInputOnChange, false );
+
+    var vali = new UI.Button( "open" ).onClick( function(){
+        validationInput.click();
+        componentPanel.setMenuDisplay( "none" );
+    } );
 
     // Component panel
 
@@ -1632,7 +1655,9 @@ NGL.StructureComponentWidget = function( component, stage ){
                         .setOverflow( "auto" )
                         //.setWordWrap( "break-word" )
         )
-        .addMenuEntry( "Trajectory", traj );
+        .addMenuEntry( "Trajectory", traj )
+        .addMenuEntry( "Principal axes", alignAxes )
+        .addMenuEntry( "Validation", vali );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
@@ -1978,12 +2003,7 @@ NGL.RepresentationComponentWidget = function( component, stage ){
 
         if( !repr.parameters[ name ] ) return;
         var p = Object.assign( {}, repr.parameters[ name ] );
-
-        if( p.type === "button" ){
-            p.value = rp[ name ].bind( repr );
-        }else{
-            p.value = rp[ name ];
-        }
+        p.value = rp[ name ];
         if( p.label === undefined ) p.label = name;
         var input = NGL.createParameterInput( p );
 

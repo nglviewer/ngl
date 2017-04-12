@@ -10,10 +10,19 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
+import { degToRad } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
-import GidPool from "../utils/gid-pool.js";
 import Viewer from "../viewer/viewer.js";
-import PickingControls from "./picking-controls.js";
+import MouseObserver from "./mouse-observer.js";
+
+import TrackballControls from "../controls/trackball-controls.js";
+import PickingControls from "../controls/picking-controls.js";
+import ViewerControls from "../controls/viewer-controls.js";
+import AnimationControls from "../controls/animation-controls.js";
+
+import PickingBehavior from "./picking-behavior.js";
+import MouseBehavior from "./mouse-behavior.js";
+import AnimationBehavior from "./animation-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -31,6 +40,8 @@ function matchName( name, comp ){
         return comp.name === name;
     }
 }
+
+const tmpZoomVector = new Vector3();
 
 
 /**
@@ -62,9 +73,28 @@ function matchName( name, comp ){
  *                                      signal is fired, set to -1 to ignore hovering
  */
 
+/**
+ * Picking data object.
+ * @typedef {Object} PickingData - picking data
+ * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
+ * @property {Boolean} [altKey] - whether the alt key was pressed
+ * @property {Boolean} [ctrlKey] - whether the control key was pressed
+ * @property {Boolean} [metaKey] - whether the meta key was pressed
+ * @property {Boolean} [shiftKey] - whether the shift key was pressed
+ * @property {AtomProxy} [atom] - picked atom
+ * @property {BondProxy} [bond] - picked bond
+ * @property {Volume} [volume] - picked volume
+ * @property {Object} [instance] - instance data
+ * @property {Integer} instance.id - instance id
+ * @property {String|Integer} instance.name - instance name
+ * @property {Matrix4} instance.matrix - transformation matrix of the instance
+ * @property {Vector3} [position] - xyz position of the picked object
+ * @property {Component} [component] - component holding the picked object
+ */
+
 
 /**
- * {@link Signal}, dispatched when stage parameters change {@link Signal}
+ * {@link Signal}, dispatched when stage parameters change
  * @example
  * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
  * @event Stage#parametersChanged
@@ -121,10 +151,10 @@ class Stage{
 
     /**
      * Create a Stage instance
-     * @param {String} eid - document id
+     * @param {String|Element} [idOrElement] - dom id or element
      * @param {StageParameters} params - parameters object
      */
-    constructor( eid, params ){
+    constructor( idOrElement, params ){
 
         this.signals = {
             parametersChanged: new Signal(),
@@ -145,18 +175,35 @@ class Stage{
          * @member {Counter}
          */
         this.tasks = new Counter();
-        this.gidPool = new GidPool();
         this.compList = [];
         this.defaultFileParams = {};
 
         //
 
-        this.viewer = new Viewer( eid );
+        this.viewer = new Viewer( idOrElement );
         if( !this.viewer.renderer ) return;
 
+        /**
+         * @member {MouseObserver}
+         */
+        this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
+
+        /**
+         * @member {ViewerControls}
+         */
+        this.viewerControls = new ViewerControls( this );
+        this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
-        this.pickingControls.signals.clicked.add( this.signals.clicked.dispatch );
-        this.pickingControls.signals.hovered.add( this.signals.hovered.dispatch );
+        /**
+         * @member {AnimationControls}
+         */
+        this.animationControls = new AnimationControls( this );
+
+        this.pickingBehavior = new PickingBehavior( this );
+        this.mouseBehavior = new MouseBehavior( this );
+        this.animationBehavior = new AnimationBehavior( this );
+
+        this.spinAnimation = this.animationControls.spin( null );
 
         var p = Object.assign( {
             impostor: true,
@@ -166,7 +213,7 @@ class Stage{
             backgroundColor: "black",
             rotateSpeed: 2.0,
             zoomSpeed: 1.2,
-            panSpeed: 0.8,
+            panSpeed: 1.0,
             clipNear: 0,
             clipFar: 100,
             clipDist: 10,
@@ -261,8 +308,7 @@ class Stage{
         var p = Object.assign( {}, params );
         var tp = this.parameters;
         var viewer = this.viewer;
-        var controls = viewer.controls;
-        var pickingControls = this.pickingControls;
+        var controls = this.trackballControls;
 
         for( var name in p ){
 
@@ -282,7 +328,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
-        pickingControls.setParameters( { hoverTimeout: p.hoverTimeout } );
+        this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
         viewer.setCamera( p.cameraType, p.cameraFov );
@@ -325,16 +371,18 @@ class Stage{
 
             object.setSelection( "/0" );
 
-            var atomCount, instanceCount;
+            var atomCount, residueCount, instanceCount;
             var structure = object.structure;
 
             if( structure.biomolDict.BU1 ){
                 var assembly = structure.biomolDict.BU1;
                 atomCount = assembly.getAtomCount( structure );
+                residueCount = assembly.getResidueCount( structure );
                 instanceCount = assembly.getInstanceCount();
                 object.setDefaultAssembly( "BU1" );
             }else{
                 atomCount = structure.getModelProxy( 0 ).atomCount;
+                residueCount = structure.getModelProxy( 0 ).residueCount;
                 instanceCount = 1;
             }
 
@@ -354,7 +402,21 @@ class Stage{
 
             if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
 
-            if( ( instanceCount > 5 && atomCount > 15000 ) || atomCount > 700000 ){
+            if( residueCount / instanceCount < 4 ){
+
+                object.addRepresentation( "ball+stick", {
+                    colorScheme: "element",
+                    scale: 2.0,
+                    aspectRatio: 1.5,
+                    bondScale: 0.3,
+                    bondSpacing: 0.75,
+                    quality: "auto"
+                } );
+
+            }else if(
+                ( instanceCount > 5 && atomCount > 15000 ) ||
+                atomCount > 700000
+            ){
 
                 var scaleFactor = (
                     Math.min(
@@ -431,17 +493,16 @@ class Stage{
 
             }
 
-            this.centerView();
-
             // add frames as trajectory
             if( object.structure.frames.length ) object.addTrajectory();
 
         }else if( object.type === "surface" || object.type === "volume" ){
 
             object.addRepresentation( "surface" );
-            this.centerView();
 
         }
+
+        this.tasks.onZeroOnce( this.autoView, this );
 
     }
 
@@ -710,34 +771,6 @@ class Stage{
     }
 
     /**
-     * Center the whole scene
-     * @return {undefined}
-     */
-    centerView(){
-
-        if( this.tasks.count > 0 ){
-
-            var centerFn = function( delta, count ){
-
-                if( count === 0 ){
-
-                    this.tasks.signals.countChanged.remove( centerFn, this );
-
-                }
-
-                this.viewer.centerView( true );
-
-            };
-
-            this.tasks.signals.countChanged.add( centerFn, this );
-
-        }
-
-        this.viewer.centerView( true );
-
-    }
-
-    /**
      * Spin the whole scene around an axis at the center
      * @example
      * stage.setSpin( [ 0, 1, 0 ], 0.01 );
@@ -752,23 +785,62 @@ class Stage{
             axis = new Vector3().fromArray( axis );
         }
 
-        this.viewer.setSpin( axis, angle );
+        this.spinAnimation.axis = axis;
+        this.spinAnimation.angle = angle;
 
     }
 
-    setOrientation( orientation ){
+    getZoomForBox( boundingBox ){
 
-        this.tasks.onZeroOnce( function(){
+        const bbSize = boundingBox.size( tmpZoomVector );
+        const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
+        const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
+        let distance = maxSize + Math.sqrt( minSize );
 
-            this.viewer.setOrientation( orientation );
+        const fov = degToRad( this.viewer.perspectiveCamera.fov );
+        const width = this.viewer.width;
+        const height = this.viewer.height;
+        const aspect = width / height;
+        const aspectFactor = ( height < width ? 1 : aspect );
 
-        }, this );
+        distance = Math.abs(
+            ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
+        );
+        distance += this.parameters.clipDist.value;
+        return -distance;
 
     }
 
-    getOrientation(){
+    getBox(){
 
-        return this.viewer.getOrientation();
+        return this.viewer.boundingBox;
+
+    }
+
+    getZoom(){
+
+        return this.getZoomForBox( this.getBox() );
+
+    }
+
+    getCenter(){
+
+        return this.getBox().center();
+
+    }
+
+    /**
+     * Add a zoom and a move animation with automatic targets
+     * @param  {Integer} duration - animation time in milliseconds
+     * @return {undefined}
+     */
+    autoView( duration ){
+
+        this.animationControls.zoomMove(
+            this.getCenter(),
+            this.getZoom(),
+            defaults( duration, 0 )
+        );
 
     }
 
@@ -920,6 +992,27 @@ class Stage{
             }
 
         }, type );
+
+        return new ComponentCollection( compList );
+
+    }
+
+    /**
+     * Get collection of components by object
+     * @param  {Object} object - the object to find
+     * @return {ComponentCollection} collection of selected components
+     */
+    getComponentsByObject( object ){
+
+        var compList = [];
+
+        this.eachComponent( function( comp ){
+
+            if( comp[ comp.type ] === object ){
+                compList.push( comp );
+            }
+
+        } );
 
         return new ComponentCollection( compList );
 

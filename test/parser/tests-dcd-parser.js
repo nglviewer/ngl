@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/dcd-parser', function() {
+describe( 'parser/dcd-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/ala3.dcd";
         var bin = fs.readFileSync( path );
         var streamer = new BinaryStreamer( bin );
@@ -20,8 +20,8 @@ describe('parsing', function () {
             assert.strictEqual( frames.coordinates[ 0 ].length, 126 );
             assert.strictEqual( frames.boxes.length, 0 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

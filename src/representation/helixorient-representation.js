@@ -59,14 +59,17 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
             var position = helixorient.getPosition();
             var color = helixorient.getColor( this.getColorParams() );
             var size = helixorient.getSize( this.radius, this.scale );
+            var picking = helixorient.getPicking();
 
             bufferList.push(
 
                 new SphereBuffer(
-                    position.center,
-                    color.color,
-                    size.size,
-                    color.pickingColor,
+                    {
+                        position: position.center,
+                        color: color.color,
+                        radius: size.size,
+                        picking: picking.picking
+                    },
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,
                         disableImpostor: this.disableImpostor,
@@ -75,21 +78,25 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                 ),
 
                 new VectorBuffer(
-                    position.center,
-                    position.axis,
-                    this.getBufferParams({
+                    {
+                        position: position.center,
+                        vector: position.axis
+                    },
+                    this.getBufferParams( {
                         color: "skyblue",
                         scale: 1
-                    })
+                    } )
                 ),
 
                 new VectorBuffer(
-                    position.center,
-                    position.resdir,
-                    this.getBufferParams({
+                    {
+                        position: position.center,
+                        vector: position.resdir
+                    },
+                    this.getBufferParams( {
                         color: "lightgreen",
                         scale: 1
-                    })
+                    } )
                 )
 
             );

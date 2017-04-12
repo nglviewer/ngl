@@ -5,31 +5,29 @@
  */
 
 
-function Collection( list ){
+class Collection{
 
-    this.list = list || [];
+    constructor( list ){
 
-    // remove elements from list when they get disposed
+        this.list = list || [];
 
-    var n = this.list.length;
+        // remove elements from list when they get disposed
 
-    for( var i = 0; i < n; ++i ){
+        const n = this.list.length;
 
-        var elm = this.list[ i ];
+        for( let i = 0; i < n; ++i ){
 
-        elm.signals.disposed.add( this._remove, this );
+            const elm = this.list[ i ];
+
+            elm.signals.disposed.add( this._remove, this );
+
+        }
 
     }
 
-}
+    _remove( elm ){
 
-Collection.prototype = {
-
-    constructor: Collection,
-
-    _remove: function( elm ){
-
-        var idx = this.list.indexOf( elm );
+        const idx = this.list.indexOf( elm );
 
         if( idx !== -1 ){
 
@@ -37,16 +35,16 @@ Collection.prototype = {
 
         }
 
-    },
+    }
 
-    _invoke: function( methodName, methodArgs ){
+    _invoke( methodName, methodArgs ){
 
-        var n = this.list.length;
+        const n = this.list.length;
 
-        for( var i = 0; i < n; ++i ){
+        for( let i = 0; i < n; ++i ){
 
-            var elm = this.list[ i ];
-            var method = elm[ methodName ];
+            const elm = this.list[ i ];
+            const method = elm[ methodName ];
 
             if( typeof method === "function" ){
 
@@ -58,27 +56,27 @@ Collection.prototype = {
 
         return this;
 
-    },
+    }
 
-    setVisibility: function( value ){
+    setVisibility( value ){
 
         return this._invoke( "setVisibility", [ value ] );
 
-    },
+    }
 
-    setSelection: function( string ){
+    setSelection( string ){
 
         return this._invoke( "setSelection", [ string ] );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         return this._invoke( "dispose" );
 
     }
 
-};
+}
 
 
 export default Collection;

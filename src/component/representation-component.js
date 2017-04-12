@@ -17,6 +17,9 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 };
 
 
+const SignalNames = [ "parametersChanged" ];
+
+
 /**
  * @ignore
  * @event RepresentationComponent#representationAdded
@@ -36,49 +39,41 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
  */
 
 
-/**
- * Component wrapping a Representation object
- * @class
- * @extends Component
- * @param {Stage} stage - stage object the component belongs to
- * @param {Representation} repr - representation object to wrap
- * @param {RepresentationParameters} [params] - component parameters
- * @param {Component} [parent] - parent component
- */
-function RepresentationComponent( stage, repr, params, parent ){
+class RepresentationComponent extends Component{
 
-    var p = params || {};
-    p.name = defaults( p.name, repr.type );
+    /**
+     * Create component wrapping a representation object
+     * @param {Stage} stage - stage object the component belongs to
+     * @param {Representation} repr - representation object to wrap
+     * @param {RepresentationParameters} [params] - component parameters
+     * @param {Component} [parent] - parent component
+     */
+    constructor( stage, repr, params, parent ){
 
-    Component.call( this, stage, p );
+        var p = params || {};
+        p.name = defaults( p.name, repr.type );
 
-    this.parent = parent;
+        super( stage, p );
 
-    this.setRepresentation( repr );
+        this.parent = parent;
 
-}
+        this.setRepresentation( repr );
 
-RepresentationComponent.prototype = Object.assign( Object.create(
+    }
 
-    Component.prototype ), {
+    get type(){ return "representation"; }
 
-    constructor: RepresentationComponent,
+    get _signalNames(){
+        return super._signalNames.concat( SignalNames );
+    }
 
-    type: "representation",
-
-    signals: Object.assign( {
-
-        parametersChanged: null,
-
-    }, Component.prototype.signals ),
-
-    getType: function(){
+    getType(){
 
         return this.repr.type;
 
-    },
+    }
 
-    setRepresentation: function( repr ){
+    setRepresentation( repr ){
 
         this.disposeRepresentation();
         this.repr = repr;
@@ -86,39 +81,39 @@ RepresentationComponent.prototype = Object.assign( Object.create(
         this.stage.tasks.listen( this.repr.tasks );
         this.updateVisibility();
 
-    },
+    }
 
     /**
      * @ignore
      * @alias RepresentationComponent#addRepresentation
      * @return {undefined}
      */
-    addRepresentation: function(){},
+    addRepresentation(){}
 
     /**
      * @ignore
      * @alias RepresentationComponent#removeRepresentation
      * @return {undefined}
      */
-    removeRepresentation: function(){},
+    removeRepresentation(){}
 
     /**
      * @ignore
      * @alias RepresentationComponent#hasRepresentation
      * @return {undefined}
      */
-    hasRepresentation: function(){},
+    hasRepresentation(){}
 
-    disposeRepresentation: function(){
+    disposeRepresentation(){
 
         if( this.repr ){
             this.stage.tasks.unlisten( this.repr.tasks );
             this.repr.dispose();
         }
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         if( this.parent && this.parent.hasRepresentation( this ) ){
             this.parent.removeRepresentation( this );
@@ -127,7 +122,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
             this.signals.disposed.dispatch();
         }
 
-    },
+    }
 
     /**
      * Set the visibility of the component, takes parent visibility into account
@@ -136,7 +131,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
      * @param {Boolean} value - visibility flag
      * @return {RepresentationComponent} this object
      */
-    setVisibility: function( value ){
+    setVisibility( value ){
 
         this.visible = value;
         this.updateVisibility();
@@ -144,9 +139,9 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    getVisibility: function(){
+    getVisibility(){
 
         if( this.parent ){
             return this.parent.visible && this.visible;
@@ -154,13 +149,13 @@ RepresentationComponent.prototype = Object.assign( Object.create(
             return this.visible;
         }
 
-    },
+    }
 
-    updateVisibility: function(){
+    updateVisibility(){
 
         this.repr.setVisibility( this.getVisibility() );
 
-    },
+    }
 
     /**
      * Set selection
@@ -171,21 +166,21 @@ RepresentationComponent.prototype = Object.assign( Object.create(
      * @param {Boolean} what.radius - update radius attribute
      * @return {RepresentationComponent} this object
      */
-    update: function( what ){
+    update( what ){
 
         this.repr.update( what );
 
         return this;
 
-    },
+    }
 
-    build: function( params ){
+    build( params ){
 
         this.repr.build( params );
 
         return this;
 
-    },
+    }
 
     /**
      * Set selection
@@ -193,13 +188,13 @@ RepresentationComponent.prototype = Object.assign( Object.create(
      * @param {String} string - selection string
      * @return {RepresentationComponent} this object
      */
-    setSelection: function( string ){
+    setSelection( string ){
 
         this.repr.setSelection( string );
 
         return this;
 
-    },
+    }
 
     /**
      * Set representation parameters
@@ -208,7 +203,7 @@ RepresentationComponent.prototype = Object.assign( Object.create(
      * @param {RepresentationParameters} params - parameter object
      * @return {RepresentationComponent} this object
      */
-    setParameters: function( params ){
+    setParameters( params ){
 
         this.repr.setParameters( params );
         this.signals.parametersChanged.dispatch(
@@ -217,30 +212,34 @@ RepresentationComponent.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    getParameters: function(){
+    getParameters(){
 
         return this.repr.getParameters();
 
-    },
+    }
 
-    setColor: function( value ){
+    setColor( value ){
 
         this.repr.setColor( value );
 
         return this;
 
-    },
+    }
 
     /**
      * @ignore
      * @alias RepresentationComponent#getCenter
      * @return {undefined}
      */
-    getCenter: function(){}
+    getCenter(){}
 
-} );
+    getZoom(){}
+
+    getBox(){}
+
+}
 
 
 export default RepresentationComponent;

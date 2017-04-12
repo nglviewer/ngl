@@ -9,36 +9,32 @@ import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
-function TextParser( streamer, params ){
+class TextParser extends Parser{
 
-    Parser.call( this, streamer, params );
+    constructor( streamer, params ){
 
-    this.text = {
+        super( streamer, params );
 
-        name: this.name,
-        path: this.path,
-        data: ""
+        this.text = {
 
-    };
+            name: this.name,
+            path: this.path,
+            data: ""
 
-}
+        };
 
-TextParser.prototype = Object.assign( Object.create(
+    }
 
-    Parser.prototype ), {
+    get type (){ return "text"; }
+    get __objName(){ return "text"; }
 
-    constructor: TextParser,
-    type: "text",
-
-    __objName: "text",
-
-    _parse: function(){
+    _parse(){
 
         this.text.data = this.streamer.asText();
 
     }
 
-} );
+}
 
 ParserRegistry.add( "txt", TextParser );
 ParserRegistry.add( "text", TextParser );

@@ -34,13 +34,13 @@ function lineLineIntersect( p1, p2, p3, p4 ){
     p43.x = p4.x - p3.x;
     p43.y = p4.y - p3.y;
     p43.z = p4.z - p3.z;
-    if( Math.abs(p43.x) < EPS && Math.abs(p43.y) < EPS && Math.abs(p43.z) < EPS )
+    if( Math.abs( p43.x ) < EPS && Math.abs( p43.y ) < EPS && Math.abs( p43.z ) < EPS )
         return null;
 
     p21.x = p2.x - p1.x;
     p21.y = p2.y - p1.y;
     p21.z = p2.z - p1.z;
-    if( Math.abs(p21.x) < EPS && Math.abs(p21.y) < EPS && Math.abs(p21.z) < EPS )
+    if( Math.abs( p21.x ) < EPS && Math.abs( p21.y ) < EPS && Math.abs( p21.z ) < EPS )
         return null;
 
     d1343 = p13.x * p43.x + p13.y * p43.y + p13.z * p43.z;
@@ -50,7 +50,7 @@ function lineLineIntersect( p1, p2, p3, p4 ){
     d2121 = p21.x * p21.x + p21.y * p21.y + p21.z * p21.z;
 
     denom = d2121 * d4343 - d4321 * d4321;
-    if( Math.abs(denom) < EPS )
+    if( Math.abs( denom ) < EPS )
         return null;
     numer = d1343 * d4321 - d1321 * d4343;
 
@@ -138,8 +138,8 @@ function computeBoundingBox( array ){
         if ( z > maxZ ) maxZ = z;
     }
     return [
-        v3new([ minX, minY, minZ ]),
-        v3new([ maxX, maxY, maxZ ])
+        v3new( [ minX, minY, minZ ] ),
+        v3new( [ maxX, maxY, maxZ ] )
     ];
 }
 v3forEach.__deps = [ v3new ];

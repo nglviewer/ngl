@@ -5,11 +5,9 @@
  */
 
 
-import { Color } from "../../lib/three.es6.js";
-
-import Selection from "../selection.js";
 import { generateUUID } from "../math/math-utils.js";
 import Colormaker from "./colormaker.js";
+import SelectionColormaker from "./selection-colormaker.js";
 
 
 var ColormakerScales = {
@@ -158,14 +156,17 @@ class ColormakerRegistry{
     addScheme( scheme, label ){
 
         if( !( scheme instanceof Colormaker ) ){
-
             scheme = this.createScheme( scheme, label );
-
         }
+
+        return this.addUserScheme( scheme, label );
+
+    }
+
+    addUserScheme( scheme, label ){
 
         label = label || "";
         var id = "" + generateUUID() + "|" + label;
-
         this.userSchemes[ id ] = scheme;
 
         return id;
@@ -181,57 +182,32 @@ class ColormakerRegistry{
     createScheme( constructor, label ){
 
         var _Colormaker = function( params ){
-
             Colormaker.call( this, params );
-
             this.label = label || "";
-
             constructor.call( this, params );
-
         };
 
         _Colormaker.prototype = Colormaker.prototype;
-
         _Colormaker.prototype.constructor = Colormaker;
 
         return _Colormaker;
 
     }
 
-    addSelectionScheme( pairList, label ){
+    addSelectionScheme( dataList, label ){
 
-        return this.addScheme( function(){
+        class MySelectionColormaker extends SelectionColormaker{
+            constructor( params ){
+                super( Object.assign( { dataList: dataList }, params ) );
+            }
+        }
 
-            var colorList = [];
-            var selectionList = [];
+        return this.addUserScheme( MySelectionColormaker, label );
 
-            pairList.forEach( function( pair ){
+    }
 
-                colorList.push( new Color( pair[ 0 ] ).getHex() );
-                selectionList.push( new Selection( pair[ 1 ] ) );
-
-            } );
-
-            var n = pairList.length;
-
-            this.atomColor = function( a ){
-
-                for( var i = 0; i < n; ++i ){
-
-                    if( selectionList[ i ].test( a ) ){
-
-                        return colorList[ i ];
-
-                    }
-
-                }
-
-                return 0xFFFFFF;
-
-            };
-
-        }, label );
-
+    hasScheme( id ) {
+        return id in this.schemes || id in this.userSchemes;
     }
 
 }

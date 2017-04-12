@@ -12,71 +12,62 @@ import "../shader/SDFFont.frag";
 
 import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
-import Buffer from "./buffer.js";
 import QuadBuffer from "./quad-buffer.js";
 
 
-var getTextAtlas = function(){
+const TextAtlasCache = {};
 
-    var cache = {};
-
-    return function getTextAtlas( params ){
-
-        var hash = JSON.stringify( params );
-
-        if( cache[ hash ] === undefined ){
-            cache[ hash ] = new TextAtlas( params );
-        }
-        return cache[ hash ];
+function getTextAtlas( params ){
+    var hash = JSON.stringify( params );
+    if( TextAtlasCache[ hash ] === undefined ){
+        TextAtlasCache[ hash ] = new TextAtlas( params );
     }
-
-}();
-
-
-function TextAtlas( params ){
-
-    // adapted from https://github.com/unconed/mathbox
-    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
-
-    var p = Object.assign( {}, params );
-
-    this.font = defaults( p.font, [ 'sans-serif' ] );
-    this.size = defaults( p.size, 36 );
-    this.style = defaults( p.style, 'normal' );
-    this.variant = defaults( p.variant, 'normal' );
-    this.weight = defaults( p.weight, 'normal' );
-    this.outline = defaults( p.outline, 0 );
-    this.width = defaults( p.width, 1024 );
-    this.height = defaults( p.height, 1024 );
-
-    this.gamma = 1;
-    if( typeof navigator !== 'undefined' ){
-        var ua = navigator.userAgent;
-        if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
-            this.gamma = 0.5;
-        }
-    }
-
-    this.mapped = {};
-    this.scratchW = 0;
-    this.scratchH = 0;
-    this.currentX = 0;
-    this.currentY = 0;
-
-    this.build();
-    this.populate();
-
-    this.texture = new CanvasTexture( this.canvas2 );
-    this.texture.flipY = false;
-    this.texture.needsUpdate = true;
-
+    return TextAtlasCache[ hash ];
 }
 
-TextAtlas.prototype = {
 
-    constructor: TextAtlas,
+class TextAtlas{
 
-    build: function(){
+    constructor( params ){
+
+        // adapted from https://github.com/unconed/mathbox
+        // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+
+        var p = Object.assign( {}, params );
+
+        this.font = defaults( p.font, [ 'sans-serif' ] );
+        this.size = defaults( p.size, 36 );
+        this.style = defaults( p.style, 'normal' );
+        this.variant = defaults( p.variant, 'normal' );
+        this.weight = defaults( p.weight, 'normal' );
+        this.outline = defaults( p.outline, 0 );
+        this.width = defaults( p.width, 1024 );
+        this.height = defaults( p.height, 1024 );
+
+        this.gamma = 1;
+        if( typeof navigator !== 'undefined' ){
+            var ua = navigator.userAgent;
+            if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
+                this.gamma = 0.5;
+            }
+        }
+
+        this.mapped = {};
+        this.scratchW = 0;
+        this.scratchH = 0;
+        this.currentX = 0;
+        this.currentY = 0;
+
+        this.build();
+        this.populate();
+
+        this.texture = new CanvasTexture( this.canvas2 );
+        this.texture.flipY = false;
+        this.texture.needsUpdate = true;
+
+    }
+
+    build(){
 
         // Prepare line-height with room for outline and descenders/ascenders
         var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
@@ -118,9 +109,9 @@ TextAtlas.prototype = {
         this.canvas2.height = this.height;
         this.context2 = this.canvas2.getContext( '2d' );
 
-    },
+    }
 
-    map: function( text ){
+    map( text ){
 
         if( this.mapped[ text ] === undefined ){
 
@@ -155,9 +146,9 @@ TextAtlas.prototype = {
 
         return this.mapped[ text ];
 
-    },
+    }
 
-    draw: function( text ){
+    draw( text ){
 
         var h = this.lineHeight;
         var o = this.outline;
@@ -175,7 +166,7 @@ TextAtlas.prototype = {
         var w = Math.min( max, Math.ceil( m.width + 2 * x + 1 ) );
 
         // Clear scratch area
-        ctx.clearRect(0, 0, w, h);
+        ctx.clearRect( 0, 0, w, h );
 
         var i, il, j, imageData, data;
 
@@ -237,9 +228,9 @@ TextAtlas.prototype = {
         this.scratchW = w;
         this.scratchH = h;
 
-    },
+    }
 
-    populate: function(){
+    populate(){
 
         for( var i = 0; i < 256; ++i ){
             this.map( String.fromCharCode( i ) );
@@ -247,7 +238,7 @@ TextAtlas.prototype = {
 
     }
 
-};
+}
 
 
 /**
@@ -285,117 +276,108 @@ TextAtlas.prototype = {
  */
 
 
-/**
- * Text buffer
- * @class
- * @augments {Buffer}
- * @param {Float32Array} position - positions
- *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
- * @param {Float32Array} size - sizes
- *                               [s1, s2, ..., sN]
- * @param {Float32Array} color - colors
- *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {String[]} text - text strings
- *                               ["t1", "t2", ..., "tN"]
- * @param {TextBufferParameters} params - parameters object
- */
-function TextBuffer( position, size, color, text, params ){
+class TextBuffer extends QuadBuffer{
 
-    var p = params || {};
-    p.forceTransparent = true;
+    /**
+     * make text buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.size - sizes
+     * @param  {Float32Array} data.color - colors
+     * @param  {String[]} data.text - text strings
+     * @param  {TextBufferParameters} params - parameters object
+     */
+    constructor( data, params ){
 
-    this.fontFamily = defaults( p.fontFamily, "sans-serif" );
-    this.fontStyle = defaults( p.fontStyle, "normal" );
-    this.fontWeight = defaults( p.fontWeight, "bold" );
-    this.fontSize = defaults( p.fontSize, 48 );
-    this.sdf = defaults( p.sdf, Browser === "Chrome" );
-    this.xOffset = defaults( p.xOffset, 0.0 );
-    this.yOffset = defaults( p.yOffset, 0.0 );
-    this.zOffset = defaults( p.zOffset, 0.5 );
-    this.attachment = defaults( p.attachment, "bottom-left" );
-    this.showBorder = defaults( p.showBorder, false );
-    this.borderColor = defaults( p.borderColor, "lightgrey" );
-    this.borderWidth = defaults( p.borderWidth, 0.15 );
-    this.showBackground = defaults( p.showBackground, false );
-    this.backgroundColor = defaults( p.backgroundColor, "lightgrey" );
-    this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
-    this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
+        var d = data || {};
+        var p = params || {};
 
-    var n = position.length / 3;
+        p.forceTransparent = true;
 
-    var charCount = 0;
-    for( var i = 0; i < n; ++i ){
-        charCount += text[ i ].length;
+        var n = d.position.length / 3;
+        var charCount = 0;
+        for( var i = 0; i < n; ++i ){
+            charCount += d.text[ i ].length;
+        }
+
+        var count = charCount;
+        if( p.showBackground ) count += n;
+
+        super( {
+            position: new Float32Array( count * 3 ),
+            color: new Float32Array( count * 3 )
+        }, p );
+
+        this.fontFamily = defaults( p.fontFamily, "sans-serif" );
+        this.fontStyle = defaults( p.fontStyle, "normal" );
+        this.fontWeight = defaults( p.fontWeight, "bold" );
+        this.fontSize = defaults( p.fontSize, 48 );
+        this.sdf = defaults( p.sdf, Browser === "Chrome" );
+        this.xOffset = defaults( p.xOffset, 0.0 );
+        this.yOffset = defaults( p.yOffset, 0.0 );
+        this.zOffset = defaults( p.zOffset, 0.5 );
+        this.attachment = defaults( p.attachment, "bottom-left" );
+        this.showBorder = defaults( p.showBorder, false );
+        this.borderColor = defaults( p.borderColor, "lightgrey" );
+        this.borderWidth = defaults( p.borderWidth, 0.15 );
+        this.showBackground = defaults( p.showBackground, false );
+        this.backgroundColor = defaults( p.backgroundColor, "lightgrey" );
+        this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
+        this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
+
+        this.text = d.text;
+        this.positionCount = n;
+
+        this.addUniforms( {
+            "fontTexture": { value: null },
+            "xOffset": { value: this.xOffset },
+            "yOffset": { value: this.yOffset },
+            "zOffset": { value: this.zOffset },
+            "ortho": { value: false },
+            "showBorder": { value: this.showBorder },
+            "borderColor": { value: new Color( this.borderColor ) },
+            "borderWidth": { value: this.borderWidth },
+            "backgroundColor": { value: new Color( this.backgroundColor ) },
+            "backgroundOpacity": { value: this.backgroundOpacity }
+        } );
+
+        this.addAttributes( {
+            "inputTexCoord": { type: "v2", value: null },
+            "inputSize": { type: "f", value: null },
+        } );
+
+        this.setAttributes( data );
+
+        this.makeTexture();
+        this.makeMapping();
+
     }
 
-    this.text = text;
-    this.count = charCount;
-    if( this.showBackground ) this.count += n;
-    this.positionCount = n;
+    get parameters (){
 
-    this.vertexShader = "SDFFont.vert";
-    this.fragmentShader = "SDFFont.frag";
+        return Object.assign( {
 
-    QuadBuffer.call( this, p );
+            fontFamily: { uniform: true },
+            fontStyle: { uniform: true },
+            fontWeight: { uniform: true },
+            fontSize: { uniform: true },
+            sdf: { updateShader: true, uniform: true },
+            xOffset: { uniform: true },
+            yOffset: { uniform: true },
+            zOffset: { uniform: true },
+            showBorder: { uniform: true },
+            borderColor: { uniform: true },
+            borderWidth: { uniform: true },
+            backgroundColor: { uniform: true },
+            backgroundOpacity: { uniform: true }
 
-    this.addUniforms( {
-        "fontTexture": { value: null },
-        "xOffset": { value: this.xOffset },
-        "yOffset": { value: this.yOffset },
-        "zOffset": { value: this.zOffset },
-        "ortho": { value: false },
-        "showBorder": { value: this.showBorder },
-        "borderColor": { value: new Color( this.borderColor ) },
-        "borderWidth": { value: this.borderWidth },
-        "backgroundColor": { value: new Color( this.backgroundColor ) },
-        "backgroundOpacity": { value: this.backgroundOpacity }
-    } );
+        }, super.parameters );
 
-    this.addAttributes( {
-        "inputTexCoord": { type: "v2", value: null },
-        "inputSize": { type: "f", value: null },
-    } );
+    }
 
-    this.setAttributes( {
-        "position": position,
-        "size": size,
-        "color": color
-    } );
+    makeMaterial(){
 
-    this.makeTexture();
-    this.makeMapping();
-
-}
-
-TextBuffer.prototype = Object.assign( Object.create(
-
-    QuadBuffer.prototype ), {
-
-    constructor: TextBuffer,
-
-    type: "text",
-
-    parameters: Object.assign( {
-
-        fontFamily: { uniform: true },
-        fontStyle: { uniform: true },
-        fontWeight: { uniform: true },
-        fontSize: { uniform: true },
-        sdf: { updateShader: true, uniform: true },
-        xOffset: { uniform: true },
-        yOffset: { uniform: true },
-        zOffset: { uniform: true },
-        showBorder: { uniform: true },
-        borderColor: { uniform: true },
-        borderWidth: { uniform: true },
-        backgroundColor: { uniform: true },
-        backgroundOpacity: { uniform: true }
-
-    }, Buffer.prototype.parameters ),
-
-    makeMaterial: function(){
-
-        Buffer.prototype.makeMaterial.call( this );
+        super.makeMaterial();
 
         var tex = this.texture;
 
@@ -417,9 +399,9 @@ TextBuffer.prototype = Object.assign( Object.create(
         pm.uniforms.fontTexture.value = tex;
         pm.needsUpdate = true;
 
-    },
+    }
 
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         var position, size, color;
         var aPosition, inputSize, aColor;
@@ -492,9 +474,9 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    makeTexture: function(){
+    makeTexture(){
 
         this.textAtlas = getTextAtlas( {
             font: [ this.fontFamily ],
@@ -506,9 +488,9 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         this.texture = this.textAtlas.texture;
 
-    },
+    }
 
-    makeMapping: function(){
+    makeMapping(){
 
         var ta = this.textAtlas;
         var text = this.text;
@@ -591,9 +573,9 @@ TextBuffer.prototype = Object.assign( Object.create(
 
                 var texCoords = [
                     c.x/texWidth, c.y/texHeight,             // top left
-                    c.x/texWidth, (c.y+c.h)/texHeight,       // bottom left
-                    (c.x+c.w)/texWidth, c.y/texHeight,       // top right
-                    (c.x+c.w)/texWidth, (c.y+c.h)/texHeight  // bottom right
+                    c.x/texWidth, ( c.y+c.h )/texHeight,       // bottom left
+                    ( c.x+c.w )/texWidth, c.y/texHeight,       // top right
+                    ( c.x+c.w )/texWidth, ( c.y+c.h )/texHeight  // bottom right
                 ];
                 inputTexCoord.set( texCoords, i );
 
@@ -606,11 +588,11 @@ TextBuffer.prototype = Object.assign( Object.create(
         this.geometry.attributes.inputTexCoord.needsUpdate = true;
         this.geometry.attributes.mapping.needsUpdate = true;
 
-    },
+    }
 
-    getDefines: function( type ){
+    getDefines( type ){
 
-        var defines = Buffer.prototype.getDefines.call( this, type );
+        var defines = super.getDefines( type );
 
         if( this.sdf ){
             defines.SDF = 1;
@@ -618,9 +600,9 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         return defines;
 
-    },
+    }
 
-    setUniforms: function( data ){
+    setUniforms( data ){
 
         if( data && (
                 data.fontFamily !== undefined ||
@@ -638,11 +620,15 @@ TextBuffer.prototype = Object.assign( Object.create(
 
         }
 
-        Buffer.prototype.setUniforms.call( this, data );
+        super.setUniforms( data );
 
     }
 
-} );
+    get type (){ return "text"; }  // TODO needed?
+    get vertexShader (){ return "SDFFont.vert"; }
+    get fragmentShader (){ return "SDFFont.frag"; }
+
+}
 
 
 export default TextBuffer;

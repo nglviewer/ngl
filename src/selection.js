@@ -7,7 +7,7 @@
 
 import Signal from "../lib/signals.es6.js";
 
-import { binarySearchIndexOf } from "./utils.js";
+import { binarySearchIndexOf, rangeInSortedArray } from "./utils.js";
 
 
 var kwd = {
@@ -566,8 +566,6 @@ Selection.prototype = {
                 }
                 indexList.sort( function( a, b ){ return a - b; } );
                 sele.atomindex = indexList;
-                sele.atomindexFirst = indexList[ 0 ];
-                sele.atomindexLast = indexList[ indexList.length - 1 ];
                 pushRule( sele );
                 continue;
             }
@@ -600,7 +598,7 @@ Selection.prototype = {
                 rules: []
             };
 
-            model = c.split("/");
+            model = c.split( "/" );
             if( model.length > 1 && model[1] ){
                 if( isNaN( parseInt( model[1] ) ) ){
                     throw new Error( "model must be an integer" );
@@ -610,14 +608,14 @@ Selection.prototype = {
                 } );
             }
 
-            altloc = model[0].split("%");
+            altloc = model[0].split( "%" );
             if( altloc.length > 1 ){
                 sele.rules.push( {
                     altloc: altloc[1]
                 } );
             }
 
-            atomname = altloc[0].split(".");
+            atomname = altloc[0].split( "." );
             if( atomname.length > 1 && atomname[1] ){
                 if( atomname[1].length > 4 ){
                     throw new Error( "atomname must be one to four characters" );
@@ -627,14 +625,14 @@ Selection.prototype = {
                 } );
             }
 
-            chain = atomname[0].split(":");
+            chain = atomname[0].split( ":" );
             if( chain.length > 1 && chain[1] ){
                 sele.rules.push( {
                     chainname: chain[1]
                 } );
             }
 
-            inscode = chain[0].split("^");
+            inscode = chain[0].split( "^" );
             if( inscode.length > 1 ){
                 sele.rules.push( {
                     inscode: inscode[1]
@@ -644,14 +642,14 @@ Selection.prototype = {
             if( inscode[0] ){
                 var negate, negate2;
                 if( inscode[0][0] === "-" ){
-                    inscode[0] = inscode[0].substr(1);
+                    inscode[0] = inscode[0].substr( 1 );
                     negate = true;
                 }
                 if( inscode[0].includes( "--" ) ){
                     inscode[0] = inscode[0].replace( "--", "-" );
                     negate2 = true;
                 }
-                resi = inscode[0].split("-");
+                resi = inscode[0].split( "-" );
                 if( resi.length === 1 ){
                     resi = parseInt( resi[0] );
                     if( isNaN( resi ) ){
@@ -743,7 +741,7 @@ Selection.prototype = {
                         // return -1;
                         na = true;
                         continue;
-                    }else if( ret === true){
+                    }else if( ret === true ){
                         if( and ){ continue; }else{ return t; }
                     }else{
                         if( and ){ return f; }else{ continue; }
@@ -763,7 +761,7 @@ Selection.prototype = {
                         // return -1;
                         na = true;
                         continue;
-                    }else if( ret === true){
+                    }else if( ret === true ){
                         if( and ){ continue; }else{ return t; }
                     }else{
                         if( and ){ return f; }else{ continue; }
@@ -967,7 +965,7 @@ Selection.prototype = {
             }
 
             if( s.atomindex!==undefined &&
-                    ( r.atomOffset > s.atomindexLast || r.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
             ) return false;
 
             if( s.resname!==undefined && s.resname!==r.resname ) return false;
@@ -1044,7 +1042,7 @@ Selection.prototype = {
             }
 
             if( s.atomindex!==undefined &&
-                    ( c.atomOffset > s.atomindexLast || c.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
             ) return false;
 
             if( s.chainname!==undefined && s.chainname!==c.chainname ) return false;
@@ -1092,7 +1090,7 @@ Selection.prototype = {
             if( s.model===undefined && s.atomindex===undefined ) return -1;
 
             if( s.atomindex!==undefined &&
-                    ( m.atomOffset > s.atomindexLast || m.atomEnd < s.atomindexFirst )
+                    rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
             ) return false;
 
             if( s.model!==undefined && s.model!==m.index ) return false;

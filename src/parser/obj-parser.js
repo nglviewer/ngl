@@ -232,7 +232,7 @@ OBJLoader.prototype = {
 
         }
 
-        if ( text.indexOf( '\\\n' ) !== - 1) {
+        if ( text.indexOf( '\\\n' ) !== - 1 ) {
 
             // join lines separated by a line continuation character (\)
             text = text.replace( /\\\n/g, '' );
@@ -429,22 +429,15 @@ OBJLoader.prototype = {
 };
 
 
-function ObjParser( streamer, params ){
+class ObjParser extends SurfaceParser{
 
-    SurfaceParser.call( this, streamer, params );
+    get type (){ return "obj"; }
 
-    this.loader = new OBJLoader();
+    getLoader(){
+        return new OBJLoader();
+    }
 
 }
-
-ObjParser.prototype = Object.assign( Object.create(
-
-    SurfaceParser.prototype ), {
-
-    constructor: ObjParser,
-    type: "obj"
-
-} );
 
 ParserRegistry.add( "obj", ObjParser );
 

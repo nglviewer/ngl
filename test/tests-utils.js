@@ -13,38 +13,38 @@ function str2bin( str ){
 }
 
 
-describe('utils', function() {
+describe( 'utils', function() {
 
 
-describe('uint8ToLines', function () {
-    it('multiple chunks', function () {
+describe( 'uint8ToLines', function () {
+    it( 'multiple chunks', function () {
         var str = "moin\nfoo\nbar\ntest123\n";
         var bin = str2bin( str );
         var lines = uint8ToLines( bin, 4 );
         assert.strictEqual( 4, lines.length, "Passed!" );
         assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
-    });
+    } );
 
-    it('newline at end', function () {
+    it( 'newline at end', function () {
         var str = "moin\nfoo\nbar\ntest123\n";
         var bin = str2bin( str );
         var lines = uint8ToLines( bin );
         assert.strictEqual( 4, lines.length, "Passed!" );
         assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
-    });
+    } );
 
-    it('no newline at end', function () {
+    it( 'no newline at end', function () {
         var str = "moin\nfoo\nbar\ntest123";
         var bin = str2bin( str );
         var lines = uint8ToLines( bin );
         assert.strictEqual( 4, lines.length, "Passed!" );
         assert.deepEqual( [ "moin", "foo", "bar", "test123" ], lines, "Passed!" );
-    });
-});
+    } );
+} );
 
 
-describe('binarySearchIndexOf', function () {
-    it('basic', function () {
+describe( 'binarySearchIndexOf', function () {
+    it( 'basic', function () {
 
         var array = [ 1, 2, 3, 4, 5, 6 ];
         var element = 4;
@@ -53,8 +53,8 @@ describe('binarySearchIndexOf', function () {
 
         assert.equal( 3, result, "index of element in array" );
 
-    });
-});
+    } );
+} );
 
 
-});
+} );

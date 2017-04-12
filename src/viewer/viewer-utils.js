@@ -17,7 +17,7 @@ function _trimCanvas( canvas, r, g, b, a ){
     var canvasWidth = canvas.width;
 
     var ctx = canvas.getContext( '2d' );
-    var pixels = ctx.getImageData(0, 0, canvasWidth, canvasHeight ).data;
+    var pixels = ctx.getImageData( 0, 0, canvasWidth, canvasHeight ).data;
 
     var x, y, doBreak, off;
 
@@ -179,7 +179,7 @@ function makeImage( viewer, params ){
         }
     }
 
-    return new Promise( function( resolve){
+    return new Promise( function( resolve ){
 
         var tiledRenderer = new TiledRenderer(
             renderer, camera, viewer,

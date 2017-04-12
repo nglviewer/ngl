@@ -269,7 +269,7 @@ function Kdtree( points, metric ){
             ){
                 throw "right child is < parent!";
             }
-            count += verify( rightIndex, depth + 1);
+            count += verify( rightIndex, depth + 1 );
         }
 
         return count;

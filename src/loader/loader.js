@@ -20,6 +20,19 @@ import NetworkStreamer from "../streamer/network-streamer.js";
  */
 
 
+const binaryFileExtensions = [
+    "mmtf", "dcd", "mrc", "ccp4", "map", "dsn6", "brix", "dxbin"
+];
+
+const jsonFileTypes = [
+    "json"
+];
+
+const xmlFileTypes = [
+    "xml", "validation"
+];
+
+
 /**
  * Loader base class
  */
@@ -34,7 +47,7 @@ class Loader{
 
         var p = Object.assign( {}, params );
 
-        var binary = [ "mmtf", "dcd", "mrc", "ccp4", "map", "dxbin" ].includes( p.ext );
+        var binary = binaryFileExtensions.includes( p.ext );
 
         this.compressed = defaults( p.compressed, false );
         this.binary = defaults( p.binary, binary );
@@ -51,8 +64,8 @@ class Loader{
         var streamerParams = {
             compressed: this.compressed,
             binary: this.binary,
-            json: this.ext === "json",
-            xml: this.ext === "xml"
+            json: jsonFileTypes.includes( this.ext ),
+            xml: xmlFileTypes.includes( this.ext )
         };
 
         if( ( typeof File !== "undefined" && src instanceof File ) ||

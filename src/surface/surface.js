@@ -189,12 +189,15 @@ Surface.prototype = {
 
     },
 
-    getPickingColor: function( params ){
+    getPicking: function( structure ){
 
-        var p = Object.assign( params || {} );
-        p.scheme = "picking";
+        const picking = this.atomindex;
+        if( picking && structure ){
+            picking.object = structure;
+            picking.type = "atom";
+        }
 
-        return this.getColor( p );
+        return picking;
 
     },
 
@@ -204,9 +207,9 @@ Surface.prototype = {
 
     },
 
-    getSize: function( size ){
+    getSize: function( size, scale ){
 
-        return uniformArray( this.size, size );
+        return uniformArray( this.size, size * scale );
 
     },
 

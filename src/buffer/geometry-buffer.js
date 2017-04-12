@@ -11,137 +11,133 @@ import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./b
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function GeometryBuffer( position, color, pickingColor, params ){
+const matrix = new Matrix4();
+const normalMatrix = new Matrix3();
 
-    var p = params || {};
 
-    // required property of subclasses
-    var geo = this.geo;
+class GeometryBuffer extends MeshBuffer{
 
-    var n = position.length / 3;
-    var m, o;
+    // position, color, picking
+    constructor( data, params, geo ){
 
-    if( geo.vertices && geo.faces ){
-        this.geoPosition = positionFromGeometry( geo );
-        this.geoNormal = normalFromGeometry( geo );
-        this.geoIndex = indexFromGeometry( geo );
-        m = geo.vertices.length;
-        o = geo.faces.length;
-    }else{
-        this.geoPosition = geo.attributes.position.array;
-        this.geoNormal = geo.attributes.normal.array;
-        this.geoIndex = geo.index.array;
-        m = this.geoPosition.length / 3;
-        o = this.geoIndex.length / 3;
+        var p = params || {};
+
+        var n = data.position.length / 3;
+        var m, o;
+        var geoPosition, geoNormal, geoIndex;
+
+        if( geo.vertices && geo.faces ){
+            geoPosition = positionFromGeometry( geo );
+            geoNormal = normalFromGeometry( geo );
+            geoIndex = indexFromGeometry( geo );
+            m = geo.vertices.length;
+            o = geo.faces.length;
+        }else{
+            geoPosition = geo.attributes.position.array;
+            geoNormal = geo.attributes.normal.array;
+            geoIndex = geo.index.array;
+            m = geoPosition.length / 3;
+            o = geoIndex.length / 3;
+        }
+
+        var size = n * m;
+
+        const meshPosition = new Float32Array( size * 3 );
+        const meshNormal = new Float32Array( size * 3 );
+        const meshColor = new Float32Array( size * 3 );
+        const meshPicking = new Float32Array( size );
+
+        const TypedArray = size > 65535 ? Uint32Array : Uint16Array;
+        const meshIndex = new TypedArray( n * o * 3 );
+
+        super( {
+            position: meshPosition,
+            color: meshColor,
+            index: meshIndex,
+            normal: meshNormal,
+            picking: meshPicking
+        }, p );
+
+        this.geoPosition = geoPosition;
+        this.geoNormal = geoNormal;
+        this.geoIndex = geoIndex;
+
+        this.positionCount = n;
+        this.geoPositionCount = m;
+        this.geoFacesCount = o;
+
+        this.transformedGeoPosition = new Float32Array( m * 3 );
+        this.transformedGeoNormal = new Float32Array( m * 3 );
+
+        this.meshPosition = meshPosition;
+        this.meshColor = meshColor;
+        this.meshIndex = meshIndex;
+        this.meshNormal = meshNormal;
+        this.meshPicking = meshPicking;
+
+        this.meshIndex = meshIndex;
+        this.makeIndex();
+
     }
 
-    this.size = n * m;
-    this.positionCount = n;
-    this.geoPositionCount = m;
-    this.geoFacesCount = o;
+    applyPositionTransform(){}
 
-    this.transformedGeoPosition = new Float32Array( m * 3 );
-    this.transformedGeoNormal = new Float32Array( m * 3 );
+    setAttributes( data, initNormals ){
 
-    this.meshPosition = new Float32Array( this.size * 3 );
-    this.meshNormal = new Float32Array( this.size * 3 );
-    this.meshColor = new Float32Array( this.size * 3 );
-    this.meshPickingColor = new Float32Array( this.size * 3 );
+        var attributes = this.geometry.attributes;
 
-    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
-    this.meshIndex = new TypedArray( n * o * 3 );
-    this.makeIndex();
+        var position, color, picking;
+        var geoPosition, geoNormal;
+        var transformedGeoPosition, transformedGeoNormal;
+        var meshPosition, meshColor, meshPicking, meshNormal;
 
-    MeshBuffer.call(
-        this, this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, p
-    );
+        var updateNormals = this.updateNormals;
 
-    this.initNormals = true;
-
-    this.setAttributes( {
-        position: position,
-        color: color,
-        pickingColor: pickingColor
-    } );
-
-    this.initNormals = false;
-
-}
-
-GeometryBuffer.prototype = Object.assign( Object.create(
-
-    MeshBuffer.prototype ), {
-
-    constructor: GeometryBuffer,
-
-    applyPositionTransform: function(){},
-
-    setAttributes: function(){
-
-        var matrix = new Matrix4();
-        var normalMatrix = new Matrix3();
-
-        return function setAttributes( data ){
-
-            var attributes = this.geometry.attributes;
-
-            var position, color, pickingColor;
-            var geoPosition, geoNormal;
-            var transformedGeoPosition, transformedGeoNormal;
-            var meshPosition, meshColor, meshPickingColor, meshNormal;
-
-            if( data.position ){
-                position = data.position;
-                geoPosition = this.geoPosition;
-                meshPosition = this.meshPosition;
-                transformedGeoPosition = this.transformedGeoPosition;
-                attributes.position.needsUpdate = true;
-            }
-
-            if( data.color ){
-                color = data.color;
-                meshColor = this.meshColor;
-                attributes.color.needsUpdate = true;
-            }
-
-            if( data.pickingColor ){
-                pickingColor = data.pickingColor;
-                meshPickingColor = this.meshPickingColor;
-                attributes.pickingColor.needsUpdate = true;
-            }
-
-            var updateNormals = !!( this.updateNormals && position );
-            var initNormals = !!( this.initNormals && position );
-
+        if( data.position ){
+            position = data.position;
+            geoPosition = this.geoPosition;
+            meshPosition = this.meshPosition;
+            transformedGeoPosition = this.transformedGeoPosition;
+            attributes.position.needsUpdate = true;
             if( updateNormals || initNormals ){
                 geoNormal = this.geoNormal;
                 meshNormal = this.meshNormal;
                 transformedGeoNormal = this.transformedGeoNormal;
                 attributes.normal.needsUpdate = true;
             }
+        }
 
-            var n = this.positionCount;
-            var m = this.geoPositionCount;
+        if( data.color ){
+            color = data.color;
+            meshColor = this.meshColor;
+            attributes.color.needsUpdate = true;
+        }
 
-            for( var i = 0; i < n; ++i ){
+        if( data.picking ){
+            picking = data.picking;
+            meshPicking = this.meshPicking;
+            attributes.picking.needsUpdate = true;
+        }
 
-                var j, l;
-                var k = i * m * 3;
-                var i3 = i * 3;
+        var n = this.positionCount;
+        var m = this.geoPositionCount;
 
-                if( position ){
+        for( var i = 0; i < n; ++i ){
 
-                    transformedGeoPosition.set( geoPosition );
-                    matrix.makeTranslation(
-                        position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
-                    );
-                    this.applyPositionTransform( matrix, i, i3 );
-                    matrix.applyToVector3Array( transformedGeoPosition );
+            var j, l;
+            var k = i * m * 3;
+            var i3 = i * 3;
 
-                    meshPosition.set( transformedGeoPosition, k );
+            if( position ){
 
-                }
+                transformedGeoPosition.set( geoPosition );
+                matrix.makeTranslation(
+                    position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
+                );
+                this.applyPositionTransform( matrix, i, i3 );
+                matrix.applyToVector3Array( transformedGeoPosition );
+
+                meshPosition.set( transformedGeoPosition, k );
 
                 if( updateNormals ){
 
@@ -157,41 +153,37 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
                 }
 
-                if( color ){
+            }
 
-                    for( j = 0; j < m; ++j ){
+            if( color ){
 
-                        l = k + 3 * j;
+                for( j = 0; j < m; ++j ){
 
-                        meshColor[ l     ] = color[ i3     ];
-                        meshColor[ l + 1 ] = color[ i3 + 1 ];
-                        meshColor[ l + 2 ] = color[ i3 + 2 ];
+                    l = k + 3 * j;
 
-                    }
-
-                }
-
-                if( pickingColor ){
-
-                    for( j = 0; j < m; ++j ){
-
-                        l = k + 3 * j;
-
-                        meshPickingColor[ l     ] = pickingColor[ i3     ];
-                        meshPickingColor[ l + 1 ] = pickingColor[ i3 + 1 ];
-                        meshPickingColor[ l + 2 ] = pickingColor[ i3 + 2 ];
-
-                    }
+                    meshColor[ l     ] = color[ i3     ];
+                    meshColor[ l + 1 ] = color[ i3 + 1 ];
+                    meshColor[ l + 2 ] = color[ i3 + 2 ];
 
                 }
 
             }
 
-        };
+            if( picking ){
 
-    }(),
+                for( j = 0; j < m; ++j ){
 
-    makeIndex: function(){
+                    meshPicking[ i * m + j ] = picking[ i ];
+
+                }
+
+            }
+
+        }
+
+    }
+
+    makeIndex(){
 
         var geoIndex = this.geoIndex;
         var meshIndex = this.meshIndex;
@@ -215,7 +207,9 @@ GeometryBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get updateNormals (){ return false; }
+
+}
 
 
 export default GeometryBuffer;

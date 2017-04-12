@@ -14,20 +14,11 @@ import {
 } from "../structure/structure-utils.js";
 
 
-function GroParser( streamer, params ){
+class GroParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "gro"; }
 
-}
-
-GroParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: GroParser,
-    type: "gro",
-
-    _parse: function(){
+    _parse(){
 
         // http://manual.gromacs.org/current/online/gro.html
 
@@ -181,7 +172,7 @@ GroParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "gro", GroParser );
 

@@ -12,20 +12,11 @@ import { degToRad } from "../math/math-utils.js";
 import VolumeParser from "./volume-parser.js";
 
 
-function DxParser( streamer, params ){
+class DxParser extends VolumeParser{
 
-    VolumeParser.call( this, streamer, params );
+    get type (){ return "dx"; }
 
-}
-
-DxParser.prototype = Object.assign( Object.create(
-
-    VolumeParser.prototype ), {
-
-    constructor: DxParser,
-    type: "dx",
-
-    _parse: function(){
+    _parse(){
 
         // http://www.poissonboltzmann.org/docs/file-format-info/
 
@@ -78,9 +69,9 @@ DxParser.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( "DxParser._parse " + this.name );
 
-    },
+    }
 
-    parseHeaderLines: function( headerLines ){
+    parseHeaderLines( headerLines ){
 
         var header = {};
         var reWhitespace = /\s+/;
@@ -144,9 +135,9 @@ DxParser.prototype = Object.assign( Object.create(
             headerByteCount: headerByteCount
         };
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         var h = this.volume.header;
         var matrix = new Matrix4();
@@ -171,7 +162,7 @@ DxParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "dx", DxParser );
 

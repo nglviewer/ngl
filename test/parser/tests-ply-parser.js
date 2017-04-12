@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/ply-parser', function() {
+describe( 'parser/ply-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/cube.ply";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -20,8 +20,8 @@ describe('parsing', function () {
             assert.strictEqual( surface.position.length, 108 );
             assert.strictEqual( surface.normal.length, 108 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

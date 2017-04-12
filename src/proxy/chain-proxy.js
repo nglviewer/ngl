@@ -262,7 +262,6 @@ ChainProxy.prototype = {
                         callback( new Polymer( structure, rStartIndex, rp1.index ) );
                     }
                 }
-
                 rStartIndex = rNextIndex;
 
                 continue;
@@ -270,7 +269,9 @@ ChainProxy.prototype = {
             }
 
             if( !ap1 || !ap2 || !ap1.connectedTo( ap2 ) ||
-                ( test && ( !test( rp1 ) || !test( rp2 ) ) ) ){
+                ( test && ( !test( rp1 ) || !test( rp2 ) ) )
+            ){
+
                 if( rp1.index - rStartIndex > 1 ){
                     // console.log("FOO2",rStartIndex, rp1.index)
                     callback( new Polymer( structure, rStartIndex, rp1.index ) );

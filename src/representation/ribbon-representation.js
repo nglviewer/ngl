@@ -89,7 +89,7 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( polymer => {
 
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
@@ -98,21 +98,24 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             var subPos = spline.getSubdividedPosition();
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subPick = spline.getSubdividedPicking();
             var subSize = spline.getSubdividedSize( this.radius, this.scale );
 
             bufferList.push(
                 new RibbonBuffer(
-                    subPos.position,
-                    subOri.binormal,
-                    subOri.normal,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
+                    {
+                        position: subPos.position,
+                        normal: subOri.binormal,
+                        dir: subOri.normal,
+                        color: subCol.color,
+                        size: subSize.size,
+                        picking: subPick.picking
+                    },
                     this.getBufferParams()
                 )
             );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,

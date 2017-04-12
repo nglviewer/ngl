@@ -146,10 +146,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         if( this.lineOnly ){
 
             this.lineBuffer = new LineBuffer(
-                bondData.position1,
-                bondData.position2,
-                bondData.color1,
-                bondData.color2,
+                bondData,
                 this.getBufferParams()
             );
 
@@ -158,13 +155,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         }else{
 
             var cylinderBuffer = new CylinderBuffer(
-                bondData.position1,
-                bondData.position2,
-                bondData.color1,
-                bondData.color2,
-                bondData.radius,
-                bondData.pickingColor1,
-                bondData.pickingColor2,
+                bondData,
                 this.getBufferParams( {
                     openEnded: this.openEnded,
                     radialSegments: this.radialSegments,
@@ -177,13 +168,8 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
             if( !this.cylinderOnly ){
 
-                var atomData = this.getAtomData( sview );
-
                 var sphereBuffer = new SphereBuffer(
-                    atomData.position,
-                    atomData.color,
-                    atomData.radius,
-                    atomData.pickingColor,
+                    this.getAtomData( sview ),
                     this.getBufferParams( {
                         sphereDetail: this.sphereDetail,
                         disableImpostor: this.disableImpostor,
@@ -216,12 +202,12 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             var lineData = {};
 
             if( !what || what.position ){
-                lineData.from = bondData.position1;
-                lineData.to = bondData.position2;
+                lineData.position1 = bondData.position1;
+                lineData.position2 = bondData.position2;
             }
 
             if( !what || what.color ){
-                lineData.color = bondData.color1;
+                lineData.color = bondData.color;
                 lineData.color2 = bondData.color2;
             }
 
@@ -237,7 +223,7 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             }
 
             if( !what || what.color ){
-                cylinderData.color = bondData.color1;
+                cylinderData.color = bondData.color;
                 cylinderData.color2 = bondData.color2;
             }
 

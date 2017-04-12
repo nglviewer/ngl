@@ -16,7 +16,8 @@ import {
 
 import { Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
-import { defaults } from "../utils.js";
+import { defaults, getTypedArray } from "../utils.js";
+import { serialArray } from "../math/array-utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -53,144 +54,168 @@ function getThreeSide( side ){
     }
 }
 
+const itemSize = {
+    "f": 1, "v2": 2, "v3": 3, "c": 3
+};
 
-/**
- * Buffer base class
- * @class
- * @param {Float32Array} position - positions
- *                                  [x1,y1,z1, x2,y2,z2, ..., xN,yN,zN]
- * @param {Float32Array} color - colors
- *                               [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {Int32Array} [index] - triangle indices
- *                                 [a1,b1,c1, a2,b2,c2, ..., aN,bN,cN]
- * @param {Float32Array} [pickingColor] - picking colors
- *                                      [r1,g1,b1, r2,g2,b2, ..., rN,gN,bN]
- * @param {BufferParameters} params - parameters object
- */
-function Buffer( position, color, index, pickingColor, params ){
 
-    var p = params || {};
+class Buffer{
 
-    // required properties:
-    // - size
-    // - attributeSize
-    // - vertexShader
-    // - fragmentShader
+    /**
+     * Create a buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.index - triangle indices
+     * @param {BufferParameters} params - parameters object
+     */
+    constructor( data, params ){
 
-    this.pickable = false;
-    this.dynamic = true;
+        var d = data || {};
+        var p = params || {};
 
-    this.opaqueBack = defaults( p.opaqueBack, false );
-    this.dullInterior = defaults( p.dullInterior, false );
-    this.side = defaults( p.side, "double" );
-    this.opacity = defaults( p.opacity, 1.0 );
-    this.clipNear = defaults( p.clipNear, 0 );
-    this.clipRadius = defaults( p.clipRadius, 0 );
-    this.clipCenter = defaults( p.clipCenter, new Vector3() );
-    this.flatShaded = defaults( p.flatShaded, false );
-    this.background = defaults( p.background, false );
-    this.linewidth = defaults( p.linewidth, 1 );
-    this.wireframe = defaults( p.wireframe, false );
-    this.wireframeLinewidth = defaults( p.wireframeLinewidth, 1 );
-    this.roughness = defaults( p.roughness, 0.4 );
-    this.metalness = defaults( p.metalness, 0.0 );
-    this.diffuse = defaults( p.diffuse, 0xffffff );
-    this.forceTransparent = defaults( p.forceTransparent, false );
+        this.opaqueBack = defaults( p.opaqueBack, false );
+        this.dullInterior = defaults( p.dullInterior, false );
+        this.side = defaults( p.side, "double" );
+        this.opacity = defaults( p.opacity, 1.0 );
+        this.clipNear = defaults( p.clipNear, 0 );
+        this.clipRadius = defaults( p.clipRadius, 0 );
+        this.clipCenter = defaults( p.clipCenter, new Vector3() );
+        this.flatShaded = defaults( p.flatShaded, false );
+        this.background = defaults( p.background, false );
+        this.linewidth = defaults( p.linewidth, 1 );
+        this.wireframe = defaults( p.wireframe, false );
+        this.wireframeLinewidth = defaults( p.wireframeLinewidth, 1 );
+        this.roughness = defaults( p.roughness, 0.4 );
+        this.metalness = defaults( p.metalness, 0.0 );
+        this.diffuse = defaults( p.diffuse, 0xffffff );
+        this.forceTransparent = defaults( p.forceTransparent, false );
 
-    this.geometry = new BufferGeometry();
+        this.geometry = new BufferGeometry();
 
-    this.addAttributes( {
-        "position": { type: "v3", value: position },
-        "color": { type: "c", value: color },
-    } );
+        this.indexVersion = 0;
+        this.wireframeIndexVersion = -1;
 
-    this.indexVersion = 0;
-    this.wireframeIndexVersion = -1;
+        this.uniforms = UniformsUtils.merge( [
+            UniformsLib.common,
+            {
+                "fogColor": { value: null },
+                "fogNear": { value: 0.0 },
+                "fogFar": { value: 0.0 },
+                "opacity": { value: this.opacity },
+                "nearClip": { value: 0.0 },
+                "clipRadius": { value: this.clipRadius },
+                "clipCenter": { value: this.clipCenter }
+            },
+            {
+                "emissive" : { value: new Color( 0x000000 ) },
+                "roughness": { value: this.roughness },
+                "metalness": { value: this.metalness }
+            },
+            UniformsLib.ambient,
+            UniformsLib.lights
+        ] );
 
-    if( index ){
+        this.uniforms.diffuse.value.set( this.diffuse );
+
+        var objectId = new Uniform( 0.0 )
+            .onUpdate( function( object/*, camera*/ ){
+                this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
+            } );
+
+        this.pickingUniforms = {
+            "nearClip": { value: 0.0 },
+            "objectId": objectId
+        };
+
+        this.group = new Group();
+        this.wireframeGroup = new Group();
+        this.pickingGroup = new Group();
+
+        //
+
+        var position = d.position || d.position1;
+        var n = position ? position.length / 3 : 0;
+        this._positionDataSize = n;
+
+        var primitiveId = serialArray( this._positionDataSize );
+
+        this.addAttributes( {
+            "position": { type: "v3", value: d.position },
+            "color": { type: "c", value: d.color },
+            "primitiveId": { type: "f", value: primitiveId },
+        } );
+
+        this.setAttributes( { primitiveId: primitiveId } );
+
+        if( d.index ){
+            this.initIndex( d.index );
+        }
+        this.picking = d.picking;
+
+        this.makeWireframeGeometry();
+
+    }
+
+    get parameters (){
+
+        return {
+            opaqueBack: { updateShader: true },
+            dullInterior: { updateShader: true },
+            side: { updateShader: true, property: true },
+            opacity: { uniform: true },
+            clipNear: { updateShader: true, property: true },
+            clipRadius: { updateShader: true, property: true, uniform: true },
+            clipCenter: { uniform: true },
+            flatShaded: { updateShader: true },
+            background: { updateShader: true },
+            linewidth: { property: true },
+            wireframe: { updateVisibility: true },
+            roughness: { uniform: true },
+            metalness: { uniform: true },
+            diffuse: { uniform: true }
+        }
+
+    }
+
+    get transparent () {
+        return this.opacity < 1 || this.forceTransparent;
+    }
+
+    get size () {
+        return this._positionDataSize;
+    }
+
+    get attributeSize () {
+        return this.size;
+    }
+
+    get pickable (){
+        return !!this.picking;
+    }
+
+    get dynamic (){ return true; }
+
+    /**
+     * @abstract
+     */
+    get vertexShader (){}
+
+    /**
+     * @abstract
+     */
+    get fragmentShader (){}
+
+    initIndex( index ){
+
         this.geometry.setIndex(
             new BufferAttribute( index, 1 )
         );
         this.geometry.getIndex().setDynamic( this.dynamic );
+
     }
 
-    if( pickingColor ){
-        this.addAttributes( {
-            "pickingColor": { type: "c", value: pickingColor },
-        } );
-        this.pickable = true;
-    }
-
-    this.uniforms = UniformsUtils.merge( [
-        UniformsLib.common,
-        {
-            "fogColor": { value: null },
-            "fogNear": { value: 0.0 },
-            "fogFar": { value: 0.0 },
-            "opacity": { value: this.opacity },
-            "nearClip": { value: 0.0 },
-            "clipRadius": { value: this.clipRadius },
-            "clipCenter": { value: this.clipCenter }
-        },
-        {
-            "emissive" : { value: new Color( 0x000000 ) },
-            "roughness": { value: this.roughness },
-            "metalness": { value: this.metalness }
-        },
-        UniformsLib.ambient,
-        UniformsLib.lights
-    ] );
-
-    this.uniforms.diffuse.value.set( this.diffuse );
-
-    var objectId = new Uniform( 0.0 )
-        .onUpdate( function( object/*, camera*/ ){
-            this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
-        } );
-
-    this.pickingUniforms = {
-        "nearClip": { value: 0.0 },
-        "objectId": objectId
-    };
-
-    this.group = new Group();
-    this.wireframeGroup = new Group();
-    this.pickingGroup = new Group();
-
-    this.makeWireframeGeometry();
-
-}
-
-Buffer.prototype = {
-
-    constructor: Buffer,
-
-    parameters: {
-
-        opaqueBack: { updateShader: true },
-        dullInterior: { updateShader: true },
-        side: { updateShader: true, property: true },
-        opacity: { uniform: true },
-        clipNear: { updateShader: true, property: true },
-        clipRadius: { updateShader: true, property: true, uniform: true },
-        clipCenter: { uniform: true },
-        flatShaded: { updateShader: true },
-        background: { updateShader: true },
-        linewidth: { property: true },
-        wireframe: { updateVisibility: true },
-        roughness: { uniform: true },
-        metalness: { uniform: true },
-        diffuse: { uniform: true },
-
-    },
-
-    get transparent () {
-
-        return this.opacity < 1 || this.forceTransparent;
-
-    },
-
-    makeMaterial: function(){
+    makeMaterial(){
 
         var side = getThreeSide( this.side );
 
@@ -245,9 +270,9 @@ Buffer.prototype = {
         // also sets vertexShader/fragmentShader
         this.updateShader();
 
-    },
+    }
 
-    makeWireframeGeometry: function(){
+    makeWireframeGeometry(){
 
         this.makeWireframeIndex();
 
@@ -266,9 +291,9 @@ Buffer.prototype = {
 
         this.wireframeGeometry = wireframeGeometry;
 
-    },
+    }
 
-    makeWireframeIndex: function(){
+    makeWireframeIndex(){
 
         var edges = [];
 
@@ -294,69 +319,65 @@ Buffer.prototype = {
 
         }
 
-        return function makeWireframeIndex(){
+        var index = this.geometry.index;
 
-            var index = this.geometry.index;
+        if( !this.wireframe ){
 
-            if( !this.wireframe ){
+            this.wireframeIndex = new Uint16Array( 0 );
+            this.wireframeIndexCount = 0;
 
-                this.wireframeIndex = new Uint16Array( 0 );
-                this.wireframeIndexCount = 0;
+        }else if( index ){
 
-            }else if( index ){
+            var array = index.array;
+            var n = array.length;
+            if( this.geometry.drawRange.count !== Infinity ){
+                n = this.geometry.drawRange.count;
+            }
+            var wireframeIndex;
+            if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                wireframeIndex = this.wireframeIndex;
+            }else{
+                var count = this.geometry.attributes.position.count;
+                var TypedArray = count > 65535 ? Uint32Array : Uint16Array;
+                wireframeIndex = new TypedArray( n * 2 );
+            }
 
-                var array = index.array;
-                var n = array.length;
-                if( this.geometry.drawRange.count !== Infinity ){
-                    n = this.geometry.drawRange.count;
+            var j = 0;
+            edges.length = 0;
+
+            for( var i = 0; i < n; i += 3 ){
+
+                var a = array[ i + 0 ];
+                var b = array[ i + 1 ];
+                var c = array[ i + 2 ];
+
+                if( checkEdge( a, b ) ){
+                    wireframeIndex[ j + 0 ] = a;
+                    wireframeIndex[ j + 1 ] = b;
+                    j += 2;
                 }
-                var wireframeIndex;
-                if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
-                    wireframeIndex = this.wireframeIndex;
-                }else{
-                    var count = this.geometry.attributes.position.count;
-                    var TypedArray = count > 65535 ? Uint32Array : Uint16Array;
-                    wireframeIndex = new TypedArray( n * 2 );
+                if( checkEdge( b, c ) ){
+                    wireframeIndex[ j + 0 ] = b;
+                    wireframeIndex[ j + 1 ] = c;
+                    j += 2;
                 }
-
-                var j = 0;
-                edges.length = 0;
-
-                for( var i = 0; i < n; i += 3 ){
-
-                    var a = array[ i + 0 ];
-                    var b = array[ i + 1 ];
-                    var c = array[ i + 2 ];
-
-                    if( checkEdge( a, b ) ){
-                        wireframeIndex[ j + 0 ] = a;
-                        wireframeIndex[ j + 1 ] = b;
-                        j += 2;
-                    }
-                    if( checkEdge( b, c ) ){
-                        wireframeIndex[ j + 0 ] = b;
-                        wireframeIndex[ j + 1 ] = c;
-                        j += 2;
-                    }
-                    if( checkEdge( c, a ) ){
-                        wireframeIndex[ j + 0 ] = c;
-                        wireframeIndex[ j + 1 ] = a;
-                        j += 2;
-                    }
-
+                if( checkEdge( c, a ) ){
+                    wireframeIndex[ j + 0 ] = c;
+                    wireframeIndex[ j + 1 ] = a;
+                    j += 2;
                 }
-
-                this.wireframeIndex = wireframeIndex;
-                this.wireframeIndexCount = j;
-                this.wireframeIndexVersion = this.indexVersion;
 
             }
 
-        };
+            this.wireframeIndex = wireframeIndex;
+            this.wireframeIndexCount = j;
+            this.wireframeIndexVersion = this.indexVersion;
 
-    }(),
+        }
 
-    updateWireframeIndex: function(){
+    }
+
+    updateWireframeIndex(){
 
         this.wireframeGeometry.setDrawRange( 0, Infinity );
         if( this.wireframeIndexVersion < this.indexVersion ) this.makeWireframeIndex();
@@ -379,9 +400,9 @@ Buffer.prototype = {
 
         this.wireframeGeometry.setDrawRange( 0, this.wireframeIndexCount );
 
-    },
+    }
 
-    getRenderOrder: function(){
+    getRenderOrder(){
 
         var renderOrder = 0;
 
@@ -401,9 +422,9 @@ Buffer.prototype = {
 
         return renderOrder;
 
-    },
+    }
 
-    getMesh: function(){
+    getMesh(){
 
         var mesh;
 
@@ -429,9 +450,9 @@ Buffer.prototype = {
 
         return mesh;
 
-    },
+    }
 
-    getWireframeMesh: function(){
+    getWireframeMesh(){
 
         var mesh;
 
@@ -447,9 +468,9 @@ Buffer.prototype = {
 
         return mesh;
 
-    },
+    }
 
-    getPickingMesh: function(){
+    getPickingMesh(){
 
         var mesh;
 
@@ -462,27 +483,27 @@ Buffer.prototype = {
 
         return mesh;
 
-    },
+    }
 
-    getShader: function( name, type ){
+    getShader( name, type ){
 
         return getShader( name, this.getDefines( type ) );
 
-    },
+    }
 
-    getVertexShader: function( type ){
+    getVertexShader( type ){
 
         return this.getShader( this.vertexShader, type );
 
-    },
+    }
 
-    getFragmentShader: function( type ){
+    getFragmentShader( type ){
 
         return this.getShader( this.fragmentShader, type );
 
-    },
+    }
 
-    getDefines: function( type ){
+    getDefines( type ){
 
         var defines = {};
 
@@ -517,9 +538,9 @@ Buffer.prototype = {
 
         return defines;
 
-    },
+    }
 
-    getParameters: function(){
+    getParameters(){
 
         var params = {};
 
@@ -529,9 +550,9 @@ Buffer.prototype = {
 
         return params;
 
-    },
+    }
 
-    addUniforms: function( uniforms ){
+    addUniforms( uniforms ){
 
         this.uniforms = UniformsUtils.merge(
             [ this.uniforms, uniforms ]
@@ -541,22 +562,19 @@ Buffer.prototype = {
             [ this.pickingUniforms, uniforms ]
         );
 
-    },
+    }
 
-    addAttributes: function( attributes ){
-
-        var itemSize = {
-            "f": 1, "v2": 2, "v3": 3, "c": 3
-        };
+    addAttributes( attributes ){
 
         for( var name in attributes ){
 
             var buf;
             var a = attributes[ name ];
+            var arraySize = this.attributeSize * itemSize[ a.type ];
 
             if( a.value ){
 
-                if( this.attributeSize * itemSize[ a.type ] !== a.value.length ){
+                if( arraySize !== a.value.length ){
                     Log.error( "attribute value has wrong length", name );
                 }
 
@@ -564,9 +582,7 @@ Buffer.prototype = {
 
             }else{
 
-                buf = new Float32Array(
-                    this.attributeSize * itemSize[ a.type ]
-                );
+                buf = getTypedArray( "float32", arraySize );
 
             }
 
@@ -578,9 +594,9 @@ Buffer.prototype = {
 
         }
 
-    },
+    }
 
-    updateRenderOrder: function(){
+    updateRenderOrder(){
 
         var renderOrder = this.getRenderOrder();
         function setRenderOrder( mesh ){
@@ -592,9 +608,9 @@ Buffer.prototype = {
             this.pickingGroup.children.forEach( setRenderOrder );
         }
 
-    },
+    }
 
-    updateShader: function(){
+    updateShader(){
 
         var m = this.material;
         var wm = this.wireframeMaterial;
@@ -612,14 +628,14 @@ Buffer.prototype = {
         pm.fragmentShader = this.getFragmentShader( "picking" );
         pm.needsUpdate = true;
 
-    },
+    }
 
     /**
      * Set buffer parameters
      * @param {BufferParameters} params - buffer parameters object
      * @return {undefined}
      */
-    setParameters: function( params ){
+    setParameters( params ){
 
         if( !params ) return;
 
@@ -681,9 +697,9 @@ Buffer.prototype = {
         if( doShaderUpdate ) this.updateShader();
         if( doVisibilityUpdate ) this.setVisibility( this.visible );
 
-    },
+    }
 
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         /**
          * Sets buffer attributes
@@ -698,6 +714,8 @@ Buffer.prototype = {
         var attributes = geometry.attributes;
 
         for( var name in data ){
+
+            if( name === "picking" ) continue;
 
             var array = data[ name ];
             var length = array.length;
@@ -750,9 +768,9 @@ Buffer.prototype = {
 
         }
 
-    },
+    }
 
-    setUniforms: function( data ){
+    setUniforms( data ){
 
         if( !data ) return;
 
@@ -798,9 +816,9 @@ Buffer.prototype = {
 
         }
 
-    },
+    }
 
-    setProperties: function( data ){
+    setProperties( data ){
 
         if( !data ) return;
 
@@ -836,14 +854,14 @@ Buffer.prototype = {
         wm.needsUpdate = true;
         pm.needsUpdate = true;
 
-    },
+    }
 
     /**
      * Set buffer visibility
      * @param {Boolean} value - visibility value
      * @return {undefined}
      */
-    setVisibility: function( value ){
+    setVisibility( value ){
 
         this.visible = value;
 
@@ -865,13 +883,13 @@ Buffer.prototype = {
 
         }
 
-    },
+    }
 
     /**
      * Free buffer resources
      * @return {undefined}
      */
-    dispose: function(){
+    dispose(){
 
         if( this.material ) this.material.dispose();
         if( this.wireframeMaterial ) this.wireframeMaterial.dispose();
@@ -882,7 +900,7 @@ Buffer.prototype = {
 
     }
 
-};
+}
 
 
 export default Buffer;

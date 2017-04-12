@@ -36,6 +36,7 @@ Stats.prototype = {
     update: function(){
 
         this.startTime = this.end();
+        this.currentTime = this.startTime;
         this.signals.updated.dispatch();
 
     },

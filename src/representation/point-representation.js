@@ -83,8 +83,7 @@ PointRepresentation.prototype = Object.assign( Object.create(
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
 
         var pointBuffer = new PointBuffer(
-            atomData.position,
-            atomData.color,
+            atomData,
             this.getBufferParams( {
                 pointSize: this.pointSize,
                 sizeAttenuation: this.sizeAttenuation,

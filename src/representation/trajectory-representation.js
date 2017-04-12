@@ -129,10 +129,11 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
             if( scope.drawSphere ){
 
                 var sphereBuffer = new SphereBuffer(
-                    path,
-                    uniformArray3( n, tc.r, tc.g, tc.b ),
-                    uniformArray( n, 0.2 ),
-                    uniformArray3( n, tc.r, tc.g, tc.b ),
+                    {
+                        position: path,
+                        color: uniformArray3( n, tc.r, tc.g, tc.b ),
+                        radius: uniformArray( n, 0.2 )
+                    },
                     scope.getBufferParams( {
                         sphereDetail: scope.sphereDetail,
                         dullInterior: true,
@@ -147,13 +148,13 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
             if( scope.drawCylinder ){
 
                 var cylinderBuffer = new CylinderBuffer(
-                    path.subarray( 0, -3 ),
-                    path.subarray( 3 ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    uniformArray( n, 0.05 ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    {
+                        position1: path.subarray( 0, -3 ),
+                        position2: path.subarray( 3 ),
+                        color: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                        color2: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                        radius: uniformArray( n, 0.05 )
+                    },
                     scope.getBufferParams( {
                         openEnded: false,
                         radialSegments: scope.radialSegments,
@@ -170,8 +171,10 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
             if( scope.drawPoint ){
 
                 var pointBuffer = new PointBuffer(
-                    path,
-                    uniformArray3( n, tc.r, tc.g, tc.b ),
+                    {
+                        position: path,
+                        color: uniformArray3( n, tc.r, tc.g, tc.b )
+                    },
                     scope.getBufferParams( {
                         pointSize: scope.pointSize,
                         sizeAttenuation: scope.sizeAttenuation,
@@ -186,10 +189,12 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
             if( scope.drawLine ){
 
                 var lineBuffer = new LineBuffer(
-                    path.subarray( 0, -3 ),
-                    path.subarray( 3 ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                    uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                    {
+                        position1: path.subarray( 0, -3 ),
+                        position2: path.subarray( 3 ),
+                        color: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
+                        color2: uniformArray3( n - 1, tc.r, tc.g, tc.b )
+                    },
                     scope.getBufferParams()
                 );
 

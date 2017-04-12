@@ -10,32 +10,28 @@ import { defaults } from "../utils.js";
 import Parser from "./parser.js";
 
 
-function JsonParser( streamer, params ){
+class JsonParser extends Parser{
 
-    var p = params || {};
+    constructor( streamer, params ){
 
-    Parser.call( this, streamer, p );
+        const p = params || {};
 
-    this.string = defaults( p.string, false );
+        super( streamer, p );
 
-    this.json = {
-        name: this.name,
-        path: this.path,
-        data: {}
-    };
+        this.string = defaults( p.string, false );
 
-}
+        this.json = {
+            name: this.name,
+            path: this.path,
+            data: {}
+        };
 
-JsonParser.prototype = Object.assign( Object.create(
+    }
 
-    Parser.prototype ), {
+    get type (){ return "json"; }
+    get __objName(){ return "json"; }
 
-    constructor: JsonParser,
-    type: "json",
-
-    __objName: "json",
-
-    _parse: function(){
+    _parse(){
 
         if( this.streamer.isBinary() || this.string ){
             this.json.data = JSON.parse( this.streamer.asText() );
@@ -45,7 +41,7 @@ JsonParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "json", JsonParser );
 

@@ -7,7 +7,7 @@
 
 import {
     PerspectiveCamera, OrthographicCamera,
-    Box3, Vector3, Quaternion, Color,
+    Box3, Vector3, Color,
     WebGLRenderer, WebGLRenderTarget,
     NearestFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
@@ -30,8 +30,8 @@ import {
 } from "../globals.js";
 import { degToRad } from "../math/math-utils.js";
 import Stats from "./stats.js";
-import TrackballControls from "../controls/trackball-controls.js";
 import { getShader } from "../shader/shader-utils.js";
+import { JitterVectors } from "./viewer-constants.js";
 import {
     makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
 } from "./viewer-utils";
@@ -39,155 +39,32 @@ import {
 import Signal from "../../lib/signals.es6.js";
 
 
-if( typeof WebGLRenderingContext !== "undefined" && WebGLRenderingContext ){
-
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
-
-    WebGLRenderingContext.prototype.getShaderParameter = function(){
-
-        var _getShaderParameter = WebGLRenderingContext.prototype.getShaderParameter;
-
-        return function getShaderParameter(){
-
-            if( Debug ){
-
-                return _getShaderParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getShaderInfoLog = function(){
-
-        var _getShaderInfoLog = WebGLRenderingContext.prototype.getShaderInfoLog;
-
-        return function getShaderInfoLog(){
-
-            if( Debug ){
-
-                return _getShaderInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramParameter = function(){
-
-        var _getProgramParameter = WebGLRenderingContext.prototype.getProgramParameter;
-
-        return function getProgramParameter( program, pname ){
-
-            if( Debug || pname !== WebGLRenderingContext.prototype.LINK_STATUS ){
-
-                return _getProgramParameter.apply( this, arguments );
-
-            }else{
-
-                return true;
-
-            }
-
-        };
-
-    }();
-
-    WebGLRenderingContext.prototype.getProgramInfoLog = function(){
-
-        var _getProgramInfoLog = WebGLRenderingContext.prototype.getProgramInfoLog;
-
-        return function getProgramInfoLog(){
-
-            if( Debug ){
-
-                return _getProgramInfoLog.apply( this, arguments );
-
-            }else{
-
-                return '';
-
-            }
-
-        };
-
-    }();
-
-}
-
-
-var JitterVectors = [
-    [
-        [ 0, 0 ]
-    ],
-    [
-        [ 4, 4 ], [ - 4, - 4 ]
-    ],
-    [
-        [ - 2, - 6 ], [ 6, - 2 ], [ - 6, 2 ], [ 2, 6 ]
-    ],
-    [
-        [ 1, - 3 ], [ - 1, 3 ], [ 5, 1 ], [ - 3, - 5 ],
-        [ - 5, 5 ], [ - 7, - 1 ], [ 3, 7 ], [ 7, - 7 ]
-    ],
-    [
-        [ 1, 1 ], [ - 1, - 3 ], [ - 3, 2 ], [ 4, - 1 ],
-        [ - 5, - 2 ], [ 2, 5 ], [ 5, 3 ], [ 3, - 5 ],
-        [ - 2, 6 ], [ 0, - 7 ], [ - 4, - 6 ], [ - 6, 4 ],
-        [ - 8, 0 ], [ 7, - 4 ], [ 6, 7 ], [ - 7, - 8 ]
-    ],
-    [
-        [ - 4, - 7 ], [ - 7, - 5 ], [ - 3, - 5 ], [ - 5, - 4 ],
-        [ - 1, - 4 ], [ - 2, - 2 ], [ - 6, - 1 ], [ - 4, 0 ],
-        [ - 7, 1 ], [ - 1, 2 ], [ - 6, 3 ], [ - 3, 3 ],
-        [ - 7, 6 ], [ - 3, 6 ], [ - 5, 7 ], [ - 1, 7 ],
-        [ 5, - 7 ], [ 1, - 6 ], [ 6, - 5 ], [ 4, - 4 ],
-        [ 2, - 3 ], [ 7, - 2 ], [ 1, - 1 ], [ 4, - 1 ],
-        [ 2, 1 ], [ 6, 2 ], [ 0, 4 ], [ 4, 4 ],
-        [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
-    ]
-];
-
-JitterVectors.forEach( function( offsetList ){
-    offsetList.forEach( function( offset ){
-        // 0.0625 = 1 / 16
-        offset[ 0 ] *= 0.0625;
-        offset[ 1 ] *= 0.0625;
-    } );
-} );
+const pixelBufferFloat = new Float32Array( 4 );
+const pixelBufferUint = new Uint8Array( 4 );
 
 
 /**
- * [Viewer description]
+ * Viewer class
  * @class
- * @param {String} eid - dom element id
+ * @param {String|Element} [idOrElement] - dom id or element
  */
-function Viewer( eid ){
+function Viewer( idOrElement ){
 
-    var _signals = {
-        orientationChanged: new Signal(),
+    var signals = {
+        ticked: new Signal()
     };
 
     var container;
-    if( eid ){
-        container = document.getElementById( eid );
+    if( typeof idOrElement === "string" ){
+        container = document.getElementById( idOrElement );
+    }else if( idOrElement instanceof Element ){
+        container = idOrElement;
     }else{
         container = document.createElement( 'div' );
     }
 
     var width, height;
-    if ( container === document ) {
+    if ( container === document.body ) {
         width = window.innerWidth || 1;
         height = window.innerHeight || 1;
     } else {
@@ -196,7 +73,8 @@ function Viewer( eid ){
         height = box.height || 1;
     }
 
-    var rendering, renderPending, sampleLevel, isStill, cDist, bRadius;
+    var rendering, renderPending, lastRenderedPicking, isStill;
+    var sampleLevel, cDist, bRadius;
 
     var parameters;
     initParams();
@@ -208,7 +86,7 @@ function Viewer( eid ){
     initCamera();
 
     var scene, pointLight, ambientLight;
-    var rotationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
+    var rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
     initScene();
 
     var renderer, supportsHalfFloat;
@@ -219,9 +97,6 @@ function Viewer( eid ){
         Log.error( "Viewer: could not initialize renderer" );
         return;
     }
-
-    var controls;
-    initControls();
 
     var boundingBoxMesh;
     var boundingBox = new Box3();
@@ -267,9 +142,6 @@ function Viewer( eid ){
             clipFar: 100,
             clipDist: 10,
 
-            spinAxis: null,
-            spinAngle: 0.01,
-
             lightColor: new Color( 0xdddddd ),
             lightIntensity: 1.0,
             ambientColor: new Color( 0xdddddd ),
@@ -286,15 +158,14 @@ function Viewer( eid ){
         var lookAt = new Vector3( 0, 0, 0 );
 
         perspectiveCamera = new PerspectiveCamera(
-            parameters.cameraFov, width / height, 0.1, 10000
+            parameters.cameraFov, width / height
         );
         perspectiveCamera.position.z = parameters.cameraZ;
         perspectiveCamera.lookAt( lookAt );
 
         orthographicCamera = new OrthographicCamera(
             width / -2, width / 2,
-            height / 2, height / -2,
-            0.1, 10000
+            height / 2, height / -2
         );
         orthographicCamera.position.z = parameters.cameraZ;
         orthographicCamera.lookAt( lookAt );
@@ -424,21 +295,25 @@ function Viewer( eid ){
         rotationGroup.name = "rotationGroup";
         scene.add( rotationGroup );
 
+        translationGroup = new Group();
+        translationGroup.name = "translationGroup";
+        rotationGroup.add( translationGroup );
+
         modelGroup = new Group();
         modelGroup.name = "modelGroup";
-        rotationGroup.add( modelGroup );
+        translationGroup.add( modelGroup );
 
         pickingGroup = new Group();
         pickingGroup.name = "pickingGroup";
-        rotationGroup.add( pickingGroup );
+        translationGroup.add( pickingGroup );
 
         backgroundGroup = new Group();
         backgroundGroup.name = "backgroundGroup";
-        rotationGroup.add( backgroundGroup );
+        translationGroup.add( backgroundGroup );
 
         helperGroup = new Group();
         helperGroup.name = "helperGroup";
-        rotationGroup.add( helperGroup );
+        translationGroup.add( helperGroup );
 
         // fog
 
@@ -506,51 +381,6 @@ function Viewer( eid ){
 
     }
 
-    function initControls(){
-
-        controls = new TrackballControls( camera, renderer.domElement );
-        controls.rotateSpeed = 2.0;
-        controls.zoomSpeed = 1.2;
-        controls.panSpeed = 0.8;
-        controls.staticMoving = true;
-        // controls.dynamicDampingFactor = 0.3;
-        controls.keys = [ 65, 83, 68 ];
-
-        controls.addEventListener( 'change', requestRender, false );
-
-        function preventDefault( e ){
-            e.preventDefault();
-        }
-        renderer.domElement.addEventListener(
-            'mousewheel', preventDefault, false
-        );
-        renderer.domElement.addEventListener(
-            'wheel', preventDefault, false
-        );
-        renderer.domElement.addEventListener(  // firefox
-            'MozMousePixelScroll', preventDefault, false
-        );
-        renderer.domElement.addEventListener(
-            'touchmove', preventDefault, false
-        );
-
-        document.addEventListener(
-            'mousemove', controls.update.bind( controls ), false
-        );
-        document.addEventListener(
-            'touchmove', controls.update.bind( controls ), false
-        );
-
-        controls.addEventListener(
-            'change',
-            function(){
-                _signals.orientationChanged.dispatch();
-            },
-            false
-        );
-
-    }
-
     function initStats(){
 
         stats = new Stats();
@@ -591,48 +421,44 @@ function Viewer( eid ){
 
         // Log.time( "Viewer.addBuffer" );
 
-        function setInstance( object ){
-            if( object.type === "Group" ){
-                object.children.forEach( function( child ){
-                    child.userData.instance = instance;
-                } );
+        function setUserData( object ){
+            if( object instanceof Group ){
+                object.children.forEach( setUserData );
             }else{
+                object.userData.buffer = buffer;
                 object.userData.instance = instance;
             }
         }
 
         var mesh = buffer.getMesh();
-        mesh.userData.buffer = buffer;
         if( instance ){
             mesh.applyMatrix( instance.matrix );
-            setInstance( mesh );
         }
+        setUserData( mesh );
         buffer.group.add( mesh );
 
         var wireframeMesh = buffer.getWireframeMesh();
-        wireframeMesh.userData.buffer = buffer;
         if( instance ){
             // wireframeMesh.applyMatrix( instance.matrix );
             wireframeMesh.matrix.copy( mesh.matrix );
             wireframeMesh.position.copy( mesh.position );
             wireframeMesh.quaternion.copy( mesh.quaternion );
             wireframeMesh.scale.copy( mesh.scale );
-            setInstance( wireframeMesh );
         }
+        setUserData( wireframeMesh );
         buffer.wireframeGroup.add( wireframeMesh );
 
         if( buffer.pickable ){
 
             var pickingMesh = buffer.getPickingMesh();
-            pickingMesh.userData.buffer = buffer;
             if( instance ){
                 // pickingMesh.applyMatrix( instance.matrix );
                 pickingMesh.matrix.copy( mesh.matrix );
                 pickingMesh.position.copy( mesh.position );
                 pickingMesh.quaternion.copy( mesh.quaternion );
                 pickingMesh.scale.copy( mesh.scale );
-                setInstance( pickingMesh );
             }
+            setUserData( pickingMesh );
             buffer.pickingGroup.add( pickingMesh );
 
         }
@@ -649,7 +475,7 @@ function Viewer( eid ){
 
     function remove( buffer ){
 
-        rotationGroup.children.forEach( function( group ){
+        translationGroup.children.forEach( function( group ){
             group.remove( buffer.group );
             group.remove( buffer.wireframeGroup );
         } );
@@ -669,8 +495,6 @@ function Viewer( eid ){
 
         function updateGeometry( geometry, matrix ){
 
-            if( geometry.attributes.position.count === 0 ) return;
-
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
@@ -689,8 +513,7 @@ function Viewer( eid ){
                 geoBoundingBox.expandByScalar( 5 );
             }
 
-            boundingBox.expandByPoint( geoBoundingBox.min );
-            boundingBox.expandByPoint( geoBoundingBox.max );
+            boundingBox.union( geoBoundingBox );
 
         }
 
@@ -707,13 +530,7 @@ function Viewer( eid ){
         }
 
         if( geometry ){
-            if( Array.isArray( geometry ) ){
-                geometry.forEach( function( g ){
-                    updateGeometry( g, matrix );
-                } );
-            }else{
-                updateGeometry( geometry, matrix );
-            }
+            updateGeometry( geometry, matrix );
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );
@@ -722,7 +539,7 @@ function Viewer( eid ){
 
         boundingBox.size( boundingBoxSize );
         boundingBoxLength = boundingBoxSize.length();
-        controls.maxDistance = boundingBoxLength * 10;
+        // controls.maxDistance = boundingBoxLength * 10;  // TODO
 
     }
 
@@ -802,7 +619,7 @@ function Viewer( eid ){
                 camera = orthographicCamera;
                 camera.position.copy( perspectiveCamera.position );
                 camera.up.copy( perspectiveCamera.up );
-                __updateZoom();
+                updateZoom();
             }
         }else{  // p.cameraType === "perspective"
             if( camera !== perspectiveCamera ){
@@ -813,8 +630,6 @@ function Viewer( eid ){
         }
 
         perspectiveCamera.fov = p.cameraFov;
-        controls.object = camera;
-        camera.lookAt( controls.target );
         camera.updateProjectionMatrix();
 
         requestRender();
@@ -830,13 +645,6 @@ function Viewer( eid ){
         if( dist !== undefined ) p.clipDist = dist;
 
         requestRender();
-
-    }
-
-    function setSpin( axis, angle ){
-
-        if( axis !== undefined ) parameters.spinAxis = axis;
-        if( angle !== undefined ) parameters.spinAngle = angle;
 
     }
 
@@ -864,15 +672,13 @@ function Viewer( eid ){
         sampleTarget.setSize( dprWidth, dprHeight );
         holdTarget.setSize( dprWidth, dprHeight );
 
-        controls.handleResize();
-
         requestRender();
 
     }
 
     function handleResize(){
 
-        if( container === document ){
+        if( container === document.body ){
             setSize( window.innerWidth, window.innerHeight );
         }else{
             var box = container.getBoundingClientRect();
@@ -916,87 +722,9 @@ function Viewer( eid ){
 
     }
 
-    var rotate = function(){
-
-        var eye = new Vector3();
-        var quaternion = new Quaternion();
-        var eyeDirection = new Vector3();
-        var upDirection = new Vector3();
-        var sidewaysDirection = new Vector3();
-        var moveDirection = new Vector3();
-
-        return function rotate( axis, angle ){
-
-            eye.copy( camera.position ).sub( controls.target );
-            eyeDirection.copy( eye ).normalize();
-            upDirection.copy( camera.up ).normalize();
-            sidewaysDirection.crossVectors( upDirection, eyeDirection ).normalize();
-
-            eyeDirection.setLength( axis.z );
-            upDirection.setLength( axis.y );
-            sidewaysDirection.setLength( axis.x );
-            moveDirection.copy( sidewaysDirection.sub( upDirection ).add( eyeDirection ) );
-
-            quaternion.setFromAxisAngle( moveDirection.normalize(), angle );
-            eye.applyQuaternion( quaternion );
-
-            camera.up.applyQuaternion( quaternion );
-            camera.position.addVectors( controls.target, eye );
-            camera.lookAt( controls.target );
-
-        };
-
-    }();
-
-    var zoom = function(){
-
-        var eye = new Vector3();
-        var eyeDirection = new Vector3();
-
-        return function zoom( distance, set ){
-
-            eye.copy( camera.position ).sub( controls.target );
-            eyeDirection.copy( eye ).normalize();
-
-            eyeDirection.setLength( distance );
-            if( set ){
-                eye.copy( eyeDirection );
-            }else{
-                eye.add( eyeDirection );
-            }
-
-            camera.position.addVectors( controls.target, eye );
-            camera.lookAt( controls.target );
-
-            __updateZoom();
-
-        };
-
-    }();
-
-    function translate( vector ){
-
-        controls.target.add( vector );
-        camera.position.add( vector );
-
-    }
-
-    var center = function(){
-
-        var vector = new Vector3();
-
-        return function center( position ){
-
-            vector.copy( position ).sub( controls.target );
-            translate( vector );
-
-        };
-
-    }();
-
     function animate(){
 
-        controls.update();
+        signals.ticked.dispatch( stats );
         var delta = performance.now() - stats.startTime;
 
         if( delta > 500 && !isStill && sampleLevel < 3 && sampleLevel !== -1 ){
@@ -1009,82 +737,66 @@ function Viewer( eid ){
             if( Debug ) Log.log( "rendered still frame" );
         }
 
-        // spin
-
-        var p = parameters;
-        if( p.spinAxis && p.spinAngle ){
-            rotate( p.spinAxis, p.spinAngle * stats.lastDuration / 16 );
-            requestRender();
-        }
-
         requestAnimationFrame( animate );
 
     }
 
-    var pick = function(){
+    function pick( x, y ){
 
-        var pixelBufferFloat = new Float32Array( 4 );
-        var pixelBufferUint = new Uint8Array( 4 );
+        x *= window.devicePixelRatio;
+        y *= window.devicePixelRatio;
 
-        return function pick( x, y ){
+        let pid, instance, picker, geom_id;
+        const pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
 
-            x *= window.devicePixelRatio;
-            y *= window.devicePixelRatio;
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, x, y, 1, 1, pixelBuffer
+        );
 
-            var gid, object, instance;
-            var pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint;
+        if( SupportsReadPixelsFloat ){
+            pid =
+                ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
+                ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
+                ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
+        }else{
+            pid =
+                ( pixelBuffer[0] << 16 ) |
+                ( pixelBuffer[1] << 8 ) |
+                ( pixelBuffer[2] );
+        }
 
-            render( true );
-            renderer.readRenderTargetPixels(
-                pickingTarget, x, y, 1, 1, pixelBuffer
-            );
+        const oid = Math.round( pixelBuffer[ 3 ] );
+        const object = pickingGroup.getObjectById( oid );
+        if( object ){
+            instance = object.userData.instance;
+            picker = object.userData.buffer.picking;
+            geom_id = object.userData.buffer.geometry.uuid; // mjg
+        }
 
-            if( SupportsReadPixelsFloat ){
-                gid =
-                    ( ( Math.round( pixelBuffer[0] * 255 ) << 16 ) & 0xFF0000 ) |
-                    ( ( Math.round( pixelBuffer[1] * 255 ) << 8 ) & 0x00FF00 ) |
-                    ( ( Math.round( pixelBuffer[2] * 255 ) ) & 0x0000FF );
-            }else{
-                gid =
-                    ( pixelBuffer[0] << 16 ) |
-                    ( pixelBuffer[1] << 8 ) |
-                    ( pixelBuffer[2] );
-            }
+        // if( Debug ){
+        //     const rgba = Array.apply( [], pixelBuffer );
+        //     Log.log( pixelBuffer );
+        //     Log.log(
+        //         "picked color",
+        //         rgba.map( c => { return c.toPrecision( 2 ) } )
+        //     );
+        //     Log.log( "picked pid", pid );
+        //     Log.log( "picked gid", gid );
+        //     Log.log( "picked oid", oid );
+        //     Log.log( "picked instance", instance );
+        //     Log.log( "picked position", x, y );
+        //     Log.log( "devicePixelRatio", window.devicePixelRatio );
+        // }
 
-            object = pickingGroup.getObjectById(
-                Math.round( pixelBuffer[ 3 ] )
-            );
-
-            if( object && object.userData.instance ){
-                instance = object.userData.instance;
-            }
-
-            // if( Debug ){
-            //     var rgba = Array.apply( [], pixelBuffer );
-            //     Log.log( pixelBuffer );
-            //     Log.log(
-            //         "picked color",
-            //         [
-            //             ( rgba[0] ).toPrecision(2),
-            //             ( rgba[1] ).toPrecision(2),
-            //             ( rgba[2] ).toPrecision(2),
-            //             ( rgba[3] ).toPrecision(2)
-            //         ]
-            //     );
-            //     Log.log( "picked gid", gid );
-            //     Log.log( "picked instance", instance );
-            //     Log.log( "picked position", x, y );
-            //     Log.log( "devicePixelRatio", window.devicePixelRatio );
-            // }
-
-            return {
-                "gid": gid,
-                "instance": instance
-            };
-
+        return {
+            "pid": pid,
+            "instance": instance,
+            "picker": picker,
+            "geom_id": geom_id  // mjg
         };
 
-    }();
+    }
 
     function requestRender(){
 
@@ -1108,14 +820,23 @@ function Viewer( eid ){
 
     }
 
+    function updateZoom(){
+
+        var fov = degToRad( perspectiveCamera.fov );
+        var _height = 2 * Math.tan( fov / 2 ) * -camera.position.z;
+        orthographicCamera.zoom = height / _height;
+
+    }
+
     function __updateClipping(){
 
         var p = parameters;
 
         // clipping
 
-        cDist = distVector.copy( camera.position )
-                    .sub( controls.target ).length();
+        // cDist = distVector.copy( camera.position )
+        //             .sub( controls.target ).length();
+        cDist = distVector.copy( camera.position ).length();
         // console.log( "cDist", cDist )
         if( !cDist ){
             // recover from a broken (NaN) camera position
@@ -1158,16 +879,6 @@ function Viewer( eid ){
 
     }
 
-    function __updateZoom(){
-
-        __updateClipping();
-        var fov = degToRad( perspectiveCamera.fov );
-        var hyperfocus = ( camera.near + camera.far ) / 2;
-        var _height = 2 * Math.tan( fov / 2 ) * hyperfocus;
-        orthographicCamera.zoom = height / _height;
-
-    }
-
     function __updateCamera(){
 
         camera.updateMatrix();
@@ -1191,8 +902,9 @@ function Viewer( eid ){
 
     function __updateLights(){
 
-        distVector.copy( camera.position ).sub( controls.target )
-            .setLength( boundingBoxLength * 100 );
+        // distVector.copy( camera.position ).sub( controls.target )
+        //     .setLength( boundingBoxLength * 100 );
+        distVector.copy( camera.position ).setLength( boundingBoxLength * 100 );
 
         pointLight.position.copy( camera.position ).add( distVector );
         pointLight.color.set( parameters.lightColor );
@@ -1318,12 +1030,13 @@ function Viewer( eid ){
         updateInfo( true );
 
         if( picking ){
-            __renderPickingGroup();
+            if( !lastRenderedPicking ) __renderPickingGroup();
         }else if( sampleLevel > 0 ){
             __renderMultiSample();
         }else{
             __renderModelGroup();
         }
+        lastRenderedPicking = picking;
 
         rendering = false;
         renderPending = false;
@@ -1342,116 +1055,14 @@ function Viewer( eid ){
 
     }
 
-    function centerView( _zoom, position ){
-
-        if( position === undefined ){
-            if( !boundingBox.isEmpty() ){
-                center( boundingBox.center() );
-            }
-        }else{
-            center( position );
-        }
-
-        if( _zoom ){
-
-            var distance;
-
-            if( _zoom === true ){
-
-                // distance = boundingBoxLength;
-
-                var bbSize = boundingBoxSize;
-                var maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                var minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
-                // var avgSize = ( bbSize.x + bbSize.y + bbSize.z ) / 3;
-                distance = maxSize + Math.sqrt( minSize );
-
-            }else{
-
-                distance = _zoom;
-
-            }
-
-            var fov = degToRad( perspectiveCamera.fov );
-            var aspect = width / height;
-            var aspectFactor = ( height < width ? 1 : aspect );
-
-            distance = Math.abs(
-                ( ( distance * 0.5 ) / aspectFactor ) / Math.sin( fov / 2 )
-            );
-
-            distance += parameters.clipDist;
-
-            zoom( distance, true );
-
-        }
-
-        requestRender();
-
-        _signals.orientationChanged.dispatch();
-
-    }
-
-    var alignView = function(){
-
-        var currentEye = new Vector3();
-        var currentUp = new Vector3();
-        var vn = new Vector3();
-        var vc = new Vector3();
-        var vz = new Vector3( 0, 0, 1 );
-
-        return function alignView( eye, up, position, zoom ){
-
-            controls.reset();
-            centerView( zoom, position );
-
-            currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            vn.crossVectors( currentEye, eye );
-            rotate( vn, -currentEye.angleTo( eye ) );
-
-            currentUp.copy( camera.up ).normalize();
-            vc.crossVectors( currentUp, up ).normalize();
-
-            var angle = currentUp.angleTo( up );
-            if( vz.dot( vc ) < 0 ) angle *= -1;
-
-            currentEye.copy( camera.position ).sub( controls.target ).normalize();
-            if( currentEye.dot( vz ) < 0 ) angle *= -1;
-
-            rotate( vz, angle );
-
-        };
-
-    }();
-
-    function getOrientation(){
-
-        return [
-            controls.target.toArray(),
-            camera.position.toArray(),
-            camera.up.toArray()
-        ];
-
-    }
-
-    function setOrientation( orientation ){
-
-        controls.target.fromArray( orientation[ 0 ] );
-        camera.position.fromArray( orientation[ 1 ] );
-        camera.up.fromArray( orientation[ 2 ] );
-
-        requestRender();
-
-        _signals.orientationChanged.dispatch();
-
-    }
-
     // API
 
     this.container = container;
     this.stats = stats;
-    this.signals = _signals;
+    this.signals = signals;
+
     this.rotationGroup = rotationGroup;
+    this.translationGroup = translationGroup;
 
     this.add = add;
     this.remove = remove;
@@ -1466,28 +1077,20 @@ function Viewer( eid ){
     this.setSampling = setSampling;
     this.setCamera = setCamera;
     this.setClip = setClip;
-    this.setSpin = setSpin;
     this.setSize = setSize;
     this.handleResize = handleResize;
-
-    this.rotate = rotate;
-    this.zoom = zoom;
-    this.center = center;
-    this.centerView = centerView;
-    this.alignView = alignView;
-    this.getOrientation = getOrientation;
-    this.setOrientation = setOrientation;
-    this.boundingBox = boundingBox;
 
     this.pick = pick;
     this.requestRender = requestRender;
     this.render = render;
     this.animate = animate;
+    this.updateZoom = updateZoom;
     this.updateHelper = updateHelper;
 
-    this.controls = controls;
     this.renderer = renderer;
     this.scene = scene;
+    this.perspectiveCamera = perspectiveCamera;
+    this.boundingBox = boundingBox;
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },

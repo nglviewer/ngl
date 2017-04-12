@@ -14,26 +14,18 @@ import {
 import StructureParser from "./structure-parser.js";
 
 
-function Mol2Parser( streamer, params ){
+const reWhitespace = /\s+/;
 
-    StructureParser.call( this, streamer, params );
 
-}
+class Mol2Parser extends StructureParser{
 
-Mol2Parser.prototype = Object.assign( Object.create(
+    get type (){ return "mol2"; }
 
-    StructureParser.prototype ), {
-
-    constructor: Mol2Parser,
-    type: "mol2",
-
-    _parse: function(){
+    _parse(){
 
         // http://www.tripos.com/data/support/mol2.pdf
 
         if( Debug ) Log.time( "Mol2Parser._parse " + this.name );
-
-        var reWhitespace = /\s+/;
 
         var s = this.structure;
         var sb = this.structureBuilder;
@@ -237,7 +229,7 @@ Mol2Parser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "mol2", Mol2Parser );
 

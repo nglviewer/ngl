@@ -67,18 +67,18 @@ function Shape( name, params ){
     var ellipsoidMajorAxis = [];
     var ellipsoidMinorAxis = [];
 
-    var cylinderFrom = [];
-    var cylinderTo = [];
+    var cylinderPosition1 = [];
+    var cylinderPosition2 = [];
     var cylinderColor = [];
     var cylinderRadius = [];
 
-    var coneFrom = [];
-    var coneTo = [];
+    var conePosition1 = [];
+    var conePosition2 = [];
     var coneColor = [];
     var coneRadius = [];
 
-    var arrowFrom = [];
-    var arrowTo = [];
+    var arrowPosition1 = [];
+    var arrowPosition2 = [];
     var arrowColor = [];
     var arrowRadius = [];
 
@@ -105,6 +105,12 @@ function Shape( name, params ){
     function addBuffer( buffer ){
 
         bufferList.push( buffer );
+
+        var geometry = buffer.geometry;
+        if( !geometry.boundingBox ){
+            geometry.computeBoundingBox();
+        }
+        boundingBox.union( geometry.boundingBox );
 
     }
 
@@ -140,7 +146,9 @@ function Shape( name, params ){
             normal = new Float32Array( normal );
         }
 
-        var meshBuffer = new MeshBuffer( position, color, index, normal );
+        var meshBuffer = new MeshBuffer( {
+            position, color, index, normal
+        } );
         bufferList.push( meshBuffer );
 
         tmpBox.setFromArray( position );
@@ -203,21 +211,21 @@ function Shape( name, params ){
      * @example
      * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
      *
-     * @param {Vector3|Array} from - from position vector or array
-     * @param {Vector3|Array} to - to position vector or array
+     * @param {Vector3|Array} position1 - from position vector or array
+     * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
      * @return {undefined}
      */
-    function addCylinder( from, to, color, radius ){
+    function addCylinder( position1, position2, color, radius ){
 
-        addElement( from, cylinderFrom );
-        addElement( to, cylinderTo );
+        addElement( position1, cylinderPosition1 );
+        addElement( position2, cylinderPosition2 );
         addElement( color, cylinderColor );
         cylinderRadius.push( radius );
 
-        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
 
     }
 
@@ -228,21 +236,21 @@ function Shape( name, params ){
      * @example
      * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
      *
-     * @param {Vector3|Array} from - from position vector or array
-     * @param {Vector3|Array} to - to position vector or array
+     * @param {Vector3|Array} position1 - from position vector or array
+     * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
      * @return {undefined}
      */
-    function addCone( from, to, color, radius ){
+    function addCone( position1, position2, color, radius ){
 
-        addElement( from, coneFrom );
-        addElement( to, coneTo );
+        addElement( position1, conePosition1 );
+        addElement( position2, conePosition2 );
         addElement( color, coneColor );
         coneRadius.push( radius );
 
-        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
 
     }
 
@@ -253,21 +261,21 @@ function Shape( name, params ){
      * @example
      * shape.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
      *
-     * @param {Vector3|Array} from - from position vector or array
-     * @param {Vector3|Array} to - to position vector or array
+     * @param {Vector3|Array} position1 - from position vector or array
+     * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
      * @return {undefined}
      */
-    function addArrow( from, to, color, radius ){
+    function addArrow( position1, position2, color, radius ){
 
-        addElement( from, arrowFrom );
-        addElement( to, arrowTo );
+        addElement( position1, arrowPosition1 );
+        addElement( position2, arrowPosition2 );
         addElement( color, arrowColor );
         arrowRadius.push( radius );
 
-        boundingBox.expandByPoint( tmpVec.fromArray( from ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( to ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
 
     }
 
@@ -277,10 +285,11 @@ function Shape( name, params ){
 
         if( spherePosition.length ){
             var sphereBuffer = new SphereBuffer(
-                new Float32Array( spherePosition ),
-                new Float32Array( sphereColor ),
-                new Float32Array( sphereRadius ),
-                undefined,  // pickingColor
+                {
+                    position: new Float32Array( spherePosition ),
+                    color: new Float32Array( sphereColor ),
+                    radius: new Float32Array( sphereRadius )
+                },
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -291,12 +300,13 @@ function Shape( name, params ){
 
         if( ellipsoidPosition.length ){
             var ellipsoidBuffer = new EllipsoidBuffer(
-                new Float32Array( ellipsoidPosition ),
-                new Float32Array( ellipsoidColor ),
-                new Float32Array( ellipsoidRadius ),
-                new Float32Array( ellipsoidMajorAxis ),
-                new Float32Array( ellipsoidMinorAxis ),
-                undefined,  // pickingColor
+                {
+                    position: new Float32Array( ellipsoidPosition ),
+                    color: new Float32Array( ellipsoidColor ),
+                    radius: new Float32Array( ellipsoidRadius ),
+                    majorAxis: new Float32Array( ellipsoidMajorAxis ),
+                    minorAxis: new Float32Array( ellipsoidMinorAxis )
+                },
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -305,15 +315,15 @@ function Shape( name, params ){
             buffers.push( ellipsoidBuffer );
         }
 
-        if( cylinderFrom.length ){
+        if( cylinderPosition1.length ){
             var cylinderBuffer = new CylinderBuffer(
-                new Float32Array( cylinderFrom ),
-                new Float32Array( cylinderTo ),
-                new Float32Array( cylinderColor ),
-                new Float32Array( cylinderColor ),
-                new Float32Array( cylinderRadius ),
-                undefined,  // pickingColor
-                undefined,  // pickingColor2
+                {
+                    position1: new Float32Array( cylinderPosition1 ),
+                    position2: new Float32Array( cylinderPosition2 ),
+                    color: new Float32Array( cylinderColor ),
+                    color2: new Float32Array( cylinderColor ),
+                    radius: new Float32Array( cylinderRadius )
+                },
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -323,13 +333,14 @@ function Shape( name, params ){
             buffers.push( cylinderBuffer );
         }
 
-        if( coneFrom.length ){
+        if( conePosition1.length ){
             var coneBuffer = new ConeBuffer(
-                new Float32Array( coneFrom ),
-                new Float32Array( coneTo ),
-                new Float32Array( coneColor ),
-                new Float32Array( coneRadius ),
-                undefined,  // pickingColor
+                {
+                    position1: new Float32Array( conePosition1 ),
+                    position2: new Float32Array( conePosition2 ),
+                    color: new Float32Array( coneColor ),
+                    radius: new Float32Array( coneRadius )
+                },
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -339,13 +350,14 @@ function Shape( name, params ){
             buffers.push( coneBuffer );
         }
 
-        if( arrowFrom.length ){
+        if( arrowPosition1.length ){
             var arrowBuffer = new ArrowBuffer(
-                new Float32Array( arrowFrom ),
-                new Float32Array( arrowTo ),
-                new Float32Array( arrowColor ),
-                new Float32Array( arrowRadius ),
-                undefined,  // pickingColor
+                {
+                    position1: new Float32Array( arrowPosition1 ),
+                    position2: new Float32Array( arrowPosition2 ),
+                    color: new Float32Array( arrowColor ),
+                    radius: new Float32Array( arrowRadius )
+                },
                 {
                     aspectRatio: aspectRatio,
                     radialSegments: radialSegments,
@@ -377,18 +389,18 @@ function Shape( name, params ){
         ellipsoidMajorAxis.length = 0;
         ellipsoidMinorAxis.length = 0;
 
-        cylinderFrom.length = 0;
-        cylinderTo.length = 0;
+        cylinderPosition1.length = 0;
+        cylinderPosition2.length = 0;
         cylinderColor.length = 0;
         cylinderRadius.length = 0;
 
-        coneFrom.length = 0;
-        coneTo.length = 0;
+        conePosition1.length = 0;
+        conePosition2.length = 0;
         coneColor.length = 0;
         coneRadius.length = 0;
 
-        arrowFrom.length = 0;
-        arrowTo.length = 0;
+        arrowPosition1.length = 0;
+        arrowPosition2.length = 0;
         arrowColor.length = 0;
         arrowRadius.length = 0;
 

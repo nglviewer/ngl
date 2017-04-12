@@ -8,6 +8,7 @@
 import { Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import StructureParser from "./structure-parser.js";
 import Entity from "../structure/entity.js";
 import Unitcell from "../symmetry/unitcell.js";
@@ -20,7 +21,7 @@ import {
 
 
 // PDB helix record encoding
-var HelixTypes = {
+const HelixTypes = {
     1: "h",  // Right-handed alpha (default)
     2: "h",  // Right-handed omega
     3: "i",  // Right-handed pi
@@ -35,20 +36,30 @@ var HelixTypes = {
 };
 
 
-function PdbParser( streamer, params ){
+class PdbParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    /**
+     * Create a pdb parser
+     * @param  {Streamer} streamer - streamer object
+     * @param  {Object} params - params object
+     * @param  {Boolean} params.hex - hexadecimal parsing of
+     *                                atom numbers >99.999 and
+     *                                residue numbers >9.999
+     * @return {undefined}
+     */
+    constructor( streamer, params ){
 
-}
+        var p = params || {};
 
-PdbParser.prototype = Object.assign( Object.create(
+        super( streamer, p );
 
-    StructureParser.prototype ), {
+        this.hex = defaults( p.hex, false );
 
-    constructor: PdbParser,
-    type: "pdb",
+    }
 
-    _parse: function(){
+    get type (){ return "pdb"; }
+
+    _parse(){
 
         // http://www.wwpdb.org/documentation/file-format.php
 
@@ -59,6 +70,10 @@ PdbParser.prototype = Object.assign( Object.create(
 
         var s = this.structure;
         var sb = this.structureBuilder;
+
+        var hex = this.hex;
+        var serialRadix = 10;
+        var resnoRadix = 10;
 
         var firstModelOnly = this.firstModelOnly;
         var asTrajectory = this.asTrajectory;
@@ -227,11 +242,17 @@ PdbParser.prototype = Object.assign( Object.create(
 
                     }else{
 
-                        serial = parseInt( line.substr( 6, 5 ) );
+                        serial = parseInt( line.substr( 6, 5 ), serialRadix );
+                        if( hex && serial === 99999 ){
+                            serialRadix = 16;
+                        }
                         element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
-                        resno = parseInt( line.substr( 22, 4 ) );
+                        resno = parseInt( line.substr( 22, 4 ), resnoRadix );
+                        if( hex && resno === 9999 ){
+                            resnoRadix = 16;
+                        }
                         inscode = line[ 26 ].trim();
                         resname = line.substr( 17, 4 ).trim();
                         bfactor = parseFloat( line.substr( 60, 6 ) );
@@ -638,11 +659,7 @@ PdbParser.prototype = Object.assign( Object.create(
         //
 
         if( unitcellDict.a !== undefined ){
-            s.unitcell = new Unitcell(
-                unitcellDict.a, unitcellDict.b, unitcellDict.c,
-                unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-                unitcellDict.spacegroup, unitcellDict.scale
-            );
+            s.unitcell = new Unitcell( unitcellDict );
         }else{
             s.unitcell = undefined;
         }
@@ -664,7 +681,7 @@ PdbParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "pdb", PdbParser );
 ParserRegistry.add( "pdb1", PdbParser );

@@ -20,10 +20,10 @@ import {
 } from "../structure/structure-utils.js";
 
 
-var reWhitespace = /\s+/;
-var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
-var reDoubleQuote = /"/g;
-var reTrimQuotes = /^['"]+|['"]+$/g;
+const reWhitespace = /\s+/;
+const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
+const reDoubleQuote = /"/g;
+const reTrimQuotes = /^['"]+|['"]+$/g;
 
 
 function ensureArray( dict, field ){
@@ -511,11 +511,7 @@ function processSymmetry( cif, structure, asymIdDict ){
     }
 
     if( unitcellDict.a !== undefined ){
-        structure.unitcell = new Unitcell(
-            unitcellDict.a, unitcellDict.b, unitcellDict.c,
-            unitcellDict.alpha, unitcellDict.beta, unitcellDict.gamma,
-            unitcellDict.spacegroup, unitcellDict.scale
-        );
+        structure.unitcell = new Unitcell( unitcellDict );
     }else{
         structure.unitcell = undefined;
     }
@@ -673,20 +669,11 @@ function processEntities( cif, structure, chainIndexDict ){
 //
 
 
-function CifParser( streamer, params ){
+class CifParser extends StructureParser{
 
-    StructureParser.call( this, streamer, params );
+    get type (){ return "cif"; }
 
-}
-
-CifParser.prototype = Object.assign( Object.create(
-
-    StructureParser.prototype ), {
-
-    constructor: CifParser,
-    type: "cif",
-
-    _parse: function(){
+    _parse(){
 
         // http://mmcif.wwpdb.org/
 
@@ -822,7 +809,7 @@ CifParser.prototype = Object.assign( Object.create(
 
                         // Log.log( "LOOP KEY", line );
 
-                        keyParts = line.split(".");
+                        keyParts = line.split( "." );
                         category = keyParts[ 0 ].substring( 1 );
                         name = keyParts[ 1 ];
 
@@ -854,7 +841,7 @@ CifParser.prototype = Object.assign( Object.create(
                         var keyValuePair = line.match( reQuotedWhitespace );
                         var key = keyValuePair[ 0 ];
                         var value = keyValuePair[ 1 ];
-                        keyParts = key.split(".");
+                        keyParts = key.split( "." );
                         category = keyParts[ 0 ].substring( 1 );
                         name = keyParts[ 1 ];
 
@@ -1179,7 +1166,7 @@ CifParser.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 ParserRegistry.add( "cif", CifParser );
 ParserRegistry.add( "mcif", CifParser );

@@ -45,9 +45,10 @@ class ElementColormaker extends Colormaker{
 
     constructor( params ){
 
-        super( params );
+        var p = params || {};
+        p.value = defaults( p.value, ElementColors.C );
 
-        this.value = defaults( this.value, ElementColors.C );
+        super( p );
 
     }
 

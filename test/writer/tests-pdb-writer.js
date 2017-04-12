@@ -7,11 +7,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('writer/pdb-writer', function() {
+describe( 'writer/pdb-writer', function() {
 
 
-describe('writing', function () {
-    it('getString', function () {
+describe( 'writing', function () {
+    it( 'getString', function () {
         var path = __dirname + "/../data/1crn.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -23,9 +23,9 @@ describe('writing', function () {
             var lines = string.split( "\n" );
             assert.strictEqual( lines.length, 331 );
         } );
-    });
+    } );
 
-    it.skip('getBlob', function () {
+    it.skip( 'getBlob', function () {
         var path = __dirname + "/../data/1crn.pdb";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -36,8 +36,8 @@ describe('writing', function () {
             assert.strictEqual( blob.type, "text/plain" );
             assert.strictEqual( blob.size, 26156 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

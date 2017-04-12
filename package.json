@@ -1,8 +1,9 @@
 {
   "name": "ngl",
-  "version": "0.10.0-dev.6",
+  "version": "0.10.0-dev.9",
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
+  "module": "dist/ngl.esm.js",
   "scripts": {
     "lint": "eslint src test",
     "prebuild": "npm run-script lint",
@@ -17,7 +18,7 @@
     "doc": "jsdoc -r -c doc/conf.json",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh",
-    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js"
+    "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {
@@ -47,14 +48,17 @@
     "babel-register": "^6.11.6",
     "babelrc-rollup": "^3.0.0",
     "chai": "^3.5.0",
+    "download": "^5.0.3",
     "eslint": "^3.2.2",
+    "file-api": "^0.10.4",
     "jsdoc": "^3.4.3",
     "mocha": "^3.1.1",
-    "rollup": "^0.41.1",
+    "performance-now": "^2.1.0",
+    "rollup": "^0.41.5",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-json": "^2.0.2",
-    "rollup-watch": "^3.2.0",
+    "rollup-watch": "^3.2.2",
     "uglify-js": "^2.6.0"
   },
   "dependencies": {}

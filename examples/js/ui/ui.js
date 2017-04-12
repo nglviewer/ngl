@@ -100,7 +100,7 @@ var properties = [
     'fontWeight', 'fontStyle', 'fontFamily', 'textTransform', 'cursor',
     'verticalAlign', 'clear', 'float', 'zIndex', 'minHeight', 'maxHeight',
     'minWidth', 'maxWidth', 'wordBreak', 'wordWrap', 'spellcheck',
-    'lineHeight', 'whiteSpace', 'textOverflow', 'textAlign'
+    'lineHeight', 'whiteSpace', 'textOverflow', 'textAlign', 'pointerEvents'
 ];
 
 properties.forEach( function ( property ) {

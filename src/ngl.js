@@ -46,14 +46,15 @@ import "./color/bfactor-colormaker.js";
 import "./color/chainid-colormaker.js";
 import "./color/chainindex-colormaker.js";
 import "./color/chainname-colormaker.js";
+import "./color/densityfit-colormaker.js";
 import "./color/element-colormaker.js";
 import "./color/entityindex-colormaker.js";
 import "./color/entitytype-colormaker.js";
+import "./color/geoquality-colormaker.js";
 import "./color/hydrophobicity-colormaker.js";
 import "./color/modelindex-colormaker.js";
 import "./color/moleculetype-colormaker.js";
 import "./color/occupancy-colormaker.js";
-import "./color/picking-colormaker.js";
 import "./color/random-colormaker.js";
 import "./color/residueindex-colormaker.js";
 import "./color/resname-colormaker.js";
@@ -93,6 +94,7 @@ import "./representation/spacefill-representation.js";
 import "./representation/trace-representation.js";
 import "./representation/tube-representation.js";
 import "./representation/unitcell-representation.js";
+import "./representation/validation-representation.js";
 
 import BufferRepresentation from "./representation/buffer-representation.js";
 import ArrowBuffer from "./buffer/arrow-buffer.js";
@@ -104,29 +106,33 @@ import TextBuffer from "./buffer/text-buffer.js";
 
 //
 
+import "./parser/cif-parser.js";
 import "./parser/gro-parser.js";
+import "./parser/mmtf-parser.js";
+import "./parser/mol2-parser.js";
 import "./parser/pdb-parser.js";
 import "./parser/pqr-parser.js";
-import "./parser/cif-parser.js";
+import "./parser/psf-parser.js";
 import "./parser/sdf-parser.js";
-import "./parser/mol2-parser.js";
-import "./parser/mmtf-parser.js";
 
 import "./parser/dcd-parser.js";
 
-import "./parser/mrc-parser.js";
 import "./parser/cube-parser.js";
+import "./parser/dsn6-parser.js";
 import "./parser/dx-parser.js";
 import "./parser/dxbin-parser.js";
+import "./parser/mrc-parser.js";
 import "./parser/xplor-parser.js";
 
-import "./parser/ply-parser.js";
 import "./parser/obj-parser.js";
+import "./parser/ply-parser.js";
 
-import "./parser/text-parser.js";
 import "./parser/csv-parser.js";
 import "./parser/json-parser.js";
+import "./parser/text-parser.js";
 import "./parser/xml-parser.js";
+
+import "./parser/validation-parser.js";
 
 //
 

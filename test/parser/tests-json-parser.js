@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/json-parser', function() {
+describe( 'parser/json-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic', function () {
+describe( 'parsing', function () {
+    it( 'basic', function () {
         var path = __dirname + "/../data/sample.json";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -18,8 +18,8 @@ describe('parsing', function () {
         return jsonParser.parse( function( json ){
             assert.strictEqual( 42, json.data.foo, "Passed!" );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

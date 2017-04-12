@@ -8,31 +8,21 @@
 import Collection from "./collection.js";
 
 
-function ComponentCollection( compList ){
+class ComponentCollection extends Collection{
 
-    Collection.call( this, compList );
-
-}
-
-ComponentCollection.prototype = Object.assign( Object.create(
-
-    Collection.prototype ), {
-
-    constructor: ComponentCollection,
-
-    addRepresentation: function( name, params ){
+    addRepresentation( name, params ){
 
         return this._invoke( "addRepresentation", [ name, params ] );
 
-    },
+    }
 
-    centerView: function( zoom, sele ){
+    autoView( duration ){
 
-        return this._invoke( "centerView", [ zoom, sele ] );
+        return this._invoke( "autoView", [ duration ] );
 
     }
 
-} );
+}
 
 
 export default ComponentCollection;

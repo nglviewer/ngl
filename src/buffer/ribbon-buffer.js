@@ -5,73 +5,78 @@
  */
 
 
-import { BufferAttribute } from "../../lib/three.es6.js";
-
 import "../shader/Ribbon.vert";
-import "../shader/Mesh.frag";
 
-import Buffer from "./buffer.js";
+import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
-function RibbonBuffer( position, normal, dir, color, size, pickingColor, params ){
+const quadIndices = new Uint16Array( [
+    0, 1, 2,
+    1, 3, 2
+] );
 
-    var p = params || {};
 
-    var n = ( position.length / 3 ) - 1;
-    var n4 = n * 4;
-    var x = n4 * 3;
+class RibbonBuffer extends MeshBuffer{
 
-    this.meshPosition = new Float32Array( x );
-    this.meshColor = new Float32Array( x );
-    this.meshNormal = new Float32Array( x );
-    this.meshPickingColor = pickingColor ? new Float32Array( x ) : undefined;
+    /**
+     * make tube mesh buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.normal - normals
+     * @param  {Float32Array} data.dir - binormals
+     * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.size - sizes
+     * @param  {Float32Array} data.picking - picking ids
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    var TypedArray = this.meshPosition.length / 3 > 65535 ? Uint32Array : Uint16Array;
-    this.meshIndex = new TypedArray( x );
-    this.makeIndex();
+        var d = data || {};
 
-    MeshBuffer.call(
-        this, this.meshPosition, this.meshColor, this.meshIndex,
-        this.meshNormal, this.meshPickingColor, p
-    );
+        var n = ( d.position.length / 3 ) - 1;
+        var n4 = n * 4;
+        var x = n4 * 3;
 
-    this.vertexShader = 'Ribbon.vert';
-    this.fragmentShader = 'Mesh.frag';
+        var meshPosition = new Float32Array( x );
+        var meshColor = new Float32Array( x );
+        var meshNormal = new Float32Array( x );
 
-    this.geometry.addAttribute(
-        'dir', new BufferAttribute( new Float32Array( x ), 3 )
-    );
-    this.geometry.addAttribute(
-        'size', new BufferAttribute( new Float32Array( n4 ), 1 )
-    );
+        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
+        var meshIndex = new TypedArray( x );
 
-    this.setAttributes( {
-        position: position,
-        normal: normal,
-        dir: dir,
-        color: color,
-        size: size,
-        pickingColor: pickingColor
-    } );
+        super( {
+            position: meshPosition,
+            color: meshColor,
+            index: meshIndex,
+            normal: meshNormal,
+            picking: d.picking
+        }, params );
 
-}
+        this.addAttributes( {
+            "dir": { type: "v3", value: new Float32Array( x ) },
+        } );
+        this.addAttributes( {
+            "size": { type: "f", value: new Float32Array( n4 ) },
+        } );
 
-RibbonBuffer.prototype = Object.assign( Object.create(
+        d.primitiveId = serialArray( n );
+        this.setAttributes( d );
 
-    Buffer.prototype ), {
+        this.meshIndex = meshIndex;
+        this.makeIndex();
 
-    constructor: RibbonBuffer,
+    }
 
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         var n4 = this.size;
         var n = n4 / 4;
 
         var attributes = this.geometry.attributes;
 
-        var position, normal, size, dir, color, pickingColor;
-        var aPosition, aNormal, aSize, aDir, aColor, aPickingColor;
+        var position, normal, size, dir, color, primitiveId;
+        var aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId;
 
         if( data.position ){
             position = data.position;
@@ -103,10 +108,10 @@ RibbonBuffer.prototype = Object.assign( Object.create(
             attributes.color.needsUpdate = true;
         }
 
-        if( data.pickingColor ){
-            pickingColor = data.pickingColor;
-            aPickingColor = attributes.pickingColor.array;
-            attributes.pickingColor.needsUpdate = true;
+        if( data.primitiveId ){
+            primitiveId = data.primitiveId;
+            aPrimitiveId = attributes.primitiveId.array;
+            attributes.primitiveId.needsUpdate = true;
         }
 
         var v, i, k, p, l, v3;
@@ -120,7 +125,6 @@ RibbonBuffer.prototype = Object.assign( Object.create(
             l = v * 4;
 
             if( position ){
-
                 aPosition[ k     ] = aPosition[ k + 3 ] = position[ v3     ];
                 aPosition[ k + 1 ] = aPosition[ k + 4 ] = position[ v3 + 1 ];
                 aPosition[ k + 2 ] = aPosition[ k + 5 ] = position[ v3 + 2 ];
@@ -128,11 +132,9 @@ RibbonBuffer.prototype = Object.assign( Object.create(
                 aPosition[ k + 6 ] = aPosition[ k +  9 ] = position[ v3 + 3 ];
                 aPosition[ k + 7 ] = aPosition[ k + 10 ] = position[ v3 + 4 ];
                 aPosition[ k + 8 ] = aPosition[ k + 11 ] = position[ v3 + 5 ];
-
             }
 
             if( normal ){
-
                 aNormal[ k     ] = aNormal[ k + 3 ] = -normal[ v3     ];
                 aNormal[ k + 1 ] = aNormal[ k + 4 ] = -normal[ v3 + 1 ];
                 aNormal[ k + 2 ] = aNormal[ k + 5 ] = -normal[ v3 + 2 ];
@@ -140,7 +142,6 @@ RibbonBuffer.prototype = Object.assign( Object.create(
                 aNormal[ k + 6 ] = aNormal[ k +  9 ] = -normal[ v3 + 3 ];
                 aNormal[ k + 7 ] = aNormal[ k + 10 ] = -normal[ v3 + 4 ];
                 aNormal[ k + 8 ] = aNormal[ k + 11 ] = -normal[ v3 + 5 ];
-
             }
 
 
@@ -149,19 +150,13 @@ RibbonBuffer.prototype = Object.assign( Object.create(
                 p = k + 3 * i;
 
                 if( color ){
-
                     aColor[ p     ] = color[ v3     ];
                     aColor[ p + 1 ] = color[ v3 + 1 ];
                     aColor[ p + 2 ] = color[ v3 + 2 ];
-
                 }
 
-                if( pickingColor ){
-
-                    aPickingColor[ p     ] = pickingColor[ v3     ];
-                    aPickingColor[ p + 1 ] = pickingColor[ v3 + 1 ];
-                    aPickingColor[ p + 2 ] = pickingColor[ v3 + 2 ];
-
+                if( primitiveId ){
+                    aPrimitiveId[ l + i ] = primitiveId[ v ];
                 }
 
             }
@@ -171,19 +166,15 @@ RibbonBuffer.prototype = Object.assign( Object.create(
                 currSize = size[ v ];
 
                 if( prevSize !== size[ v ] ){
-
                     aSize[ l     ] = prevSize;
                     aSize[ l + 1 ] = prevSize;
                     aSize[ l + 2 ] = currSize;
                     aSize[ l + 3 ] = currSize;
-
                 }else{
-
                     aSize[ l     ] = currSize;
                     aSize[ l + 1 ] = currSize;
                     aSize[ l + 2 ] = currSize;
                     aSize[ l + 3 ] = currSize;
-
                 }
 
                 prevSize = currSize;
@@ -212,17 +203,12 @@ RibbonBuffer.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    makeIndex: function(){
+    makeIndex(){
 
         var meshIndex = this.meshIndex;
         var n = meshIndex.length / 4 / 3;
-
-        var quadIndices = new Uint16Array([
-            0, 1, 2,
-            1, 3, 2
-        ]);
 
         var s, v, ix, it;
 
@@ -240,7 +226,9 @@ RibbonBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get vertexShader (){ return "Ribbon.vert"; }
+
+}
 
 
 export default RibbonBuffer;

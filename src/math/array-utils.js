@@ -138,6 +138,21 @@ function uniformArray3( n, a, b, c ){
 }
 
 
+function serialArray( n, j = 0 ){
+
+    var array = new Float32Array( n );
+
+    for( var i = 0; i < n; ++i ){
+
+        array[ i ] = j + i;
+
+    }
+
+    return array;
+
+}
+
+
 function randomColorArray( n ){
 
     var array = new Float32Array( n * 3 );
@@ -565,6 +580,7 @@ export {
     calculateDirectionArray,
     uniformArray,
     uniformArray3,
+    serialArray,
     randomColorArray,
     replicateArray3Entries,
     calculateMeanArray,

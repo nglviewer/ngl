@@ -28,6 +28,9 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Color} labelColor - color of the distance label
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} labelUnit - distance unit (e.g. "angstrom" or "nm"). If set, a distance
+ *                                symbol is appended to the label (i.e. 'nm' or '\u00C5'). In case of 'nm', the
+ *                                distance value is computed in nanometers instead of Angstroms.
  * @property {Array[]} atomPair - list of pairs of selection strings (see {@link Selection})
  *                                or pairs of atom indices. Using atom indices is much more
  *                                when the representation is updated often, e.g. by
@@ -50,7 +53,7 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  *     // or atom indices
  *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
  *     o.addRepresentation( "distance", { atomPair: atomPair } );
- *     stage.centerView();
+ *     stage.autoView();
  * } );
  * @param {Structure} structure - the structure to be represented
  * @param {Viewer} viewer - a viewer object
@@ -86,6 +89,10 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         labelZOffset: {
             type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
         },
+        labelUnit: {
+            type: "select", rebuild: true,
+            options: { "": "", angstrom: "angstrom", nm: "nm" },
+        },
         atomPair: {
             type: "hidden", rebuild: true
         },
@@ -110,6 +117,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.labelColor = defaults( p.labelColor, 0xFFFFFF );
         this.labelVisible = defaults( p.labelVisible, true );
         this.labelZOffset = defaults( p.labelZOffset, 0.5 );
+        this.labelUnit = defaults( p.labelUnit, "" );
         this.atomPair = defaults( p.atomPair, [] );
 
         StructureRepresentation.prototype.init.call( this, p );
@@ -151,7 +159,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
                 var atomIndices2 = sview.getAtomIndices( sele2 );
 
                 if( atomIndices1.length && atomIndices2.length ){
-                    
+
                     ap1.index = atomIndices1[ 0 ];
                     ap2.index = atomIndices2[ 0 ];
 
@@ -167,7 +175,20 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondStore.addBond( ap1, ap2, 1 );
 
             i -= j;
-            text[ i ] = ap1.distanceTo( ap2 ).toFixed( 2 );
+            var d = ap1.distanceTo( ap2 )
+            switch ( this.labelUnit ) {
+                case "angstrom":
+                    // 0x212B fails in TextBuffer
+                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 197 );
+                    break;
+                case "nm":
+                    text[ i ] = ( d / 10 ).toFixed( 2 ) + " nm";
+                    break;
+                default:
+                    text[ i ] = d.toFixed( 2 );
+                    break;
+            }
+
 
             var i3 = i * 3;
             position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
@@ -211,10 +232,12 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var c = new Color( this.labelColor );
 
         this.textBuffer = new TextBuffer(
-            distanceData.position,
-            uniformArray( n, this.labelSize ),
-            uniformArray3( n, c.r, c.g, c.b ),
-            distanceData.text,
+            {
+                position: distanceData.position,
+                size: uniformArray( n, this.labelSize ),
+                color: uniformArray3( n, c.r, c.g, c.b ),
+                text: distanceData.text
+            },
             this.getBufferParams( {
                 fontFamily: this.fontFamily,
                 fontStyle: this.fontStyle,
@@ -234,13 +257,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         var bondData = this.getBondData( this.structureView, undefined, bondParams );
 
         this.cylinderBuffer = new CylinderBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            bondData.radius,
-            bondData.pickingColor1,
-            bondData.pickingColor2,
+            bondData,
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,
@@ -331,7 +348,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             what.labelSize = true;
         }
 
-        if( params && params.labelColor ){
+        if( params && ( params.labelColor || params.labelColor === 0x000000 ) ){
             what.labelColor = true;
         }
 

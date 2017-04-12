@@ -144,12 +144,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
     attach: function( callback ){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
-
+        } );
         this.setVisibility( this.visible );
 
         callback();
@@ -158,7 +155,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        var position, color, size, pickingColor;
+        var dotData = {};
 
         if( this.volume ){
 
@@ -174,28 +171,29 @@ DotRepresentation.prototype = Object.assign( Object.create(
             }
             volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
 
-            position = volume.getDataPosition();
-            color = volume.getDataColor( this.getColorParams() );
-            size = volume.getDataSize( this.radius, this.scale );
-            pickingColor = volume.getPickingDataColor( this.getColorParams() );
+            dotData.position = volume.getDataPosition();
+            dotData.color = volume.getDataColor( this.getColorParams() );
+            if( this.dotType === "sphere" ){
+                dotData.radius = volume.getDataSize( this.radius, this.scale );
+                dotData.picking = volume.getDataPicking();
+            }
 
         }else{
 
             var surface = this.surface;
-            position = surface.getPosition();
-            color = surface.getColor( this.getColorParams() );
-            size = surface.getSize( this.radius, this.scale );
-            pickingColor = surface.getPickingColor( this.getColorParams() );
+            dotData.position = surface.getPosition();
+            dotData.color = surface.getColor( this.getColorParams() );
+            if( this.dotType === "sphere" ){
+                dotData.radius = surface.getSize( this.radius, this.scale );
+                dotData.picking = surface.getPicking();
+            }
 
         }
 
         if( this.dotType === "sphere" ){
 
             this.dotBuffer = new SphereBuffer(
-                position,
-                color,
-                size,
-                pickingColor,
+                dotData,
                 this.getBufferParams( {
                     sphereDetail: this.sphereDetail,
                     disableImpostor: this.disableImpostor,
@@ -206,8 +204,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
         }else{
 
             this.dotBuffer = new PointBuffer(
-                position,
-                color,
+                dotData,
                 this.getBufferParams( {
                     pointSize: this.pointSize,
                     sizeAttenuation: this.sizeAttenuation,
@@ -234,39 +231,27 @@ DotRepresentation.prototype = Object.assign( Object.create(
         var dotData = {};
 
         if( what.color ){
-
             if( this.volume ){
-
                 dotData.color = this.volume.getDataColor(
                     this.getColorParams()
                 );
-
             }else{
-
                 dotData.color = this.surface.getColor(
                     this.getColorParams()
                 );
-
             }
-
         }
 
         if( this.dotType === "sphere" && ( what.radius || what.scale ) ){
-
             if( this.volume ){
-
                 dotData.radius = this.volume.getDataSize(
                     this.radius, this.scale
                 );
-
             }else{
-
                 dotData.radius = this.surface.getSize(
                     this.radius, this.scale
                 );
-
             }
-
         }
 
         this.dotBuffer.setAttributes( dotData );

@@ -11,25 +11,18 @@ import CylinderGeometryBuffer from "./cylindergeometry-buffer.js";
 import HyperballStickImpostorBuffer from "./hyperballstickimpostor-buffer.js";
 
 
-function HyperballStickBuffer( from, to, color, color2, radius1, radius2, pickingColor, pickingColor2, params ){
+// from, to, color, color2, radius1, radius2, picking
+function HyperballStickBuffer( data, params ){
 
-    var p = params || {};
+    if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
 
-    if( !ExtensionFragDepth || p.disableImpostor ){
+        data.radius = calculateMinArray( data.radius1, data.radius2 );
 
-        return new CylinderGeometryBuffer(
-            from, to, color, color2,
-            calculateMinArray( radius1, radius2 ),
-            pickingColor, pickingColor2, params
-        );
+        return new CylinderGeometryBuffer( data, params );
 
     }else{
 
-        return new HyperballStickImpostorBuffer(
-            from, to, color, color2,
-            radius1, radius2,
-            pickingColor, pickingColor2, params
-        );
+        return new HyperballStickImpostorBuffer( data, params );
 
     }
 

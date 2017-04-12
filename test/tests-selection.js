@@ -11,11 +11,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('selection', function() {
+describe( 'selection', function() {
 
 
-describe('parsing', function () {
-    it('chain', function () {
+describe( 'parsing', function () {
+    it( 'chain', function () {
         var sele = ":A";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -25,9 +25,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('chain resno range', function () {
+    it( 'chain resno range', function () {
         var sele = "1-100:A";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -38,9 +38,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('HOH or .OH', function () {
+    it( 'HOH or .OH', function () {
         var sele = "HOH or .OH";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -51,9 +51,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('modelindex', function () {
+    it( 'modelindex', function () {
         var sele = "/1";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -63,9 +63,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('altloc', function () {
+    it( 'altloc', function () {
         var sele = "%A";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -75,9 +75,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('inscode', function () {
+    it( 'inscode', function () {
         var sele = "^C";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -87,9 +87,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parens', function () {
+    it( 'parens', function () {
         var sele = "10-15 or ( backbone and ( 30-35 or 40-45 ) )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -112,9 +112,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('no parens', function () {
+    it( 'no parens', function () {
         var sele = "10-15 or backbone and 30-35 or 40-45";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -132,9 +132,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('outer parens', function () {
+    it( 'outer parens', function () {
         var sele = "( 10-15 or backbone )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -145,27 +145,27 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parsing error resi', function () {
+    it( 'parsing error resi', function () {
         var sele = "( foobar )";
         var selection = new Selection( sele );
         var selectionObj = {
             "error": "resi must be an integer"
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parsing error atomname', function () {
+    it( 'parsing error atomname', function () {
         var sele = ".FOOBAR";
         var selection = new Selection( sele );
         var selectionObj = {
             "error": "atomname must be one to four characters"
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parsing multi-char chain', function () {
+    it( 'parsing multi-char chain', function () {
         var sele = ":ABJ/0";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -176,27 +176,27 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parsing error model', function () {
+    it( 'parsing error model', function () {
         var sele = "/Q";
         var selection = new Selection( sele );
         var selectionObj = {
             "error": "model must be an integer"
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('parsing error resi range', function () {
+    it( 'parsing error resi range', function () {
         var sele = "1-2-3";
         var selection = new Selection( sele );
         var selectionObj = {
             "error": "resi range must contain one '-'"
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate simple', function () {
+    it( 'negate simple', function () {
         var sele = "not 10-15";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -207,9 +207,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate or', function () {
+    it( 'negate or', function () {
         var sele = "MET or not 10-15";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -226,9 +226,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate parens', function () {
+    it( 'negate parens', function () {
         var sele = "MET or not ( 10-15 )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -250,9 +250,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate parens 2', function () {
+    it( 'negate parens 2', function () {
         var sele = "MET or not ( 10-15 and 15-20 )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -275,9 +275,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate parens 3', function () {
+    it( 'negate parens 3', function () {
         var sele = "MET or not ( 10-15 and 15-20 ) or GLU";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -301,9 +301,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate parens 4', function () {
+    it( 'negate parens 4', function () {
         var sele = "MET or not ( 10-15 and 15-20 ) and GLU";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -332,9 +332,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negate parens 5', function () {
+    it( 'negate parens 5', function () {
         var sele = "1-100 and not ( MET or GLU ) or 300-330";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -363,9 +363,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not backbone or .CA', function () {
+    it( 'not backbone or .CA', function () {
         var sele = "not backbone or .CA";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -382,9 +382,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('.CA or not backbone', function () {
+    it( '.CA or not backbone', function () {
         var sele = ".CA or not backbone";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -401,9 +401,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('MET or GLY', function () {
+    it( 'MET or GLY', function () {
         var sele = "MET or GLY";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -414,9 +414,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not ( MET ) or GLY', function () {
+    it( 'not ( MET ) or GLY', function () {
         var sele = "not ( MET ) or GLY";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -438,9 +438,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not ( MET or GLY )', function () {
+    it( 'not ( MET or GLY )', function () {
         var sele = "not ( MET or GLY )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -457,9 +457,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not ( MET )', function () {
+    it( 'not ( MET )', function () {
         var sele = "not ( MET )";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -475,9 +475,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not not MET', function () {
+    it( 'not not MET', function () {
         var sele = "not not MET";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -494,9 +494,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('not not not MET', function () {
+    it( 'not not not MET', function () {
         var sele = "not not not MET";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -519,9 +519,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('MET or sidechain', function () {
+    it( 'MET or sidechain', function () {
         var sele = "MET or sidechain";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -532,9 +532,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('MET or not sidechain', function () {
+    it( 'MET or not sidechain', function () {
         var sele = "MET or not sidechain";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -551,9 +551,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('element H', function () {
+    it( 'element H', function () {
         var sele = "#H";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -563,9 +563,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('(CYS and .CA) or (CYS and hydrogen)', function () {
+    it( '(CYS and .CA) or (CYS and hydrogen)', function () {
         var sele = "(CYS and .CA) or (CYS and hydrogen)";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -588,58 +588,52 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('atomindex @1,2,3', function () {
+    it( 'atomindex @1,2,3', function () {
         var sele = "@1,2,3";
         var selection = new Selection( sele );
         var selectionObj = {
             "operator": undefined,
             "rules": [
                 {
-                    "atomindex": [ 1, 2, 3 ],
-                    "atomindexFirst": 1,
-                    "atomindexLast": 3
+                    "atomindex": [ 1, 2, 3 ]
                 }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('atomindex @1,13,2 OR protein', function () {
+    it( 'atomindex @1,13,2 OR protein', function () {
         var sele = "@1,13,2 OR protein";
         var selection = new Selection( sele );
         var selectionObj = {
             "operator": "OR",
             "rules": [
                 {
-                    "atomindex": [ 1, 2, 13 ],
-                    "atomindexFirst": 1,
-                    "atomindexLast": 13
+                    "atomindex": [ 1, 2, 13 ]
                 },
                 { "keyword": kwd.PROTEIN }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('atomindex @0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19', function () {
+    it( 'atomindex @0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19', function () {
         var sele = "@0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19";
         var selection = new Selection( sele );
         var selectionObj = {
             "operator": undefined,
             "rules": [
                 {
-                    "atomindex": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ],
-                    "atomindexFirst": 0,
-                    "atomindexLast": 19
+                    "atomindex": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ]
                 }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('[123]', function () {
+    it( '[123]', function () {
         var sele = "[123]";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -649,9 +643,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('15^C:A.N%A/0', function () {
+    it( '15^C:A.N%A/0', function () {
         var sele = "15^C:A.N%A/0";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -666,9 +660,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negative resno -143', function () {
+    it( 'negative resno -143', function () {
         var sele = "-143";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -678,9 +672,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negative resno range -12-14', function () {
+    it( 'negative resno range -12-14', function () {
         var sele = "-12-14";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -690,9 +684,9 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
+    } );
 
-    it('negative resno range -12--8', function () {
+    it( 'negative resno range -12--8', function () {
         var sele = "-12--8";
         var selection = new Selection( sele );
         var selectionObj = {
@@ -702,8 +696,8 @@ describe('parsing', function () {
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );
-    });
-});
+    } );
+} );
 
 
 function getNthSelectedAtom( structure, nth ){
@@ -717,15 +711,15 @@ function getNthSelectedAtom( structure, nth ){
 }
 
 
-describe('selection', function () {
+describe( 'selection', function () {
 
     var _1crnPdb;
 
-    before(function() {
+    before( function() {
         _1crnPdb = fs.readFileSync( __dirname + "/data/1crn.pdb", "utf-8" );
-    });
+    } );
 
-    it('backbone', function () {
+    it( 'backbone', function () {
         var sele = "backbone";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -736,9 +730,9 @@ describe('selection', function () {
             assert.strictEqual( sview.atomCount, 185, "Passed!" );
             assert.strictEqual( ap.atomname, "N", "Passed!" );
         } );
-    });
+    } );
 
-    it('.CA', function () {
+    it( '.CA', function () {
         var sele = ".CA";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -749,9 +743,9 @@ describe('selection', function () {
             assert.strictEqual( sview.atomCount, 46, "Passed!" );
             assert.strictEqual( ap.atomname, "CA", "Passed!" );
         } );
-    });
+    } );
 
-    it('ARG or .N', function () {
+    it( 'ARG or .N', function () {
         var sele = "ARG or .N";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -760,9 +754,9 @@ describe('selection', function () {
             var sview = structure.getView( selection );
             assert.strictEqual( sview.atomCount, 22 + 46 - 2, "Passed!" );
         } );
-    });
+    } );
 
-    it('not backbone', function () {
+    it( 'not backbone', function () {
         var sele = "not backbone";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -773,9 +767,9 @@ describe('selection', function () {
             assert.strictEqual( sview.atomCount, 142, "Passed!" );
             assert.strictEqual( ap.atomname, "CB", "Passed!" );
         } );
-    });
+    } );
 
-    it('sidechain', function () {
+    it( 'sidechain', function () {
         var sele = "sidechain";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -786,9 +780,9 @@ describe('selection', function () {
             assert.strictEqual( sview.atomCount, 142, "Passed!" );
             assert.strictEqual( ap.atomname, "CB", "Passed!" );
         } );
-    });
+    } );
 
-    it('not backbone or .CA', function () {
+    it( 'not backbone or .CA', function () {
         var sele = "not backbone or .CA";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -801,9 +795,9 @@ describe('selection', function () {
             assert.strictEqual( ap1.atomname, "CA", "Passed!" );
             assert.strictEqual( ap2.atomname, "CB", "Passed!" );
         } );
-    });
+    } );
 
-    it('TYR vs not not TYR', function () {
+    it( 'TYR vs not not TYR', function () {
         var selection1 = new Selection( "TYR" );
         var selection2 = new Selection( "not not TYR" );
         var streamer = new StringStreamer( _1crnPdb );
@@ -813,9 +807,9 @@ describe('selection', function () {
             var sview2 = structure.getView( selection2 );
             assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
         } );
-    });
+    } );
 
-    it('not ( 12 and .CA ) vs not ( 12.CA )', function () {
+    it( 'not ( 12 and .CA ) vs not ( 12.CA )', function () {
         var selection1 = new Selection( "not ( 12 and .CA )" );
         var selection2 = new Selection( "not ( 12.CA )" );
         var streamer = new StringStreamer( _1crnPdb );
@@ -825,9 +819,9 @@ describe('selection', function () {
             var sview2 = structure.getView( selection2 );
             assert.strictEqual( sview1.atomCount, sview2.atomCount, "Passed!" );
         } );
-    });
+    } );
 
-    it('/1 PDB', function () {
+    it( '/1 PDB', function () {
         var sele = "/1";
         var selection = new Selection( sele );
         var path = __dirname + "/data/1LVZ.pdb";
@@ -841,9 +835,9 @@ describe('selection', function () {
             assert.strictEqual( ap1.modelIndex, 1, "Passed!" );
             assert.strictEqual( ap2.modelIndex, 1, "Passed!" );
         } );
-    });
+    } );
 
-    it('/1 CIF', function () {
+    it( '/1 CIF', function () {
         var sele = "/1";
         var selection = new Selection( sele );
         var path = __dirname + "/data/1LVZ.cif";
@@ -857,9 +851,9 @@ describe('selection', function () {
             assert.strictEqual( ap1.modelIndex, 1, "Passed!" );
             assert.strictEqual( ap2.modelIndex, 1, "Passed!" );
         } );
-    });
+    } );
 
-    it('atomindex', function () {
+    it( 'atomindex', function () {
         var sele = "@1,8,12";
         var selection = new Selection( sele );
         var streamer = new StringStreamer( _1crnPdb );
@@ -874,9 +868,9 @@ describe('selection', function () {
             assert.strictEqual( ap2.index, 8, "Passed!" );
             assert.strictEqual( ap3.index, 12, "Passed!" );
         } );
-    });
+    } );
 
-    it('lowercase resname', function () {
+    it( 'lowercase resname', function () {
         var sele = "phe";
         var selection = new Selection( sele );
         var path = __dirname + "/data/lowerCaseResname.pdb";
@@ -887,8 +881,8 @@ describe('selection', function () {
             var sview = structure.getView( selection );
             assert.strictEqual( sview.atomCount, 13, "Passed!" );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

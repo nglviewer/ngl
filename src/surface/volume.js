@@ -9,7 +9,7 @@ import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
 import { WorkerRegistry, ColormakerRegistry } from "../globals.js";
 import WorkerPool from "../worker/worker-pool.js";
-import { uniformArray } from "../math/array-utils";
+import { uniformArray, serialArray } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
 import { applyMatrix4toVector3array, applyMatrix3toVector3array } from "../math/vector-utils.js";
@@ -25,6 +25,8 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
         var sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
+        }
+        if( smooth || contour ){
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
         if( matrix ){
@@ -247,7 +249,7 @@ Volume.prototype = {
 
     },
 
-    getSurface: function( isolevel, smooth, center, size ){
+    getSurface: function( isolevel, smooth, center, size, contour ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -261,13 +263,13 @@ Volume.prototype = {
         }
 
         var box = this.__getBox( center, size );
-        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements );
+        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements, contour );
 
         return this.makeSurface( sd, isolevel, smooth );
 
     },
 
-    getSurfaceWorker: function( isolevel, smooth, center, size, callback ){
+    getSurfaceWorker: function( isolevel, smooth, center, size, contour, callback ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -293,7 +295,8 @@ Volume.prototype = {
                 isolevel: isolevel,
                 smooth: smooth,
                 box: this.__getBox( center, size ),
-                matrix: this.matrix.elements
+                matrix: this.matrix.elements,
+                contour: contour
             };
 
             worker.post( msg, undefined,
@@ -499,12 +502,13 @@ Volume.prototype = {
 
     },
 
-    getPickingDataColor: function( params ){
+    getDataPicking: function(){
 
-        var p = Object.assign( params || {} );
-        p.scheme = "picking";
+        const picking = serialArray( this.dataPosition.length / 3 );
+        picking.object = this;
+        picking.type = "volume";
 
-        return this.getDataColor( p );
+        return picking;
 
     },
 

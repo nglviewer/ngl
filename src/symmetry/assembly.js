@@ -12,7 +12,7 @@ import Selection from "../selection.js";
 
 
 function selectionFromChains( chainList ){
-    var sele = "";
+    let sele = "";
     if( chainList.length > 0 ){
         sele = ":" + uniqueArray( chainList ).join( " OR :" );
     }
@@ -25,17 +25,16 @@ function selectionFromChains( chainList ){
  * @class
  * @param {String} name - assembly name
  */
-function Assembly( name ){
+class Assembly{
 
-    this.name = name || "";
-    this.partList = [];
+    constructor( name ){
 
-}
+        this.name = name || "";
+        this.partList = [];
 
-Assembly.prototype = {
+    }
 
-    constructor: Assembly,
-    type: "Assembly",
+    get type (){ return "Assembly"; }
 
     /**
      * Add transformed parts to the assembly
@@ -50,35 +49,52 @@ Assembly.prototype = {
      * @param {String[]} chainList - array of chain names
      * @return {AssemblyPart} the added assembly part
      */
-    addPart: function( matrixList, chainList ){
+    addPart( matrixList, chainList ){
         var part = new AssemblyPart( matrixList, chainList );
         this.partList.push( part );
         return part;
-    },
+    }
+
+    getCount( structure, methodName ){
+
+        var count = 0;
+
+        this.partList.forEach( function( part ){
+            count += part[ methodName ]( structure );
+        } );
+
+        return count;
+
+    }
 
     /**
      * Get the number of atom for a given structure
      * @param  {Structure} structure - the given structure
      * @return {Integer} number of atoms in the assembly
      */
-    getAtomCount: function( structure ){
+    getAtomCount( structure ){
 
-        var atomCount = 0;
+        return this.getCount( structure, "getAtomCount" );
 
-        this.partList.forEach( function( part ){
-            atomCount += part.getAtomCount( structure );
-        } );
+    }
 
-        return atomCount;
+    /**
+     * Get the number of residues for a given structure
+     * @param  {Structure} structure - the given structure
+     * @return {Integer} number of residues in the assembly
+     */
+    getResidueCount( structure ){
 
-    },
+        return this.getCount( structure, "getResidueCount" );
+
+    }
 
     /**
      * Get number of instances the assembly will produce, i.e.
      * the number of transformations performed by the assembly
      * @return {Integer} number of instances
      */
-    getInstanceCount: function(){
+    getInstanceCount(){
 
         var instanceCount = 0;
 
@@ -88,14 +104,14 @@ Assembly.prototype = {
 
         return instanceCount;
 
-    },
+    }
 
     /**
      * Determine if the assembly is the full and untransformed structure
      * @param  {Structure}  structure - the given structure
      * @return {Boolean} whether the assembly is identical to the structure
      */
-    isIdentity: function( structure ){
+    isIdentity( structure ){
 
         if( this.partList.length !== 1 ) return false;
 
@@ -114,9 +130,9 @@ Assembly.prototype = {
 
         return true;
 
-    },
+    }
 
-    getBoundingBox: function( structure ){
+    getBoundingBox( structure ){
 
         var boundingBox = new Box3();
 
@@ -128,9 +144,9 @@ Assembly.prototype = {
 
         return boundingBox;
 
-    },
+    }
 
-    getSelection: function(){
+    getSelection(){
         var chainList = [];
         this.partList.forEach( function( part ){
             chainList = chainList.concat( part.chainList );
@@ -138,37 +154,48 @@ Assembly.prototype = {
         return selectionFromChains( chainList );
     }
 
-};
-
-
-function AssemblyPart( matrixList, chainList ){
-
-    this.matrixList = matrixList || [];
-    this.chainList = chainList || [];
-
 }
 
-AssemblyPart.prototype = {
 
-    constructor: AssemblyPart,
-    type: "AssemblyPart",
+class AssemblyPart{
 
-    getAtomCount: function( structure ){
+    constructor( matrixList, chainList ){
 
-        var atomCount = 0;
+        this.matrixList = matrixList || [];
+        this.chainList = chainList || [];
+
+    }
+
+    get type (){ return "AssemblyPart"; }
+
+    getCount( structure, propertyName ){
+
+        var count = 0;
         var chainList = this.chainList;
 
         structure.eachChain( function( cp ){
             if( chainList.length === 0 || chainList.includes( cp.chainname ) ){
-                atomCount += cp.atomCount;
+                count += cp[ propertyName ];
             }
         } );
 
-        return this.matrixList.length * atomCount;
+        return this.matrixList.length * count;
 
-    },
+    }
 
-    getBoundingBox: function( structure ){
+    getAtomCount( structure ){
+
+        return this.getCount( structure, "atomCount" );
+
+    }
+
+    getResidueCount( structure ){
+
+        return this.getCount( structure, "residueCount" );
+
+    }
+
+    getBoundingBox( structure ){
 
         var partBox = new Box3();
         var instanceBox = new Box3();
@@ -184,22 +211,22 @@ AssemblyPart.prototype = {
 
         return partBox;
 
-    },
+    }
 
-    getSelection: function(){
+    getSelection(){
         return selectionFromChains( this.chainList );
-    },
+    }
 
-    getView: function( structure ){
+    getView( structure ){
         var selection = this.getSelection();
         if( selection ){
             return structure.getView( selection );
         }else{
             return structure;
         }
-    },
+    }
 
-    getInstanceList: function(){
+    getInstanceList(){
         var instanceList = [];
         for ( var j = 0, jl = this.matrixList.length; j < jl; ++j ){
             instanceList.push( {
@@ -211,7 +238,7 @@ AssemblyPart.prototype = {
         return instanceList;
     }
 
-};
+}
 
 
 export default Assembly;

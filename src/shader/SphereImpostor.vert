@@ -10,7 +10,8 @@ attribute vec2 mapping;
 attribute float radius;
 
 #ifdef PICKING
-    attribute vec3 pickingColor;
+    #include unpack_color
+    attribute float primitiveId;
     varying vec3 vPickingColor;
 #else
     #include color_pars_vertex
@@ -112,7 +113,7 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
 void main(void){
 
     #ifdef PICKING
-        vPickingColor = pickingColor;
+        vPickingColor = unpackColor( primitiveId );
     #else
         #include color_vertex
     #endif

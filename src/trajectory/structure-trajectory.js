@@ -8,24 +8,17 @@
 import Trajectory from "./trajectory.js";
 
 
-function StructureTrajectory( trajPath, structure, params ){
+class StructureTrajectory extends Trajectory{
 
-    // if( !trajPath ) trajPath = structure.path;
-    trajPath = "";
+    constructor( trajPath, structure, params ){
 
-    Trajectory.call( this, trajPath, structure, params );
+        super( "", structure, params );
 
-}
+    }
 
-StructureTrajectory.prototype = Object.assign( Object.create(
+    get type (){ return "structure"; }
 
-    Trajectory.prototype ), {
-
-    constructor: StructureTrajectory,
-
-    type: "structure",
-
-    makeAtomIndices: function(){
+    makeAtomIndices(){
 
         if( this.structure.atomSet.size() < this.structure.atomStore.count ){
             this.atomIndices = this.structure.getAtomIndices();
@@ -33,9 +26,9 @@ StructureTrajectory.prototype = Object.assign( Object.create(
             this.atomIndices = null;
         }
 
-    },
+    }
 
-    _loadFrame: function( i, callback ){
+    _loadFrame( i, callback ){
 
         var coords;
         var structure = this.structure;
@@ -74,15 +67,15 @@ StructureTrajectory.prototype = Object.assign( Object.create(
             callback();
         }
 
-    },
+    }
 
-    getNumframes: function(){
+    getNumframes(){
 
         this.setNumframes( this.structure.frames.length );
 
-    },
+    }
 
-    getPath: function( index, callback ){
+    getPath( index, callback ){
 
         var i, j, f;
         var n = this.numframes;
@@ -105,7 +98,7 @@ StructureTrajectory.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default StructureTrajectory;

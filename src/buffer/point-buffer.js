@@ -73,56 +73,57 @@ function makePointTexture( params ){
 }
 
 
-function PointBuffer( position, color, params ){
+class PointBuffer extends Buffer{
 
-    var p = params || {};
+    /**
+     * make point buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.color - colors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.point = true;
-    this.pointSize = defaults( p.pointSize, 1 );
-    this.sizeAttenuation = defaults( p.sizeAttenuation, true );
-    this.sortParticles = defaults( p.sortParticles, false );
-    this.alphaTest = defaults( p.alphaTest, 0.5 );
-    this.useTexture = defaults( p.useTexture, false );
-    this.forceTransparent = defaults( p.forceTransparent, false );
-    this.edgeBleach = defaults( p.edgeBleach, 0.0 );
+        var p = params || {};
 
-    this.size = position.length / 3;
-    this.attributeSize = this.size;
-    this.vertexShader = 'Point.vert';
-    this.fragmentShader = 'Point.frag';
+        super( data, p );
 
-    Buffer.call( this, position, color, undefined, undefined, p );
+        this.pointSize = defaults( p.pointSize, 1 );
+        this.sizeAttenuation = defaults( p.sizeAttenuation, true );
+        this.sortParticles = defaults( p.sortParticles, false );
+        this.alphaTest = defaults( p.alphaTest, 0.5 );
+        this.useTexture = defaults( p.useTexture, false );
+        this.forceTransparent = defaults( p.forceTransparent, false );
+        this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-    this.addUniforms( {
-        "size": { value: this.pointSize },
-        "canvasHeight": { value: 1.0 },
-        "pixelRatio": { value: 1.0 },
-        "map": { value: null },
-    } );
+        this.addUniforms( {
+            "size": { value: this.pointSize },
+            "canvasHeight": { value: 1.0 },
+            "pixelRatio": { value: 1.0 },
+            "map": { value: null },
+        } );
 
-}
+    }
 
-PointBuffer.prototype = Object.assign( Object.create(
+    get parameters (){
 
-    Buffer.prototype ), {
+        return Object.assign( {
 
-    constructor: PointBuffer,
+            pointSize: { uniform: "size" },
+            sizeAttenuation: { updateShader: true },
+            sortParticles: {},
+            alphaTest: { updateShader: true },
+            useTexture: { updateShader: true },
+            forceTransparent: {},
+            edgeBleach: { uniform: true }
 
-    parameters: Object.assign( {
+        }, super.parameters );
 
-        pointSize: { uniform: "size" },
-        sizeAttenuation: { updateShader: true },
-        sortParticles: {},
-        alphaTest: { updateShader: true },
-        useTexture: { updateShader: true },
-        forceTransparent: {},
-        edgeBleach: { uniform: true },
+    }
 
-    }, Buffer.prototype.parameters ),
+    makeMaterial(){
 
-    makeMaterial: function(){
-
-        Buffer.prototype.makeMaterial.call( this );
+        super.makeMaterial();
 
         this.makeTexture();
 
@@ -138,18 +139,18 @@ PointBuffer.prototype = Object.assign( Object.create(
         this.pickingMaterial.blending = NormalBlending;
         this.pickingMaterial.needsUpdate = true;
 
-    },
+    }
 
-    makeTexture: function(){
+    makeTexture(){
 
         if( this.tex ) this.tex.dispose();
         this.tex = makePointTexture( { delta: this.edgeBleach } );
 
-    },
+    }
 
-    getDefines: function( type ){
+    getDefines( type ){
 
-        var defines = Buffer.prototype.getDefines.call( this, type );
+        var defines = super.getDefines( type );
 
         if( this.sizeAttenuation ){
             defines.USE_SIZEATTENUATION = 1;
@@ -165,9 +166,9 @@ PointBuffer.prototype = Object.assign( Object.create(
 
         return defines;
 
-    },
+    }
 
-    setUniforms: function( data ){
+    setUniforms( data ){
 
         if( data && data.edgeBleach !== undefined ){
 
@@ -176,19 +177,23 @@ PointBuffer.prototype = Object.assign( Object.create(
 
         }
 
-        Buffer.prototype.setUniforms.call( this, data );
+        super.setUniforms( data );
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
-        Buffer.prototype.dispose.call( this );
+        super.dispose();
 
         if( this.tex ) this.tex.dispose();
 
     }
 
-} );
+    get point (){ return true; }
+    get vertexShader (){ return "Point.vert"; }
+    get fragmentShader (){ return "Point.frag"; }
+
+}
 
 
 export default PointBuffer;

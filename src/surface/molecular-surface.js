@@ -18,7 +18,7 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
     var p = e.data.params;
     if( a && p ){
         var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
-        var surf = new SurfClass(a.coordList, a.radiusList, a.indexList );
+        var surf = new SurfClass( a.coordList, a.radiusList, a.indexList );
         var sd = surf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );

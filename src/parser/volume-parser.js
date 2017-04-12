@@ -12,39 +12,35 @@ import Parser from "./parser.js";
 import Volume from "../surface/volume.js";
 
 
-function VolumeParser( streamer, params ){
+class VolumeParser extends Parser{
 
-    var p = params || {};
+    constructor( streamer, params ){
 
-    Parser.call( this, streamer, p );
+        const p = params || {};
 
-    this.volume = new Volume( this.name, this.path );
-    this.voxelSize  = defaults( p.voxelSize, 1 );
+        super( streamer, p );
 
-}
+        this.volume = new Volume( this.name, this.path );
+        this.voxelSize  = defaults( p.voxelSize, 1 );
 
-VolumeParser.prototype = Object.assign( Object.create(
+    }
 
-    Parser.prototype ), {
+    get type (){ return "volume"; }
+    get __objName(){ return "volume"; }
 
-    constructor: VolumeParser,
-    type: "volume",
-
-    __objName: "volume",
-
-    _afterParse: function(){
+    _afterParse(){
 
         this.volume.setMatrix( this.getMatrix() );
 
-    },
+    }
 
-    getMatrix: function(){
+    getMatrix(){
 
         return new Matrix4();
 
     }
 
-} );
+}
 
 
 export default VolumeParser;

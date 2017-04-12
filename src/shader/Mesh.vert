@@ -12,7 +12,8 @@ uniform vec3 clipCenter;
 #endif
 
 #if defined( PICKING )
-    attribute vec3 pickingColor;
+    #include unpack_color
+    attribute float primitiveId;
     varying vec3 vPickingColor;
 #elif defined( NOLIGHT )
     varying vec3 vColor;
@@ -28,7 +29,7 @@ uniform vec3 clipCenter;
 void main(){
 
     #if defined( PICKING )
-        vPickingColor = pickingColor;
+        vPickingColor = unpackColor( primitiveId );
     #elif defined( NOLIGHT )
         vColor = color;
     #else

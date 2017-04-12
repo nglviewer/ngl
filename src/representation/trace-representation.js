@@ -97,8 +97,7 @@ TraceRepresentation.prototype = Object.assign( Object.create(
 
             bufferList.push(
                 new TraceBuffer(
-                    subPos.position,
-                    subCol.color,
+                    Object.assign( {}, subPos, subCol ),
                     this.getBufferParams()
                 )
             );

@@ -12,6 +12,7 @@ import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
 import SurfaceBuffer from "../buffer/surface-buffer.js";
 import DoubleSidedBuffer from "../buffer/doublesided-buffer";
+import ContourBuffer from "../buffer/contour-buffer.js";
 
 
 /**
@@ -54,21 +55,15 @@ function SurfaceRepresentation( surface, viewer, params ){
     this.box = new Box3();
     this.__box = new Box3();
 
-    this.setBox = ( function(){
-        var position = new Vector3();
-        return function setBox(){
-            var target = viewer.controls.target;
-            var group = viewer.rotationGroup.position;
-            position.copy( group ).negate().add( target );
-            if( !position.equals( this.boxCenter ) ){
-                this.setParameters( { "boxCenter": position } );
-            }
-        }.bind( this );
-    }.bind( this ) )();
+    this._position = new Vector3();
+    this.setBox = function setBox(){
+        this._position.copy( viewer.translationGroup.position ).negate();
+        if( !this._position.equals( this.boxCenter ) ){
+            this.setParameters( { "boxCenter": this._position } );
+        }
+    };
 
-    this.viewer.signals.orientationChanged.add(
-        this.setBox
-    );
+    this.viewer.signals.ticked.add( this.setBox, this );
 
     this.build();
 
@@ -107,6 +102,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         colorVolume: {
             type: "hidden"
         },
+        contour: {
+            type: "boolean", rebuild: true
+        },
         useWorker: {
             type: "boolean", rebuild: true
         }
@@ -126,6 +124,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.opaqueBack = defaults( p.opaqueBack, true );
         this.boxSize = defaults( p.boxSize, 0 );
         this.colorVolume = defaults( p.colorVolume, undefined );
+        this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
 
         Representation.prototype.init.call( this, p );
@@ -161,12 +160,14 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
+                this.__contour !== this.contour ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
             ){
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
+                this.__contour = this.contour;
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
@@ -178,13 +179,14 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
-                        isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        onSurfaceFinish
+                        isolevel, this.smooth, this.boxCenter, this.boxSize, 
+                        this.contour, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
-                            isolevel, this.smooth, this.boxCenter, this.boxSize
+                            isolevel, this.smooth, this.boxCenter, this.boxSize,
+                            this.contour
                         )
                     );
                 }
@@ -198,23 +200,45 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     },
 
+    getSurfaceData: function(){
+
+        return {
+            position: this.surface.getPosition(),
+            color: this.surface.getColor( this.getColorParams() ),
+            index: this.surface.getIndex(),
+            normal: this.surface.getNormal(),
+            picking: this.surface.getPicking()
+        };
+
+    },
+
     create: function(){
 
-        var surfaceBuffer = new SurfaceBuffer(
-            this.surface.getPosition(),
-            this.surface.getColor( this.getColorParams() ),
-            this.surface.getIndex(),
-            this.surface.getNormal(),
-            undefined,  // this.surface.getPickingColor( this.getColorParams() ),
-            this.getBufferParams( {
-                background: this.background,
-                opaqueBack: this.opaqueBack,
-                dullInterior: false,
-            } )
-        );
-        var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+        var sd = this.getSurfaceData();
 
-        this.bufferList.push( doubleSidedBuffer );
+        var buffer;
+
+        if( this.contour ){
+
+            buffer = new ContourBuffer(
+                sd, this.getBufferParams( {
+                    wireframe: false
+            } ) );
+
+        } else {
+
+            var surfaceBuffer = new SurfaceBuffer(
+                sd, this.getBufferParams( {
+                    background: this.background,
+                    opaqueBack: this.opaqueBack,
+                    dullInterior: false
+                } ) );
+            
+            buffer = new DoubleSidedBuffer( surfaceBuffer );
+            
+        }
+
+        this.bufferList.push( buffer );
 
     },
 
@@ -297,6 +321,13 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             delete params.boxCenter;
         }
 
+        // Forbid wireframe && contour as in molsurface
+        if( params && params.wireframe && (
+            params.contour || ( params.contour === undefined && this.contour )
+        ) ){
+            params.wireframe = false;
+        }
+
         Representation.prototype.setParameters.call(
             this, params, what, rebuild
         );
@@ -317,11 +348,11 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                     !this.__box.equals( this.box ) )
             )
         ){
-            this.build( {
+            this.build( { 
                 "position": true,
                 "color": true,
                 "index": true,
-                "normal": true
+                "normal": !this.contour
             } );
         }
 
@@ -341,9 +372,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
     dispose: function(){
 
-        this.viewer.signals.orientationChanged.remove(
-            this.setBox
-        );
+        this.viewer.signals.ticked.remove( this.setBox, this );
 
         Representation.prototype.dispose.call( this );
 

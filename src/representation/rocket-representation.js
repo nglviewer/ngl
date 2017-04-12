@@ -88,7 +88,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             end: new Float32Array( length * 3 ),
             size: new Float32Array( length ),
             color: new Float32Array( length * 3 ),
-            pickingColor: new Float32Array( length * 3 ),
+            picking: new Float32Array( length ),
         };
 
         var offset = 0;
@@ -98,18 +98,21 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData.end.set( axis.end, offset * 3 );
             axisData.size.set( axis.size, offset );
             axisData.color.set( axis.color, offset * 3 );
-            axisData.pickingColor.set( axis.pickingColor, offset * 3 );
+            axisData.picking.set( axis.picking, offset );
+            axisData.picking.object = axis.picking.object;
+            axisData.picking.type = axis.picking.type;
             offset += axis.size.length;
         } );
 
         var cylinderBuffer = new CylinderBuffer(
-            axisData.begin,
-            axisData.end,
-            axisData.color,
-            axisData.color,
-            axisData.size,
-            axisData.pickingColor,
-            axisData.pickingColor,
+            {
+                position1: axisData.begin,
+                position2: axisData.end,
+                color: axisData.color,
+                color2: axisData.color,
+                radius: axisData.size,
+                picking: axisData.picking,
+            },
             this.getBufferParams( {
                 openEnded: this.openEnded,
                 radialSegments: this.radialSegments,

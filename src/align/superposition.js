@@ -12,50 +12,48 @@ import {
 } from "../math/matrix-utils.js";
 
 
-function Superposition( atoms1, atoms2 ){
+class Superposition{
 
-    // allocate & init data structures
+    constructor( atoms1, atoms2 ){
 
-    var n;
-    if( typeof atoms1.eachAtom === "function" ){
-        n = atoms1.atomCount;
-    }else if( atoms1 instanceof Float32Array ){
-        n = atoms1.length / 3;
+        // allocate & init data structures
+
+        var n;
+        if( typeof atoms1.eachAtom === "function" ){
+            n = atoms1.atomCount;
+        }else if( atoms1 instanceof Float32Array ){
+            n = atoms1.length / 3;
+        }
+
+        var coords1 = new Matrix( 3, n );
+        var coords2 = new Matrix( 3, n );
+
+        this.coords1t = new Matrix( n, 3 );
+        this.coords2t = new Matrix( n, 3 );
+
+        this.A = new Matrix( 3, 3 );
+        this.W = new Matrix( 1, 3 );
+        this.U = new Matrix( 3, 3 );
+        this.V = new Matrix( 3, 3 );
+        this.VH = new Matrix( 3, 3 );
+        this.R = new Matrix( 3, 3 );
+
+        this.tmp = new Matrix( 3, 3 );
+        this.c = new Matrix( 3, 3 );
+        this.c.data.set( [ 1, 0, 0, 0, 1, 0, 0, 0, -1 ] );
+
+        // prep coords
+
+        this.prepCoords( atoms1, coords1 );
+        this.prepCoords( atoms2, coords2 );
+
+        // superpose
+
+        this._superpose( coords1, coords2 );
+
     }
 
-    var coords1 = new Matrix( 3, n );
-    var coords2 = new Matrix( 3, n );
-
-    this.coords1t = new Matrix( n, 3 );
-    this.coords2t = new Matrix( n, 3 );
-
-    this.A = new Matrix( 3, 3 );
-    this.W = new Matrix( 1, 3 );
-    this.U = new Matrix( 3, 3 );
-    this.V = new Matrix( 3, 3 );
-    this.VH = new Matrix( 3, 3 );
-    this.R = new Matrix( 3, 3 );
-
-    this.tmp = new Matrix( 3, 3 );
-    this.c = new Matrix( 3, 3 );
-    this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ]);
-
-    // prep coords
-
-    this.prepCoords( atoms1, coords1 );
-    this.prepCoords( atoms2, coords2 );
-
-    // superpose
-
-    this._superpose( coords1, coords2 );
-
-}
-
-Superposition.prototype = {
-
-    constructor: Superposition,
-
-    _superpose: function( coords1, coords2 ){
+    _superpose( coords1, coords2 ){
 
         this.mean1 = mean_rows( coords1 );
         this.mean2 = mean_rows( coords2 );
@@ -82,9 +80,9 @@ Superposition.prototype = {
 
         }
 
-    },
+    }
 
-    prepCoords: function( atoms, coords ){
+    prepCoords( atoms, coords ){
 
         var i = 0;
         var cd = coords.data;
@@ -111,9 +109,9 @@ Superposition.prototype = {
 
         }
 
-    },
+    }
 
-    transform: function( atoms ){
+    transform( atoms ){
 
         // allocate data structures
 
@@ -165,7 +163,7 @@ Superposition.prototype = {
 
     }
 
-};
+}
 
 
 export default Superposition;

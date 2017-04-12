@@ -7,7 +7,6 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
 import { v3new, v3cross } from "./vector-utils.js";
 
 
@@ -35,9 +34,9 @@ function transpose( At, A ){
     var Ai=0,Ati=0,pAt=0;
     var ad=A.data,atd=At.data;
 
-    for (; i < nrows; Ati += 1, Ai += ncols, i++) {
+    for ( ; i < nrows; Ati += 1, Ai += ncols, i++ ) {
         pAt = Ati;
-        for (j = 0; j < ncols; pAt += nrows, j++) atd[pAt] = ad[Ai+j];
+        for ( j = 0; j < ncols; pAt += nrows, j++ ) atd[pAt] = ad[Ai+j];
     }
 }
 
@@ -50,12 +49,12 @@ function multiply( C, A, B ){
     var ad=A.data,bd=B.data,cd=C.data;
     var sum=0.0;
 
-    for (; i < nrows; Ap += ncols, i++) {
-        for (p_B = 0, j = 0; j < mcols; Cp++, p_B++, j++) {
+    for ( ; i < nrows; Ap += ncols, i++ ) {
+        for ( p_B = 0, j = 0; j < mcols; Cp++, p_B++, j++ ) {
             pB = p_B;
             pA = Ap;
             sum = 0.0;
-            for (k = 0; k < ncols; pA++, pB += mcols, k++) {
+            for ( k = 0; k < ncols; pA++, pB += mcols, k++ ) {
                 sum += ad[pA] * bd[pB];
             }
             cd[Cp] = sum;
@@ -72,11 +71,11 @@ function multiply_ABt( C, A, B ){
     var ad=A.data,bd=B.data,cd=C.data;
     var sum=0.0;
 
-    for (; i < nrows; Ap += ncols, i++) {
-        for (pB = 0, j = 0; j < mrows; Cp++, j++) {
+    for ( ; i < nrows; Ap += ncols, i++ ) {
+        for ( pB = 0, j = 0; j < mrows; Cp++, j++ ) {
             pA = Ap;
             sum = 0.0;
-            for (k = 0; k < ncols; pA++, pB++, k++) {
+            for ( k = 0; k < ncols; pA++, pB++, k++ ) {
                 sum += ad[pA] * bd[pB];
             }
             cd[Cp] = sum;
@@ -93,12 +92,12 @@ function multiply_AtB( C, A, B ){
     var ad=A.data,bd=B.data,cd=C.data;
     var sum=0.0;
 
-    for (; i < ncols; Ap++, i++) {
-        for (p_B = 0, j = 0; j < mcols; Cp++, p_B++, j++) {
+    for ( ; i < ncols; Ap++, i++ ) {
+        for ( p_B = 0, j = 0; j < mcols; Cp++, p_B++, j++ ) {
             pB = p_B;
             pA = Ap;
             sum = 0.0;
-            for (k = 0; k < nrows; pA += ncols, pB += mcols, k++) {
+            for ( k = 0; k < nrows; pA += ncols, pB += mcols, k++ ) {
                 sum += ad[pA] * bd[pB];
             }
             cd[Cp] = sum;
@@ -125,16 +124,16 @@ function invert_3x3( from, to ){
     var t20 = A[6];
     var t21 = t20*t14;
     var t23 = t20*t17;
-    var t26 = 1.0/(t9*t2-t11*t5-t15*t2+t18*t5+t21*t4-t23*t1);
-    invA[0] = (t1*t2-t4*t5)*t26;
-    invA[1] = -(t14*t2-t17*t5)*t26;
-    invA[2] = -(-t14*t4+t17*t1)*t26;
-    invA[3] = -(t13*t2-t4*t20)*t26;
-    invA[4] = (t8*t2-t23)*t26;
-    invA[5] = -(t11-t18)*t26;
-    invA[6] = -(-t13*t5+t1*t20)*t26;
-    invA[7] = -(t8*t5-t21)*t26;
-    invA[8] = (t9-t15)*t26;
+    var t26 = 1.0/( t9*t2-t11*t5-t15*t2+t18*t5+t21*t4-t23*t1 );
+    invA[0] = ( t1*t2-t4*t5 )*t26;
+    invA[1] = -( t14*t2-t17*t5 )*t26;
+    invA[2] = -( -t14*t4+t17*t1 )*t26;
+    invA[3] = -( t13*t2-t4*t20 )*t26;
+    invA[4] = ( t8*t2-t23 )*t26;
+    invA[5] = -( t11-t18 )*t26;
+    invA[6] = -( -t13*t5+t1*t20 )*t26;
+    invA[7] = -( t8*t5-t21 )*t26;
+    invA[8] = ( t9-t15 )*t26;
 }
 
 
@@ -292,15 +291,15 @@ function swap( A, i0, i1, t ){
 
 
 function hypot( a, b ){
-    a = Math.abs(a);
-    b = Math.abs(b);
+    a = Math.abs( a );
+    b = Math.abs( b );
     if( a > b ) {
         b /= a;
-        return a*Math.sqrt(1.0 + b*b);
+        return a*Math.sqrt( 1.0 + b*b );
     }
     if( b > 0 ) {
         a /= b;
-        return b*Math.sqrt(1.0 + a*a);
+        return b*Math.sqrt( 1.0 + a*a );
     }
     return 0.0;
 }
@@ -313,7 +312,7 @@ var FLT_MIN = 1E-37;
 function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
     var eps = EPSILON * 2.0;
     var minval = FLT_MIN;
-    var i=0,j=0,k=0,iter=0,max_iter=Math.max(m, 30);
+    var i=0,j=0,k=0,iter=0,max_iter=Math.max( m, 30 );
     var Ai=0,Aj=0,Vi=0,Vj=0,changed=0;
     var c=0.0, s=0.0, t=0.0;
     var t0=0.0,t1=0.0,sd=0.0,beta=0.0,gamma=0.0,delta=0.0,a=0.0,p=0.0,b=0.0;
@@ -322,28 +321,28 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
 
     var W = new Float64Array( n<<3 );
 
-    for(; i < n; i++) {
-        for(k = 0, sd = 0; k < m; k++) {
+    for( ; i < n; i++ ) {
+        for( k = 0, sd = 0; k < m; k++ ) {
             t = At[i*astep + k];
             sd += t*t;
         }
         W[i] = sd;
 
-        if(Vt) {
-            for(k = 0; k < n; k++) {
+        if( Vt ) {
+            for( k = 0; k < n; k++ ) {
                 Vt[i*vstep + k] = 0;
             }
             Vt[i*vstep + i] = 1;
         }
     }
 
-    for(; iter < max_iter; iter++) {
+    for( ; iter < max_iter; iter++ ) {
         changed = 0;
 
-        for(i = 0; i < n-1; i++) {
-            for(j = i+1; j < n; j++) {
-                Ai = (i*astep)|0;
-                Aj = (j*astep)|0;
+        for( i = 0; i < n-1; i++ ) {
+            for( j = i+1; j < n; j++ ) {
+                Ai = ( i*astep )|0;
+                Aj = ( j*astep )|0;
                 a = W[i];
                 p = 0;
                 b = W[j];
@@ -352,21 +351,21 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                 p += At[Ai]*At[Aj];
                 p += At[Ai+1]*At[Aj+1];
 
-                for(; k < m; k++)
+                for( ; k < m; k++ )
                     p += At[Ai+k]*At[Aj+k];
 
-                if(Math.abs(p) <= eps*Math.sqrt(a*b)) continue;
+                if( Math.abs( p ) <= eps*Math.sqrt( a*b ) ) continue;
 
                 p *= 2.0;
                 beta = a - b;
-                gamma = hypot(p, beta);
+                gamma = hypot( p, beta );
                 if( beta < 0 ) {
-                    delta = (gamma - beta)*0.5;
-                    s = Math.sqrt(delta/gamma);
-                    c = (p/(gamma*s*2.0));
+                    delta = ( gamma - beta )*0.5;
+                    s = Math.sqrt( delta/gamma );
+                    c = ( p/( gamma*s*2.0 ) );
                 } else {
-                    c = Math.sqrt((gamma + beta)/(gamma*2.0));
-                    s = (p/(gamma*c*2.0));
+                    c = Math.sqrt( ( gamma + beta )/( gamma*2.0 ) );
+                    s = ( p/( gamma*c*2.0 ) );
                 }
 
                 a=0.0;
@@ -397,9 +396,9 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
 
                 changed = 1;
 
-                if(Vt) {
-                    Vi = (i*vstep)|0;
-                    Vj = (j*vstep)|0;
+                if( Vt ) {
+                    Vi = ( i*vstep )|0;
+                    Vj = ( j*vstep )|0;
 
                     k = 2;
                     t0 = c*Vt[Vi] + s*Vt[Vj];
@@ -410,7 +409,7 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                     t1 = -s*Vt[Vi+1] + c*Vt[Vj+1];
                     Vt[Vi+1] = t0; Vt[Vj+1] = t1;
 
-                    for(; k < n; k++) {
+                    for( ; k < n; k++ ) {
                         t0 = c*Vt[Vi+k] + s*Vt[Vj+k];
                         t1 = -s*Vt[Vi+k] + c*Vt[Vj+k];
                         Vt[Vi+k] = t0; Vt[Vj+k] = t1;
@@ -418,87 +417,87 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
                 }
             }
         }
-        if(changed === 0) break;
+        if( changed === 0 ) break;
     }
 
-    for(i = 0; i < n; i++) {
-        for(k = 0, sd = 0; k < m; k++) {
+    for( i = 0; i < n; i++ ) {
+        for( k = 0, sd = 0; k < m; k++ ) {
             t = At[i*astep + k];
             sd += t*t;
         }
-        W[i] = Math.sqrt(sd);
+        W[i] = Math.sqrt( sd );
     }
 
-    for(i = 0; i < n-1; i++) {
+    for( i = 0; i < n-1; i++ ) {
         j = i;
-        for(k = i+1; k < n; k++) {
-            if(W[j] < W[k])
+        for( k = i+1; k < n; k++ ) {
+            if( W[j] < W[k] )
                 j = k;
         }
-        if(i != j) {
-            swap(W, i, j, sd);
-            if(Vt) {
-                for(k = 0; k < m; k++) {
-                    swap(At, i*astep + k, j*astep + k, t);
+        if( i != j ) {
+            swap( W, i, j, sd );
+            if( Vt ) {
+                for( k = 0; k < m; k++ ) {
+                    swap( At, i*astep + k, j*astep + k, t );
                 }
 
-                for(k = 0; k < n; k++) {
-                    swap(Vt, i*vstep + k, j*vstep + k, t);
+                for( k = 0; k < n; k++ ) {
+                    swap( Vt, i*vstep + k, j*vstep + k, t );
                 }
             }
         }
     }
 
-    for(i = 0; i < n; i++) {
+    for( i = 0; i < n; i++ ) {
         _W[i] = W[i];
     }
 
-    if(!Vt) {
+    if( !Vt ) {
         return;
     }
 
-    for(i = 0; i < n1; i++) {
+    for( i = 0; i < n1; i++ ) {
 
         sd = i < n ? W[i] : 0;
 
-        while(sd <= minval) {
+        while( sd <= minval ) {
             // if we got a zero singular value, then in order to get the corresponding left singular vector
             // we generate a random vector, project it to the previously computed left singular vectors,
             // subtract the projection and normalize the difference.
-            val0 = (1.0/m);
-            for(k = 0; k < m; k++) {
-                seed = (seed * 214013 + 2531011);
-                val = (((seed >> 16) & 0x7fff) & 256) !== 0 ? val0 : -val0;
+            val0 = ( 1.0/m );
+            for( k = 0; k < m; k++ ) {
+                seed = ( seed * 214013 + 2531011 );
+                val = ( ( ( seed >> 16 ) & 0x7fff ) & 256 ) !== 0 ? val0 : -val0;
                 At[i*astep + k] = val;
             }
-            for(iter = 0; iter < 2; iter++) {
-                for(j = 0; j < i; j++) {
+            for( iter = 0; iter < 2; iter++ ) {
+                for( j = 0; j < i; j++ ) {
                     sd = 0;
-                    for(k = 0; k < m; k++) {
+                    for( k = 0; k < m; k++ ) {
                         sd += At[i*astep + k]*At[j*astep + k];
                     }
                     asum = 0.0;
-                    for(k = 0; k < m; k++) {
-                        t = (At[i*astep + k] - sd*At[j*astep + k]);
+                    for( k = 0; k < m; k++ ) {
+                        t = ( At[i*astep + k] - sd*At[j*astep + k] );
                         At[i*astep + k] = t;
-                        asum += Math.abs(t);
+                        asum += Math.abs( t );
                     }
                     asum = asum ? 1.0/asum : 0;
-                    for(k = 0; k < m; k++) {
+                    for( k = 0; k < m; k++ ) {
                         At[i*astep + k] *= asum;
                     }
                 }
             }
             sd = 0;
-            for(k = 0; k < m; k++) {
+            for( k = 0; k < m; k++ ) {
                 t = At[i*astep + k];
                 sd += t*t;
             }
-            sd = Math.sqrt(sd);
+            sd = Math.sqrt( sd );
         }
 
-        s = (1.0/sd);
-        for(k = 0; k < m; k++) {
+        s = ( 1.0/sd );
+        for( k = 0; k < m; k++ ) {
             At[i*astep + k] *= s;
         }
     }
@@ -508,7 +507,7 @@ function JacobiSVDImpl( At, astep, _W, Vt, vstep, m, n, n1 ){
 function svd( A, W, U, V ){
     var at=0,i=0,_m=A.rows,_n=A.cols,m=_m,n=_n;
 
-    if(m < n) {
+    if( m < n ) {
         at = 1;
         i = m;
         m = n;
@@ -519,88 +518,46 @@ function svd( A, W, U, V ){
     var w_mt = new Matrix( 1, n );
     var v_mt = new Matrix( n, n );
 
-    if(at === 0) {
-        transpose(a_mt, A);
+    if( at === 0 ) {
+        transpose( a_mt, A );
     } else {
-        for(i = 0; i < _n*_m; i++) {
+        for( i = 0; i < _n*_m; i++ ) {
             a_mt.data[i] = A.data[i];
         }
-        for(; i < n*m; i++) {
+        for( ; i < n*m; i++ ) {
             a_mt.data[i] = 0;
         }
     }
 
     JacobiSVDImpl( a_mt.data, m, w_mt.data, v_mt.data, n, m, n, m );
 
-    if(W) {
-        for(i=0; i < n; i++) {
+    if( W ) {
+        for( i=0; i < n; i++ ) {
             W.data[i] = w_mt.data[i];
         }
-        for(; i < _n; i++) {
+        for( ; i < _n; i++ ) {
             W.data[i] = 0;
         }
     }
 
-    if (at === 0) {
-        if( U ) transpose(U, a_mt);
-        if( V ) transpose(V, v_mt);
+    if ( at === 0 ) {
+        if( U ) transpose( U, a_mt );
+        if( V ) transpose( V, v_mt );
     } else {
-        if( U ) transpose(U, v_mt);
-        if( V ) transpose(V, a_mt);
+        if( U ) transpose( U, v_mt );
+        if( V ) transpose( V, a_mt );
     }
-}
-
-
-function principalAxes( points ){
-
-    // console.time( "principalAxes" );
-
-    var n = points.rows;
-    var pointsT = new Matrix( n, 3 );
-    var A = new Matrix( 3, 3 );
-    var W = new Matrix( 1, 3 );
-    var U = new Matrix( 3, 3 );
-    var V = new Matrix( 3, 3 );
-
-    var mean = mean_rows( points );
-    sub_rows( points, mean );
-    transpose( pointsT, points );
-    multiply_ABt( A, pointsT, pointsT );
-    svd( A, W, U, V );
-
-    // console.log( points, pointsT, mean )
-    // console.log( n, A, W, U, V );
-
-    var vm = new Vector3( mean[0], mean[1], mean[2] );
-    var va = new Vector3( U.data[0], U.data[3], U.data[6] );
-    var vb = new Vector3( U.data[1], U.data[4], U.data[7] );
-    var vc = new Vector3( U.data[2], U.data[5], U.data[8] );
-
-    va.multiplyScalar( Math.sqrt( W.data[0] / ( n / 3 ) ) );
-    vb.multiplyScalar( Math.sqrt( W.data[1] / ( n / 3 ) ) );
-    vc.multiplyScalar( Math.sqrt( W.data[2] / ( n / 3 ) ) );
-
-    var begA = new Vector3().copy( vm ).sub( va );
-    var endA = new Vector3().copy( vm ).add( va );
-    var begB = new Vector3().copy( vm ).sub( vb );
-    var endB = new Vector3().copy( vm ).add( vb );
-    var begC = new Vector3().copy( vm ).sub( vc );
-    var endC = new Vector3().copy( vm ).add( vc );
-
-    // console.timeEnd( "principalAxes" );
-
-    return [ [ begA, endA ], [ begB, endB ], [ begC, endC ], vm ];
 }
 
 //
 
 function m4new(){
-    return new Float32Array([
+    return new Float32Array( [
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
-    ]);
+    ] );
 }
 
 function m4set( out, n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44 ){
@@ -686,17 +643,17 @@ m4makeRotationY.__deps = [ m4set ];
 //
 
 function m3new(){
-    return new Float32Array([
+    return new Float32Array( [
         1, 0, 0,
         0, 1, 0,
         0, 0, 1
-    ]);
+    ] );
 }
 
 function m3makeNormal( out, m4 ){
-    var r0 = v3new([ m4[0], m4[1], m4[2] ]);
-    var r1 = v3new([ m4[4], m4[5], m4[6] ]);
-    var r2 = v3new([ m4[8], m4[9], m4[10] ]);
+    var r0 = v3new( [ m4[0], m4[1], m4[2] ] );
+    var r1 = v3new( [ m4[4], m4[5], m4[6] ] );
+    var r2 = v3new( [ m4[8], m4[9], m4[10] ] );
     var cp = v3new();
     //        [ r0 ]       [ r1 x r2 ]
     // M3x3 = [ r1 ]   N = [ r2 x r0 ]
@@ -720,7 +677,6 @@ m3makeNormal.__deps = [ v3new, v3cross ];
 export {
     Matrix,
     svd,
-    principalAxes,
     mean_rows,
     mean_cols,
     sub_rows,

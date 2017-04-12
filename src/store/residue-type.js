@@ -378,10 +378,10 @@ ResidueType.prototype = {
             ai2 = atomIndices2[i];
 
             var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
-            a1.push(ai2);
+            a1.push( ai2 );
 
             var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
-            a2.push(ai1);
+            a2.push( ai1 );
         }
     },
 
@@ -413,7 +413,7 @@ ResidueType.prototype = {
         function DFS( i, connected, from ) {
 
             // Sanity check
-            if( state[ i ] ) { throw Error("DFS revisited atom"); }
+            if( state[ i ] ) { throw Error( "DFS revisited atom" ); }
             state[ i ] = 1;
             visited.push( i );
             var nc = connected.length;
@@ -428,7 +428,7 @@ ResidueType.prototype = {
                     // And has >= 2 neighbours:
                     if( bondGraph[ j ] && bondGraph[ j ].length >= 2 ) {
                         // Recurse
-                        DFS(j, bondGraph[ j ], i);
+                        DFS( j, bondGraph[ j ], i );
                     } else {
                         // Not interesting
                         state[ j ] = 2;
@@ -518,7 +518,7 @@ ResidueType.prototype = {
                 for( var ri = 0; ri < ringData.length; ++ri ){
 
                     // Have we already found it?
-                    if( bondReferenceAtomIndices[i] !== undefined) { break; }
+                    if( bondReferenceAtomIndices[i] !== undefined ) { break; }
 
                     var ring = ringData[ ri ];
                     // Try to find this atom and reference atom in no more than 1 full

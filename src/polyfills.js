@@ -28,7 +28,7 @@ if( typeof window !== "undefined" ){
             'assert,clear,count,debug,dir,dirxml,error,exception,group,' +
             'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
             'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn'
-        ).split(',');
+        ).split( ',' );
 
         while( ( prop = properties.pop() ) ) if( !con[ prop] ) con[ prop ] = empty;
         while( ( method = methods.pop() ) ) if( !con[ method] ) con[ method ] = dummy;
@@ -80,7 +80,7 @@ if( typeof HTMLCanvasElement !== "undefined" && !HTMLCanvasElement.prototype.toB
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/cbrt
 Math.cbrt = Math.cbrt || function( x ){
-    var y = Math.pow(Math.abs(x), 1/3);
+    var y = Math.pow( Math.abs( x ), 1/3 );
     return x < 0 ? -y : y;
 };
 
@@ -117,33 +117,33 @@ if( !Object.assign ){
         configurable: true,
         writable: true,
 
-        value: function(target/*, firstSource*/) {
+        value: function( target/*, firstSource*/ ) {
 
             "use strict";
-            if (target === undefined || target === null)
-            throw new TypeError("Cannot convert first argument to object");
+            if ( target === undefined || target === null )
+            throw new TypeError( "Cannot convert first argument to object" );
 
-            var to = Object(target);
+            var to = Object( target );
 
             var hasPendingException = false;
             var pendingException;
 
-            for (var i = 1; i < arguments.length; i++) {
+            for ( var i = 1; i < arguments.length; i++ ) {
 
                 var nextSource = arguments[i];
-                if (nextSource === undefined || nextSource === null)
+                if ( nextSource === undefined || nextSource === null )
                     continue;
 
-                var keysArray = Object.keys(Object(nextSource));
-                for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+                var keysArray = Object.keys( Object( nextSource ) );
+                for ( var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++ ) {
 
                     var nextKey = keysArray[nextIndex];
                     try {
-                        var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-                        if (desc !== undefined && desc.enumerable)
+                        var desc = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+                        if ( desc !== undefined && desc.enumerable )
                             to[nextKey] = nextSource[nextKey];
-                    } catch (e) {
-                        if (!hasPendingException) {
+                    } catch ( e ) {
+                        if ( !hasPendingException ) {
                             hasPendingException = true;
                             pendingException = e;
                         }
@@ -151,7 +151,7 @@ if( !Object.assign ){
 
                 }
 
-                if (hasPendingException)
+                if ( hasPendingException )
                     throw pendingException;
 
             }
@@ -165,121 +165,121 @@ if( !Object.assign ){
 }
 
 
-if (!String.prototype.startsWith) {
+if ( !String.prototype.startsWith ) {
 
     /*! https://mths.be/startswith v0.2.0 by @mathias */
 
-    (function() {
+    ( function() {
         'use strict'; // needed to support `apply`/`call` with `undefined`/`null`
-        var defineProperty = (function() {
+        var defineProperty = ( function() {
             // IE 8 only supports `Object.defineProperty` on DOM elements
             var result;
             try {
                 var object = {};
                 var $defineProperty = Object.defineProperty;
-                result = $defineProperty(object, object, object) && $defineProperty;
-            } catch(error) {}  // eslint-disable-line no-empty
+                result = $defineProperty( object, object, object ) && $defineProperty;
+            } catch( error ) {}  // eslint-disable-line no-empty
             return result;
-        }());
+        }() );
         var toString = {}.toString;
-        var startsWith = function(search) {
-            if (this === null) {
+        var startsWith = function( search ) {
+            if ( this === null ) {
                 throw TypeError();
             }
-            var string = String(this);
-            if (search && toString.call(search) == '[object RegExp]') {
+            var string = String( this );
+            if ( search && toString.call( search ) == '[object RegExp]' ) {
                 throw TypeError();
             }
             var stringLength = string.length;
-            var searchString = String(search);
+            var searchString = String( search );
             var searchLength = searchString.length;
             var position = arguments.length > 1 ? arguments[1] : undefined;
             // `ToInteger`
-            var pos = position ? Number(position) : 0;
-            if (pos != pos) { // better `isNaN`
+            var pos = position ? Number( position ) : 0;
+            if ( pos != pos ) { // better `isNaN`
                 pos = 0;
             }
-            var start = Math.min(Math.max(pos, 0), stringLength);
+            var start = Math.min( Math.max( pos, 0 ), stringLength );
             // Avoid the `indexOf` call if no match is possible
-            if (searchLength + start > stringLength) {
+            if ( searchLength + start > stringLength ) {
                 return false;
             }
             var index = -1;
-            while (++index < searchLength) {
-                if (string.charCodeAt(start + index) != searchString.charCodeAt(index)) {
+            while ( ++index < searchLength ) {
+                if ( string.charCodeAt( start + index ) != searchString.charCodeAt( index ) ) {
                     return false;
                 }
             }
             return true;
         };
-        if (defineProperty) {
-            defineProperty(String.prototype, 'startsWith', {
+        if ( defineProperty ) {
+            defineProperty( String.prototype, 'startsWith', {
                 'value': startsWith,
                 'configurable': true,
                 'writable': true
-            });
+            } );
         } else {
             String.prototype.startsWith = startsWith;
         }
-    }());
+    }() );
 
 }
 
 
-if (!String.prototype.endsWith) {
-  String.prototype.endsWith = function(searchString, position) {
+if ( !String.prototype.endsWith ) {
+  String.prototype.endsWith = function( searchString, position ) {
       var subjectString = this.toString();
-      if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+      if ( typeof position !== 'number' || !isFinite( position ) || Math.floor( position ) !== position || position > subjectString.length ) {
         position = subjectString.length;
       }
       position -= searchString.length;
-      var lastIndex = subjectString.indexOf(searchString, position);
+      var lastIndex = subjectString.indexOf( searchString, position );
       return lastIndex !== -1 && lastIndex === position;
   };
 }
 
 
-if (!String.prototype.includes) {
-  String.prototype.includes = function(search, start) {
+if ( !String.prototype.includes ) {
+  String.prototype.includes = function( search, start ) {
     'use strict';
-    if (typeof start !== 'number') {
+    if ( typeof start !== 'number' ) {
       start = 0;
     }
 
-    if (start + search.length > this.length) {
+    if ( start + search.length > this.length ) {
       return false;
     } else {
-      return this.indexOf(search, start) !== -1;
+      return this.indexOf( search, start ) !== -1;
     }
   };
 }
 
 
-if (!Array.prototype.includes) {
-  Array.prototype.includes = function(searchElement /*, fromIndex*/) {
+if ( !Array.prototype.includes ) {
+  Array.prototype.includes = function( searchElement /*, fromIndex*/ ) {
     'use strict';
-    if (this == null) {
-      throw new TypeError('Array.prototype.includes called on null or undefined');
+    if ( this == null ) {
+      throw new TypeError( 'Array.prototype.includes called on null or undefined' );
     }
 
-    var O = Object(this);
-    var len = parseInt(O.length, 10) || 0;
-    if (len === 0) {
+    var O = Object( this );
+    var len = parseInt( O.length, 10 ) || 0;
+    if ( len === 0 ) {
       return false;
     }
-    var n = parseInt(arguments[1], 10) || 0;
+    var n = parseInt( arguments[1], 10 ) || 0;
     var k;
-    if (n >= 0) {
+    if ( n >= 0 ) {
       k = n;
     } else {
       k = len + n;
-      if (k < 0) {k = 0;}
+      if ( k < 0 ) {k = 0;}
     }
     var currentElement;
-    while (k < len) {
+    while ( k < len ) {
       currentElement = O[k];
-      if (searchElement === currentElement ||
-         (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+      if ( searchElement === currentElement ||
+         ( searchElement !== searchElement && currentElement !== currentElement ) ) { // NaN !== NaN
         return true;
       }
       k++;
@@ -291,73 +291,73 @@ if (!Array.prototype.includes) {
 
 // Production steps of ECMA-262, Edition 6, 22.1.2.1
 // Reference: https://people.mozilla.org/~jorendorff/es6-draft.html#sec-array.from
-if (!Array.from) {
+if ( !Array.from ) {
 
-    Array.from = (function () {
+    Array.from = ( function () {
 
         var toStr = Object.prototype.toString;
-        var isCallable = function (fn) {
-            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        var isCallable = function ( fn ) {
+            return typeof fn === 'function' || toStr.call( fn ) === '[object Function]';
         };
-        var toInteger = function (value) {
-            var number = Number(value);
-            if (isNaN(number)) { return 0; }
-            if (number === 0 || !isFinite(number)) { return number; }
-            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        var toInteger = function ( value ) {
+            var number = Number( value );
+            if ( isNaN( number ) ) { return 0; }
+            if ( number === 0 || !isFinite( number ) ) { return number; }
+            return ( number > 0 ? 1 : -1 ) * Math.floor( Math.abs( number ) );
         };
-        var maxSafeInteger = Math.pow(2, 53) - 1;
-        var toLength = function (value) {
-            var len = toInteger(value);
-            return Math.min(Math.max(len, 0), maxSafeInteger);
+        var maxSafeInteger = Math.pow( 2, 53 ) - 1;
+        var toLength = function ( value ) {
+            var len = toInteger( value );
+            return Math.min( Math.max( len, 0 ), maxSafeInteger );
         };
 
         // The length property of the from method is 1.
-        return function from(arrayLike/*, mapFn, thisArg */) {
+        return function from( arrayLike/*, mapFn, thisArg */ ) {
 
             // 1. Let C be the this value.
             var C = this;
 
             // 2. Let items be ToObject(arrayLike).
-            var items = Object(arrayLike);
+            var items = Object( arrayLike );
 
             // 3. ReturnIfAbrupt(items).
-            if (arrayLike == null) {
-                throw new TypeError("Array.from requires an array-like object - not null or undefined");
+            if ( arrayLike == null ) {
+                throw new TypeError( "Array.from requires an array-like object - not null or undefined" );
             }
 
             // 4. If mapfn is undefined, then let mapping be false.
             var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
             var T;
-            if (typeof mapFn !== 'undefined') {
+            if ( typeof mapFn !== 'undefined' ) {
                 // 5. else
                 // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
-                if (!isCallable(mapFn)) {
-                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                if ( !isCallable( mapFn ) ) {
+                    throw new TypeError( 'Array.from: when provided, the second argument must be a function' );
                 }
 
                 // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
-                if (arguments.length > 2) {
+                if ( arguments.length > 2 ) {
                     T = arguments[2];
                 }
             }
 
             // 10. Let lenValue be Get(items, "length").
             // 11. Let len be ToLength(lenValue).
-            var len = toLength(items.length);
+            var len = toLength( items.length );
 
             // 13. If IsConstructor(C) is true, then
             // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
             // 14. a. Else, Let A be ArrayCreate(len).
-            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+            var A = isCallable( C ) ? Object( new C( len ) ) : new Array( len );
 
             // 16. Let k be 0.
             var k = 0;
             // 17. Repeat, while k < len… (also steps a - h)
             var kValue;
-            while (k < len) {
+            while ( k < len ) {
                 kValue = items[k];
-                if (mapFn) {
-                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                if ( mapFn ) {
+                    A[k] = typeof T === 'undefined' ? mapFn( kValue, k ) : mapFn.call( T, kValue, k );
                 } else {
                     A[k] = kValue;
                 }
@@ -369,7 +369,7 @@ if (!Array.from) {
             return A;
         };
 
-    }());
+    }() );
 
 }
 

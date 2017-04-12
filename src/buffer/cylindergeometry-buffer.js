@@ -12,84 +12,72 @@ import { calculateCenterArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
-function CylinderGeometryBuffer( from, to, color, color2, radius, pickingColor, pickingColor2, params ){
+const scale = new Vector3();
+const eye = new Vector3();
+const target = new Vector3();
+const up = new Vector3( 0, 1, 0 );
 
-    var p = params || {};
 
-    var radialSegments = defaults( p.radialSegments, 10 );
-    var openEnded = defaults( p.openEnded, true );
+class CylinderGeometryBuffer extends GeometryBuffer{
 
-    this.updateNormals = true;
+    // from, to, color, color2, radius, picking
+    constructor( data, params ){
 
-    var matrix = new Matrix4().makeRotationX( Math.PI / 2  );
+        const p = params || {};
 
-    this.geo = new CylinderBufferGeometry(
-        1,  // radiusTop,
-        1,  // radiusBottom,
-        1,  // height,
-        radialSegments,  // radialSegments,
-        1,  // heightSegments,
-        openEnded  // openEnded
-    );
-    this.geo.applyMatrix( matrix );
+        const radialSegments = defaults( p.radialSegments, 10 );
+        const openEnded = defaults( p.openEnded, true );
+        const matrix = new Matrix4().makeRotationX( Math.PI / 2  );
 
-    var n = from.length;
-    var m = radius.length;
+        const geo = new CylinderBufferGeometry(
+            1,  // radiusTop,
+            1,  // radiusBottom,
+            1,  // height,
+            radialSegments,  // radialSegments,
+            1,  // heightSegments,
+            openEnded  // openEnded
+        );
+        geo.applyMatrix( matrix );
 
-    this._position = new Float32Array( n * 2 );
-    this._color = new Float32Array( n * 2 );
-    this._pickingColor = new Float32Array( n * 2 );
-    this._from = new Float32Array( n * 2 );
-    this._to = new Float32Array( n * 2 );
-    this._radius = new Float32Array( m * 2 );
+        const n = data.position1.length;
+        const m = data.radius.length;
 
-    this.__center = new Float32Array( n );
+        const position = new Float32Array( n * 2 );
+        const color = new Float32Array( n * 2 );
+        const picking = new Float32Array( ( n * 2 ) / 3 );
 
-    GeometryBuffer.call(
-        this, this._position, this._color, this._pickingColor, p
-    );
+        super( {
+            position: position,
+            color: color,
+            picking: picking
+        }, p, geo );
 
-    this.setAttributes( {
-        "position1": from,
-        "position2": to,
-        "color": color,
-        "color2": color2,
-        "radius": radius,
-        "pickingColor": pickingColor,
-        "pickingColor2": pickingColor2
-    } );
+        this.__center = new Float32Array( n );
 
-}
+        this._position = position;
+        this._color = color;
+        this._picking = picking;
+        this._from = new Float32Array( n * 2 );
+        this._to = new Float32Array( n * 2 );
+        this._radius = new Float32Array( m * 2 );
 
-CylinderGeometryBuffer.prototype = Object.assign( Object.create(
+        this.setAttributes( data, true );
 
-    GeometryBuffer.prototype ), {
+    }
 
-    constructor: CylinderGeometryBuffer,
+    applyPositionTransform( matrix, i, i3 ){
 
-    applyPositionTransform: function(){
+        eye.fromArray( this._from, i3 );
+        target.fromArray( this._to, i3 );
+        matrix.lookAt( eye, target, up );
 
-        var r;
-        var scale = new Vector3();
-        var eye = new Vector3();
-        var target = new Vector3();
-        var up = new Vector3( 0, 1, 0 );
+        const r = this._radius[ i ];
+        scale.set( r, r, eye.distanceTo( target ) );
+        matrix.scale( scale );
 
-        return function applyPositionTransform( matrix, i, i3 ){
+    }
 
-            eye.fromArray( this._from, i3 );
-            target.fromArray( this._to, i3 );
-            matrix.lookAt( eye, target, up );
-
-            r = this._radius[ i ];
-            scale.set( r, r, eye.distanceTo( target ) );
-            matrix.scale( scale );
-
-        };
-
-    }(),
-
-    setAttributes: function( data ){
+    setAttributes( data, initNormals ){
 
         var n = this._position.length / 2;
         var m = this._radius.length / 2;
@@ -118,10 +106,10 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
             geoData.color = this._color;
         }
 
-        if( data.pickingColor && data.pickingColor2 ){
-            this._pickingColor.set( data.pickingColor );
-            this._pickingColor.set( data.pickingColor2, n );
-            geoData.pickingColor = this._pickingColor;
+        if( data.picking ){
+            this._picking.set( data.picking );
+            this._picking.set( data.picking, n );
+            geoData.picking = this._picking;
         }
 
         if( data.radius ){
@@ -129,11 +117,13 @@ CylinderGeometryBuffer.prototype = Object.assign( Object.create(
             this._radius.set( data.radius, m );
         }
 
-        GeometryBuffer.prototype.setAttributes.call( this, geoData );
+        super.setAttributes( geoData, initNormals );
 
     }
 
-} );
+    get updateNormals (){ return true; }
+
+}
 
 
 export default CylinderGeometryBuffer;

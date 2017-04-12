@@ -8,8 +8,10 @@ var ArgumentParser = require('argparse').ArgumentParser;
 var now = require( "performance-now" );
 global.performance = { now: now };
 
-var doChunked = require( "../lib.js" ).doChunked;
+var doChunked = require( "../lib/utils.js" ).doChunked;
 
+
+const mmtfExt = [ "mmtf", "bb.mmtf" ];
 
 function parseIdListFile( path ){
     return fs.readFileSync( path, "utf8" ).trim().split( "\n" );
@@ -18,6 +20,10 @@ function parseIdListFile( path ){
 function getUrl( id, format, gz ){
     if( format === "mmcif" ){
         return "http://files.rcsb.org/download/" + id + ".cif" + ( gz ? ".gz" : "" );
+    }else if( format === "pdb" ){
+        return "http://files.rcsb.org/download/" + id + ".pdb" + ( gz ? ".gz" : "" );
+    }else if( format === "bb.mmtf" ){
+        return "http://mmtf.rcsb.org/v1.0/reduced/" + id;
     }else{
         return "http://mmtf.rcsb.org/v1.0/full/" + id;
     }
@@ -37,13 +43,15 @@ function downloadIds( idList, options ){
         var fileName = name + "." + format + ( gz ? ".gz" : "" );
         var ds = download( url, undefined, { pool: pool } );
         var os = fs.createWriteStream( outPath + "/" + fileName );
-        if( format === "mmtf" && gz ){
+        if( mmtfExt.includes( format ) && gz ){
             ds.pipe( zlib.createGzip() ).pipe( os );
         }else{
             ds.pipe( os );
         }
         return ds;
-    } ) );
+    } ) ).catch( function( e ){
+        console.error( e )
+    } );
 }
 
 function downloadIdsChunked( idList, options ){
@@ -57,7 +65,7 @@ function downloadIdsChunked( idList, options ){
 
 var parser = new ArgumentParser( {
     addHelp: true,
-    description: "Download MMTF or mmCIF files."
+    description: "Download MMTF (full or reduced), mmCIF or PDB files."
 } );
 parser.addArgument( "--idListFile", {
     help: "file in path"
@@ -66,11 +74,11 @@ parser.addArgument( "--outDir", {
     help: "dir out path"
 });
 parser.addArgument( "--format", {
-    help: "MMTF or mmCIF"
+    help: "mmtf, bb.mmtf, mmcif or pdb"
 });
 parser.addArgument( "--gz", {
     action: "storeTrue",
-    help: "MMTF or mmCIF"
+    help: "gzip use"
 });
 var args = parser.parseArgs();
 

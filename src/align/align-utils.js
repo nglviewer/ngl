@@ -45,7 +45,7 @@ function superpose( s1, s2, align, sele1, sele2 ){
         // Log.log( seq1.join("") );
         // Log.log( seq2.join("") );
 
-        var ali = new Alignment( seq1.join(""), seq2.join("") );
+        var ali = new Alignment( seq1.join( "" ), seq2.join( "" ) );
 
         ali.calc();
         ali.trace();

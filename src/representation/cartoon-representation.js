@@ -111,7 +111,7 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( polymer => {
 
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
@@ -121,17 +121,12 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             var subPos = spline.getSubdividedPosition();
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subPick = spline.getSubdividedPicking();
             var subSize = spline.getSubdividedSize( this.radius, this.getScale( polymer ) );
 
             bufferList.push(
                 new TubeMeshBuffer(
-                    subPos.position,
-                    subOri.normal,
-                    subOri.binormal,
-                    subOri.tangent,
-                    subCol.color,
-                    subSize.size,
-                    subCol.pickingColor,
+                    Object.assign( {}, subPos, subOri, subCol, subPick, subSize ),
                     this.getBufferParams( {
                         radialSegments: this.radialSegments,
                         aspectRatio: this.getAspectRatio( polymer ),
@@ -141,7 +136,7 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
                 )
             );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,
@@ -181,9 +176,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             if( what.color ){
 
                 var subCol = spline.getSubdividedColor( this.getColorParams() );
-
                 bufferData.color = subCol.color;
-                bufferData.pickingColor = subCol.pickingColor;
+
+            }
+
+            if( what.picking ){
+
+                var subPick = spline.getSubdividedPicking();
+                bufferData.picking = subPick.picking;
 
             }
 

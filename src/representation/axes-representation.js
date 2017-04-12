@@ -10,7 +10,6 @@ import { Color, Vector3 } from "../../lib/three.es6.js";
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import { projectPointOnVector } from "../math/vector-utils.js";
 import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -39,9 +38,6 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         sphereDetail: true,
         radialSegments: true,
         disableImpostor: true,
-        align: {
-            type: "button"
-        },
         showAxes: {
             type: "boolean", rebuild: true
         },
@@ -76,20 +72,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             selection = assembly.partList[ 0 ].getSelection();
         }
 
-        // return this.structureView.getPrincipalAxes( selection );  // FIXME
-        return this.structureView.getView( selection ).getPrincipalAxes();
-
-    },
-
-    align: function(){
-
-        var pa = this.getPrincipalAxes( this.structureView );
-
-        var v1 = new Vector3().copy( pa[0][1] ).sub( pa[0][0] ).normalize();
-        // var v2 = new Vector3().copy( pa[1][1] ).sub( pa[1][0] ).normalize();
-        var v3 = new Vector3().copy( pa[2][1] ).sub( pa[2][0] ).normalize();
-
-        this.viewer.alignView( v3, v1, pa[ 3 ], true );
+        return this.structureView.getPrincipalAxes( selection );
 
     },
 
@@ -132,74 +115,36 @@ AxesRepresentation.prototype = Object.assign( Object.create(
                 offset += 3;
             }
 
-            addAxis( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] );
-            addAxis( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] );
-            addAxis( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] );
+            addAxis( pa.begA, pa.endA );
+            addAxis( pa.begB, pa.endB );
+            addAxis( pa.begC, pa.endC );
 
         }
 
         if( this.showBox ){
 
-            var ax1 = new Vector3().subVectors( pa[ 0 ][ 0 ], pa[ 0 ][ 1 ] ).normalize();
-            var ax2 = new Vector3().subVectors( pa[ 1 ][ 0 ], pa[ 1 ][ 1 ] ).normalize();
-            var ax3 = new Vector3().subVectors( pa[ 2 ][ 0 ], pa[ 2 ][ 1 ] ).normalize();
-            var p1 = new Vector3();
-            var p2 = new Vector3();
-            var p3 = new Vector3();
-            var t = new Vector3();
             var v = new Vector3();
-            var d1a = -Infinity;
-            var d1b = -Infinity;
-            var d2a = -Infinity;
-            var d2b = -Infinity;
-            var d3a = -Infinity;
-            var d3b = -Infinity;
-            sview.eachAtom( function( ap ){
-                projectPointOnVector( p1.copy( ap ), ax1, pa[ 3 ] );
-                var dp1 = t.subVectors( p1, pa[3] ).normalize().dot( ax1 );
-                var dt1 = p1.distanceTo( pa[3] );
-                if( dp1 > 0 ){
-                    if( dt1 > d1a ) d1a = dt1;
-                }else{
-                    if( dt1 > d1b ) d1b = dt1;
-                }
+            var { d1a, d2a, d3a, d1b, d2b, d3b } = pa.getProjectedScaleForAtoms( sview );
 
-                projectPointOnVector( p2.copy( ap ), ax2, pa[ 3 ] );
-                var dp2 = t.subVectors( p2, pa[3] ).normalize().dot( ax2 );
-                var dt2 = p2.distanceTo( pa[3] );
-                if( dp2 > 0 ){
-                    if( dt2 > d2a ) d2a = dt2;
-                }else{
-                    if( dt2 > d2b ) d2b = dt2;
-                }
-
-                projectPointOnVector( p3.copy( ap ), ax3, pa[ 3 ] );
-                var dp3 = t.subVectors( p3, pa[3] ).normalize().dot( ax3 );
-                var dt3 = p3.distanceTo( pa[3] );
-                if( dp3 > 0 ){
-                    if( dt3 > d3a ) d3a = dt3;
-                }else{
-                    if( dt3 > d3b ) d3b = dt3;
-                }
-            } );
+            console.log( d1a, d2a, d3a, d1b, d2b, d3b )
 
             var offset2 = offset * 2;
             var addCorner = function( d1, d2, d3 ){
-                v.copy( pa[3] )
-                    .addScaledVector( ax1, d1 )
-                    .addScaledVector( ax2, d2 )
-                    .addScaledVector( ax3, d3 );
+                v.copy( pa.center )
+                    .addScaledVector( pa.normVecA, d1 )
+                    .addScaledVector( pa.normVecB, d2 )
+                    .addScaledVector( pa.normVecC, d3 );
                 v.toArray( vertexPosition, offset2 );
                 offset2 += 3;
             }
             addCorner( d1a, d2a, d3a );
-            addCorner( d1a, d2a, -d3b );
-            addCorner( d1a, -d2b, -d3b );
-            addCorner( d1a, -d2b, d3a );
-            addCorner( -d1b, -d2b, -d3b );
-            addCorner( -d1b, -d2b, d3a );
-            addCorner( -d1b, d2a, d3a );
-            addCorner( -d1b, d2a, -d3b );
+            addCorner( d1a, d2a, d3b );
+            addCorner( d1a, d2b, d3b );
+            addCorner( d1a, d2b, d3a );
+            addCorner( d1b, d2b, d3b );
+            addCorner( d1b, d2b, d3a );
+            addCorner( d1b, d2a, d3a );
+            addCorner( d1b, d2a, d3b );
 
             var edgeOffset = offset;
             var addEdge = function( a, b ){
@@ -225,13 +170,18 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         }
 
         return {
-            vertexPosition: vertexPosition,
-            vertexColor: vertexColor,
-            vertexRadius: vertexRadius,
-            edgePosition1: edgePosition1,
-            edgePosition2: edgePosition2,
-            edgeColor: edgeColor,
-            edgeRadius: edgeRadius
+            vertex: {
+                position: vertexPosition,
+                color: vertexColor,
+                radius: vertexRadius
+            },
+            edge: {
+                position1: edgePosition1,
+                position2: edgePosition2,
+                color: edgeColor,
+                color2: edgeColor,
+                radius: edgeRadius
+            }
         };
 
     },
@@ -241,10 +191,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var axesData = this.getAxesData( this.structureView );
 
         this.sphereBuffer = new SphereBuffer(
-            axesData.vertexPosition,
-            axesData.vertexColor,
-            axesData.vertexRadius,
-            undefined,
+            axesData.vertex,
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 disableImpostor: this.disableImpostor,
@@ -253,13 +200,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         );
 
         this.cylinderBuffer = new CylinderBuffer(
-            axesData.edgePosition1,
-            axesData.edgePosition2,
-            axesData.edgeColor,
-            axesData.edgeColor,
-            axesData.edgeRadius,
-            undefined,
-            undefined,
+            axesData.edge,
             this.getBufferParams( {
                 openEnded: true,
                 radialSegments: this.radialSegments,
@@ -282,20 +223,20 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         var cylinderData = {};
 
         if( !what || what.position ){
-            sphereData.position = axesData.vertexPosition;
-            cylinderData.position1 = axesData.edgePosition1;
-            cylinderData.position2 = axesData.edgePosition2;
+            sphereData.position = axesData.vertex.position;
+            cylinderData.position1 = axesData.edge.position1;
+            cylinderData.position2 = axesData.edge.position2;
         }
 
         if( !what || what.color ){
-            sphereData.color = axesData.vertexColor;
-            cylinderData.color = axesData.edgeColor;
-            cylinderData.color2 = axesData.edgeColor;
+            sphereData.color = axesData.vertex.color;
+            cylinderData.color = axesData.edge.color;
+            cylinderData.color2 = axesData.edge.color;
         }
 
         if( !what || what.radius ){
-            sphereData.radius = axesData.vertexRadius;
-            cylinderData.radius = axesData.edgeRadius;
+            sphereData.radius = axesData.vertex.radius;
+            cylinderData.radius = axesData.edge.radius;
         }
 
         this.sphereBuffer.setAttributes( sphereData );

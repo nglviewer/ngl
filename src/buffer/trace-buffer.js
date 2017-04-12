@@ -5,45 +5,43 @@
  */
 
 
+import "../shader/Line.vert";
+import "../shader/Line.frag";
+
 import { Log } from "../globals.js";
 import Buffer from "./buffer.js";
 
 
-function TraceBuffer( position, color, params ){
+class TraceBuffer extends Buffer{
 
-    var p = params || {};
+    /**
+     * make trace buffer
+     * @param  {Object} data - attribute object
+     * @param  {Float32Array} data.position - positions
+     * @param  {Float32Array} data.color - colors
+     * @param  {BufferParameters} params - parameter object
+     */
+    constructor( data, params ){
 
-    this.size = position.length / 3;
-    this.vertexShader = 'Line.vert';
-    this.fragmentShader = 'Line.frag';
-    this.line = true;
+        var d = data || {};
+        var p = params || {};
 
-    var n = this.size;
-    var n1 = n - 1;
+        var n = d.position.length / 3;
+        var n1 = n - 1;
 
-    this.attributeSize = n1 * 2;
+        var linePosition = new Float32Array( n1 * 3 * 2 );
+        var lineColor = new Float32Array( n1 * 3 * 2 );
 
-    this.linePosition = new Float32Array( n1 * 3 * 2 );
-    this.lineColor = new Float32Array( n1 * 3 * 2 );
+        super( {
+            position: linePosition,
+            color: lineColor
+        }, p );
 
-    Buffer.call(
-        this, this.linePosition, this.lineColor, undefined, undefined, p
-    );
+        this.setAttributes( data );
 
-    this.setAttributes( {
-        position: position,
-        color: color
-    } );
+    }
 
-}
-
-TraceBuffer.prototype = Object.assign( Object.create(
-
-    Buffer.prototype ), {
-
-    constructor: TraceBuffer,
-
-    setAttributes: function( data ){
+    setAttributes( data ){
 
         var position, color;
         var linePosition, lineColor;
@@ -104,7 +102,11 @@ TraceBuffer.prototype = Object.assign( Object.create(
 
     }
 
-} );
+    get line (){ return true; }
+    get vertexShader (){ return "Line.vert"; }
+    get fragmentShader (){ return "Line.frag"; }
+
+}
 
 
 export default TraceBuffer;

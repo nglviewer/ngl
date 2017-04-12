@@ -4,32 +4,32 @@ import { Matrix, svd } from "../../src/math/matrix-utils.js";
 import { assert } from 'chai';
 
 
-describe('math/matrix-utils', function() {
+describe( 'math/matrix-utils', function() {
 
 
-describe('Matrix', function () {
-    it('initialization', function () {
+describe( 'Matrix', function () {
+    it( 'initialization', function () {
         var m = new Matrix( 5, 10 );
-        assert.strictEqual(5, m.cols);
-        assert.strictEqual(10, m.rows);
-        assert.strictEqual(5 * 10, m.size);
-    });
-});
+        assert.strictEqual( 5, m.cols );
+        assert.strictEqual( 10, m.rows );
+        assert.strictEqual( 5 * 10, m.size );
+    } );
+} );
 
-describe('svd', function () {
-    it('decomposition', function () {
+describe( 'svd', function () {
+    it( 'decomposition', function () {
         // http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm
 
         var m_rows = 4;
         var n_cols = 2;
 
         var A = new Matrix( n_cols, m_rows );
-        A.data.set([
+        A.data.set( [
             2, 4,
             1, 3,
             0, 0,
             0, 0
-        ]);
+        ] );
 
         // console.log( "A", A.data );
 
@@ -70,8 +70,8 @@ describe('svd', function () {
         assert.closeTo( V.data[1], Vx[1], 0.01 );
         assert.closeTo( V.data[2], Vx[2], 0.01 );
         assert.closeTo( V.data[3], Vx[3], 0.01 );
-    });
-});
+    } );
+} );
 
 
-});
+} );

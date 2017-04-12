@@ -40,7 +40,6 @@ varying float vRadius2;
 #ifdef PICKING
     uniform float objectId;
     varying vec3 vPickingColor;
-    varying vec3 vPickingColor2;
 #else
     varying vec3 vColor1;
     varying vec3 vColor2;
@@ -251,11 +250,7 @@ void main(){
 
     #ifdef PICKING
 
-        if( distance_ratio > 0.5 ){
-            gl_FragColor = vec4( vPickingColor, objectId );
-        }else{
-            gl_FragColor = vec4( vPickingColor2, objectId );
-        }
+        gl_FragColor = vec4( vPickingColor, objectId );
 
     #else
 

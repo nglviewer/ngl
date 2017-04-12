@@ -91,17 +91,10 @@ ContactRepresentation.prototype = Object.assign( Object.create(
             bondSet: contactData.bondSet,
             bondStore: contactData.bondStore
         };
-
         var bondData = this.getBondData( sview, undefined, bondParams );
 
         var cylinderBuffer = new CylinderBuffer(
-            bondData.position1,
-            bondData.position2,
-            bondData.color1,
-            bondData.color2,
-            bondData.radius,
-            bondData.pickingColor1,
-            bondData.pickingColor2,
+            bondData,
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,

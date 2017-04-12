@@ -41,13 +41,8 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
 
     createData: function( sview ){
 
-        var atomData = sview.getAtomData( this.getAtomParams() );
-
         var sphereBuffer = new SphereBuffer(
-            atomData.position,
-            atomData.color,
-            atomData.radius,
-            atomData.pickingColor,
+            sview.getAtomData( this.getAtomParams() ),
             this.getBufferParams( {
                 sphereDetail: this.sphereDetail,
                 dullInterior: true,

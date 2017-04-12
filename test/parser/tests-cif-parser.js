@@ -6,11 +6,11 @@ import { assert } from 'chai';
 import fs from 'fs';
 
 
-describe('parser/cif-parser', function() {
+describe( 'parser/cif-parser', function() {
 
 
-describe('parsing', function () {
-    it('basic/mmcif', function () {
+describe( 'parsing', function () {
+    it( 'basic/mmcif', function () {
         var path = __dirname + "/../data/1CRN.cif";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -41,11 +41,11 @@ describe('parsing', function () {
             );
 
             assert.deepEqual( structure.boxes, [
-                new Float32Array([
+                new Float32Array( [
                     40.959999084472656, 0, 0,
                     0, 18.649999618530273, 0,
                     0, 0, 22.520000457763672
-                ])
+                ] )
             ] );
             assert.deepEqual( structure.frames, [] );
             assert.deepEqual( structure.header, {
@@ -68,9 +68,9 @@ describe('parsing', function () {
             assert.strictEqual( structure.entityList.length, 1 );
             assert.ok( structure.spatialHash !== undefined );
         } );
-    });
+    } );
 
-    it('basic/chemComp', function () {
+    it( 'basic/chemComp', function () {
         var path = __dirname + "/../data/PRDCC_000001.cif";
         var str = fs.readFileSync( path, "utf-8" );
         var streamer = new StringStreamer( str );
@@ -79,8 +79,8 @@ describe('parsing', function () {
             assert.strictEqual( structure.atomCount, 352 );
             assert.strictEqual( structure.bondCount, 364 );
         } );
-    });
-});
+    } );
+} );
 
 
-});
+} );

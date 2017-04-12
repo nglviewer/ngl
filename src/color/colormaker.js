@@ -26,7 +26,6 @@ import chroma from "../../lib/chroma.es6.js";
  * @property {Structure} [structure] - structure object
  * @property {Volume} [volume] - volume object
  * @property {Surface} [surface] - surface object
- * @property {GidPool} [gidPool] - gid pool object
  */
 
 
@@ -51,7 +50,6 @@ class Colormaker{
         this.structure = p.structure;
         this.volume = p.volume;
         this.surface = p.surface;
-        this.gidPool = p.gidPool;
 
         if( this.structure ){
             this.atomProxy = this.structure.getAtomProxy();

@@ -8,40 +8,33 @@
 import MappedBuffer from "./mapped-buffer.js";
 
 
-function AlignedBoxBuffer( params ){
+const mapping = new Float32Array( [
+    -1.0,  1.0, -1.0,
+    -1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0,  1.0,  1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0
+] );
 
-    this.mapping = new Float32Array([
-        -1.0,  1.0, -1.0,
-        -1.0, -1.0, -1.0,
-         1.0,  1.0, -1.0,
-         1.0,  1.0,  1.0,
-         1.0, -1.0, -1.0,
-         1.0, -1.0,  1.0
-    ]);
+const mappingIndices = new Uint16Array( [
+    0, 1, 2,
+    1, 4, 2,
+    2, 4, 3,
+    4, 5, 3
+] );
 
-    this.mappingIndices = new Uint16Array([
-        0, 1, 2,
-        1, 4, 2,
-        2, 4, 3,
-        4, 5, 3
-    ]);
 
-    this.mappingIndicesSize = 12;
-    this.mappingType = "v3";
-    this.mappingSize = 6;
-    this.mappingItemSize = 3;
+class AlignedBoxBuffer extends MappedBuffer{
 
-    MappedBuffer.call( this, params );
+    get mapping (){ return mapping; }
+    get mappingIndices (){ return mappingIndices; }
+    get mappingIndicesSize (){ return 12; }
+    get mappingType (){ return "v3"; }
+    get mappingSize (){ return 6; }
+    get mappingItemSize (){ return 3; }
 
 }
-
-AlignedBoxBuffer.prototype = Object.assign( Object.create(
-
-    MappedBuffer.prototype ), {
-
-    constructor: AlignedBoxBuffer
-
-} );
 
 
 export default AlignedBoxBuffer;

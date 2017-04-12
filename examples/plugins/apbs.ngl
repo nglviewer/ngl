@@ -55,7 +55,7 @@ var ApbsPreset = function( pqrComp, dxComp, params ){
         opaqueBack: false
     } );
 
-    stage.centerView();
+    stage.autoView();
 
     // params setter
 
@@ -218,7 +218,7 @@ function loadApbs( pqr, dx, isBinary ){
     panel.add( infoText );
 
     var initComp = function( comp ){
-        comp.centerView();
+        comp.autoView();
         return comp;
     }
 
