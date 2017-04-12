@@ -436,14 +436,15 @@ NGL.ViewportWidget = function( stage ){
         .setPointerEvents( "none" )
         .add( tooltipText );
 
+    var cp = new NGL.Vector2();
     stage.signals.hovered.add( function( d ){
         var text = NGL.getPickingMessage( d, "" );
         if( text !== "nothing" ){
-            d.canvasPosition.addScalar( 5 );
+            cp.copy( d.canvasPosition ).addScalar( 5 );
             tooltipText.setValue( text );
             tooltipPanel
-                .setBottom( d.canvasPosition.y  + "px" )
-                .setLeft( d.canvasPosition.x + "px" )
+                .setBottom( cp.y + "px" )
+                .setLeft( cp.x + "px" )
                 .setDisplay( "block" );
         }else{
             tooltipPanel.setDisplay( "none" );
