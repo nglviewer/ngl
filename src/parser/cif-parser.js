@@ -574,7 +574,7 @@ function processConnections( cif, structure, asymIdDict ){
             if( !atomIndices1 ){
                 var selection1 = new Selection( sele1 );
                 if( selection1.selection.error ){
-                    Log.warn( "invalid selection for connection", sele1 );
+                    if( Debug ) Log.warn( "invalid selection for connection", sele1 );
                     continue;
                 }
                 atomIndices1 = structure.getAtomIndices( selection1 );
@@ -594,7 +594,7 @@ function processConnections( cif, structure, asymIdDict ){
             if( !atomIndices2 ){
                 var selection2 = new Selection( sele2 );
                 if( selection2.selection.error ){
-                    Log.warn( "invalid selection for connection", sele2 );
+                    if( Debug ) Log.warn( "invalid selection for connection", sele2 );
                     continue;
                 }
                 atomIndices2 = structure.getAtomIndices( selection2 );
@@ -621,7 +621,7 @@ function processConnections( cif, structure, asymIdDict ){
             // console.log( k, l );
 
             if( k === 0 || l === 0 ){
-                Log.warn( "no atoms found for", sele1, sele2 );
+                if( Debug ) Log.warn( "no atoms found for", sele1, sele2 );
                 continue;
             }
 
@@ -823,7 +823,7 @@ class CifParser extends StructureParser{
 
                             if( !cif[ category ] ) cif[ category ] = {};
                             if( cif[ category ][ name ] ){
-                                Log.warn( category, name, "already exists" );
+                                if( Debug ) Log.warn( category, name, "already exists" );
                             }else{
                                 cif[ category ][ name ] = [];
                                 loopPointers.push( cif[ category ][ name ] );
@@ -855,7 +855,7 @@ class CifParser extends StructureParser{
                             if( !cif[ category ] ) cif[ category ] = {};
 
                             if( cif[ category ][ name ] ){
-                                Log.warn( category, name, "already exists" );
+                                if( Debug ) Log.warn( category, name, "already exists" );
                             }else{
                                 cif[ category ][ name ] = value;
                             }
@@ -1009,7 +1009,7 @@ class CifParser extends StructureParser{
                                 // actually a many-to-many mapping
                                 var assignedChainname = asymIdDict[ chainid ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
-                                    Log.warn( assignedChainname, chainname );
+                                    if( Debug ) Log.warn( assignedChainname, chainname );
                                 }
                             }
                             // chainname mapping: label_asym_id -> auth_asym_id
