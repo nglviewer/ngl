@@ -79,9 +79,7 @@ class CylinderGeometryBuffer extends GeometryBuffer{
 
     setAttributes( data, initNormals ){
 
-        var n = this._position.length / 2;
-        var m = this._radius.length / 2;
-        var geoData = {};
+        const meshData = {};
 
         if( data.position1 && data.position2 ){
             calculateCenterArray(
@@ -91,33 +89,28 @@ class CylinderGeometryBuffer extends GeometryBuffer{
                 data.position1, this.__center, this._position
             );
             calculateCenterArray(
-                this.__center, data.position2, this._position, n
+                this.__center, data.position2, this._position, data.position1.length
             );
             this._from.set( data.position1 );
-            this._from.set( this.__center, n );
+            this._from.set( this.__center, data.position1.length );
             this._to.set( this.__center );
-            this._to.set( data.position2, n );
-            geoData.position = this._position;
+            this._to.set( data.position2, this.__center.length );
+            meshData.position = this._position;
         }
 
         if( data.color && data.color2 ){
             this._color.set( data.color );
-            this._color.set( data.color2, n );
-            geoData.color = this._color;
-        }
-
-        if( data.picking ){
-            this._picking.set( data.picking );
-            this._picking.set( data.picking, n );
-            geoData.picking = this._picking;
+            this._color.set( data.color2, data.color.length );
+            meshData.color = this._color;
         }
 
         if( data.radius ){
             this._radius.set( data.radius );
-            this._radius.set( data.radius, m );
+            this._radius.set( data.radius, data.radius.length );
+            meshData.radius = this._radius;
         }
 
-        super.setAttributes( geoData, initNormals );
+        super.setAttributes( meshData, initNormals );
 
     }
 

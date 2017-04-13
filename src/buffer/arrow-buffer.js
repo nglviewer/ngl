@@ -164,22 +164,8 @@ class ArrowBuffer{
 
         var attr = this.makeAttributes( data );
 
-        this.cylinderBuffer.setAttributes( {
-            position1: attr.cylinder.position1,
-            position2: attr.cylinder.position2,
-            color: attr.cylinder.color,
-            color2: attr.cylinder.color2,
-            radius: attr.cylinder.radius,
-            primitiveId: attr.cylinder.primitiveId
-        } );
-
-        this.coneBuffer.setAttributes( {
-            position1: attr.cone.position1,
-            position2: attr.cone.position2,
-            color: attr.cone.color,
-            radius: attr.cone.radius,
-            primitiveId: attr.cone.primitiveId
-        } );
+        this.cylinderBuffer.setAttributes( attr.cylinder );
+        this.coneBuffer.setAttributes( attr.cone );
 
     }
 

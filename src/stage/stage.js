@@ -206,7 +206,7 @@ class Stage{
             lightIntensity: 1.0,
             ambientColor: 0xdddddd,
             ambientIntensity: 0.2,
-            hoverTimeout: 500,
+            hoverTimeout: 0,
         }, params );
 
         this.parameters = {

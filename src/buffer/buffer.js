@@ -119,7 +119,7 @@ class Buffer{
         this.uniforms.diffuse.value.set( this.diffuse );
 
         var objectId = new Uniform( 0.0 )
-            .onUpdate( function( object/*, camera*/ ){
+            .onUpdate( function( object ){
                 this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
             } );
 

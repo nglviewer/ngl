@@ -72,7 +72,7 @@ class ConeGeometryBuffer extends GeometryBuffer{
 
     setAttributes( data, initNormals ){
 
-        var geoData = {};
+        var meshData = {};
 
         if( data.position1 && data.position2 ){
             calculateCenterArray(
@@ -80,22 +80,18 @@ class ConeGeometryBuffer extends GeometryBuffer{
             );
             this._from.set( data.position1 );
             this._to.set( data.position2 );
-            geoData.position = this._position;
+            meshData.position = this._position;
         }
 
         if( data.color ){
-            geoData.color = data.color;
-        }
-
-        if( data.picking ){
-            geoData.picking = data.picking;
+            meshData.color = data.color;
         }
 
         if( data.radius ){
             this._radius.set( data.radius );
         }
 
-        super.setAttributes( geoData, initNormals );
+        super.setAttributes( meshData, initNormals );
 
     }
 
