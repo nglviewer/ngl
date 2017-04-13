@@ -5,7 +5,9 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
+import { Color, Vector3 } from "../../lib/three.es6.js";
+
+import { calculateMeanVector3 } from "../math/vector-utils.js";
 
 
 class Picker{
@@ -36,6 +38,45 @@ class Picker{
         return this.applyTransformations(
             this._getPosition( pid ), instance, component
         );
+    }
+
+}
+
+
+class DataPicker extends Picker{
+
+    constructor( array, data ){
+        super( array );
+        this.data = data;
+    }
+
+}
+
+
+//
+
+
+class ArrowPicker extends DataPicker{
+
+    get type (){ return "arrow"; }
+
+    getObject( pid ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            position: this._getPosition( pid ),
+            position1: new Vector3().fromArray( d.color, 3 * pid ),
+            position2: new Vector3().fromArray( d.color, 3 * pid ),
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ]
+        };
+    }
+
+    _getPosition( pid ){
+        const d = this.data;
+        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
+        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
     }
 
 }
@@ -105,6 +146,31 @@ class ContactPicker extends BondPicker{
 }
 
 
+class ConePicker extends DataPicker{
+
+    get type (){ return "cone"; }
+
+    getObject( pid ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ],
+            position1: new Vector3().fromArray( d.position1, 3 * pid ),
+            position2: new Vector3().fromArray( d.position2, 3 * pid )
+        };
+    }
+
+    _getPosition( pid ){
+        const d = this.data;
+        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
+        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
+    }
+
+}
+
+
 class ClashPicker extends Picker{
 
     constructor( array, validation ){
@@ -134,6 +200,79 @@ class ClashPicker extends Picker{
 }
 
 
+class CylinderPicker extends ConePicker{
+
+    get type (){ return "cylinder"; }
+
+}
+
+
+class EllipsoidPicker extends DataPicker{
+
+    get type (){ return "ellipsoid"; }
+
+    getObject( pid ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            position: this._getPosition( pid ),
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ],
+            majorAxis: new Vector3().fromArray( d.majorAxis, 3 * pid ),
+            minorAxis: new Vector3().fromArray( d.minorAxis, 3 * pid )
+        };
+    }
+
+    _getPosition( pid ){
+        return new Vector3().fromArray( this.data.position, 3 * pid );
+    }
+
+}
+
+
+class MeshPicker extends DataPicker{
+
+    get type (){ return "mesh"; }
+
+    getObject( /*pid*/ ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            serial: d.serial
+        };
+    }
+
+    _getPosition( /*pid*/ ){
+        if( !this.__position ){
+            this.__position = calculateMeanVector3( this.data.position );
+        }
+        return this.__position;
+    }
+
+}
+
+
+class SpherePicker extends DataPicker{
+
+    get type (){ return "sphere"; }
+
+    getObject( pid ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            position: this._getPosition( pid ),
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ]
+        };
+    }
+
+    _getPosition( pid ){
+        return new Vector3().fromArray( this.data.position, 3 * pid );
+    }
+
+}
+
+
 class SurfacePicker extends Picker{
 
     constructor( array, surface ){
@@ -145,11 +284,9 @@ class SurfacePicker extends Picker{
     get data (){ return this.surface; }
 
     getObject( pid ){
-        const surf = this.surface;
-        const idx = this.getIndex( pid );
         return {
-            surface: surf,
-            index: idx
+            surface: this.surface,
+            index: this.getIndex( pid )
         };
     }
 
@@ -202,10 +339,17 @@ class VolumePicker extends Picker{
 
 export {
     Picker,
+    DataPicker,
+    ArrowPicker,
     AtomPicker,
     BondPicker,
+    ConePicker,
     ContactPicker,
+    CylinderPicker,
     ClashPicker,
+    EllipsoidPicker,
+    MeshPicker,
+    SpherePicker,
     SurfacePicker,
     VolumePicker
 };

@@ -8,7 +8,7 @@
 import { Matrix4, Vector3, CylinderBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
+import { calculateCenterArray, serialBlockArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
@@ -23,6 +23,7 @@ class CylinderGeometryBuffer extends GeometryBuffer{
     // from, to, color, color2, radius, picking
     constructor( data, params ){
 
+        const d = data || {};
         const p = params || {};
 
         const radialSegments = defaults( p.radialSegments, 10 );
@@ -39,29 +40,38 @@ class CylinderGeometryBuffer extends GeometryBuffer{
         );
         geo.applyMatrix( matrix );
 
-        const n = data.position1.length;
-        const m = data.radius.length;
+        const n = d.position1.length;
+        const m = d.radius.length;
+
+        //
+
+        const geoLength = geo.attributes.position.array.length / 3;
+        const count = n / 3;
+        const primitiveId = new Float32Array( count * 2 * geoLength );
+        serialBlockArray( count, geoLength, 0, primitiveId );
+        serialBlockArray( count, geoLength, count * geoLength, primitiveId );
+
+        //
 
         const position = new Float32Array( n * 2 );
         const color = new Float32Array( n * 2 );
-        const picking = new Float32Array( ( n * 2 ) / 3 );
 
         super( {
             position: position,
             color: color,
-            picking: picking
+            primitiveId: primitiveId,
+            picking: d.picking
         }, p, geo );
 
         this.__center = new Float32Array( n );
 
         this._position = position;
         this._color = color;
-        this._picking = picking;
         this._from = new Float32Array( n * 2 );
         this._to = new Float32Array( n * 2 );
         this._radius = new Float32Array( m * 2 );
 
-        this.setAttributes( data, true );
+        this.setAttributes( d, true );
 
     }
 

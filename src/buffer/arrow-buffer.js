@@ -74,6 +74,10 @@ class ArrowBuffer{
 
     }
 
+    get pickable (){
+        return !!this.picking;
+    }
+
     makeAttributes( data ){
 
         const splitPosition = this.splitPosition;
@@ -119,11 +123,6 @@ class ArrowBuffer{
             cylinder.color = data.color;
             cylinder.color2 = data.color;
             cone.color = data.color;
-        }
-
-        if( data.primitiveId ){
-            cylinder.primitiveId = data.primitiveId;
-            cone.primitiveId = data.primitiveId;
         }
 
         return {

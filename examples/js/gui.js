@@ -367,7 +367,9 @@ NGL.StageWidget = function( stage ){
 NGL.getPickingMessage = function( d, prefix ){
     var msg = "nothing";
     if( d ){
-        if( d.atom ){
+        if( d.arrow ){
+            msg = "arrow: " + d.pid + " (" + d.arrow.shape.name + ")";
+        }else if( d.atom ){
             msg = "atom: " +
                 d.atom.qualifiedName() +
                 " (" + d.atom.structure.name + ")";
@@ -375,11 +377,20 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.structure.name + ")";
+        }else if( d.cone ){
+            msg = "cone: " + d.pid + " (" + d.cone.shape.name + ")";
         }else if( d.clash ){
-            var c = d.clash.clash;
-            msg = "clash: " + c.sele1 + " - " + c.sele2;
+            msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
+        }else if( d.cylinder ){
+            msg = "cylinder: " + d.pid + " (" + d.cylinder.shape.name + ")";
+        }else if( d.ellipsoid ){
+            msg = "ellipsoid: " + d.pid + " (" + d.ellipsoid.shape.name + ")";
+        }else if( d.mesh ){
+            msg = "mesh: " + d.mesh.serial + " (" + d.mesh.shape.name + ")";
         }else if( d.surface ){
             msg = "surface: " + d.surface.surface.name;
+        }else if( d.sphere ){
+            msg = "sphere: " + d.pid + " (" + d.sphere.shape.name + ")";
         }else if( d.volume ){
             msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +

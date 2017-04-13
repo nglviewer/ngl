@@ -71,13 +71,6 @@ class PickingProxy{
         return this.picker.getPosition( this.pid );
     }
 
-    get atom (){
-        return this._objectIfType( "atom" );
-    }
-
-    get bond (){
-        return this._objectIfType( "bond" );
-    }
 
     get closestBondAtom (){
 
@@ -94,17 +87,17 @@ class PickingProxy{
 
     }
 
-    get clash (){
-        return this._objectIfType( "clash" );
-    }
-
-    get surface (){
-        return this._objectIfType( "surface" );
-    }
-
-    get volume (){
-        return this._objectIfType( "volume" );
-    }
+    get arrow (){ return this._objectIfType( "arrow" ); }
+    get atom (){ return this._objectIfType( "atom" ); }
+    get bond (){ return this._objectIfType( "bond" ); }
+    get cone (){ return this._objectIfType( "cone" ); }
+    get clash (){ return this._objectIfType( "clash" ); }
+    get cylinder (){ return this._objectIfType( "cylinder" ); }
+    get mesh (){ return this._objectIfType( "mesh" ); }
+    get ellipsoid (){ return this._objectIfType( "ellipsoid" ); }
+    get sphere (){ return this._objectIfType( "sphere" ); }
+    get surface (){ return this._objectIfType( "surface" ); }
+    get volume (){ return this._objectIfType( "volume" ); }
 
     _objectIfType( type ){
         return this.type === type ? this.object : undefined;
