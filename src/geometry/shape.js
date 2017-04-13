@@ -7,7 +7,7 @@
 
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 
-import { defaults } from "../utils.js";
+import { defaults, ensureFloat32Array } from "../utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import EllipsoidBuffer from "../buffer/ellipsoid-buffer.js";
@@ -132,18 +132,14 @@ function Shape( name, params ){
      */
     function addMesh( position, color, index, normal ){
 
-        if( Array.isArray( position ) ){
-            position = new Float32Array( position );
-        }
-        if( Array.isArray( color ) ){
-            color = new Float32Array( color );
-        }
+        position = ensureFloat32Array( position );
+        color = ensureFloat32Array( color );
         if( Array.isArray( index ) ){
-            var ctor = ( position && position.length ) > 65535 ? Uint32Array : Uint16Array;
+            const ctor = position.length > 65535 ? Uint32Array : Uint16Array;
             index = new ctor( index );
         }
-        if( Array.isArray( normal ) ){
-            normal = new Float32Array( normal );
+        if( normal ){
+            normal = ensureFloat32Array( normal );
         }
 
         var meshBuffer = new MeshBuffer( {
