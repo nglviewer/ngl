@@ -381,6 +381,10 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "cone: " + d.pid + " (" + d.cone.shape.name + ")";
         }else if( d.clash ){
             msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
+        }else if( d.contact ){
+            msg = "contact: " +
+                d.contact.atom1.qualifiedName() + " - " + d.contact.atom2.qualifiedName() +
+                " (" + d.contact.structure.name + ")";
         }else if( d.cylinder ){
             msg = "cylinder: " + d.pid + " (" + d.cylinder.shape.name + ")";
         }else if( d.ellipsoid ){

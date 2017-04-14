@@ -817,7 +817,7 @@ Structure.prototype = {
         }
         if( !what || what.picking ){
             picking = new Float32Array( bondCount );
-            bondData.picking = new BondPicker( picking, this );
+            bondData.picking = new BondPicker( picking, this, p.bondStore );
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );

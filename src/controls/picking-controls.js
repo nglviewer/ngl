@@ -92,6 +92,7 @@ class PickingProxy{
     get bond (){ return this._objectIfType( "bond" ); }
     get cone (){ return this._objectIfType( "cone" ); }
     get clash (){ return this._objectIfType( "clash" ); }
+    get contact (){ return this._objectIfType( "contact" ); }
     get cylinder (){ return this._objectIfType( "cylinder" ); }
     get mesh (){ return this._objectIfType( "mesh" ); }
     get ellipsoid (){ return this._objectIfType( "ellipsoid" ); }

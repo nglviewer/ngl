@@ -105,16 +105,19 @@ class AtomPicker extends Picker{
 
 class BondPicker extends Picker{
 
-    constructor( array, structure ){
+    constructor( array, structure, bondStore ){
         super( array );
         this.structure = structure;
+        this.bondStore = bondStore || structure.bondStore;
     }
 
     get type (){ return "bond"; }
     get data (){ return this.structure; }
 
     getObject( pid ){
-        return this.structure.getBondProxy( this.getIndex( pid ) );
+        var bp = this.structure.getBondProxy( this.getIndex( pid ) );
+        bp.bondStore = this.bondStore;
+        return bp;
     }
 
     _getPosition( pid ){
@@ -130,18 +133,7 @@ class BondPicker extends Picker{
 
 class ContactPicker extends BondPicker{
 
-    constructor( array, structure, bondStore ){
-        super( array, structure );
-        this.bondStore = bondStore;
-    }
-
     get type (){ return "contact"; }
-
-    getObject( pid ){
-        const bp = this.structure.getBondProxy( this.getIndex( pid ) );
-        bp.bondStore = this.bondStore;
-        return bp;
-    }
 
 }
 
@@ -317,6 +309,7 @@ class VolumePicker extends Picker{
     getObject( pid ){
         const vol = this.volume;
         const idx = this.getIndex( pid );
+        console.log( pid, idx )
         return {
             volume: vol,
             index: idx,
@@ -337,6 +330,18 @@ class VolumePicker extends Picker{
 }
 
 
+class SlicePicker extends VolumePicker{
+
+    get type (){ return "slice"; }
+
+    getIndex( pid ){
+        console.log(pid, pid/255)
+        return super.getIndex( Math.round( pid / 255 ) );
+    }
+
+}
+
+
 export {
     Picker,
     DataPicker,
@@ -349,6 +354,7 @@ export {
     ClashPicker,
     EllipsoidPicker,
     MeshPicker,
+    SlicePicker,
     SpherePicker,
     SurfacePicker,
     VolumePicker
