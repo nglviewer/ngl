@@ -782,6 +782,7 @@ function Viewer( idOrElement ){
         //     );
         //     Log.log( "picked pid", pid );
         //     Log.log( "picked oid", oid );
+        //     Log.log( "picked object", object );
         //     Log.log( "picked instance", instance );
         //     Log.log( "picked position", x, y );
         //     Log.log( "devicePixelRatio", window.devicePixelRatio );
