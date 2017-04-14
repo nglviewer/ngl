@@ -309,7 +309,6 @@ class VolumePicker extends Picker{
     getObject( pid ){
         const vol = this.volume;
         const idx = this.getIndex( pid );
-        console.log( pid, idx )
         return {
             volume: vol,
             index: idx,
@@ -330,13 +329,28 @@ class VolumePicker extends Picker{
 }
 
 
-class SlicePicker extends VolumePicker{
+class SlicePicker extends Picker{
+
+    constructor( array, volume ){
+        super( array );
+        this.volume = volume;
+    }
 
     get type (){ return "slice"; }
+    get data (){ return this.volume; }
 
-    getIndex( pid ){
-        console.log(pid, pid/255)
-        return super.getIndex( Math.round( pid / 255 ) );
+    getObject( pid ){
+        const vol = this.volume;
+        const idx = this.getIndex( pid );
+        return {
+            volume: vol,
+            index: idx,
+            value: vol.__data[ idx ]
+        };
+    }
+
+    _getPosition( /*pid*/ ){
+        return this.volume.center.clone();
     }
 
 }

@@ -5,13 +5,19 @@ uniform float nearClip;
 uniform float clipRadius;
 
 varying vec2 vUv;
-varying vec3 vViewPosition;
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )
+    varying vec3 vViewPosition;
+#endif
 
 #if defined( RADIUS_CLIP )
     varying vec3 vClipCenter;
 #endif
 
-#include fog_pars_fragment
+#if defined( PICKING )
+    uniform float objectId;
+#else
+    #include fog_pars_fragment
+#endif
 
 
 #if defined( CUBIC_INTERPOLATION )
@@ -101,17 +107,25 @@ void main(){
     #include nearclip_fragment
     #include radiusclip_fragment
 
-    #if defined( CUBIC_INTERPOLATION )
-        gl_FragColor = biCubic( map, vUv );
+    #if defined( PICKING )
+
+        gl_FragColor = vec4( texture2D( map, vUv ).xyz, objectId );
+
     #else
-        gl_FragColor = texture2D( map, vUv );
+
+        #if defined( CUBIC_INTERPOLATION )
+            gl_FragColor = biCubic( map, vUv );
+        #else
+            gl_FragColor = texture2D( map, vUv );
+        #endif
+
+        gl_FragColor.a *= opacity;
+
+        if( gl_FragColor.a < 0.01 )
+            discard;
+
+        #include fog_fragment
+
     #endif
-
-    gl_FragColor.a *= opacity;
-
-    if( gl_FragColor.a < 0.01 )
-        discard;
-
-    #include fog_fragment
 
 }

@@ -391,10 +391,14 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "ellipsoid: " + d.pid + " (" + d.ellipsoid.shape.name + ")";
         }else if( d.mesh ){
             msg = "mesh: " + d.mesh.serial + " (" + d.mesh.shape.name + ")";
-        }else if( d.surface ){
-            msg = "surface: " + d.surface.surface.name;
+        }else if( d.slice ){
+            msg = "slice: " +
+                d.slice.value.toPrecision( 3 ) +
+                " (" + d.slice.volume.name + ")";
         }else if( d.sphere ){
             msg = "sphere: " + d.pid + " (" + d.sphere.shape.name + ")";
+        }else if( d.surface ){
+            msg = "surface: " + d.surface.surface.name;
         }else if( d.volume ){
             msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +

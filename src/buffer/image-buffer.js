@@ -17,12 +17,12 @@ import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
 
 
-var quadIndices = new Uint16Array( [
+const quadIndices = new Uint16Array( [
     0, 1, 2,
     1, 3, 2
 ] );
 
-var quadUvs = new Float32Array( [
+const quadUvs = new Float32Array( [
     0, 1,
     0, 0,
     1, 1,
@@ -32,21 +32,33 @@ var quadUvs = new Float32Array( [
 
 class ImageBuffer extends Buffer{
 
-    constructor( position, data, width, height, params ){
+    constructor( data, params ){
 
-        var p = params || {};
+        const d = data || {};
+        const p = params || {};
 
-        super( { position, index: quadIndices }, p );
+        super( {
+            position: d.position,
+            index: quadIndices,
+            picking: d.picking
+        }, p );
 
         this.forceTransparent = true;
         this.filter = defaults( p.filter, "nearest" );
 
-        this.tex = new DataTexture( data, width, height );
-        this.tex.flipY = true;
+        const tex = new DataTexture( d.imageData, d.width, d.height );
+        tex.flipY = true;
+        this.tex = tex;
+
+        const pickingTex = new DataTexture( d.pickingData, d.width, d.height );
+        pickingTex.flipY = true;
+        pickingTex.minFilter = NearestFilter;
+        pickingTex.magFilter = NearestFilter;
+        this.pickingTex = pickingTex;
 
         this.addUniforms( {
             "map": { value: null },
-            "mapSize": { value: new Vector2( width, height ) }
+            "mapSize": { value: new Vector2( d.width, d.height ) }
         } );
 
         this.geometry.addAttribute( 'uv', new BufferAttribute( quadUvs, 2 ) );
@@ -65,7 +77,7 @@ class ImageBuffer extends Buffer{
 
     getDefines( type ){
 
-        var defines = Buffer.prototype.getDefines.call( this, type );
+        const defines = super.getDefines( type );
 
         if( this.filter.startsWith( "cubic" ) ){
             defines.CUBIC_INTERPOLATION = 1;
@@ -84,7 +96,7 @@ class ImageBuffer extends Buffer{
 
     updateTexture(){
 
-        var tex = this.tex;
+        const tex = this.tex;
 
         if( this.filter.startsWith( "cubic" ) ){
 
@@ -104,27 +116,27 @@ class ImageBuffer extends Buffer{
         }
 
         tex.needsUpdate = true;
+        this.pickingTex.needsUpdate = true;
 
     }
 
     makeMaterial(){
 
-        Buffer.prototype.makeMaterial.call( this );
-
+        super.makeMaterial();
         this.updateTexture();
 
-        var m = this.material;
+        const m = this.material;
         m.uniforms.map.value = this.tex;
         m.blending = NormalBlending;
         m.needsUpdate = true;
 
-        var wm = this.wireframeMaterial;
+        const wm = this.wireframeMaterial;
         wm.uniforms.map.value = this.tex;
         wm.blending = NormalBlending;
         wm.needsUpdate = true;
 
-        var pm = this.pickingMaterial;
-        pm.uniforms.map.value = this.tex;
+        const pm = this.pickingMaterial;
+        pm.uniforms.map.value = this.pickingTex;
         pm.blending = NormalBlending;
         pm.needsUpdate = true;
 
@@ -140,6 +152,10 @@ class ImageBuffer extends Buffer{
         }
 
         super.setUniforms( data );
+
+        const pm = this.pickingMaterial;
+        pm.uniforms.map.value = this.pickingTex;
+        pm.needsUpdate = true;
 
     }
 

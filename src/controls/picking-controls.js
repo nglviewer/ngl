@@ -96,6 +96,7 @@ class PickingProxy{
     get cylinder (){ return this._objectIfType( "cylinder" ); }
     get mesh (){ return this._objectIfType( "mesh" ); }
     get ellipsoid (){ return this._objectIfType( "ellipsoid" ); }
+    get slice (){ return this._objectIfType( "slice" ); }
     get sphere (){ return this._objectIfType( "sphere" ); }
     get surface (){ return this._objectIfType( "surface" ); }
     get volume (){ return this._objectIfType( "volume" ); }
