@@ -51,27 +51,67 @@ class PickingProxy{
 
     }
 
+    /**
+     * Kind of the picked data
+     * @member {String}
+     */
     get type (){ return this.picker.type; }
 
+    /**
+     * If the `alt` key was pressed
+     * @member {Boolean}
+     */
     get altKey (){ return this.mouse.altKey; }
+    /**
+     * If the `ctrl` key was pressed
+     * @member {Boolean}
+     */
     get ctrlKey (){ return this.mouse.ctrlKey; }
+    /**
+     * If the `meta` key was pressed
+     * @member {Boolean}
+     */
     get metaKey (){ return this.mouse.metaKey; }
+    /**
+     * If the `shift` key was pressed
+     * @member {Boolean}
+     */
     get shiftKey (){ return this.mouse.shiftKey; }
+
+    /**
+     * Position of the mouse on the canvas
+     * @member {Vector2}
+     */
     get canvasPosition (){ return this.mouse.canvasPosition; }
 
+    /**
+     * The component the picked data is part of
+     * @member {Component}
+     */
     get component (){
         return this.stage.getComponentsByObject( this.picker.data ).list[ 0 ];
     }
 
+    /**
+     * The picked object data
+     * @member {Object}
+     */
     get object (){
         return this.picker.getObject( this.pid );
     }
 
+    /**
+     * The 3d position in the scene of the picked object
+     * @member {Vector3}
+     */
     get position (){
         return this.picker.getPosition( this.pid );
     }
 
-
+    /**
+     * The atom of a picked bond that is closest to the mouse
+     * @member {AtomProxy}
+     */
     get closestBondAtom (){
 
         if( this.type !== "bond" ) return undefined;
@@ -87,18 +127,57 @@ class PickingProxy{
 
     }
 
+    /**
+     * @member {Object}
+     */
     get arrow (){ return this._objectIfType( "arrow" ); }
+    /**
+     * @member {AtomProxy}
+     */
     get atom (){ return this._objectIfType( "atom" ); }
+    /**
+     * @member {BondProxy}
+     */
     get bond (){ return this._objectIfType( "bond" ); }
+    /**
+     * @member {Object}
+     */
     get cone (){ return this._objectIfType( "cone" ); }
+    /**
+     * @member {Object}
+     */
     get clash (){ return this._objectIfType( "clash" ); }
+    /**
+     * @member {Object}
+     */
     get contact (){ return this._objectIfType( "contact" ); }
+    /**
+     * @member {Object}
+     */
     get cylinder (){ return this._objectIfType( "cylinder" ); }
+    /**
+     * @member {Object}
+     */
     get mesh (){ return this._objectIfType( "mesh" ); }
+    /**
+     * @member {Object}
+     */
     get ellipsoid (){ return this._objectIfType( "ellipsoid" ); }
+    /**
+     * @member {Object}
+     */
     get slice (){ return this._objectIfType( "slice" ); }
+    /**
+     * @member {Object}
+     */
     get sphere (){ return this._objectIfType( "sphere" ); }
+    /**
+     * @member {Object}
+     */
     get surface (){ return this._objectIfType( "surface" ); }
+    /**
+     * @member {Object}
+     */
     get volume (){ return this._objectIfType( "volume" ); }
 
     _objectIfType( type ){
