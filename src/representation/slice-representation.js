@@ -194,7 +194,6 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         var i = 0, j = 0;
         var imageData = new Uint8Array( width * height * 4 );
         var pickingArray = new Float32Array( width * height );
-        var pickingData = new Uint8Array( width * height * 4 );
 
         var min, max;
         if( this.thresholdType === "sigma" ){
@@ -223,9 +222,6 @@ SliceRepresentation.prototype = Object.assign( Object.create(
                     imageData[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
 
                     pickingArray[ j ] = idx;
-                    pickingData[ i     ] = j >> 16 & 255;
-                    pickingData[ i + 1 ] = j >> 8 & 255;
-                    pickingData[ i + 2 ] = j & 255;
 
                     ++j
                     i += 4;
@@ -237,7 +233,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         const picking = new SlicePicker( pickingArray, v );
 
         var sliceBuffer = new ImageBuffer(
-            { position, imageData, pickingData, width, height, picking },
+            { position, imageData, width, height, picking },
             this.getBufferParams( {
                 filter: this.filter
             } )

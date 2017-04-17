@@ -50,7 +50,16 @@ class ImageBuffer extends Buffer{
         tex.flipY = true;
         this.tex = tex;
 
-        const pickingTex = new DataTexture( d.pickingData, d.width, d.height );
+        var n = d.imageData.length;
+        const pickingData = new Uint8Array( n );
+        for( let i = 0; i < n; i += 4 ){
+            const j = i / 4;
+            pickingData[ i     ] = j >> 16 & 255;
+            pickingData[ i + 1 ] = j >> 8 & 255;
+            pickingData[ i + 2 ] = j & 255;
+        }
+
+        const pickingTex = new DataTexture( pickingData, d.width, d.height );
         pickingTex.flipY = true;
         pickingTex.minFilter = NearestFilter;
         pickingTex.magFilter = NearestFilter;
