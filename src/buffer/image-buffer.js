@@ -57,7 +57,8 @@ class ImageBuffer extends Buffer{
         this.pickingTex = pickingTex;
 
         this.addUniforms( {
-            "map": { value: null },
+            "map": { value: tex },
+            "pickingMap": { value: pickingTex },
             "mapSize": { value: new Vector2( d.width, d.height ) }
         } );
 
@@ -136,7 +137,8 @@ class ImageBuffer extends Buffer{
         wm.needsUpdate = true;
 
         const pm = this.pickingMaterial;
-        pm.uniforms.map.value = this.pickingTex;
+        pm.uniforms.map.value = this.tex;
+        pm.uniforms.pickingMap.value = this.pickingTex;
         pm.blending = NormalBlending;
         pm.needsUpdate = true;
 
@@ -152,10 +154,6 @@ class ImageBuffer extends Buffer{
         }
 
         super.setUniforms( data );
-
-        const pm = this.pickingMaterial;
-        pm.uniforms.map.value = this.pickingTex;
-        pm.needsUpdate = true;
 
     }
 

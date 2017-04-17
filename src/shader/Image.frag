@@ -14,6 +14,7 @@ varying vec2 vUv;
 #endif
 
 #if defined( PICKING )
+    uniform sampler2D pickingMap;
     uniform float objectId;
 #else
     #include fog_pars_fragment
@@ -107,25 +108,20 @@ void main(){
     #include nearclip_fragment
     #include radiusclip_fragment
 
-    #if defined( PICKING )
-
-        gl_FragColor = vec4( texture2D( map, vUv ).xyz, objectId );
-
+    #if defined( CUBIC_INTERPOLATION )
+        gl_FragColor = biCubic( map, vUv );
     #else
+        gl_FragColor = texture2D( map, vUv );
+    #endif
 
-        #if defined( CUBIC_INTERPOLATION )
-            gl_FragColor = biCubic( map, vUv );
-        #else
-            gl_FragColor = texture2D( map, vUv );
-        #endif
+    if( gl_FragColor.a < 0.01 )
+        discard;
 
+    #if defined( PICKING )
+        gl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );
+    #else
         gl_FragColor.a *= opacity;
-
-        if( gl_FragColor.a < 0.01 )
-            discard;
-
         #include fog_fragment
-
     #endif
 
 }
