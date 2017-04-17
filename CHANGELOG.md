@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file, following t
 - `voxelSize` parameter for volume file parser
 - support for non orthogonal cell in cube file parser
 - dsn6/brix volume file parser
+- psf topology/structure file parser
 - support for picking Shape objects, Volume slices, Contact bonds
 
 ### Changed
