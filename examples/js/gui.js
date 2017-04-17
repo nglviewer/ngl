@@ -365,21 +365,45 @@ NGL.StageWidget = function( stage ){
 
 
 NGL.getPickingMessage = function( d, prefix ){
-    var msg;
-    if( d.atom ){
-        msg = "atom: " +
-            d.atom.qualifiedName() +
-            " (" + d.atom.structure.name + ")";
-    }else if( d.bond ){
-        msg = "bond: " +
-            d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-            " (" + d.bond.structure.name + ")";
-    }else if( d.volume ){
-        msg = "volume: " +
-            d.volume.value.toPrecision( 3 ) +
-            " (" + d.volume.volume.name + ")";
-    }else{
-        msg = "nothing";
+    var msg = "nothing";
+    if( d ){
+        if( d.arrow ){
+            msg = "arrow: " + d.pid + " (" + d.arrow.shape.name + ")";
+        }else if( d.atom ){
+            msg = "atom: " +
+                d.atom.qualifiedName() +
+                " (" + d.atom.structure.name + ")";
+        }else if( d.bond ){
+            msg = "bond: " +
+                d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
+                " (" + d.bond.structure.name + ")";
+        }else if( d.cone ){
+            msg = "cone: " + d.pid + " (" + d.cone.shape.name + ")";
+        }else if( d.clash ){
+            msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
+        }else if( d.contact ){
+            msg = "contact: " +
+                d.contact.atom1.qualifiedName() + " - " + d.contact.atom2.qualifiedName() +
+                " (" + d.contact.structure.name + ")";
+        }else if( d.cylinder ){
+            msg = "cylinder: " + d.pid + " (" + d.cylinder.shape.name + ")";
+        }else if( d.ellipsoid ){
+            msg = "ellipsoid: " + d.pid + " (" + d.ellipsoid.shape.name + ")";
+        }else if( d.mesh ){
+            msg = "mesh: " + d.mesh.serial + " (" + d.mesh.shape.name + ")";
+        }else if( d.slice ){
+            msg = "slice: " +
+                d.slice.value.toPrecision( 3 ) +
+                " (" + d.slice.volume.name + ")";
+        }else if( d.sphere ){
+            msg = "sphere: " + d.pid + " (" + d.sphere.shape.name + ")";
+        }else if( d.surface ){
+            msg = "surface: " + d.surface.surface.name;
+        }else if( d.volume ){
+            msg = "volume: " +
+                d.volume.value.toPrecision( 3 ) +
+                " (" + d.volume.volume.name + ")";
+        }
     }
     return prefix ? prefix + " " + msg : msg;
 };
@@ -431,14 +455,15 @@ NGL.ViewportWidget = function( stage ){
         .setPointerEvents( "none" )
         .add( tooltipText );
 
+    var cp = new NGL.Vector2();
     stage.signals.hovered.add( function( d ){
         var text = NGL.getPickingMessage( d, "" );
         if( text !== "nothing" ){
-            d.canvasPosition.addScalar( 5 );
+            cp.copy( d.canvasPosition ).addScalar( 5 );
             tooltipText.setValue( text );
             tooltipPanel
-                .setBottom( d.canvasPosition.y  + "px" )
-                .setLeft( d.canvasPosition.x + "px" )
+                .setBottom( cp.y + "px" )
+                .setLeft( cp.x + "px" )
                 .setDisplay( "block" );
         }else{
             tooltipPanel.setDisplay( "none" );

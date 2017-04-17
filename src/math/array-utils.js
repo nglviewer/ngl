@@ -138,13 +138,34 @@ function uniformArray3( n, a, b, c ){
 }
 
 
-function serialArray( n, j = 0 ){
+function serialArray( n ){
 
     var array = new Float32Array( n );
 
     for( var i = 0; i < n; ++i ){
 
-        array[ i ] = j + i;
+        array[ i ] = i;
+
+    }
+
+    return array;
+
+}
+
+
+function serialBlockArray( n, b, offset = 0, optionalTarget ){
+
+    const array = optionalTarget || new Float32Array( n * b );
+
+    for( let i = 0; i < n; ++i ){
+
+        const k = offset + i * b;
+
+        for( let j = 0; j < b; ++j ){
+
+            array[ k + j ] = i;
+
+        }
 
     }
 
@@ -581,6 +602,7 @@ export {
     uniformArray,
     uniformArray3,
     serialArray,
+    serialBlockArray,
     randomColorArray,
     replicateArray3Entries,
     calculateMeanArray,

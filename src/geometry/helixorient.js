@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
+import { AtomPicker } from "../utils/picker.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 import { projectPointOnVector } from "../math/vector-utils.js";
@@ -123,20 +124,15 @@ Helixorient.prototype = {
         var residueIndexStart = polymer.residueIndexStart;
 
         var pick = new Float32Array( n );
-        pick.object = structure;
-        pick.type = "atom"
-
         var rp = structure.getResidueProxy();
 
         for( var i = 0; i < n; ++i ){
-
             rp.index = residueIndexStart + i;
             pick[ i ] = rp.traceAtomIndex;
-
         }
 
         return {
-            "picking": pick
+            "picking": new AtomPicker( pick, structure )
         };
 
     },

@@ -9,6 +9,7 @@ import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { SlicePicker } from "../utils/picker.js";
 import Representation from "./representation.js";
 import ImageBuffer from "../buffer/image-buffer.js";
 
@@ -133,6 +134,10 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         var nx = v.nx, ny = v.ny, nz = v.nz;
         var vec = new Vector3();
 
+        function setVec( x, y, z, offset ){
+            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, offset );
+        }
+
         if( this.dimension === "x" ){
 
             x = pos( v.nx );
@@ -145,10 +150,10 @@ SliceRepresentation.prototype = Object.assign( Object.create(
             x0 = x;
             nx = x0 + 1;
 
-            vec.set( x, 0, 0 ).applyMatrix4( m ).toArray( position, 0 );
-            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
-            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
-            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+            setVec( x, 0, 0, 0 );
+            setVec( x, y, 0, 3 );
+            setVec( x, 0, z, 6 );
+            setVec( x, y, z, 9 );
 
         }else if( this.dimension === "y" ){
 
@@ -162,10 +167,10 @@ SliceRepresentation.prototype = Object.assign( Object.create(
             y0 = y;
             ny = y0 + 1;
 
-            vec.set( 0, y, 0 ).applyMatrix4( m ).toArray( position, 0 );
-            vec.set( x, y, 0 ).applyMatrix4( m ).toArray( position, 3 );
-            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 6 );
-            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+            setVec( 0, y, 0, 0 );
+            setVec( x, y, 0, 3 );
+            setVec( 0, y, z, 6 );
+            setVec( x, y, z, 9 );
 
         }else if( this.dimension === "z" ){
 
@@ -179,15 +184,17 @@ SliceRepresentation.prototype = Object.assign( Object.create(
             z0 = z;
             nz = z0 + 1;
 
-            vec.set( 0, 0, z ).applyMatrix4( m ).toArray( position, 0 );
-            vec.set( 0, y, z ).applyMatrix4( m ).toArray( position, 3 );
-            vec.set( x, 0, z ).applyMatrix4( m ).toArray( position, 6 );
-            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, 9 );
+            setVec( 0, 0, z, 0 );
+            setVec( 0, y, z, 3 );
+            setVec( x, 0, z, 6 );
+            setVec( x, y, z, 9 );
 
         }
 
-        var i = 0;
-        var data = new Uint8Array( width * height * 4 );
+        var i = 0, j = 0;
+        var imageData = new Uint8Array( width * height * 4 );
+        var pickingArray = new Float32Array( width * height );
+        var pickingData = new Uint8Array( width * height * 4 );
 
         var min, max;
         if( this.thresholdType === "sigma" ){
@@ -210,18 +217,27 @@ SliceRepresentation.prototype = Object.assign( Object.create(
                     var idx = index( ix, iy, iz, 0 ) / 3;
                     var val = d[ idx ];
                     colormaker.volumeColorToArray( idx, tmp );
-                    data[ i     ] = Math.round( tmp[ 0 ] * 255 );
-                    data[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
-                    data[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
-                    data[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+                    imageData[ i     ] = Math.round( tmp[ 0 ] * 255 );
+                    imageData[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
+                    imageData[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
+                    imageData[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+
+                    pickingArray[ j ] = idx;
+                    pickingData[ i     ] = j >> 16 & 255;
+                    pickingData[ i + 1 ] = j >> 8 & 255;
+                    pickingData[ i + 2 ] = j & 255;
+
+                    ++j
                     i += 4;
 
                 }
             }
         }
 
+        const picking = new SlicePicker( pickingArray, v );
+
         var sliceBuffer = new ImageBuffer(
-            position, data, width, height,
+            { position, imageData, pickingData, width, height, picking },
             this.getBufferParams( {
                 filter: this.filter
             } )

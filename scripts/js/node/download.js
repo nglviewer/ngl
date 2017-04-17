@@ -18,7 +18,7 @@ function parseIdListFile( path ){
 }
 
 function getUrl( id, format, gz ){
-    if( format === "mmcif" ){
+    if( format === "cif" ){
         return "http://files.rcsb.org/download/" + id + ".cif" + ( gz ? ".gz" : "" );
     }else if( format === "pdb" ){
         return "http://files.rcsb.org/download/" + id + ".pdb" + ( gz ? ".gz" : "" );
@@ -74,7 +74,7 @@ parser.addArgument( "--outDir", {
     help: "dir out path"
 });
 parser.addArgument( "--format", {
-    help: "mmtf, bb.mmtf, mmcif or pdb"
+    help: "mmtf, bb.mmtf, cif or pdb"
 });
 parser.addArgument( "--gz", {
     action: "storeTrue",

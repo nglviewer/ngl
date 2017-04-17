@@ -5,7 +5,7 @@
  */
 
 
-import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
+import { Vector2, Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { ensureVector3, ensureMatrix4, ensureQuaternion } from "../utils.js";
@@ -31,6 +31,7 @@ const tmpQ = new Quaternion();
 const tmpP = new Vector3();
 const tmpS = new Vector3();
 
+const tmpCanvasVector = new Vector3();
 const tmpScaleVector = new Vector3();
 const tmpRotateMatrix = new Matrix4();
 const tmpRotateVector = new Vector3();
@@ -87,6 +88,23 @@ class ViewerControls{
 
         this.viewer.requestRender();
         this.signals.changed.dispatch();
+
+    }
+
+    getPositionOnCanvas( position, optionalTarget ){
+
+        const canvasPosition = optionalTarget || new Vector2();
+        const viewer = this.viewer;
+
+        tmpCanvasVector.copy( position )
+            .add( viewer.translationGroup.position )
+            .applyMatrix4( viewer.rotationGroup.matrix )
+            .project( viewer.camera );
+
+        return canvasPosition.set(
+            ( tmpCanvasVector.x + 1 ) * viewer.width / 2,
+            ( tmpCanvasVector.y + 1 ) * viewer.height / 2
+        );
 
     }
 

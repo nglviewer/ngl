@@ -52,10 +52,7 @@ BackboneRepresentation.prototype = Object.assign( Object.create(
 
     getBondData: function( sview, what, params ){
 
-        var p = this.getBondParams( what, params );
-        p.colorParams.backbone = true;
-
-        return sview.getBackboneBondData( p );
+        return sview.getBackboneBondData( this.getBondParams( what, params ) );
 
     }
 

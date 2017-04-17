@@ -7,7 +7,7 @@
 
 import {
     Color, Vector3,
-    FrontSide, BackSide, DoubleSide, VertexColors,
+    FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
     BufferGeometry, BufferAttribute,
     UniformsUtils, UniformsLib, Uniform,
     Group, LineSegments, Points, Mesh,
@@ -17,7 +17,6 @@ import {
 import { Log } from "../globals.js";
 import { SupportsReadPixelsFloat } from "../globals.js";
 import { defaults, getTypedArray } from "../utils.js";
-import { serialArray } from "../math/array-utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -119,7 +118,7 @@ class Buffer{
         this.uniforms.diffuse.value.set( this.diffuse );
 
         var objectId = new Uniform( 0.0 )
-            .onUpdate( function( object/*, camera*/ ){
+            .onUpdate( function( object ){
                 this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
             } );
 
@@ -135,18 +134,13 @@ class Buffer{
         //
 
         var position = d.position || d.position1;
-        var n = position ? position.length / 3 : 0;
-        this._positionDataSize = n;
-
-        var primitiveId = serialArray( this._positionDataSize );
+        this._positionDataSize = position ? position.length / 3 : 0;
 
         this.addAttributes( {
             "position": { type: "v3", value: d.position },
             "color": { type: "c", value: d.color },
-            "primitiveId": { type: "f", value: primitiveId },
+            "primitiveId": { type: "f", value: d.primitiveId }
         } );
-
-        this.setAttributes( { primitiveId: primitiveId } );
 
         if( d.index ){
             this.initIndex( d.index );
@@ -219,7 +213,7 @@ class Buffer{
 
         var side = getThreeSide( this.side );
 
-        this.material = new ShaderMaterial( {
+        var m = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -231,12 +225,12 @@ class Buffer{
             side: side,
             linewidth: this.linewidth
         } );
-        this.material.vertexColors = VertexColors;
-        this.material.extensions.derivatives = this.flatShaded;
-        this.material.extensions.fragDepth = this.impostor;
-        this.material.clipNear = this.clipNear;
+        m.vertexColors = VertexColors;
+        m.extensions.derivatives = this.flatShaded;
+        m.extensions.fragDepth = this.impostor;
+        m.clipNear = this.clipNear;
 
-        this.wireframeMaterial = new ShaderMaterial( {
+        var wm = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -248,10 +242,10 @@ class Buffer{
             side: side,
             linewidth: this.linewidth
         } );
-        this.wireframeMaterial.vertexColors = VertexColors;
-        this.wireframeMaterial.clipNear = this.clipNear;
+        wm.vertexColors = VertexColors;
+        wm.clipNear = this.clipNear;
 
-        this.pickingMaterial = new ShaderMaterial( {
+        var pm = new ShaderMaterial( {
             uniforms: this.pickingUniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -261,11 +255,16 @@ class Buffer{
             lights: false,
             fog: false,
             side: side,
-            linewidth: this.linewidth
+            linewidth: this.linewidth,
+            blending: NoBlending
         } );
-        this.pickingMaterial.vertexColors = VertexColors;
-        this.pickingMaterial.extensions.fragDepth = this.impostor;
-        this.pickingMaterial.clipNear = this.clipNear;
+        pm.vertexColors = VertexColors;
+        pm.extensions.fragDepth = this.impostor;
+        pm.clipNear = this.clipNear;
+
+        this.material = m;
+        this.wireframeMaterial = wm;
+        this.pickingMaterial = pm;
 
         // also sets vertexShader/fragmentShader
         this.updateShader();

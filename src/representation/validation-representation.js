@@ -56,12 +56,6 @@ class ValidationRepresentation extends StructureRepresentation{
 
     }
 
-    updateData( /*what, data*/ ){
-
-        this.build();
-
-    }
-
 }
 
 

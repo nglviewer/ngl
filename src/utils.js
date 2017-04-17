@@ -566,6 +566,11 @@ function ensureQuaternion( q ){
 }
 
 
+function ensureFloat32Array( a ){
+    return a instanceof Float32Array ? a : new Float32Array( a );
+}
+
+
 export {
     getQuery,
     boolean,
@@ -589,5 +594,6 @@ export {
     getTypedArray,
     ensureVector3,
     ensureMatrix4,
-    ensureQuaternion
+    ensureQuaternion,
+    ensureFloat32Array
 };

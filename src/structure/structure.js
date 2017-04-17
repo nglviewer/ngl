@@ -10,6 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, ColormakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { AtomPicker, BondPicker } from "../utils/picker.js";
 import { copyWithin } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import RadiusFactory from "../utils/radius-factory.js";
@@ -734,9 +735,7 @@ Structure.prototype = {
         }
         if( !what || what.picking ){
             picking = new Float32Array( atomCount );
-            picking.object = this;
-            picking.type = "atom";
-            atomData.picking = picking;
+            atomData.picking = new AtomPicker( picking, this );
         }
         if( !what || what.radius ){
             radius = new Float32Array( atomCount );
@@ -818,9 +817,7 @@ Structure.prototype = {
         }
         if( !what || what.picking ){
             picking = new Float32Array( bondCount );
-            picking.object = this;
-            picking.type = "bond";
-            bondData.picking = picking;
+            bondData.picking = new BondPicker( picking, this, p.bondStore );
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );

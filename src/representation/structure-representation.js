@@ -225,7 +225,7 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
     updateData: function( /*what, data*/ ){
 
-        console.error( "updateData not implemented" );
+        this.build();
 
     },
 

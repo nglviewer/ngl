@@ -7,9 +7,9 @@
 
 import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from "../../lib/three.es6.js";
 
-import { Debug, Log } from "../globals.js";
-import { ColormakerRegistry } from "../globals.js";
-import { uniformArray, uniformArray3 } from "../math/array-utils.js";
+import { Debug, Log, ColormakerRegistry } from "../globals.js";
+import { AtomPicker, SurfacePicker } from "../utils/picker.js";
+import { uniformArray, uniformArray3, serialArray } from "../math/array-utils.js";
 import Selection from "../selection.js";
 
 
@@ -191,13 +191,11 @@ Surface.prototype = {
 
     getPicking: function( structure ){
 
-        const picking = this.atomindex;
-        if( picking && structure ){
-            picking.object = structure;
-            picking.type = "atom";
+        if( this.atomindex && structure ){
+            return new AtomPicker( this.atomindex, structure );
+        }else{
+            return new SurfacePicker( serialArray( this.size ), this );
         }
-
-        return picking;
 
     },
 

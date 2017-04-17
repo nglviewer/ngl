@@ -7,7 +7,12 @@
 
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 
-import { defaults } from "../utils.js";
+import { defaults, ensureFloat32Array } from "../utils.js";
+import {
+    ArrowPicker, ConePicker, CylinderPicker,
+    EllipsoidPicker, MeshPicker, SpherePicker
+} from "../utils/picker.js";
+import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import EllipsoidBuffer from "../buffer/ellipsoid-buffer.js";
@@ -56,6 +61,7 @@ function Shape( name, params ){
     var tmpBox = new Box3();
 
     var bufferList = [];
+    var meshCount = 0;
 
     var spherePosition = [];
     var sphereColor = [];
@@ -132,27 +138,29 @@ function Shape( name, params ){
      */
     function addMesh( position, color, index, normal ){
 
-        if( Array.isArray( position ) ){
-            position = new Float32Array( position );
-        }
-        if( Array.isArray( color ) ){
-            color = new Float32Array( color );
-        }
+        position = ensureFloat32Array( position );
+        color = ensureFloat32Array( color );
         if( Array.isArray( index ) ){
-            var ctor = ( position && position.length ) > 65535 ? Uint32Array : Uint16Array;
+            const ctor = position.length > 65535 ? Uint32Array : Uint16Array;
             index = new ctor( index );
         }
-        if( Array.isArray( normal ) ){
-            normal = new Float32Array( normal );
+        if( normal ){
+            normal = ensureFloat32Array( normal );
         }
 
-        var meshBuffer = new MeshBuffer( {
-            position, color, index, normal
-        } );
+        const data = { position, color, index, normal };
+        const picking = new MeshPicker(
+            serialArray( position.length ),
+            Object.assign( { shape: this, serial: meshCount }, data )
+        );
+        const meshBuffer = new MeshBuffer(
+            Object.assign( { picking: picking }, data )
+        );
         bufferList.push( meshBuffer );
 
         tmpBox.setFromArray( position );
         boundingBox.union( tmpBox );
+        meshCount += 1;
 
     }
 
@@ -281,15 +289,20 @@ function Shape( name, params ){
 
     function getBufferList(){
 
-        var buffers = [];
+        const buffers = [];
 
         if( spherePosition.length ){
-            var sphereBuffer = new SphereBuffer(
-                {
-                    position: new Float32Array( spherePosition ),
-                    color: new Float32Array( sphereColor ),
-                    radius: new Float32Array( sphereRadius )
-                },
+            const sphereData = {
+                position: new Float32Array( spherePosition ),
+                color: new Float32Array( sphereColor ),
+                radius: new Float32Array( sphereRadius )
+            };
+            const spherePicking = new SpherePicker(
+                serialArray( sphereRadius.length ),
+                Object.assign( { shape: this }, sphereData )
+            );
+            const sphereBuffer = new SphereBuffer(
+                Object.assign( { picking: spherePicking }, sphereData ),
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -299,14 +312,19 @@ function Shape( name, params ){
         }
 
         if( ellipsoidPosition.length ){
-            var ellipsoidBuffer = new EllipsoidBuffer(
-                {
-                    position: new Float32Array( ellipsoidPosition ),
-                    color: new Float32Array( ellipsoidColor ),
-                    radius: new Float32Array( ellipsoidRadius ),
-                    majorAxis: new Float32Array( ellipsoidMajorAxis ),
-                    minorAxis: new Float32Array( ellipsoidMinorAxis )
-                },
+            const ellipsoidData = {
+                position: new Float32Array( ellipsoidPosition ),
+                color: new Float32Array( ellipsoidColor ),
+                radius: new Float32Array( ellipsoidRadius ),
+                majorAxis: new Float32Array( ellipsoidMajorAxis ),
+                minorAxis: new Float32Array( ellipsoidMinorAxis )
+            };
+            const ellipsoidPicking = new EllipsoidPicker(
+                serialArray( ellipsoidRadius.length ),
+                Object.assign( { shape: this }, ellipsoidData )
+            );
+            const ellipsoidBuffer = new EllipsoidBuffer(
+                Object.assign( { picking: ellipsoidPicking }, ellipsoidData ),
                 {
                     sphereDetail: sphereDetail,
                     disableImpostor: disableImpostor
@@ -316,14 +334,19 @@ function Shape( name, params ){
         }
 
         if( cylinderPosition1.length ){
-            var cylinderBuffer = new CylinderBuffer(
-                {
-                    position1: new Float32Array( cylinderPosition1 ),
-                    position2: new Float32Array( cylinderPosition2 ),
-                    color: new Float32Array( cylinderColor ),
-                    color2: new Float32Array( cylinderColor ),
-                    radius: new Float32Array( cylinderRadius )
-                },
+            const cylinderData = {
+                position1: new Float32Array( cylinderPosition1 ),
+                position2: new Float32Array( cylinderPosition2 ),
+                color: new Float32Array( cylinderColor ),
+                color2: new Float32Array( cylinderColor ),
+                radius: new Float32Array( cylinderRadius )
+            };
+            const cylinderPicking = new CylinderPicker(
+                serialArray( cylinderRadius.length ),
+                Object.assign( { shape: this }, cylinderData )
+            );
+            const cylinderBuffer = new CylinderBuffer(
+                Object.assign( { picking: cylinderPicking }, cylinderData ),
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -334,13 +357,18 @@ function Shape( name, params ){
         }
 
         if( conePosition1.length ){
-            var coneBuffer = new ConeBuffer(
-                {
-                    position1: new Float32Array( conePosition1 ),
-                    position2: new Float32Array( conePosition2 ),
-                    color: new Float32Array( coneColor ),
-                    radius: new Float32Array( coneRadius )
-                },
+            const coneData = {
+                position1: new Float32Array( conePosition1 ),
+                position2: new Float32Array( conePosition2 ),
+                color: new Float32Array( coneColor ),
+                radius: new Float32Array( coneRadius )
+            };
+            const conePicking = new ConePicker(
+                serialArray( coneRadius.length ),
+                Object.assign( { shape: this }, coneData )
+            );
+            const coneBuffer = new ConeBuffer(
+                Object.assign( { picking: conePicking }, coneData ),
                 {
                     radialSegments: radialSegments,
                     disableImpostor: disableImpostor,
@@ -351,13 +379,18 @@ function Shape( name, params ){
         }
 
         if( arrowPosition1.length ){
-            var arrowBuffer = new ArrowBuffer(
-                {
-                    position1: new Float32Array( arrowPosition1 ),
-                    position2: new Float32Array( arrowPosition2 ),
-                    color: new Float32Array( arrowColor ),
-                    radius: new Float32Array( arrowRadius )
-                },
+            const arrowData = {
+                position1: new Float32Array( arrowPosition1 ),
+                position2: new Float32Array( arrowPosition2 ),
+                color: new Float32Array( arrowColor ),
+                radius: new Float32Array( arrowRadius )
+            };
+            const arrowPicking = new ArrowPicker(
+                serialArray( arrowRadius.length ),
+                Object.assign( { shape: this }, arrowData )
+            );
+            const arrowBuffer = new ArrowBuffer(
+                Object.assign( { picking: arrowPicking }, arrowData ),
                 {
                     aspectRatio: aspectRatio,
                     radialSegments: radialSegments,

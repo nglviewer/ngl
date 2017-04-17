@@ -7,7 +7,7 @@
 
 import Buffer from "./buffer.js";
 
-import { calculateCenterArray } from "../math/array-utils.js";
+import { calculateCenterArray, serialArray } from "../math/array-utils.js";
 
 
 class MappedBuffer extends Buffer{
@@ -24,6 +24,8 @@ class MappedBuffer extends Buffer{
         this.addAttributes( {
             "mapping": { type: this.mappingType, value: null },
         } );
+
+        this.setAttributes( { primitiveId: serialArray( this.size ) } );
 
     }
 

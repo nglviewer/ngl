@@ -781,8 +781,8 @@ function Viewer( idOrElement ){
         //         rgba.map( c => { return c.toPrecision( 2 ) } )
         //     );
         //     Log.log( "picked pid", pid );
-        //     Log.log( "picked gid", gid );
         //     Log.log( "picked oid", oid );
+        //     Log.log( "picked object", object );
         //     Log.log( "picked instance", instance );
         //     Log.log( "picked position", x, y );
         //     Log.log( "devicePixelRatio", window.devicePixelRatio );
