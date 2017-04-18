@@ -9,6 +9,11 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+function randomColor(){
+    return Math.random() * 0xFFFFFF;
+}
+
+
 /**
  * Class for making random colors
  * @extends Colormaker
@@ -20,7 +25,7 @@ class RandomColormaker extends Colormaker{
      * @return {Integer} random hex color
      */
     atomColor(){
-        return Math.random() * 0xFFFFFF;
+        return randomColor();
     }
 
     /**
@@ -28,7 +33,7 @@ class RandomColormaker extends Colormaker{
      * @return {Integer} random hex color
      */
     volumeColor(){
-        return Math.random() * 0xFFFFFF;
+        return randomColor();
     }
 
     /**
@@ -36,7 +41,7 @@ class RandomColormaker extends Colormaker{
      * @return {Integer} random hex color
      */
     positionColor(){
-        return Math.random() * 0xFFFFFF;
+        return randomColor();
     }
 
 }
