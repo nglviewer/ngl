@@ -771,26 +771,23 @@ NGL.ExampleRegistry.addDict( {
 
     "slice": function( stage ){
 
-        stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
+        Promise.all( [
+            stage.loadFile( "data://3pqr.ccp4.gz" ),
+            stage.loadFile( "data://3pqr.pdb" )
+        ] ).then( function( ol ){
 
-            var coords = 53.164;
-            var p = new NGL.Vector3().setFromMatrixPosition( o.volume.matrix );
-            var s = new NGL.Vector3().setFromMatrixScale( o.volume.matrix );
-            var position = Math.round( ( ( ( coords - p.z ) / ( o.volume.nz / 100 ) ) + 1 ) / s.z );
+            var sele = new NGL.Selection( "245:A.NZ" );
 
-            o.addRepresentation( "slice", {
+            ol[ 0 ].addRepresentation( "slice", {
                 dimension: "z",
-                position: position
+                positionType: "coordinate",
+                position: ol[ 1 ].structure.getView( sele ).center.z
             } );
-            o.addRepresentation( "surface" );
-            stage.autoView();
+            ol[ 0 ].addRepresentation( "surface" );
 
-        } );
+            ol[ 1 ].addRepresentation( "licorice" );
+            ol[ 1 ].addRepresentation( "cartoon" );
 
-        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
-
-            o.addRepresentation( "licorice" );
-            o.addRepresentation( "cartoon" );
             stage.autoView();
 
         } );

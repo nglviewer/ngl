@@ -345,7 +345,7 @@ class SlicePicker extends Picker{
         return {
             volume: vol,
             index: idx,
-            value: vol.__data[ idx ]
+            value: vol.data[ idx ]
         };
     }
 

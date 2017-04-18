@@ -5,13 +5,10 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
-
-import { ColormakerRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
-import { SlicePicker } from "../utils/picker.js";
 import Representation from "./representation.js";
 import ImageBuffer from "../buffer/image-buffer.js";
+import VolumeSlice from "../surface/volume-slice.js";
 
 
 function SliceRepresentation( volume, viewer, params ){
@@ -19,7 +16,6 @@ function SliceRepresentation( volume, viewer, params ){
     Representation.call( this, volume, viewer, params );
 
     this.volume = volume;
-
     this.build();
 
 }
@@ -41,6 +37,11 @@ SliceRepresentation.prototype = Object.assign( Object.create(
                 "cubic-bspline": "cubic-bspline",
                 "cubic-catmulrom": "cubic-catmulrom",
                 "cubic-mitchell": "cubic-mitchell"
+            }
+        },
+        positionType: {
+            type: "select", rebuild: true, options: {
+                "percent": "percent", "coordinate": "coordinate"
             }
         },
         position: {
@@ -80,7 +81,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     init: function( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "value" );
         p.colorScale = defaults( p.colorScale, "Spectral" );
 
@@ -89,6 +90,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         this.colorScheme = "value";
         this.dimension = defaults( p.dimension, "x" );
         this.filter = defaults( p.filter, "cubic-bspline" );
+        this.positionType = defaults( p.positionType, "percent" );
         this.position = defaults( p.position, 30 );
         this.thresholdType = defaults( p.thresholdType, "sigma" );
         this.thresholdMin = defaults( p.thresholdMin, -Infinity );
@@ -98,12 +100,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     attach: function( callback ){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
-
+        } );
         this.setVisibility( this.visible );
 
         callback();
@@ -112,128 +111,17 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     create: function(){
 
-        var p = this.position;
-        var v = this.volume;
-        v.filterData( -Infinity, Infinity, false );
-        var d = v.data;
-        var m = v.matrix;
+        const volumeSlice = new VolumeSlice( this.volume, {
+            positionType: this.positionType,
+            position: this.position,
+            dimension: this.dimension,
+            thresholdType: this.thresholdType,
+            thresholdMin: this.thresholdMin,
+            thresholdMax: this.thresholdMax
+        } );
 
-        function pos( dimLen ){
-            return Math.round( ( dimLen  / 100 ) * ( p - 1 ) )
-        }
-
-        function index( x, y, z, i ){
-            return ( z * v.ny * v.nx + y * v.nx + x ) * 3 + i;
-        }
-
-        var position = new Float32Array( 4 * 3 );
-        var width, height;
-        var x, y, z;
-
-        var x0 = 0, y0 = 0, z0 = 0;
-        var nx = v.nx, ny = v.ny, nz = v.nz;
-        var vec = new Vector3();
-
-        function setVec( x, y, z, offset ){
-            vec.set( x, y, z ).applyMatrix4( m ).toArray( position, offset );
-        }
-
-        if( this.dimension === "x" ){
-
-            x = pos( v.nx );
-            y = v.ny-1;
-            z = v.nz-1;
-
-            width = v.nz;
-            height = v.ny;
-
-            x0 = x;
-            nx = x0 + 1;
-
-            setVec( x, 0, 0, 0 );
-            setVec( x, y, 0, 3 );
-            setVec( x, 0, z, 6 );
-            setVec( x, y, z, 9 );
-
-        }else if( this.dimension === "y" ){
-
-            x = v.nx-1;
-            y = pos( v.ny );
-            z = v.nz-1;
-
-            width = v.nz;
-            height = v.nx;
-
-            y0 = y;
-            ny = y0 + 1;
-
-            setVec( 0, y, 0, 0 );
-            setVec( x, y, 0, 3 );
-            setVec( 0, y, z, 6 );
-            setVec( x, y, z, 9 );
-
-        }else if( this.dimension === "z" ){
-
-            x = v.nx-1;
-            y = v.ny-1;
-            z = pos( v.nz );
-
-            width = v.nx;
-            height = v.ny;
-
-            z0 = z;
-            nz = z0 + 1;
-
-            setVec( 0, 0, z, 0 );
-            setVec( 0, y, z, 3 );
-            setVec( x, 0, z, 6 );
-            setVec( x, y, z, 9 );
-
-        }
-
-        var i = 0, j = 0;
-        var imageData = new Uint8Array( width * height * 4 );
-        var pickingArray = new Float32Array( width * height );
-
-        var min, max;
-        if( this.thresholdType === "sigma" ){
-            min = v.getValueForSigma( this.thresholdMin );
-            max = v.getValueForSigma( this.thresholdMax );
-        }else{
-            min = this.thresholdMin;
-            max = this.thresholdMax;
-        }
-
-        var cp = this.getColorParams( { volume: v } );
-        cp.domain = [ v.getDataMin(), v.getDataMax() ];
-        var colormaker = ColormakerRegistry.getScheme( cp );
-        var tmp = new Float32Array( 3 );
-
-        for ( var iy = y0; iy < ny; ++iy ) {
-            for ( var ix = x0; ix < nx; ++ix ) {
-                for ( var iz = z0; iz < nz; ++iz ) {
-
-                    var idx = index( ix, iy, iz, 0 ) / 3;
-                    var val = d[ idx ];
-                    colormaker.volumeColorToArray( idx, tmp );
-                    imageData[ i     ] = Math.round( tmp[ 0 ] * 255 );
-                    imageData[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
-                    imageData[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
-                    imageData[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
-
-                    pickingArray[ j ] = idx;
-
-                    ++j
-                    i += 4;
-
-                }
-            }
-        }
-
-        const picking = new SlicePicker( pickingArray, v );
-
-        var sliceBuffer = new ImageBuffer(
-            { position, imageData, width, height, picking },
+        const sliceBuffer = new ImageBuffer(
+            volumeSlice.getData( { colorParams: this.getColorParams() } ),
             this.getBufferParams( {
                 filter: this.filter
             } )
