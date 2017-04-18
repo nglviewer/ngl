@@ -329,29 +329,9 @@ class VolumePicker extends Picker{
 }
 
 
-class SlicePicker extends Picker{
-
-    constructor( array, volume ){
-        super( array );
-        this.volume = volume;
-    }
+class SlicePicker extends VolumePicker{
 
     get type (){ return "slice"; }
-    get data (){ return this.volume; }
-
-    getObject( pid ){
-        const vol = this.volume;
-        const idx = this.getIndex( pid );
-        return {
-            volume: vol,
-            index: idx,
-            value: vol.data[ idx ]
-        };
-    }
-
-    _getPosition( /*pid*/ ){
-        return this.volume.center.clone();
-    }
 
 }
 
