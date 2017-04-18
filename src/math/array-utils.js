@@ -555,8 +555,8 @@ function quickselectCmp( arr, n, cmp, left, right ){
 
 function arrayMax( array ){
 
-    var max = -Infinity;
-    for( var i = 0, il = array.length; i < il; ++i ){
+    let max = -Infinity;
+    for( let i = 0, il = array.length; i < il; ++i ){
         if( array[ i ] > max ) max = array[ i ];
     }
     return max;
@@ -566,11 +566,36 @@ function arrayMax( array ){
 
 function arrayMin( array ){
 
-    var min = Infinity;
-    for( var i = 0, il = array.length; i < il; ++i ){
+    let min = Infinity;
+    for( let i = 0, il = array.length; i < il; ++i ){
         if( array[ i ] < min ) min = array[ i ];
     }
     return min;
+
+}
+
+
+function arrayMean( array ){
+
+    const n = array.length;
+    let sum = 0;
+    for( let i = 0; i < n; ++i ){
+        sum += array[ i ];
+    }
+    return sum / n;
+
+}
+
+
+function arrayRms( array ){
+
+    const n = array.length;
+    let sumSq = 0;
+    for( let i = 0; i < n; ++i ){
+        const di = array[ i ];
+        sumSq += di * di;
+    }
+    return Math.sqrt( sumSq / n );
 
 }
 
@@ -614,6 +639,8 @@ export {
     quickselectCmp,
     arrayMax,
     arrayMin,
+    arrayMean,
+    arrayRms,
     arraySorted,
     arraySortedCmp
 };
