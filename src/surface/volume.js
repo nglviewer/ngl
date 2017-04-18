@@ -8,9 +8,12 @@
 import { Vector3, Box3, Matrix3, Matrix4 } from "../../lib/three.es6.js";
 
 import { WorkerRegistry, ColormakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { VolumePicker } from "../utils/picker.js";
-import { uniformArray, serialArray } from "../math/array-utils";
+import {
+    uniformArray, serialArray, arrayMin, arrayMax, arrayMean, arrayRms
+} from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
 import { applyMatrix4toVector3array, applyMatrix3toVector3array } from "../math/vector-utils.js";
@@ -74,34 +77,35 @@ WorkerRegistry.add( "surf", function func( e, callback ){
 
 /**
  * Volume
- * @class
- * @param {String} name - volume name
- * @param {String} path - source path
- * @param {Float32array} data - volume 3d grid
- * @param {Integer} nx - x dimension of the 3d volume
- * @param {Integer} ny - y dimension of the 3d volume
- * @param {Integer} nz - z dimension of the 3d volume
- * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
  */
-function Volume( name, path, data, nx, ny, nz, dataAtomindex ){
+class Volume{
 
-    this.name = name;
-    this.path = path;
+    /**
+     * Make Volume instance
+     * @param {String} name - volume name
+     * @param {String} path - source path
+     * @param {Float32array} data - volume 3d grid
+     * @param {Integer} nx - x dimension of the 3d volume
+     * @param {Integer} ny - y dimension of the 3d volume
+     * @param {Integer} nz - z dimension of the 3d volume
+     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     */
+    constructor( name, path, data, nx, ny, nz, dataAtomindex ){
 
-    this.matrix = new Matrix4();
-    this.normalMatrix = new Matrix3();
-    this.inverseMatrix = new Matrix4();
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
+        this.name = name;
+        this.path = path;
 
-    this.setData( data, nx, ny, nz, dataAtomindex );
+        this.matrix = new Matrix4();
+        this.normalMatrix = new Matrix3();
+        this.inverseMatrix = new Matrix4();
+        this.center = new Vector3();
+        this.boundingBox = new Box3();
 
-}
+        this.setData( data, nx, ny, nz, dataAtomindex );
 
-Volume.prototype = {
+    }
 
-    constructor: Volume,
-    type: "Volume",
+    get type(){ return "Volume"; }
 
     /**
      * set volume data
@@ -112,7 +116,7 @@ Volume.prototype = {
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
      * @return {undefined}
      */
-    setData: function( data, nx, ny, nz, dataAtomindex ){
+    setData( data, nx, ny, nz, dataAtomindex ){
 
         this.nx = nx || 1;
         this.ny = ny || 1;
@@ -141,14 +145,14 @@ Volume.prototype = {
 
         if( this.worker ) this.worker.terminate();
 
-    },
+    }
 
     /**
      * set transformation matrix
      * @param {Matrix4} matrix - 4x4 transformation matrix
      * @return {undefined}
      */
-    setMatrix: function( matrix ){
+    setMatrix( matrix ){
 
         this.matrix.copy( matrix );
 
@@ -199,23 +203,23 @@ Volume.prototype = {
 
         this.inverseMatrix.getInverse( this.matrix );
 
-    },
+    }
 
     /**
      * set atom indices
      * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
      * @return {undefined}
      */
-    setDataAtomindex: function( dataAtomindex ){
+    setDataAtomindex( dataAtomindex ){
 
         this.dataAtomindex = dataAtomindex;
         this.__dataAtomindex = this.dataAtomindex;
 
         delete this.__dataAtomindexBuffer;
 
-    },
+    }
 
-    getBox: function( center, size, target ){
+    getBox( center, size, target ){
 
         if( !target ) target = new Box3();
 
@@ -228,9 +232,9 @@ Volume.prototype = {
 
         return target;
 
-    },
+    }
 
-    __getBox: function( center, size ){
+    __getBox( center, size ){
 
         if( !center || !size ) return;
 
@@ -238,9 +242,9 @@ Volume.prototype = {
         var box = this.getBox( center, size, this.__box );
         return [ box.min.toArray(), box.max.toArray() ];
 
-    },
+    }
 
-    makeSurface: function( sd, isolevel, smooth ){
+    makeSurface( sd, isolevel, smooth ){
 
         var name = this.name + "@" + isolevel.toPrecision( 2 );
         var surface = new Surface( name, "", sd );
@@ -250,12 +254,12 @@ Volume.prototype = {
 
         return surface;
 
-    },
+    }
 
-    getSurface: function( isolevel, smooth, center, size, contour ){
+    getSurface( isolevel, smooth, center, size, contour ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
-        smooth = smooth || 0;
+        smooth = defaults( smooth, 0 );
 
         //
 
@@ -270,9 +274,9 @@ Volume.prototype = {
 
         return this.makeSurface( sd, isolevel, smooth );
 
-    },
+    }
 
-    getSurfaceWorker: function( isolevel, smooth, center, size, contour, callback ){
+    getSurfaceWorker( isolevel, smooth, center, size, contour, callback ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -327,25 +331,21 @@ Volume.prototype = {
 
         }
 
-    },
+    }
 
-    getValueForSigma: function( sigma ){
+    getValueForSigma( sigma ){
 
-        sigma = sigma !== undefined ? sigma : 2;
+        return this.getDataMean() + defaults( sigma, 2 ) * this.getDataRms();
 
-        return this.getDataMean() + sigma * this.getDataRms();
+    }
 
-    },
+    getSigmaForValue( value ){
 
-    getSigmaForValue: function( value ){
+        return ( defaults( value, 0 ) - this.getDataMean() ) / this.getDataRms();
 
-        value = value !== undefined ? value : 0;
+    }
 
-        return ( value - this.getDataMean() ) / this.getDataRms();
-
-    },
-
-    filterData: function( minValue, maxValue, outside ){
+    filterData( minValue, maxValue, outside ){
 
         if( isNaN( minValue ) && this.header ){
             minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
@@ -428,9 +428,9 @@ Volume.prototype = {
         this.__maxValue = maxValue;
         this.__outside = outside;
 
-    },
+    }
 
-    makeDataPosition: function(){
+    makeDataPosition(){
 
         var nz = this.nz;
         var ny = this.ny;
@@ -463,21 +463,21 @@ Volume.prototype = {
         this.dataPosition = position;
         this.__dataPosition = position;
 
-    },
+    }
 
-    getDataAtomindex: function(){
+    getDataAtomindex(){
 
         return this.dataAtomindex;
 
-    },
+    }
 
-    getDataPosition: function(){
+    getDataPosition(){
 
         return this.dataPosition;
 
-    },
+    }
 
-    getDataColor: function( params ){
+    getDataColor( params ){
 
         var p = params || {};
         p.volume = this;
@@ -503,16 +503,16 @@ Volume.prototype = {
 
         return array;
 
-    },
+    }
 
-    getDataPicking: function(){
+    getDataPicking(){
 
         const picking = serialArray( this.dataPosition.length / 3 );
         return new VolumePicker( picking, this );
 
-    },
+    }
 
-    getDataSize: function( size, scale ){
+    getDataSize( size, scale ){
 
         var n = this.dataPosition.length / 3;
         var i, array;
@@ -563,91 +563,49 @@ Volume.prototype = {
 
         return array;
 
-    },
+    }
 
-    getDataMin: function(){
+    getDataMin(){
 
         if( this.__dataMin === undefined ){
-
-            var data = this.__data;
-            var n = data.length;
-            var min = Infinity;
-
-            for( var i = 0; i < n; ++i ){
-                min = Math.min( min, data[ i ] );
-            }
-
-            this.__dataMin = min;
-
+            this.__dataMin = arrayMin( this.__data );
         }
 
         return this.__dataMin;
 
-    },
+    }
 
-    getDataMax: function(){
+    getDataMax(){
 
         if( this.__dataMax === undefined ){
-
-            var data = this.__data;
-            var n = data.length;
-            var max = -Infinity;
-
-            for( var i = 0; i < n; ++i ){
-                max = Math.max( max, data[ i ] );
-            }
-
-            this.__dataMax = max;
-
+            this.__dataMax = arrayMax( this.__data );
         }
 
         return this.__dataMax;
 
-    },
+    }
 
-    getDataMean: function(){
+    getDataMean(){
 
         if( this.__dataMean === undefined ){
-
-            var data = this.__data;
-            var n = data.length;
-            var sum = 0;
-
-            for( var i = 0; i < n; ++i ){
-                sum += data[ i ];
-            }
-
-            this.__dataMean = sum / n;
-
+            this.__dataMean = arrayMean( this.__data );
         }
 
         return this.__dataMean;
 
-    },
+    }
 
-    getDataRms: function(){
+    getDataRms(){
 
         if( this.__dataRms === undefined ){
-
-            var data = this.__data;
-            var n = data.length;
-            var sumSq = 0;
-            var di, i;
-
-            for( i = 0; i < n; ++i ){
-                di = data[ i ];
-                sumSq += di * di;
-            }
-
-            this.__dataRms = Math.sqrt( sumSq / n );
-
+            this.__dataRms = arrayRms( this.__data );
         }
 
         return this.__dataRms;
 
-    },
+    }
 
-    clone: function(){
+    clone(){
 
         var vol = new Volume(
 
@@ -674,15 +632,15 @@ Volume.prototype = {
 
         return vol;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         if( this.workerPool ) this.workerPool.terminate();
 
     }
 
-};
+}
 
 
 export default Volume;
