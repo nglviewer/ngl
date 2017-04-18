@@ -135,7 +135,7 @@ NGL.Preferences = function( id, defaultParams ){
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
         ambientIntensity: 0.2,
-        hoverTimeout: 50,
+        hoverTimeout: 0,
     };
 
     // overwrite default values with params
