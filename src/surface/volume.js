@@ -26,7 +26,7 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
     function getSurface( isolevel, smooth, box, matrix, contour ){
-        var sd = mc.triangulate( isolevel, smooth, box, contour );
+        const sd = mc.triangulate( isolevel, smooth, box, contour );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
         }
@@ -36,7 +36,7 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
         if( matrix ){
             applyMatrix4toVector3array( matrix, sd.position );
             if( sd.normal ){
-                var normalMatrix = m3new();
+                const normalMatrix = m3new();
                 m3makeNormal( normalMatrix, matrix );
                 applyMatrix3toVector3array( normalMatrix, sd.normal );
             }
@@ -56,14 +56,14 @@ VolumeSurface.__deps = [
 
 WorkerRegistry.add( "surf", function func( e, callback ){
 
-    var a = e.data.args;
-    var p = e.data.params;
+    const a = e.data.args;
+    const p = e.data.params;
     if( a ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
-        var transferList = [ sd.position.buffer, sd.index.buffer ];
+        const sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
+        const transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
         callback( {
@@ -88,9 +88,9 @@ class Volume{
      * @param {Integer} nx - x dimension of the 3d volume
      * @param {Integer} ny - y dimension of the 3d volume
      * @param {Integer} nz - z dimension of the 3d volume
-     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
      */
-    constructor( name, path, data, nx, ny, nz, dataAtomindex ){
+    constructor( name, path, data, nx, ny, nz, atomindex ){
 
         this.name = name;
         this.path = path;
@@ -101,7 +101,7 @@ class Volume{
         this.center = new Vector3();
         this.boundingBox = new Box3();
 
-        this.setData( data, nx, ny, nz, dataAtomindex );
+        this.setData( data, nx, ny, nz, atomindex );
 
     }
 
@@ -113,35 +113,24 @@ class Volume{
      * @param {Integer} nx - x dimension of the 3d volume
      * @param {Integer} ny - y dimension of the 3d volume
      * @param {Integer} nz - z dimension of the 3d volume
-     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
      * @return {undefined}
      */
-    setData( data, nx, ny, nz, dataAtomindex ){
+    setData( data, nx, ny, nz, atomindex ){
 
         this.nx = nx || 1;
         this.ny = ny || 1;
         this.nz = nz || 1;
 
         this.data = data || new Float32Array( 1 );
-        this.__data = this.data;
+        this.setAtomindex( atomindex );
 
-        this.setDataAtomindex( dataAtomindex );
+        delete this._position;
 
-        delete this.mc;
-
-        delete this.__isolevel;
-        delete this.__smooth;
-        delete this.__minValue;
-        delete this.__maxValue;
-
-        delete this.__dataPositionBuffer;
-        delete this.__dataPosition;
-        delete this.__dataBuffer;
-
-        delete this.__dataMin;
-        delete this.__dataMax;
-        delete this.__dataMean;
-        delete this.__dataRms;
+        delete this._min;
+        delete this._max;
+        delete this._mean;
+        delete this._rms;
 
         if( this.worker ) this.worker.terminate();
 
@@ -156,12 +145,12 @@ class Volume{
 
         this.matrix.copy( matrix );
 
-        var bb = this.boundingBox;
-        var v = this.center;  // temporary re-purposing
+        const bb = this.boundingBox;
+        const v = this.center;  // temporary re-purposing
 
-        var x = this.nx - 1;
-        var y = this.ny - 1;
-        var z = this.nz - 1;
+        const x = this.nx - 1;
+        const y = this.ny - 1;
+        const z = this.nz - 1;
 
         bb.makeEmpty();
 
@@ -179,15 +168,15 @@ class Volume{
 
         // make normal matrix
 
-        var me = this.matrix.elements;
-        var r0 = new Vector3( me[0], me[1], me[2] );
-        var r1 = new Vector3( me[4], me[5], me[6] );
-        var r2 = new Vector3( me[8], me[9], me[10] );
-        var cp = new Vector3();
+        const me = this.matrix.elements;
+        const r0 = new Vector3( me[0], me[1], me[2] );
+        const r1 = new Vector3( me[4], me[5], me[6] );
+        const r2 = new Vector3( me[8], me[9], me[10] );
+        const cp = new Vector3();
         //        [ r0 ]       [ r1 x r2 ]
         // M3x3 = [ r1 ]   N = [ r2 x r0 ]
         //        [ r2 ]       [ r0 x r1 ]
-        var ne = this.normalMatrix.elements;
+        const ne = this.normalMatrix.elements;
         cp.crossVectors( r1, r2 );
         ne[ 0 ] = cp.x;
         ne[ 1 ] = cp.y;
@@ -207,15 +196,12 @@ class Volume{
 
     /**
      * set atom indices
-     * @param {Int32Array} dataAtomindex - atom indices corresponding to the cells in the 3d grid
+     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
      * @return {undefined}
      */
-    setDataAtomindex( dataAtomindex ){
+    setAtomindex( atomindex ){
 
-        this.dataAtomindex = dataAtomindex;
-        this.__dataAtomindex = this.dataAtomindex;
-
-        delete this.__dataAtomindexBuffer;
+        this.atomindex = atomindex;
 
     }
 
@@ -234,20 +220,20 @@ class Volume{
 
     }
 
-    __getBox( center, size ){
+    _getBox( center, size ){
 
         if( !center || !size ) return;
 
         if( !this.__box ) this.__box = new Box3();
-        var box = this.getBox( center, size, this.__box );
+        const box = this.getBox( center, size, this.__box );
         return [ box.min.toArray(), box.max.toArray() ];
 
     }
 
-    makeSurface( sd, isolevel, smooth ){
+    _makeSurface( sd, isolevel, smooth ){
 
-        var name = this.name + "@" + isolevel.toPrecision( 2 );
-        var surface = new Surface( name, "", sd );
+        const name = this.name + "@" + isolevel.toPrecision( 2 );
+        const surface = new Surface( name, "", sd );
         surface.info.isolevel = isolevel;
         surface.info.smooth = smooth;
         surface.info.volume = this;
@@ -265,14 +251,16 @@ class Volume{
 
         if( this.volsurf === undefined ){
             this.volsurf = new VolumeSurface(
-                this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
+                this.data, this.nx, this.ny, this.nz, this.atomindex
             );
         }
 
-        var box = this.__getBox( center, size );
-        var sd = this.volsurf.getSurface( isolevel, smooth, box, this.matrix.elements, contour );
+        const box = this._getBox( center, size );
+        const sd = this.volsurf.getSurface(
+            isolevel, smooth, box, this.matrix.elements, contour
+        );
 
-        return this.makeSurface( sd, isolevel, smooth );
+        return this._makeSurface( sd, isolevel, smooth );
 
     }
 
@@ -289,44 +277,44 @@ class Volume{
                 this.workerPool = new WorkerPool( "surf", 2 );
             }
 
-            var msg = {};
-            var worker = this.workerPool.getNextWorker();
+            const msg = {};
+            const worker = this.workerPool.getNextWorker();
 
             if( worker.postCount === 0 ){
                 msg.args = [
-                    this.__data, this.nx, this.ny, this.nz, this.__dataAtomindex
+                    this.data, this.nx, this.ny, this.nz, this.atomindex
                 ];
             }
 
             msg.params = {
                 isolevel: isolevel,
                 smooth: smooth,
-                box: this.__getBox( center, size ),
+                box: this._getBox( center, size ),
                 matrix: this.matrix.elements,
                 contour: contour
             };
 
             worker.post( msg, undefined,
 
-                function( e ){
-                    var sd = e.data.sd;
-                    var p = e.data.p;
-                    callback( this.makeSurface( sd, p.isolevel, p.smooth ) );
-                }.bind( this ),
+                e => {
+                    const sd = e.data.sd;
+                    const p = e.data.p;
+                    callback( this._makeSurface( sd, p.isolevel, p.smooth ) );
+                },
 
-                function( e ){
+                e => {
                     console.warn(
                         "Volume.getSurfaceWorker error - trying without worker", e
                     );
-                    var surface = this.getSurface( isolevel, smooth, center, size );
+                    const surface = this.getSurface( isolevel, smooth, center, size );
                     callback( surface );
-                }.bind( this )
+                }
 
             );
 
         }else{
 
-            var surface = this.getSurface( isolevel, smooth, center, size );
+            const surface = this.getSurface( isolevel, smooth, center, size );
             callback( surface );
 
         }
@@ -335,170 +323,77 @@ class Volume{
 
     getValueForSigma( sigma ){
 
-        return this.getDataMean() + defaults( sigma, 2 ) * this.getDataRms();
+        return this.mean + defaults( sigma, 2 ) * this.rms;
 
     }
 
     getSigmaForValue( value ){
 
-        return ( defaults( value, 0 ) - this.getDataMean() ) / this.getDataRms();
+        return ( defaults( value, 0 ) - this.mean ) / this.rms;
 
     }
 
-    filterData( minValue, maxValue, outside ){
+    get position(){
 
-        if( isNaN( minValue ) && this.header ){
-            minValue = this.header.DMEAN + 2.0 * this.header.ARMS;
-        }
+        if( !this._position ){
 
-        minValue = ( minValue !== undefined && !isNaN( minValue ) ) ? minValue : -Infinity;
-        maxValue = maxValue !== undefined ? maxValue : Infinity;
-        outside = outside || false;
+            const nz = this.nz;
+            const ny = this.ny;
+            const nx = this.nx;
+            const position = new Float32Array( nx * ny * nz * 3 );
 
-        if( !this.dataPosition ){
-
-            this.makeDataPosition();
-
-        }
-
-        var dataPosition = this.__dataPosition;
-        var data = this.__data;
-
-        if( minValue === this.__minValue && maxValue == this.__maxValue &&
-            outside === this.__outside
-        ){
-
-            // already filtered
-            return;
-
-        }else if( minValue === -Infinity && maxValue === Infinity ){
-
-            this.dataPosition = dataPosition;
-            this.data = data;
-
-        }else{
-
-            var n = data.length;
-
-            if( !this.__dataBuffer ){
-
-                // ArrayBuffer for re-use as Float32Array backend
-
-                this.__dataPositionBuffer = new ArrayBuffer( n * 3 * 4 );
-                this.__dataBuffer = new ArrayBuffer( n * 4 );
-
-            }
-
-            var filteredDataPosition = new Float32Array( this.__dataPositionBuffer );
-            var filteredData = new Float32Array( this.__dataBuffer );
-
-            var j = 0;
-
-            for( var i = 0; i < n; ++i ){
-
-                var i3 = i * 3;
-                var v = data[ i ];
-
-                if( ( !outside && v >= minValue && v <= maxValue ) ||
-                    ( outside && ( v < minValue || v > maxValue ) )
-                ){
-
-                    var j3 = j * 3;
-
-                    filteredDataPosition[ j3 + 0 ] = dataPosition[ i3 + 0 ];
-                    filteredDataPosition[ j3 + 1 ] = dataPosition[ i3 + 1 ];
-                    filteredDataPosition[ j3 + 2 ] = dataPosition[ i3 + 2 ];
-
-                    filteredData[ j ] = v;
-
-                    j += 1;
-
+            let p = 0;
+            for( let z = 0; z < nz; ++z ){
+                for( let y = 0; y < ny; ++y ){
+                    for( let x = 0; x < nx; ++x ){
+                        position[ p + 0 ] = x;
+                        position[ p + 1 ] = y;
+                        position[ p + 2 ] = z;
+                        p += 3;
+                    }
                 }
-
             }
 
-            // set views
-
-            this.dataPosition = new Float32Array( this.__dataPositionBuffer, 0, j * 3 );
-            this.data = new Float32Array( this.__dataBuffer, 0, j );
+            this.matrix.applyToVector3Array( position );
+            this._position = position;
 
         }
 
-        this.__minValue = minValue;
-        this.__maxValue = maxValue;
-        this.__outside = outside;
-
-    }
-
-    makeDataPosition(){
-
-        var nz = this.nz;
-        var ny = this.ny;
-        var nx = this.nx;
-
-        var position = new Float32Array( nx * ny * nz * 3 );
-
-        var p = 0;
-
-        for( var z = 0; z < nz; ++z ){
-
-            for( var y = 0; y < ny; ++y ){
-
-                for( var x = 0; x < nx; ++x ){
-
-                    position[ p + 0 ] = x;
-                    position[ p + 1 ] = y;
-                    position[ p + 2 ] = z;
-
-                    p += 3;
-
-                }
-
-            }
-
-        }
-
-        this.matrix.applyToVector3Array( position );
-
-        this.dataPosition = position;
-        this.__dataPosition = position;
+        return this._position;
 
     }
 
     getDataAtomindex(){
 
-        return this.dataAtomindex;
+        return this.atomindex;
 
     }
 
     getDataPosition(){
 
-        return this.dataPosition;
+        return this.position;
 
     }
 
     getDataColor( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.volume = this;
         p.scale = p.scale || 'Spectral';
-        p.domain = p.domain || [ this.getDataMin(), this.getDataMax() ];
+        p.domain = p.domain || [ this.min, this.max ];
 
-        var colormaker = ColormakerRegistry.getScheme( p );
+        const colormaker = ColormakerRegistry.getScheme( p );
 
-        var n = this.dataPosition.length / 3;
-        var array = new Float32Array( n * 3 );
+        const n = this.position.length / 3;
+        const array = new Float32Array( n * 3 );
 
         // var atoms = p.structure.atoms;
-        // var atomindex = this.dataAtomindex;
+        // var atomindex = this.atomindex;
 
-        for( var i = 0; i < n; ++i ){
-
+        for( let i = 0; i < n; ++i ){
             colormaker.volumeColorToArray( i, array, i * 3 );
-
             // a = atoms[ atomindex[ i ] ];
             // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
-
         }
 
         return array;
@@ -507,128 +402,114 @@ class Volume{
 
     getDataPicking(){
 
-        const picking = serialArray( this.dataPosition.length / 3 );
+        const picking = serialArray( this.position.length / 3 );
         return new VolumePicker( picking, this );
 
     }
 
     getDataSize( size, scale ){
 
-        var n = this.dataPosition.length / 3;
-        var i, array;
+        const data = this.data;
+        const n = this.position.length / 3;
+        let array;
 
         switch( size ){
 
             case "value":
-
-                array = new Float32Array( this.data );
+                array = new Float32Array( data );
                 break;
 
             case "abs-value":
-
-                array = new Float32Array( this.data );
-                for( i = 0; i < n; ++i ){
+                array = new Float32Array( data );
+                for( let i = 0; i < n; ++i ){
                     array[ i ] = Math.abs( array[ i ] );
                 }
                 break;
 
-            case "value-min":
-
-                array = new Float32Array( this.data );
-                var min = this.getDataMin();
-                for( i = 0; i < n; ++i ){
+            case "value-min": {
+                array = new Float32Array( data );
+                const min = this.min;
+                for( let i = 0; i < n; ++i ){
                     array[ i ] -= min;
                 }
                 break;
+            }
 
             case "deviation":
-
-                array = new Float32Array( this.data );
+                array = new Float32Array( data );
                 break;
 
             default:
-
                 array = uniformArray( n, size );
                 break;
 
         }
 
         if( scale !== 1.0 ){
-
-            for( i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
                 array[ i ] *= scale;
             }
-
         }
 
         return array;
 
     }
 
-    getDataMin(){
+    get min(){
 
-        if( this.__dataMin === undefined ){
-            this.__dataMin = arrayMin( this.__data );
+        if( this._min === undefined ){
+            this._min = arrayMin( this.data );
         }
-
-        return this.__dataMin;
+        return this._min;
 
     }
 
-    getDataMax(){
+    get max(){
 
-        if( this.__dataMax === undefined ){
-            this.__dataMax = arrayMax( this.__data );
+        if( this._max === undefined ){
+            this._max = arrayMax( this.data );
         }
-
-        return this.__dataMax;
+        return this._max;
 
     }
 
-    getDataMean(){
+    get mean(){
 
-        if( this.__dataMean === undefined ){
-            this.__dataMean = arrayMean( this.__data );
+        if( this._mean === undefined ){
+            this._mean = arrayMean( this.data );
         }
-
-        return this.__dataMean;
+        return this._mean;
 
     }
 
-    getDataRms(){
+    get rms(){
 
-        if( this.__dataRms === undefined ){
-            this.__dataRms = arrayRms( this.__data );
+        if( this._rms === undefined ){
+            this._rms = arrayRms( this.data );
         }
-
-        return this.__dataRms;
+        return this._rms;
 
     }
 
     clone(){
 
-        var vol = new Volume(
+        const vol = new Volume(
 
             this.name,
             this.path,
 
-            this.__data,
+            this.data,
 
             this.nx,
             this.ny,
             this.nz,
 
-            this.__dataAtomindex
+            this.atomindex
 
         );
 
         vol.matrix.copy( this.matrix );
-
-        if( this.header ){
-
-            vol.header = Object.assign( {}, this.header );
-
-        }
+        vol.header = Object.assign( {}, this.header );
 
         return vol;
 

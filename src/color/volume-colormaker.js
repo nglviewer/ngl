@@ -23,7 +23,7 @@ class VolumeColormaker extends Colormaker{
 
             var valueScale = this.getScale();
             var inverseMatrix = volume.inverseMatrix;
-            var data = volume.__data;
+            var data = volume.data;
             var nx = volume.nx;
             var ny = volume.ny;
             var vec = new Vector3();

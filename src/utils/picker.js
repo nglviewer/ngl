@@ -317,7 +317,7 @@ class VolumePicker extends Picker{
     }
 
     _getPosition( pid ){
-        const dp = this.volume.dataPosition;
+        const dp = this.volume.position;
         const idx = this.getIndex( pid );
         return new Vector3(
             dp[ idx * 3 ],

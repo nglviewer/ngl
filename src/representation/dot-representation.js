@@ -9,6 +9,7 @@ import { ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
+import FilteredVolume from "../surface/filtered-volume.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import PointBuffer from "../buffer/point-buffer.js";
 
@@ -19,7 +20,7 @@ function DotRepresentation( surface, viewer, params ){
 
     if( surface instanceof Volume ){
         this.surface = undefined;
-        this.volume = surface;
+        this.volume = new FilteredVolume( surface );
     }else{
         this.surface = surface;
         this.volume = undefined;
@@ -169,7 +170,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
                 thresholdMin = this.thresholdMin;
                 thresholdMax = this.thresholdMax;
             }
-            volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
+            volume.setFilter( thresholdMin, thresholdMax, this.thresholdOut );
 
             dotData.position = volume.getDataPosition();
             dotData.color = volume.getDataColor( this.getColorParams() );
