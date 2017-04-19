@@ -136,6 +136,7 @@ class MouseObserver{
      */
     onMousewheel( event ){
         event.preventDefault();
+        this.setKeys( event );
 
         var delta = 0;
         if( event.wheelDelta ){
