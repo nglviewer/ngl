@@ -10,7 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
-import { degToRad } from "../math/math-utils.js";
+import { degToRad, clamp, pclamp } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
 import Viewer from "../viewer/viewer.js";
 import MouseObserver from "./mouse-observer.js";
@@ -748,6 +748,21 @@ class Stage{
             }
 
         }
+
+    }
+
+    setFocus( value ){
+
+        const clipNear = clamp( value / 2, 0, 49.9 );
+        const clipFar = 100 - clipNear;
+        const diffHalf = ( clipFar - clipNear ) / 2;
+
+        this.setParameters( {
+            clipNear,
+            clipFar,
+            fogNear: pclamp( clipFar - diffHalf ),
+            fogFar: pclamp( clipFar + diffHalf )
+        } );
 
     }
 
