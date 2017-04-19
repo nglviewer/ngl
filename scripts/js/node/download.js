@@ -80,6 +80,10 @@ parser.addArgument( "--gz", {
     action: "storeTrue",
     help: "gzip use"
 });
+parser.addArgument( "--allCurrent", {
+    action: "storeTrue",
+    help: "gzip use"
+});
 var args = parser.parseArgs();
 
 if( args.idListFile !== null ){
@@ -91,4 +95,16 @@ if( args.idListFile !== null ){
             gz: args.gz
         }
     );
+}else if( args.allCurrent ){
+    var url = "http://www.rcsb.org/pdb/json/getCurrent";
+    download( url ).then( function( res ){
+        downloadIdsChunked(
+            JSON.parse( res ).idList,
+            {
+                outPath: args.outDir,
+                format: args.format.toLowerCase(),
+                gz: args.gz
+            }
+        );
+    } );
 }
