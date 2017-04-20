@@ -354,7 +354,7 @@ class Volume{
                 }
             }
 
-            this.matrix.applyToVector3Array( position );
+            applyMatrix4toVector3array( this.matrix.elements, position );
             this._position = position;
 
         }

@@ -8,6 +8,7 @@
 import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
 
 import { serialBlockArray } from "../math/array-utils.js";
+import { applyMatrix3toVector3array, applyMatrix4toVector3array } from "../math/vector-utils.js";
 import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
@@ -132,7 +133,7 @@ class GeometryBuffer extends MeshBuffer{
                     position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
                 );
                 this.applyPositionTransform( matrix, i, i3 );
-                matrix.applyToVector3Array( transformedGeoPosition );
+                applyMatrix4toVector3array( matrix.elements, transformedGeoPosition );
 
                 meshPosition.set( transformedGeoPosition, k );
 
@@ -140,7 +141,7 @@ class GeometryBuffer extends MeshBuffer{
 
                     transformedGeoNormal.set( geoNormal );
                     normalMatrix.getNormalMatrix( matrix );
-                    normalMatrix.applyToVector3Array( transformedGeoNormal );
+                    applyMatrix3toVector3array( normalMatrix.elements, transformedGeoNormal );
 
                     meshNormal.set( transformedGeoNormal, k );
 
