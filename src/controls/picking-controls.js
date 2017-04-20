@@ -46,6 +46,7 @@ class PickingProxy{
         this.picker = pickingData.picker;
         this.instance = pickingData.instance;
 
+        this.stage = stage;
         this.controls = stage.viewerControls;
         this.mouse = stage.mouseObserver;
 
