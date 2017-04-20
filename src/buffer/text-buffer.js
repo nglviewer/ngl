@@ -325,6 +325,8 @@ class TextBuffer extends QuadBuffer{
         this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
         this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
+        this.flatShaded = true;
+
         this.text = d.text;
         this.positionCount = n;
 
@@ -371,7 +373,11 @@ class TextBuffer extends QuadBuffer{
             backgroundColor: { uniform: true },
             backgroundOpacity: { uniform: true }
 
-        }, super.parameters );
+        }, super.parameters, {
+
+            flatShaded: undefined
+
+        } );
 
     }
 

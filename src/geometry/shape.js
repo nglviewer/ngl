@@ -19,6 +19,7 @@ import EllipsoidBuffer from "../buffer/ellipsoid-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 import ConeBuffer from "../buffer/cone-buffer.js";
 import ArrowBuffer from "../buffer/arrow-buffer.js";
+import TextBuffer from "../buffer/text-buffer.js";
 
 
 /**
@@ -41,6 +42,7 @@ import ArrowBuffer from "../buffer/arrow-buffer.js";
  * @param {Integer} params.radialSegments - cylinder quality (number of segments)
  * @param {Boolean} params.disableImpostor - disable use of raycasted impostors for rendering
  * @param {Boolean} params.openEnded - capped or not
+ * @param {TextBufferParameters} params.labelParams - label parameters
  */
 function Shape( name, params ){
 
@@ -87,6 +89,11 @@ function Shape( name, params ){
     var arrowPosition2 = [];
     var arrowColor = [];
     var arrowRadius = [];
+
+    var labelPosition = [];
+    var labelColor = [];
+    var labelSize = [];
+    var labelText = [];
 
     function addElement( elm, array ){
 
@@ -287,6 +294,30 @@ function Shape( name, params ){
 
     }
 
+    /**
+     * Add a label
+     * @instance
+     * @memberof Shape
+     * @example
+     * shape.addLabel( [ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello" );
+     *
+     * @param {Vector3|Array} position - from position vector or array
+     * @param {Color|Array} color - color object or array
+     * @param {Float} size - size value
+     * @param {String} text - text value
+     * @return {undefined}
+     */
+    function addLabel( position, color, size, text ){
+
+        addElement( position, labelPosition );
+        addElement( color, labelColor );
+        labelSize.push( size );
+        labelText.push( text );
+
+        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+
+    }
+
     function getBufferList(){
 
         const buffers = [];
@@ -401,6 +432,17 @@ function Shape( name, params ){
             buffers.push( arrowBuffer );
         }
 
+        if( labelPosition.length ){
+            const labelData = {
+                position: new Float32Array( labelPosition ),
+                color: new Float32Array( labelColor ),
+                size: new Float32Array( labelSize ),
+                text: labelText
+            };
+            const labelBuffer = new TextBuffer( labelData, p.labelParams );
+            buffers.push( labelBuffer );
+        }
+
         return bufferList.concat( buffers );
 
     }
@@ -455,6 +497,7 @@ function Shape( name, params ){
     this.addCylinder = addCylinder;
     this.addCone = addCone;
     this.addArrow = addArrow;
+    this.addLabel = addLabel;
     this.getBufferList = getBufferList;
     this.dispose = dispose;
 
