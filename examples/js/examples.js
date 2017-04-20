@@ -872,7 +872,7 @@ NGL.ExampleRegistry.addDict( {
                 opaqueBack: false,
                 useWorker: false,
                 // clipNear: 50,
-                // clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                // clipRadius: sview.boundingBox.getSize().length() * 0.5 + 3.5,
                 clipCenter: sview.center,
                 filterSele: filterSet.toSeleString()
                 // filterSele: groupSet.toSeleString()
@@ -884,7 +884,7 @@ NGL.ExampleRegistry.addDict( {
                 color: "lime",
                 opacity: 0.7,
                 wireframe: true,
-                clipRadius: sview.boundingBox.size().length() / 2 + 5,
+                clipRadius: sview.boundingBox.getSize().length() / 2 + 5,
                 clipCenter: sview.center
             } );
 

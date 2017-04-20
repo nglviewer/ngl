@@ -7,7 +7,7 @@
 
 import {
     PerspectiveCamera, OrthographicCamera,
-    Box3, Vector3, Color,
+    Box3, Vector3, Matrix4, Color,
     WebGLRenderer, WebGLRenderTarget,
     NearestFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
@@ -41,6 +41,92 @@ import Signal from "../../lib/signals.es6.js";
 
 const pixelBufferFloat = new Float32Array( 4 );
 const pixelBufferUint = new Uint8Array( 4 );
+
+
+var tmpMatrix = new Matrix4();
+
+function onBeforeRender( renderer, scene, camera, geometry, material/*, group*/ ){
+
+    var u = material.uniforms;
+    var updateList = [];
+
+    if( u.objectId ){
+        u.objectId.value = SupportsReadPixelsFloat ? this.id : this.id / 255;
+        updateList.push( "objectId" );
+    }
+
+    if( u.modelViewMatrixInverse || u.modelViewMatrixInverseTranspose ||
+        u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
+    ){
+        this.modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, this.matrixWorld );
+    }
+
+    if( u.modelViewMatrixInverse ){
+        u.modelViewMatrixInverse.value.getInverse( this.modelViewMatrix );
+        updateList.push( "modelViewMatrixInverse" );
+    }
+
+    if( u.modelViewMatrixInverseTranspose ){
+        if( u.modelViewMatrixInverse ){
+            u.modelViewMatrixInverseTranspose.value.copy(
+                u.modelViewMatrixInverse.value
+            ).transpose();
+        }else{
+            u.modelViewMatrixInverseTranspose.value
+                .getInverse( this.modelViewMatrix )
+                .transpose();
+        }
+        updateList.push( "modelViewMatrixInverseTranspose" );
+    }
+
+    if( u.modelViewProjectionMatrix ){
+        camera.updateProjectionMatrix();
+        u.modelViewProjectionMatrix.value.multiplyMatrices(
+            camera.projectionMatrix, this.modelViewMatrix
+        );
+        updateList.push( "modelViewProjectionMatrix" );
+    }
+
+    if( u.modelViewProjectionMatrixInverse ){
+        if( u.modelViewProjectionMatrix ){
+            tmpMatrix.copy(
+                u.modelViewProjectionMatrix.value
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }else{
+            camera.updateProjectionMatrix();
+            tmpMatrix.multiplyMatrices(
+                camera.projectionMatrix, this.modelViewMatrix
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }
+        updateList.push( "modelViewProjectionMatrixInverse" );
+    }
+
+    if( updateList.length ){
+
+        var materialProperties = renderer.properties.get( material );
+
+        if( materialProperties.program ){
+
+            var gl = renderer.getContext();
+            var p = materialProperties.program;
+            gl.useProgram( p.program );
+            var pu = p.getUniforms();
+
+            updateList.forEach( function( name ){
+                pu.setValue( gl, name, u[ name ].value );
+            } );
+
+        }
+
+    }
+
+}
 
 
 /**
@@ -427,6 +513,7 @@ function Viewer( idOrElement ){
             }else{
                 object.userData.buffer = buffer;
                 object.userData.instance = instance;
+                object.onBeforeRender = onBeforeRender;
             }
         }
 
@@ -537,7 +624,7 @@ function Viewer( idOrElement ){
             backgroundGroup.traverse( updateNode );
         }
 
-        boundingBox.size( boundingBoxSize );
+        boundingBox.getSize( boundingBoxSize );
         boundingBoxLength = boundingBoxSize.length();
         // controls.maxDistance = boundingBoxLength * 10;  // TODO
 
@@ -843,7 +930,7 @@ function Viewer( idOrElement ){
         }
 
         bRadius = Math.max( 10, boundingBoxLength * 0.5 );
-        bRadius += boundingBox.center( distVector ).length();
+        bRadius += boundingBox.getCenter( distVector ).length();
         // console.log( "bRadius", bRadius )
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );

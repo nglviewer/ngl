@@ -5,64 +5,13 @@
  */
 
 
-import { Matrix4, Uniform } from "../../lib/three.es6.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import "../shader/HyperballStickImpostor.vert";
 import "../shader/HyperballStickImpostor.frag";
 
 import { defaults } from "../utils.js";
 import BoxBuffer from "./box-buffer.js";
-
-
-var tmpMatrix = new Matrix4();
-
-function matrixCalc( object, camera ){
-
-    var u = object.material.uniforms;
-
-    if( u.modelViewMatrixInverse ){
-        u.modelViewMatrixInverse.value.getInverse(
-            object.modelViewMatrix
-        );
-    }
-
-    if( u.modelViewMatrixInverseTranspose ){
-        if( u.modelViewMatrixInverse ){
-            u.modelViewMatrixInverseTranspose.value.copy(
-                u.modelViewMatrixInverse.value
-            ).transpose();
-        }else{
-            u.modelViewMatrixInverseTranspose.value
-                .getInverse( object.modelViewMatrix )
-                .transpose();
-        }
-    }
-
-    if( u.modelViewProjectionMatrix ){
-        u.modelViewProjectionMatrix.value.multiplyMatrices(
-            camera.projectionMatrix, object.modelViewMatrix
-        );
-    }
-
-    if( u.modelViewProjectionMatrixInverse ){
-        if( u.modelViewProjectionMatrix ){
-            tmpMatrix.copy(
-                u.modelViewProjectionMatrix.value
-            );
-            u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
-        }else{
-            tmpMatrix.multiplyMatrices(
-                camera.projectionMatrix, object.modelViewMatrix
-            );
-            u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
-        }
-    }
-
-}
 
 
 class HyperballStickImpostorBuffer extends BoxBuffer{
@@ -88,17 +37,10 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
 
         var shrink = defaults( p.shrink, 0.14 );
 
-        var modelViewProjectionMatrix = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-        var modelViewProjectionMatrixInverse = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-        var modelViewMatrixInverseTranspose = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-
         this.addUniforms( {
-            "modelViewProjectionMatrix": modelViewProjectionMatrix,
-            "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
-            "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
+            "modelViewProjectionMatrix": { value: new Matrix4() },
+            "modelViewProjectionMatrixInverse": { value: new Matrix4() },
+            "modelViewMatrixInverseTranspose": { value: new Matrix4() },
             "shrink": { value: shrink },
         } );
 

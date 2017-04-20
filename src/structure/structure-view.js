@@ -186,7 +186,7 @@ StructureView.prototype = Object.assign( Object.create(
         if( Debug ) Log.timeEnd( "StructureView.refresh#size" );
 
         this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
+        this.center = this.boundingBox.getCenter();
 
         if( Debug ) Log.timeEnd( "StructureView.refresh" );
 

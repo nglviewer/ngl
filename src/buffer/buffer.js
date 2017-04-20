@@ -9,13 +9,12 @@ import {
     Color, Vector3,
     FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
     BufferGeometry, BufferAttribute,
-    UniformsUtils, UniformsLib, Uniform,
+    UniformsUtils, UniformsLib,
     Group, LineSegments, Points, Mesh,
     ShaderMaterial
 } from "../../lib/three.es6.js";
 
 import { Log } from "../globals.js";
-import { SupportsReadPixelsFloat } from "../globals.js";
 import { defaults, getTypedArray } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
@@ -117,14 +116,9 @@ class Buffer{
 
         this.uniforms.diffuse.value.set( this.diffuse );
 
-        var objectId = new Uniform( 0.0 )
-            .onUpdate( function( object ){
-                this.value = SupportsReadPixelsFloat ? object.id : object.id / 255;
-            } );
-
         this.pickingUniforms = {
             "nearClip": { value: 0.0 },
-            "objectId": objectId
+            "objectId": { value: 0 }
         };
 
         this.group = new Group();

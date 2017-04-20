@@ -788,7 +788,7 @@ class Stage{
 
     getZoomForBox( boundingBox ){
 
-        const bbSize = boundingBox.size( tmpZoomVector );
+        const bbSize = boundingBox.getSize( tmpZoomVector );
         const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
         const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
         let distance = maxSize + Math.sqrt( minSize );
@@ -819,9 +819,9 @@ class Stage{
 
     }
 
-    getCenter(){
+    getCenter( optionalTarget ){
 
-        return this.getBox().center();
+        return this.getBox().getCenter( optionalTarget );
 
     }
 

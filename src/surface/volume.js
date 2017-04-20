@@ -164,7 +164,7 @@ class Volume{
         bb.expandByPoint( v.set( 0, 0, 0 ) );
 
         bb.applyMatrix4( this.matrix );
-        bb.center( this.center );
+        bb.getCenter( this.center );
 
         // make normal matrix
 

@@ -187,7 +187,7 @@ Structure.prototype = {
         this.atomSet = this.getAtomSet();
         this.atomCount = this.atomStore.count;
         this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
+        this.center = this.boundingBox.getCenter();
         this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
     },
@@ -1056,7 +1056,7 @@ Structure.prototype = {
     atomCenter: function( selection ){
 
         if( selection ){
-            return this.getBoundingBox( selection ).center();
+            return this.getBoundingBox( selection ).getCenter();
         }else{
             return this.center.clone();
         }
@@ -1135,7 +1135,7 @@ Structure.prototype = {
     refreshPosition: function(){
 
         this.getBoundingBox( undefined, this.boundingBox );
-        this.boundingBox.center( this.center );
+        this.boundingBox.getCenter( this.center );
         this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
     },

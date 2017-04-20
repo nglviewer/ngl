@@ -232,9 +232,9 @@ class Component{
 
     }
 
-    getCenter(){
+    getCenter( optionalTarget ){
 
-        return this.getBox().center();
+        return this.getBox().getCenter( optionalTarget );
 
     }
 

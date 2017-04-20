@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Uniform } from "../../lib/three.es6.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import "../shader/CylinderImpostor.vert";
 import "../shader/CylinderImpostor.frag";
@@ -35,13 +35,8 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
 
         this.openEnded = defaults( p.openEnded, false );
 
-        var modelViewMatrixInverse = new Uniform( new Matrix4() )
-            .onUpdate( function( object/*, camera*/ ){
-                this.value.getInverse( object.modelViewMatrix );
-            } );
-
         this.addUniforms( {
-            "modelViewMatrixInverse": modelViewMatrixInverse,
+            "modelViewMatrixInverse": { value: new Matrix4() },
             "ortho": { value: 0.0 },
         } );
 

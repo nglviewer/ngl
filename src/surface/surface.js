@@ -55,7 +55,7 @@ function Surface( name, path, data ){
         );
 
         this.boundingBox.setFromArray( data.position );
-        this.boundingBox.center( this.center );
+        this.boundingBox.getCenter( this.center );
 
     }
 
@@ -107,7 +107,7 @@ Surface.prototype = {
         if( !geo.boundingBox ) geo.computeBoundingBox();
 
         this.boundingBox.copy( geo.boundingBox );
-        this.boundingBox.center( this.center );
+        this.boundingBox.getCenter( this.center );
 
         var position, color, index, normal;
 

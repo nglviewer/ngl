@@ -443,7 +443,7 @@ function Shape( name, params ){
 
     Object.defineProperties( this, {
         center: {
-            get: function(){ return boundingBox.center( center ); }
+            get: function(){ return boundingBox.getCenter( center ); }
         },
     } );
     this.boundingBox = boundingBox;

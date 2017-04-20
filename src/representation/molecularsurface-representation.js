@@ -125,7 +125,7 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
             if( this.filterSele ){
                 var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
-                var bbSize = sviewFilter.boundingBox.size();
+                var bbSize = sviewFilter.boundingBox.getSize();
                 var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
                 var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, ( maxDim / 2 ) + 6.0 );
                 sview = sview.getView(
