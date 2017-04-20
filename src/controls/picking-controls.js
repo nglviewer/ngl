@@ -105,7 +105,7 @@ class PickingProxy{
      * @member {Vector3}
      */
     get position (){
-        return this.picker.getPosition( this.pid );
+        return this.picker.getPosition( this.pid, this.instance, this.component );
     }
 
     /**
