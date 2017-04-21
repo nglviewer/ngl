@@ -8,6 +8,7 @@
 import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { calculateMeanVector3 } from "../math/vector-utils.js";
+import Selection from "../selection.js";
 
 
 class Picker{
@@ -56,7 +57,32 @@ class DataPicker extends Picker{
 //
 
 
-class ArrowPicker extends DataPicker{
+class CylinderPicker extends DataPicker{
+
+    get type (){ return "cylinder"; }
+
+    getObject( pid ){
+        const d = this.data;
+        return {
+            shape: d.shape,
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ],
+            position1: new Vector3().fromArray( d.position1, 3 * pid ),
+            position2: new Vector3().fromArray( d.position2, 3 * pid )
+        };
+    }
+
+    _getPosition( pid ){
+        const d = this.data;
+        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
+        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
+    }
+
+}
+
+
+class ArrowPicker extends CylinderPicker{
 
     get type (){ return "arrow"; }
 
@@ -70,13 +96,6 @@ class ArrowPicker extends DataPicker{
             color: new Color().fromArray( d.color, 3 * pid ),
             radius: d.radius[ pid ]
         };
-    }
-
-    _getPosition( pid ){
-        const d = this.data;
-        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
-        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
-        return p1.add( p2 ).multiplyScalar( 0.5 );
     }
 
 }
@@ -138,36 +157,19 @@ class ContactPicker extends BondPicker{
 }
 
 
-class ConePicker extends DataPicker{
+class ConePicker extends CylinderPicker{
 
     get type (){ return "cone"; }
-
-    getObject( pid ){
-        const d = this.data;
-        return {
-            shape: d.shape,
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            position1: new Vector3().fromArray( d.position1, 3 * pid ),
-            position2: new Vector3().fromArray( d.position2, 3 * pid )
-        };
-    }
-
-    _getPosition( pid ){
-        const d = this.data;
-        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
-        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
-        return p1.add( p2 ).multiplyScalar( 0.5 );
-    }
 
 }
 
 
 class ClashPicker extends Picker{
 
-    constructor( array, validation ){
+    constructor( array, validation, structure ){
         super( array );
         this.validation = validation;
+        this.structure = structure;
     }
 
     get type (){ return "clash"; }
@@ -183,18 +185,19 @@ class ClashPicker extends Picker{
         };
     }
 
-    // TODO
-    // _getPosition( pid ){
-    //     const idx = this.getIndex( pid );
-    //     return new Vector3();
-    // }
+    _getAtomProxyFromSele( sele ){
+        const selection = new Selection( sele );
+        const idx = this.structure.getAtomIndices( selection )[ 0 ];
+        return this.structure.getAtomProxy( idx );
+    }
 
-}
-
-
-class CylinderPicker extends ConePicker{
-
-    get type (){ return "cylinder"; }
+    _getPosition( pid ){
+        const clash = this.getObject( pid ).clash;
+        const s = this.structure;
+        const ap1 = this._getAtomProxyFromSele( clash.sele1 );
+        const ap2 = this._getAtomProxyFromSele( clash.sele2 );
+        return new Vector3().copy( ap1 ).add( ap2 ).multiplyScalar( 0.5 );
+    }
 
 }
 
