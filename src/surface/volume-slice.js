@@ -153,22 +153,30 @@ class VolumeSlice{
             tMax = this.thresholdMax;
         }
 
-        const colormaker = ColormakerRegistry.getScheme(
-            Object.assign( {}, params.colorParams, { volume: v } )
-        );
+        const cp = Object.assign( {}, params.colorParams, { volume: v } );
+        if( this.normalize ){
+            cp.domain = [ 0, 1 ];
+        }
+        const colormaker = ColormakerRegistry.getScheme( cp );
         const tmp = new Float32Array( 3 );
         const scale = colormaker.getScale();
 
-        let min = +Infinity, max = -Infinity;
-        for( let iy = y0; iy < ny; ++iy ){
-            for( let ix = x0; ix < nx; ++ix ){
-                for( let iz = z0; iz < nz; ++iz ){
-                    const idx = index( ix, iy, iz, 0 ) / 3;
-                    const val = d[ idx ];
-                    if( val < min  ) min = val;
-                    if( val > max  ) max = val;
+        let min, max, diff;
+        if( this.normalize ){
+            min = +Infinity
+            max = -Infinity;
+            for( let iy = y0; iy < ny; ++iy ){
+                for( let ix = x0; ix < nx; ++ix ){
+                    for( let iz = z0; iz < nz; ++iz ){
+                        const idx = index( ix, iy, iz, 0 ) / 3;
+                        const val = d[ idx ];
+                        if( val < min  ) min = val;
+                        if( val > max  ) max = val;
+                    }
                 }
             }
+            diff = max - min;
+            console.log( diff, min, max, v.min, v.max )
         }
 
         for( let iy = y0; iy < ny; ++iy ){
@@ -177,7 +185,9 @@ class VolumeSlice{
 
                     const idx = index( ix, iy, iz, 0 ) / 3;
                     let val = d[ idx ];
-                    if( this.normalize ) val /= max;
+                    if( this.normalize ){
+                        val = ( val - min ) / diff;
+                    }
 
                     colormaker.colorToArray( scale( val ), tmp );
                     imageData[ i     ] = Math.round( tmp[ 0 ] * 255 );

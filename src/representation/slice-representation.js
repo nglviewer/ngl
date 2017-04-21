@@ -13,13 +13,10 @@ import VolumeSlice from "../surface/volume-slice.js";
 
 function SliceRepresentation( volume, viewer, params ){
 
-    var p = params || {};
-
-    p.colorDomain = defaults( p.colorDomain, [ volume.min, volume.max ] );
-
-    Representation.call( this, volume, viewer, p );
-
     this.volume = volume;
+
+    Representation.call( this, volume, viewer, params );
+
     this.build();
 
 }
@@ -88,7 +85,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     init: function( params ){
 
+        const v = this.volume;
         const p = params || {};
+        p.colorDomain = defaults( p.colorDomain, [ v.min, v.max ] );
         p.colorScheme = defaults( p.colorScheme, "value" );
         p.colorScale = defaults( p.colorScale, "Spectral" );
 
