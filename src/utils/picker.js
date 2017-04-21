@@ -26,7 +26,7 @@ class Picker{
             vector.applyProjection( instance.matrix );
         }
         // if( component ){
-        //     // TODO component-wise matrix
+        //     // apply component-wise matrix when available in the future
         // }
         return vector;
     }
@@ -286,13 +286,6 @@ class SurfacePicker extends Picker{
 
     _getPosition( /*pid*/ ){
         return this.surface.center.clone();
-        // const p = this.surface.getPosition();
-        // const idx = this.getIndex( pid );
-        // return new Vector3(
-        //     p[ idx * 3 ],
-        //     p[ idx * 3 + 1 ],
-        //     p[ idx * 3 + 2 ]
-        // );
     }
 
 }
