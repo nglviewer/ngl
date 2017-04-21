@@ -193,7 +193,6 @@ class ClashPicker extends Picker{
 
     _getPosition( pid ){
         const clash = this.getObject( pid ).clash;
-        const s = this.structure;
         const ap1 = this._getAtomProxyFromSele( clash.sele1 );
         const ap2 = this._getAtomProxyFromSele( clash.sele2 );
         return new Vector3().copy( ap1 ).add( ap2 ).multiplyScalar( 0.5 );
