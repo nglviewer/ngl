@@ -13,7 +13,11 @@ import VolumeSlice from "../surface/volume-slice.js";
 
 function SliceRepresentation( volume, viewer, params ){
 
-    Representation.call( this, volume, viewer, params );
+    var p = params || {};
+
+    p.colorDomain = defaults( p.colorDomain, [ volume.min, volume.max ] );
+
+    Representation.call( this, volume, viewer, p );
 
     this.volume = volume;
     this.build();
@@ -64,6 +68,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         thresholdMax: {
             type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
         },
+        normalize: {
+            type: "boolean", rebuild: true
+        },
 
     }, Representation.prototype.parameters, {
 
@@ -95,6 +102,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         this.thresholdType = defaults( p.thresholdType, "sigma" );
         this.thresholdMin = defaults( p.thresholdMin, -Infinity );
         this.thresholdMax = defaults( p.thresholdMax, Infinity );
+        this.normalize = defaults( p.normalize, false );
 
     },
 
@@ -117,7 +125,8 @@ SliceRepresentation.prototype = Object.assign( Object.create(
             dimension: this.dimension,
             thresholdType: this.thresholdType,
             thresholdMin: this.thresholdMin,
-            thresholdMax: this.thresholdMax
+            thresholdMax: this.thresholdMax,
+            normalize: this.normalize
         } );
 
         const sliceBuffer = new ImageBuffer(

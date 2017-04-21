@@ -24,6 +24,7 @@ class VolumeSlice{
         this.thresholdType = defaults( p.thresholdType, "sigma" );
         this.thresholdMin = defaults( p.thresholdMin, -Infinity );
         this.thresholdMax = defaults( p.thresholdMax, Infinity );
+        this.normalize = defaults( p.normalize, false );
 
         this.volume = volume;
 
@@ -143,34 +144,46 @@ class VolumeSlice{
         const imageData = new Uint8Array( width * height * 4 );
         const pickingArray = new Float32Array( width * height );
 
-        let min, max;
+        let tMin, tMax;
         if( this.thresholdType === "sigma" ){
-            min = v.getValueForSigma( this.thresholdMin );
-            max = v.getValueForSigma( this.thresholdMax );
+            tMin = v.getValueForSigma( this.thresholdMin );
+            tMax = v.getValueForSigma( this.thresholdMax );
         }else{
-            min = this.thresholdMin;
-            max = this.thresholdMax;
+            tMin = this.thresholdMin;
+            tMax = this.thresholdMax;
         }
 
         const colormaker = ColormakerRegistry.getScheme(
-            Object.assign( {}, params.colorParams, {
-                volume: v,
-                domain: [ v.min, v.max ]
-            } )
+            Object.assign( {}, params.colorParams, { volume: v } )
         );
         const tmp = new Float32Array( 3 );
+        const scale = colormaker.getScale();
+
+        let min = +Infinity, max = -Infinity;
+        for( let iy = y0; iy < ny; ++iy ){
+            for( let ix = x0; ix < nx; ++ix ){
+                for( let iz = z0; iz < nz; ++iz ){
+                    const idx = index( ix, iy, iz, 0 ) / 3;
+                    const val = d[ idx ];
+                    if( val < min  ) min = val;
+                    if( val > max  ) max = val;
+                }
+            }
+        }
 
         for( let iy = y0; iy < ny; ++iy ){
             for( let ix = x0; ix < nx; ++ix ){
                 for( let iz = z0; iz < nz; ++iz ){
 
                     const idx = index( ix, iy, iz, 0 ) / 3;
-                    const val = d[ idx ];
-                    colormaker.volumeColorToArray( idx, tmp );
+                    let val = d[ idx ];
+                    if( this.normalize ) val /= max;
+
+                    colormaker.colorToArray( scale( val ), tmp );
                     imageData[ i     ] = Math.round( tmp[ 0 ] * 255 );
                     imageData[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
                     imageData[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
-                    imageData[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+                    imageData[ i + 3 ] = ( val > tMin && val < tMax ) ? 255 : 0;
 
                     pickingArray[ j ] = idx;
 
