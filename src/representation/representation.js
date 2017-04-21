@@ -171,7 +171,7 @@ Representation.prototype = {
         this.colorScheme = defaults( p.colorScheme, "uniform" );
         this.colorScale = defaults( p.colorScale, "" );
         this.colorValue = defaults( p.colorValue, 0x909090 );
-        this.colorDomain = defaults( p.colorDomain, "" );
+        this.colorDomain = defaults( p.colorDomain, undefined );
         this.colorMode = defaults( p.colorMode, "hcl" );
 
         this.visible = defaults( p.visible, true );
