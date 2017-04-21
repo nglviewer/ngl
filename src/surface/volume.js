@@ -12,11 +12,14 @@ import { defaults } from "../utils.js";
 import WorkerPool from "../worker/worker-pool.js";
 import { VolumePicker } from "../utils/picker.js";
 import {
-    uniformArray, serialArray, arrayMin, arrayMax, arrayMean, arrayRms
+    uniformArray, serialArray,
+    arrayMin, arrayMax, arraySum, arrayMean, arrayRms
 } from "../math/array-utils";
 import MarchingCubes from "./marching-cubes.js";
 import { laplacianSmooth, computeVertexNormals } from "./surface-utils.js";
-import { applyMatrix4toVector3array, applyMatrix3toVector3array } from "../math/vector-utils.js";
+import {
+    applyMatrix4toVector3array, applyMatrix3toVector3array
+} from "../math/vector-utils.js";
 import { m3new, m3makeNormal } from "../math/matrix-utils.js";
 import Surface from "./surface.js";
 
@@ -470,6 +473,15 @@ class Volume{
             this._max = arrayMax( this.data );
         }
         return this._max;
+
+    }
+
+    get sum(){
+
+        if( this._sum === undefined ){
+            this._sum = arraySum( this.data );
+        }
+        return this._sum;
 
     }
 

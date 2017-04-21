@@ -575,14 +575,21 @@ function arrayMin( array ){
 }
 
 
-function arrayMean( array ){
+function arraySum( array ){
 
     const n = array.length;
     let sum = 0;
     for( let i = 0; i < n; ++i ){
         sum += array[ i ];
     }
-    return sum / n;
+    return sum;
+
+}
+
+
+function arrayMean( array ){
+
+    return arraySum( array ) / array.length;
 
 }
 
@@ -639,6 +646,7 @@ export {
     quickselectCmp,
     arrayMax,
     arrayMin,
+    arraySum,
     arrayMean,
     arrayRms,
     arraySorted,
