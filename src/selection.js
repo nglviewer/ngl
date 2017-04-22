@@ -10,7 +10,7 @@ import Signal from "../lib/signals.es6.js";
 import { binarySearchIndexOf, rangeInSortedArray } from "./utils.js";
 
 
-var kwd = {
+const kwd = {
     "PROTEIN": 1,
     "NUCLEIC": 2,
     "RNA": 3,
@@ -30,26 +30,26 @@ var kwd = {
 
 /**
  * Selection
- * @class
- * @param {String} string - selection string, see {@tutorial selection-language}
  */
-function Selection( string ){
+class Selection{
 
-    this.signals = {
-        stringChanged: new Signal(),
-    };
+    /**
+     * Create Selection
+     * @param {String} string - selection string, see {@tutorial selection-language}
+     */
+    constructor( string ){
 
-    this.setString( string );
+        this.signals = {
+            stringChanged: new Signal(),
+        };
 
-}
+        this.setString( string );
 
-Selection.prototype = {
+    }
 
-    constructor: Selection,
+    get type(){ return "selection"; }
 
-    type: "selection",
-
-    setString: function( string, silent ){
+    setString( string, silent ){
 
         if( string === undefined ) string = this.string || "";
         if( string === this.string ) return;
@@ -79,9 +79,9 @@ Selection.prototype = {
             this.signals.stringChanged.dispatch( this.string );
         }
 
-    },
+    }
 
-    parse: function( string ){
+    parse( string ){
 
         this.selection = {
             operator: undefined,
@@ -692,9 +692,9 @@ Selection.prototype = {
 
         }
 
-    },
+    }
 
-    _makeTest: function( fn, selection ){
+    _makeTest( fn, selection ){
 
         if( selection === undefined ) selection = this.selection;
         if( selection === null ) return false;
@@ -779,9 +779,9 @@ Selection.prototype = {
 
         };
 
-    },
+    }
 
-    _filter: function( fn, selection ){
+    _filter( fn, selection ){
 
         if( selection === undefined ) selection = this.selection;
         if( selection.error ) return selection;
@@ -824,9 +824,9 @@ Selection.prototype = {
 
         }
 
-    },
+    }
 
-    makeAtomTest: function( atomOnly ){
+    makeAtomTest( atomOnly ){
 
         var helixTypes = [ "h", "g", "i" ];
         var sheetTypes = [ "e", "b" ];
@@ -912,9 +912,9 @@ Selection.prototype = {
 
         return this._makeTest( fn, selection );
 
-    },
+    }
 
-    makeResidueTest: function( residueOnly ){
+    makeResidueTest( residueOnly ){
 
         var helixTypes = [ "h", "g", "i" ];
         var sheetTypes = [ "e", "b" ];
@@ -988,9 +988,9 @@ Selection.prototype = {
 
         return this._makeTest( fn, selection );
 
-    },
+    }
 
-    makeChainTest: function( chainOnly ){
+    makeChainTest( chainOnly ){
 
         var selection;
 
@@ -1055,9 +1055,9 @@ Selection.prototype = {
 
         return this._makeTest( fn, selection );
 
-    },
+    }
 
-    makeModelTest: function( modelOnly ){
+    makeModelTest( modelOnly ){
 
         var selection;
 
@@ -1103,7 +1103,7 @@ Selection.prototype = {
 
     }
 
-};
+}
 
 
 export default Selection;
