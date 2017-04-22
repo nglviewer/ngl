@@ -1,0 +1,15 @@
+{
+    "title": "NGL Viewer",
+    "source": "./src",
+    "destination": "./build/docs/api",
+    "manual": {
+        "globalIndex": true,
+        "overview": [ "./doc/overview.md" ],
+        "example": [ "./doc/tutorials/snippets.md" ],
+        "changelog": [ "./CHANGELOG.md" ]
+    },
+    "undocumentIdentifier": false,
+    "coverage": false,
+    "includeSource": false,
+    "lint": false
+}

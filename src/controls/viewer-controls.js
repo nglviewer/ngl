@@ -38,6 +38,9 @@ const tmpRotateVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
 
+/**
+ * Viewer controls
+ */
 class ViewerControls{
 
     /**

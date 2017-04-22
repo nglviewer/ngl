@@ -17,6 +17,9 @@ const tmpPanMatrix = new Matrix4();
 const tmpPanVector = new Vector3();
 
 
+/**
+ * Trackball controls
+ */
 class TrackballControls{
 
     constructor( stage, params ){

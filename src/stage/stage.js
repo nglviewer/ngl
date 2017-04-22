@@ -91,14 +91,6 @@ const tmpZoomVector = new Vector3();
  */
 
 /**
- * {@link Signal}, dispatched when a component is added to the stage
- * @example
- * stage.signals.componentAdded.add( function( component ){ ... } );
- * @event Stage#componentAdded
- * @type {Component}
- */
-
-/**
  * {@link Signal}, dispatched when a component is removed from the stage
  * @example
  * stage.signals.componentRemoved.add( function( component ){ ... } );
@@ -124,6 +116,15 @@ const tmpZoomVector = new Vector3();
 
 
 /**
+ * @example
+ * stage.signals.componentAdded.add( function( component ){ ... } );
+ *
+ * @typedef {Object} StageSignals
+ * @property {Signal<Component>} componentAdded - when a component is added
+ */
+
+
+/**
  * Stage class, central for creating molecular scenes with NGL.
  * @example
  *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
@@ -137,6 +138,10 @@ class Stage{
      */
     constructor( idOrElement, params ){
 
+        /**
+         * Events emitted by the stage
+         * @member {StageSignals}
+         */
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
@@ -599,6 +604,7 @@ class Stage{
 
     /**
      * Create a component from the given object and add to the stage
+     * @emits {StageSignals.componentAdded}
      * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
      * @param {ComponentParameters} params - parameter object
      * @return {Component} the created component

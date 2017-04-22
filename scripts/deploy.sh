@@ -19,12 +19,9 @@ cp -r ${DIR}/../examples/css/ ./css/;
 cp -r ${DIR}/../examples/fonts/ ./fonts/;
 cp -r ${DIR}/../examples/js/ ./js/;
 cp -r ${DIR}/../examples/plugins/ ./plugins/;
+cp -r ${DIR}/../build/docs/api/ ./api/;
 
 cp ${DIR}/../dist/ngl.js ./js/ngl.js;
-
-# get the newest api directory
-APIDIR=$(ls -td ${DIR}/../build/docs/api/ngl/*/ | head -1);
-cp -r ${APIDIR}/ ./api/;
 
 cd ../;
 git add -A;

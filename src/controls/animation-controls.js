@@ -147,6 +147,9 @@ class RotateAnimation extends Animation{
 }
 
 
+/**
+ * Animation controls
+ */
 class AnimationControls{
 
     /**
