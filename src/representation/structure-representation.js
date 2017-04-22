@@ -25,104 +25,95 @@ import RadiusFactory from "../utils/radius-factory.js";
 
 
 /**
- * Structure representation object
- * @class
- * @extends Representation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {StructureRepresentationParameters} params - structure representation parameters
+ * Structure representation
  */
-function StructureRepresentation( structure, viewer, params ){
-
-    var p = params || {};
+class StructureRepresentation extends Representation{
 
     /**
-     * @member {Selection}
-     * @private
+     * Create Structure representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {StructureRepresentationParameters} params - structure representation parameters
      */
-    this.selection = new Selection( p.sele );
+    constructor( structure, viewer, params ){
 
-    /**
-     * @member {Array}
-     * @private
-     */
-    this.dataList = [];
+        var p = params || {};
 
-    /**
-     * @member {Structure}
-     */
-    this.structure = structure;
+        super( structure, viewer, p );
 
-    /**
-     * @member {StructureView}
-     */
-    this.structureView = this.structure.getView( this.selection );
+        this.type = "structure";
 
-    Representation.call( this, structure, viewer, p );
+        this.parameters = Object.assign( {
 
-    if( structure.biomolDict ){
-        var biomolOptions = {
-            "default": "default",
-            "": ( structure.unitcell ? "AU" : "FULL" )
-        };
-        Object.keys( structure.biomolDict ).forEach( function( k ){
-            biomolOptions[ k ] = k;
-        } );
-        this.parameters.assembly = {
-            type: "select",
-            options: biomolOptions,
-            rebuild: true
-        };
-    }else{
-        this.parameters.assembly = null;
-    }
+            radiusType: {
+                type: "select", options: RadiusFactory.types
+            },
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            scale: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            assembly: null,
+            defaultAssembly: {
+                type: "hidden"
+            }
 
-    // must come after structureView to ensure selection change signals
-    // have already updated the structureView
-    this.selection.signals.stringChanged.add( function(){
-        this.build();
-    }.bind( this ) );
+        }, this.parameters );
 
-    this.build();
+        /**
+         * @member {Selection}
+         * @private
+         */
+        this.selection = new Selection( p.sele );
 
-}
+        /**
+         * @member {Array}
+         * @private
+         */
+        this.dataList = [];
 
-StructureRepresentation.prototype = Object.assign( Object.create(
+        /**
+         * @member {Structure}
+         */
+        this.structure = structure;
 
-    Representation.prototype ), {
+        /**
+         * @member {StructureView}
+         */
+        this.structureView = this.structure.getView( this.selection );
 
-    constructor: StructureRepresentation,
-
-    type: "structure",
-
-    parameters: Object.assign( {
-
-        radiusType: {
-            type: "select", options: RadiusFactory.types
-        },
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        scale: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        assembly: null,
-        defaultAssembly: {
-            type: "hidden"
+        if( structure.biomolDict ){
+            var biomolOptions = {
+                "default": "default",
+                "": ( structure.unitcell ? "AU" : "FULL" )
+            };
+            Object.keys( structure.biomolDict ).forEach( function( k ){
+                biomolOptions[ k ] = k;
+            } );
+            this.parameters.assembly = {
+                type: "select",
+                options: biomolOptions,
+                rebuild: true
+            };
+        }else{
+            this.parameters.assembly = null;
         }
 
-    }, Representation.prototype.parameters ),
+    }
 
-    defaultScale: {
-        "vdw": 1.0,
-        "covalent": 1.0,
-        "bfactor": 0.01,
-        "sstruc": 1.0
-    },
+    get defaultScale(){
 
-    defaultSize: 1.0,
+        return {
+            "vdw": 1.0,
+            "covalent": 1.0,
+            "bfactor": 0.01,
+            "sstruc": 1.0
+        };
 
-    init: function( params ){
+    }
+
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "element" );
@@ -136,18 +127,22 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             p.quality = this.getQuality();
         }
 
-        Representation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+        this.selection.signals.stringChanged.add( this.build, this );
 
-    getAssembly: function(){
+        this.build();
+
+    }
+
+    getAssembly(){
 
         var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         return this.structure.biomolDict[ name ];
 
-    },
+    }
 
-    getQuality: function(){
+    getQuality(){
 
         var atomCount;
         var s = this.structureView;
@@ -173,9 +168,9 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             return "low";
         }
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         if( this.structureView.atomCount === 0 ) return;
 
@@ -200,15 +195,15 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             }
         }
 
-    },
+    }
 
-    createData: function( /*sview*/ ){
+    createData( /*sview*/ ){
 
         console.error( "createData not implemented" );
 
-    },
+    }
 
-    update: function( what ){
+    update( what ){
 
         if( this.lazy && !this.visible ){
             Object.assign( this.lazyProps.what, what );
@@ -221,34 +216,24 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             }
         }, this );
 
-    },
+    }
 
-    updateData: function( /*what, data*/ ){
+    updateData( /*what, data*/ ){
 
         this.build();
 
-    },
+    }
 
-    getColorParams: function(){
+    getColorParams(){
 
-        var p = Representation.prototype.getColorParams.call( this );
+        var p = super.getColorParams();
         p.structure = this.structure;
 
         return p;
 
-    },
+    }
 
-    getAtomParams: function( what, params ){
-
-        return Object.assign( {
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { "radius": this.radius, "scale": this.scale }
-        }, params );
-
-    },
-
-    getBondParams: function( what, params ){
+    getAtomParams( what, params ){
 
         return Object.assign( {
             what: what,
@@ -256,7 +241,17 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             radiusParams: { "radius": this.radius, "scale": this.scale }
         }, params );
 
-    },
+    }
+
+    getBondParams( what, params ){
+
+        return Object.assign( {
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": this.scale }
+        }, params );
+
+    }
 
     /**
      * Set representation parameters
@@ -265,13 +260,13 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [silent] - don't trigger a change event in the selection
      * @return {StructureRepresentation} this object
      */
-    setSelection: function( string, silent ){
+    setSelection( string, silent ){
 
         this.selection.setString( string, silent );
 
         return this;
 
-    },
+    }
 
     /**
      * Set representation parameters
@@ -287,13 +282,13 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {StructureRepresentation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         what = what || {};
 
         if( params && params.radiusType !== undefined ){
             if( params.radiusType === "size" ){
-                this.radius = this.defaultSize;
+                this.radius = 1.0;
             }else{
                 this.radius = params.radiusType;
             }
@@ -321,18 +316,16 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             rebuild = true;
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
-    },
+    }
 
-    getParameters: function(){
+    getParameters(){
 
         var params = Object.assign(
-            Representation.prototype.getParameters.call( this ),
+            super.getParameters(),
             {
                 sele: this.selection ? this.selection.string : undefined,
                 defaultAssembly: this.defaultAssembly
@@ -341,9 +334,9 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
         return params;
 
-    },
+    }
 
-    attach: function( callback ){
+    attach( callback ){
 
         var viewer = this.viewer;
         var bufferList = this.bufferList;
@@ -358,28 +351,28 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.setVisibility( this.visible );
         callback();
 
-    },
+    }
 
-    clear: function(){
+    clear(){
 
         this.dataList.length = 0;
 
-        Representation.prototype.clear.call( this );
+        super.clear();
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.structureView.dispose();
 
         delete this.structure;
         delete this.structureView;
 
-        Representation.prototype.dispose.call( this );
+        super.dispose();
 
     }
 
-} );
+}
 
 
 export default StructureRepresentation;

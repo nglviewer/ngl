@@ -12,44 +12,42 @@ import StructureRepresentation from "./structure-representation.js";
 import TubeMeshBuffer from "../buffer/tubemesh-buffer.js";
 
 
-function CartoonRepresentation( structure, viewer, params ){
+class CartoonRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-CartoonRepresentation.prototype = Object.assign( Object.create(
+        this.type = "cartoon";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: CartoonRepresentation,
+            aspectRatio: {
+                type: "number", precision: 1, max: 10.0, min: 1.0
+            },
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            radialSegments: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            capped: {
+                type: "boolean", rebuild: true
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    type: "cartoon",
+        }, this.parameters );
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        aspectRatio: {
-            type: "number", precision: 1, max: 10.0, min: 1.0
-        },
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        radialSegments: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        capped: {
-            type: "boolean", rebuild: true
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+    }
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -62,8 +60,6 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         this.capped = defaults( p.capped, true );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
-
         if( p.quality === "low" ){
             this.subdiv = 3;
             this.radialSegments = 6;
@@ -75,9 +71,11 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             this.subdiv = defaults( p.subdiv, 6 );
         }
 
-    },
+        super.init( p );
 
-    getSplineParams: function( params ){
+    }
+
+    getSplineParams( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -86,27 +84,27 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    }
 
-    getSpline: function( polymer ){
+    getSpline( polymer ){
 
         return new Spline( polymer, this.getSplineParams() );
 
-    },
+    }
 
-    getScale: function( polymer ){
+    getScale( polymer ){
 
         return polymer.isCg() ? this.scale * this.aspectRatio : this.scale;
 
-    },
+    }
 
-    getAspectRatio: function( polymer ){
+    getAspectRatio( polymer ){
 
         return polymer.isCg() ? 1.0 : this.aspectRatio;
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var bufferList = [];
         var polymerList = [];
@@ -143,9 +141,9 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             polymerList: polymerList
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         if( Debug ) Log.time( this.type + " repr update" );
 
@@ -193,9 +191,9 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
 
         if( Debug ) Log.timeEnd( this.type + " repr update" );
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -208,15 +206,13 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "cartoon", CartoonRepresentation );

@@ -13,40 +13,38 @@ import Helixbundle from "../geometry/helixbundle.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
-function RocketRepresentation( structure, viewer, params ){
+class RocketRepresentation extends StructureRepresentation{
 
-    this.helixbundleList = [];
+    constructor( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        super( structure, viewer, params );
 
-}
+        this.type = "rocket";
 
-RocketRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            localAngle: {
+                type: "integer", max: 180, min: 0, rebuild: true
+            },
+            centerDist: {
+                type: "number", precision: 1, max: 10, min: 0, rebuild: true
+            },
+            ssBorder: {
+                type: "boolean", rebuild: true
+            },
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true
 
-    constructor: RocketRepresentation,
+        }, this.parameters );
 
-    type: "rocket",
+        this.helixbundleList = [];
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        localAngle: {
-            type: "integer", max: 180, min: 0, rebuild: true
-        },
-        centerDist: {
-            type: "number", precision: 1, max: 10, min: 0, rebuild: true
-        },
-        ssBorder: {
-            type: "boolean", rebuild: true
-        },
-        radialSegments: true,
-        openEnded: true,
-        disableImpostor: true
+    }
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
@@ -58,17 +56,17 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         this.centerDist = defaults( p.centerDist, 2.5 );
         this.ssBorder = defaults( p.ssBorder, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var length = 0;
         var axisList = [];
         var helixbundleList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( polymer => {
 
             if( polymer.residueCount < 4 || polymer.isNucleic() ) return;
 
@@ -82,7 +80,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisList.push( axis );
             helixbundleList.push( helixbundle );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         var axisData = {
             begin: new Float32Array( length * 3 ),
@@ -133,9 +131,9 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData: axisData
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         what = what || {};
 
@@ -150,7 +148,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
 
             var offset = 0;
 
-            data.helixbundleList.forEach( function( helixbundle ){
+            data.helixbundleList.forEach( helixbundle => {
 
                 var axis = helixbundle.getAxis(
                     this.localAngle, this.centerDist, this.ssBorder,
@@ -164,7 +162,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
                 }
                 offset += axis.size.length;
 
-            }.bind( this ) );
+            } );
 
             if( what.color ){
                 cylinderData.color = data.axisData.color;
@@ -181,7 +179,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "rocket", RocketRepresentation );

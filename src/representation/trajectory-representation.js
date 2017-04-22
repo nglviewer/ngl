@@ -10,7 +10,6 @@ import { Color } from "../../lib/three.es6.js";
 import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -19,57 +18,53 @@ import PointBuffer from "../buffer/point-buffer.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
-function TrajectoryRepresentation( trajectory, viewer, params ){
+class TrajectoryRepresentation extends StructureRepresentation{
 
-    this.manualAttach = true;
+    constructor( trajectory, viewer, params ){
 
-    this.trajectory = trajectory;
+        super( trajectory.structure, viewer, params );
 
-    StructureRepresentation.call(
-        this, trajectory.structure, viewer, params
-    );
+        this.type = "trajectory";
 
-}
+        this.parameters = Object.assign( {
 
-TrajectoryRepresentation.prototype = Object.assign( Object.create(
+            drawLine: {
+                type: "boolean", rebuild: true
+            },
+            drawCylinder: {
+                type: "boolean", rebuild: true
+            },
+            drawPoint: {
+                type: "boolean", rebuild: true
+            },
+            drawSphere: {
+                type: "boolean", rebuild: true
+            },
 
-    StructureRepresentation.prototype ), {
+            linewidth: {
+                type: "integer", max: 20, min: 1, rebuild: true
+            },
+            pointSize: {
+                type: "integer", max: 20, min: 1, rebuild: true
+            },
+            sizeAttenuation: {
+                type: "boolean", rebuild: true
+            },
+            sort: {
+                type: "boolean", rebuild: true
+            },
 
-    constructor: TrajectoryRepresentation,
+        }, this.parameters );
 
-    type: "",
+        this.manualAttach = true;
 
-    parameters: Object.assign( {
+        this.trajectory = trajectory;
 
-        drawLine: {
-            type: "boolean", rebuild: true
-        },
-        drawCylinder: {
-            type: "boolean", rebuild: true
-        },
-        drawPoint: {
-            type: "boolean", rebuild: true
-        },
-        drawSphere: {
-            type: "boolean", rebuild: true
-        },
+        this.init( params );
 
-        linewidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
-        },
-        pointSize: {
-            type: "integer", max: 20, min: 1, rebuild: true
-        },
-        sizeAttenuation: {
-            type: "boolean", rebuild: true
-        },
-        sort: {
-            type: "boolean", rebuild: true
-        },
+    }
 
-    }, Representation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -84,33 +79,29 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
         this.sizeAttenuation = defaults( p.sizeAttenuation, false );
         this.sort = defaults( p.sort, true );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    attach: function( callback ){
+    attach( callback ){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
-
+        } );
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    }
 
-    prepare: function( callback ){
+    prepare( callback ){
 
         // TODO
-
         callback();
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         // Log.log( this.selection )
         // Log.log( this.atomSet )
@@ -208,7 +199,7 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default TrajectoryRepresentation;

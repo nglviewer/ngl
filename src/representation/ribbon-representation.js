@@ -12,43 +12,39 @@ import StructureRepresentation from "./structure-representation.js";
 import RibbonBuffer from "../buffer/ribbon-buffer.js";
 
 
-function RibbonRepresentation( structure, viewer, params ){
+class RibbonRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-    this.defaultScale.sstruc *= 3.0;
+        super( structure, viewer, params );
 
-}
+        this.type = "ribbon";
 
-RibbonRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    constructor: RibbonRepresentation,
+        }, this.parameters, {
 
-    type: "ribbon",
+            side: null,
+            wireframe: null,
+            linewidth: null
 
-    parameters: Object.assign( {
+        } );
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+        this.init( params );
 
-    }, StructureRepresentation.prototype.parameters, {
+    }
 
-        side: null,
-        wireframe: null,
-        linewidth: null
-
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -69,11 +65,11 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
         this.tension = defaults( p.tension, NaN );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getSplineParams: function( params ){
+    getSplineParams( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -82,9 +78,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var bufferList = [];
         var polymerList = [];
@@ -122,9 +118,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             polymerList: polymerList
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         what = what || {};
 
@@ -158,9 +154,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -169,15 +165,13 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "ribbon", RibbonRepresentation );

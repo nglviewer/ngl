@@ -50,110 +50,106 @@ import Counter from "../utils/counter.js";
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} [params] - representation parameters
  */
-function Representation( object, viewer, params ){
+class Representation{
 
-    /**
-     * @member {Viewer}
-     */
-    this.viewer = viewer;
+    constructor( object, viewer/*, params*/ ){
 
-    /**
-     * Counter that keeps track of tasks related to the creation of
-     * the representation, including surface calculations.
-     * @member {Counter}
-     */
-    this.tasks = new Counter();
+        this.type = "";
 
-    /**
-     * @member {Queue}
-     * @private
-     */
-    this.queue = new Queue( this.make.bind( this ) );
+        this.parameters = {
 
-    /**
-     * @member {Array}
-     * @private
-     */
-    this.bufferList = [];
+            lazy: {
+                type: "boolean"
+            },
 
-    if( this.parameters.colorScheme ){
-        this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
+            clipNear: {
+                type: "range", step: 1, max: 100, min: 0, buffer: true
+            },
+            clipRadius: {
+                type: "number", precision: 1, max: 1000, min: 0, buffer: true
+            },
+            clipCenter: {
+                type: "vector3", precision: 1, buffer: true
+            },
+            flatShaded: {
+                type: "boolean", buffer: true
+            },
+            opacity: {
+                type: "range", step: 0.01, max: 1, min: 0, buffer: true
+            },
+            side: {
+                type: "select", buffer: true,
+                options: { front: "front", back: "back", double: "double" },
+            },
+            wireframe: {
+                type: "boolean", buffer: true
+            },
+            linewidth: {
+                type: "integer", max: 50, min: 1, buffer: true
+            },
+
+            colorScheme: {
+                type: "select", update: "color",
+                options: {}
+            },
+            colorScale: {
+                type: "select", update: "color",
+                options: ColormakerRegistry.getScales()
+            },
+            colorValue: {
+                type: "color", update: "color"
+            },
+            colorDomain: {
+                type: "hidden", update: "color"
+            },
+            colorMode: {
+                type: "select", update: "color",
+                options: ColormakerRegistry.getModes()
+            },
+
+            roughness: {
+                type: "range", step: 0.01, max: 1, min: 0, buffer: true
+            },
+            metalness: {
+                type: "range", step: 0.01, max: 1, min: 0, buffer: true
+            },
+            diffuse: {
+                type: "color", buffer: true
+            },
+
+        };
+
+        /**
+         * @member {Viewer}
+         */
+        this.viewer = viewer;
+
+        /**
+         * Counter that keeps track of tasks related to the creation of
+         * the representation, including surface calculations.
+         * @member {Counter}
+         */
+        this.tasks = new Counter();
+
+        /**
+         * @member {Queue}
+         * @private
+         */
+        this.queue = new Queue( this.make.bind( this ) );
+
+        /**
+         * @member {Array}
+         * @private
+         */
+        this.bufferList = [];
+
+        if( this.parameters.colorScheme ){
+            this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
+        }
+
     }
 
-    this.init( params );
-
-}
-
-Representation.prototype = {
-
-    constructor: Representation,
-
-    type: "",
-
-    parameters: {
-
-        lazy: {
-            type: "boolean"
-        },
-
-        clipNear: {
-            type: "range", step: 1, max: 100, min: 0, buffer: true
-        },
-        clipRadius: {
-            type: "number", precision: 1, max: 1000, min: 0, buffer: true
-        },
-        clipCenter: {
-            type: "vector3", precision: 1, buffer: true
-        },
-        flatShaded: {
-            type: "boolean", buffer: true
-        },
-        opacity: {
-            type: "range", step: 0.01, max: 1, min: 0, buffer: true
-        },
-        side: {
-            type: "select", buffer: true,
-            options: { front: "front", back: "back", double: "double" },
-        },
-        wireframe: {
-            type: "boolean", buffer: true
-        },
-        linewidth: {
-            type: "integer", max: 50, min: 1, buffer: true
-        },
-
-        colorScheme: {
-            type: "select", update: "color",
-            options: {}
-        },
-        colorScale: {
-            type: "select", update: "color",
-            options: ColormakerRegistry.getScales()
-        },
-        colorValue: {
-            type: "color", update: "color"
-        },
-        colorDomain: {
-            type: "hidden", update: "color"
-        },
-        colorMode: {
-            type: "select", update: "color",
-            options: ColormakerRegistry.getModes()
-        },
-
-        roughness: {
-            type: "range", step: 0.01, max: 1, min: 0, buffer: true
-        },
-        metalness: {
-            type: "range", step: 0.01, max: 1, min: 0, buffer: true
-        },
-        diffuse: {
-            type: "color", buffer: true
-        },
-
-    },
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
 
@@ -239,9 +235,9 @@ Representation.prototype = {
             this.disableImpostor = defaults( p.disableImpostor, false );
         }
 
-    },
+    }
 
-    getColorParams: function( p ){
+    getColorParams( p ){
 
         return Object.assign( {
 
@@ -253,9 +249,9 @@ Representation.prototype = {
 
         }, p );
 
-    },
+    }
 
-    getBufferParams: function( p ){
+    getBufferParams( p ){
 
         return Object.assign( {
 
@@ -274,9 +270,9 @@ Representation.prototype = {
 
         }, p );
 
-    },
+    }
 
-    setColor: function( value, p ){
+    setColor( value, p ){
 
         var types = Object.keys( ColormakerRegistry.getSchemes() );
 
@@ -304,23 +300,24 @@ Representation.prototype = {
 
         return this;
 
-    },
+    }
 
-    prepare: false,
+    // TODO
+    // get prepare(){ return false; }
 
-    create: function(){
+    create(){
 
         // this.bufferList.length = 0;
 
-    },
+    }
 
-    update: function(){
+    update(){
 
         this.build();
 
-    },
+    }
 
-    build: function( updateWhat ){
+    build( updateWhat ){
 
         if( this.lazy && !this.visible ){
             this.lazyProps.build = true;
@@ -343,9 +340,9 @@ Representation.prototype = {
 
         this.queue.push( updateWhat || false );
 
-    },
+    }
 
-    make: function( updateWhat, callback ){
+    make( updateWhat, callback ){
 
         if( Debug ) Log.time( "Representation.make " + this.type );
 
@@ -379,15 +376,15 @@ Representation.prototype = {
             _make();
         }
 
-    },
+    }
 
-    attach: function( callback ){
+    attach( callback ){
 
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    }
 
     /**
      * Set the visibility of the representation
@@ -395,7 +392,7 @@ Representation.prototype = {
      * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
      * @return {Representation} this object
      */
-    setVisibility: function( value, noRenderRequest ){
+    setVisibility( value, noRenderRequest ){
 
         this.visible = value;
 
@@ -429,7 +426,7 @@ Representation.prototype = {
 
         return this;
 
-    },
+    }
 
     /**
      * Set the visibility of the representation
@@ -444,7 +441,7 @@ Representation.prototype = {
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {Representation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         var p = params || {};
         var tp = this.parameters;
@@ -501,9 +498,9 @@ Representation.prototype = {
 
         return this;
 
-    },
+    }
 
-    updateParameters: function( bufferParams, what ){
+    updateParameters( bufferParams, what ){
 
         if( this.lazy && !this.visible ){
             Object.assign( this.lazyProps.bufferParams, bufferParams );
@@ -521,9 +518,9 @@ Representation.prototype = {
 
         this.viewer.requestRender();
 
-    },
+    }
 
-    getParameters: function(){
+    getParameters(){
 
         var params = {
             lazy: this.lazy,
@@ -539,9 +536,9 @@ Representation.prototype = {
 
         return params;
 
-    },
+    }
 
-    clear: function(){
+    clear(){
 
         this.bufferList.forEach( function( buffer ){
 
@@ -554,9 +551,9 @@ Representation.prototype = {
 
         this.viewer.requestRender();
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.disposed = true;
         this.queue.kill();
@@ -565,7 +562,7 @@ Representation.prototype = {
 
     }
 
-};
+}
 
 
 export default Representation;

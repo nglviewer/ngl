@@ -10,47 +10,43 @@ import { defaults } from "../utils.js";
 import CartoonRepresentation from "./cartoon-representation.js";
 
 
-function TubeRepresentation( structure, viewer, params ){
+class TubeRepresentation extends CartoonRepresentation{
 
-    CartoonRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-TubeRepresentation.prototype = Object.assign( Object.create(
+        this.type = "tube";
 
-    CartoonRepresentation.prototype ), {
+        this.parameters = Object.assign(
+            {}, this.parameters, { aspectRatio: null }
+        );
 
-    constructor: TubeRepresentation,
+    }
 
-    type: "tube",
-
-    parameters: Object.assign(
-        {}, CartoonRepresentation.prototype.parameters, { aspectRatio: null }
-    ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
         p.scale = defaults( p.scale, 2.0 );
 
-        CartoonRepresentation.prototype.init.call( this, p );
-
         if( p.quality === "low" ){
             this.radialSegments = 5;
         }
 
-    },
+        super.init( p );
 
-    getSplineParams: function( /*params*/ ){
+    }
 
-        return CartoonRepresentation.prototype.getSplineParams.call( this, {
+    getSplineParams( /*params*/ ){
+
+        return super.getSplineParams( {
             directional: false
         } );
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "tube", TubeRepresentation );

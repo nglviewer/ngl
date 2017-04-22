@@ -30,7 +30,7 @@ class ValidationRepresentation extends StructureRepresentation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorValue = defaults( p.colorValue, "#f0027f" );
 
         super.init( p );
@@ -41,12 +41,12 @@ class ValidationRepresentation extends StructureRepresentation{
 
         if( !sview.validation ) return;
 
-        var clashData = sview.validation.getClashData( {
+        const clashData = sview.validation.getClashData( {
             structure: sview,
             color: this.colorValue
         } );
 
-        var cylinderBuffer = new CylinderBuffer(
+        const cylinderBuffer = new CylinderBuffer(
             clashData, this.getBufferParams( { openEnded: false } )
         );
 

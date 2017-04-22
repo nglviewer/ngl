@@ -31,87 +31,84 @@ import ContourBuffer from "../buffer/contour-buffer.js";
 
 
 /**
- * Surface representation object
- * @class
- * @extends Representation
- * @param {Surface|Volume} surface - the surface or volume to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {SurfaceRepresentationParameters} params - surface representation parameters
+ * Surface representation
  */
-function SurfaceRepresentation( surface, viewer, params ){
+class SurfaceRepresentation extends Representation{
 
-    Representation.call( this, surface, viewer, params );
+    /**
+     * Create Surface representation object
+     * @param {Surface|Volume} surface - the surface or volume to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {SurfaceRepresentationParameters} params - surface representation parameters
+     */
+    constructor( surface, viewer, params ){
 
-    if( surface instanceof Volume ){
-        this.surface = undefined;
-        this.volume = surface;
-    }else{
-        this.surface = surface;
-        this.volume = undefined;
+        super( surface, viewer, params );
+
+        this.type = "surface";
+
+        this.parameters = Object.assign( {
+
+            isolevelType: {
+                type: "select", options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            isolevel: {
+                type: "number", precision: 2, max: 1000, min: -1000
+            },
+            smooth: {
+                type: "integer", precision: 1, max: 10, min: 0
+            },
+            background: {
+                type: "boolean", rebuild: true  // FIXME
+            },
+            opaqueBack: {
+                type: "boolean", buffer: true
+            },
+            boxSize: {
+                type: "integer", precision: 1, max: 100, min: 0
+            },
+            colorVolume: {
+                type: "hidden"
+            },
+            contour: {
+                type: "boolean", rebuild: true
+            },
+            useWorker: {
+                type: "boolean", rebuild: true
+            }
+
+        }, this.parameters );
+
+        if( surface instanceof Volume ){
+            this.surface = undefined;
+            this.volume = surface;
+        }else{
+            this.surface = surface;
+            this.volume = undefined;
+        }
+
+        this.boxCenter = new Vector3();
+        this.__boxCenter = new Vector3();
+        this.box = new Box3();
+        this.__box = new Box3();
+
+        this._position = new Vector3();
+        this.setBox = function setBox(){
+            this._position.copy( viewer.translationGroup.position ).negate();
+            if( !this._position.equals( this.boxCenter ) ){
+                this.setParameters( { "boxCenter": this._position } );
+            }
+        };
+
+        this.viewer.signals.ticked.add( this.setBox, this );
+
+        this.init( params );
+
     }
 
-    this.boxCenter = new Vector3();
-    this.__boxCenter = new Vector3();
-    this.box = new Box3();
-    this.__box = new Box3();
-
-    this._position = new Vector3();
-    this.setBox = function setBox(){
-        this._position.copy( viewer.translationGroup.position ).negate();
-        if( !this._position.equals( this.boxCenter ) ){
-            this.setParameters( { "boxCenter": this._position } );
-        }
-    };
-
-    this.viewer.signals.ticked.add( this.setBox, this );
-
-    this.build();
-
-}
-
-SurfaceRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: SurfaceRepresentation,
-
-    type: "surface",
-
-    parameters: Object.assign( {
-
-        isolevelType: {
-            type: "select", options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000
-        },
-        smooth: {
-            type: "integer", precision: 1, max: 10, min: 0
-        },
-        background: {
-            type: "boolean", rebuild: true  // FIXME
-        },
-        opaqueBack: {
-            type: "boolean", buffer: true
-        },
-        boxSize: {
-            type: "integer", precision: 1, max: 100, min: 0
-        },
-        colorVolume: {
-            type: "hidden"
-        },
-        contour: {
-            type: "boolean", rebuild: true
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
-        }
-
-    }, Representation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -127,25 +124,25 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
 
-        Representation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+        this.build();
 
-    attach: function( callback ){
+    }
 
-        this.bufferList.forEach( function( buffer ){
+    attach( callback ){
 
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
+        } );
 
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    }
 
-    prepare: function( callback ){
+    prepare( callback ){
 
         if( this.volume ){
 
@@ -198,9 +195,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             callback();
         }
 
-    },
+    }
 
-    getSurfaceData: function(){
+    getSurfaceData(){
 
         return {
             position: this.surface.getPosition(),
@@ -210,9 +207,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             picking: this.surface.getPicking()
         };
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         var sd = this.getSurfaceData();
 
@@ -240,9 +237,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( buffer );
 
-    },
+    }
 
-    update: function( what ){
+    update( what ){
 
         if( this.bufferList.length === 0 ) return;
 
@@ -272,7 +269,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             buffer.setAttributes( surfaceData );
         } );
 
-    },
+    }
 
     /**
      * Set representation parameters
@@ -288,7 +285,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {SurfaceRepresentation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         if( params && params.isolevelType !== undefined &&
             this.volume
@@ -328,9 +325,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             params.wireframe = false;
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         if( this.volume ){
             this.volume.getBox( this.boxCenter, this.boxSize, this.box );
@@ -358,27 +353,27 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    getColorParams: function(){
+    getColorParams(){
 
-        var p = Representation.prototype.getColorParams.call( this );
+        var p = super.getColorParams();
 
         p.volume = this.colorVolume;
 
         return p;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.viewer.signals.ticked.remove( this.setBox, this );
 
-        Representation.prototype.dispose.call( this );
+        super.dispose();
 
     }
 
-} );
+}
 
 
 export default SurfaceRepresentation;

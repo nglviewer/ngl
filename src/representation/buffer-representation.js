@@ -10,68 +10,70 @@ import Representation from "./representation.js";
 
 /**
  * Representation for showing buffer objects
- * @class
- * @extends Representation
- * @param {SphereBuffer|CylinderBuffer} buffer - a buffer object
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters
  */
-function BufferRepresentation( buffer, viewer, params ){
+class BufferRepresentation extends Representation{
 
-    if( !Array.isArray( buffer ) ){
-        buffer = [ buffer ];
+    /**
+     * Create Buffer representation
+     * @param {SphereBuffer|CylinderBuffer} buffer - a buffer object
+     * @param {Viewer} viewer - a viewer object
+     * @param {RepresentationParameters} params - representation parameters
+     */
+    constructor( buffer, viewer, params ){
+
+        if( !Array.isArray( buffer ) ){
+            buffer = [ buffer ];
+        }
+
+        super( buffer, viewer, params );
+
+        this.type = "buffer";
+
+        this.parameters = Object.assign( {
+
+        }, this.parameters, {
+
+            colorScheme: null,
+            colorScale: null,
+            colorValue: null,
+            colorDomain: null,
+            colorMode: null
+
+        } )
+
+        this.buffer = buffer;
+
+        this.init( params );
+
     }
 
-    Representation.call( this, buffer, viewer, params );
+    init( params ){
 
-    this.buffer = buffer;
+        super.init( params );
 
-    this.build();
+        this.build();
 
-}
+    }
 
-BufferRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: BufferRepresentation,
-
-    type: "buffer",
-
-    parameters: Object.assign( {
-
-    }, Representation.prototype.parameters, {
-
-        colorScheme: null,
-        colorScale: null,
-        colorValue: null,
-        colorDomain: null,
-        colorMode: null
-
-    } ),
-
-    create: function(){
+    create(){
 
         this.bufferList.push.apply( this.bufferList, this.buffer );
 
-    },
+    }
 
-    attach: function( callback ){
+    attach( callback ){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
             buffer.setParameters( this.getBufferParams() );
-
-        }, this );
-
+        } );
         this.setVisibility( this.visible );
 
         callback();
 
     }
 
-} );
+}
 
 
 export default BufferRepresentation;

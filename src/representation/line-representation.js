@@ -7,80 +7,78 @@
 
 import { defaults } from "../utils.js";
 import { RepresentationRegistry } from "../globals.js";
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
 /**
- * Line representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
- * @property {String} multipleBond - one off "off", "symmetric", "offset"
- * @param {Float} params.bondSpacing - spacing for multiple bond rendering
- * @param {null} params.flatShaded - not available
- * @param {null} params.side - not available
- * @param {null} params.wireframe - not available
- * @param {null} params.roughness - not available
- * @param {null} params.metalness - not available
- * @param {null} params.diffuse - not available
+ * Line representation
  */
-function LineRepresentation( structure, viewer, params ){
+class LineRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    /**
+     * Create Line representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
+     * @property {String} multipleBond - one off "off", "symmetric", "offset"
+     * @param {Float} params.bondSpacing - spacing for multiple bond rendering
+     * @param {null} params.flatShaded - not available
+     * @param {null} params.side - not available
+     * @param {null} params.wireframe - not available
+     * @param {null} params.roughness - not available
+     * @param {null} params.metalness - not available
+     * @param {null} params.diffuse - not available
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-LineRepresentation.prototype = Object.assign( Object.create(
+        this.type = "line";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: LineRepresentation,
-
-    type: "line",
-
-    parameters: Object.assign( {
-
-        multipleBond: {
-            type: "select", rebuild: true,
-            options: {
-                "off" : "off",
-                "symmetric" : "symmetric",
-                "offset": "offset"
+            multipleBond: {
+                type: "select", rebuild: true,
+                options: {
+                    "off" : "off",
+                    "symmetric" : "symmetric",
+                    "offset": "offset"
+                }
+            },
+            bondSpacing: {
+                type: "number", precision: 2, max: 2.0, min: 0.5
             }
-        },
-        bondSpacing: {
-            type: "number", precision: 2, max: 2.0, min: 0.5
-        }
 
 
-    }, Representation.prototype.parameters, {
+        }, this.parameters, {
 
-        flatShaded: null,
-        side: null,
-        wireframe: null,
+            flatShaded: null,
+            side: null,
+            wireframe: null,
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    init( params ){
 
         var p = params || {};
 
         this.multipleBond = defaults( p.multipleBond, "off" );
         this.bondSpacing = defaults( p.bondSpacing, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getBondParams: function( what, params ){
+    getBondParams( what, params ){
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
@@ -88,11 +86,11 @@ LineRepresentation.prototype = Object.assign( Object.create(
             radiusParams: { "radius": 0.1, "scale": 1 }
         }, params );
 
-        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
+        return super.getBondParams( what, params );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var what = { position: true, color: true };
         var bondData = sview.getBondData( this.getBondParams( what ) );
@@ -105,9 +103,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ lineBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var bondData = data.sview.getBondData( this.getBondParams( what ) );
         var lineData = {};
@@ -124,9 +122,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( lineData );
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -135,15 +133,13 @@ LineRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "line", LineRepresentation );

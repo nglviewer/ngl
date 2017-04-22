@@ -10,60 +10,57 @@ import { Color, Vector3 } from "../../lib/three.es6.js";
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
-function AxesRepresentation( structure, viewer, params ){
+class AxesRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-AxesRepresentation.prototype = Object.assign( Object.create(
+        this.type = "axes";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: AxesRepresentation,
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            radialSegments: true,
+            disableImpostor: true,
+            showAxes: {
+                type: "boolean", rebuild: true
+            },
+            showBox: {
+                type: "boolean", rebuild: true
+            }
 
-    type: "axes",
+        }, this.parameters, {
+            assembly: null
+        } );
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        radialSegments: true,
-        disableImpostor: true,
-        showAxes: {
-            type: "boolean", rebuild: true
-        },
-        showBox: {
-            type: "boolean", rebuild: true
-        }
+    }
 
-    }, Representation.prototype.parameters, {
-        assembly: null
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
 
         p.radius = defaults( p.radius, 0.5 );
         p.colorValue = defaults( p.colorValue, "lightgreen" );
 
-        StructureRepresentation.prototype.init.call( this, p );
-
         this.showAxes = defaults( p.showAxes, true );
         this.showBox = defaults( p.showBox, false );
 
-    },
+        super.init( p );
 
-    getPrincipalAxes: function( /*sview*/ ){
+    }
+
+    getPrincipalAxes( /*sview*/ ){
 
         var selection;
         var assembly = this.getAssembly();
@@ -74,9 +71,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
         return this.structureView.getPrincipalAxes( selection );
 
-    },
+    }
 
-    getAxesData: function( sview ){
+    getAxesData( sview ){
 
         var pa = this.getPrincipalAxes( sview );
         var c = new Color( this.colorValue );
@@ -184,9 +181,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             }
         };
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         var axesData = this.getAxesData( this.structureView );
 
@@ -214,9 +211,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var axesData = this.getAxesData( data.sview );
         var sphereData = {};
@@ -244,7 +241,7 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "axes", AxesRepresentation );

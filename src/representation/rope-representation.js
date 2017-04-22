@@ -12,32 +12,28 @@ import Helixorient from "../geometry/helixorient.js";
 import Spline from "../geometry/spline.js";
 
 
-function RopeRepresentation( structure, viewer, params ){
+class RopeRepresentation extends CartoonRepresentation{
 
-    CartoonRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-RopeRepresentation.prototype = Object.assign( Object.create(
+        this.type = "rope";
 
-    CartoonRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: RopeRepresentation,
+            smooth: {
+                type: "integer", max: 15, min: 0, rebuild: true
+            }
 
-    type: "rope",
+        }, this.parameters, {
+            aspectRatio: null,
+            smoothSheet: null
+        } );
 
-    parameters: Object.assign( {
+    }
 
-        smooth: {
-            type: "integer", max: 15, min: 0, rebuild: true
-        }
-
-    }, CartoonRepresentation.prototype.parameters, {
-        aspectRatio: null,
-        smoothSheet: null
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
@@ -47,11 +43,11 @@ RopeRepresentation.prototype = Object.assign( Object.create(
 
         this.smooth = defaults( p.smooth, 2 );
 
-        CartoonRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getSpline: function( polymer ){
+    getSpline( polymer ){
 
         var helixorient = new Helixorient( polymer );
 
@@ -62,7 +58,7 @@ RopeRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "rope", RopeRepresentation );

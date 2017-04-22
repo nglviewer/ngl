@@ -11,87 +11,81 @@ import ImageBuffer from "../buffer/image-buffer.js";
 import VolumeSlice from "../surface/volume-slice.js";
 
 
-function SliceRepresentation( volume, viewer, params ){
+class SliceRepresentation extends Representation{
 
-    this.volume = volume;
+    constructor( volume, viewer, params ){
 
-    Representation.call( this, volume, viewer, params );
+        super( volume, viewer, params );
 
-    this.build();
+        this.type = "slice"
 
-}
+        this.parameters = Object.assign( {
 
-SliceRepresentation.prototype = Object.assign( Object.create(
+            filter: {
+                type: "select", buffer: true, options: {
+                    "nearest": "nearest",
+                    "linear": "linear",
+                    "cubic-bspline": "cubic-bspline",
+                    "cubic-catmulrom": "cubic-catmulrom",
+                    "cubic-mitchell": "cubic-mitchell"
+                }
+            },
+            positionType: {
+                type: "select", rebuild: true, options: {
+                    "percent": "percent", "coordinate": "coordinate"
+                }
+            },
+            position: {
+                type: "range", step: 0.1, max: 100, min: 1,
+                rebuild: true
+            },
+            dimension: {
+                type: "select", rebuild: true, options: {
+                    "x": "x", "y": "y", "z": "z"
+                }
+            },
+            thresholdType: {
+                type: "select", rebuild: true, options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            thresholdMin: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdMax: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            normalize: {
+                type: "boolean", rebuild: true
+            },
 
-    Representation.prototype ), {
+        }, this.parameters, {
 
-    constructor: SliceRepresentation,
+            flatShaded: null,
+            side: null,
+            wireframe: null,
+            linewidth: null,
+            colorScheme: null,
 
-    type: "slice",
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    parameters: Object.assign( {
+        } );
 
-        filter: {
-            type: "select", buffer: true, options: {
-                "nearest": "nearest",
-                "linear": "linear",
-                "cubic-bspline": "cubic-bspline",
-                "cubic-catmulrom": "cubic-catmulrom",
-                "cubic-mitchell": "cubic-mitchell"
-            }
-        },
-        positionType: {
-            type: "select", rebuild: true, options: {
-                "percent": "percent", "coordinate": "coordinate"
-            }
-        },
-        position: {
-            type: "range", step: 0.1, max: 100, min: 1,
-            rebuild: true
-        },
-        dimension: {
-            type: "select", rebuild: true, options: {
-                "x": "x", "y": "y", "z": "z"
-            }
-        },
-        thresholdType: {
-            type: "select", rebuild: true, options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        thresholdMin: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdMax: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        normalize: {
-            type: "boolean", rebuild: true
-        },
+        this.volume = volume;
 
-    }, Representation.prototype.parameters, {
+        this.init( params );
 
-        flatShaded: null,
-        side: null,
-        wireframe: null,
-        linewidth: null,
-        colorScheme: null,
+    }
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
-
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         const v = this.volume;
         const p = params || {};
         p.colorDomain = defaults( p.colorDomain, [ v.min, v.max ] );
         p.colorScheme = defaults( p.colorScheme, "value" );
         p.colorScale = defaults( p.colorScale, "Spectral" );
-
-        Representation.prototype.init.call( this, p );
 
         this.colorScheme = "value";
         this.dimension = defaults( p.dimension, "x" );
@@ -103,9 +97,13 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         this.thresholdMax = defaults( p.thresholdMax, Infinity );
         this.normalize = defaults( p.normalize, false );
 
-    },
+        super.init( p );
 
-    attach: function( callback ){
+        this.build();
+
+    }
+
+    attach( callback ){
 
         this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
@@ -114,9 +112,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         callback();
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         const volumeSlice = new VolumeSlice( this.volume, {
             positionType: this.positionType,
@@ -139,7 +137,7 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default SliceRepresentation;

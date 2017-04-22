@@ -10,40 +10,37 @@ import { Vector3, Color } from "../../lib/three.es6.js";
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
-function UnitcellRepresentation( structure, viewer, params ){
+class UnitcellRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-UnitcellRepresentation.prototype = Object.assign( Object.create(
+        this.type = "unitcell";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: UnitcellRepresentation,
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            radialSegments: true,
+            disableImpostor: true
 
-    type: "unitcell",
+        }, this.parameters, {
+            assembly: null
+        } );
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        radialSegments: true,
-        disableImpostor: true
+    }
 
-    }, Representation.prototype.parameters, {
-        assembly: null
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
 
@@ -55,11 +52,11 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         p.radius = defaults( p.radius, defaultRadius );
         p.colorValue = defaults( p.colorValue, "orange" );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getUnitcellData: function( structure ){
+    getUnitcellData( structure ){
 
         var c = new Color( this.colorValue );
 
@@ -131,9 +128,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             }
         };
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         var structure = this.structureView.getStructure();
         if( !structure.unitcell ) return;
@@ -163,9 +160,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var structure = data.sview.getStructure();
         var unitcellData = this.getUnitcellData( structure );
@@ -194,7 +191,7 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
