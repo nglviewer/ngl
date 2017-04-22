@@ -176,7 +176,6 @@ class VolumeSlice{
                 }
             }
             diff = max - min;
-            console.log( diff, min, max, v.min, v.max )
         }
 
         for( let iy = y0; iy < ny; ++iy ){
