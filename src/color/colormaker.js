@@ -64,7 +64,7 @@ class Colormaker{
 
         var scale = defaults( p.scale, this.scale );
         if( scale === "rainbow" ){
-            scale = [ "blue", "green", "yellow", "orange", "red" ];
+            scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
             scale = [ "red", "white", "blue" ];
         }
