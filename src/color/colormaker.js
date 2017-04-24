@@ -46,6 +46,7 @@ class Colormaker{
         this.mode = defaults( p.mode, "hcl" );
         this.domain = defaults( p.domain, [ 0, 1 ] );
         this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
+        this.reverse = defaults( p.reverse, false );
 
         this.structure = p.structure;
         this.volume = p.volume;
@@ -68,10 +69,15 @@ class Colormaker{
             scale = [ "red", "white", "blue" ];
         }
 
+        var domain = defaults( p.domain, this.domain );
+        if( this.reverse ){
+            domain.reverse();
+        }
+
         return chroma
             .scale( scale )
             .mode( defaults( p.mode, this.mode ) )
-            .domain( defaults( p.domain, this.domain ) )
+            .domain( domain )
             .out( "num" );
 
     }

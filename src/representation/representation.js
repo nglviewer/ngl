@@ -32,6 +32,7 @@ import Counter from "../utils/counter.js";
  * @property {String} [colorScale] - color scale, either a string for a
  *                                 predefined scale or an array of
  *                                 colors to be used as the scale
+ * @property {Boolean} [colorReverse] - reverse color scale
  * @property {Color} [colorValue] - color value
  * @property {Integer[]} [colorDomain] - scale value range
  * @property {Integer} colorDomain.0 - min value
@@ -95,6 +96,9 @@ class Representation{
             colorScale: {
                 type: "select", update: "color",
                 options: ColormakerRegistry.getScales()
+            },
+            colorReverse: {
+                type: "boolean", update: "color"
             },
             colorValue: {
                 type: "color", update: "color"
@@ -166,6 +170,7 @@ class Representation{
 
         this.colorScheme = defaults( p.colorScheme, "uniform" );
         this.colorScale = defaults( p.colorScale, "" );
+        this.colorReverse = defaults( p.colorReverse, false );
         this.colorValue = defaults( p.colorValue, 0x909090 );
         this.colorDomain = defaults( p.colorDomain, undefined );
         this.colorMode = defaults( p.colorMode, "hcl" );
@@ -243,6 +248,7 @@ class Representation{
 
             scheme: this.colorScheme,
             scale: this.colorScale,
+            reverse: this.colorReverse,
             value: this.colorValue,
             domain: this.colorDomain,
             mode: this.colorMode,

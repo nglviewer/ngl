@@ -382,8 +382,11 @@ class Stage{
             }
 
             var colorScheme = "chainname";
+            var colorScale = "RdYlBu";
+            var colorReverse = false;
             if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
+                colorReverse = true;
             }
 
             if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
@@ -421,7 +424,8 @@ class Stage{
                     probeRadius: 1.4,
                     scaleFactor: scaleFactor,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     useWorker: false
                 } );
 
@@ -430,7 +434,8 @@ class Stage{
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu"
+                    colorScale: colorScale,
+                    colorReverse: colorReverse
                 } );
 
             }else if( atomCount > 100000 ){
@@ -439,7 +444,8 @@ class Stage{
                     quality: "low",
                     disableImpostor: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
@@ -447,7 +453,8 @@ class Stage{
 
                 object.addRepresentation( "backbone", {
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
@@ -455,7 +462,7 @@ class Stage{
 
                 object.addRepresentation( "cartoon", {
                     color: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
                     scale: 0.7,
                     aspectRatio: 5,
                     quality: "auto"
@@ -463,7 +470,8 @@ class Stage{
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
                         color: colorScheme,
-                        colorScale: "RdYlBu",
+                        colorScale: colorScale,
+                        colorReverse: colorReverse,
                         quality: "auto"
                     } );
                 }

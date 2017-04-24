@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file, following t
 - support for picking Shape objects, Volume slices, Contact bonds
 - scroll mouse behavior to change far/near clipping and fog
 - label primitive for Shape class
+- support for reversing color schemes with `colorReverse` parameter
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`
