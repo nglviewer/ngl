@@ -35,6 +35,7 @@ var ColormakerScales = {
     "PuBuGn": "[S] Purple-Blue-Green",
 
     // Diverging
+    "Viridis": "[D] Viridis",
     "Spectral": "[D] Spectral",
     "RdYlGn": "[D] Red-Yellow-Green",
     "RdBu": "[D] Red-Blue",
