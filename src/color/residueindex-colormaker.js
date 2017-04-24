@@ -16,7 +16,7 @@ class ResidueindexColormaker extends Colormaker{
         super( params );
 
         if( !params.scale ){
-            this.scale = "roygb";
+            this.scale = "rainbow";
         }
         if( !params.domain ){
 

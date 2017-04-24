@@ -56,7 +56,7 @@ var ColormakerScales = {
     "Accent": "[Q] Accent",
 
     // Other
-    "roygb": "[?] Rainbow",
+    "rainbow": "[?] Rainbow",
     "rwb": "[?] Red-White-Blue",
 
 };

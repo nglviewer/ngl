@@ -16,7 +16,7 @@ class ModelindexColormaker extends Colormaker{
         super( params );
 
         if( !params.scale ){
-            this.scale = "roygb";
+            this.scale = "rainbow";
         }
         if( !params.domain ){
             this.domain = [ 0, this.structure.modelStore.count ];
