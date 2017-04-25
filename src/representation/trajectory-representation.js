@@ -18,8 +18,31 @@ import PointBuffer from "../buffer/point-buffer.js";
 import LineBuffer from "../buffer/line-buffer.js";
 
 
+/**
+ * Trajectory representation parameter object.
+ * @typedef {Object} TrajectoryRepresentationParameters - parameters
+ *
+ * @property {Boolean} drawLine - draw lines
+ * @property {Boolean} drawCylinder - draw cylinders
+ * @property {Boolean} drawPoint - draw points
+ * @property {Boolean} drawSphere - draw sphere
+ * @property {Integer} linewidth - line width
+ * @property {Integer} pointSize - point size
+ * @property {Boolean} sizeAttenuation - size attenuation
+ * @property {Boolean} sort - sort flag for points
+ */
+
+
+/**
+ * Trajectory representation
+ */
 class TrajectoryRepresentation extends StructureRepresentation{
 
+    /**
+     * @param  {Trajectory} trajectory - the trajectory
+     * @param  {Viewer} viewer - viewer object
+     * @param  {TrajectoryRepresentationParameters} params - parameters
+     */
     constructor( trajectory, viewer, params ){
 
         super( trajectory.structure, viewer, params );

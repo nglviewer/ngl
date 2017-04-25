@@ -15,8 +15,36 @@ import SphereBuffer from "../buffer/sphere-buffer.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
+/**
+ * Axes representation. Show principal axes and/or a box aligned with them
+ * that fits the structure or selection.
+ *
+ * __Name:__ _axes_
+ *
+ * @example
+ * stage.loadFile( "rcsb://3pqr", {
+ *     assembly: "BU1"
+ * } ).then( function( o ){
+ *     o.addRepresentation( "cartoon" );
+ *     o.addRepresentation( "axes", {
+ *         sele: "RET", showAxes: false, showBox: true, radius: 0.2
+ *     } );
+ *     o.addRepresentation( "ball+stick", { sele: "RET" } );
+ *     o.addRepresentation( "axes", {
+ *         sele: ":B and backbone", showAxes: false, showBox: true, radius: 0.2
+ *     } );
+ *     stage.autoView();
+ *     var pa = o.structure.getPrincipalAxes();
+ *     stage.animationControls.rotate( pa.getRotationQuaternion(), 1500 );
+ * } );
+ */
 class AxesRepresentation extends StructureRepresentation{
 
+    /**
+     * @param  {Structure} structure - the structure object
+     * @param  {Viewer} viewer - the viewer object
+     * @param  {StructureRepresentationParameters} params - parameters object
+     */
     constructor( structure, viewer, params ){
 
         super( structure, viewer, params );

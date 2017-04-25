@@ -12,8 +12,26 @@ import StructureRepresentation from "./structure-representation.js";
 import TubeMeshBuffer from "../buffer/tubemesh-buffer.js";
 
 
+/**
+ * Cartoon representation. Show a thick ribbon that
+ * smoothly connecting backbone atoms in polymers.
+ *
+ * __Name:__ _cartoon_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "cartoon" );
+ *     o.autoView();
+ * } );
+ */
 class CartoonRepresentation extends StructureRepresentation{
 
+    /**
+     * Create Cartoon representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {StructureRepresentationParameters} params - representation parameters
+     */
     constructor( structure, viewer, params ){
 
         super( structure, viewer, params );

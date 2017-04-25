@@ -10,8 +10,25 @@ import { defaults } from "../utils.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
+/**
+ * Backbone representation. Show cylinders (or lines) connecting .CA (protein)
+ * or .C4'/.C3' (RNA/DNA) of polymers.
+ *
+ * __Name:__ _backbone_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1sfi" ).then( function( o ){
+ *     o.addRepresentation( "backbone" );
+ *     o.autoView();
+ * } );
+ */
 class BackboneRepresentation extends BallAndStickRepresentation{
 
+    /**
+     * @param  {Structure} structure - the structure object
+     * @param  {Viewer} viewer - the viewer object
+     * @param  {BallAndStickRepresentationParameters} params - parameters object
+     */
     constructor( structure, viewer, params ){
 
         super( structure, viewer, params );

@@ -33,7 +33,15 @@ import LineBuffer from "../buffer/line-buffer.js";
 
 
 /**
- * Ball And Stick representation
+ * Ball And Stick representation. Show atoms as spheres and bonds as cylinders.
+ *
+ * __Name:__ _ball+stick_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "ball+stick" );
+ *     o.autoView();
+ * } );
  */
 class BallAndStickRepresentation extends StructureRepresentation{
 

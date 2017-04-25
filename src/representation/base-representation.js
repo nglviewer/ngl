@@ -10,8 +10,25 @@ import { defaults } from "../utils.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
+/**
+ * Base representation. Show cylinders for RNA/DNA ladders.
+ *
+ * __Name:__ _base_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1d66" ).then( function( o ){
+ *     o.addRepresentation( "cartoon", { sele: "nucleic" } );
+ *     o.addRepresentation( "base", { color: "resname" } );
+ *     o.autoView( "nucleic" );
+ * } );
+ */
 class BaseRepresentation extends BallAndStickRepresentation{
 
+    /**
+     * @param  {Structure} structure - the structure object
+     * @param  {Viewer} viewer - the viewer object
+     * @param  {BallAndStickRepresentationParameters} params - parameters object
+     */
     constructor( structure, viewer, params ){
 
         super( structure, viewer, params );
