@@ -5,6 +5,8 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
 import { defaults } from "../utils.js";
 import Component from "./component.js";
 
@@ -17,32 +19,21 @@ Component.prototype.__getRepresentationComponent = function( repr, p ){
 };
 
 
-const SignalNames = [ "parametersChanged" ];
-
-
 /**
- * @ignore
- * @event RepresentationComponent#representationAdded
- */
-
-/**
- * @ignore
- * @event RepresentationComponent#representationRemoved
- */
-
-/**
- * {@link Signal}, dispatched when parameters change
- * @example
- * component.signals.parametersChanged.add( function( params ){ ... } );
- * @event RepresentationComponent#parametersChanged
- * @type {RepresentationParameters}
+ * Extends {@link ComponentSignals}
+ *
+ * @typedef {Object} RepresentationComponentSignals
+ * @property {Signal<String>} parametersChanged - on parameters change
  */
 
 
+/**
+ * Component wrapping a {@link Representation} object
+ */
 class RepresentationComponent extends Component{
 
     /**
-     * Create component wrapping a representation object
+     * Create representation component
      * @param {Stage} stage - stage object the component belongs to
      * @param {Representation} repr - representation object to wrap
      * @param {RepresentationParameters} [params] - component parameters
@@ -55,17 +46,25 @@ class RepresentationComponent extends Component{
 
         super( stage, p );
 
+        /**
+         * Events emitted by the component
+         * @type {RepresentationComponentSignals}
+         */
+        this.signals = Object.assign( this.signals, {
+            parametersChanged: new Signal()
+        } );
+
         this.parent = parent;
 
         this.setRepresentation( repr );
 
     }
 
+    /**
+     * Component type
+     * @type {String}
+     */
     get type(){ return "representation"; }
-
-    get _signalNames(){
-        return super._signalNames.concat( SignalNames );
-    }
 
     getType(){
 
@@ -126,8 +125,6 @@ class RepresentationComponent extends Component{
 
     /**
      * Set the visibility of the component, takes parent visibility into account
-     * @alias RepresentationComponent#setVisibility
-     * @fires Component#visibilityChanged
      * @param {Boolean} value - visibility flag
      * @return {RepresentationComponent} this object
      */
@@ -159,7 +156,6 @@ class RepresentationComponent extends Component{
 
     /**
      * Set selection
-     * @alias RepresentationComponent#update
      * @param {Object} what - flags indicating what attributes to update
      * @param {Boolean} what.position - update position attribute
      * @param {Boolean} what.color - update color attribute
@@ -184,7 +180,6 @@ class RepresentationComponent extends Component{
 
     /**
      * Set selection
-     * @alias RepresentationComponent#setSelection
      * @param {String} string - selection string
      * @return {RepresentationComponent} this object
      */
@@ -198,8 +193,6 @@ class RepresentationComponent extends Component{
 
     /**
      * Set representation parameters
-     * @alias RepresentationComponent#setParameters
-     * @fires RepresentationComponent#parametersChanged
      * @param {RepresentationParameters} params - parameter object
      * @return {RepresentationComponent} this object
      */
@@ -214,12 +207,21 @@ class RepresentationComponent extends Component{
 
     }
 
+    /**
+     * Get representation parameters
+     * @return {RepresentationParameters} parameter object
+     */
     getParameters(){
 
         return this.repr.getParameters();
 
     }
 
+    /**
+     * Set color
+     * @param {String|Color|Hex} value - color value
+     * @return {RepresentationComponent} this object
+     */
     setColor( value ){
 
         this.repr.setColor( value );
@@ -230,13 +232,20 @@ class RepresentationComponent extends Component{
 
     /**
      * @ignore
-     * @alias RepresentationComponent#getCenter
      * @return {undefined}
      */
     getCenter(){}
 
+    /**
+     * @ignore
+     * @return {undefined}
+     */
     getZoom(){}
 
+    /**
+     * @ignore
+     * @return {undefined}
+     */
     getBox(){}
 
 }

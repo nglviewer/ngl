@@ -16,11 +16,6 @@ import { makeRepresentation } from "../representation/representation-utils.js";
 
 let nextComponentId = 0;
 
-const SignalNames = [
-    "representationAdded", "representationRemoved", "visibilityChanged",
-    "statusChanged", "nameChanged", "disposed"
-];
-
 
 /**
  * Component parameter object.
@@ -29,35 +24,27 @@ const SignalNames = [
  * @property {Boolean} visible - component visibility
  */
 
+
 /**
- * {@link Signal}, dispatched when a representation is added
  * @example
  * component.signals.representationAdded.add( function( representationComponent ){ ... } );
- * @event Component#representationAdded
- * @type {RepresentationComponent}
+ *
+ * @typedef {Object} ComponentSignals
+ * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added
+ * @property {Signal<RepresentationComponent>} representationRemoved - when a representation is removed
+ * @property {Signal<Boolean>} visibilityChanged - on visibility change
+ * @property {Signal<String>} statusChanged - on status change
+ * @property {Signal<String>} nameChanged - on name change
+ * @property {Signal<undefined>} disposed - on dispose
  */
+
 
 /**
- * {@link Signal}, dispatched when a representation is removed
- * @example
- * component.signals.representationRemoved.add( function( representationComponent ){ ... } );
- * @event Component#representationRemoved
- * @type {RepresentationComponent}
+ * Base class for components
  */
-
-/**
- * {@link Signal}, dispatched when the visibility changes
- * @example
- * component.signals.visibilityChanged.add( function( value ){ ... } );
- * @event Component#visibilityChanged
- * @type {Boolean}
- */
-
-
 class Component{
 
     /**
-     * Base class for components
      * @param {Stage} stage - stage object the component belongs to
      * @param {ComponentParameters} params - parameter object
      */
@@ -71,11 +58,18 @@ class Component{
         this.uuid = generateUUID();
         this.visible = p.visible !== undefined ? p.visible : true;
 
-        // construct instance signals
-        this.signals = {};
-        this._signalNames.forEach( name => {
-            this.signals[ name ] = new Signal();
-        } );
+        /**
+         * Events emitted by the component
+         * @type {ComponentSignals}
+         */
+        this.signals = {
+            representationAdded: new Signal(),
+            representationRemoved: new Signal(),
+            visibilityChanged: new Signal(),
+            statusChanged: new Signal(),
+            nameChanged: new Signal(),
+            disposed: new Signal(),
+        };
 
         this.stage = stage;
         this.viewer = stage.viewer;
@@ -86,11 +80,8 @@ class Component{
 
     get type(){ return "component"; }
 
-    get _signalNames(){ return SignalNames; }
-
     /**
      * Add a new representation to the component
-     * @fires Component#representationAdded
      * @param {String} type - the name of the representation
      * @param {Object} object - the object on which the representation should be based
      * @param {RepresentationParameters} [params] - representation parameters
@@ -134,7 +125,6 @@ class Component{
 
     /**
      * Removes a representation component
-     * @fires Component#representationRemoved
      * @param {RepresentationComponent} repr - the representation component
      * @return {undefined}
      */
@@ -161,7 +151,6 @@ class Component{
 
     /**
      * Removes all representation components
-     * @fires Component#representationRemoved
      * @return {undefined}
      */
     removeAllRepresentations(){
@@ -190,7 +179,6 @@ class Component{
 
     /**
      * Set the visibility of the component, including added representations
-     * @fires Component#visibilityChanged
      * @param {Boolean} value - visibility flag
      * @return {Component} this object
      */

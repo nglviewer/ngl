@@ -5,13 +5,10 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
 import { defaults } from "../utils.js";
 import Component from "./component.js";
-
-
-const SignalNames = [
-    "frameChanged", "playerChanged", "gotNumframes", "parametersChanged"
-];
 
 
 /**
@@ -29,10 +26,26 @@ const SignalNames = [
  */
 
 
+/**
+ * Extends {@link ComponentSignals}
+ *
+ * @example
+ * component.signals.representationAdded.add( function( representationComponent ){ ... } );
+ *
+ * @typedef {Object} TrajectoryComponentSignals
+ * @property {Signal<RepresentationComponent>} frameChanged - on frame change
+ * @property {Signal<RepresentationComponent>} playerChanged - on player change
+ * @property {Signal<String>} gotNumframes - when frame count is available
+ * @property {Signal<String>} parametersChanged - on parameters change
+ */
+
+
+/**
+ * Component wrapping a {@link Trajectory} object
+ */
 class TrajectoryComponent extends Component{
 
     /**
-     * Create component wrapping a trajectory object
      * @param {Stage} stage - stage object the component belongs to
      * @param {Trajectory} trajectory - the trajectory object
      * @param {TrajectoryComponentParameters} params - component parameters
@@ -44,6 +57,17 @@ class TrajectoryComponent extends Component{
         p.name = defaults( p.name, trajectory.name );
 
         super( stage, p );
+
+        /**
+         * Events emitted by the component
+         * @type {TrajectoryComponentSignals}
+         */
+        this.signals = Object.assign( this.signals, {
+            frameChanged: new Signal(),
+            playerChanged: new Signal(),
+            gotNumframes: new Signal(),
+            parametersChanged: new Signal()
+        } );
 
         this.trajectory = trajectory;
         this.parent = parent;
@@ -78,30 +102,44 @@ class TrajectoryComponent extends Component{
 
     }
 
+    /**
+     * Component type
+     * @type {String}
+     */
     get type(){ return "trajectory" }
 
-    get _signalNames(){
-        return super._signalNames.concat( SignalNames );
-    }
-
+    /**
+     * Add trajectory representation
+     * @param {String} type - representation type, currently only: "trajectory"
+     * @param {RepresentationParameters} params - parameters
+     * @return {RepresentationComponent} the added representation component
+     */
     addRepresentation( type, params ){
 
         return super.addRepresentation( type, this.trajectory, params );
 
     }
 
+    /**
+     * Set the frame of the trajectory
+     * @param {Integer} i - frame number
+     * @return {undefined}
+     */
     setFrame( i ){
 
         this.trajectory.setFrame( i );
 
     }
 
+    /**
+     * Set trajectory parameters
+     * @param {TrajectoryParameters} params - trajectory parameters
+     * @return {undefined}
+     */
     setParameters( params ){
 
         this.trajectory.setParameters( params );
         this.signals.parametersChanged.dispatch( params );
-
-        return this;
 
     }
 

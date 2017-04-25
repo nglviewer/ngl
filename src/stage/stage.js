@@ -69,49 +69,7 @@ const tmpZoomVector = new Vector3();
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
- *                                      signal is fired, set to -1 to ignore hovering
- */
-
-
-/**
- * {@link Signal}, dispatched when stage parameters change
- * @example
- * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
- * @event Stage#parametersChanged
- * @type {StageParameters}
- */
-
-/**
- * {@link Signal}, dispatched when the fullscreen is entered or left
- * @example
- * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
- * @event Stage#fullscreenChanged
- * @type {Boolean}
- */
-
-/**
- * {@link Signal}, dispatched when a component is removed from the stage
- * @example
- * stage.signals.componentRemoved.add( function( component ){ ... } );
- * @event Stage#componentRemoved
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched upon clicking in the viewer canvas
- * @example
- * stage.signals.clicked.add( function( pickingProxy ){ ... } );
- * @event Stage#clicked
- * @type {PickingProxy}
- */
-
-/**
- * {@link Signal}, dispatched upon hovering over the viewer canvas
- * @example
- * stage.signals.hovered.add( function( pickingProxy ){ ... } );
- * @event Stage#hovered
- * @type {PickingProxy}
+ * @property {Integer} hoverTimeout - timeout for hovering
  */
 
 
@@ -120,7 +78,12 @@ const tmpZoomVector = new Vector3();
  * stage.signals.componentAdded.add( function( component ){ ... } );
  *
  * @typedef {Object} StageSignals
+ * @property {Signal<StageParameters>} parametersChanged - on parameters change
+ * @property {Signal<Boolean>} fullscreenChanged - on fullscreen change
  * @property {Signal<Component>} componentAdded - when a component is added
+ * @property {Signal<Component>} componentRemoved - when a component is removed
+ * @property {Signal<PickingProxy|undefined>} clicked - on click
+ * @property {Signal<PickingProxy|undefined>} hovered - on hover
  */
 
 
@@ -140,7 +103,7 @@ class Stage{
 
         /**
          * Events emitted by the stage
-         * @member {StageSignals}
+         * @type {StageSignals}
          */
         this.signals = {
             parametersChanged: new Signal(),
@@ -158,7 +121,7 @@ class Stage{
         /**
          * Counter that keeps track of various potentially long-running tasks,
          * including file loading and surface calculation.
-         * @member {Counter}
+         * @type {Counter}
          */
         this.tasks = new Counter();
         this.compList = [];
@@ -170,18 +133,18 @@ class Stage{
         if( !this.viewer.renderer ) return;
 
         /**
-         * @member {MouseObserver}
+         * @type {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
 
         /**
-         * @member {ViewerControls}
+         * @type {ViewerControls}
          */
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
         /**
-         * @member {AnimationControls}
+         * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
 
@@ -285,7 +248,6 @@ class Stage{
 
     /**
      * Set stage parameters
-     * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
      * @return {Stage} this object
      */
@@ -527,7 +489,6 @@ class Stage{
      *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
      * } );
      *
-     * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {LoaderParameters} params - loading parameters
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
@@ -612,7 +573,6 @@ class Stage{
 
     /**
      * Create a component from the given object and add to the stage
-     * @emits {StageSignals.componentAdded}
      * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
      * @param {ComponentParameters} params - parameter object
      * @return {Component} the created component
@@ -674,7 +634,6 @@ class Stage{
 
     /**
      * Toggle fullscreen
-     * @fires Stage#fullscreenChanged
      * @param  {Element} [element] - document element to put into fullscreen,
      *                               defaults to the viewer container
      * @return {undefined}
