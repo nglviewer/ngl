@@ -11,27 +11,40 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
 
 
 /**
- * Cylinder buffer
- * @class
- * @augments {Buffer}
- * @param {Object} data - buffer data
- * @param {Float32Array} data.position1 - from positions
- * @param {Float32Array} data.position2 - to positions
- * @param {Float32Array} data.color - from colors
- * @param {Float32Array} data.color2 - to colors
- * @param {Float32Array} data.radius - radii
- * @param {Float32Array} [data.picking] - from picking ids
- * @param {BufferParams} [params] - parameters object
+ * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
+ * `params.disableImpostor` the constructor returns either a
+ * {@link CylinderGeometryBuffer} or a {@link CylinderImpostorBuffer}
+ * @implements {Buffer}
+ *
+ * @example
+ * var cylinderBuffer = new NGL.CylinderBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 1, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
  */
-function CylinderBuffer( data, params ){
+class CylinderBuffer{
 
-    if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
+    /**\
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position1 - from positions
+     * @param {Float32Array} data.position2 - to positions
+     * @param {Float32Array} data.color - from colors
+     * @param {Float32Array} data.color2 - to colors
+     * @param {Float32Array} data.radius - radii
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     * @return {CylinderGeometryBuffer|CylinderImpostorBuffer} the buffer object
+     */
+    constructor( data, params ){
 
-        return new CylinderGeometryBuffer( data, params );
-
-    }else{
-
-        return new CylinderImpostorBuffer( data, params );
+        if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
+            return new CylinderGeometryBuffer( data, params );
+        }else{
+            return new CylinderImpostorBuffer( data, params );
+        }
 
     }
 
