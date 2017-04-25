@@ -11,158 +11,164 @@ import Polymer from "./polymer.js";
 
 /**
  * Chain proxy
- * @class
- * @param {Structure} structure - the structure
- * @param {Integer} index - the index
  */
-function ChainProxy( structure, index ){
+class ChainProxy{
 
-    this.structure = structure;
-    this.chainStore = structure.chainStore;
-    this.residueStore = structure.residueStore;
-    this.index = index;
+    /**
+     * @param {Structure} structure - the structure
+     * @param {Integer} index - the index
+     */
+    constructor( structure, index ){
 
-    this.__residueProxy = this.structure.getResidueProxy();
+        /**
+         * @type {Structure}
+         */
+        this.structure = structure;
+        /**
+         * @type {ChainStore}
+         */
+        this.chainStore = structure.chainStore;
+        /**
+         * @type {ResidueStore}
+         */
+        this.residueStore = structure.residueStore;
+        /**
+         * @type {Integer}
+         */
+        this.index = index;
 
-}
+        this.__residueProxy = this.structure.getResidueProxy();
 
-ChainProxy.prototype = {
-
-    constructor: ChainProxy,
-    type: "ChainProxy",
-
-    structure: undefined,
-    chainStore: undefined,
-    index: undefined,
+    }
 
     get entity () {
         return this.structure.entityList[ this.entityIndex ];
-    },
+    }
     get model () {
         return this.structure.getModelProxy( this.modelIndex );
-    },
+    }
 
     get entityIndex () {
         return this.chainStore.entityIndex[ this.index ];
-    },
+    }
     set entityIndex ( value ) {
         this.chainStore.entityIndex[ this.index ] = value;
-    },
+    }
 
     get modelIndex () {
         return this.chainStore.modelIndex[ this.index ];
-    },
+    }
     set modelIndex ( value ) {
         this.chainStore.modelIndex[ this.index ] = value;
-    },
+    }
 
     get residueOffset () {
         return this.chainStore.residueOffset[ this.index ];
-    },
+    }
     set residueOffset ( value ) {
         this.chainStore.residueOffset[ this.index ] = value;
-    },
+    }
 
     get residueCount () {
         return this.chainStore.residueCount[ this.index ];
-    },
+    }
     set residueCount ( value ) {
         this.chainStore.residueCount[ this.index ] = value;
-    },
+    }
 
     get residueEnd () {
         return this.residueOffset + this.residueCount - 1;
-    },
+    }
 
     get atomOffset () {
         return this.residueStore.atomOffset[ this.residueOffset ];
-    },
+    }
     get atomEnd () {
         return (
             this.residueStore.atomOffset[ this.residueEnd ] +
             this.residueStore.atomCount[ this.residueEnd ] - 1
         );
-    },
+    }
     get atomCount () {
         if( this.residueCount === 0 ){
             return 0;
         }else{
             return this.atomEnd - this.atomOffset + 1;
         }
-    },
+    }
 
     //
 
     get chainname () {
         return this.chainStore.getChainname( this.index );
-    },
+    }
     set chainname ( value ) {
         this.chainStore.setChainname( this.index, value );
-    },
+    }
 
     get chainid () {
         return this.chainStore.getChainid( this.index );
-    },
+    }
     set chainid ( value ) {
         this.chainStore.setChainid( this.index, value );
-    },
+    }
 
     //
 
     get __firstResidueProxy () {
         this.__residueProxy.index = this.residueOffset;
         return this.__residueProxy;
-    },
+    }
 
     //
 
-    isProtein: function(){
+    isProtein(){
         return this.__firstResidueProxy.isProtein();
-    },
+    }
 
-    isNucleic: function(){
+    isNucleic(){
         return this.__firstResidueProxy.isNucleic();
-    },
+    }
 
-    isRna: function(){
+    isRna(){
         return this.__firstResidueProxy.isRna();
-    },
+    }
 
-    isDna: function(){
+    isDna(){
         return this.__firstResidueProxy.isDna();
-    },
+    }
 
-    isPolymer: function(){
+    isPolymer(){
         return this.__firstResidueProxy.isPolymer();
-    },
+    }
 
-    isHetero: function(){
+    isHetero(){
         return this.__firstResidueProxy.isHetero();
-    },
+    }
 
-    isWater: function(){
+    isWater(){
         return this.__firstResidueProxy.isWater();
-    },
+    }
 
-    isIon: function(){
+    isIon(){
         return this.__firstResidueProxy.isIon();
-    },
+    }
 
-    isSaccharide: function(){
+    isSaccharide(){
         return this.__firstResidueProxy.isSaccharide();
-    },
+    }
 
     //
 
-    eachAtom: function( callback, selection ){
+    eachAtom( callback, selection ){
 
         this.eachResidue( function( rp ){
             rp.eachAtom( callback, selection );
         }, selection );
 
-    },
+    }
 
-    eachResidue: function( callback, selection ){
+    eachResidue( callback, selection ){
 
         var i;
         var count = this.residueCount;
@@ -192,9 +198,9 @@ ChainProxy.prototype = {
             }
         }
 
-    },
+    }
 
-    eachResidueN: function( n, callback ){
+    eachResidueN( n, callback ){
 
         var i;
         var count = this.residueCount;
@@ -215,9 +221,9 @@ ChainProxy.prototype = {
             callback.apply( this, array );
         }
 
-    },
+    }
 
-    eachPolymer: function( callback, selection ){
+    eachPolymer( callback, selection ){
 
         var rStartIndex, rNextIndex;
         var test = selection ? selection.residueOnlyTest : undefined;
@@ -289,22 +295,22 @@ ChainProxy.prototype = {
             }
         }
 
-    },
+    }
 
     //
 
-    qualifiedName: function(){
+    qualifiedName(){
         var name = ":" + this.chainname + "/" + this.modelIndex;
         return name;
-    },
+    }
 
-    clone: function(){
+    clone(){
 
         return new this.constructor( this.structure, this.index );
 
-    },
+    }
 
-    toObject: function(){
+    toObject(){
 
         return {
             index: this.index,
@@ -316,7 +322,7 @@ ChainProxy.prototype = {
 
     }
 
-};
+}
 
 
 export default ChainProxy;

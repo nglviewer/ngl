@@ -11,90 +11,99 @@ import Bitset from "../utils/bitset.js";
 
 /**
  * Polymer
- * @class
- * @param {Structure} structure - the structure
- * @param {Integer} residueIndexStart - the index of the first residue
- * @param {Integer} residueIndexEnd - the index of the last residue
  */
-function Polymer( structure, residueIndexStart, residueIndexEnd ){
+class Polymer{
 
-    this.structure = structure;
-    this.chainStore = structure.chainStore;
-    this.residueStore = structure.residueStore;
-    this.atomStore = structure.atomStore;
+    /**
+     * @param {Structure} structure - the structure
+     * @param {Integer} residueIndexStart - the index of the first residue
+     * @param {Integer} residueIndexEnd - the index of the last residue
+     */
+    constructor( structure, residueIndexStart, residueIndexEnd ){
 
-    this.residueIndexStart = residueIndexStart;
-    this.residueIndexEnd = residueIndexEnd;
-    this.residueCount = residueIndexEnd - residueIndexStart + 1;
+        /**
+         * @type {Structure}
+         */
+        this.structure = structure;
+        /**
+         * @type {ChainStore}
+         */
+        this.chainStore = structure.chainStore;
+        /**
+         * @type {ResidueStore}
+         */
+        this.residueStore = structure.residueStore;
+        /**
+         * @type {AtomStore}
+         */
+        this.atomStore = structure.atomStore;
 
-    var rpStart = this.structure.getResidueProxy( this.residueIndexStart );
-    var rpEnd = this.structure.getResidueProxy( this.residueIndexEnd );
-    this.isPrevConnected = rpStart.getPreviousConnectedResidue() !== undefined;
-    var rpNext = rpEnd.getNextConnectedResidue();
-    this.isNextConnected = rpNext !== undefined;
-    this.isNextNextConnected = this.isNextConnected && rpNext.getNextConnectedResidue() !== undefined;
-    this.isCyclic = rpEnd.connectedTo( rpStart );
+        /**
+         * @type {Integer}
+         */
+        this.residueIndexStart = residueIndexStart;
+        /**
+         * @type {Integer}
+         */
+        this.residueIndexEnd = residueIndexEnd;
+        /**
+         * @type {Integer}
+         */
+        this.residueCount = residueIndexEnd - residueIndexStart + 1;
 
-    this.__residueProxy = this.structure.getResidueProxy();
+        var rpStart = this.structure.getResidueProxy( this.residueIndexStart );
+        var rpEnd = this.structure.getResidueProxy( this.residueIndexEnd );
+        this.isPrevConnected = rpStart.getPreviousConnectedResidue() !== undefined;
+        var rpNext = rpEnd.getNextConnectedResidue();
+        this.isNextConnected = rpNext !== undefined;
+        this.isNextNextConnected = this.isNextConnected && rpNext.getNextConnectedResidue() !== undefined;
+        this.isCyclic = rpEnd.connectedTo( rpStart );
 
-    // console.log( this.qualifiedName(), this );
+        this.__residueProxy = this.structure.getResidueProxy();
 
-}
+        // console.log( this.qualifiedName(), this );
 
-Polymer.prototype = {
-
-    constructor: Polymer,
-    type: "Polymer",
-
-    structure: undefined,
-    residueStore: undefined,
-    atomStore: undefined,
-
-    residueIndexStart: undefined,
-    residueIndexEnd: undefined,
-    residueCount: undefined,
-
-    //
+    }
 
     get chainIndex () {
         return this.residueStore.chainIndex[ this.residueIndexStart ];
-    },
+    }
     get modelIndex () {
         return this.chainStore.modelIndex[ this.chainIndex ];
-    },
+    }
 
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
-    },
+    }
 
     //
 
-    isProtein: function(){
+    isProtein(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isProtein();
-    },
+    }
 
-    isCg: function(){
+    isCg(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isCg();
-    },
+    }
 
-    isNucleic: function(){
+    isNucleic(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isNucleic();
-    },
+    }
 
-    getMoleculeType: function(){
+    getMoleculeType(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.moleculeType;
-    },
+    }
 
-    getBackboneType: function( position ){
+    getBackboneType( position ){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.getBackboneType( position );
-    },
+    }
 
-    getAtomIndexByType: function( index, type ){
+    getAtomIndexByType( index, type ){
 
         // TODO pre-calculate, add to residueStore???
 
@@ -140,17 +149,17 @@ Polymer.prototype = {
 
         return aIndex;
 
-    },
+    }
 
-    eachAtom: function( callback, selection ){
+    eachAtom( callback, selection ){
 
         this.eachResidue( function( rp ){
             rp.eachAtom( callback, selection );
         }, selection );
 
-    },
+    }
 
-    eachAtomN: function( n, callback, type ){
+    eachAtomN( n, callback, type ){
 
         var i;
         var m = this.residueCount;
@@ -169,9 +178,9 @@ Polymer.prototype = {
             callback.apply( this, array );
         }
 
-    },
+    }
 
-    eachAtomN2: function( n, callback, type ){
+    eachAtomN2( n, callback, type ){
 
         // console.log(this.residueOffset,this.residueCount)
 
@@ -210,9 +219,9 @@ Polymer.prototype = {
             }
         } );
 
-    },
+    }
 
-    eachDirectionAtomsN: function( n, callback ){
+    eachDirectionAtomsN( n, callback ){
 
         var n2 = n * 2;
         var offset = this.atomOffset;
@@ -248,9 +257,9 @@ Polymer.prototype = {
             }
         }, as1, as2 );
 
-    },
+    }
 
-    eachResidue: function( callback ){
+    eachResidue( callback ){
 
         var rp = this.structure.getResidueProxy();
         var n = this.residueCount;
@@ -261,15 +270,15 @@ Polymer.prototype = {
             callback( rp );
         }
 
-    },
+    }
 
-    qualifiedName: function(){
+    qualifiedName(){
         var rpStart = this.structure.getResidueProxy( this.residueIndexStart );
         var rpEnd = this.structure.getResidueProxy( this.residueIndexEnd );
         return rpStart.qualifiedName() + " - " + rpEnd.qualifiedName();
     }
 
-};
+}
 
 
 export default Polymer;
