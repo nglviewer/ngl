@@ -13,6 +13,9 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Color by molecule type
+ */
 class MoleculetypeColormaker extends Colormaker{
 
     atomColor( a ){

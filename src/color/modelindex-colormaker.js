@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by model index
+ */
 class ModelindexColormaker extends Colormaker{
 
     constructor( params ){

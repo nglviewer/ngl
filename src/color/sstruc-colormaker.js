@@ -25,6 +25,9 @@ var StructureColors = {
 var DefaultStructureColor = 0x808080;
 
 
+/**
+ * Color by secondary structure
+ */
 class SstrucColormaker extends Colormaker{
 
     constructor( params ){

@@ -11,6 +11,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by volume position
+ */
 class VolumeColormaker extends Colormaker{
 
     constructor( params ){

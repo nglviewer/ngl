@@ -15,8 +15,7 @@ function randomColor(){
 
 
 /**
- * Class for making random colors
- * @extends Colormaker
+ * Class by random color
  */
 class RandomColormaker extends Colormaker{
 

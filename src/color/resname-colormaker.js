@@ -53,6 +53,9 @@ var ResidueColors = {
 var DefaultResidueColor = 0xFF00FF;
 
 
+/**
+ * Color by residue name
+ */
 class ResnameColormaker extends Colormaker{
 
     atomColor( a ){

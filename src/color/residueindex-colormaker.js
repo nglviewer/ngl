@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by residue index
+ */
 class ResidueindexColormaker extends Colormaker{
 
     constructor( params ){
