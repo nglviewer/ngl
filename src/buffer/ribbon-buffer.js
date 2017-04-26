@@ -17,17 +17,19 @@ const quadIndices = new Uint16Array( [
 ] );
 
 
+/**
+ * Ribbon buffer. Draws a thin ribbon.
+ */
 class RibbonBuffer extends MeshBuffer{
 
     /**
-     * make tube mesh buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.normal - normals
      * @param  {Float32Array} data.dir - binormals
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){

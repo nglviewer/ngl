@@ -8,11 +8,10 @@
 import MeshBuffer from "./mesh-buffer.js";
 
 
-class SurfaceBuffer extends MeshBuffer{
-
-	get type (){ return "surface"; }
-
-}
+/**
+ * Surface buffer. Identical to a {@link MeshBuffer}, just a different class.
+ */
+class SurfaceBuffer extends MeshBuffer{}
 
 
 export default SurfaceBuffer;

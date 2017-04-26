@@ -14,10 +14,22 @@ import { defaults } from "../utils.js";
 import BoxBuffer from "./box-buffer.js";
 
 
+/**
+ * Hyperball stick impostor buffer.
+ *
+ * @example
+ * var hyperballStickImpostorBuffer = new HyperballStickImpostorBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 2, 2, 2 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius1: new Float32Array( [ 1 ] ),
+ *     radius2: new Float32Array( [ 2 ] )
+ * } );
+ */
 class HyperballStickImpostorBuffer extends BoxBuffer{
 
     /**
-     * make hyperball stick impostor buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position1 - from positions
      * @param  {Float32Array} data.position2 - to positions
@@ -25,7 +37,7 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
      * @param  {Float32Array} data.color2 - to colors
      * @param  {Float32Array} data.radius1 - from radii
      * @param  {Float32Array} data.radius2 - to radii
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){

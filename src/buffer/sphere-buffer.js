@@ -17,7 +17,7 @@ import SphereImpostorBuffer from "./sphereimpostor-buffer.js";
  * @implements {Buffer}
  *
  * @example
- * var sphereBuffer = new NGL.SphereBuffer( {
+ * var sphereBuffer = new SphereBuffer( {
  *     position: new Float32Array( [ 0, 0, 0 ] ),
  *     color: new Float32Array( [ 1, 0, 0 ] ),
  *     radius: new Float32Array( [ 1 ] )

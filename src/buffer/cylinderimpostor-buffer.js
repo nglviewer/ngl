@@ -14,6 +14,18 @@ import { defaults } from "../utils.js";
 import AlignedBoxBuffer from "./alignedbox-buffer.js";
 
 
+/**
+ * Cylinder impostor buffer.
+ *
+ * @example
+ * var cylinderimpostorBuffer = new CylinderImpostorBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 1, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
 class CylinderImpostorBuffer extends AlignedBoxBuffer{
 
     /**
@@ -24,7 +36,7 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
      * @param  {Float32Array} data.color - from colors
      * @param  {Float32Array} data.color2 - to colors
      * @param  {Float32Array} data.radius - radii
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){

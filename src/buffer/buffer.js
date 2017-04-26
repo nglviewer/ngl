@@ -57,14 +57,18 @@ const itemSize = {
 };
 
 
+/**
+ * Buffer class. Base class for buffers.
+ * @interface
+ */
 class Buffer{
 
     /**
-     * Create a buffer
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.color - colors
-     * @param  {Float32Array} data.index - triangle indices
+     * @param {Object} data - attribute object
+     * @param {Float32Array} data.position - positions
+     * @param {Float32Array} data.color - colors
+     * @param {Float32Array} data.index - triangle indices
+     * @param {Picker} [data.picking] - picking ids
      * @param {BufferParameters} params - parameters object
      */
     constructor( data, params ){

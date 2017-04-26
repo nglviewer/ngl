@@ -17,7 +17,7 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
  * @implements {Buffer}
  *
  * @example
- * var cylinderBuffer = new NGL.CylinderBuffer( {
+ * var cylinderBuffer = new CylinderBuffer( {
  *     position1: new Float32Array( [ 0, 0, 0 ] ),
  *     position2: new Float32Array( [ 1, 1, 1 ] ),
  *     color: new Float32Array( [ 1, 0, 0 ] ),
@@ -27,7 +27,7 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
  */
 class CylinderBuffer{
 
-    /**\
+    /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position1 - from positions
      * @param {Float32Array} data.position2 - to positions

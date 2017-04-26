@@ -13,7 +13,7 @@ import ConeGeometryBuffer from "./conegeometry-buffer.js";
  * @implements {Buffer}
  *
  * @example
- * var coneBuffer = new NGL.ConeBuffer( {
+ * var coneBuffer = new ConeBuffer( {
  *     position1: new Float32Array( [ 0, 0, 0 ] ),
  *     position2: new Float32Array( [ 1, 1, 1 ] ),
  *     color: new Float32Array( [ 1, 0, 0 ] ),

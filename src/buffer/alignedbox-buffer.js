@@ -25,6 +25,11 @@ const mappingIndices = new Uint16Array( [
 ] );
 
 
+/**
+ * Aligned box buffer. Draws boxes where one side is always screen-space aligned.
+ * Used to render cylinder imposters.
+ * @interface
+ */
 class AlignedBoxBuffer extends MappedBuffer{
 
     get mapping (){ return mapping; }

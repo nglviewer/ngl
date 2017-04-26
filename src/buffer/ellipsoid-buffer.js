@@ -12,7 +12,7 @@ import EllipsoidGeometryBuffer from "./ellipsoidgeometry-buffer.js";
  * Ellipsoid buffer. Returns an {@link EllipsoidGeometryBuffer}
  *
  * @example
- * var ellipsoidBuffer = new NGL.EllipsoidBuffer( {
+ * var ellipsoidBuffer = new EllipsoidBuffer( {
  *     position: new Float32Array( [ 0, 0, 0 ] ),
  *     color: new Float32Array( [ 1, 0, 0 ] ),
  *     radius: new Float32Array( [ 1 ] ),

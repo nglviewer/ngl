@@ -16,10 +16,12 @@ var vTangent = new Vector3();
 var vMeshNormal = new Vector3();
 
 
+/**
+ * Tube mesh buffer. Draws a tube.
+ */
 class TubeMeshBuffer extends MeshBuffer{
 
     /**
-     * make tube mesh buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.normal - normals
@@ -27,7 +29,7 @@ class TubeMeshBuffer extends MeshBuffer{
      * @param  {Float32Array} data.tangent - tangents
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){

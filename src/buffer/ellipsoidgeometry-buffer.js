@@ -17,6 +17,18 @@ const up = new Vector3();
 const eye = new Vector3( 0, 0, 0 );
 
 
+/**
+ * Ellipsoid geometry buffer. Draws ellipsoids.
+ *
+ * @example
+ * var ellipsoidGeometryBuffer = new EllipsoidGeometryBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] ),
+ *     majorAxis: new Float32Array( [ 1, 1, 0 ] ),
+ *     minorAxis: new Float32Array( [ 0.5, 0, 0.5 ] ),
+ * } );
+ */
 class EllipsoidGeometryBuffer extends GeometryBuffer{
 
     // position, color, radius, majorAxis, minorAxis, picking

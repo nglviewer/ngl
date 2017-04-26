@@ -73,10 +73,18 @@ function makePointTexture( params ){
 }
 
 
+/**
+ * Point buffer. Draws points. Optionally textured.
+ *
+ * @example
+ * var pointBuffer = new PointBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] )
+ * } );
+ */
 class PointBuffer extends Buffer{
 
     /**
-     * make point buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.color - colors

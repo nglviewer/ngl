@@ -276,14 +276,24 @@ class TextAtlas{
  */
 
 
+/**
+ * Text buffer. Renders screen-aligned text strings.
+ *
+ * @example
+ * var textBuffer = new TextBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     size: new Float32Array( [ 2 ] ),
+ *     text: [ "Hello" ]
+ * } );
+ */
 class TextBuffer extends QuadBuffer{
 
     /**
-     * make text buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.size - sizes
      * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.size - sizes
      * @param  {String[]} data.text - text strings
      * @param  {TextBufferParameters} params - parameters object
      */

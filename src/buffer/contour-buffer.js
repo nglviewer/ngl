@@ -10,6 +10,9 @@ import "../shader/Line.frag";
 import Buffer from "./buffer.js";
 
 
+/**
+ * Contour buffer. A buffer that draws lines (instead of triangle meshes).
+ */
 class ContourBuffer extends Buffer{
 
     get line (){ return true; }

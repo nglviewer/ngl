@@ -30,8 +30,20 @@ const quadUvs = new Float32Array( [
 ] );
 
 
+/**
+ * Image buffer. Draw a single image. Optionally interpolate.
+ */
 class ImageBuffer extends Buffer{
 
+    /**
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position - image position
+     * @param {Float32Array} data.imageData - image data, rgba channels
+     * @param {Float32Array} data.width - image width
+     * @param {Float32Array} data.height - image height
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     */
     constructor( data, params ){
 
         const d = data || {};

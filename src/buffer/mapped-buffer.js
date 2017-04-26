@@ -10,6 +10,11 @@ import Buffer from "./buffer.js";
 import { calculateCenterArray, serialArray } from "../math/array-utils.js";
 
 
+/**
+ * Mapped buffer. Sends mapping attribute to the GPU and repeats data in
+ * others attributes. Used to render imposters.
+ * @interface
+ */
 class MappedBuffer extends Buffer{
 
     constructor( data, params ){

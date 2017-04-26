@@ -17,9 +17,22 @@ const matrix = new Matrix4();
 const normalMatrix = new Matrix3();
 
 
+/**
+ * Geometry buffer. Base class for geometry-based buffers. Used to draw
+ * geometry primitives given a mesh.
+ * @interface
+ */
 class GeometryBuffer extends MeshBuffer{
 
-    // position, color, picking
+    /**
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position - positions
+     * @param {Float32Array} data.color - colors
+     * @param {Float32Array} data.radius - radii
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     * @param {Geometry|BufferGeometry} geo - geometry object
+     */
     constructor( data, params, geo ){
 
         var d = data || {};
