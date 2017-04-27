@@ -86,7 +86,7 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
 
     }
 
-    get impostor (){ return true; }
+    get isImpostor (){ return true; }
     get vertexShader (){ return "CylinderImpostor.vert"; }
     get fragmentShader (){ return "CylinderImpostor.frag"; }
 

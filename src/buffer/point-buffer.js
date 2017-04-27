@@ -197,7 +197,7 @@ class PointBuffer extends Buffer{
 
     }
 
-    get point (){ return true; }
+    get isPoint (){ return true; }
     get vertexShader (){ return "Point.vert"; }
     get fragmentShader (){ return "Point.frag"; }
 

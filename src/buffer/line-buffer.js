@@ -123,7 +123,7 @@ class LineBuffer extends Buffer{
 
     }
 
-    get line (){ return true; }
+    get isLine (){ return true; }
     get vertexShader (){ return "Line.vert"; }
     get fragmentShader (){ return "Line.frag"; }
 

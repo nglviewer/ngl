@@ -225,7 +225,7 @@ class Buffer{
         } );
         m.vertexColors = VertexColors;
         m.extensions.derivatives = this.flatShaded;
-        m.extensions.fragDepth = this.impostor;
+        m.extensions.fragDepth = this.isImpostor;
         m.clipNear = this.clipNear;
 
         var wm = new ShaderMaterial( {
@@ -257,7 +257,7 @@ class Buffer{
             blending: NoBlending
         } );
         pm.vertexColors = VertexColors;
-        pm.extensions.fragDepth = this.impostor;
+        pm.extensions.fragDepth = this.isImpostor;
         pm.clipNear = this.clipNear;
 
         this.material = m;
@@ -403,13 +403,13 @@ class Buffer{
 
         var renderOrder = 0;
 
-        if( this.type === "text" ){
+        if( this.isText ){
 
             renderOrder = 1;
 
         }else if( this.transparent ){
 
-            if( this.type === "surface" ){
+            if( this.isSurface ){
                 renderOrder = 3;
             }else{
                 renderOrder = 2;
@@ -427,11 +427,11 @@ class Buffer{
 
         if( !this.material ) this.makeMaterial();
 
-        if( this.line ){
+        if( this.isLine ){
 
             mesh = new LineSegments( this.geometry, this.material );
 
-        }else if( this.point ){
+        }else if( this.isPoint ){
 
             mesh = new Points( this.geometry, this.material );
             if( this.sortParticles ) mesh.sortParticles = true;

@@ -51,7 +51,7 @@ class SphereImpostorBuffer extends QuadBuffer{
 
     }
 
-    get impostor (){ return true; }
+    get isImpostor (){ return true; }
     get vertexShader (){ return "SphereImpostor.vert"; }
     get fragmentShader (){ return "SphereImpostor.frag"; }
 

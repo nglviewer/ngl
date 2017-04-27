@@ -80,7 +80,7 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
 
     }
 
-    get impostor (){ return true; }
+    get isImpostor (){ return true; }
     get vertexShader (){ return "HyperballStickImpostor.vert"; }
     get fragmentShader (){ return "HyperballStickImpostor.frag"; }
 

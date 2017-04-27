@@ -638,7 +638,7 @@ class TextBuffer extends QuadBuffer{
 
     }
 
-    get type (){ return "text"; }  // TODO needed?
+    get isText (){ return true; }
     get vertexShader (){ return "SDFFont.vert"; }
     get fragmentShader (){ return "SDFFont.frag"; }
 
