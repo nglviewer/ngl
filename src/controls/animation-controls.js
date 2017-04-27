@@ -187,11 +187,3 @@ class AnimationControls{
 
 
 export default AnimationControls;
-
-export {
-    Animation,
-    SpinAnimation,
-    MoveAnimation,
-    ZoomAnimation,
-    RotateAnimation
-};
