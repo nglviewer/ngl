@@ -12,50 +12,36 @@ import { defaults } from "../utils.js";
 
 
 /**
- * {@link Signal}, dispatched on mouse move
- * @event MouseObserver#moved
- */
-
-/**
- * {@link Signal}, dispatched on mouse scroll
- * @event MouseObserver#scrolled
- */
-
-/**
- * {@link Signal}, dispatched on mouse drag
- * @event MouseObserver#dragged
- */
-
-/**
- * {@link Signal}, dispatched on mouse drop
- * @event MouseObserver#dropped
- */
-
-/**
- * {@link Signal}, dispatched on mouse click
- * @event MouseObserver#clicked
- */
-
-/**
- * {@link Signal}, dispatched on mouse hover
- * @event MouseObserver#hovered
+ * @example
+ * mouseObserver.signals.scroll.add( function( delta ){ ... } );
+ *
+ * @typedef {Object} MouseSignals
+ * @property {Signal<Integer, Integer>} moved - on move: deltaX, deltaY
+ * @property {Signal<Number>} scrolled - on scroll: delta
+ * @property {Signal<Integer, Integer>} dragged - on drag: deltaX, deltaY
+ * @property {Signal} dropped - on drop
+ * @property {Signal} clicked - on click
+ * @property {Signal} hovered - on hover
  */
 
 
 /**
- * Observer mouse event
+ * Mouse observer
  */
 class MouseObserver{
 
     /**
-     * mouse observer constructor
      * @param  {Element} domElement - the dom element to observe mouse events in
      * @param  {Object} params - parameters object
-     * @param  {Integer} params.hoverTimeout - timeout until the {@link MouseObserver#event:hovered|hovered}
+     * @param  {Integer} params.hoverTimeout - timeout until the {@link MouseSignals.hovered}
      *                                         signal is fired, set to -1 to ignore hovering
      */
     constructor( domElement, params ){
 
+        /**
+         * Events emitted by the mouse observer
+         * @type {MouseSignals}
+         */
         this.signals = {
             moved: new Signal(),
             scrolled: new Signal(),
@@ -71,36 +57,94 @@ class MouseObserver{
 
         this.domElement = domElement;
 
+        /**
+         * Position on page
+         * @type {Vector2}
+         */
         this.position = new Vector2();
+        /**
+         * Previous position on page
+         * @type {Vector2}
+         */
         this.prevPosition = new Vector2();
+        /**
+         * Position on page when clicked
+         * @type {Vector2}
+         */
         this.down = new Vector2();
+        /**
+         * Position on dom element
+         * @type {Vector2}
+         */
         this.canvasPosition = new Vector2();
+        /**
+         * Flag indicating if the mouse is moving
+         * @type {Boolean}
+         */
         this.moving = false;
+        /**
+         * Flag indicating if the mouse is hovering
+         * @type {Boolean}
+         */
         this.hovering = true;
+        /**
+         * Flag indicating if there was a scolling event
+         * since the last mouse move
+         * @type {Boolean}
+         */
         this.scrolled = false;
+        /**
+         * Timestamp of last mouse move
+         * @type {Number}
+         */
         this.lastMoved = Infinity;
+        /**
+         * Indicates which mouse button was pressed:
+         * 0: No button; 1: Left button; 2: Middle button; 3: Right button
+         * @type {Integer}
+         */
         this.which = undefined;
+        /**
+         * Flag indicating if the mouse is pressed down
+         * @type {Boolean}
+         */
         this.pressed = undefined;
+        /**
+         * Flag indicating if the alt key is pressed
+         * @type {Boolean}
+         */
         this.altKey = undefined;
+        /**
+         * Flag indicating if the ctrl key is pressed
+         * @type {Boolean}
+         */
         this.ctrlKey = undefined;
+        /**
+         * Flag indicating if the meta key is pressed
+         * @type {Boolean}
+         */
         this.metaKey = undefined;
+        /**
+         * Flag indicating if the shift key is pressed
+         * @type {Boolean}
+         */
         this.shiftKey = undefined;
 
-        this.listen = this.listen.bind( this );
-        this.onMousewheel = this.onMousewheel.bind( this );
-        this.onMousemove = this.onMousemove.bind( this );
-        this.onMousedown = this.onMousedown.bind( this );
-        this.onMouseup = this.onMouseup.bind( this );
+        this._listen = this._listen.bind( this );
+        this._onMousewheel = this._onMousewheel.bind( this );
+        this._onMousemove = this._onMousemove.bind( this );
+        this._onMousedown = this._onMousedown.bind( this );
+        this._onMouseup = this._onMouseup.bind( this );
 
         this.listen();
 
-        domElement.addEventListener( 'mousewheel', this.onMousewheel );
-        domElement.addEventListener( 'wheel', this.onMousewheel );
-        domElement.addEventListener( 'MozMousePixelScroll', this.onMousewheel );
-        domElement.addEventListener( 'mousemove', this.onMousemove );
-        domElement.addEventListener( 'mousedown', this.onMousedown );
-        domElement.addEventListener( 'mouseup', this.onMouseup );
-        domElement.addEventListener( 'contextmenu', this.onContextmenu );
+        domElement.addEventListener( 'mousewheel', this._onMousewheel );
+        domElement.addEventListener( 'wheel', this._onMousewheel );
+        domElement.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
+        domElement.addEventListener( 'mousemove', this._onMousemove );
+        domElement.addEventListener( 'mousedown', this._onMousedown );
+        domElement.addEventListener( 'mouseup', this._onMouseup );
+        domElement.addEventListener( 'contextmenu', this._onContextmenu );
 
     }
 
@@ -111,10 +155,10 @@ class MouseObserver{
 
     /**
      * listen to mouse actions
-     * @fires MouseObserver#hovered
+     * @emits {MouseSignals.hovered} when hovered
      * @return {undefined}
      */
-    listen(){
+    _listen(){
         if( performance.now() - this.lastMoved > this.hoverTimeout ){
             this.moving = false;
         }
@@ -130,13 +174,13 @@ class MouseObserver{
 
     /**
      * handle mouse scroll
-     * @fires MouseObserver#scrolled
+     * @emits {MouseSignals.scrolled} when scrolled
      * @param  {Event} event - mouse event
      * @return {undefined}
      */
-    onMousewheel( event ){
+    _onMousewheel( event ){
         event.preventDefault();
-        this.setKeys( event );
+        this._setKeys( event );
 
         var delta = 0;
         if( event.wheelDelta ){
@@ -159,20 +203,20 @@ class MouseObserver{
 
     /**
      * handle mouse move
-     * @fires MouseObserver#moved
-     * @fires MouseObserver#dragged
+     * @emits {MouseSignals.moved} when moved
+     * @emits {MouseSignals.dragged} when dragged
      * @param  {Event} event - mouse event
      * @return {undefined}
      */
-    onMousemove( event ){
+    _onMousemove( event ){
         event.preventDefault();
-        this.setKeys( event );
+        this._setKeys( event );
         this.moving = true;
         this.hovering = false;
         this.lastMoved = performance.now();
         this.prevPosition.copy( this.position );
         this.position.set( event.layerX, event.layerY );
-        this.setCanvasPosition( event );
+        this._setCanvasPosition( event );
         var x = this.prevPosition.x - this.position.x;
         var y = this.prevPosition.y - this.position.y;
         this.signals.moved.dispatch( x, y );
@@ -181,9 +225,9 @@ class MouseObserver{
         }
     }
 
-    onMousedown( event ){
+    _onMousedown( event ){
         event.preventDefault();
-        this.setKeys( event );
+        this._setKeys( event );
         this.moving = false;
         this.hovering = false;
         this.down.set( event.layerX, event.layerY );
@@ -194,14 +238,14 @@ class MouseObserver{
 
     /**
      * handle mouse up
-     * @fires MouseObserver#clicked
-     * @fires MouseObserver#dropped
+     * @emits {MouseSignals.clicked} when clicked
+     * @emits {MouseSignals.dropped} when dropped
      * @param  {Event} event - mouse event
      * @return {undefined}
      */
-    onMouseup( event ){
+    _onMouseup( event ){
         event.preventDefault();
-        this.setKeys( event );
+        this._setKeys( event );
         this.signals.clicked.dispatch();
         // if( this.distance() > 3 || event.which === RightMouseButton ){
         //     this.signals.dropped.dispatch();
@@ -210,22 +254,22 @@ class MouseObserver{
         this.pressed = undefined;
     }
 
-    onContextmenu( event ){
+    _onContextmenu( event ){
         event.preventDefault();
     }
 
-    distance(){
+    _distance(){
         return this.position.distanceTo( this.down );
     }
 
-    setCanvasPosition( event ){
+    _setCanvasPosition( event ){
         var box = this.domElement.getBoundingClientRect();
         var offsetX = event.clientX - box.left;
         var offsetY = event.clientY - box.top;
         this.canvasPosition.set( offsetX, box.height - offsetY );
     }
 
-    setKeys( event ){
+    _setKeys( event ){
         this.altKey = event.altKey;
         this.ctrlKey = event.ctrlKey;
         this.metaKey = event.metaKey;
@@ -234,13 +278,13 @@ class MouseObserver{
 
     dispose(){
         var domElement = this.domElement;
-        domElement.removeEventListener( 'mousewheel', this.onMousewheel );
-        domElement.removeEventListener( 'wheel', this.onMousewheel );
-        domElement.removeEventListener( 'MozMousePixelScroll', this.onMousewheel );
-        domElement.removeEventListener( 'mousemove', this.onMousemove );
-        domElement.removeEventListener( 'mousedown', this.onMousedown );
-        domElement.removeEventListener( 'mouseup', this.onMouseup );
-        domElement.removeEventListener( 'contextmenu', this.onContextmenu );
+        domElement.removeEventListener( 'mousewheel', this._onMousewheel );
+        domElement.removeEventListener( 'wheel', this._onMousewheel );
+        domElement.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
+        domElement.removeEventListener( 'mousemove', this._onMousemove );
+        domElement.removeEventListener( 'mousedown', this._onMousedown );
+        domElement.removeEventListener( 'mouseup', this._onMouseup );
+        domElement.removeEventListener( 'contextmenu', this._onContextmenu );
     }
 
 }
