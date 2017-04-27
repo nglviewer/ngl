@@ -5,10 +5,12 @@
  */
 
 
-import { Vector2, Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
+import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { ensureVector3, ensureMatrix4, ensureQuaternion } from "../utils.js";
+import {
+    ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
+} from "../utils.js";
 
 
 /**
@@ -96,7 +98,7 @@ class ViewerControls{
 
     getPositionOnCanvas( position, optionalTarget ){
 
-        const canvasPosition = optionalTarget || new Vector2();
+        const canvasPosition = ensureVector2( optionalTarget );
         const viewer = this.viewer;
 
         tmpCanvasVector.copy( position )
@@ -118,7 +120,7 @@ class ViewerControls{
      */
     getOrientation( optionalTarget ){
 
-        const m = optionalTarget || new Matrix4();
+        const m = ensureMatrix4( optionalTarget );
 
         m.copy( this.viewer.rotationGroup.matrix );
         const z = -this.viewer.camera.position.z;
