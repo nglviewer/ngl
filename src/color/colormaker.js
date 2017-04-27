@@ -30,7 +30,8 @@ import chroma from "../../lib/chroma.es6.js";
 
 
 /**
- * Class for making colors
+ * Class for making colors.
+ * @interface
  */
 class Colormaker{
 

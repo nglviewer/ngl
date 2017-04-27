@@ -1,4 +1,6 @@
 
+# Selection Language
+
 Selections (or 'Sele' for short) strings can be input at various places in the user interface or when scripting. They are used to limit which atoms/residues are shown in a [molecular representation]{@tutorial molecular-representations} or what atoms are loaded from a trajectory.
 
 

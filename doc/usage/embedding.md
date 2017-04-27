@@ -1,3 +1,7 @@
+
+# Embedding
+
+
 For embedding the viewer into other websites a single JavaScript file is available `ngl.js`.
 
 ## Example

@@ -1,4 +1,6 @@
 
+# File Formats
+
 The following file formats are supported. Files can be compressed with gzip. Format detection is based on the file extension.
 
 Structures

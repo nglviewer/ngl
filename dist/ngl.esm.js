@@ -732,6 +732,99 @@ if ( Number.EPSILON === undefined ) {
 
 }
 
+if ( Number.isInteger === undefined ) {
+
+	// Missing in IE
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+
+	Number.isInteger = function ( value ) {
+
+		return typeof value === 'number' && isFinite( value ) && Math.floor( value ) === value;
+
+	};
+
+}
+
+//
+
+if ( Math.sign === undefined ) {
+
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/sign
+
+	Math.sign = function ( x ) {
+
+		return ( x < 0 ) ? - 1 : ( x > 0 ) ? 1 : + x;
+
+	};
+
+}
+
+if ( Function.prototype.name === undefined ) {
+
+	// Missing in IE
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+
+	Object.defineProperty( Function.prototype, 'name', {
+
+		get: function () {
+
+			return this.toString().match( /^\s*function\s*([^\(\s]*)/ )[ 1 ];
+
+		}
+
+	} );
+
+}
+
+if ( Object.assign === undefined ) {
+
+	// Missing in IE
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+
+	( function () {
+
+		Object.assign = function ( target ) {
+
+			'use strict';
+			var arguments$1 = arguments;
+
+
+			if ( target === undefined || target === null ) {
+
+				throw new TypeError( 'Cannot convert undefined or null to object' );
+
+			}
+
+			var output = Object( target );
+
+			for ( var index = 1; index < arguments.length; index ++ ) {
+
+				var source = arguments$1[ index ];
+
+				if ( source !== undefined && source !== null ) {
+
+					for ( var nextKey in source ) {
+
+						if ( Object.prototype.hasOwnProperty.call( source, nextKey ) ) {
+
+							output[ nextKey ] = source[ nextKey ];
+
+						}
+
+					}
+
+				}
+
+			}
+
+			return output;
+
+		};
+
+	} )();
+
+}
+
 /**
  * https://github.com/mrdoob/eventdispatcher.js/
  */
@@ -825,7 +918,7 @@ Object.assign( EventDispatcher.prototype, {
 
 } );
 
-var REVISION = '85dev';
+var REVISION = '85';
 var CullFaceNone = 0;
 var CullFaceBack = 1;
 var CullFaceFront = 2;
@@ -21126,6 +21219,12 @@ function WebGLRenderer( parameters ) {
 
 	};
 
+	function absNumericalSort( a, b ) {
+
+		return Math.abs( b[ 0 ] ) - Math.abs( a[ 0 ] );
+
+	}
+
 	this.renderBufferDirect = function ( camera, fog, geometry, material, object, group ) {
 
 		state.setMaterial( material );
@@ -21464,13 +21563,47 @@ function WebGLRenderer( parameters ) {
 
 	}
 
-	// Sorting
+	// Compile
 
-	function absNumericalSort( a, b ) {
+	this.compile = function ( scene, camera ) {
 
-		return Math.abs( b[ 0 ] ) - Math.abs( a[ 0 ] );
+		lights = [];
 
-	}
+		scene.traverse( function ( object ) {
+
+			if ( object.isLight ) {
+
+				lights.push( object );
+
+			}
+
+		} );
+
+		setupLights( lights, camera );
+
+		scene.traverse( function ( object ) {
+
+			if ( object.material ) {
+
+				if ( Array.isArray( object.material ) ) {
+
+					for ( var i = 0; i < object.material.length; i ++ ) {
+
+						initMaterial( object.material[ i ], scene.fog, object );
+
+					}
+
+				} else {
+
+					initMaterial( object.material, scene.fog, object );
+
+				}
+
+			}
+
+		} );
+
+	};
 
 	// Rendering
 
@@ -39665,6 +39798,29 @@ Object.assign( AnimationMixer.prototype, EventDispatcher.prototype, {
 } );
 
 /**
+ * @author mrdoob / http://mrdoob.com/
+ */
+
+function Uniform( value ) {
+
+	if ( typeof value === 'string' ) {
+
+		console.warn( 'THREE.Uniform: Type parameter is no longer needed.' );
+		value = arguments[ 1 ];
+
+	}
+
+	this.value = value;
+
+}
+
+Uniform.prototype.clone = function () {
+
+	return new Uniform( this.value.clone === undefined ? this.value : this.value.clone() );
+
+};
+
+/**
  * @author benaadams / https://twitter.com/ben_a_adams
  */
 
@@ -41026,6 +41182,1280 @@ CameraHelper.prototype.update = function () {
 	};
 
 }();
+
+/**
+ * @author zz85 https://github.com/zz85
+ *
+ * Centripetal CatmullRom Curve - which is useful for avoiding
+ * cusps and self-intersections in non-uniform catmull rom curves.
+ * http://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
+ *
+ * curve.type accepts centripetal(default), chordal and catmullrom
+ * curve.tension is used for catmullrom which defaults to 0.5
+ */
+
+
+/*
+Based on an optimized c++ solution in
+ - http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
+ - http://ideone.com/NoEbVM
+
+This CubicPoly class could be used for reusing some variables and calculations,
+but for three.js curve use, it could be possible inlined and flatten into a single function call
+which can be placed in CurveUtils.
+*/
+
+function CubicPoly() {
+
+	var c0 = 0, c1 = 0, c2 = 0, c3 = 0;
+
+	/*
+	 * Compute coefficients for a cubic polynomial
+	 *   p(s) = c0 + c1*s + c2*s^2 + c3*s^3
+	 * such that
+	 *   p(0) = x0, p(1) = x1
+	 *  and
+	 *   p'(0) = t0, p'(1) = t1.
+	 */
+	function init( x0, x1, t0, t1 ) {
+
+		c0 = x0;
+		c1 = t0;
+		c2 = - 3 * x0 + 3 * x1 - 2 * t0 - t1;
+		c3 = 2 * x0 - 2 * x1 + t0 + t1;
+
+	}
+
+	return {
+
+		initCatmullRom: function ( x0, x1, x2, x3, tension ) {
+
+			init( x1, x2, tension * ( x2 - x0 ), tension * ( x3 - x1 ) );
+
+		},
+
+		initNonuniformCatmullRom: function ( x0, x1, x2, x3, dt0, dt1, dt2 ) {
+
+			// compute tangents when parameterized in [t1,t2]
+			var t1 = ( x1 - x0 ) / dt0 - ( x2 - x0 ) / ( dt0 + dt1 ) + ( x2 - x1 ) / dt1;
+			var t2 = ( x2 - x1 ) / dt1 - ( x3 - x1 ) / ( dt1 + dt2 ) + ( x3 - x2 ) / dt2;
+
+			// rescale tangents for parametrization in [0,1]
+			t1 *= dt1;
+			t2 *= dt1;
+
+			init( x1, x2, t1, t2 );
+
+		},
+
+		calc: function ( t ) {
+
+			var t2 = t * t;
+			var t3 = t2 * t;
+			return c0 + c1 * t + c2 * t2 + c3 * t3;
+
+		}
+
+	};
+
+}
+
+//
+
+var tmp = new Vector3();
+var px = new CubicPoly();
+var py = new CubicPoly();
+var pz = new CubicPoly();
+
+function CatmullRomCurve3( p /* array of Vector3 */ ) {
+
+	Curve.call( this );
+
+	this.points = p || [];
+	this.closed = false;
+
+}
+
+CatmullRomCurve3.prototype = Object.create( Curve.prototype );
+CatmullRomCurve3.prototype.constructor = CatmullRomCurve3;
+
+CatmullRomCurve3.prototype.getPoint = function ( t ) {
+
+	var points = this.points;
+	var l = points.length;
+
+	if ( l < 2 ) { console.log( 'duh, you need at least 2 points' ); }
+
+	var point = ( l - ( this.closed ? 0 : 1 ) ) * t;
+	var intPoint = Math.floor( point );
+	var weight = point - intPoint;
+
+	if ( this.closed ) {
+
+		intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
+
+	} else if ( weight === 0 && intPoint === l - 1 ) {
+
+		intPoint = l - 2;
+		weight = 1;
+
+	}
+
+	var p0, p1, p2, p3; // 4 points
+
+	if ( this.closed || intPoint > 0 ) {
+
+		p0 = points[ ( intPoint - 1 ) % l ];
+
+	} else {
+
+		// extrapolate first point
+		tmp.subVectors( points[ 0 ], points[ 1 ] ).add( points[ 0 ] );
+		p0 = tmp;
+
+	}
+
+	p1 = points[ intPoint % l ];
+	p2 = points[ ( intPoint + 1 ) % l ];
+
+	if ( this.closed || intPoint + 2 < l ) {
+
+		p3 = points[ ( intPoint + 2 ) % l ];
+
+	} else {
+
+		// extrapolate last point
+		tmp.subVectors( points[ l - 1 ], points[ l - 2 ] ).add( points[ l - 1 ] );
+		p3 = tmp;
+
+	}
+
+	if ( this.type === undefined || this.type === 'centripetal' || this.type === 'chordal' ) {
+
+		// init Centripetal / Chordal Catmull-Rom
+		var pow = this.type === 'chordal' ? 0.5 : 0.25;
+		var dt0 = Math.pow( p0.distanceToSquared( p1 ), pow );
+		var dt1 = Math.pow( p1.distanceToSquared( p2 ), pow );
+		var dt2 = Math.pow( p2.distanceToSquared( p3 ), pow );
+
+		// safety check for repeated points
+		if ( dt1 < 1e-4 ) { dt1 = 1.0; }
+		if ( dt0 < 1e-4 ) { dt0 = dt1; }
+		if ( dt2 < 1e-4 ) { dt2 = dt1; }
+
+		px.initNonuniformCatmullRom( p0.x, p1.x, p2.x, p3.x, dt0, dt1, dt2 );
+		py.initNonuniformCatmullRom( p0.y, p1.y, p2.y, p3.y, dt0, dt1, dt2 );
+		pz.initNonuniformCatmullRom( p0.z, p1.z, p2.z, p3.z, dt0, dt1, dt2 );
+
+	} else if ( this.type === 'catmullrom' ) {
+
+		var tension = this.tension !== undefined ? this.tension : 0.5;
+		px.initCatmullRom( p0.x, p1.x, p2.x, p3.x, tension );
+		py.initCatmullRom( p0.y, p1.y, p2.y, p3.y, tension );
+		pz.initCatmullRom( p0.z, p1.z, p2.z, p3.z, tension );
+
+	}
+
+	return new Vector3( px.calc( weight ), py.calc( weight ), pz.calc( weight ) );
+
+};
+
+//
+
+Curve.create = function ( construct, getPoint ) {
+
+	console.log( 'THREE.Curve.create() has been deprecated' );
+
+	construct.prototype = Object.create( Curve.prototype );
+	construct.prototype.constructor = construct;
+	construct.prototype.getPoint = getPoint;
+
+	return construct;
+
+};
+
+//
+
+function Spline( points ) {
+
+	console.warn( 'THREE.Spline has been removed. Use THREE.CatmullRomCurve3 instead.' );
+
+	CatmullRomCurve3.call( this, points );
+	this.type = 'catmullrom';
+
+}
+
+Spline.prototype = Object.create( CatmullRomCurve3.prototype );
+
+Object.assign( Spline.prototype, {
+
+	initFromArray: function ( a ) {
+
+		console.error( 'THREE.Spline: .initFromArray() has been removed.' );
+
+	},
+	getControlPointsArray: function ( optionalTarget ) {
+
+		console.error( 'THREE.Spline: .getControlPointsArray() has been removed.' );
+
+	},
+	reparametrizeByArcLength: function ( samplingCoef ) {
+
+		console.error( 'THREE.Spline: .reparametrizeByArcLength() has been removed.' );
+
+	}
+
+} );
+
+//
+
+Object.assign( Box2.prototype, {
+
+	center: function ( optionalTarget ) {
+
+		console.warn( 'THREE.Box2: .center() has been renamed to .getCenter().' );
+		return this.getCenter( optionalTarget );
+
+	},
+	empty: function () {
+
+		console.warn( 'THREE.Box2: .empty() has been renamed to .isEmpty().' );
+		return this.isEmpty();
+
+	},
+	isIntersectionBox: function ( box ) {
+
+		console.warn( 'THREE.Box2: .isIntersectionBox() has been renamed to .intersectsBox().' );
+		return this.intersectsBox( box );
+
+	},
+	size: function ( optionalTarget ) {
+
+		console.warn( 'THREE.Box2: .size() has been renamed to .getSize().' );
+		return this.getSize( optionalTarget );
+
+	}
+} );
+
+Object.assign( Box3.prototype, {
+
+	center: function ( optionalTarget ) {
+
+		console.warn( 'THREE.Box3: .center() has been renamed to .getCenter().' );
+		return this.getCenter( optionalTarget );
+
+	},
+	empty: function () {
+
+		console.warn( 'THREE.Box3: .empty() has been renamed to .isEmpty().' );
+		return this.isEmpty();
+
+	},
+	isIntersectionBox: function ( box ) {
+
+		console.warn( 'THREE.Box3: .isIntersectionBox() has been renamed to .intersectsBox().' );
+		return this.intersectsBox( box );
+
+	},
+	isIntersectionSphere: function ( sphere ) {
+
+		console.warn( 'THREE.Box3: .isIntersectionSphere() has been renamed to .intersectsSphere().' );
+		return this.intersectsSphere( sphere );
+
+	},
+	size: function ( optionalTarget ) {
+
+		console.warn( 'THREE.Box3: .size() has been renamed to .getSize().' );
+		return this.getSize( optionalTarget );
+
+	}
+} );
+
+Line3.prototype.center = function ( optionalTarget ) {
+
+	console.warn( 'THREE.Line3: .center() has been renamed to .getCenter().' );
+	return this.getCenter( optionalTarget );
+
+};
+
+_Math.random16 = function () {
+
+	console.warn( 'THREE.Math.random16() has been deprecated. Use Math.random() instead.' );
+	return Math.random();
+
+};
+
+Object.assign( Matrix3.prototype, {
+
+	flattenToArrayOffset: function ( array, offset ) {
+
+		console.warn( "THREE.Matrix3: .flattenToArrayOffset() has been deprecated. Use .toArray() instead." );
+		return this.toArray( array, offset );
+
+	},
+	multiplyVector3: function ( vector ) {
+
+		console.warn( 'THREE.Matrix3: .multiplyVector3() has been removed. Use vector.applyMatrix3( matrix ) instead.' );
+		return vector.applyMatrix3( this );
+
+	},
+	multiplyVector3Array: function ( a ) {
+
+		console.warn( 'THREE.Matrix3: .multiplyVector3Array() has been renamed. Use matrix.applyToVector3Array( array ) instead.' );
+		return this.applyToVector3Array( a );
+
+	},
+	applyToBuffer: function( buffer, offset, length ) {
+
+		console.warn( 'THREE.Matrix3: .applyToBuffer() has been removed. Use matrix.applyToBufferAttribute( attribute ) instead.' );
+		return this.applyToBufferAttribute( buffer );
+
+	},
+	applyToVector3Array: function( array, offset, length ) {
+
+		console.error( 'THREE.Matrix3: .applyToVector3Array() has been removed.' );
+
+	}
+
+} );
+
+Object.assign( Matrix4.prototype, {
+
+	extractPosition: function ( m ) {
+
+		console.warn( 'THREE.Matrix4: .extractPosition() has been renamed to .copyPosition().' );
+		return this.copyPosition( m );
+
+	},
+	flattenToArrayOffset: function ( array, offset ) {
+
+		console.warn( "THREE.Matrix4: .flattenToArrayOffset() has been deprecated. Use .toArray() instead." );
+		return this.toArray( array, offset );
+
+	},
+	getPosition: function () {
+
+		var v1;
+
+		return function getPosition() {
+
+			if ( v1 === undefined ) { v1 = new Vector3(); }
+			console.warn( 'THREE.Matrix4: .getPosition() has been removed. Use Vector3.setFromMatrixPosition( matrix ) instead.' );
+			return v1.setFromMatrixColumn( this, 3 );
+
+		};
+
+	}(),
+	setRotationFromQuaternion: function ( q ) {
+
+		console.warn( 'THREE.Matrix4: .setRotationFromQuaternion() has been renamed to .makeRotationFromQuaternion().' );
+		return this.makeRotationFromQuaternion( q );
+
+	},
+	multiplyToArray: function () {
+
+		console.warn( 'THREE.Matrix4: .multiplyToArray() has been removed.' );
+
+	},
+	multiplyVector3: function ( vector ) {
+
+		console.warn( 'THREE.Matrix4: .multiplyVector3() has been removed. Use vector.applyMatrix4( matrix ) instead.' );
+		return vector.applyMatrix4( this );
+
+	},
+	multiplyVector4: function ( vector ) {
+
+		console.warn( 'THREE.Matrix4: .multiplyVector4() has been removed. Use vector.applyMatrix4( matrix ) instead.' );
+		return vector.applyMatrix4( this );
+
+	},
+	multiplyVector3Array: function ( a ) {
+
+		console.warn( 'THREE.Matrix4: .multiplyVector3Array() has been renamed. Use matrix.applyToVector3Array( array ) instead.' );
+		return this.applyToVector3Array( a );
+
+	},
+	rotateAxis: function ( v ) {
+
+		console.warn( 'THREE.Matrix4: .rotateAxis() has been removed. Use Vector3.transformDirection( matrix ) instead.' );
+		v.transformDirection( this );
+
+	},
+	crossVector: function ( vector ) {
+
+		console.warn( 'THREE.Matrix4: .crossVector() has been removed. Use vector.applyMatrix4( matrix ) instead.' );
+		return vector.applyMatrix4( this );
+
+	},
+	translate: function () {
+
+		console.error( 'THREE.Matrix4: .translate() has been removed.' );
+
+	},
+	rotateX: function () {
+
+		console.error( 'THREE.Matrix4: .rotateX() has been removed.' );
+
+	},
+	rotateY: function () {
+
+		console.error( 'THREE.Matrix4: .rotateY() has been removed.' );
+
+	},
+	rotateZ: function () {
+
+		console.error( 'THREE.Matrix4: .rotateZ() has been removed.' );
+
+	},
+	rotateByAxis: function () {
+
+		console.error( 'THREE.Matrix4: .rotateByAxis() has been removed.' );
+
+	},
+	applyToBuffer: function( buffer, offset, length ) {
+
+		console.warn( 'THREE.Matrix4: .applyToBuffer() has been removed. Use matrix.applyToBufferAttribute( attribute ) instead.' );
+		return this.applyToBufferAttribute( buffer );
+
+	},
+	applyToVector3Array: function( array, offset, length ) {
+
+		console.error( 'THREE.Matrix4: .applyToVector3Array() has been removed.' );
+
+	},
+	makeFrustum: function( left, right, bottom, top, near, far ) {
+
+		console.warn( 'THREE.Matrix4: .makeFrustum() has been removed. Use .makePerspective( left, right, top, bottom, near, far ) instead.' );
+		return this.makePerspective( left, right, top, bottom, near, far );
+
+	}
+
+} );
+
+Plane.prototype.isIntersectionLine = function ( line ) {
+
+	console.warn( 'THREE.Plane: .isIntersectionLine() has been renamed to .intersectsLine().' );
+	return this.intersectsLine( line );
+
+};
+
+Quaternion.prototype.multiplyVector3 = function ( vector ) {
+
+	console.warn( 'THREE.Quaternion: .multiplyVector3() has been removed. Use is now vector.applyQuaternion( quaternion ) instead.' );
+	return vector.applyQuaternion( this );
+
+};
+
+Object.assign( Ray.prototype, {
+
+	isIntersectionBox: function ( box ) {
+
+		console.warn( 'THREE.Ray: .isIntersectionBox() has been renamed to .intersectsBox().' );
+		return this.intersectsBox( box );
+
+	},
+	isIntersectionPlane: function ( plane ) {
+
+		console.warn( 'THREE.Ray: .isIntersectionPlane() has been renamed to .intersectsPlane().' );
+		return this.intersectsPlane( plane );
+
+	},
+	isIntersectionSphere: function ( sphere ) {
+
+		console.warn( 'THREE.Ray: .isIntersectionSphere() has been renamed to .intersectsSphere().' );
+		return this.intersectsSphere( sphere );
+
+	}
+
+} );
+
+Object.assign( Shape.prototype, {
+
+	extrude: function ( options ) {
+
+		console.warn( 'THREE.Shape: .extrude() has been removed. Use ExtrudeGeometry() instead.' );
+		return new ExtrudeGeometry( this, options );
+
+	},
+	makeGeometry: function ( options ) {
+
+		console.warn( 'THREE.Shape: .makeGeometry() has been removed. Use ShapeGeometry() instead.' );
+		return new ShapeGeometry( this, options );
+
+	}
+
+} );
+
+Object.assign( Vector2.prototype, {
+
+	fromAttribute: function ( attribute, index, offset ) {
+
+		console.error( 'THREE.Vector2: .fromAttribute() has been renamed to .fromBufferAttribute().' );
+		return this.fromBufferAttribute( attribute, index, offset );
+
+	}
+
+} );
+
+Object.assign( Vector3.prototype, {
+
+	setEulerFromRotationMatrix: function () {
+
+		console.error( 'THREE.Vector3: .setEulerFromRotationMatrix() has been removed. Use Euler.setFromRotationMatrix() instead.' );
+
+	},
+	setEulerFromQuaternion: function () {
+
+		console.error( 'THREE.Vector3: .setEulerFromQuaternion() has been removed. Use Euler.setFromQuaternion() instead.' );
+
+	},
+	getPositionFromMatrix: function ( m ) {
+
+		console.warn( 'THREE.Vector3: .getPositionFromMatrix() has been renamed to .setFromMatrixPosition().' );
+		return this.setFromMatrixPosition( m );
+
+	},
+	getScaleFromMatrix: function ( m ) {
+
+		console.warn( 'THREE.Vector3: .getScaleFromMatrix() has been renamed to .setFromMatrixScale().' );
+		return this.setFromMatrixScale( m );
+
+	},
+	getColumnFromMatrix: function ( index, matrix ) {
+
+		console.warn( 'THREE.Vector3: .getColumnFromMatrix() has been renamed to .setFromMatrixColumn().' );
+		return this.setFromMatrixColumn( matrix, index );
+
+	},
+	applyProjection: function ( m ) {
+
+		console.warn( 'THREE.Vector3: .applyProjection() has been removed. Use .applyMatrix4( m ) instead.' );
+		return this.applyMatrix4( m );
+
+	},
+	fromAttribute: function ( attribute, index, offset ) {
+
+		console.error( 'THREE.Vector3: .fromAttribute() has been renamed to .fromBufferAttribute().' );
+		return this.fromBufferAttribute( attribute, index, offset );
+
+	}
+
+} );
+
+Object.assign( Vector4.prototype, {
+
+	fromAttribute: function ( attribute, index, offset ) {
+
+		console.error( 'THREE.Vector4: .fromAttribute() has been renamed to .fromBufferAttribute().' );
+		return this.fromBufferAttribute( attribute, index, offset );
+
+	}
+
+} );
+
+//
+
+Geometry.prototype.computeTangents = function () {
+
+	console.warn( 'THREE.Geometry: .computeTangents() has been removed.' );
+
+};
+
+Object.assign( Object3D.prototype, {
+
+	getChildByName: function ( name ) {
+
+		console.warn( 'THREE.Object3D: .getChildByName() has been renamed to .getObjectByName().' );
+		return this.getObjectByName( name );
+
+	},
+	renderDepth: function () {
+
+		console.warn( 'THREE.Object3D: .renderDepth has been removed. Use .renderOrder, instead.' );
+
+	},
+	translate: function ( distance, axis ) {
+
+		console.warn( 'THREE.Object3D: .translate() has been removed. Use .translateOnAxis( axis, distance ) instead.' );
+		return this.translateOnAxis( axis, distance );
+
+	}
+
+} );
+
+Object.defineProperties( Object3D.prototype, {
+
+	eulerOrder: {
+		get: function () {
+
+			console.warn( 'THREE.Object3D: .eulerOrder is now .rotation.order.' );
+			return this.rotation.order;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.Object3D: .eulerOrder is now .rotation.order.' );
+			this.rotation.order = value;
+
+		}
+	},
+	useQuaternion: {
+		get: function () {
+
+			console.warn( 'THREE.Object3D: .useQuaternion has been removed. The library now uses quaternions by default.' );
+
+		},
+		set: function () {
+
+			console.warn( 'THREE.Object3D: .useQuaternion has been removed. The library now uses quaternions by default.' );
+
+		}
+	}
+
+} );
+
+Object.defineProperties( LOD.prototype, {
+
+	objects: {
+		get: function () {
+
+			console.warn( 'THREE.LOD: .objects has been renamed to .levels.' );
+			return this.levels;
+
+		}
+	}
+
+} );
+
+Object.defineProperty( Skeleton.prototype, 'useVertexTexture', {
+
+	get: function () {
+
+		console.warn( 'THREE.Skeleton: useVertexTexture has been removed.' );
+
+	},
+	set: function () {
+
+		console.warn( 'THREE.Skeleton: useVertexTexture has been removed.' );
+
+	}
+
+} );
+
+Object.defineProperty( Curve.prototype, '__arcLengthDivisions', {
+
+	get: function () {
+
+		console.warn( 'THREE.Curve: .__arcLengthDivisions is now .arcLengthDivisions.' );
+		return this.arcLengthDivisions;
+
+	},
+	set: function ( value ) {
+
+		console.warn( 'THREE.Curve: .__arcLengthDivisions is now .arcLengthDivisions.' );
+		this.arcLengthDivisions = value;
+
+	}
+
+} );
+
+//
+
+PerspectiveCamera.prototype.setLens = function ( focalLength, filmGauge ) {
+
+	console.warn( "THREE.PerspectiveCamera.setLens is deprecated. " +
+			"Use .setFocalLength and .filmGauge for a photographic setup." );
+
+	if ( filmGauge !== undefined ) { this.filmGauge = filmGauge; }
+	this.setFocalLength( focalLength );
+
+};
+
+//
+
+Object.defineProperties( Light.prototype, {
+	onlyShadow: {
+		set: function () {
+
+			console.warn( 'THREE.Light: .onlyShadow has been removed.' );
+
+		}
+	},
+	shadowCameraFov: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraFov is now .shadow.camera.fov.' );
+			this.shadow.camera.fov = value;
+
+		}
+	},
+	shadowCameraLeft: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraLeft is now .shadow.camera.left.' );
+			this.shadow.camera.left = value;
+
+		}
+	},
+	shadowCameraRight: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraRight is now .shadow.camera.right.' );
+			this.shadow.camera.right = value;
+
+		}
+	},
+	shadowCameraTop: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraTop is now .shadow.camera.top.' );
+			this.shadow.camera.top = value;
+
+		}
+	},
+	shadowCameraBottom: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraBottom is now .shadow.camera.bottom.' );
+			this.shadow.camera.bottom = value;
+
+		}
+	},
+	shadowCameraNear: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraNear is now .shadow.camera.near.' );
+			this.shadow.camera.near = value;
+
+		}
+	},
+	shadowCameraFar: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowCameraFar is now .shadow.camera.far.' );
+			this.shadow.camera.far = value;
+
+		}
+	},
+	shadowCameraVisible: {
+		set: function () {
+
+			console.warn( 'THREE.Light: .shadowCameraVisible has been removed. Use new THREE.CameraHelper( light.shadow.camera ) instead.' );
+
+		}
+	},
+	shadowBias: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowBias is now .shadow.bias.' );
+			this.shadow.bias = value;
+
+		}
+	},
+	shadowDarkness: {
+		set: function () {
+
+			console.warn( 'THREE.Light: .shadowDarkness has been removed.' );
+
+		}
+	},
+	shadowMapWidth: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowMapWidth is now .shadow.mapSize.width.' );
+			this.shadow.mapSize.width = value;
+
+		}
+	},
+	shadowMapHeight: {
+		set: function ( value ) {
+
+			console.warn( 'THREE.Light: .shadowMapHeight is now .shadow.mapSize.height.' );
+			this.shadow.mapSize.height = value;
+
+		}
+	}
+} );
+
+//
+
+Object.defineProperties( BufferAttribute.prototype, {
+
+	length: {
+		get: function () {
+
+			console.warn( 'THREE.BufferAttribute: .length has been deprecated. Use .count instead.' );
+			return this.array.length;
+
+		}
+	}
+
+} );
+
+Object.assign( BufferGeometry.prototype, {
+
+	addIndex: function ( index ) {
+
+		console.warn( 'THREE.BufferGeometry: .addIndex() has been renamed to .setIndex().' );
+		this.setIndex( index );
+
+	},
+	addDrawCall: function ( start, count, indexOffset ) {
+
+		if ( indexOffset !== undefined ) {
+
+			console.warn( 'THREE.BufferGeometry: .addDrawCall() no longer supports indexOffset.' );
+
+		}
+		console.warn( 'THREE.BufferGeometry: .addDrawCall() is now .addGroup().' );
+		this.addGroup( start, count );
+
+	},
+	clearDrawCalls: function () {
+
+		console.warn( 'THREE.BufferGeometry: .clearDrawCalls() is now .clearGroups().' );
+		this.clearGroups();
+
+	},
+	computeTangents: function () {
+
+		console.warn( 'THREE.BufferGeometry: .computeTangents() has been removed.' );
+
+	},
+	computeOffsets: function () {
+
+		console.warn( 'THREE.BufferGeometry: .computeOffsets() has been removed.' );
+
+	}
+
+} );
+
+Object.defineProperties( BufferGeometry.prototype, {
+
+	drawcalls: {
+		get: function () {
+
+			console.error( 'THREE.BufferGeometry: .drawcalls has been renamed to .groups.' );
+			return this.groups;
+
+		}
+	},
+	offsets: {
+		get: function () {
+
+			console.warn( 'THREE.BufferGeometry: .offsets has been renamed to .groups.' );
+			return this.groups;
+
+		}
+	}
+
+} );
+
+//
+
+Object.defineProperties( Uniform.prototype, {
+
+	dynamic: {
+		set: function () {
+
+			console.warn( 'THREE.Uniform: .dynamic has been removed. Use object.onBeforeRender() instead.' );
+
+		}
+	},
+	onUpdate: {
+		value: function () {
+
+			console.warn( 'THREE.Uniform: .onUpdate() has been removed. Use object.onBeforeRender() instead.' );
+			return this;
+
+		}
+	}
+
+} );
+
+//
+
+Object.defineProperties( Material.prototype, {
+
+	wrapAround: {
+		get: function () {
+
+			console.warn( 'THREE.Material: .wrapAround has been removed.' );
+
+		},
+		set: function () {
+
+			console.warn( 'THREE.Material: .wrapAround has been removed.' );
+
+		}
+	},
+	wrapRGB: {
+		get: function () {
+
+			console.warn( 'THREE.Material: .wrapRGB has been removed.' );
+			return new Color();
+
+		}
+	}
+
+} );
+
+Object.defineProperties( MeshPhongMaterial.prototype, {
+
+	metal: {
+		get: function () {
+
+			console.warn( 'THREE.MeshPhongMaterial: .metal has been removed. Use THREE.MeshStandardMaterial instead.' );
+			return false;
+
+		},
+		set: function () {
+
+			console.warn( 'THREE.MeshPhongMaterial: .metal has been removed. Use THREE.MeshStandardMaterial instead' );
+
+		}
+	}
+
+} );
+
+Object.defineProperties( ShaderMaterial.prototype, {
+
+	derivatives: {
+		get: function () {
+
+			console.warn( 'THREE.ShaderMaterial: .derivatives has been moved to .extensions.derivatives.' );
+			return this.extensions.derivatives;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE. ShaderMaterial: .derivatives has been moved to .extensions.derivatives.' );
+			this.extensions.derivatives = value;
+
+		}
+	}
+
+} );
+
+//
+
+Object.assign( WebGLRenderer.prototype, {
+
+	getCurrentRenderTarget: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .getCurrentRenderTarget() is now .getRenderTarget().' );
+		return this.getRenderTarget();
+
+	},
+
+	supportsFloatTextures: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsFloatTextures() is now .extensions.get( \'OES_texture_float\' ).' );
+		return this.extensions.get( 'OES_texture_float' );
+
+	},
+	supportsHalfFloatTextures: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsHalfFloatTextures() is now .extensions.get( \'OES_texture_half_float\' ).' );
+		return this.extensions.get( 'OES_texture_half_float' );
+
+	},
+	supportsStandardDerivatives: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsStandardDerivatives() is now .extensions.get( \'OES_standard_derivatives\' ).' );
+		return this.extensions.get( 'OES_standard_derivatives' );
+
+	},
+	supportsCompressedTextureS3TC: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsCompressedTextureS3TC() is now .extensions.get( \'WEBGL_compressed_texture_s3tc\' ).' );
+		return this.extensions.get( 'WEBGL_compressed_texture_s3tc' );
+
+	},
+	supportsCompressedTexturePVRTC: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsCompressedTexturePVRTC() is now .extensions.get( \'WEBGL_compressed_texture_pvrtc\' ).' );
+		return this.extensions.get( 'WEBGL_compressed_texture_pvrtc' );
+
+	},
+	supportsBlendMinMax: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsBlendMinMax() is now .extensions.get( \'EXT_blend_minmax\' ).' );
+		return this.extensions.get( 'EXT_blend_minmax' );
+
+	},
+	supportsVertexTextures: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsVertexTextures() is now .capabilities.vertexTextures.' );
+		return this.capabilities.vertexTextures;
+
+	},
+	supportsInstancedArrays: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .supportsInstancedArrays() is now .extensions.get( \'ANGLE_instanced_arrays\' ).' );
+		return this.extensions.get( 'ANGLE_instanced_arrays' );
+
+	},
+	enableScissorTest: function ( boolean ) {
+
+		console.warn( 'THREE.WebGLRenderer: .enableScissorTest() is now .setScissorTest().' );
+		this.setScissorTest( boolean );
+
+	},
+	initMaterial: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .initMaterial() has been removed.' );
+
+	},
+	addPrePlugin: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .addPrePlugin() has been removed.' );
+
+	},
+	addPostPlugin: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .addPostPlugin() has been removed.' );
+
+	},
+	updateShadowMap: function () {
+
+		console.warn( 'THREE.WebGLRenderer: .updateShadowMap() has been removed.' );
+
+	}
+
+} );
+
+Object.defineProperties( WebGLRenderer.prototype, {
+
+	shadowMapEnabled: {
+		get: function () {
+
+			return this.shadowMap.enabled;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderer: .shadowMapEnabled is now .shadowMap.enabled.' );
+			this.shadowMap.enabled = value;
+
+		}
+	},
+	shadowMapType: {
+		get: function () {
+
+			return this.shadowMap.type;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderer: .shadowMapType is now .shadowMap.type.' );
+			this.shadowMap.type = value;
+
+		}
+	},
+	shadowMapCullFace: {
+		get: function () {
+
+			return this.shadowMap.cullFace;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderer: .shadowMapCullFace is now .shadowMap.cullFace.' );
+			this.shadowMap.cullFace = value;
+
+		}
+	}
+} );
+
+Object.defineProperties( WebGLShadowMap.prototype, {
+
+	cullFace: {
+		get: function () {
+
+			return this.renderReverseSided ? CullFaceFront : CullFaceBack;
+
+		},
+		set: function ( cullFace ) {
+
+			var value = ( cullFace !== CullFaceBack );
+			console.warn( "WebGLRenderer: .shadowMap.cullFace is deprecated. Set .shadowMap.renderReverseSided to " + value + "." );
+			this.renderReverseSided = value;
+
+		}
+	}
+
+} );
+
+//
+
+Object.defineProperties( WebGLRenderTarget.prototype, {
+
+	wrapS: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .wrapS is now .texture.wrapS.' );
+			return this.texture.wrapS;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .wrapS is now .texture.wrapS.' );
+			this.texture.wrapS = value;
+
+		}
+	},
+	wrapT: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .wrapT is now .texture.wrapT.' );
+			return this.texture.wrapT;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .wrapT is now .texture.wrapT.' );
+			this.texture.wrapT = value;
+
+		}
+	},
+	magFilter: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .magFilter is now .texture.magFilter.' );
+			return this.texture.magFilter;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .magFilter is now .texture.magFilter.' );
+			this.texture.magFilter = value;
+
+		}
+	},
+	minFilter: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .minFilter is now .texture.minFilter.' );
+			return this.texture.minFilter;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .minFilter is now .texture.minFilter.' );
+			this.texture.minFilter = value;
+
+		}
+	},
+	anisotropy: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .anisotropy is now .texture.anisotropy.' );
+			return this.texture.anisotropy;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .anisotropy is now .texture.anisotropy.' );
+			this.texture.anisotropy = value;
+
+		}
+	},
+	offset: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .offset is now .texture.offset.' );
+			return this.texture.offset;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .offset is now .texture.offset.' );
+			this.texture.offset = value;
+
+		}
+	},
+	repeat: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .repeat is now .texture.repeat.' );
+			return this.texture.repeat;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .repeat is now .texture.repeat.' );
+			this.texture.repeat = value;
+
+		}
+	},
+	format: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .format is now .texture.format.' );
+			return this.texture.format;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .format is now .texture.format.' );
+			this.texture.format = value;
+
+		}
+	},
+	type: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .type is now .texture.type.' );
+			return this.texture.type;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .type is now .texture.type.' );
+			this.texture.type = value;
+
+		}
+	},
+	generateMipmaps: {
+		get: function () {
+
+			console.warn( 'THREE.WebGLRenderTarget: .generateMipmaps is now .texture.generateMipmaps.' );
+			return this.texture.generateMipmaps;
+
+		},
+		set: function ( value ) {
+
+			console.warn( 'THREE.WebGLRenderTarget: .generateMipmaps is now .texture.generateMipmaps.' );
+			this.texture.generateMipmaps = value;
+
+		}
+	}
+
+} );
+
+//
+
+Audio.prototype.load = function ( file ) {
+
+	console.warn( 'THREE.Audio: .load has been deprecated. Use THREE.AudioLoader instead.' );
+	var scope = this;
+	var audioLoader = new AudioLoader();
+	audioLoader.load( file, function ( buffer ) {
+
+		scope.setBuffer( buffer );
+
+	} );
+	return this;
+
+};
+
+AudioAnalyser.prototype.getData = function () {
+
+	console.warn( 'THREE.AudioAnalyser: .getData() is now .getFrequencyData().' );
+	return this.getFrequencyData();
+
+};
 
 /**
  * @file Utils
@@ -44909,10 +46339,8 @@ var kwd = {
 
 /**
  * Selection
- * @class
- * @param {String} string - selection string, see {@tutorial selection-language}
  */
-function Selection$1( string ){
+var Selection$1 = function Selection( string ){
 
     this.signals = {
         stringChanged: new Signal(),
@@ -44920,1073 +46348,1071 @@ function Selection$1( string ){
 
     this.setString( string );
 
-}
+};
 
-Selection$1.prototype = {
+var prototypeAccessors$1 = { type: {} };
 
-    constructor: Selection$1,
+prototypeAccessors$1.type.get = function (){ return "selection"; };
 
-    type: "selection",
+Selection$1.prototype.setString = function setString ( string, silent ){
 
-    setString: function( string, silent ){
+    if( string === undefined ) { string = this.string || ""; }
+    if( string === this.string ) { return; }
 
-        if( string === undefined ) { string = this.string || ""; }
-        if( string === this.string ) { return; }
+    //
 
-        //
+    try{
+        this.parse( string );
+    }catch( e ){
+        // Log.error( e.stack );
+        this.selection = { "error": e.message };
+    }
 
-        try{
-            this.parse( string );
-        }catch( e ){
-            // Log.error( e.stack );
-            this.selection = { "error": e.message };
-        }
+    this.string = string;
 
-        this.string = string;
+    this.test = this.makeAtomTest();
+    this.residueTest = this.makeResidueTest();
+    this.chainTest = this.makeChainTest();
+    this.modelTest = this.makeModelTest();
 
-        this.test = this.makeAtomTest();
-        this.residueTest = this.makeResidueTest();
-        this.chainTest = this.makeChainTest();
-        this.modelTest = this.makeModelTest();
+    this.atomOnlyTest = this.makeAtomTest( true );
+    this.residueOnlyTest = this.makeResidueTest( true );
+    this.chainOnlyTest = this.makeChainTest( true );
+    this.modelOnlyTest = this.makeModelTest( true );
 
-        this.atomOnlyTest = this.makeAtomTest( true );
-        this.residueOnlyTest = this.makeResidueTest( true );
-        this.chainOnlyTest = this.makeChainTest( true );
-        this.modelOnlyTest = this.makeModelTest( true );
+    if( !silent ){
+        this.signals.stringChanged.dispatch( this.string );
+    }
 
-        if( !silent ){
-            this.signals.stringChanged.dispatch( this.string );
-        }
+};
 
-    },
+Selection$1.prototype.parse = function parse ( string ){
 
-    parse: function( string ){
+    this.selection = {
+        operator: undefined,
+        rules: []
+    };
 
-        this.selection = {
-            operator: undefined,
+    if( !string ) { return; }
+
+    var scope = this;
+
+    var selection = this.selection;
+    var selectionStack = [];
+    var newSelection, oldSelection;
+
+    string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
+    if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
+        string = string.slice( 1, -1 ).trim();
+    }
+    var chunks = string.split( /\s+/ );
+
+    // Log.log( string, chunks )
+
+    var all = [ "*", "", "ALL" ];
+
+    var c, sele, i, not;
+    var atomname, chain, model, resi, altloc, inscode;
+
+    var createNewContext = function( operator ){
+
+        newSelection = {
+            operator: operator,
             rules: []
         };
-
-        if( !string ) { return; }
-
-        var scope = this;
-
-        var selection = this.selection;
-        var selectionStack = [];
-        var newSelection, oldSelection;
-
-        string = string.replace( /\(/g, ' ( ' ).replace( /\)/g, ' ) ' ).trim();
-        if( string.charAt( 0 ) === "(" && string.substr( -1 ) === ")" ){
-            string = string.slice( 1, -1 ).trim();
+        if( selection === undefined ){
+            selection = newSelection;
+            scope.selection = newSelection;
+        }else{
+            selection.rules.push( newSelection );
+            selectionStack.push( selection );
+            selection = newSelection;
         }
-        var chunks = string.split( /\s+/ );
 
-        // Log.log( string, chunks )
+    };
 
-        var all = [ "*", "", "ALL" ];
+    var getPrevContext = function( operator ){
 
-        var c, sele, i, not;
-        var atomname, chain, model, resi, altloc, inscode;
+        oldSelection = selection;
+        selection = selectionStack.pop();
+        if( selection === undefined ){
+            createNewContext( operator );
+            pushRule( oldSelection );
+        }
 
-        var createNewContext = function( operator ){
+    };
 
-            newSelection = {
-                operator: operator,
-                rules: []
-            };
-            if( selection === undefined ){
-                selection = newSelection;
-                scope.selection = newSelection;
-            }else{
-                selection.rules.push( newSelection );
-                selectionStack.push( selection );
-                selection = newSelection;
-            }
+    var pushRule = function( rule ){
 
-        };
+        selection.rules.push( rule );
 
-        var getPrevContext = function( operator ){
+    };
 
-            oldSelection = selection;
-            selection = selectionStack.pop();
-            if( selection === undefined ){
-                createNewContext( operator );
-                pushRule( oldSelection );
-            }
+    for( i = 0; i < chunks.length; ++i ){
 
-        };
+        c = chunks[ i ];
 
-        var pushRule = function( rule ){
+        // handle parens
 
-            selection.rules.push( rule );
+        if( c === "(" ){
 
-        };
+            // Log.log( "(" );
 
-        for( i = 0; i < chunks.length; ++i ){
+            not = false;
+            createNewContext();
+            continue;
 
-            c = chunks[ i ];
+        }else if( c === ")" ){
 
-            // handle parens
+            // Log.log( ")" );
 
-            if( c === "(" ){
-
-                // Log.log( "(" );
-
-                not = false;
-                createNewContext();
-                continue;
-
-            }else if( c === ")" ){
-
-                // Log.log( ")" );
-
+            getPrevContext();
+            if( selection.negate ){
                 getPrevContext();
-                if( selection.negate ){
-                    getPrevContext();
-                }
-                continue;
-
             }
+            continue;
 
-            // leave 'not' context
+        }
 
-            if( not > 0 ){
+        // leave 'not' context
 
-                if( c.toUpperCase() === "NOT" ){
+        if( not > 0 ){
 
-                    not = 1;
-
-                }else if( not === 1 ){
-
-                    not = 2;
-
-                }else if( not === 2 ){
-
-                    not = false;
-                    getPrevContext();
-
-                }else{
-
-                    throw new Error( "something went wrong with 'not'" );
-
-                }
-
-            }
-
-            // handle logic operators
-
-            if( c.toUpperCase() === "AND" ){
-
-                // Log.log( "AND" );
-
-                if( selection.operator === "OR" ){
-                    var lastRule = selection.rules.pop();
-                    createNewContext( "AND" );
-                    pushRule( lastRule );
-                }else{
-                    selection.operator = "AND";
-                }
-                continue;
-
-            }else if( c.toUpperCase() === "OR" ){
-
-                // Log.log( "OR" );
-
-                if( selection.operator === "AND" ){
-                    getPrevContext( "OR" );
-                }else{
-                    selection.operator = "OR";
-                }
-                continue;
-
-            }else if( c.toUpperCase() === "NOT" ){
-
-                // Log.log( "NOT", j );
+            if( c.toUpperCase() === "NOT" ){
 
                 not = 1;
-                createNewContext();
-                selection.negate = true;
-                continue;
+
+            }else if( not === 1 ){
+
+                not = 2;
+
+            }else if( not === 2 ){
+
+                not = false;
+                getPrevContext();
 
             }else{
 
-                // Log.log( "chunk", c, j, selection );
+                throw new Error( "something went wrong with 'not'" );
 
             }
 
-            // handle keyword attributes
+        }
 
-            sele = {};
+        // handle logic operators
 
-            if( c.toUpperCase() === "HETERO" ){
-                sele.keyword = kwd.HETERO;
-                pushRule( sele );
-                continue;
+        if( c.toUpperCase() === "AND" ){
+
+            // Log.log( "AND" );
+
+            if( selection.operator === "OR" ){
+                var lastRule = selection.rules.pop();
+                createNewContext( "AND" );
+                pushRule( lastRule );
+            }else{
+                selection.operator = "AND";
             }
+            continue;
 
-            if( c.toUpperCase() === "WATER" ){
-                sele.keyword = kwd.WATER;
-                pushRule( sele );
-                continue;
+        }else if( c.toUpperCase() === "OR" ){
+
+            // Log.log( "OR" );
+
+            if( selection.operator === "AND" ){
+                getPrevContext( "OR" );
+            }else{
+                selection.operator = "OR";
             }
+            continue;
 
-            if( c.toUpperCase() === "PROTEIN" ){
-                sele.keyword = kwd.PROTEIN;
-                pushRule( sele );
-                continue;
-            }
+        }else if( c.toUpperCase() === "NOT" ){
 
-            if( c.toUpperCase() === "NUCLEIC" ){
-                sele.keyword = kwd.NUCLEIC;
-                pushRule( sele );
-                continue;
-            }
+            // Log.log( "NOT", j );
 
-            if( c.toUpperCase() === "RNA" ){
-                sele.keyword = kwd.RNA;
-                pushRule( sele );
-                continue;
-            }
+            not = 1;
+            createNewContext();
+            selection.negate = true;
+            continue;
 
-            if( c.toUpperCase() === "DNA" ){
-                sele.keyword = kwd.DNA;
-                pushRule( sele );
-                continue;
-            }
+        }else{
 
-            if( c.toUpperCase() === "POLYMER" ){
-                sele.keyword = kwd.POLYMER;
-                pushRule( sele );
-                continue;
-            }
+            // Log.log( "chunk", c, j, selection );
 
-            if( c.toUpperCase() === "ION" ){
-                sele.keyword = kwd.ION;
-                pushRule( sele );
-                continue;
-            }
+        }
 
-            if( c.toUpperCase() === "SACCHARIDE" || c.toUpperCase() === "SUGAR" ){
-                sele.keyword = kwd.SACCHARIDE;
-                pushRule( sele );
-                continue;
-            }
+        // handle keyword attributes
 
-            if( c.toUpperCase() === "HYDROGEN" ){
-                sele.element = "H";
-                pushRule( sele );
-                continue;
-            }
+        sele = {};
 
-            if( c.toUpperCase() === "SMALL" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "GLY" },
-                        { resname: "ALA" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "HETERO" ){
+            sele.keyword = kwd.HETERO;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "NUCLEOPHILIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "CYS" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "WATER" ){
+            sele.keyword = kwd.WATER;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "HYDROPHOBIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "VAL" },
-                        { resname: "LEU" },
-                        { resname: "ILE" },
-                        { resname: "MET" },
-                        { resname: "PRO" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "PROTEIN" ){
+            sele.keyword = kwd.PROTEIN;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "AROMATIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "PHE" },
-                        { resname: "TYR" },
-                        { resname: "TRP" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "NUCLEIC" ){
+            sele.keyword = kwd.NUCLEIC;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "AMIDE" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASN" },
-                        { resname: "GLN" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "RNA" ){
+            sele.keyword = kwd.RNA;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "ACIDIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "DNA" ){
+            sele.keyword = kwd.DNA;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "BASIC" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "POLYMER" ){
+            sele.keyword = kwd.POLYMER;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "CHARGED" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "ION" ){
+            sele.keyword = kwd.ION;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "POLAR" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" },
-                        { resname: "ASN" },
-                        { resname: "GLN" },
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "TYR" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "SACCHARIDE" || c.toUpperCase() === "SUGAR" ){
+            sele.keyword = kwd.SACCHARIDE;
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "NONPOLAR" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ALA" },
-                        { resname: "CYS" },
-                        { resname: "GLY" },
-                        { resname: "ILE" },
-                        { resname: "LEU" },
-                        { resname: "MET" },
-                        { resname: "PHE" },
-                        { resname: "PRO" },
-                        { resname: "VAL" },
-                        { resname: "TRP" }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "HYDROGEN" ){
+            sele.element = "H";
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "HELIX" ){
-                sele.keyword = kwd.HELIX;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "SMALL" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "GLY" },
+                    { resname: "ALA" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "SHEET" ){
-                sele.keyword = kwd.SHEET;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "NUCLEOPHILIC" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "SER" },
+                    { resname: "THR" },
+                    { resname: "CYS" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "TURN" ){
-                sele = {
-                    operator: "AND",
-                    rules: [
-                        {
-                            operator: "OR",
-                            negate: true,
-                            rules: [
-                                { keyword: kwd.HELIX },
-                                { keyword: kwd.SHEET }
-                            ]
-                        },
-                        {
-                            operator: "OR",
-                            rules: [
-                                { keyword: kwd.PROTEIN },
-                                { sstruc: "s" },
-                                { sstruc: "t" },
-                                { sstruc: "l" }
-                            ]
-                        }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "HYDROPHOBIC" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "VAL" },
+                    { resname: "LEU" },
+                    { resname: "ILE" },
+                    { resname: "MET" },
+                    { resname: "PRO" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "BACKBONE" ){
-                sele.keyword = kwd.BACKBONE;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "AROMATIC" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "PHE" },
+                    { resname: "TYR" },
+                    { resname: "TRP" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "SIDECHAIN" ){
-                sele.keyword = kwd.SIDECHAIN;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "AMIDE" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "ASN" },
+                    { resname: "GLN" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.toUpperCase() === "SIDECHAINATTACHED" ){
-                sele = {
-                    operator: "OR",
-                    rules: [
-                        { keyword: kwd.SIDECHAIN },
-                        {
-                            operator: "AND",
-                            negate: false,
-                            rules: [
-                                { keyword: kwd.PROTEIN },
-                                {
-                                    operator: "OR",
-                                    negate: false,
-                                    rules: [
-                                        { atomname: "CA" },
-                                        { atomname: "BB" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            operator: "AND",
-                            negate: false,
-                            rules: [
-                                { resname: "PRO" },
-                                { atomname: "N" }
-                            ]
-                        },
-                        {
-                            operator: "AND",
-                            negate: false,
-                            rules: [
-                                { keyword: kwd.NUCLEIC },
-                                {
-                                    operator: "OR",
-                                    negate: true,
-                                    rules: [
-                                        { atomname: "P" },
-                                        { atomname: "OP1" },
-                                        { atomname: "OP2" },
-                                        { atomname: "O3'" },
-                                        { atomname: "O3*" },
-                                        { atomname: "O5'" },
-                                        { atomname: "O5*" },
-                                        { atomname: "C5'" },
-                                        { atomname: "C5*" }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                };
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "ACIDIC" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "ASP" },
+                    { resname: "GLU" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( all.indexOf( c.toUpperCase() )!==-1 ){
-                sele.keyword = kwd.ALL;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "BASIC" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "HIS" },
+                    { resname: "LYS" },
+                    { resname: "ARG" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            // handle atom expressions
+        if( c.toUpperCase() === "CHARGED" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "ASP" },
+                    { resname: "GLU" },
+                    { resname: "HIS" },
+                    { resname: "LYS" },
+                    { resname: "ARG" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.charAt( 0 ) === "@" ){
-                var indexList = c.substr( 1 ).split( "," );
-                for( var k = 0, kl = indexList.length; k < kl; ++k ){
-                    indexList[ k ] = parseInt( indexList[ k ] );
-                }
-                indexList.sort( function( a, b ){ return a - b; } );
-                sele.atomindex = indexList;
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "POLAR" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "ASP" },
+                    { resname: "GLU" },
+                    { resname: "HIS" },
+                    { resname: "LYS" },
+                    { resname: "ARG" },
+                    { resname: "ASN" },
+                    { resname: "GLN" },
+                    { resname: "SER" },
+                    { resname: "THR" },
+                    { resname: "TYR" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c.charAt( 0 ) === "#" ){
-                sele.element = c.substr( 1 ).toUpperCase();
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "NONPOLAR" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { resname: "ALA" },
+                    { resname: "CYS" },
+                    { resname: "GLY" },
+                    { resname: "ILE" },
+                    { resname: "LEU" },
+                    { resname: "MET" },
+                    { resname: "PHE" },
+                    { resname: "PRO" },
+                    { resname: "VAL" },
+                    { resname: "TRP" }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-            if( c[0] === "[" && c[c.length-1] === "]" ){
-                sele.resname = c.substr( 1, c.length-2 ).toUpperCase();
-                pushRule( sele );
-                continue;
-            }else if( ( c.length >= 1 && c.length <= 4 ) &&
-                    c[0] !== "^" && c[0] !== ":" && c[0] !== "." && c[0] !== "%" && c[0] !== "/" &&
-                    isNaN( parseInt( c ) ) ){
+        if( c.toUpperCase() === "HELIX" ){
+            sele.keyword = kwd.HELIX;
+            pushRule( sele );
+            continue;
+        }
 
-                sele.resname = c.toUpperCase();
-                pushRule( sele );
-                continue;
-            }
+        if( c.toUpperCase() === "SHEET" ){
+            sele.keyword = kwd.SHEET;
+            pushRule( sele );
+            continue;
+        }
 
-            // there must be only one constraint per rule
-            // otherwise a test quickly becomes not applicable
-            // e.g. chainTest for chainname when resno is present too
-
+        if( c.toUpperCase() === "TURN" ){
             sele = {
                 operator: "AND",
-                rules: []
+                rules: [
+                    {
+                        operator: "OR",
+                        negate: true,
+                        rules: [
+                            { keyword: kwd.HELIX },
+                            { keyword: kwd.SHEET }
+                        ]
+                    },
+                    {
+                        operator: "OR",
+                        rules: [
+                            { keyword: kwd.PROTEIN },
+                            { sstruc: "s" },
+                            { sstruc: "t" },
+                            { sstruc: "l" }
+                        ]
+                    }
+                ]
             };
-
-            model = c.split( "/" );
-            if( model.length > 1 && model[1] ){
-                if( isNaN( parseInt( model[1] ) ) ){
-                    throw new Error( "model must be an integer" );
-                }
-                sele.rules.push( {
-                    model: parseInt( model[1] )
-                } );
-            }
-
-            altloc = model[0].split( "%" );
-            if( altloc.length > 1 ){
-                sele.rules.push( {
-                    altloc: altloc[1]
-                } );
-            }
-
-            atomname = altloc[0].split( "." );
-            if( atomname.length > 1 && atomname[1] ){
-                if( atomname[1].length > 4 ){
-                    throw new Error( "atomname must be one to four characters" );
-                }
-                sele.rules.push( {
-                    atomname: atomname[1].substring( 0, 4 ).toUpperCase()
-                } );
-            }
-
-            chain = atomname[0].split( ":" );
-            if( chain.length > 1 && chain[1] ){
-                sele.rules.push( {
-                    chainname: chain[1]
-                } );
-            }
-
-            inscode = chain[0].split( "^" );
-            if( inscode.length > 1 ){
-                sele.rules.push( {
-                    inscode: inscode[1]
-                } );
-            }
-
-            if( inscode[0] ){
-                var negate, negate2;
-                if( inscode[0][0] === "-" ){
-                    inscode[0] = inscode[0].substr( 1 );
-                    negate = true;
-                }
-                if( inscode[0].includes( "--" ) ){
-                    inscode[0] = inscode[0].replace( "--", "-" );
-                    negate2 = true;
-                }
-                resi = inscode[0].split( "-" );
-                if( resi.length === 1 ){
-                    resi = parseInt( resi[0] );
-                    if( isNaN( resi ) ){
-                        throw new Error( "resi must be an integer" );
-                    }
-                    if( negate ) { resi *= -1; }
-                    sele.rules.push( {
-                        resno: resi
-                    } );
-                }else if( resi.length === 2 ){
-                    if( negate ) { resi[0] *= -1; }
-                    if( negate2 ) { resi[1] *= -1; }
-                    sele.rules.push( {
-                        resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
-                    } );
-                }else{
-                    throw new Error( "resi range must contain one '-'" );
-                }
-            }
-
-            // round up
-
-            if( sele.rules.length === 1 ){
-                pushRule( sele.rules[ 0 ] );
-            }else if( sele.rules.length > 1 ){
-                pushRule( sele );
-            }else{
-                throw new Error( "empty selection chunk" );
-            }
-
+            pushRule( sele );
+            continue;
         }
 
-        // cleanup
-
-        if( this.selection.operator === undefined &&
-                this.selection.rules.length === 1 &&
-                this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
-
-            this.selection = this.selection.rules[ 0 ];
-
+        if( c.toUpperCase() === "BACKBONE" ){
+            sele.keyword = kwd.BACKBONE;
+            pushRule( sele );
+            continue;
         }
 
-    },
-
-    _makeTest: function( fn, selection ){
-        var this$1 = this;
-
-
-        if( selection === undefined ) { selection = this.selection; }
-        if( selection === null ) { return false; }
-        if( selection.error ) { return false; }
-
-        var n = selection.rules.length;
-        if( n === 0 ) { return false; }
-
-        var t = selection.negate ? false : true;
-        var f = selection.negate ? true : false;
-
-        var s, and, ret, na;
-        var subTests = [];
-
-        for( var i = 0; i < n; ++i ){
-            s = selection.rules[ i ];
-            if( s.hasOwnProperty( "operator" ) ){
-                subTests[ i ] = this$1._makeTest( fn, s );
-            }
+        if( c.toUpperCase() === "SIDECHAIN" ){
+            sele.keyword = kwd.SIDECHAIN;
+            pushRule( sele );
+            continue;
         }
 
-        // ( x and y ) can short circuit on false
-        // ( x or y ) can short circuit on true
-        // not ( x and y )
-
-        return function test( entity ){
-
-            and = selection.operator === "AND";
-            na = false;
-
-            for( var i = 0; i < n; ++i ){
-
-                s = selection.rules[ i ];
-
-                if( s.hasOwnProperty( "operator" ) ){
-
-                    if( subTests[ i ] ){
-                        ret = subTests[ i ]( entity );
-                    }else{
-                        ret = -1;
+        if( c.toUpperCase() === "SIDECHAINATTACHED" ){
+            sele = {
+                operator: "OR",
+                rules: [
+                    { keyword: kwd.SIDECHAIN },
+                    {
+                        operator: "AND",
+                        negate: false,
+                        rules: [
+                            { keyword: kwd.PROTEIN },
+                            {
+                                operator: "OR",
+                                negate: false,
+                                rules: [
+                                    { atomname: "CA" },
+                                    { atomname: "BB" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        operator: "AND",
+                        negate: false,
+                        rules: [
+                            { resname: "PRO" },
+                            { atomname: "N" }
+                        ]
+                    },
+                    {
+                        operator: "AND",
+                        negate: false,
+                        rules: [
+                            { keyword: kwd.NUCLEIC },
+                            {
+                                operator: "OR",
+                                negate: true,
+                                rules: [
+                                    { atomname: "P" },
+                                    { atomname: "OP1" },
+                                    { atomname: "OP2" },
+                                    { atomname: "O3'" },
+                                    { atomname: "O3*" },
+                                    { atomname: "O5'" },
+                                    { atomname: "O5*" },
+                                    { atomname: "C5'" },
+                                    { atomname: "C5*" }
+                                ]
+                            }
+                        ]
                     }
+                ]
+            };
+            pushRule( sele );
+            continue;
+        }
 
-                    if( ret === -1 ){
-                        // return -1;
-                        na = true;
-                        continue;
-                    }else if( ret === true ){
-                        if( and ){ continue; }else{ return t; }
-                    }else{
-                        if( and ){ return f; }else{ continue; }
-                    }
+        if( all.indexOf( c.toUpperCase() )!==-1 ){
+            sele.keyword = kwd.ALL;
+            pushRule( sele );
+            continue;
+        }
 
-                }else{
+        // handle atom expressions
 
-                    if( s.keyword===kwd.ALL ){
-                        if( and ){ continue; }else{ return t; }
-                    }
-
-                    ret = fn( entity, s );
-
-                    // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
-
-                    if( ret === -1 ){
-                        // return -1;
-                        na = true;
-                        continue;
-                    }else if( ret === true ){
-                        if( and ){ continue; }else{ return t; }
-                    }else{
-                        if( and ){ return f; }else{ continue; }
-                    }
-
-                }
-
+        if( c.charAt( 0 ) === "@" ){
+            var indexList = c.substr( 1 ).split( "," );
+            for( var k = 0, kl = indexList.length; k < kl; ++k ){
+                indexList[ k ] = parseInt( indexList[ k ] );
             }
+            indexList.sort( function( a, b ){ return a - b; } );
+            sele.atomindex = indexList;
+            pushRule( sele );
+            continue;
+        }
 
-            if( na ){
-                return -1;
-            }else{
-                if( and ){ return t; }else{ return f; }
-            }
+        if( c.charAt( 0 ) === "#" ){
+            sele.element = c.substr( 1 ).toUpperCase();
+            pushRule( sele );
+            continue;
+        }
 
-        };
+        if( c[0] === "[" && c[c.length-1] === "]" ){
+            sele.resname = c.substr( 1, c.length-2 ).toUpperCase();
+            pushRule( sele );
+            continue;
+        }else if( ( c.length >= 1 && c.length <= 4 ) &&
+                c[0] !== "^" && c[0] !== ":" && c[0] !== "." && c[0] !== "%" && c[0] !== "/" &&
+                isNaN( parseInt( c ) ) ){
 
-    },
+            sele.resname = c.toUpperCase();
+            pushRule( sele );
+            continue;
+        }
 
-    _filter: function( fn, selection ){
-        var this$1 = this;
+        // there must be only one constraint per rule
+        // otherwise a test quickly becomes not applicable
+        // e.g. chainTest for chainname when resno is present too
 
-
-        if( selection === undefined ) { selection = this.selection; }
-        if( selection.error ) { return selection; }
-
-        var n = selection.rules.length;
-        if( n === 0 ) { return selection; }
-
-        var filtered = {
-            operator: selection.operator,
+        sele = {
+            operator: "AND",
             rules: []
         };
-        if( selection.hasOwnProperty( "negate" ) ){
-            filtered.negate = selection.negate;
-        }
 
-        for( var i = 0; i < n; ++i ){
-
-            var s = selection.rules[ i ];
-            if( s.hasOwnProperty( "operator" ) ){
-                var fs = this$1._filter( fn, s );
-                if( fs !== null ) { filtered.rules.push( fs ); }
-            }else if( !fn( s ) ){
-                filtered.rules.push( s );
+        model = c.split( "/" );
+        if( model.length > 1 && model[1] ){
+            if( isNaN( parseInt( model[1] ) ) ){
+                throw new Error( "model must be an integer" );
             }
-
-        }
-
-        if( filtered.rules.length > 0 ){
-
-            // TODO maybe the filtered rules could be returned
-            // in some case, but the way how tests are applied
-            // e.g. when traversing a structure would also need
-            // to change
-            return selection;
-            // return filtered;
-
-        }else{
-
-            return null;
-
-        }
-
-    },
-
-    makeAtomTest: function( atomOnly ){
-
-        var helixTypes = [ "h", "g", "i" ];
-        var sheetTypes = [ "e", "b" ];
-
-        var selection;
-
-        if( atomOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-                if( s.keyword!==undefined &&
-                        s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN
-                ) { return true; }
-                if( s.model!==undefined ) { return true; }
-                if( s.chainname!==undefined ) { return true; }
-                if( s.resname!==undefined ) { return true; }
-                if( s.resno!==undefined ) { return true; }
-                if( s.sstruc!==undefined ) { return true; }
-                return false;
+            sele.rules.push( {
+                model: parseInt( model[1] )
             } );
-
-        }else{
-
-            selection = this.selection;
-
         }
 
-        var fn = function( a, s ){
+        altloc = model[0].split( "%" );
+        if( altloc.length > 1 ){
+            sele.rules.push( {
+                altloc: altloc[1]
+            } );
+        }
 
-            // returning -1 means the rule is not applicable
-            if( s.atomname===undefined && s.element===undefined &&
-                    s.altloc===undefined && s.atomindex===undefined &&
-                    // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
-                    s.keyword===undefined && s.inscode===undefined &&
-                    s.resname===undefined && s.sstruc===undefined &&
-                    s.resno===undefined && s.chainname===undefined &&
-                    s.model===undefined
-            ) { return -1; }
-
-            if( s.keyword!==undefined ){
-                if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) { return false; }
-                if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) { return false; }
-
-                if( s.keyword===kwd.HETERO && !a.isHetero() ) { return false; }
-                if( s.keyword===kwd.PROTEIN && !a.isProtein() ) { return false; }
-                if( s.keyword===kwd.NUCLEIC && !a.isNucleic() ) { return false; }
-                if( s.keyword===kwd.RNA && !a.isRna() ) { return false; }
-                if( s.keyword===kwd.DNA && !a.isDna() ) { return false; }
-                if( s.keyword===kwd.POLYMER && !a.isPolymer() ) { return false; }
-                if( s.keyword===kwd.WATER && !a.isWater() ) { return false; }
-                if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.sstruc )===-1 ) { return false; }
-                if( s.keyword===kwd.SHEET && sheetTypes.indexOf( a.sstruc )===-1 ) { return false; }
-                if( s.keyword===kwd.ION && !a.isIon() ) { return false; }
-                if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) { return false; }
+        atomname = altloc[0].split( "." );
+        if( atomname.length > 1 && atomname[1] ){
+            if( atomname[1].length > 4 ){
+                throw new Error( "atomname must be one to four characters" );
             }
+            sele.rules.push( {
+                atomname: atomname[1].substring( 0, 4 ).toUpperCase()
+            } );
+        }
 
-            if( s.atomname!==undefined && s.atomname!==a.atomname ) { return false; }
-            if( s.element!==undefined && s.element!==a.element ) { return false; }
-            if( s.altloc!==undefined && s.altloc!==a.altloc ) { return false; }
+        chain = atomname[0].split( ":" );
+        if( chain.length > 1 && chain[1] ){
+            sele.rules.push( {
+                chainname: chain[1]
+            } );
+        }
 
-            if( s.atomindex!==undefined &&
-                    binarySearchIndexOf( s.atomindex, a.index ) < 0
-            ) { return false; }
+        inscode = chain[0].split( "^" );
+        if( inscode.length > 1 ){
+            sele.rules.push( {
+                inscode: inscode[1]
+            } );
+        }
 
-            if( s.resname!==undefined && s.resname!==a.resname ) { return false; }
-            if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) { return false; }
-            if( s.resno!==undefined ){
-                if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>a.resno || s.resno[1]<a.resno ) { return false; }
-                }else{
-                    if( s.resno!==a.resno ) { return false; }
+        if( inscode[0] ){
+            var negate, negate2;
+            if( inscode[0][0] === "-" ){
+                inscode[0] = inscode[0].substr( 1 );
+                negate = true;
+            }
+            if( inscode[0].includes( "--" ) ){
+                inscode[0] = inscode[0].replace( "--", "-" );
+                negate2 = true;
+            }
+            resi = inscode[0].split( "-" );
+            if( resi.length === 1 ){
+                resi = parseInt( resi[0] );
+                if( isNaN( resi ) ){
+                    throw new Error( "resi must be an integer" );
                 }
+                if( negate ) { resi *= -1; }
+                sele.rules.push( {
+                    resno: resi
+                } );
+            }else if( resi.length === 2 ){
+                if( negate ) { resi[0] *= -1; }
+                if( negate2 ) { resi[1] *= -1; }
+                sele.rules.push( {
+                    resno: [ parseInt( resi[0] ), parseInt( resi[1] ) ]
+                } );
+            }else{
+                throw new Error( "resi range must contain one '-'" );
             }
-            if( s.inscode!==undefined && s.inscode!==a.inscode ) { return false; }
-
-            if( s.chainname!==undefined && s.chainname!==a.chainname ) { return false; }
-            if( s.model!==undefined && s.model!==a.modelIndex ) { return false; }
-
-            return true;
-
-        };
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeResidueTest: function( residueOnly ){
-
-        var helixTypes = [ "h", "g", "i" ];
-        var sheetTypes = [ "e", "b" ];
-
-        var selection;
-
-        if( residueOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-                if( s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN ) { return true; }
-                if( s.model!==undefined ) { return true; }
-                if( s.chainname!==undefined ) { return true; }
-                if( s.atomname!==undefined ) { return true; }
-                if( s.element!==undefined ) { return true; }
-                if( s.altloc!==undefined ) { return true; }
-                return false;
-            } );
-
-        }else{
-
-            selection = this.selection;
-
         }
 
-        var fn = function( r, s ){
+        // round up
 
-            // returning -1 means the rule is not applicable
-            if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
-                    s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
-                    s.atomindex===undefined &&
-                    ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
-            ) { return -1; }
-
-            if( s.keyword!==undefined ){
-                if( s.keyword===kwd.HETERO && !r.isHetero() ) { return false; }
-                if( s.keyword===kwd.PROTEIN && !r.isProtein() ) { return false; }
-                if( s.keyword===kwd.NUCLEIC && !r.isNucleic() ) { return false; }
-                if( s.keyword===kwd.RNA && !r.isRna() ) { return false; }
-                if( s.keyword===kwd.DNA && !r.isDna() ) { return false; }
-                if( s.keyword===kwd.POLYMER && !r.isPolymer() ) { return false; }
-                if( s.keyword===kwd.WATER && !r.isWater() ) { return false; }
-                if( s.keyword===kwd.HELIX && helixTypes.indexOf( r.sstruc )===-1 ) { return false; }
-                if( s.keyword===kwd.SHEET && sheetTypes.indexOf( r.sstruc )===-1 ) { return false; }
-                if( s.keyword===kwd.ION && !r.isIon() ) { return false; }
-                if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) { return false; }
-            }
-
-            if( s.atomindex!==undefined &&
-                    rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
-            ) { return false; }
-
-            if( s.resname!==undefined && s.resname!==r.resname ) { return false; }
-            if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) { return false; }
-            if( s.resno!==undefined ){
-                if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                    if( s.resno[0]>r.resno || s.resno[1]<r.resno ) { return false; }
-                }else{
-                    if( s.resno!==r.resno ) { return false; }
-                }
-            }
-            if( s.inscode!==undefined && s.inscode!==r.inscode ) { return false; }
-
-            if( s.chainname!==undefined && s.chainname!==r.chainname ) { return false; }
-            if( s.model!==undefined && s.model!==r.modelIndex ) { return false; }
-
-            return true;
-
-        };
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeChainTest: function( chainOnly ){
-
-        var selection;
-
-        var chainKeywordList = [
-            kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
-            kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
-        ];
-
-        if( chainOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-                if( s.keyword!==undefined && !chainKeywordList.includes( s.keyword ) ) { return true; }
-                // if( s.model!==undefined ) return true;
-                if( s.resname!==undefined ) { return true; }
-                if( s.resno!==undefined ) { return true; }
-                if( s.atomname!==undefined ) { return true; }
-                if( s.element!==undefined ) { return true; }
-                if( s.altloc!==undefined ) { return true; }
-                if( s.sstruc!==undefined ) { return true; }
-                if( s.inscode!==undefined ) { return true; }
-                return false;
-            } );
-
+        if( sele.rules.length === 1 ){
+            pushRule( sele.rules[ 0 ] );
+        }else if( sele.rules.length > 1 ){
+            pushRule( sele );
         }else{
-
-            selection = this.selection;
-
+            throw new Error( "empty selection chunk" );
         }
 
-        var fn = function( c, s ){
+    }
 
-            // returning -1 means the rule is not applicable
-            if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
-                    ( s.keyword===undefined || !chainKeywordList.includes( s.keyword ) )
-            ) { return -1; }
+    // cleanup
 
-            if( s.keyword!==undefined ){
-                if( s.keyword===kwd.HETERO && !c.isHetero() ) { return false; }
-                if( s.keyword===kwd.PROTEIN && !c.isProtein() ) { return false; }
-                if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) { return false; }
-                if( s.keyword===kwd.RNA && !c.isRna() ) { return false; }
-                if( s.keyword===kwd.DNA && !c.isDna() ) { return false; }
-                if( s.keyword===kwd.POLYMER && !c.isPolymer() ) { return false; }
-                if( s.keyword===kwd.WATER && !c.isWater() ) { return false; }
-                if( s.keyword===kwd.ION && !c.isIon() ) { return false; }
-                if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) { return false; }
-            }
+    if( this.selection.operator === undefined &&
+            this.selection.rules.length === 1 &&
+            this.selection.rules[ 0 ].hasOwnProperty( "operator" ) ){
 
-            if( s.atomindex!==undefined &&
-                    rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
-            ) { return false; }
-
-            if( s.chainname!==undefined && s.chainname!==c.chainname ) { return false; }
-
-            if( s.model!==undefined && s.model!==c.modelIndex ) { return false; }
-
-            return true;
-
-        };
-
-        return this._makeTest( fn, selection );
-
-    },
-
-    makeModelTest: function( modelOnly ){
-
-        var selection;
-
-        if( modelOnly ){
-
-            // console.log( this.selection )
-
-            selection = this._filter( function( s ){
-                if( s.keyword!==undefined ) { return true; }
-                if( s.chainname!==undefined ) { return true; }
-                if( s.resname!==undefined ) { return true; }
-                if( s.resno!==undefined ) { return true; }
-                if( s.atomname!==undefined ) { return true; }
-                if( s.element!==undefined ) { return true; }
-                if( s.altloc!==undefined ) { return true; }
-                if( s.sstruc!==undefined ) { return true; }
-                if( s.inscode!==undefined ) { return true; }
-                return false;
-            } );
-
-        }else{
-
-            selection = this.selection;
-
-        }
-
-        var fn = function( m, s ){
-
-            // returning -1 means the rule is not applicable
-            if( s.model===undefined && s.atomindex===undefined ) { return -1; }
-
-            if( s.atomindex!==undefined &&
-                    rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
-            ) { return false; }
-
-            if( s.model!==undefined && s.model!==m.index ) { return false; }
-
-            return true;
-
-        };
-
-        return this._makeTest( fn, selection );
+        this.selection = this.selection.rules[ 0 ];
 
     }
 
 };
+
+Selection$1.prototype._makeTest = function _makeTest ( fn, selection ){
+        var this$1 = this;
+
+
+    if( selection === undefined ) { selection = this.selection; }
+    if( selection === null ) { return false; }
+    if( selection.error ) { return false; }
+
+    var n = selection.rules.length;
+    if( n === 0 ) { return false; }
+
+    var t = selection.negate ? false : true;
+    var f = selection.negate ? true : false;
+
+    var s, and, ret, na;
+    var subTests = [];
+
+    for( var i = 0; i < n; ++i ){
+        s = selection.rules[ i ];
+        if( s.hasOwnProperty( "operator" ) ){
+            subTests[ i ] = this$1._makeTest( fn, s );
+        }
+    }
+
+    // ( x and y ) can short circuit on false
+    // ( x or y ) can short circuit on true
+    // not ( x and y )
+
+    return function test( entity ){
+
+        and = selection.operator === "AND";
+        na = false;
+
+        for( var i = 0; i < n; ++i ){
+
+            s = selection.rules[ i ];
+
+            if( s.hasOwnProperty( "operator" ) ){
+
+                if( subTests[ i ] ){
+                    ret = subTests[ i ]( entity );
+                }else{
+                    ret = -1;
+                }
+
+                if( ret === -1 ){
+                    // return -1;
+                    na = true;
+                    continue;
+                }else if( ret === true ){
+                    if( and ){ continue; }else{ return t; }
+                }else{
+                    if( and ){ return f; }else{ continue; }
+                }
+
+            }else{
+
+                if( s.keyword===kwd.ALL ){
+                    if( and ){ continue; }else{ return t; }
+                }
+
+                ret = fn( entity, s );
+
+                // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
+
+                if( ret === -1 ){
+                    // return -1;
+                    na = true;
+                    continue;
+                }else if( ret === true ){
+                    if( and ){ continue; }else{ return t; }
+                }else{
+                    if( and ){ return f; }else{ continue; }
+                }
+
+            }
+
+        }
+
+        if( na ){
+            return -1;
+        }else{
+            if( and ){ return t; }else{ return f; }
+        }
+
+    };
+
+};
+
+Selection$1.prototype._filter = function _filter ( fn, selection ){
+        var this$1 = this;
+
+
+    if( selection === undefined ) { selection = this.selection; }
+    if( selection.error ) { return selection; }
+
+    var n = selection.rules.length;
+    if( n === 0 ) { return selection; }
+
+    var filtered = {
+        operator: selection.operator,
+        rules: []
+    };
+    if( selection.hasOwnProperty( "negate" ) ){
+        filtered.negate = selection.negate;
+    }
+
+    for( var i = 0; i < n; ++i ){
+
+        var s = selection.rules[ i ];
+        if( s.hasOwnProperty( "operator" ) ){
+            var fs = this$1._filter( fn, s );
+            if( fs !== null ) { filtered.rules.push( fs ); }
+        }else if( !fn( s ) ){
+            filtered.rules.push( s );
+        }
+
+    }
+
+    if( filtered.rules.length > 0 ){
+
+        // TODO maybe the filtered rules could be returned
+        // in some case, but the way how tests are applied
+        // e.g. when traversing a structure would also need
+        // to change
+        return selection;
+        // return filtered;
+
+    }else{
+
+        return null;
+
+    }
+
+};
+
+Selection$1.prototype.makeAtomTest = function makeAtomTest ( atomOnly ){
+
+    var helixTypes = [ "h", "g", "i" ];
+    var sheetTypes = [ "e", "b" ];
+
+    var selection;
+
+    if( atomOnly ){
+
+        // console.log( this.selection )
+
+        selection = this._filter( function( s ){
+            if( s.keyword!==undefined &&
+                    s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN
+            ) { return true; }
+            if( s.model!==undefined ) { return true; }
+            if( s.chainname!==undefined ) { return true; }
+            if( s.resname!==undefined ) { return true; }
+            if( s.resno!==undefined ) { return true; }
+            if( s.sstruc!==undefined ) { return true; }
+            return false;
+        } );
+
+    }else{
+
+        selection = this.selection;
+
+    }
+
+    var fn = function( a, s ){
+
+        // returning -1 means the rule is not applicable
+        if( s.atomname===undefined && s.element===undefined &&
+                s.altloc===undefined && s.atomindex===undefined &&
+                // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
+                s.keyword===undefined && s.inscode===undefined &&
+                s.resname===undefined && s.sstruc===undefined &&
+                s.resno===undefined && s.chainname===undefined &&
+                s.model===undefined
+        ) { return -1; }
+
+        if( s.keyword!==undefined ){
+            if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) { return false; }
+            if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) { return false; }
+
+            if( s.keyword===kwd.HETERO && !a.isHetero() ) { return false; }
+            if( s.keyword===kwd.PROTEIN && !a.isProtein() ) { return false; }
+            if( s.keyword===kwd.NUCLEIC && !a.isNucleic() ) { return false; }
+            if( s.keyword===kwd.RNA && !a.isRna() ) { return false; }
+            if( s.keyword===kwd.DNA && !a.isDna() ) { return false; }
+            if( s.keyword===kwd.POLYMER && !a.isPolymer() ) { return false; }
+            if( s.keyword===kwd.WATER && !a.isWater() ) { return false; }
+            if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.sstruc )===-1 ) { return false; }
+            if( s.keyword===kwd.SHEET && sheetTypes.indexOf( a.sstruc )===-1 ) { return false; }
+            if( s.keyword===kwd.ION && !a.isIon() ) { return false; }
+            if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) { return false; }
+        }
+
+        if( s.atomname!==undefined && s.atomname!==a.atomname ) { return false; }
+        if( s.element!==undefined && s.element!==a.element ) { return false; }
+        if( s.altloc!==undefined && s.altloc!==a.altloc ) { return false; }
+
+        if( s.atomindex!==undefined &&
+                binarySearchIndexOf( s.atomindex, a.index ) < 0
+        ) { return false; }
+
+        if( s.resname!==undefined && s.resname!==a.resname ) { return false; }
+        if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) { return false; }
+        if( s.resno!==undefined ){
+            if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                if( s.resno[0]>a.resno || s.resno[1]<a.resno ) { return false; }
+            }else{
+                if( s.resno!==a.resno ) { return false; }
+            }
+        }
+        if( s.inscode!==undefined && s.inscode!==a.inscode ) { return false; }
+
+        if( s.chainname!==undefined && s.chainname!==a.chainname ) { return false; }
+        if( s.model!==undefined && s.model!==a.modelIndex ) { return false; }
+
+        return true;
+
+    };
+
+    return this._makeTest( fn, selection );
+
+};
+
+Selection$1.prototype.makeResidueTest = function makeResidueTest ( residueOnly ){
+
+    var helixTypes = [ "h", "g", "i" ];
+    var sheetTypes = [ "e", "b" ];
+
+    var selection;
+
+    if( residueOnly ){
+
+        // console.log( this.selection )
+
+        selection = this._filter( function( s ){
+            if( s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN ) { return true; }
+            if( s.model!==undefined ) { return true; }
+            if( s.chainname!==undefined ) { return true; }
+            if( s.atomname!==undefined ) { return true; }
+            if( s.element!==undefined ) { return true; }
+            if( s.altloc!==undefined ) { return true; }
+            return false;
+        } );
+
+    }else{
+
+        selection = this.selection;
+
+    }
+
+    var fn = function( r, s ){
+
+        // returning -1 means the rule is not applicable
+        if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
+                s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
+                s.atomindex===undefined &&
+                ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
+        ) { return -1; }
+
+        if( s.keyword!==undefined ){
+            if( s.keyword===kwd.HETERO && !r.isHetero() ) { return false; }
+            if( s.keyword===kwd.PROTEIN && !r.isProtein() ) { return false; }
+            if( s.keyword===kwd.NUCLEIC && !r.isNucleic() ) { return false; }
+            if( s.keyword===kwd.RNA && !r.isRna() ) { return false; }
+            if( s.keyword===kwd.DNA && !r.isDna() ) { return false; }
+            if( s.keyword===kwd.POLYMER && !r.isPolymer() ) { return false; }
+            if( s.keyword===kwd.WATER && !r.isWater() ) { return false; }
+            if( s.keyword===kwd.HELIX && helixTypes.indexOf( r.sstruc )===-1 ) { return false; }
+            if( s.keyword===kwd.SHEET && sheetTypes.indexOf( r.sstruc )===-1 ) { return false; }
+            if( s.keyword===kwd.ION && !r.isIon() ) { return false; }
+            if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) { return false; }
+        }
+
+        if( s.atomindex!==undefined &&
+                rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
+        ) { return false; }
+
+        if( s.resname!==undefined && s.resname!==r.resname ) { return false; }
+        if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) { return false; }
+        if( s.resno!==undefined ){
+            if( Array.isArray( s.resno ) && s.resno.length===2 ){
+                if( s.resno[0]>r.resno || s.resno[1]<r.resno ) { return false; }
+            }else{
+                if( s.resno!==r.resno ) { return false; }
+            }
+        }
+        if( s.inscode!==undefined && s.inscode!==r.inscode ) { return false; }
+
+        if( s.chainname!==undefined && s.chainname!==r.chainname ) { return false; }
+        if( s.model!==undefined && s.model!==r.modelIndex ) { return false; }
+
+        return true;
+
+    };
+
+    return this._makeTest( fn, selection );
+
+};
+
+Selection$1.prototype.makeChainTest = function makeChainTest ( chainOnly ){
+
+    var selection;
+
+    var chainKeywordList = [
+        kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
+        kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
+    ];
+
+    if( chainOnly ){
+
+        // console.log( this.selection )
+
+        selection = this._filter( function( s ){
+            if( s.keyword!==undefined && !chainKeywordList.includes( s.keyword ) ) { return true; }
+            // if( s.model!==undefined ) return true;
+            if( s.resname!==undefined ) { return true; }
+            if( s.resno!==undefined ) { return true; }
+            if( s.atomname!==undefined ) { return true; }
+            if( s.element!==undefined ) { return true; }
+            if( s.altloc!==undefined ) { return true; }
+            if( s.sstruc!==undefined ) { return true; }
+            if( s.inscode!==undefined ) { return true; }
+            return false;
+        } );
+
+    }else{
+
+        selection = this.selection;
+
+    }
+
+    var fn = function( c, s ){
+
+        // returning -1 means the rule is not applicable
+        if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
+                ( s.keyword===undefined || !chainKeywordList.includes( s.keyword ) )
+        ) { return -1; }
+
+        if( s.keyword!==undefined ){
+            if( s.keyword===kwd.HETERO && !c.isHetero() ) { return false; }
+            if( s.keyword===kwd.PROTEIN && !c.isProtein() ) { return false; }
+            if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) { return false; }
+            if( s.keyword===kwd.RNA && !c.isRna() ) { return false; }
+            if( s.keyword===kwd.DNA && !c.isDna() ) { return false; }
+            if( s.keyword===kwd.POLYMER && !c.isPolymer() ) { return false; }
+            if( s.keyword===kwd.WATER && !c.isWater() ) { return false; }
+            if( s.keyword===kwd.ION && !c.isIon() ) { return false; }
+            if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) { return false; }
+        }
+
+        if( s.atomindex!==undefined &&
+                rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
+        ) { return false; }
+
+        if( s.chainname!==undefined && s.chainname!==c.chainname ) { return false; }
+
+        if( s.model!==undefined && s.model!==c.modelIndex ) { return false; }
+
+        return true;
+
+    };
+
+    return this._makeTest( fn, selection );
+
+};
+
+Selection$1.prototype.makeModelTest = function makeModelTest ( modelOnly ){
+
+    var selection;
+
+    if( modelOnly ){
+
+        // console.log( this.selection )
+
+        selection = this._filter( function( s ){
+            if( s.keyword!==undefined ) { return true; }
+            if( s.chainname!==undefined ) { return true; }
+            if( s.resname!==undefined ) { return true; }
+            if( s.resno!==undefined ) { return true; }
+            if( s.atomname!==undefined ) { return true; }
+            if( s.element!==undefined ) { return true; }
+            if( s.altloc!==undefined ) { return true; }
+            if( s.sstruc!==undefined ) { return true; }
+            if( s.inscode!==undefined ) { return true; }
+            return false;
+        } );
+
+    }else{
+
+        selection = this.selection;
+
+    }
+
+    var fn = function( m, s ){
+
+        // returning -1 means the rule is not applicable
+        if( s.model===undefined && s.atomindex===undefined ) { return -1; }
+
+        if( s.atomindex!==undefined &&
+                rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
+        ) { return false; }
+
+        if( s.model!==undefined && s.model!==m.index ) { return false; }
+
+        return true;
+
+    };
+
+    return this._makeTest( fn, selection );
+
+};
+
+Object.defineProperties( Selection$1.prototype, prototypeAccessors$1 );
 
 /**
  * @file Selection Colormaker
@@ -46983,13 +48409,13 @@ var Script = function Script( functionBody, name, path ){
 
 };
 
-var prototypeAccessors$1 = { type: {} };
+var prototypeAccessors$2 = { type: {} };
 
 /**
  * Object type
  * @readonly
  */
-prototypeAccessors$1.type.get = function (){ return "Script"; };
+prototypeAccessors$2.type.get = function (){ return "Script"; };
 
 /**
  * Execute the script
@@ -47045,7 +48471,7 @@ Script.prototype.call = function call ( stage ){
 
 };
 
-Object.defineProperties( Script.prototype, prototypeAccessors$1 );
+Object.defineProperties( Script.prototype, prototypeAccessors$2 );
 
 /**
  * @file Script Loader
@@ -48437,14 +49863,21 @@ function arrayMin( array ){
 }
 
 
-function arrayMean( array ){
+function arraySum( array ){
 
     var n = array.length;
     var sum = 0;
     for( var i = 0; i < n; ++i ){
         sum += array[ i ];
     }
-    return sum / n;
+    return sum;
+
+}
+
+
+function arrayMean( array ){
+
+    return arraySum( array ) / array.length;
 
 }
 
@@ -50237,6 +51670,9 @@ var tmpPanMatrix = new Matrix4();
 var tmpPanVector = new Vector3();
 
 
+/**
+ * Trackball controls
+ */
 var TrackballControls = function TrackballControls( stage, params ){
 
     var p = params || {};
@@ -50289,7 +51725,7 @@ TrackballControls.prototype.rotate = function rotate ( x, y ){
 };
 
 /**
- * @file Picking Controls
+ * @file Picking Proxy
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
@@ -50303,20 +51739,12 @@ function closer( x, a, b ){
 /**
  * Picking data object.
  * @typedef {Object} PickingData - picking data
- * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
- * @property {Boolean} [altKey] - whether the alt key was pressed
- * @property {Boolean} [ctrlKey] - whether the control key was pressed
- * @property {Boolean} [metaKey] - whether the meta key was pressed
- * @property {Boolean} [shiftKey] - whether the shift key was pressed
- * @property {AtomProxy} [atom] - picked atom
- * @property {BondProxy} [bond] - picked bond
- * @property {Volume} [volume] - picked volume
+ * @property {Number} [pid] - picking id
  * @property {Object} [instance] - instance data
  * @property {Integer} instance.id - instance id
  * @property {String|Integer} instance.name - instance name
  * @property {Matrix4} instance.matrix - transformation matrix of the instance
- * @property {Vector3} [position] - xyz position of the picked object
- * @property {Component} [component] - component holding the picked object
+ * @property {Picker} [picker] - picker object
  */
 
 
@@ -50327,54 +51755,67 @@ var PickingProxy = function PickingProxy( pickingData, stage ){
 
     this.pid = pickingData.pid;
     this.picker = pickingData.picker;
+
+    /**
+     * @member {Object}
+     */
     this.instance = pickingData.instance;
 
+    /**
+     * @member {Stage}
+     */
     this.stage = stage;
+    /**
+     * @member {ViewerControls}
+     */
     this.controls = stage.viewerControls;
+    /**
+     * @member {MouseObserver}
+     */
     this.mouse = stage.mouseObserver;
 
 };
 
-var prototypeAccessors$2 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},bond: {},cone: {},clash: {},contact: {},cylinder: {},mesh: {},ellipsoid: {},slice: {},sphere: {},surface: {},volume: {} };
+var prototypeAccessors$3 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},bond: {},cone: {},clash: {},contact: {},cylinder: {},mesh: {},ellipsoid: {},slice: {},sphere: {},surface: {},volume: {} };
 
 /**
  * Kind of the picked data
  * @member {String}
  */
-prototypeAccessors$2.type.get = function (){ return this.picker.type; };
+prototypeAccessors$3.type.get = function (){ return this.picker.type; };
 
 /**
  * If the `alt` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$2.altKey.get = function (){ return this.mouse.altKey; };
+prototypeAccessors$3.altKey.get = function (){ return this.mouse.altKey; };
 /**
  * If the `ctrl` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$2.ctrlKey.get = function (){ return this.mouse.ctrlKey; };
+prototypeAccessors$3.ctrlKey.get = function (){ return this.mouse.ctrlKey; };
 /**
  * If the `meta` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$2.metaKey.get = function (){ return this.mouse.metaKey; };
+prototypeAccessors$3.metaKey.get = function (){ return this.mouse.metaKey; };
 /**
  * If the `shift` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$2.shiftKey.get = function (){ return this.mouse.shiftKey; };
+prototypeAccessors$3.shiftKey.get = function (){ return this.mouse.shiftKey; };
 
 /**
  * Position of the mouse on the canvas
  * @member {Vector2}
  */
-prototypeAccessors$2.canvasPosition.get = function (){ return this.mouse.canvasPosition; };
+prototypeAccessors$3.canvasPosition.get = function (){ return this.mouse.canvasPosition; };
 
 /**
  * The component the picked data is part of
  * @member {Component}
  */
-prototypeAccessors$2.component.get = function (){
+prototypeAccessors$3.component.get = function (){
     return this.stage.getComponentsByObject( this.picker.data ).list[ 0 ];
 };
 
@@ -50382,7 +51823,7 @@ prototypeAccessors$2.component.get = function (){
  * The picked object data
  * @member {Object}
  */
-prototypeAccessors$2.object.get = function (){
+prototypeAccessors$3.object.get = function (){
     return this.picker.getObject( this.pid );
 };
 
@@ -50390,7 +51831,7 @@ prototypeAccessors$2.object.get = function (){
  * The 3d position in the scene of the picked object
  * @member {Vector3}
  */
-prototypeAccessors$2.position.get = function (){
+prototypeAccessors$3.position.get = function (){
     return this.picker.getPosition( this.pid, this.instance, this.component );
 };
 
@@ -50398,7 +51839,7 @@ prototypeAccessors$2.position.get = function (){
  * The atom of a picked bond that is closest to the mouse
  * @member {AtomProxy}
  */
-prototypeAccessors$2.closestBondAtom.get = function (){
+prototypeAccessors$3.closestBondAtom.get = function (){
 
     if( this.type !== "bond" ) { return undefined; }
 
@@ -50416,63 +51857,72 @@ prototypeAccessors$2.closestBondAtom.get = function (){
 /**
  * @member {Object}
  */
-prototypeAccessors$2.arrow.get = function (){ return this._objectIfType( "arrow" ); };
+prototypeAccessors$3.arrow.get = function (){ return this._objectIfType( "arrow" ); };
 /**
  * @member {AtomProxy}
  */
-prototypeAccessors$2.atom.get = function (){ return this._objectIfType( "atom" ); };
+prototypeAccessors$3.atom.get = function (){ return this._objectIfType( "atom" ); };
 /**
  * @member {BondProxy}
  */
-prototypeAccessors$2.bond.get = function (){ return this._objectIfType( "bond" ); };
+prototypeAccessors$3.bond.get = function (){ return this._objectIfType( "bond" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.cone.get = function (){ return this._objectIfType( "cone" ); };
+prototypeAccessors$3.cone.get = function (){ return this._objectIfType( "cone" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.clash.get = function (){ return this._objectIfType( "clash" ); };
+prototypeAccessors$3.clash.get = function (){ return this._objectIfType( "clash" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.contact.get = function (){ return this._objectIfType( "contact" ); };
+prototypeAccessors$3.contact.get = function (){ return this._objectIfType( "contact" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.cylinder.get = function (){ return this._objectIfType( "cylinder" ); };
+prototypeAccessors$3.cylinder.get = function (){ return this._objectIfType( "cylinder" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.mesh.get = function (){ return this._objectIfType( "mesh" ); };
+prototypeAccessors$3.mesh.get = function (){ return this._objectIfType( "mesh" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.ellipsoid.get = function (){ return this._objectIfType( "ellipsoid" ); };
+prototypeAccessors$3.ellipsoid.get = function (){ return this._objectIfType( "ellipsoid" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.slice.get = function (){ return this._objectIfType( "slice" ); };
+prototypeAccessors$3.slice.get = function (){ return this._objectIfType( "slice" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.sphere.get = function (){ return this._objectIfType( "sphere" ); };
+prototypeAccessors$3.sphere.get = function (){ return this._objectIfType( "sphere" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.surface.get = function (){ return this._objectIfType( "surface" ); };
+prototypeAccessors$3.surface.get = function (){ return this._objectIfType( "surface" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$2.volume.get = function (){ return this._objectIfType( "volume" ); };
+prototypeAccessors$3.volume.get = function (){ return this._objectIfType( "volume" ); };
 
 PickingProxy.prototype._objectIfType = function _objectIfType ( type ){
     return this.type === type ? this.object : undefined;
 };
 
-Object.defineProperties( PickingProxy.prototype, prototypeAccessors$2 );
+Object.defineProperties( PickingProxy.prototype, prototypeAccessors$3 );
+
+/**
+ * @file Picking Controls
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
 
 
+/**
+ * Picking controls
+ */
 var PickingControls = function PickingControls( stage/*, params*/ ){
 
     this.stage = stage;
@@ -50530,6 +51980,9 @@ var tmpRotateVector = new Vector3();
 var tmpAlignMatrix = new Matrix4();
 
 
+/**
+ * Viewer controls
+ */
 var ViewerControls = function ViewerControls( stage ){
 
     this.stage = stage;
@@ -50541,7 +51994,7 @@ var ViewerControls = function ViewerControls( stage ){
 
 };
 
-var prototypeAccessors$3 = { position: {},rotation: {} };
+var prototypeAccessors$4 = { position: {},rotation: {} };
 
 /**
  * scene center position
@@ -50549,7 +52002,7 @@ var prototypeAccessors$3 = { position: {},rotation: {} };
  * @readOnly
  * @type {Vector3}
  */
-prototypeAccessors$3.position.get = function (){
+prototypeAccessors$4.position.get = function (){
 
     return this.viewer.translationGroup.position;
 
@@ -50561,7 +52014,7 @@ prototypeAccessors$3.position.get = function (){
  * @readOnly
  * @type {Quaternion}
  */
-prototypeAccessors$3.rotation.get = function (){
+prototypeAccessors$4.rotation.get = function (){
 
     return this.viewer.rotationGroup.quaternion;
 
@@ -50737,7 +52190,7 @@ ViewerControls.prototype.applyMatrix = function applyMatrix ( matrix ){
 
 };
 
-Object.defineProperties( ViewerControls.prototype, prototypeAccessors$3 );
+Object.defineProperties( ViewerControls.prototype, prototypeAccessors$4 );
 
 /**
  * @file Animation Controls
@@ -50913,6 +52366,9 @@ var RotateAnimation = (function (Animation) {
 }(Animation));
 
 
+/**
+ * Animation controls
+ */
 var AnimationControls = function AnimationControls( stage ){
 
     this.stage = stage;
@@ -51394,7 +52850,7 @@ Picker.prototype.applyTransformations = function applyTransformations ( vector, 
         vector.applyProjection( instance.matrix );
     }
     // if( component ){
-    // // TODO component-wise matrix
+    // // apply component-wise matrix when available in the future
     // }
     return vector;
 };
@@ -51427,18 +52883,55 @@ var DataPicker = (function (Picker) {
 //
 
 
-var ArrowPicker = (function (DataPicker) {
-    function ArrowPicker () {
+var CylinderPicker = (function (DataPicker) {
+    function CylinderPicker () {
         DataPicker.apply(this, arguments);
     }
 
-    if ( DataPicker ) ArrowPicker.__proto__ = DataPicker;
-    ArrowPicker.prototype = Object.create( DataPicker && DataPicker.prototype );
-    ArrowPicker.prototype.constructor = ArrowPicker;
+    if ( DataPicker ) CylinderPicker.__proto__ = DataPicker;
+    CylinderPicker.prototype = Object.create( DataPicker && DataPicker.prototype );
+    CylinderPicker.prototype.constructor = CylinderPicker;
 
     var prototypeAccessors = { type: {} };
 
-    prototypeAccessors.type.get = function (){ return "arrow"; };
+    prototypeAccessors.type.get = function (){ return "cylinder"; };
+
+    CylinderPicker.prototype.getObject = function getObject ( pid ){
+        var d = this.data;
+        return {
+            shape: d.shape,
+            color: new Color().fromArray( d.color, 3 * pid ),
+            radius: d.radius[ pid ],
+            position1: new Vector3().fromArray( d.position1, 3 * pid ),
+            position2: new Vector3().fromArray( d.position2, 3 * pid )
+        };
+    };
+
+    CylinderPicker.prototype._getPosition = function _getPosition ( pid ){
+        var d = this.data;
+        var p1 = new Vector3().fromArray( d.position1, 3 * pid );
+        var p2 = new Vector3().fromArray( d.position2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
+    };
+
+    Object.defineProperties( CylinderPicker.prototype, prototypeAccessors );
+
+    return CylinderPicker;
+}(DataPicker));
+
+
+var ArrowPicker = (function (CylinderPicker) {
+    function ArrowPicker () {
+        CylinderPicker.apply(this, arguments);
+    }
+
+    if ( CylinderPicker ) ArrowPicker.__proto__ = CylinderPicker;
+    ArrowPicker.prototype = Object.create( CylinderPicker && CylinderPicker.prototype );
+    ArrowPicker.prototype.constructor = ArrowPicker;
+
+    var prototypeAccessors$1 = { type: {} };
+
+    prototypeAccessors$1.type.get = function (){ return "arrow"; };
 
     ArrowPicker.prototype.getObject = function getObject ( pid ){
         var d = this.data;
@@ -51452,17 +52945,10 @@ var ArrowPicker = (function (DataPicker) {
         };
     };
 
-    ArrowPicker.prototype._getPosition = function _getPosition ( pid ){
-        var d = this.data;
-        var p1 = new Vector3().fromArray( d.position1, 3 * pid );
-        var p2 = new Vector3().fromArray( d.position2, 3 * pid );
-        return p1.add( p2 ).multiplyScalar( 0.5 );
-    };
-
-    Object.defineProperties( ArrowPicker.prototype, prototypeAccessors );
+    Object.defineProperties( ArrowPicker.prototype, prototypeAccessors$1 );
 
     return ArrowPicker;
-}(DataPicker));
+}(CylinderPicker));
 
 
 var AtomPicker = (function (Picker) {
@@ -51475,10 +52961,10 @@ var AtomPicker = (function (Picker) {
     AtomPicker.prototype = Object.create( Picker && Picker.prototype );
     AtomPicker.prototype.constructor = AtomPicker;
 
-    var prototypeAccessors$1 = { type: {},data: {} };
+    var prototypeAccessors$2 = { type: {},data: {} };
 
-    prototypeAccessors$1.type.get = function (){ return "atom"; };
-    prototypeAccessors$1.data.get = function (){ return this.structure; };
+    prototypeAccessors$2.type.get = function (){ return "atom"; };
+    prototypeAccessors$2.data.get = function (){ return this.structure; };
 
     AtomPicker.prototype.getObject = function getObject ( pid ){
         return this.structure.getAtomProxy( this.getIndex( pid ) );
@@ -51488,7 +52974,7 @@ var AtomPicker = (function (Picker) {
         return new Vector3().copy( this.getObject( pid ) );
     };
 
-    Object.defineProperties( AtomPicker.prototype, prototypeAccessors$1 );
+    Object.defineProperties( AtomPicker.prototype, prototypeAccessors$2 );
 
     return AtomPicker;
 }(Picker));
@@ -51505,10 +52991,10 @@ var BondPicker = (function (Picker) {
     BondPicker.prototype = Object.create( Picker && Picker.prototype );
     BondPicker.prototype.constructor = BondPicker;
 
-    var prototypeAccessors$2 = { type: {},data: {} };
+    var prototypeAccessors$3 = { type: {},data: {} };
 
-    prototypeAccessors$2.type.get = function (){ return "bond"; };
-    prototypeAccessors$2.data.get = function (){ return this.structure; };
+    prototypeAccessors$3.type.get = function (){ return "bond"; };
+    prototypeAccessors$3.data.get = function (){ return this.structure; };
 
     BondPicker.prototype.getObject = function getObject ( pid ){
         var bp = this.structure.getBondProxy( this.getIndex( pid ) );
@@ -51524,7 +53010,7 @@ var BondPicker = (function (Picker) {
             .multiplyScalar( 0.5 );
     };
 
-    Object.defineProperties( BondPicker.prototype, prototypeAccessors$2 );
+    Object.defineProperties( BondPicker.prototype, prototypeAccessors$3 );
 
     return BondPicker;
 }(Picker));
@@ -51539,67 +53025,50 @@ var ContactPicker = (function (BondPicker) {
     ContactPicker.prototype = Object.create( BondPicker && BondPicker.prototype );
     ContactPicker.prototype.constructor = ContactPicker;
 
-    var prototypeAccessors$3 = { type: {} };
+    var prototypeAccessors$4 = { type: {} };
 
-    prototypeAccessors$3.type.get = function (){ return "contact"; };
+    prototypeAccessors$4.type.get = function (){ return "contact"; };
 
-    Object.defineProperties( ContactPicker.prototype, prototypeAccessors$3 );
+    Object.defineProperties( ContactPicker.prototype, prototypeAccessors$4 );
 
     return ContactPicker;
 }(BondPicker));
 
 
-var ConePicker = (function (DataPicker) {
+var ConePicker = (function (CylinderPicker) {
     function ConePicker () {
-        DataPicker.apply(this, arguments);
+        CylinderPicker.apply(this, arguments);
     }
 
-    if ( DataPicker ) ConePicker.__proto__ = DataPicker;
-    ConePicker.prototype = Object.create( DataPicker && DataPicker.prototype );
+    if ( CylinderPicker ) ConePicker.__proto__ = CylinderPicker;
+    ConePicker.prototype = Object.create( CylinderPicker && CylinderPicker.prototype );
     ConePicker.prototype.constructor = ConePicker;
 
-    var prototypeAccessors$4 = { type: {} };
+    var prototypeAccessors$5 = { type: {} };
 
-    prototypeAccessors$4.type.get = function (){ return "cone"; };
+    prototypeAccessors$5.type.get = function (){ return "cone"; };
 
-    ConePicker.prototype.getObject = function getObject ( pid ){
-        var d = this.data;
-        return {
-            shape: d.shape,
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            position1: new Vector3().fromArray( d.position1, 3 * pid ),
-            position2: new Vector3().fromArray( d.position2, 3 * pid )
-        };
-    };
-
-    ConePicker.prototype._getPosition = function _getPosition ( pid ){
-        var d = this.data;
-        var p1 = new Vector3().fromArray( d.position1, 3 * pid );
-        var p2 = new Vector3().fromArray( d.position2, 3 * pid );
-        return p1.add( p2 ).multiplyScalar( 0.5 );
-    };
-
-    Object.defineProperties( ConePicker.prototype, prototypeAccessors$4 );
+    Object.defineProperties( ConePicker.prototype, prototypeAccessors$5 );
 
     return ConePicker;
-}(DataPicker));
+}(CylinderPicker));
 
 
 var ClashPicker = (function (Picker) {
-    function ClashPicker( array, validation ){
+    function ClashPicker( array, validation, structure ){
         Picker.call( this, array );
         this.validation = validation;
+        this.structure = structure;
     }
 
     if ( Picker ) ClashPicker.__proto__ = Picker;
     ClashPicker.prototype = Object.create( Picker && Picker.prototype );
     ClashPicker.prototype.constructor = ClashPicker;
 
-    var prototypeAccessors$5 = { type: {},data: {} };
+    var prototypeAccessors$6 = { type: {},data: {} };
 
-    prototypeAccessors$5.type.get = function (){ return "clash"; };
-    prototypeAccessors$5.data.get = function (){ return this.validation; };
+    prototypeAccessors$6.type.get = function (){ return "clash"; };
+    prototypeAccessors$6.data.get = function (){ return this.validation; };
 
     ClashPicker.prototype.getObject = function getObject ( pid ){
         var val = this.validation;
@@ -51611,29 +53080,23 @@ var ClashPicker = (function (Picker) {
         };
     };
 
-    Object.defineProperties( ClashPicker.prototype, prototypeAccessors$5 );
+    ClashPicker.prototype._getAtomProxyFromSele = function _getAtomProxyFromSele ( sele ){
+        var selection = new Selection$1( sele );
+        var idx = this.structure.getAtomIndices( selection )[ 0 ];
+        return this.structure.getAtomProxy( idx );
+    };
+
+    ClashPicker.prototype._getPosition = function _getPosition ( pid ){
+        var clash = this.getObject( pid ).clash;
+        var ap1 = this._getAtomProxyFromSele( clash.sele1 );
+        var ap2 = this._getAtomProxyFromSele( clash.sele2 );
+        return new Vector3().copy( ap1 ).add( ap2 ).multiplyScalar( 0.5 );
+    };
+
+    Object.defineProperties( ClashPicker.prototype, prototypeAccessors$6 );
 
     return ClashPicker;
 }(Picker));
-
-
-var CylinderPicker = (function (ConePicker) {
-    function CylinderPicker () {
-        ConePicker.apply(this, arguments);
-    }
-
-    if ( ConePicker ) CylinderPicker.__proto__ = ConePicker;
-    CylinderPicker.prototype = Object.create( ConePicker && ConePicker.prototype );
-    CylinderPicker.prototype.constructor = CylinderPicker;
-
-    var prototypeAccessors$6 = { type: {} };
-
-    prototypeAccessors$6.type.get = function (){ return "cylinder"; };
-
-    Object.defineProperties( CylinderPicker.prototype, prototypeAccessors$6 );
-
-    return CylinderPicker;
-}(ConePicker));
 
 
 var EllipsoidPicker = (function (DataPicker) {
@@ -51762,13 +53225,6 @@ var SurfacePicker = (function (Picker) {
 
     SurfacePicker.prototype._getPosition = function _getPosition ( /*pid*/ ){
         return this.surface.center.clone();
-        // const p = this.surface.getPosition();
-        // const idx = this.getIndex( pid );
-        // return new Vector3(
-        //     p[ idx * 3 ],
-        //     p[ idx * 3 + 1 ],
-        //     p[ idx * 3 + 2 ]
-        // );
     };
 
     Object.defineProperties( SurfacePicker.prototype, prototypeAccessors$10 );
@@ -55856,9 +57312,9 @@ var Assembly = function Assembly( name ){
 
 };
 
-var prototypeAccessors$5 = { type: {} };
+var prototypeAccessors$6 = { type: {} };
 
-prototypeAccessors$5.type.get = function (){ return "Assembly"; };
+prototypeAccessors$6.type.get = function (){ return "Assembly"; };
 
 /**
  * Add transformed parts to the assembly
@@ -55978,7 +57434,7 @@ Assembly.prototype.getSelection = function getSelection (){
     return selectionFromChains( chainList );
 };
 
-Object.defineProperties( Assembly.prototype, prototypeAccessors$5 );
+Object.defineProperties( Assembly.prototype, prototypeAccessors$6 );
 
 
 var AssemblyPart = function AssemblyPart( matrixList, chainList ){
@@ -62732,9 +64188,9 @@ var Volume = function Volume( name, path, data, nx, ny, nz, atomindex ){
 
 };
 
-var prototypeAccessors$6 = { type: {},position: {},min: {},max: {},mean: {},rms: {} };
+var prototypeAccessors$7 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
 
-prototypeAccessors$6.type.get = function (){ return "Volume"; };
+prototypeAccessors$7.type.get = function (){ return "Volume"; };
 
 /**
  * set volume data
@@ -62964,7 +64420,7 @@ Volume.prototype.getSigmaForValue = function getSigmaForValue ( value ){
 
 };
 
-prototypeAccessors$6.position.get = function (){
+prototypeAccessors$7.position.get = function (){
 
     if( !this._position ){
 
@@ -63086,7 +64542,7 @@ Volume.prototype.getDataSize = function getDataSize ( size, scale ){
 
 };
 
-prototypeAccessors$6.min.get = function (){
+prototypeAccessors$7.min.get = function (){
 
     if( this._min === undefined ){
         this._min = arrayMin( this.data );
@@ -63095,7 +64551,7 @@ prototypeAccessors$6.min.get = function (){
 
 };
 
-prototypeAccessors$6.max.get = function (){
+prototypeAccessors$7.max.get = function (){
 
     if( this._max === undefined ){
         this._max = arrayMax$1( this.data );
@@ -63104,7 +64560,16 @@ prototypeAccessors$6.max.get = function (){
 
 };
 
-prototypeAccessors$6.mean.get = function (){
+prototypeAccessors$7.sum.get = function (){
+
+    if( this._sum === undefined ){
+        this._sum = arraySum( this.data );
+    }
+    return this._sum;
+
+};
+
+prototypeAccessors$7.mean.get = function (){
 
     if( this._mean === undefined ){
         this._mean = arrayMean( this.data );
@@ -63113,7 +64578,7 @@ prototypeAccessors$6.mean.get = function (){
 
 };
 
-prototypeAccessors$6.rms.get = function (){
+prototypeAccessors$7.rms.get = function (){
 
     if( this._rms === undefined ){
         this._rms = arrayRms( this.data );
@@ -63152,7 +64617,7 @@ Volume.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Volume.prototype, prototypeAccessors$6 );
+Object.defineProperties( Volume.prototype, prototypeAccessors$7 );
 
 /**
  * @file Queue
@@ -64028,9 +65493,9 @@ var Buffer = function Buffer( data, params ){
 
 };
 
-var prototypeAccessors$7 = { parameters: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$9 = { parameters: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
 
-prototypeAccessors$7.parameters.get = function (){
+prototypeAccessors$9.parameters.get = function (){
 
     return {
         opaqueBack: { updateShader: true },
@@ -64051,33 +65516,33 @@ prototypeAccessors$7.parameters.get = function (){
 
 };
 
-prototypeAccessors$7.transparent.get = function () {
+prototypeAccessors$9.transparent.get = function () {
     return this.opacity < 1 || this.forceTransparent;
 };
 
-prototypeAccessors$7.size.get = function () {
+prototypeAccessors$9.size.get = function () {
     return this._positionDataSize;
 };
 
-prototypeAccessors$7.attributeSize.get = function () {
+prototypeAccessors$9.attributeSize.get = function () {
     return this.size;
 };
 
-prototypeAccessors$7.pickable.get = function (){
+prototypeAccessors$9.pickable.get = function (){
     return !!this.picking;
 };
 
-prototypeAccessors$7.dynamic.get = function (){ return true; };
+prototypeAccessors$9.dynamic.get = function (){ return true; };
 
 /**
  * @abstract
  */
-prototypeAccessors$7.vertexShader.get = function (){};
+prototypeAccessors$9.vertexShader.get = function (){};
 
 /**
  * @abstract
  */
-prototypeAccessors$7.fragmentShader.get = function (){};
+prototypeAccessors$9.fragmentShader.get = function (){};
 
 Buffer.prototype.initIndex = function initIndex ( index ){
 
@@ -64790,7 +66255,7 @@ Buffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Buffer.prototype, prototypeAccessors$7 );
+Object.defineProperties( Buffer.prototype, prototypeAccessors$9 );
 
 /**
  * @file Mesh Buffer
@@ -66065,9 +67530,9 @@ var ArrowBuffer = function ArrowBuffer( data, params ){
 
 };
 
-var prototypeAccessors$8 = { pickable: {} };
+var prototypeAccessors$10 = { pickable: {} };
 
-prototypeAccessors$8.pickable.get = function (){
+prototypeAccessors$10.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -66191,7 +67656,7 @@ ArrowBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$8 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$10 );
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include color_pars_vertex\n#include common\nvoid main(void){\n#include color_vertex\ntexCoord = inputTexCoord;\nfloat _zOffset = zOffset;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01;\ncameraCornerPos.x += xOffset;\ncameraCornerPos.y += yOffset;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\nvViewPosition = -cameraCornerPos.xyz;\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
@@ -66831,489 +68296,461 @@ var TextBuffer = (function (QuadBuffer$$1) {
  */
 
 
+function addElement( elm, array ){
+    if( elm.toArray !== undefined ){
+        elm = elm.toArray();
+    }else if( elm.x !== undefined ){
+        elm = [ elm.x, elm.y, elm.z ];
+    }else if( elm.r !== undefined ){
+        elm = [ elm.r, elm.g, elm.b ];
+    }
+    array.push.apply( array, elm );
+}
+
+var tmpVec = new Vector3();
+var tmpBox = new Box3();
+
+
 /**
  * Class for building custom shapes.
- * @class
- * @example
- * var shape = new NGL.Shape( "shape", { disableImpostor: true } );
- * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
- * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
- * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
- * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
- * shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
- * var shapeComp = stage.addComponentFromObject( shape );
- * geoComp.addRepresentation( "buffer" );
- *
- * @param {String} name - name
- * @param {Object} params - parameter object
- * @param {Integer} params.aspectRatio - arrow aspect ratio, used for cylinder radius and cone length
- * @param {Integer} params.sphereDetail - sphere quality (icosahedron subdivisions)
- * @param {Integer} params.radialSegments - cylinder quality (number of segments)
- * @param {Boolean} params.disableImpostor - disable use of raycasted impostors for rendering
- * @param {Boolean} params.openEnded - capped or not
- * @param {TextBufferParameters} params.labelParams - label parameters
  */
-function Shape$1( name, params ){
+var Shape$1 = function Shape$$1( name, params ){
 
     this.name = defaults( name, "shape" );
 
     var p = params || {};
 
-    var aspectRatio = defaults( p.aspectRatio, 1.5 );
-    var sphereDetail = defaults( p.sphereDetail, 2 );
-    var radialSegments = defaults( p.radialSegments, 50 );
-    var disableImpostor = defaults( p.disableImpostor, false );
-    var openEnded = defaults( p.openEnded, false );
+    this.aspectRatio = defaults( p.aspectRatio, 1.5 );
+    this.sphereDetail = defaults( p.sphereDetail, 2 );
+    this.radialSegments = defaults( p.radialSegments, 50 );
+    this.disableImpostor = defaults( p.disableImpostor, false );
+    this.openEnded = defaults( p.openEnded, false );
+    this.labelParams = defaults( p.labelParams, {} );
 
-    var center = new Vector3();
-    var boundingBox = new Box3();
+    this.boundingBox = new Box3();
 
-    var tmpVec = new Vector3();
-    var tmpBox = new Box3();
+    this.bufferList = [];
+    this.meshCount = 0;
 
-    var bufferList = [];
-    var meshCount = 0;
+    this.spherePosition = [];
+    this.sphereColor = [];
+    this.sphereRadius = [];
 
-    var spherePosition = [];
-    var sphereColor = [];
-    var sphereRadius = [];
+    this.ellipsoidPosition = [];
+    this.ellipsoidColor = [];
+    this.ellipsoidRadius = [];
+    this.ellipsoidMajorAxis = [];
+    this.ellipsoidMinorAxis = [];
 
-    var ellipsoidPosition = [];
-    var ellipsoidColor = [];
-    var ellipsoidRadius = [];
-    var ellipsoidMajorAxis = [];
-    var ellipsoidMinorAxis = [];
+    this.cylinderPosition1 = [];
+    this.cylinderPosition2 = [];
+    this.cylinderColor = [];
+    this.cylinderRadius = [];
 
-    var cylinderPosition1 = [];
-    var cylinderPosition2 = [];
-    var cylinderColor = [];
-    var cylinderRadius = [];
+    this.conePosition1 = [];
+    this.conePosition2 = [];
+    this.coneColor = [];
+    this.coneRadius = [];
 
-    var conePosition1 = [];
-    var conePosition2 = [];
-    var coneColor = [];
-    var coneRadius = [];
+    this.arrowPosition1 = [];
+    this.arrowPosition2 = [];
+    this.arrowColor = [];
+    this.arrowRadius = [];
 
-    var arrowPosition1 = [];
-    var arrowPosition2 = [];
-    var arrowColor = [];
-    var arrowRadius = [];
+    this.labelPosition = [];
+    this.labelColor = [];
+    this.labelSize = [];
+    this.labelText = [];
 
-    var labelPosition = [];
-    var labelColor = [];
-    var labelSize = [];
-    var labelText = [];
+};
 
-    function addElement( elm, array ){
+var prototypeAccessors$8 = { center: {},type: {} };
 
-        if( elm.toArray !== undefined ){
-            elm = elm.toArray();
-        }else if( elm.x !== undefined ){
-            elm = [ elm.x, elm.y, elm.z ];
-        }else if( elm.r !== undefined ){
-            elm = [ elm.r, elm.g, elm.b ];
-        }
-        array.push.apply( array, elm );
+/**
+ * Add a buffer
+ * @param {Buffer} buffer - buffer object
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addBuffer = function addBuffer ( buffer ){
 
+    this.bufferList.push( buffer );
+
+    var geometry = buffer.geometry;
+    if( !geometry.boundingBox ){
+        geometry.computeBoundingBox();
+    }
+    this.boundingBox.union( geometry.boundingBox );
+
+    return this;
+
+};
+
+/**
+ * Add a mesh
+ * @example
+ * shape.addMesh(
+ * [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
+ * [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ]
+ * );
+ *
+ * @param {Float32Array|Array} position - positions
+ * @param {Float32Array|Array} color - colors
+ * @param {Uint32Array|Uint16Array|Array} [index] - indices
+ * @param {Float32Array|Array} [normal] - normals
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addMesh = function addMesh ( position, color, index, normal ){
+
+    position = ensureFloat32Array( position );
+    color = ensureFloat32Array( color );
+    if( Array.isArray( index ) ){
+        var ctor = position.length > 65535 ? Uint32Array : Uint16Array;
+        index = new ctor( index );
+    }
+    if( normal ){
+        normal = ensureFloat32Array( normal );
     }
 
-    /**
-     * Add a buffer
-     * @instance
-     * @memberof Shape
-     * @param {Buffer} buffer - buffer object
-     * @return {undefined}
-     */
-    function addBuffer( buffer ){
+    var data = { position: position, color: color, index: index, normal: normal };
+    var picking = new MeshPicker(
+        serialArray( position.length ),
+        Object.assign( { shape: this, serial: this.meshCount }, data )
+    );
+    var meshBuffer = new MeshBuffer(
+        Object.assign( { picking: picking }, data )
+    );
+    this.bufferList.push( meshBuffer );
 
-        bufferList.push( buffer );
+    tmpBox.setFromArray( position );
+    this.boundingBox.union( tmpBox );
+    this.meshCount += 1;
 
-        var geometry = buffer.geometry;
-        if( !geometry.boundingBox ){
-            geometry.computeBoundingBox();
-        }
-        boundingBox.union( geometry.boundingBox );
+    return this;
 
-    }
+};
 
-    /**
-     * Add a mesh
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addMesh(
-     *     [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
-     *     [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ]
-     * );
-     *
-     * @param {Float32Array|Array} position - positions
-     * @param {Float32Array|Array} color - colors
-     * @param {Uint32Array|Uint16Array|Array} [index] - indices
-     * @param {Float32Array|Array} [normal] - normals
-     * @return {undefined}
-     */
-    function addMesh( position, color, index, normal ){
+/**
+ * Add a sphere
+ * @example
+ * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
+ *
+ * @param {Vector3|Array} position - position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addSphere = function addSphere ( position, color, radius ){
 
-        position = ensureFloat32Array( position );
-        color = ensureFloat32Array( color );
-        if( Array.isArray( index ) ){
-            var ctor = position.length > 65535 ? Uint32Array : Uint16Array;
-            index = new ctor( index );
-        }
-        if( normal ){
-            normal = ensureFloat32Array( normal );
-        }
+    addElement( position, this.spherePosition );
+    addElement( color, this.sphereColor );
+    this.sphereRadius.push( radius );
 
-        var data = { position: position, color: color, index: index, normal: normal };
-        var picking = new MeshPicker(
-            serialArray( position.length ),
-            Object.assign( { shape: this, serial: meshCount }, data )
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+
+    return this;
+
+};
+
+/**
+ * Add an ellipsoid
+ * @example
+ * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
+ *
+ * @param {Vector3|Array} position - position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @param {Vector3|Array} majorAxis - major axis vector or array
+ * @param {Vector3|Array} minorAxis - minor axis vector or array
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addEllipsoid = function addEllipsoid ( position, color, radius, majorAxis, minorAxis ){
+
+    addElement( position, this.ellipsoidPosition );
+    addElement( color, this.ellipsoidColor );
+    this.ellipsoidRadius.push( radius );
+    addElement( majorAxis, this.ellipsoidMajorAxis );
+    addElement( minorAxis, this.ellipsoidMinorAxis );
+
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+
+    return this;
+
+};
+
+/**
+ * Add a cylinder
+ * @example
+ * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+ *
+ * @param {Vector3|Array} position1 - from position vector or array
+ * @param {Vector3|Array} position2 - to position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addCylinder = function addCylinder ( position1, position2, color, radius ){
+
+    addElement( position1, this.cylinderPosition1 );
+    addElement( position2, this.cylinderPosition2 );
+    addElement( color, this.cylinderColor );
+    this.cylinderRadius.push( radius );
+
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
+
+    return this;
+
+};
+
+/**
+ * Add a cone
+ * @example
+ * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+ *
+ * @param {Vector3|Array} position1 - from position vector or array
+ * @param {Vector3|Array} position2 - to position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addCone = function addCone ( position1, position2, color, radius ){
+
+    addElement( position1, this.conePosition1 );
+    addElement( position2, this.conePosition2 );
+    addElement( color, this.coneColor );
+    this.coneRadius.push( radius );
+
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
+
+    return this;
+
+};
+
+/**
+ * Add an arrow
+ * @example
+ * shape.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+ *
+ * @param {Vector3|Array} position1 - from position vector or array
+ * @param {Vector3|Array} position2 - to position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addArrow = function addArrow ( position1, position2, color, radius ){
+
+    addElement( position1, this.arrowPosition1 );
+    addElement( position2, this.arrowPosition2 );
+    addElement( color, this.arrowColor );
+    this.arrowRadius.push( radius );
+
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
+
+    return this;
+
+};
+
+/**
+ * Add a label
+ * @example
+ * shape.addLabel( [ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello" );
+ *
+ * @param {Vector3|Array} position - from position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} size - size value
+ * @param {String} text - text value
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addLabel = function addLabel ( position, color, size, text ){
+
+    addElement( position, this.labelPosition );
+    addElement( color, this.labelColor );
+    this.labelSize.push( size );
+    this.labelText.push( text );
+
+    this.boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+
+    return this;
+
+};
+
+Shape$1.prototype.getBufferList = function getBufferList (){
+
+    var buffers = [];
+
+    if( this.spherePosition.length ){
+        var sphereData = {
+            position: new Float32Array( this.spherePosition ),
+            color: new Float32Array( this.sphereColor ),
+            radius: new Float32Array( this.sphereRadius )
+        };
+        var spherePicking = new SpherePicker(
+            serialArray( this.sphereRadius.length ),
+            Object.assign( { shape: this }, sphereData )
         );
-        var meshBuffer = new MeshBuffer(
-            Object.assign( { picking: picking }, data )
+        var sphereBuffer = new SphereBuffer(
+            Object.assign( { picking: spherePicking }, sphereData ),
+            {
+                sphereDetail: this.sphereDetail,
+                disableImpostor: this.disableImpostor
+            }
         );
-        bufferList.push( meshBuffer );
-
-        tmpBox.setFromArray( position );
-        boundingBox.union( tmpBox );
-        meshCount += 1;
-
+        buffers.push( sphereBuffer );
     }
 
-    /**
-     * Add a sphere
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
-     *
-     * @param {Vector3|Array} position - position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} radius - radius value
-     * @return {undefined}
-     */
-    function addSphere( position, color, radius ){
-
-        addElement( position, spherePosition );
-        addElement( color, sphereColor );
-        sphereRadius.push( radius );
-
-        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
-
+    if( this.ellipsoidPosition.length ){
+        var ellipsoidData = {
+            position: new Float32Array( this.ellipsoidPosition ),
+            color: new Float32Array( this.ellipsoidColor ),
+            radius: new Float32Array( this.ellipsoidRadius ),
+            majorAxis: new Float32Array( this.ellipsoidMajorAxis ),
+            minorAxis: new Float32Array( this.ellipsoidMinorAxis )
+        };
+        var ellipsoidPicking = new EllipsoidPicker(
+            serialArray( this.ellipsoidRadius.length ),
+            Object.assign( { shape: this }, ellipsoidData )
+        );
+        var ellipsoidBuffer = new EllipsoidBuffer(
+            Object.assign( { picking: ellipsoidPicking }, ellipsoidData ),
+            {
+                sphereDetail: this.sphereDetail,
+                disableImpostor: this.disableImpostor
+            }
+        );
+        buffers.push( ellipsoidBuffer );
     }
 
-    /**
-     * Add an ellipsoid
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
-     *
-     * @param {Vector3|Array} position - position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} radius - radius value
-     * @param {Vector3|Array} majorAxis - major axis vector or array
-     * @param {Vector3|Array} minorAxis - minor axis vector or array
-     * @return {undefined}
-     */
-    function addEllipsoid( position, color, radius, majorAxis, minorAxis ){
-
-        addElement( position, ellipsoidPosition );
-        addElement( color, ellipsoidColor );
-        ellipsoidRadius.push( radius );
-        addElement( majorAxis, ellipsoidMajorAxis );
-        addElement( minorAxis, ellipsoidMinorAxis );
-
-        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
-
+    if( this.cylinderPosition1.length ){
+        var cylinderData = {
+            position1: new Float32Array( this.cylinderPosition1 ),
+            position2: new Float32Array( this.cylinderPosition2 ),
+            color: new Float32Array( this.cylinderColor ),
+            color2: new Float32Array( this.cylinderColor ),
+            radius: new Float32Array( this.cylinderRadius )
+        };
+        var cylinderPicking = new CylinderPicker(
+            serialArray( this.cylinderRadius.length ),
+            Object.assign( { shape: this }, cylinderData )
+        );
+        var cylinderBuffer = new CylinderBuffer(
+            Object.assign( { picking: cylinderPicking }, cylinderData ),
+            {
+                radialSegments: this.radialSegments,
+                disableImpostor: this.disableImpostor,
+                openEnded: this.openEnded,
+            }
+        );
+        buffers.push( cylinderBuffer );
     }
 
-    /**
-     * Add a cylinder
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-     *
-     * @param {Vector3|Array} position1 - from position vector or array
-     * @param {Vector3|Array} position2 - to position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} radius - radius value
-     * @return {undefined}
-     */
-    function addCylinder( position1, position2, color, radius ){
-
-        addElement( position1, cylinderPosition1 );
-        addElement( position2, cylinderPosition2 );
-        addElement( color, cylinderColor );
-        cylinderRadius.push( radius );
-
-        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
-
+    if( this.conePosition1.length ){
+        var coneData = {
+            position1: new Float32Array( this.conePosition1 ),
+            position2: new Float32Array( this.conePosition2 ),
+            color: new Float32Array( this.coneColor ),
+            radius: new Float32Array( this.coneRadius )
+        };
+        var conePicking = new ConePicker(
+            serialArray( this.coneRadius.length ),
+            Object.assign( { shape: this }, coneData )
+        );
+        var coneBuffer = new ConeBuffer(
+            Object.assign( { picking: conePicking }, coneData ),
+            {
+                radialSegments: this.radialSegments,
+                disableImpostor: this.disableImpostor,
+                openEnded: this.openEnded,
+            }
+        );
+        buffers.push( coneBuffer );
     }
 
-    /**
-     * Add a cone
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
-     *
-     * @param {Vector3|Array} position1 - from position vector or array
-     * @param {Vector3|Array} position2 - to position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} radius - radius value
-     * @return {undefined}
-     */
-    function addCone( position1, position2, color, radius ){
-
-        addElement( position1, conePosition1 );
-        addElement( position2, conePosition2 );
-        addElement( color, coneColor );
-        coneRadius.push( radius );
-
-        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
-
+    if( this.arrowPosition1.length ){
+        var arrowData = {
+            position1: new Float32Array( this.arrowPosition1 ),
+            position2: new Float32Array( this.arrowPosition2 ),
+            color: new Float32Array( this.arrowColor ),
+            radius: new Float32Array( this.arrowRadius )
+        };
+        var arrowPicking = new ArrowPicker(
+            serialArray( this.arrowRadius.length ),
+            Object.assign( { shape: this }, arrowData )
+        );
+        var arrowBuffer = new ArrowBuffer(
+            Object.assign( { picking: arrowPicking }, arrowData ),
+            {
+                aspectRatio: this.aspectRatio,
+                radialSegments: this.radialSegments,
+                disableImpostor: this.disableImpostor,
+                openEnded: this.openEnded,
+            }
+        );
+        buffers.push( arrowBuffer );
     }
 
-    /**
-     * Add an arrow
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addArrow( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-     *
-     * @param {Vector3|Array} position1 - from position vector or array
-     * @param {Vector3|Array} position2 - to position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} radius - radius value
-     * @return {undefined}
-     */
-    function addArrow( position1, position2, color, radius ){
-
-        addElement( position1, arrowPosition1 );
-        addElement( position2, arrowPosition2 );
-        addElement( color, arrowColor );
-        arrowRadius.push( radius );
-
-        boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
-        boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
-
+    if( this.labelPosition.length ){
+        var labelData = {
+            position: new Float32Array( this.labelPosition ),
+            color: new Float32Array( this.labelColor ),
+            size: new Float32Array( this.labelSize ),
+            text: this.labelText
+        };
+        var labelBuffer = new TextBuffer( labelData, this.labelParams );
+        buffers.push( labelBuffer );
     }
 
-    /**
-     * Add a label
-     * @instance
-     * @memberof Shape
-     * @example
-     * shape.addLabel( [ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello" );
-     *
-     * @param {Vector3|Array} position - from position vector or array
-     * @param {Color|Array} color - color object or array
-     * @param {Float} size - size value
-     * @param {String} text - text value
-     * @return {undefined}
-     */
-    function addLabel( position, color, size, text ){
+    return this.bufferList.concat( buffers );
 
-        addElement( position, labelPosition );
-        addElement( color, labelColor );
-        labelSize.push( size );
-        labelText.push( text );
+};
 
-        boundingBox.expandByPoint( tmpVec.fromArray( position ) );
+Shape$1.prototype.dispose = function dispose (){
 
-    }
-
-    function getBufferList(){
-
-        var buffers = [];
-
-        if( spherePosition.length ){
-            var sphereData = {
-                position: new Float32Array( spherePosition ),
-                color: new Float32Array( sphereColor ),
-                radius: new Float32Array( sphereRadius )
-            };
-            var spherePicking = new SpherePicker(
-                serialArray( sphereRadius.length ),
-                Object.assign( { shape: this }, sphereData )
-            );
-            var sphereBuffer = new SphereBuffer(
-                Object.assign( { picking: spherePicking }, sphereData ),
-                {
-                    sphereDetail: sphereDetail,
-                    disableImpostor: disableImpostor
-                }
-            );
-            buffers.push( sphereBuffer );
-        }
-
-        if( ellipsoidPosition.length ){
-            var ellipsoidData = {
-                position: new Float32Array( ellipsoidPosition ),
-                color: new Float32Array( ellipsoidColor ),
-                radius: new Float32Array( ellipsoidRadius ),
-                majorAxis: new Float32Array( ellipsoidMajorAxis ),
-                minorAxis: new Float32Array( ellipsoidMinorAxis )
-            };
-            var ellipsoidPicking = new EllipsoidPicker(
-                serialArray( ellipsoidRadius.length ),
-                Object.assign( { shape: this }, ellipsoidData )
-            );
-            var ellipsoidBuffer = new EllipsoidBuffer(
-                Object.assign( { picking: ellipsoidPicking }, ellipsoidData ),
-                {
-                    sphereDetail: sphereDetail,
-                    disableImpostor: disableImpostor
-                }
-            );
-            buffers.push( ellipsoidBuffer );
-        }
-
-        if( cylinderPosition1.length ){
-            var cylinderData = {
-                position1: new Float32Array( cylinderPosition1 ),
-                position2: new Float32Array( cylinderPosition2 ),
-                color: new Float32Array( cylinderColor ),
-                color2: new Float32Array( cylinderColor ),
-                radius: new Float32Array( cylinderRadius )
-            };
-            var cylinderPicking = new CylinderPicker(
-                serialArray( cylinderRadius.length ),
-                Object.assign( { shape: this }, cylinderData )
-            );
-            var cylinderBuffer = new CylinderBuffer(
-                Object.assign( { picking: cylinderPicking }, cylinderData ),
-                {
-                    radialSegments: radialSegments,
-                    disableImpostor: disableImpostor,
-                    openEnded: openEnded,
-                }
-            );
-            buffers.push( cylinderBuffer );
-        }
-
-        if( conePosition1.length ){
-            var coneData = {
-                position1: new Float32Array( conePosition1 ),
-                position2: new Float32Array( conePosition2 ),
-                color: new Float32Array( coneColor ),
-                radius: new Float32Array( coneRadius )
-            };
-            var conePicking = new ConePicker(
-                serialArray( coneRadius.length ),
-                Object.assign( { shape: this }, coneData )
-            );
-            var coneBuffer = new ConeBuffer(
-                Object.assign( { picking: conePicking }, coneData ),
-                {
-                    radialSegments: radialSegments,
-                    disableImpostor: disableImpostor,
-                    openEnded: openEnded,
-                }
-            );
-            buffers.push( coneBuffer );
-        }
-
-        if( arrowPosition1.length ){
-            var arrowData = {
-                position1: new Float32Array( arrowPosition1 ),
-                position2: new Float32Array( arrowPosition2 ),
-                color: new Float32Array( arrowColor ),
-                radius: new Float32Array( arrowRadius )
-            };
-            var arrowPicking = new ArrowPicker(
-                serialArray( arrowRadius.length ),
-                Object.assign( { shape: this }, arrowData )
-            );
-            var arrowBuffer = new ArrowBuffer(
-                Object.assign( { picking: arrowPicking }, arrowData ),
-                {
-                    aspectRatio: aspectRatio,
-                    radialSegments: radialSegments,
-                    disableImpostor: disableImpostor,
-                    openEnded: openEnded,
-                }
-            );
-            buffers.push( arrowBuffer );
-        }
-
-        if( labelPosition.length ){
-            var labelData = {
-                position: new Float32Array( labelPosition ),
-                color: new Float32Array( labelColor ),
-                size: new Float32Array( labelSize ),
-                text: labelText
-            };
-            var labelBuffer = new TextBuffer( labelData, p.labelParams );
-            buffers.push( labelBuffer );
-        }
-
-        return bufferList.concat( buffers );
-
-    }
-
-    function dispose(){
-
-        bufferList.forEach( function( buffer ){
-            buffer.dispose();
-        } );
-        bufferList.length = 0;
-
-        spherePosition.length = 0;
-        sphereColor.length = 0;
-        sphereRadius.length = 0;
-
-        ellipsoidPosition.length = 0;
-        ellipsoidColor.length = 0;
-        ellipsoidRadius.length = 0;
-        ellipsoidMajorAxis.length = 0;
-        ellipsoidMinorAxis.length = 0;
-
-        cylinderPosition1.length = 0;
-        cylinderPosition2.length = 0;
-        cylinderColor.length = 0;
-        cylinderRadius.length = 0;
-
-        conePosition1.length = 0;
-        conePosition2.length = 0;
-        coneColor.length = 0;
-        coneRadius.length = 0;
-
-        arrowPosition1.length = 0;
-        arrowPosition2.length = 0;
-        arrowColor.length = 0;
-        arrowRadius.length = 0;
-
-    }
-
-    // API
-
-    Object.defineProperties( this, {
-        center: {
-            get: function(){ return boundingBox.getCenter( center ); }
-        },
+    this.bufferList.forEach( function( buffer ){
+        buffer.dispose();
     } );
-    this.boundingBox = boundingBox;
+    this.bufferList.length = 0;
 
-    this.addBuffer = addBuffer;
-    this.addMesh = addMesh;
-    this.addSphere = addSphere;
-    this.addEllipsoid = addEllipsoid;
-    this.addCylinder = addCylinder;
-    this.addCone = addCone;
-    this.addArrow = addArrow;
-    this.addLabel = addLabel;
-    this.getBufferList = getBufferList;
-    this.dispose = dispose;
+    this.spherePosition.length = 0;
+    this.sphereColor.length = 0;
+    this.sphereRadius.length = 0;
 
-}
+    this.ellipsoidPosition.length = 0;
+    this.ellipsoidColor.length = 0;
+    this.ellipsoidRadius.length = 0;
+    this.ellipsoidMajorAxis.length = 0;
+    this.ellipsoidMinorAxis.length = 0;
 
-Shape$1.prototype.constructor = Shape$1;
-Shape$1.prototype.type = "Shape";
+    this.cylinderPosition1.length = 0;
+    this.cylinderPosition2.length = 0;
+    this.cylinderColor.length = 0;
+    this.cylinderRadius.length = 0;
+
+    this.conePosition1.length = 0;
+    this.conePosition2.length = 0;
+    this.coneColor.length = 0;
+    this.coneRadius.length = 0;
+
+    this.arrowPosition1.length = 0;
+    this.arrowPosition2.length = 0;
+    this.arrowColor.length = 0;
+    this.arrowRadius.length = 0;
+
+};
+
+prototypeAccessors$8.center.get = function (){
+
+    if( !this._center ){
+        this._center = this.boundingBox.getCenter();
+    }
+    return this._center;
+
+};
+
+prototypeAccessors$8.type.get = function (){ return "Shape"; };
+
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$8 );
 
 /**
  * @file Representation
@@ -67359,47 +68796,11 @@ Shape$1.prototype.type = "Shape";
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} [params] - representation parameters
  */
-function Representation( object, viewer, params ){
+var Representation = function Representation( object, viewer/*, params*/ ){
 
-    /**
-     * @member {Viewer}
-     */
-    this.viewer = viewer;
+    this.type = "";
 
-    /**
-     * Counter that keeps track of tasks related to the creation of
-     * the representation, including surface calculations.
-     * @member {Counter}
-     */
-    this.tasks = new Counter();
-
-    /**
-     * @member {Queue}
-     * @private
-     */
-    this.queue = new Queue( this.make.bind( this ) );
-
-    /**
-     * @member {Array}
-     * @private
-     */
-    this.bufferList = [];
-
-    if( this.parameters.colorScheme ){
-        this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
-    }
-
-    this.init( params );
-
-}
-
-Representation.prototype = {
-
-    constructor: Representation,
-
-    type: "",
-
-    parameters: {
+    this.parameters = {
 
         lazy: {
             type: "boolean"
@@ -67460,421 +68861,450 @@ Representation.prototype = {
             type: "color", buffer: true
         },
 
-    },
+    };
 
-    init: function( params ){
+    /**
+     * @member {Viewer}
+     */
+    this.viewer = viewer;
 
-        var p = params || {};
+    /**
+     * Counter that keeps track of tasks related to the creation of
+     * the representation, including surface calculations.
+     * @member {Counter}
+     */
+    this.tasks = new Counter();
 
-        this.clipNear = defaults( p.clipNear, 0 );
-        this.clipRadius = defaults( p.clipRadius, 0 );
-        this.clipCenter = defaults( p.clipCenter, new Vector3() );
-        this.flatShaded = defaults( p.flatShaded, false );
-        this.side = defaults( p.side, "double" );
-        this.opacity = defaults( p.opacity, 1.0 );
-        this.wireframe = defaults( p.wireframe, false );
-        this.linewidth = defaults( p.linewidth, 2 );
+    /**
+     * @member {Queue}
+     * @private
+     */
+    this.queue = new Queue( this.make.bind( this ) );
 
-        this.setColor( p.color, p );
+    /**
+     * @member {Array}
+     * @private
+     */
+    this.bufferList = [];
 
-        this.colorScheme = defaults( p.colorScheme, "uniform" );
-        this.colorScale = defaults( p.colorScale, "" );
-        this.colorValue = defaults( p.colorValue, 0x909090 );
-        this.colorDomain = defaults( p.colorDomain, "" );
-        this.colorMode = defaults( p.colorMode, "hcl" );
+    if( this.parameters.colorScheme ){
+        this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
+    }
 
-        this.visible = defaults( p.visible, true );
-        this.quality = defaults( p.quality, undefined );
+};
 
-        this.roughness = defaults( p.roughness, 0.4 );
-        this.metalness = defaults( p.metalness, 0.0 );
-        this.diffuse = defaults( p.diffuse, 0xffffff );
+Representation.prototype.init = function init ( params ){
 
-        this.lazy = defaults( p.lazy, false );
-        this.lazyProps = {
-            build: false,
-            bufferParams: {},
-            what: {}
+    var p = params || {};
+
+    this.clipNear = defaults( p.clipNear, 0 );
+    this.clipRadius = defaults( p.clipRadius, 0 );
+    this.clipCenter = defaults( p.clipCenter, new Vector3() );
+    this.flatShaded = defaults( p.flatShaded, false );
+    this.side = defaults( p.side, "double" );
+    this.opacity = defaults( p.opacity, 1.0 );
+    this.wireframe = defaults( p.wireframe, false );
+    this.linewidth = defaults( p.linewidth, 2 );
+
+    this.setColor( p.color, p );
+
+    this.colorScheme = defaults( p.colorScheme, "uniform" );
+    this.colorScale = defaults( p.colorScale, "" );
+    this.colorValue = defaults( p.colorValue, 0x909090 );
+    this.colorDomain = defaults( p.colorDomain, undefined );
+    this.colorMode = defaults( p.colorMode, "hcl" );
+
+    this.visible = defaults( p.visible, true );
+    this.quality = defaults( p.quality, undefined );
+
+    this.roughness = defaults( p.roughness, 0.4 );
+    this.metalness = defaults( p.metalness, 0.0 );
+    this.diffuse = defaults( p.diffuse, 0xffffff );
+
+    this.lazy = defaults( p.lazy, false );
+    this.lazyProps = {
+        build: false,
+        bufferParams: {},
+        what: {}
+    };
+
+    // handle common parameters when applicable
+
+    var tp = this.parameters;
+
+    if( tp.sphereDetail === true ){
+        tp.sphereDetail = {
+            type: "integer", max: 3, min: 0, rebuild: "impostor"
         };
+    }
+    if( tp.radialSegments === true ){
+        tp.radialSegments = {
+            type: "integer", max: 25, min: 5, rebuild: "impostor"
+        };
+    }
+    if( tp.openEnded === true ){
+        tp.openEnded = {
+            type: "boolean", rebuild: "impostor", buffer: true
+        };
+    }
+    if( tp.disableImpostor === true ){
+        tp.disableImpostor = {
+            type: "boolean", rebuild: true
+        };
+    }
 
-        // handle common parameters when applicable
+    if( p.quality === "low" ){
+        if( tp.sphereDetail ) { this.sphereDetail = 0; }
+        if( tp.radialSegments ) { this.radialSegments = 5; }
+    }else if( p.quality === "medium" ){
+        if( tp.sphereDetail ) { this.sphereDetail = 1; }
+        if( tp.radialSegments ) { this.radialSegments = 10; }
+    }else if( p.quality === "high" ){
+        if( tp.sphereDetail ) { this.sphereDetail = 2; }
+        if( tp.radialSegments ) { this.radialSegments = 20; }
+    }else{
+        if( tp.sphereDetail ){
+            this.sphereDetail = defaults( p.sphereDetail, 1 );
+        }
+        if( tp.radialSegments ){
+            this.radialSegments = defaults( p.radialSegments, 10 );
+        }
+    }
 
-        var tp = this.parameters;
+    if( tp.openEnded ){
+        this.openEnded = defaults( p.openEnded, true );
+    }
 
-        if( tp.sphereDetail === true ){
-            tp.sphereDetail = {
-                type: "integer", max: 3, min: 0, rebuild: "impostor"
-            };
-        }
-        if( tp.radialSegments === true ){
-            tp.radialSegments = {
-                type: "integer", max: 25, min: 5, rebuild: "impostor"
-            };
-        }
-        if( tp.openEnded === true ){
-            tp.openEnded = {
-                type: "boolean", rebuild: "impostor", buffer: true
-            };
-        }
-        if( tp.disableImpostor === true ){
-            tp.disableImpostor = {
-                type: "boolean", rebuild: true
-            };
-        }
+    if( tp.disableImpostor ){
+        this.disableImpostor = defaults( p.disableImpostor, false );
+    }
 
-        if( p.quality === "low" ){
-            if( tp.sphereDetail ) { this.sphereDetail = 0; }
-            if( tp.radialSegments ) { this.radialSegments = 5; }
-        }else if( p.quality === "medium" ){
-            if( tp.sphereDetail ) { this.sphereDetail = 1; }
-            if( tp.radialSegments ) { this.radialSegments = 10; }
-        }else if( p.quality === "high" ){
-            if( tp.sphereDetail ) { this.sphereDetail = 2; }
-            if( tp.radialSegments ) { this.radialSegments = 20; }
+};
+
+Representation.prototype.getColorParams = function getColorParams ( p ){
+
+    return Object.assign( {
+
+        scheme: this.colorScheme,
+        scale: this.colorScale,
+        value: this.colorValue,
+        domain: this.colorDomain,
+        mode: this.colorMode,
+
+    }, p );
+
+};
+
+Representation.prototype.getBufferParams = function getBufferParams ( p ){
+
+    return Object.assign( {
+
+        clipNear: this.clipNear,
+        clipRadius: this.clipRadius,
+        clipCenter: this.clipCenter,
+        flatShaded: this.flatShaded,
+        opacity: this.opacity,
+        side: this.side,
+        wireframe: this.wireframe,
+        linewidth: this.linewidth,
+
+        roughness: this.roughness,
+        metalness: this.metalness,
+        diffuse: this.diffuse,
+
+    }, p );
+
+};
+
+Representation.prototype.setColor = function setColor ( value, p ){
+
+    var types = Object.keys( ColormakerRegistry.getSchemes() );
+
+    if( types.includes( value ) ){
+
+        if( p ){
+            p.colorScheme = value;
         }else{
-            if( tp.sphereDetail ){
-                this.sphereDetail = defaults( p.sphereDetail, 1 );
-            }
-            if( tp.radialSegments ){
-                this.radialSegments = defaults( p.radialSegments, 10 );
+            this.setParameters( { colorScheme: value } );
+        }
+
+    }else if( value !== undefined ){
+
+        value = new Color( value ).getHex();
+        if( p ){
+            p.colorScheme = "uniform";
+            p.colorValue = value;
+        }else{
+            this.setParameters( {
+                colorScheme: "uniform", colorValue: value
+            } );
+        }
+
+    }
+
+    return this;
+
+};
+
+// TODO
+// get prepare(){ return false; }
+
+Representation.prototype.create = function create (){
+
+    // this.bufferList.length = 0;
+
+};
+
+Representation.prototype.update = function update (){
+
+    this.build();
+
+};
+
+Representation.prototype.build = function build ( updateWhat ){
+
+    if( this.lazy && !this.visible ){
+        this.lazyProps.build = true;
+        return;
+    }
+
+    if( !this.prepare ){
+        this.tasks.increment();
+        this.make();
+        return;
+    }
+
+    // don't let tasks accumulate
+    if( this.queue.length() > 0 ){
+        this.tasks.change( 1 - this.queue.length() );
+        this.queue.kill();
+    }else{
+        this.tasks.increment();
+    }
+
+    this.queue.push( updateWhat || false );
+
+};
+
+Representation.prototype.make = function make ( updateWhat, callback ){
+
+    if( Debug ) { Log.time( "Representation.make " + this.type ); }
+
+    var _make = function(){
+
+        if( updateWhat ){
+            this.update( updateWhat );
+            this.viewer.requestRender();
+            this.tasks.decrement();
+            if( callback ) { callback(); }
+        }else{
+            this.clear();
+            this.create();
+            if( !this.manualAttach && !this.disposed ){
+                if( Debug ) { Log.time( "Representation.attach " + this.type ); }
+                this.attach( function(){
+                    if( Debug ) { Log.timeEnd( "Representation.attach " + this.type ); }
+                    this.tasks.decrement();
+                    if( callback ) { callback(); }
+                }.bind( this ) );
             }
         }
 
-        if( tp.openEnded ){
-            this.openEnded = defaults( p.openEnded, true );
-        }
+        if( Debug ) { Log.timeEnd( "Representation.make " + this.type ); }
 
-        if( tp.disableImpostor ){
-            this.disableImpostor = defaults( p.disableImpostor, false );
-        }
+    }.bind( this );
 
-    },
+    if( this.prepare ){
+        this.prepare( _make );
+    }else{
+        _make();
+    }
 
-    getColorParams: function( p ){
+};
 
-        return Object.assign( {
+Representation.prototype.attach = function attach ( callback ){
 
-            scheme: this.colorScheme,
-            scale: this.colorScale,
-            value: this.colorValue,
-            domain: this.colorDomain,
-            mode: this.colorMode,
+    this.setVisibility( this.visible );
 
-        }, p );
+    callback();
 
-    },
+};
 
-    getBufferParams: function( p ){
+/**
+ * Set the visibility of the representation
+ * @param {Boolean} value - visibility flag
+ * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
+ * @return {Representation} this object
+ */
+Representation.prototype.setVisibility = function setVisibility ( value, noRenderRequest ){
 
-        return Object.assign( {
+    this.visible = value;
 
-            clipNear: this.clipNear,
-            clipRadius: this.clipRadius,
-            clipCenter: this.clipCenter,
-            flatShaded: this.flatShaded,
-            opacity: this.opacity,
-            side: this.side,
-            wireframe: this.wireframe,
-            linewidth: this.linewidth,
+    if( this.visible ){
 
-            roughness: this.roughness,
-            metalness: this.metalness,
-            diffuse: this.diffuse,
+        var lazyProps = this.lazyProps;
+        var bufferParams = lazyProps.bufferParams;
+        var what = lazyProps.what;
 
-        }, p );
+        if( lazyProps.build ){
 
-    },
-
-    setColor: function( value, p ){
-
-        var types = Object.keys( ColormakerRegistry.getSchemes() );
-
-        if( types.includes( value ) ){
-
-            if( p ){
-                p.colorScheme = value;
-            }else{
-                this.setParameters( { colorScheme: value } );
-            }
-
-        }else if( value !== undefined ){
-
-            value = new Color( value ).getHex();
-            if( p ){
-                p.colorScheme = "uniform";
-                p.colorValue = value;
-            }else{
-                this.setParameters( {
-                    colorScheme: "uniform", colorValue: value
-                } );
-            }
-
-        }
-
-        return this;
-
-    },
-
-    prepare: false,
-
-    create: function(){
-
-        // this.bufferList.length = 0;
-
-    },
-
-    update: function(){
-
-        this.build();
-
-    },
-
-    build: function( updateWhat ){
-
-        if( this.lazy && !this.visible ){
-            this.lazyProps.build = true;
+            lazyProps.build = false;
+            this.build();
             return;
-        }
 
-        if( !this.prepare ){
-            this.tasks.increment();
-            this.make();
-            return;
-        }
+        }else if( Object.keys( bufferParams ).length || Object.keys( what ).length ){
 
-        // don't let tasks accumulate
-        if( this.queue.length() > 0 ){
-            this.tasks.change( 1 - this.queue.length() );
-            this.queue.kill();
-        }else{
-            this.tasks.increment();
-        }
-
-        this.queue.push( updateWhat || false );
-
-    },
-
-    make: function( updateWhat, callback ){
-
-        if( Debug ) { Log.time( "Representation.make " + this.type ); }
-
-        var _make = function(){
-
-            if( updateWhat ){
-                this.update( updateWhat );
-                this.viewer.requestRender();
-                this.tasks.decrement();
-                if( callback ) { callback(); }
-            }else{
-                this.clear();
-                this.create();
-                if( !this.manualAttach && !this.disposed ){
-                    if( Debug ) { Log.time( "Representation.attach " + this.type ); }
-                    this.attach( function(){
-                        if( Debug ) { Log.timeEnd( "Representation.attach " + this.type ); }
-                        this.tasks.decrement();
-                        if( callback ) { callback(); }
-                    }.bind( this ) );
-                }
-            }
-
-            if( Debug ) { Log.timeEnd( "Representation.make " + this.type ); }
-
-        }.bind( this );
-
-        if( this.prepare ){
-            this.prepare( _make );
-        }else{
-            _make();
-        }
-
-    },
-
-    attach: function( callback ){
-
-        this.setVisibility( this.visible );
-
-        callback();
-
-    },
-
-    /**
-     * Set the visibility of the representation
-     * @param {Boolean} value - visibility flag
-     * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
-     * @return {Representation} this object
-     */
-    setVisibility: function( value, noRenderRequest ){
-
-        this.visible = value;
-
-        if( this.visible ){
-
-            var lazyProps = this.lazyProps;
-            var bufferParams = lazyProps.bufferParams;
-            var what = lazyProps.what;
-
-            if( lazyProps.build ){
-
-                lazyProps.build = false;
-                this.build();
-                return;
-
-            }else if( Object.keys( bufferParams ).length || Object.keys( what ).length ){
-
-                lazyProps.bufferParams = {};
-                lazyProps.what = {};
-                this.updateParameters( bufferParams, what );
-
-            }
+            lazyProps.bufferParams = {};
+            lazyProps.what = {};
+            this.updateParameters( bufferParams, what );
 
         }
 
-        this.bufferList.forEach( function( buffer ){
-            buffer.setVisibility( value );
-        } );
+    }
 
-        if( !noRenderRequest ) { this.viewer.requestRender(); }
+    this.bufferList.forEach( function( buffer ){
+        buffer.setVisibility( value );
+    } );
 
-        return this;
+    if( !noRenderRequest ) { this.viewer.requestRender(); }
 
-    },
+    return this;
 
-    /**
-     * Set the visibility of the representation
-     * @param {RepresentationParameters} params - parameters object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {Representation} this object
-     */
-    setParameters: function( params, what, rebuild ){
+};
+
+/**
+ * Set the visibility of the representation
+ * @param {RepresentationParameters} params - parameters object
+ * @param {Object} [what] - buffer data attributes to be updated,
+ *                    note that this needs to be implemented in the
+ *                    derived classes. Generally it allows more
+ *                    fine-grained control over updating than
+ *                    forcing a rebuild.
+ * @param {Boolean} what.position - update position data
+ * @param {Boolean} what.color - update color data
+ * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+ * @return {Representation} this object
+ */
+Representation.prototype.setParameters = function setParameters ( params, what, rebuild ){
         var this$1 = this;
 
 
-        var p = params || {};
-        var tp = this.parameters;
+    var p = params || {};
+    var tp = this.parameters;
 
-        what = what || {};
-        rebuild = rebuild || false;
+    what = what || {};
+    rebuild = rebuild || false;
 
-        var bufferParams = {};
+    var bufferParams = {};
 
-        for( var name in p ){
+    for( var name in p ){
 
-            if( p[ name ] === undefined ) { continue; }
-            if( tp[ name ] === undefined ) { continue; }
+        if( p[ name ] === undefined ) { continue; }
+        if( tp[ name ] === undefined ) { continue; }
 
-            if( tp[ name ].int ) { p[ name ] = parseInt( p[ name ] ); }
-            if( tp[ name ].float ) { p[ name ] = parseFloat( p[ name ] ); }
+        if( tp[ name ].int ) { p[ name ] = parseInt( p[ name ] ); }
+        if( tp[ name ].float ) { p[ name ] = parseFloat( p[ name ] ); }
 
-            // no value change
-            if( p[ name ] === this$1[ name ] ) { continue; }
+        // no value change
+        if( p[ name ] === this$1[ name ] ) { continue; }
 
-            this$1[ name ] = p[ name ];
+        this$1[ name ] = p[ name ];
 
-            // buffer param
-            if( tp[ name ].buffer ){
-                if( tp[ name ].buffer === true ){
-                    bufferParams[ name ] = p[ name ];
-                }else{
-                    bufferParams[ tp[ name ].buffer ] = p[ name ];
-                }
+        // buffer param
+        if( tp[ name ].buffer ){
+            if( tp[ name ].buffer === true ){
+                bufferParams[ name ] = p[ name ];
+            }else{
+                bufferParams[ tp[ name ].buffer ] = p[ name ];
             }
-
-            // mark for update
-            if( tp[ name ].update ){
-                what[ tp[ name ].update ] = true;
-            }
-
-            // mark for rebuild
-            if( tp[ name ].rebuild &&
-                !( tp[ name ].rebuild === "impostor" &&
-                    ExtensionFragDepth && !this$1.disableImpostor )
-            ){
-                rebuild = true;
-            }
-
         }
 
-        //
-
-        if( rebuild ){
-            this.build();
-        }else{
-            this.updateParameters( bufferParams, what );
+        // mark for update
+        if( tp[ name ].update ){
+            what[ tp[ name ].update ] = true;
         }
 
-        return this;
-
-    },
-
-    updateParameters: function( bufferParams, what ){
-
-        if( this.lazy && !this.visible ){
-            Object.assign( this.lazyProps.bufferParams, bufferParams );
-            Object.assign( this.lazyProps.what, what );
-            return;
+        // mark for rebuild
+        if( tp[ name ].rebuild &&
+            !( tp[ name ].rebuild === "impostor" &&
+                ExtensionFragDepth && !this$1.disableImpostor )
+        ){
+            rebuild = true;
         }
-
-        this.bufferList.forEach( function( buffer ){
-            buffer.setParameters( bufferParams );
-        } );
-
-        if( Object.keys( what ).length ){
-            this.update( what );  // update buffer attribute
-        }
-
-        this.viewer.requestRender();
-
-    },
-
-    getParameters: function(){
-
-        var params = {
-            lazy: this.lazy,
-            visible: this.visible,
-            quality: this.quality
-        };
-
-        Object.keys( this.parameters ).forEach( function( name ){
-            if( this.parameters[ name ] !== null ){
-                params[ name ] = this[ name ];
-            }
-        }, this );
-
-        return params;
-
-    },
-
-    clear: function(){
-
-        this.bufferList.forEach( function( buffer ){
-
-            this.viewer.remove( buffer );
-            buffer.dispose();
-
-        }, this );
-
-        this.bufferList.length = 0;
-
-        this.viewer.requestRender();
-
-    },
-
-    dispose: function(){
-
-        this.disposed = true;
-        this.queue.kill();
-        this.tasks.dispose();
-        this.clear();
 
     }
+
+    //
+
+    if( rebuild ){
+        this.build();
+    }else{
+        this.updateParameters( bufferParams, what );
+    }
+
+    return this;
+
+};
+
+Representation.prototype.updateParameters = function updateParameters ( bufferParams, what ){
+
+    if( this.lazy && !this.visible ){
+        Object.assign( this.lazyProps.bufferParams, bufferParams );
+        Object.assign( this.lazyProps.what, what );
+        return;
+    }
+
+    this.bufferList.forEach( function( buffer ){
+        buffer.setParameters( bufferParams );
+    } );
+
+    if( Object.keys( what ).length ){
+        this.update( what );  // update buffer attribute
+    }
+
+    this.viewer.requestRender();
+
+};
+
+Representation.prototype.getParameters = function getParameters (){
+
+    var params = {
+        lazy: this.lazy,
+        visible: this.visible,
+        quality: this.quality
+    };
+
+    Object.keys( this.parameters ).forEach( function( name ){
+        if( this.parameters[ name ] !== null ){
+            params[ name ] = this[ name ];
+        }
+    }, this );
+
+    return params;
+
+};
+
+Representation.prototype.clear = function clear (){
+
+    this.bufferList.forEach( function( buffer ){
+
+        this.viewer.remove( buffer );
+        buffer.dispose();
+
+    }, this );
+
+    this.bufferList.length = 0;
+
+    this.viewer.requestRender();
+
+};
+
+Representation.prototype.dispose = function dispose (){
+
+    this.disposed = true;
+    this.queue.kill();
+    this.tasks.dispose();
+    this.clear();
 
 };
 
@@ -67887,68 +69317,70 @@ Representation.prototype = {
 
 /**
  * Representation for showing buffer objects
- * @class
- * @extends Representation
- * @param {SphereBuffer|CylinderBuffer} buffer - a buffer object
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters
  */
-function BufferRepresentation( buffer, viewer, params ){
+var BufferRepresentation = (function (Representation$$1) {
+    function BufferRepresentation( buffer, viewer, params ){
 
-    if( !Array.isArray( buffer ) ){
-        buffer = [ buffer ];
+        if( !Array.isArray( buffer ) ){
+            buffer = [ buffer ];
+        }
+
+        Representation$$1.call( this, buffer, viewer, params );
+
+        this.type = "buffer";
+
+        this.parameters = Object.assign( {
+
+        }, this.parameters, {
+
+            colorScheme: null,
+            colorScale: null,
+            colorValue: null,
+            colorDomain: null,
+            colorMode: null
+
+        } );
+
+        this.buffer = buffer;
+
+        this.init( params );
+
     }
 
-    Representation.call( this, buffer, viewer, params );
+    if ( Representation$$1 ) BufferRepresentation.__proto__ = Representation$$1;
+    BufferRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    BufferRepresentation.prototype.constructor = BufferRepresentation;
 
-    this.buffer = buffer;
+    BufferRepresentation.prototype.init = function init ( params ){
 
-    this.build();
+        Representation$$1.prototype.init.call( this, params );
 
-}
+        this.build();
 
-BufferRepresentation.prototype = Object.assign( Object.create(
+    };
 
-    Representation.prototype ), {
-
-    constructor: BufferRepresentation,
-
-    type: "buffer",
-
-    parameters: Object.assign( {
-
-    }, Representation.prototype.parameters, {
-
-        colorScheme: null,
-        colorScale: null,
-        colorValue: null,
-        colorDomain: null,
-        colorMode: null
-
-    } ),
-
-    create: function(){
+    BufferRepresentation.prototype.create = function create (){
 
         this.bufferList.push.apply( this.bufferList, this.buffer );
 
-    },
+    };
 
-    attach: function( callback ){
+    BufferRepresentation.prototype.attach = function attach ( callback ){
+        var this$1 = this;
 
-        this.bufferList.forEach( function( buffer ){
 
-            this.viewer.add( buffer );
-            buffer.setParameters( this.getBufferParams() );
-
-        }, this );
-
+        this.bufferList.forEach( function (buffer) {
+            this$1.viewer.add( buffer );
+            buffer.setParameters( this$1.getBufferParams() );
+        } );
         this.setVisibility( this.visible );
 
         callback();
 
-    }
+    };
 
-} );
+    return BufferRepresentation;
+}(Representation));
 
 /**
  * @file Surface Buffer
@@ -68033,9 +69465,9 @@ var DoubleSidedBuffer = function DoubleSidedBuffer( buffer ){
 
 };
 
-var prototypeAccessors$9 = { pickable: {} };
+var prototypeAccessors$11 = { pickable: {} };
 
-prototypeAccessors$9.pickable.get = function (){
+prototypeAccessors$11.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -68123,7 +69555,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$9 );
+Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$11 );
 
 DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
 
@@ -68180,87 +69612,81 @@ var ContourBuffer = (function (Buffer$$1) {
 
 
 /**
- * Surface representation object
- * @class
- * @extends Representation
- * @param {Surface|Volume} surface - the surface or volume to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {SurfaceRepresentationParameters} params - surface representation parameters
+ * Surface representation
  */
-function SurfaceRepresentation( surface, viewer, params ){
+var SurfaceRepresentation = (function (Representation$$1) {
+    function SurfaceRepresentation( surface, viewer, params ){
 
-    Representation.call( this, surface, viewer, params );
+        Representation$$1.call( this, surface, viewer, params );
 
-    if( surface instanceof Volume ){
-        this.surface = undefined;
-        this.volume = surface;
-    }else{
-        this.surface = surface;
-        this.volume = undefined;
+        this.type = "surface";
+
+        this.parameters = Object.assign( {
+
+            isolevelType: {
+                type: "select", options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            isolevel: {
+                type: "number", precision: 2, max: 1000, min: -1000
+            },
+            smooth: {
+                type: "integer", precision: 1, max: 10, min: 0
+            },
+            background: {
+                type: "boolean", rebuild: true  // FIXME
+            },
+            opaqueBack: {
+                type: "boolean", buffer: true
+            },
+            boxSize: {
+                type: "integer", precision: 1, max: 100, min: 0
+            },
+            colorVolume: {
+                type: "hidden"
+            },
+            contour: {
+                type: "boolean", rebuild: true
+            },
+            useWorker: {
+                type: "boolean", rebuild: true
+            }
+
+        }, this.parameters );
+
+        if( surface instanceof Volume ){
+            this.surface = undefined;
+            this.volume = surface;
+        }else{
+            this.surface = surface;
+            this.volume = undefined;
+        }
+
+        this.boxCenter = new Vector3();
+        this.__boxCenter = new Vector3();
+        this.box = new Box3();
+        this.__box = new Box3();
+
+        this._position = new Vector3();
+        this.setBox = function setBox(){
+            this._position.copy( viewer.translationGroup.position ).negate();
+            if( !this._position.equals( this.boxCenter ) ){
+                this.setParameters( { "boxCenter": this._position } );
+            }
+        };
+
+        this.viewer.signals.ticked.add( this.setBox, this );
+
+        this.init( params );
+
     }
 
-    this.boxCenter = new Vector3();
-    this.__boxCenter = new Vector3();
-    this.box = new Box3();
-    this.__box = new Box3();
+    if ( Representation$$1 ) SurfaceRepresentation.__proto__ = Representation$$1;
+    SurfaceRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    SurfaceRepresentation.prototype.constructor = SurfaceRepresentation;
 
-    this._position = new Vector3();
-    this.setBox = function setBox(){
-        this._position.copy( viewer.translationGroup.position ).negate();
-        if( !this._position.equals( this.boxCenter ) ){
-            this.setParameters( { "boxCenter": this._position } );
-        }
-    };
-
-    this.viewer.signals.ticked.add( this.setBox, this );
-
-    this.build();
-
-}
-
-SurfaceRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: SurfaceRepresentation,
-
-    type: "surface",
-
-    parameters: Object.assign( {
-
-        isolevelType: {
-            type: "select", options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000
-        },
-        smooth: {
-            type: "integer", precision: 1, max: 10, min: 0
-        },
-        background: {
-            type: "boolean", rebuild: true  // FIXME
-        },
-        opaqueBack: {
-            type: "boolean", buffer: true
-        },
-        boxSize: {
-            type: "integer", precision: 1, max: 100, min: 0
-        },
-        colorVolume: {
-            type: "hidden"
-        },
-        contour: {
-            type: "boolean", rebuild: true
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
-        }
-
-    }, Representation.prototype.parameters ),
-
-    init: function( params ){
+    SurfaceRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -68276,25 +69702,27 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
 
-        Representation.prototype.init.call( this, p );
+        Representation$$1.prototype.init.call( this, p );
 
-    },
+        this.build();
 
-    attach: function( callback ){
+    };
 
-        this.bufferList.forEach( function( buffer ){
+    SurfaceRepresentation.prototype.attach = function attach ( callback ){
+        var this$1 = this;
 
-            this.viewer.add( buffer );
 
-        }, this );
+        this.bufferList.forEach( function (buffer) {
+            this$1.viewer.add( buffer );
+        } );
 
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    };
 
-    prepare: function( callback ){
+    SurfaceRepresentation.prototype.prepare = function prepare ( callback ){
 
         if( this.volume ){
 
@@ -68347,9 +69775,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             callback();
         }
 
-    },
+    };
 
-    getSurfaceData: function(){
+    SurfaceRepresentation.prototype.getSurfaceData = function getSurfaceData (){
 
         return {
             position: this.surface.getPosition(),
@@ -68359,9 +69787,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             picking: this.surface.getPicking()
         };
 
-    },
+    };
 
-    create: function(){
+    SurfaceRepresentation.prototype.create = function create (){
 
         var sd = this.getSurfaceData();
 
@@ -68389,9 +69817,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( buffer );
 
-    },
+    };
 
-    update: function( what ){
+    SurfaceRepresentation.prototype.update = function update ( what ){
 
         if( this.bufferList.length === 0 ) { return; }
 
@@ -68421,7 +69849,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             buffer.setAttributes( surfaceData );
         } );
 
-    },
+    };
 
     /**
      * Set representation parameters
@@ -68437,7 +69865,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {SurfaceRepresentation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    SurfaceRepresentation.prototype.setParameters = function setParameters ( params, what, rebuild ){
 
         if( params && params.isolevelType !== undefined &&
             this.volume
@@ -68477,9 +69905,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             params.wireframe = false;
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        Representation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         if( this.volume ){
             this.volume.getBox( this.boxCenter, this.boxSize, this.box );
@@ -68507,27 +69933,28 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    };
 
-    getColorParams: function(){
+    SurfaceRepresentation.prototype.getColorParams = function getColorParams (){
 
-        var p = Representation.prototype.getColorParams.call( this );
+        var p = Representation$$1.prototype.getColorParams.call(this);
 
         p.volume = this.colorVolume;
 
         return p;
 
-    },
+    };
 
-    dispose: function(){
+    SurfaceRepresentation.prototype.dispose = function dispose (){
 
         this.viewer.signals.ticked.remove( this.setBox, this );
 
-        Representation.prototype.dispose.call( this );
+        Representation$$1.prototype.dispose.call(this);
 
-    }
+    };
 
-} );
+    return SurfaceRepresentation;
+}(Representation));
 
 /**
  * @file Filtered Volume
@@ -68543,18 +69970,18 @@ var FilteredVolume = function FilteredVolume( volume, minValue, maxValue, outsid
 
 };
 
-var prototypeAccessors$10 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
+var prototypeAccessors$12 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
 
-prototypeAccessors$10.header.get = function (){ return this.volume.header; };
-prototypeAccessors$10.matrix.get = function (){ return this.volume.matrix; };
-prototypeAccessors$10.normalMatrix.get = function (){ return this.volume.normalMatrix; };
-prototypeAccessors$10.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
-prototypeAccessors$10.center.get = function (){ return this.volume.center; };
-prototypeAccessors$10.boundingBox.get = function (){ return this.volume.boundingBox; };
-prototypeAccessors$10.min.get = function (){ return this.volume.min; };
-prototypeAccessors$10.max.get = function (){ return this.volume.max; };
-prototypeAccessors$10.mean.get = function (){ return this.volume.mean; };
-prototypeAccessors$10.rms.get = function (){ return this.volume.rms; };
+prototypeAccessors$12.header.get = function (){ return this.volume.header; };
+prototypeAccessors$12.matrix.get = function (){ return this.volume.matrix; };
+prototypeAccessors$12.normalMatrix.get = function (){ return this.volume.normalMatrix; };
+prototypeAccessors$12.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
+prototypeAccessors$12.center.get = function (){ return this.volume.center; };
+prototypeAccessors$12.boundingBox.get = function (){ return this.volume.boundingBox; };
+prototypeAccessors$12.min.get = function (){ return this.volume.min; };
+prototypeAccessors$12.max.get = function (){ return this.volume.max; };
+prototypeAccessors$12.mean.get = function (){ return this.volume.mean; };
+prototypeAccessors$12.rms.get = function (){ return this.volume.rms; };
 
 FilteredVolume.prototype._getFilterHash = function _getFilterHash ( minValue, maxValue, outside ){
 
@@ -68647,7 +70074,7 @@ FilteredVolume.prototype.setFilter = function setFilter ( minValue, maxValue, ou
 
 };
 
-Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$10 );
+Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$12 );
 
 FilteredVolume.prototype.getValueForSigma = Volume.prototype.getValueForSigma;
 FilteredVolume.prototype.getSigmaForValue = Volume.prototype.getSigmaForValue;
@@ -68858,110 +70285,107 @@ var PointBuffer = (function (Buffer$$1) {
  */
 
 
-function DotRepresentation( surface, viewer, params ){
+var DotRepresentation = (function (Representation$$1) {
+    function DotRepresentation( surface, viewer, params ){
 
-    Representation.call( this, surface, viewer, params );
+        Representation$$1.call( this, surface, viewer, params );
 
-    if( surface instanceof Volume ){
-        this.surface = undefined;
-        this.volume = new FilteredVolume( surface );
-    }else{
-        this.surface = surface;
-        this.volume = undefined;
+        this.type = "dot";
+
+        this.parameters = Object.assign( {
+
+            thresholdType: {
+                type: "select", rebuild: true, options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            thresholdMin: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdMax: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdOut: {
+                type: "boolean", rebuild: true
+            },
+            dotType: {
+                type: "select", rebuild: true, options: {
+                    "": "",
+                    "sphere": "sphere",
+                    "point": "point"
+                }
+            },
+            radiusType: {
+                type: "select", options: {
+                    "": "",
+                    "value": "value",
+                    "abs-value": "abs-value",
+                    "value-min": "value-min",
+                    "deviation": "deviation",
+                    "size": "size"
+                }
+            },
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001, property: "size"
+            },
+            scale: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            disableImpostor: true,
+
+            pointSize: {
+                type: "number", precision: 1, max: 100, min: 0, buffer: true
+            },
+            sizeAttenuation: {
+                type: "boolean", buffer: true
+            },
+            sortParticles: {
+                type: "boolean", rebuild: true
+            },
+            useTexture: {
+                type: "boolean", buffer: true
+            },
+            alphaTest: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+            forceTransparent: {
+                type: "boolean", buffer: true
+            },
+            edgeBleach: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+
+        }, this.parameters, {
+
+            colorScheme: {
+                type: "select", update: "color", options: {
+                    "": "",
+                    "value": "value",
+                    "uniform": "uniform",
+                    "random": "random"
+                }
+            },
+
+        } );
+
+        if( surface instanceof Volume ){
+            this.surface = undefined;
+            this.volume = new FilteredVolume( surface );
+        }else{
+            this.surface = surface;
+            this.volume = undefined;
+        }
+
+        this.init( params );
+
     }
 
-    this.build();
+    if ( Representation$$1 ) DotRepresentation.__proto__ = Representation$$1;
+    DotRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    DotRepresentation.prototype.constructor = DotRepresentation;
 
-}
-
-DotRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: DotRepresentation,
-
-    type: "dot",
-
-    parameters: Object.assign( {
-
-        thresholdType: {
-            type: "select", rebuild: true, options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        thresholdMin: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdMax: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdOut: {
-            type: "boolean", rebuild: true
-        },
-        dotType: {
-            type: "select", rebuild: true, options: {
-                "": "",
-                "sphere": "sphere",
-                "point": "point"
-            }
-        },
-        radiusType: {
-            type: "select", options: {
-                "": "",
-                "value": "value",
-                "abs-value": "abs-value",
-                "value-min": "value-min",
-                "deviation": "deviation",
-                "size": "size"
-            }
-        },
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001, property: "size"
-        },
-        scale: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        disableImpostor: true,
-
-        pointSize: {
-            type: "number", precision: 1, max: 100, min: 0, buffer: true
-        },
-        sizeAttenuation: {
-            type: "boolean", buffer: true
-        },
-        sortParticles: {
-            type: "boolean", rebuild: true
-        },
-        useTexture: {
-            type: "boolean", buffer: true
-        },
-        alphaTest: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-        forceTransparent: {
-            type: "boolean", buffer: true
-        },
-        edgeBleach: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-
-    }, Representation.prototype.parameters, {
-
-        colorScheme: {
-            type: "select", update: "color", options: {
-                "": "",
-                "value": "value",
-                "uniform": "uniform",
-                "random": "random"
-            }
-        },
-
-    } ),
-
-    defaultSize: 0.1,
-
-    init: function( params ){
+    DotRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -68983,11 +70407,13 @@ DotRepresentation.prototype = Object.assign( Object.create(
         this.forceTransparent = defaults( p.forceTransparent, false );
         this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-        Representation.prototype.init.call( this, p );
+        Representation$$1.prototype.init.call( this, p );
 
-    },
+        this.build();
 
-    attach: function( callback ){
+    };
+
+    DotRepresentation.prototype.attach = function attach ( callback ){
         var this$1 = this;
 
 
@@ -68998,9 +70424,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         callback();
 
-    },
+    };
 
-    create: function(){
+    DotRepresentation.prototype.create = function create (){
 
         var dotData = {};
 
@@ -69067,9 +70493,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( this.dotBuffer );
 
-    },
+    };
 
-    update: function( what ){
+    DotRepresentation.prototype.update = function update ( what ){
 
         if( this.bufferList.length === 0 ) { return; }
 
@@ -69103,9 +70529,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         this.dotBuffer.setAttributes( dotData );
 
-    },
+    };
 
-    setParameters: function( params, what, rebuild ){
+    DotRepresentation.prototype.setParameters = function setParameters ( params, what, rebuild ){
 
         what = what || {};
 
@@ -69144,7 +70570,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
         if( params && params.radiusType !== undefined ){
 
             if( params.radiusType === "radius" ){
-                this.radius = this.defaultSize;
+                this.radius = 0.1;
             }else{
                 this.radius = params.radiusType;
             }
@@ -69179,15 +70605,14 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        Representation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return DotRepresentation;
+}(Representation));
 
 ShaderRegistry.add('shader/Image.vert', "uniform float clipRadius;\nuniform vec3 clipCenter;\nvarying vec2 vUv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\nvoid main() {\n#include begin_vertex\n#include project_vertex\nvUv = uv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n}");
 
@@ -69379,6 +70804,7 @@ var VolumeSlice = function VolumeSlice( volume, params ){
     this.thresholdType = defaults( p.thresholdType, "sigma" );
     this.thresholdMin = defaults( p.thresholdMin, -Infinity );
     this.thresholdMax = defaults( p.thresholdMax, Infinity );
+    this.normalize = defaults( p.normalize, false );
 
     this.volume = volume;
 
@@ -69407,6 +70833,8 @@ VolumeSlice.prototype.getPositionFromCoordinate = function getPositionFromCoordi
 };
 
 VolumeSlice.prototype.getData = function getData ( params ){
+        var this$1 = this;
+
 
     params = params || {};
 
@@ -69498,36 +70926,57 @@ VolumeSlice.prototype.getData = function getData ( params ){
     var imageData = new Uint8Array( width * height * 4 );
     var pickingArray = new Float32Array( width * height );
 
-    var min, max;
+    var tMin, tMax;
     if( this.thresholdType === "sigma" ){
-        min = v.getValueForSigma( this.thresholdMin );
-        max = v.getValueForSigma( this.thresholdMax );
+        tMin = v.getValueForSigma( this.thresholdMin );
+        tMax = v.getValueForSigma( this.thresholdMax );
     }else{
-        min = this.thresholdMin;
-        max = this.thresholdMax;
+        tMin = this.thresholdMin;
+        tMax = this.thresholdMax;
     }
 
-    var colormaker = ColormakerRegistry.getScheme(
-        Object.assign( {}, params.colorParams, {
-            volume: v,
-            domain: [ v.min, v.max ]
-        } )
-    );
+    var cp = Object.assign( {}, params.colorParams, { volume: v } );
+    if( this.normalize ){
+        cp.domain = [ 0, 1 ];
+    }
+    var colormaker = ColormakerRegistry.getScheme( cp );
     var tmp = new Float32Array( 3 );
+    var scale = colormaker.getScale();
 
-    for( var iy = y0; iy < ny; ++iy ){
-        for( var ix = x0; ix < nx; ++ix ){
-            for( var iz = z0; iz < nz; ++iz ){
+    var min, max, diff;
+    if( this.normalize ){
+        min = +Infinity;
+        max = -Infinity;
+        for( var iy = y0; iy < ny; ++iy ){
+            for( var ix = x0; ix < nx; ++ix ){
+                for( var iz = z0; iz < nz; ++iz ){
+                    var idx = index( ix, iy, iz, 0 ) / 3;
+                    var val = d[ idx ];
+                    if( val < min  ) { min = val; }
+                    if( val > max  ) { max = val; }
+                }
+            }
+        }
+        diff = max - min;
+    }
 
-                var idx = index( ix, iy, iz, 0 ) / 3;
-                var val = d[ idx ];
-                colormaker.volumeColorToArray( idx, tmp );
+    for( var iy$1 = y0; iy$1 < ny; ++iy$1 ){
+        for( var ix$1 = x0; ix$1 < nx; ++ix$1 ){
+            for( var iz$1 = z0; iz$1 < nz; ++iz$1 ){
+
+                var idx$1 = index( ix$1, iy$1, iz$1, 0 ) / 3;
+                var val$1 = d[ idx$1 ];
+                if( this$1.normalize ){
+                    val$1 = ( val$1 - min ) / diff;
+                }
+
+                colormaker.colorToArray( scale( val$1 ), tmp );
                 imageData[ i ] = Math.round( tmp[ 0 ] * 255 );
                 imageData[ i + 1 ] = Math.round( tmp[ 1 ] * 255 );
                 imageData[ i + 2 ] = Math.round( tmp[ 2 ] * 255 );
-                imageData[ i + 3 ] = ( val > min && val < max ) ? 255 : 0;
+                imageData[ i + 3 ] = ( val$1 > tMin && val$1 < tMax ) ? 255 : 0;
 
-                pickingArray[ j ] = idx;
+                pickingArray[ j ] = idx$1;
 
                 ++j;
                 i += 4;
@@ -69549,81 +70998,84 @@ VolumeSlice.prototype.getData = function getData ( params ){
  */
 
 
-function SliceRepresentation( volume, viewer, params ){
+var SliceRepresentation = (function (Representation$$1) {
+    function SliceRepresentation( volume, viewer, params ){
 
-    Representation.call( this, volume, viewer, params );
+        Representation$$1.call( this, volume, viewer, params );
 
-    this.volume = volume;
-    this.build();
+        this.type = "slice";
 
-}
+        this.parameters = Object.assign( {
 
-SliceRepresentation.prototype = Object.assign( Object.create(
+            filter: {
+                type: "select", buffer: true, options: {
+                    "nearest": "nearest",
+                    "linear": "linear",
+                    "cubic-bspline": "cubic-bspline",
+                    "cubic-catmulrom": "cubic-catmulrom",
+                    "cubic-mitchell": "cubic-mitchell"
+                }
+            },
+            positionType: {
+                type: "select", rebuild: true, options: {
+                    "percent": "percent", "coordinate": "coordinate"
+                }
+            },
+            position: {
+                type: "range", step: 0.1, max: 100, min: 1,
+                rebuild: true
+            },
+            dimension: {
+                type: "select", rebuild: true, options: {
+                    "x": "x", "y": "y", "z": "z"
+                }
+            },
+            thresholdType: {
+                type: "select", rebuild: true, options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            thresholdMin: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdMax: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            normalize: {
+                type: "boolean", rebuild: true
+            },
 
-    Representation.prototype ), {
+        }, this.parameters, {
 
-    constructor: SliceRepresentation,
+            flatShaded: null,
+            side: null,
+            wireframe: null,
+            linewidth: null,
+            colorScheme: null,
 
-    type: "slice",
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    parameters: Object.assign( {
+        } );
 
-        filter: {
-            type: "select", buffer: true, options: {
-                "nearest": "nearest",
-                "linear": "linear",
-                "cubic-bspline": "cubic-bspline",
-                "cubic-catmulrom": "cubic-catmulrom",
-                "cubic-mitchell": "cubic-mitchell"
-            }
-        },
-        positionType: {
-            type: "select", rebuild: true, options: {
-                "percent": "percent", "coordinate": "coordinate"
-            }
-        },
-        position: {
-            type: "range", step: 0.1, max: 100, min: 1,
-            rebuild: true
-        },
-        dimension: {
-            type: "select", rebuild: true, options: {
-                "x": "x", "y": "y", "z": "z"
-            }
-        },
-        thresholdType: {
-            type: "select", rebuild: true, options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        thresholdMin: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdMax: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
+        this.volume = volume;
 
-    }, Representation.prototype.parameters, {
+        this.init( params );
 
-        flatShaded: null,
-        side: null,
-        wireframe: null,
-        linewidth: null,
-        colorScheme: null,
+    }
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
+    if ( Representation$$1 ) SliceRepresentation.__proto__ = Representation$$1;
+    SliceRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    SliceRepresentation.prototype.constructor = SliceRepresentation;
 
-    } ),
+    SliceRepresentation.prototype.init = function init ( params ){
 
-    init: function( params ){
-
+        var v = this.volume;
         var p = params || {};
+        p.colorDomain = defaults( p.colorDomain, [ v.min, v.max ] );
         p.colorScheme = defaults( p.colorScheme, "value" );
         p.colorScale = defaults( p.colorScale, "Spectral" );
-
-        Representation.prototype.init.call( this, p );
 
         this.colorScheme = "value";
         this.dimension = defaults( p.dimension, "x" );
@@ -69633,10 +71085,15 @@ SliceRepresentation.prototype = Object.assign( Object.create(
         this.thresholdType = defaults( p.thresholdType, "sigma" );
         this.thresholdMin = defaults( p.thresholdMin, -Infinity );
         this.thresholdMax = defaults( p.thresholdMax, Infinity );
+        this.normalize = defaults( p.normalize, false );
 
-    },
+        Representation$$1.prototype.init.call( this, p );
 
-    attach: function( callback ){
+        this.build();
+
+    };
+
+    SliceRepresentation.prototype.attach = function attach ( callback ){
         var this$1 = this;
 
 
@@ -69647,9 +71104,9 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         callback();
 
-    },
+    };
 
-    create: function(){
+    SliceRepresentation.prototype.create = function create (){
 
         var volumeSlice = new VolumeSlice( this.volume, {
             positionType: this.positionType,
@@ -69657,7 +71114,8 @@ SliceRepresentation.prototype = Object.assign( Object.create(
             dimension: this.dimension,
             thresholdType: this.thresholdType,
             thresholdMin: this.thresholdMin,
-            thresholdMax: this.thresholdMax
+            thresholdMax: this.thresholdMax,
+            normalize: this.normalize
         } );
 
         var sliceBuffer = new ImageBuffer(
@@ -69669,9 +71127,10 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( sliceBuffer );
 
-    }
+    };
 
-} );
+    return SliceRepresentation;
+}(Representation));
 
 /**
  * @file Structure Representation
@@ -69693,104 +71152,94 @@ SliceRepresentation.prototype = Object.assign( Object.create(
 
 
 /**
- * Structure representation object
- * @class
- * @extends Representation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {StructureRepresentationParameters} params - structure representation parameters
+ * Structure representation
  */
-function StructureRepresentation( structure, viewer, params ){
+var StructureRepresentation = (function (Representation$$1) {
+    function StructureRepresentation( structure, viewer, params ){
 
-    var p = params || {};
+        var p = params || {};
 
-    /**
-     * @member {Selection}
-     * @private
-     */
-    this.selection = new Selection$1( p.sele );
+        Representation$$1.call( this, structure, viewer, p );
 
-    /**
-     * @member {Array}
-     * @private
-     */
-    this.dataList = [];
+        this.type = "structure";
 
-    /**
-     * @member {Structure}
-     */
-    this.structure = structure;
+        this.parameters = Object.assign( {
 
-    /**
-     * @member {StructureView}
-     */
-    this.structureView = this.structure.getView( this.selection );
+            radiusType: {
+                type: "select", options: RadiusFactory.types
+            },
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            scale: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            assembly: null,
+            defaultAssembly: {
+                type: "hidden"
+            }
 
-    Representation.call( this, structure, viewer, p );
+        }, this.parameters );
 
-    if( structure.biomolDict ){
-        var biomolOptions = {
-            "default": "default",
-            "": ( structure.unitcell ? "AU" : "FULL" )
-        };
-        Object.keys( structure.biomolDict ).forEach( function( k ){
-            biomolOptions[ k ] = k;
-        } );
-        this.parameters.assembly = {
-            type: "select",
-            options: biomolOptions,
-            rebuild: true
-        };
-    }else{
-        this.parameters.assembly = null;
-    }
+        /**
+         * @member {Selection}
+         * @private
+         */
+        this.selection = new Selection$1( p.sele );
 
-    // must come after structureView to ensure selection change signals
-    // have already updated the structureView
-    this.selection.signals.stringChanged.add( function(){
-        this.build();
-    }.bind( this ) );
+        /**
+         * @member {Array}
+         * @private
+         */
+        this.dataList = [];
 
-    this.build();
+        /**
+         * @member {Structure}
+         */
+        this.structure = structure;
 
-}
+        /**
+         * @member {StructureView}
+         */
+        this.structureView = this.structure.getView( this.selection );
 
-StructureRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: StructureRepresentation,
-
-    type: "structure",
-
-    parameters: Object.assign( {
-
-        radiusType: {
-            type: "select", options: RadiusFactory.types
-        },
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        scale: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        assembly: null,
-        defaultAssembly: {
-            type: "hidden"
+        if( structure.biomolDict ){
+            var biomolOptions = {
+                "default": "default",
+                "": ( structure.unitcell ? "AU" : "FULL" )
+            };
+            Object.keys( structure.biomolDict ).forEach( function( k ){
+                biomolOptions[ k ] = k;
+            } );
+            this.parameters.assembly = {
+                type: "select",
+                options: biomolOptions,
+                rebuild: true
+            };
+        }else{
+            this.parameters.assembly = null;
         }
 
-    }, Representation.prototype.parameters ),
+    }
 
-    defaultScale: {
-        "vdw": 1.0,
-        "covalent": 1.0,
-        "bfactor": 0.01,
-        "sstruc": 1.0
-    },
+    if ( Representation$$1 ) StructureRepresentation.__proto__ = Representation$$1;
+    StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    StructureRepresentation.prototype.constructor = StructureRepresentation;
 
-    defaultSize: 1.0,
+    var prototypeAccessors = { defaultScale: {} };
 
-    init: function( params ){
+    prototypeAccessors.defaultScale.get = function (){
+
+        return {
+            "vdw": 1.0,
+            "covalent": 1.0,
+            "bfactor": 0.01,
+            "sstruc": 1.0
+        };
+
+    };
+
+    StructureRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "element" );
@@ -69804,18 +71253,22 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             p.quality = this.getQuality();
         }
 
-        Representation.prototype.init.call( this, p );
+        Representation$$1.prototype.init.call( this, p );
 
-    },
+        this.selection.signals.stringChanged.add( this.build, this );
 
-    getAssembly: function(){
+        this.build();
+
+    };
+
+    StructureRepresentation.prototype.getAssembly = function getAssembly (){
 
         var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         return this.structure.biomolDict[ name ];
 
-    },
+    };
 
-    getQuality: function(){
+    StructureRepresentation.prototype.getQuality = function getQuality (){
 
         var atomCount;
         var s = this.structureView;
@@ -69841,9 +71294,9 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             return "low";
         }
 
-    },
+    };
 
-    create: function(){
+    StructureRepresentation.prototype.create = function create (){
 
         if( this.structureView.atomCount === 0 ) { return; }
 
@@ -69868,15 +71321,15 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             }
         }
 
-    },
+    };
 
-    createData: function( /*sview*/ ){
+    StructureRepresentation.prototype.createData = function createData ( /*sview*/ ){
 
         console.error( "createData not implemented" );
 
-    },
+    };
 
-    update: function( what ){
+    StructureRepresentation.prototype.update = function update ( what ){
 
         if( this.lazy && !this.visible ){
             Object.assign( this.lazyProps.what, what );
@@ -69889,34 +71342,24 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             }
         }, this );
 
-    },
+    };
 
-    updateData: function( /*what, data*/ ){
+    StructureRepresentation.prototype.updateData = function updateData ( /*what, data*/ ){
 
         this.build();
 
-    },
+    };
 
-    getColorParams: function(){
+    StructureRepresentation.prototype.getColorParams = function getColorParams (){
 
-        var p = Representation.prototype.getColorParams.call( this );
+        var p = Representation$$1.prototype.getColorParams.call(this);
         p.structure = this.structure;
 
         return p;
 
-    },
+    };
 
-    getAtomParams: function( what, params ){
-
-        return Object.assign( {
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { "radius": this.radius, "scale": this.scale }
-        }, params );
-
-    },
-
-    getBondParams: function( what, params ){
+    StructureRepresentation.prototype.getAtomParams = function getAtomParams ( what, params ){
 
         return Object.assign( {
             what: what,
@@ -69924,7 +71367,17 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             radiusParams: { "radius": this.radius, "scale": this.scale }
         }, params );
 
-    },
+    };
+
+    StructureRepresentation.prototype.getBondParams = function getBondParams ( what, params ){
+
+        return Object.assign( {
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { "radius": this.radius, "scale": this.scale }
+        }, params );
+
+    };
 
     /**
      * Set representation parameters
@@ -69933,13 +71386,13 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [silent] - don't trigger a change event in the selection
      * @return {StructureRepresentation} this object
      */
-    setSelection: function( string, silent ){
+    StructureRepresentation.prototype.setSelection = function setSelection ( string, silent ){
 
         this.selection.setString( string, silent );
 
         return this;
 
-    },
+    };
 
     /**
      * Set representation parameters
@@ -69955,13 +71408,13 @@ StructureRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {StructureRepresentation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    StructureRepresentation.prototype.setParameters = function setParameters ( params, what, rebuild ){
 
         what = what || {};
 
         if( params && params.radiusType !== undefined ){
             if( params.radiusType === "size" ){
-                this.radius = this.defaultSize;
+                this.radius = 1.0;
             }else{
                 this.radius = params.radiusType;
             }
@@ -69989,18 +71442,16 @@ StructureRepresentation.prototype = Object.assign( Object.create(
             rebuild = true;
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        Representation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    },
+    };
 
-    getParameters: function(){
+    StructureRepresentation.prototype.getParameters = function getParameters (){
 
         var params = Object.assign(
-            Representation.prototype.getParameters.call( this ),
+            Representation$$1.prototype.getParameters.call(this),
             {
                 sele: this.selection ? this.selection.string : undefined,
                 defaultAssembly: this.defaultAssembly
@@ -70009,9 +71460,9 @@ StructureRepresentation.prototype = Object.assign( Object.create(
 
         return params;
 
-    },
+    };
 
-    attach: function( callback ){
+    StructureRepresentation.prototype.attach = function attach ( callback ){
 
         var viewer = this.viewer;
         var bufferList = this.bufferList;
@@ -70026,28 +71477,31 @@ StructureRepresentation.prototype = Object.assign( Object.create(
         this.setVisibility( this.visible );
         callback();
 
-    },
+    };
 
-    clear: function(){
+    StructureRepresentation.prototype.clear = function clear (){
 
         this.dataList.length = 0;
 
-        Representation.prototype.clear.call( this );
+        Representation$$1.prototype.clear.call(this);
 
-    },
+    };
 
-    dispose: function(){
+    StructureRepresentation.prototype.dispose = function dispose (){
 
         this.structureView.dispose();
 
         delete this.structure;
         delete this.structureView;
 
-        Representation.prototype.dispose.call( this );
+        Representation$$1.prototype.dispose.call(this);
 
-    }
+    };
 
-} );
+    Object.defineProperties( StructureRepresentation.prototype, prototypeAccessors );
+
+    return StructureRepresentation;
+}(Representation));
 
 /**
  * @file Line Buffer
@@ -70170,57 +71624,56 @@ var LineBuffer = (function (Buffer$$1) {
  */
 
 
-function TrajectoryRepresentation( trajectory, viewer, params ){
+var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
+    function TrajectoryRepresentation( trajectory, viewer, params ){
 
-    this.manualAttach = true;
+        StructureRepresentation$$1.call( this, trajectory.structure, viewer, params );
 
-    this.trajectory = trajectory;
+        this.type = "trajectory";
 
-    StructureRepresentation.call(
-        this, trajectory.structure, viewer, params
-    );
+        this.parameters = Object.assign( {
 
-}
+            drawLine: {
+                type: "boolean", rebuild: true
+            },
+            drawCylinder: {
+                type: "boolean", rebuild: true
+            },
+            drawPoint: {
+                type: "boolean", rebuild: true
+            },
+            drawSphere: {
+                type: "boolean", rebuild: true
+            },
 
-TrajectoryRepresentation.prototype = Object.assign( Object.create(
+            linewidth: {
+                type: "integer", max: 20, min: 1, rebuild: true
+            },
+            pointSize: {
+                type: "integer", max: 20, min: 1, rebuild: true
+            },
+            sizeAttenuation: {
+                type: "boolean", rebuild: true
+            },
+            sort: {
+                type: "boolean", rebuild: true
+            },
 
-    StructureRepresentation.prototype ), {
+        }, this.parameters );
 
-    constructor: TrajectoryRepresentation,
+        this.manualAttach = true;
 
-    type: "",
+        this.trajectory = trajectory;
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        drawLine: {
-            type: "boolean", rebuild: true
-        },
-        drawCylinder: {
-            type: "boolean", rebuild: true
-        },
-        drawPoint: {
-            type: "boolean", rebuild: true
-        },
-        drawSphere: {
-            type: "boolean", rebuild: true
-        },
+    }
 
-        linewidth: {
-            type: "integer", max: 20, min: 1, rebuild: true
-        },
-        pointSize: {
-            type: "integer", max: 20, min: 1, rebuild: true
-        },
-        sizeAttenuation: {
-            type: "boolean", rebuild: true
-        },
-        sort: {
-            type: "boolean", rebuild: true
-        },
+    if ( StructureRepresentation$$1 ) TrajectoryRepresentation.__proto__ = StructureRepresentation$$1;
+    TrajectoryRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    TrajectoryRepresentation.prototype.constructor = TrajectoryRepresentation;
 
-    }, Representation.prototype.parameters ),
-
-    init: function( params ){
+    TrajectoryRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -70235,33 +71688,31 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
         this.sizeAttenuation = defaults( p.sizeAttenuation, false );
         this.sort = defaults( p.sort, true );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    attach: function( callback ){
+    TrajectoryRepresentation.prototype.attach = function attach ( callback ){
+        var this$1 = this;
 
-        this.bufferList.forEach( function( buffer ){
 
-            this.viewer.add( buffer );
-
-        }, this );
-
+        this.bufferList.forEach( function (buffer) {
+            this$1.viewer.add( buffer );
+        } );
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    };
 
-    prepare: function( callback ){
+    TrajectoryRepresentation.prototype.prepare = function prepare ( callback ){
 
         // TODO
-
         callback();
 
-    },
+    };
 
-    create: function(){
+    TrajectoryRepresentation.prototype.create = function create (){
 
         // Log.log( this.selection )
         // Log.log( this.atomSet )
@@ -70357,9 +71808,10 @@ TrajectoryRepresentation.prototype = Object.assign( Object.create(
 
         } );
 
-    }
+    };
 
-} );
+    return TrajectoryRepresentation;
+}(StructureRepresentation));
 
 /**
  * @file Representation Utils
@@ -70515,11 +71967,11 @@ var Component = function Component( stage, params ){
 
 };
 
-var prototypeAccessors$4 = { type: {},_signalNames: {} };
+var prototypeAccessors$5 = { type: {},_signalNames: {} };
 
-prototypeAccessors$4.type.get = function (){ return "component"; };
+prototypeAccessors$5.type.get = function (){ return "component"; };
 
-prototypeAccessors$4._signalNames.get = function (){ return SignalNames; };
+prototypeAccessors$5._signalNames.get = function (){ return SignalNames; };
 
 /**
  * Add a new representation to the component
@@ -70699,7 +72151,7 @@ Component.prototype.eachRepresentation = function eachRepresentation ( callback 
 
 };
 
-Object.defineProperties( Component.prototype, prototypeAccessors$4 );
+Object.defineProperties( Component.prototype, prototypeAccessors$5 );
 
 /**
  * @file Representation Component
@@ -71149,14 +72601,6 @@ var tmpZoomVector = new Vector3();
  */
 
 /**
- * {@link Signal}, dispatched when a component is added to the stage
- * @example
- * stage.signals.componentAdded.add( function( component ){ ... } );
- * @event Stage#componentAdded
- * @type {Component}
- */
-
-/**
  * {@link Signal}, dispatched when a component is removed from the stage
  * @example
  * stage.signals.componentRemoved.add( function( component ){ ... } );
@@ -71182,12 +72626,25 @@ var tmpZoomVector = new Vector3();
 
 
 /**
+ * @example
+ * stage.signals.componentAdded.add( function( component ){ ... } );
+ *
+ * @typedef {Object} StageSignals
+ * @property {Signal<Component>} componentAdded - when a component is added
+ */
+
+
+/**
  * Stage class, central for creating molecular scenes with NGL.
  * @example
  *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 var Stage = function Stage( idOrElement, params ){
 
+    /**
+     * Events emitted by the stage
+     * @member {StageSignals}
+     */
     this.signals = {
         parametersChanged: new Signal(),
         fullscreenChanged: new Signal(),
@@ -71652,6 +73109,7 @@ Stage.prototype.addComponent = function addComponent ( component ){
 
 /**
  * Create a component from the given object and add to the stage
+ * @emits {StageSignals.componentAdded}
  * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
  * @param {ComponentParameters} params - parameter object
  * @return {Component} the created component
@@ -75445,54 +76903,55 @@ ComponentRegistry.add( "volume", VolumeComponent );
  */
 
 
-function AxesRepresentation( structure, viewer, params ){
+var AxesRepresentation = (function (StructureRepresentation$$1) {
+    function AxesRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "axes";
 
-AxesRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            radialSegments: true,
+            disableImpostor: true,
+            showAxes: {
+                type: "boolean", rebuild: true
+            },
+            showBox: {
+                type: "boolean", rebuild: true
+            }
 
-    constructor: AxesRepresentation,
+        }, this.parameters, {
+            assembly: null
+        } );
 
-    type: "axes",
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        radialSegments: true,
-        disableImpostor: true,
-        showAxes: {
-            type: "boolean", rebuild: true
-        },
-        showBox: {
-            type: "boolean", rebuild: true
-        }
+    if ( StructureRepresentation$$1 ) AxesRepresentation.__proto__ = StructureRepresentation$$1;
+    AxesRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    AxesRepresentation.prototype.constructor = AxesRepresentation;
 
-    }, Representation.prototype.parameters, {
-        assembly: null
-    } ),
-
-    init: function( params ){
+    AxesRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
         p.radius = defaults( p.radius, 0.5 );
         p.colorValue = defaults( p.colorValue, "lightgreen" );
 
-        StructureRepresentation.prototype.init.call( this, p );
-
         this.showAxes = defaults( p.showAxes, true );
         this.showBox = defaults( p.showBox, false );
 
-    },
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    getPrincipalAxes: function( /*sview*/ ){
+    };
+
+    AxesRepresentation.prototype.getPrincipalAxes = function getPrincipalAxes ( /*sview*/ ){
 
         var selection;
         var assembly = this.getAssembly();
@@ -75503,9 +76962,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
 
         return this.structureView.getPrincipalAxes( selection );
 
-    },
+    };
 
-    getAxesData: function( sview ){
+    AxesRepresentation.prototype.getAxesData = function getAxesData ( sview ){
 
         var pa = this.getPrincipalAxes( sview );
         var c = new Color( this.colorValue );
@@ -75619,9 +77078,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             }
         };
 
-    },
+    };
 
-    create: function(){
+    AxesRepresentation.prototype.create = function create (){
 
         var axesData = this.getAxesData( this.structureView );
 
@@ -75649,9 +77108,9 @@ AxesRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    };
 
-    updateData: function( what, data ){
+    AxesRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var axesData = this.getAxesData( data.sview );
         var sphereData = {};
@@ -75677,9 +77136,10 @@ AxesRepresentation.prototype = Object.assign( Object.create(
         this.sphereBuffer.setAttributes( sphereData );
         this.cylinderBuffer.setAttributes( cylinderData );
 
-    }
+    };
 
-} );
+    return AxesRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "axes", AxesRepresentation );
@@ -75711,65 +77171,59 @@ RepresentationRegistry.add( "axes", AxesRepresentation );
 
 
 /**
- * Ball And Stick representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+ * Ball And Stick representation
  */
-function BallAndStickRepresentation( structure, viewer, params ){
+var BallAndStickRepresentation = (function (StructureRepresentation$$1) {
+    function BallAndStickRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "ball+stick";
 
-BallAndStickRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
-
-    constructor: BallAndStickRepresentation,
-
-    type: "ball+stick",
-
-    defaultSize: 0.15,
-
-    parameters: Object.assign( {
-
-        sphereDetail: true,
-        radialSegments: true,
-        openEnded: true,
-        disableImpostor: true,
-        aspectRatio: {
-            type: "number", precision: 1, max: 10.0, min: 1.0
-        },
-        lineOnly: {
-            type: "boolean", rebuild: true
-        },
-        cylinderOnly: {
-            type: "boolean", rebuild: true
-        },
-        multipleBond: {
-            type: "select", rebuild: true,
-            options: {
-                "off" : "off",
-                "symmetric" : "symmetric",
-                "offset": "offset"
+            sphereDetail: true,
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true,
+            aspectRatio: {
+                type: "number", precision: 1, max: 10.0, min: 1.0
+            },
+            lineOnly: {
+                type: "boolean", rebuild: true
+            },
+            cylinderOnly: {
+                type: "boolean", rebuild: true
+            },
+            multipleBond: {
+                type: "select", rebuild: true,
+                options: {
+                    "off" : "off",
+                    "symmetric" : "symmetric",
+                    "offset": "offset"
+                }
+            },
+            bondScale: {
+                type: "number", precision: 2, max: 1.0, min: 0.01
+            },
+            bondSpacing: {
+                type: "number", precision: 2, max: 2.0, min: 0.5
             }
-        },
-        bondScale: {
-            type: "number", precision: 2, max: 1.0, min: 0.01
-        },
-        bondSpacing: {
-            type: "number", precision: 2, max: 2.0, min: 0.5
-        }
 
-    }, StructureRepresentation.prototype.parameters ),
+        }, this.parameters );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    if ( StructureRepresentation$$1 ) BallAndStickRepresentation.__proto__ = StructureRepresentation$$1;
+    BallAndStickRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    BallAndStickRepresentation.prototype.constructor = BallAndStickRepresentation;
+
+    BallAndStickRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.15 );
 
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
@@ -75778,27 +77232,27 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.bondSpacing = defaults( p.bondSpacing, 1.0 );
         this.bondScale = defaults( p.bondScale, 0.4 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getAtomParams: function( what, params ){
+    BallAndStickRepresentation.prototype.getAtomParams = function getAtomParams ( what, params ){
 
         params = Object.assign( {
             radiusParams: { "radius": this.radius, "scale": this.scale * this.aspectRatio }
         }, params );
 
-        return StructureRepresentation.prototype.getAtomParams.call( this, what, params );
+        return StructureRepresentation$$1.prototype.getAtomParams.call( this, what, params );
 
-    },
+    };
 
-    getAtomData: function( sview, what, params ){
+    BallAndStickRepresentation.prototype.getAtomData = function getAtomData ( sview, what, params ){
 
         return sview.getAtomData( this.getAtomParams( what, params ) );
 
-    },
+    };
 
-    getBondParams: function( what, params ){
+    BallAndStickRepresentation.prototype.getBondParams = function getBondParams ( what, params ){
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
@@ -75806,17 +77260,17 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             bondScale:  this.bondScale
         }, params );
 
-        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
+        return StructureRepresentation$$1.prototype.getBondParams.call( this, what, params );
 
-    },
+    };
 
-    getBondData: function( sview, what, params ){
+    BallAndStickRepresentation.prototype.getBondData = function getBondData ( sview, what, params ){
 
         return sview.getBondData( this.getBondParams( what, params ) );
 
-    },
+    };
 
-    createData: function( sview ){
+    BallAndStickRepresentation.prototype.createData = function createData ( sview ){
 
         var bondData = this.getBondData( sview );
         var bufferList = [];
@@ -75865,9 +77319,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             bufferList: bufferList
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    BallAndStickRepresentation.prototype.updateData = function updateData ( what, data ){
 
         if( this.multipleBond !== "off" && what && what.radius ){
             what.position = true;
@@ -75935,9 +77389,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    };
 
-    setParameters: function( params ){
+    BallAndStickRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -75951,15 +77405,14 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return BallAndStickRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "ball+stick", BallAndStickRepresentation );
@@ -75971,53 +77424,54 @@ RepresentationRegistry.add( "ball+stick", BallAndStickRepresentation );
  */
 
 
-function BackboneRepresentation( structure, viewer, params ){
+var BackboneRepresentation = (function (BallAndStickRepresentation$$1) {
+    function BackboneRepresentation( structure, viewer, params ){
 
-    BallAndStickRepresentation.call( this, structure, viewer, params );
+        BallAndStickRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "backbone";
 
-BackboneRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    BallAndStickRepresentation.prototype ), {
+        }, this.parameters, {
 
-    constructor: BackboneRepresentation,
+            multipleBond: null,
+            bondSpacing: null,
 
-    type: "backbone",
+        } );
 
-    defaultSize: 0.25,
-
-    parameters: Object.assign( {
-
-    }, BallAndStickRepresentation.prototype.parameters, {
-
-        multipleBond: null,
-        bondSpacing: null,
-
-    } ),
-
-    init: function( params ){
-
-        var p = params || {};
-        p.aspectRatio = defaults( p.aspectRatio, 1.0 );
-
-        BallAndStickRepresentation.prototype.init.call( this, p );
-
-    },
-
-    getAtomData: function( sview, what, params ){
-
-        return sview.getBackboneAtomData( this.getAtomParams( what, params ) );
-
-    },
-
-    getBondData: function( sview, what, params ){
-
-        return sview.getBackboneBondData( this.getBondParams( what, params ) );
+        this.init( params );
 
     }
 
-} );
+    if ( BallAndStickRepresentation$$1 ) BackboneRepresentation.__proto__ = BallAndStickRepresentation$$1;
+    BackboneRepresentation.prototype = Object.create( BallAndStickRepresentation$$1 && BallAndStickRepresentation$$1.prototype );
+    BackboneRepresentation.prototype.constructor = BackboneRepresentation;
+
+    BackboneRepresentation.prototype.init = function init ( params ){
+
+        var p = params || {};
+        p.aspectRatio = defaults( p.aspectRatio, 1.0 );
+        p.radius = defaults( p.radius, 0.25 );
+
+        BallAndStickRepresentation$$1.prototype.init.call( this, p );
+
+    };
+
+    BackboneRepresentation.prototype.getAtomData = function getAtomData ( sview, what, params ){
+
+        return sview.getBackboneAtomData( this.getAtomParams( what, params ) );
+
+    };
+
+    BackboneRepresentation.prototype.getBondData = function getBondData ( sview, what, params ){
+
+        return sview.getBackboneBondData( this.getBondParams( what, params ) );
+
+    };
+
+    return BackboneRepresentation;
+}(BallAndStickRepresentation));
 
 
 RepresentationRegistry.add( "backbone", BackboneRepresentation );
@@ -76029,56 +77483,55 @@ RepresentationRegistry.add( "backbone", BackboneRepresentation );
  */
 
 
-function BaseRepresentation( structure, viewer, params ){
+var BaseRepresentation = (function (BallAndStickRepresentation$$1) {
+    function BaseRepresentation( structure, viewer, params ){
 
-    BallAndStickRepresentation.call( this, structure, viewer, params );
+        BallAndStickRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "base";
 
-BaseRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    BallAndStickRepresentation.prototype ), {
+        }, this.parameters, {
 
-    constructor: BaseRepresentation,
+            multipleBond: null,
+            bondSpacing: null,
 
-    type: "base",
+        } );
 
-    defaultSize: 0.3,
+    }
 
-    parameters: Object.assign( {
+    if ( BallAndStickRepresentation$$1 ) BaseRepresentation.__proto__ = BallAndStickRepresentation$$1;
+    BaseRepresentation.prototype = Object.create( BallAndStickRepresentation$$1 && BallAndStickRepresentation$$1.prototype );
+    BaseRepresentation.prototype.constructor = BaseRepresentation;
 
-    }, BallAndStickRepresentation.prototype.parameters, {
-
-        multipleBond: null,
-        bondSpacing: null,
-
-    } ),
-
-    init: function( params ){
+    BaseRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.aspectRatio = defaults( p.aspectRatio, 1.0 );
+        p.radius = defaults( p.radius, 0.3 );
 
-        BallAndStickRepresentation.prototype.init.call( this, p );
+        BallAndStickRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getAtomData: function( sview, what, params ){
+    BaseRepresentation.prototype.getAtomData = function getAtomData ( sview, what, params ){
 
         return sview.getRungAtomData( this.getAtomParams( what, params ) );
 
-    },
+    };
 
-    getBondData: function( sview, what, params ){
+    BaseRepresentation.prototype.getBondData = function getBondData ( sview, what, params ){
 
         var p = this.getBondParams( what, params );
         p.colorParams.rung = true;
 
         return sview.getRungBondData( p );
 
-    }
+    };
 
-} );
+    return BaseRepresentation;
+}(BallAndStickRepresentation));
 
 
 RepresentationRegistry.add( "base", BaseRepresentation );
@@ -76455,7 +77908,7 @@ function Interpolator( m, tension ){
 }
 
 
-function Spline( polymer, params ){
+function Spline$1( polymer, params ){
 
     this.polymer = polymer;
     this.size = polymer.residueCount;
@@ -76476,9 +77929,9 @@ function Spline( polymer, params ){
 
 }
 
-Spline.prototype = {
+Spline$1.prototype = {
 
-    constructor: Spline,
+    constructor: Spline$1,
 
     getAtomIterator: function( type, smooth ){
 
@@ -77124,44 +78577,45 @@ var TubeMeshBuffer = (function (MeshBuffer$$1) {
  */
 
 
-function CartoonRepresentation( structure, viewer, params ){
+var CartoonRepresentation = (function (StructureRepresentation$$1) {
+    function CartoonRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "cartoon";
 
-CartoonRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            aspectRatio: {
+                type: "number", precision: 1, max: 10.0, min: 1.0
+            },
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            radialSegments: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            capped: {
+                type: "boolean", rebuild: true
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    constructor: CartoonRepresentation,
+        }, this.parameters );
 
-    type: "cartoon",
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        aspectRatio: {
-            type: "number", precision: 1, max: 10.0, min: 1.0
-        },
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        radialSegments: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        capped: {
-            type: "boolean", rebuild: true
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+    if ( StructureRepresentation$$1 ) CartoonRepresentation.__proto__ = StructureRepresentation$$1;
+    CartoonRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    CartoonRepresentation.prototype.constructor = CartoonRepresentation;
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    CartoonRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -77174,8 +78628,6 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
         this.capped = defaults( p.capped, true );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
-
         if( p.quality === "low" ){
             this.subdiv = 3;
             this.radialSegments = 6;
@@ -77187,9 +78639,11 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             this.subdiv = defaults( p.subdiv, 6 );
         }
 
-    },
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    getSplineParams: function( params ){
+    };
+
+    CartoonRepresentation.prototype.getSplineParams = function getSplineParams ( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -77198,27 +78652,27 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    };
 
-    getSpline: function( polymer ){
+    CartoonRepresentation.prototype.getSpline = function getSpline ( polymer ){
 
-        return new Spline( polymer, this.getSplineParams() );
+        return new Spline$1( polymer, this.getSplineParams() );
 
-    },
+    };
 
-    getScale: function( polymer ){
+    CartoonRepresentation.prototype.getScale = function getScale ( polymer ){
 
         return polymer.isCg() ? this.scale * this.aspectRatio : this.scale;
 
-    },
+    };
 
-    getAspectRatio: function( polymer ){
+    CartoonRepresentation.prototype.getAspectRatio = function getAspectRatio ( polymer ){
 
         return polymer.isCg() ? 1.0 : this.aspectRatio;
 
-    },
+    };
 
-    createData: function( sview ){
+    CartoonRepresentation.prototype.createData = function createData ( sview ){
         var this$1 = this;
 
 
@@ -77257,9 +78711,9 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             polymerList: polymerList
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    CartoonRepresentation.prototype.updateData = function updateData ( what, data ){
         var this$1 = this;
 
 
@@ -77309,9 +78763,9 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
 
         if( Debug ) { Log.timeEnd( this.type + " repr update" ); }
 
-    },
+    };
 
-    setParameters: function( params ){
+    CartoonRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -77324,15 +78778,14 @@ CartoonRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return CartoonRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "cartoon", CartoonRepresentation );
@@ -77633,56 +79086,55 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
  */
 
 
-function ContactRepresentation( structure, viewer, params ){
+var ContactRepresentation = (function (StructureRepresentation$$1) {
+    function ContactRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "contact";
 
-ContactRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            contactType: {
+                type: "select", rebuild: true,
+                options: {
+                    "polar": "polar",
+                    "polarBackbone": "polar backbone"
+                }
+            },
+            maxDistance: {
+                type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
+            },
+            maxAngle: {
+                type: "integer", max: 180, min: 0, rebuild: true
+            },
+            radialSegments: true,
+            disableImpostor: true
 
-    constructor: ContactRepresentation,
+        }, this.parameters );
 
-    type: "contact",
+        this.init( params );
 
-    defaultSize: 0.25,
+    }
 
-    parameters: Object.assign( {
+    if ( StructureRepresentation$$1 ) ContactRepresentation.__proto__ = StructureRepresentation$$1;
+    ContactRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    ContactRepresentation.prototype.constructor = ContactRepresentation;
 
-        contactType: {
-            type: "select", rebuild: true,
-            options: {
-                "polar": "polar",
-                "polarBackbone": "polar backbone"
-            }
-        },
-        maxDistance: {
-            type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
-        },
-        maxAngle: {
-            type: "integer", max: 180, min: 0, rebuild: true
-        },
-        radialSegments: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    ContactRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.25 );
 
         this.contactType = defaults( p.contactType, "polarBackbone" );
         this.maxDistance = defaults( p.maxDistance, 3.5 );
         this.maxAngle = defaults( p.maxAngle, 40 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getContactData: function( sview ){
+    ContactRepresentation.prototype.getContactData = function getContactData ( sview ){
 
         var contactsFnDict = {
             "polar": polarContacts,
@@ -77695,9 +79147,9 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
         return contactData;
 
-    },
+    };
 
-    getBondData: function( sview, what, params ){
+    ContactRepresentation.prototype.getBondData = function getBondData ( sview, what, params ){
 
         var bondData = sview.getBondData( this.getBondParams( what, params ) );
         if( bondData.picking ){
@@ -77709,9 +79161,9 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         }
         return bondData;
 
-    },
+    };
 
-    createData: function( sview ){
+    ContactRepresentation.prototype.createData = function createData ( sview ){
 
         var contactData = this.getContactData( sview );
 
@@ -77734,9 +79186,9 @@ ContactRepresentation.prototype = Object.assign( Object.create(
             bondStore: contactData.bondStore
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    ContactRepresentation.prototype.updateData = function updateData ( what, data ){
 
         if( !what || what.position ){
             var contactData = this.getContactData( data.sview );
@@ -77772,9 +79224,10 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( cylinderData );
 
-    }
+    };
 
-} );
+    return ContactRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "contact", ContactRepresentation );
@@ -77810,72 +79263,56 @@ RepresentationRegistry.add( "contact", ContactRepresentation );
 
 
 /**
- * Distance representation object
- * @class
- * @extends StructureRepresentation
- * @example
- * stage.loadFile( "rcsb://1crn" ).then( function( o ){
- *     o.addRepresentation( "cartoon" );
- *     // either give selections (uses first selected atom) ...
- *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
- *     // or atom indices
- *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
- *     o.addRepresentation( "distance", { atomPair: atomPair } );
- *     stage.autoView();
- * } );
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {DistanceRepresentationParameters} params - distance representation parameters
+ * Distance representation
  */
-function DistanceRepresentation( structure, viewer, params ){
+var DistanceRepresentation = (function (StructureRepresentation$$1) {
+    function DistanceRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "distance";
 
-DistanceRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            labelSize: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            labelColor: {
+                type: "color"
+            },
+            labelVisible: {
+                type: "boolean"
+            },
+            labelZOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
+            },
+            labelUnit: {
+                type: "select", rebuild: true,
+                options: { "": "", angstrom: "angstrom", nm: "nm" },
+            },
+            atomPair: {
+                type: "hidden", rebuild: true
+            },
+            radialSegments: true,
+            disableImpostor: true
 
-    constructor: DistanceRepresentation,
+        }, this.parameters, {
+            flatShaded: null,
+            assembly: null
+        } );
 
-    type: "distance",
+        this.init( params );
 
-    defaultSize: 0.15,
+    }
 
-    parameters: Object.assign( {
+    if ( StructureRepresentation$$1 ) DistanceRepresentation.__proto__ = StructureRepresentation$$1;
+    DistanceRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    DistanceRepresentation.prototype.constructor = DistanceRepresentation;
 
-        labelSize: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        labelColor: {
-            type: "color"
-        },
-        labelVisible: {
-            type: "boolean"
-        },
-        labelZOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
-        },
-        labelUnit: {
-            type: "select", rebuild: true,
-            options: { "": "", angstrom: "angstrom", nm: "nm" },
-        },
-        atomPair: {
-            type: "hidden", rebuild: true
-        },
-        radialSegments: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters, {
-        flatShaded: null,
-        assembly: null
-    } ),
-
-    init: function( params ){
+    DistanceRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.15 );
 
         this.fontFamily = defaults( p.fontFamily, "sans-serif" );
         this.fontStyle = defaults( p.fontStyle, "normal" );
@@ -77888,11 +79325,11 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.labelUnit = defaults( p.labelUnit, "" );
         this.atomPair = defaults( p.atomPair, [] );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getDistanceData: function( sview, atomPair ){
+    DistanceRepresentation.prototype.getDistanceData = function getDistanceData ( sview, atomPair ){
 
         var n = atomPair.length;
         var text = new Array( n );
@@ -77979,15 +79416,15 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondStore: bondStore
         };
 
-    },
+    };
 
-    getBondData: function( sview, what, params ){
+    DistanceRepresentation.prototype.getBondData = function getBondData ( sview, what, params ){
 
         return sview.getBondData( this.getBondParams( what, params ) );
 
-    },
+    };
 
-    create: function(){
+    DistanceRepresentation.prototype.create = function create (){
 
         if( this.structureView.atomCount === 0 ) { return; }
 
@@ -78041,19 +79478,19 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.textBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    };
 
-    update: function( what ){
+    DistanceRepresentation.prototype.update = function update ( what ){
 
         if( what.position ){
             this.build();
         }else{
-            StructureRepresentation.prototype.update.call( this, what );
+            StructureRepresentation$$1.prototype.update.call( this, what );
         }
 
-    },
+    };
 
-    updateData: function( what, data ){
+    DistanceRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var bondParams = {
             bondSet: data.bondSet,
@@ -78086,13 +79523,11 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.textBuffer.setAttributes( textData );
         this.cylinderBuffer.setAttributes( cylinderData );
 
-    },
+    };
 
-    setVisibility: function( value, noRenderRequest ){
+    DistanceRepresentation.prototype.setVisibility = function setVisibility ( value, noRenderRequest ){
 
-        StructureRepresentation.prototype.setVisibility.call(
-            this, value, true
-        );
+        StructureRepresentation$$1.prototype.setVisibility.call( this, value, true );
 
         if( this.textBuffer ){
             this.textBuffer.setVisibility(
@@ -78104,9 +79539,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    };
 
-    setParameters: function( params ){
+    DistanceRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -78119,9 +79554,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             what.labelColor = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         if( params && params.labelVisible !== undefined ){
             this.setVisibility( this.visible );
@@ -78129,9 +79562,10 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    }
+    };
 
-} );
+    return DistanceRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "distance", DistanceRepresentation );
@@ -78228,52 +79662,55 @@ var VectorBuffer = (function (Buffer$$1) {
  */
 
 
-function HelixorientRepresentation( structure, viewer, params ){
+var HelixorientRepresentation = (function (StructureRepresentation$$1) {
+    function HelixorientRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "helixorient",
 
-HelixorientRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            sphereDetail: true,
+            disableImpostor: true
 
-    constructor: HelixorientRepresentation,
+        }, this.parameters );
 
-    type: "helixorient",
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        sphereDetail: true,
-        disableImpostor: true
+    if ( StructureRepresentation$$1 ) HelixorientRepresentation.__proto__ = StructureRepresentation$$1;
+    HelixorientRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    HelixorientRepresentation.prototype.constructor = HelixorientRepresentation;
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    HelixorientRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
         p.radius = defaults( p.radius, 0.15 );
         p.scale = defaults( p.scale, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    HelixorientRepresentation.prototype.createData = function createData ( sview ){
+        var this$1 = this;
+
 
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( function (polymer) {
 
             if( polymer.residueCount < 4 ) { return; }
             polymerList.push( polymer );
 
             var helixorient = new Helixorient( polymer );
             var position = helixorient.getPosition();
-            var color = helixorient.getColor( this.getColorParams() );
-            var size = helixorient.getSize( this.radius, this.scale );
+            var color = helixorient.getColor( this$1.getColorParams() );
+            var size = helixorient.getSize( this$1.radius, this$1.scale );
             var picking = helixorient.getPicking();
 
             bufferList.push(
@@ -78285,9 +79722,9 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         radius: size.size,
                         picking: picking.picking
                     },
-                    this.getBufferParams( {
-                        sphereDetail: this.sphereDetail,
-                        disableImpostor: this.disableImpostor,
+                    this$1.getBufferParams( {
+                        sphereDetail: this$1.sphereDetail,
+                        disableImpostor: this$1.disableImpostor,
                         dullInterior: true
                     } )
                 ),
@@ -78297,7 +79734,7 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         position: position.center,
                         vector: position.axis
                     },
-                    this.getBufferParams( {
+                    this$1.getBufferParams( {
                         color: "skyblue",
                         scale: 1
                     } )
@@ -78308,7 +79745,7 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
                         position: position.center,
                         vector: position.resdir
                     },
-                    this.getBufferParams( {
+                    this$1.getBufferParams( {
                         color: "lightgreen",
                         scale: 1
                     } )
@@ -78317,16 +79754,16 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
             );
 
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,
             polymerList: polymerList
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    HelixorientRepresentation.prototype.updateData = function updateData ( what, data ){
 
         if( Debug ) { Log.time( this.type + " repr update" ); }
 
@@ -78363,9 +79800,10 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
 
         if( Debug ) { Log.timeEnd( this.type + " repr update" ); }
 
-    }
+    };
 
-} );
+    return HelixorientRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "helixorient", HelixorientRepresentation );
@@ -78379,40 +79817,35 @@ RepresentationRegistry.add( "helixorient", HelixorientRepresentation );
 
 /**
  * Licorice representation object ({@link BallAndStickRepresentation} with `aspectRatio` fixed at 1.0)
- * @class
- * @extends BallAndStickRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
  */
-function LicoriceRepresentation( structure, viewer, params ){
+var LicoriceRepresentation = (function (BallAndStickRepresentation$$1) {
+    function LicoriceRepresentation( structure, viewer, params ){
 
-    BallAndStickRepresentation.call( this, structure, viewer, params );
+        BallAndStickRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "licorice";
 
-LicoriceRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign(
+            {}, this.parameters, { aspectRatio: null }
+        );
 
-    BallAndStickRepresentation.prototype ), {
+    }
 
-    constructor: LicoriceRepresentation,
+    if ( BallAndStickRepresentation$$1 ) LicoriceRepresentation.__proto__ = BallAndStickRepresentation$$1;
+    LicoriceRepresentation.prototype = Object.create( BallAndStickRepresentation$$1 && BallAndStickRepresentation$$1.prototype );
+    LicoriceRepresentation.prototype.constructor = LicoriceRepresentation;
 
-    type: "licorice",
-
-    parameters: Object.assign(
-        {}, BallAndStickRepresentation.prototype.parameters, { aspectRatio: null }
-    ),
-
-    init: function( params ){
+    LicoriceRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
 
-        BallAndStickRepresentation.prototype.init.call( this, p );
+        BallAndStickRepresentation$$1.prototype.init.call( this, p );
 
-    }
+    };
 
-} );
+    return LicoriceRepresentation;
+}(BallAndStickRepresentation));
 
 
 RepresentationRegistry.add( "licorice", LicoriceRepresentation );
@@ -78572,38 +80005,33 @@ function HyperballStickBuffer( data, params ){
  */
 
 
-function HyperballRepresentation( structure, viewer, params ){
+var HyperballRepresentation = (function (LicoriceRepresentation$$1) {
+    function HyperballRepresentation( structure, viewer, params ){
 
-    LicoriceRepresentation.call( this, structure, viewer, params );
+        LicoriceRepresentation$$1.call( this, structure, viewer, params );
 
-    this.defaultScale.vdw = 0.2;
+        this.type = "hyperball";
 
-}
+        this.parameters = Object.assign( {
 
-HyperballRepresentation.prototype = Object.assign( Object.create(
+            shrink: {
+                type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
+            }
 
-    LicoriceRepresentation.prototype ), {
+        }, this.parameters, {
 
-    constructor: HyperballRepresentation,
+            multipleBond: null,
+            bondSpacing: null,
 
-    type: "hyperball",
+        } );
 
-    defaultSize: 1.0,
+    }
 
-    parameters: Object.assign( {
+    if ( LicoriceRepresentation$$1 ) HyperballRepresentation.__proto__ = LicoriceRepresentation$$1;
+    HyperballRepresentation.prototype = Object.create( LicoriceRepresentation$$1 && LicoriceRepresentation$$1.prototype );
+    HyperballRepresentation.prototype.constructor = HyperballRepresentation;
 
-        shrink: {
-            type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
-        }
-
-    }, LicoriceRepresentation.prototype.parameters, {
-
-        multipleBond: null,
-        bondSpacing: null,
-
-    } ),
-
-    init: function( params ){
+    HyperballRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.scale = defaults( p.scale, 0.2 );
@@ -78611,21 +80039,21 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
 
         this.shrink = defaults( p.shrink, 0.12 );
 
-        LicoriceRepresentation.prototype.init.call( this, p );
+        LicoriceRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getBondParams: function( what, params ){
+    HyperballRepresentation.prototype.getBondParams = function getBondParams ( what, params ){
 
         if( !what || what.radius ){
             params = Object.assign( { radius2: true }, params );
         }
 
-        return LicoriceRepresentation.prototype.getBondParams.call( this, what, params );
+        return LicoriceRepresentation$$1.prototype.getBondParams.call( this, what, params );
 
-    },
+    };
 
-    createData: function( sview ){
+    HyperballRepresentation.prototype.createData = function createData ( sview ){
 
         var sphereBuffer = new SphereBuffer(
             sview.getAtomData( this.getAtomParams() ),
@@ -78652,9 +80080,9 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ sphereBuffer, stickBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    HyperballRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams() );
         var bondData = data.sview.getBondData( this.getBondParams() );
@@ -78685,9 +80113,10 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
         data.bufferList[ 0 ].setAttributes( sphereData );
         data.bufferList[ 1 ].setAttributes( stickData );
 
-    }
+    };
 
-} );
+    return HyperballRepresentation;
+}(LicoriceRepresentation));
 
 
 RepresentationRegistry.add( "hyperball", HyperballRepresentation );
@@ -78837,119 +80266,115 @@ LabelFactory.types = {
 
 
 /**
- * Label representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {LabelRepresentationParameters} params - label representation parameters
+ * Label representation
  */
-function LabelRepresentation( structure, viewer, params ){
+var LabelRepresentation = (function (StructureRepresentation$$1) {
+    function LabelRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "label";
 
-LabelRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
-
-    constructor: LabelRepresentation,
-
-    type: "label",
-
-    parameters: Object.assign( {
-
-        labelType: {
-            type: "select", options: LabelFactory.types, rebuild: true
-        },
-        labelText: {
-            type: "hidden", rebuild: true
-        },
-        fontFamily: {
-            type: "select", options: {
-                "sans-serif": "sans-serif",
-                "monospace": "monospace",
-                "serif": "serif"
+            labelType: {
+                type: "select", options: LabelFactory.types, rebuild: true
             },
-            buffer: true
-        },
-        fontStyle: {
-            type: "select", options: {
-                "normal": "normal",
-                "italic": "italic"
+            labelText: {
+                type: "hidden", rebuild: true
             },
-            buffer: true
-        },
-        fontWeight: {
-            type: "select", options: {
-                "normal": "normal",
-                "bold": "bold"
+            fontFamily: {
+                type: "select", options: {
+                    "sans-serif": "sans-serif",
+                    "monospace": "monospace",
+                    "serif": "serif"
+                },
+                buffer: true
             },
-            buffer: true
-        },
-        sdf: {
-            type: "boolean", buffer: true
-        },
-        xOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        yOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        zOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        attachment: {
-            type: "select", options: {
-                "bottom-left": "bottom-left",
-                "bottom-center": "bottom-center",
-                "bottom-right": "bottom-right",
-                "middle-left": "middle-left",
-                "middle-center": "middle-center",
-                "middle-right": "middle-right",
-                "top-left": "top-left",
-                "top-center": "top-center",
-                "top-right": "top-right"
+            fontStyle: {
+                type: "select", options: {
+                    "normal": "normal",
+                    "italic": "italic"
+                },
+                buffer: true
             },
-            rebuild: true
-        },
-        showBorder: {
-            type: "boolean", buffer: true
-        },
-        borderColor: {
-            type: "color", buffer: true
-        },
-        borderWidth: {
-            type: "number", precision: 2, max: 0.3, min: 0, buffer: true
-        },
-        showBackground: {
-            type: "boolean", rebuild: true
-        },
-        backgroundColor: {
-            type: "color", buffer: true
-        },
-        backgroundMargin: {
-            type: "number", precision: 2, max: 2, min: 0, rebuild: true
-        },
-        backgroundOpacity: {
-            type: "range", step: 0.01, max: 1, min: 0, buffer: true
-        },
+            fontWeight: {
+                type: "select", options: {
+                    "normal": "normal",
+                    "bold": "bold"
+                },
+                buffer: true
+            },
+            sdf: {
+                type: "boolean", buffer: true
+            },
+            xOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            yOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            zOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            attachment: {
+                type: "select", options: {
+                    "bottom-left": "bottom-left",
+                    "bottom-center": "bottom-center",
+                    "bottom-right": "bottom-right",
+                    "middle-left": "middle-left",
+                    "middle-center": "middle-center",
+                    "middle-right": "middle-right",
+                    "top-left": "top-left",
+                    "top-center": "top-center",
+                    "top-right": "top-right"
+                },
+                rebuild: true
+            },
+            showBorder: {
+                type: "boolean", buffer: true
+            },
+            borderColor: {
+                type: "color", buffer: true
+            },
+            borderWidth: {
+                type: "number", precision: 2, max: 0.3, min: 0, buffer: true
+            },
+            showBackground: {
+                type: "boolean", rebuild: true
+            },
+            backgroundColor: {
+                type: "color", buffer: true
+            },
+            backgroundMargin: {
+                type: "number", precision: 2, max: 2, min: 0, rebuild: true
+            },
+            backgroundOpacity: {
+                type: "range", step: 0.01, max: 1, min: 0, buffer: true
+            },
 
-    }, StructureRepresentation.prototype.parameters, {
+        }, this.parameters, {
 
-        side: null,
-        flatShaded: null,
-        wireframe: null,
-        linewidth: null,
+            side: null,
+            flatShaded: null,
+            wireframe: null,
+            linewidth: null,
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    if ( StructureRepresentation$$1 ) LabelRepresentation.__proto__ = StructureRepresentation$$1;
+    LabelRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    LabelRepresentation.prototype.constructor = LabelRepresentation;
+
+    LabelRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
@@ -78971,11 +80396,11 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
         this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    LabelRepresentation.prototype.createData = function createData ( sview ){
 
         var what = { position: true, color: true, radius: true };
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
@@ -79018,9 +80443,9 @@ LabelRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ textBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    LabelRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var textData = {};
@@ -79039,9 +80464,10 @@ LabelRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( textData );
 
-    }
+    };
 
-} );
+    return LabelRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "label", LabelRepresentation );
@@ -79054,74 +80480,62 @@ RepresentationRegistry.add( "label", LabelRepresentation );
 
 
 /**
- * Line representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
- * @property {String} multipleBond - one off "off", "symmetric", "offset"
- * @param {Float} params.bondSpacing - spacing for multiple bond rendering
- * @param {null} params.flatShaded - not available
- * @param {null} params.side - not available
- * @param {null} params.wireframe - not available
- * @param {null} params.roughness - not available
- * @param {null} params.metalness - not available
- * @param {null} params.diffuse - not available
+ * Line representation
  */
-function LineRepresentation( structure, viewer, params ){
+var LineRepresentation = (function (StructureRepresentation$$1) {
+    function LineRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "line";
 
-LineRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
-
-    constructor: LineRepresentation,
-
-    type: "line",
-
-    parameters: Object.assign( {
-
-        multipleBond: {
-            type: "select", rebuild: true,
-            options: {
-                "off" : "off",
-                "symmetric" : "symmetric",
-                "offset": "offset"
+            multipleBond: {
+                type: "select", rebuild: true,
+                options: {
+                    "off" : "off",
+                    "symmetric" : "symmetric",
+                    "offset": "offset"
+                }
+            },
+            bondSpacing: {
+                type: "number", precision: 2, max: 2.0, min: 0.5
             }
-        },
-        bondSpacing: {
-            type: "number", precision: 2, max: 2.0, min: 0.5
-        }
 
 
-    }, Representation.prototype.parameters, {
+        }, this.parameters, {
 
-        flatShaded: null,
-        side: null,
-        wireframe: null,
+            flatShaded: null,
+            side: null,
+            wireframe: null,
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    if ( StructureRepresentation$$1 ) LineRepresentation.__proto__ = StructureRepresentation$$1;
+    LineRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    LineRepresentation.prototype.constructor = LineRepresentation;
+
+    LineRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
         this.multipleBond = defaults( p.multipleBond, "off" );
         this.bondSpacing = defaults( p.bondSpacing, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getBondParams: function( what, params ){
+    LineRepresentation.prototype.getBondParams = function getBondParams ( what, params ){
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
@@ -79129,11 +80543,11 @@ LineRepresentation.prototype = Object.assign( Object.create(
             radiusParams: { "radius": 0.1, "scale": 1 }
         }, params );
 
-        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
+        return StructureRepresentation$$1.prototype.getBondParams.call( this, what, params );
 
-    },
+    };
 
-    createData: function( sview ){
+    LineRepresentation.prototype.createData = function createData ( sview ){
 
         var what = { position: true, color: true };
         var bondData = sview.getBondData( this.getBondParams( what ) );
@@ -79146,9 +80560,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ lineBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    LineRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var bondData = data.sview.getBondData( this.getBondParams( what ) );
         var lineData = {};
@@ -79165,9 +80579,9 @@ LineRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( lineData );
 
-    },
+    };
 
-    setParameters: function( params ){
+    LineRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -79176,15 +80590,14 @@ LineRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return LineRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "line", LineRepresentation );
@@ -81012,83 +82425,84 @@ MolecularSurface.prototype = {
  */
 
 
-function MolecularSurfaceRepresentation( structure, viewer, params ){
+var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
+    function MolecularSurfaceRepresentation( structure, viewer, params ){
 
-    this.__infoList = [];
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        this.type = "surface";
 
-    // TODO find a more direct way
-    this.structure.signals.refreshed.add( function(){
-        this.__forceNewMolsurf = true;
-    }, this );
+        this.parameters = Object.assign( {
 
-}
-
-MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
-
-    StructureRepresentation.prototype ), {
-
-    constructor: MolecularSurfaceRepresentation,
-
-    type: "surface",
-
-    parameters: Object.assign( {
-
-        surfaceType: {
-            type: "select", rebuild: true,
-            options: {
-                "vws": "vws",
-                "sas": "sas",
-                "ms": "ms",
-                "ses": "ses",
-                "av": "av"
+            surfaceType: {
+                type: "select", rebuild: true,
+                options: {
+                    "vws": "vws",
+                    "sas": "sas",
+                    "ms": "ms",
+                    "ses": "ses",
+                    "av": "av"
+                }
+            },
+            probeRadius: {
+                type: "number", precision: 1, max: 20, min: 0,
+                rebuild: true
+            },
+            smooth: {
+                type: "integer", precision: 1, max: 10, min: 0,
+                rebuild: true
+            },
+            scaleFactor: {
+                type: "number", precision: 1, max: 5, min: 0,
+                rebuild: true
+            },
+            cutoff: {
+                type: "number", precision: 2, max: 50, min: 0,
+                rebuild: true
+            },
+            contour: {
+                type: "boolean", rebuild: true
+            },
+            background: {
+                type: "boolean", rebuild: true  // FIXME
+            },
+            opaqueBack: {
+                type: "boolean", buffer: true
+            },
+            filterSele: {
+                type: "text", rebuild: true
+            },
+            colorVolume: {
+                type: "hidden"
+            },
+            useWorker: {
+                type: "boolean", rebuild: true
             }
-        },
-        probeRadius: {
-            type: "number", precision: 1, max: 20, min: 0,
-            rebuild: true
-        },
-        smooth: {
-            type: "integer", precision: 1, max: 10, min: 0,
-            rebuild: true
-        },
-        scaleFactor: {
-            type: "number", precision: 1, max: 5, min: 0,
-            rebuild: true
-        },
-        cutoff: {
-            type: "number", precision: 2, max: 50, min: 0,
-            rebuild: true
-        },
-        contour: {
-            type: "boolean", rebuild: true
-        },
-        background: {
-            type: "boolean", rebuild: true  // FIXME
-        },
-        opaqueBack: {
-            type: "boolean", buffer: true
-        },
-        filterSele: {
-            type: "text", rebuild: true
-        },
-        colorVolume: {
-            type: "hidden"
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
-        }
 
-    }, StructureRepresentation.prototype.parameters, {
+        }, this.parameters, {
 
-        radiusType: null,
-        radius: null,
-        scale: null
+            radiusType: null,
+            radius: null,
+            scale: null
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.__infoList = [];
+
+        // TODO find a more direct way
+        this.structure.signals.refreshed.add( function(){
+            this.__forceNewMolsurf = true;
+        }, this );
+
+        this.init( params );
+
+    }
+
+    if ( StructureRepresentation$$1 ) MolecularSurfaceRepresentation.__proto__ = StructureRepresentation$$1;
+    MolecularSurfaceRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    MolecularSurfaceRepresentation.prototype.constructor = MolecularSurfaceRepresentation;
+
+    MolecularSurfaceRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -81106,11 +82520,11 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.useWorker = defaults( p.useWorker, true );
 
-        StructureRepresentation.prototype.init.call( this, params );
+        StructureRepresentation$$1.prototype.init.call( this, params );
 
-    },
+    };
 
-    prepareData: function( sview, i, callback ){
+    MolecularSurfaceRepresentation.prototype.prepareData = function prepareData ( sview, i, callback ){
 
         var info = this.__infoList[ i ];
         if( !info ){
@@ -81152,9 +82566,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    };
 
-    prepare: function( callback ){
+    MolecularSurfaceRepresentation.prototype.prepare = function prepare ( callback ){
 
         if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
                 this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
@@ -81190,9 +82604,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             this.prepareData( this.structureView, 0, after );
         }
 
-    },
+    };
 
-    createData: function( sview, i ){
+    MolecularSurfaceRepresentation.prototype.createData = function createData ( sview, i ){
 
         var info = this.__infoList[ i ];
         var surface = info.surface;
@@ -81236,9 +82650,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             };
         }
 
-    },
+    };
 
-    updateData: function( what, data ){
+    MolecularSurfaceRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var surfaceData = {};
 
@@ -81258,9 +82672,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( surfaceData );
 
-    },
+    };
 
-    setParameters: function( params, what, rebuild ){
+    MolecularSurfaceRepresentation.prototype.setParameters = function setParameters ( params, what, rebuild ){
 
         what = what || {};
 
@@ -81280,15 +82694,13 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             params.wireframe = false;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    },
+    };
 
-    getSurfaceParams: function( params ){
+    MolecularSurfaceRepresentation.prototype.getSurfaceParams = function getSurfaceParams ( params ){
 
         var p = Object.assign( {
             type: this.surfaceType,
@@ -81302,36 +82714,37 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         return p;
 
-    },
+    };
 
-    getColorParams: function(){
+    MolecularSurfaceRepresentation.prototype.getColorParams = function getColorParams (){
 
-        var p = StructureRepresentation.prototype.getColorParams.call( this );
+        var p = StructureRepresentation$$1.prototype.getColorParams.call(this);
 
         p.volume = this.colorVolume;
 
         return p;
 
-    },
+    };
 
-    clear: function(){
+    MolecularSurfaceRepresentation.prototype.clear = function clear (){
 
-        StructureRepresentation.prototype.clear.call( this );
+        StructureRepresentation$$1.prototype.clear.call(this);
 
-    },
+    };
 
-    dispose: function(){
+    MolecularSurfaceRepresentation.prototype.dispose = function dispose (){
 
-        this.__infoList.forEach( function( info ){
+        this.__infoList.forEach( function (info) {
             info.molsurf.dispose();
-        }.bind( this ) );
+        } );
         this.__infoList.length = 0;
 
-        StructureRepresentation.prototype.dispose.call( this );
+        StructureRepresentation$$1.prototype.dispose.call(this);
 
-    }
+    };
 
-} );
+    return MolecularSurfaceRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "surface", MolecularSurfaceRepresentation );
@@ -81343,56 +82756,57 @@ RepresentationRegistry.add( "surface", MolecularSurfaceRepresentation );
  */
 
 
-function PointRepresentation( structure, viewer, params ){
+var PointRepresentation = (function (StructureRepresentation$$1) {
+    function PointRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "point";
 
-PointRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            pointSize: {
+                type: "number", precision: 1, max: 100, min: 0, buffer: true
+            },
+            sizeAttenuation: {
+                type: "boolean", buffer: true
+            },
+            sortParticles: {
+                type: "boolean", rebuild: true
+            },
+            useTexture: {
+                type: "boolean", buffer: true
+            },
+            alphaTest: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+            forceTransparent: {
+                type: "boolean", buffer: true
+            },
+            edgeBleach: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
 
-    constructor: PointRepresentation,
+        }, this.parameters, {
 
-    type: "point",
+            flatShaded: null,
+            wireframe: null,
+            linewidth: null,
 
-    parameters: Object.assign( {
+            roughness: null,
+            metalness: null
 
-        pointSize: {
-            type: "number", precision: 1, max: 100, min: 0, buffer: true
-        },
-        sizeAttenuation: {
-            type: "boolean", buffer: true
-        },
-        sortParticles: {
-            type: "boolean", rebuild: true
-        },
-        useTexture: {
-            type: "boolean", buffer: true
-        },
-        alphaTest: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-        forceTransparent: {
-            type: "boolean", buffer: true
-        },
-        edgeBleach: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
+        } );
 
-    }, Representation.prototype.parameters, {
+        this.init( params );
 
-        flatShaded: null,
-        wireframe: null,
-        linewidth: null,
+    }
 
-        roughness: null,
-        metalness: null
+    if ( StructureRepresentation$$1 ) PointRepresentation.__proto__ = StructureRepresentation$$1;
+    PointRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    PointRepresentation.prototype.constructor = PointRepresentation;
 
-    } ),
-
-    init: function( params ){
+    PointRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
@@ -81404,11 +82818,11 @@ PointRepresentation.prototype = Object.assign( Object.create(
         this.forceTransparent = defaults( p.forceTransparent, false );
         this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    PointRepresentation.prototype.createData = function createData ( sview ){
 
         var what = { position: true, color: true };
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
@@ -81430,9 +82844,9 @@ PointRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ pointBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    PointRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var pointData = {};
@@ -81447,9 +82861,10 @@ PointRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( pointData );
 
-    }
+    };
 
-} );
+    return PointRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "point", PointRepresentation );
@@ -81686,43 +83101,42 @@ var RibbonBuffer = (function (MeshBuffer$$1) {
  */
 
 
-function RibbonRepresentation( structure, viewer, params ){
+var RibbonRepresentation = (function (StructureRepresentation$$1) {
+    function RibbonRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-    this.defaultScale.sstruc *= 3.0;
+        this.type = "ribbon";
 
-}
+        this.parameters = Object.assign( {
 
-RibbonRepresentation.prototype = Object.assign( Object.create(
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    StructureRepresentation.prototype ), {
+        }, this.parameters, {
 
-    constructor: RibbonRepresentation,
+            side: null,
+            wireframe: null,
+            linewidth: null
 
-    type: "ribbon",
+        } );
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+    }
 
-    }, StructureRepresentation.prototype.parameters, {
+    if ( StructureRepresentation$$1 ) RibbonRepresentation.__proto__ = StructureRepresentation$$1;
+    RibbonRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    RibbonRepresentation.prototype.constructor = RibbonRepresentation;
 
-        side: null,
-        wireframe: null,
-        linewidth: null
-
-    } ),
-
-    init: function( params ){
+    RibbonRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -81743,11 +83157,11 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
         this.tension = defaults( p.tension, NaN );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getSplineParams: function( params ){
+    RibbonRepresentation.prototype.getSplineParams = function getSplineParams ( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -81756,9 +83170,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    };
 
-    createData: function( sview ){
+    RibbonRepresentation.prototype.createData = function createData ( sview ){
         var this$1 = this;
 
 
@@ -81770,7 +83184,7 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             if( polymer.residueCount < 4 ) { return; }
             polymerList.push( polymer );
 
-            var spline = new Spline( polymer, this$1.getSplineParams() );
+            var spline = new Spline$1( polymer, this$1.getSplineParams() );
             var subPos = spline.getSubdividedPosition();
             var subOri = spline.getSubdividedOrientation();
             var subCol = spline.getSubdividedColor( this$1.getColorParams() );
@@ -81798,9 +83212,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             polymerList: polymerList
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    RibbonRepresentation.prototype.updateData = function updateData ( what, data ){
         var this$1 = this;
 
 
@@ -81812,7 +83226,7 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new Spline( data.polymerList[ i ], this$1.getSplineParams() );
+            var spline = new Spline$1( data.polymerList[ i ], this$1.getSplineParams() );
 
             if( what.position ){
                 var subPos = spline.getSubdividedPosition();
@@ -81836,9 +83250,9 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    };
 
-    setParameters: function( params ){
+    RibbonRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -81847,15 +83261,14 @@ RibbonRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return RibbonRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "ribbon", RibbonRepresentation );
@@ -81867,40 +83280,41 @@ RepresentationRegistry.add( "ribbon", RibbonRepresentation );
  */
 
 
-function RocketRepresentation( structure, viewer, params ){
+var RocketRepresentation = (function (StructureRepresentation$$1) {
+    function RocketRepresentation( structure, viewer, params ){
 
-    this.helixbundleList = [];
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        this.type = "rocket";
 
-}
+        this.parameters = Object.assign( {
 
-RocketRepresentation.prototype = Object.assign( Object.create(
+            localAngle: {
+                type: "integer", max: 180, min: 0, rebuild: true
+            },
+            centerDist: {
+                type: "number", precision: 1, max: 10, min: 0, rebuild: true
+            },
+            ssBorder: {
+                type: "boolean", rebuild: true
+            },
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true
 
-    StructureRepresentation.prototype ), {
+        }, this.parameters );
 
-    constructor: RocketRepresentation,
+        this.helixbundleList = [];
 
-    type: "rocket",
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        localAngle: {
-            type: "integer", max: 180, min: 0, rebuild: true
-        },
-        centerDist: {
-            type: "number", precision: 1, max: 10, min: 0, rebuild: true
-        },
-        ssBorder: {
-            type: "boolean", rebuild: true
-        },
-        radialSegments: true,
-        openEnded: true,
-        disableImpostor: true
+    if ( StructureRepresentation$$1 ) RocketRepresentation.__proto__ = StructureRepresentation$$1;
+    RocketRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    RocketRepresentation.prototype.constructor = RocketRepresentation;
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    RocketRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
@@ -81912,31 +83326,33 @@ RocketRepresentation.prototype = Object.assign( Object.create(
         this.centerDist = defaults( p.centerDist, 2.5 );
         this.ssBorder = defaults( p.ssBorder, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    RocketRepresentation.prototype.createData = function createData ( sview ){
+        var this$1 = this;
+
 
         var length = 0;
         var axisList = [];
         var helixbundleList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( function (polymer) {
 
             if( polymer.residueCount < 4 || polymer.isNucleic() ) { return; }
 
             var helixbundle = new Helixbundle( polymer );
             var axis = helixbundle.getAxis(
-                this.localAngle, this.centerDist, this.ssBorder,
-                this.getColorParams(), this.radius, this.scale
+                this$1.localAngle, this$1.centerDist, this$1.ssBorder,
+                this$1.getColorParams(), this$1.radius, this$1.scale
             );
 
             length += axis.size.length;
             axisList.push( axis );
             helixbundleList.push( helixbundle );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         var axisData = {
             begin: new Float32Array( length * 3 ),
@@ -81987,9 +83403,11 @@ RocketRepresentation.prototype = Object.assign( Object.create(
             axisData: axisData
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    RocketRepresentation.prototype.updateData = function updateData ( what, data ){
+        var this$1 = this;
+
 
         what = what || {};
 
@@ -82004,11 +83422,11 @@ RocketRepresentation.prototype = Object.assign( Object.create(
 
             var offset = 0;
 
-            data.helixbundleList.forEach( function( helixbundle ){
+            data.helixbundleList.forEach( function (helixbundle) {
 
                 var axis = helixbundle.getAxis(
-                    this.localAngle, this.centerDist, this.ssBorder,
-                    this.getColorParams(), this.radius, this.scale
+                    this$1.localAngle, this$1.centerDist, this$1.ssBorder,
+                    this$1.getColorParams(), this$1.radius, this$1.scale
                 );
                 if( what.color ){
                     data.axisData.color.set( axis.color, offset * 3 );
@@ -82018,7 +83436,7 @@ RocketRepresentation.prototype = Object.assign( Object.create(
                 }
                 offset += axis.size.length;
 
-            }.bind( this ) );
+            } );
 
             if( what.color ){
                 cylinderData.color = data.axisData.color;
@@ -82033,9 +83451,10 @@ RocketRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( cylinderData );
 
-    }
+    };
 
-} );
+    return RocketRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "rocket", RocketRepresentation );
@@ -82047,32 +83466,31 @@ RepresentationRegistry.add( "rocket", RocketRepresentation );
  */
 
 
-function RopeRepresentation( structure, viewer, params ){
+var RopeRepresentation = (function (CartoonRepresentation$$1) {
+    function RopeRepresentation( structure, viewer, params ){
 
-    CartoonRepresentation.call( this, structure, viewer, params );
+        CartoonRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "rope";
 
-RopeRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    CartoonRepresentation.prototype ), {
+            smooth: {
+                type: "integer", max: 15, min: 0, rebuild: true
+            }
 
-    constructor: RopeRepresentation,
+        }, this.parameters, {
+            aspectRatio: null,
+            smoothSheet: null
+        } );
 
-    type: "rope",
+    }
 
-    parameters: Object.assign( {
+    if ( CartoonRepresentation$$1 ) RopeRepresentation.__proto__ = CartoonRepresentation$$1;
+    RopeRepresentation.prototype = Object.create( CartoonRepresentation$$1 && CartoonRepresentation$$1.prototype );
+    RopeRepresentation.prototype.constructor = RopeRepresentation;
 
-        smooth: {
-            type: "integer", max: 15, min: 0, rebuild: true
-        }
-
-    }, CartoonRepresentation.prototype.parameters, {
-        aspectRatio: null,
-        smoothSheet: null
-    } ),
-
-    init: function( params ){
+    RopeRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
@@ -82082,22 +83500,23 @@ RopeRepresentation.prototype = Object.assign( Object.create(
 
         this.smooth = defaults( p.smooth, 2 );
 
-        CartoonRepresentation.prototype.init.call( this, p );
+        CartoonRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getSpline: function( polymer ){
+    RopeRepresentation.prototype.getSpline = function getSpline ( polymer ){
 
         var helixorient = new Helixorient( polymer );
 
-        return new Spline( polymer, this.getSplineParams( {
+        return new Spline$1( polymer, this.getSplineParams( {
             directional: false,
             positionIterator: helixorient.getCenterIterator( this.smooth )
         } ) );
 
-    }
+    };
 
-} );
+    return RopeRepresentation;
+}(CartoonRepresentation));
 
 
 RepresentationRegistry.add( "rope", RopeRepresentation );
@@ -82109,36 +83528,35 @@ RepresentationRegistry.add( "rope", RopeRepresentation );
  */
 
 
-function SpacefillRepresentation( structure, viewer, params ){
+var SpacefillRepresentation = (function (StructureRepresentation$$1) {
+    function SpacefillRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "spacefill";
 
-SpacefillRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
+            sphereDetail: true,
+            disableImpostor: true
+        }, this.parameters );
 
-    StructureRepresentation.prototype ), {
+        this.init( params );
 
-    constructor: SpacefillRepresentation,
+    }
 
-    type: "spacefill",
+    if ( StructureRepresentation$$1 ) SpacefillRepresentation.__proto__ = StructureRepresentation$$1;
+    SpacefillRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    SpacefillRepresentation.prototype.constructor = SpacefillRepresentation;
 
-    parameters: Object.assign( {
-
-        sphereDetail: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    SpacefillRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    createData: function( sview ){
+    SpacefillRepresentation.prototype.createData = function createData ( sview ){
 
         var sphereBuffer = new SphereBuffer(
             sview.getAtomData( this.getAtomParams() ),
@@ -82153,9 +83571,9 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ sphereBuffer ]
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    SpacefillRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var sphereData = {};
@@ -82174,9 +83592,10 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( sphereData );
 
-    }
+    };
 
-} );
+    return SpacefillRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "spacefill", SpacefillRepresentation );
@@ -82292,41 +83711,42 @@ var TraceBuffer = (function (Buffer$$1) {
  */
 
 
-function TraceRepresentation( structure, viewer, params ){
+var TraceRepresentation = (function (StructureRepresentation$$1) {
+    function TraceRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "trace";
 
-TraceRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    constructor: TraceRepresentation,
+        }, this.parameters, {
 
-    type: "trace",
+            flatShaded: null,
+            side: null,
+            wireframe: null
 
-    parameters: Object.assign( {
+        } );
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+        this.init( params );
 
-    }, Representation.prototype.parameters, {
+    }
 
-        flatShaded: null,
-        side: null,
-        wireframe: null
+    if ( StructureRepresentation$$1 ) TraceRepresentation.__proto__ = StructureRepresentation$$1;
+    TraceRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    TraceRepresentation.prototype.constructor = TraceRepresentation;
 
-    } ),
-
-    init: function( params ){
+    TraceRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -82345,11 +83765,11 @@ TraceRepresentation.prototype = Object.assign( Object.create(
         this.tension = defaults( p.tension, NaN );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getSplineParams: function( params ){
+    TraceRepresentation.prototype.getSplineParams = function getSplineParams ( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -82358,39 +83778,41 @@ TraceRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    };
 
-    createData: function( sview ){
+    TraceRepresentation.prototype.createData = function createData ( sview ){
+        var this$1 = this;
+
 
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( function (polymer) {
 
             if( polymer.residueCount < 4 ) { return; }
             polymerList.push( polymer );
 
-            var spline = new Spline( polymer, this.getSplineParams() );
+            var spline = new Spline$1( polymer, this$1.getSplineParams() );
             var subPos = spline.getSubdividedPosition();
-            var subCol = spline.getSubdividedColor( this.getColorParams() );
+            var subCol = spline.getSubdividedColor( this$1.getColorParams() );
 
             bufferList.push(
                 new TraceBuffer(
                     Object.assign( {}, subPos, subCol ),
-                    this.getBufferParams()
+                    this$1.getBufferParams()
                 )
             );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,
             polymerList: polymerList
         };
 
-    },
+    };
 
-    updateData: function( what, data ){
+    TraceRepresentation.prototype.updateData = function updateData ( what, data ){
         var this$1 = this;
 
 
@@ -82402,7 +83824,7 @@ TraceRepresentation.prototype = Object.assign( Object.create(
         for( i = 0; i < n; ++i ){
 
             var bufferData = {};
-            var spline = new Spline( data.polymerList[ i ], this$1.getSplineParams() );
+            var spline = new Spline$1( data.polymerList[ i ], this$1.getSplineParams() );
 
             if( what.position ){
                 var subPos = spline.getSubdividedPosition();
@@ -82418,9 +83840,9 @@ TraceRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    };
 
-    setParameters: function( params ){
+    TraceRepresentation.prototype.setParameters = function setParameters ( params ){
 
         var rebuild = false;
         var what = {};
@@ -82429,15 +83851,14 @@ TraceRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        StructureRepresentation$$1.prototype.setParameters.call( this, params, what, rebuild );
 
         return this;
 
-    }
+    };
 
-} );
+    return TraceRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "trace", TraceRepresentation );
@@ -82449,47 +83870,47 @@ RepresentationRegistry.add( "trace", TraceRepresentation );
  */
 
 
-function TubeRepresentation( structure, viewer, params ){
+var TubeRepresentation = (function (CartoonRepresentation$$1) {
+    function TubeRepresentation( structure, viewer, params ){
 
-    CartoonRepresentation.call( this, structure, viewer, params );
+        CartoonRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "tube";
 
-TubeRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign(
+            {}, this.parameters, { aspectRatio: null }
+        );
 
-    CartoonRepresentation.prototype ), {
+    }
 
-    constructor: TubeRepresentation,
+    if ( CartoonRepresentation$$1 ) TubeRepresentation.__proto__ = CartoonRepresentation$$1;
+    TubeRepresentation.prototype = Object.create( CartoonRepresentation$$1 && CartoonRepresentation$$1.prototype );
+    TubeRepresentation.prototype.constructor = TubeRepresentation;
 
-    type: "tube",
-
-    parameters: Object.assign(
-        {}, CartoonRepresentation.prototype.parameters, { aspectRatio: null }
-    ),
-
-    init: function( params ){
+    TubeRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
         p.scale = defaults( p.scale, 2.0 );
 
-        CartoonRepresentation.prototype.init.call( this, p );
-
         if( p.quality === "low" ){
             this.radialSegments = 5;
         }
 
-    },
+        CartoonRepresentation$$1.prototype.init.call( this, p );
 
-    getSplineParams: function( /*params*/ ){
+    };
 
-        return CartoonRepresentation.prototype.getSplineParams.call( this, {
+    TubeRepresentation.prototype.getSplineParams = function getSplineParams ( /*params*/ ){
+
+        return CartoonRepresentation$$1.prototype.getSplineParams.call( this, {
             directional: false
         } );
 
-    }
+    };
 
-} );
+    return TubeRepresentation;
+}(CartoonRepresentation));
 
 
 RepresentationRegistry.add( "tube", TubeRepresentation );
@@ -82501,34 +83922,35 @@ RepresentationRegistry.add( "tube", TubeRepresentation );
  */
 
 
-function UnitcellRepresentation( structure, viewer, params ){
+var UnitcellRepresentation = (function (StructureRepresentation$$1) {
+    function UnitcellRepresentation( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        StructureRepresentation$$1.call( this, structure, viewer, params );
 
-}
+        this.type = "unitcell";
 
-UnitcellRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    StructureRepresentation.prototype ), {
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            radialSegments: true,
+            disableImpostor: true
 
-    constructor: UnitcellRepresentation,
+        }, this.parameters, {
+            assembly: null
+        } );
 
-    type: "unitcell",
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        radialSegments: true,
-        disableImpostor: true
+    if ( StructureRepresentation$$1 ) UnitcellRepresentation.__proto__ = StructureRepresentation$$1;
+    UnitcellRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+    UnitcellRepresentation.prototype.constructor = UnitcellRepresentation;
 
-    }, Representation.prototype.parameters, {
-        assembly: null
-    } ),
-
-    init: function( params ){
+    UnitcellRepresentation.prototype.init = function init ( params ){
 
         var p = params || {};
 
@@ -82540,11 +83962,11 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         p.radius = defaults( p.radius, defaultRadius );
         p.colorValue = defaults( p.colorValue, "orange" );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        StructureRepresentation$$1.prototype.init.call( this, p );
 
-    },
+    };
 
-    getUnitcellData: function( structure ){
+    UnitcellRepresentation.prototype.getUnitcellData = function getUnitcellData ( structure ){
 
         var c = new Color( this.colorValue );
 
@@ -82616,9 +84038,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             }
         };
 
-    },
+    };
 
-    create: function(){
+    UnitcellRepresentation.prototype.create = function create (){
 
         var structure = this.structureView.getStructure();
         if( !structure.unitcell ) { return; }
@@ -82648,9 +84070,9 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    };
 
-    updateData: function( what, data ){
+    UnitcellRepresentation.prototype.updateData = function updateData ( what, data ){
 
         var structure = data.sview.getStructure();
         var unitcellData = this.getUnitcellData( structure );
@@ -82677,9 +84099,10 @@ UnitcellRepresentation.prototype = Object.assign( Object.create(
         this.sphereBuffer.setAttributes( sphereData );
         this.cylinderBuffer.setAttributes( cylinderData );
 
-    }
+    };
 
-} );
+    return UnitcellRepresentation;
+}(StructureRepresentation));
 
 
 RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
@@ -82771,10 +84194,10 @@ var Parser = function Parser( streamer, params ){
 
 };
 
-var prototypeAccessors$11 = { type: {},__objName: {} };
+var prototypeAccessors$13 = { type: {},__objName: {} };
 
-prototypeAccessors$11.type.get = function (){ return ""; };
-prototypeAccessors$11.__objName.get = function (){ return ""; };
+prototypeAccessors$13.type.get = function (){ return ""; };
+prototypeAccessors$13.__objName.get = function (){ return ""; };
 
 Parser.prototype.parse = function parse (){
         var this$1 = this;
@@ -82801,7 +84224,7 @@ Parser.prototype._afterParse = function _afterParse (){
 
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$11 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$13 );
 
 /**
  * @file Structure Builder
@@ -83005,9 +84428,9 @@ var Entity = function Entity( structure, index, description, type, chainIndexLis
 
 };
 
-var prototypeAccessors$12 = { type: {} };
+var prototypeAccessors$14 = { type: {} };
 
-prototypeAccessors$12.type.get = function (){ return "Entity"; };
+prototypeAccessors$14.type.get = function (){ return "Entity"; };
 
 Entity.prototype.getEntityType = function getEntityType (){
     return this.entityType;
@@ -83040,7 +84463,7 @@ Entity.prototype.eachChain = function eachChain ( callback ){
 
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$12 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$14 );
 
 /**
  * @file Unitcell
@@ -86977,11 +88400,11 @@ var Frames = function Frames( name, path ){
 
 };
 
-var prototypeAccessors$13 = { type: {} };
+var prototypeAccessors$15 = { type: {} };
 
-prototypeAccessors$13.type.get = function (){ return "Frames"; };
+prototypeAccessors$15.type.get = function (){ return "Frames"; };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$13 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$15 );
 
 /**
  * @file Trajectory Parser
@@ -89750,9 +91173,9 @@ var Validation = function Validation( name, path ){
 
 };
 
-var prototypeAccessors$14 = { type: {} };
+var prototypeAccessors$16 = { type: {} };
 
-prototypeAccessors$14.type.get = function (){ return "validation"; };
+prototypeAccessors$16.type.get = function (){ return "validation"; };
 
 Validation.prototype.fromXml = function fromXml ( xml ){
 
@@ -89958,12 +91381,12 @@ Validation.prototype.getClashData = function getClashData ( params ){
         color: color.subarray( 0, i * 3 ),
         color2: color.subarray( 0, i * 3 ),
         radius: radius.subarray( 0, i ),
-        picking: new ClashPicker( picking.subarray( 0, i ), this )
+        picking: new ClashPicker( picking.subarray( 0, i ), this, s )
     };
 
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$14 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$16 );
 
 /**
  * @file Validation Parser

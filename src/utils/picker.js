@@ -11,17 +11,29 @@ import { calculateMeanVector3 } from "../math/vector-utils.js";
 import Selection from "../selection.js";
 
 
+/**
+ * Picker class
+ * @interface
+ */
 class Picker{
 
+    /**
+     * @param  {Array|TypedArray} array - mapping
+     */
     constructor( array ){
         this.array = array;
     }
 
+    /**
+     * Get the index for the given picking id
+     * @param  {Integer} pid - the picking id
+     * @return {Integer} the index
+     */
     getIndex( pid ){
         return this.array[ pid ];
     }
 
-    applyTransformations( vector, instance/*, component*/ ){
+    _applyTransformations( vector, instance/*, component*/ ){
         if( instance ){
             vector.applyProjection( instance.matrix );
         }
@@ -35,8 +47,15 @@ class Picker{
         return new Vector3();
     }
 
+    /**
+     * Get position for the given picking id
+     * @param  {Integer} pid - the picking
+     * @param  {Object} instance - the instance that should be applied
+     * @param  {Component} component - the component of the picked object
+     * @return {Vector3} the position
+     */
     getPosition( pid, instance, component ){
-        return this.applyTransformations(
+        return this._applyTransformations(
             this._getPosition( pid ), instance, component
         );
     }

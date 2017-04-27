@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file, following t
 - refactored buffer classes to use a data object as input
 - refactored picking to be more general
 - replaced PickingData with PickingProxy
+- updated three.js to r85
+- updated chroma.js to 1.3.3
 
 ### Removed
 - stage/component.centerView method, use .autoView instead

@@ -1,3 +1,6 @@
+
+# Scripting
+
 Scripts are written in JavaScript and can be loaded as files that have the extension **.ngl**.
 
 ## Example
