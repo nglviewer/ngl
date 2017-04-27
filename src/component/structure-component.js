@@ -33,6 +33,13 @@ import { superpose } from "../align/align-utils.js";
 
 /**
  * Component wrapping a {@link Structure} object
+ *
+ * @example
+ * // get a structure component by loading a structure file into the stage
+ * stage.loadFile( "rcsb://4opj" ).then( function( structureComponent ){
+ *     structureComponent.addRepresentation( "cartoon" );
+ *     structureComponent.autoView();
+ * } );
  */
 class StructureComponent extends Component{
 

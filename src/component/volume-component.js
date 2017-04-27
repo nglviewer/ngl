@@ -10,12 +10,19 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a {@link Volume} object
+ *
+ * @example
+ * // get a volume component by loading a volume file into the stage
+ * stage.loadFile( "url/for/volume" ).then( function( volumeComponent ){
+ *     volumeComponent.addRepresentation( "surface" );
+ *     volumeComponent.autoView();
+ * } );
+ */
 class VolumeComponent extends Component{
 
     /**
-     * Create component wrapping a volume object
-     * @class
-     * @extends Component
      * @param {Stage} stage - stage object the component belongs to
      * @param {Volume} volume - volume object to wrap
      * @param {ComponentParameters} params - component parameters
@@ -33,16 +40,12 @@ class VolumeComponent extends Component{
 
     /**
      * Component type
-     * @alias VolumeComponent#type
-     * @constant
      * @type {String}
-     * @default
      */
     get type(){ return "volume"; }
 
     /**
      * Add a new volume representation to the component
-     * @alias VolumeComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
      *                        surface, dot.
      * @param {VolumeRepresentationParameters} params - representation parameters

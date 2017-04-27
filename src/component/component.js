@@ -41,6 +41,7 @@ let nextComponentId = 0;
 
 /**
  * Base class for components
+ * @interface
  */
 class Component{
 
@@ -214,11 +215,11 @@ class Component{
 
     }
 
-    getBox(){
-
-        // console.warn( "not implemented" )
-
-    }
+    /**
+     * @abstract
+     * @return {Box3} the component's bounding box
+     */
+    getBox(){}
 
     getCenter( optionalTarget ){
 
