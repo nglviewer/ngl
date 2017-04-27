@@ -11,6 +11,10 @@ import { defaults, ensureVector3, ensureQuaternion } from "../utils.js";
 import { lerp, smoothstep } from "../math/math-utils.js";
 
 
+/**
+ * Animation. Base animation class.
+ * @interface
+ */
 class Animation{
 
     constructor( duration, controls, ...args ){
@@ -53,6 +57,9 @@ class Animation{
 }
 
 
+/**
+ * Spin animation. Spin around an axis.
+ */
 class SpinAnimation extends Animation{
 
     constructor( duration, ...args ){
@@ -85,6 +92,9 @@ class SpinAnimation extends Animation{
 }
 
 
+/**
+ * Move animation. Move from one position to another.
+ */
 class MoveAnimation extends Animation{
 
     _init( moveFrom, moveTo ){
@@ -105,6 +115,9 @@ class MoveAnimation extends Animation{
 }
 
 
+/**
+ * Zoom animation. Gradually change the zoom level.
+ */
 class ZoomAnimation extends Animation{
 
     _init( zoomFrom, zoomTo ){
@@ -123,6 +136,9 @@ class ZoomAnimation extends Animation{
 }
 
 
+/**
+ * Rotate animation. Rotate from one orientation to another.
+ */
 class RotateAnimation extends Animation{
 
     _init( rotateFrom, rotateTo ){
@@ -324,3 +340,11 @@ class AnimationControls{
 
 
 export default AnimationControls;
+
+export {
+    Animation,
+    SpinAnimation,
+    MoveAnimation,
+    ZoomAnimation,
+    RotateAnimation
+};
