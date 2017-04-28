@@ -169,7 +169,7 @@ class MouseObserver{
                 this.signals.hovered.dispatch();
             }
         }
-        requestAnimationFrame( this.listen );
+        requestAnimationFrame( this._listen );
     }
 
     /**
