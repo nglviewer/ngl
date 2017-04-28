@@ -136,7 +136,7 @@ class MouseObserver{
         this._onMousedown = this._onMousedown.bind( this );
         this._onMouseup = this._onMouseup.bind( this );
 
-        this.listen();
+        this._listen();
 
         domElement.addEventListener( 'mousewheel', this._onMousewheel );
         domElement.addEventListener( 'wheel', this._onMousewheel );
