@@ -9,13 +9,11 @@ The following file formats are supported. Files can be compressed with gzip. For
 Structure data is saved into [Structure](../class/src/structure/structure.js~Structure.html) instances.
 
 Loading flags (in the GUI available from the *File* menu):
-
 * *asTrajectory*: load the topology from first model and add the coordinates from it and the remaining models as trajectory frames. Note that this assumes that all models share the same topology.
 * *firstModelOnly*: load only the first model.
 * *cAlphaOnly*: load only C-alpha atoms.
 
 Atom data added to all structures:
-
 * *index*: running atom index that is unique within the structure
 * *modelindex*: running model index that is unique within the structure
 * *globalindex*: globally unique running atom index
@@ -28,7 +26,6 @@ Extension: **.mmcif**, **.cif**, **.mcif**
 Specification: [http://mmcif.wwpdb.org/](http://mmcif.wwpdb.org/)
 
 Supported features:
-
 * Title: read from "_struct.title" item
 * Box coordinates: read from "_cell" item
 * Space group: read from "_symmetry.space_group_name_H-M" item
@@ -62,7 +59,6 @@ Extension: **.pdb**, **.ent**, **.pqr**
 Specification: [http://www.wwpdb.org/documentation/file-format.php](http://www.wwpdb.org/documentation/file-format.php)
 
 Supported features:
-
 * Title: read from "TITLE" record
 * Box coordinates: read from "CRYST1" record
 * Space group: read from "CRYST1" record
@@ -96,7 +92,6 @@ Extension: **.gro**
 Specification: [http://manual.gromacs.org/current/online/gro.html](http://manual.gromacs.org/current/online/gro.html)
 
 Supported features:
-
 * Title: read from "title string" field
 * Box coordinates: read from "box vectors" field
 * Secondary structure: not available in the format, automatically calculated during post-processing
@@ -125,7 +120,6 @@ Extension: **.sdf**
 Specification: [http://download.accelrys.com/freeware/ctfile-formats/](http://download.accelrys.com/freeware/ctfile-formats/)
 
 Supported features:
-
 * Title: read from the second line of the header block
 * Box coordinates: not available in the format
 * Secondary structure: not available in the format, automatically calculated during post-processing
@@ -151,7 +145,6 @@ Extension: **.mol2**
 Specification: [http://www.tripos.com/data/support/mol2.pdf](http://www.tripos.com/data/support/mol2.pdf)
 
 Supported features:
-
 * Title: read from the first line of the molecule record
 * Box coordinates: not available in the format
 * Secondary structure: not available in the format, automatically calculated during post-processing
@@ -178,7 +171,6 @@ Extension: **.mmtf**
 Specification: [https://github.com/rcsb/mmtf](https://github.com/rcsb/mmtf)
 
 Supported features:
-
 * Title: read from "title"
 * Box coordinates: read from "unitCell" field
 * Secondary structure: read from "secStructList" field
@@ -197,6 +189,11 @@ Supported features:
 	* *bfactor*: read from "bFactorList" field
 	* *occupancy*: read from "occupancyList" field
 * Connectivity: read from "bondAtomList", "bondOrderList" fields and their "groupTypeList[]" counterparts
+
+
+### PSF
+
+Extension: **.psf**
 
 
 ## Trajectories
@@ -221,7 +218,6 @@ Extensions: **.mrc**, **.map**, **.ccp4**
 Specification: [http://www.ccp4.ac.uk/html/maplib.html](http://www.ccp4.ac.uk/html/maplib.html), [http://ami.scripps.edu/software/mrctools/mrc_specification.php](http://ami.scripps.edu/software/mrctools/mrc_specification.php)
 
 Supported features:
-
 * Header data
 * Density data
 
@@ -233,13 +229,20 @@ Extension: **.cube**
 Specification: [http://paulbourke.net/dataformats/cube/](http://paulbourke.net/dataformats/cube/)
 
 Supported features:
-
 * Header data
 * Density data
 
 TODO:
-
 * Read structure embedded in the header.
+
+
+### DSN6/BRIX
+
+Extensions: **.dsn6**, **.brix**
+
+Supported features:
+* Header data
+* Density data
 
 
 ### DX/DXBIN
@@ -249,7 +252,15 @@ Extensions: **.dx**, **.dxbin**
 Specification: [http://www.poissonboltzmann.org/docs/file-format-info/](http://www.poissonboltzmann.org/docs/file-format-info/)
 
 Supported features:
+* Header data
+* Density data
 
+
+### XPLOR/CNS
+
+Extensions: **.xplor**, **.cns**
+
+Supported features:
 * Header data
 * Density data
 
@@ -299,3 +310,25 @@ Promise.all( [
     stage.autoView();
 } );
 ```
+
+
+## General
+
+### JSON
+
+Extension: **.ply**
+
+
+### CSV
+
+Extension: **.csv**
+
+
+### TXT
+
+Extensions: **.txt**, **.text**
+
+
+### XML
+
+Extension: **.xml**
