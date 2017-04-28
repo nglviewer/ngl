@@ -13,8 +13,27 @@ stage.loadFile( "rcsb://1crn" ).then( function( o ){
 
 ## Available schemes
 
-- [atomindex](class/src/color/atomindex-colormaker.js~AtomindexColormaker.html)
-- [bfactor](class/src/color/bfactor-colormaker.js~BfactorColormaker.html)
+- [atomindex](../class/src/color/atomindex-colormaker.js~AtomindexColormaker.html)
+- [bfactor](../class/src/color/bfactor-colormaker.js~BfactorColormaker.html)
+- [chainid](../class/src/color/chainid-colormaker.js~ChainidColormaker.html)
+- [chainindex](../class/src/color/chainindex-colormaker.js~ChainindexColormaker.html)
+- [chainname](../class/src/color/chainname-colormaker.js~ChainnameColormaker.html)
+- [densityfit](../class/src/color/densityfit-colormaker.js~DensityfitColormaker.html)
+- [element](../class/src/color/element-colormaker.js~ElementColormaker.html)
+- [entityindex](../class/src/color/entityindex-colormaker.js~EntityindexColormaker.html)
+- [entitytype](../class/src/color/entitytype-colormaker.js~EntitytypeColormaker.html)
+- [geoquality](../class/src/color/geoquality-colormaker.js~GeoqualityColormaker.html)
+- [hydrophobicity](../class/src/color/hydrophobicity-colormaker.js~HydrophobicityColormaker.html)
+- [modelindex](../class/src/color/modelindex-colormaker.js~ModelindexColormaker.html)
+- [moleculetype](../class/src/color/moleculetype-colormaker.js~MoleculetypeColormaker.html)
+- [occupancy](../class/src/color/occupancy-colormaker.js~OccupancyColormaker.html)
+- [random](../class/src/color/random-colormaker.js~RandomColormaker.html)
+- [residueindex](../class/src/color/residueindex-colormaker.js~ResidueindexColormaker.html)
+- [resname](../class/src/color/resname-colormaker.js~ResnameColormaker.html)
+- [sstruc](../class/src/color/sstruc-colormaker.js~SstrucColormaker.html)
+- [uniform](../class/src/color/uniform-colormaker.js~UniformColormaker.html)
+- [value](../class/src/color/value-colormaker.js~ValueColormaker.html)
+- [volume](../class/src/color/volume-colormaker.js~VolumeColormaker.html)
 
 
 ## Selection-based coloring
