@@ -51907,7 +51907,7 @@ var MouseObserver = function MouseObserver( domElement, params ){
     this._onMousedown = this._onMousedown.bind( this );
     this._onMouseup = this._onMouseup.bind( this );
 
-    this.listen();
+    this._listen();
 
     domElement.addEventListener( 'mousewheel', this._onMousewheel );
     domElement.addEventListener( 'wheel', this._onMousewheel );
@@ -51940,7 +51940,7 @@ MouseObserver.prototype._listen = function _listen (){
             this.signals.hovered.dispatch();
         }
     }
-    requestAnimationFrame( this.listen );
+    requestAnimationFrame( this._listen );
 };
 
 /**
@@ -95437,7 +95437,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.12";
+var version$1 = "0.10.0-dev.13";
 
 /**
  * @file Version
