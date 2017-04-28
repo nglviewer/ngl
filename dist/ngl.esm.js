@@ -52006,7 +52006,7 @@ MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
     this.down.set( event.layerX, event.layerY );
     this.which = event.which;
     this.pressed = true;
-    this.setCanvasPosition( event );
+    this._setCanvasPosition( event );
 };
 
 /**
@@ -95437,7 +95437,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.13";
+var version$1 = "0.10.0-dev.14";
 
 /**
  * @file Version
