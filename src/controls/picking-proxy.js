@@ -188,6 +188,10 @@ class PickingProxy{
     /**
      * @member {Object}
      */
+    get unknown (){ return this._objectIfType( "unknown" ); }
+    /**
+     * @member {Object}
+     */
     get volume (){ return this._objectIfType( "volume" ); }
 
     _objectIfType( type ){

@@ -30,7 +30,10 @@ class PickingControls{
 
         const pickingData = this.viewer.pick( x, y );
 
-        if( pickingData.picker && pickingData.pid !== undefined ){
+        if( pickingData.picker &&
+            pickingData.picker.type !== "ignore" &&
+            pickingData.pid !== undefined
+        ){
             return new PickingProxy( pickingData, this.stage );
         }
 

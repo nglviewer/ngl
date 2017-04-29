@@ -259,6 +259,13 @@ class EllipsoidPicker extends DataPicker{
 }
 
 
+class IgnorePicker extends Picker{
+
+    get type (){ return "ignore"; }
+
+}
+
+
 class MeshPicker extends DataPicker{
 
     get type (){ return "mesh"; }
@@ -351,6 +358,13 @@ class UnitcellPicker extends Picker{
 }
 
 
+class UnknownPicker extends Picker{
+
+    get type (){ return "unknown"; }
+
+}
+
+
 class VolumePicker extends Picker{
 
     constructor( array, volume ){
@@ -402,10 +416,12 @@ export {
     CylinderPicker,
     ClashPicker,
     EllipsoidPicker,
+    IgnorePicker,
     MeshPicker,
     SlicePicker,
     SpherePicker,
     SurfacePicker,
     UnitcellPicker,
+    UnknownPicker,
     VolumePicker
 };
