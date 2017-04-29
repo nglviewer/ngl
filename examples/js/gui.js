@@ -403,6 +403,8 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "unitcell: " +
                 d.unitcell.unitcell.spacegroup +
                 " (" + d.unitcell.structure.name + ")";
+        }else if( d.unknown ){
+            msg = "unknown";
         }else if( d.volume ){
             msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +

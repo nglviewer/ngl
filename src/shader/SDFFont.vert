@@ -13,16 +13,28 @@ varying vec2 texCoord;
     varying vec3 vClipCenter;
 #endif
 
+#if defined( PICKING )
+    #include unpack_color
+    attribute float primitiveId;
+    varying vec3 vPickingColor;
+#else
+    #include color_pars_vertex
+#endif
+
 attribute vec2 mapping;
 attribute vec2 inputTexCoord;
 attribute float inputSize;
 
-#include color_pars_vertex
 #include common
 
 void main(void){
 
-    #include color_vertex
+    #if defined( PICKING )
+        vPickingColor = unpackColor( primitiveId );
+    #else
+        #include color_vertex
+    #endif
+
     texCoord = inputTexCoord;
 
     float _zOffset = zOffset;
