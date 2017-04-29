@@ -11,12 +11,24 @@ varying vec3 vViewPosition;
     varying vec3 vClipCenter;
 #endif
 
-#include color_pars_vertex
+#if defined( PICKING )
+    #include unpack_color
+    attribute float primitiveId;
+    varying vec3 vPickingColor;
+#else
+    #include color_pars_vertex
+#endif
+
 #include common
 
 void main(){
 
-    #include color_vertex
+    #if defined( PICKING )
+        vPickingColor = unpackColor( primitiveId );
+    #else
+        #include color_vertex
+    #endif
+
     #include begin_vertex
     #include project_vertex
 

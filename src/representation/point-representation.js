@@ -76,7 +76,7 @@ class PointRepresentation extends StructureRepresentation{
 
     createData( sview ){
 
-        var what = { position: true, color: true };
+        var what = { position: true, color: true, picking: true };
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
 
         var pointBuffer = new PointBuffer(

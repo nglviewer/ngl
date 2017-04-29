@@ -35,12 +35,12 @@ class GeometryBuffer extends MeshBuffer{
      */
     constructor( data, params, geo ){
 
-        var d = data || {};
-        var p = params || {};
+        const d = data || {};
+        const p = params || {};
 
-        var n = d.position.length / 3;
-        var m, o;
-        var geoPosition, geoNormal, geoIndex;
+        const n = d.position.length / 3;
+        let m, o;
+        let geoPosition, geoNormal, geoIndex;
 
         if( geo.vertices && geo.faces ){
             geoPosition = positionFromGeometry( geo );
@@ -56,7 +56,7 @@ class GeometryBuffer extends MeshBuffer{
             o = geoIndex.length / 3;
         }
 
-        var size = n * m;
+        const size = n * m;
 
         const meshPosition = new Float32Array( size * 3 );
         const meshNormal = new Float32Array( size * 3 );
@@ -101,14 +101,14 @@ class GeometryBuffer extends MeshBuffer{
 
     setAttributes( data, initNormals ){
 
-        var attributes = this.geometry.attributes;
+        const attributes = this.geometry.attributes;
 
-        var position, color;
-        var geoPosition, geoNormal;
-        var transformedGeoPosition, transformedGeoNormal;
-        var meshPosition, meshColor, meshNormal;
+        let position, color;
+        let geoPosition, geoNormal;
+        let transformedGeoPosition, transformedGeoNormal;
+        let meshPosition, meshColor, meshNormal;
 
-        var updateNormals = this.updateNormals;
+        const updateNormals = this.updateNormals;
 
         if( data.position ){
             position = data.position;
@@ -130,14 +130,14 @@ class GeometryBuffer extends MeshBuffer{
             attributes.color.needsUpdate = true;
         }
 
-        var n = this.positionCount;
-        var m = this.geoPositionCount;
+        const n = this.positionCount;
+        const m = this.geoPositionCount;
 
-        for( var i = 0; i < n; ++i ){
+        for( let i = 0; i < n; ++i ){
 
-            var j, l;
-            var k = i * m * 3;
-            var i3 = i * 3;
+            let j, l;
+            const k = i * m * 3;
+            const i3 = i * 3;
 
             if( position ){
 
@@ -186,23 +186,22 @@ class GeometryBuffer extends MeshBuffer{
 
     makeIndex(){
 
-        var geoIndex = this.geoIndex;
-        var meshIndex = this.meshIndex;
+        const geoIndex = this.geoIndex;
+        const meshIndex = this.meshIndex;
 
-        var n = this.positionCount;
-        var m = this.geoPositionCount;
-        var o = this.geoFacesCount;
+        const n = this.positionCount;
+        const m = this.geoPositionCount;
+        const o = this.geoFacesCount;
 
-        var p, i, j, q;
-        var o3 = o * 3;
+        const o3 = o * 3;
 
-        for( i = 0; i < n; ++i ){
+        for( let i = 0; i < n; ++i ){
 
-            j = i * o3;
-            q = j + o3;
+            const j = i * o3;
+            const q = j + o3;
 
             meshIndex.set( geoIndex, j );
-            for( p = j; p < q; ++p ) meshIndex[ p ] += i * m;
+            for( let p = j; p < q; ++p ) meshIndex[ p ] += i * m;
 
         }
 

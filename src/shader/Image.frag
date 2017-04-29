@@ -114,14 +114,19 @@ void main(){
         gl_FragColor = texture2D( map, vUv );
     #endif
 
-    if( gl_FragColor.a < 0.01 )
-        discard;
-
     #if defined( PICKING )
+
+        if( gl_FragColor.a < 0.5 )
+            discard;
         gl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );
+
     #else
+
+        if( gl_FragColor.a < 0.01 )
+            discard;
         gl_FragColor.a *= opacity;
         #include fog_fragment
+
     #endif
 
 }

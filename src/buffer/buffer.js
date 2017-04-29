@@ -73,8 +73,8 @@ class Buffer{
      */
     constructor( data, params ){
 
-        var d = data || {};
-        var p = params || {};
+        const d = data || {};
+        const p = params || {};
 
         this.opaqueBack = defaults( p.opaqueBack, false );
         this.dullInterior = defaults( p.dullInterior, false );
@@ -131,7 +131,7 @@ class Buffer{
 
         //
 
-        var position = d.position || d.position1;
+        const position = d.position || d.position1;
         this._positionDataSize = position ? position.length / 3 : 0;
 
         this.addAttributes( {
@@ -209,9 +209,9 @@ class Buffer{
 
     makeMaterial(){
 
-        var side = getThreeSide( this.side );
+        const side = getThreeSide( this.side );
 
-        var m = new ShaderMaterial( {
+        const m = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -228,7 +228,7 @@ class Buffer{
         m.extensions.fragDepth = this.isImpostor;
         m.clipNear = this.clipNear;
 
-        var wm = new ShaderMaterial( {
+        const wm = new ShaderMaterial( {
             uniforms: this.uniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -243,7 +243,7 @@ class Buffer{
         wm.vertexColors = VertexColors;
         wm.clipNear = this.clipNear;
 
-        var pm = new ShaderMaterial( {
+        const pm = new ShaderMaterial( {
             uniforms: this.pickingUniforms,
             vertexShader: "",
             fragmentShader: "",
@@ -273,9 +273,9 @@ class Buffer{
 
         this.makeWireframeIndex();
 
-        var geometry = this.geometry;
-        var wireframeIndex = this.wireframeIndex;
-        var wireframeGeometry = new BufferGeometry();
+        const geometry = this.geometry;
+        const wireframeIndex = this.wireframeIndex;
+        const wireframeGeometry = new BufferGeometry();
 
         wireframeGeometry.attributes = geometry.attributes;
         if( wireframeIndex ){
@@ -292,17 +292,17 @@ class Buffer{
 
     makeWireframeIndex(){
 
-        var edges = [];
+        const edges = [];
 
         function checkEdge( a, b ) {
 
             if ( a > b ){
-                var tmp = a;
+                const tmp = a;
                 a = b;
                 b = tmp;
             }
 
-            var list = edges[ a ];
+            const list = edges[ a ];
 
             if( list === undefined ){
                 edges[ a ] = [ b ];
@@ -316,7 +316,7 @@ class Buffer{
 
         }
 
-        var index = this.geometry.index;
+        const index = this.geometry.index;
 
         if( !this.wireframe ){
 
@@ -325,28 +325,28 @@ class Buffer{
 
         }else if( index ){
 
-            var array = index.array;
-            var n = array.length;
+            const array = index.array;
+            let n = array.length;
             if( this.geometry.drawRange.count !== Infinity ){
                 n = this.geometry.drawRange.count;
             }
-            var wireframeIndex;
+            let wireframeIndex;
             if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                 wireframeIndex = this.wireframeIndex;
             }else{
-                var count = this.geometry.attributes.position.count;
-                var TypedArray = count > 65535 ? Uint32Array : Uint16Array;
+                const count = this.geometry.attributes.position.count;
+                const TypedArray = count > 65535 ? Uint32Array : Uint16Array;
                 wireframeIndex = new TypedArray( n * 2 );
             }
 
-            var j = 0;
+            let j = 0;
             edges.length = 0;
 
-            for( var i = 0; i < n; i += 3 ){
+            for( let i = 0; i < n; i += 3 ){
 
-                var a = array[ i + 0 ];
-                var b = array[ i + 1 ];
-                var c = array[ i + 2 ];
+                const a = array[ i + 0 ];
+                const b = array[ i + 1 ];
+                const c = array[ i + 2 ];
 
                 if( checkEdge( a, b ) ){
                     wireframeIndex[ j + 0 ] = a;
@@ -388,7 +388,7 @@ class Buffer{
 
         }else{
 
-            var index = this.wireframeGeometry.getIndex();
+            const index = this.wireframeGeometry.getIndex();
             index.set( this.wireframeIndex );
             index.needsUpdate = this.wireframeIndexCount > 0;
             index.updateRange.count = this.wireframeIndexCount;
@@ -401,7 +401,7 @@ class Buffer{
 
     getRenderOrder(){
 
-        var renderOrder = 0;
+        let renderOrder = 0;
 
         if( this.isText ){
 
@@ -421,25 +421,22 @@ class Buffer{
 
     }
 
-    getMesh(){
-
-        var mesh;
+    _getMesh( materialName ){
 
         if( !this.material ) this.makeMaterial();
 
+        const g = this.geometry;
+        const m = this[ materialName ];
+
+        let mesh;
+
         if( this.isLine ){
-
-            mesh = new LineSegments( this.geometry, this.material );
-
+            mesh = new LineSegments( g, m );
         }else if( this.isPoint ){
-
-            mesh = new Points( this.geometry, this.material );
+            mesh = new Points( g, m );
             if( this.sortParticles ) mesh.sortParticles = true;
-
         }else{
-
-            mesh = new Mesh( this.geometry, this.material );
-
+            mesh = new Mesh( g, m );
         }
 
         mesh.frustumCulled = false;
@@ -449,9 +446,15 @@ class Buffer{
 
     }
 
+    getMesh(){
+
+        return this._getMesh( "material" );
+
+    }
+
     getWireframeMesh(){
 
-        var mesh;
+        let mesh;
 
         if( !this.material ) this.makeMaterial();
         if( !this.wireframeGeometry ) this.makeWireframeGeometry();
@@ -469,16 +472,7 @@ class Buffer{
 
     getPickingMesh(){
 
-        var mesh;
-
-        if( !this.material ) this.makeMaterial();
-
-        mesh = new Mesh( this.geometry, this.pickingMaterial );
-
-        mesh.frustumCulled = false;
-        mesh.renderOrder = this.getRenderOrder();
-
-        return mesh;
+        return this._getMesh( "pickingMaterial" );
 
     }
 
@@ -502,7 +496,7 @@ class Buffer{
 
     getDefines( type ){
 
-        var defines = {};
+        const defines = {};
 
         if( this.clipNear ){
             defines.NEAR_CLIP = 1;
@@ -539,9 +533,9 @@ class Buffer{
 
     getParameters(){
 
-        var params = {};
+        const params = {};
 
-        for( var name in this.parameters ){
+        for( let name in this.parameters ){
             params[ name ] = this[ name ];
         }
 
@@ -563,11 +557,11 @@ class Buffer{
 
     addAttributes( attributes ){
 
-        for( var name in attributes ){
+        for( let name in attributes ){
 
-            var buf;
-            var a = attributes[ name ];
-            var arraySize = this.attributeSize * itemSize[ a.type ];
+            let buf;
+            const a = attributes[ name ];
+            const arraySize = this.attributeSize * itemSize[ a.type ];
 
             if( a.value ){
 
@@ -595,7 +589,7 @@ class Buffer{
 
     updateRenderOrder(){
 
-        var renderOrder = this.getRenderOrder();
+        const renderOrder = this.getRenderOrder();
         function setRenderOrder( mesh ){
             mesh.renderOrder = renderOrder;
         }
@@ -609,9 +603,9 @@ class Buffer{
 
     updateShader(){
 
-        var m = this.material;
-        var wm = this.wireframeMaterial;
-        var pm = this.pickingMaterial;
+        const m = this.material;
+        const wm = this.wireframeMaterial;
+        const pm = this.pickingMaterial;
 
         m.vertexShader = this.getVertexShader();
         m.fragmentShader = this.getFragmentShader();
@@ -636,15 +630,15 @@ class Buffer{
 
         if( !params ) return;
 
-        var p = params;
-        var tp = this.parameters;
+        const p = params;
+        const tp = this.parameters;
 
-        var propertyData = {};
-        var uniformData = {};
-        var doShaderUpdate = false;
-        var doVisibilityUpdate = false;
+        const propertyData = {};
+        const uniformData = {};
+        let doShaderUpdate = false;
+        let doVisibilityUpdate = false;
 
-        for( var name in p ){
+        for( let name in p ){
 
             if( p[ name ] === undefined ) continue;
             if( tp[ name ] === undefined ) continue;
@@ -707,19 +701,19 @@ class Buffer{
          * buffer.setAttributes({ attrName: attrData });
          */
 
-        var geometry = this.geometry;
-        var attributes = geometry.attributes;
+        const geometry = this.geometry;
+        const attributes = geometry.attributes;
 
-        for( var name in data ){
+        for( let name in data ){
 
             if( name === "picking" ) continue;
 
-            var array = data[ name ];
-            var length = array.length;
+            const array = data[ name ];
+            const length = array.length;
 
             if( name === "index" ){
 
-                var index = geometry.getIndex();
+                const index = geometry.getIndex();
                 geometry.setDrawRange( 0, Infinity );
 
                 if( length > index.array.length ){
@@ -743,7 +737,7 @@ class Buffer{
 
             }else{
 
-                var attribute = attributes[ name ];
+                const attribute = attributes[ name ];
 
                 if( length > attribute.array.length ){
 
@@ -771,11 +765,11 @@ class Buffer{
 
         if( !data ) return;
 
-        var u = this.material.uniforms;
-        var wu = this.wireframeMaterial.uniforms;
-        var pu = this.pickingMaterial.uniforms;
+        const u = this.material.uniforms;
+        const wu = this.wireframeMaterial.uniforms;
+        const pu = this.pickingMaterial.uniforms;
 
-        for( var name in data ){
+        for( let name in data ){
 
             if( name === "opacity" ){
                 this.setProperties( { transparent: this.transparent } );
@@ -819,13 +813,13 @@ class Buffer{
 
         if( !data ) return;
 
-        var m = this.material;
-        var wm = this.wireframeMaterial;
-        var pm = this.pickingMaterial;
+        const m = this.material;
+        const wm = this.wireframeMaterial;
+        const pm = this.pickingMaterial;
 
-        for( var name in data ){
+        for( let name in data ){
 
-            var value = data[ name ];
+            let value = data[ name ];
 
             if( name === "transparent" ){
                 this.updateRenderOrder();
