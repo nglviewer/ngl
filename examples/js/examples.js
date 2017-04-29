@@ -1420,7 +1420,11 @@ NGL.ExampleRegistry.addDict( {
         var grey = [ 0.8, 0.8, 0.8 ];
         var darkgrey = [ 0.6, 0.6, 0.6 ];
 
-        var shape = new NGL.Shape( "shape", { labelParams: { attachment: "middle-center" } } );
+        var shape = new NGL.Shape( "shape", {
+            labelParams: { attachment: "middle-center" },
+            sphereDetail: 4,
+            radialSegments: 100
+        } );
         shape.addEllipsoid( [ 0, 0, 0 ], grey, 4, [ 0, 3, 0 ], [ 0, 0, 1 ] );
         shape.addSphere( [ -2, 1, -1 ], darkgrey, 0.3 );
         shape.addSphere( [  2, 1, -1 ], darkgrey, 0.3 );
@@ -1430,12 +1434,12 @@ NGL.ExampleRegistry.addDict( {
         shape.addCone( [ 2.5, 1.7, 0 ], [ 4, 3, 0 ], darkgrey, 0.8 );
         shape.addCone( [ -2.5, 1.7, 0 ], [ -4, 3, 0 ], darkgrey, 0.8 );
         shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -0.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -1.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -2.2, -1.2 ], darkgrey, 0.1 );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.5, -1.2, -1.2 ], darkgrey, 0.1 );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.2, -2.2, -1.2 ], darkgrey, 0.1 );
         shape.addCylinder( [  1, -1, -1 ], [  4.3, -0.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [  1, -1, -1 ], [  4.3, -1.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [  1, -1, -1 ], [  4.3, -2.2, -1.2 ], darkgrey, 0.1 );
-        shape.addLabel( [ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, "Meow" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.5, -1.2, -1.2 ], darkgrey, 0.1 );
+        shape.addCylinder( [  1, -1, -1 ], [  4.2, -2.2, -1.2 ], darkgrey, 0.1 );
+        shape.addLabel( [ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, "Meow Яна" );
 
         var shapeComp = stage.addComponentFromObject( shape );
         shapeComp.addRepresentation( "buffer" );
