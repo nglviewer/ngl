@@ -399,6 +399,10 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "sphere: " + d.pid + " (" + d.sphere.shape.name + ")";
         }else if( d.surface ){
             msg = "surface: " + d.surface.surface.name;
+        }else if( d.unitcell ){
+            msg = "unitcell: " +
+                d.unitcell.unitcell.spacegroup +
+                " (" + d.unitcell.structure.name + ")";
         }else if( d.volume ){
             msg = "volume: " +
                 d.volume.value.toPrecision( 3 ) +

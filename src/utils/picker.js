@@ -18,7 +18,7 @@ import Selection from "../selection.js";
 class Picker{
 
     /**
-     * @param  {Array|TypedArray} array - mapping
+     * @param  {Array|TypedArray} [array] - mapping
      */
     constructor( array ){
         this.array = array;
@@ -30,7 +30,17 @@ class Picker{
      * @return {Integer} the index
      */
     getIndex( pid ){
-        return this.array[ pid ];
+        return this.array ? this.array[ pid ] : pid;
+    }
+
+    /**
+     * Get object data
+     * @abstract
+     * @param  {Integer} pid - the picking id
+     * @return {Object} the object data
+     */
+    getObject( /*pid*/ ){
+        return {};
     }
 
     _applyTransformations( vector, instance/*, component*/ ){
@@ -43,13 +53,19 @@ class Picker{
         return vector;
     }
 
+    /**
+     * Get object position
+     * @abstract
+     * @param  {Integer} pid - the picking id
+     * @return {Vector3} the object position
+     */
     _getPosition( /*pid*/ ){
         return new Vector3();
     }
 
     /**
      * Get position for the given picking id
-     * @param  {Integer} pid - the picking
+     * @param  {Integer} pid - the picking id
      * @param  {Object} instance - the instance that should be applied
      * @param  {Component} component - the component of the picked object
      * @return {Vector3} the position
@@ -310,6 +326,31 @@ class SurfacePicker extends Picker{
 }
 
 
+class UnitcellPicker extends Picker{
+
+    constructor( unitcell, structure ){
+        super();
+        this.unitcell = unitcell;
+        this.structure = structure;
+    }
+
+    get type (){ return "unitcell"; }
+    get data (){ return this.unitcell; }
+
+    getObject( /*pid*/ ){
+        return {
+            unitcell: this.unitcell,
+            structure: this.structure
+        };
+    }
+
+    _getPosition( /*pid*/ ){
+        return this.unitcell.getCenter( this.structure );
+    }
+
+}
+
+
 class VolumePicker extends Picker{
 
     constructor( array, volume ){
@@ -365,5 +406,6 @@ export {
     SlicePicker,
     SpherePicker,
     SurfacePicker,
+    UnitcellPicker,
     VolumePicker
 };

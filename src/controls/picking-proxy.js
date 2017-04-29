@@ -184,6 +184,10 @@ class PickingProxy{
     /**
      * @member {Object}
      */
+    get unitcell (){ return this._objectIfType( "unitcell" ); }
+    /**
+     * @member {Object}
+     */
     get volume (){ return this._objectIfType( "volume" ); }
 
     _objectIfType( type ){

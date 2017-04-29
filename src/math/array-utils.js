@@ -5,6 +5,8 @@
  */
 
 
+import { Vector3 } from "../../lib/three.es6.js";
+
 import { TwoPI } from "./math-constants.js";
 
 
@@ -134,6 +136,24 @@ function uniformArray3( n, a, b, c ){
     }
 
     return array;
+
+}
+
+
+function centerArray3( array, center ){
+
+    const n = array.length;
+    center = center || new Vector3();
+
+    for( let i = 0; i < n; i+=3 ){
+        center.x += array[ i ];
+        center.y += array[ i + 1 ];
+        center.z += array[ i + 2 ];
+    }
+
+    center.divideScalar( n / 3 );
+
+    return center;
 
 }
 
@@ -633,6 +653,7 @@ export {
     calculateDirectionArray,
     uniformArray,
     uniformArray3,
+    centerArray3,
     serialArray,
     serialBlockArray,
     randomColorArray,
