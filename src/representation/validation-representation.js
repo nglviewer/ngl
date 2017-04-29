@@ -16,15 +16,21 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  */
 class ValidationRepresentation extends StructureRepresentation{
 
-    get type (){ return "validation"; }
+    constructor( structure, viewer, params ){
 
-    get parameters (){
+        super( structure, viewer, params );
 
-        return Object.assign( super.parameters, {
+        this.type = "validation";
+
+        this.parameters = Object.assign( {
+
+        }, this.parameters, {
             radiusType: null,
             radius: null,
             scale: null
         } );
+
+        this.init( params );
 
     }
 
