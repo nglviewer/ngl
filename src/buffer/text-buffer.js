@@ -41,8 +41,8 @@ class TextAtlas{
         this.variant = defaults( p.variant, 'normal' );
         this.weight = defaults( p.weight, 'normal' );
         this.outline = defaults( p.outline, 0 );
-        this.width = defaults( p.width, 1024 );
-        this.height = defaults( p.height, 1024 );
+        this.width = defaults( p.width, 2048 );
+        this.height = defaults( p.height, 2048 );
 
         this.gamma = 1;
         if( typeof navigator !== 'undefined' ){
@@ -232,7 +232,23 @@ class TextAtlas{
 
     populate(){
 
-        for( var i = 0; i < 256; ++i ){
+        // Basic Latin
+        for( let i = 0x0000; i < 0x007F; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Latin-1 Supplement
+        for( let i = 0x0080; i < 0x00FF; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Greek and Coptic
+        for( let i = 0x0370; i < 0x03FF; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Cyrillic
+        for( let i = 0x0400; i < 0x04FF; ++i ){
             this.map( String.fromCharCode( i ) );
         }
 
