@@ -8,6 +8,7 @@
 import { Vector2 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
+import { RightMouseButton } from "../constants.js";
 import { defaults } from "../utils.js";
 
 
@@ -23,6 +24,13 @@ import { defaults } from "../utils.js";
  * @property {Signal} clicked - on click
  * @property {Signal} hovered - on hover
  */
+
+
+function getTouchDistance( event ){
+    const dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+    const dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+    return Math.sqrt( dx * dx + dy * dy );
+}
 
 
 /**
@@ -135,6 +143,10 @@ class MouseObserver{
         this._onMousemove = this._onMousemove.bind( this );
         this._onMousedown = this._onMousedown.bind( this );
         this._onMouseup = this._onMouseup.bind( this );
+        this._onContextmenu = this._onContextmenu.bind( this );
+        this._onTouchstart = this._onTouchstart.bind( this );
+        this._onTouchend = this._onTouchend.bind( this );
+        this._onTouchmove = this._onTouchmove.bind( this );
 
         this._listen();
 
@@ -145,6 +157,9 @@ class MouseObserver{
         domElement.addEventListener( 'mousedown', this._onMousedown );
         domElement.addEventListener( 'mouseup', this._onMouseup );
         domElement.addEventListener( 'contextmenu', this._onContextmenu );
+        domElement.addEventListener( 'touchstart', this._onTouchstart );
+        domElement.addEventListener( 'touchend', this._onTouchend );
+        domElement.addEventListener( 'touchmove', this._onTouchmove );
 
     }
 
@@ -193,7 +208,6 @@ class MouseObserver{
             // Firefox or IE 11
             delta = - event.deltaY / ( event.deltaMode ? 0.33 : 30 );
         }
-
         this.signals.scrolled.dispatch( delta );
 
         setTimeout( () => {
@@ -258,6 +272,97 @@ class MouseObserver{
         event.preventDefault();
     }
 
+    _onTouchstart( event ){
+        event.preventDefault();
+        this.pressed = true;
+        switch( event.touches.length ){
+
+            case 1: {
+                this.moving = false;
+                this.hovering = false;
+                this.down.set(
+                    event.touches[ 0 ].pageX,
+                    event.touches[ 0 ].pageY
+                );
+                this.position.set(
+                    event.touches[ 0 ].pageX,
+                    event.touches[ 0 ].pageY
+                );
+                this._setCanvasPosition( event.touches[ 0 ] );
+                break;
+            }
+
+            case 2: {
+                this.down.set(
+                    ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
+                    ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2
+                );
+                this.position.set(
+                    ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
+                    ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2
+                );
+                this.lastTouchDistance = getTouchDistance( event );
+            }
+
+        }
+    }
+
+    _onTouchend( event ){
+        event.preventDefault();
+        this.pressed = false;
+    }
+
+    _onTouchmove( event ){
+        event.preventDefault();
+        switch( event.touches.length ){
+
+            case 1: {
+                this._setKeys( event );
+                this.which = undefined;
+                this.moving = true;
+                this.hovering = false;
+                this.lastMoved = performance.now();
+                this.prevPosition.copy( this.position );
+                this.position.set(
+                    event.touches[ 0 ].pageX,
+                    event.touches[ 0 ].pageY
+                );
+                this._setCanvasPosition( event.touches[ 0 ] );
+                const x = this.prevPosition.x - this.position.x;
+                const y = this.prevPosition.y - this.position.y;
+                this.signals.moved.dispatch( x, y );
+                if( this.pressed ){
+                    this.signals.dragged.dispatch( x, y );
+                }
+                break;
+            }
+
+            case 2: {
+                this.which = RightMouseButton;
+                const touchDistance = getTouchDistance( event );
+                const delta = touchDistance - this.lastTouchDistance;
+                this.lastTouchDistance = touchDistance;
+                if( Math.abs( delta ) > 1 ){
+                    this.signals.scrolled.dispatch( delta / 2 );
+                }else{
+                    this.prevPosition.copy( this.position );
+                    this.position.set(
+                        ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
+                        ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2
+                    );
+                    const x = this.prevPosition.x - this.position.x;
+                    const y = this.prevPosition.y - this.position.y;
+                    this.signals.moved.dispatch( x, y );
+                    if( this.pressed ){
+                        this.signals.dragged.dispatch( x, y );
+                    }
+                }
+
+            }
+
+        }
+    }
+
     _distance(){
         return this.position.distanceTo( this.down );
     }
@@ -285,6 +390,9 @@ class MouseObserver{
         domElement.removeEventListener( 'mousedown', this._onMousedown );
         domElement.removeEventListener( 'mouseup', this._onMouseup );
         domElement.removeEventListener( 'contextmenu', this._onContextmenu );
+        domElement.removeEventListener( 'touchstart', this._onTouchstart );
+        domElement.removeEventListener( 'touchend', this._onTouchend );
+        domElement.removeEventListener( 'touchmove', this._onTouchmove );
     }
 
 }
