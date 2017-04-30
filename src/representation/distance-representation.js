@@ -174,8 +174,7 @@ class DistanceRepresentation extends StructureRepresentation{
             var d = ap1.distanceTo( ap2 )
             switch ( this.labelUnit ) {
                 case "angstrom":
-                    // 0x212B fails in TextBuffer
-                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 197 );
+                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 0x212B );
                     break;
                 case "nm":
                     text[ i ] = ( d / 10 ).toFixed( 2 ) + " nm";

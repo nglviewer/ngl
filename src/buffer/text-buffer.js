@@ -239,7 +239,7 @@ class TextAtlas{
 
     populate(){
 
-        // REPLACEMENT CHARACTER
+        // Replacement Character
         this.placeholder = this.map( String.fromCharCode( 0xFFFD ) );
 
         // Basic Latin
@@ -261,6 +261,9 @@ class TextAtlas{
         for( let i = 0x0400; i < 0x04FF; ++i ){
             this.map( String.fromCharCode( i ) );
         }
+
+        // Angstrom Sign
+        this.map( String.fromCharCode( 0x212B ) );
 
     }
 
