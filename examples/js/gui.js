@@ -734,6 +734,14 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         stage.setSpin( null, null );
     }
 
+    function onRockOnClick(){
+        stage.setRock( [ 0, 1, 0 ], 0.005 );
+    }
+
+    function onRockOffClick(){
+        stage.setRock( null, null );
+    }
+
     function onGetOrientationClick(){
         window.prompt(
             "Get orientation",
@@ -778,6 +786,9 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         createDivider(),
         createOption( 'Spin on', onSpinOnClick ),
         createOption( 'Spin off', onSpinOffClick ),
+        createDivider(),
+        createOption( 'Rock on', onRockOnClick ),
+        createOption( 'Rock off', onRockOffClick ),
         createDivider(),
         createOption( 'Get orientation', onGetOrientationClick ),
         createOption( 'Set orientation', onSetOrientationClick ),

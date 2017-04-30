@@ -153,6 +153,7 @@ class Stage{
         this.animationBehavior = new AnimationBehavior( this );
 
         this.spinAnimation = this.animationControls.spin( null );
+        this.rockAnimation = this.animationControls.rock( null );
 
         var p = Object.assign( {
             impostor: true,
@@ -745,17 +746,60 @@ class Stage{
      * stage.setSpin( [ 0, 1, 0 ], 0.01 );
      *
      * @param {Number[]|Vector3} axis - the axis to spin around
-     * @param {Number} angle - amount to spin per render call
+     * @param {Number} angle - amount to spin per frame, radians
      * @return {undefined}
      */
     setSpin( axis, angle ){
+
+        if( this.rockAnimation.axis ){
+            this.setRock( null );
+        }
 
         if( Array.isArray( axis ) ){
             axis = new Vector3().fromArray( axis );
         }
 
-        this.spinAnimation.axis = axis;
-        this.spinAnimation.angle = angle;
+        if( axis !== undefined ){
+            this.spinAnimation.axis = axis;
+        }
+        if( angle !== undefined ){
+            this.spinAnimation.angle = angle;
+        }
+
+    }
+
+    /**
+     * Rock the whole scene around an axis at the center
+     * @example
+     * stage.setRock( [ 0, 1, 0 ], 0.01, 0.3 );
+     *
+     * @param {Number[]|Vector3} axis - the axis to rock around
+     * @param {Number} angle - amount to spin per frame, radians
+     * @param {Number} end - maximum extend of motion, radians
+     * @return {undefined}
+     */
+    setRock( axis, angle, end ){
+
+        if( this.spinAnimation.axis ){
+            this.setSpin( null );
+        }
+
+        if( Array.isArray( axis ) ){
+            axis = new Vector3().fromArray( axis );
+        }
+
+        if( axis !== undefined ){
+            this.rockAnimation.axis = axis;
+        }
+        if( angle !== undefined ){
+            this.rockAnimation.angleStep = angle;
+        }
+        if( end !== undefined ){
+            this.rockAnimation.angleEnd = end;
+        }
+
+        this.rockAnimation.angleSum = 0;
+        this.rockAnimation.direction = 1;
 
     }
 

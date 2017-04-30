@@ -6,7 +6,8 @@
 
 
 import {
-    SpinAnimation, MoveAnimation, ZoomAnimation, RotateAnimation
+    SpinAnimation, RockAnimation, MoveAnimation,
+    ZoomAnimation, RotateAnimation
 } from "../animation/animation.js";
 
 
@@ -91,7 +92,7 @@ class AnimationControls{
     /**
      * Add a spin animation
      * @param  {Vector3} axis - axis to spin around
-     * @param  {Number} angle - amount to spin
+     * @param  {Number} angle - amount to spin per frame, radians
      * @param  {Number} duration - animation time in milliseconds
      * @return {SpinAnimation} the animation
      */
@@ -99,6 +100,22 @@ class AnimationControls{
 
         return this.add(
             new SpinAnimation( duration, this.controls, axis, angle )
+        );
+
+    }
+
+    /**
+     * Add a rock animation
+     * @param  {Vector3} axis - axis to rock around
+     * @param  {Number} angle - amount to spin per frame, radians
+     * @param  {Number} end - maximum extend of motion, radians
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {SpinAnimation} the animation
+     */
+    rock( axis, angle, end, duration ){
+
+        return this.add(
+            new RockAnimation( duration, this.controls, axis, angle, end )
         );
 
     }

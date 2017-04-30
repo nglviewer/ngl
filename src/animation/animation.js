@@ -93,6 +93,57 @@ class SpinAnimation extends Animation{
 
 
 /**
+ * Rock animation. Rock around an axis.
+ */
+class RockAnimation extends Animation{
+
+    constructor( duration, ...args ){
+
+        super( defaults( duration, Infinity ), ...args );
+
+    }
+
+    _init( axis, angleStep, angleEnd ){
+
+        if( Array.isArray( axis ) ){
+            this.axis = new Vector3().fromArray( axis );
+        }else{
+            this.axis = defaults( axis, new Vector3( 0, 1, 0 ) );
+        }
+        this.angleStep = defaults( angleStep, 0.01 );
+        this.angleEnd = defaults( angleEnd, 0.2 );
+
+        this.angleSum = 0;
+        this.direction = 1;
+
+    }
+
+    _tick( stats ){
+
+        if( !this.axis || !this.angleStep || !this.angleEnd ) return;
+
+        const alpha = smoothstep(
+            0, 1, Math.abs( this.angleSum ) / this.angleEnd
+        );
+        const angle = this.angleStep * this.direction * ( 1.1 - alpha );
+
+        this.controls.spin(
+            this.axis, angle * stats.lastDuration / 16
+        );
+
+        this.angleSum += this.angleStep;
+
+        if( this.angleSum >= this.angleEnd ){
+            this.direction *= -1;
+            this.angleSum = -this.angleEnd;
+        }
+
+    }
+
+}
+
+
+/**
  * Move animation. Move from one position to another.
  */
 class MoveAnimation extends Animation{
@@ -166,6 +217,7 @@ class RotateAnimation extends Animation{
 export {
     Animation,
     SpinAnimation,
+    RockAnimation,
     MoveAnimation,
     ZoomAnimation,
     RotateAnimation

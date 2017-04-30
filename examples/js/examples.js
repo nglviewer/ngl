@@ -1445,6 +1445,10 @@ NGL.ExampleRegistry.addDict( {
         shapeComp.addRepresentation( "buffer" );
         shapeComp.autoView();
 
+        setTimeout( function(){
+            stage.setRock( [ 0, 1, 0 ], 0.005, 0.3 );
+        }, 1000 );
+
     },
 
     "spatialHash": function( stage ) {
