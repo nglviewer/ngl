@@ -5,8 +5,6 @@
  */
 
 
-import { Vector3 } from "../../lib/three.es6.js";
-
 import { Debug, Log } from "../globals.js";
 import _Kdtree from "../utils/kdtree.js";
 
@@ -69,9 +67,9 @@ Kdtree.prototype = {
 
             // Log.time( "Kdtree nearest" );
 
-            if( point instanceof Vector3 ){
+            if( point.toArray ){
                 point.toArray( pointArray );
-            }else if( point.type === "AtomProxy" ){
+            }else if( point.positionToArray ){
                 point.positionToArray( pointArray );
             }
 
