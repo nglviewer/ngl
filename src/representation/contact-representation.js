@@ -130,7 +130,6 @@ class ContactRepresentation extends StructureRepresentation{
         var cylinderData = {};
 
         if( !what || what.position ){
-
             cylinderData.position = calculateCenterArray(
                 bondData.position1, bondData.position2
             );
