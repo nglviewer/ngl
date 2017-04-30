@@ -79,8 +79,16 @@ class Picker{
 }
 
 
-class DataPicker extends Picker{
+/**
+ * Shape picker class
+ * @interface
+ */
+class ShapePicker extends Picker{
 
+    /**
+     * @param  {Array|TypedArray} [array] - mapping
+     * @param  {Object} data - shape data
+     */
     constructor( array, data ){
         super( array );
         this.data = data;
@@ -92,7 +100,7 @@ class DataPicker extends Picker{
 //
 
 
-class CylinderPicker extends DataPicker{
+class CylinderPicker extends ShapePicker{
 
     get type (){ return "cylinder"; }
 
@@ -103,7 +111,8 @@ class CylinderPicker extends DataPicker{
             color: new Color().fromArray( d.color, 3 * pid ),
             radius: d.radius[ pid ],
             position1: new Vector3().fromArray( d.position1, 3 * pid ),
-            position2: new Vector3().fromArray( d.position2, 3 * pid )
+            position2: new Vector3().fromArray( d.position2, 3 * pid ),
+            name: d.name[ pid ]
         };
     }
 
@@ -129,7 +138,8 @@ class ArrowPicker extends CylinderPicker{
             position1: new Vector3().fromArray( d.color, 3 * pid ),
             position2: new Vector3().fromArray( d.color, 3 * pid ),
             color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ]
+            radius: d.radius[ pid ],
+            name: d.name[ pid ]
         };
     }
 
@@ -243,7 +253,7 @@ class DistancePicker extends BondPicker{
 }
 
 
-class EllipsoidPicker extends DataPicker{
+class EllipsoidPicker extends ShapePicker{
 
     get type (){ return "ellipsoid"; }
 
@@ -255,7 +265,8 @@ class EllipsoidPicker extends DataPicker{
             color: new Color().fromArray( d.color, 3 * pid ),
             radius: d.radius[ pid ],
             majorAxis: new Vector3().fromArray( d.majorAxis, 3 * pid ),
-            minorAxis: new Vector3().fromArray( d.minorAxis, 3 * pid )
+            minorAxis: new Vector3().fromArray( d.minorAxis, 3 * pid ),
+            name: d.name[ pid ]
         };
     }
 
@@ -273,7 +284,7 @@ class IgnorePicker extends Picker{
 }
 
 
-class MeshPicker extends DataPicker{
+class MeshPicker extends ShapePicker{
 
     get type (){ return "mesh"; }
 
@@ -281,7 +292,8 @@ class MeshPicker extends DataPicker{
         const d = this.data;
         return {
             shape: d.shape,
-            serial: d.serial
+            serial: d.serial,
+            name: d.name
         };
     }
 
@@ -295,7 +307,7 @@ class MeshPicker extends DataPicker{
 }
 
 
-class SpherePicker extends DataPicker{
+class SpherePicker extends ShapePicker{
 
     get type (){ return "sphere"; }
 
@@ -305,7 +317,8 @@ class SpherePicker extends DataPicker{
             shape: d.shape,
             position: this._getPosition( pid ),
             color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ]
+            radius: d.radius[ pid ],
+            name: d.name[ pid ]
         };
     }
 
@@ -414,7 +427,7 @@ class SlicePicker extends VolumePicker{
 
 export {
     Picker,
-    DataPicker,
+    ShapePicker,
     ArrowPicker,
     AtomPicker,
     BondPicker,

@@ -368,7 +368,7 @@ NGL.getPickingMessage = function( d, prefix ){
     var msg = "nothing";
     if( d ){
         if( d.arrow ){
-            msg = "arrow: " + d.pid + " (" + d.arrow.shape.name + ")";
+            msg = "arrow: " + ( d.arrow.name || d.pid ) + " (" + d.arrow.shape.name + ")";
         }else if( d.atom ){
             msg = "atom: " +
                 d.atom.qualifiedName() +
@@ -378,7 +378,7 @@ NGL.getPickingMessage = function( d, prefix ){
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
                 " (" + d.bond.structure.name + ")";
         }else if( d.cone ){
-            msg = "cone: " + d.pid + " (" + d.cone.shape.name + ")";
+            msg = "cone: " + ( d.cone.name || d.pid ) + " (" + d.cone.shape.name + ")";
         }else if( d.clash ){
             msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
         }else if( d.contact ){
@@ -386,21 +386,21 @@ NGL.getPickingMessage = function( d, prefix ){
                 d.contact.atom1.qualifiedName() + " - " + d.contact.atom2.qualifiedName() +
                 " (" + d.contact.structure.name + ")";
         }else if( d.cylinder ){
-            msg = "cylinder: " + d.pid + " (" + d.cylinder.shape.name + ")";
+            msg = "cylinder: " + ( d.cylinder.name || d.pid ) + " (" + d.cylinder.shape.name + ")";
         }else if( d.distance ){
             msg = "distance: " +
                 d.distance.atom1.qualifiedName() + " - " + d.distance.atom2.qualifiedName() +
                 " (" + d.distance.structure.name + ")";
         }else if( d.ellipsoid ){
-            msg = "ellipsoid: " + d.pid + " (" + d.ellipsoid.shape.name + ")";
+            msg = "ellipsoid: " + ( d.ellipsoid.name || d.pid ) + " (" + d.ellipsoid.shape.name + ")";
         }else if( d.mesh ){
-            msg = "mesh: " + d.mesh.serial + " (" + d.mesh.shape.name + ")";
+            msg = "mesh: " + ( d.mesh.name || d.mesh.serial ) + " (" + d.mesh.shape.name + ")";
         }else if( d.slice ){
             msg = "slice: " +
                 d.slice.value.toPrecision( 3 ) +
                 " (" + d.slice.volume.name + ")";
         }else if( d.sphere ){
-            msg = "sphere: " + d.pid + " (" + d.sphere.shape.name + ")";
+            msg = "sphere: " + ( d.sphere.name || d.pid ) + " (" + d.sphere.shape.name + ")";
         }else if( d.surface ){
             msg = "surface: " + d.surface.surface.name;
         }else if( d.unitcell ){

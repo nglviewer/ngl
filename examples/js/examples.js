@@ -1398,7 +1398,8 @@ NGL.ExampleRegistry.addDict( {
         var shape = new NGL.Shape( "shape" );
         shape.addMesh(
             [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
-            [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ]
+            [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
+            undefined, undefined, "My mesh"
         );
         shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
         shape.addSphere( [ 12, 5, 15 ], [ 1, 0.5, 0 ], 1 );
@@ -1425,21 +1426,21 @@ NGL.ExampleRegistry.addDict( {
             sphereDetail: 4,
             radialSegments: 100
         } );
-        shape.addEllipsoid( [ 0, 0, 0 ], grey, 4, [ 0, 3, 0 ], [ 0, 0, 1 ] );
-        shape.addSphere( [ -2, 1, -1 ], darkgrey, 0.3 );
-        shape.addSphere( [  2, 1, -1 ], darkgrey, 0.3 );
-        shape.addSphere( [ 0, 0, -1 ], darkgrey, 0.5 );
-        shape.addEllipsoid( [ -1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ] );
-        shape.addEllipsoid( [  1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ] );
-        shape.addCone( [ 2.5, 1.7, 0 ], [ 4, 3, 0 ], darkgrey, 0.8 );
-        shape.addCone( [ -2.5, 1.7, 0 ], [ -4, 3, 0 ], darkgrey, 0.8 );
-        shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -0.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [ -1, -1, -1 ], [ -4.5, -1.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [ -1, -1, -1 ], [ -4.2, -2.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [  1, -1, -1 ], [  4.3, -0.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [  1, -1, -1 ], [  4.5, -1.2, -1.2 ], darkgrey, 0.1 );
-        shape.addCylinder( [  1, -1, -1 ], [  4.2, -2.2, -1.2 ], darkgrey, 0.1 );
-        shape.addLabel( [ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, "Meow Яна" );
+        shape.addEllipsoid( [ 0, 0, 0 ], grey, 4, [ 0, 3, 0 ], [ 0, 0, 1 ], "Face" );
+        shape.addSphere( [ -2, 1, -1 ], darkgrey, 0.3, "Right eye" );
+        shape.addSphere( [  2, 1, -1 ], darkgrey, 0.3, "Left eye" );
+        shape.addSphere( [ 0, 0, -1 ], darkgrey, 0.5, "Nose" );
+        shape.addEllipsoid( [ -1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ], "Right cheek" );
+        shape.addEllipsoid( [  1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ], "Left cheek" );
+        shape.addCone( [ 2.5, 1.7, 0 ], [ 4, 3, 0 ], darkgrey, 0.8, "Left ear" );
+        shape.addCone( [ -2.5, 1.7, 0 ], [ -4, 3, 0 ], darkgrey, 0.8, "Right ear" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -0.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.5, -1.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.2, -2.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.3, -0.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.5, -1.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.2, -2.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addLabel( [ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, "Meow" );
 
         var shapeComp = stage.addComponentFromObject( shape );
         shapeComp.addRepresentation( "buffer" );

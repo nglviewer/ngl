@@ -84,27 +84,32 @@ class Shape{
         this.spherePosition = [];
         this.sphereColor = [];
         this.sphereRadius = [];
+        this.sphereName = [];
 
         this.ellipsoidPosition = [];
         this.ellipsoidColor = [];
         this.ellipsoidRadius = [];
         this.ellipsoidMajorAxis = [];
         this.ellipsoidMinorAxis = [];
+        this.ellipsoidName = [];
 
         this.cylinderPosition1 = [];
         this.cylinderPosition2 = [];
         this.cylinderColor = [];
         this.cylinderRadius = [];
+        this.cylinderName = [];
 
         this.conePosition1 = [];
         this.conePosition2 = [];
         this.coneColor = [];
         this.coneRadius = [];
+        this.coneName = [];
 
         this.arrowPosition1 = [];
         this.arrowPosition2 = [];
         this.arrowColor = [];
         this.arrowRadius = [];
+        this.arrowName = [];
 
         this.labelPosition = [];
         this.labelColor = [];
@@ -144,9 +149,10 @@ class Shape{
      * @param {Float32Array|Array} color - colors
      * @param {Uint32Array|Uint16Array|Array} [index] - indices
      * @param {Float32Array|Array} [normal] - normals
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addMesh( position, color, index, normal ){
+    addMesh( position, color, index, normal, name ){
 
         position = ensureFloat32Array( position );
         color = ensureFloat32Array( color );
@@ -161,7 +167,7 @@ class Shape{
         const data = { position, color, index, normal };
         const picking = new MeshPicker(
             serialArray( position.length ),
-            Object.assign( { shape: this, serial: this.meshCount }, data )
+            Object.assign( { shape: this, serial: this.meshCount, name: name }, data )
         );
         const meshBuffer = new MeshBuffer(
             Object.assign( { picking: picking }, data )
@@ -184,13 +190,15 @@ class Shape{
      * @param {Vector3|Array} position - position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addSphere( position, color, radius ){
+    addSphere( position, color, radius, name ){
 
         addElement( position, this.spherePosition );
         addElement( color, this.sphereColor );
         this.sphereRadius.push( radius );
+        this.sphereName.push( name );
 
         this.boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
@@ -208,15 +216,17 @@ class Shape{
      * @param {Float} radius - radius value
      * @param {Vector3|Array} majorAxis - major axis vector or array
      * @param {Vector3|Array} minorAxis - minor axis vector or array
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addEllipsoid( position, color, radius, majorAxis, minorAxis ){
+    addEllipsoid( position, color, radius, majorAxis, minorAxis, name ){
 
         addElement( position, this.ellipsoidPosition );
         addElement( color, this.ellipsoidColor );
         this.ellipsoidRadius.push( radius );
         addElement( majorAxis, this.ellipsoidMajorAxis );
         addElement( minorAxis, this.ellipsoidMinorAxis );
+        this.ellipsoidName.push( name );
 
         this.boundingBox.expandByPoint( tmpVec.fromArray( position ) );
 
@@ -233,14 +243,16 @@ class Shape{
      * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addCylinder( position1, position2, color, radius ){
+    addCylinder( position1, position2, color, radius, name ){
 
         addElement( position1, this.cylinderPosition1 );
         addElement( position2, this.cylinderPosition2 );
         addElement( color, this.cylinderColor );
         this.cylinderRadius.push( radius );
+        this.cylinderName.push( name );
 
         this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
         this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
@@ -258,14 +270,16 @@ class Shape{
      * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addCone( position1, position2, color, radius ){
+    addCone( position1, position2, color, radius, name ){
 
         addElement( position1, this.conePosition1 );
         addElement( position2, this.conePosition2 );
         addElement( color, this.coneColor );
         this.coneRadius.push( radius );
+        this.coneName.push( name );
 
         this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
         this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
@@ -283,14 +297,16 @@ class Shape{
      * @param {Vector3|Array} position2 - to position vector or array
      * @param {Color|Array} color - color object or array
      * @param {Float} radius - radius value
+     * @param {String} [name] - text
      * @return {Shape} this object
      */
-    addArrow( position1, position2, color, radius ){
+    addArrow( position1, position2, color, radius, name ){
 
         addElement( position1, this.arrowPosition1 );
         addElement( position2, this.arrowPosition2 );
         addElement( color, this.arrowColor );
         this.arrowRadius.push( radius );
+        this.arrowName.push( name );
 
         this.boundingBox.expandByPoint( tmpVec.fromArray( position1 ) );
         this.boundingBox.expandByPoint( tmpVec.fromArray( position2 ) );
@@ -335,7 +351,7 @@ class Shape{
             };
             const spherePicking = new SpherePicker(
                 serialArray( this.sphereRadius.length ),
-                Object.assign( { shape: this }, sphereData )
+                Object.assign( { shape: this, name: this.sphereName }, sphereData )
             );
             const sphereBuffer = new SphereBuffer(
                 Object.assign( { picking: spherePicking }, sphereData ),
@@ -357,7 +373,7 @@ class Shape{
             };
             const ellipsoidPicking = new EllipsoidPicker(
                 serialArray( this.ellipsoidRadius.length ),
-                Object.assign( { shape: this }, ellipsoidData )
+                Object.assign( { shape: this, name: this.ellipsoidName }, ellipsoidData )
             );
             const ellipsoidBuffer = new EllipsoidBuffer(
                 Object.assign( { picking: ellipsoidPicking }, ellipsoidData ),
@@ -379,7 +395,7 @@ class Shape{
             };
             const cylinderPicking = new CylinderPicker(
                 serialArray( this.cylinderRadius.length ),
-                Object.assign( { shape: this }, cylinderData )
+                Object.assign( { shape: this, name: this.cylinderName }, cylinderData )
             );
             const cylinderBuffer = new CylinderBuffer(
                 Object.assign( { picking: cylinderPicking }, cylinderData ),
@@ -401,7 +417,7 @@ class Shape{
             };
             const conePicking = new ConePicker(
                 serialArray( this.coneRadius.length ),
-                Object.assign( { shape: this }, coneData )
+                Object.assign( { shape: this, name: this.coneName }, coneData )
             );
             const coneBuffer = new ConeBuffer(
                 Object.assign( { picking: conePicking }, coneData ),
@@ -423,7 +439,7 @@ class Shape{
             };
             const arrowPicking = new ArrowPicker(
                 serialArray( this.arrowRadius.length ),
-                Object.assign( { shape: this }, arrowData )
+                Object.assign( { shape: this, name: this.arrowName }, arrowData )
             );
             const arrowBuffer = new ArrowBuffer(
                 Object.assign( { picking: arrowPicking }, arrowData ),
@@ -462,27 +478,37 @@ class Shape{
         this.spherePosition.length = 0;
         this.sphereColor.length = 0;
         this.sphereRadius.length = 0;
+        this.sphereName.length = 0;
 
         this.ellipsoidPosition.length = 0;
         this.ellipsoidColor.length = 0;
         this.ellipsoidRadius.length = 0;
         this.ellipsoidMajorAxis.length = 0;
         this.ellipsoidMinorAxis.length = 0;
+        this.ellipsoidName.length = 0;
 
         this.cylinderPosition1.length = 0;
         this.cylinderPosition2.length = 0;
         this.cylinderColor.length = 0;
         this.cylinderRadius.length = 0;
+        this.cylinderName.length = 0;
 
         this.conePosition1.length = 0;
         this.conePosition2.length = 0;
         this.coneColor.length = 0;
         this.coneRadius.length = 0;
+        this.coneName.length = 0;
 
         this.arrowPosition1.length = 0;
         this.arrowPosition2.length = 0;
         this.arrowColor.length = 0;
         this.arrowRadius.length = 0;
+        this.arrowName.length = 0;
+
+        this.labelPosition.length = 0;
+        this.labelColor.length = 0;
+        this.labelSize.length = 0;
+        this.labelText.length = 0;
 
     }
 
