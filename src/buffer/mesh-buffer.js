@@ -8,6 +8,7 @@
 import "../shader/Mesh.vert";
 import "../shader/Mesh.frag";
 
+import { serialArray } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
 
 
@@ -36,9 +37,13 @@ class MeshBuffer extends Buffer{
      */
     constructor( data, params ){
 
-        super( data, params );
-
         var d = data || {};
+
+        if( !d.primitiveId && d.position ){
+            d.primitiveId = serialArray( d.position.length / 3 );
+        }
+
+        super( d, params );
 
         this.addAttributes( {
             "normal": { type: "v3", value: d.normal },
