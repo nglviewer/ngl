@@ -906,7 +906,7 @@ function buildUnitcellAssembly( structure ){
 
 
 const elm1 = [ "H", "C", "O", "N", "S", "P" ];
-const elm2 = [ "NA", "CL" ];
+const elm2 = [ "NA", "CL", "FE" ];
 
 function guessElement( atomName ){
 

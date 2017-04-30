@@ -65,6 +65,14 @@ class PdbParser extends StructureParser{
 
         if( Debug ) Log.time( "PdbParser._parse " + this.name );
 
+        var isLegacy = false;
+        var headerLine = this.streamer.peekLines( 1 )[ 0 ];
+        var headerId = headerLine.substr( 62, 4 );
+        var legacyId = headerLine.substr( 72, 4 );
+        if( headerId === legacyId && legacyId.trim() ){
+            isLegacy = true;
+        }
+
         var isPqr = this.type === "pqr";
         var reWhitespace = /\s+/;
 
@@ -145,9 +153,9 @@ class PdbParser extends StructureParser{
 
         function _parseChunkOfLines( _i, _n, lines ){
 
-            var j, jl;
+            let j, jl;
 
-            for( var i = _i; i < _n; ++i ){
+            for( let i = _i; i < _n; ++i ){
 
                 line = lines[ i ];
                 recordName = line.substr( 0, 6 );
@@ -246,9 +254,8 @@ class PdbParser extends StructureParser{
                         if( hex && serial === 99999 ){
                             serialRadix = 16;
                         }
-                        element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                        chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
+                        chainname = line[ 21 ].trim();
                         resno = parseInt( line.substr( 22, 4 ), resnoRadix );
                         if( hex && resno === 9999 ){
                             resnoRadix = 16;
@@ -258,6 +265,13 @@ class PdbParser extends StructureParser{
                         bfactor = parseFloat( line.substr( 60, 6 ) );
                         altloc = line[ 16 ].trim();
                         occupancy = parseFloat( line.substr( 54, 6 ) );
+
+                        if( !isLegacy ){
+                            element = line.substr( 76, 2 ).trim();
+                            if( !chainname ){
+                                chainname = line.substr( 72, 4 ).trim();  // segid
+                            }
+                        }
 
                     }
 
@@ -359,7 +373,7 @@ class PdbParser extends StructureParser{
                     endChain = line[ 31 ].trim();
                     endResi = parseInt( line.substr( 33, 4 ) );
                     endIcode = line[ 37 ].trim();
-                    var helixType = parseInt( line.substr( 39, 1 ) );
+                    let helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 );
                     helices.push( [
                         startChain, startResi, startIcode,
@@ -664,16 +678,18 @@ class PdbParser extends StructureParser{
             s.unitcell = undefined;
         }
 
+        if( helices.length || sheets.length ){
+            assignSecondaryStructure( s, secStruct );
+        }
+
         sb.finalize();
         s.finalizeAtoms();
-        calculateChainnames( s );
+        if( !isLegacy ) calculateChainnames( s );
         calculateBonds( s );
         s.finalizeBonds();
 
         if( !helices.length && !sheets.length ){
             calculateSecondaryStructure( s );
-        }else{
-            assignSecondaryStructure( s, secStruct );
         }
         buildUnitcellAssembly( s );
 
