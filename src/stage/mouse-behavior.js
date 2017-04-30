@@ -17,12 +17,12 @@ class MouseBehavior{
         this.mouse = stage.mouseObserver;
         this.controls = stage.trackballControls;
 
-        this.mouse.signals.scrolled.add( this.onScroll, this );
-        this.mouse.signals.dragged.add( this.onDrag, this );
+        this.mouse.signals.scrolled.add( this._onScroll, this );
+        this.mouse.signals.dragged.add( this._onDrag, this );
 
     }
 
-    onScroll( delta ){
+    _onScroll( delta ){
 
         if( this.mouse.shiftKey ){
             const sp = this.stage.getParameters();
@@ -36,7 +36,7 @@ class MouseBehavior{
 
     }
 
-    onDrag( x, y ){
+    _onDrag( x, y ){
 
         if( this.mouse.which === RightMouseButton ){
             this.controls.pan( x, y );
@@ -47,8 +47,8 @@ class MouseBehavior{
     }
 
     dispose(){
-        this.mouse.signals.scrolled.remove( this.onScroll, this );
-        this.mouse.signals.dragged.remove( this.onDrag, this );
+        this.mouse.signals.scrolled.remove( this._onScroll, this );
+        this.mouse.signals.dragged.remove( this._onDrag, this );
     }
 
 }

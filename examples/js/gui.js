@@ -263,7 +263,7 @@ NGL.StageWidget = function( stage ){
     //
 
     document.body.addEventListener(
-        'touchmove', function( e ){ e.preventDefault(); }, false
+        'touchmove', function( e ){ e.preventDefault(); }, { passive: false }
     );
 
     //
