@@ -256,12 +256,12 @@ class PdbParser extends StructureParser{
                         }
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
                         chainname = line[ 21 ].trim();
-                        resno = parseInt( line.substr( 22, 4 ), resnoRadix );
+                        resno = parseInt( line.substr( 22, 4 ), resnoRadix ) || 1;
                         if( hex && resno === 9999 ){
                             resnoRadix = 16;
                         }
                         inscode = line[ 26 ].trim();
-                        resname = line.substr( 17, 4 ).trim();
+                        resname = line.substr( 17, 4 ).trim() || "MOL";
                         bfactor = parseFloat( line.substr( 60, 6 ) );
                         altloc = line[ 16 ].trim();
                         occupancy = parseFloat( line.substr( 54, 6 ) );
