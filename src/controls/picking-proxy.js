@@ -154,7 +154,7 @@ class PickingProxy{
      */
     get clash (){ return this._objectIfType( "clash" ); }
     /**
-     * @member {Object}
+     * @member {BondProxy}
      */
     get contact (){ return this._objectIfType( "contact" ); }
     /**
@@ -162,13 +162,17 @@ class PickingProxy{
      */
     get cylinder (){ return this._objectIfType( "cylinder" ); }
     /**
-     * @member {Object}
+     * @member {BondProxy}
      */
-    get mesh (){ return this._objectIfType( "mesh" ); }
+    get distance (){ return this._objectIfType( "distance" ); }
     /**
      * @member {Object}
      */
     get ellipsoid (){ return this._objectIfType( "ellipsoid" ); }
+    /**
+     * @member {Object}
+     */
+    get mesh (){ return this._objectIfType( "mesh" ); }
     /**
      * @member {Object}
      */

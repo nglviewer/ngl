@@ -9,6 +9,7 @@ import { Color } from "../../lib/three.es6.js";
 
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { DistancePicker } from "../utils/picker.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import Bitset from "../utils/bitset.js";
 import StructureRepresentation from "./structure-representation.js";
@@ -211,7 +212,15 @@ class DistanceRepresentation extends StructureRepresentation{
 
     getBondData( sview, what, params ){
 
-        return sview.getBondData( this.getBondParams( what, params ) );
+        var bondData = sview.getBondData( this.getBondParams( what, params ) );
+        if( bondData.picking ){
+            bondData.picking = new DistancePicker(
+                bondData.picking.array,
+                bondData.picking.structure,
+                params.bondStore
+            );
+        }
+        return bondData;
 
     }
 

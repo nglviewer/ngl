@@ -387,6 +387,10 @@ NGL.getPickingMessage = function( d, prefix ){
                 " (" + d.contact.structure.name + ")";
         }else if( d.cylinder ){
             msg = "cylinder: " + d.pid + " (" + d.cylinder.shape.name + ")";
+        }else if( d.distance ){
+            msg = "distance: " +
+                d.distance.atom1.qualifiedName() + " - " + d.distance.atom2.qualifiedName() +
+                " (" + d.distance.structure.name + ")";
         }else if( d.ellipsoid ){
             msg = "ellipsoid: " + d.pid + " (" + d.ellipsoid.shape.name + ")";
         }else if( d.mesh ){

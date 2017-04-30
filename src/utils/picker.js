@@ -236,6 +236,13 @@ class ClashPicker extends Picker{
 }
 
 
+class DistancePicker extends BondPicker{
+
+    get type (){ return "distance"; }
+
+}
+
+
 class EllipsoidPicker extends DataPicker{
 
     get type (){ return "ellipsoid"; }
@@ -415,6 +422,7 @@ export {
     ContactPicker,
     CylinderPicker,
     ClashPicker,
+    DistancePicker,
     EllipsoidPicker,
     IgnorePicker,
     MeshPicker,
