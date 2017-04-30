@@ -149,6 +149,12 @@ class TextAtlas{
 
     }
 
+    get( text ){
+
+        return this.mapped[ text ] || this.placeholder;
+
+    }
+
     draw( text ){
 
         const h = this.lineHeight;
@@ -232,6 +238,9 @@ class TextAtlas{
     }
 
     populate(){
+
+        // REPLACEMENT CHARACTER
+        this.placeholder = this.map( String.fromCharCode( 0xFFFD ) );
 
         // Basic Latin
         for( let i = 0x0000; i < 0x007F; ++i ){
@@ -544,7 +553,7 @@ class TextBuffer extends QuadBuffer{
 
             // calculate width
             for( iChar = 0; iChar < nChar; ++iChar ) {
-                c = ta.mapped[ txt[ iChar ] ];
+                c = ta.get( txt[ iChar ] );
                 xadvance += c.w - 2 * ta.outline;
             }
 
@@ -588,7 +597,7 @@ class TextBuffer extends QuadBuffer{
 
             for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
-                c = ta.mapped[ txt[ iChar ] ];
+                c = ta.get( txt[ iChar ] );
                 i = iCharAll * 2 * 4;
 
                 inputMapping[ i + 0 ] = xadvance - xShift;  // top left
