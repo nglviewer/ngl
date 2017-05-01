@@ -94,96 +94,102 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 /**
  * Structure
- * @class
- * @param {String} name - structure name
- * @param {String} path - source path
  */
-function Structure( name, path ){
-
-    this.signals = {
-        refreshed: new Signal(),
-    };
-
-    this.name = name;
-    this.path = path;
-    this.title = "";
-    this.id = "";
-    /**
-     * @member {StructureHeader}
-     */
-    this.header = {};
-
-    this.atomSetCache = undefined;
-    this.atomSetDict = {};
-    this.biomolDict = {};
-    /**
-     * @member {Entity[]}
-     */
-    this.entityList = [];
-    /**
-     * @member {Unitcell}
-     */
-    this.unitcell = undefined;
-
-    this.frames = [];
-    this.boxes = [];
+class Structure{
 
     /**
-     * @member {Validation}
+     * @param {String} name - structure name
+     * @param {String} path - source path
      */
-    this.validation = undefined;
+    constructor( name, path ){
 
-    this.bondStore = new BondStore( 0 );
-    this.backboneBondStore = new BondStore( 0 );
-    this.rungBondStore = new BondStore( 0 );
-    this.atomStore = new AtomStore( 0 );
-    this.residueStore = new ResidueStore( 0 );
-    this.chainStore = new ChainStore( 0 );
-    this.modelStore = new ModelStore( 0 );
+        this.signals = {
+            refreshed: new Signal(),
+        };
 
-    /**
-     * @member {AtomMap}
-     */
-    this.atomMap = new AtomMap( this );
-    /**
-     * @member {ResidueMap}
-     */
-    this.residueMap = new ResidueMap( this );
+        this.init( name, path );
 
-    /**
-     * @member {BondHash}
-     */
-    this.bondHash = undefined;
-    /**
-     * @member {SpatialHash}
-     */
-    this.spatialHash = undefined;
+    }
 
-    this.atomSet = undefined;
-    this.bondSet = undefined;
+    init( name, path ){
 
-    /**
-     * @member {Vector3}
-     */
-    this.center = undefined;
-    /**
-     * @member {Box3}
-     */
-    this.boundingBox = undefined;
+        this.name = name;
+        this.path = path;
+        this.title = "";
+        this.id = "";
+        /**
+         * @type {StructureHeader}
+         */
+        this.header = {};
 
-    this._bp = this.getBondProxy();
-    this._ap = this.getAtomProxy();
-    this._rp = this.getResidueProxy();
-    this._cp = this.getChainProxy();
+        this.atomSetCache = undefined;
+        this.atomSetDict = {};
+        this.biomolDict = {};
+        /**
+         * @type {Entity[]}
+         */
+        this.entityList = [];
+        /**
+         * @type {Unitcell}
+         */
+        this.unitcell = undefined;
 
-}
+        this.frames = [];
+        this.boxes = [];
 
-Structure.prototype = {
+        /**
+         * @type {Validation}
+         */
+        this.validation = undefined;
 
-    constructor: Structure,
-    type: "Structure",
+        this.bondStore = new BondStore( 0 );
+        this.backboneBondStore = new BondStore( 0 );
+        this.rungBondStore = new BondStore( 0 );
+        this.atomStore = new AtomStore( 0 );
+        this.residueStore = new ResidueStore( 0 );
+        this.chainStore = new ChainStore( 0 );
+        this.modelStore = new ModelStore( 0 );
 
-    finalizeAtoms: function(){
+        /**
+         * @type {AtomMap}
+         */
+        this.atomMap = new AtomMap( this );
+        /**
+         * @type {ResidueMap}
+         */
+        this.residueMap = new ResidueMap( this );
+
+        /**
+         * @type {BondHash}
+         */
+        this.bondHash = undefined;
+        /**
+         * @type {SpatialHash}
+         */
+        this.spatialHash = undefined;
+
+        this.atomSet = undefined;
+        this.bondSet = undefined;
+
+        /**
+         * @type {Vector3}
+         */
+        this.center = undefined;
+        /**
+         * @type {Box3}
+         */
+        this.boundingBox = undefined;
+
+        this._bp = this.getBondProxy();
+        this._ap = this.getAtomProxy();
+        this._rp = this.getResidueProxy();
+        this._cp = this.getChainProxy();
+
+    }
+
+    get type(){ return "Structure"; }
+
+    finalizeAtoms(){
 
         this.atomSet = this.getAtomSet();
         this.atomCount = this.atomStore.count;
@@ -191,9 +197,9 @@ Structure.prototype = {
         this.center = this.boundingBox.getCenter();
         this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
-    },
+    }
 
-    finalizeBonds: function(){
+    finalizeBonds(){
 
         this.bondSet = this.getBondSet();
         this.bondCount = this.bondStore.count;
@@ -210,43 +216,43 @@ Structure.prototype = {
             this.atomSetCache[ "__" + name ] = as2.intersection( as );
         }
 
-    },
+    }
 
     //
 
-    getBondProxy: function( index ){
+    getBondProxy( index ){
 
         return new BondProxy( this, index );
 
-    },
+    }
 
-    getAtomProxy: function( index ){
+    getAtomProxy( index ){
 
         return new AtomProxy( this, index );
 
-    },
+    }
 
-    getResidueProxy: function( index ){
+    getResidueProxy( index ){
 
         return new ResidueProxy( this, index );
 
-    },
+    }
 
-    getChainProxy: function( index ){
+    getChainProxy( index ){
 
         return new ChainProxy( this, index );
 
-    },
+    }
 
-    getModelProxy: function( index ){
+    getModelProxy( index ){
 
         return new ModelProxy( this, index );
 
-    },
+    }
 
     //
 
-    getBondSet: function( /*selection*/ ){
+    getBondSet( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -277,9 +283,9 @@ Structure.prototype = {
 
         return bs;
 
-    },
+    }
 
-    getBackboneBondSet: function( /*selection*/ ){
+    getBackboneBondSet( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -311,9 +317,9 @@ Structure.prototype = {
 
         return bs;
 
-    },
+    }
 
-    getRungBondSet: function( /*selection*/ ){
+    getRungBondSet( /*selection*/ ){
 
         // TODO implement selection parameter
 
@@ -345,9 +351,9 @@ Structure.prototype = {
 
         return bs;
 
-    },
+    }
 
-    getAtomSet: function( selection ){
+    getAtomSet( selection ){
 
         if( Debug ) Log.time( "Structure.getAtomSet" );
 
@@ -396,7 +402,7 @@ Structure.prototype = {
 
         return as;
 
-    },
+    }
 
     /**
      * Get set of atom around a set of atoms from a selection
@@ -404,7 +410,7 @@ Structure.prototype = {
      * @param  {Number} radius - radius to select within
      * @return {BitSet} set of atoms
      */
-    getAtomSetWithinSelection: function( selection, radius ){
+    getAtomSetWithinSelection( selection, radius ){
 
         var spatialHash = this.spatialHash;
         var as = this.getAtomSet( false );
@@ -419,9 +425,9 @@ Structure.prototype = {
 
         return as;
 
-    },
+    }
 
-    getAtomSetWithinPoint: function( point, radius ){
+    getAtomSetWithinPoint( point, radius ){
 
         var p = point;
         var as = this.getAtomSet( false );
@@ -432,9 +438,9 @@ Structure.prototype = {
 
         return as;
 
-    },
+    }
 
-    getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
+    getAtomSetWithinVolume( volume, radius, minValue, maxValue, outside ){
 
         var fv = new FilteredVolume( volume, minValue, maxValue, outside );
 
@@ -451,9 +457,9 @@ Structure.prototype = {
 
         return as;
 
-    },
+    }
 
-    getAtomSetWithinGroup: function( selection ){
+    getAtomSetWithinGroup( selection ){
 
         var atomResidueIndex = this.atomStore.residueIndex;
         var as = this.getAtomSet( false );
@@ -468,21 +474,21 @@ Structure.prototype = {
 
         return as;
 
-    },
+    }
 
     //
 
-    getSelection: function(){
+    getSelection(){
 
         return false;
 
-    },
+    }
 
-    getStructure: function(){
+    getStructure(){
 
         return this;
 
-    },
+    }
 
     /**
      * Entity iterator
@@ -490,7 +496,7 @@ Structure.prototype = {
      * @param  {EntityType} type - entity type
      * @return {undefined}
      */
-    eachEntity: function( callback, type ){
+    eachEntity( callback, type ){
 
         this.entityList.forEach( function( entity ){
             if( type === undefined || entity.getEntityType() === type ){
@@ -498,7 +504,7 @@ Structure.prototype = {
             }
         } );
 
-    },
+    }
 
     /**
      * Bond iterator
@@ -506,7 +512,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachBond: function( callback, selection ){
+    eachBond( callback, selection ){
 
         var bp = this.getBondProxy();
         var bs = this.bondSet;
@@ -532,7 +538,7 @@ Structure.prototype = {
             }
         }
 
-    },
+    }
 
     /**
      * Atom iterator
@@ -540,7 +546,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachAtom: function( callback, selection ){
+    eachAtom( callback, selection ){
 
         if( selection && selection.test ){
             this.eachModel( function( mp ){
@@ -555,7 +561,7 @@ Structure.prototype = {
             }
         }
 
-    },
+    }
 
     /**
      * Residue iterator
@@ -563,7 +569,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachResidue: function( callback, selection ){
+    eachResidue( callback, selection ){
 
         var i;
         if( selection && selection.test ){
@@ -592,7 +598,7 @@ Structure.prototype = {
             }
         }
 
-    },
+    }
 
     /**
      * Multi-residue iterator
@@ -600,7 +606,7 @@ Structure.prototype = {
      * @param  {residueListCallback} callback - the callback
      * @return {undefined}
      */
-    eachResidueN: function( n, callback ){
+    eachResidueN( n, callback ){
 
         var i, j;
         var rn = this.residueStore.count;
@@ -619,7 +625,7 @@ Structure.prototype = {
             callback.apply( this, array );
         }
 
-    },
+    }
 
     /**
      * Polymer iterator
@@ -627,7 +633,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachPolymer: function( callback, selection ){
+    eachPolymer( callback, selection ){
 
         if( selection && selection.modelOnlyTest ){
 
@@ -647,7 +653,7 @@ Structure.prototype = {
 
         }
 
-    },
+    }
 
     /**
      * Chain iterator
@@ -655,7 +661,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachChain: function( callback, selection ){
+    eachChain( callback, selection ){
 
         if( selection && selection.test ){
             this.eachModel( function( mp ){
@@ -670,7 +676,7 @@ Structure.prototype = {
             }
         }
 
-    },
+    }
 
     /**
      * Model iterator
@@ -678,7 +684,7 @@ Structure.prototype = {
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
-    eachModel: function( callback, selection ){
+    eachModel( callback, selection ){
 
         var i;
         var n = this.modelStore.count;
@@ -706,11 +712,11 @@ Structure.prototype = {
             }
         }
 
-    },
+    }
 
     //
 
-    getAtomData: function( params ){
+    getAtomData( params ){
 
         var p = Object.assign( {}, params );
         if( p.colorParams ) p.colorParams.structure = this.getStructure();
@@ -769,9 +775,9 @@ Structure.prototype = {
         } );
         return atomData;
 
-    },
+    }
 
-    getBondData: function( params ){
+    getBondData( params ){
 
         var p = Object.assign( {}, params );
         if( p.colorParams ) p.colorParams.structure = this.getStructure();
@@ -948,9 +954,9 @@ Structure.prototype = {
 
         return bondData;
 
-    },
+    }
 
-    getBackboneAtomData: function( params ){
+    getBackboneAtomData( params ){
 
         params = Object.assign( {
             atomSet: this.atomSetCache.__backbone,
@@ -958,9 +964,9 @@ Structure.prototype = {
 
         return this.getAtomData( params );
 
-    },
+    }
 
-    getBackboneBondData: function( params ){
+    getBackboneBondData( params ){
 
         params = Object.assign( {
             bondSet: this.getBackboneBondSet(),
@@ -969,9 +975,9 @@ Structure.prototype = {
 
         return this.getBondData( params );
 
-    },
+    }
 
-    getRungAtomData: function( params ){
+    getRungAtomData( params ){
 
         params = Object.assign( {
             atomSet: this.atomSetCache.__rung,
@@ -979,9 +985,9 @@ Structure.prototype = {
 
         return this.getAtomData( params );
 
-    },
+    }
 
-    getRungBondData: function( params ){
+    getRungBondData( params ){
 
         params = Object.assign( {
             bondSet: this.getRungBondSet(),
@@ -990,11 +996,11 @@ Structure.prototype = {
 
         return this.getBondData( params );
 
-    },
+    }
 
     //
 
-    getBoundingBox: function( selection, box ){
+    getBoundingBox( selection, box ){
 
         if( Debug ) Log.time( "getBoundingBox" );
 
@@ -1031,9 +1037,9 @@ Structure.prototype = {
 
         return box;
 
-    },
+    }
 
-    getPrincipalAxes: function( selection ){
+    getPrincipalAxes( selection ){
 
         if( Debug ) Log.time( "getPrincipalAxes" );
 
@@ -1052,9 +1058,9 @@ Structure.prototype = {
 
         return new PrincipalAxes( coords );
 
-    },
+    }
 
-    atomCenter: function( selection ){
+    atomCenter( selection ){
 
         if( selection ){
             return this.getBoundingBox( selection ).getCenter();
@@ -1062,9 +1068,9 @@ Structure.prototype = {
             return this.center.clone();
         }
 
-    },
+    }
 
-    getSequence: function( selection ){
+    getSequence( selection ){
 
         var seq = [];
         var rp = this.getResidueProxy();
@@ -1078,9 +1084,9 @@ Structure.prototype = {
 
         return seq;
 
-    },
+    }
 
-    getAtomIndices: function( selection ){
+    getAtomIndices( selection ){
 
         var indices;
 
@@ -1100,14 +1106,14 @@ Structure.prototype = {
 
         return indices;
 
-    },
+    }
 
     /**
      * Get number of unique chainnames
      * @param  {Selection} selection - limit count to selection
      * @return {Integer} count
      */
-    getChainnameCount: function( selection ){
+    getChainnameCount( selection ){
 
         var chainnames = new Set();
         this.eachChain( function( cp ){
@@ -1118,11 +1124,11 @@ Structure.prototype = {
 
         return chainnames.size;
 
-    },
+    }
 
     //
 
-    updatePosition: function( position ){
+    updatePosition( position ){
 
         var i = 0;
 
@@ -1131,22 +1137,22 @@ Structure.prototype = {
             i += 3;
         } );
 
-    },
+    }
 
-    refreshPosition: function(){
+    refreshPosition(){
 
         this.getBoundingBox( undefined, this.boundingBox );
         this.boundingBox.getCenter( this.center );
         this.spatialHash = new SpatialHash( this.atomStore, this.boundingBox );
 
-    },
+    }
 
     /**
      * Calls dispose() method of property objects.
      * Unsets properties to help garbage collection.
      * @return {undefined}
      */
-    dispose: function(){
+    dispose(){
 
         if( this.frames ) this.frames.length = 0;
         if( this.boxes ) this.boxes.length = 0;
@@ -1174,7 +1180,7 @@ Structure.prototype = {
 
     }
 
-};
+}
 
 
 export default Structure;
