@@ -41,9 +41,17 @@ class ChainProxy{
 
     }
 
+    /**
+     * Entity
+     * @type {Entity}
+     */
     get entity () {
         return this.structure.entityList[ this.entityIndex ];
     }
+    /**
+     * Model
+     * @type {ModelProxy}
+     */
     get model () {
         return this.structure.getModelProxy( this.modelIndex );
     }
@@ -69,6 +77,10 @@ class ChainProxy{
         this.chainStore.residueOffset[ this.index ] = value;
     }
 
+    /**
+     * Residue count
+     * @type {Integer}
+     */
     get residueCount () {
         return this.chainStore.residueCount[ this.index ];
     }
@@ -89,6 +101,10 @@ class ChainProxy{
             this.residueStore.atomCount[ this.residueEnd ] - 1
         );
     }
+    /**
+     * Atom count
+     * @type {Integer}
+     */
     get atomCount () {
         if( this.residueCount === 0 ){
             return 0;
@@ -99,6 +115,10 @@ class ChainProxy{
 
     //
 
+    /**
+     * Chain name
+     * @type {String}
+     */
     get chainname () {
         return this.chainStore.getChainname( this.index );
     }
@@ -106,6 +126,10 @@ class ChainProxy{
         this.chainStore.setChainname( this.index, value );
     }
 
+    /**
+     * Chain id
+     * @type {String}
+     */
     get chainid () {
         return this.chainStore.getChainid( this.index );
     }
@@ -122,44 +146,86 @@ class ChainProxy{
 
     //
 
+    /**
+     * If first residue is from a protein
+     * @return {Boolean} flag
+     */
     isProtein(){
         return this.__firstResidueProxy.isProtein();
     }
 
+    /**
+     * If first residue is nucleic
+     * @return {Boolean} flag
+     */
     isNucleic(){
         return this.__firstResidueProxy.isNucleic();
     }
 
+    /**
+     * If first residue is rna
+     * @return {Boolean} flag
+     */
     isRna(){
         return this.__firstResidueProxy.isRna();
     }
 
+    /**
+     * If first residue is dna
+     * @return {Boolean} flag
+     */
     isDna(){
         return this.__firstResidueProxy.isDna();
     }
 
+    /**
+     * If first residue is a polymer
+     * @return {Boolean} flag
+     */
     isPolymer(){
         return this.__firstResidueProxy.isPolymer();
     }
 
+    /**
+     * If first residue is a hetero group
+     * @return {Boolean} flag
+     */
     isHetero(){
         return this.__firstResidueProxy.isHetero();
     }
 
+    /**
+     * If first residue is a water molecule
+     * @return {Boolean} flag
+     */
     isWater(){
         return this.__firstResidueProxy.isWater();
     }
 
+    /**
+     * If first residue is an ion
+     * @return {Boolean} flag
+     */
     isIon(){
         return this.__firstResidueProxy.isIon();
     }
 
+    /**
+     * If first residue is a saccharide
+     * @return {Boolean} flag
+     */
     isSaccharide(){
         return this.__firstResidueProxy.isSaccharide();
     }
 
     //
 
+    /**
+     * Atom iterator
+     * @param  {function(atom: AtomProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachAtom( callback, selection ){
 
         this.eachResidue( function( rp ){
@@ -168,6 +234,12 @@ class ChainProxy{
 
     }
 
+    /**
+     * Residue iterator
+     * @param  {function(residue: ResidueProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachResidue( callback, selection ){
 
         var i;
@@ -200,6 +272,12 @@ class ChainProxy{
 
     }
 
+    /**
+     * Multi-residue iterator
+     * @param {Integer} n - window size
+     * @param  {function(residueList: ResidueProxy[])} callback - the callback
+     * @return {undefined}
+     */
     eachResidueN( n, callback ){
 
         var i;
@@ -223,6 +301,12 @@ class ChainProxy{
 
     }
 
+    /**
+     * Polymer iterator
+     * @param  {function(polymer: Polymer)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachPolymer( callback, selection ){
 
         var rStartIndex, rNextIndex;
@@ -304,6 +388,10 @@ class ChainProxy{
         return name;
     }
 
+    /**
+     * Clone object
+     * @return {ChainProxy} cloned chain
+     */
     clone(){
 
         return new this.constructor( this.structure, this.index );

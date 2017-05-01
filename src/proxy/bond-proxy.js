@@ -40,14 +40,23 @@ class BondProxy{
 
     }
 
+    /**
+     * @type {AtomProxy}
+     */
     get atom1 () {
         return this.structure.getAtomProxy( this.atomIndex1 );
     }
 
+    /**
+     * @type {AtomProxy}
+     */
     get atom2 () {
         return this.structure.getAtomProxy( this.atomIndex2 );
     }
 
+    /**
+     * @type {Integer}
+     */
     get atomIndex1 () {
         return this.bondStore.atomIndex1[ this.index ];
     }
@@ -55,6 +64,9 @@ class BondProxy{
         this.bondStore.atomIndex1[ this.index ] = value;
     }
 
+    /**
+     * @type {Integer}
+     */
     get atomIndex2 () {
         return this.bondStore.atomIndex2[ this.index ];
     }
@@ -62,6 +74,9 @@ class BondProxy{
         this.bondStore.atomIndex2[ this.index ] = value;
     }
 
+    /**
+     * @type {Integer}
+     */
     get bondOrder () {
         return this.bondStore.bondOrder[ this.index ];
     }
@@ -137,6 +152,10 @@ class BondProxy{
         return this.atomIndex1 + "=" + this.atomIndex2;
     }
 
+    /**
+     * Clone object
+     * @return {BondProxy} cloned bond
+     */
     clone(){
         return new this.constructor( this.structure, this.index );
     }

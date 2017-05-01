@@ -72,22 +72,37 @@ class Polymer{
         return this.chainStore.modelIndex[ this.chainIndex ];
     }
 
+    /**
+     * @type {String}
+     */
     get chainname () {
         return this.chainStore.getChainname( this.chainIndex );
     }
 
     //
 
+    /**
+     * If first residue is from aprotein
+     * @return {Boolean} flag
+     */
     isProtein(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isProtein();
     }
 
+    /**
+     * If atom is part of a coarse-grain group
+     * @return {Boolean} flag
+     */
     isCg(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isCg();
     }
 
+    /**
+     * If atom is part of a nucleic molecule
+     * @return {Boolean} flag
+     */
     isNucleic(){
         this.__residueProxy.index = this.residueIndexStart;
         return this.__residueProxy.isNucleic();
@@ -151,6 +166,12 @@ class Polymer{
 
     }
 
+    /**
+     * Atom iterator
+     * @param  {function(atom: AtomProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachAtom( callback, selection ){
 
         this.eachResidue( function( rp ){
@@ -259,6 +280,11 @@ class Polymer{
 
     }
 
+    /**
+     * Residue iterator
+     * @param  {function(residue: ResidueProxy)} callback - the callback
+     * @return {undefined}
+     */
     eachResidue( callback ){
 
         var rp = this.structure.getResidueProxy();

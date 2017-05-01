@@ -13,14 +13,6 @@ import Selection from "../selection.js";
 
 
 /**
- * {@link Signal}, dispatched when StructureView.refresh() is called
- * @example
- * structureView.signals.refreshed.add( function(){ ... } );
- * @event StructureView#refreshed
- */
-
-
-/**
  * Get view on structure restricted to the selection
  * @param  {Selection} selection - the selection
  * @return {StructureView} the view on the structure
@@ -94,7 +86,7 @@ class StructureView extends Structure{
 
     /**
      * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
-     * @fires StructureView#refreshed
+     * @emits {Structure.signals.refreshed} when refreshed
      * @return {undefined}
      */
     refresh(){

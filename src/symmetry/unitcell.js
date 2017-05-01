@@ -15,10 +15,12 @@ import {
 import { UnitcellPicker } from "../utils/picker.js";
 
 
+/**
+ * Unitcell class
+ */
 class Unitcell{
 
     /**
-     * Create a unitcell object
      * @param  {Object} params - unitcell parameters
      * @param  {Number} params.a - length a
      * @param  {Number} params.b - length b
@@ -36,41 +38,41 @@ class Unitcell{
         const p = params || {};
 
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.a = p.a || 1;
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.b = p.b || 1;
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.c = p.c || 1;
 
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.alpha = p.alpha || 90;
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.beta = p.beta || 90;
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.gamma = p.gamma || 90;
 
         /**
-         * @member {String}
+         * @type {String}
          */
         this.spacegroup = p.spacegroup || "P 1";
         /**
-         * @member {Matrix4}
+         * @type {Matrix4}
          */
         this.cartToFrac = p.cartToFrac || p.scale;
         /**
-         * @member {Matrix4}
+         * @type {Matrix4}
          */
         this.fracToCart = new Matrix4();
 
@@ -86,7 +88,7 @@ class Unitcell{
         const sinGamma = Math.sin( gammaRad );
 
         /**
-         * @member {Number}
+         * @type {Number}
          */
         this.volume = (
             this.a * this.b * this.c *

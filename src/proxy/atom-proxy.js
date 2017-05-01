@@ -282,7 +282,7 @@ class AtomProxy{
 
     /**
      * Iterate over each bond
-     * @param  {Function} callback - iterator callback function
+     * @param  {function(bond: BondProxy)} callback - iterator callback function
      * @param  {BondProxy} [bp] - optional target bond proxy for use in the callback
      * @return {undefined}
      */
@@ -304,7 +304,7 @@ class AtomProxy{
 
     /**
      * Iterate over each bonded atom
-     * @param  {Function} callback - iterator callback function
+     * @param  {function(atom: AtomProxy)} callback - iterator callback function
      * @param  {AtomProxy} [ap] - optional target atom proxy for use in the callback
      * @return {undefined}
      */
@@ -326,6 +326,10 @@ class AtomProxy{
 
     //
 
+    /**
+     * If atom is part of a backbone
+     * @return {Boolean} flag
+     */
     isBackbone(){
         var backboneIndexList = this.residueType.backboneIndexList;
         if( backboneIndexList.length > 0 ){
@@ -336,6 +340,10 @@ class AtomProxy{
         }
     }
 
+    /**
+     * If atom is part of a polymer
+     * @return {Boolean} flag
+     */
     isPolymer(){
         if( this.structure.entityList.length > 0 ){
             return this.entity.isPolymer();
@@ -349,10 +357,18 @@ class AtomProxy{
         }
     }
 
+    /**
+     * If atom is part of a sidechin
+     * @return {Boolean} flag
+     */
     isSidechain(){
         return this.isPolymer() && !this.isBackbone();
     }
 
+    /**
+     * If atom is part of a coarse-grain group
+     * @return {Boolean} flag
+     */
     isCg(){
         var backboneType = this.residueType.backboneType;
         return (
@@ -362,14 +378,26 @@ class AtomProxy{
         );
     }
 
+    /**
+     * If atom is part of a hetero group
+     * @return {Boolean} flag
+     */
     isHetero(){
         return this.residueType.hetero === 1;
     }
 
+    /**
+     * If atom is part of a protein molecule
+     * @return {Boolean} flag
+     */
     isProtein(){
         return this.residueType.moleculeType === ProteinType;
     }
 
+    /**
+     * If atom is part of a nucleic molecule
+     * @return {Boolean} flag
+     */
     isNucleic(){
         var moleculeType = this.residueType.moleculeType;
         return (
@@ -378,31 +406,60 @@ class AtomProxy{
         );
     }
 
+    /**
+     * If atom is part of a rna
+     * @return {Boolean} flag
+     */
     isRna(){
         return this.residueType.moleculeType === RnaType;
     }
 
+    /**
+     * If atom is part of a dna
+     * @return {Boolean} flag
+     */
     isDna(){
         return this.residueType.moleculeType === DnaType;
     }
 
+    /**
+     * If atom is part of a water molecule
+     * @return {Boolean} flag
+     */
     isWater(){
         return this.residueType.moleculeType === WaterType;
     }
 
+    /**
+     * If atom is part of an ion
+     * @return {Boolean} flag
+     */
     isIon(){
         return this.residueType.moleculeType === IonType;
     }
 
+    /**
+     * If atom is part of a saccharide
+     * @return {Boolean} flag
+     */
     isSaccharide(){
         return this.residueType.moleculeType === SaccharideType;
     }
 
+    /**
+     * If atom is part of a ring
+     * @return {Boolean} flag
+     */
     isRing(){
         var ringFlags = this.residueType.getRings().flags;
         return ringFlags[ this.index - this.residueAtomOffset ] === 1;
     }
 
+    /**
+     * Distance to another atom
+     * @param  {AtomProxy} atom - the other atom
+     * @return {Number} the distance
+     */
     distanceTo( atom ){
         var taa = this.atomStore;
         var aaa = atom.atomStore;
@@ -415,6 +472,11 @@ class AtomProxy{
         return Math.sqrt( distSquared );
     }
 
+    /**
+     * If connected to another atom
+     * @param  {AtomProxy} atom - the other atom
+     * @return {Boolean} flag
+     */
     connectedTo( atom ){
 
         var taa = this.atomStore;
@@ -448,6 +510,12 @@ class AtomProxy{
 
     }
 
+    /**
+     * Set atom position from array
+     * @param  {Array|TypedArray} array - input array
+     * @param  {Integer} [offset] - the offset
+     * @return {AtomProxy} this object
+     */
     positionFromArray( array, offset ){
 
         if( offset === undefined ) offset = 0;
@@ -460,6 +528,12 @@ class AtomProxy{
 
     }
 
+    /**
+     * Write atom position to array
+     * @param  {Array|TypedArray} [array] - target array
+     * @param  {Integer} [offset] - the offset
+     * @return {Array|TypedArray} target array
+     */
     positionToArray( array, offset ){
 
         if( array === undefined ) array = [];
@@ -476,6 +550,11 @@ class AtomProxy{
 
     }
 
+    /**
+     * Write atom position to vector
+     * @param  {Vector3} [v] - target vector
+     * @return {Vector3} target vector
+     */
     positionToVector3( v ){
 
         if( v === undefined ) v = new Vector3();
@@ -488,6 +567,11 @@ class AtomProxy{
 
     }
 
+    /**
+     * Set atom position from vector
+     * @param  {Vector3} v - input vector
+     * @return {AtomProxy} this object
+     */
     positionFromVector3( v ){
 
         this.x = v.x;
@@ -548,6 +632,10 @@ class AtomProxy{
         return name;
     }
 
+    /**
+     * Clone object
+     * @return {AtomProxy} cloned atom
+     */
     clone(){
 
         return new this.constructor( this.structure, this.index );

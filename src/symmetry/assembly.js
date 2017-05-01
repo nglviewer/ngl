@@ -22,11 +22,12 @@ function selectionFromChains( chainList ){
 
 /**
  * Assembly of transformed parts of a {@link Structure}
- * @class
- * @param {String} name - assembly name
  */
 class Assembly{
 
+    /**
+     * @param {String} name - assembly name
+     */
     constructor( name ){
 
         this.name = name || "";

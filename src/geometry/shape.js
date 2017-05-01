@@ -39,21 +39,20 @@ const tmpBox = new Box3();
 
 /**
  * Class for building custom shapes.
+ *
+ * @example
+ * var shape = new NGL.Shape( "shape", { disableImpostor: true } );
+ * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
+ * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
+ * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
+ * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
+ * shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
+ * var shapeComp = stage.addComponentFromObject( shape );
+ * geoComp.addRepresentation( "buffer" );
  */
 class Shape{
 
     /**
-     * Create Shape object.
-     * @example
-     * var shape = new NGL.Shape( "shape", { disableImpostor: true } );
-     * shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
-     * shape.addEllipsoid( [ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ] );
-     * shape.addCylinder( [ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5 );
-     * shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
-     * shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
-     * var shapeComp = stage.addComponentFromObject( shape );
-     * geoComp.addRepresentation( "buffer" );
-     *
      * @param {String} name - name
      * @param {Object} params - parameter object
      * @param {Integer} params.aspectRatio - arrow aspect ratio, used for cylinder radius and cone length

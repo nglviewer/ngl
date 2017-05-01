@@ -76,6 +76,10 @@ class ModelProxy{
         );
     }
 
+    /**
+     * Residue count
+     * @type {Integer}
+     */
     get residueCount () {
         if( this.chainCount === 0 ){
             return 0;
@@ -83,6 +87,11 @@ class ModelProxy{
             return this.residueEnd - this.residueOffset + 1;
         }
     }
+
+    /**
+     * Atom count
+     * @type {Integer}
+     */
     get atomCount () {
         if( this.residueCount === 0 ){
             return 0;
@@ -93,6 +102,12 @@ class ModelProxy{
 
     //
 
+    /**
+     * Atom iterator
+     * @param  {function(atom: AtomProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachAtom( callback, selection ){
 
         this.eachChain( function( cp ){
@@ -101,6 +116,12 @@ class ModelProxy{
 
     }
 
+    /**
+     * Residue iterator
+     * @param  {function(residue: ResidueProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachResidue( callback, selection ){
 
         this.eachChain( function( cp ){
@@ -109,6 +130,12 @@ class ModelProxy{
 
     }
 
+    /**
+     * Polymer iterator
+     * @param  {function(polymer: Polymer)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachPolymer( callback, selection ){
 
         if( selection && selection.chainOnlyTest ){
@@ -131,6 +158,12 @@ class ModelProxy{
 
     }
 
+    /**
+     * Chain iterator
+     * @param  {function(chain: ChainProxy)} callback - the callback
+     * @param  {Selection} [selection] - the selection
+     * @return {undefined}
+     */
     eachChain( callback, selection ){
 
         var i;
@@ -170,6 +203,10 @@ class ModelProxy{
         return name;
     }
 
+    /**
+     * Clone object
+     * @return {ModelProxy} cloned model
+     */
     clone(){
 
         return new this.constructor( this.structure, this.index );

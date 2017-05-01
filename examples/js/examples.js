@@ -721,6 +721,7 @@ NGL.ExampleRegistry.addDict( {
         shape.addBuffer( sphereBuffer );
         var shapeComp = stage.addComponentFromObject( shape );
         shapeComp.addRepresentation( "buffer" );
+        shapeComp.autoView();
 
     },
 

@@ -9,6 +9,20 @@
  * @external {Signal} https://millermedeiros.github.io/js-signals/docs/symbols/Signal.html
  */
 
+
+/**
+ * @external {TypedArray} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+ */
+
+/**
+ * @external {Integer} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Integer
+ */
+
+/**
+ * @external {Float} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float
+ */
+
+
 /**
  * @external {Matrix3} https://threejs.org/docs/#api/math/Matrix3
  */

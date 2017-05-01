@@ -14,7 +14,7 @@ import { defaults } from "../utils.js";
 
 /**
  * @example
- * mouseObserver.signals.scroll.add( function( delta ){ ... } );
+ * mouseObserver.signals.scrolled.add( function( delta ){ ... } );
  *
  * @typedef {Object} MouseSignals
  * @property {Signal<Integer, Integer>} moved - on move: deltaX, deltaY
@@ -35,6 +35,26 @@ function getTouchDistance( event ){
 
 /**
  * Mouse observer
+ *
+ * @example
+ * // listen to mouse moving (and touch-moving) events
+ * mouseObserver.moved.moved.add( function( deltaX, deltaY ){ ... } );
+ *
+ * @example
+ * // listen to scrolling (and pinching) events
+ * mouseObserver.signals.scrolled.add( function( delta ){ ... } );
+ *
+ * @example
+ * // listen to dragging (and touch-dragging) events
+ * mouseObserver.signals.dragged.add( function( deltaX, deltaY ){ ... } );
+ *
+ * @example
+ * // listen to clicking (and touch-clicking) events
+ * mouseObserver.signals.clicked.add( function(){ ... } );
+ *
+ * @example
+ * // listen to hovering events
+ * mouseObserver.signals.hovered.add( function(){ ... } );
  */
 class MouseObserver{
 

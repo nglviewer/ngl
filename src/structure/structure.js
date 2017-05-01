@@ -50,49 +50,6 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
- * Bond iterator callback
- * @callback bondCallback
- * @param {BondProxy} bondProxy - current bond proxy
- */
-
-/**
- * Atom iterator callback
- * @callback atomCallback
- * @param {AtomProxy} atomProxy - current atom proxy
- */
-
-/**
- * Residue iterator callback
- * @callback residueCallback
- * @param {ResidueProxy} residueProxy - current residue proxy
- */
-
-/**
- * Residue-list iterator callback
- * @callback residueListCallback
- * @param {ResidueProxy[]} residueProxyList - list of current residue proxies
- */
-
-/**
- * Polymer iterator callback
- * @callback polymerCallback
- * @param {Polymer} polymer - current polymer object
- */
-
-/**
- * Chain iterator callback
- * @callback chainCallback
- * @param {ChainProxy} chainProxy - current chain proxy
- */
-
-/**
- * Model iterator callback
- * @callback modelCallback
- * @param {ModelProxy} modelProxy - current model proxy
- */
-
-
-/**
  * Structure
  */
 class Structure{
@@ -103,6 +60,9 @@ class Structure{
      */
     constructor( name, path ){
 
+        /**
+         * @type {{refreshed: Signal}}
+         */
         this.signals = {
             refreshed: new Signal(),
         };
@@ -492,7 +452,7 @@ class Structure{
 
     /**
      * Entity iterator
-     * @param  {entityCallback} callback - the callback
+     * @param  {function(entity: Entity)} callback - the callback
      * @param  {EntityType} type - entity type
      * @return {undefined}
      */
@@ -508,7 +468,7 @@ class Structure{
 
     /**
      * Bond iterator
-     * @param  {bondCallback} callback - the callback
+     * @param  {function(bond: BondProxy)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -542,7 +502,7 @@ class Structure{
 
     /**
      * Atom iterator
-     * @param  {atomCallback} callback - the callback
+     * @param  {function(atom: AtomProxy)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -565,7 +525,7 @@ class Structure{
 
     /**
      * Residue iterator
-     * @param  {residueCallback} callback - the callback
+     * @param  {function(residue: ResidueProxy)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -603,7 +563,7 @@ class Structure{
     /**
      * Multi-residue iterator
      * @param {Integer} n - window size
-     * @param  {residueListCallback} callback - the callback
+     * @param  {function(residueList: ResidueProxy[])} callback - the callback
      * @return {undefined}
      */
     eachResidueN( n, callback ){
@@ -629,7 +589,7 @@ class Structure{
 
     /**
      * Polymer iterator
-     * @param  {polymerCallback} callback - the callback
+     * @param  {function(polymer: Polymer)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -657,7 +617,7 @@ class Structure{
 
     /**
      * Chain iterator
-     * @param  {chainCallback} callback - the callback
+     * @param  {function(chain: ChainProxy)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -680,7 +640,7 @@ class Structure{
 
     /**
      * Model iterator
-     * @param  {modelCallback} callback - the callback
+     * @param  {function(model: ModelProxy)} callback - the callback
      * @param  {Selection} [selection] - the selection
      * @return {undefined}
      */
@@ -1000,6 +960,12 @@ class Structure{
 
     //
 
+    /**
+     * Gets the bounding box of the (selected) structure atoms
+     * @param  {Selection} [selection] - the selection
+     * @param  {Box3} [box] - optional target
+     * @return {Vector3} the box
+     */
     getBoundingBox( selection, box ){
 
         if( Debug ) Log.time( "getBoundingBox" );
@@ -1039,6 +1005,11 @@ class Structure{
 
     }
 
+    /**
+     * Gets the principal axes of the (selected) structure atoms
+     * @param  {Selection} [selection] - the selection
+     * @return {PrincipalAxes} the principal axes
+     */
     getPrincipalAxes( selection ){
 
         if( Debug ) Log.time( "getPrincipalAxes" );
@@ -1060,6 +1031,11 @@ class Structure{
 
     }
 
+    /**
+     * Gets the center of the (selected) structure atoms
+     * @param  {Selection} [selection] - the selection
+     * @return {Vector3} the center
+     */
     atomCenter( selection ){
 
         if( selection ){
