@@ -48,7 +48,7 @@
     "babel-register": "^6.24.1",
     "babelrc-rollup": "^3.0.0",
     "chai": "^3.5.0",
-    "download": "^5.0.3",
+    "download": "^6.0.0",
     "esdoc": "^0.5.2",
     "eslint": "^3.19.0",
     "file-api": "^0.10.4",
