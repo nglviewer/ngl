@@ -15,11 +15,11 @@
  */
 
 /**
- * @external {Integer} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Integer
+ * @external {Integer} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
  */
 
 /**
- * @external {Float} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float
+ * @external {Float} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
  */
 
 
