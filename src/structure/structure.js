@@ -17,6 +17,7 @@ import RadiusFactory from "../utils/radius-factory.js";
 import { Matrix } from "../math/matrix-utils.js";
 import PrincipalAxes from "../math/principal-axes.js"
 import SpatialHash from "../geometry/spatial-hash.js";
+import FilteredVolume from "../surface/filtered-volume.js";
 // import StructureView from "./structure-view.js";
 
 import BondHash from "../store/bond-hash.js";
@@ -435,11 +436,11 @@ Structure.prototype = {
 
     getAtomSetWithinVolume: function( volume, radius, minValue, maxValue, outside ){
 
-        volume.filterData( minValue, maxValue, outside );
+        var fv = new FilteredVolume( volume, minValue, maxValue, outside );
 
-        var dp = volume.dataPosition;
+        var dp = fv.getDataPosition();
         var n = dp.length;
-        var r = volume.matrix.getMaxScaleOnAxis();
+        var r = fv.matrix.getMaxScaleOnAxis();
         var as = this.getAtomSet( false );
 
         for( var i = 0; i < n; i+=3 ){
