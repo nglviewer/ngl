@@ -6,7 +6,10 @@ uniform float yOffset;
 uniform float zOffset;
 uniform bool ortho;
 
-varying vec3 vViewPosition;
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+    varying vec3 vViewPosition;
+#endif
+
 varying vec2 texCoord;
 
 #if defined( RADIUS_CLIP )
@@ -57,7 +60,9 @@ void main(void){
 
     gl_Position = projectionMatrix * cameraCornerPos;
 
-    vViewPosition = -cameraCornerPos.xyz;
+    #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+        vViewPosition = -cameraCornerPos.xyz;
+    #endif
 
     #if defined( RADIUS_CLIP )
         vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;
