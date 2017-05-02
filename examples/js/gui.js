@@ -373,6 +373,8 @@ NGL.getPickingMessage = function( d, prefix ){
             msg = "atom: " +
                 d.atom.qualifiedName() +
                 " (" + d.atom.structure.name + ")";
+        }else if( d.axes ){
+            msg = "axes";
         }else if( d.bond ){
             msg = "bond: " +
                 d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +

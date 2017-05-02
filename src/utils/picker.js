@@ -167,6 +167,29 @@ class AtomPicker extends Picker{
 }
 
 
+class AxesPicker extends Picker{
+
+    constructor( axes ){
+        super();
+        this.axes = axes;
+    }
+
+    get type (){ return "axes"; }
+    get data (){ return this.axes; }
+
+    getObject( /*pid*/ ){
+        return {
+            axes: this.axes
+        };
+    }
+
+    _getPosition( /*pid*/ ){
+        return this.axes.center.clone();
+    }
+
+}
+
+
 class BondPicker extends Picker{
 
     constructor( array, structure, bondStore ){
@@ -430,6 +453,7 @@ export {
     ShapePicker,
     ArrowPicker,
     AtomPicker,
+    AxesPicker,
     BondPicker,
     ConePicker,
     ContactPicker,

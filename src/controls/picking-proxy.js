@@ -142,6 +142,10 @@ class PickingProxy{
      */
     get atom (){ return this._objectIfType( "atom" ); }
     /**
+     * @member {Object}
+     */
+    get axes (){ return this._objectIfType( "axes" ); }
+    /**
      * @member {BondProxy}
      */
     get bond (){ return this._objectIfType( "bond" ); }

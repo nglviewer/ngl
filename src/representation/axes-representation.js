@@ -9,6 +9,7 @@ import { Color, Vector3 } from "../../lib/three.es6.js";
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { AxesPicker } from "../utils/picker.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
@@ -194,18 +195,22 @@ class AxesRepresentation extends StructureRepresentation{
 
         }
 
+        const picker = new AxesPicker( pa );
+
         return {
             vertex: {
                 position: vertexPosition,
                 color: vertexColor,
-                radius: vertexRadius
+                radius: vertexRadius,
+                picking: picker
             },
             edge: {
                 position1: edgePosition1,
                 position2: edgePosition2,
                 color: edgeColor,
                 color2: edgeColor,
-                radius: edgeRadius
+                radius: edgeRadius,
+                picking: picker
             }
         };
 
