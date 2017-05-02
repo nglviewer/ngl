@@ -316,7 +316,8 @@ class Buffer{
 
         }
 
-        const index = this.geometry.index;
+        const geometry = this.geometry;
+        const index = geometry.index;
 
         if( !this.wireframe ){
 
@@ -327,8 +328,8 @@ class Buffer{
 
             const array = index.array;
             let n = array.length;
-            if( this.geometry.drawRange.count !== Infinity ){
-                n = this.geometry.drawRange.count;
+            if( geometry.drawRange.count !== Infinity ){
+                n = geometry.drawRange.count;
             }
             let wireframeIndex;
             if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
