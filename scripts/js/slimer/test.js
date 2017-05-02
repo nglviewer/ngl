@@ -6,7 +6,7 @@ var NGL = require( "../../../build/js/ngl.dev.js" );
 //
 
 var t0 = performance.now();
-var data = fs.read( "data/1crn.pdb" );
+var data = fs.read( "../data/1crn.pdb" );
 var blob = new Blob( [ data ], { type: 'text/plain'} );
 
 NGL.autoLoad( blob, { ext: "pdb" } ).then( function( obj ){
