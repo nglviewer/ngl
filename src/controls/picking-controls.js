@@ -34,7 +34,11 @@ class PickingControls{
             pickingData.picker.type !== "ignore" &&
             pickingData.pid !== undefined
         ){
-            return new PickingProxy( pickingData, this.stage );
+            if( pickingData.pid < pickingData.picker.array.length ){
+                return new PickingProxy( pickingData, this.stage );
+            }else{
+                console.error( "pid > picker.array.length" );
+            }
         }
 
     }
