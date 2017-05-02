@@ -370,6 +370,34 @@ class Buffer{
             this.wireframeIndexCount = j;
             this.wireframeIndexVersion = this.indexVersion;
 
+        }else{
+
+            const n = geometry.attributes.position.count;
+
+            let wireframeIndex;
+            if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
+                wireframeIndex = this.wireframeIndex;
+            }else{
+                wireframeIndex = getUintArray( n * 2, n );
+            }
+
+            for( let i = 0, j = 0; i < n; i += 3 ){
+
+                wireframeIndex[ j + 0 ] = i;
+                wireframeIndex[ j + 1 ] = i + 1;
+                wireframeIndex[ j + 2 ] = i + 1;
+                wireframeIndex[ j + 3 ] = i + 2;
+                wireframeIndex[ j + 4 ] = i + 2;
+                wireframeIndex[ j + 5 ] = i;
+
+                j += 6;
+
+            }
+
+            this.wireframeIndex = wireframeIndex;
+            this.wireframeIndexCount = n * 2;
+            this.wireframeIndexVersion = this.indexVersion;
+
         }
 
     }
