@@ -30,6 +30,9 @@ class MouseBehavior{
             const sign = Math.sign( delta );
             const step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
             this.stage.setFocus( focus + step );
+        }else if( this.mouse.ctrlKey ){
+            const sp = this.stage.getParameters();
+            this.stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
         }else{
             this.controls.zoom( delta );
         }
