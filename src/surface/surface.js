@@ -8,6 +8,7 @@
 import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from "../../lib/three.es6.js";
 
 import { Debug, Log, ColormakerRegistry } from "../globals.js";
+import { getUintArray } from "../utils.js";
 import { AtomPicker, SurfacePicker } from "../utils/picker.js";
 import { uniformArray, uniformArray3, serialArray } from "../math/array-utils.js";
 import Selection from "../selection.js";
@@ -260,8 +261,7 @@ Surface.prototype = {
 
             }
 
-            var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
-            return new TypedArray( filteredIndex );
+            return getUintArray( filteredIndex, this.position.length / 3 );
 
         }else{
 

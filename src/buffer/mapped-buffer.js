@@ -7,6 +7,7 @@
 
 import Buffer from "./buffer.js";
 
+import { getUintArray } from "../utils.js";
 import { calculateCenterArray, serialArray } from "../math/array-utils.js";
 
 
@@ -21,8 +22,7 @@ class MappedBuffer extends Buffer{
 
         super( data, params );
 
-        var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
-        this.index = new TypedArray( this.indexSize );
+        this.index = getUintArray( this.indexSize, this.attributeSize );
         this.makeIndex();
         this.initIndex( this.index, 1 );
 

@@ -7,7 +7,7 @@
 
 import { Vector3, Box3 } from "../../lib/three.es6.js";
 
-import { defaults, ensureFloat32Array } from "../utils.js";
+import { defaults, ensureFloat32Array, getUintArray } from "../utils.js";
 import {
     ArrowPicker, ConePicker, CylinderPicker,
     EllipsoidPicker, MeshPicker, SpherePicker
@@ -156,8 +156,7 @@ class Shape{
         position = ensureFloat32Array( position );
         color = ensureFloat32Array( color );
         if( Array.isArray( index ) ){
-            const ctor = position.length > 65535 ? Uint32Array : Uint16Array;
-            index = new ctor( index );
+            index = getUintArray( index, position.length );
         }
         if( normal ){
             normal = ensureFloat32Array( normal );

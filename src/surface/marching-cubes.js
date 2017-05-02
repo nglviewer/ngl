@@ -5,6 +5,9 @@
  */
 
 
+import { getUintArray } from "../utils.js";
+
+
 function getEdgeTable(){
     return new Uint32Array( [
         0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -387,7 +390,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         }
 
         var vIndexLength = contour ? n * 3 : n;
-      
+
         if( !vertexIndex || vertexIndex.length != vIndexLength ){
             // In contour mode we want all drawn edges parallel to one axis,
             // so interpolation must be calculated in each dimension (rather
@@ -418,11 +421,10 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         indexArray.length = icount;
         if( atomindex ) atomindexArray.length = count;
 
-        var TypedArray = positionArray.length / 3 > 65535 ? Uint32Array : Uint16Array;
         return {
             position: new Float32Array( positionArray ),
             normal: noNormals ? undefined : new Float32Array( normalArray ),
-            index: new TypedArray( indexArray ),
+            index: getUintArray( indexArray, positionArray.length / 3 ),
             atomindex: atomindex ? new Int32Array( atomindexArray ) : undefined,
             contour: contour
         };
@@ -984,7 +986,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     }
 
 }
-MarchingCubes.__deps = [ getEdgeTable, getTriTable, getAllowedContours ];
+MarchingCubes.__deps = [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ];
 
 
 export default MarchingCubes;

@@ -551,6 +551,12 @@ function getTypedArray( arrayType, arraySize ){
 }
 
 
+function getUintArray( sizeOrArray, maxUnit ){
+    const TypedArray = maxUnit > 65535 ? Uint32Array : Uint16Array;
+    return new TypedArray( sizeOrArray );
+}
+
+
 function _ensureClassFromArg( arg, constructor ){
     return arg instanceof constructor ? arg : new constructor( arg );
 }
@@ -612,6 +618,7 @@ export {
     uint8ToString,
     uint8ToLines,
     getTypedArray,
+    getUintArray,
     ensureVector2,
     ensureVector3,
     ensureMatrix4,

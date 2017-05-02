@@ -7,6 +7,7 @@
 
 import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
 
+import { getUintArray } from "../utils.js";
 import { serialBlockArray } from "../math/array-utils.js";
 import { applyMatrix3toVector3array, applyMatrix4toVector3array } from "../math/vector-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
@@ -52,8 +53,7 @@ class GeometryBuffer extends MeshBuffer{
 
         let meshIndex;
         if( geoIndex ){
-            const TypedArray = size > 65535 ? Uint32Array : Uint16Array;
-            meshIndex = new TypedArray( n * geoIndex.length );
+            meshIndex = getUintArray( n * geoIndex.length, size );
         }
 
         super( {

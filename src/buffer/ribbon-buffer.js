@@ -7,6 +7,7 @@
 
 import "../shader/Ribbon.vert";
 
+import { getUintArray } from "../utils.js";
 import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
@@ -43,9 +44,7 @@ class RibbonBuffer extends MeshBuffer{
         var meshPosition = new Float32Array( x );
         var meshColor = new Float32Array( x );
         var meshNormal = new Float32Array( x );
-
-        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
-        var meshIndex = new TypedArray( x );
+        var meshIndex = getUintArray( x, x / 3 );
 
         super( {
             position: meshPosition,

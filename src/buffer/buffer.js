@@ -15,7 +15,7 @@ import {
 } from "../../lib/three.es6.js";
 
 import { Log } from "../globals.js";
-import { defaults, getTypedArray } from "../utils.js";
+import { defaults, getTypedArray, getUintArray } from "../utils.js";
 import { getShader } from "../shader/shader-utils.js";
 
 
@@ -335,9 +335,8 @@ class Buffer{
             if( this.wireframeIndex && this.wireframeIndex.length > n * 2 ){
                 wireframeIndex = this.wireframeIndex;
             }else{
-                const count = this.geometry.attributes.position.count;
-                const TypedArray = count > 65535 ? Uint32Array : Uint16Array;
-                wireframeIndex = new TypedArray( n * 2 );
+                const count = geometry.attributes.position.count;
+                wireframeIndex = getUintArray( n * 2, count );
             }
 
             let j = 0;
