@@ -54,3 +54,7 @@
 /**
  * @external {Color} https://threejs.org/docs/#api/math/Color
  */
+
+/**
+ * @external {BufferGeometry} https://threejs.org/docs/#api/core/BufferGeometry
+ */

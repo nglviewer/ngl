@@ -5,7 +5,7 @@
  */
 
 
-import { IcosahedronGeometry, Vector3 } from "../../lib/three.es6.js";
+import { IcosahedronBufferGeometry, Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
@@ -36,7 +36,7 @@ class EllipsoidGeometryBuffer extends GeometryBuffer{
 
         const p = params || {};
         const detail = defaults( p.sphereDetail, 2 );
-        const geo = new IcosahedronGeometry( 1, detail );
+        const geo = new IcosahedronBufferGeometry( 1, detail );
 
         super( data, p, geo );
 

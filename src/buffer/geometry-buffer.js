@@ -9,7 +9,6 @@ import { Matrix4, Matrix3 } from "../../lib/three.es6.js";
 
 import { serialBlockArray } from "../math/array-utils.js";
 import { applyMatrix3toVector3array, applyMatrix4toVector3array } from "../math/vector-utils.js";
-import { positionFromGeometry, normalFromGeometry, indexFromGeometry } from "./buffer-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
 
@@ -31,30 +30,19 @@ class GeometryBuffer extends MeshBuffer{
      * @param {Float32Array} data.radius - radii
      * @param {Picker} [data.picking] - picking ids
      * @param {BufferParameters} [params] - parameters object
-     * @param {Geometry|BufferGeometry} geo - geometry object
+     * @param {BufferGeometry} geo - geometry object
      */
     constructor( data, params, geo ){
 
         const d = data || {};
         const p = params || {};
 
-        const n = d.position.length / 3;
-        let m, o;
-        let geoPosition, geoNormal, geoIndex;
+        const geoPosition = geo.attributes.position.array;
+        const geoNormal = geo.attributes.normal.array;
+        const geoIndex = geo.index ? geo.index.array : undefined;
 
-        if( geo.vertices && geo.faces ){
-            geoPosition = positionFromGeometry( geo );
-            geoNormal = normalFromGeometry( geo );
-            geoIndex = indexFromGeometry( geo );
-            m = geo.vertices.length;
-            o = geo.faces.length;
-        }else{
-            geoPosition = geo.attributes.position.array;
-            geoNormal = geo.attributes.normal.array;
-            geoIndex = geo.index.array;
-            m = geoPosition.length / 3;
-            o = geoIndex.length / 3;
-        }
+        const n = d.position.length / 3;
+        const m = geoPosition.length / 3;
 
         const size = n * m;
 
@@ -62,8 +50,11 @@ class GeometryBuffer extends MeshBuffer{
         const meshNormal = new Float32Array( size * 3 );
         const meshColor = new Float32Array( size * 3 );
 
-        const TypedArray = size > 65535 ? Uint32Array : Uint16Array;
-        const meshIndex = new TypedArray( n * o * 3 );
+        let meshIndex;
+        if( geoIndex ){
+            const TypedArray = size > 65535 ? Uint32Array : Uint16Array;
+            meshIndex = new TypedArray( n * geoIndex.length );
+        }
 
         super( {
             position: meshPosition,
@@ -82,7 +73,6 @@ class GeometryBuffer extends MeshBuffer{
 
         this.positionCount = n;
         this.geoPositionCount = m;
-        this.geoFacesCount = o;
 
         this.transformedGeoPosition = new Float32Array( m * 3 );
         this.transformedGeoNormal = new Float32Array( m * 3 );
@@ -189,9 +179,11 @@ class GeometryBuffer extends MeshBuffer{
         const geoIndex = this.geoIndex;
         const meshIndex = this.meshIndex;
 
+        if( !geoIndex ) return;
+
         const n = this.positionCount;
         const m = this.geoPositionCount;
-        const o = this.geoFacesCount;
+        const o = geoIndex.length / 3;
 
         const o3 = o * 3;
 
