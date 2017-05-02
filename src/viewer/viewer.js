@@ -9,7 +9,7 @@ import {
     PerspectiveCamera, OrthographicCamera,
     Box3, Vector3, Matrix4, Color,
     WebGLRenderer, WebGLRenderTarget,
-    NearestFilter, AdditiveBlending,
+    NearestFilter, LinearFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
     ShaderMaterial,
     PlaneGeometry,
@@ -321,13 +321,13 @@ function Viewer( idOrElement ){
         );
         pickingTarget.texture.generateMipmaps = false;
 
-        // msaa textures
+        // ssaa textures
 
         sampleTarget = new WebGLRenderTarget(
             dprWidth, dprHeight,
             {
-                minFilter: NearestFilter,
-                magFilter: NearestFilter,
+                minFilter: LinearFilter,
+                magFilter: LinearFilter,
                 format: RGBAFormat,
             }
         );
@@ -1040,14 +1040,14 @@ function Viewer( idOrElement ){
 
     }
 
-    function __renderMultiSample(){
+    function __renderSuperSample(){
 
-        // based on the Manual Multi-Sample Anti-Aliasing Render Pass
+        // based on the Supersample Anti-Aliasing Render Pass
         // contributed to three.js by bhouston / http://clara.io/
         //
-        // This manual approach to MSAA re-renders the scene ones for
+        // This manual approach to SSAA re-renders the scene ones for
         // each sample with camera jitter and accumulates the results.
-        // References: https://en.wikipedia.org/wiki/Multisample_anti-aliasing
+        // References: https://en.wikipedia.org/wiki/Supersampling
 
         var offsetList = JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
 
@@ -1117,7 +1117,7 @@ function Viewer( idOrElement ){
         if( picking ){
             if( !lastRenderedPicking ) __renderPickingGroup();
         }else if( sampleLevel > 0 ){
-            __renderMultiSample();
+            __renderSuperSample();
         }else{
             __renderModelGroup();
         }
