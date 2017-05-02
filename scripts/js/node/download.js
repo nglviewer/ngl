@@ -34,7 +34,7 @@ function downloadIds( idList, options ){
     var format = options.format;
     var gz = options.gz;
     var pool = new http.Agent();
-    pool.maxSockets = 5;
+    pool.maxSockets = 1;
     if( !fs.existsSync( outPath ) ){
         fs.mkdirSync( outPath );
     }
@@ -50,13 +50,13 @@ function downloadIds( idList, options ){
         }
         return ds;
     } ) ).catch( function( e ){
-        console.error( e )
+        console.error( e, idList )
     } );
 }
 
 function downloadIdsChunked( idList, options ){
     var t0 = performance.now();
-    doChunked( idList, downloadIds, options, 10 ).then( function(){
+    doChunked( idList, downloadIds, options, 1 ).then( function(){
         var t1 = performance.now();
         console.log( t1 - t0 );
     } );
