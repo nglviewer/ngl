@@ -147,7 +147,7 @@ Surface.prototype = {
         var n = this.size;
         var i, array, colormaker;
 
-        if( p.scheme === "volume" ){
+        if( p.scheme === "volume" || p.scheme === "electrostatic" ){
 
             var v = new Vector3();
             var pos = this.position;

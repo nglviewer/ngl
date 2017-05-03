@@ -1572,7 +1572,10 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "surface", {
                 sele: "not hetero",
                 surfaceType: "av",
-                colorScheme: "bfactor",
+                colorScheme: "electrostatic",
+                colorScale: "rwb",
+                colorDomain: [-0.5, 0, 0.5],
+                userWorker: true,
                 contour: true,
                 filterSele: "10 OR 11 OR 12 OR 13 OR 14 OR 18 OR 31 OR 33 OR "
                             + "64 OR 80 OR 81 OR 82 OR 83 OR 84 OR 85 OR 86 OR "
