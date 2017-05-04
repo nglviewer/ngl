@@ -58,7 +58,7 @@ function autoLoad( file, params ){
     var loaderClass;
     if( ParserRegistry.names.includes( p.ext ) ){
         loaderClass = ParserLoader;
-    }else if( p.ext === "ngl" ){
+    }else if( [ "ngl", "js" ].includes( p.ext ) ){
         loaderClass = ScriptLoader;
     }else if( p.ext === "plugin" ){
         loaderClass = PluginLoader;
