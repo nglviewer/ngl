@@ -45,7 +45,7 @@ class Picker{
 
     _applyTransformations( vector, instance/*, component*/ ){
         if( instance ){
-            vector.applyProjection( instance.matrix );
+            vector.applyMatrix4( instance.matrix );
         }
         // if( component ){
         //     // apply component-wise matrix when available in the future
