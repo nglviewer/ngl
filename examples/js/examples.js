@@ -33,7 +33,6 @@ NGL.ExampleRegistry = {
     load: function( name, stage ){
         var fn = this.get( name );
         if( typeof fn === "function" ){
-            console.log( "CYDEUNFDIDNFIN" )
             fn( stage );
         }else{
             console.warn( "NGL.ExampleRegistry.load not available:", name );
