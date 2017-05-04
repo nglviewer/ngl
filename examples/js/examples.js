@@ -33,6 +33,7 @@ NGL.ExampleRegistry = {
     load: function( name, stage ){
         var fn = this.get( name );
         if( typeof fn === "function" ){
+            console.log( "CYDEUNFDIDNFIN" )
             fn( stage );
         }else{
             console.warn( "NGL.ExampleRegistry.load not available:", name );
@@ -132,7 +133,7 @@ NGL.ExampleRegistry.addDict( {
         } ).then( function( o ){
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
-            o.autoView();
+            stage.autoView();
             // o.addTrajectory();
         } );
 
@@ -142,7 +143,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
             o.autoView();
-            o.addTrajectory();
+            stage.addTrajectory();
         } );
 
     },
@@ -153,7 +154,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
@@ -161,7 +162,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
