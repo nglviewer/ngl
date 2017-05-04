@@ -16,7 +16,7 @@ function renderExample( name ){
         page.onCallback = function( cmd ){
             switch( cmd ){
                 case "render":
-                    page.render( "../build/test/" + name + ".png" );
+                    page.render( "../build/test/img/" + name + ".png" );
                     page.close();
                     console.log( name, "FINISH" );
                     resolve();
@@ -25,6 +25,7 @@ function renderExample( name ){
         }
         page.onLoadFinished = function(){
             page.evaluate( function(){
+                stage.handleResize();
                 var t0 = performance.now();
                 stage.tasks.signals.countChanged.add( function(){
                     t0 = performance.now();
@@ -40,10 +41,34 @@ function renderExample( name ){
             } );
         };
 
-        page.viewportSize = { width: 1024, height: 768 };
+        page.viewportSize = { width: 512, height: 384 };
         page.open( exampleUrl + "./scripts/" + name + ".js" );
     });
 }
+
+
+function buildExamplePage( exampleNames, exampleUrl ){
+    var pageLines = [];
+    exampleNames.forEach( name => {
+        pageLines.push(
+            "<a href='" + exampleUrl + "./scripts/" + name + ".js' >" +
+                "<img src='./img/" + name + ".png' />" +
+            "</a>"
+        );
+    } );
+    return (
+        "<!DOCTYPE html>\n" +
+        "<html lang='en'>\n" +
+        "<head>\n" +
+            "<title>NGL - results</title>" +
+        "</head>\n" +
+        "<body>\n" +
+            pageLines.join( "\n" ) + "\n" +
+        "</body>\n" +
+        "</html>"
+    );
+}
+
 
 function getExampleNames( dir ){
     return fs.list( dir ).map( name => {
@@ -60,5 +85,9 @@ exampleNames.reduce( function( acc, name ){
         return renderExample( name );
     } );
 }, Promise.resolve( [] ) ).then( function(){
+    fs.write(
+        "../build/test/results.html",
+        buildExamplePage( exampleNames, exampleUrl )
+    );
     slimer.exit();
 } );
