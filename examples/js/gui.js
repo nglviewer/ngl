@@ -1688,6 +1688,12 @@ NGL.StructureComponentWidget = function( component, stage ){
         componentPanel.setMenuDisplay( "none" );
     } );
 
+    // Position
+
+    var position = new UI.Vector3().onChange( function(){
+        component.setPosition( position.getValue() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1705,7 +1711,8 @@ NGL.StructureComponentWidget = function( component, stage ){
         )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Principal axes", alignAxes )
-        .addMenuEntry( "Validation", vali );
+        .addMenuEntry( "Validation", vali )
+        .addMenuEntry( "Position", position );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory

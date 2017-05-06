@@ -6,6 +6,7 @@
  */
 
 
+import { Matrix4 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
@@ -76,10 +77,19 @@ class Component{
         this.viewer = stage.viewer;
 
         this.reprList = [];
+        this.matrix = new Matrix4();
 
     }
 
     get type(){ return "component"; }
+
+    setPosition( v ){
+        this.matrix.setPosition( v );
+        this.reprList.forEach( repr => {
+            repr.setParameters( { matrix: this.matrix } );
+        } );
+        this.stage.viewer.updateBoundingBox();
+    }
 
     /**
      * Add a new representation to the component

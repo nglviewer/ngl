@@ -6,7 +6,7 @@
 
 
 import {
-    Color, Vector3,
+    Color, Vector3, Matrix4,
     FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
     BufferGeometry, BufferAttribute,
     UniformsUtils, UniformsLib,
@@ -37,6 +37,7 @@ import { getShader } from "../shader/shader-utils.js";
  * @property {Float} metalness - how metallic the material is, between 0 and 1
  * @property {Color} diffuse - diffuse color for lighting
  * @property {Boolean} forceTransparent - force the material to allow transparency
+ * @property {Matrix4} matrix - additional transformation matrix
  */
 
 
@@ -55,6 +56,14 @@ function getThreeSide( side ){
 const itemSize = {
     "f": 1, "v2": 2, "v3": 3, "c": 3
 };
+
+
+function setObjectMatrix( object, matrix ){
+    object.matrix.copy( matrix );
+    object.matrix.decompose( object.position, object.quaternion, object.scale );
+    object.matrixWorldNeedsUpdate = true;
+    object.updateMatrixWorld( true );
+}
 
 
 /**
@@ -101,18 +110,18 @@ class Buffer{
         this.uniforms = UniformsUtils.merge( [
             UniformsLib.common,
             {
-                "fogColor": { value: null },
-                "fogNear": { value: 0.0 },
-                "fogFar": { value: 0.0 },
-                "opacity": { value: this.opacity },
-                "nearClip": { value: 0.0 },
-                "clipRadius": { value: this.clipRadius },
-                "clipCenter": { value: this.clipCenter }
+                fogColor: { value: null },
+                fogNear: { value: 0.0 },
+                fogFar: { value: 0.0 },
+                opacity: { value: this.opacity },
+                nearClip: { value: 0.0 },
+                clipRadius: { value: this.clipRadius },
+                clipCenter: { value: this.clipCenter }
             },
             {
-                "emissive" : { value: new Color( 0x000000 ) },
-                "roughness": { value: this.roughness },
-                "metalness": { value: this.metalness }
+                emissive: { value: new Color( 0x000000 ) },
+                roughness: { value: this.roughness },
+                metalness: { value: this.metalness }
             },
             UniformsLib.ambient,
             UniformsLib.lights
@@ -121,13 +130,16 @@ class Buffer{
         this.uniforms.diffuse.value.set( this.diffuse );
 
         this.pickingUniforms = {
-            "nearClip": { value: 0.0 },
-            "objectId": { value: 0 }
+            nearClip: { value: 0.0 },
+            objectId: { value: 0 }
         };
 
         this.group = new Group();
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
+
+        // requires Group objects to be present
+        this.matrix = defaults( p.matrix, new Matrix4 );
 
         //
 
@@ -135,9 +147,9 @@ class Buffer{
         this._positionDataSize = position ? position.length / 3 : 0;
 
         this.addAttributes( {
-            "position": { type: "v3", value: d.position },
-            "color": { type: "c", value: d.color },
-            "primitiveId": { type: "f", value: d.primitiveId }
+            position: { type: "v3", value: d.position },
+            color: { type: "c", value: d.color },
+            primitiveId: { type: "f", value: d.primitiveId }
         } );
 
         if( d.index ){
@@ -165,9 +177,19 @@ class Buffer{
             wireframe: { updateVisibility: true },
             roughness: { uniform: true },
             metalness: { uniform: true },
-            diffuse: { uniform: true }
+            diffuse: { uniform: true },
+            matrix: {}
         }
 
+    }
+
+    set matrix ( m ){
+        setObjectMatrix( this.group, m );
+        setObjectMatrix( this.wireframeGroup, m );
+        setObjectMatrix( this.pickingGroup, m );
+    }
+    get matrix (){
+        return this.group.matrix.clone();
     }
 
     get transparent () {

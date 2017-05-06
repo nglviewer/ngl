@@ -551,9 +551,9 @@ function Viewer( idOrElement ){
         }
 
         if( instance ){
-            updateBoundingBox( buffer.geometry, instance.matrix );
+            updateBoundingBox( buffer.geometry, buffer.group.matrix, instance.matrix );
         }else{
-            updateBoundingBox( buffer.geometry );
+            updateBoundingBox( buffer.geometry, buffer.group.matrix );
         }
 
         // Log.timeEnd( "Viewer.addBuffer" );
@@ -578,20 +578,18 @@ function Viewer( idOrElement ){
 
     }
 
-    function updateBoundingBox( geometry, matrix ){
+    function updateBoundingBox( geometry, matrix, instanceMatrix ){
 
-        function updateGeometry( geometry, matrix ){
+        function updateGeometry( geometry, matrix, instanceMatrix ){
 
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
 
-            var geoBoundingBox;
-            if( matrix ){
-                geoBoundingBox = geometry.boundingBox.clone();
-                geoBoundingBox.applyMatrix4( matrix );
-            }else{
-                geoBoundingBox = geometry.boundingBox;
+            var geoBoundingBox = geometry.boundingBox.clone();
+            geoBoundingBox.applyMatrix4( matrix );
+            if( instanceMatrix ){
+                geoBoundingBox.applyMatrix4( instanceMatrix );
             }
 
             if( geoBoundingBox.min.equals( geoBoundingBox.max ) ){
@@ -607,17 +605,17 @@ function Viewer( idOrElement ){
         function updateNode( node ){
 
             if( node.geometry !== undefined ){
-                var matrix;
+                var instanceMatrix;
                 if( node.userData.instance ){
-                    matrix = node.userData.instance.matrix;
+                    instanceMatrix = node.userData.instance.matrix;
                 }
-                updateGeometry( node.geometry, matrix );
+                updateGeometry( node.geometry, node.parent.matrix, instanceMatrix );
             }
 
         }
 
         if( geometry ){
-            updateGeometry( geometry, matrix );
+            updateGeometry( geometry, matrix, instanceMatrix );
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );
@@ -1176,6 +1174,10 @@ function Viewer( idOrElement ){
     this.scene = scene;
     this.perspectiveCamera = perspectiveCamera;
     this.boundingBox = boundingBox;
+    this.updateBoundingBox = function(){
+        updateBoundingBox();
+        if( Debug ) updateHelper();
+    }
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },

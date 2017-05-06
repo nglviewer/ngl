@@ -298,9 +298,9 @@ UI.Vector3 = function( value ){
 
     UI.Panel.call( this ).setDisplay( "inline-block" );
 
-    this.xNumber = new UI.Number().setWidth( "40px" );
-    this.yNumber = new UI.Number().setWidth( "40px" );
-    this.zNumber = new UI.Number().setWidth( "40px" );
+    this.xNumber = new UI.Number( 0 ).setWidth( "40px" );
+    this.yNumber = new UI.Number( 0 ).setWidth( "40px" );
+    this.zNumber = new UI.Number( 0 ).setWidth( "40px" );
 
     this.add( this.xNumber, this.yNumber, this.zNumber );
     this.setValue( value );
