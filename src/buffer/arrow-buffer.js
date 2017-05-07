@@ -5,7 +5,7 @@
  */
 
 
-import { Vector3, Group } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, Group } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
@@ -45,31 +45,21 @@ class ArrowBuffer{
         this.aspectRatio = defaults( p.aspectRatio, 1.5 );
         this.wireframe = defaults( p.wireframe, false );
 
-        const radialSegments = defaults( p.radialSegments, 50 );
-        const openEnded = defaults( p.openEnded, false );
-        const disableImpostor = defaults( p.disableImpostor, false );
-
         this.splitPosition = new Float32Array( d.position1.length );
         this.cylinderRadius = new Float32Array( d.radius.length );
 
         var attr = this.makeAttributes( d );
+        var bufferParams = {
+            radialSegments: defaults( p.radialSegments, 50 ),
+            openEnded: defaults( p.openEnded, false ),
+            disableImpostor: defaults( p.disableImpostor, false )
+        }
 
         this.cylinderBuffer = new CylinderBuffer(
-            attr.cylinder,
-            {
-                radialSegments: radialSegments,
-                openEnded: openEnded,
-                disableImpostor: disableImpostor
-            }
+            attr.cylinder, bufferParams
         );
-
         this.coneBuffer = new ConeBuffer(
-            attr.cone,
-            {
-                radialSegments: radialSegments,
-                openEnded: openEnded,
-                disableImpostor: disableImpostor
-            }
+            attr.cone, bufferParams
         );
 
         this.geometry = new GeometryGroup( [
@@ -81,8 +71,18 @@ class ArrowBuffer{
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
 
+        // requires Group objects to be present
+        this.matrix = defaults( p.matrix, new Matrix4() );
+
         this.picking = d.picking;
 
+    }
+
+    set matrix ( m ){
+        Buffer.prototype.setMatrix.call( this, m );
+    }
+    get matrix (){
+        return this.group.matrix.clone();
     }
 
     get pickable (){
@@ -186,13 +186,21 @@ class ArrowBuffer{
      */
     setParameters( params ){
 
-        this.cylinderBuffer.setParameters( params );
-        this.coneBuffer.setParameters( params );
+        params = Object.assign( {}, params );
+
+        if( params && params.matrix !== undefined ){
+            this.matrix = params.matrix;
+        }
+        delete params.matrix;
 
         if( params && params.wireframe !== undefined ){
             this.wireframe = params.wireframe;
             this.setVisibility( this.visible );
         }
+        delete params.wireframe;
+
+        this.cylinderBuffer.setParameters( params );
+        this.coneBuffer.setParameters( params );
 
     }
 
