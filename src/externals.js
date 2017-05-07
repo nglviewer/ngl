@@ -48,6 +48,10 @@
  */
 
 /**
+ * @external {Euler} https://threejs.org/docs/#api/math/Euler
+ */
+
+/**
  * @external {Plane} https://threejs.org/docs/#api/math/Plane
  */
 
