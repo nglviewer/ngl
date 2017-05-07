@@ -16,8 +16,7 @@ stage.loadFile( "data://ala3.pdb" ).then( function( o ){
     o.autoView();
 
     NGL.autoLoad( "data://ala3.dcd" ).then( function( frames ){
-        var trajComp = o.addTrajectory( frames );
-        trajComp.trajectory.player.play();
+        o.addTrajectory( frames );
     });
 
 } );

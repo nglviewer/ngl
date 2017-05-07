@@ -26,3 +26,14 @@ Parse current archive from mmtf
 mkdir -p ../build/logs/mmtf-all/
 node js/node/timeParsing.js --dir ../build/data/mmtf-all/ --out ../build/logs/mmtf-all/
 ```
+
+
+## Render tests
+
+```
+slimerjs js/slimer/test.js
+```
+
+```
+slimerjs js/slimer/test.js 8091
+```

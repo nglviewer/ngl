@@ -1,9 +1,18 @@
 
 var fs = require( "fs" );
+var system = require('system');
 var webpage = require( "webpage" );
 
 
-var exampleUrl = "http://localhost:8091/ngl/examples/test.html?load=";
+var port = 80;
+
+var argCount = system.args.length;
+if( argCount === 2 ){
+    port = parseInt( system.args[ 1 ] );
+}
+
+
+var exampleUrl = "http://localhost:" + port + "/ngl/examples/test.html?load=";
 var exampleDir = "../examples/scripts/";
 
 
