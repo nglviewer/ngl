@@ -139,7 +139,7 @@ class Buffer{
         this.pickingGroup = new Group();
 
         // requires Group objects to be present
-        this.matrix = defaults( p.matrix, new Matrix4 );
+        this.matrix = defaults( p.matrix, new Matrix4() );
 
         //
 
@@ -184,9 +184,7 @@ class Buffer{
     }
 
     set matrix ( m ){
-        setObjectMatrix( this.group, m );
-        setObjectMatrix( this.wireframeGroup, m );
-        setObjectMatrix( this.pickingGroup, m );
+        this.setMatrix( m );
     }
     get matrix (){
         return this.group.matrix.clone();
@@ -219,6 +217,12 @@ class Buffer{
      * @abstract
      */
     get fragmentShader (){}
+
+    setMatrix( m ){
+        setObjectMatrix( this.group, m );
+        setObjectMatrix( this.wireframeGroup, m );
+        setObjectMatrix( this.pickingGroup, m );
+    }
 
     initIndex( index ){
 
