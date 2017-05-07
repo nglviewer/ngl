@@ -551,9 +551,9 @@ function Viewer( idOrElement ){
         }
 
         if( instance ){
-            updateBoundingBox( buffer.geometry, buffer.group.matrix, instance.matrix );
+            updateBoundingBox( buffer.geometry, buffer.matrix, instance.matrix );
         }else{
-            updateBoundingBox( buffer.geometry, buffer.group.matrix );
+            updateBoundingBox( buffer.geometry, buffer.matrix );
         }
 
         // Log.timeEnd( "Viewer.addBuffer" );
@@ -587,7 +587,10 @@ function Viewer( idOrElement ){
             }
 
             var geoBoundingBox = geometry.boundingBox.clone();
-            geoBoundingBox.applyMatrix4( matrix );
+
+            if( matrix ){
+                geoBoundingBox.applyMatrix4( matrix );
+            }
             if( instanceMatrix ){
                 geoBoundingBox.applyMatrix4( instanceMatrix );
             }
@@ -605,11 +608,14 @@ function Viewer( idOrElement ){
         function updateNode( node ){
 
             if( node.geometry !== undefined ){
-                var instanceMatrix;
+                var matrix, instanceMatrix;
+                if( node.userData.buffer ){
+                    matrix = node.userData.buffer.matrix;
+                }
                 if( node.userData.instance ){
                     instanceMatrix = node.userData.instance.matrix;
                 }
-                updateGeometry( node.geometry, node.parent.matrix, instanceMatrix );
+                updateGeometry( node.geometry, matrix, instanceMatrix );
             }
 
         }
@@ -624,7 +630,6 @@ function Viewer( idOrElement ){
 
         boundingBox.getSize( boundingBoxSize );
         boundingBoxLength = boundingBoxSize.length();
-        // controls.maxDistance = boundingBoxLength * 10;  // TODO
 
     }
 
