@@ -6,7 +6,7 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Quaternion, Matrix4 } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
@@ -16,6 +16,9 @@ import { makeRepresentation } from "../representation/representation-utils.js";
 
 
 let nextComponentId = 0;
+
+const _m = new Matrix4();
+const _v = new Vector3();
 
 
 /**
@@ -77,18 +80,57 @@ class Component{
         this.viewer = stage.viewer;
 
         this.reprList = [];
+
         this.matrix = new Matrix4();
+        this.position = new Vector3();
+        this.quaternion = new Quaternion();
+        this.scale = new Vector3( 1, 1, 1 );
 
     }
 
     get type(){ return "component"; }
 
     setPosition( v ){
-        this.matrix.setPosition( v );
+
+        this.position.copy( v );
+        this.updateMatrix();
+
+    }
+
+    setRotation( q ){
+
+        this.quaternion.copy( q );
+        this.updateMatrix();
+
+    }
+
+    setScale( s ){
+
+        this.scale.set( s, s, s );
+        this.updateMatrix();
+
+    }
+
+    updateMatrix(){
+
+        var c = this.getCenter( _v );
+        this.matrix.makeTranslation( -c.x, -c.y, -c.z );
+
+        _m.makeRotationFromQuaternion( this.quaternion );
+        this.matrix.premultiply( _m );
+
+        _m.makeScale( this.scale.x, this.scale.y, this.scale.z );
+        this.matrix.premultiply( _m );
+
+        var p = this.position;
+        _m.makeTranslation( p.x + c.x, p.y + c.y, p.z + c.z );
+        this.matrix.premultiply( _m );
+
         this.reprList.forEach( repr => {
             repr.setParameters( { matrix: this.matrix } );
         } );
         this.stage.viewer.updateBoundingBox();
+
     }
 
     /**

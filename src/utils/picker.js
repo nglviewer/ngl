@@ -43,13 +43,14 @@ class Picker{
         return {};
     }
 
-    _applyTransformations( vector, instance/*, component*/ ){
+    _applyTransformations( vector, instance, component ){
         if( instance ){
             vector.applyMatrix4( instance.matrix );
         }
-        // if( component ){
-        //     // apply component-wise matrix when available in the future
-        // }
+        if( component ){
+            console.log( component )
+            vector.applyMatrix4( component.matrix );
+        }
         return vector;
     }
 

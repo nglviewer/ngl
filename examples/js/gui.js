@@ -1694,6 +1694,22 @@ NGL.StructureComponentWidget = function( component, stage ){
         component.setPosition( position.getValue() );
     } );
 
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+        e.setFromVector3( rotation.getValue() );
+        q.setFromEuler( e );
+        component.setRotation( q );
+    } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
+        component.setScale( scale.getValue() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1712,7 +1728,9 @@ NGL.StructureComponentWidget = function( component, stage ){
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Principal axes", alignAxes )
         .addMenuEntry( "Validation", vali )
-        .addMenuEntry( "Position", position );
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
@@ -1769,6 +1787,28 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
         } );
 
+    // Position
+
+    var position = new UI.Vector3().onChange( function(){
+        component.setPosition( position.getValue() );
+    } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+        e.setFromVector3( rotation.getValue() );
+        q.setFromEuler( e );
+        component.setRotation( q );
+    } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
+        component.setScale( scale.getValue() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1778,7 +1818,10 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.surface.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
@@ -1829,6 +1872,28 @@ NGL.VolumeComponentWidget = function( component, stage ){
 
         } );
 
+    // Position
+
+    var position = new UI.Vector3().onChange( function(){
+        component.setPosition( position.getValue() );
+    } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+        e.setFromVector3( rotation.getValue() );
+        q.setFromEuler( e );
+        component.setRotation( q );
+    } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
+        component.setScale( scale.getValue() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1838,7 +1903,10 @@ NGL.VolumeComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.volume.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
@@ -1887,6 +1955,28 @@ NGL.ShapeComponentWidget = function( component, stage ){
 
         } );
 
+    // Position
+
+    var position = new UI.Vector3().onChange( function(){
+        component.setPosition( position.getValue() );
+    } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+        e.setFromVector3( rotation.getValue() );
+        q.setFromEuler( e );
+        component.setRotation( q );
+    } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
+        component.setScale( scale.getValue() );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1896,7 +1986,10 @@ NGL.ShapeComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.shape.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
