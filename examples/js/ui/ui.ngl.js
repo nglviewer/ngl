@@ -356,6 +356,16 @@ UI.Vector3.prototype.setPrecision = function ( precision ) {
 
 };
 
+UI.Vector3.prototype.setRange = function( min, max ){
+
+    this.xNumber.setRange( min, max );
+    this.yNumber.setRange( min, max );
+    this.zNumber.setRange( min, max );
+
+    return this;
+
+};
+
 
 // Selection
 
