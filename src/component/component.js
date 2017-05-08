@@ -94,14 +94,22 @@ class Component{
 
     setPosition( v ){
 
-        this.position.copy( v );
+        if( Array.isArray( v ) ){
+            this.position.fromArray( v );
+        }else{
+            this.position.copy( v );
+        }
         this.updateMatrix();
 
     }
 
     setRotation( q ){
 
-        this.quaternion.copy( q );
+        if( Array.isArray( q ) ){
+            this.quaternion.fromArray( q );
+        }else{
+            this.quaternion.copy( q );
+        }
         this.updateMatrix();
 
     }
