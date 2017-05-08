@@ -149,6 +149,7 @@ class Component{
 
         var p = params || {};
         var sp = this.stage.getParameters();
+        p.matrix = this.matrix.clone();
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
         p.useWorker = defaults( p.useWorker, sp.workerDefault );
