@@ -277,7 +277,7 @@ class StructureComponent extends Component{
 
     getCenter( sele ){
 
-        if( sele ){
+        if( sele && typeof sele === "string" ){
             return this.structure.atomCenter( new Selection( sele ) );
         }else{
             return this.structure.center;
