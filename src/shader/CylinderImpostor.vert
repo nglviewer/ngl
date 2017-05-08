@@ -50,6 +50,8 @@ varying vec4 w;
 uniform mat4 modelViewMatrixInverse;
 uniform float ortho;
 
+#include matrix_scale
+
 void main(){
 
     #ifdef PICKING
@@ -59,8 +61,10 @@ void main(){
         vColor2 = color2;
     #endif
 
+    float scale = matrixScale( modelViewMatrix );
+
     // vRadius = radius;
-    base_radius.w = radius;
+    base_radius.w = radius * scale;
 
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );
@@ -88,8 +92,8 @@ void main(){
         ldir = ext * dir;
 
     vec3 left = normalize( cross( cam_dir, ldir ) );
-    left = radius * left;
-    vec3 up = radius * normalize( cross( left, ldir ) );
+    left = radius * scale * left;
+    vec3 up = radius * scale * normalize( cross( left, ldir ) );
 
     // transform to modelview coordinates
     axis = normalize( normalMatrix * ldir );
