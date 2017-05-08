@@ -61,10 +61,8 @@ void main(){
         vColor2 = color2;
     #endif
 
-    float scale = matrixScale( modelViewMatrix );
-
     // vRadius = radius;
-    base_radius.w = radius * scale;
+    base_radius.w = radius * matrixScale( modelViewMatrix );
 
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );
@@ -92,8 +90,8 @@ void main(){
         ldir = ext * dir;
 
     vec3 left = normalize( cross( cam_dir, ldir ) );
-    left = radius * scale * left;
-    vec3 up = radius * scale * normalize( cross( left, ldir ) );
+    left = radius * left;
+    vec3 up = radius * normalize( cross( left, ldir ) );
 
     // transform to modelview coordinates
     axis = normalize( normalMatrix * ldir );
