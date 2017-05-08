@@ -1698,7 +1698,7 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
         e.setFromVector3( rotation.getValue() );
         q.setFromEuler( e );
         component.setRotation( q );
@@ -1797,7 +1797,7 @@ NGL.SurfaceComponentWidget = function( component, stage ){
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
         e.setFromVector3( rotation.getValue() );
         q.setFromEuler( e );
         component.setRotation( q );
@@ -1882,7 +1882,7 @@ NGL.VolumeComponentWidget = function( component, stage ){
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
         e.setFromVector3( rotation.getValue() );
         q.setFromEuler( e );
         component.setRotation( q );
@@ -1965,7 +1965,7 @@ NGL.ShapeComponentWidget = function( component, stage ){
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( 0, 6.28 ).onChange( function(){
+    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
         e.setFromVector3( rotation.getValue() );
         q.setFromEuler( e );
         component.setRotation( q );
