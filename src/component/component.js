@@ -272,20 +272,18 @@ class Component{
      */
     getBox(){
 
-        return this.getBoxUntransformed().applyMatrix4( this.matrix );
+        return this.getBoxUntransformed( ...arguments )
+                    .clone().applyMatrix4( this.matrix );
 
     }
 
     /**
-     * @param {Vector3} [optionalTarget] - target vector
      * @return {Vector3} the component's center position
      */
-    getCenter( optionalTarget ){
+    getCenter(){
 
-        if( optionalTarget === undefined ) optionalTarget = new Vector3();
-        optionalTarget.copy( this.getCenterUntransformed() );
-
-        return optionalTarget.applyMatrix4( this.matrix );
+        return this.getCenterUntransformed( ...arguments )
+                    .clone().applyMatrix4( this.matrix );
 
     }
 

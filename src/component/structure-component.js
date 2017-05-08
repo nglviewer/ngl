@@ -268,7 +268,7 @@ class StructureComponent extends Component{
         if( sele ){
             bb = this.structureView.getBoundingBox( new Selection( sele ) );
         }else{
-            bb = this.structureView.boundingBox.clone();
+            bb = this.structureView.boundingBox;
         }
 
         return bb;
@@ -280,7 +280,7 @@ class StructureComponent extends Component{
         if( sele && typeof sele === "string" ){
             return this.structure.atomCenter( new Selection( sele ) );
         }else{
-            return this.structure.center.clone();
+            return this.structure.center;
         }
 
     }
