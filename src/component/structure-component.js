@@ -261,26 +261,26 @@ class StructureComponent extends Component{
 
     }
 
-    getBox( sele ){
+    getBoxUntransformed( sele ){
 
         var bb;
 
         if( sele ){
             bb = this.structureView.getBoundingBox( new Selection( sele ) );
         }else{
-            bb = this.structureView.boundingBox;
+            bb = this.structureView.boundingBox.clone();
         }
 
         return bb;
 
     }
 
-    getCenter( sele ){
+    getCenterUntransformed( sele ){
 
         if( sele && typeof sele === "string" ){
             return this.structure.atomCenter( new Selection( sele ) );
         }else{
-            return this.structure.center;
+            return this.structure.center.clone();
         }
 
     }

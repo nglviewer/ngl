@@ -1665,6 +1665,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         var q = pa.getRotationQuaternion();
         q.multiply( component.quaternion.clone().inverse() );
         stage.animationControls.rotate( q );
+        stage.animationControls.move( component.getCenter() );
     } );
 
     // Open validation

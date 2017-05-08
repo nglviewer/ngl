@@ -113,7 +113,7 @@ class Component{
 
     updateMatrix(){
 
-        var c = this.getCenter( _v );
+        var c = this.getCenterUntransformed( _v );
         this.matrix.makeTranslation( -c.x, -c.y, -c.z );
 
         _m.makeRotationFromQuaternion( this.quaternion );
@@ -268,20 +268,42 @@ class Component{
     }
 
     /**
-     * @abstract
      * @return {Box3} the component's bounding box
      */
-    getBox(){}
+    getBox(){
 
+        return this.getBoxUntransformed().applyMatrix4( this.matrix );
+
+    }
+
+    /**
+     * @param {Vector3} [optionalTarget] - target vector
+     * @return {Vector3} the component's center position
+     */
     getCenter( optionalTarget ){
 
-        return this.getBox().getCenter( optionalTarget );
+        if( optionalTarget === undefined ) optionalTarget = new Vector3();
+        optionalTarget.copy( this.getCenterUntransformed() );
+
+        return optionalTarget.applyMatrix4( this.matrix );
 
     }
 
     getZoom(){
 
         return this.stage.getZoomForBox( this.getBox( ...arguments ) );
+
+    }
+
+    /**
+     * @abstract
+     * @return {Box3} the untransformed component's bounding box
+     */
+    getBoxUntransformed(){}
+
+    getCenterUntransformed(){
+
+        return this.getBoxUntransformed().getCenter();
 
     }
 
