@@ -1662,7 +1662,9 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var alignAxes = new UI.Button( "align" ).onClick( function(){
         var pa = component.structure.getPrincipalAxes();
-        stage.animationControls.rotate( pa.getRotationQuaternion() );
+        var q = pa.getRotationQuaternion();
+        q.multiply( component.quaternion.clone().inverse() );
+        stage.animationControls.rotate( q );
     } );
 
     // Open validation
