@@ -36,6 +36,7 @@ const _v = new Vector3();
  * @typedef {Object} ComponentSignals
  * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added
  * @property {Signal<RepresentationComponent>} representationRemoved - when a representation is removed
+ * @property {Signal<Matrix4>} matrixChanged - on matrix change
  * @property {Signal<Boolean>} visibilityChanged - on visibility change
  * @property {Signal<String>} statusChanged - on status change
  * @property {Signal<String>} nameChanged - on name change
@@ -71,6 +72,7 @@ class Component{
             representationAdded: new Signal(),
             representationRemoved: new Signal(),
             visibilityChanged: new Signal(),
+            matrixChanged: new Signal(),
             statusChanged: new Signal(),
             nameChanged: new Signal(),
             disposed: new Signal(),
@@ -130,6 +132,8 @@ class Component{
             repr.setParameters( { matrix: this.matrix } );
         } );
         this.stage.viewer.updateBoundingBox();
+
+        this.signals.matrixChanged.dispatch( this.matrix );
 
     }
 

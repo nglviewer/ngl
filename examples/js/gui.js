@@ -1693,24 +1693,37 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     // Position
 
-    var position = new UI.Vector3().onChange( function(){
-        component.setPosition( position.getValue() );
-    } );
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
 
     // Rotation
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
-        e.setFromVector3( rotation.getValue() );
-        q.setFromEuler( e );
-        component.setRotation( q );
-    } );
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
 
     // Scale
 
-    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
-        component.setScale( scale.getValue() );
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
     } );
 
     // Component panel
@@ -1761,11 +1774,9 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1773,43 +1784,52 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "surface": "surface",
                 "dot": "dot"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Position
 
-    var position = new UI.Vector3().onChange( function(){
-        component.setPosition( position.getValue() );
-    } );
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
 
     // Rotation
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
-        e.setFromVector3( rotation.getValue() );
-        q.setFromEuler( e );
-        component.setRotation( q );
-    } );
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
 
     // Scale
 
-    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
-        component.setScale( scale.getValue() );
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
     } );
 
     // Component panel
@@ -1845,11 +1865,9 @@ NGL.VolumeComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1857,7 +1875,6 @@ NGL.VolumeComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "surface": "surface",
@@ -1865,36 +1882,46 @@ NGL.VolumeComponentWidget = function( component, stage ){
                 "slice": "slice"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Position
 
-    var position = new UI.Vector3().onChange( function(){
-        component.setPosition( position.getValue() );
-    } );
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
 
     // Rotation
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
-        e.setFromVector3( rotation.getValue() );
-        q.setFromEuler( e );
-        component.setRotation( q );
-    } );
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
 
     // Scale
 
-    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
-        component.setScale( scale.getValue() );
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
     } );
 
     // Component panel
@@ -1930,11 +1957,9 @@ NGL.ShapeComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1942,42 +1967,51 @@ NGL.ShapeComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "buffer": "buffer"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
 
     // Position
 
-    var position = new UI.Vector3().onChange( function(){
-        component.setPosition( position.getValue() );
-    } );
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
 
     // Rotation
 
     var q = new NGL.Quaternion();
     var e = new NGL.Euler();
-    var rotation = new UI.Vector3().setRange( -6.28, 6.28 ).onChange( function(){
-        e.setFromVector3( rotation.getValue() );
-        q.setFromEuler( e );
-        component.setRotation( q );
-    } );
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
 
     // Scale
 
-    var scale = new UI.Number( 1 ).setRange( 0.01, 100 ).onChange( function(){
-        component.setScale( scale.getValue() );
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
     } );
 
     // Component panel
