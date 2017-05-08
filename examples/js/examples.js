@@ -1705,6 +1705,21 @@ NGL.ExampleRegistry.addDict( {
             });
         } );
 
+    },
+
+    "compMatrix": function( stage ){
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.addRepresentation( "cartoon" );
+            stage.autoView();
+        } );
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.setPosition( [ 10, 0, 0 ] );
+            o.addRepresentation( "cartoon", { color: "orange" } );
+            stage.autoView();
+        } );
+
     }
 
 } );
