@@ -62,7 +62,6 @@ function setObjectMatrix( object, matrix ){
     object.matrix.copy( matrix );
     object.matrix.decompose( object.position, object.quaternion, object.scale );
     object.matrixWorldNeedsUpdate = true;
-    object.updateMatrixWorld( true );
 }
 
 
@@ -219,9 +218,11 @@ class Buffer{
     get fragmentShader (){}
 
     setMatrix( m ){
+
         setObjectMatrix( this.group, m );
         setObjectMatrix( this.wireframeGroup, m );
         setObjectMatrix( this.pickingGroup, m );
+
     }
 
     initIndex( index ){
