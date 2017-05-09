@@ -130,10 +130,11 @@ class ViewerControls{
 
         ensureMatrix4( orientation ).decompose( tmpP, tmpQ, tmpS )
 
-        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
-        this.viewer.translationGroup.position.copy( tmpP );
-        this.viewer.camera.position.z = -tmpS.z;
-        this.viewer.updateZoom();
+        const v = this.viewer;
+        v.rotationGroup.setRotationFromQuaternion( tmpQ );
+        v.translationGroup.position.copy( tmpP );
+        v.camera.position.z = -tmpS.z;
+        v.updateZoom();
         this.changed();
 
     }
