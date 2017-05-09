@@ -48,7 +48,6 @@ class Picker{
             vector.applyMatrix4( instance.matrix );
         }
         if( component ){
-            console.log( component )
             vector.applyMatrix4( component.matrix );
         }
         return vector;
