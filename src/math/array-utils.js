@@ -104,9 +104,9 @@ function calculateDirectionArray( array1, array2 ){
 }
 
 
-function uniformArray( n, a ){
+function uniformArray( n, a, optionalTarget ){
 
-    var array = new Float32Array( n );
+    var array = optionalTarget || new Float32Array( n );
 
     for( var i = 0; i < n; ++i ){
 
@@ -119,9 +119,9 @@ function uniformArray( n, a ){
 }
 
 
-function uniformArray3( n, a, b, c ){
+function uniformArray3( n, a, b, c, optionalTarget ){
 
-    var array = new Float32Array( n * 3 );
+    var array = optionalTarget || new Float32Array( n * 3 );
 
     var j;
 
