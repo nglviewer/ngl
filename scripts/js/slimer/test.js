@@ -1,33 +1,42 @@
 
-var fs = require( "fs" );
-var system = require('system');
-var webpage = require( "webpage" );
+const fs = require( "fs" );
+const system = require('system');
+const webpage = require( "webpage" );
 
 
-var port = 80;
+let port = 80;
+let examples = false;
 
-var argCount = system.args.length;
-if( argCount === 2 ){
-    port = parseInt( system.args[ 1 ] );
+
+const argCount = system.args.length;
+for( let i = 1; i < argCount; ++i ){
+    const [ name, value ] = system.args[ i ].split( ":" );
+    if( name === "port" ){
+        port = parseInt( value );
+    }else if( name === "name" ){
+        examples = value.split( "," );
+    }
 }
 
 
-var exampleUrl = "http://localhost:" + port + "/ngl/examples/test.html?load=";
-var exampleDir = "../examples/scripts/";
+const exampleUrl = "http://localhost:" + port + "/ngl/examples/test.html?load=";
+const exampleDir = "../examples/scripts/";
 
 
 function renderExample( name ){
     return new Promise( function( resolve, reject ){
-        var page = webpage.create();
-        page.onConsoleMessage = function( msg ){
-            console.log( name, msg );
+        const page = webpage.create();
+        page.onConsoleMessage = function( msg, line, file, level ){
+            if( [ "error", "warning" ].includes( level ) ){
+                console.log( level.toUpperCase(), msg );
+            }
         };
         page.onCallback = function( cmd ){
             switch( cmd ){
                 case "render":
                     page.render( "../build/test/img/" + name + ".png" );
                     page.close();
-                    console.log( name, "FINISH" );
+                    console.log( "FINISH", name );
                     resolve();
                     break;
             }
@@ -35,14 +44,14 @@ function renderExample( name ){
         page.onLoadFinished = function(){
             page.evaluate( function(){
                 stage.handleResize();
-                var t0 = performance.now();
+                let t0 = performance.now();
                 stage.tasks.signals.countChanged.add( function(){
                     t0 = performance.now();
                 } );
                 setInterval( function(){
-                    var t = performance.now();
+                    const t = performance.now();
                     if( stage.tasks.count === 0 ){
-                        if( t - t0 > 500 ){
+                        if( t - t0 > 1000 ){
                             window.callPhantom( "render" );
                         }
                     }
@@ -57,7 +66,7 @@ function renderExample( name ){
 
 
 function buildExamplePage( exampleNames, exampleUrl ){
-    var pageLines = [];
+    const pageLines = [];
     exampleNames.forEach( name => {
         pageLines.push(
             "<a href='" + exampleUrl + "./scripts/" + name + ".js' >" +
@@ -79,18 +88,37 @@ function buildExamplePage( exampleNames, exampleUrl ){
 }
 
 
-function getExampleNames( dir ){
-    return fs.list( dir ).map( name => {
-        return name.substr( 0, name.length - 3 )
-    } );
+function flatten( arr ){
+    return arr.reduce( function( acc, val ){
+        return acc.concat(
+            Array.isArray( val ) ? flatten( val ) : val
+        );
+    }, [] );
 }
 
 
-var exampleNames = getExampleNames( exampleDir );
+function getExampleNames( dir, prefix = "" ){
+    return flatten( fs.list( dir )
+        .filter( name => !name.startsWith( "." ) )
+        .map( name => {
+            const path = fs.join( dir, name );
+            if( fs.isDirectory( path ) ){
+                return getExampleNames( path, name + "/" );
+            }else if( fs.isFile( path ) ){
+                return prefix + name.substr( 0, name.length - 3 );
+            }
+        } )
+    );
+}
 
-exampleNames.reduce( function( acc, name ){
+
+const exampleNames = getExampleNames( exampleDir );
+if( !examples ) examples = exampleNames;
+
+
+examples.reduce( function( acc, name ){
     return acc.then( function(){
-        console.log( name, "START" );
+        console.log( "START", name );
         return renderExample( name );
     } );
 }, Promise.resolve( [] ) ).then( function(){

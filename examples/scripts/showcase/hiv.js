@@ -23,6 +23,6 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
         colorScheme: "chainindex"
     } );
 
-    stage.autoView();
+    stage.tasks.onZeroOnce( function(){ stage.autoView(); } );
 
 } );

@@ -17,7 +17,6 @@ stage.loadFile( "data://1crn_apbs.pqr" ).then( function( o ){
 } );
 
 stage.loadFile( "data://1crn_apbs_pot.dx.gz" ).then( function( o ){
-// stage.loadFile( "data://1crn_apbs_pot.dxbin" ).then( function( o ){
 
     o.addRepresentation( "dot", {
         thresholdType: "value",

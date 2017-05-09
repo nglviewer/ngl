@@ -1,5 +1,5 @@
 
-stage.loadFile( "data://1CRN.cif.gz" ).then( function( o ){
+stage.loadFile( "data://1blu.pdb" ).then( function( o ){
 
     o.addRepresentation( "cartoon" );
     o.autoView();

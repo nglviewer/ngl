@@ -1,5 +1,5 @@
 
-stage.loadFile( "rcsb://2vts" ).then( function ( o ) {
+stage.loadFile( "data://2vts.mmtf" ).then( function ( o ) {
     o.addRepresentation( "line", { sele: "not hetero" })
     o.addRepresentation( "licorice", {
         multipleBond: "symmetric",
