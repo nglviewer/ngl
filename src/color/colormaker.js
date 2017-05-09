@@ -104,18 +104,6 @@ class Colormaker{
     }
 
     /**
-     * get color for an atom
-     * @abstract
-     * @param  {AtomProxy} atom - atom to get color for
-     * @return {Integer} hex atom color
-     */
-    atomColor( /*atom*/ ){
-
-        return 0xFFFFFF;
-
-    }
-
-    /**
      * safe a atom color to an array
      * @param  {AtomProxy} atom - atom to get color for
      * @param  {Array|TypedArray} array - destination
@@ -160,18 +148,6 @@ class Colormaker{
     }
 
     /**
-     * return the color for a volume cell
-     * @abstract
-     * @param  {Integer} index - volume cell index
-     * @return {Integer} hex cell color
-     */
-    volumeColor( /*index*/ ){
-
-        return 0xFFFFFF;
-
-    }
-
-    /**
      * safe a volume cell color to an array
      * @param  {Integer} index - volume cell index
      * @param  {Array|TypedArray} array - destination
@@ -183,18 +159,6 @@ class Colormaker{
         return this.colorToArray(
             this.volumeColor( index ), array, offset
         );
-
-    }
-
-    /**
-     * return the color for coordinates in space
-     * @abstract
-     * @param  {Vector3} coords - xyz coordinates
-     * @return {Integer} hex coords color
-     */
-    positionColor( /*coords*/ ){
-
-        return 0xFFFFFF;
 
     }
 
