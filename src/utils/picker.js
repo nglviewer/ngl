@@ -87,13 +87,14 @@ class Picker{
 class ShapePicker extends Picker{
 
     /**
-     * @param  {Array|TypedArray} [array] - mapping
-     * @param  {Object} data - shape data
+     * @param  {Shape} shape - shape object
      */
-    constructor( array, data ){
-        super( array );
-        this.data = data;
+    constructor( shape ){
+        super();
+        this.shape = shape;
     }
+
+    get data (){ return this.shape; }
 
 }
 
@@ -106,42 +107,49 @@ class CylinderPicker extends ShapePicker{
     get type (){ return "cylinder"; }
 
     getObject( pid ){
-        const d = this.data;
+        const s = this.shape;
         return {
-            shape: d.shape,
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            position1: new Vector3().fromArray( d.position1, 3 * pid ),
-            position2: new Vector3().fromArray( d.position2, 3 * pid ),
-            name: d.name[ pid ]
+            shape: s,
+            color: new Color().fromArray( s.cylinderColor, 3 * pid ),
+            radius: s.cylinderRadius[ pid ],
+            position1: new Vector3().fromArray( s.cylinderPosition1, 3 * pid ),
+            position2: new Vector3().fromArray( s.cylinderPosition2, 3 * pid ),
+            name: s.cylinderName[ pid ]
         };
     }
 
     _getPosition( pid ){
-        const d = this.data;
-        const p1 = new Vector3().fromArray( d.position1, 3 * pid );
-        const p2 = new Vector3().fromArray( d.position2, 3 * pid );
+        const s = this.shape;
+        const p1 = new Vector3().fromArray( s.cylinderPosition1, 3 * pid );
+        const p2 = new Vector3().fromArray( s.cylinderPosition2, 3 * pid );
         return p1.add( p2 ).multiplyScalar( 0.5 );
     }
 
 }
 
 
-class ArrowPicker extends CylinderPicker{
+class ArrowPicker extends ShapePicker{
 
     get type (){ return "arrow"; }
 
     getObject( pid ){
-        const d = this.data;
+        const s = this.shape;
         return {
-            shape: d.shape,
+            shape: s,
             position: this._getPosition( pid ),
-            position1: new Vector3().fromArray( d.color, 3 * pid ),
-            position2: new Vector3().fromArray( d.color, 3 * pid ),
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            name: d.name[ pid ]
+            position1: new Vector3().fromArray( s.arrowPosition1, 3 * pid ),
+            position2: new Vector3().fromArray( s.arrowPosition2, 3 * pid ),
+            color: new Color().fromArray( s.arrowColor, 3 * pid ),
+            radius: s.arrowRadius[ pid ],
+            name: s.arrowName[ pid ]
         };
+    }
+
+    _getPosition( pid ){
+        const s = this.shape;
+        const p1 = new Vector3().fromArray( s.arrowPosition1, 3 * pid );
+        const p2 = new Vector3().fromArray( s.arrowPosition2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
     }
 
 }
@@ -226,9 +234,29 @@ class ContactPicker extends BondPicker{
 }
 
 
-class ConePicker extends CylinderPicker{
+class ConePicker extends ShapePicker{
 
     get type (){ return "cone"; }
+
+    getObject( pid ){
+        const s = this.shape;
+        return {
+            shape: s,
+            position: this._getPosition( pid ),
+            position1: new Vector3().fromArray( s.conePosition1, 3 * pid ),
+            position2: new Vector3().fromArray( s.conePosition2, 3 * pid ),
+            color: new Color().fromArray( s.coneColor, 3 * pid ),
+            radius: s.coneRadius[ pid ],
+            name: s.coneName[ pid ]
+        };
+    }
+
+    _getPosition( pid ){
+        const s = this.shape;
+        const p1 = new Vector3().fromArray( s.conePosition1, 3 * pid );
+        const p2 = new Vector3().fromArray( s.conePosition2, 3 * pid );
+        return p1.add( p2 ).multiplyScalar( 0.5 );
+    }
 
 }
 
@@ -282,20 +310,20 @@ class EllipsoidPicker extends ShapePicker{
     get type (){ return "ellipsoid"; }
 
     getObject( pid ){
-        const d = this.data;
+        const s = this.shape;
         return {
-            shape: d.shape,
+            shape: s,
             position: this._getPosition( pid ),
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            majorAxis: new Vector3().fromArray( d.majorAxis, 3 * pid ),
-            minorAxis: new Vector3().fromArray( d.minorAxis, 3 * pid ),
-            name: d.name[ pid ]
+            color: new Color().fromArray( s.ellipsoidColor, 3 * pid ),
+            radius: s.ellipsoidRadius[ pid ],
+            majorAxis: new Vector3().fromArray( s.ellipsoidMajorAxis, 3 * pid ),
+            minorAxis: new Vector3().fromArray( s.ellipsoidMinorAxis, 3 * pid ),
+            name: s.ellipsoidName[ pid ]
         };
     }
 
     _getPosition( pid ){
-        return new Vector3().fromArray( this.data.position, 3 * pid );
+        return new Vector3().fromArray( this.shape.ellipsoidPosition, 3 * pid );
     }
 
 }
@@ -310,20 +338,25 @@ class IgnorePicker extends Picker{
 
 class MeshPicker extends ShapePicker{
 
+    constructor( shape, mesh ){
+        super( shape );
+        this.mesh = mesh;
+    }
+
     get type (){ return "mesh"; }
 
     getObject( /*pid*/ ){
-        const d = this.data;
+        const m = this.mesh;
         return {
-            shape: d.shape,
-            serial: d.serial,
-            name: d.name
+            shape: this.shape,
+            name: m.name,
+            serial: m.serial
         };
     }
 
     _getPosition( /*pid*/ ){
         if( !this.__position ){
-            this.__position = calculateMeanVector3( this.data.position );
+            this.__position = calculateMeanVector3( this.mesh.position );
         }
         return this.__position;
     }
@@ -336,18 +369,18 @@ class SpherePicker extends ShapePicker{
     get type (){ return "sphere"; }
 
     getObject( pid ){
-        const d = this.data;
+        const s = this.shape;
         return {
-            shape: d.shape,
+            shape: s,
             position: this._getPosition( pid ),
-            color: new Color().fromArray( d.color, 3 * pid ),
-            radius: d.radius[ pid ],
-            name: d.name[ pid ]
+            color: new Color().fromArray( s.sphereColor, 3 * pid ),
+            radius: s.sphereRadius[ pid ],
+            name: s.sphereName[ pid ]
         };
     }
 
     _getPosition( pid ){
-        return new Vector3().fromArray( this.data.position, 3 * pid );
+        return new Vector3().fromArray( this.shape.spherePosition, 3 * pid );
     }
 
 }
