@@ -571,6 +571,12 @@ class Selection{
             }
 
             if( c.charAt( 0 ) === "#" ){
+                console.error( "# for element selection deprecated, use _" );
+                sele.element = c.substr( 1 ).toUpperCase();
+                pushRule( sele );
+                continue;
+            }
+            if( c.charAt( 0 ) === "_" ){
                 sele.element = c.substr( 1 ).toUpperCase();
                 pushRule( sele );
                 continue;
