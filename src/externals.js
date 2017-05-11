@@ -22,6 +22,10 @@
  * @external {Float} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
  */
 
+/**
+ * @external {Char} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+ */
+
 
 /**
  * @external {Matrix3} https://threejs.org/docs/#api/math/Matrix3
