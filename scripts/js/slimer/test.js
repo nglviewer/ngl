@@ -68,21 +68,25 @@ function renderExample( name ){
 const nglUrl = "https://rawgit.com/arose/ngl/master/dist/ngl.js";
 
 const html = (
-    "<div id=\"viewport\" style=\"width:600px; height:600px;\"></div>"
+    "<div id=\"viewport\" style=\"width:100%; height:100%;\"></div>"
+);
+
+const css = (
+    "* { margin: 0; padding: 0; }\n" +
+    "html, body { width: 100%; height: 100%; overflow: hidden; }\n"
 );
 
 const jsPrefix = (
-    "// Datasources\n" +
+    "// Setup to load data from rawgit\n" +
     "NGL.DatasourceRegistry.add(\n" +
     "    \"data\", new NGL.StaticDatasource( \"//rawgit.com/arose/ngl/master/data/\" )\n" +
     ");\n\n" +
-    "var stage;\n" +
-    "document.addEventListener( \"DOMContentLoaded\", function(){\n" +
-    "stage = new NGL.Stage( \"viewport\" );"
-);
-
-const jsSuffix = (
-    "} );"
+    "// Create NGL Stage object\n" +
+    "var stage = new NGL.Stage( \"viewport\" );\n\n" +
+    "// Handle window resizing\n" +
+    "window.addEventListener( \"resize\", function( event ){\n" +
+    "    stage.handleResize();\n" +
+    "}, false );\n\n\n"
 );
 
 
@@ -96,16 +100,24 @@ function buildExamplePage( exampleNames, exampleUrl ){
             "</a>"
         );
         pageLines.push( "<span class='name'>" + name + "</span>" );
-        console.log(name)
         const path = exampleDir + name + ".js";
-        const js = jsPrefix + "\n\n" + fs.open( path, "r" ).read() + "\n\n" + jsSuffix;
+        const doc = "// Code for example: " + name + "\n";
+        const js = jsPrefix + doc + fs.open( path, "r" ).read();
+        const data = {
+            title: "NGL example - " + name,
+            editors: "001",
+            layout: "left",
+            html: html,
+            css: css,
+            js: js.replace(/'/g, '"').replace(/"/g, '\"'),
+            js_external: nglUrl
+        };
+        const json = JSON.stringify( data );
         pageLines.push(
             "" +
-            "<form method='post' id='name' action='http://jsfiddle.net/api/post/library/pure/' target='_blank'>" +
-            "<input type='submit' value='JSFiddle'/>" +
-            "<input type='hidden' name='resources' value='" + nglUrl + "'/>" +
-            "<input type='hidden' name='html' value='" + html + "'/>" +
-            "<input type='hidden' name='js' value='" + js + "'/>" +
+            "<form method='post' id='name' action='http://codepen.io/pen/define/' target='_blank'>" +
+            "<input type='submit' value='CodePen'/>" +
+            "<input type='hidden' name='data' value='" + json + "'/>" +
             "</form>"
         );
         pageLines.push( "</div>" );
