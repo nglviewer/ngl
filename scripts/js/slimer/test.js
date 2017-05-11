@@ -65,20 +65,61 @@ function renderExample( name ){
 }
 
 
+const nglUrl = "https://rawgit.com/arose/ngl/master/dist/ngl.js";
+
+const html = (
+    "<div id=\"viewport\" style=\"width:600px; height:600px;\"></div>"
+);
+
+const jsPrefix = (
+    "// Datasources\n" +
+    "NGL.DatasourceRegistry.add(\n" +
+    "    \"data\", new NGL.StaticDatasource( \"//rawgit.com/arose/ngl/master/data/\" )\n" +
+    ");\n\n" +
+    "var stage;\n" +
+    "document.addEventListener( \"DOMContentLoaded\", function(){\n" +
+    "stage = new NGL.Stage( \"viewport\" );"
+);
+
+const jsSuffix = (
+    "} );"
+);
+
+
 function buildExamplePage( exampleNames, exampleUrl ){
     const pageLines = [];
     exampleNames.forEach( name => {
+        pageLines.push( "<div class='outer'>" );
         pageLines.push(
-            "<a href='" + exampleUrl + "./scripts/" + name + ".js' >" +
+            "<a href='" + exampleUrl + "./scripts/" + name + ".js' target='_blank' >" +
                 "<img src='./img/" + name + ".png' />" +
             "</a>"
         );
+        pageLines.push( "<span class='name'>" + name + "</span>" );
+        console.log(name)
+        const path = exampleDir + name + ".js";
+        const js = jsPrefix + "\n\n" + fs.open( path, "r" ).read() + "\n\n" + jsSuffix;
+        pageLines.push(
+            "" +
+            "<form method='post' id='name' action='http://jsfiddle.net/api/post/library/pure/' target='_blank'>" +
+            "<input type='submit' value='JSFiddle'/>" +
+            "<input type='hidden' name='resources' value='" + nglUrl + "'/>" +
+            "<input type='hidden' name='html' value='" + html + "'/>" +
+            "<input type='hidden' name='js' value='" + js + "'/>" +
+            "</form>"
+        );
+        pageLines.push( "</div>" );
     } );
     return (
         "<!DOCTYPE html>\n" +
         "<html lang='en'>\n" +
         "<head>\n" +
             "<title>NGL - results</title>" +
+            "<style>" +
+                ".outer { position:relative; display:inline-block; } " +
+                ".name { position:absolute; bottom:15px; right:5px; z-index:10; color:lightgrey; font-family:sans-serif; } " +
+                "input, form { display:inline; position:absolute; top:5px; right:5px; z-index:10; } " +
+            "</style>" +
         "</head>\n" +
         "<body>\n" +
             pageLines.join( "\n" ) + "\n" +
