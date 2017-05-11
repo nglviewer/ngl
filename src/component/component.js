@@ -6,7 +6,7 @@
  */
 
 
-import { Vector3, Quaternion, Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Quaternion, Matrix4, Euler } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
@@ -40,7 +40,7 @@ const _v = new Vector3();
  * @property {Signal<Boolean>} visibilityChanged - on visibility change
  * @property {Signal<String>} statusChanged - on status change
  * @property {Signal<String>} nameChanged - on name change
- * @property {Signal<undefined>} disposed - on dispose
+ * @property {Signal} disposed - on dispose
  */
 
 
@@ -92,32 +92,75 @@ class Component{
 
     get type(){ return "component"; }
 
-    setPosition( v ){
+    /**
+     * Set position transform
+     *
+     * @example
+     * // translate by 25 angstrom along x axis
+     * component.setPosition( [ 25, 0, 0 ] );
+     *
+     * @param {Vector3|Array} p - the coordinates
+     * @return {Component} this object
+     */
+    setPosition( p ){
 
-        if( Array.isArray( v ) ){
-            this.position.fromArray( v );
+        if( Array.isArray( p ) ){
+            this.position.fromArray( p );
         }else{
-            this.position.copy( v );
+            this.position.copy( p );
         }
         this.updateMatrix();
 
+        return this;
+
     }
 
-    setRotation( q ){
+    /**
+     * Set rotation transform
+     *
+     * @example
+     * // rotate by 2 degree radians on x axis
+     * component.setRotation( [ 2, 0, 0 ] );
+     *
+     * @param {Quaternion|Euler|Array} r - the rotation
+     * @return {Component} this object
+     */
+    setRotation( r ){
 
-        if( Array.isArray( q ) ){
-            this.quaternion.fromArray( q );
+        if( Array.isArray( r ) ){
+            if( r.length === 3 ){
+                const e = new Euler().fromArray( r );
+                this.quaternion.setFromEuler( e );
+            }else{
+                this.quaternion.fromArray( r );
+            }
+        }else if( r instanceof Euler ){
+            this.quaternion.setFromEuler( r );
         }else{
-            this.quaternion.copy( q );
+            this.quaternion.copy( r );
         }
         this.updateMatrix();
 
+        return this;
+
     }
 
+    /**
+     * Set scale transform
+     *
+     * @example
+     * // scale by factor of two
+     * component.setScale( 2 );
+     *
+     * @param {Number} s - the scale
+     * @return {Component} this object
+     */
     setScale( s ){
 
         this.scale.set( s, s, s );
         this.updateMatrix();
+
+        return this;
 
     }
 
