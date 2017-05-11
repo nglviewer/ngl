@@ -115,7 +115,7 @@ function buildExamplePage( exampleNames, exampleUrl ){
         const json = JSON.stringify( data );
         pageLines.push(
             "" +
-            "<form method='post' id='name' action='http://codepen.io/pen/define/' target='_blank'>" +
+            "<form method='post' id='" + name + "' action='http://codepen.io/pen/define/' target='_blank'>" +
             "<input type='submit' value='CodePen'/>" +
             "<input type='hidden' name='data' value='" + json + "'/>" +
             "</form>"
