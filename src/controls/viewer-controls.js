@@ -21,14 +21,6 @@ import {
  */
 
 
-/**
- * {@link Signal}, dispatched when viewer controls change
- * @example
- * viewerControls.signals.changed.add( function(){ ... } );
- * @event ViewerControls#changed
- */
-
-
 const tmpQ = new Quaternion();
 const tmpP = new Vector3();
 const tmpS = new Vector3();
@@ -46,7 +38,6 @@ const tmpAlignMatrix = new Matrix4();
 class ViewerControls{
 
     /**
-     * create viewer controls
      * @param  {Stage} stage - the stage object
      */
     constructor( stage ){
@@ -54,6 +45,9 @@ class ViewerControls{
         this.stage = stage;
         this.viewer = stage.viewer;
 
+        /**
+         * @type {{changed: Signal}}
+         */
         this.signals = {
             changed: new Signal()
         };
@@ -62,8 +56,6 @@ class ViewerControls{
 
     /**
      * scene center position
-     * @member
-     * @readOnly
      * @type {Vector3}
      */
     get position(){
@@ -74,8 +66,6 @@ class ViewerControls{
 
     /**
      * scene rotation
-     * @member
-     * @readOnly
      * @type {Quaternion}
      */
     get rotation(){
@@ -86,7 +76,7 @@ class ViewerControls{
 
     /**
      * Trigger render and emit changed event
-     * @fires ViewerControls#changed
+     * @emits {ViewerControls.signals.changed}
      * @return {undefined}
      */
     changed(){
@@ -140,10 +130,11 @@ class ViewerControls{
 
         ensureMatrix4( orientation ).decompose( tmpP, tmpQ, tmpS )
 
-        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
-        this.viewer.translationGroup.position.copy( tmpP );
-        this.viewer.camera.position.z = -tmpS.z;
-        this.viewer.updateZoom();
+        const v = this.viewer;
+        v.rotationGroup.setRotationFromQuaternion( tmpQ );
+        v.translationGroup.position.copy( tmpP );
+        v.camera.position.z = -tmpS.z;
+        v.updateZoom();
         this.changed();
 
     }

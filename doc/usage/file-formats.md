@@ -224,7 +224,7 @@ Supported features:
 
 ### CUBE
 
-Extension: **.cube**
+Extensions: **.cube**, **.cub**
 
 Specification: [http://paulbourke.net/dataformats/cube/](http://paulbourke.net/dataformats/cube/)
 

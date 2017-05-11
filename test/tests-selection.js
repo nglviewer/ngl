@@ -554,7 +554,7 @@ describe( 'parsing', function () {
     } );
 
     it( 'element H', function () {
-        var sele = "#H";
+        var sele = "_H";
         var selection = new Selection( sele );
         var selectionObj = {
             "operator": undefined,

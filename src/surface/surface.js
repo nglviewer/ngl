@@ -94,7 +94,7 @@ Surface.prototype = {
 
         if( Debug ) Log.time( "GeometrySurface.fromGeometry" );
 
-        var geo;
+        let geo;
 
         if( geometry instanceof Geometry ){
             geometry.computeVertexNormals( true );
@@ -110,12 +110,12 @@ Surface.prototype = {
         this.boundingBox.copy( geo.boundingBox );
         this.boundingBox.getCenter( this.center );
 
-        var position, color, index, normal;
+        let position, color, index, normal;
 
         if( geo instanceof BufferGeometry ){
 
-            var attr = geo.attributes;
-            var an = attr.normal ? attr.normal.array : false;
+            const attr = geo.attributes;
+            const an = attr.normal ? attr.normal.array : false;
 
             // assume there are no normals if the first is zero
             if( !an || ( an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0 ) ){
@@ -142,50 +142,44 @@ Surface.prototype = {
 
     getColor: function( params ){
 
-        var p = params || {};
+        const p = params || {};
+        p.surface = this;
 
-        var n = this.size;
-        var i, array, colormaker;
+        const n = this.size;
+        const array = new Float32Array( n * 3 );
+        const colormaker = ColormakerRegistry.getScheme( p );
 
-        if( p.scheme === "volume" || p.scheme === "electrostatic" ){
+        if( colormaker.volumeColor || p.scheme === "random" ){
 
-            var v = new Vector3();
-            var pos = this.position;
-            colormaker = ColormakerRegistry.getScheme( p );
-            array = new Float32Array( n * 3 );
+            for( let i = 0; i < n; ++i ){
+                colormaker.volumeColorToArray( i, array, i * 3 );
+            }
 
-            for( i = 0; i < n; ++i ){
+        }else if( colormaker.positionColor ){
+
+            const v = new Vector3();
+            const pos = this.position;
+
+            for( let i = 0; i < n; ++i ){
                 var i3 = i * 3;
                 v.set( pos[ i3 ], pos[ i3 + 1 ], pos[ i3 + 2 ] );
                 colormaker.positionColorToArray( v, array, i3 );
             }
 
-        }else if( p.scheme === "random" ){
+        }else if( colormaker.atomColor && this.atomindex ){
 
-            colormaker = ColormakerRegistry.getScheme( p );
-            array = new Float32Array( n * 3 );
+            const atomProxy = p.structure.getAtomProxy();
+            const atomindex = this.atomindex;
 
-            for( i = 0; i < n; ++i ){
-                colormaker.volumeColorToArray( i, array, i * 3 );
-            }
-
-        }else if( this.atomindex ){
-
-            p.surface = this;  // FIXME should this be p.surface???
-            array = new Float32Array( n * 3 );
-            colormaker = ColormakerRegistry.getScheme( p );
-            var atomProxy = p.structure.getAtomProxy();
-            var atomindex = this.atomindex;
-
-            for( i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
                 atomProxy.index = atomindex[ i ];
                 colormaker.atomColorToArray( atomProxy, array, i * 3 );
             }
 
         }else{
 
-            var tc = new Color( p.value );
-            array = uniformArray3( n, tc.r, tc.g, tc.b );
+            const tc = new Color( p.value );
+            uniformArray3( n, tc.r, tc.g, tc.b, array );
 
         }
 
@@ -225,26 +219,25 @@ Surface.prototype = {
 
         if( sele && this.atomindex ){
 
-            var selection = new Selection( sele );
-            var as = structure.getAtomSet( selection );
-            var filteredIndex = [];
+            const selection = new Selection( sele );
+            const as = structure.getAtomSet( selection );
+            const filteredIndex = [];
 
-            var atomindex = this.atomindex;
-            var index = this.index;
-            var n = index.length;
-            var j = 0;
-            var a;
+            const atomindex = this.atomindex;
+            const index = this.index;
+            const n = index.length;
+            const elementSize = this.contour ? 2 : 3;
 
-            var elementSize = this.contour ? 2 : 3;
+            let j = 0;
 
-            for( var i = 0; i < n; i += elementSize ){
+            for( let i = 0; i < n; i += elementSize ){
 
-                var include = true;
+                let include = true;
 
-                for( a = 0 ; a < elementSize; a++ ){
+                for( let a = 0 ; a < elementSize; a++ ){
 
-                    var idx = index[ i + a ];
-                    var ai = atomindex[ idx ];
+                    const idx = index[ i + a ];
+                    const ai = atomindex[ idx ];
                     if( !as.has( ai ) ){
                         include = false;
                         break;
@@ -253,7 +246,7 @@ Surface.prototype = {
 
                 if( !include ) { continue ; }
 
-                for( a = 0; a < elementSize; a ++, j++ ){
+                for( let a = 0; a < elementSize; a ++, j++ ){
 
                     filteredIndex[ j ] = index[ i + a ];
 

@@ -12,7 +12,6 @@ import {
     ArrowPicker, ConePicker, CylinderPicker,
     EllipsoidPicker, MeshPicker, SpherePicker
 } from "../utils/picker.js";
-import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "../buffer/mesh-buffer.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import EllipsoidBuffer from "../buffer/ellipsoid-buffer.js";
@@ -164,11 +163,10 @@ class Shape{
 
         const data = { position, color, index, normal };
         const picking = new MeshPicker(
-            serialArray( position.length ),
-            Object.assign( { shape: this, serial: this.meshCount, name: name }, data )
+            this, Object.assign( { serial: this.meshCount, name }, data )
         );
         const meshBuffer = new MeshBuffer(
-            Object.assign( { picking: picking }, data )
+            Object.assign( { picking }, data )
         );
         this.bufferList.push( meshBuffer );
 
@@ -342,17 +340,13 @@ class Shape{
         const buffers = [];
 
         if( this.spherePosition.length ){
-            const sphereData = {
-                position: new Float32Array( this.spherePosition ),
-                color: new Float32Array( this.sphereColor ),
-                radius: new Float32Array( this.sphereRadius )
-            };
-            const spherePicking = new SpherePicker(
-                serialArray( this.sphereRadius.length ),
-                Object.assign( { shape: this, name: this.sphereName }, sphereData )
-            );
             const sphereBuffer = new SphereBuffer(
-                Object.assign( { picking: spherePicking }, sphereData ),
+                {
+                    position: new Float32Array( this.spherePosition ),
+                    color: new Float32Array( this.sphereColor ),
+                    radius: new Float32Array( this.sphereRadius ),
+                    picking: new SpherePicker( this )
+                },
                 {
                     sphereDetail: this.sphereDetail,
                     disableImpostor: this.disableImpostor
@@ -362,19 +356,15 @@ class Shape{
         }
 
         if( this.ellipsoidPosition.length ){
-            const ellipsoidData = {
-                position: new Float32Array( this.ellipsoidPosition ),
-                color: new Float32Array( this.ellipsoidColor ),
-                radius: new Float32Array( this.ellipsoidRadius ),
-                majorAxis: new Float32Array( this.ellipsoidMajorAxis ),
-                minorAxis: new Float32Array( this.ellipsoidMinorAxis )
-            };
-            const ellipsoidPicking = new EllipsoidPicker(
-                serialArray( this.ellipsoidRadius.length ),
-                Object.assign( { shape: this, name: this.ellipsoidName }, ellipsoidData )
-            );
             const ellipsoidBuffer = new EllipsoidBuffer(
-                Object.assign( { picking: ellipsoidPicking }, ellipsoidData ),
+                {
+                    position: new Float32Array( this.ellipsoidPosition ),
+                    color: new Float32Array( this.ellipsoidColor ),
+                    radius: new Float32Array( this.ellipsoidRadius ),
+                    majorAxis: new Float32Array( this.ellipsoidMajorAxis ),
+                    minorAxis: new Float32Array( this.ellipsoidMinorAxis ),
+                    picking: new EllipsoidPicker( this )
+                },
                 {
                     sphereDetail: this.sphereDetail,
                     disableImpostor: this.disableImpostor
@@ -384,19 +374,15 @@ class Shape{
         }
 
         if( this.cylinderPosition1.length ){
-            const cylinderData = {
-                position1: new Float32Array( this.cylinderPosition1 ),
-                position2: new Float32Array( this.cylinderPosition2 ),
-                color: new Float32Array( this.cylinderColor ),
-                color2: new Float32Array( this.cylinderColor ),
-                radius: new Float32Array( this.cylinderRadius )
-            };
-            const cylinderPicking = new CylinderPicker(
-                serialArray( this.cylinderRadius.length ),
-                Object.assign( { shape: this, name: this.cylinderName }, cylinderData )
-            );
             const cylinderBuffer = new CylinderBuffer(
-                Object.assign( { picking: cylinderPicking }, cylinderData ),
+                {
+                    position1: new Float32Array( this.cylinderPosition1 ),
+                    position2: new Float32Array( this.cylinderPosition2 ),
+                    color: new Float32Array( this.cylinderColor ),
+                    color2: new Float32Array( this.cylinderColor ),
+                    radius: new Float32Array( this.cylinderRadius ),
+                    picking: new CylinderPicker( this )
+                },
                 {
                     radialSegments: this.radialSegments,
                     disableImpostor: this.disableImpostor,
@@ -407,18 +393,14 @@ class Shape{
         }
 
         if( this.conePosition1.length ){
-            const coneData = {
-                position1: new Float32Array( this.conePosition1 ),
-                position2: new Float32Array( this.conePosition2 ),
-                color: new Float32Array( this.coneColor ),
-                radius: new Float32Array( this.coneRadius )
-            };
-            const conePicking = new ConePicker(
-                serialArray( this.coneRadius.length ),
-                Object.assign( { shape: this, name: this.coneName }, coneData )
-            );
             const coneBuffer = new ConeBuffer(
-                Object.assign( { picking: conePicking }, coneData ),
+                {
+                    position1: new Float32Array( this.conePosition1 ),
+                    position2: new Float32Array( this.conePosition2 ),
+                    color: new Float32Array( this.coneColor ),
+                    radius: new Float32Array( this.coneRadius ),
+                    picking: new ConePicker( this )
+                },
                 {
                     radialSegments: this.radialSegments,
                     disableImpostor: this.disableImpostor,
@@ -429,18 +411,14 @@ class Shape{
         }
 
         if( this.arrowPosition1.length ){
-            const arrowData = {
-                position1: new Float32Array( this.arrowPosition1 ),
-                position2: new Float32Array( this.arrowPosition2 ),
-                color: new Float32Array( this.arrowColor ),
-                radius: new Float32Array( this.arrowRadius )
-            };
-            const arrowPicking = new ArrowPicker(
-                serialArray( this.arrowRadius.length ),
-                Object.assign( { shape: this, name: this.arrowName }, arrowData )
-            );
             const arrowBuffer = new ArrowBuffer(
-                Object.assign( { picking: arrowPicking }, arrowData ),
+                {
+                    position1: new Float32Array( this.arrowPosition1 ),
+                    position2: new Float32Array( this.arrowPosition2 ),
+                    color: new Float32Array( this.arrowColor ),
+                    radius: new Float32Array( this.arrowRadius ),
+                    picking: new ArrowPicker( this )
+                },
                 {
                     aspectRatio: this.aspectRatio,
                     radialSegments: this.radialSegments,
@@ -452,13 +430,15 @@ class Shape{
         }
 
         if( this.labelPosition.length ){
-            const labelData = {
-                position: new Float32Array( this.labelPosition ),
-                color: new Float32Array( this.labelColor ),
-                size: new Float32Array( this.labelSize ),
-                text: this.labelText
-            };
-            const labelBuffer = new TextBuffer( labelData, this.labelParams );
+            const labelBuffer = new TextBuffer(
+                {
+                    position: new Float32Array( this.labelPosition ),
+                    color: new Float32Array( this.labelColor ),
+                    size: new Float32Array( this.labelSize ),
+                    text: this.labelText
+                },
+                this.labelParams
+            );
             buffers.push( labelBuffer );
         }
 

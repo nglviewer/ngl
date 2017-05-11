@@ -519,9 +519,7 @@ class Stage{
 
             if( component.type === "script" ){
                 component.run();
-            }
-
-            if( p.defaultRepresentation ){
+            }else if( p.defaultRepresentation ){
                 this.defaultFileRepresentation( component );
             }
 

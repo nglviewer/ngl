@@ -58,13 +58,13 @@ class SurfaceComponent extends Component{
 
     }
 
-    getBox(){
+    getBoxUntransformed(){
 
         return this.surface.boundingBox;
 
     }
 
-    getCenter(){
+    getCenterUntransformed(){
 
         return this.surface.center;
 

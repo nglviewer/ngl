@@ -702,7 +702,7 @@ class Structure{
         }
         if( !what || what.picking ){
             picking = new Float32Array( atomCount );
-            atomData.picking = new AtomPicker( picking, this );
+            atomData.picking = new AtomPicker( picking, this.getStructure() );
         }
         if( !what || what.radius ){
             radius = new Float32Array( atomCount );
@@ -784,7 +784,7 @@ class Structure{
         }
         if( !what || what.picking ){
             picking = new Float32Array( bondCount );
-            bondData.picking = new BondPicker( picking, this, p.bondStore );
+            bondData.picking = new BondPicker( picking, this.getStructure(), p.bondStore );
         }
         if( !what || what.radius || ( isMulti && what.position ) ){
             radiusFactory = new RadiusFactory( p.radiusParams.radius, p.radiusParams.scale );

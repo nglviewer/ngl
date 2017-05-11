@@ -41,8 +41,13 @@ class AtomindexColormaker extends Colormaker{
 
     }
 
-    atomColor( a ){
-        return this.scalePerModel[ a.modelIndex ]( a.index );
+    /**
+     * get color for an atom
+     * @param  {AtomProxy} atom - atom to get color for
+     * @return {Integer} hex atom color
+     */
+    atomColor( atom ){
+        return this.scalePerModel[ atom.modelIndex ]( atom.index );
     }
 
 }

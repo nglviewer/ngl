@@ -53,7 +53,7 @@ class TrajectoryPlayer{
             }
         }, this );
 
-        var n = traj.numframes;
+        var n = defaults( traj.numframes, 1 );
         this.traj = traj;
         this.start = defaults( p.start, 0 );
         this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
@@ -67,6 +67,10 @@ class TrajectoryPlayer{
 
         this._stopFlag = false;
         this._running = false;
+
+        traj.signals.gotNumframes.add( function( n ){
+            this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
+        }, this );
 
     }
 

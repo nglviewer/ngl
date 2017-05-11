@@ -17,14 +17,18 @@ class ValueColormaker extends Colormaker{
     constructor( params ){
 
         super( params );
+        this.valueScale = this.getScale();
 
-        var valueScale = this.getScale();
+    }
 
-        this.volumeColor = function( index ){
+    /**
+     * return the color for a volume cell
+     * @param  {Integer} index - volume cell index
+     * @return {Integer} hex cell color
+     */
+    volumeColor( index ){
 
-            return valueScale( this.volume.data[ index ] );
-
-        };
+        return this.valueScale( this.volume.data[ index ] );
 
     }
 

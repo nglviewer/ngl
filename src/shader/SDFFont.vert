@@ -28,6 +28,7 @@ attribute vec2 mapping;
 attribute vec2 inputTexCoord;
 attribute float inputSize;
 
+#include matrix_scale
 #include common
 
 void main(void){
@@ -40,7 +41,9 @@ void main(void){
 
     texCoord = inputTexCoord;
 
-    float _zOffset = zOffset;
+    float scale = matrixScale( modelViewMatrix );
+
+    float _zOffset = zOffset * scale;
     if( texCoord.x == 10.0 ){
         _zOffset -= 0.001;
     }
@@ -51,9 +54,9 @@ void main(void){
     }
     vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
-    cameraCornerPos.xy += mapping * inputSize * 0.01;
-    cameraCornerPos.x += xOffset;
-    cameraCornerPos.y += yOffset;
+    cameraCornerPos.xy += mapping * inputSize * 0.01 * scale;
+    cameraCornerPos.x += xOffset * scale;
+    cameraCornerPos.y += yOffset * scale;
     if( !ortho ){
         cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;
     }

@@ -58,13 +58,13 @@ class ShapeComponent extends Component{
 
     }
 
-    getBox(){
+    getBoxUntransformed(){
 
         return this.shape.boundingBox;
 
     }
 
-    getCenter(){
+    getCenterUntransformed(){
 
         return this.shape.center;
 

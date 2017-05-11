@@ -5,7 +5,7 @@
  */
 
 
-import { Color, Vector3 } from "../../lib/three.es6.js";
+import { Color, Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
@@ -121,6 +121,10 @@ class Representation{
                 type: "color", buffer: true
             },
 
+            matrix: {
+                type: "hidden", buffer: true
+            },
+
         };
 
         /**
@@ -188,6 +192,8 @@ class Representation{
             bufferParams: {},
             what: {}
         };
+
+        this.matrix = defaults( p.matrix, new Matrix4() );
 
         // handle common parameters when applicable
 
@@ -273,6 +279,8 @@ class Representation{
             roughness: this.roughness,
             metalness: this.metalness,
             diffuse: this.diffuse,
+
+            matrix: this.matrix
 
         }, p );
 
@@ -466,9 +474,16 @@ class Representation{
             if( tp[ name ].float ) p[ name ] = parseFloat( p[ name ] );
 
             // no value change
-            if( p[ name ] === this[ name ] ) continue;
+            if( p[ name ] === this[ name ] && (
+                    !p[ name ].equals || p[ name ].equals( this[ name ] )
+                )
+            ) continue;
 
-            this[ name ] = p[ name ];
+            if( this[ name ].set ){
+                this[ name ].set( p[ name ] );
+            }else{
+                this[ name ] = p[ name ];
+            }
 
             // buffer param
             if( tp[ name ].buffer ){

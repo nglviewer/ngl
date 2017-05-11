@@ -132,7 +132,7 @@ NGL.ExampleRegistry.addDict( {
         } ).then( function( o ){
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
-            o.autoView();
+            stage.autoView();
             // o.addTrajectory();
         } );
 
@@ -142,7 +142,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
             o.autoView();
-            o.addTrajectory();
+            stage.addTrajectory();
         } );
 
     },
@@ -153,7 +153,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
@@ -161,7 +161,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
@@ -1701,6 +1701,21 @@ NGL.ExampleRegistry.addDict( {
                 o.addRepresentation( "ball+stick" );
                 stage.autoView();
             });
+        } );
+
+    },
+
+    "compMatrix": function( stage ){
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.addRepresentation( "cartoon" );
+            stage.autoView();
+        } );
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.setPosition( [ 10, 0, 0 ] );
+            o.addRepresentation( "cartoon", { color: "orange" } );
+            stage.autoView();
         } );
 
     }

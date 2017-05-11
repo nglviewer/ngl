@@ -52,6 +52,13 @@ class VolumeColormaker extends Colormaker{
 
     }
 
+    /**
+     * return the color for coordinates in space
+     * @param  {Vector3} coords - xyz coordinates
+     * @return {Integer} hex coords color
+     */
+    positionColor( /*coords*/ ){}
+
 }
 
 

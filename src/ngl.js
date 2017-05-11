@@ -156,7 +156,7 @@ import StaticDatasource from "./datasource/static-datasource.js";
 
 import Signal from "../lib/signals.es6.js";
 import {
-    Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Plane, Color
+    Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
 } from "../lib/three.es6.js";
 
 //
@@ -218,6 +218,7 @@ export {
     Vector3,
     Box3,
     Quaternion,
+    Euler,
     Plane,
     Color
 };

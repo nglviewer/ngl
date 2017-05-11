@@ -551,9 +551,9 @@ function Viewer( idOrElement ){
         }
 
         if( instance ){
-            updateBoundingBox( buffer.geometry, instance.matrix );
+            updateBoundingBox( buffer.geometry, buffer.matrix, instance.matrix );
         }else{
-            updateBoundingBox( buffer.geometry );
+            updateBoundingBox( buffer.geometry, buffer.matrix );
         }
 
         // Log.timeEnd( "Viewer.addBuffer" );
@@ -578,20 +578,21 @@ function Viewer( idOrElement ){
 
     }
 
-    function updateBoundingBox( geometry, matrix ){
+    function updateBoundingBox( geometry, matrix, instanceMatrix ){
 
-        function updateGeometry( geometry, matrix ){
+        function updateGeometry( geometry, matrix, instanceMatrix ){
 
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
 
-            var geoBoundingBox;
+            var geoBoundingBox = geometry.boundingBox.clone();
+
             if( matrix ){
-                geoBoundingBox = geometry.boundingBox.clone();
                 geoBoundingBox.applyMatrix4( matrix );
-            }else{
-                geoBoundingBox = geometry.boundingBox;
+            }
+            if( instanceMatrix ){
+                geoBoundingBox.applyMatrix4( instanceMatrix );
             }
 
             if( geoBoundingBox.min.equals( geoBoundingBox.max ) ){
@@ -607,17 +608,20 @@ function Viewer( idOrElement ){
         function updateNode( node ){
 
             if( node.geometry !== undefined ){
-                var matrix;
-                if( node.userData.instance ){
-                    matrix = node.userData.instance.matrix;
+                var matrix, instanceMatrix;
+                if( node.userData.buffer ){
+                    matrix = node.userData.buffer.matrix;
                 }
-                updateGeometry( node.geometry, matrix );
+                if( node.userData.instance ){
+                    instanceMatrix = node.userData.instance.matrix;
+                }
+                updateGeometry( node.geometry, matrix, instanceMatrix );
             }
 
         }
 
         if( geometry ){
-            updateGeometry( geometry, matrix );
+            updateGeometry( geometry, matrix, instanceMatrix );
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );
@@ -626,7 +630,6 @@ function Viewer( idOrElement ){
 
         boundingBox.getSize( boundingBoxSize );
         boundingBoxLength = boundingBoxSize.length();
-        // controls.maxDistance = boundingBoxLength * 10;  // TODO
 
     }
 
@@ -1176,6 +1179,10 @@ function Viewer( idOrElement ){
     this.scene = scene;
     this.perspectiveCamera = perspectiveCamera;
     this.boundingBox = boundingBox;
+    this.updateBoundingBox = function(){
+        updateBoundingBox();
+        if( Debug ) updateHelper();
+    }
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },

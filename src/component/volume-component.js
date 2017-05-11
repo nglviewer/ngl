@@ -58,13 +58,13 @@ class VolumeComponent extends Component{
 
     }
 
-    getBox(){
+    getBoxUntransformed(){
 
         return this.volume.boundingBox;
 
     }
 
-    getCenter(){
+    getCenterUntransformed(){
 
         return this.volume.center;
 

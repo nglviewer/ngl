@@ -49,6 +49,9 @@ class DoubleSidedBuffer{
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
 
+        // requires Group objects to be present
+        this.matrix = buffer.matrix;
+
         this.frontMeshes = [];
         this.backMeshes = [];
 
@@ -76,6 +79,13 @@ class DoubleSidedBuffer{
         this.frontBuffer = frontBuffer;
         this.backBuffer = backBuffer;
 
+    }
+
+    set matrix ( m ){
+        Buffer.prototype.setMatrix.call( this, m );
+    }
+    get matrix (){
+        return this.group.matrix.clone();
     }
 
     get pickable (){
@@ -141,6 +151,11 @@ class DoubleSidedBuffer{
             this.backMeshes.forEach( setVisibilityTrue );
 
         }
+
+        if( data.matrix !== undefined ){
+            this.matrix = data.matrix;
+        }
+        delete data.matrix;
 
         if( data.side !== undefined ){
             this.side = data.side;

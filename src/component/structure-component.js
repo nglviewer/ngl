@@ -261,7 +261,7 @@ class StructureComponent extends Component{
 
     }
 
-    getBox( sele ){
+    getBoxUntransformed( sele ){
 
         var bb;
 
@@ -275,9 +275,9 @@ class StructureComponent extends Component{
 
     }
 
-    getCenter( sele ){
+    getCenterUntransformed( sele ){
 
-        if( sele ){
+        if( sele && typeof sele === "string" ){
             return this.structure.atomCenter( new Selection( sele ) );
         }else{
             return this.structure.center;
