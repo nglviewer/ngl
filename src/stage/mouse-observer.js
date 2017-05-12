@@ -265,6 +265,7 @@ class MouseObserver{
         this.moving = false;
         this.hovering = false;
         this.down.set( event.layerX, event.layerY );
+        this.position.set( event.layerX, event.layerY );
         this.which = event.which;
         this.pressed = true;
         this._setCanvasPosition( event );

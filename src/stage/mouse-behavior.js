@@ -17,8 +17,17 @@ class MouseBehavior{
         this.mouse = stage.mouseObserver;
         this.controls = stage.trackballControls;
 
+        this.stage.signals.hovered.add( this._onHover, this );
         this.mouse.signals.scrolled.add( this._onScroll, this );
         this.mouse.signals.dragged.add( this._onDrag, this );
+
+    }
+
+    _onHover( pickingProxy ){
+
+        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
+            this.stage.transformComponent = pickingProxy.component;
+        }
 
     }
 
@@ -50,6 +59,7 @@ class MouseBehavior{
     }
 
     dispose(){
+        this.stage.signals.hovered.remove( this._onHover, this );
         this.mouse.signals.scrolled.remove( this._onScroll, this );
         this.mouse.signals.dragged.remove( this._onDrag, this );
     }
