@@ -73706,6 +73706,7 @@ var Component = function Component( stage, params ){
     this.position = new Vector3();
     this.quaternion = new Quaternion();
     this.scale = new Vector3( 1, 1, 1 );
+    this.transform = new Matrix4();
 
 };
 
@@ -73785,6 +73786,25 @@ Component.prototype.setScale = function setScale ( s ){
 
 };
 
+/**
+ * Set general transform. Is applied before and in addition
+ * to the position, rotation and scale transformations
+ *
+ * @example
+ * component.setTransform( matrix );
+ *
+ * @param {Matrix4} m - the matrix
+ * @return {Component} this object
+ */
+Component.prototype.setTransform = function setTransform ( m ){
+
+    this.transform.copy( m );
+    this.updateMatrix();
+
+    return this;
+
+};
+
 Component.prototype.updateMatrix = function updateMatrix (){
         var this$1 = this;
 
@@ -73801,6 +73821,8 @@ Component.prototype.updateMatrix = function updateMatrix (){
     var p = this.position;
     _m.makeTranslation( p.x + c.x, p.y + c.y, p.z + c.z );
     this.matrix.premultiply( _m );
+
+    this.matrix.premultiply( this.transform );
 
     this.reprList.forEach( function (repr) {
         repr.setParameters( { matrix: this$1.matrix } );
@@ -96448,7 +96470,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.17";
+var version$1 = "0.10.0-dev.18";
 
 /**
  * @file Version
