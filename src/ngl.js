@@ -153,6 +153,12 @@ import StaticDatasource from "./datasource/static-datasource.js";
 
 //
 
+import {
+    LeftMouseButton, MiddleMouseButton, RightMouseButton
+} from "./constants.js";
+
+//
+
 import Signal from "../lib/signals.es6.js";
 import {
     Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
@@ -208,6 +214,10 @@ export {
 
     Kdtree,
     SpatialHash,
+
+    LeftMouseButton,
+    MiddleMouseButton,
+    RightMouseButton,
 
     Signal,
 
