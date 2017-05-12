@@ -87,6 +87,7 @@ class Component{
         this.position = new Vector3();
         this.quaternion = new Quaternion();
         this.scale = new Vector3( 1, 1, 1 );
+        this.transform = new Matrix4();
 
     }
 
@@ -164,6 +165,25 @@ class Component{
 
     }
 
+    /**
+     * Set general transform. Is applied before and in addition
+     * to the position, rotation and scale transformations
+     *
+     * @example
+     * component.setTransform( matrix );
+     *
+     * @param {Matrix4} m - the matrix
+     * @return {Component} this object
+     */
+    setTransform( m ){
+
+        this.transform.copy( m );
+        this.updateMatrix();
+
+        return this;
+
+    }
+
     updateMatrix(){
 
         var c = this.getCenterUntransformed( _v );
@@ -178,6 +198,8 @@ class Component{
         var p = this.position;
         _m.makeTranslation( p.x + c.x, p.y + c.y, p.z + c.z );
         this.matrix.premultiply( _m );
+
+        this.matrix.premultiply( this.transform );
 
         this.reprList.forEach( repr => {
             repr.setParameters( { matrix: this.matrix } );
