@@ -19,7 +19,8 @@ cp -r ${DIR}/../examples/css/ ./css/;
 cp -r ${DIR}/../examples/fonts/ ./fonts/;
 cp -r ${DIR}/../examples/js/ ./js/;
 cp -r ${DIR}/../examples/plugins/ ./plugins/;
-cp -r ${DIR}/../build/docs/api/ ./api/;
+cp -r ${DIR}/../build/docs/ ./api/;
+cp -r ${DIR}/../build/gallery/ ./gallery/;
 
 cp ${DIR}/../dist/ngl.js ./js/ngl.js;
 

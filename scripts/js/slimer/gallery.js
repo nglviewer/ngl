@@ -34,7 +34,7 @@ function renderExample( name ){
         page.onCallback = function( cmd ){
             switch( cmd ){
                 case "render":
-                    page.render( "../build/test/img/" + name + ".png" );
+                    page.render( "../build/gallery/img/" + name + ".png" );
                     page.close();
                     console.log( "FINISH", name );
                     resolve();
@@ -64,8 +64,10 @@ function renderExample( name ){
     });
 }
 
+const pkg = JSON.parse( fs.open( "../package.json", "r" ).read() );
+const nglVersion = pkg.version;
 
-const nglUrl = "https://rawgit.com/arose/ngl/master/dist/ngl.js";
+const nglUrl = "https://rawgit.com/arose/ngl/v" + nglVersion + "/dist/ngl.js";
 
 const html = (
     "<div id=\"viewport\" style=\"width:100%; height:100%;\"></div>"
@@ -78,7 +80,7 @@ const css = (
 const jsPrefix = (
     "// Setup to load data from rawgit\n" +
     "NGL.DatasourceRegistry.add(\n" +
-    "    \"data\", new NGL.StaticDatasource( \"//rawgit.com/arose/ngl/master/data/\" )\n" +
+    "    \"data\", new NGL.StaticDatasource( \"//rawgit.com/arose/ngl/v" + nglVersion + "/data/\" )\n" +
     ");\n\n" +
     "// Create NGL Stage object\n" +
     "var stage = new NGL.Stage( \"viewport\" );\n\n" +
@@ -93,17 +95,14 @@ function buildExamplePage( exampleNames, exampleUrl ){
     const pageLines = [];
     exampleNames.forEach( name => {
         pageLines.push( "<div class='outer'>" );
-        pageLines.push(
-            "<a href='" + exampleUrl + "./scripts/" + name + ".js' target='_blank' >" +
-                "<img src='./img/" + name + ".png' />" +
-            "</a>"
-        );
+        pageLines.push( "<img src='./img/" + name + ".png' />" );
         pageLines.push( "<span class='name'>" + name + "</span>" );
         const path = exampleDir + name + ".js";
         const doc = "// Code for example: " + name + "\n";
         const js = jsPrefix + doc + fs.open( path, "r" ).read();
         const data = {
-            title: "NGL example - " + name,
+            title: "NGL@" + nglVersion + " - " + name,
+            tags: [ "ngl", "nglviewer", "webgl", "molecule", "scientific" ],
             editors: "001",
             layout: "left",
             html: html,
@@ -125,14 +124,16 @@ function buildExamplePage( exampleNames, exampleUrl ){
         "<!DOCTYPE html>\n" +
         "<html lang='en'>\n" +
         "<head>\n" +
-            "<title>NGL - results</title>" +
+            "<title>NGL - gallery</title>" +
             "<style>" +
+                "body { font-family:sans-serif; } " +
                 ".outer { position:relative; display:inline-block; } " +
-                ".name { position:absolute; bottom:15px; right:5px; z-index:10; color:lightgrey; font-family:sans-serif; } " +
+                ".name { position:absolute; bottom:15px; right:5px; z-index:10; color:lightgrey; } " +
                 "input, form { display:inline; position:absolute; top:5px; right:5px; z-index:10; } " +
             "</style>" +
         "</head>\n" +
         "<body>\n" +
+            "<h1>NGL@" + nglVersion + " gallery</h1>\n" +
             pageLines.join( "\n" ) + "\n" +
         "</body>\n" +
         "</html>"
@@ -175,7 +176,7 @@ examples.reduce( function( acc, name ){
     } );
 }, Promise.resolve( [] ) ).then( function(){
     fs.write(
-        "../build/test/results.html",
+        "../build/gallery/index.html",
         buildExamplePage( exampleNames, exampleUrl )
     );
     slimer.exit();
