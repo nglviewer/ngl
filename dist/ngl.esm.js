@@ -96470,7 +96470,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.18";
+var version$1 = "0.10.0-dev.19";
 
 /**
  * @file Version
