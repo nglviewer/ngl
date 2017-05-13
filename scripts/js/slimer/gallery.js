@@ -19,7 +19,7 @@ for( let i = 1; i < argCount; ++i ){
 }
 
 
-const exampleUrl = "http://localhost:" + port + "/ngl/examples/test.html?load=";
+const exampleUrl = "http://localhost:" + port + "/ngl/examples/test.html?script=";
 const exampleDir = "../examples/scripts/";
 
 
@@ -60,7 +60,7 @@ function renderExample( name ){
         };
 
         page.viewportSize = { width: 512, height: 384 };
-        page.open( exampleUrl + "./scripts/" + name + ".js" );
+        page.open( exampleUrl + name );
     });
 }
 
