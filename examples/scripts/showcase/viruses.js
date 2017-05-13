@@ -6,13 +6,15 @@ Promise.all( pdbs.map( function( id ){
     return stage.loadFile( "rcsb://" + id )
 } ) ).then( function( ol ){
 
-    ol[ 1 ].setPosition( [ -169.65, -178.95, -90.31 ] );
-
     ol.map( function( o, i ){
+        var s = o.structure;
+        var bu1 = s.biomolDict.BU1;
+        o.setPosition( bu1.getCenter( s ).negate() );
         o.addRepresentation( "surface", {
+            sele: "polymer",
             assembly: "BU1",
             color: colors[ i ],
-            scaleFactor: 0.15,
+            scaleFactor: 0.10,
             surfaceType: "sas"
         } );
     } );

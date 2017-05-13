@@ -147,6 +147,12 @@ class Assembly{
 
     }
 
+    getCenter( structure ){
+
+        return this.getBoundingBox( structure ).getCenter();
+
+    }
+
     getSelection(){
         var chainList = [];
         this.partList.forEach( function( part ){
