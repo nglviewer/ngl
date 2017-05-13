@@ -68,10 +68,10 @@ This project would not be possible without many fine open-source projects. Espec
 
 * [three.js](http://threejs.org/)
     * NGL relies on the three.js library to interface WebGL
-    * NGL's documentation uses the three.js documentation as a template
     * NGL's GUI is based on the three.js editor UI
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
+* [ESDoc](https://esdoc.org/) - for documentation
 * [Mocha](https://mochajs.org/) and [Chai](http://chaijs.com/) - for unit testing
 * [Chroma.js](https://github.com/gka/chroma.js) - for color handling
 * [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - for color picking
