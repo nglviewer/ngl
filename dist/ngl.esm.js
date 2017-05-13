@@ -52261,13 +52261,17 @@ TrackballControls.prototype.pan = function pan ( x, y ){
 
     tmpPanVector.set( x, y, 0 );
     tmpPanVector.multiplyScalar( this.panSpeed * scaleFactor );
-    tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
-    tmpPanVector.applyMatrix4( tmpPanMatrix );
 
     if( this.mouse.ctrlKey && this.component ){
+        tmpPanMatrix.extractRotation( this.component.transform );
+        tmpPanMatrix.premultiply( this.viewer.rotationGroup.matrix );
+        tmpPanMatrix.getInverse( tmpPanMatrix );
+        tmpPanVector.applyMatrix4( tmpPanMatrix );
         this.component.position.add( tmpPanVector );
         this.component.updateMatrix();
     }else{
+        tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
+        tmpPanVector.applyMatrix4( tmpPanMatrix );
         this.controls.translate( tmpPanVector );
     }
 
@@ -52279,7 +52283,9 @@ TrackballControls.prototype.rotate = function rotate ( x, y ){
     var dy = this.rotateSpeed * y * 0.01;
 
     if( this.mouse.ctrlKey && this.component ){
-        tmpRotateMatrix.getInverse( this.viewer.rotationGroup.matrix );
+        tmpRotateMatrix.extractRotation( this.component.transform );
+        tmpRotateMatrix.premultiply( this.viewer.rotationGroup.matrix );
+        tmpRotateMatrix.getInverse( tmpRotateMatrix );
         tmpRotateVector.set( 1, 0, 0 );
         tmpRotateVector.applyMatrix4( tmpRotateMatrix );
         tmpRotateXMatrix.makeRotationAxis( tmpRotateVector, dy );
@@ -96470,7 +96476,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.19";
+var version$1 = "0.10.0-dev.20";
 
 /**
  * @file Version
