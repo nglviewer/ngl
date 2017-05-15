@@ -205,7 +205,7 @@ class BitArray{
         const answer = Object.create( BitArray.prototype );
         answer._words = wordsA;
         answer.length = Math.min( this.length, otherBitarray.length );
-        for( let k = 0; k < c; ++k ){
+        for( let k = 0; k < count; ++k ){
             wordsA[ k ] = words1[ k ] & words2[ k ];
         }
         return answer;
