@@ -67,7 +67,7 @@ function renderExample( name ){
 const pkg = JSON.parse( fs.open( "../package.json", "r" ).read() );
 const nglVersion = pkg.version;
 
-const nglUrl = "https://rawgit.com/arose/ngl/v" + nglVersion + "/dist/ngl.js";
+const nglUrl = "https://cdn.rawgit.com/arose/ngl/v" + nglVersion + "/dist/ngl.js";
 
 const html = (
     "<div id=\"viewport\" style=\"width:100%; height:100%;\"></div>"
@@ -80,7 +80,7 @@ const css = (
 const jsPrefix = (
     "// Setup to load data from rawgit\n" +
     "NGL.DatasourceRegistry.add(\n" +
-    "    \"data\", new NGL.StaticDatasource( \"//rawgit.com/arose/ngl/v" + nglVersion + "/data/\" )\n" +
+    "    \"data\", new NGL.StaticDatasource( \"//cdn.rawgit.com/arose/ngl/v" + nglVersion + "/data/\" )\n" +
     ");\n\n" +
     "// Create NGL Stage object\n" +
     "var stage = new NGL.Stage( \"viewport\" );\n\n" +
