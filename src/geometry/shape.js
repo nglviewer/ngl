@@ -65,7 +65,7 @@ class Shape{
 
         this.name = defaults( name, "shape" );
 
-        var p = params || {};
+        const p = params || {};
 
         this.aspectRatio = defaults( p.aspectRatio, 1.5 );
         this.sphereDetail = defaults( p.sphereDetail, 2 );
@@ -125,7 +125,7 @@ class Shape{
 
         this.bufferList.push( buffer );
 
-        var geometry = buffer.geometry;
+        const geometry = buffer.geometry;
         if( !geometry.boundingBox ){
             geometry.computeBoundingBox();
         }
