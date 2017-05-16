@@ -215,18 +215,18 @@ class Polymer{
         }
         // console.log( array, offset, end, count )
 
-        var as = this.structure.atomSetCache[ "__" + type ];
-        if( as === undefined ){
+        let atomSet = this.structure.atomSetCache[ "__" + type ];
+        if( atomSet === undefined ){
             Log.warn( "no precomputed atomSet for: " + type );
-            as = this.structure.getAtomSet( false );
+            atomSet = this.structure.getAtomSet( false );
             this.eachResidue( function( rp ){
                 var ap = rp.getAtomByName( type );
-                as.add_unsafe( ap.index );
+                atomSet.set( ap.index );
             } );
         }
         var j = 0;
 
-        as.forEach( function( index ){
+        atomSet.forEach( function( index ){
             if( index >= offset && index < end ){
                 for( var i = 1; i < n; ++i ){
                     array[ i - 1 ].index = array[ i ].index;

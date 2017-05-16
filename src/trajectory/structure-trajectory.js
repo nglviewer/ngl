@@ -20,7 +20,7 @@ class StructureTrajectory extends Trajectory{
 
     makeAtomIndices(){
 
-        if( this.structure.atomSet.size() < this.structure.atomStore.count ){
+        if( this.structure.atomSet.getSize() < this.structure.atomStore.count ){
             this.atomIndices = this.structure.getAtomIndices();
         }else{
             this.atomIndices = null;

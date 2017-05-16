@@ -17,8 +17,20 @@ describe( 'BitArray', function () {
         ba.set( 10 );
         assert.strictEqual( ba.get( 10 ), true, "after set" );
 
-        ba.unset( 10 );
-        assert.strictEqual( ba.get( 10 ), false, "after unset" );
+        ba.clear( 10 );
+        assert.strictEqual( ba.get( 10 ), false, "after clear" );
+
+    } );
+
+    it( 'is set', function () {
+
+        var ba = new BitArray( 40 );
+
+        assert.isFalse( ba.isSet( 10, 33 ), "after init" );
+
+        ba.set( 10 );
+        ba.set( 33 );
+        assert.isTrue( ba.isSet( 10, 33 ), "after set" );
 
     } );
 
@@ -33,17 +45,17 @@ describe( 'BitArray', function () {
         words[ 0 ] = 1;
         assert.deepEqual( ba._words, words, "after set" );
 
-        ba.unset( 0 );
+        ba.clear( 0 );
         words[ 0 ] = 0;
-        assert.deepEqual( ba._words, words, "after unset" );
+        assert.deepEqual( ba._words, words, "after clear" );
 
         ba.set( 32 );
         words[ 1 ] = 1;
         assert.deepEqual( ba._words, words, "after set" );
 
-        ba.unset( 32 );
+        ba.clear( 32 );
         words[ 1 ] = 0;
-        assert.deepEqual( ba._words, words, "after unset" );
+        assert.deepEqual( ba._words, words, "after clear" );
 
     } );
 
@@ -56,8 +68,8 @@ describe( 'BitArray', function () {
         ba.set( 39 );
         assert.strictEqual( ba.get( 39 ), true, "after set" );
 
-        ba.unset( 39 );
-        assert.strictEqual( ba.get( 39 ), false, "after unset" );
+        ba.clear( 39 );
+        assert.strictEqual( ba.get( 39 ), false, "after clear" );
 
     } );
 
@@ -70,8 +82,8 @@ describe( 'BitArray', function () {
         ba.set( 10 );
         assert.strictEqual( ba.getSize(), 1, "after set" );
 
-        ba.unset( 10 );
-        assert.strictEqual( ba.getSize(), 0, "after unset" );
+        ba.clear( 10 );
+        assert.strictEqual( ba.getSize(), 0, "after clear" );
 
     } );
 
@@ -84,8 +96,8 @@ describe( 'BitArray', function () {
         ba.set( 10 );
         assert.deepEqual( ba.toArray(), [ 10 ], "after set" );
 
-        ba.unset( 10 );
-        assert.deepEqual( ba.toArray(), [], "after unset" );
+        ba.clear( 10 );
+        assert.deepEqual( ba.toArray(), [], "after clear" );
 
     } );
 
@@ -98,8 +110,8 @@ describe( 'BitArray', function () {
         ba.set( 39 );
         assert.deepEqual( ba.toArray(), [ 39 ], "after set" );
 
-        ba.unset( 39 );
-        assert.deepEqual( ba.toArray(), [], "after unset" );
+        ba.clear( 39 );
+        assert.deepEqual( ba.toArray(), [], "after clear" );
 
     } );
 
@@ -157,16 +169,39 @@ describe( 'BitArray', function () {
 
         var ba = new BitArray( 40 );
 
+        assert.deepEqual( ba._words, new Uint32Array( [ 0, 0 ] ), "after init" );
         assert.deepEqual( ba.toArray(), [], "after init" );
         assert.strictEqual( ba.getSize(), 0, "after init" );
 
         ba.setAll();
+        assert.deepEqual( ba._words, new Uint32Array( [ 0xFFFFFFFF, 0xFF ] ), "after set" );
         assert.deepEqual( ba.toArray(), [...Array( 40 ).keys() ], "after set" );
         assert.strictEqual( ba.getSize(), 40, "after set" );
 
-        ba.unsetAll();
-        assert.deepEqual( ba.toArray(), [], "after unset" );
-        assert.strictEqual( ba.getSize(), 0, "after unset" );
+        ba.clearAll();
+        assert.deepEqual( ba._words, new Uint32Array( [ 0, 0 ] ), "after clear" );
+        assert.deepEqual( ba.toArray(), [], "after clear" );
+        assert.strictEqual( ba.getSize(), 0, "after clear" );
+
+    } );
+
+    it( 'set all 140', function () {
+
+        var ba = new BitArray( 140 );
+
+        assert.deepEqual( ba._words, new Uint32Array( [ 0, 0, 0, 0, 0 ] ), "after init" );
+        assert.deepEqual( ba.toArray(), [], "after init" );
+        assert.strictEqual( ba.getSize(), 0, "after init" );
+
+        ba.setAll();
+        assert.deepEqual( ba._words, new Uint32Array( [ 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFF ] ), "after set" );
+        assert.deepEqual( ba.toArray(), [...Array( 140 ).keys() ], "after set" );
+        assert.strictEqual( ba.getSize(), 140, "after set" );
+
+        ba.clearAll();
+        assert.deepEqual( ba._words, new Uint32Array( [ 0, 0, 0, 0, 0 ] ), "after clear" );
+        assert.deepEqual( ba.toArray(), [], "after clear" );
+        assert.strictEqual( ba.getSize(), 0, "after clear" );
 
     } );
 

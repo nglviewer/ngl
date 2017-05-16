@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file, following t
 - scroll mouse behavior to change far/near clipping and fog
 - label primitive for Shape class
 - support for reversing color schemes with `colorReverse` parameter
+- independent component movement via `.setPosition`, `.setRotation`, `.setScale`, `.setTransform`
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`
@@ -28,6 +29,7 @@ All notable changes to this project will be documented in this file, following t
 - replaced PickingData with PickingProxy
 - updated three.js to r85
 - updated chroma.js to 1.3.3
+- replaced utils/bitset with utils/bitarray
 
 ### Removed
 - stage/component.centerView method, use .autoView instead

@@ -220,7 +220,7 @@ Surface.prototype = {
         if( sele && this.atomindex ){
 
             const selection = new Selection( sele );
-            const as = structure.getAtomSet( selection );
+            const atomSet = structure.getAtomSet( selection );
             const filteredIndex = [];
 
             const atomindex = this.atomindex;
@@ -238,7 +238,7 @@ Surface.prototype = {
 
                     const idx = index[ i + a ];
                     const ai = atomindex[ idx ];
-                    if( !as.has( ai ) ){
+                    if( !atomSet.get( ai ) ){
                         include = false;
                         break;
                     }
