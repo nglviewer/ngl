@@ -51,10 +51,6 @@ class AtomProxy{
          * @type {AtomMap}
          */
         this.atomMap = structure.atomMap;
-        /**
-         * @type {BondHash}
-         */
-        this.bondHash = structure.bondHash;
 
         /**
          * The index of the atom, pointing to the data in the corresponding {@link AtomStore}
@@ -63,6 +59,11 @@ class AtomProxy{
         this.index = index;
 
     }
+
+    /**
+     * @type {BondHash}
+     */
+    get bondHash(){ return this.structure.bondHash; }
 
     /**
      * Molecular enity
@@ -444,6 +445,10 @@ class AtomProxy{
      */
     isSaccharide(){
         return this.residueType.moleculeType === SaccharideType;
+    }
+
+    isBonded(){
+        return this.bondHash.countArray[ this.index ] !== 0;
     }
 
     /**

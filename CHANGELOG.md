@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file, following t
 - label primitive for Shape class
 - support for reversing color schemes with `colorReverse` parameter
 - independent component movement via `.setPosition`, `.setRotation`, `.setScale`, `.setTransform`
+- `bonded` keyword in selection language
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`

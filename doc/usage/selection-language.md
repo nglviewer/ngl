@@ -13,34 +13,34 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 
 ### Keywords
 
-*   *all*, *****
-*   *sidechain*
-*   *sidechainAttached*
-*   *backbone*
-*   *protein*
-*   *nucleic*
-*   *rna*
-*   *dna*
-*   *hetero*
-*   *ion*
-*   *saccharide*/*sugar*
-*   *polymer*
-*   *water*
-*   *hydrogen*
-*   *helix*
-*   *sheet*
-*   *turn* (not helix and not sheet)
-*   *small* (Gly, Ala)
-*   *nucleophilic* (Ser, Thr, Cys)
-*   *hydrophobic* (Val, Leu, Ile, Met, Pro)
-*   *aromatic* (Phe, Tyr, Trp)
-*   *amid* (Asn, Gln)
-*   *acidic* (Asp, Glu)
-*   *basic* (His, Lys, Arg)
-*   *charged* (Asp, Glu, His, Lys, Arg)
-*   *polar* (Asp, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
-*   *nonpolar* (Ala, Cys, Gly, Ile, Leu, Met, Phe, Pro, Val, Trp)
-
+* *all*, *****
+* *sidechain*
+* *sidechainAttached*
+* *backbone*
+* *protein*
+* *nucleic*
+* *rna*
+* *dna*
+* *hetero*
+* *ion*
+* *saccharide*/*sugar*
+* *polymer*
+* *water*
+* *hydrogen*
+* *helix*
+* *sheet*
+* *turn* (not helix and not sheet)
+* *small* (Gly, Ala)
+* *nucleophilic* (Ser, Thr, Cys)
+* *hydrophobic* (Val, Leu, Ile, Met, Pro)
+* *aromatic* (Phe, Tyr, Trp)
+* *amid* (Asn, Gln)
+* *acidic* (Asp, Glu)
+* *basic* (His, Lys, Arg)
+* *charged* (Asp, Glu, His, Lys, Arg)
+* *polar* (Asp, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
+* *nonpolar* (Ala, Cys, Gly, Ile, Leu, Met, Phe, Pro, Val, Trp)
+* *bonded* (all atoms with at least one bond)
 
 ### Expressions
 

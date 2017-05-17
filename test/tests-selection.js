@@ -697,6 +697,18 @@ describe( 'parsing', function () {
         };
         assert.deepEqual( selection.selection, selectionObj );
     } );
+
+    it( 'bonded', function () {
+        var sele = "bonded";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "keyword": kwd.BONDED }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
 } );
 
 

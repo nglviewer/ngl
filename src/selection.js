@@ -24,10 +24,18 @@ const kwd = {
     "ALL": 11,
     "HETERO": 12,
     "ION": 13,
-    "SACCHARIDE": 14, "SUGAR": 14
+    "SACCHARIDE": 14, "SUGAR": 14,
+    "BONDED": 15
 };
 
 const all = [ "*", "", "ALL" ];
+
+const atomOnlyKeywords = [
+    kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED
+];
+
+const helixTypes = [ "h", "g", "i" ];
+const sheetTypes = [ "e", "b" ];
 
 
 /**
@@ -739,9 +747,6 @@ class Selection{
 
     makeAtomTest( atomOnly ){
 
-        const helixTypes = [ "h", "g", "i" ];
-        const sheetTypes = [ "e", "b" ];
-
         let selection;
 
         if( atomOnly ){
@@ -749,9 +754,7 @@ class Selection{
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined &&
-                        s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN
-                ) return true;
+                if( s.keyword!==undefined && !atomOnlyKeywords.includes( s.keyword ) ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
@@ -771,7 +774,6 @@ class Selection{
             // returning -1 means the rule is not applicable
             if( s.atomname===undefined && s.element===undefined &&
                     s.altloc===undefined && s.atomindex===undefined &&
-                    // s.keyword!==kwd.BACKBONE && s.keyword!==kwd.SIDECHAIN &&
                     s.keyword===undefined && s.inscode===undefined &&
                     s.resname===undefined && s.sstruc===undefined &&
                     s.resno===undefined && s.chainname===undefined &&
@@ -781,6 +783,7 @@ class Selection{
             if( s.keyword!==undefined ){
                 if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) return false;
                 if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) return false;
+                if( s.keyword===kwd.BONDED && !a.isBonded() ) return false;
 
                 if( s.keyword===kwd.HETERO && !a.isHetero() ) return false;
                 if( s.keyword===kwd.PROTEIN && !a.isProtein() ) return false;
@@ -827,9 +830,6 @@ class Selection{
 
     makeResidueTest( residueOnly ){
 
-        const helixTypes = [ "h", "g", "i" ];
-        const sheetTypes = [ "e", "b" ];
-
         let selection;
 
         if( residueOnly ){
@@ -837,7 +837,7 @@ class Selection{
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN ) return true;
+                if( s.keyword!==undefined && atomOnlyKeywords.includes( s.keyword ) ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
@@ -858,7 +858,7 @@ class Selection{
             if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
                     s.atomindex===undefined &&
-                    ( s.keyword===undefined || s.keyword===kwd.BACKBONE || s.keyword===kwd.SIDECHAIN )
+                    ( s.keyword===undefined || atomOnlyKeywords.includes( s.keyword ) )
             ) return -1;
 
             if( s.keyword!==undefined ){
