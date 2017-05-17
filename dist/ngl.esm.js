@@ -54187,581 +54187,358 @@ var SlicePicker = (function (VolumePicker) {
 }(VolumePicker));
 
 /**
- * @file Bitset
+ * @file Bit array
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
- *
- * @description
- * FastBitSet.js : a fast bit set implementation in JavaScript.
- * (c) the authors
- * Licensed under the Apache License, Version 2.0.
- *
- * Speed-optimized BitSet implementation for modern browsers and JavaScript engines.
- *
- * A BitSet is an ideal data structure to implement a Set when values being stored are
- * reasonably small integers. It can be orders of magnitude faster than a generic set implementation.
- * The FastBitSet implementation optimizes for speed, leveraging commonly available features
- * like typed arrays.
- *
- * Simple usage :
- *  var b = new TypedFastBitSet();// initially empty
- *         // will throw exception if typed arrays are not supported
- *  b.add(1);// add the value "1"
- *  b.has(1); // check that the value is present! (will return true)
- *  b.add(2);
- *  console.log(""+b);// should display {1,2}
- *  b.add(10);
- *  b.array(); // would return [1,2,10]
- *
- *  var c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
- *  c.difference(b); // from c, remove elements that are in b
- *  var su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
- * c.union(b); // c will contain all elements that are in c and b
- * var s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
- * c.intersection(b); // c will only contain elements that are in both c and b
- * c = b.clone(); // create a (deep) copy of b and assign it to c.
- * c.equals(b); // check whether c and b are equal
- *
- *   See README.md file for a more complete description.
- *
- * You can install the library under node with the command line
- *   npm install fastbitset
  */
 
 
-// you can provide an iterable
-// an exception is thrown if typed arrays are not supported
-// - added size argument, ASR
-// - added flip argument, ASR
 /**
- * Bitset
- * @class
- * @param {Integer} size - how many element to store
- * @param {Boolean} [flip] - set to true to set all bits to 1
+ * Compute the Hamming weight of a 32-bit unsigned integer
+ * @param  {Integer} v - a 32-bit unsigned integer
+ * @return {Integer} the Hamming weight
  */
-function TypedFastBitSet( size, flip ) {
-  this.count = 0 | 0;
-  this.words = new Uint32Array( 8 );
-  this.resize( size );
-  if ( flip ) {
-    this.flip_all();
-  }
+function hammingWeight( v ){
+    // works with signed or unsigned shifts
+    v -= ( ( v >>> 1 ) & 0x55555555 );
+    v = ( v & 0x33333333 ) + ( ( v >>> 2 ) & 0x33333333 );
+    return ( ( v + ( v >>> 4 ) & 0xF0F0F0F ) * 0x1010101 ) >>> 24;
 }
 
-// Add the value (Set the bit at index to true)
-TypedFastBitSet.prototype.add = function( index ) {
-  if ( ( this.count << 5 ) <= index ) {
-    this.resize( index );
-  }
-  this.words[index >>> 5] |= 1 << index ;
-};
 
-// Add the value (Set the bit at index to true)
-// - unsafe because size is not checked, added by ASR
-TypedFastBitSet.prototype.add_unsafe = function( index ) {
-  this.words[index >>> 5] |= 1 << index ;
-};
-
-// If the value was not in the set, add it, otherwise remove it (flip bit at index)
-TypedFastBitSet.prototype.flip = function( index ) {
-  if ( ( this.count << 5 ) <= index ) {
-    this.resize( index );
-  }
-  this.words[index >>> 5] ^= 1 << index ;
-};
-
-// If the value was not in the set, add it, otherwise remove it (flip bit at index)
-// - unsafe because size is not checked, added by ASR
-TypedFastBitSet.prototype.flip_unsafe = function( index ) {
-  this.words[index >>> 5] ^= 1 << index ;
-};
-
-// Flip all bits, added by ASR
-TypedFastBitSet.prototype.flip_all = function() {
-  var this$1 = this;
-
-  var count = this.count;
-  var k = 0 | 0;
-  var bs = 32 - this.length % 32;
-  for ( ; k + 7 < count; k += 8 ) {
-    this$1.words[k    ] = ~this$1.words[k    ];
-    this$1.words[k + 1] = ~this$1.words[k + 1];
-    this$1.words[k + 2] = ~this$1.words[k + 2];
-    this$1.words[k + 3] = ~this$1.words[k + 3];
-    this$1.words[k + 4] = ~this$1.words[k + 4];
-    this$1.words[k + 5] = ~this$1.words[k + 5];
-    this$1.words[k + 6] = ~this$1.words[k + 6];
-    this$1.words[k + 7] = ~this$1.words[k + 7];
-  }
-  for ( ; k < count-1; ++k ) {
-    this$1.words[k] = ~this$1.words[k];
-  }
-  this.words[count-1] = ( ~( this.words[count-1] << bs ) ) >>> bs;
-  return this;
-};
-
-// Set all bits to value, added by ASR
-TypedFastBitSet.prototype.set_all = function( value ) {
-  if ( this.length <= 0 ) { return this; }
-  this.set_range( 0, this.length-1, value );
-  return this;
-};
-
-// Set all bits in range to value, added by ASR
-TypedFastBitSet.prototype.set_range = function( from, to, value ) {
-  var this$1 = this;
-
-  // set complete words when applicable
-  value = value ? 0xFFFFFFFF : 0x00000000;
-  var wordStart = ( from >>> 5 ) + 1;
-  var wordEnd = ( to >>> 5 ) - 1;
-  var k = wordStart | 0;
-  for ( ; k + 7 < wordEnd; k += 8 ) {
-    this$1.words[k    ] = value;
-    this$1.words[k + 1] = value;
-    this$1.words[k + 2] = value;
-    this$1.words[k + 3] = value;
-    this$1.words[k + 4] = value;
-    this$1.words[k + 5] = value;
-    this$1.words[k + 6] = value;
-    this$1.words[k + 7] = value;
-  }
-  for ( ; k < wordEnd; ++k ) {
-    this$1.words[k] = value;
-  }
-  // set parts of the range not spanning complete words
-  var i, n;
-  if ( value ){
-    for ( i = from, n = ( wordStart << 5 ) + 1; i < n; ++i ) {
-      this$1.words[i >>> 5] |= 1 << i ;
+/**
+ * Bit array
+ *
+ * Based heavily on https://github.com/lemire/FastBitSet.js
+ * which is licensed under the Apache License, Version 2.0.
+ */
+var BitArray = function BitArray( length, setAll ){
+    this.length = length;
+    this._words = new Uint32Array( ( length + 32 ) >>> 5 );
+    if( setAll === true ){
+        this.setAll();
     }
-    for ( i = ( wordEnd << 5 ), n = to + 1; i < n; ++i ) {
-      this$1.words[i >>> 5] |= 1 << i ;
+};
+
+/**
+ * Get value at index
+ * @param  {Integer} index - the index
+ * @return {Boolean} value
+ */
+BitArray.prototype.get = function get ( index ){
+    return ( this._words[ index >>> 5 ] & ( 1 << index ) ) !== 0;
+};
+
+/**
+ * Set value at index to true
+ * @param  {Integer} index - the index
+ * @return {undefined}
+ */
+BitArray.prototype.set = function set ( index ){
+    this._words[ index >>> 5 ] |= 1 << index;
+};
+
+/**
+ * Set value at index to false
+ * @param  {Integer} index - the index
+ * @return {undefined}
+ */
+BitArray.prototype.clear = function clear ( index ){
+    this._words[ index >>> 5 ] &= ~( 1 << index );
+};
+
+/**
+ * Flip value at index
+ * @param  {Integer} index - the index
+ * @return {undefined}
+ */
+BitArray.prototype.flip = function flip ( index ){
+    this._words[ index >>> 5 ] ^= 1 << index;
+};
+
+BitArray.prototype._assignRange = function _assignRange ( start, end, value ){
+    var words = this._words;
+    var wordValue = value === true ? 0xFFFFFFFF : 0;
+    var wordStart = start >>> 5;
+    var wordEnd = end >>> 5;
+    // set complete words when applicable
+    for( var k = wordStart; k < wordEnd; ++k ){
+        words[ k ] = wordValue;
     }
-  }else{
-    for ( i = from, n = ( wordStart << 5 ) + 1; i < n; ++i ) {
-      this$1.words[i >>> 5] &= ~( 1 << i );
+    // set parts of the range not spanning complete words
+    var i, n;
+    if( value === true ){
+        for( i = start, n = wordStart << 5; i < n; ++i ){
+            words[ i >>> 5 ] |= 1 << i;
+        }
+        for( i = wordEnd << 5, n = end; i < n; ++i ){
+            words[ i >>> 5 ] |= 1 << i;
+        }
+    }else{
+        for( i = start, n = wordStart << 5; i < n; ++i ){
+            words[ i >>> 5 ] &= ~( 1 << i );
+        }
+        for( i = wordEnd << 5, n = end; i < n; ++i ){
+            words[ i >>> 5 ] &= ~( 1 << i );
+        }
     }
-    for ( i = ( wordEnd << 5 ), n = to + 1; i < n; ++i ) {
-      this$1.words[i >>> 5] &= ~( 1 << i );
+    return this;
+};
+
+/**
+ * Set bits of the given range
+ * @param {Integer} start - start index
+ * @param {Integer} end - end index
+ * @return {BitArray} this object
+ */
+BitArray.prototype.setRange = function setRange ( start, end ){
+    return this._assignRange( start, end, true );
+};
+
+/**
+ * Clear bits of the given range
+ * @param {Integer} start - start index
+ * @param {Integer} end - end index
+ * @return {BitArray} this object
+ */
+BitArray.prototype.clearRange = function clearRange ( start, end ){
+    return this._assignRange( start, end, false );
+};
+
+/**
+ * Set all bits of the array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.setAll = function setAll (){
+    return this._assignRange( 0, this.length, true );
+};
+
+/**
+ * Clear all bits of the array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.clearAll = function clearAll (){
+    return this._assignRange( 0, this.length, false );
+};
+
+/**
+ * Flip all the values in the array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.flipAll = function flipAll (){
+    var count = this._words.length;
+    var words = this._words;
+    var bs = 32 - this.length % 32;
+    for ( var k = 0; k < count - 1; ++k ) {
+        words[k] = ~words[ k ];
     }
-  }
-  return this;
+    words[ count - 1 ] = ( ~( words[ count - 1 ] << bs ) ) >>> bs;
+    return this;
 };
 
-// Remove all values, reset memory usage
-TypedFastBitSet.prototype.clear = function() {
-  this.count = 0 | 0;
-  this.length = 0 | 0;
-  this.words = new Uint32Array( this.count );
-  return this;
-};
-
-// Set the bit at index to false
-TypedFastBitSet.prototype.remove = function( index ) {
-  if ( ( this.count << 5 ) <= index ) {
-    this.resize( index );
-  }
-  this.words[index >>> 5] &= ~( 1 << index );
-};
-
-// Set the bit at index to false
-// - unsafe because size is not checked, added by ASR
-TypedFastBitSet.prototype.remove_unsafe = function( index ) {
-  this.words[index >>> 5] &= ~( 1 << index );
-};
-
-// Return true if no bit is set
-TypedFastBitSet.prototype.isEmpty = function() {
-  var this$1 = this;
-
-  var c = this.count;
-  for ( var  i = 0; i < c; i++ ) {
-    if ( this$1.words[i] !== 0 ) { return false; }
-  }
-  return true;
-};
-
-// Is the value contained in the set? Is the bit at index true or false? Returns a boolean
-TypedFastBitSet.prototype.has = function( index ) {
-  return ( this.words[index >>> 5] & ( 1 << index ) ) !== 0;
-};
-
-// Reduce the memory usage to a minimum
-TypedFastBitSet.prototype.trim = function() {
-  var this$1 = this;
-
-  while ( this.count > 0 ) {
-    if ( this$1.words[this$1.count - 1] === 0 )
-      { this$1.count--; }
-  }
-  this.words = this.words.slice( 0,this.count );
-};
-
-// Resize the bitset so that we can write a value at index
-TypedFastBitSet.prototype.resize = function( index ) {
-  this.length = index;
-  if ( ( this.count << 5 ) > index ) {
-    return; //nothing to do
-  }
-  this.count = ( index + 32 ) >>> 5;// just what is needed
-  if ( ( this.words.length << 5 ) <= index ) {
-    var newwords = new Uint32Array( this.count << 1 );
-    newwords.set( this.words );// hopefully, this copy is fast
-    this.words = newwords;
-  }
-};
-
-// fast function to compute the Hamming weight of a 32-bit unsigned integer
-TypedFastBitSet.prototype.hammingWeight = function( v ) {
-  v -= ( ( v >>> 1 ) & 0x55555555 );// works with signed or unsigned shifts
-  v = ( v & 0x33333333 ) + ( ( v >>> 2 ) & 0x33333333 );
-  return ( ( v + ( v >>> 4 ) & 0xF0F0F0F ) * 0x1010101 ) >>> 24;
-};
-
-
-// How many values stored in the set? How many set bits?
-TypedFastBitSet.prototype.size = function() {
-  var this$1 = this;
-
-  var answer = 0;
-  var c = this.count;
-  for ( var i = 0; i < c; i++ ) {
-    answer += this$1.hammingWeight( this$1.words[i] | 0 );
-  }
-  return Math.min( answer, this.length );
-};
-
-// How many bits are set in the given range of the set?
-// - added by ASR
-TypedFastBitSet.prototype.sizeRange = function( offset, count ) {
-  var size = 0;
-  var end = offset + count;
-  this.forEach( function( index ){
-      if( index >= offset && index < end ) { ++size; }
-  } );
-  return size;
-};
-
-// Return an array with the set bit locations (values)
-TypedFastBitSet.prototype.array = function() {
-  var this$1 = this;
-
-  var answer = new Array( this.size() );
-  var pos = 0 | 0;
-  var c = this.count | 0;
-  for ( var k = 0; k < c; ++k ) {
-    var w =  this$1.words[k];
-    while ( w !== 0 ) {
-      var t = w & -w;
-      answer[pos++] = ( k << 5 ) + this$1.hammingWeight( ( t - 1 ) | 0 );
-      w ^= t;
+BitArray.prototype._isRangeValue = function _isRangeValue ( start, end, value ){
+    var words = this._words;
+    var wordValue = value === true ? 0xFFFFFFFF : 0;
+    var wordStart = start >>> 5;
+    var wordEnd = end >>> 5;
+    // set complete words when applicable
+    for( var k = wordStart; k < wordEnd; ++k ){
+        if( words[ k ] !== wordValue ) { return false; }
     }
-  }
-  return answer;
-};
-
-
-// Call fnc with the set bit locations (values)
-// - fixed method description, ASR
-TypedFastBitSet.prototype.forEach = function( fnc ) {
-  var this$1 = this;
-
-  var c = this.count | 0;
-  var i = 0 | 0;
-  for ( var k = 0; k < c; ++k ) {
-    var w = this$1.words[k];
-    while ( w !== 0 ) {
-      var t = w & -w;
-      var index = ( k << 5 ) + this$1.hammingWeight( ( t - 1 ) | 0 );
-      // FIXME workaround, it should not be required to check the length
-      if( index < this$1.length ) { fnc( index,i ); }
-      w ^= t;
-      i += 1;
+    // set parts of the range not spanning complete words
+    var i, n;
+    for( i = start, n = wordStart << 5; i < n; ++i ){
+        if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) { return false; }
     }
-  }
-};
-
-TypedFastBitSet.forEach = function( fnc, bitmap1, bitmap2 ) {
-  var c = Math.min( bitmap1.count, bitmap2.count ) | 0;
-  for ( var k = 0; k < c; ++k ) {
-    var w1 = bitmap1.words[k];
-    var w2 = bitmap2.words[k];
-    while ( w1 !== 0 && w2 !== 0 ) {
-      var t1 = w1 & -w1;
-      var t2 = w2 & -w2;
-      var kShift = k << 5;
-      fnc(
-        kShift + bitmap1.hammingWeight( ( t1 - 1 ) | 0 ),
-        kShift + bitmap2.hammingWeight( ( t2 - 1 ) | 0 )
-      );
-      w1 ^= t1;
-      w2 ^= t2;
+    for( i = wordEnd << 5, n = end; i < n; ++i ){
+        if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) { return false; }
     }
-  }
+    return true;
 };
 
-// Creates a copy of this bitmap
-TypedFastBitSet.prototype.clone = function() {
-  var clone = Object.create( TypedFastBitSet.prototype );
-  clone.count = this.count;
-  clone.length = this.length;
-  clone.words = new Uint32Array( this.words );
-  return clone;
+/**
+ * Test if bits in given range are set
+ * @param {Integer} start - start index
+ * @param {Integer} end - end index
+ * @return {BitArray} this object
+ */
+BitArray.prototype.isRangeSet = function isRangeSet ( start, end ){
+    return this._isRangeValue( start, end, true );
 };
 
-// Check if this bitset intersects with another one,
-// no bitmap is modified
-TypedFastBitSet.prototype.intersects = function( otherbitmap ) {
-  var this$1 = this;
-
-  var newcount = Math.min( this.count,otherbitmap.count );
-  for ( var k = 0 | 0; k < newcount; ++k ) {
-    if ( ( this$1.words[k] & otherbitmap.words[k] ) !== 0 ) { return true; }
-  }
-  return false;
+/**
+ * Test if bits in given range are clear
+ * @param {Integer} start - start index
+ * @param {Integer} end - end index
+ * @return {BitArray} this object
+ */
+BitArray.prototype.isRangeClear = function isRangeClear ( start, end ){
+    return this._isRangeValue( start, end, false );
 };
 
-// Computes the intersection between this bitset and another one,
-// the current bitmap is modified  (and returned by the function)
-TypedFastBitSet.prototype.intersection = function( otherbitmap ) {
-  var this$1 = this;
-
-  var newcount = Math.min( this.count,otherbitmap.count );
-  var k = 0 | 0;
-  for ( ; k + 7 < newcount; k += 8 ) {
-    this$1.words[k    ] &= otherbitmap.words[k    ];
-    this$1.words[k + 1] &= otherbitmap.words[k + 1];
-    this$1.words[k + 2] &= otherbitmap.words[k + 2];
-    this$1.words[k + 3] &= otherbitmap.words[k + 3];
-    this$1.words[k + 4] &= otherbitmap.words[k + 4];
-    this$1.words[k + 5] &= otherbitmap.words[k + 5];
-    this$1.words[k + 6] &= otherbitmap.words[k + 6];
-    this$1.words[k + 7] &= otherbitmap.words[k + 7];
-  }
-  for ( ; k < newcount; ++k ) {
-    this$1.words[k] &= otherbitmap.words[k];
-  }
-  var c = this.count;
-  for ( k = newcount; k < c; ++k ) {
-    this$1.words[k] = 0;
-  }
-  this.count = newcount;
-  return this;
+/**
+ * Test if all bits in the array are set
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isAllSet = function isAllSet (){
+    return this._isAllValue( 0, this.length, true );
 };
 
-// Computes the size of the intersection between this bitset and another one
-TypedFastBitSet.prototype.intersection_size = function( otherbitmap ) {
-  var this$1 = this;
-
-  var newcount = Math.min( this.count,otherbitmap.count );
-  var answer = 0 | 0;
-  for ( var k = 0 | 0; k < newcount; ++k ) {
-    answer += this$1.hammingWeight( this$1.words[k] & otherbitmap.words[k] );
-  }
-  return answer;
+/**
+ * Test if all bits in the array are clear
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isAllClear = function isAllClear (){
+    return this._isAllValue( 0, this.length, false );
 };
 
-// Computes the intersection between this bitset and another one,
-// a new bitmap is generated
-TypedFastBitSet.prototype.new_intersection = function( otherbitmap ) {
-  var this$1 = this;
+/**
+ * Test if bits at all given indices are set
+ * @param {...Integer} arguments - indices
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isSet = function isSet (){
+        var arguments$1 = arguments;
 
-  var answer = Object.create( TypedFastBitSet.prototype );
-  answer.count = Math.min( this.count,otherbitmap.count );
-  answer.words = new Uint32Array( answer.count );
-  answer.length = Math.min( this.length,otherbitmap.length );
-  var c = answer.count;
-  for ( var k = 0 | 0; k < c; ++k ) {
-    answer.words[k] = this$1.words[k] & otherbitmap.words[k];
-  }
-  return answer;
-};
-
-// Computes the intersection between this bitset and another one,
-// the current bitmap is modified
-TypedFastBitSet.prototype.equals = function( otherbitmap ) {
-  var this$1 = this;
-
-  var mcount = Math.min( this.count , otherbitmap.count );
-  var k, c;
-  for ( k = 0 | 0; k < mcount; ++k ) {
-    if ( this$1.words[k] != otherbitmap.words[k] ) { return false; }
-  }
-  if ( this.count < otherbitmap.count ) {
-    c = otherbitmap.count;
-    for ( k = this.count; k < c; ++k ) {
-      if ( otherbitmap.words[k] !== 0 ) { return false; }
+    var words = this._words;
+    var n = arguments.length;
+    for( var i = 0; i < n; ++i ){
+        var index = arguments$1[ i ];
+        if( ( words[ index >>> 5 ] & ( 1 << index ) ) === 0 ) { return false; }
     }
-  } else if ( otherbitmap.count < this.count ) {
-    c = this.count;
-    for ( k = otherbitmap.count; k < c; ++k ) {
-      if ( this$1.words[k] !== 0 ) { return false; }
+    return true;
+};
+
+/**
+ * Test if bits at all given indices are clear
+ * @param {...Integer} arguments - indices
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isClear = function isClear (){
+        var arguments$1 = arguments;
+
+    var words = this._words;
+    var n = arguments.length;
+    for( var i = 0; i < n; ++i ){
+        var index = arguments$1[ i ];
+        if( ( words[ index >>> 5 ] & ( 1 << index ) ) !== 0 ) { return false; }
     }
-  }
-  return true;
+    return true;
 };
 
-// Computes the difference between this bitset and another one,
-// the current bitset is modified (and returned by the function)
-TypedFastBitSet.prototype.difference = function( otherbitmap ) {
-  var this$1 = this;
-
-  var newcount = Math.min( this.count,otherbitmap.count );
-  var k = 0 | 0;
-  for ( ; k + 7 < newcount; k += 8 ) {
-    this$1.words[k    ] &= ~otherbitmap.words[k    ];
-    this$1.words[k + 1] &= ~otherbitmap.words[k + 1];
-    this$1.words[k + 2] &= ~otherbitmap.words[k + 2];
-    this$1.words[k + 3] &= ~otherbitmap.words[k + 3];
-    this$1.words[k + 4] &= ~otherbitmap.words[k + 4];
-    this$1.words[k + 5] &= ~otherbitmap.words[k + 5];
-    this$1.words[k + 6] &= ~otherbitmap.words[k + 6];
-    this$1.words[k + 7] &= ~otherbitmap.words[k + 7];
-  }
-  for ( ; k < newcount; ++k ) {
-    this$1.words[k] &= ~otherbitmap.words[k];
-  }
-  return this;
-};
-
-// Computes the size of the difference between this bitset and another one
-TypedFastBitSet.prototype.difference_size = function( otherbitmap ) {
-  var this$1 = this;
-
-  var newcount = Math.min( this.count,otherbitmap.count );
-  var answer = 0 | 0;
-  var k = 0 | 0;
-  for ( ; k < newcount; ++k ) {
-    answer += this$1.hammingWeight( this$1.words[k] & ( ~otherbitmap.words[k] ) );
-  }
-  var c = this.count;
-  for ( ; k < c; ++k ) {
-    answer += this$1.hammingWeight( this$1.words[k] );
-  }
-  return answer;
-};
-
-// Returns a string representation
-TypedFastBitSet.prototype.toString = function() {
-  return '{' + this.array().join( ',' ) + '}';
-};
-
-// Computes the union between this bitset and another one,
-// the current bitset is modified  (and returned by the function)
-TypedFastBitSet.prototype.union = function( otherbitmap ) {
-  var this$1 = this;
-
-  var mcount = Math.min( this.count,otherbitmap.count );
-  var k = 0 | 0;
-  for ( ; k + 7  < mcount; k += 8 ) {
-    this$1.words[k    ] |= otherbitmap.words[k    ];
-    this$1.words[k + 1] |= otherbitmap.words[k + 1];
-    this$1.words[k + 2] |= otherbitmap.words[k + 2];
-    this$1.words[k + 3] |= otherbitmap.words[k + 3];
-    this$1.words[k + 4] |= otherbitmap.words[k + 4];
-    this$1.words[k + 5] |= otherbitmap.words[k + 5];
-    this$1.words[k + 6] |= otherbitmap.words[k + 6];
-    this$1.words[k + 7] |= otherbitmap.words[k + 7];
-  }
-  for ( ; k < mcount; ++k ) {
-    this$1.words[k] |= otherbitmap.words[k];
-  }
-  if ( this.count < otherbitmap.count ) {
-    this.resize( ( otherbitmap.count  << 5 ) - 1 );
-    var c = otherbitmap.count;
-    for ( k = mcount; k < c; ++k ) {
-      this$1.words[k] = otherbitmap.words[k];
+/**
+ * How many set bits?
+ * @return {Integer} number of set bits
+ */
+BitArray.prototype.getSize = function getSize ( /*start, end*/ ){
+    var count = this._words.length;
+    var words = this._words;
+    var size = 0;
+    for( var i = 0; i < count; ++i ){
+        size += hammingWeight( words[ i ] );
     }
-    this.count = otherbitmap.count;
-  }
-  return this;
+    return size;
 };
 
-// Computes the union between this bitset and another one,
-// a new bitmap is generated
-TypedFastBitSet.prototype.new_union = function( otherbitmap ) {
-  var this$1 = this;
-
-  var answer = Object.create( TypedFastBitSet.prototype );
-  answer.count = Math.max( this.count,otherbitmap.count );
-  answer.words = new Uint32Array( answer.count );
-  var mcount = Math.min( this.count,otherbitmap.count );
-  var k;
-  for ( k = 0; k < mcount; ++k ) {
-      answer.words[k] = this$1.words[k] | otherbitmap.words[k];
-  }
-  var c = this.count;
-  for ( k = mcount; k < c; ++k ) {
-      answer.words[k] = this$1.words[k] ;
-  }
-  var c2 = otherbitmap.count;
-  for ( k = mcount; k < c2; ++k ) {
-      answer.words[k] = otherbitmap.words[k] ;
-  }
-  return answer;
-};
-
-// Computes the difference between this bitset and another one,
-// a new bitmap is generated
-TypedFastBitSet.prototype.new_difference = function( otherbitmap ) {
-  return this.clone().difference( otherbitmap );// should be fast enough
-};
-
-// Computes the size union between this bitset and another one
-TypedFastBitSet.prototype.union_size = function( otherbitmap ) {
-  var this$1 = this;
-
-  var mcount = Math.min( this.count,otherbitmap.count );
-  var answer = 0 | 0;
-  var k, c;
-  for ( k = 0 | 0; k < mcount; ++k ) {
-    answer += this$1.hammingWeight( this$1.words[k] | otherbitmap.words[k] );
-  }
-  if ( this.count < otherbitmap.count ) {
-    c = otherbitmap.count;
-    for ( k = this.count ; k < c; ++k ) {
-      answer += this$1.hammingWeight( otherbitmap.words[k] | 0 );
+/**
+ * Calculate intersection betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.intersection = function intersection ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        words1[ k ] &= words2[ k ];
     }
-  } else {
-    c = this.count;
-    for ( k = otherbitmap.count ; k < c; ++k ) {
-      answer += this$1.hammingWeight( this$1.words[k] | 0 );
+    for( var k$1 = words1.length; k$1 < count; ++k$1 ){
+        words1[ k$1 ] = 0;
     }
-  }
-  return answer;
+    return this;
 };
 
-// Get transferable objects, added by ASR
-TypedFastBitSet.prototype.getTransferable = function() {
-  return [ this.words ];
+/**
+ * Calculate intersection betwen this and another bit array.
+ * Store result in a new bit array.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} the new bit array
+ */
+BitArray.prototype.makeIntersection = function makeIntersection ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    var wordsA = new Uint32Array( count );
+    var intersection = Object.create( BitArray.prototype );
+    intersection._words = wordsA;
+    intersection.length = Math.min( this.length, otherBitarray.length );
+    for( var k = 0; k < count; ++k ){
+        wordsA[ k ] = words1[ k ] & words2[ k ];
+    }
+    return intersection;
 };
 
-// Serialize to JSON, added by ASR
-TypedFastBitSet.prototype.toJSON = function() {
-  return {
-    count: this.count,
-    length: this.length,
-    words: this.words
-  };
+/**
+ * Iterate over all set bits in the array
+ * @param  {function( index: Integer, i: Integer )} callback - the callback
+ * @return {undefined}
+ */
+BitArray.prototype.forEach = function forEach ( callback ) {
+    var count = this._words.length;
+    var words = this._words;
+    var i = 0;
+    for( var k = 0; k < count; ++k ){
+        var w = words[ k ];
+        while( w !== 0 ){
+            var t = w & -w;
+            var index = ( k << 5 ) + hammingWeight( t - 1 );
+            callback( index, i );
+            w ^= t;
+            ++i;
+        }
+    }
 };
 
-// De-serialize from JSON, added by ASR
-TypedFastBitSet.prototype.fromJSON = function( input ) {
-  this.count = input.count;
-  this.length = input.length;
-  this.words = input.words;
-  return this;
+/**
+ * Get an array with the set bits
+ * @return {Array} bit indices
+ */
+BitArray.prototype.toArray = function toArray (){
+    var words = this._words;
+    var answer = new Array( this.getSize() );
+    var count = this._words.length;
+    var pos = 0;
+    for( var k = 0; k < count; ++k ){
+        var w = words[ k ];
+        while( w !== 0 ){
+            var t = w & -w;
+            answer[ pos++ ] = ( k << 5 ) + hammingWeight( t - 1 );
+            w ^= t;
+        }
+    }
+    return answer;
 };
 
-TypedFastBitSet.prototype.toSeleString = function() {
-  var sele = this.array().join( ',' );
-  return sele ? "@" + sele : "NONE";
+BitArray.prototype.toString = function toString (){
+    return "{" + this.toArray().join( "," ) + "}";
 };
 
-TypedFastBitSet.prototype.type = "Bitset";
+BitArray.prototype.toSeleString = function toSeleString (){
+    var sele = this.toArray().join( "," );
+    return sele ? "@" + sele : "NONE";
+};
 
-
-var Bitset = TypedFastBitSet;
+/**
+ * Clone this object
+ * @return {BitArray} the cloned object
+ */
+BitArray.prototype.clone = function clone (){
+    var clone = Object.create( BitArray.prototype );
+    clone.length = this.length;
+    clone._words = new Uint32Array( this._words );
+    return clone;
+};
 
 /**
  * @file Structure Constants
@@ -57855,7 +57632,7 @@ Surface.prototype = {
         if( sele && this.atomindex ){
 
             var selection = new Selection$1( sele );
-            var as = structure.getAtomSet( selection );
+            var atomSet = structure.getAtomSet( selection );
             var filteredIndex = [];
 
             var atomindex = this.atomindex;
@@ -57873,7 +57650,7 @@ Surface.prototype = {
 
                     var idx = index[ i + a ];
                     var ai = atomindex[ idx ];
-                    if( !as.has( ai ) ){
+                    if( !atomSet.get( ai ) ){
                         include = false;
                         break;
                     }
@@ -60756,7 +60533,7 @@ Assembly.prototype.addPart = function addPart ( matrixList, chainList ){
     return part;
 };
 
-Assembly.prototype.getCount = function getCount ( structure, methodName ){
+Assembly.prototype._getCount = function _getCount ( structure, methodName ){
 
     var count = 0;
 
@@ -60775,7 +60552,7 @@ Assembly.prototype.getCount = function getCount ( structure, methodName ){
  */
 Assembly.prototype.getAtomCount = function getAtomCount ( structure ){
 
-    return this.getCount( structure, "getAtomCount" );
+    return this._getCount( structure, "getAtomCount" );
 
 };
 
@@ -60786,7 +60563,7 @@ Assembly.prototype.getAtomCount = function getAtomCount ( structure ){
  */
 Assembly.prototype.getResidueCount = function getResidueCount ( structure ){
 
-    return this.getCount( structure, "getResidueCount" );
+    return this._getCount( structure, "getResidueCount" );
 
 };
 
@@ -60847,6 +60624,12 @@ Assembly.prototype.getBoundingBox = function getBoundingBox ( structure ){
 
 };
 
+Assembly.prototype.getCenter = function getCenter ( structure ){
+
+    return this.getBoundingBox( structure ).getCenter();
+
+};
+
 Assembly.prototype.getSelection = function getSelection (){
     var chainList = [];
     this.partList.forEach( function( part ){
@@ -60869,7 +60652,7 @@ var prototypeAccessors$1$1 = { type: {} };
 
 prototypeAccessors$1$1.type.get = function (){ return "AssemblyPart"; };
 
-AssemblyPart.prototype.getCount = function getCount ( structure, propertyName ){
+AssemblyPart.prototype._getCount = function _getCount ( structure, propertyName ){
 
     var count = 0;
     var chainList = this.chainList;
@@ -60886,13 +60669,13 @@ AssemblyPart.prototype.getCount = function getCount ( structure, propertyName ){
 
 AssemblyPart.prototype.getAtomCount = function getAtomCount ( structure ){
 
-    return this.getCount( structure, "atomCount" );
+    return this._getCount( structure, "atomCount" );
 
 };
 
 AssemblyPart.prototype.getResidueCount = function getResidueCount ( structure ){
 
-    return this.getCount( structure, "residueCount" );
+    return this._getCount( structure, "residueCount" );
 
 };
 
@@ -61606,8 +61389,8 @@ function calculateBondsWithin( structure, onlyAddRung ){
             a1.index = r.traceAtomIndex;
             a2.index = r.rungEndAtomIndex;
             rungBondStore.addBond( a1, a2 );
-            rungAtomSet.add_unsafe( a1.index );
-            rungAtomSet.add_unsafe( a2.index );
+            rungAtomSet.set( a1.index );
+            rungAtomSet.set( a2.index );
         }
 
     } );
@@ -61646,8 +61429,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;
                 backboneBondStore.addBond( ap1, ap2 );
-                backboneAtomSet.add_unsafe( ap1.index );
-                backboneAtomSet.add_unsafe( ap2.index );
+                backboneAtomSet.set( ap1.index );
+                backboneAtomSet.set( ap2.index );
             }
         }
     }
@@ -64150,18 +63933,18 @@ Polymer.prototype.eachAtomN2 = function eachAtomN2 ( n, callback, type ){
     }
     // console.log( array, offset, end, count )
 
-    var as = this.structure.atomSetCache[ "__" + type ];
-    if( as === undefined ){
+    var atomSet = this.structure.atomSetCache[ "__" + type ];
+    if( atomSet === undefined ){
         Log.warn( "no precomputed atomSet for: " + type );
-        as = this.structure.getAtomSet( false );
+        atomSet = this.structure.getAtomSet( false );
         this.eachResidue( function( rp ){
             var ap = rp.getAtomByName( type );
-            as.add_unsafe( ap.index );
+            atomSet.set( ap.index );
         } );
     }
     var j = 0;
 
-    as.forEach( function( index ){
+    atomSet.forEach( function( index ){
         if( index >= offset && index < end ){
             for( var i = 1; i < n; ++i ){
                 array[ i - 1 ].index = array[ i ].index;
@@ -64173,46 +63956,6 @@ Polymer.prototype.eachAtomN2 = function eachAtomN2 ( n, callback, type ){
             }
         }
     } );
-
-};
-
-Polymer.prototype.eachDirectionAtomsN = function eachDirectionAtomsN ( n, callback ){
-        var this$1 = this;
-
-
-    var n2 = n * 2;
-    var offset = this.atomOffset;
-    var count = this.atomCount;
-    var end = offset + count;
-    if( count < n ) { return; }
-
-    var array = new Array( n2 );
-    for( var i = 0; i < n2; ++i ){
-        array[ i ] = this$1.structure.getAtomProxy();
-    }
-
-    var as1 = this.structure.atomSetCache.__direction1;
-    var as2 = this.structure.atomSetCache.__direction2;
-    if( as1 === undefined || as2 === undefined ){
-        Log.error( "no precomputed atomSet for direction1 or direction2" );
-        return;
-    }
-    var j = 0;
-
-    Bitset.forEach( function( index1, index2 ){
-        if( index1 >= offset && index1 < end && index2 >= offset && index2 < end ){
-            for( var i = 1; i < n; ++i ){
-                array[ i - 1 ].index = array[ i ].index;
-                array[ i - 1 + n ].index = array[ i + n ].index;
-            }
-            array[ n - 1 ].index = index1;
-            array[ n - 1 + n ].index = index2;
-            j += 1;
-            if( j >= n ){
-                callback.apply( this, array );
-            }
-        }
-    }, as1, as2 );
 
 };
 
@@ -65014,9 +64757,7 @@ Structure.prototype.finalizeBonds = function finalizeBonds (){
     }
 
     for( var name in this$1.atomSetDict ){
-        var as = this$1.atomSetDict[ name ];
-        var as2 = this$1.getAtomSet( false );
-        this$1.atomSetCache[ "__" + name ] = as2.intersection( as );
+        this$1.atomSetCache[ "__" + name ] = this$1.atomSetDict[ name ].clone();
     }
 
 };
@@ -65059,32 +64800,28 @@ Structure.prototype.getBondSet = function getBondSet ( /*selection*/ ){
 
     // TODO implement selection parameter
 
-    if( Debug ) { Log.time( "Structure.getBondSet" ); }
-
     var n = this.bondStore.count;
-    var bs = new Bitset( n );
-    var as = this.atomSet;
+    var bondSet = new BitArray( n );
+    var atomSet = this.atomSet;
 
-    if( as ){
+    if( atomSet ){
 
         var bp = this.getBondProxy();
 
         for( var i = 0; i < n; ++i ){
             bp.index = i;
-            if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
-                bs.add_unsafe( bp.index );
+            if( atomSet.isSet( bp.atomIndex1, bp.atomIndex2 ) ){
+                bondSet.set( bp.index );
             }
         }
 
     }else{
 
-        bs.set_all( true );
+        bondSet.setAll();
 
     }
 
-    if( Debug ) { Log.timeEnd( "Structure.getBondSet" ); }
-
-    return bs;
+    return bondSet;
 
 };
 
@@ -65092,33 +64829,29 @@ Structure.prototype.getBackboneBondSet = function getBackboneBondSet ( /*selecti
 
     // TODO implement selection parameter
 
-    if( Debug ) { Log.time( "Structure.getBackboneBondSet" ); }
-
     var n = this.backboneBondStore.count;
-    var bs = new Bitset( n );
-    var as = this.atomSetCache.__backbone;
+    var backboneBondSet = new BitArray( n );
+    var backboneAtomSet = this.atomSetCache.__backbone;
 
-    if( as ){
+    if( backboneAtomSet ){
 
         var bp = this.getBondProxy();
         bp.bondStore = this.backboneBondStore;
 
         for( var i = 0; i < n; ++i ){
             bp.index = i;
-            if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
-                bs.add_unsafe( bp.index );
+            if( backboneAtomSet.isSet( bp.atomIndex1, bp.atomIndex2 ) ){
+                backboneBondSet.set( bp.index );
             }
         }
 
     }else{
 
-        bs.set_all( true );
+        backboneBondSet.set_all( true );
 
     }
 
-    if( Debug ) { Log.timeEnd( "Structure.getBackboneBondSet" ); }
-
-    return bs;
+    return backboneBondSet;
 
 };
 
@@ -65126,55 +64859,40 @@ Structure.prototype.getRungBondSet = function getRungBondSet ( /*selection*/ ){
 
     // TODO implement selection parameter
 
-    if( Debug ) { Log.time( "Structure.getRungBondSet" ); }
-
     var n = this.rungBondStore.count;
-    var bs = new Bitset( n );
-    var as = this.atomSetCache.__rung;
+    var rungBondSet = new BitArray( n );
+    var rungAtomSet = this.atomSetCache.__rung;
 
-    if( as ){
+    if( rungAtomSet ){
 
         var bp = this.getBondProxy();
         bp.bondStore = this.rungBondStore;
 
         for( var i = 0; i < n; ++i ){
             bp.index = i;
-            if( as.has( bp.atomIndex1 ) && as.has( bp.atomIndex2 ) ){
-                bs.add_unsafe( bp.index );
+            if( rungAtomSet.isSet( bp.atomIndex1, bp.atomIndex2 ) ){
+                rungBondSet.set( bp.index );
             }
         }
 
     }else{
 
-        bs.set_all( true );
+        rungBondSet.set_all( true );
 
     }
 
-    if( Debug ) { Log.timeEnd( "Structure.getRungBondSet" ); }
-
-    return bs;
+    return rungBondSet;
 
 };
 
 Structure.prototype.getAtomSet = function getAtomSet ( selection ){
 
-    if( Debug ) { Log.time( "Structure.getAtomSet" ); }
-
-    var as;
+    var atomSet;
     var n = this.atomStore.count;
 
-    if( selection && selection.type === "Bitset" ){
+    if( selection instanceof BitArray ){
 
-        as = selection;
-
-    }else if( selection === false ){
-
-        as = new Bitset( n );
-
-    }else if( selection === true ){
-
-        as = new Bitset( n );
-        as.set_all( true );
+        atomSet = selection;
 
     }else if( selection && selection.test ){
 
@@ -65182,28 +64900,29 @@ Structure.prototype.getAtomSet = function getAtomSet ( selection ){
 
         if( seleString in this.atomSetCache ){
 
-            as = this.atomSetCache[ seleString ];
+            atomSet = this.atomSetCache[ seleString ];
 
         }else{
 
-            as = new Bitset( n );
+            atomSet = new BitArray( n );
             this.eachAtom( function( ap ){
-                as.add_unsafe( ap.index );
+                atomSet.set( ap.index );
             }, selection );
-            this.atomSetCache[ seleString ] = as;
+            this.atomSetCache[ seleString ] = atomSet;
 
         }
 
+    }else if( selection === false ){
+
+        atomSet = new BitArray( n );
+
     }else{
 
-        as = new Bitset( n );
-        as.set_all( true );
+        atomSet = new BitArray( n, true );
 
     }
 
-    if( Debug ) { Log.timeEnd( "Structure.getAtomSet" ); }
-
-    return as;
+    return atomSet;
 
 };
 
@@ -65211,35 +64930,35 @@ Structure.prototype.getAtomSet = function getAtomSet ( selection ){
  * Get set of atom around a set of atoms from a selection
  * @param  {Selection} selection - the selection object
  * @param  {Number} radius - radius to select within
- * @return {BitSet} set of atoms
+ * @return {BitArray} set of atoms
  */
 Structure.prototype.getAtomSetWithinSelection = function getAtomSetWithinSelection ( selection, radius ){
 
     var spatialHash = this.spatialHash;
-    var as = this.getAtomSet( false );
+    var atomSet = this.getAtomSet( false );
     var ap = this.getAtomProxy();
 
     this.getAtomSet( selection ).forEach( function( idx ){
         ap.index = idx;
         spatialHash.within( ap.x, ap.y, ap.z, radius ).forEach( function( idx2 ){
-            as.add_unsafe( idx2 );
+            atomSet.set( idx2 );
         } );
     } );
 
-    return as;
+    return atomSet;
 
 };
 
 Structure.prototype.getAtomSetWithinPoint = function getAtomSetWithinPoint ( point, radius ){
 
     var p = point;
-    var as = this.getAtomSet( false );
+    var atomSet = this.getAtomSet( false );
 
     this.spatialHash.within( p.x, p.y, p.z, radius ).forEach( function( idx ){
-        as.add_unsafe( idx );
+        atomSet.set( idx );
     } );
 
-    return as;
+    return atomSet;
 
 };
 
@@ -65252,32 +64971,32 @@ Structure.prototype.getAtomSetWithinVolume = function getAtomSetWithinVolume ( v
     var dp = fv.getDataPosition();
     var n = dp.length;
     var r = fv.matrix.getMaxScaleOnAxis();
-    var as = this.getAtomSet( false );
+    var atomSet = this.getAtomSet( false );
 
     for( var i = 0; i < n; i+=3 ){
         this$1.spatialHash.within( dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r ).forEach( function( idx ){
-            as.add_unsafe( idx );
+            atomSet.set( idx );
         } );
     }
 
-    return as;
+    return atomSet;
 
 };
 
 Structure.prototype.getAtomSetWithinGroup = function getAtomSetWithinGroup ( selection ){
 
     var atomResidueIndex = this.atomStore.residueIndex;
-    var as = this.getAtomSet( false );
+    var atomSet = this.getAtomSet( false );
     var rp = this.getResidueProxy();
 
     this.getAtomSet( selection ).forEach( function( idx ){
         rp.index = atomResidueIndex[ idx ];
         for( var idx2 = rp.atomOffset; idx2 <= rp.atomEnd; ++idx2 ){
-            as.add_unsafe( idx2 );
+            atomSet.set( idx2 );
         }
     } );
 
-    return as;
+    return atomSet;
 
 };
 
@@ -65320,18 +65039,17 @@ Structure.prototype.eachEntity = function eachEntity ( callback, type ){
 Structure.prototype.eachBond = function eachBond ( callback, selection ){
 
     var bp = this.getBondProxy();
-    var bs = this.bondSet;
+    var bondSet;
 
     if( selection && selection.test ){
-        if( bs ){
-            bs = bs.new_intersection( this.getBondSet( selection ) );
-        }else{
-            bs = this.getBondSet( selection );
+        bondSet = this.getBondSet( selection );
+        if( this.bondSet ){
+            bondSet.intersection( this.bondSet );
         }
     }
 
-    if( bs ){
-        bs.forEach( function( index ){
+    if( bondSet ){
+        bondSet.forEach( function( index ){
             bp.index = index;
             callback( bp );
         } );
@@ -65536,7 +65254,7 @@ Structure.prototype.getAtomData = function getAtomData ( params ){
 
     var atomData = {};
     var ap = this.getAtomProxy();
-    var atomCount = atomSet.size();
+    var atomCount = atomSet.getSize();
 
     if( !what || what.position ){
         position = new Float32Array( atomCount * 3 );
@@ -65613,7 +65331,7 @@ Structure.prototype.getBondData = function getBondData ( params ){
             bondCount += storeBondOrder[ index ];
         } );
     }else{
-        bondCount = bondSet.size();
+        bondCount = bondSet.getSize();
     }
 
     if( !what || what.position ){
@@ -69742,7 +69460,7 @@ var TextBuffer = (function (QuadBuffer$$1) {
     TextBuffer.prototype = Object.create( QuadBuffer$$1 && QuadBuffer$$1.prototype );
     TextBuffer.prototype.constructor = TextBuffer;
 
-    var prototypeAccessors = { parameters: {},isText: {},vertexShader: {},fragmentShader: {} };
+    var prototypeAccessors = { parameters: {},wireframe: {},isText: {},vertexShader: {},fragmentShader: {} };
 
     prototypeAccessors.parameters.get = function (){
 
@@ -70022,6 +69740,9 @@ var TextBuffer = (function (QuadBuffer$$1) {
         QuadBuffer$$1.prototype.setUniforms.call( this, data );
 
     };
+
+    prototypeAccessors.wireframe.set = function ( value ){};
+    prototypeAccessors.wireframe.get = function (){ return false; };
 
     prototypeAccessors.isText.get = function (){ return true; };
     prototypeAccessors.vertexShader.get = function (){ return "SDFFont.vert"; };
@@ -77605,7 +77326,7 @@ var StructureTrajectory = (function (Trajectory$$1) {
 
     StructureTrajectory.prototype.makeAtomIndices = function makeAtomIndices (){
 
-        if( this.structure.atomSet.size() < this.structure.atomStore.count ){
+        if( this.structure.atomSet.getSize() < this.structure.atomStore.count ){
             this.atomIndices = this.structure.getAtomIndices();
         }else{
             this.atomIndices = null;
@@ -77976,24 +77697,18 @@ var StructureView = (function (Structure$$1) {
 
         this.atomSet = this.getAtomSet( this.selection, true );
         if( this.structure.atomSet ){
-            if( Debug ) { Log.time( "StructureView.refresh#atomSet.intersection" ); }
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );
-            if( Debug ) { Log.timeEnd( "StructureView.refresh#atomSet.intersection" ); }
         }
 
         this.bondSet = this.getBondSet();
 
-        if( Debug ) { Log.time( "StructureView.refresh#atomSetDict.new_intersection" ); }
         for( var name in this$1.atomSetDict ){
-            var as = this$1.atomSetDict[ name ];
-            this$1.atomSetCache[ "__" + name ] = as.new_intersection( this$1.atomSet );
+            var atomSet = this$1.atomSetDict[ name ];
+            this$1.atomSetCache[ "__" + name ] = atomSet.makeIntersection( this$1.atomSet );
         }
-        if( Debug ) { Log.timeEnd( "StructureView.refresh#atomSetDict.new_intersection" ); }
 
-        if( Debug ) { Log.time( "StructureView.refresh#size" ); }
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-        if( Debug ) { Log.timeEnd( "StructureView.refresh#size" ); }
+        this.atomCount = this.atomSet.getSize();
+        this.bondCount = this.bondSet.getSize();
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.getCenter();
@@ -78057,11 +77772,11 @@ var StructureView = (function (Structure$$1) {
     StructureView.prototype.eachAtom = function eachAtom ( callback, selection ){
 
         var ap = this.getAtomProxy();
-        var as = this.getAtomSet( selection );
+        var atomSet = this.getAtomSet( selection );
         var n = this.atomStore.count;
 
-        if( as && as.size() < n ){
-            as.forEach( function( index ){
+        if( atomSet.getSize() < n ){
+            atomSet.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
             } );
@@ -78107,16 +77822,12 @@ var StructureView = (function (Structure$$1) {
 
     StructureView.prototype.getAtomSet = function getAtomSet ( selection, ignoreView ){
 
-        if( Debug ) { Log.time( "StructureView.getAtomSet" ); }
-
-        var as = this.structure.getAtomSet( selection );
+        var atomSet = this.structure.getAtomSet( selection );
         if( !ignoreView && this.atomSet ){
-            as = as.new_intersection( this.atomSet );
+            atomSet = atomSet.makeIntersection( this.atomSet );
         }
 
-        if( Debug ) { Log.timeEnd( "StructureView.getAtomSet" ); }
-
-        return as;
+        return atomSet;
 
     };
 
@@ -80608,7 +80319,7 @@ RepresentationRegistry.add( "cartoon", CartoonRepresentation );
  */
 
 
-function Contact( sview1, sview2 ){
+var Contact = function Contact( sview1, sview2 ){
 
     this.sview1 = sview1;
     this.sview2 = sview2;
@@ -80616,60 +80327,54 @@ function Contact( sview1, sview2 ){
     // this.kdtree1 = new Kdtree( sview1 );
     this.kdtree2 = new Kdtree( sview2 );
 
-}
+};
 
-Contact.prototype = {
+Contact.prototype.within = function within ( maxDistance, minDistance ){
 
-    within: function( maxDistance, minDistance ){
+    Log.time( "Contact within" );
 
-        Log.time( "Contact within" );
+    // var kdtree1 = this.kdtree1;
+    var kdtree2 = this.kdtree2;
 
-        // var kdtree1 = this.kdtree1;
-        var kdtree2 = this.kdtree2;
+    var ap2 = this.sview1.getAtomProxy();
+    var atomSet = this.sview1.getAtomSet( false );
+    var bondStore = new BondStore();
 
-        var ap2 = this.sview1.getAtomProxy();
-        var atomSet = this.sview1.getAtomSet( false );
-        var bondStore = new BondStore();
+    this.sview1.eachAtom( function( ap1 ){
 
-        this.sview1.eachAtom( function( ap1 ){
+        var found = false;
+        var contacts = kdtree2.nearest( ap1, Infinity, maxDistance );
 
-            var found = false;
-            var contacts = kdtree2.nearest(
-                ap1, Infinity, maxDistance
-            );
+        for( var j = 0, m = contacts.length; j < m; ++j ){
 
-            for( var j = 0, m = contacts.length; j < m; ++j ){
+            var d = contacts[ j ];
+            ap2.index = d.index;
 
-                var d = contacts[ j ];
-                ap2.index = d.index;
-
-                if( ap1.residueIndex !== ap2.residueIndex &&
-                    ( !minDistance || d.distance > minDistance ) ){
-                    found = true;
-                    atomSet.add_unsafe( ap2.index );
-                    bondStore.addBond( ap1, ap2, 1 );
-                }
-
+            if( ap1.residueIndex !== ap2.residueIndex &&
+                ( !minDistance || d.distance > minDistance )
+            ){
+                found = true;
+                atomSet.set( ap2.index );
+                bondStore.addBond( ap1, ap2, 1 );
             }
 
-            if( found ){
-                atomSet.add_unsafe( ap1.index );
-            }
+        }
 
-        } );
+        if( found ){
+            atomSet.set( ap1.index );
+        }
 
-        var bondSet = new Bitset( bondStore.count );
-        bondSet.set_all( true );
+    } );
 
-        Log.timeEnd( "Contact within" );
+    var bondSet = new BitArray( bondStore.count, true );
 
-        return {
-            atomSet: atomSet,
-            bondSet: bondSet,
-            bondStore: bondStore
-        };
+    Log.timeEnd( "Contact within" );
 
-    }
+    return {
+        atomSet: atomSet,
+        bondSet: bondSet,
+        bondStore: bondStore
+    };
 
 };
 
@@ -80758,7 +80463,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         ){
 
             // ignore backbone to backbone contacts
-            data.bondSet.flip_unsafe( i );
+            data.bondSet.clear( i );
             continue;
 
         }else if( ap1.atomname === "N" || ap2.atomname === "N" ){
@@ -80789,7 +80494,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
             v2.subVectors( atomX, atomN );
 
             if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
-                data.bondSet.flip_unsafe( i );
+                data.bondSet.clear( i );
             }
 
         }else if(
@@ -80798,7 +80503,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         ){
 
             if( !checkAngle( ap1, ap2, "OH", "CZ" ) ){
-                data.bondSet.flip_unsafe( i );
+                data.bondSet.clear( i );
             }
 
         }
@@ -80877,7 +80582,7 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
         // Log.log( radToDeg( v1.angleTo( v2 ) ) );
 
         if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
-            data.bondSet.flip_unsafe( i );
+            data.bondSet.clear( i );
         }
 
     }
@@ -81215,8 +80920,7 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
             position = position.subarray( 0, n * 3 );
         }
 
-        var bondSet = new Bitset( bondStore.count );
-        bondSet.set_all( true );
+        var bondSet = new BitArray( bondStore.count, true );
 
         return {
             text: text,
@@ -96476,7 +96180,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.20";
+var version$1 = "0.10.0-dev.21";
 
 /**
  * @file Version
