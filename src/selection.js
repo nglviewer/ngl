@@ -11,27 +11,28 @@ import { binarySearchIndexOf, rangeInSortedArray } from "./utils.js";
 
 
 const kwd = {
-    "PROTEIN": 1,
-    "NUCLEIC": 2,
-    "RNA": 3,
-    "DNA": 4,
-    "POLYMER": 5,
-    "WATER": 6,
-    "HELIX": 7,
-    "SHEET": 8,
-    "BACKBONE": 9,
-    "SIDECHAIN": 10,
-    "ALL": 11,
-    "HETERO": 12,
-    "ION": 13,
-    "SACCHARIDE": 14, "SUGAR": 14,
-    "BONDED": 15
+    PROTEIN: 1,
+    NUCLEIC: 2,
+    RNA: 3,
+    DNA: 4,
+    POLYMER: 5,
+    WATER: 6,
+    HELIX: 7,
+    SHEET: 8,
+    BACKBONE: 9,
+    SIDECHAIN: 10,
+    ALL: 11,
+    HETERO: 12,
+    ION: 13,
+    SACCHARIDE: 14, SUGAR: 14,
+    BONDED: 15,
+    RING: 16
 };
 
 const all = [ "*", "", "ALL" ];
 
 const atomOnlyKeywords = [
-    kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED
+    kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING
 ];
 
 const helixTypes = [ "h", "g", "i" ];
@@ -784,6 +785,7 @@ class Selection{
                 if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) return false;
                 if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) return false;
                 if( s.keyword===kwd.BONDED && !a.isBonded() ) return false;
+                if( s.keyword===kwd.RING && !a.isRing() ) return false;
 
                 if( s.keyword===kwd.HETERO && !a.isHetero() ) return false;
                 if( s.keyword===kwd.PROTEIN && !a.isProtein() ) return false;

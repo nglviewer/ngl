@@ -709,6 +709,18 @@ describe( 'parsing', function () {
         };
         assert.deepEqual( selection.selection, selectionObj );
     } );
+
+    it( 'ring', function () {
+        var sele = "ring";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "keyword": kwd.RING }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
 } );
 
 

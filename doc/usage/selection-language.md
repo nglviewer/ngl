@@ -41,6 +41,7 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 * *polar* (Asp, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
 * *nonpolar* (Ala, Cys, Gly, Ile, Leu, Met, Phe, Pro, Val, Trp)
 * *bonded* (all atoms with at least one bond)
+* *ring* (all atoms within rings)
 
 ### Expressions
 
