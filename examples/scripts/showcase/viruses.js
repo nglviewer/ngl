@@ -1,4 +1,19 @@
 
+function addElement( el ){
+    Object.assign( el.style, {
+        position: "absolute",
+        zIndex: 10
+    } );
+    stage.viewer.container.appendChild( el );
+}
+
+function createElement( name, properties, style ){
+    var el = document.createElement( name );
+    Object.assign( el, properties );
+    Object.assign( el.style, style );
+    return el;
+}
+
 var pdbs = [ "1stm", "3nap", "1sid", "2ft1", "4cwu" ];
 var colors = [ "red", "yellow", "green", "lightblue", "violet" ];
 
@@ -21,5 +36,19 @@ Promise.all( pdbs.map( function( id ){
 
     stage.tasks.onZeroOnce( function(){ stage.autoView(); } );
     stage.setParameters( { clipNear: 50 } );
+
+    var clipRange = createElement( "input", {
+      type: "range",
+      value: 50,
+      min: 0,
+      max: 100,
+      step: 1
+    }, { top: "1em", left: "1em" } );
+
+    clipRange.oninput = function( e ){
+        stage.setParameters( { clipNear: e.target.value } );
+    };
+
+    addElement( clipRange );
 
 } );
