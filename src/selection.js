@@ -19,24 +19,27 @@ const kwd = {
     WATER: 6,
     HELIX: 7,
     SHEET: 8,
-    BACKBONE: 9,
-    SIDECHAIN: 10,
-    ALL: 11,
-    HETERO: 12,
-    ION: 13,
-    SACCHARIDE: 14, SUGAR: 14,
-    BONDED: 15,
-    RING: 16
+    TURN: 9,
+    BACKBONE: 10,
+    SIDECHAIN: 11,
+    ALL: 12,
+    HETERO: 13,
+    ION: 14,
+    SACCHARIDE: 15, SUGAR: 15,
+    BONDED: 16,
+    RING: 17
 };
 
-const all = [ "*", "", "ALL" ];
+const SelectAllKeyword = [ "*", "", "ALL" ];
 
-const atomOnlyKeywords = [
+const AtomOnlyKeywords = [
     kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING
 ];
 
-const helixTypes = [ "h", "g", "i" ];
-const sheetTypes = [ "e", "b" ];
+const ChainKeywords = [
+    kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
+    kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
+];
 
 
 /**
@@ -390,32 +393,6 @@ class Selection{
                 continue;
             }
 
-            if( cu === "TURN" ){
-                pushRule( {
-                    operator: "AND",
-                    rules: [
-                        {
-                            operator: "OR",
-                            negate: true,
-                            rules: [
-                                { keyword: kwd.HELIX },
-                                { keyword: kwd.SHEET }
-                            ]
-                        },
-                        {
-                            operator: "OR",
-                            rules: [
-                                { keyword: kwd.PROTEIN },
-                                { sstruc: "s" },
-                                { sstruc: "t" },
-                                { sstruc: "l" }
-                            ]
-                        }
-                    ]
-                } );
-                continue;
-            }
-
             if( cu === "SIDECHAINATTACHED" ){
                 pushRule( {
                     operator: "OR",
@@ -471,7 +448,7 @@ class Selection{
                 continue;
             }
 
-            if( all.indexOf( cu ) !== -1 ){
+            if( SelectAllKeyword.indexOf( cu ) !== -1 ){
                 pushRule( { keyword: kwd.ALL } );
                 continue;
             }
@@ -755,7 +732,7 @@ class Selection{
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined && !atomOnlyKeywords.includes( s.keyword ) ) return true;
+                if( s.keyword!==undefined && !AtomOnlyKeywords.includes( s.keyword ) ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
@@ -794,8 +771,9 @@ class Selection{
                 if( s.keyword===kwd.DNA && !a.isDna() ) return false;
                 if( s.keyword===kwd.POLYMER && !a.isPolymer() ) return false;
                 if( s.keyword===kwd.WATER && !a.isWater() ) return false;
-                if( s.keyword===kwd.HELIX && helixTypes.indexOf( a.sstruc )===-1 ) return false;
-                if( s.keyword===kwd.SHEET && sheetTypes.indexOf( a.sstruc )===-1 ) return false;
+                if( s.keyword===kwd.HELIX && !a.isHelix() ) return false;
+                if( s.keyword===kwd.SHEET && !a.isSheet() ) return false;
+                if( s.keyword===kwd.TURN && !a.isTurn() ) return false;
                 if( s.keyword===kwd.ION && !a.isIon() ) return false;
                 if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) return false;
             }
@@ -839,7 +817,7 @@ class Selection{
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined && atomOnlyKeywords.includes( s.keyword ) ) return true;
+                if( s.keyword!==undefined && AtomOnlyKeywords.includes( s.keyword ) ) return true;
                 if( s.model!==undefined ) return true;
                 if( s.chainname!==undefined ) return true;
                 if( s.atomname!==undefined ) return true;
@@ -860,7 +838,7 @@ class Selection{
             if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
                     s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
                     s.atomindex===undefined &&
-                    ( s.keyword===undefined || atomOnlyKeywords.includes( s.keyword ) )
+                    ( s.keyword===undefined || AtomOnlyKeywords.includes( s.keyword ) )
             ) return -1;
 
             if( s.keyword!==undefined ){
@@ -871,8 +849,9 @@ class Selection{
                 if( s.keyword===kwd.DNA && !r.isDna() ) return false;
                 if( s.keyword===kwd.POLYMER && !r.isPolymer() ) return false;
                 if( s.keyword===kwd.WATER && !r.isWater() ) return false;
-                if( s.keyword===kwd.HELIX && helixTypes.indexOf( r.sstruc )===-1 ) return false;
-                if( s.keyword===kwd.SHEET && sheetTypes.indexOf( r.sstruc )===-1 ) return false;
+                if( s.keyword===kwd.HELIX && !r.isHelix() ) return false;
+                if( s.keyword===kwd.SHEET && !r.isSheet() ) return false;
+                if( s.keyword===kwd.TURN && !r.isTurn() ) return false;
                 if( s.keyword===kwd.ION && !r.isIon() ) return false;
                 if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) return false;
             }
@@ -907,17 +886,12 @@ class Selection{
 
         let selection;
 
-        const chainKeywordList = [
-            kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
-            kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
-        ];
-
         if( chainOnly ){
 
             // console.log( this.selection )
 
             selection = this._filter( function( s ){
-                if( s.keyword!==undefined && !chainKeywordList.includes( s.keyword ) ) return true;
+                if( s.keyword!==undefined && !ChainKeywords.includes( s.keyword ) ) return true;
                 // if( s.model!==undefined ) return true;
                 if( s.resname!==undefined ) return true;
                 if( s.resno!==undefined ) return true;
@@ -939,7 +913,7 @@ class Selection{
 
             // returning -1 means the rule is not applicable
             if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
-                    ( s.keyword===undefined || !chainKeywordList.includes( s.keyword ) )
+                    ( s.keyword===undefined || !ChainKeywords.includes( s.keyword ) )
             ) return -1;
 
             if( s.keyword!==undefined ){

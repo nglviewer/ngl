@@ -6,64 +6,70 @@
 
 
 // entity types
-var UnknownEntity = 0;
-var PolymerEntity = 1;
-var NonPolymerEntity = 2;
-var MacrolideEntity = 3;
-var WaterEntity = 4;
+const UnknownEntity = 0;
+const PolymerEntity = 1;
+const NonPolymerEntity = 2;
+const MacrolideEntity = 3;
+const WaterEntity = 4;
 
 
 // molecule types
-var UnknownType = 0;
-var WaterType = 1;
-var IonType = 2;
-var ProteinType = 3;
-var RnaType = 4;
-var DnaType = 5;
-var SaccharideType = 6;
+const UnknownType = 0;
+const WaterType = 1;
+const IonType = 2;
+const ProteinType = 3;
+const RnaType = 4;
+const DnaType = 5;
+const SaccharideType = 6;
 
 
 // backbone types
-var UnknownBackboneType = 0;
-var ProteinBackboneType = 1;
-var RnaBackboneType = 2;
-var DnaBackboneType = 3;
-var CgProteinBackboneType = 4;
-var CgRnaBackboneType = 5;
-var CgDnaBackboneType = 6;
+const UnknownBackboneType = 0;
+const ProteinBackboneType = 1;
+const RnaBackboneType = 2;
+const DnaBackboneType = 3;
+const CgProteinBackboneType = 4;
+const CgRnaBackboneType = 5;
+const CgDnaBackboneType = 6;
 
 
 // chemical component types
-var ChemCompProtein = [
+const ChemCompProtein = [
     "D-BETA-PEPTIDE, C-GAMMA LINKING", "D-GAMMA-PEPTIDE, C-DELTA LINKING",
     "D-PEPTIDE COOH CARBOXY TERMINUS", "D-PEPTIDE NH3 AMINO TERMINUS", "D-PEPTIDE LINKING",
     "L-BETA-PEPTIDE, C-GAMMA LINKING", "L-GAMMA-PEPTIDE, C-DELTA LINKING",
     "L-PEPTIDE COOH CARBOXY TERMINUS", "L-PEPTIDE NH3 AMINO TERMINUS", "L-PEPTIDE LINKING",
     "PEPTIDE LINKING", "PEPTIDE-LIKE"
 ];
-var ChemCompRna = [
+const ChemCompRna = [
     "RNA OH 3 PRIME TERMINUS", "RNA OH 5 PRIME TERMINUS", "RNA LINKING"
 ];
-var ChemCompDna = [
+const ChemCompDna = [
     "DNA OH 3 PRIME TERMINUS", "DNA OH 5 PRIME TERMINUS", "DNA LINKING",
     "L-DNA LINKING", "L-RNA LINKING"
 ];
-var ChemCompSaccharide = [
+const ChemCompSaccharide = [
     "D-SACCHARIDE", "D-SACCHARIDE 1,4 AND 1,4 LINKING", "D-SACCHARIDE 1,4 AND 1,6 LINKING",
     "L-SACCHARIDE", "L-SACCHARIDE 1,4 AND 1,4 LINKING", "L-SACCHARIDE 1,4 AND 1,6 LINKING",
     "SACCHARIDE"
 ];
-var ChemCompOther = [
+const ChemCompOther = [
     "OTHER"
 ];
-var ChemCompNonPolymer = [
+const ChemCompNonPolymer = [
     "NON-POLYMER"
 ];
-var ChemCompHetero = ChemCompNonPolymer.concat( ChemCompOther, ChemCompSaccharide );
+const ChemCompHetero = ChemCompNonPolymer.concat( ChemCompOther, ChemCompSaccharide );
+
+
+// secondary structure
+const SecStrucHelix = [ "h", "g", "i" ];
+const SecStrucSheet = [ "e", "b" ];
+const SecStrucTurn = [ "s", "t", "l", "" ];
 
 
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
-var VdwRadii = {
+const VdwRadii = {
     "H": 1.1, "HE": 1.4, "LI": 1.81, "BE": 1.53, "B": 1.92, "C": 1.7,
     "N": 1.55, "O": 1.52, "F": 1.47, "NE": 1.54, "NA": 2.27, "MG": 1.73, "AL": 1.84,
     "SI": 2.1, "P": 1.8, "S": 1.8, "CL": 1.75, "AR": 1.88, "K": 2.75, "CA": 2.31,
@@ -82,11 +88,11 @@ var VdwRadii = {
     "DB": 2.0, "SG": 2.0, "BH": 2.0, "HS": 2.0, "MT": 2.0, "DS": 2.0, "RG": 2.0,
     "CN": 2.0, "UUT": 2.0, "FL": 2.0, "UUP": 2.0, "LV": 2.0, "UUH": 2.0
 };
-var DefaultVdwRadius = 2.0;
+const DefaultVdwRadius = 2.0;
 
 
 // Peter Rose (peter.rose@rcsb.org), private communication, average accross PDB
-var ResidueRadii = {
+const ResidueRadii = {
     "2QY": 6.58, "CY0": 11.98, "2QZ": 2.52, "CY1": 6.59, "HHK": 5.11, "CXM": 4.69, "HHI": 4.58, "CY4": 4.57,
     "S12": 18.57, "CY3": 2.79, "C5C": 5.35, "PFX": 11.84, "2R3": 6.94, "2R1": 3.78, "ILX": 4.99, "32S": 5.68,
     "BTK": 8.59, "32T": 5.72, "FAK": 9.8, "B27": 2.78, "ILM": 3.84, "C4R": 5.63, "32L": 6.75, "SYS": 3.01,
@@ -180,11 +186,11 @@ var ResidueRadii = {
     "9NR": 9.33, "FPR": 8.85, "9NF": 8.93, "KPY": 10.17, "9NE": 9.77, "TOQ": 7.5, "MPQ": 4.2, "FPK": 3.08,
     "HQA": 7.25, "SOY": 10.94
 };
-var DefaultResidueRadius = 5.0;
+const DefaultResidueRadius = 5.0;
 
 
 // http://dx.doi.org/10.1039/b801115j (or 1.6)
-var CovalentRadii = {
+const CovalentRadii = {
     "H": 0.31, "HE": 0.28, "LI": 1.28, "BE": 0.96, "B": 0.84, "C": 0.76,
     "N": 0.71, "O": 0.66, "F": 0.57, "NE": 0.58, "NA": 1.66, "MG": 1.41, "AL": 1.21,
     "SI": 1.11, "P": 1.07, "S": 1.05, "CL": 1.02, "AR": 1.06, "K": 2.03, "CA": 1.76,
@@ -203,11 +209,11 @@ var CovalentRadii = {
     "DB": 1.6, "SG": 1.6, "BH": 1.6, "HS": 1.6, "MT": 1.6, "DS": 1.6, "RG": 1.6,
     "CN": 1.6, "UUT": 1.6, "FL": 1.6, "UUP": 1.6, "LV": 1.6, "UUH": 1.6
 };
-var DefaultCovalentRadius = 1.6;
+const DefaultCovalentRadius = 1.6;
 
 
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
-var ResidueHydrophobicity = {
+const ResidueHydrophobicity = {
     // AA  DGwif   DGwoct  Oct-IF
     "ALA": [  0.17,  0.50,  0.33 ],
     "ARG": [  0.81,  1.81,  1.00 ],
@@ -233,10 +239,10 @@ var ResidueHydrophobicity = {
     "TYR": [ -0.94, -0.71,  0.23 ],
     "VAL": [  0.07, -0.46, -0.53 ]
 };
-var DefaultResidueHydrophobicity = [ 0.00, 0.00, 0.00 ];
+const DefaultResidueHydrophobicity = [ 0.00, 0.00, 0.00 ];
 
 
-var AA1 = {
+const AA1 = {
     'HIS': 'H',
     'ARG': 'R',
     'LYS': 'K',
@@ -264,15 +270,15 @@ var AA1 = {
     'UNK': '',
 };
 
-var AA3 = Object.keys( AA1 );
+const AA3 = Object.keys( AA1 );
 
-var RnaBases = [ "A", "C", "T", "G", "U" ];
+const RnaBases = [ "A", "C", "T", "G", "U" ];
 
-var DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
+const DnaBases = [ "DA", "DC", "DT", "DG", "DU", "TCY", "MCY", "5CM" ];
 
-var PurinBases = [ "A", "G", "DA", "DG" ];
+const PurinBases = [ "A", "G", "DA", "DG" ];
 
-var WaterNames = [
+const WaterNames = [
     "SOL", "WAT", "HOH", "H2O", "W", "DOD", "D3O", "TIP3", "TIP4"
 ];
 
@@ -285,7 +291,7 @@ var WaterNames = [
 //     FROM pdb.chem_comp WHERE name LIKE "% ION%"
 //     GROUP BY id_
 // ) AS t1;
-var IonNames = [
+const IonNames = [
     "118", "119", "1AL", "1CU", "2FK", "2HP", "2OF", "3CO",
     "3MT", "3NI", "3OF", "3P8", "4MO", "4PU", "543", "6MO", "ACT", "AG", "AL",
     "ALF", "AM", "ATH", "AU", "AU3", "AUC", "AZI", "BA", "BCT", "BEF", "BF4", "BO4",
@@ -317,7 +323,7 @@ var IonNames = [
 //     FROM pdb.chem_comp WHERE type like "%SACCHARIDE%"
 //     GROUP BY id_
 // ) AS t1;
-var SaccharideNames = [
+const SaccharideNames = [
     "045", "0AT", "0BD", "0MK", "0NZ", "0TS", "0V4", "0XY", "0YT", "10M",
     "147", "149", "14T", "15L", "16G", "18T", "18Y", "1AR", "1BW", "1GL", "1GN",
     "1JB", "1LL", "1NA", "1S3", "26M", "26Q", "26R", "26V", "26W", "26Y", "27C",
@@ -370,20 +376,20 @@ var SaccharideNames = [
 ];
 
 
-var ProteinBackboneAtoms = [
+const ProteinBackboneAtoms = [
     "CA", "C", "N", "O",
     "O1", "O2", "OC1", "OC2", "OX1", "OXT",
     "H", "H1", "H2", "H3", "HA",
     "BB"
 ];
 
-var NucleicBackboneAtoms = [
+const NucleicBackboneAtoms = [
     "P", "O3'", "O5'", "C5'", "C4'", "C3'", "OP1", "OP2",
     "O3*", "O5*", "C5*", "C4*", "C3*"
 ];
 
 
-var ResidueTypeAtoms = {};
+const ResidueTypeAtoms = {};
 
 ResidueTypeAtoms[ ProteinBackboneType ] = {
     trace: "CA",
@@ -460,6 +466,10 @@ export {
     ChemCompOther,
     ChemCompNonPolymer,
     ChemCompHetero,
+
+    SecStrucHelix,
+    SecStrucSheet,
+    SecStrucTurn,
 
     VdwRadii,
     DefaultVdwRadius,

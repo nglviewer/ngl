@@ -6,6 +6,7 @@
 
 
 import {
+    SecStrucHelix, SecStrucSheet, SecStrucTurn,
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     AA1
@@ -336,6 +337,30 @@ class ResidueProxy{
      */
     isSaccharide(){
         return this.residueType.moleculeType === SaccharideType;
+    }
+
+    /**
+     * If residue is part of a helix
+     * @return {Boolean} flag
+     */
+    isHelix(){
+        return SecStrucHelix.includes( this.sstruc );
+    }
+
+    /**
+     * If residue is part of a sheet
+     * @return {Boolean} flag
+     */
+    isSheet(){
+        return SecStrucSheet.includes( this.sstruc );
+    }
+
+    /**
+     * If residue is part of a turn
+     * @return {Boolean} flag
+     */
+    isTurn(){
+        return SecStrucTurn.includes( this.sstruc ) && this.isProtein();
     }
 
     getAtomType( index ){
