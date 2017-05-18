@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file, following t
 - support for reversing color schemes with `colorReverse` parameter
 - independent component movement via `.setPosition`, `.setRotation`, `.setScale`, `.setTransform`
 - `bonded` and `ring` selection language keywords
+- resname list to selection language, `[ALA,GLU]`
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`

@@ -41,6 +41,17 @@ const ChainKeywords = [
     kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
 ];
 
+const SmallResname = [ "ALA", "GLY" ];
+const NucleophilicResname = [ "CYS", "SER", "THR" ];
+const HydrophobicResname = [ "ILE", "LEU", "MET", "PRO", "VAL" ];
+const AromaticResname = [ "PHE", "TRP", "TYR" ];
+const AmideResname = [ "ASN", "GLN" ];
+const AcidicResname = [ "ASP", "GLU" ];
+const BasicResname = [ "ARG", "HIS", "LYS" ];
+const ChargedResname = [ "ARG", "ASP", "GLU", "HIS", "LYS" ];
+const PolarResname = [ "ASN", "ARG", "ASP", "GLN", "GLU", "HIS", "LYS", "SER", "THR", "TYR" ];
+const NonpolarResname = [ "ALA", "CYS", "ILE", "GLY", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+
 
 /**
  * Selection
@@ -259,137 +270,52 @@ class Selection{
             }
 
             if( cu === "SMALL" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "GLY" },
-                        { resname: "ALA" }
-                    ]
-                } );
+                pushRule( { resname: SmallResname } );
                 continue;
             }
 
             if( cu === "NUCLEOPHILIC" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "CYS" }
-                    ]
-                } );
+                pushRule( { resname: NucleophilicResname } );
                 continue;
             }
 
             if( cu === "HYDROPHOBIC" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "VAL" },
-                        { resname: "LEU" },
-                        { resname: "ILE" },
-                        { resname: "MET" },
-                        { resname: "PRO" }
-                    ]
-                } );
+                pushRule( { resname: HydrophobicResname } );
                 continue;
             }
 
             if( cu === "AROMATIC" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "PHE" },
-                        { resname: "TYR" },
-                        { resname: "TRP" }
-                    ]
-                } );
+                pushRule( { resname: AromaticResname } );
                 continue;
             }
 
             if( cu === "AMIDE" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASN" },
-                        { resname: "GLN" }
-                    ]
-                } );
+                pushRule( { resname: AmideResname } );
                 continue;
             }
 
             if( cu === "ACIDIC" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" }
-                    ]
-                } );
+                pushRule( { resname: AcidicResname } );
                 continue;
             }
 
             if( cu === "BASIC" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                } );
+                pushRule( { resname: BasicResname } );
                 continue;
             }
 
             if( cu === "CHARGED" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" }
-                    ]
-                } );
+                pushRule( { resname: ChargedResname } );
                 continue;
             }
 
             if( cu === "POLAR" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ASP" },
-                        { resname: "GLU" },
-                        { resname: "HIS" },
-                        { resname: "LYS" },
-                        { resname: "ARG" },
-                        { resname: "ASN" },
-                        { resname: "GLN" },
-                        { resname: "SER" },
-                        { resname: "THR" },
-                        { resname: "TYR" }
-                    ]
-                } );
+                pushRule( { resname: PolarResname } );
                 continue;
             }
 
             if( cu === "NONPOLAR" ){
-                pushRule( {
-                    operator: "OR",
-                    rules: [
-                        { resname: "ALA" },
-                        { resname: "CYS" },
-                        { resname: "GLY" },
-                        { resname: "ILE" },
-                        { resname: "LEU" },
-                        { resname: "MET" },
-                        { resname: "PHE" },
-                        { resname: "PRO" },
-                        { resname: "VAL" },
-                        { resname: "TRP" }
-                    ]
-                } );
+                pushRule( { resname: NonpolarResname } );
                 continue;
             }
 
@@ -476,7 +402,9 @@ class Selection{
             }
 
             if( c[0] === "[" && c[c.length-1] === "]" ){
-                pushRule( { resname: cu.substr( 1, c.length-2 ) } );
+                const resnameList = cu.substr( 1, c.length-2 ).split( "," );
+                const resname = resnameList.length > 1 ? resnameList : resnameList[ 0 ];
+                pushRule( { resname: resname } );
                 continue;
             }else if(
                 ( c.length >= 1 && c.length <= 4 ) &&
@@ -786,7 +714,13 @@ class Selection{
                     binarySearchIndexOf( s.atomindex, a.index ) < 0
             ) return false;
 
-            if( s.resname!==undefined && s.resname!==a.resname ) return false;
+            if( s.resname!==undefined ){
+                if( Array.isArray( s.resname ) ){
+                    if( !s.resname.includes( a.resname ) ) return false;
+                }else{
+                    if( s.resname!==a.resname ) return false;
+                }
+            }
             if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) return false;
             if( s.resno!==undefined ){
                 if( Array.isArray( s.resno ) && s.resno.length===2 ){
@@ -860,7 +794,13 @@ class Selection{
                     rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
             ) return false;
 
-            if( s.resname!==undefined && s.resname!==r.resname ) return false;
+            if( s.resname!==undefined ){
+                if( Array.isArray( s.resname ) ){
+                    if( !s.resname.includes( r.resname ) ) return false;
+                }else{
+                    if( s.resname!==r.resname ) return false;
+                }
+            }
             if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) return false;
             if( s.resno!==undefined ){
                 if( Array.isArray( s.resno ) && s.resno.length===2 ){

@@ -721,6 +721,18 @@ describe( 'parsing', function () {
         };
         assert.deepEqual( selection.selection, selectionObj );
     } );
+
+    it( 'resname list', function () {
+        var sele = "[ALA,MET,GLU]";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "resname": [ "ALA", "MET", "GLU" ] }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
 } );
 
 
