@@ -41,16 +41,18 @@ const ChainKeywords = [
     kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
 ];
 
-const SmallResname = [ "ALA", "GLY" ];
+const SmallResname = [ "ALA", "GLY", "SER" ];
 const NucleophilicResname = [ "CYS", "SER", "THR" ];
-const HydrophobicResname = [ "ILE", "LEU", "MET", "PRO", "VAL" ];
-const AromaticResname = [ "PHE", "TRP", "TYR" ];
+const HydrophobicResname = [ "ALA", "ILE", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+const AromaticResname = [ "PHE", "TRP", "TYR", "HIS" ];
 const AmideResname = [ "ASN", "GLN" ];
 const AcidicResname = [ "ASP", "GLU" ];
 const BasicResname = [ "ARG", "HIS", "LYS" ];
 const ChargedResname = [ "ARG", "ASP", "GLU", "HIS", "LYS" ];
-const PolarResname = [ "ASN", "ARG", "ASP", "GLN", "GLU", "HIS", "LYS", "SER", "THR", "TYR" ];
-const NonpolarResname = [ "ALA", "CYS", "ILE", "GLY", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+const PolarResname = [ "ASN", "ARG", "ASP", "CYS", "GLY", "GLN", "GLU", "HIS", "LYS", "SER", "THR", "TYR" ];
+const NonpolarResname = [ "ALA", "ILE", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+const CyclicResname = [ "HIS", "PHE", "PRO", "TRP", "TYR" ];
+const AliphaticResname = [ "ALA", "GLY", "ILE", "LEU", "VAL" ];
 
 
 /**
@@ -316,6 +318,16 @@ class Selection{
 
             if( cu === "NONPOLAR" ){
                 pushRule( { resname: NonpolarResname } );
+                continue;
+            }
+
+            if( cu === "CYCLIC" ){
+                pushRule( { resname: CyclicResname } );
+                continue;
+            }
+
+            if( cu === "ALIPHATIC" ){
+                pushRule( { resname: AliphaticResname } );
                 continue;
             }
 

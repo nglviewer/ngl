@@ -30,16 +30,18 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 * *helix*
 * *sheet*
 * *turn* (not helix and not sheet)
-* *small* (Gly, Ala)
+* *small* (Gly, Ala, Ser)
 * *nucleophilic* (Ser, Thr, Cys)
-* *hydrophobic* (Val, Leu, Ile, Met, Pro)
-* *aromatic* (Phe, Tyr, Trp)
+* *hydrophobic* (Ala, Val, Leu, Ile, Met, Pro, Phe, Trp)
+* *aromatic* (Phe, Tyr, Trp, His)
 * *amid* (Asn, Gln)
 * *acidic* (Asp, Glu)
 * *basic* (His, Lys, Arg)
 * *charged* (Asp, Glu, His, Lys, Arg)
-* *polar* (Asp, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
-* *nonpolar* (Ala, Cys, Gly, Ile, Leu, Met, Phe, Pro, Val, Trp)
+* *polar* (Asp, Cys, Gly, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
+* *nonpolar* (Ala, Ile, Leu, Met, Phe, Pro, Val, Trp)
+* *cyclic* (His, Phe, Pro, Trp, Tyr)
+* *aliphatic* (Ala, Gly, Ile, Leu, Val)
 * *bonded* (all atoms with at least one bond)
 * *ring* (all atoms within rings)
 
