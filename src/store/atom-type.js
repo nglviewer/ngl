@@ -10,36 +10,29 @@ import { VdwRadii, CovalentRadii } from "../structure/structure-constants.js";
 
 
 /**
- * Atom type class
- * @class
- * @param {Structure} structure - the structure object
- * @param {String} atomname - the name of the atom
- * @param {String} element - the chemical element
+ * Atom type
  */
-function AtomType( structure, atomname, element ){
+class AtomType{
 
-    this.structure = structure;
+    /**
+     * @param {Structure} structure - the structure object
+     * @param {String} atomname - the name of the atom
+     * @param {String} element - the chemical element
+     */
+    constructor( structure, atomname, element ){
 
-    element = element || guessElement( atomname );
+        this.structure = structure;
 
-    this.atomname = atomname;
-    this.element = element;
-    this.vdw = VdwRadii[ element ];
-    this.covalent = CovalentRadii[ element ];
+        element = element || guessElement( atomname );
+
+        this.atomname = atomname;
+        this.element = element;
+        this.vdw = VdwRadii[ element ];
+        this.covalent = CovalentRadii[ element ];
+
+    }
 
 }
-
-AtomType.prototype = {
-
-    constructor: AtomType,
-    type: "AtomType",
-
-    atomname: undefined,
-    element: undefined,
-    vdw: undefined,
-    covalent: undefined,
-
-};
 
 
 export default AtomType;
