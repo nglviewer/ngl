@@ -16,56 +16,56 @@ import Selection from "../selection.js";
 
 /**
  * Surface
- * @class
- * @param {String} name - surface name
- * @param {String} path - source path
- * @param {Object} data - surface data
- * @param {Float32Array} data.position - surface positions
- * @param {Int32Array} data.index - surface indices
- * @param {Float32Array} data.normal - surface normals
- * @param {Float32Array} data.color - surface colors
- * @param {Int32Array} data.atomindex - atom indices
- * @param {boolean} data.contour - contour mode flag
  */
-function Surface( name, path, data ){
+class Surface{
 
-    this.name = name;
-    this.path = path;
-    this.info = {};
+    /**
+     * @param {String} name - surface name
+     * @param {String} path - source path
+     * @param {Object} data - surface data
+     * @param {Float32Array} data.position - surface positions
+     * @param {Int32Array} data.index - surface indices
+     * @param {Float32Array} data.normal - surface normals
+     * @param {Float32Array} data.color - surface colors
+     * @param {Int32Array} data.atomindex - atom indices
+     * @param {boolean} data.contour - contour mode flag
+     */
+    constructor( name, path, data ){
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
+        this.name = name || "";
+        this.path = path || "";
+        this.info = {};
 
-    if( data instanceof Geometry ||
-        data instanceof BufferGeometry ||
-        data instanceof Group
-    ){
+        this.center = new Vector3();
+        this.boundingBox = new Box3();
 
-        // to be removed
-        this.fromGeometry( data );
+        if( data instanceof Geometry ||
+            data instanceof BufferGeometry ||
+            data instanceof Group
+        ){
 
-    }else if( data ){
+            // to be removed
+            this.fromGeometry( data );
 
-        this.set(
-            data.position,
-            data.index,
-            data.normal,
-            data.color,
-            data.atomindex,
-            data.contour
-        );
+        }else if( data ){
 
-        this.boundingBox.setFromArray( data.position );
-        this.boundingBox.getCenter( this.center );
+            this.set(
+                data.position,
+                data.index,
+                data.normal,
+                data.color,
+                data.atomindex,
+                data.contour
+            );
+
+            this.boundingBox.setFromArray( data.position );
+            this.boundingBox.getCenter( this.center );
+
+        }
 
     }
 
-}
-
-Surface.prototype = {
-
-    constructor: Surface,
-    type: "Surface",
+    get type(){ return "Surface"; }
 
     /**
      * set surface data
@@ -77,20 +77,35 @@ Surface.prototype = {
      * @param {boolean} contour - contour mode flag
      * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex, contour ){
+    set( position, index, normal, color, atomindex, contour ){
 
+        /**
+         * @type {Float32Array}
+         */
         this.position = position;
+        /**
+         * @type {Uint32Array|Uint16Array|undefined}
+         */
         this.index = index;
+        /**
+         * @type {Float32Array|undefined}
+         */
         this.normal = normal;
+        /**
+         * @type {Float32Array|undefined}
+         */
         this.color = color;
+        /**
+         * @type {Int32Array|undefined}
+         */
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
         this.contour = contour;
 
-    },
+    }
 
-    fromGeometry: function( geometry ){
+    fromGeometry( geometry ){
 
         if( Debug ) Log.time( "GeometrySurface.fromGeometry" );
 
@@ -132,15 +147,15 @@ Surface.prototype = {
 
         if( Debug ) Log.timeEnd( "GeometrySurface.setGeometry" );
 
-    },
+    }
 
-    getPosition: function(){
+    getPosition(){
 
         return this.position;
 
-    },
+    }
 
-    getColor: function( params ){
+    getColor( params ){
 
         const p = params || {};
         p.surface = this;
@@ -185,9 +200,9 @@ Surface.prototype = {
 
         return array;
 
-    },
+    }
 
-    getPicking: function( structure ){
+    getPicking( structure ){
 
         if( this.atomindex && structure ){
             return new AtomPicker( this.atomindex, structure );
@@ -195,27 +210,27 @@ Surface.prototype = {
             return new SurfacePicker( serialArray( this.size ), this );
         }
 
-    },
+    }
 
-    getNormal: function(){
+    getNormal(){
 
         return this.normal;
 
-    },
+    }
 
-    getSize: function( size, scale ){
+    getSize( size, scale ){
 
         return uniformArray( this.size, size * scale );
 
-    },
+    }
 
-    getIndex: function(){
+    getIndex(){
 
         return this.index;
 
-    },
+    }
 
-    getFilteredIndex: function( sele, structure ){
+    getFilteredIndex( sele, structure ){
 
         if( sele && this.atomindex ){
 
@@ -262,21 +277,21 @@ Surface.prototype = {
 
         }
 
-    },
+    }
 
-    getAtomindex: function(){
+    getAtomindex(){
 
         return this.atomindex;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         //
 
     }
 
-};
+}
 
 
 export default Surface;

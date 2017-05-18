@@ -139,6 +139,7 @@ import "./parser/validation-parser.js";
 import Shape from "./geometry/shape.js";
 import Kdtree from "./geometry/kdtree.js";
 import SpatialHash from "./geometry/spatial-hash.js";
+import MolecularSurface from "./surface/molecular-surface.js";
 
 //
 
@@ -214,6 +215,7 @@ export {
 
     Kdtree,
     SpatialHash,
+    MolecularSurface,
 
     LeftMouseButton,
     MiddleMouseButton,
