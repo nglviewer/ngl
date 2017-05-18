@@ -375,7 +375,6 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     var triTable = getTriTable();
     var allowedContours = getAllowedContours();
 
-
     //
 
     this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
@@ -391,7 +390,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         var vIndexLength = contour ? n * 3 : n;
 
-        if( !vertexIndex || vertexIndex.length != vIndexLength ){
+        if( !vertexIndex || vertexIndex.length !== vIndexLength ){
             // In contour mode we want all drawn edges parallel to one axis,
             // so interpolation must be calculated in each dimension (rather
             // than re-using a single interpolated vertex)
@@ -613,127 +612,103 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         // top of the cube
 
         if ( bits & 1 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( q1 );
             }
             VIntX( q, 0, fx, fy, fz, field0, field1 );
-
         }
 
         if ( bits & 2 ) {
-
             if( !noNormals ){
                 compNorm( q1 );
                 compNorm( q1y );
             }
             VIntY( q1, 1, fx2, fy, fz, field1, field3 );
-
         }
 
         if ( bits & 4 ) {
-
             if( !noNormals ){
                 compNorm( qy );
                 compNorm( q1y );
             }
             VIntX( qy, 2, fx, fy2, fz, field2, field3 );
-
         }
 
         if ( bits & 8 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( qy );
             }
             VIntY( q, 3, fx, fy, fz, field0, field2 );
-
         }
 
         // bottom of the cube
 
         if ( bits & 16 ) {
-
             if( !noNormals ){
                 compNorm( qz );
                 compNorm( q1z );
             }
             VIntX( qz, 4, fx, fy, fz2, field4, field5 );
-
         }
 
         if ( bits & 32 ) {
-
             if( !noNormals ){
                 compNorm( q1z );
                 compNorm( q1yz );
             }
             VIntY( q1z, 5, fx2, fy, fz2, field5, field7 );
-
         }
 
         if ( bits & 64 ) {
-
             if( !noNormals ){
                 compNorm( qyz );
                 compNorm( q1yz );
             }
             VIntX( qyz, 6, fx, fy2, fz2, field6, field7 );
-
         }
 
         if ( bits & 128 ) {
-
             if( !noNormals ){
                 compNorm( qz );
                 compNorm( qyz );
             }
             VIntY( qz, 7, fx, fy, fz2, field4, field6 );
-
         }
 
         // vertical lines of the cube
 
         if ( bits & 256 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( qz );
             }
             VIntZ( q, 8, fx, fy, fz, field0, field4 );
-
         }
 
         if ( bits & 512 ) {
-
             if( !noNormals ){
                 compNorm( q1 );
                 compNorm( q1z );
             }
             VIntZ( q1, 9, fx2, fy, fz, field1, field5 );
-
         }
 
         if ( bits & 1024 ) {
-
             if( !noNormals ){
                 compNorm( q1y );
                 compNorm( q1yz );
             }
             VIntZ( q1y, 10, fx2, fy2, fz, field3, field7 );
-
         }
 
         if ( bits & 2048 ) {
-
             if( !noNormals ){
                 compNorm( qy );
                 compNorm( qyz );
             }
             VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
-
         }
 
         var triIndex = cubeindex << 4;  // re-purpose cubeindex into an offset into triTable
