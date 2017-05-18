@@ -110,7 +110,7 @@ class SurfaceRepresentation extends Representation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
@@ -146,7 +146,7 @@ class SurfaceRepresentation extends Representation{
 
         if( this.volume ){
 
-            var isolevel;
+            let isolevel;
 
             if( this.isolevelType === "sigma" ){
                 isolevel = this.volume.getValueForSigma( this.isolevel );
@@ -169,10 +169,10 @@ class SurfaceRepresentation extends Representation{
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                var onSurfaceFinish = function( surface ){
+                const onSurfaceFinish = surface => {
                     this.surface = surface;
                     callback();
-                }.bind( this );
+                };
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
@@ -211,9 +211,9 @@ class SurfaceRepresentation extends Representation{
 
     create(){
 
-        var sd = this.getSurfaceData();
+        const sd = this.getSurfaceData();
 
-        var buffer;
+        let buffer;
 
         if( this.contour ){
 
@@ -224,7 +224,7 @@ class SurfaceRepresentation extends Representation{
 
         } else {
 
-            var surfaceBuffer = new SurfaceBuffer(
+            const surfaceBuffer = new SurfaceBuffer(
                 sd, this.getBufferParams( {
                     background: this.background,
                     opaqueBack: this.opaqueBack,
@@ -245,7 +245,7 @@ class SurfaceRepresentation extends Representation{
 
         what = what || {};
 
-        var surfaceData = {};
+        const surfaceData = {};
 
         if( what.position ){
             surfaceData.position = this.surface.getPosition();
@@ -357,7 +357,7 @@ class SurfaceRepresentation extends Representation{
 
     getColorParams(){
 
-        var p = super.getColorParams();
+        const p = super.getColorParams();
 
         p.volume = this.colorVolume;
 
