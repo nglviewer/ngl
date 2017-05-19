@@ -311,7 +311,7 @@ class DistanceRepresentation extends StructureRepresentation{
         }
 
         if( what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 
