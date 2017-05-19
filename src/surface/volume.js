@@ -28,12 +28,10 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box, matrix, contour ){
-        const sd = mc.triangulate( isolevel, smooth, box, contour );
+    function getSurface( isolevel, smooth, box, matrix, contour, wrap ){
+        const sd = mc.triangulate( isolevel, smooth, box, contour, wrap );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
-        }
-        if( smooth || contour ){
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
         if( matrix ){
@@ -65,7 +63,9 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        const sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
+        const sd = self.volsurf.getSurface(
+            p.isolevel, p.smooth, p.box, p.matrix, p.contour, p.wrap
+        );
         const transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
@@ -245,7 +245,7 @@ class Volume{
 
     }
 
-    getSurface( isolevel, smooth, center, size, contour ){
+    getSurface( isolevel, smooth, center, size, contour, wrap ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = defaults( smooth, 0 );
@@ -260,14 +260,14 @@ class Volume{
 
         const box = this._getBox( center, size );
         const sd = this.volsurf.getSurface(
-            isolevel, smooth, box, this.matrix.elements, contour
+            isolevel, smooth, box, this.matrix.elements, contour, wrap
         );
 
         return this._makeSurface( sd, isolevel, smooth );
 
     }
 
-    getSurfaceWorker( isolevel, smooth, center, size, contour, callback ){
+    getSurfaceWorker( isolevel, smooth, center, size, contour, wrap, callback ){
 
         isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
         smooth = smooth || 0;
@@ -294,7 +294,8 @@ class Volume{
                 smooth: smooth,
                 box: this._getBox( center, size ),
                 matrix: this.matrix.elements,
-                contour: contour
+                contour: contour,
+                wrap: wrap
             };
 
             worker.post( msg, undefined,
@@ -309,7 +310,7 @@ class Volume{
                     console.warn(
                         "Volume.getSurfaceWorker error - trying without worker", e
                     );
-                    const surface = this.getSurface( isolevel, smooth, center, size );
+                    const surface = this.getSurface( isolevel, smooth, center, size, contour, wrap );
                     callback( surface );
                 }
 
@@ -317,7 +318,7 @@ class Volume{
 
         }else{
 
-            const surface = this.getSurface( isolevel, smooth, center, size );
+            const surface = this.getSurface( isolevel, smooth, center, size, contour, wrap );
             callback( surface );
 
         }

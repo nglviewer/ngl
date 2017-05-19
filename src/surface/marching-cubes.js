@@ -354,6 +354,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     var isolevel = 0;
     var noNormals = false;
     var contour = false;
+    var wrap = false;
 
     var n = nx * ny * nz;
 
@@ -375,12 +376,15 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     var triTable = getTriTable();
     var allowedContours = getAllowedContours();
 
+    var mx, my, mz;
+
     //
 
-    this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
+    this.triangulate = function( _isolevel, _noNormals, _box, _contour, _wrap ){
 
         isolevel = _isolevel;
         contour = _contour;
+        wrap = _wrap;
         // Normals currently disabled in contour mode for performance (unused)
         noNormals = _noNormals || contour;
 
@@ -404,12 +408,19 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             var min = _box[ 0 ].map( Math.round );
             var max = _box[ 1 ].map( Math.round );
+
+            mx = nx * Math.ceil( Math.abs( min[ 0 ] ) / nx );
+            my = ny * Math.ceil( Math.abs( min[ 1 ] ) / ny );
+            mz = nz * Math.ceil( Math.abs( min[ 2 ] ) / nz );
+
             triangulate(
                 min[ 0 ], min[ 1 ], min[ 2 ],
                 max[ 0 ], max[ 1 ], max[ 2 ]
             );
 
         }else{
+
+            mx = my = mz = 0;
 
             triangulate();
 
@@ -433,6 +444,13 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     // polygonization
 
     function lerp( a, b, t ) { return a + ( b - a ) * t; }
+
+    function index( x, y, z ){
+        x = ( x + mx ) % nx;
+        y = ( y + my ) % ny;
+        z = ( z + mz ) % nz;
+        return ( ( zd * z ) + yd * y ) + x;
+    }
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
@@ -560,11 +578,11 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         var q3 = q * 3;
 
-        if ( normalCache[ q3 ] === 0.0 ) {
+        if( normalCache[ q3 ] === 0.0 ){
 
-            normalCache[ q3     ] = field[ q - 1  ] - field[ q + 1 ];
-            normalCache[ q3 + 1 ] = field[ q - yd ] - field[ q + yd ];
-            normalCache[ q3 + 2 ] = field[ q - zd ] - field[ q + zd ];
+            normalCache[ q3     ] = field[ ( q - 1 + n ) % n  ] - field[ ( q + 1 ) % n ];
+            normalCache[ q3 + 1 ] = field[ ( q - yd + n ) % n ] - field[ ( q + yd ) % n ];
+            normalCache[ q3 + 2 ] = field[ ( q - zd + n ) % n ] - field[ ( q + zd ) % n ];
 
         }
 
@@ -573,13 +591,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
-        var q1 = q + 1,
-            qy = q + yd,
-            qz = q + zd,
-            q1y = q1 + yd,
-            q1z = q1 + zd,
-            qyz = q + yd + zd,
-            q1yz = q1 + yd + zd;
+        q = index( fx, fy, fz );
+        var q1 = index( fx + 1, fy, fz ),
+            qy = index( fx, fy + 1, fz ),
+            qz = index( fx, fy, fz + 1 ),
+            q1y = index( fx + 1, fy + 1, fz ),
+            q1z = index( fx + 1, fy, fz + 1 ),
+            qyz = index( fx, fy + 1, fz + 1 ),
+            q1yz = index( fx + 1, fy + 1, fz + 1 );
 
         var cubeindex = 0,
             field0 = field[ q ],
@@ -755,7 +774,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
-        var q, x, y, z, y_offset, z_offset;
+        var q, q3, x, y, z, y_offset, z_offset;
 
         xBeg = xBeg !== undefined ? xBeg : 0;
         yBeg = yBeg !== undefined ? yBeg : 0;
@@ -765,183 +784,224 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         yEnd = yEnd !== undefined ? yEnd : ny - 1;
         zEnd = zEnd !== undefined ? zEnd : nz - 1;
 
-        if( noNormals ){
+        if( !wrap ){
 
-            xBeg = Math.max( 0, xBeg );
-            yBeg = Math.max( 0, yBeg );
-            zBeg = Math.max( 0, zBeg );
+            if( noNormals ){
 
-            xEnd = Math.min( nx - 1, xEnd );
-            yEnd = Math.min( ny - 1, yEnd );
-            zEnd = Math.min( nz - 1, zEnd );
+                xBeg = Math.max( 0, xBeg );
+                yBeg = Math.max( 0, yBeg );
+                zBeg = Math.max( 0, zBeg );
 
-        }else{
+                xEnd = Math.min( nx - 1, xEnd );
+                yEnd = Math.min( ny - 1, yEnd );
+                zEnd = Math.min( nz - 1, zEnd );
 
-            xBeg = Math.max( 1, xBeg );
-            yBeg = Math.max( 1, yBeg );
-            zBeg = Math.max( 1, zBeg );
+            }else{
 
-            xEnd = Math.min( nx - 2, xEnd );
-            yEnd = Math.min( ny - 2, yEnd );
-            zEnd = Math.min( nz - 2, zEnd );
+                xBeg = Math.max( 1, xBeg );
+                yBeg = Math.max( 1, yBeg );
+                zBeg = Math.max( 1, zBeg );
+
+                xEnd = Math.min( nx - 2, xEnd );
+                yEnd = Math.min( ny - 2, yEnd );
+                zEnd = Math.min( nz - 2, zEnd );
+
+            }
 
         }
 
-        // init part of the vertexIndex
-        // (takes a significant amount of time to do for all)
+        var xBeg2, yBeg2, zBeg2, xEnd2, yEnd2, zEnd2
 
-        var xBeg2 = Math.max( 0, xBeg - 2 );
-        var yBeg2 = Math.max( 0, yBeg - 2 );
-        var zBeg2 = Math.max( 0, zBeg - 2 );
+        if( !wrap ){
 
-        var xEnd2 = Math.min( nx, xEnd + 2 );
-        var yEnd2 = Math.min( ny, yEnd + 2 );
-        var zEnd2 = Math.min( nz, zEnd + 2 );
+            // init part of the vertexIndex
+            // (takes a significant amount of time to do for all)
 
-        for ( z = zBeg2; z < zEnd2; ++z ) {
-            z_offset = zd * z;
-            for ( y = yBeg2; y < yEnd2; ++y ) {
-                y_offset = z_offset + yd * y;
-                for ( x = xBeg2; x < xEnd2; ++x ) {
-                    if( contour ) {
-                        q = 3 * ( y_offset + x );
-                        vertexIndex[ q ] = -1;
-                        vertexIndex[ q + 1 ] = -1;
-                        vertexIndex[ q + 2 ] = -1;
-                    } else {
-                        q = ( y_offset + x );
-                        vertexIndex[ q ] = -1;
+            xBeg2 = Math.max( 0, xBeg - 2 );
+            yBeg2 = Math.max( 0, yBeg - 2 );
+            zBeg2 = Math.max( 0, zBeg - 2 );
+
+            xEnd2 = Math.min( nx, xEnd + 2 );
+            yEnd2 = Math.min( ny, yEnd + 2 );
+            zEnd2 = Math.min( nz, zEnd + 2 );
+
+            for ( z = zBeg2; z < zEnd2; ++z ) {
+                z_offset = zd * z;
+                for ( y = yBeg2; y < yEnd2; ++y ) {
+                    y_offset = z_offset + yd * y;
+                    for ( x = xBeg2; x < xEnd2; ++x ) {
+                        if( contour ) {
+                            q = 3 * ( y_offset + x );
+                            vertexIndex[ q ] = -1;
+                            vertexIndex[ q + 1 ] = -1;
+                            vertexIndex[ q + 2 ] = -1;
+                        } else {
+                            q = ( y_offset + x );
+                            vertexIndex[ q ] = -1;
+                        }
                     }
                 }
             }
+
+        }else{
+
+            xBeg2 = xBeg - 2;
+            yBeg2 = yBeg - 2;
+            zBeg2 = zBeg - 2;
+
+            xEnd2 = xEnd + 2;
+            yEnd2 = yEnd + 2;
+            zEnd2 = zEnd + 2;
+
+            for ( z = zBeg2; z < zEnd2; ++z ) {
+                z_offset = zd * z;
+                for ( y = yBeg2; y < yEnd2; ++y ) {
+                    y_offset = z_offset + yd * y;
+                    for ( x = xBeg2; x < xEnd2; ++x ) {
+                        if( contour ) {
+                            q3 = index( x, y, z ) * 3;
+                            vertexIndex[ q3 ] = -1;
+                            vertexIndex[ q3 + 1 ] = -1;
+                            vertexIndex[ q3 + 2 ] = -1;
+                        } else {
+                            q = index( x, y, z );
+                            vertexIndex[ q ] = -1;
+                        }
+                    }
+                }
+            }
+
         }
 
-        // clip space where the isovalue is too low
+        if( !wrap ){
 
-        var __break;
-        var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
-        var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+            // clip space where the isovalue is too low
 
-        __break = false;
-        for ( z = zBeg; z < zEnd; ++z ) {
+            var __break;
+            var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
+            var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+
+            __break = false;
+            for ( z = zBeg; z < zEnd; ++z ) {
+                for ( y = yBeg; y < yEnd; ++y ) {
+                    for ( x = xBeg; x < xEnd; ++x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __zBeg = z;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) break;
+                }
+                if( __break ) break;
+            }
+
+            __break = false;
             for ( y = yBeg; y < yEnd; ++y ) {
-                for ( x = xBeg; x < xEnd; ++x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __zBeg = z;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) break;
-            }
-            if( __break ) break;
-        }
-
-        __break = false;
-        for ( y = yBeg; y < yEnd; ++y ) {
-            for ( z = __zBeg; z < zEnd; ++z ) {
-                for ( x = xBeg; x < xEnd; ++x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __yBeg = y;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) break;
-            }
-            if( __break ) break;
-        }
-
-        __break = false;
-        for ( x = xBeg; x < xEnd; ++x ) {
-            for ( y = __yBeg; y < yEnd; ++y ) {
                 for ( z = __zBeg; z < zEnd; ++z ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __xBeg = x;
-                        __break = true;
-                        break;
+                    for ( x = xBeg; x < xEnd; ++x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __yBeg = y;
+                            __break = true;
+                            break;
+                        }
                     }
+                    if( __break ) break;
                 }
                 if( __break ) break;
             }
-            if( __break ) break;
-        }
 
-        __break = false;
-        for ( z = zEnd; z >= zBeg; --z ) {
+            __break = false;
+            for ( x = xBeg; x < xEnd; ++x ) {
+                for ( y = __yBeg; y < yEnd; ++y ) {
+                    for ( z = __zBeg; z < zEnd; ++z ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __xBeg = x;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) break;
+                }
+                if( __break ) break;
+            }
+
+            __break = false;
+            for ( z = zEnd; z >= zBeg; --z ) {
+                for ( y = yEnd; y >= yBeg; --y ) {
+                    for ( x = xEnd; x >= xBeg; --x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __zEnd = z;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) break;
+                }
+                if( __break ) break;
+            }
+
+            __break = false;
             for ( y = yEnd; y >= yBeg; --y ) {
-                for ( x = xEnd; x >= xBeg; --x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __zEnd = z;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) break;
-            }
-            if( __break ) break;
-        }
-
-        __break = false;
-        for ( y = yEnd; y >= yBeg; --y ) {
-            for ( z = __zEnd; z >= zBeg; --z ) {
-                for ( x = xEnd; x >= xBeg; --x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __yEnd = y;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) break;
-            }
-            if( __break ) break;
-        }
-
-        __break = false;
-        for ( x = xEnd; x >= xBeg; --x ) {
-            for ( y = __yEnd; y >= yBeg; --y ) {
                 for ( z = __zEnd; z >= zBeg; --z ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __xEnd = x;
-                        __break = true;
-                        break;
+                    for ( x = xEnd; x >= xBeg; --x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __yEnd = y;
+                            __break = true;
+                            break;
+                        }
                     }
+                    if( __break ) break;
                 }
                 if( __break ) break;
             }
-            if( __break ) break;
+
+            __break = false;
+            for ( x = xEnd; x >= xBeg; --x ) {
+                for ( y = __yEnd; y >= yBeg; --y ) {
+                    for ( z = __zEnd; z >= zBeg; --z ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __xEnd = x;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) break;
+                }
+                if( __break ) break;
+            }
+
+            //
+
+            if( noNormals ){
+
+                xBeg = Math.max( 0, __xBeg - 1 );
+                yBeg = Math.max( 0, __yBeg - 1 );
+                zBeg = Math.max( 0, __zBeg - 1 );
+
+                xEnd = Math.min( nx - 1, __xEnd + 1 );
+                yEnd = Math.min( ny - 1, __yEnd + 1 );
+                zEnd = Math.min( nz - 1, __zEnd + 1 );
+
+            }else{
+
+                xBeg = Math.max( 1, __xBeg - 1 );
+                yBeg = Math.max( 1, __yBeg - 1 );
+                zBeg = Math.max( 1, __zBeg - 1 );
+
+                xEnd = Math.min( nx - 2, __xEnd + 1 );
+                yEnd = Math.min( ny - 2, __yEnd + 1 );
+                zEnd = Math.min( nz - 2, __zEnd + 1 );
+
+            }
+
         }
-
-        //
-
-        if( noNormals ){
-
-            xBeg = Math.max( 0, __xBeg - 1 );
-            yBeg = Math.max( 0, __yBeg - 1 );
-            zBeg = Math.max( 0, __zBeg - 1 );
-
-            xEnd = Math.min( nx - 1, __xEnd + 1 );
-            yEnd = Math.min( ny - 1, __yEnd + 1 );
-            zEnd = Math.min( nz - 1, __zEnd + 1 );
-
-        }else{
-
-            xBeg = Math.max( 1, __xBeg - 1 );
-            yBeg = Math.max( 1, __yBeg - 1 );
-            zBeg = Math.max( 1, __zBeg - 1 );
-
-            xEnd = Math.min( nx - 2, __xEnd + 1 );
-            yEnd = Math.min( ny - 2, __yEnd + 1 );
-            zEnd = Math.min( nz - 2, __zEnd + 1 );
-
-        }
-
 
         // polygonize part of the grid
         var edgeFilter = 15;

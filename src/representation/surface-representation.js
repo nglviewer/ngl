@@ -24,9 +24,10 @@ import ContourBuffer from "../buffer/contour-buffer.js";
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
  * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
  * @property {Boolean} background - Render the surface in the background, unlit.
- * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring of the transparency parameter.
+ * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring the transparency parameter.
  * @property {Integer} boxSize - Size of the box to triangulate volume data in. Set to zero to triangulate the whole volume. For volume data only.
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
+ * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
 
 
@@ -77,7 +78,10 @@ class SurfaceRepresentation extends Representation{
             },
             useWorker: {
                 type: "boolean", rebuild: true
-            }
+            },
+            wrap: {
+                type: "boolean", rebuild: true
+            },
 
         }, this.parameters );
 
@@ -123,6 +127,7 @@ class SurfaceRepresentation extends Representation{
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
+        this.wrap = defaults( p.wrap, false );
 
         super.init( p );
 
@@ -158,6 +163,7 @@ class SurfaceRepresentation extends Representation{
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
                 this.__contour !== this.contour ||
+                this.__wrap !== this.wrap ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
@@ -165,6 +171,7 @@ class SurfaceRepresentation extends Representation{
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
                 this.__contour = this.contour;
+                this.__wrap = this.wrap
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
@@ -177,13 +184,13 @@ class SurfaceRepresentation extends Representation{
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
                         isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        this.contour, onSurfaceFinish
+                        this.contour, this.wrap, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
                             isolevel, this.smooth, this.boxCenter, this.boxSize,
-                            this.contour
+                            this.contour, this.wrap
                         )
                     );
                 }
@@ -338,6 +345,7 @@ class SurfaceRepresentation extends Representation{
         if( this.surface && (
                 params.isolevel !== undefined ||
                 params.smooth !== undefined ||
+                params.wrap !== undefined ||
                 params.boxSize !== undefined ||
                 ( this.boxSize > 0 &&
                     !this.__box.equals( this.box ) )
