@@ -80897,7 +80897,7 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
         }
 
         if( what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 
@@ -96069,7 +96069,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.23";
+var version$1 = "0.10.0-dev.24";
 
 /**
  * @file Version
