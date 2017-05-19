@@ -46582,6 +46582,19 @@ var ChainKeywords = [
     kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
 ];
 
+var SmallResname = [ "ALA", "GLY", "SER" ];
+var NucleophilicResname = [ "CYS", "SER", "THR" ];
+var HydrophobicResname = [ "ALA", "ILE", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+var AromaticResname = [ "PHE", "TRP", "TYR", "HIS" ];
+var AmideResname = [ "ASN", "GLN" ];
+var AcidicResname = [ "ASP", "GLU" ];
+var BasicResname = [ "ARG", "HIS", "LYS" ];
+var ChargedResname = [ "ARG", "ASP", "GLU", "HIS", "LYS" ];
+var PolarResname = [ "ASN", "ARG", "ASP", "CYS", "GLY", "GLN", "GLU", "HIS", "LYS", "SER", "THR", "TYR" ];
+var NonpolarResname = [ "ALA", "ILE", "LEU", "MET", "PHE", "PRO", "TRP", "VAL" ];
+var CyclicResname = [ "HIS", "PHE", "PRO", "TRP", "TYR" ];
+var AliphaticResname = [ "ALA", "GLY", "ILE", "LEU", "VAL" ];
+
 
 /**
  * Selection
@@ -46798,137 +46811,62 @@ Selection$1.prototype.parse = function parse ( string ){
         }
 
         if( cu === "SMALL" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "GLY" },
-                    { resname: "ALA" }
-                ]
-            } );
+            pushRule( { resname: SmallResname } );
             continue;
         }
 
         if( cu === "NUCLEOPHILIC" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "SER" },
-                    { resname: "THR" },
-                    { resname: "CYS" }
-                ]
-            } );
+            pushRule( { resname: NucleophilicResname } );
             continue;
         }
 
         if( cu === "HYDROPHOBIC" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "VAL" },
-                    { resname: "LEU" },
-                    { resname: "ILE" },
-                    { resname: "MET" },
-                    { resname: "PRO" }
-                ]
-            } );
+            pushRule( { resname: HydrophobicResname } );
             continue;
         }
 
         if( cu === "AROMATIC" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "PHE" },
-                    { resname: "TYR" },
-                    { resname: "TRP" }
-                ]
-            } );
+            pushRule( { resname: AromaticResname } );
             continue;
         }
 
         if( cu === "AMIDE" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "ASN" },
-                    { resname: "GLN" }
-                ]
-            } );
+            pushRule( { resname: AmideResname } );
             continue;
         }
 
         if( cu === "ACIDIC" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "ASP" },
-                    { resname: "GLU" }
-                ]
-            } );
+            pushRule( { resname: AcidicResname } );
             continue;
         }
 
         if( cu === "BASIC" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "HIS" },
-                    { resname: "LYS" },
-                    { resname: "ARG" }
-                ]
-            } );
+            pushRule( { resname: BasicResname } );
             continue;
         }
 
         if( cu === "CHARGED" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "ASP" },
-                    { resname: "GLU" },
-                    { resname: "HIS" },
-                    { resname: "LYS" },
-                    { resname: "ARG" }
-                ]
-            } );
+            pushRule( { resname: ChargedResname } );
             continue;
         }
 
         if( cu === "POLAR" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "ASP" },
-                    { resname: "GLU" },
-                    { resname: "HIS" },
-                    { resname: "LYS" },
-                    { resname: "ARG" },
-                    { resname: "ASN" },
-                    { resname: "GLN" },
-                    { resname: "SER" },
-                    { resname: "THR" },
-                    { resname: "TYR" }
-                ]
-            } );
+            pushRule( { resname: PolarResname } );
             continue;
         }
 
         if( cu === "NONPOLAR" ){
-            pushRule( {
-                operator: "OR",
-                rules: [
-                    { resname: "ALA" },
-                    { resname: "CYS" },
-                    { resname: "GLY" },
-                    { resname: "ILE" },
-                    { resname: "LEU" },
-                    { resname: "MET" },
-                    { resname: "PHE" },
-                    { resname: "PRO" },
-                    { resname: "VAL" },
-                    { resname: "TRP" }
-                ]
-            } );
+            pushRule( { resname: NonpolarResname } );
+            continue;
+        }
+
+        if( cu === "CYCLIC" ){
+            pushRule( { resname: CyclicResname } );
+            continue;
+        }
+
+        if( cu === "ALIPHATIC" ){
+            pushRule( { resname: AliphaticResname } );
             continue;
         }
 
@@ -47015,7 +46953,9 @@ Selection$1.prototype.parse = function parse ( string ){
         }
 
         if( c[0] === "[" && c[c.length-1] === "]" ){
-            pushRule( { resname: cu.substr( 1, c.length-2 ) } );
+            var resnameList = cu.substr( 1, c.length-2 ).split( "," );
+            var resname = resnameList.length > 1 ? resnameList : resnameList[ 0 ];
+            pushRule( { resname: resname } );
             continue;
         }else if(
             ( c.length >= 1 && c.length <= 4 ) &&
@@ -47329,7 +47269,13 @@ Selection$1.prototype.makeAtomTest = function makeAtomTest ( atomOnly ){
                 binarySearchIndexOf( s.atomindex, a.index ) < 0
         ) { return false; }
 
-        if( s.resname!==undefined && s.resname!==a.resname ) { return false; }
+        if( s.resname!==undefined ){
+            if( Array.isArray( s.resname ) ){
+                if( !s.resname.includes( a.resname ) ) { return false; }
+            }else{
+                if( s.resname!==a.resname ) { return false; }
+            }
+        }
         if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) { return false; }
         if( s.resno!==undefined ){
             if( Array.isArray( s.resno ) && s.resno.length===2 ){
@@ -47403,7 +47349,13 @@ Selection$1.prototype.makeResidueTest = function makeResidueTest ( residueOnly )
                 rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
         ) { return false; }
 
-        if( s.resname!==undefined && s.resname!==r.resname ) { return false; }
+        if( s.resname!==undefined ){
+            if( Array.isArray( s.resname ) ){
+                if( !s.resname.includes( r.resname ) ) { return false; }
+            }else{
+                if( s.resname!==r.resname ) { return false; }
+            }
+        }
         if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) { return false; }
         if( s.resno!==undefined ){
             if( Array.isArray( s.resno ) && s.resno.length===2 ){
@@ -56255,6 +56207,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     var isolevel = 0;
     var noNormals = false;
     var contour = false;
+    var wrap = false;
 
     var n = nx * ny * nz;
 
@@ -56276,13 +56229,15 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     var triTable = getTriTable();
     var allowedContours = getAllowedContours();
 
+    var mx, my, mz;
 
     //
 
-    this.triangulate = function( _isolevel, _noNormals, _box, _contour ){
+    this.triangulate = function( _isolevel, _noNormals, _box, _contour, _wrap ){
 
         isolevel = _isolevel;
         contour = _contour;
+        wrap = _wrap;
         // Normals currently disabled in contour mode for performance (unused)
         noNormals = _noNormals || contour;
 
@@ -56292,7 +56247,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         var vIndexLength = contour ? n * 3 : n;
 
-        if( !vertexIndex || vertexIndex.length != vIndexLength ){
+        if( !vertexIndex || vertexIndex.length !== vIndexLength ){
             // In contour mode we want all drawn edges parallel to one axis,
             // so interpolation must be calculated in each dimension (rather
             // than re-using a single interpolated vertex)
@@ -56306,12 +56261,19 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
             var min = _box[ 0 ].map( Math.round );
             var max = _box[ 1 ].map( Math.round );
+
+            mx = nx * Math.ceil( Math.abs( min[ 0 ] ) / nx );
+            my = ny * Math.ceil( Math.abs( min[ 1 ] ) / ny );
+            mz = nz * Math.ceil( Math.abs( min[ 2 ] ) / nz );
+
             triangulate(
                 min[ 0 ], min[ 1 ], min[ 2 ],
                 max[ 0 ], max[ 1 ], max[ 2 ]
             );
 
         }else{
+
+            mx = my = mz = 0;
 
             triangulate();
 
@@ -56335,6 +56297,13 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     // polygonization
 
     function lerp( a, b, t ) { return a + ( b - a ) * t; }
+
+    function index( x, y, z ){
+        x = ( x + mx ) % nx;
+        y = ( y + my ) % ny;
+        z = ( z + mz ) % nz;
+        return ( ( zd * z ) + yd * y ) + x;
+    }
 
     function VIntX( q, offset, x, y, z, valp1, valp2 ) {
 
@@ -56462,11 +56431,11 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
         var q3 = q * 3;
 
-        if ( normalCache[ q3 ] === 0.0 ) {
+        if( normalCache[ q3 ] === 0.0 ){
 
-            normalCache[ q3     ] = field[ q - 1  ] - field[ q + 1 ];
-            normalCache[ q3 + 1 ] = field[ q - yd ] - field[ q + yd ];
-            normalCache[ q3 + 2 ] = field[ q - zd ] - field[ q + zd ];
+            normalCache[ q3     ] = field[ ( q - 1 + n ) % n  ] - field[ ( q + 1 ) % n ];
+            normalCache[ q3 + 1 ] = field[ ( q - yd + n ) % n ] - field[ ( q + yd ) % n ];
+            normalCache[ q3 + 2 ] = field[ ( q - zd + n ) % n ] - field[ ( q + zd ) % n ];
 
         }
 
@@ -56475,13 +56444,14 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
-        var q1 = q + 1,
-            qy = q + yd,
-            qz = q + zd,
-            q1y = q1 + yd,
-            q1z = q1 + zd,
-            qyz = q + yd + zd,
-            q1yz = q1 + yd + zd;
+        q = index( fx, fy, fz );
+        var q1 = index( fx + 1, fy, fz ),
+            qy = index( fx, fy + 1, fz ),
+            qz = index( fx, fy, fz + 1 ),
+            q1y = index( fx + 1, fy + 1, fz ),
+            q1z = index( fx + 1, fy, fz + 1 ),
+            qyz = index( fx, fy + 1, fz + 1 ),
+            q1yz = index( fx + 1, fy + 1, fz + 1 );
 
         var cubeindex = 0,
             field0 = field[ q ],
@@ -56514,127 +56484,103 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         // top of the cube
 
         if ( bits & 1 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( q1 );
             }
             VIntX( q, 0, fx, fy, fz, field0, field1 );
-
         }
 
         if ( bits & 2 ) {
-
             if( !noNormals ){
                 compNorm( q1 );
                 compNorm( q1y );
             }
             VIntY( q1, 1, fx2, fy, fz, field1, field3 );
-
         }
 
         if ( bits & 4 ) {
-
             if( !noNormals ){
                 compNorm( qy );
                 compNorm( q1y );
             }
             VIntX( qy, 2, fx, fy2, fz, field2, field3 );
-
         }
 
         if ( bits & 8 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( qy );
             }
             VIntY( q, 3, fx, fy, fz, field0, field2 );
-
         }
 
         // bottom of the cube
 
         if ( bits & 16 ) {
-
             if( !noNormals ){
                 compNorm( qz );
                 compNorm( q1z );
             }
             VIntX( qz, 4, fx, fy, fz2, field4, field5 );
-
         }
 
         if ( bits & 32 ) {
-
             if( !noNormals ){
                 compNorm( q1z );
                 compNorm( q1yz );
             }
             VIntY( q1z, 5, fx2, fy, fz2, field5, field7 );
-
         }
 
         if ( bits & 64 ) {
-
             if( !noNormals ){
                 compNorm( qyz );
                 compNorm( q1yz );
             }
             VIntX( qyz, 6, fx, fy2, fz2, field6, field7 );
-
         }
 
         if ( bits & 128 ) {
-
             if( !noNormals ){
                 compNorm( qz );
                 compNorm( qyz );
             }
             VIntY( qz, 7, fx, fy, fz2, field4, field6 );
-
         }
 
         // vertical lines of the cube
 
         if ( bits & 256 ) {
-
             if( !noNormals ){
                 compNorm( q );
                 compNorm( qz );
             }
             VIntZ( q, 8, fx, fy, fz, field0, field4 );
-
         }
 
         if ( bits & 512 ) {
-
             if( !noNormals ){
                 compNorm( q1 );
                 compNorm( q1z );
             }
             VIntZ( q1, 9, fx2, fy, fz, field1, field5 );
-
         }
 
         if ( bits & 1024 ) {
-
             if( !noNormals ){
                 compNorm( q1y );
                 compNorm( q1yz );
             }
             VIntZ( q1y, 10, fx2, fy2, fz, field3, field7 );
-
         }
 
         if ( bits & 2048 ) {
-
             if( !noNormals ){
                 compNorm( qy );
                 compNorm( qyz );
             }
             VIntZ( qy, 11, fx, fy2, fz, field2, field6 );
-
         }
 
         var triIndex = cubeindex << 4;  // re-purpose cubeindex into an offset into triTable
@@ -56681,7 +56627,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
 
     function triangulate( xBeg, yBeg, zBeg, xEnd, yEnd, zEnd ) {
 
-        var q, x, y, z, y_offset, z_offset;
+        var q, q3, x, y, z, y_offset, z_offset;
 
         xBeg = xBeg !== undefined ? xBeg : 0;
         yBeg = yBeg !== undefined ? yBeg : 0;
@@ -56691,183 +56637,224 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
         yEnd = yEnd !== undefined ? yEnd : ny - 1;
         zEnd = zEnd !== undefined ? zEnd : nz - 1;
 
-        if( noNormals ){
+        if( !wrap ){
 
-            xBeg = Math.max( 0, xBeg );
-            yBeg = Math.max( 0, yBeg );
-            zBeg = Math.max( 0, zBeg );
+            if( noNormals ){
 
-            xEnd = Math.min( nx - 1, xEnd );
-            yEnd = Math.min( ny - 1, yEnd );
-            zEnd = Math.min( nz - 1, zEnd );
+                xBeg = Math.max( 0, xBeg );
+                yBeg = Math.max( 0, yBeg );
+                zBeg = Math.max( 0, zBeg );
 
-        }else{
+                xEnd = Math.min( nx - 1, xEnd );
+                yEnd = Math.min( ny - 1, yEnd );
+                zEnd = Math.min( nz - 1, zEnd );
 
-            xBeg = Math.max( 1, xBeg );
-            yBeg = Math.max( 1, yBeg );
-            zBeg = Math.max( 1, zBeg );
+            }else{
 
-            xEnd = Math.min( nx - 2, xEnd );
-            yEnd = Math.min( ny - 2, yEnd );
-            zEnd = Math.min( nz - 2, zEnd );
+                xBeg = Math.max( 1, xBeg );
+                yBeg = Math.max( 1, yBeg );
+                zBeg = Math.max( 1, zBeg );
+
+                xEnd = Math.min( nx - 2, xEnd );
+                yEnd = Math.min( ny - 2, yEnd );
+                zEnd = Math.min( nz - 2, zEnd );
+
+            }
 
         }
 
-        // init part of the vertexIndex
-        // (takes a significant amount of time to do for all)
+        var xBeg2, yBeg2, zBeg2, xEnd2, yEnd2, zEnd2;
 
-        var xBeg2 = Math.max( 0, xBeg - 2 );
-        var yBeg2 = Math.max( 0, yBeg - 2 );
-        var zBeg2 = Math.max( 0, zBeg - 2 );
+        if( !wrap ){
 
-        var xEnd2 = Math.min( nx, xEnd + 2 );
-        var yEnd2 = Math.min( ny, yEnd + 2 );
-        var zEnd2 = Math.min( nz, zEnd + 2 );
+            // init part of the vertexIndex
+            // (takes a significant amount of time to do for all)
 
-        for ( z = zBeg2; z < zEnd2; ++z ) {
-            z_offset = zd * z;
-            for ( y = yBeg2; y < yEnd2; ++y ) {
-                y_offset = z_offset + yd * y;
-                for ( x = xBeg2; x < xEnd2; ++x ) {
-                    if( contour ) {
-                        q = 3 * ( y_offset + x );
-                        vertexIndex[ q ] = -1;
-                        vertexIndex[ q + 1 ] = -1;
-                        vertexIndex[ q + 2 ] = -1;
-                    } else {
-                        q = ( y_offset + x );
-                        vertexIndex[ q ] = -1;
+            xBeg2 = Math.max( 0, xBeg - 2 );
+            yBeg2 = Math.max( 0, yBeg - 2 );
+            zBeg2 = Math.max( 0, zBeg - 2 );
+
+            xEnd2 = Math.min( nx, xEnd + 2 );
+            yEnd2 = Math.min( ny, yEnd + 2 );
+            zEnd2 = Math.min( nz, zEnd + 2 );
+
+            for ( z = zBeg2; z < zEnd2; ++z ) {
+                z_offset = zd * z;
+                for ( y = yBeg2; y < yEnd2; ++y ) {
+                    y_offset = z_offset + yd * y;
+                    for ( x = xBeg2; x < xEnd2; ++x ) {
+                        if( contour ) {
+                            q = 3 * ( y_offset + x );
+                            vertexIndex[ q ] = -1;
+                            vertexIndex[ q + 1 ] = -1;
+                            vertexIndex[ q + 2 ] = -1;
+                        } else {
+                            q = ( y_offset + x );
+                            vertexIndex[ q ] = -1;
+                        }
                     }
                 }
             }
+
+        }else{
+
+            xBeg2 = xBeg - 2;
+            yBeg2 = yBeg - 2;
+            zBeg2 = zBeg - 2;
+
+            xEnd2 = xEnd + 2;
+            yEnd2 = yEnd + 2;
+            zEnd2 = zEnd + 2;
+
+            for ( z = zBeg2; z < zEnd2; ++z ) {
+                z_offset = zd * z;
+                for ( y = yBeg2; y < yEnd2; ++y ) {
+                    y_offset = z_offset + yd * y;
+                    for ( x = xBeg2; x < xEnd2; ++x ) {
+                        if( contour ) {
+                            q3 = index( x, y, z ) * 3;
+                            vertexIndex[ q3 ] = -1;
+                            vertexIndex[ q3 + 1 ] = -1;
+                            vertexIndex[ q3 + 2 ] = -1;
+                        } else {
+                            q = index( x, y, z );
+                            vertexIndex[ q ] = -1;
+                        }
+                    }
+                }
+            }
+
         }
 
-        // clip space where the isovalue is too low
+        if( !wrap ){
 
-        var __break;
-        var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
-        var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+            // clip space where the isovalue is too low
 
-        __break = false;
-        for ( z = zBeg; z < zEnd; ++z ) {
+            var __break;
+            var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg;
+            var __xEnd = xEnd; var __yEnd = yEnd; var __zEnd = zEnd;
+
+            __break = false;
+            for ( z = zBeg; z < zEnd; ++z ) {
+                for ( y = yBeg; y < yEnd; ++y ) {
+                    for ( x = xBeg; x < xEnd; ++x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __zBeg = z;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) { break; }
+                }
+                if( __break ) { break; }
+            }
+
+            __break = false;
             for ( y = yBeg; y < yEnd; ++y ) {
-                for ( x = xBeg; x < xEnd; ++x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __zBeg = z;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) { break; }
-            }
-            if( __break ) { break; }
-        }
-
-        __break = false;
-        for ( y = yBeg; y < yEnd; ++y ) {
-            for ( z = __zBeg; z < zEnd; ++z ) {
-                for ( x = xBeg; x < xEnd; ++x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __yBeg = y;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) { break; }
-            }
-            if( __break ) { break; }
-        }
-
-        __break = false;
-        for ( x = xBeg; x < xEnd; ++x ) {
-            for ( y = __yBeg; y < yEnd; ++y ) {
                 for ( z = __zBeg; z < zEnd; ++z ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __xBeg = x;
-                        __break = true;
-                        break;
+                    for ( x = xBeg; x < xEnd; ++x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __yBeg = y;
+                            __break = true;
+                            break;
+                        }
                     }
+                    if( __break ) { break; }
                 }
                 if( __break ) { break; }
             }
-            if( __break ) { break; }
-        }
 
-        __break = false;
-        for ( z = zEnd; z >= zBeg; --z ) {
+            __break = false;
+            for ( x = xBeg; x < xEnd; ++x ) {
+                for ( y = __yBeg; y < yEnd; ++y ) {
+                    for ( z = __zBeg; z < zEnd; ++z ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __xBeg = x;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) { break; }
+                }
+                if( __break ) { break; }
+            }
+
+            __break = false;
+            for ( z = zEnd; z >= zBeg; --z ) {
+                for ( y = yEnd; y >= yBeg; --y ) {
+                    for ( x = xEnd; x >= xBeg; --x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __zEnd = z;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) { break; }
+                }
+                if( __break ) { break; }
+            }
+
+            __break = false;
             for ( y = yEnd; y >= yBeg; --y ) {
-                for ( x = xEnd; x >= xBeg; --x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __zEnd = z;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) { break; }
-            }
-            if( __break ) { break; }
-        }
-
-        __break = false;
-        for ( y = yEnd; y >= yBeg; --y ) {
-            for ( z = __zEnd; z >= zBeg; --z ) {
-                for ( x = xEnd; x >= xBeg; --x ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __yEnd = y;
-                        __break = true;
-                        break;
-                    }
-                }
-                if( __break ) { break; }
-            }
-            if( __break ) { break; }
-        }
-
-        __break = false;
-        for ( x = xEnd; x >= xBeg; --x ) {
-            for ( y = __yEnd; y >= yBeg; --y ) {
                 for ( z = __zEnd; z >= zBeg; --z ) {
-                    q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
-                    if( field[ q ] >= isolevel ){
-                        __xEnd = x;
-                        __break = true;
-                        break;
+                    for ( x = xEnd; x >= xBeg; --x ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __yEnd = y;
+                            __break = true;
+                            break;
+                        }
                     }
+                    if( __break ) { break; }
                 }
                 if( __break ) { break; }
             }
-            if( __break ) { break; }
+
+            __break = false;
+            for ( x = xEnd; x >= xBeg; --x ) {
+                for ( y = __yEnd; y >= yBeg; --y ) {
+                    for ( z = __zEnd; z >= zBeg; --z ) {
+                        q = ( ( nx * ny ) * z ) + ( nx * y ) + x;
+                        if( field[ q ] >= isolevel ){
+                            __xEnd = x;
+                            __break = true;
+                            break;
+                        }
+                    }
+                    if( __break ) { break; }
+                }
+                if( __break ) { break; }
+            }
+
+            //
+
+            if( noNormals ){
+
+                xBeg = Math.max( 0, __xBeg - 1 );
+                yBeg = Math.max( 0, __yBeg - 1 );
+                zBeg = Math.max( 0, __zBeg - 1 );
+
+                xEnd = Math.min( nx - 1, __xEnd + 1 );
+                yEnd = Math.min( ny - 1, __yEnd + 1 );
+                zEnd = Math.min( nz - 1, __zEnd + 1 );
+
+            }else{
+
+                xBeg = Math.max( 1, __xBeg - 1 );
+                yBeg = Math.max( 1, __yBeg - 1 );
+                zBeg = Math.max( 1, __zBeg - 1 );
+
+                xEnd = Math.min( nx - 2, __xEnd + 1 );
+                yEnd = Math.min( ny - 2, __yEnd + 1 );
+                zEnd = Math.min( nz - 2, __zEnd + 1 );
+
+            }
+
         }
-
-        //
-
-        if( noNormals ){
-
-            xBeg = Math.max( 0, __xBeg - 1 );
-            yBeg = Math.max( 0, __yBeg - 1 );
-            zBeg = Math.max( 0, __zBeg - 1 );
-
-            xEnd = Math.min( nx - 1, __xEnd + 1 );
-            yEnd = Math.min( ny - 1, __yEnd + 1 );
-            zEnd = Math.min( nz - 1, __zEnd + 1 );
-
-        }else{
-
-            xBeg = Math.max( 1, __xBeg - 1 );
-            yBeg = Math.max( 1, __yBeg - 1 );
-            zBeg = Math.max( 1, __zBeg - 1 );
-
-            xEnd = Math.min( nx - 2, __xEnd + 1 );
-            yEnd = Math.min( ny - 2, __yEnd + 1 );
-            zEnd = Math.min( nz - 2, __zEnd + 1 );
-
-        }
-
 
         // polygonize part of the grid
         var edgeFilter = 15;
@@ -57594,12 +57581,10 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     var mc = new MarchingCubes( data, nx, ny, nz, atomindex );
 
-    function getSurface( isolevel, smooth, box, matrix, contour ){
-        var sd = mc.triangulate( isolevel, smooth, box, contour );
+    function getSurface( isolevel, smooth, box, matrix, contour, wrap ){
+        var sd = mc.triangulate( isolevel, smooth, box, contour, wrap );
         if( smooth ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
-        }
-        if( smooth || contour ){
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
         if( matrix ){
@@ -57631,7 +57616,9 @@ WorkerRegistry.add( "surf", function func( e, callback ){
         self.volsurf = new VolumeSurface( a[0], a[1], a[2], a[3], a[4] );
     }
     if( p ){
-        var sd = self.volsurf.getSurface( p.isolevel, p.smooth, p.box, p.matrix, p.contour );
+        var sd = self.volsurf.getSurface(
+            p.isolevel, p.smooth, p.box, p.matrix, p.contour, p.wrap
+        );
         var transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) { transferList.push( sd.normal.buffer ); }
         if( sd.atomindex ) { transferList.push( sd.atomindex.buffer ); }
@@ -57801,7 +57788,7 @@ Volume.prototype._makeSurface = function _makeSurface ( sd, isolevel, smooth ){
 
 };
 
-Volume.prototype.getSurface = function getSurface ( isolevel, smooth, center, size, contour ){
+Volume.prototype.getSurface = function getSurface ( isolevel, smooth, center, size, contour, wrap ){
 
     isolevel = isNaN( isolevel ) ? this.getValueForSigma( 2 ) : isolevel;
     smooth = defaults( smooth, 0 );
@@ -57816,14 +57803,14 @@ Volume.prototype.getSurface = function getSurface ( isolevel, smooth, center, si
 
     var box = this._getBox( center, size );
     var sd = this.volsurf.getSurface(
-        isolevel, smooth, box, this.matrix.elements, contour
+        isolevel, smooth, box, this.matrix.elements, contour, wrap
     );
 
     return this._makeSurface( sd, isolevel, smooth );
 
 };
 
-Volume.prototype.getSurfaceWorker = function getSurfaceWorker ( isolevel, smooth, center, size, contour, callback ){
+Volume.prototype.getSurfaceWorker = function getSurfaceWorker ( isolevel, smooth, center, size, contour, wrap, callback ){
         var this$1 = this;
 
 
@@ -57852,7 +57839,8 @@ Volume.prototype.getSurfaceWorker = function getSurfaceWorker ( isolevel, smooth
             smooth: smooth,
             box: this._getBox( center, size ),
             matrix: this.matrix.elements,
-            contour: contour
+            contour: contour,
+            wrap: wrap
         };
 
         worker.post( msg, undefined,
@@ -57867,7 +57855,7 @@ Volume.prototype.getSurfaceWorker = function getSurfaceWorker ( isolevel, smooth
                 console.warn(
                     "Volume.getSurfaceWorker error - trying without worker", e
                 );
-                var surface = this$1.getSurface( isolevel, smooth, center, size );
+                var surface = this$1.getSurface( isolevel, smooth, center, size, contour, wrap );
                 callback( surface );
             }
 
@@ -57875,7 +57863,7 @@ Volume.prototype.getSurfaceWorker = function getSurfaceWorker ( isolevel, smooth
 
     }else{
 
-        var surface = this.getSurface( isolevel, smooth, center, size );
+        var surface = this.getSurface( isolevel, smooth, center, size, contour, wrap );
         callback( surface );
 
     }
@@ -58229,7 +58217,7 @@ FilteredVolume.prototype.getDataSize = Volume.prototype.getDataSize;
  */
 
 
-function BondHash( bondStore, atomCount ){
+var BondHash = function BondHash( bondStore, atomCount ){
 
     if( Debug ) { Log.time( "BondHash init" ); }
 
@@ -58239,17 +58227,15 @@ function BondHash( bondStore, atomCount ){
     var countArray = new Uint8Array( atomCount );
     var offsetArray = new Int32Array( atomCount );
 
-    var i;
-
     // count bonds per atom
-    for( i = 0; i < bondCount; ++i ){
+    for( var i = 0; i < bondCount; ++i ){
         countArray[ atomIndex1Array[ i ] ] += 1;
         countArray[ atomIndex2Array[ i ] ] += 1;
     }
 
     // get offsets to atom bonds
-    for( i = 1; i < atomCount; ++i ){
-        offsetArray[ i ] += offsetArray[ i - 1 ] + countArray[ i - 1 ];
+    for( var i$1 = 1; i$1 < atomCount; ++i$1 ){
+        offsetArray[ i$1 ] += offsetArray[ i$1 - 1 ] + countArray[ i$1 - 1 ];
     }
 
     // prepare index array
@@ -58260,30 +58246,28 @@ function BondHash( bondStore, atomCount ){
     }
 
     // build index array
-    for( i = 0; i < bondCount; ++i ){
-        var idx1 = atomIndex1Array[ i ];
-        var idx2 = atomIndex2Array[ i ];
+    for( var i$2 = 0; i$2 < bondCount; ++i$2 ){
+        var idx1 = atomIndex1Array[ i$2 ];
+        var idx2 = atomIndex2Array[ i$2 ];
         var j1 = offsetArray[ idx1 ];
         while( indexArray[ j1 ] !== -1 ){
             j1 += 1;
         }
-        indexArray[ j1 ] = i;
+        indexArray[ j1 ] = i$2;
         var j2 = offsetArray[ idx2 ];
         while( indexArray[ j2 ] !== -1 ){
             j2 += 1;
         }
-        indexArray[ j2 ] = i;
+        indexArray[ j2 ] = i$2;
     }
 
     if( Debug ) { Log.timeEnd( "BondHash init" ); }
-
-    // API
 
     this.countArray = countArray;
     this.offsetArray = offsetArray;
     this.indexArray = indexArray;
 
-}
+};
 
 /**
  * @file Store
@@ -58297,7 +58281,7 @@ function BondHash( bondStore, atomCount ){
  * @class
  * @param {Integer} [size] - initial size
  */
-function Store( size ){
+var Store = function Store( size ){
 
     if( Number.isInteger( size ) ){
 
@@ -58309,184 +58293,176 @@ function Store( size ){
 
     }
 
-}
+};
 
-Store.prototype = {
-
-    constructor: Store,
-
-    type: "Store",
-
-    init: function( size ){
+Store.prototype.init = function init ( size ){
         var this$1 = this;
 
 
-        this.length = size;
-        this.count = 0;
+    this.length = size;
+    this.count = 0;
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+    for( var i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this$1.__fields[ i ][ 0 ];
-            var itemSize = this$1.__fields[ i ][ 1 ];
-            var arrayType = this$1.__fields[ i ][ 2 ];
-            var arraySize = this$1.length * itemSize;
+        var name = this$1.__fields[ i ][ 0 ];
+        var itemSize = this$1.__fields[ i ][ 1 ];
+        var arrayType = this$1.__fields[ i ][ 2 ];
+        var arraySize = this$1.length * itemSize;
 
-            this$1[ name ] = getTypedArray( arrayType, arraySize );
+        this$1[ name ] = getTypedArray( arrayType, arraySize );
 
+    }
+
+};
+
+Store.prototype.resize = function resize ( size ){
+        var this$1 = this;
+
+
+    // Log.time( "Store.resize" );
+
+    this.length = Math.round( size || 0 );
+    this.count = Math.min( this.count, this.length );
+
+    for( var i = 0, il = this.__fields.length; i < il; ++i ){
+
+        var name = this$1.__fields[ i ][ 0 ];
+        var itemSize = this$1.__fields[ i ][ 1 ];
+        var arraySize = this$1.length * itemSize;
+        var tmpArray = new this$1[ name ].constructor( arraySize );
+
+        if( this$1[ name ].length > arraySize ){
+            tmpArray.set( this$1[ name ].subarray( 0, arraySize ) );
+        }else{
+            tmpArray.set( this$1[ name ] );
         }
+        this$1[ name ] = tmpArray;
 
-    },
+    }
 
-    resize: function( size ){
+    // Log.timeEnd( "Store.resize" );
+
+};
+
+Store.prototype.growIfFull = function growIfFull (){
+
+    if( this.count >= this.length ){
+        var size = Math.round( this.length * 1.5 );
+        this.resize( Math.max( 256, size ) );
+    }
+
+};
+
+Store.prototype.copyFrom = function copyFrom ( other, thisOffset, otherOffset, length ){
         var this$1 = this;
 
 
-        // Log.time( "Store.resize" );
+    for( var i = 0, il = this.__fields.length; i < il; ++i ){
 
-        this.length = Math.round( size || 0 );
-        this.count = Math.min( this.count, this.length );
+        var name = this$1.__fields[ i ][ 0 ];
+        var itemSize = this$1.__fields[ i ][ 1 ];
+        var thisField = this$1[ name ];
+        var otherField = other[ name ];
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
-
-            var name = this$1.__fields[ i ][ 0 ];
-            var itemSize = this$1.__fields[ i ][ 1 ];
-            var arraySize = this$1.length * itemSize;
-            var tmpArray = new this$1[ name ].constructor( arraySize );
-
-            if( this$1[ name ].length > arraySize ){
-                tmpArray.set( this$1[ name ].subarray( 0, arraySize ) );
-            }else{
-                tmpArray.set( this$1[ name ] );
+        for( var j = 0; j < length; ++j ){
+            var thisIndex = itemSize * ( thisOffset + j );
+            var otherIndex = itemSize * ( otherOffset + j );
+            for( var k = 0; k < itemSize; ++k ){
+                thisField[ thisIndex + k ] = otherField[ otherIndex + k ];
             }
-            this$1[ name ] = tmpArray;
-
         }
 
-        // Log.timeEnd( "Store.resize" );
+    }
 
-    },
+};
 
-    growIfFull: function(){
-
-        if( this.count >= this.length ){
-            var size = Math.round( this.length * 1.5 );
-            this.resize( Math.max( 256, size ) );
-        }
-
-    },
-
-    copyFrom: function( other, thisOffset, otherOffset, length ){
+Store.prototype.copyWithin = function copyWithin ( offsetTarget, offsetSource, length ){
         var this$1 = this;
 
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+    for( var i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this$1.__fields[ i ][ 0 ];
-            var itemSize = this$1.__fields[ i ][ 1 ];
-            var thisField = this$1[ name ];
-            var otherField = other[ name ];
+        var name = this$1.__fields[ i ][ 0 ];
+        var itemSize = this$1.__fields[ i ][ 1 ];
+        var thisField = this$1[ name ];
 
-            for( var j = 0; j < length; ++j ){
-                var thisIndex = itemSize * ( thisOffset + j );
-                var otherIndex = itemSize * ( otherOffset + j );
-                for( var k = 0; k < itemSize; ++k ){
-                    thisField[ thisIndex + k ] = otherField[ otherIndex + k ];
+        for( var j = 0; j < length; ++j ){
+            var targetIndex = itemSize * ( offsetTarget + j );
+            var sourceIndex = itemSize * ( offsetSource + j );
+            for( var k = 0; k < itemSize; ++k ){
+                thisField[ targetIndex + k ] = thisField[ sourceIndex + k ];
+            }
+        }
+
+    }
+
+};
+
+Store.prototype.sort = function sort ( compareFunction ){
+
+    Log.time( "Store.sort" );
+
+    var thisStore = this;
+    var tmpStore = new this.constructor( 1 );
+
+    function swap( index1, index2 ){
+        if( index1 === index2 ) { return; }
+        tmpStore.copyFrom( thisStore, 0, index1, 1 );
+        thisStore.copyWithin( index1, index2, 1 );
+        thisStore.copyFrom( tmpStore, index2, 0, 1 );
+    }
+
+    function quicksort( left, right ){
+        if( left < right ){
+            var pivot = Math.floor( ( left + right ) / 2 );
+            var left_new = left;
+            var right_new = right;
+            do{
+                while( compareFunction( left_new, pivot ) < 0 ){
+                    left_new += 1;
                 }
-            }
-
-        }
-
-    },
-
-    copyWithin: function( offsetTarget, offsetSource, length ){
-        var this$1 = this;
-
-
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
-
-            var name = this$1.__fields[ i ][ 0 ];
-            var itemSize = this$1.__fields[ i ][ 1 ];
-            var thisField = this$1[ name ];
-
-            for( var j = 0; j < length; ++j ){
-                var targetIndex = itemSize * ( offsetTarget + j );
-                var sourceIndex = itemSize * ( offsetSource + j );
-                for( var k = 0; k < itemSize; ++k ){
-                    thisField[ targetIndex + k ] = thisField[ sourceIndex + k ];
+                while( compareFunction( right_new, pivot ) > 0 ){
+                    right_new -= 1;
                 }
-            }
-
-        }
-
-    },
-
-    sort: function( compareFunction ){
-
-        Log.time( "Store.sort" );
-
-        var thisStore = this;
-        var tmpStore = new this.constructor( 1 );
-
-        function swap( index1, index2 ){
-            if( index1 === index2 ) { return; }
-            tmpStore.copyFrom( thisStore, 0, index1, 1 );
-            thisStore.copyWithin( index1, index2, 1 );
-            thisStore.copyFrom( tmpStore, index2, 0, 1 );
-        }
-
-        function quicksort( left, right ){
-            if( left < right ){
-                var pivot = Math.floor( ( left + right ) / 2 );
-                var left_new = left;
-                var right_new = right;
-                do{
-                    while( compareFunction( left_new, pivot ) < 0 ){
-                        left_new += 1;
+                if( left_new <= right_new ){
+                    if( left_new === pivot ){
+                        pivot = right_new;
+                    }else if( right_new === pivot ){
+                        pivot = left_new;
                     }
-                    while( compareFunction( right_new, pivot ) > 0 ){
-                        right_new -= 1;
-                    }
-                    if( left_new <= right_new ){
-                        if( left_new === pivot ){
-                            pivot = right_new;
-                        }else if( right_new === pivot ){
-                            pivot = left_new;
-                        }
-                        swap( left_new, right_new );
-                        left_new += 1;
-                        right_new -= 1;
-                    }
-                }while( left_new <= right_new );
-                quicksort( left, right_new );
-                quicksort( left_new, right );
-            }
+                    swap( left_new, right_new );
+                    left_new += 1;
+                    right_new -= 1;
+                }
+            }while( left_new <= right_new );
+            quicksort( left, right_new );
+            quicksort( left_new, right );
         }
+    }
 
-        quicksort( 0, this.count - 1 );
+    quicksort( 0, this.count - 1 );
 
-        Log.timeEnd( "Store.sort" );
+    Log.timeEnd( "Store.sort" );
 
-    },
+};
 
-    clear: function(){
+Store.prototype.clear = function clear (){
 
-        this.count = 0;
+    this.count = 0;
 
-    },
+};
 
-    dispose: function(){
+Store.prototype.dispose = function dispose (){
         var this$1 = this;
 
 
-        delete this.length;
-        delete this.count;
+    delete this.length;
+    delete this.count;
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+    for( var i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this$1.__fields[ i ][ 0 ];
-            delete this$1[ name ];
-
-        }
+        var name = this$1.__fields[ i ][ 0 ];
+        delete this$1[ name ];
 
     }
 
@@ -58500,32 +58476,30 @@ Store.prototype = {
 
 
 /**
- * Bond store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Bond store
  */
-function BondStore( size ){
+var BondStore = (function (Store$$1) {
+    function BondStore () {
+        Store$$1.apply(this, arguments);
+    }
 
-    Store.call( this, size );
+    if ( Store$$1 ) BondStore.__proto__ = Store$$1;
+    BondStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    BondStore.prototype.constructor = BondStore;
 
-}
+    var prototypeAccessors = { __fields: {} };
 
-BondStore.prototype = Object.assign( Object.create(
+    prototypeAccessors.__fields.get = function (){
 
-    Store.prototype ), {
+        return [
+            [ "atomIndex1", 1, "int32" ],
+            [ "atomIndex2", 1, "int32" ],
+            [ "bondOrder", 1, "int8" ]
+        ];
 
-    constructor: BondStore,
+    };
 
-    type: "BondStore",
-
-    __fields: [
-
-        [ "atomIndex1", 1, "int32" ],
-        [ "atomIndex2", 1, "int32" ],
-        [ "bondOrder", 1, "int8" ] ],
-
-    addBond: function( atom1, atom2, bondOrder ){
+    BondStore.prototype.addBond = function addBond ( atom1, atom2, bondOrder ){
 
         this.growIfFull();
 
@@ -58544,9 +58518,9 @@ BondStore.prototype = Object.assign( Object.create(
 
         this.count += 1;
 
-    },
+    };
 
-    addBondIfConnected: function( atom1, atom2, bondOrder ){
+    BondStore.prototype.addBondIfConnected = function addBondIfConnected ( atom1, atom2, bondOrder ){
 
         if( atom1.connectedTo( atom2 ) ){
             this.addBond( atom1, atom2, bondOrder );
@@ -58555,9 +58529,12 @@ BondStore.prototype = Object.assign( Object.create(
 
         return false;
 
-    }
+    };
 
-} );
+    Object.defineProperties( BondStore.prototype, prototypeAccessors );
+
+    return BondStore;
+}(Store));
 
 /**
  * @file Atom Store
@@ -58567,50 +58544,49 @@ BondStore.prototype = Object.assign( Object.create(
 
 
 /**
- * Atom store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Atom store
  */
-function AtomStore( size ){
-
-    Store.call( this, size );
-
-}
-
-AtomStore.prototype = Object.assign( Object.create(
-
-    Store.prototype ), {
-
-    constructor: AtomStore,
-
-    type: "AtomStore",
-
-    __fields: [
-
-        [ "residueIndex", 1, "uint32" ],
-        [ "atomTypeId", 1, "uint16" ],
-
-        [ "x", 1, "float32" ],
-        [ "y", 1, "float32" ],
-        [ "z", 1, "float32" ],
-        [ "serial", 1, "int32" ],
-        [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ],
-        [ "occupancy", 1, "float32" ]
-
-    ],
-
-    setAltloc: function( i, str ){
-        this.altloc[ i ] = str.charCodeAt( 0 );
-    },
-
-    getAltloc: function( i ){
-        var code = this.altloc[ i ];
-        return code ? String.fromCharCode( code ) : "";
+var AtomStore = (function (Store$$1) {
+    function AtomStore () {
+        Store$$1.apply(this, arguments);
     }
 
-} );
+    if ( Store$$1 ) AtomStore.__proto__ = Store$$1;
+    AtomStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    AtomStore.prototype.constructor = AtomStore;
+
+    var prototypeAccessors = { __fields: {} };
+
+    prototypeAccessors.__fields.get = function (){
+
+        return [
+            [ "residueIndex", 1, "uint32" ],
+            [ "atomTypeId", 1, "uint16" ],
+
+            [ "x", 1, "float32" ],
+            [ "y", 1, "float32" ],
+            [ "z", 1, "float32" ],
+            [ "serial", 1, "int32" ],
+            [ "bfactor", 1, "float32" ],
+            [ "altloc", 1, "uint8" ],
+            [ "occupancy", 1, "float32" ]
+        ];
+
+    };
+
+    AtomStore.prototype.setAltloc = function setAltloc ( i, str ){
+        this.altloc[ i ] = str.charCodeAt( 0 );
+    };
+
+    AtomStore.prototype.getAltloc = function getAltloc ( i ){
+        var code = this.altloc[ i ];
+        return code ? String.fromCharCode( code ) : "";
+    };
+
+    Object.defineProperties( AtomStore.prototype, prototypeAccessors );
+
+    return AtomStore;
+}(Store));
 
 /**
  * @file Residue Store
@@ -58620,57 +58596,56 @@ AtomStore.prototype = Object.assign( Object.create(
 
 
 /**
- * Residue store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Residue store
  */
-function ResidueStore( size ){
-
-    Store.call( this, size );
-
-}
-
-ResidueStore.prototype = Object.assign( Object.create(
-
-    Store.prototype ), {
-
-    constructor: ResidueStore,
-
-    type: "ResidueStore",
-
-    __fields: [
-
-        [ "chainIndex", 1, "uint32" ],
-        [ "atomOffset", 1, "uint32" ],
-        [ "atomCount", 1, "uint16" ],
-        [ "residueTypeId", 1, "uint16" ],
-
-        [ "resno", 1, "int32" ],
-        [ "sstruc", 1, "uint8" ],
-        [ "inscode", 1, "uint8" ]
-
-    ],
-
-    setSstruc: function( i, str ){
-        this.sstruc[ i ] = str.charCodeAt( 0 );
-    },
-
-    getSstruc: function( i ){
-        var code = this.sstruc[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    },
-
-    setInscode: function( i, str ){
-        this.inscode[ i ] = str.charCodeAt( 0 );
-    },
-
-    getInscode: function( i ){
-        var code = this.inscode[ i ];
-        return code ? String.fromCharCode( code ) : "";
+var ResidueStore = (function (Store$$1) {
+    function ResidueStore () {
+        Store$$1.apply(this, arguments);
     }
 
-} );
+    if ( Store$$1 ) ResidueStore.__proto__ = Store$$1;
+    ResidueStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    ResidueStore.prototype.constructor = ResidueStore;
+
+    var prototypeAccessors = { __fields: {} };
+
+    prototypeAccessors.__fields.get = function (){
+
+        return [
+            [ "chainIndex", 1, "uint32" ],
+            [ "atomOffset", 1, "uint32" ],
+            [ "atomCount", 1, "uint16" ],
+            [ "residueTypeId", 1, "uint16" ],
+
+            [ "resno", 1, "int32" ],
+            [ "sstruc", 1, "uint8" ],
+            [ "inscode", 1, "uint8" ]
+        ];
+
+    };
+
+    ResidueStore.prototype.setSstruc = function setSstruc ( i, str ){
+        this.sstruc[ i ] = str.charCodeAt( 0 );
+    };
+
+    ResidueStore.prototype.getSstruc = function getSstruc ( i ){
+        var code = this.sstruc[ i ];
+        return code ? String.fromCharCode( code ) : "";
+    };
+
+    ResidueStore.prototype.setInscode = function setInscode ( i, str ){
+        this.inscode[ i ] = str.charCodeAt( 0 );
+    };
+
+    ResidueStore.prototype.getInscode = function getInscode ( i ){
+        var code = this.inscode[ i ];
+        return code ? String.fromCharCode( code ) : "";
+    };
+
+    Object.defineProperties( ResidueStore.prototype, prototypeAccessors );
+
+    return ResidueStore;
+}(Store));
 
 /**
  * @file Chain Store
@@ -58680,38 +58655,34 @@ ResidueStore.prototype = Object.assign( Object.create(
 
 
 /**
- * Chain store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Chain store
  */
-function ChainStore( size ){
+var ChainStore = (function (Store$$1) {
+    function ChainStore () {
+        Store$$1.apply(this, arguments);
+    }
 
-    Store.call( this, size );
+    if ( Store$$1 ) ChainStore.__proto__ = Store$$1;
+    ChainStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    ChainStore.prototype.constructor = ChainStore;
 
-}
+    var prototypeAccessors = { __fields: {} };
 
-ChainStore.prototype = Object.assign( Object.create(
+    prototypeAccessors.__fields.get = function (){
 
-    Store.prototype ), {
+        return [
+            [ "entityIndex", 1, "uint16" ],
+            [ "modelIndex", 1, "uint16" ],
+            [ "residueOffset", 1, "uint32" ],
+            [ "residueCount", 1, "uint32" ],
 
-    constructor: ChainStore,
+            [ "chainname", 4, "uint8" ],
+            [ "chainid", 4, "uint8" ]
+        ];
 
-    type: "ChainStore",
+    };
 
-    __fields: [
-
-        [ "entityIndex", 1, "uint16" ],
-        [ "modelIndex", 1, "uint16" ],
-        [ "residueOffset", 1, "uint32" ],
-        [ "residueCount", 1, "uint32" ],
-
-        [ "chainname", 4, "uint8" ],
-        [ "chainid", 4, "uint8" ]
-
-    ],
-
-    setChainname: function( i, str ){
+    ChainStore.prototype.setChainname = function setChainname ( i, str ){
 
         var j = 4 * i;
         this.chainname[ j ] = str.charCodeAt( 0 );
@@ -58719,9 +58690,9 @@ ChainStore.prototype = Object.assign( Object.create(
         this.chainname[ j + 2 ] = str.charCodeAt( 2 );
         this.chainname[ j + 3 ] = str.charCodeAt( 3 );
 
-    },
+    };
 
-    getChainname: function( i ){
+    ChainStore.prototype.getChainname = function getChainname ( i ){
         var this$1 = this;
 
 
@@ -58736,9 +58707,9 @@ ChainStore.prototype = Object.assign( Object.create(
         }
         return chainname;
 
-    },
+    };
 
-    setChainid: function( i, str ){
+    ChainStore.prototype.setChainid = function setChainid ( i, str ){
 
         var j = 4 * i;
         this.chainid[ j ] = str.charCodeAt( 0 );
@@ -58746,9 +58717,9 @@ ChainStore.prototype = Object.assign( Object.create(
         this.chainid[ j + 2 ] = str.charCodeAt( 2 );
         this.chainid[ j + 3 ] = str.charCodeAt( 3 );
 
-    },
+    };
 
-    getChainid: function( i ){
+    ChainStore.prototype.getChainid = function getChainid ( i ){
         var this$1 = this;
 
 
@@ -58763,9 +58734,12 @@ ChainStore.prototype = Object.assign( Object.create(
         }
         return chainid;
 
-    }
+    };
 
-} );
+    Object.defineProperties( ChainStore.prototype, prototypeAccessors );
+
+    return ChainStore;
+}(Store));
 
 /**
  * @file Model Store
@@ -58775,33 +58749,32 @@ ChainStore.prototype = Object.assign( Object.create(
 
 
 /**
- * Model store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Model store
  */
-function ModelStore( size ){
+var ModelStore = (function (Store$$1) {
+    function ModelStore () {
+        Store$$1.apply(this, arguments);
+    }
 
-    Store.call( this, size );
+    if ( Store$$1 ) ModelStore.__proto__ = Store$$1;
+    ModelStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    ModelStore.prototype.constructor = ModelStore;
 
-}
+    var prototypeAccessors = { __fields: {} };
 
-ModelStore.prototype = Object.assign( Object.create(
+    prototypeAccessors.__fields.get = function (){
 
-    Store.prototype ), {
+        return [
+            [ "chainOffset", 1, "uint32" ],
+            [ "chainCount", 1, "uint32" ]
+        ];
 
-    constructor: ModelStore,
+    };
 
-    type: "ModelStore",
+    Object.defineProperties( ModelStore.prototype, prototypeAccessors );
 
-    __fields: [
-
-        [ "chainOffset", 1, "uint32" ],
-        [ "chainCount", 1, "uint32" ]
-
-    ]
-
-} );
+    return ModelStore;
+}(Store));
 
 /**
  * @file Helixorient
@@ -61572,13 +61545,9 @@ function assignResidueTypeBonds( structure ){
 
 
 /**
- * Atom type class
- * @class
- * @param {Structure} structure - the structure object
- * @param {String} atomname - the name of the atom
- * @param {String} element - the chemical element
+ * Atom type
  */
-function AtomType( structure, atomname, element ){
+var AtomType = function AtomType( structure, atomname, element ){
 
     this.structure = structure;
 
@@ -61589,18 +61558,6 @@ function AtomType( structure, atomname, element ){
     this.vdw = VdwRadii[ element ];
     this.covalent = CovalentRadii[ element ];
 
-}
-
-AtomType.prototype = {
-
-    constructor: AtomType,
-    type: "AtomType",
-
-    atomname: undefined,
-    element: undefined,
-    vdw: undefined,
-    covalent: undefined,
-
 };
 
 /**
@@ -61610,70 +61567,41 @@ AtomType.prototype = {
  */
 
 
-function AtomMap( structure ){
-
-    var idDict = {};
-    var typeList = [];
-
-    function getHash( atomname, element ){
-        return atomname + "|" + element;
-    }
-
-    function add( atomname, element ){
-        atomname = atomname.toUpperCase();
-        if( !element ){
-            element = guessElement( atomname );
-        }else{
-            element = element.toUpperCase();
-        }
-        var hash = getHash( atomname, element );
-        var id = idDict[ hash ];
-        if( id === undefined ){
-            var atomType = new AtomType( structure, atomname, element );
-            id = typeList.length;
-            idDict[ hash ] = id;
-            typeList.push( atomType );
-        }
-        return id;
-    }
-
-    function get( id ){
-        return typeList[ id ];
-    }
-
-    // API
-
-    this.add = add;
-    this.get = get;
-
-    this.list = typeList;
-    this.dict = idDict;
-
-    this.toJSON = function(){
-        var output = {
-            metadata: {
-                version: 0.1,
-                type: 'AtomMap',
-                generator: 'AtomMapExporter'
-            },
-            idDict: idDict,
-            typeList: typeList.map( function( atomType ){
-                return atomType.toJSON();
-            } )
-        };
-        return output;
-    };
-
-    this.fromJSON = function( input ){
-        idDict = input.idDict;
-        typeList = input.typeList.map( function( input ){
-            return new AtomType( structure, input.atomname, input.element );
-        } );
-        this.list = typeList;
-        this.dict = idDict;
-    };
-
+function getHash( atomname, element ){
+    return atomname + "|" + element;
 }
+
+
+var AtomMap = function AtomMap( structure ){
+
+    this.structure = structure;
+
+    this.dict = {};
+    this.list = [];
+
+};
+
+AtomMap.prototype.add = function add ( atomname, element ){
+    atomname = atomname.toUpperCase();
+    if( !element ){
+        element = guessElement( atomname );
+    }else{
+        element = element.toUpperCase();
+    }
+    var hash = getHash( atomname, element );
+    var id = this.dict[ hash ];
+    if( id === undefined ){
+        var atomType = new AtomType( this.structure, atomname, element );
+        id = this.list.length;
+        this.dict[ hash ] = id;
+        this.list.push( atomType );
+    }
+    return id;
+};
+
+AtomMap.prototype.get = function get ( id ){
+    return this.list[ id ];
+};
 
 /**
  * @file Residue Type
@@ -61684,17 +61612,9 @@ function AtomMap( structure ){
 
 
 /**
- * Residue type class
- * @class
- * @param {Structure} structure - the structure object
- * @param {String} resname - name of the residue
- * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
- *                                 to the atoms of the residue
- * @param {Boolean} hetero - hetero flag
- * @param {String} chemCompType - chemical component type
- * @param {Object} [bonds] - TODO
+ * Residue type
  */
-function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
+var ResidueType = function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
     this.structure = structure;
 
@@ -61742,528 +61662,511 @@ function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, 
     // Sparse array containing the reference atom index for each bond.
     this.bondReferenceAtomIndices = [];
 
-}
+};
 
-ResidueType.prototype = {
-
-    constructor: ResidueType,
-    type: "ResidueType",
-
-    resname: undefined,
-    atomTypeIdList: undefined,
-    atomCount: undefined,
-
-    getBackboneIndexList: function(){
-        var backboneIndexList = [];
-        var atomnameList;
-        switch( this.moleculeType ){
-            case ProteinType:
-                atomnameList = ProteinBackboneAtoms;
-                break;
-            case RnaType:
-            case DnaType:
-                atomnameList = NucleicBackboneAtoms;
-                break;
-            default:
-                return backboneIndexList;
+ResidueType.prototype.getBackboneIndexList = function getBackboneIndexList (){
+    var backboneIndexList = [];
+    var atomnameList;
+    switch( this.moleculeType ){
+        case ProteinType:
+            atomnameList = ProteinBackboneAtoms;
+            break;
+        case RnaType:
+        case DnaType:
+            atomnameList = NucleicBackboneAtoms;
+            break;
+        default:
+            return backboneIndexList;
+    }
+    var atomMap = this.structure.atomMap;
+    var atomTypeIdList = this.atomTypeIdList;
+    for( var i = 0, il = this.atomCount; i < il; ++i ){
+        var atomType = atomMap.get( atomTypeIdList[ i ] );
+        if( atomnameList.includes( atomType.atomname ) ){
+            backboneIndexList.push( i );
         }
-        var atomMap = this.structure.atomMap;
-        var atomTypeIdList = this.atomTypeIdList;
-        for( var i = 0, il = this.atomCount; i < il; ++i ){
-            var atomType = atomMap.get( atomTypeIdList[ i ] );
-            if( atomnameList.includes( atomType.atomname ) ){
-                backboneIndexList.push( i );
+    }
+    return backboneIndexList;
+};
+
+ResidueType.prototype.getMoleculeType = function getMoleculeType (){
+    if( this.isProtein() ){
+        return ProteinType;
+    }else if( this.isRna() ){
+        return RnaType;
+    }else if( this.isDna() ){
+        return DnaType;
+    }else if( this.isWater() ){
+        return WaterType;
+    }else if( this.isIon() ){
+        return IonType;
+    }else if( this.isSaccharide() ){
+        return SaccharideType;
+    }else{
+        return UnknownType;
+    }
+};
+
+ResidueType.prototype.getBackboneType = function getBackboneType ( position ){
+    if( this.hasProteinBackbone( position ) ){
+        return ProteinBackboneType;
+    }else if( this.hasRnaBackbone( position ) ){
+        return RnaBackboneType;
+    }else if( this.hasDnaBackbone( position ) ){
+        return DnaBackboneType;
+    }else if( this.hasCgProteinBackbone( position ) ){
+        return CgProteinBackboneType;
+    }else if( this.hasCgRnaBackbone( position ) ){
+        return CgRnaBackboneType;
+    }else if( this.hasCgDnaBackbone( position ) ){
+        return CgDnaBackboneType;
+    }else{
+        return UnknownBackboneType;
+    }
+};
+
+ResidueType.prototype.isProtein = function isProtein (){
+    if( this.chemCompType ){
+        return ChemCompProtein.includes( this.chemCompType );
+    }else{
+        return (
+            this.hasAtomWithName( "CA", "C", "N" ) ||
+            AA3.includes( this.resname )
+        );
+    }
+};
+
+ResidueType.prototype.isCg = function isCg (){
+    var backboneType = this.backboneType;
+    return (
+        backboneType === CgProteinBackboneType ||
+        backboneType === CgRnaBackboneType ||
+        backboneType === CgDnaBackboneType
+    );
+};
+
+ResidueType.prototype.isNucleic = function isNucleic (){
+    return this.isRna() || this.isDna();
+};
+
+ResidueType.prototype.isRna = function isRna (){
+    if( this.chemCompType ){
+        return ChemCompRna.includes( this.chemCompType );
+    }else{
+        return (
+            this.hasAtomWithName(
+                [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
+            ) ||
+            ( RnaBases.includes( this.resname ) &&
+                ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
+        );
+    }
+};
+
+ResidueType.prototype.isDna = function isDna (){
+    if( this.chemCompType ){
+        return ChemCompDna.includes( this.chemCompType );
+    }else{
+        return (
+            ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
+                !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
+            DnaBases.includes( this.resname )
+        );
+    }
+};
+
+ResidueType.prototype.isHetero = function isHetero (){
+    return this.hetero === 1;
+};
+
+ResidueType.prototype.isIon = function isIon (){
+    return IonNames.includes( this.resname );
+};
+
+ResidueType.prototype.isWater = function isWater (){
+    return WaterNames.includes( this.resname );
+};
+
+ResidueType.prototype.isSaccharide = function isSaccharide (){
+    if( this.chemCompType ){
+        return ChemCompSaccharide.includes( this.chemCompType );
+    }else{
+        return SaccharideNames.includes( this.resname );
+    }
+};
+
+ResidueType.prototype.hasBackboneAtoms = function hasBackboneAtoms ( position, type ){
+    var atomnames = ResidueTypeAtoms[ type ];
+    if( position === -1 ){
+        return this.hasAtomWithName(
+            atomnames.trace,
+            atomnames.backboneEnd,
+            atomnames.direction1,
+            atomnames.direction2
+        );
+    }else if( position === 0 ){
+        return this.hasAtomWithName(
+            atomnames.trace,
+            atomnames.direction1,
+            atomnames.direction2
+        );
+    }else if( position === 1 ){
+        return this.hasAtomWithName(
+            atomnames.trace,
+            atomnames.backboneStart,
+            atomnames.direction1,
+            atomnames.direction2
+        );
+    }else{
+        return this.hasAtomWithName(
+            atomnames.trace,
+            atomnames.backboneStart,
+            atomnames.backboneEnd,
+            atomnames.direction1,
+            atomnames.direction2
+        );
+    }
+};
+
+ResidueType.prototype.hasProteinBackbone = function hasProteinBackbone ( position ){
+    return (
+        this.isProtein() &&
+        this.hasBackboneAtoms( position, ProteinBackboneType )
+    );
+};
+
+ResidueType.prototype.hasRnaBackbone = function hasRnaBackbone ( position ){
+    return (
+        this.isRna() &&
+        this.hasBackboneAtoms( position, RnaBackboneType )
+    );
+};
+
+ResidueType.prototype.hasDnaBackbone = function hasDnaBackbone ( position ){
+    return (
+        this.isDna() &&
+        this.hasBackboneAtoms( position, DnaBackboneType )
+    );
+};
+
+ResidueType.prototype.hasCgProteinBackbone = function hasCgProteinBackbone ( position ){
+    return (
+        this.isProtein() &&
+        this.hasBackboneAtoms( position, CgProteinBackboneType )
+    );
+};
+
+ResidueType.prototype.hasCgRnaBackbone = function hasCgRnaBackbone ( position ){
+    return (
+        this.isRna() &&
+        this.hasBackboneAtoms( position, CgRnaBackboneType )
+    );
+};
+
+ResidueType.prototype.hasCgDnaBackbone = function hasCgDnaBackbone ( position ){
+    return (
+        this.isDna() &&
+        this.hasBackboneAtoms( position, CgDnaBackboneType )
+    );
+};
+
+ResidueType.prototype.hasBackbone = function hasBackbone ( position ){
+    return (
+        this.hasProteinBackbone( position ) ||
+        this.hasRnaBackbone( position ) ||
+        this.hasDnaBackbone( position ) ||
+        this.hasCgProteinBackbone( position ) ||
+        this.hasCgRnaBackbone( position ) ||
+        this.hasCgDnaBackbone( position )
+    );
+};
+
+ResidueType.prototype.getAtomIndexByName = function getAtomIndexByName ( atomname ){
+    var n = this.atomCount;
+    var atomMap = this.structure.atomMap;
+    var atomTypeIdList = this.atomTypeIdList;
+    if( Array.isArray( atomname ) ){
+        for( var i = 0; i < n; ++i ){
+            var index = atomTypeIdList[ i ];
+            if( atomname.includes( atomMap.get( index ).atomname ) ){
+                return i;
             }
         }
-        return backboneIndexList;
-    },
-
-    getMoleculeType: function(){
-        if( this.isProtein() ){
-            return ProteinType;
-        }else if( this.isRna() ){
-            return RnaType;
-        }else if( this.isDna() ){
-            return DnaType;
-        }else if( this.isWater() ){
-            return WaterType;
-        }else if( this.isIon() ){
-            return IonType;
-        }else if( this.isSaccharide() ){
-            return SaccharideType;
-        }else{
-            return UnknownType;
-        }
-    },
-
-    getBackboneType: function( position ){
-        if( this.hasProteinBackbone( position ) ){
-            return ProteinBackboneType;
-        }else if( this.hasRnaBackbone( position ) ){
-            return RnaBackboneType;
-        }else if( this.hasDnaBackbone( position ) ){
-            return DnaBackboneType;
-        }else if( this.hasCgProteinBackbone( position ) ){
-            return CgProteinBackboneType;
-        }else if( this.hasCgRnaBackbone( position ) ){
-            return CgRnaBackboneType;
-        }else if( this.hasCgDnaBackbone( position ) ){
-            return CgDnaBackboneType;
-        }else{
-            return UnknownBackboneType;
-        }
-    },
-
-    isProtein: function(){
-        if( this.chemCompType ){
-            return ChemCompProtein.includes( this.chemCompType );
-        }else{
-            return (
-                this.hasAtomWithName( "CA", "C", "N" ) ||
-                AA3.includes( this.resname )
-            );
-        }
-    },
-
-    isCg: function(){
-        var backboneType = this.backboneType;
-        return (
-            backboneType === CgProteinBackboneType ||
-            backboneType === CgRnaBackboneType ||
-            backboneType === CgDnaBackboneType
-        );
-    },
-
-    isNucleic: function(){
-        return this.isRna() || this.isDna();
-    },
-
-    isRna: function(){
-        if( this.chemCompType ){
-            return ChemCompRna.includes( this.chemCompType );
-        }else{
-            return (
-                this.hasAtomWithName(
-                    [ "P", "O3'", "O3*" ], [ "C4'", "C4*" ], [ "O2'", "O2*", "F2'", "F2*" ]
-                ) ||
-                ( RnaBases.includes( this.resname ) &&
-                    ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
-            );
-        }
-    },
-
-    isDna: function(){
-        if( this.chemCompType ){
-            return ChemCompDna.includes( this.chemCompType );
-        }else{
-            return (
-                ( this.hasAtomWithName( [ "P", "O3'", "O3*" ], [ "C3'", "C3*" ] ) &&
-                    !this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) ||
-                DnaBases.includes( this.resname )
-            );
-        }
-    },
-
-    isHetero: function(){
-        return this.hetero === 1;
-    },
-
-    isIon: function(){
-        return IonNames.includes( this.resname );
-    },
-
-    isWater: function(){
-        return WaterNames.includes( this.resname );
-    },
-
-    isSaccharide: function(){
-        if( this.chemCompType ){
-            return ChemCompSaccharide.includes( this.chemCompType );
-        }else{
-            return SaccharideNames.includes( this.resname );
-        }
-    },
-
-    hasBackboneAtoms: function( position, type ){
-        var atomnames = ResidueTypeAtoms[ type ];
-        if( position === -1 ){
-            return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneEnd,
-                atomnames.direction1,
-                atomnames.direction2
-            );
-        }else if( position === 0 ){
-            return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.direction1,
-                atomnames.direction2
-            );
-        }else if( position === 1 ){
-            return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneStart,
-                atomnames.direction1,
-                atomnames.direction2
-            );
-        }else{
-            return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneStart,
-                atomnames.backboneEnd,
-                atomnames.direction1,
-                atomnames.direction2
-            );
-        }
-    },
-
-    hasProteinBackbone: function( position ){
-        return (
-            this.isProtein() &&
-            this.hasBackboneAtoms( position, ProteinBackboneType )
-        );
-    },
-
-    hasRnaBackbone: function( position ){
-        return (
-            this.isRna() &&
-            this.hasBackboneAtoms( position, RnaBackboneType )
-        );
-    },
-
-    hasDnaBackbone: function( position ){
-        return (
-            this.isDna() &&
-            this.hasBackboneAtoms( position, DnaBackboneType )
-        );
-    },
-
-    hasCgProteinBackbone: function( position ){
-        return (
-            this.isProtein() &&
-            this.hasBackboneAtoms( position, CgProteinBackboneType )
-        );
-    },
-
-    hasCgRnaBackbone: function( position ){
-        return (
-            this.isRna() &&
-            this.hasBackboneAtoms( position, CgRnaBackboneType )
-        );
-    },
-
-    hasCgDnaBackbone: function( position ){
-        return (
-            this.isDna() &&
-            this.hasBackboneAtoms( position, CgDnaBackboneType )
-        );
-    },
-
-    hasBackbone: function( position ){
-        return (
-            this.hasProteinBackbone( position ) ||
-            this.hasRnaBackbone( position ) ||
-            this.hasDnaBackbone( position ) ||
-            this.hasCgProteinBackbone( position ) ||
-            this.hasCgRnaBackbone( position ) ||
-            this.hasCgDnaBackbone( position )
-        );
-    },
-
-    getAtomIndexByName: function( atomname ){
-        var i, index;
-        var n = this.atomCount;
-        var atomMap = this.structure.atomMap;
-        var atomTypeIdList = this.atomTypeIdList;
-        if( Array.isArray( atomname ) ){
-            for( i = 0; i < n; ++i ){
-                index = atomTypeIdList[ i ];
-                if( atomname.includes( atomMap.get( index ).atomname ) ){
-                    return i;
-                }
-            }
-        }else{
-            for( i = 0; i < n; ++i ){
-                index = atomTypeIdList[ i ];
-                if( atomname === atomMap.get( index ).atomname ){
-                    return i;
-                }
+    }else{
+        for( var i$1 = 0; i$1 < n; ++i$1 ){
+            var index$1 = atomTypeIdList[ i$1 ];
+            if( atomname === atomMap.get( index$1 ).atomname ){
+                return i$1;
             }
         }
-        return undefined;
-    },
+    }
+    return undefined;
+};
 
-    hasAtomWithName: function( /*atomname*/ ){
+ResidueType.prototype.hasAtomWithName = function hasAtomWithName ( /*atomname*/ ){
         var arguments$1 = arguments;
         var this$1 = this;
 
-        var n = arguments.length;
-        for( var i = 0; i < n; ++i ){
-            if( arguments$1[ i ] === undefined ) { continue; }
-            if( this$1.getAtomIndexByName( arguments$1[ i ] ) === undefined ){
-                return false;
-            }
+    var n = arguments.length;
+    for( var i = 0; i < n; ++i ){
+        if( arguments$1[ i ] === undefined ) { continue; }
+        if( this$1.getAtomIndexByName( arguments$1[ i ] ) === undefined ){
+            return false;
         }
-        return true;
-    },
+    }
+    return true;
+};
 
-    getBonds: function( r ){
-        if( this.bonds === undefined ){
-            this.bonds = calculateResidueBonds( r );
-        }
-        return this.bonds;
-    },
+ResidueType.prototype.getBonds = function getBonds ( r ){
+    if( this.bonds === undefined ){
+        this.bonds = calculateResidueBonds( r );
+    }
+    return this.bonds;
+};
 
-    getRings: function() {
-        if( this.rings === undefined ){
-            this.calculateRings();
-        }
-        return this.rings;
-    },
+ResidueType.prototype.getRings = function getRings () {
+    if( this.rings === undefined ){
+        this.calculateRings();
+    }
+    return this.rings;
+};
 
-    getBondGraph: function(){
-        if( this.bondGraph === undefined ){
-            this.calculateBondGraph();
-        }
-        return this.bondGraph;
-    },
+ResidueType.prototype.getBondGraph = function getBondGraph (){
+    if( this.bondGraph === undefined ){
+        this.calculateBondGraph();
+    }
+    return this.bondGraph;
+};
 
-    /**
-     * @return {Object} bondGraph - represents the bonding in this
-     *   residue: { ai1: [ ai2, ai3, ...], ...}
-     */
-    calculateBondGraph: function() {
+/**
+ * @return {Object} bondGraph - represents the bonding in this
+ *   residue: { ai1: [ ai2, ai3, ...], ...}
+ */
+ResidueType.prototype.calculateBondGraph = function calculateBondGraph (){
 
-        var bondGraph = this.bondGraph = {};
-        var bonds = this.getBonds();
-        var nb = bonds.atomIndices1.length;
-        var atomIndices1 = bonds.atomIndices1;
-        var atomIndices2 = bonds.atomIndices2;
+    var bondGraph = this.bondGraph = {};
+    var bonds = this.getBonds();
+    var nb = bonds.atomIndices1.length;
+    var atomIndices1 = bonds.atomIndices1;
+    var atomIndices2 = bonds.atomIndices2;
 
-        var ai1, ai2;
+    for( var i = 0; i < nb; ++i ){
+        var ai1 = atomIndices1[i];
+        var ai2 = atomIndices2[i];
 
-        for( var i = 0; i < nb; ++i ){
-            ai1 = atomIndices1[i];
-            ai2 = atomIndices2[i];
+        var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
+        a1.push( ai2 );
 
-            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
-            a1.push( ai2 );
-
-            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
-            a2.push( ai1 );
-        }
-    },
-
-    /**
-     * Calculates ring atoms within a residue
-     * Adaptation of RDKit's fastFindRings method by G. Landrum:
-     * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
-     *
-     * @param {ResidueProxy} r   - The residue for which we are to find rings
-     * @return {Object} ringData - contains ringFlags (1/0) and rings
-     *                             (nested array)
-     *
-     * Note this method finds all ring atoms, but in cases of fused or
-     * connected rings will not detect all rings.
-     * The resulting rings object will provide 'a ring' for each ring atom
-     * but which ring depends on atom order and connectivity
-     *
-     * @return {undefined}
-     */
-    calculateRings: function() {
-
-        var bondGraph = this.getBondGraph();
-
-        var state = new Int8Array( this.atomCount ),
-            flags = new Int8Array( this.atomCount ),
-            rings = [],
-            visited = [];
-
-        function DFS( i, connected, from ) {
-
-            // Sanity check
-            if( state[ i ] ) { throw Error( "DFS revisited atom" ); }
-            state[ i ] = 1;
-            visited.push( i );
-            var nc = connected.length;
-
-            // For each neighbour
-            for( var ci = 0; ci < nc; ++ci ) {
-                var j = connected[ci];
-
-                // If unvisited:
-                if( state[ j ] === 0 ){
-
-                    // And has >= 2 neighbours:
-                    if( bondGraph[ j ] && bondGraph[ j ].length >= 2 ) {
-                        // Recurse
-                        DFS( j, bondGraph[ j ], i );
-                    } else {
-                        // Not interesting
-                        state[ j ] = 2;
-                    }
-
-                // Else unclosed ring:
-                } else if( state[ j ] === 1 ) {
-
-                    if( from && from != j ){
-                        var ring = [ j ];
-                        flags[ j ] = 1;
-                        rings.push( ring );
-                        for( var ki = visited.length-1; ki >= 0; --ki ){
-                            var k = visited[ ki ];
-                            if( k === j ){
-                                break;
-                            }
-                            ring.push( k );
-                            flags[ k ] = 1;
-                        }
-                    }
-                }
-            }
-            state[ i ] = 2; // Completed processing for this atom
-
-            visited.pop();
-        }
-
-
-        for( var i = 0; i < this.atomCount; ++i ){
-
-            if( state[ i ] ){ continue; } // Already processed
-
-            var connected = bondGraph[ i ];
-            if( !connected || connected.length < 2 ){
-                // Finished
-                state[ i ] = 2;
-                continue;
-            }
-
-            visited.length = 0;
-            DFS( i, connected );
-        }
-
-        this.rings = { flags: flags,
-                       rings: rings };
-
-    },
-
-    /**
-     * For bonds with order > 1, pick a reference atom
-     * @return {undefined}
-     */
-    assignBondReferenceAtomIndices: function() {
-
-        var bondGraph = this.getBondGraph();
-        var rings = this.getRings();
-        var ringFlags = rings.flags;
-        var ringData = rings.rings;
-
-        var atomIndices1 = this.bonds.atomIndices1;
-        var atomIndices2 = this.bonds.atomIndices2;
-        var bondOrders = this.bonds.bondOrders;
-        var bondReferenceAtomIndices = this.bondReferenceAtomIndices;
-
-        var nb = this.bonds.atomIndices1.length;
-
-        var i, j, ai1, ai2, ai3;
-
-
-        bondReferenceAtomIndices.length = 0;  // reset array
-
-        for( i = 0; i < nb; ++i ) {
-
-            // Not required for single bonds
-            if( bondOrders[i] <= 1 ) { continue; }
-
-            ai1 = atomIndices1[i];
-            ai2 = atomIndices2[i];
-
-            // Are both atoms in a ring?
-            if( ringFlags[ ai1 ] && ringFlags[ ai2 ] ){
-                // Select another ring atom
-                // I *think* we can simply take the first ring atom
-                // we find in a ring that contains either ai1 or ai2
-                // where the ring atom is not ai1 or ai2
-                for( var ri = 0; ri < ringData.length; ++ri ){
-
-                    // Have we already found it?
-                    if( bondReferenceAtomIndices[i] !== undefined ) { break; }
-
-                    var ring = ringData[ ri ];
-                    // Try to find this atom and reference atom in no more than 1 full
-                    // iteration through loop
-                    var refAtom = null, found = false;
-                    for( var rai = 0; rai < ring.length; ++rai ){
-                        ai3 = ring[ rai ];
-                        if( ai3 === ai1 || ai3 === ai2 ){
-                            found = true;
-                        } else {
-                            // refAtom is any other atom
-                            refAtom = ai3;
-                        }
-                        if( found && refAtom !== null ) {
-                          bondReferenceAtomIndices[i] = refAtom;
-                          break;
-                        }
-                    }
-                }
-                if( bondReferenceAtomIndices[i] !== undefined ) { continue; }
-            }
-
-            // Not a ring (or not one we can process), simply take the first
-            // neighbouring atom
-
-            if( bondGraph[ ai1 ].length > 1 ){
-                for( j = 0; j < bondGraph[ ai1 ].length; ++j ){
-                    ai3 = bondGraph[ ai1 ][ j ];
-                    if( ai3 !== ai2 ) {
-                        bondReferenceAtomIndices[i] = ai3;
-                        break;
-                    }
-                }
-                continue;
-
-            } else if( bondGraph[ ai2 ].length > 1 ){
-                for( j = 0; j < bondGraph[ ai2 ].length; ++j ){
-                    ai3 = bondGraph[ ai2 ][ j ];
-                    if( ai3 !== ai1 ) {
-                        bondReferenceAtomIndices[i] = ai3;
-                        break;
-                    }
-                }
-                continue;
-
-            } // No reference atom could be found (e.g. diatomic molecule/fragment)
-        }
-    },
-
-    getBondIndex: function( atomIndex1, atomIndex2 ){
-        var bonds = this.bonds;
-        var atomIndices1 = bonds.atomIndices1;
-        var atomIndices2 = bonds.atomIndices2;
-        var idx1 = atomIndices1.indexOf( atomIndex1 );
-        var idx2 = atomIndices2.indexOf( atomIndex2 );
-        var _idx2 = idx2;
-        while( idx1 !== -1 ){
-            while( idx2 !== -1 ){
-                if( idx1 === idx2 ) { return idx1; }
-                idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
-            }
-            idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
-            idx2 = _idx2;
-        }
-        // returns undefined when no bond is found
-    },
-
-    getBondReferenceAtomIndex: function( atomIndex1, atomIndex2 ) {
-        var bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
-        if( bondIndex === undefined ) { return undefined; }
-        if( this.bondReferenceAtomIndices.length === 0 ){
-            this.assignBondReferenceAtomIndices();
-        }
-        return this.bondReferenceAtomIndices[ bondIndex ];
+        var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
+        a2.push( ai1 );
     }
 
+};
+
+/**
+ * Calculates ring atoms within a residue
+ * Adaptation of RDKit's fastFindRings method by G. Landrum:
+ * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+ *
+ * @param {ResidueProxy} r   - The residue for which we are to find rings
+ * @return {Object} ringData - contains ringFlags (1/0) and rings
+ *                         (nested array)
+ *
+ * Note this method finds all ring atoms, but in cases of fused or
+ * connected rings will not detect all rings.
+ * The resulting rings object will provide 'a ring' for each ring atom
+ * but which ring depends on atom order and connectivity
+ *
+ * @return {undefined}
+ */
+ResidueType.prototype.calculateRings = function calculateRings (){
+
+    var bondGraph = this.getBondGraph();
+
+    var state = new Int8Array( this.atomCount );
+    var flags = new Int8Array( this.atomCount );
+    var rings = [];
+    var visited = [];
+
+    function DFS( i, connected, from ) {
+
+        // Sanity check
+        if( state[ i ] ) { throw Error( "DFS revisited atom" ); }
+        state[ i ] = 1;
+        visited.push( i );
+        var nc = connected.length;
+
+        // For each neighbour
+        for( var ci = 0; ci < nc; ++ci ) {
+            var j = connected[ci];
+
+            // If unvisited:
+            if( state[ j ] === 0 ){
+
+                // And has >= 2 neighbours:
+                if( bondGraph[ j ] && bondGraph[ j ].length >= 2 ) {
+                    // Recurse
+                    DFS( j, bondGraph[ j ], i );
+                } else {
+                    // Not interesting
+                    state[ j ] = 2;
+                }
+
+            // Else unclosed ring:
+            } else if( state[ j ] === 1 ) {
+
+                if( from && from != j ){
+                    var ring = [ j ];
+                    flags[ j ] = 1;
+                    rings.push( ring );
+                    for( var ki = visited.length-1; ki >= 0; --ki ){
+                        var k = visited[ ki ];
+                        if( k === j ){
+                            break;
+                        }
+                        ring.push( k );
+                        flags[ k ] = 1;
+                    }
+                }
+            }
+        }
+        state[ i ] = 2; // Completed processing for this atom
+
+        visited.pop();
+    }
+
+
+    for( var i = 0; i < this.atomCount; ++i ){
+
+        if( state[ i ] ){ continue; } // Already processed
+
+        var connected = bondGraph[ i ];
+        if( !connected || connected.length < 2 ){
+            // Finished
+            state[ i ] = 2;
+            continue;
+        }
+
+        visited.length = 0;
+        DFS( i, connected );
+    }
+
+    this.rings = { flags: flags, rings: rings };
+
+};
+
+/**
+ * For bonds with order > 1, pick a reference atom
+ * @return {undefined}
+ */
+ResidueType.prototype.assignBondReferenceAtomIndices = function assignBondReferenceAtomIndices (){
+
+    var bondGraph = this.getBondGraph();
+    var rings = this.getRings();
+    var ringFlags = rings.flags;
+    var ringData = rings.rings;
+
+    var atomIndices1 = this.bonds.atomIndices1;
+    var atomIndices2 = this.bonds.atomIndices2;
+    var bondOrders = this.bonds.bondOrders;
+    var bondReferenceAtomIndices = this.bondReferenceAtomIndices;
+
+    var nb = this.bonds.atomIndices1.length;
+
+    bondReferenceAtomIndices.length = 0;  // reset array
+
+    for( var i = 0; i < nb; ++i ) {
+
+        // Not required for single bonds
+        if( bondOrders[i] <= 1 ) { continue; }
+
+        var ai1 = atomIndices1[i];
+        var ai2 = atomIndices2[i];
+
+        // Are both atoms in a ring?
+        if( ringFlags[ ai1 ] && ringFlags[ ai2 ] ){
+            // Select another ring atom
+            // I *think* we can simply take the first ring atom
+            // we find in a ring that contains either ai1 or ai2
+            // where the ring atom is not ai1 or ai2
+            for( var ri = 0; ri < ringData.length; ++ri ){
+
+                // Have we already found it?
+                if( bondReferenceAtomIndices[i] !== undefined ) { break; }
+
+                var ring = ringData[ ri ];
+                // Try to find this atom and reference atom in no more than 1 full
+                // iteration through loop
+                var refAtom = null, found = false;
+                for( var rai = 0; rai < ring.length; ++rai ){
+                    var ai3 = ring[ rai ];
+                    if( ai3 === ai1 || ai3 === ai2 ){
+                        found = true;
+                    } else {
+                        // refAtom is any other atom
+                        refAtom = ai3;
+                    }
+                    if( found && refAtom !== null ) {
+                      bondReferenceAtomIndices[i] = refAtom;
+                      break;
+                    }
+                }
+            }
+            if( bondReferenceAtomIndices[i] !== undefined ) { continue; }
+        }
+
+        // Not a ring (or not one we can process), simply take the first
+        // neighbouring atom
+
+        if( bondGraph[ ai1 ].length > 1 ){
+            for( var j = 0; j < bondGraph[ ai1 ].length; ++j ){
+                var ai3$1 = bondGraph[ ai1 ][ j ];
+                if( ai3$1 !== ai2 ) {
+                    bondReferenceAtomIndices[i] = ai3$1;
+                    break;
+                }
+            }
+            continue;
+
+        } else if( bondGraph[ ai2 ].length > 1 ){
+            for( var j$1 = 0; j$1 < bondGraph[ ai2 ].length; ++j$1 ){
+                var ai3$2 = bondGraph[ ai2 ][ j$1 ];
+                if( ai3$2 !== ai1 ) {
+                    bondReferenceAtomIndices[i] = ai3$2;
+                    break;
+                }
+            }
+            continue;
+
+        } // No reference atom could be found (e.g. diatomic molecule/fragment)
+    }
+};
+
+ResidueType.prototype.getBondIndex = function getBondIndex ( atomIndex1, atomIndex2 ){
+    var bonds = this.bonds;
+    var atomIndices1 = bonds.atomIndices1;
+    var atomIndices2 = bonds.atomIndices2;
+    var idx1 = atomIndices1.indexOf( atomIndex1 );
+    var idx2 = atomIndices2.indexOf( atomIndex2 );
+    var _idx2 = idx2;
+    while( idx1 !== -1 ){
+        while( idx2 !== -1 ){
+            if( idx1 === idx2 ) { return idx1; }
+            idx2 = atomIndices2.indexOf( atomIndex2, idx2 + 1 );
+        }
+        idx1 = atomIndices1.indexOf( atomIndex1, idx1 + 1 );
+        idx2 = _idx2;
+    }
+    // returns undefined when no bond is found
+};
+
+ResidueType.prototype.getBondReferenceAtomIndex = function getBondReferenceAtomIndex ( atomIndex1, atomIndex2 ) {
+    var bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
+    if( bondIndex === undefined ) { return undefined; }
+    if( this.bondReferenceAtomIndices.length === 0 ){
+        this.assignBondReferenceAtomIndices();
+    }
+    return this.bondReferenceAtomIndices[ bondIndex ];
 };
 
 /**
@@ -62273,48 +62176,43 @@ ResidueType.prototype = {
  */
 
 
-function ResidueMap( structure ){
-
-    var idDict = {};
-    var typeList = [];
-
-    function getHash( resname, atomTypeIdList, hetero, chemCompType ){
-        return (
-            resname + "|" +
-            atomTypeIdList.join( "," ) + "|" +
-            ( hetero ? 1 : 0 ) + "|" +
-            ( chemCompType ? chemCompType : "" )
-        );
-    }
-
-    function add( resname, atomTypeIdList, hetero, chemCompType, bonds ){
-        resname = resname.toUpperCase();
-        var hash = getHash( resname, atomTypeIdList, hetero, chemCompType );
-        var id = idDict[ hash ];
-        if( id === undefined ){
-            var residueType = new ResidueType(
-                structure, resname, atomTypeIdList, hetero, chemCompType, bonds
-            );
-            id = typeList.length;
-            idDict[ hash ] = id;
-            typeList.push( residueType );
-        }
-        return id;
-    }
-
-    function get( id ){
-        return typeList[ id ];
-    }
-
-    // API
-
-    this.add = add;
-    this.get = get;
-
-    this.list = typeList;
-    this.dict = idDict;
-
+function getHash$1( resname, atomTypeIdList, hetero, chemCompType ){
+    return (
+        resname + "|" +
+        atomTypeIdList.join( "," ) + "|" +
+        ( hetero ? 1 : 0 ) + "|" +
+        ( chemCompType ? chemCompType : "" )
+    );
 }
+
+
+var ResidueMap = function ResidueMap( structure ){
+
+    this.structure = structure;
+
+    this.dict = {};
+    this.list = [];
+
+};
+
+ResidueMap.prototype.add = function add ( resname, atomTypeIdList, hetero, chemCompType, bonds ){
+    resname = resname.toUpperCase();
+    var hash = getHash$1( resname, atomTypeIdList, hetero, chemCompType );
+    var id = this.dict[ hash ];
+    if( id === undefined ){
+        var residueType = new ResidueType(
+            this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
+        );
+        id = this.list.length;
+        this.dict[ hash ] = id;
+        this.list.push( residueType );
+    }
+    return id;
+};
+
+ResidueMap.prototype.get = function get ( id ){
+    return this.list[ id ];
+};
 
 /**
  * @file Bond Proxy
@@ -71112,9 +71010,10 @@ var ContourBuffer = (function (Buffer$$1) {
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
  * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
  * @property {Boolean} background - Render the surface in the background, unlit.
- * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring of the transparency parameter.
+ * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring the transparency parameter.
  * @property {Integer} boxSize - Size of the box to triangulate volume data in. Set to zero to triangulate the whole volume. For volume data only.
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
+ * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
 
 
@@ -71158,7 +71057,10 @@ var SurfaceRepresentation = (function (Representation$$1) {
             },
             useWorker: {
                 type: "boolean", rebuild: true
-            }
+            },
+            wrap: {
+                type: "boolean", rebuild: true
+            },
 
         }, this.parameters );
 
@@ -71208,6 +71110,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
+        this.wrap = defaults( p.wrap, false );
 
         Representation$$1.prototype.init.call( this, p );
 
@@ -71230,6 +71133,8 @@ var SurfaceRepresentation = (function (Representation$$1) {
     };
 
     SurfaceRepresentation.prototype.prepare = function prepare ( callback ){
+        var this$1 = this;
+
 
         if( this.volume ){
 
@@ -71245,6 +71150,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
                 this.__contour !== this.contour ||
+                this.__wrap !== this.wrap ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
@@ -71252,25 +71158,26 @@ var SurfaceRepresentation = (function (Representation$$1) {
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
                 this.__contour = this.contour;
+                this.__wrap = this.wrap;
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                var onSurfaceFinish = function( surface ){
-                    this.surface = surface;
+                var onSurfaceFinish = function (surface) {
+                    this$1.surface = surface;
                     callback();
-                }.bind( this );
+                };
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
                         isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        this.contour, onSurfaceFinish
+                        this.contour, this.wrap, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
                             isolevel, this.smooth, this.boxCenter, this.boxSize,
-                            this.contour
+                            this.contour, this.wrap
                         )
                     );
                 }
@@ -71425,6 +71332,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
         if( this.surface && (
                 params.isolevel !== undefined ||
                 params.smooth !== undefined ||
+                params.wrap !== undefined ||
                 params.boxSize !== undefined ||
                 ( this.boxSize > 0 &&
                     !this.__box.equals( this.box ) )
@@ -73844,6 +73752,16 @@ var RepresentationComponent = (function (Component$$1) {
         }else{
             return this.visible;
         }
+
+    };
+
+    /**
+     * Toggle visibility of the component, takes parent visibility into account
+     * @return {RepresentationComponent} this object
+     */
+    RepresentationComponent.prototype.toggleVisibility = function toggleVisibility (){
+
+        return this.setVisibility( !this.visible );
 
     };
 
@@ -96151,7 +96069,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0-dev.22";
+var version$1 = "0.10.0-dev.23";
 
 /**
  * @file Version
