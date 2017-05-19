@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file, following t
 - support for non orthogonal cell in cube file parser
 - dsn6/brix volume file parser
 - psf topology/structure file parser
+- wwPDB validation report xml parser, representation and colorschemes
 - support for picking Shape objects, Volume slices, Contact bonds
 - scroll mouse behavior to change far/near clipping and fog
 - label primitive for Shape class
