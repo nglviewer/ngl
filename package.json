@@ -19,7 +19,7 @@
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh",
     "gallery": "./scripts/gallery.sh",
-    "release": "./scripts/release.sh",
+    "prerelease": "./scripts/release.sh prerelease",
     "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
   },
   "homepage": "https://github.com/arose/ngl#readme",

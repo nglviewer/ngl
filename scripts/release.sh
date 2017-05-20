@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 
-npm version prerelease;
+LEVEL=$1
+
+npm version $LEVEL;
 npm run-script doc;
 npm run-script gallery;
 npm run-script deploy;
-npm publish --tag next;
+if [ "$LEVEL" = "prerelease" ]; then
+	npm publish --tag next;
+else
+	npm publish;
+fi
