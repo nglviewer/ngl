@@ -301,6 +301,54 @@ describe( 'BitArray', function () {
         assert.isTrue( ba.isEqualTo( bb ), "equals" );
 
     } );
+
+    it( 'isAllClear', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isTrue( ba.isAllClear(), "is empty" );
+
+        ba.set ( 38 );
+
+        assert.isFalse( ba.isAllClear(), "is not empty" );
+        
+    } );
+
+    it( 'isAllSet', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isFalse( ba.isAllSet(), "is not all set (empty bitarray)" );
+
+        ba.set ( 38 );
+
+        assert.isFalse( ba.isAllSet(), "is not all set (sparse bitarray)" );
+
+        ba.setAll();
+
+        assert.isTrue( ba.isAllSet(), "is all set" );
+
+        
+    } );
+
+    it( 'isRangeSet', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isFalse( ba.isRangeSet( 0, 39 ), "before set" );
+
+        ba.set ( 1, 2, 3 );
+
+        assert.isTrue( ba.isRangeSet( 1, 3 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 0, 3 ), "after set" );
+
+        ba.setAll();
+
+        assert.isTrue( ba.isRangeSet( 0, 3 ), "after set" );
+
+        
+    } );
+
     
 } );
 

@@ -199,7 +199,7 @@ class BitArray{
      * @return {Boolean} test result
      */
     isAllSet(){
-        return this._isAllValue( 0, this.length, true );
+        return this._isRangeValue( 0, this.length, true );
     }
 
     /**
@@ -207,7 +207,14 @@ class BitArray{
      * @return {Boolean} test result
      */
     isAllClear(){
-        return this._isAllValue( 0, this.length, false );
+        const words = this._words;
+        const count = words.length;
+        for( let k = 0; k < count; ++k ){
+            if ( words[ k ] !== 0 ) {
+                return false
+            }
+        }
+        return true;
     }
 
     /**
