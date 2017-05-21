@@ -1,5 +1,6 @@
 /**
  * @author mrdoob / http://mrdoob.com/
+ * The MIT License, Copyright &copy; 2010-2016 three.js authors
  */
 
 
