@@ -17,6 +17,8 @@ attribute float radius;
     #include color_pars_vertex
 #endif
 
+#include matrix_scale
+
 const mat4 D = mat4(
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
@@ -118,15 +120,17 @@ void main(void){
         #include color_vertex
     #endif
 
+    vRadius = radius * matrixScale( modelViewMatrix );
+
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
     // avoid clipping, added again in fragment shader
-    mvPosition.z -= radius;
+    mvPosition.z -= vRadius;
 
     gl_Position = projectionMatrix * vec4( mvPosition.xyz, 1.0 );
     ComputePointSizeAndPositionInClipCoordSphere();
 
-    vRadius = radius;
-    vRadiusSq = radius * radius;
+
+    vRadiusSq = vRadius * vRadius;
     vec4 vPoint4 = projectionMatrixInverse * gl_Position;
     vPoint = vPoint4.xyz / vPoint4.w;
     vPointViewPosition = -mvPosition.xyz / mvPosition.w;

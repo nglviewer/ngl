@@ -35,6 +35,10 @@ const mappingIndices = new Uint16Array( [
 ] );
 
 
+/**
+ * Box buffer. Draws boxes. Used to render general imposters.
+ * @interface
+ */
 class BoxBuffer extends MappedBuffer{
 
     get mapping (){ return mapping; }

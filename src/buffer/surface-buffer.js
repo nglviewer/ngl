@@ -8,9 +8,12 @@
 import MeshBuffer from "./mesh-buffer.js";
 
 
+/**
+ * Surface buffer. Like a {@link MeshBuffer}, but with `.isSurface` set to `true`.
+ */
 class SurfaceBuffer extends MeshBuffer{
 
-	get type (){ return "surface"; }
+    get isSurface (){ return true; }
 
 }
 

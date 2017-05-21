@@ -18,78 +18,72 @@ import {
 
 
 /**
- * Residue type class
- * @class
- * @param {Structure} structure - the structure object
- * @param {String} resname - name of the residue
- * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
- *                                 to the atoms of the residue
- * @param {Boolean} hetero - hetero flag
- * @param {String} chemCompType - chemical component type
- * @param {Object} [bonds] - TODO
+ * Residue type
  */
-function ResidueType( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
+class ResidueType{
 
-    this.structure = structure;
+    /**
+     * @param {Structure} structure - the structure object
+     * @param {String} resname - name of the residue
+     * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
+     *                                 to the atoms of the residue
+     * @param {Boolean} hetero - hetero flag
+     * @param {String} chemCompType - chemical component type
+     * @param {Object} [bonds] - TODO
+     */
+    constructor( structure, resname, atomTypeIdList, hetero, chemCompType, bonds ){
 
-    this.resname = resname;
-    this.atomTypeIdList = atomTypeIdList;
-    this.hetero = hetero ? 1 : 0;
-    this.chemCompType = chemCompType;
-    this.bonds = bonds;
-    this.rings = undefined;
-    this.atomCount = atomTypeIdList.length;
+        this.structure = structure;
 
-    this.moleculeType = this.getMoleculeType();
-    this.backboneType = this.getBackboneType( 0 );
-    this.backboneEndType = this.getBackboneType( -1 );
-    this.backboneStartType = this.getBackboneType( 1 );
-    this.backboneIndexList = this.getBackboneIndexList();
+        this.resname = resname;
+        this.atomTypeIdList = atomTypeIdList;
+        this.hetero = hetero ? 1 : 0;
+        this.chemCompType = chemCompType;
+        this.bonds = bonds;
+        this.rings = undefined;
+        this.atomCount = atomTypeIdList.length;
 
-    var atomnames = ResidueTypeAtoms[ this.backboneType ];
-    var atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
-    var atomnamesEnd = ResidueTypeAtoms[ this.backboneEndType ];
+        this.moleculeType = this.getMoleculeType();
+        this.backboneType = this.getBackboneType( 0 );
+        this.backboneEndType = this.getBackboneType( -1 );
+        this.backboneStartType = this.getBackboneType( 1 );
+        this.backboneIndexList = this.getBackboneIndexList();
 
-    var traceIndex = this.getAtomIndexByName( atomnames.trace );
-    this.traceAtomIndex = traceIndex !== undefined ? traceIndex : -1;
+        const atomnames = ResidueTypeAtoms[ this.backboneType ];
+        const atomnamesStart = ResidueTypeAtoms[ this.backboneStartType ];
+        const atomnamesEnd = ResidueTypeAtoms[ this.backboneEndType ];
 
-    var dir1Index = this.getAtomIndexByName( atomnames.direction1 );
-    this.direction1AtomIndex = dir1Index !== undefined ? dir1Index : -1;
+        const traceIndex = this.getAtomIndexByName( atomnames.trace );
+        this.traceAtomIndex = traceIndex !== undefined ? traceIndex : -1;
 
-    var dir2Index = this.getAtomIndexByName( atomnames.direction2 );
-    this.direction2AtomIndex = dir2Index !== undefined ? dir2Index : -1;
+        const dir1Index = this.getAtomIndexByName( atomnames.direction1 );
+        this.direction1AtomIndex = dir1Index !== undefined ? dir1Index : -1;
 
-    var bbStartIndex = this.getAtomIndexByName( atomnamesStart.backboneStart );
-    this.backboneStartAtomIndex = bbStartIndex !== undefined ? bbStartIndex : -1;
+        const dir2Index = this.getAtomIndexByName( atomnames.direction2 );
+        this.direction2AtomIndex = dir2Index !== undefined ? dir2Index : -1;
 
-    var bbEndIndex = this.getAtomIndexByName( atomnamesEnd.backboneEnd );
-    this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
+        const bbStartIndex = this.getAtomIndexByName( atomnamesStart.backboneStart );
+        this.backboneStartAtomIndex = bbStartIndex !== undefined ? bbStartIndex : -1;
 
-    var rungEndIndex;
-    if( PurinBases.includes( resname ) ){
-        rungEndIndex = this.getAtomIndexByName( "N1" );
-    }else{
-        rungEndIndex = this.getAtomIndexByName( "N3" );
+        const bbEndIndex = this.getAtomIndexByName( atomnamesEnd.backboneEnd );
+        this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1;
+
+        let rungEndIndex;
+        if( PurinBases.includes( resname ) ){
+            rungEndIndex = this.getAtomIndexByName( "N1" );
+        }else{
+            rungEndIndex = this.getAtomIndexByName( "N3" );
+        }
+        this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
+
+        // Sparse array containing the reference atom index for each bond.
+        this.bondReferenceAtomIndices = [];
+
     }
-    this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
 
-    // Sparse array containing the reference atom index for each bond.
-    this.bondReferenceAtomIndices = [];
-
-}
-
-ResidueType.prototype = {
-
-    constructor: ResidueType,
-    type: "ResidueType",
-
-    resname: undefined,
-    atomTypeIdList: undefined,
-    atomCount: undefined,
-
-    getBackboneIndexList: function(){
-        var backboneIndexList = [];
-        var atomnameList;
+    getBackboneIndexList(){
+        const backboneIndexList = [];
+        let atomnameList;
         switch( this.moleculeType ){
             case ProteinType:
                 atomnameList = ProteinBackboneAtoms;
@@ -101,18 +95,18 @@ ResidueType.prototype = {
             default:
                 return backboneIndexList;
         }
-        var atomMap = this.structure.atomMap;
-        var atomTypeIdList = this.atomTypeIdList;
-        for( var i = 0, il = this.atomCount; i < il; ++i ){
-            var atomType = atomMap.get( atomTypeIdList[ i ] );
+        const atomMap = this.structure.atomMap;
+        const atomTypeIdList = this.atomTypeIdList;
+        for( let i = 0, il = this.atomCount; i < il; ++i ){
+            const atomType = atomMap.get( atomTypeIdList[ i ] );
             if( atomnameList.includes( atomType.atomname ) ){
                 backboneIndexList.push( i );
             }
         }
         return backboneIndexList;
-    },
+    }
 
-    getMoleculeType: function(){
+    getMoleculeType(){
         if( this.isProtein() ){
             return ProteinType;
         }else if( this.isRna() ){
@@ -128,9 +122,9 @@ ResidueType.prototype = {
         }else{
             return UnknownType;
         }
-    },
+    }
 
-    getBackboneType: function( position ){
+    getBackboneType( position ){
         if( this.hasProteinBackbone( position ) ){
             return ProteinBackboneType;
         }else if( this.hasRnaBackbone( position ) ){
@@ -146,9 +140,9 @@ ResidueType.prototype = {
         }else{
             return UnknownBackboneType;
         }
-    },
+    }
 
-    isProtein: function(){
+    isProtein(){
         if( this.chemCompType ){
             return ChemCompProtein.includes( this.chemCompType );
         }else{
@@ -157,22 +151,22 @@ ResidueType.prototype = {
                 AA3.includes( this.resname )
             );
         }
-    },
+    }
 
-    isCg: function(){
-        var backboneType = this.backboneType;
+    isCg(){
+        const backboneType = this.backboneType;
         return (
             backboneType === CgProteinBackboneType ||
             backboneType === CgRnaBackboneType ||
             backboneType === CgDnaBackboneType
         );
-    },
+    }
 
-    isNucleic: function(){
+    isNucleic(){
         return this.isRna() || this.isDna();
-    },
+    }
 
-    isRna: function(){
+    isRna(){
         if( this.chemCompType ){
             return ChemCompRna.includes( this.chemCompType );
         }else{
@@ -184,9 +178,9 @@ ResidueType.prototype = {
                     ( this.hasAtomWithName( [ "O2'", "O2*", "F2'", "F2*" ] ) ) )
             );
         }
-    },
+    }
 
-    isDna: function(){
+    isDna(){
         if( this.chemCompType ){
             return ChemCompDna.includes( this.chemCompType );
         }else{
@@ -196,30 +190,30 @@ ResidueType.prototype = {
                 DnaBases.includes( this.resname )
             );
         }
-    },
+    }
 
-    isHetero: function(){
+    isHetero(){
         return this.hetero === 1;
-    },
+    }
 
-    isIon: function(){
+    isIon(){
         return IonNames.includes( this.resname );
-    },
+    }
 
-    isWater: function(){
+    isWater(){
         return WaterNames.includes( this.resname );
-    },
+    }
 
-    isSaccharide: function(){
+    isSaccharide(){
         if( this.chemCompType ){
             return ChemCompSaccharide.includes( this.chemCompType );
         }else{
             return SaccharideNames.includes( this.resname );
         }
-    },
+    }
 
-    hasBackboneAtoms: function( position, type ){
-        var atomnames = ResidueTypeAtoms[ type ];
+    hasBackboneAtoms( position, type ){
+        const atomnames = ResidueTypeAtoms[ type ];
         if( position === -1 ){
             return this.hasAtomWithName(
                 atomnames.trace,
@@ -249,51 +243,51 @@ ResidueType.prototype = {
                 atomnames.direction2
             );
         }
-    },
+    }
 
-    hasProteinBackbone: function( position ){
+    hasProteinBackbone( position ){
         return (
             this.isProtein() &&
             this.hasBackboneAtoms( position, ProteinBackboneType )
         );
-    },
+    }
 
-    hasRnaBackbone: function( position ){
+    hasRnaBackbone( position ){
         return (
             this.isRna() &&
             this.hasBackboneAtoms( position, RnaBackboneType )
         );
-    },
+    }
 
-    hasDnaBackbone: function( position ){
+    hasDnaBackbone( position ){
         return (
             this.isDna() &&
             this.hasBackboneAtoms( position, DnaBackboneType )
         );
-    },
+    }
 
-    hasCgProteinBackbone: function( position ){
+    hasCgProteinBackbone( position ){
         return (
             this.isProtein() &&
             this.hasBackboneAtoms( position, CgProteinBackboneType )
         );
-    },
+    }
 
-    hasCgRnaBackbone: function( position ){
+    hasCgRnaBackbone( position ){
         return (
             this.isRna() &&
             this.hasBackboneAtoms( position, CgRnaBackboneType )
         );
-    },
+    }
 
-    hasCgDnaBackbone: function( position ){
+    hasCgDnaBackbone( position ){
         return (
             this.isDna() &&
             this.hasBackboneAtoms( position, CgDnaBackboneType )
         );
-    },
+    }
 
-    hasBackbone: function( position ){
+    hasBackbone( position ){
         return (
             this.hasProteinBackbone( position ) ||
             this.hasRnaBackbone( position ) ||
@@ -302,88 +296,86 @@ ResidueType.prototype = {
             this.hasCgRnaBackbone( position ) ||
             this.hasCgDnaBackbone( position )
         );
-    },
+    }
 
-    getAtomIndexByName: function( atomname ){
-        var i, index;
-        var n = this.atomCount;
-        var atomMap = this.structure.atomMap;
-        var atomTypeIdList = this.atomTypeIdList;
+    getAtomIndexByName( atomname ){
+        const n = this.atomCount;
+        const atomMap = this.structure.atomMap;
+        const atomTypeIdList = this.atomTypeIdList;
         if( Array.isArray( atomname ) ){
-            for( i = 0; i < n; ++i ){
-                index = atomTypeIdList[ i ];
+            for( let i = 0; i < n; ++i ){
+                const index = atomTypeIdList[ i ];
                 if( atomname.includes( atomMap.get( index ).atomname ) ){
                     return i;
                 }
             }
         }else{
-            for( i = 0; i < n; ++i ){
-                index = atomTypeIdList[ i ];
+            for( let i = 0; i < n; ++i ){
+                const index = atomTypeIdList[ i ];
                 if( atomname === atomMap.get( index ).atomname ){
                     return i;
                 }
             }
         }
         return undefined;
-    },
+    }
 
-    hasAtomWithName: function( /*atomname*/ ){
-        var n = arguments.length;
-        for( var i = 0; i < n; ++i ){
+    hasAtomWithName( /*atomname*/ ){
+        const n = arguments.length;
+        for( let i = 0; i < n; ++i ){
             if( arguments[ i ] === undefined ) continue;
             if( this.getAtomIndexByName( arguments[ i ] ) === undefined ){
                 return false;
             }
         }
         return true;
-    },
+    }
 
-    getBonds: function( r ){
+    getBonds( r ){
         if( this.bonds === undefined ){
             this.bonds = calculateResidueBonds( r );
         }
         return this.bonds;
-    },
+    }
 
-    getRings: function() {
+    getRings() {
         if( this.rings === undefined ){
             this.calculateRings();
         }
         return this.rings;
-    },
+    }
 
-    getBondGraph: function(){
+    getBondGraph(){
         if( this.bondGraph === undefined ){
             this.calculateBondGraph();
         }
         return this.bondGraph;
-    },
+    }
 
     /**
      * @return {Object} bondGraph - represents the bonding in this
      *   residue: { ai1: [ ai2, ai3, ...], ...}
      */
-    calculateBondGraph: function() {
+    calculateBondGraph(){
 
-        var bondGraph = this.bondGraph = {};
-        var bonds = this.getBonds();
-        var nb = bonds.atomIndices1.length;
-        var atomIndices1 = bonds.atomIndices1;
-        var atomIndices2 = bonds.atomIndices2;
+        const bondGraph = this.bondGraph = {};
+        const bonds = this.getBonds();
+        const nb = bonds.atomIndices1.length;
+        const atomIndices1 = bonds.atomIndices1;
+        const atomIndices2 = bonds.atomIndices2;
 
-        var ai1, ai2;
+        for( let i = 0; i < nb; ++i ){
+            const ai1 = atomIndices1[i];
+            const ai2 = atomIndices2[i];
 
-        for( var i = 0; i < nb; ++i ){
-            ai1 = atomIndices1[i];
-            ai2 = atomIndices2[i];
-
-            var a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
+            const a1 = bondGraph[ ai1 ] = bondGraph[ ai1 ] || [];
             a1.push( ai2 );
 
-            var a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
+            const a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || [];
             a2.push( ai1 );
         }
-    },
+
+    }
 
     /**
      * Calculates ring atoms within a residue
@@ -401,14 +393,14 @@ ResidueType.prototype = {
      *
      * @return {undefined}
      */
-    calculateRings: function() {
+    calculateRings(){
 
-        var bondGraph = this.getBondGraph();
+        const bondGraph = this.getBondGraph();
 
-        var state = new Int8Array( this.atomCount ),
-            flags = new Int8Array( this.atomCount ),
-            rings = [],
-            visited = [];
+        const state = new Int8Array( this.atomCount );
+        const flags = new Int8Array( this.atomCount );
+        const rings = [];
+        const visited = [];
 
         function DFS( i, connected, from ) {
 
@@ -458,11 +450,11 @@ ResidueType.prototype = {
         }
 
 
-        for( var i = 0; i < this.atomCount; ++i ){
+        for( let i = 0; i < this.atomCount; ++i ){
 
             if( state[ i ] ){ continue; } // Already processed
 
-            var connected = bondGraph[ i ];
+            const connected = bondGraph[ i ];
             if( !connected || connected.length < 2 ){
                 // Finished
                 state[ i ] = 2;
@@ -473,41 +465,37 @@ ResidueType.prototype = {
             DFS( i, connected );
         }
 
-        this.rings = { flags: flags,
-                       rings: rings };
+        this.rings = { flags, rings };
 
-    },
+    }
 
     /**
      * For bonds with order > 1, pick a reference atom
      * @return {undefined}
      */
-    assignBondReferenceAtomIndices: function() {
+    assignBondReferenceAtomIndices(){
 
-        var bondGraph = this.getBondGraph();
-        var rings = this.getRings();
-        var ringFlags = rings.flags;
-        var ringData = rings.rings;
+        const bondGraph = this.getBondGraph();
+        const rings = this.getRings();
+        const ringFlags = rings.flags;
+        const ringData = rings.rings;
 
-        var atomIndices1 = this.bonds.atomIndices1;
-        var atomIndices2 = this.bonds.atomIndices2;
-        var bondOrders = this.bonds.bondOrders;
-        var bondReferenceAtomIndices = this.bondReferenceAtomIndices;
+        const atomIndices1 = this.bonds.atomIndices1;
+        const atomIndices2 = this.bonds.atomIndices2;
+        const bondOrders = this.bonds.bondOrders;
+        const bondReferenceAtomIndices = this.bondReferenceAtomIndices;
 
-        var nb = this.bonds.atomIndices1.length;
-
-        var i, j, ai1, ai2, ai3;
-
+        const nb = this.bonds.atomIndices1.length;
 
         bondReferenceAtomIndices.length = 0;  // reset array
 
-        for( i = 0; i < nb; ++i ) {
+        for( let i = 0; i < nb; ++i ) {
 
             // Not required for single bonds
             if( bondOrders[i] <= 1 ) continue;
 
-            ai1 = atomIndices1[i];
-            ai2 = atomIndices2[i];
+            const ai1 = atomIndices1[i];
+            const ai2 = atomIndices2[i];
 
             // Are both atoms in a ring?
             if( ringFlags[ ai1 ] && ringFlags[ ai2 ] ){
@@ -515,17 +503,17 @@ ResidueType.prototype = {
                 // I *think* we can simply take the first ring atom
                 // we find in a ring that contains either ai1 or ai2
                 // where the ring atom is not ai1 or ai2
-                for( var ri = 0; ri < ringData.length; ++ri ){
+                for( let ri = 0; ri < ringData.length; ++ri ){
 
                     // Have we already found it?
                     if( bondReferenceAtomIndices[i] !== undefined ) { break; }
 
-                    var ring = ringData[ ri ];
+                    const ring = ringData[ ri ];
                     // Try to find this atom and reference atom in no more than 1 full
                     // iteration through loop
-                    var refAtom = null, found = false;
-                    for( var rai = 0; rai < ring.length; ++rai ){
-                        ai3 = ring[ rai ];
+                    let refAtom = null, found = false;
+                    for( let rai = 0; rai < ring.length; ++rai ){
+                        const ai3 = ring[ rai ];
                         if( ai3 === ai1 || ai3 === ai2 ){
                             found = true;
                         } else {
@@ -545,8 +533,8 @@ ResidueType.prototype = {
             // neighbouring atom
 
             if( bondGraph[ ai1 ].length > 1 ){
-                for( j = 0; j < bondGraph[ ai1 ].length; ++j ){
-                    ai3 = bondGraph[ ai1 ][ j ];
+                for( let j = 0; j < bondGraph[ ai1 ].length; ++j ){
+                    const ai3 = bondGraph[ ai1 ][ j ];
                     if( ai3 !== ai2 ) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
@@ -555,8 +543,8 @@ ResidueType.prototype = {
                 continue;
 
             } else if( bondGraph[ ai2 ].length > 1 ){
-                for( j = 0; j < bondGraph[ ai2 ].length; ++j ){
-                    ai3 = bondGraph[ ai2 ][ j ];
+                for( let j = 0; j < bondGraph[ ai2 ].length; ++j ){
+                    const ai3 = bondGraph[ ai2 ][ j ];
                     if( ai3 !== ai1 ) {
                         bondReferenceAtomIndices[i] = ai3;
                         break;
@@ -566,15 +554,15 @@ ResidueType.prototype = {
 
             } // No reference atom could be found (e.g. diatomic molecule/fragment)
         }
-    },
+    }
 
-    getBondIndex: function( atomIndex1, atomIndex2 ){
-        var bonds = this.bonds;
-        var atomIndices1 = bonds.atomIndices1;
-        var atomIndices2 = bonds.atomIndices2;
-        var idx1 = atomIndices1.indexOf( atomIndex1 );
-        var idx2 = atomIndices2.indexOf( atomIndex2 );
-        var _idx2 = idx2;
+    getBondIndex( atomIndex1, atomIndex2 ){
+        const bonds = this.bonds;
+        const atomIndices1 = bonds.atomIndices1;
+        const atomIndices2 = bonds.atomIndices2;
+        let idx1 = atomIndices1.indexOf( atomIndex1 );
+        let idx2 = atomIndices2.indexOf( atomIndex2 );
+        const _idx2 = idx2;
         while( idx1 !== -1 ){
             while( idx2 !== -1 ){
                 if( idx1 === idx2 ) return idx1;
@@ -584,10 +572,10 @@ ResidueType.prototype = {
             idx2 = _idx2;
         }
         // returns undefined when no bond is found
-    },
+    }
 
-    getBondReferenceAtomIndex: function( atomIndex1, atomIndex2 ) {
-        var bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
+    getBondReferenceAtomIndex( atomIndex1, atomIndex2 ) {
+        const bondIndex = this.getBondIndex( atomIndex1, atomIndex2 );
         if( bondIndex === undefined ) return undefined;
         if( this.bondReferenceAtomIndices.length === 0 ){
             this.assignBondReferenceAtomIndices();
@@ -595,7 +583,7 @@ ResidueType.prototype = {
         return this.bondReferenceAtomIndices[ bondIndex ];
     }
 
-};
+}
 
 
 export default ResidueType;

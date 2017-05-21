@@ -11,21 +11,34 @@ import _WorkerRegistry from "./worker/worker-registry.js";
 import _ColormakerRegistry from "./color/colormaker-registry.js";
 
 
-var Browser = getBrowser();
+/**
+ * The browser name: "Opera", "Chrome", "Firefox", "Mobile Safari",
+ * "Internet Explorer", "Safari" or false.
+ * @type {String|false}
+ */
+const Browser = getBrowser();
 
-var Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false;
+/**
+ * Flag indicating a mobile browser
+ * @type {Boolean}
+ */
+const Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false;
 
-var SupportsReadPixelsFloat = false;
+let SupportsReadPixelsFloat = false;
 function setSupportsReadPixelsFloat( value ){
     SupportsReadPixelsFloat = value;
 }
 
-var ExtensionFragDepth = false;
+/**
+ * Flag indicating support for the `EXT_frag_depth` WebGL extension
+ * @type {Boolean}
+ */
+let ExtensionFragDepth = false;
 function setExtensionFragDepth( value ){
     ExtensionFragDepth = value;
 }
 
-var Log = {
+const Log = {
     log: Function.prototype.bind.call( console.log, console ),
     info: Function.prototype.bind.call( console.info, console ),
     warn: Function.prototype.bind.call( console.warn, console ),
@@ -34,21 +47,25 @@ var Log = {
     timeEnd: Function.prototype.bind.call( console.timeEnd, console )
 };
 
-var Debug = boolean( getQuery( "debug" ) );
+let Debug = boolean( getQuery( "debug" ) );
 function setDebug( value ){
     Debug = value;
 }
 
-var WebglErrorMessage = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="padding:15px;text-align:center;">Your browser/graphics card does not seem to support <a target="_blank" href="https://en.wikipedia.org/wiki/WebGL">WebGL</a>.<br/><br/>Find out how to get it <a target="_blank" href="http://get.webgl.org/">here</a>.</p></div>';
+const WebglErrorMessage = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="padding:15px;text-align:center;">Your browser/graphics card does not seem to support <a target="_blank" href="https://en.wikipedia.org/wiki/WebGL">WebGL</a>.<br/><br/>Find out how to get it <a target="_blank" href="http://get.webgl.org/">here</a>.</p></div>';
 
-var WorkerRegistry = new _WorkerRegistry();
-var ColormakerRegistry = new _ColormakerRegistry();
-var DatasourceRegistry = new Registry( "datasource" );
-var RepresentationRegistry = new Registry( "representatation" );
-var ParserRegistry = new Registry( "parser" );
-var ShaderRegistry = new Registry( "shader" );
-var DecompressorRegistry = new Registry( "decompressor" );
-var ComponentRegistry = new Registry( "component" );
+const WorkerRegistry = new _WorkerRegistry();
+/**
+ * Global instance of {@link src/color/colormaker-registry.js~ColormakerRegistry}
+ * @type {src/color/colormaker-registry.js~ColormakerRegistry}
+ */
+const ColormakerRegistry = new _ColormakerRegistry();
+const DatasourceRegistry = new Registry( "datasource" );
+const RepresentationRegistry = new Registry( "representatation" );
+const ParserRegistry = new Registry( "parser" );
+const ShaderRegistry = new Registry( "shader" );
+const DecompressorRegistry = new Registry( "decompressor" );
+const ComponentRegistry = new Registry( "component" );
 
 
 export {

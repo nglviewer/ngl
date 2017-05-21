@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by model index
+ */
 class ModelindexColormaker extends Colormaker{
 
     constructor( params ){
@@ -16,7 +19,7 @@ class ModelindexColormaker extends Colormaker{
         super( params );
 
         if( !params.scale ){
-            this.scale = "roygb";
+            this.scale = "rainbow";
         }
         if( !params.domain ){
             this.domain = [ 0, this.structure.modelStore.count ];

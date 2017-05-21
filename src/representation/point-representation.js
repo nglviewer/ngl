@@ -7,61 +7,58 @@
 
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import PointBuffer from "../buffer/point-buffer.js";
 
 
-function PointRepresentation( structure, viewer, params ){
+class PointRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-PointRepresentation.prototype = Object.assign( Object.create(
+        this.type = "point";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: PointRepresentation,
+            pointSize: {
+                type: "number", precision: 1, max: 100, min: 0, buffer: true
+            },
+            sizeAttenuation: {
+                type: "boolean", buffer: true
+            },
+            sortParticles: {
+                type: "boolean", rebuild: true
+            },
+            useTexture: {
+                type: "boolean", buffer: true
+            },
+            alphaTest: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+            forceTransparent: {
+                type: "boolean", buffer: true
+            },
+            edgeBleach: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
 
-    type: "point",
+        }, this.parameters, {
 
-    parameters: Object.assign( {
+            flatShaded: null,
+            wireframe: null,
+            linewidth: null,
 
-        pointSize: {
-            type: "number", precision: 1, max: 100, min: 0, buffer: true
-        },
-        sizeAttenuation: {
-            type: "boolean", buffer: true
-        },
-        sortParticles: {
-            type: "boolean", rebuild: true
-        },
-        useTexture: {
-            type: "boolean", buffer: true
-        },
-        alphaTest: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-        forceTransparent: {
-            type: "boolean", buffer: true
-        },
-        edgeBleach: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
+            roughness: null,
+            metalness: null
 
-    }, Representation.prototype.parameters, {
+        } );
 
-        flatShaded: null,
-        wireframe: null,
-        linewidth: null,
+        this.init( params );
 
-        roughness: null,
-        metalness: null
+    }
 
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
 
@@ -73,13 +70,13 @@ PointRepresentation.prototype = Object.assign( Object.create(
         this.forceTransparent = defaults( p.forceTransparent, false );
         this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( this, p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
-        var what = { position: true, color: true };
+        var what = { position: true, color: true, picking: true };
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
 
         var pointBuffer = new PointBuffer(
@@ -99,9 +96,9 @@ PointRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ pointBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var pointData = {};
@@ -118,7 +115,7 @@ PointRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "point", PointRepresentation );

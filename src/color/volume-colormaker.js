@@ -11,6 +11,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by volume position
+ */
 class VolumeColormaker extends Colormaker{
 
     constructor( params ){
@@ -23,7 +26,7 @@ class VolumeColormaker extends Colormaker{
 
             var valueScale = this.getScale();
             var inverseMatrix = volume.inverseMatrix;
-            var data = volume.__data;
+            var data = volume.data;
             var nx = volume.nx;
             var ny = volume.ny;
             var vec = new Vector3();
@@ -48,6 +51,13 @@ class VolumeColormaker extends Colormaker{
         }
 
     }
+
+    /**
+     * return the color for coordinates in space
+     * @param  {Vector3} coords - xyz coordinates
+     * @return {Integer} hex coords color
+     */
+    positionColor( /*coords*/ ){}
 
 }
 

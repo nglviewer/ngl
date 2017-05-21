@@ -9,50 +9,37 @@ import Store from "./store.js";
 
 
 /**
- * Atom store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Atom store
  */
-function AtomStore( size ){
+class AtomStore extends Store{
 
-    Store.call( this, size );
+    get __fields(){
 
-}
+        return [
+            [ "residueIndex", 1, "uint32" ],
+            [ "atomTypeId", 1, "uint16" ],
 
-AtomStore.prototype = Object.assign( Object.create(
+            [ "x", 1, "float32" ],
+            [ "y", 1, "float32" ],
+            [ "z", 1, "float32" ],
+            [ "serial", 1, "int32" ],
+            [ "bfactor", 1, "float32" ],
+            [ "altloc", 1, "uint8" ],
+            [ "occupancy", 1, "float32" ]
+        ];
 
-    Store.prototype ), {
+    }
 
-    constructor: AtomStore,
-
-    type: "AtomStore",
-
-    __fields: [
-
-        [ "residueIndex", 1, "uint32" ],
-        [ "atomTypeId", 1, "uint16" ],
-
-        [ "x", 1, "float32" ],
-        [ "y", 1, "float32" ],
-        [ "z", 1, "float32" ],
-        [ "serial", 1, "int32" ],
-        [ "bfactor", 1, "float32" ],
-        [ "altloc", 1, "uint8" ],
-        [ "occupancy", 1, "float32" ]
-
-    ],
-
-    setAltloc: function( i, str ){
+    setAltloc( i, str ){
         this.altloc[ i ] = str.charCodeAt( 0 );
-    },
+    }
 
-    getAltloc: function( i ){
-        var code = this.altloc[ i ];
+    getAltloc( i ){
+        const code = this.altloc[ i ];
         return code ? String.fromCharCode( code ) : "";
     }
 
-} );
+}
 
 
 export default AtomStore;

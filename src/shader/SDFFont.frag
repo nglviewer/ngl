@@ -15,9 +15,15 @@ varying vec2 texCoord;
     varying vec3 vClipCenter;
 #endif
 
-#include common
-#include color_pars_fragment
-#include fog_pars_fragment
+#if defined( PICKING )
+    uniform float objectId;
+    varying vec3 vPickingColor;
+    const vec3 vColor = vec3( 0.0 );
+#else
+    #include common
+    #include color_pars_fragment
+    #include fog_pars_fragment
+#endif
 
 #ifdef SDF
     const float smoothness = 16.0;
@@ -63,9 +69,17 @@ void main(){
 
     }
 
-    #include premultiplied_alpha_fragment
-    #include tonemapping_fragment
-    #include encodings_fragment
-    #include fog_fragment
+    #if defined( PICKING )
+
+        gl_FragColor = vec4( vPickingColor, objectId );
+
+    #else
+
+        #include premultiplied_alpha_fragment
+        #include tonemapping_fragment
+        #include encodings_fragment
+        #include fog_fragment
+
+    #endif
 
 }

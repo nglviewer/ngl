@@ -24,96 +24,97 @@ import ContourBuffer from "../buffer/contour-buffer.js";
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
  * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
  * @property {Boolean} background - Render the surface in the background, unlit.
- * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring of the transparency parameter.
+ * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring the transparency parameter.
  * @property {Integer} boxSize - Size of the box to triangulate volume data in. Set to zero to triangulate the whole volume. For volume data only.
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
+ * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
 
 
 /**
- * Surface representation object
- * @class
- * @extends Representation
- * @param {Surface|Volume} surface - the surface or volume to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {SurfaceRepresentationParameters} params - surface representation parameters
+ * Surface representation
  */
-function SurfaceRepresentation( surface, viewer, params ){
+class SurfaceRepresentation extends Representation{
 
-    Representation.call( this, surface, viewer, params );
+    /**
+     * Create Surface representation object
+     * @param {Surface|Volume} surface - the surface or volume to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {SurfaceRepresentationParameters} params - surface representation parameters
+     */
+    constructor( surface, viewer, params ){
 
-    if( surface instanceof Volume ){
-        this.surface = undefined;
-        this.volume = surface;
-    }else{
-        this.surface = surface;
-        this.volume = undefined;
+        super( surface, viewer, params );
+
+        this.type = "surface";
+
+        this.parameters = Object.assign( {
+
+            isolevelType: {
+                type: "select", options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            isolevel: {
+                type: "number", precision: 2, max: 1000, min: -1000
+            },
+            smooth: {
+                type: "integer", precision: 1, max: 10, min: 0
+            },
+            background: {
+                type: "boolean", rebuild: true  // FIXME
+            },
+            opaqueBack: {
+                type: "boolean", buffer: true
+            },
+            boxSize: {
+                type: "integer", precision: 1, max: 100, min: 0
+            },
+            colorVolume: {
+                type: "hidden"
+            },
+            contour: {
+                type: "boolean", rebuild: true
+            },
+            useWorker: {
+                type: "boolean", rebuild: true
+            },
+            wrap: {
+                type: "boolean", rebuild: true
+            },
+
+        }, this.parameters );
+
+        if( surface instanceof Volume ){
+            this.surface = undefined;
+            this.volume = surface;
+        }else{
+            this.surface = surface;
+            this.volume = undefined;
+        }
+
+        this.boxCenter = new Vector3();
+        this.__boxCenter = new Vector3();
+        this.box = new Box3();
+        this.__box = new Box3();
+
+        this._position = new Vector3();
+        this.setBox = function setBox(){
+            this._position.copy( viewer.translationGroup.position ).negate();
+            if( !this._position.equals( this.boxCenter ) ){
+                this.setParameters( { "boxCenter": this._position } );
+            }
+        };
+
+        this.viewer.signals.ticked.add( this.setBox, this );
+
+        this.init( params );
+
     }
 
-    this.boxCenter = new Vector3();
-    this.__boxCenter = new Vector3();
-    this.box = new Box3();
-    this.__box = new Box3();
+    init( params ){
 
-    this._position = new Vector3();
-    this.setBox = function setBox(){
-        this._position.copy( viewer.translationGroup.position ).negate();
-        if( !this._position.equals( this.boxCenter ) ){
-            this.setParameters( { "boxCenter": this._position } );
-        }
-    };
-
-    this.viewer.signals.ticked.add( this.setBox, this );
-
-    this.build();
-
-}
-
-SurfaceRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: SurfaceRepresentation,
-
-    type: "surface",
-
-    parameters: Object.assign( {
-
-        isolevelType: {
-            type: "select", options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        isolevel: {
-            type: "number", precision: 2, max: 1000, min: -1000
-        },
-        smooth: {
-            type: "integer", precision: 1, max: 10, min: 0
-        },
-        background: {
-            type: "boolean", rebuild: true  // FIXME
-        },
-        opaqueBack: {
-            type: "boolean", buffer: true
-        },
-        boxSize: {
-            type: "integer", precision: 1, max: 100, min: 0
-        },
-        colorVolume: {
-            type: "hidden"
-        },
-        contour: {
-            type: "boolean", rebuild: true
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
-        }
-
-    }, Representation.prototype.parameters ),
-
-    init: function( params ){
-
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
@@ -126,30 +127,31 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
+        this.wrap = defaults( p.wrap, false );
 
-        Representation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+        this.build();
 
-    attach: function( callback ){
+    }
 
-        this.bufferList.forEach( function( buffer ){
+    attach( callback ){
 
+        this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
-
-        }, this );
+        } );
 
         this.setVisibility( this.visible );
 
         callback();
 
-    },
+    }
 
-    prepare: function( callback ){
+    prepare( callback ){
 
         if( this.volume ){
 
-            var isolevel;
+            let isolevel;
 
             if( this.isolevelType === "sigma" ){
                 isolevel = this.volume.getValueForSigma( this.isolevel );
@@ -161,6 +163,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
                 this.__contour !== this.contour ||
+                this.__wrap !== this.wrap ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
@@ -168,25 +171,26 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
                 this.__contour = this.contour;
+                this.__wrap = this.wrap
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                var onSurfaceFinish = function( surface ){
+                const onSurfaceFinish = surface => {
                     this.surface = surface;
                     callback();
-                }.bind( this );
+                };
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
                         isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        this.contour, onSurfaceFinish
+                        this.contour, this.wrap, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
                             isolevel, this.smooth, this.boxCenter, this.boxSize,
-                            this.contour
+                            this.contour, this.wrap
                         )
                     );
                 }
@@ -198,9 +202,9 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             callback();
         }
 
-    },
+    }
 
-    getSurfaceData: function(){
+    getSurfaceData(){
 
         return {
             position: this.surface.getPosition(),
@@ -210,13 +214,13 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             picking: this.surface.getPicking()
         };
 
-    },
+    }
 
-    create: function(){
+    create(){
 
-        var sd = this.getSurfaceData();
+        const sd = this.getSurfaceData();
 
-        var buffer;
+        let buffer;
 
         if( this.contour ){
 
@@ -227,7 +231,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         } else {
 
-            var surfaceBuffer = new SurfaceBuffer(
+            const surfaceBuffer = new SurfaceBuffer(
                 sd, this.getBufferParams( {
                     background: this.background,
                     opaqueBack: this.opaqueBack,
@@ -240,15 +244,15 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( buffer );
 
-    },
+    }
 
-    update: function( what ){
+    update( what ){
 
         if( this.bufferList.length === 0 ) return;
 
         what = what || {};
 
-        var surfaceData = {};
+        const surfaceData = {};
 
         if( what.position ){
             surfaceData.position = this.surface.getPosition();
@@ -272,7 +276,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             buffer.setAttributes( surfaceData );
         } );
 
-    },
+    }
 
     /**
      * Set representation parameters
@@ -288,7 +292,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
      * @param {Boolean} [rebuild] - whether or not to rebuild the representation
      * @return {SurfaceRepresentation} this object
      */
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         if( params && params.isolevelType !== undefined &&
             this.volume
@@ -328,9 +332,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
             params.wireframe = false;
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         if( this.volume ){
             this.volume.getBox( this.boxCenter, this.boxSize, this.box );
@@ -343,6 +345,7 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
         if( this.surface && (
                 params.isolevel !== undefined ||
                 params.smooth !== undefined ||
+                params.wrap !== undefined ||
                 params.boxSize !== undefined ||
                 ( this.boxSize > 0 &&
                     !this.__box.equals( this.box ) )
@@ -358,27 +361,27 @@ SurfaceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    getColorParams: function(){
+    getColorParams(){
 
-        var p = Representation.prototype.getColorParams.call( this );
+        const p = super.getColorParams();
 
         p.volume = this.colorVolume;
 
         return p;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         this.viewer.signals.ticked.remove( this.setBox, this );
 
-        Representation.prototype.dispose.call( this );
+        super.dispose();
 
     }
 
-} );
+}
 
 
 export default SurfaceRepresentation;

@@ -10,7 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
-import { degToRad } from "../math/math-utils.js";
+import { degToRad, clamp, pclamp } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
 import Viewer from "../viewer/viewer.js";
 import MouseObserver from "./mouse-observer.js";
@@ -69,57 +69,21 @@ const tmpZoomVector = new Vector3();
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
- *                                      signal is fired, set to -1 to ignore hovering
+ * @property {Integer} hoverTimeout - timeout for hovering
  */
 
 
 /**
- * {@link Signal}, dispatched when stage parameters change
- * @example
- * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
- * @event Stage#parametersChanged
- * @type {StageParameters}
- */
-
-/**
- * {@link Signal}, dispatched when the fullscreen is entered or left
- * @example
- * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
- * @event Stage#fullscreenChanged
- * @type {Boolean}
- */
-
-/**
- * {@link Signal}, dispatched when a component is added to the stage
  * @example
  * stage.signals.componentAdded.add( function( component ){ ... } );
- * @event Stage#componentAdded
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched when a component is removed from the stage
- * @example
- * stage.signals.componentRemoved.add( function( component ){ ... } );
- * @event Stage#componentRemoved
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched upon clicking in the viewer canvas
- * @example
- * stage.signals.clicked.add( function( pickingProxy ){ ... } );
- * @event Stage#clicked
- * @type {PickingProxy}
- */
-
-/**
- * {@link Signal}, dispatched upon hovering over the viewer canvas
- * @example
- * stage.signals.hovered.add( function( pickingProxy ){ ... } );
- * @event Stage#hovered
- * @type {PickingProxy}
+ *
+ * @typedef {Object} StageSignals
+ * @property {Signal<StageParameters>} parametersChanged - on parameters change
+ * @property {Signal<Boolean>} fullscreenChanged - on fullscreen change
+ * @property {Signal<Component>} componentAdded - when a component is added
+ * @property {Signal<Component>} componentRemoved - when a component is removed
+ * @property {Signal<PickingProxy|undefined>} clicked - on click
+ * @property {Signal<PickingProxy|undefined>} hovered - on hover
  */
 
 
@@ -137,6 +101,10 @@ class Stage{
      */
     constructor( idOrElement, params ){
 
+        /**
+         * Events emitted by the stage
+         * @type {StageSignals}
+         */
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
@@ -153,7 +121,7 @@ class Stage{
         /**
          * Counter that keeps track of various potentially long-running tasks,
          * including file loading and surface calculation.
-         * @member {Counter}
+         * @type {Counter}
          */
         this.tasks = new Counter();
         this.compList = [];
@@ -165,18 +133,18 @@ class Stage{
         if( !this.viewer.renderer ) return;
 
         /**
-         * @member {MouseObserver}
+         * @type {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
 
         /**
-         * @member {ViewerControls}
+         * @type {ViewerControls}
          */
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
         /**
-         * @member {AnimationControls}
+         * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
 
@@ -185,6 +153,7 @@ class Stage{
         this.animationBehavior = new AnimationBehavior( this );
 
         this.spinAnimation = this.animationControls.spin( null );
+        this.rockAnimation = this.animationControls.rock( null );
 
         var p = Object.assign( {
             impostor: true,
@@ -280,7 +249,6 @@ class Stage{
 
     /**
      * Set stage parameters
-     * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
      * @return {Stage} this object
      */
@@ -377,8 +345,11 @@ class Stage{
             }
 
             var colorScheme = "chainname";
+            var colorScale = "RdYlBu";
+            var colorReverse = false;
             if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
+                colorReverse = true;
             }
 
             if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
@@ -416,7 +387,8 @@ class Stage{
                     probeRadius: 1.4,
                     scaleFactor: scaleFactor,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     useWorker: false
                 } );
 
@@ -425,7 +397,8 @@ class Stage{
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu"
+                    colorScale: colorScale,
+                    colorReverse: colorReverse
                 } );
 
             }else if( atomCount > 100000 ){
@@ -434,7 +407,8 @@ class Stage{
                     quality: "low",
                     disableImpostor: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
@@ -442,7 +416,8 @@ class Stage{
 
                 object.addRepresentation( "backbone", {
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
@@ -450,7 +425,7 @@ class Stage{
 
                 object.addRepresentation( "cartoon", {
                     color: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
                     scale: 0.7,
                     aspectRatio: 5,
                     quality: "auto"
@@ -458,7 +433,8 @@ class Stage{
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
                         color: colorScheme,
-                        colorScale: "RdYlBu",
+                        colorScale: colorScale,
+                        colorReverse: colorReverse,
                         quality: "auto"
                     } );
                 }
@@ -514,7 +490,6 @@ class Stage{
      *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
      * } );
      *
-     * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {LoaderParameters} params - loading parameters
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
@@ -544,9 +519,7 @@ class Stage{
 
             if( component.type === "script" ){
                 component.run();
-            }
-
-            if( p.defaultRepresentation ){
+            }else if( p.defaultRepresentation ){
                 this.defaultFileRepresentation( component );
             }
 
@@ -660,7 +633,6 @@ class Stage{
 
     /**
      * Toggle fullscreen
-     * @fires Stage#fullscreenChanged
      * @param  {Element} [element] - document element to put into fullscreen,
      *                               defaults to the viewer container
      * @return {undefined}
@@ -751,29 +723,87 @@ class Stage{
 
     }
 
+    setFocus( value ){
+
+        const clipNear = clamp( value / 2, 0, 49.9 );
+        const clipFar = 100 - clipNear;
+        const diffHalf = ( clipFar - clipNear ) / 2;
+
+        this.setParameters( {
+            clipNear,
+            clipFar,
+            fogNear: pclamp( clipFar - diffHalf ),
+            fogFar: pclamp( clipFar + diffHalf )
+        } );
+
+    }
+
     /**
      * Spin the whole scene around an axis at the center
      * @example
      * stage.setSpin( [ 0, 1, 0 ], 0.01 );
      *
      * @param {Number[]|Vector3} axis - the axis to spin around
-     * @param {Number} angle - amount to spin per render call
+     * @param {Number} angle - amount to spin per frame, radians
      * @return {undefined}
      */
     setSpin( axis, angle ){
+
+        if( this.rockAnimation.axis ){
+            this.setRock( null );
+        }
 
         if( Array.isArray( axis ) ){
             axis = new Vector3().fromArray( axis );
         }
 
-        this.spinAnimation.axis = axis;
-        this.spinAnimation.angle = angle;
+        if( axis !== undefined ){
+            this.spinAnimation.axis = axis;
+        }
+        if( angle !== undefined ){
+            this.spinAnimation.angle = angle;
+        }
+
+    }
+
+    /**
+     * Rock the whole scene around an axis at the center
+     * @example
+     * stage.setRock( [ 0, 1, 0 ], 0.01, 0.3 );
+     *
+     * @param {Number[]|Vector3} axis - the axis to rock around
+     * @param {Number} angle - amount to spin per frame, radians
+     * @param {Number} end - maximum extend of motion, radians
+     * @return {undefined}
+     */
+    setRock( axis, angle, end ){
+
+        if( this.spinAnimation.axis ){
+            this.setSpin( null );
+        }
+
+        if( Array.isArray( axis ) ){
+            axis = new Vector3().fromArray( axis );
+        }
+
+        if( axis !== undefined ){
+            this.rockAnimation.axis = axis;
+        }
+        if( angle !== undefined ){
+            this.rockAnimation.angleStep = angle;
+        }
+        if( end !== undefined ){
+            this.rockAnimation.angleEnd = end;
+        }
+
+        this.rockAnimation.angleSum = 0;
+        this.rockAnimation.direction = 1;
 
     }
 
     getZoomForBox( boundingBox ){
 
-        const bbSize = boundingBox.size( tmpZoomVector );
+        const bbSize = boundingBox.getSize( tmpZoomVector );
         const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
         const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
         let distance = maxSize + Math.sqrt( minSize );
@@ -804,9 +834,9 @@ class Stage{
 
     }
 
-    getCenter(){
+    getCenter( optionalTarget ){
 
-        return this.getBox().center();
+        return this.getBox().getCenter( optionalTarget );
 
     }
 

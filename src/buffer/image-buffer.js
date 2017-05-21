@@ -30,8 +30,20 @@ const quadUvs = new Float32Array( [
 ] );
 
 
+/**
+ * Image buffer. Draw a single image. Optionally interpolate.
+ */
 class ImageBuffer extends Buffer{
 
+    /**
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position - image position
+     * @param {Float32Array} data.imageData - image data, rgba channels
+     * @param {Float32Array} data.width - image width
+     * @param {Float32Array} data.height - image height
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     */
     constructor( data, params ){
 
         const d = data || {};
@@ -50,14 +62,24 @@ class ImageBuffer extends Buffer{
         tex.flipY = true;
         this.tex = tex;
 
-        const pickingTex = new DataTexture( d.pickingData, d.width, d.height );
+        var n = d.imageData.length;
+        const pickingData = new Uint8Array( n );
+        for( let i = 0; i < n; i += 4 ){
+            const j = i / 4;
+            pickingData[ i     ] = j >> 16 & 255;
+            pickingData[ i + 1 ] = j >> 8 & 255;
+            pickingData[ i + 2 ] = j & 255;
+        }
+
+        const pickingTex = new DataTexture( pickingData, d.width, d.height );
         pickingTex.flipY = true;
         pickingTex.minFilter = NearestFilter;
         pickingTex.magFilter = NearestFilter;
         this.pickingTex = pickingTex;
 
         this.addUniforms( {
-            "map": { value: null },
+            "map": { value: tex },
+            "pickingMap": { value: pickingTex },
             "mapSize": { value: new Vector2( d.width, d.height ) }
         } );
 
@@ -136,7 +158,8 @@ class ImageBuffer extends Buffer{
         wm.needsUpdate = true;
 
         const pm = this.pickingMaterial;
-        pm.uniforms.map.value = this.pickingTex;
+        pm.uniforms.map.value = this.tex;
+        pm.uniforms.pickingMap.value = this.pickingTex;
         pm.blending = NormalBlending;
         pm.needsUpdate = true;
 
@@ -152,10 +175,6 @@ class ImageBuffer extends Buffer{
         }
 
         super.setUniforms( data );
-
-        const pm = this.pickingMaterial;
-        pm.uniforms.map.value = this.pickingTex;
-        pm.needsUpdate = true;
 
     }
 

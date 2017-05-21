@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by validation density fit
+ */
 class DensityfitColormaker extends Colormaker{
 
     constructor( params ){

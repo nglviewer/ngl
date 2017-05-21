@@ -313,7 +313,7 @@ function processSymmetry( cif, structure, asymIdDict ){
         gen.assembly_id.forEach( function( id, i ){
 
             var md = {};
-            var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
+            var oe = gen.oper_expression[ i ].replace( /['"]\(|['"]/g, "" );
 
             if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
 

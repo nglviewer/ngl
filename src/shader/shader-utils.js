@@ -9,11 +9,12 @@ import { ShaderChunk } from "../../lib/three.es6.js";
 
 import "./chunk/dull_interior_fragment.glsl";
 import "./chunk/fog_fragment.glsl";
+import "./chunk/matrix_scale.glsl";
 import "./chunk/nearclip_vertex.glsl";
 import "./chunk/nearclip_fragment.glsl";
+import "./chunk/opaque_back_fragment.glsl";
 import "./chunk/radiusclip_vertex.glsl";
 import "./chunk/radiusclip_fragment.glsl";
-import "./chunk/opaque_back_fragment.glsl";
 import "./chunk/unpack_color.glsl";
 
 import { ShaderRegistry } from "../globals.js";

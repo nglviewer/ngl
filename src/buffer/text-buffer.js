@@ -13,12 +13,13 @@ import "../shader/SDFFont.frag";
 import { Browser } from "../globals.js";
 import { defaults } from "../utils.js";
 import QuadBuffer from "./quad-buffer.js";
+import { IgnorePicker } from "../utils/picker.js";
 
 
 const TextAtlasCache = {};
 
 function getTextAtlas( params ){
-    var hash = JSON.stringify( params );
+    const hash = JSON.stringify( params );
     if( TextAtlasCache[ hash ] === undefined ){
         TextAtlasCache[ hash ] = new TextAtlas( params );
     }
@@ -33,7 +34,7 @@ class TextAtlas{
         // adapted from https://github.com/unconed/mathbox
         // MIT License Copyright (C) 2013+ Steven Wittens and contributors
 
-        var p = Object.assign( {}, params );
+        const p = Object.assign( {}, params );
 
         this.font = defaults( p.font, [ 'sans-serif' ] );
         this.size = defaults( p.size, 36 );
@@ -41,12 +42,12 @@ class TextAtlas{
         this.variant = defaults( p.variant, 'normal' );
         this.weight = defaults( p.weight, 'normal' );
         this.outline = defaults( p.outline, 0 );
-        this.width = defaults( p.width, 1024 );
-        this.height = defaults( p.height, 1024 );
+        this.width = defaults( p.width, 2048 );
+        this.height = defaults( p.height, 2048 );
 
         this.gamma = 1;
         if( typeof navigator !== 'undefined' ){
-            var ua = navigator.userAgent;
+            const ua = navigator.userAgent;
             if( ua.match( /Chrome/ ) && ua.match( /OS X/ ) ){
                 this.gamma = 0.5;
             }
@@ -70,30 +71,30 @@ class TextAtlas{
     build(){
 
         // Prepare line-height with room for outline and descenders/ascenders
-        var lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
-        var maxWidth = this.width / 4;
+        const lineHeight = this.size + 2 * this.outline + Math.round( this.size / 4 );
+        const maxWidth = this.width / 4;
 
         // Prepare scratch canvas
-        var canvas = document.createElement( "canvas" );
+        const canvas = document.createElement( "canvas" );
         canvas.width = maxWidth;
         canvas.height = lineHeight;
 
-        var ctx = canvas.getContext( "2d" );
+        const ctx = canvas.getContext( "2d" );
         ctx.font = this.style + " " + this.variant + " " + this.weight + " " + this.size + "px " + this.font;
         ctx.fillStyle = "#FF0000";
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
         ctx.lineJoin = "round";
 
-        var colors = [];
-        var dilate = this.outline * 3;
-        for( var i = 0; i < dilate; ++i ){
+        const colors = [];
+        const dilate = this.outline * 3;
+        for( let i = 0; i < dilate; ++i ){
             // 8 rgb levels = 1 step = .5 pixel increase
-            var val = Math.max( 0, -i * 8 + 128 - ( !i ) * 8 );
-            var hex = ( "00" + val.toString( 16 ) ).slice( -2 );
+            const val = Math.max( 0, -i * 8 + 128 - ( !i ) * 8 );
+            const hex = ( "00" + val.toString( 16 ) ).slice( -2 );
             colors.push( "#" + hex + hex + hex );
         }
-        var scratch = new Uint8Array( maxWidth * lineHeight * 2 );
+        const scratch = new Uint8Array( maxWidth * lineHeight * 2 );
 
         this.canvas = canvas;
         this.context = ctx;
@@ -148,27 +149,33 @@ class TextAtlas{
 
     }
 
+    get( text ){
+
+        return this.mapped[ text ] || this.placeholder;
+
+    }
+
     draw( text ){
 
-        var h = this.lineHeight;
-        var o = this.outline;
-        var ctx = this.context;
-        var dst = this.scratch;
-        var max = this.maxWidth;
-        var colors = this.colors;
+        const h = this.lineHeight;
+        const o = this.outline;
+        const ctx = this.context;
+        const dst = this.scratch;
+        const max = this.maxWidth;
+        const colors = this.colors;
 
         // Bottom aligned, take outline into account
-        var x = o;
-        var y = h - this.outline;
+        const x = o;
+        const y = h - this.outline;
 
         // Measure text
-        var m = ctx.measureText( text );
-        var w = Math.min( max, Math.ceil( m.width + 2 * x + 1 ) );
+        const m = ctx.measureText( text );
+        const w = Math.min( max, Math.ceil( m.width + 2 * x + 1 ) );
 
         // Clear scratch area
         ctx.clearRect( 0, 0, w, h );
 
-        var i, il, j, imageData, data;
+        let i, il, j, imageData, data;
 
         if( this.outline === 0 ){
 
@@ -202,19 +209,19 @@ class TextAtlas{
             data = imageData.data;
 
             j = 0;
-            var gamma = this.gamma;
+            const gamma = this.gamma;
             for( i = 0, il = data.length / 4; i < il; ++i ){
                 // Get value + mask
-                var a = data[ j ];
-                var mask = a ? data[ j + 1 ] / a : 1;
+                const a = data[ j ];
+                let mask = a ? data[ j + 1 ] / a : 1;
                 if( gamma === 0.5 ){
                     mask = Math.sqrt( mask );
                 }
                 mask = Math.min( 1, Math.max( 0, mask ) );
 
                 // Blend between positive/outside and negative/inside
-                var b = 256 - a;
-                var c = b + ( a - b ) * mask;
+                const b = 256 - a;
+                const c = b + ( a - b ) * mask;
 
                 // Clamp (slight expansion to hide errors around the transition)
                 dst[ i ] = Math.max( 0, Math.min( 255, c + 2 ) );
@@ -232,9 +239,31 @@ class TextAtlas{
 
     populate(){
 
-        for( var i = 0; i < 256; ++i ){
+        // Replacement Character
+        this.placeholder = this.map( String.fromCharCode( 0xFFFD ) );
+
+        // Basic Latin
+        for( let i = 0x0000; i < 0x007F; ++i ){
             this.map( String.fromCharCode( i ) );
         }
+
+        // Latin-1 Supplement
+        for( let i = 0x0080; i < 0x00FF; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Greek and Coptic
+        for( let i = 0x0370; i < 0x03FF; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Cyrillic
+        for( let i = 0x0400; i < 0x04FF; ++i ){
+            this.map( String.fromCharCode( i ) );
+        }
+
+        // Angstrom Sign
+        this.map( String.fromCharCode( 0x212B ) );
 
     }
 
@@ -276,14 +305,24 @@ class TextAtlas{
  */
 
 
+/**
+ * Text buffer. Renders screen-aligned text strings.
+ *
+ * @example
+ * var textBuffer = new TextBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     size: new Float32Array( [ 2 ] ),
+ *     text: [ "Hello" ]
+ * } );
+ */
 class TextBuffer extends QuadBuffer{
 
     /**
-     * make text buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.size - sizes
      * @param  {Float32Array} data.color - colors
+     * @param  {Float32Array} data.size - sizes
      * @param  {String[]} data.text - text strings
      * @param  {TextBufferParameters} params - parameters object
      */
@@ -305,7 +344,8 @@ class TextBuffer extends QuadBuffer{
 
         super( {
             position: new Float32Array( count * 3 ),
-            color: new Float32Array( count * 3 )
+            color: new Float32Array( count * 3 ),
+            picking: new IgnorePicker()
         }, p );
 
         this.fontFamily = defaults( p.fontFamily, "sans-serif" );
@@ -371,7 +411,11 @@ class TextBuffer extends QuadBuffer{
             backgroundColor: { uniform: true },
             backgroundOpacity: { uniform: true }
 
-        }, super.parameters );
+        }, super.parameters, {
+
+            flatShaded: undefined
+
+        } );
 
     }
 
@@ -379,21 +423,21 @@ class TextBuffer extends QuadBuffer{
 
         super.makeMaterial();
 
-        var tex = this.texture;
+        const tex = this.texture;
 
-        var m = this.material;
+        const m = this.material;
         m.extensions.derivatives = true;
         m.lights = false;
         m.uniforms.fontTexture.value = tex;
         m.needsUpdate = true;
 
-        var wm = this.wireframeMaterial;
+        const wm = this.wireframeMaterial;
         wm.extensions.derivatives = true;
         wm.lights = false;
         wm.uniforms.fontTexture.value = tex;
         wm.needsUpdate = true;
 
-        var pm = this.pickingMaterial;
+        const pm = this.pickingMaterial;
         pm.extensions.derivatives = true;
         pm.lights = false;
         pm.uniforms.fontTexture.value = tex;
@@ -403,11 +447,11 @@ class TextBuffer extends QuadBuffer{
 
     setAttributes( data ){
 
-        var position, size, color;
-        var aPosition, inputSize, aColor;
+        let position, size, color;
+        let aPosition, inputSize, aColor;
 
-        var text = this.text;
-        var attributes = this.geometry.attributes;
+        const text = this.text;
+        const attributes = this.geometry.attributes;
 
         if( data.position ){
             position = data.position;
@@ -427,13 +471,13 @@ class TextBuffer extends QuadBuffer{
             attributes.color.needsUpdate = true;
         }
 
-        var n = this.positionCount;
+        const n = this.positionCount;
 
-        var j, o;
-        var iCharAll = 0;
-        var txt, iChar, nChar;
+        let j, o;
+        let iCharAll = 0;
+        let txt, iChar, nChar;
 
-        for( var v = 0; v < n; ++v ) {
+        for( let v = 0; v < n; ++v ) {
 
             o = 3 * v;
             txt = text[ v ];
@@ -442,7 +486,7 @@ class TextBuffer extends QuadBuffer{
 
             for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
-                for( var m = 0; m < 4; m++ ) {
+                for( let m = 0; m < 4; m++ ) {
 
                     j = iCharAll * 4 * 3 + ( 3 * m );
 
@@ -492,19 +536,19 @@ class TextBuffer extends QuadBuffer{
 
     makeMapping(){
 
-        var ta = this.textAtlas;
-        var text = this.text;
-        var attachment = this.attachment;
-        var margin = ( ta.lineHeight * this.backgroundMargin * 0.1 ) - 10;
+        const ta = this.textAtlas;
+        const text = this.text;
+        const attachment = this.attachment;
+        const margin = ( ta.lineHeight * this.backgroundMargin * 0.1 ) - 10;
 
-        var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
-        var inputMapping = this.geometry.attributes.mapping.array;
+        const inputTexCoord = this.geometry.attributes.inputTexCoord.array;
+        const inputMapping = this.geometry.attributes.mapping.array;
 
-        var n = this.positionCount;
-        var iCharAll = 0;
-        var c, i, txt, xadvance, iChar, nChar, xShift, yShift;
+        const n = this.positionCount;
+        let iCharAll = 0;
+        let c, i, txt, xadvance, iChar, nChar, xShift, yShift;
 
-        for( var v = 0; v < n; ++v ) {
+        for( let v = 0; v < n; ++v ) {
 
             txt = text[ v ];
             xadvance = 0;
@@ -512,7 +556,7 @@ class TextBuffer extends QuadBuffer{
 
             // calculate width
             for( iChar = 0; iChar < nChar; ++iChar ) {
-                c = ta.mapped[ txt[ iChar ] ];
+                c = ta.get( txt[ iChar ] );
                 xadvance += c.w - 2 * ta.outline;
             }
 
@@ -556,7 +600,7 @@ class TextBuffer extends QuadBuffer{
 
             for( iChar = 0; iChar < nChar; ++iChar, ++iCharAll ) {
 
-                c = ta.mapped[ txt[ iChar ] ];
+                c = ta.get( txt[ iChar ] );
                 i = iCharAll * 2 * 4;
 
                 inputMapping[ i + 0 ] = xadvance - xShift;  // top left
@@ -568,10 +612,10 @@ class TextBuffer extends QuadBuffer{
                 inputMapping[ i + 6 ] = xadvance + c.w - xShift;  // bottom right
                 inputMapping[ i + 7 ] = 0 - yShift;
 
-                var texWidth = ta.width;
-                var texHeight = ta.height;
+                const texWidth = ta.width;
+                const texHeight = ta.height;
 
-                var texCoords = [
+                const texCoords = [
                     c.x/texWidth, c.y/texHeight,             // top left
                     c.x/texWidth, ( c.y+c.h )/texHeight,       // bottom left
                     ( c.x+c.w )/texWidth, c.y/texHeight,       // top right
@@ -592,7 +636,7 @@ class TextBuffer extends QuadBuffer{
 
     getDefines( type ){
 
-        var defines = super.getDefines( type );
+        const defines = super.getDefines( type );
 
         if( this.sdf ){
             defines.SDF = 1;
@@ -624,7 +668,10 @@ class TextBuffer extends QuadBuffer{
 
     }
 
-    get type (){ return "text"; }  // TODO needed?
+    set wireframe ( value ){}
+    get wireframe (){ return false; }
+
+    get isText (){ return true; }
     get vertexShader (){ return "SDFFont.vert"; }
     get fragmentShader (){ return "SDFFont.frag"; }
 

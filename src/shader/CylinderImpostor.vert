@@ -50,6 +50,8 @@ varying vec4 w;
 uniform mat4 modelViewMatrixInverse;
 uniform float ortho;
 
+#include matrix_scale
+
 void main(){
 
     #ifdef PICKING
@@ -60,7 +62,7 @@ void main(){
     #endif
 
     // vRadius = radius;
-    base_radius.w = radius;
+    base_radius.w = radius * matrixScale( modelViewMatrix );
 
     vec3 center = position;
     vec3 dir = normalize( position2 - position1 );

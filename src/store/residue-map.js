@@ -8,46 +8,45 @@
 import ResidueType from "./residue-type.js";
 
 
-function ResidueMap( structure ){
+function getHash( resname, atomTypeIdList, hetero, chemCompType ){
+    return (
+        resname + "|" +
+        atomTypeIdList.join( "," ) + "|" +
+        ( hetero ? 1 : 0 ) + "|" +
+        ( chemCompType ? chemCompType : "" )
+    );
+}
 
-    var idDict = {};
-    var typeList = [];
 
-    function getHash( resname, atomTypeIdList, hetero, chemCompType ){
-        return (
-            resname + "|" +
-            atomTypeIdList.join( "," ) + "|" +
-            ( hetero ? 1 : 0 ) + "|" +
-            ( chemCompType ? chemCompType : "" )
-        );
+class ResidueMap{
+
+    constructor( structure ){
+
+        this.structure = structure;
+
+        this.dict = {};
+        this.list = [];
+
     }
 
-    function add( resname, atomTypeIdList, hetero, chemCompType, bonds ){
+    add( resname, atomTypeIdList, hetero, chemCompType, bonds ){
         resname = resname.toUpperCase();
-        var hash = getHash( resname, atomTypeIdList, hetero, chemCompType );
-        var id = idDict[ hash ];
+        const hash = getHash( resname, atomTypeIdList, hetero, chemCompType );
+        let id = this.dict[ hash ];
         if( id === undefined ){
-            var residueType = new ResidueType(
-                structure, resname, atomTypeIdList, hetero, chemCompType, bonds
+            const residueType = new ResidueType(
+                this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
             );
-            id = typeList.length;
-            idDict[ hash ] = id;
-            typeList.push( residueType );
+            id = this.list.length;
+            this.dict[ hash ] = id;
+            this.list.push( residueType );
         }
         return id;
     }
 
-    function get( id ){
-        return typeList[ id ];
+    get( id ){
+        return this.list[ id ];
     }
-
-    // API
-
-    this.add = add;
-    this.get = get;
-
-    this.list = typeList;
-    this.dict = idDict;
 
 }
 

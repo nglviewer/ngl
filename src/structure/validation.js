@@ -319,7 +319,7 @@ class Validation{
             color: color.subarray( 0, i * 3 ),
             color2: color.subarray( 0, i * 3 ),
             radius: radius.subarray( 0, i ),
-            picking: new ClashPicker( picking.subarray( 0, i ), this )
+            picking: new ClashPicker( picking.subarray( 0, i ), this, s )
         };
 
     }

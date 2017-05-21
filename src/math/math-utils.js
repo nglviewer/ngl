@@ -57,6 +57,11 @@ function clamp( value, min, max ){
 }
 
 
+function pclamp( value ){
+    return clamp( value, 0, 100 );
+}
+
+
 function saturate( value ){
     return clamp( value, 0, 1 );
 }
@@ -101,6 +106,15 @@ function smootheststep( min, max, x ) {
 }
 
 
+function almostIdentity( value, start, stop ){
+    if( value > start ) return value;
+    const a = 2 * stop - start
+    const b = 2 * start - 3 * stop;
+    const t = value / start;
+    return ( a * t + b ) * t * t + stop;
+}
+
+
 export {
     degToRad,
     radToDeg,
@@ -108,10 +122,12 @@ export {
     countSetBits,
     normalize,
     clamp,
+    pclamp,
     saturate,
     lerp,
     spline,
     smoothstep,
     smootherstep,
-    smootheststep
+    smootheststep,
+    almostIdentity
 };

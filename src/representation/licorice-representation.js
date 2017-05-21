@@ -11,40 +11,37 @@ import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 /**
  * Licorice representation object ({@link BallAndStickRepresentation} with `aspectRatio` fixed at 1.0)
- * @class
- * @extends BallAndStickRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
  */
-function LicoriceRepresentation( structure, viewer, params ){
+class LicoriceRepresentation extends BallAndStickRepresentation{
 
-    BallAndStickRepresentation.call( this, structure, viewer, params );
+    /**
+     * Create Licorice representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-LicoriceRepresentation.prototype = Object.assign( Object.create(
+        this.type = "licorice";
 
-    BallAndStickRepresentation.prototype ), {
+        this.parameters = Object.assign(
+            {}, this.parameters, { aspectRatio: null }
+        );
 
-    constructor: LicoriceRepresentation,
+    }
 
-    type: "licorice",
-
-    parameters: Object.assign(
-        {}, BallAndStickRepresentation.prototype.parameters, { aspectRatio: null }
-    ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.aspectRatio = 1.0;
 
-        BallAndStickRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "licorice", LicoriceRepresentation );

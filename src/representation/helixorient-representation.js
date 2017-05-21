@@ -13,44 +13,42 @@ import SphereBuffer from "../buffer/sphere-buffer.js";
 import VectorBuffer from "../buffer/vector-buffer.js";
 
 
-function HelixorientRepresentation( structure, viewer, params ){
+class HelixorientRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-HelixorientRepresentation.prototype = Object.assign( Object.create(
+        this.type = "helixorient",
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: HelixorientRepresentation,
+            sphereDetail: true,
+            disableImpostor: true
 
-    type: "helixorient",
+        }, this.parameters );
 
-    parameters: Object.assign( {
+        this.init( params );
 
-        sphereDetail: true,
-        disableImpostor: true
+    }
 
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "sstruc" );
         p.radius = defaults( p.radius, 0.15 );
         p.scale = defaults( p.scale, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( polymer => {
 
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
@@ -102,16 +100,16 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
             );
 
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,
             polymerList: polymerList
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         if( Debug ) Log.time( this.type + " repr update" );
 
@@ -150,7 +148,7 @@ HelixorientRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "helixorient", HelixorientRepresentation );

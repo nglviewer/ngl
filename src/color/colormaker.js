@@ -30,7 +30,8 @@ import chroma from "../../lib/chroma.es6.js";
 
 
 /**
- * Class for making colors
+ * Class for making colors.
+ * @interface
  */
 class Colormaker{
 
@@ -46,6 +47,7 @@ class Colormaker{
         this.mode = defaults( p.mode, "hcl" );
         this.domain = defaults( p.domain, [ 0, 1 ] );
         this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
+        this.reverse = defaults( p.reverse, false );
 
         this.structure = p.structure;
         this.volume = p.volume;
@@ -62,16 +64,21 @@ class Colormaker{
         var p = params || {};
 
         var scale = defaults( p.scale, this.scale );
-        if( scale === "rainbow" || scale === "roygb" ){
+        if( scale === "rainbow" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
             scale = [ "red", "white", "blue" ];
         }
 
+        var domain = defaults( p.domain, this.domain );
+        if( this.reverse ){
+            domain.reverse();
+        }
+
         return chroma
             .scale( scale )
             .mode( defaults( p.mode, this.mode ) )
-            .domain( defaults( p.domain, this.domain ) )
+            .domain( domain )
             .out( "num" );
 
     }
@@ -93,18 +100,6 @@ class Colormaker{
         array[ offset + 2 ] = ( color & 255 ) / 255;
 
         return array;
-
-    }
-
-    /**
-     * get color for an atom
-     * @abstract
-     * @param  {AtomProxy} atom - atom to get color for
-     * @return {Integer} hex atom color
-     */
-    atomColor( /*atom*/ ){
-
-        return 0xFFFFFF;
 
     }
 
@@ -153,18 +148,6 @@ class Colormaker{
     }
 
     /**
-     * return the color for a volume cell
-     * @abstract
-     * @param  {Integer} index - volume cell index
-     * @return {Integer} hex cell color
-     */
-    volumeColor( /*index*/ ){
-
-        return 0xFFFFFF;
-
-    }
-
-    /**
      * safe a volume cell color to an array
      * @param  {Integer} index - volume cell index
      * @param  {Array|TypedArray} array - destination
@@ -176,18 +159,6 @@ class Colormaker{
         return this.colorToArray(
             this.volumeColor( index ), array, offset
         );
-
-    }
-
-    /**
-     * return the color for coordinates in space
-     * @abstract
-     * @param  {Vector3} coords - xyz coordinates
-     * @return {Integer} hex coords color
-     */
-    positionColor( /*coords*/ ){
-
-        return 0xFFFFFF;
 
     }
 

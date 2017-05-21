@@ -6,27 +6,49 @@
 
 
 import { RightMouseButton } from "../constants.js";
+import { almostIdentity } from "../math/math-utils.js";
 
 
 class MouseBehavior{
 
     constructor( stage/*, params*/ ){
 
+        this.stage = stage;
         this.mouse = stage.mouseObserver;
         this.controls = stage.trackballControls;
 
-        this.mouse.signals.scrolled.add( this.onScroll, this );
-        this.mouse.signals.dragged.add( this.onDrag, this );
+        this.stage.signals.hovered.add( this._onHover, this );
+        this.mouse.signals.scrolled.add( this._onScroll, this );
+        this.mouse.signals.dragged.add( this._onDrag, this );
 
     }
 
-    onScroll( delta ){
+    _onHover( pickingProxy ){
 
-        this.controls.zoom( delta );
+        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
+            this.stage.transformComponent = pickingProxy.component;
+        }
 
     }
 
-    onDrag( x, y ){
+    _onScroll( delta ){
+
+        if( this.mouse.shiftKey ){
+            const sp = this.stage.getParameters();
+            const focus = sp.clipNear * 2;
+            const sign = Math.sign( delta );
+            const step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
+            this.stage.setFocus( focus + step );
+        }else if( this.mouse.ctrlKey ){
+            const sp = this.stage.getParameters();
+            this.stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
+        }else{
+            this.controls.zoom( delta );
+        }
+
+    }
+
+    _onDrag( x, y ){
 
         if( this.mouse.which === RightMouseButton ){
             this.controls.pan( x, y );
@@ -37,8 +59,9 @@ class MouseBehavior{
     }
 
     dispose(){
-        this.mouse.signals.scrolled.remove( this.onScroll, this );
-        this.mouse.signals.dragged.remove( this.onDrag, this );
+        this.stage.signals.hovered.remove( this._onHover, this );
+        this.mouse.signals.scrolled.remove( this._onScroll, this );
+        this.mouse.signals.dragged.remove( this._onDrag, this );
     }
 
 }

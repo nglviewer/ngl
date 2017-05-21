@@ -14,15 +14,15 @@ import Surface from "./surface.js";
 
 WorkerRegistry.add( "molsurf", function func( e, callback ){
 
-    var a = e.data.args;
-    var p = e.data.params;
+    const a = e.data.args;
+    const p = e.data.params;
     if( a && p ){
-        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
-        var surf = new SurfClass( a.coordList, a.radiusList, a.indexList );
-        var sd = surf.getSurface(
+        const SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        const surf = new SurfClass( a.coordList, a.radiusList, a.indexList );
+        const sd = surf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
-        var transferList = [ sd.position.buffer, sd.index.buffer ];
+        const transferList = [ sd.position.buffer, sd.index.buffer ];
         if( sd.normal ) transferList.push( sd.normal.buffer );
         if( sd.atomindex ) transferList.push( sd.atomindex.buffer );
         callback( {
@@ -34,27 +34,40 @@ WorkerRegistry.add( "molsurf", function func( e, callback ){
 }, [ EDTSurface, AVSurface ] );
 
 
+/**
+ * Molecular surface parameter object.
+ * @typedef {Object} MolecularSurfaceParameters - stage parameters
+ * @property {String} type - "av" or "edt"
+ * @property {Number} probeRadius - probe radius
+ * @property {Number} scaleFactor - higher for better quality
+ * @property {Integer} smooth - number of smoothing cycles to apply
+ * @property {String} name - name for created surface
+ */
 
-function MolecularSurface( structure ){
 
-    this.structure = structure;
+/**
+ * Create Molecular surfaces
+ */
+class MolecularSurface{
 
-}
+    constructor( structure ){
 
-MolecularSurface.prototype = {
+        this.structure = structure;
 
-    getAtomData: function(){
+    }
+
+    _getAtomData(){
 
         return this.structure.getAtomData( {
             what: { position: true, radius: true, index: true },
             radiusParams: { radius: "vdw", scale: 1 }
         } );
 
-    },
+    }
 
-    makeSurface: function( sd, p ){
+    _makeSurface( sd, p ){
 
-        var surface = new Surface( "", "", sd );
+        var surface = new Surface( p.name, "", sd );
 
         surface.info.type = p.type;
         surface.info.probeRadius = p.probeRadius;
@@ -64,30 +77,41 @@ MolecularSurface.prototype = {
 
         return surface;
 
-    },
+    }
 
-    getSurface: function( params ){
+    /**
+     * Get molecular surface
+     * @param {MolecularSurfaceParameters} params - parameters for surface creation
+     * @return {Surface} the surface
+     */
+    getSurface( params ){
 
-        var p = params || {};
+        const p = params || {};
 
-        var atomData = this.getAtomData();
-        var coordList = atomData.position;
-        var radiusList = atomData.radius;
-        var indexList = atomData.index;
+        const atomData = this._getAtomData();
+        const coordList = atomData.position;
+        const radiusList = atomData.radius;
+        const indexList = atomData.index;
 
-        var SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
-        var surf = new SurfClass( coordList, radiusList, indexList );
-        var sd = surf.getSurface(
+        const SurfClass = ( p.type === "av" ) ? AVSurface : EDTSurface;
+        const surf = new SurfClass( coordList, radiusList, indexList );
+        const sd = surf.getSurface(
             p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
         );
 
-        return this.makeSurface( sd, p );
+        return this._makeSurface( sd, p );
 
-    },
+    }
 
-    getSurfaceWorker: function( params, callback ){
+    /**
+     * Get molecular surface asynchronous
+     * @param {MolecularSurfaceParameters} params - parameters for surface creation
+     * @param {function(surface: Surface)} callback - function to be called after surface is created
+     * @return {undefined}
+     */
+    getSurfaceWorker( params, callback ){
 
-        var p = Object.assign( {}, params );
+        const p = Object.assign( {}, params );
 
         if( window.Worker ){
 
@@ -95,12 +119,12 @@ MolecularSurface.prototype = {
                 this.worker = new Worker( "molsurf" );
             }
 
-            var atomData = this.getAtomData();
-            var coordList = atomData.position;
-            var radiusList = atomData.radius;
-            var indexList = atomData.index;
+            const atomData = this._getAtomData();
+            const coordList = atomData.position;
+            const radiusList = atomData.radius;
+            const indexList = atomData.index;
 
-            var msg = {
+            const msg = {
                 args: {
                     coordList: coordList,
                     radiusList: radiusList,
@@ -109,45 +133,48 @@ MolecularSurface.prototype = {
                 params: p
             };
 
-            var transferList = [
+            const transferList = [
                 coordList.buffer, radiusList.buffer, indexList.buffer
             ];
 
             this.worker.post( msg, transferList,
 
-                function( e ){
-                    var sd = e.data.sd;
-                    callback( this.makeSurface( sd, p ) );
-                }.bind( this ),
+                e => {
+                    callback( this._makeSurface( e.data.sd, p ) );
+                },
 
-                function( e ){
+                e => {
                     console.warn(
                         "MolecularSurface.getSurfaceWorker error - trying without worker", e
                     );
                     this.worker.terminate();
                     this.worker = undefined;
-                    var surface = this.getSurface( p );
+                    const surface = this.getSurface( p );
                     callback( surface );
-                }.bind( this )
+                }
 
             );
 
         }else{
 
-            var surface = this.getSurface( p );
+            const surface = this.getSurface( p );
             callback( surface );
 
         }
 
-    },
+    }
 
-    dispose: function(){
+    /**
+     * Cleanup
+     * @return {undefined}
+     */
+    dispose(){
 
         if( this.worker ) this.worker.terminate();
 
     }
 
-};
+}
 
 
 export default MolecularSurface;

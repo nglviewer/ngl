@@ -11,10 +11,20 @@ import "../shader/Line.frag";
 import Buffer from "./buffer.js";
 
 
+/**
+ * Line buffer. Draws lines with a fixed width in pixels.
+ *
+ * @example
+ * var lineBuffer = new LineBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 1, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] )
+ * } );
+ */
 class LineBuffer extends Buffer{
 
     /**
-     * make line buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position1 - from positions
      * @param  {Float32Array} data.position2 - to positions
@@ -113,7 +123,7 @@ class LineBuffer extends Buffer{
 
     }
 
-    get line (){ return true; }
+    get isLine (){ return true; }
     get vertexShader (){ return "Line.vert"; }
     get fragmentShader (){ return "Line.frag"; }
 

@@ -12,10 +12,12 @@ import { Log } from "../globals.js";
 import Buffer from "./buffer.js";
 
 
+/**
+ * Trace buffer. Draws a series of lines.
+ */
 class TraceBuffer extends Buffer{
 
     /**
-     * make trace buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.color - colors
@@ -102,7 +104,7 @@ class TraceBuffer extends Buffer{
 
     }
 
-    get line (){ return true; }
+    get isLine (){ return true; }
     get vertexShader (){ return "Line.vert"; }
     get fragmentShader (){ return "Line.frag"; }
 

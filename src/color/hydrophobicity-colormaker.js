@@ -13,6 +13,9 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Color by hydrophobicity
+ */
 class HydrophobicityColormaker extends Colormaker{
 
     constructor( params ){

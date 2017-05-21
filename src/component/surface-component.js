@@ -10,10 +10,19 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a {@link Surface} object
+ *
+ * @example
+ * // get a surface component by loading a surface file into the stage
+ * stage.loadFile( "url/for/surface" ).then( function( surfaceComponent ){
+ *     surfaceComponent.addRepresentation( "surface" );
+ *     surfaceComponent.autoView();
+ * } );
+ */
 class SurfaceComponent extends Component{
 
     /**
-     * Create component wrapping a surface object
      * @param {Stage} stage - stage object the component belongs to
      * @param {Surface} surface - surface object to wrap
      * @param {ComponentParameters} params - component parameters
@@ -31,16 +40,12 @@ class SurfaceComponent extends Component{
 
     /**
      * Component type
-     * @alias SurfaceComponent#type
-     * @constant
      * @type {String}
-     * @default
      */
     get type(){ return "surface"; }
 
     /**
      * Add a new surface representation to the component
-     * @alias SurfaceComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
      *                        surface, dot.
      * @param {SurfaceRepresentationParameters} params - representation parameters
@@ -53,13 +58,13 @@ class SurfaceComponent extends Component{
 
     }
 
-    getBox(){
+    getBoxUntransformed(){
 
         return this.surface.boundingBox;
 
     }
 
-    getCenter(){
+    getCenterUntransformed(){
 
         return this.surface.center;
 

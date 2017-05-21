@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by chain id
+ */
 class ChainidColormaker extends Colormaker{
 
     constructor( params ){

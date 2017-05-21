@@ -1,6 +1,5 @@
 
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/arose/ngl/blob/master/LICENSE)
-[![Version](http://img.shields.io/badge/version-0.9.3-blue.svg?style=flat)](https://github.com/arose/ngl/releases/tag/v0.9.3)
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
 [![npm version](https://badge.fury.io/js/ngl.svg)](https://badge.fury.io/js/ngl)
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)
@@ -11,7 +10,9 @@ NGL Viewer is a web application for molecular visualization. [WebGL](https://get
 See it in action:
 
 * [Web application](http://arose.github.io/ngl/?example=3pqr)
-* [API documentation](http://arose.github.io/ngl/api/)
+* [Documentation](http://arose.github.io/ngl/api/)
+* [CodePen template](https://codepen.io/pen?template=JNLMXb)
+* [Pens tagged _ngl_](https://codepen.io/tag/ngl/)
 
 
 
@@ -67,10 +68,10 @@ This project would not be possible without many fine open-source projects. Espec
 
 * [three.js](http://threejs.org/)
     * NGL relies on the three.js library to interface WebGL
-    * NGL's documentation uses the three.js documentation as a template
     * NGL's GUI is based on the three.js editor UI
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
+* [ESDoc](https://esdoc.org/) - for documentation
 * [Mocha](https://mochajs.org/) and [Chai](http://chaijs.com/) - for unit testing
 * [Chroma.js](https://github.com/gka/chroma.js) - for color handling
 * [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - for color picking

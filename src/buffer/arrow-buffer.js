@@ -5,7 +5,7 @@
  */
 
 
-import { Vector3, Group } from "../../lib/three.es6.js";
+import { Matrix4, Vector3, Group } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
 import Buffer from "./buffer.js";
@@ -14,17 +14,28 @@ import ConeBuffer from "./cone-buffer.js";
 import GeometryGroup from "../viewer/geometry-group.js";
 
 
+/**
+ * Arrow buffer. Draws arrows made from a cylinder and a cone.
+ * @implements {Buffer}
+ *
+ * @example
+ * var arrowBuffer = new ArrowBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 10, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
 class ArrowBuffer{
 
     /**
-     * Create arrow buffer
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position1 - from positions
      * @param {Float32Array} data.position2 - to positions
      * @param {Float32Array} data.color - colors
      * @param {Float32Array} data.radius - radii
-     * @param {Float32Array} [data.picking] - picking ids
-     * @param {BufferParams} [params] - parameters object
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
      */
     constructor( data, params ){
 
@@ -34,31 +45,21 @@ class ArrowBuffer{
         this.aspectRatio = defaults( p.aspectRatio, 1.5 );
         this.wireframe = defaults( p.wireframe, false );
 
-        const radialSegments = defaults( p.radialSegments, 50 );
-        const openEnded = defaults( p.openEnded, false );
-        const disableImpostor = defaults( p.disableImpostor, false );
-
         this.splitPosition = new Float32Array( d.position1.length );
         this.cylinderRadius = new Float32Array( d.radius.length );
 
         var attr = this.makeAttributes( d );
+        var bufferParams = {
+            radialSegments: defaults( p.radialSegments, 50 ),
+            openEnded: defaults( p.openEnded, false ),
+            disableImpostor: defaults( p.disableImpostor, false )
+        }
 
         this.cylinderBuffer = new CylinderBuffer(
-            attr.cylinder,
-            {
-                radialSegments: radialSegments,
-                openEnded: openEnded,
-                disableImpostor: disableImpostor
-            }
+            attr.cylinder, bufferParams
         );
-
         this.coneBuffer = new ConeBuffer(
-            attr.cone,
-            {
-                radialSegments: radialSegments,
-                openEnded: openEnded,
-                disableImpostor: disableImpostor
-            }
+            attr.cone, bufferParams
         );
 
         this.geometry = new GeometryGroup( [
@@ -70,8 +71,18 @@ class ArrowBuffer{
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
 
+        // requires Group objects to be present
+        this.matrix = defaults( p.matrix, new Matrix4() );
+
         this.picking = d.picking;
 
+    }
+
+    set matrix ( m ){
+        Buffer.prototype.setMatrix.call( this, m );
+    }
+    get matrix (){
+        return this.group.matrix.clone();
     }
 
     get pickable (){
@@ -175,13 +186,21 @@ class ArrowBuffer{
      */
     setParameters( params ){
 
-        this.cylinderBuffer.setParameters( params );
-        this.coneBuffer.setParameters( params );
+        params = Object.assign( {}, params );
+
+        if( params && params.matrix !== undefined ){
+            this.matrix = params.matrix;
+        }
+        delete params.matrix;
 
         if( params && params.wireframe !== undefined ){
             this.wireframe = params.wireframe;
             this.setVisibility( this.visible );
         }
+        delete params.wireframe;
+
+        this.cylinderBuffer.setParameters( params );
+        this.coneBuffer.setParameters( params );
 
     }
 

@@ -711,8 +711,8 @@ function calculateBondsWithin( structure, onlyAddRung ){
             a1.index = r.traceAtomIndex;
             a2.index = r.rungEndAtomIndex;
             rungBondStore.addBond( a1, a2 );
-            rungAtomSet.add_unsafe( a1.index );
-            rungAtomSet.add_unsafe( a2.index );
+            rungAtomSet.set( a1.index );
+            rungAtomSet.set( a2.index );
         }
 
     } );
@@ -751,8 +751,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;
                 backboneBondStore.addBond( ap1, ap2 );
-                backboneAtomSet.add_unsafe( ap1.index );
-                backboneAtomSet.add_unsafe( ap2.index );
+                backboneAtomSet.set( ap1.index );
+                backboneAtomSet.set( ap2.index );
             }
         }
     }
@@ -906,7 +906,7 @@ function buildUnitcellAssembly( structure ){
 
 
 const elm1 = [ "H", "C", "O", "N", "S", "P" ];
-const elm2 = [ "NA", "CL" ];
+const elm2 = [ "NA", "CL", "FE" ];
 
 function guessElement( atomName ){
 

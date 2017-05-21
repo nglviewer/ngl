@@ -5,10 +5,12 @@
  */
 
 
-import { Vector2, Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
+import { Vector3, Matrix4, Quaternion } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
-import { ensureVector3, ensureMatrix4, ensureQuaternion } from "../utils.js";
+import {
+    ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
+} from "../utils.js";
 
 
 /**
@@ -16,14 +18,6 @@ import { ensureVector3, ensureMatrix4, ensureQuaternion } from "../utils.js";
  * used for scene rotation, scale part for scene camera distance and
  * position part for scene translation
  * @typedef {Matrix4} OrientationMatrix - orientation matrix
- */
-
-
-/**
- * {@link Signal}, dispatched when viewer controls change
- * @example
- * viewerControls.signals.changed.add( function(){ ... } );
- * @event ViewerControls#changed
  */
 
 
@@ -38,10 +32,12 @@ const tmpRotateVector = new Vector3();
 const tmpAlignMatrix = new Matrix4();
 
 
+/**
+ * Viewer controls
+ */
 class ViewerControls{
 
     /**
-     * create viewer controls
      * @param  {Stage} stage - the stage object
      */
     constructor( stage ){
@@ -49,6 +45,9 @@ class ViewerControls{
         this.stage = stage;
         this.viewer = stage.viewer;
 
+        /**
+         * @type {{changed: Signal}}
+         */
         this.signals = {
             changed: new Signal()
         };
@@ -57,8 +56,6 @@ class ViewerControls{
 
     /**
      * scene center position
-     * @member
-     * @readOnly
      * @type {Vector3}
      */
     get position(){
@@ -69,8 +66,6 @@ class ViewerControls{
 
     /**
      * scene rotation
-     * @member
-     * @readOnly
      * @type {Quaternion}
      */
     get rotation(){
@@ -81,7 +76,7 @@ class ViewerControls{
 
     /**
      * Trigger render and emit changed event
-     * @fires ViewerControls#changed
+     * @emits {ViewerControls.signals.changed}
      * @return {undefined}
      */
     changed(){
@@ -93,7 +88,7 @@ class ViewerControls{
 
     getPositionOnCanvas( position, optionalTarget ){
 
-        const canvasPosition = optionalTarget || new Vector2();
+        const canvasPosition = ensureVector2( optionalTarget );
         const viewer = this.viewer;
 
         tmpCanvasVector.copy( position )
@@ -115,7 +110,7 @@ class ViewerControls{
      */
     getOrientation( optionalTarget ){
 
-        const m = optionalTarget || new Matrix4();
+        const m = ensureMatrix4( optionalTarget );
 
         m.copy( this.viewer.rotationGroup.matrix );
         const z = -this.viewer.camera.position.z;
@@ -135,10 +130,11 @@ class ViewerControls{
 
         ensureMatrix4( orientation ).decompose( tmpP, tmpQ, tmpS )
 
-        this.viewer.rotationGroup.setRotationFromQuaternion( tmpQ );
-        this.viewer.translationGroup.position.copy( tmpP );
-        this.viewer.camera.position.z = -tmpS.z;
-        this.viewer.updateZoom();
+        const v = this.viewer;
+        v.rotationGroup.setRotationFromQuaternion( tmpQ );
+        v.translationGroup.position.copy( tmpP );
+        v.camera.position.z = -tmpS.z;
+        v.updateZoom();
         this.changed();
 
     }

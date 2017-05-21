@@ -274,7 +274,7 @@ function sortProjectedPosition( scene, camera ){
         for( i = 0; i < n; ++i ){
 
             vertex.fromArray( attributes.position.array, i * 3 );
-            vertex.applyProjection( modelViewProjectionMatrix );
+            vertex.applyMatrix4( modelViewProjectionMatrix );
 
             // negate, so that sorting order is reversed
             zArray[ i ] = -vertex.z;

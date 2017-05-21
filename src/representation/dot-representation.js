@@ -9,114 +9,109 @@ import { ExtensionFragDepth } from "../globals.js";
 import { defaults } from "../utils.js";
 import Representation from "./representation.js";
 import Volume from "../surface/volume.js";
+import FilteredVolume from "../surface/filtered-volume.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 import PointBuffer from "../buffer/point-buffer.js";
 
 
-function DotRepresentation( surface, viewer, params ){
+class DotRepresentation extends Representation{
 
-    Representation.call( this, surface, viewer, params );
+    constructor( surface, viewer, params ){
 
-    if( surface instanceof Volume ){
-        this.surface = undefined;
-        this.volume = surface;
-    }else{
-        this.surface = surface;
-        this.volume = undefined;
+        super( surface, viewer, params );
+
+        this.type = "dot";
+
+        this.parameters = Object.assign( {
+
+            thresholdType: {
+                type: "select", rebuild: true, options: {
+                    "value": "value", "sigma": "sigma"
+                }
+            },
+            thresholdMin: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdMax: {
+                type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
+            },
+            thresholdOut: {
+                type: "boolean", rebuild: true
+            },
+            dotType: {
+                type: "select", rebuild: true, options: {
+                    "": "",
+                    "sphere": "sphere",
+                    "point": "point"
+                }
+            },
+            radiusType: {
+                type: "select", options: {
+                    "": "",
+                    "value": "value",
+                    "abs-value": "abs-value",
+                    "value-min": "value-min",
+                    "deviation": "deviation",
+                    "size": "size"
+                }
+            },
+            radius: {
+                type: "number", precision: 3, max: 10.0, min: 0.001, property: "size"
+            },
+            scale: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            sphereDetail: true,
+            disableImpostor: true,
+
+            pointSize: {
+                type: "number", precision: 1, max: 100, min: 0, buffer: true
+            },
+            sizeAttenuation: {
+                type: "boolean", buffer: true
+            },
+            sortParticles: {
+                type: "boolean", rebuild: true
+            },
+            useTexture: {
+                type: "boolean", buffer: true
+            },
+            alphaTest: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+            forceTransparent: {
+                type: "boolean", buffer: true
+            },
+            edgeBleach: {
+                type: "range", step: 0.001, max: 1, min: 0, buffer: true
+            },
+
+        }, this.parameters, {
+
+            colorScheme: {
+                type: "select", update: "color", options: {
+                    "": "",
+                    "value": "value",
+                    "uniform": "uniform",
+                    "random": "random"
+                }
+            },
+
+        } );
+
+        if( surface instanceof Volume ){
+            this.surface = undefined;
+            this.volume = new FilteredVolume( surface );
+        }else{
+            this.surface = surface;
+            this.volume = undefined;
+        }
+
+        this.init( params );
+
     }
 
-    this.build();
-
-}
-
-DotRepresentation.prototype = Object.assign( Object.create(
-
-    Representation.prototype ), {
-
-    constructor: DotRepresentation,
-
-    type: "dot",
-
-    parameters: Object.assign( {
-
-        thresholdType: {
-            type: "select", rebuild: true, options: {
-                "value": "value", "sigma": "sigma"
-            }
-        },
-        thresholdMin: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdMax: {
-            type: "number", precision: 3, max: Infinity, min: -Infinity, rebuild: true
-        },
-        thresholdOut: {
-            type: "boolean", rebuild: true
-        },
-        dotType: {
-            type: "select", rebuild: true, options: {
-                "": "",
-                "sphere": "sphere",
-                "point": "point"
-            }
-        },
-        radiusType: {
-            type: "select", options: {
-                "": "",
-                "value": "value",
-                "abs-value": "abs-value",
-                "value-min": "value-min",
-                "deviation": "deviation",
-                "size": "size"
-            }
-        },
-        radius: {
-            type: "number", precision: 3, max: 10.0, min: 0.001, property: "size"
-        },
-        scale: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        sphereDetail: true,
-        disableImpostor: true,
-
-        pointSize: {
-            type: "number", precision: 1, max: 100, min: 0, buffer: true
-        },
-        sizeAttenuation: {
-            type: "boolean", buffer: true
-        },
-        sortParticles: {
-            type: "boolean", rebuild: true
-        },
-        useTexture: {
-            type: "boolean", buffer: true
-        },
-        alphaTest: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-        forceTransparent: {
-            type: "boolean", buffer: true
-        },
-        edgeBleach: {
-            type: "range", step: 0.001, max: 1, min: 0, buffer: true
-        },
-
-    }, Representation.prototype.parameters, {
-
-        colorScheme: {
-            type: "select", update: "color", options: {
-                "": "",
-                "value": "value",
-                "uniform": "uniform",
-                "random": "random"
-            }
-        },
-
-    } ),
-
-    defaultSize: 0.1,
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
@@ -138,11 +133,13 @@ DotRepresentation.prototype = Object.assign( Object.create(
         this.forceTransparent = defaults( p.forceTransparent, false );
         this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-        Representation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+        this.build();
 
-    attach: function( callback ){
+    }
+
+    attach( callback ){
 
         this.bufferList.forEach( buffer => {
             this.viewer.add( buffer );
@@ -151,9 +148,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         callback();
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         var dotData = {};
 
@@ -169,7 +166,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
                 thresholdMin = this.thresholdMin;
                 thresholdMax = this.thresholdMax;
             }
-            volume.filterData( thresholdMin, thresholdMax, this.thresholdOut );
+            volume.setFilter( thresholdMin, thresholdMax, this.thresholdOut );
 
             dotData.position = volume.getDataPosition();
             dotData.color = volume.getDataColor( this.getColorParams() );
@@ -220,9 +217,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         this.bufferList.push( this.dotBuffer );
 
-    },
+    }
 
-    update: function( what ){
+    update( what ){
 
         if( this.bufferList.length === 0 ) return;
 
@@ -256,9 +253,9 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         this.dotBuffer.setAttributes( dotData );
 
-    },
+    }
 
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         what = what || {};
 
@@ -297,7 +294,7 @@ DotRepresentation.prototype = Object.assign( Object.create(
         if( params && params.radiusType !== undefined ){
 
             if( params.radiusType === "radius" ){
-                this.radius = this.defaultSize;
+                this.radius = 0.1;
             }else{
                 this.radius = params.radiusType;
             }
@@ -332,15 +329,13 @@ DotRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-        Representation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 export default DotRepresentation;

@@ -8,13 +8,20 @@
 import { getFileInfo, getAbsolutePath } from "../utils.js";
 
 
+const reProtocol = /^((http|https|ftp):)*\/\//;
+
+
 function StaticDatasource( baseUrl ){
 
     baseUrl = baseUrl || "";
 
     this.getUrl = function( src ){
-        var info = getFileInfo( src );
-        return getAbsolutePath( baseUrl + info.path );
+        const info = getFileInfo( src );
+        let url = baseUrl + info.path;
+        if( !reProtocol.test( baseUrl ) ){
+            url = getAbsolutePath( url );
+        }
+        return url;
     };
 
 }

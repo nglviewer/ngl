@@ -12,6 +12,9 @@ import Colormaker from "./colormaker.js";
 import { ColormakerRegistry } from "../globals.js";
 
 
+/**
+ * Color based on {@link Selection}
+ */
 class SelectionColormaker extends Colormaker{
 
     constructor( params ){

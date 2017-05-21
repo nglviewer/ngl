@@ -10,6 +10,9 @@ import Colormaker from "./colormaker.js";
 import { countSetBits } from "../math/math-utils.js";
 
 
+/**
+ * Color by validation gometry quality
+ */
 class GeoqualityColormaker extends Colormaker{
 
     constructor( params ){

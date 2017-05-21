@@ -5,6 +5,8 @@
  */
 
 
+import { Vector3 } from "../../lib/three.es6.js";
+
 import { TwoPI } from "./math-constants.js";
 
 
@@ -102,9 +104,9 @@ function calculateDirectionArray( array1, array2 ){
 }
 
 
-function uniformArray( n, a ){
+function uniformArray( n, a, optionalTarget ){
 
-    var array = new Float32Array( n );
+    var array = optionalTarget || new Float32Array( n );
 
     for( var i = 0; i < n; ++i ){
 
@@ -117,9 +119,9 @@ function uniformArray( n, a ){
 }
 
 
-function uniformArray3( n, a, b, c ){
+function uniformArray3( n, a, b, c, optionalTarget ){
 
-    var array = new Float32Array( n * 3 );
+    var array = optionalTarget || new Float32Array( n * 3 );
 
     var j;
 
@@ -134,6 +136,24 @@ function uniformArray3( n, a, b, c ){
     }
 
     return array;
+
+}
+
+
+function centerArray3( array, center ){
+
+    const n = array.length;
+    center = center || new Vector3();
+
+    for( let i = 0; i < n; i+=3 ){
+        center.x += array[ i ];
+        center.y += array[ i + 1 ];
+        center.z += array[ i + 2 ];
+    }
+
+    center.divideScalar( n / 3 );
+
+    return center;
 
 }
 
@@ -555,8 +575,8 @@ function quickselectCmp( arr, n, cmp, left, right ){
 
 function arrayMax( array ){
 
-    var max = -Infinity;
-    for( var i = 0, il = array.length; i < il; ++i ){
+    let max = -Infinity;
+    for( let i = 0, il = array.length; i < il; ++i ){
         if( array[ i ] > max ) max = array[ i ];
     }
     return max;
@@ -566,11 +586,43 @@ function arrayMax( array ){
 
 function arrayMin( array ){
 
-    var min = Infinity;
-    for( var i = 0, il = array.length; i < il; ++i ){
+    let min = Infinity;
+    for( let i = 0, il = array.length; i < il; ++i ){
         if( array[ i ] < min ) min = array[ i ];
     }
     return min;
+
+}
+
+
+function arraySum( array ){
+
+    const n = array.length;
+    let sum = 0;
+    for( let i = 0; i < n; ++i ){
+        sum += array[ i ];
+    }
+    return sum;
+
+}
+
+
+function arrayMean( array ){
+
+    return arraySum( array ) / array.length;
+
+}
+
+
+function arrayRms( array ){
+
+    const n = array.length;
+    let sumSq = 0;
+    for( let i = 0; i < n; ++i ){
+        const di = array[ i ];
+        sumSq += di * di;
+    }
+    return Math.sqrt( sumSq / n );
 
 }
 
@@ -601,6 +653,7 @@ export {
     calculateDirectionArray,
     uniformArray,
     uniformArray3,
+    centerArray3,
     serialArray,
     serialBlockArray,
     randomColorArray,
@@ -614,6 +667,9 @@ export {
     quickselectCmp,
     arrayMax,
     arrayMin,
+    arraySum,
+    arrayMean,
+    arrayRms,
     arraySorted,
     arraySortedCmp
 };

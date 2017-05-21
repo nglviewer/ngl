@@ -6,19 +6,10 @@
 
 
 import { Vector3, Box3 } from "../../lib/three.es6.js";
-import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log } from "../globals.js";
 import Structure from "./structure.js";
 import Selection from "../selection.js";
-
-
-/**
- * {@link Signal}, dispatched when StructureView.refresh() is called
- * @example
- * structureView.signals.refreshed.add( function(){ ... } );
- * @event StructureView#refreshed
- */
 
 
 /**
@@ -34,111 +25,22 @@ Structure.prototype.getView = function( selection ){
 
 /**
  * View on the structure, restricted to the selection
- * @class
- * @extends Structure
- * @param {Structure} structure - the structure
- * @param {Selection} selection - the selection
  */
-function StructureView( structure, selection ){
+class StructureView extends Structure{
 
-    this.signals = {
-        refreshed: new Signal(),
-    };
+    /**
+     * @param {Structure} structure - the structure
+     * @param {Selection} selection - the selection
+     */
+    constructor( structure, selection ){
 
-    this.structure = structure;
-    this.selection = selection;
+        super();
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
+        this.structure = structure;
+        this.selection = selection;
 
-    this.init();
-    this.refresh();
-
-}
-
-StructureView.prototype = Object.assign( Object.create(
-
-    Structure.prototype ), {
-
-    constructor: StructureView,
-    type: "StructureView",
-
-    init: function(){
-
-        Object.defineProperties( this, {
-            name: {
-                get: function(){ return this.structure.name; }
-            },
-            path: {
-                get: function(){ return this.structure.path; }
-            },
-            title: {
-                get: function(){ return this.structure.title; }
-            },
-            id: {
-                get: function(){ return this.structure.id; }
-            },
-
-            atomSetDict: {
-                get: function(){ return this.structure.atomSetDict; }
-            },
-            biomolDict: {
-                get: function(){ return this.structure.biomolDict; }
-            },
-            entityList: {
-                get: function(){ return this.structure.entityList; }
-            },
-            unitcell: {
-                get: function(){ return this.structure.unitcell; }
-            },
-
-            frames: {
-                get: function(){ return this.structure.frames; }
-            },
-            boxes: {
-                get: function(){ return this.structure.boxes; }
-            },
-
-            validation: {
-                get: function(){ return this.structure.validation; }
-            },
-
-            bondStore: {
-                get: function(){ return this.structure.bondStore; }
-            },
-            backboneBondStore: {
-                get: function(){ return this.structure.backboneBondStore; }
-            },
-            rungBondStore: {
-                get: function(){ return this.structure.rungBondStore; }
-            },
-            atomStore: {
-                get: function(){ return this.structure.atomStore; }
-            },
-            residueStore: {
-                get: function(){ return this.structure.residueStore; }
-            },
-            chainStore: {
-                get: function(){ return this.structure.chainStore; }
-            },
-            modelStore: {
-                get: function(){ return this.structure.modelStore; }
-            },
-
-            atomMap: {
-                get: function(){ return this.structure.atomMap; }
-            },
-            residueMap: {
-                get: function(){ return this.structure.residueMap; }
-            },
-
-            bondHash: {
-                get: function(){ return this.structure.bondHash; }
-            },
-            spatialHash: {
-                get: function(){ return this.structure.spatialHash; }
-            }
-        } );
+        this.center = new Vector3();
+        this.boundingBox = new Box3();
 
         this._bp = this.getBondProxy();
         this._ap = this.getAtomProxy();
@@ -151,14 +53,43 @@ StructureView.prototype = Object.assign( Object.create(
 
         this.structure.signals.refreshed.add( this.refresh, this );
 
-    },
+        this.refresh();
+
+    }
+
+    init(){}
+
+    get type(){ return "StructureView"; }
+
+    get name(){ return this.structure.name; }
+    get path(){ return this.structure.path; }
+    get title(){ return this.structure.title; }
+    get id(){ return this.structure.id; }
+    get atomSetDict(){ return this.structure.atomSetDict; }
+    get biomolDict(){ return this.structure.biomolDict; }
+    get entityList(){ return this.structure.entityList; }
+    get unitcell(){ return this.structure.unitcell; }
+    get frames(){ return this.structure.frames; }
+    get boxes(){ return this.structure.boxes; }
+    get validation(){ return this.structure.validation; }
+    get bondStore(){ return this.structure.bondStore; }
+    get backboneBondStore(){ return this.structure.backboneBondStore; }
+    get rungBondStore(){ return this.structure.rungBondStore; }
+    get atomStore(){ return this.structure.atomStore; }
+    get residueStore(){ return this.structure.residueStore; }
+    get chainStore(){ return this.structure.chainStore; }
+    get modelStore(){ return this.structure.modelStore; }
+    get atomMap(){ return this.structure.atomMap; }
+    get residueMap(){ return this.structure.residueMap; }
+    get bondHash(){ return this.structure.bondHash; }
+    get spatialHash(){ return this.structure.spatialHash; }
 
     /**
      * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
-     * @fires StructureView#refreshed
+     * @emits {Structure.signals.refreshed} when refreshed
      * @return {undefined}
      */
-    refresh: function(){
+    refresh(){
 
         if( Debug ) Log.time( "StructureView.refresh" );
 
@@ -166,53 +97,47 @@ StructureView.prototype = Object.assign( Object.create(
 
         this.atomSet = this.getAtomSet( this.selection, true );
         if( this.structure.atomSet ){
-            if( Debug ) Log.time( "StructureView.refresh#atomSet.intersection" );
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );
-            if( Debug ) Log.timeEnd( "StructureView.refresh#atomSet.intersection" );
         }
 
         this.bondSet = this.getBondSet();
 
-        if( Debug ) Log.time( "StructureView.refresh#atomSetDict.new_intersection" );
-        for( var name in this.atomSetDict ){
-            var as = this.atomSetDict[ name ];
-            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
+        for( let name in this.atomSetDict ){
+            const atomSet = this.atomSetDict[ name ];
+            this.atomSetCache[ "__" + name ] = atomSet.makeIntersection( this.atomSet );
         }
-        if( Debug ) Log.timeEnd( "StructureView.refresh#atomSetDict.new_intersection" );
 
-        if( Debug ) Log.time( "StructureView.refresh#size" );
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-        if( Debug ) Log.timeEnd( "StructureView.refresh#size" );
+        this.atomCount = this.atomSet.getSize();
+        this.bondCount = this.bondSet.getSize();
 
         this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.center();
+        this.center = this.boundingBox.getCenter();
 
         if( Debug ) Log.timeEnd( "StructureView.refresh" );
 
         this.signals.refreshed.dispatch();
 
-    },
+    }
 
     //
 
-    setSelection: function( selection ){
+    setSelection( selection ){
 
         this.selection = selection;
 
         this.refresh();
 
-    },
+    }
 
-    getSelection: function( selection ){
+    getSelection( selection ){
 
-        var seleList = [];
+        const seleList = [];
 
         if( selection && selection.string ){
             seleList.push( selection.string );
         }
 
-        var parentSelection = this.structure.getSelection();
+        const parentSelection = this.structure.getSelection();
         if( parentSelection && parentSelection.string ){
             seleList.push( parentSelection.string );
         }
@@ -221,112 +146,108 @@ StructureView.prototype = Object.assign( Object.create(
             seleList.push( this.selection.string );
         }
 
-        var sele = "";
+        let sele = "";
         if( seleList.length > 0 ){
             sele = "( " + seleList.join( " ) AND ( " ) + " )";
         }
 
         return new Selection( sele );
 
-    },
+    }
 
-    getStructure: function(){
+    getStructure(){
 
         return this.structure.getStructure();
 
-    },
+    }
 
     //
 
-    eachBond: function( callback, selection ){
+    eachBond( callback, selection ){
 
         this.structure.eachBond( callback, this.getSelection( selection ) );
 
-    },
+    }
 
-    eachAtom: function( callback, selection ){
+    eachAtom( callback, selection ){
 
-        var ap = this.getAtomProxy();
-        var as = this.getAtomSet( selection );
-        var n = this.atomStore.count;
+        const ap = this.getAtomProxy();
+        const atomSet = this.getAtomSet( selection );
+        const n = this.atomStore.count;
 
-        if( as && as.size() < n ){
-            as.forEach( function( index ){
+        if( atomSet.getSize() < n ){
+            atomSet.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
             } );
         }else{
-            for( var i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
                 ap.index = i;
                 callback( ap );
             }
         }
 
-    },
+    }
 
-    eachResidue: function( callback, selection ){
+    eachResidue( callback, selection ){
 
         this.structure.eachResidue( callback, this.getSelection( selection ) );
 
-    },
+    }
 
     /**
      * Not implemented
      * @alias StructureView#eachResidueN
      * @return {undefined}
      */
-    eachResidueN: function( /*n, callback*/ ){
+    eachResidueN( /*n, callback*/ ){
 
         console.error( "StructureView.eachResidueN() not implemented" );
 
-    },
+    }
 
-    eachChain: function( callback, selection ){
+    eachChain( callback, selection ){
 
         this.structure.eachChain( callback, this.getSelection( selection ) );
 
-    },
+    }
 
-    eachModel: function( callback, selection ){
+    eachModel( callback, selection ){
 
         this.structure.eachModel( callback, this.getSelection( selection ) );
 
-    },
+    }
 
     //
 
-    getAtomSet: function( selection, ignoreView ){
+    getAtomSet( selection, ignoreView ){
 
-        if( Debug ) Log.time( "StructureView.getAtomSet" );
-
-        var as = this.structure.getAtomSet( selection );
+        let atomSet = this.structure.getAtomSet( selection );
         if( !ignoreView && this.atomSet ){
-            as = as.new_intersection( this.atomSet );
+            atomSet = atomSet.makeIntersection( this.atomSet );
         }
 
-        if( Debug ) Log.timeEnd( "StructureView.getAtomSet" );
+        return atomSet;
 
-        return as;
-
-    },
+    }
 
     //
 
-    getAtomIndices: function( selection ){
+    getAtomIndices( selection ){
 
         return this.structure.getAtomIndices( this.getSelection( selection ) );
 
-    },
+    }
 
-    refreshPosition: function(){
+    refreshPosition(){
 
         return this.structure.refreshPosition();
 
-    },
+    }
 
     //
 
-    dispose: function(){
+    dispose(){
 
         if( this.selection ){
             this.selection.signals.stringChanged.remove( this.refresh, this );
@@ -344,7 +265,7 @@ StructureView.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default StructureView;

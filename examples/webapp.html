@@ -28,7 +28,7 @@
 
     <script>
         NGL.cssDirectory = "css/";
-        NGL.documentationUrl = "../build/docs/api/ngl/";
+        NGL.documentationUrl = "../build/docs/";
 
         // Datasources
         NGL.DatasourceRegistry.add(
@@ -48,6 +48,8 @@
             if( example ) NGL.ExampleRegistry.load( example, stage );
             var load = NGL.getQuery( "load" );
             if( load ) stage.loadFile( load, { defaultRepresentation: true } );
+            var script = NGL.getQuery( "script" );
+            if( script ) stage.loadFile( "./scripts/" + script + ".js" );
             var plugin = NGL.getQuery( "plugin" );
             if( plugin ) NGL.PluginRegistry.load( plugin, stage );
         } );

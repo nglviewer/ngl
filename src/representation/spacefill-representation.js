@@ -10,36 +10,32 @@ import StructureRepresentation from "./structure-representation.js";
 import SphereBuffer from "../buffer/sphere-buffer.js";
 
 
-function SpacefillRepresentation( structure, viewer, params ){
+class SpacefillRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-SpacefillRepresentation.prototype = Object.assign( Object.create(
+        this.type = "spacefill";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
+            sphereDetail: true,
+            disableImpostor: true
+        }, this.parameters );
 
-    constructor: SpacefillRepresentation,
+        this.init( params );
 
-    type: "spacefill",
+    }
 
-    parameters: Object.assign( {
-
-        sphereDetail: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var sphereBuffer = new SphereBuffer(
             sview.getAtomData( this.getAtomParams() ),
@@ -54,9 +50,9 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ sphereBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var sphereData = {};
@@ -77,7 +73,7 @@ SpacefillRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "spacefill", SpacefillRepresentation );

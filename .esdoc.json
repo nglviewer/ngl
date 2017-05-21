@@ -1,0 +1,38 @@
+{
+    "title": "NGL Viewer",
+    "source": "./src",
+    "destination": "./build/docs",
+    "manual": {
+        "globalIndex": false,
+        "asset": "./doc/images",
+        "index": "./doc/overview.md",
+        "overview": [],
+        "design": [],
+        "installation": [],
+        "usage": [
+            "./doc/usage/coloring.md",
+            "./doc/usage/custom-geometries.md",
+            "./doc/usage/embedding.md",
+            "./doc/usage/file-formats.md",
+            "./doc/usage/interaction-controls.md",
+            "./doc/usage/molecular-representations.md",
+            "./doc/usage/scripting.md",
+            "./doc/usage/selection-language.md"
+        ],
+        "tutorial": [],
+        "configuration": [],
+        "example": [ "./doc/usage/snippets.md" ],
+        "advanced": [],
+        "faq": [],
+        "changelog": [ "./CHANGELOG.md" ]
+    },
+    "plugins": [
+        {
+            "name": "./doc/plugins/header.js"
+        }
+    ],
+    "undocumentIdentifier": false,
+    "coverage": false,
+    "includeSource": true,
+    "lint": false
+}

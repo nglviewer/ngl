@@ -132,7 +132,7 @@ NGL.ExampleRegistry.addDict( {
         } ).then( function( o ){
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
-            o.autoView();
+            stage.autoView();
             // o.addTrajectory();
         } );
 
@@ -142,7 +142,7 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "cartoon", { sele: "*" } );
             // o.addRepresentation( "licorice", { sele: "*" } );
             o.autoView();
-            o.addTrajectory();
+            stage.addTrajectory();
         } );
 
     },
@@ -153,7 +153,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
@@ -161,7 +161,7 @@ NGL.ExampleRegistry.addDict( {
 
             o.addRepresentation( "cartoon", { sele: "*" } );
             o.addRepresentation( "ball+stick", { sele: "hetero" } );
-            o.autoView();
+            stage.autoView();
 
         } );
 
@@ -428,7 +428,6 @@ NGL.ExampleRegistry.addDict( {
             o.addRepresentation( "licorice", {
                 sele: "nucleic", color: "element", visible: false
             } );
-            o.addRepresentation( "spacefill", { sele: "nucleic", color: "picking" } );
 
             o.autoView( "nucleic" );
 
@@ -711,6 +710,21 @@ NGL.ExampleRegistry.addDict( {
 
     },
 
+    "buffer": function( stage ){
+
+        var shape = new NGL.Shape( "shape" );
+        var sphereBuffer = new NGL.SphereBuffer( {
+            position: new Float32Array( [ 0, 0, 0, 4, 0, 0 ] ),
+            color: new Float32Array( [ 1, 0, 0, 1, 1, 0 ] ),
+            radius: new Float32Array( [ 1, 1.2 ] )
+        } );
+        shape.addBuffer( sphereBuffer );
+        var shapeComp = stage.addComponentFromObject( shape );
+        shapeComp.addRepresentation( "buffer" );
+        shapeComp.autoView();
+
+    },
+
     "ccp4": function( stage ){
 
         stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
@@ -771,26 +785,23 @@ NGL.ExampleRegistry.addDict( {
 
     "slice": function( stage ){
 
-        stage.loadFile( "data://3pqr.ccp4.gz" ).then( function( o ){
+        Promise.all( [
+            stage.loadFile( "data://3pqr.ccp4.gz" ),
+            stage.loadFile( "data://3pqr.pdb" )
+        ] ).then( function( ol ){
 
-            var coords = 53.164;
-            var p = new NGL.Vector3().setFromMatrixPosition( o.volume.matrix );
-            var s = new NGL.Vector3().setFromMatrixScale( o.volume.matrix );
-            var position = Math.round( ( ( ( coords - p.z ) / ( o.volume.nz / 100 ) ) + 1 ) / s.z );
+            var sele = new NGL.Selection( "245:A.NZ" );
 
-            o.addRepresentation( "slice", {
+            ol[ 0 ].addRepresentation( "slice", {
                 dimension: "z",
-                position: position
+                positionType: "coordinate",
+                position: ol[ 1 ].structure.getView( sele ).center.z
             } );
-            o.addRepresentation( "surface" );
-            stage.autoView();
+            ol[ 0 ].addRepresentation( "surface" );
 
-        } );
+            ol[ 1 ].addRepresentation( "licorice" );
+            ol[ 1 ].addRepresentation( "cartoon" );
 
-        stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
-
-            o.addRepresentation( "licorice" );
-            o.addRepresentation( "cartoon" );
             stage.autoView();
 
         } );
@@ -875,7 +886,7 @@ NGL.ExampleRegistry.addDict( {
                 opaqueBack: false,
                 useWorker: false,
                 // clipNear: 50,
-                // clipRadius: sview.boundingBox.size().length() * 0.5 + 3.5,
+                // clipRadius: sview.boundingBox.getSize().length() * 0.5 + 3.5,
                 clipCenter: sview.center,
                 filterSele: filterSet.toSeleString()
                 // filterSele: groupSet.toSeleString()
@@ -887,7 +898,7 @@ NGL.ExampleRegistry.addDict( {
                 color: "lime",
                 opacity: 0.7,
                 wireframe: true,
-                clipRadius: sview.boundingBox.size().length() / 2 + 5,
+                clipRadius: sview.boundingBox.getSize().length() / 2 + 5,
                 clipCenter: sview.center
             } );
 
@@ -1388,7 +1399,8 @@ NGL.ExampleRegistry.addDict( {
         var shape = new NGL.Shape( "shape" );
         shape.addMesh(
             [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
-            [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ]
+            [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
+            undefined, undefined, "My mesh"
         );
         shape.addSphere( [ 0, 0, 9 ], [ 1, 0, 0 ], 1.5 );
         shape.addSphere( [ 12, 5, 15 ], [ 1, 0.5, 0 ], 1 );
@@ -1397,9 +1409,47 @@ NGL.ExampleRegistry.addDict( {
         shape.addCone( [ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5 );
         shape.addArrow( [ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0 );
         shape.addArrow( [ 2, 2, 7 ], [ 30, -3, -3 ], [ 1, 0.5, 1 ], 1.0 );
+        shape.addLabel( [ 15, -4, 4 ], [ 0.2, 0.5, 0.8 ], 2.5, "Hello" );
+
         var shapeComp = stage.addComponentFromObject( shape );
         shapeComp.addRepresentation( "buffer" );
-        stage.autoView();
+        shapeComp.autoView();
+
+    },
+
+    "cat": function( stage ) {
+
+        var grey = [ 0.8, 0.8, 0.8 ];
+        var darkgrey = [ 0.6, 0.6, 0.6 ];
+
+        var shape = new NGL.Shape( "shape", {
+            labelParams: { attachment: "middle-center" },
+            sphereDetail: 4,
+            radialSegments: 100
+        } );
+        shape.addEllipsoid( [ 0, 0, 0 ], grey, 4, [ 0, 3, 0 ], [ 0, 0, 1 ], "Face" );
+        shape.addSphere( [ -2, 1, -1 ], darkgrey, 0.3, "Right eye" );
+        shape.addSphere( [  2, 1, -1 ], darkgrey, 0.3, "Left eye" );
+        shape.addSphere( [ 0, 0, -1 ], darkgrey, 0.5, "Nose" );
+        shape.addEllipsoid( [ -1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ], "Right cheek" );
+        shape.addEllipsoid( [  1, -1, -1 ], darkgrey, 1.3, [ 0, 1, 0 ], [ 0, 0, 0.3 ], "Left cheek" );
+        shape.addCone( [ 2.5, 1.7, 0 ], [ 4, 3, 0 ], darkgrey, 0.8, "Left ear" );
+        shape.addCone( [ -2.5, 1.7, 0 ], [ -4, 3, 0 ], darkgrey, 0.8, "Right ear" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.3, -0.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.5, -1.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [ -1, -1, -1 ], [ -4.2, -2.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.3, -0.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.5, -1.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addCylinder( [  1, -1, -1 ], [  4.2, -2.2, -1.2 ], darkgrey, 0.1, "Whisker" );
+        shape.addLabel( [ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, "Meow" );
+
+        var shapeComp = stage.addComponentFromObject( shape );
+        shapeComp.addRepresentation( "buffer" );
+        shapeComp.autoView();
+
+        setTimeout( function(){
+            stage.setRock( [ 0, 1, 0 ], 0.005, 0.3 );
+        }, 1000 );
 
     },
 
@@ -1622,18 +1672,18 @@ NGL.ExampleRegistry.addDict( {
 
     "validation": function( stage ){
 
-        Promise.all([
+        Promise.all( [
             stage.loadFile( "data://3PQR.cif" ),
             NGL.autoLoad( "data://3pqr_validation.xml", { ext: "validation" } )
-        ]).then( function( ol ){
-            ol[0].structure.validation = ol[1];
-            ol[0].addRepresentation( "cartoon", { color: "geoquality" } );
-            ol[0].addRepresentation( "validation" );
-            ol[0].addRepresentation( "ball+stick", {
-                sele: ol[1].clashSele,
+        ] ).then( function( ol ){
+            ol[ 0 ].structure.validation = ol[ 1 ];
+            ol[ 0 ].addRepresentation( "cartoon", { color: "geoquality" } );
+            ol[ 0 ].addRepresentation( "validation" );
+            ol[ 0 ].addRepresentation( "ball+stick", {
+                sele: ol[ 1 ].clashSele,
                 color: "geoquality"
             } );
-            ol[0].addRepresentation( "licorice", {
+            ol[ 0 ].addRepresentation( "licorice", {
                 sele: "hetero",
                 color: "geoquality"
             } );
@@ -1653,6 +1703,21 @@ NGL.ExampleRegistry.addDict( {
                 o.addRepresentation( "ball+stick" );
                 stage.autoView();
             });
+        } );
+
+    },
+
+    "compMatrix": function( stage ){
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.addRepresentation( "cartoon" );
+            stage.autoView();
+        } );
+
+        stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+            o.setPosition( [ 10, 0, 0 ] );
+            o.addRepresentation( "cartoon", { color: "orange" } );
+            stage.autoView();
         } );
 
     }
