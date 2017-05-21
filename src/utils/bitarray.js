@@ -241,6 +241,23 @@ class BitArray{
     }
 
     /**
+     * Test if two BitArrays are identical in all their values
+     * @param {BitArray} otherBitarray - the other BitArray
+     * @return {Boolean} test result
+     */
+    isEqualTo( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            if ( words1[ k ] !== words2[ k ] ) {
+                return false
+            }
+        }
+        return true;
+    }
+
+    /**
      * How many set bits?
      * @return {Integer} number of set bits
      */
@@ -252,6 +269,44 @@ class BitArray{
             size += hammingWeight( words[ i ] );
         }
         return size;
+    }
+
+    /**
+     * Calculate difference betwen this and another bit array.
+     * Store result in this object.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {BitArray} this object
+     */
+    difference( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            words1[ k ] = words1[ k ] & ~words2[ k ];
+        }
+        for( let k = words1.length; k < count; ++k ){
+            words1[ k ] = 0;
+        }
+        return this;
+    }
+
+    /**
+     * Calculate union betwen this and another bit array.
+     * Store result in this object.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {BitArray} this object
+     */
+    union( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            words1[ k ] |= words2[ k ];
+        }
+        for( let k = words1.length; k < count; ++k ){
+            words1[ k ] = 0;
+        }
+        return this;
     }
 
     /**
@@ -271,6 +326,40 @@ class BitArray{
             words1[ k ] = 0;
         }
         return this;
+    }
+
+    /**
+     * Calculate intersection betwen this and another bit array.
+     * Store result in this object.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {BitArray} this object
+     */
+    intersects( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            if ( ( words1[ k ] & words2[ k ] ) !== 0 ){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Calculate the number of bits in common betwen this and another bit array.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {Integer} size
+     */
+    getIntersectionSize( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        let size = 0;
+        for( let k = 0; k < count; ++k ){
+            size += hammingWeight( words1[ k ] & words2[ k ] )
+        }
+        return size;
     }
 
     /**
