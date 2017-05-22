@@ -225,6 +225,135 @@ describe( 'BitArray', function () {
 
     } );
 
+    it( 'union', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        var bc = new BitArray( 40 );
+
+        ba.set( 2 );
+        bb.set( 38 );
+        bc.set( 2 );
+        bc.set( 38 );
+
+        ba.union( bb )
+        assert.isTrue( ba instanceof BitArray, "after union" );
+        assert.deepEqual( ba._words, bc._words, "after union" );
+        assert.strictEqual( ba.length, 40, "after union" );
+
+    } );
+
+    it( 'difference', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        var bc = new BitArray( 40 );
+        var bd = new BitArray( 40 );
+
+        ba.setAll();
+        bb.set( 38 );
+        bb.set( 2 );
+        bc.set( 2 );
+
+        ba.difference( bb );
+        bc.difference( bb );
+        assert.isTrue( ba instanceof BitArray, "after difference" );
+        assert.deepEqual( bc._words, bd._words, "after difference" );
+        assert.strictEqual( ba.getSize(), 38, "after difference" );
+
+    } );
+
+    it( 'intersects getIntersectionSize', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+
+        ba.setAll();
+        bb.set( 38 );
+        assert.isTrue( ba.intersects( bb ), "intersection" );
+        assert.strictEqual( ba.getIntersectionSize( bb ), 1, "intersection size" );
+
+        ba.clear ( 38 );
+        assert.isFalse( ba.intersects( bb ), "no intersection" );
+        assert.strictEqual( ba.getIntersectionSize( bb ), 0, "intersection size is zero when there are is intersection" )
+        assert.strictEqual( ba.getSize(), 39, "no value change with intersects" );
+
+    } );
+
+    it( 'isEqualTo', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        assert.isTrue( ba.isEqualTo( bb ), "equals" );
+
+        ba.set ( 38 );
+        assert.isFalse( ba.isEqualTo( bb ), "doesn't equal" );
+
+        bb.set ( 38 );
+        assert.isTrue( ba.isEqualTo( bb ), "equals" );
+
+    } );
+
+    it( 'isAllClear', function () {
+
+        var ba = new BitArray( 40 );
+        assert.isTrue( ba.isAllClear(), "is empty" );
+
+        ba.set ( 38 );
+        assert.isFalse( ba.isAllClear(), "is not empty" );
+
+    } );
+
+    it( 'isAllSet', function () {
+
+        var ba = new BitArray( 40 );
+        assert.isFalse( ba.isAllSet(), "is not all set (empty bitarray)" );
+
+        ba.set ( 38 );
+        assert.isFalse( ba.isAllSet(), "is not all set (sparse bitarray)" );
+
+        ba.setAll();
+        assert.isTrue( ba.isAllSet(), "is all set" );
+
+
+    } );
+
+    it( 'isRangeSet', function () {
+
+        var ba = new BitArray( 92 );
+        assert.isFalse( ba.isRangeSet( 0, 92 ), "before set" );
+        assert.strictEqual( ba.getSize(), 0, "after set" );
+
+        ba.setBits( 1, 2, 3 );
+        assert.isTrue( ba.isRangeSet( 1, 3 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 0, 3 ), "after set" );
+        assert.strictEqual( ba.getSize(), 3, "after set" );
+
+        ba.setAll();
+        assert.isTrue( ba.get( 91 ), "after set" );
+        assert.isTrue( ba.isRangeSet( 0, 91 ), "after set" );
+        assert.strictEqual( ba.getSize(), 92, "after set" );
+
+    } );
+
+    it( 'setRange', function () {
+
+        var ba = new BitArray( 92 );
+        assert.isFalse( ba.isRangeSet( 0, 92 ), "before set" );
+        assert.strictEqual( ba.getSize(), 0, "after set" );
+
+        ba.setRange( 1, 10 );
+        assert.isFalse( ba.get( 0 ), "after set - index 0 should be false" );
+        assert.isTrue( ba.get( 1 ), "after set - index 1 should be true" );
+        assert.isTrue( ba.get( 10 ), "after set - index 10 should be true" );
+        assert.isFalse( ba.get( 11 ), "after set - index 11 should be false" );
+        assert.isTrue( ba.isRangeSet( 1, 10 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 0, 10 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 1, 11 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 0, 11 ), "after set" );
+        assert.strictEqual( ba.getSize(), 10, "after set" );
+
+    } );
 } );
 
 

@@ -1,6 +1,7 @@
 /**
  * @file Bit array
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Paul Pillot <paulpillot@gmail.com>
  * @private
  */
 
@@ -84,20 +85,33 @@ class BitArray{
             words[ k ] = wordValue;
         }
         // set parts of the range not spanning complete words
-        let i, n;
+        const startWord = wordStart << 5;
+        const endWord = wordEnd << 5;
         if( value === true ){
-            for( i = start, n = wordStart << 5; i < n; ++i ){
-                words[ i >>> 5 ] |= 1 << i;
-            }
-            for( i = wordEnd << 5, n = end; i < n; ++i ){
-                words[ i >>> 5 ] |= 1 << i;
+            if( end - start < 32 ){
+                for( let i = start, n = end + 1; i < n; ++i ){
+                    words[ i >>> 5 ] |= 1 << i;
+                }
+            }else{
+                for( let i = start, n = startWord; i < n; ++i ){
+                    words[ i >>> 5 ] |= 1 << i;
+                }
+                for( let i = endWord, n = end + 1; i < n; ++i ){
+                    words[ i >>> 5 ] |= 1 << i;
+                }
             }
         }else{
-            for( i = start, n = wordStart << 5; i < n; ++i ){
-                words[ i >>> 5 ] &= ~( 1 << i );
-            }
-            for( i = wordEnd << 5, n = end; i < n; ++i ){
-                words[ i >>> 5 ] &= ~( 1 << i );
+            if( end - start < 32 ){
+                for( let i = start, n = end + 1; i < n; ++i ){
+                    words[ i >>> 5 ] &= ~( 1 << i );
+                }
+            }else{
+                for( let i = start, n = startWord; i < n; ++i ){
+                    words[ i >>> 5 ] &= ~( 1 << i );
+                }
+                for( let i = endWord, n = end + 1; i < n; ++i ){
+                    words[ i >>> 5 ] &= ~( 1 << i );
+                }
             }
         }
         return this;
@@ -124,11 +138,41 @@ class BitArray{
     }
 
     /**
+     * Set bits at all given indices
+     * @param {...Integer} arguments - indices
+     * @return {Boolean} this object
+     */
+    setBits(){
+        const words = this._words;
+        const n = arguments.length;
+        for( let i = 0; i < n; ++i ){
+            const index = arguments[ i ];
+            words[ index >>> 5 ] |= 1 << index;
+        }
+        return this;
+    }
+
+    /**
+     * Clear bits at all given indices
+     * @param {...Integer} arguments - indices
+     * @return {Boolean} this object
+     */
+    clearBits(){
+        const words = this._words;
+        const n = arguments.length;
+        for( let i = 0; i < n; ++i ){
+            const index = arguments[ i ];
+            words[ index >>> 5 ] &= ~( 1 << index );
+        }
+        return this;
+    }
+
+    /**
      * Set all bits of the array
      * @return {BitArray} this object
      */
     setAll(){
-        return this._assignRange( 0, this.length, true );
+        return this._assignRange( 0, this.length - 1, true );
     }
 
     /**
@@ -136,7 +180,7 @@ class BitArray{
      * @return {BitArray} this object
      */
     clearAll(){
-        return this._assignRange( 0, this.length, false );
+        return this._assignRange( 0, this.length - 1, false );
     }
 
     /**
@@ -164,12 +208,19 @@ class BitArray{
             if( words[ k ] !== wordValue ) return false;
         }
         // set parts of the range not spanning complete words
-        let i, n;
-        for( i = start, n = wordStart << 5; i < n; ++i ){
-            if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) return false;
-        }
-        for( i = wordEnd << 5, n = end; i < n; ++i ){
-            if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) return false;
+        if( end - start < 32 ){
+            for( let i = start, n = end + 1; i < n; ++i ){
+                if( !!( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) return false;
+            }
+        }else{
+            const startWord = wordStart << 5;
+            const endWord = wordEnd << 5;
+            for( let i = start, n = startWord << 5; i < n; ++i ){
+                if( !!( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) return false;
+            }
+            for( let i = endWord, n = end + 1; i < n; ++i ){
+                if( !!( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) return false;
+            }
         }
         return true;
     }
@@ -199,7 +250,7 @@ class BitArray{
      * @return {Boolean} test result
      */
     isAllSet(){
-        return this._isAllValue( 0, this.length, true );
+        return this._isRangeValue( 0, this.length - 1, true );
     }
 
     /**
@@ -207,7 +258,7 @@ class BitArray{
      * @return {Boolean} test result
      */
     isAllClear(){
-        return this._isAllValue( 0, this.length, false );
+        return this._isRangeValue( 0, this.length - 1, false );
     }
 
     /**
@@ -241,10 +292,27 @@ class BitArray{
     }
 
     /**
+     * Test if two BitArrays are identical in all their values
+     * @param {BitArray} otherBitarray - the other BitArray
+     * @return {Boolean} test result
+     */
+    isEqualTo( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            if ( words1[ k ] !== words2[ k ] ) {
+                return false
+            }
+        }
+        return true;
+    }
+
+    /**
      * How many set bits?
      * @return {Integer} number of set bits
      */
-    getSize( /*start, end*/ ){
+    getSize(){
         const count = this._words.length;
         const words = this._words;
         let size = 0;
@@ -252,6 +320,44 @@ class BitArray{
             size += hammingWeight( words[ i ] );
         }
         return size;
+    }
+
+    /**
+     * Calculate difference betwen this and another bit array.
+     * Store result in this object.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {BitArray} this object
+     */
+    difference( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            words1[ k ] = words1[ k ] & ~words2[ k ];
+        }
+        for( let k = words1.length; k < count; ++k ){
+            words1[ k ] = 0;
+        }
+        return this;
+    }
+
+    /**
+     * Calculate union betwen this and another bit array.
+     * Store result in this object.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {BitArray} this object
+     */
+    union( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            words1[ k ] |= words2[ k ];
+        }
+        for( let k = words1.length; k < count; ++k ){
+            words1[ k ] = 0;
+        }
+        return this;
     }
 
     /**
@@ -271,6 +377,39 @@ class BitArray{
             words1[ k ] = 0;
         }
         return this;
+    }
+
+    /**
+     * Test if there is any intersection betwen this and another bit array.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {Boolean} test result
+     */
+    intersects( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        for( let k = 0; k < count; ++k ){
+            if( ( words1[ k ] & words2[ k ] ) !== 0 ){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Calculate the number of bits in common betwen this and another bit array.
+     * @param  {BitArray} otherBitarray - the other bit array
+     * @return {Integer} size
+     */
+    getIntersectionSize( otherBitarray ){
+        const words1 = this._words;
+        const words2 = otherBitarray._words;
+        const count = Math.min( words1.length, words2.length );
+        let size = 0;
+        for( let k = 0; k < count; ++k ){
+            size += hammingWeight( words1[ k ] & words2[ k ] )
+        }
+        return size;
     }
 
     /**
