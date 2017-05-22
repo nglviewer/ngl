@@ -53143,6 +53143,10 @@ MouseBehavior.prototype._onScroll = function _onScroll ( delta ){
     }else if( this.mouse.ctrlKey ){
         var sp$1 = this.stage.getParameters();
         this.stage.setParameters( { clipNear: sp$1.clipNear + delta / 10 } );
+    }else if( this.mouse.altKey ){
+        // nothing yet
+    }else if( this.mouse.metaKey ){
+        // nothing yet
     }else{
         this.controls.zoom( delta );
     }
@@ -53153,6 +53157,8 @@ MouseBehavior.prototype._onDrag = function _onDrag ( x, y ){
 
     if( this.mouse.which === RightMouseButton ){
         this.controls.pan( x, y );
+    }else if( this.mouse.which === MiddleMouseButton ){
+        // nothing yet
     }else{
         this.controls.rotate( x, y );
     }
@@ -54024,6 +54030,7 @@ var SlicePicker = (function (VolumePicker) {
 /**
  * @file Bit array
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Paul Pillot <paulpillot@gmail.com>
  * @private
  */
 
@@ -54101,20 +54108,33 @@ BitArray.prototype._assignRange = function _assignRange ( start, end, value ){
         words[ k ] = wordValue;
     }
     // set parts of the range not spanning complete words
-    var i, n;
+    var startWord = wordStart << 5;
+    var endWord = wordEnd << 5;
     if( value === true ){
-        for( i = start, n = wordStart << 5; i < n; ++i ){
-            words[ i >>> 5 ] |= 1 << i;
-        }
-        for( i = wordEnd << 5, n = end; i < n; ++i ){
-            words[ i >>> 5 ] |= 1 << i;
+        if( end - start < 32 ){
+            for( var i = start, n = end + 1; i < n; ++i ){
+                words[ i >>> 5 ] |= 1 << i;
+            }
+        }else{
+            for( var i$1 = start, n$1 = startWord; i$1 < n$1; ++i$1 ){
+                words[ i$1 >>> 5 ] |= 1 << i$1;
+            }
+            for( var i$2 = endWord, n$2 = end + 1; i$2 < n$2; ++i$2 ){
+                words[ i$2 >>> 5 ] |= 1 << i$2;
+            }
         }
     }else{
-        for( i = start, n = wordStart << 5; i < n; ++i ){
-            words[ i >>> 5 ] &= ~( 1 << i );
-        }
-        for( i = wordEnd << 5, n = end; i < n; ++i ){
-            words[ i >>> 5 ] &= ~( 1 << i );
+        if( end - start < 32 ){
+            for( var i$3 = start, n$3 = end + 1; i$3 < n$3; ++i$3 ){
+                words[ i$3 >>> 5 ] &= ~( 1 << i$3 );
+            }
+        }else{
+            for( var i$4 = start, n$4 = startWord; i$4 < n$4; ++i$4 ){
+                words[ i$4 >>> 5 ] &= ~( 1 << i$4 );
+            }
+            for( var i$5 = endWord, n$5 = end + 1; i$5 < n$5; ++i$5 ){
+                words[ i$5 >>> 5 ] &= ~( 1 << i$5 );
+            }
         }
     }
     return this;
@@ -54141,11 +54161,45 @@ BitArray.prototype.clearRange = function clearRange ( start, end ){
 };
 
 /**
+ * Set bits at all given indices
+ * @param {...Integer} arguments - indices
+ * @return {Boolean} this object
+ */
+BitArray.prototype.setBits = function setBits (){
+        var arguments$1 = arguments;
+
+    var words = this._words;
+    var n = arguments.length;
+    for( var i = 0; i < n; ++i ){
+        var index = arguments$1[ i ];
+        words[ index >>> 5 ] |= 1 << index;
+    }
+    return this;
+};
+
+/**
+ * Clear bits at all given indices
+ * @param {...Integer} arguments - indices
+ * @return {Boolean} this object
+ */
+BitArray.prototype.clearBits = function clearBits (){
+        var arguments$1 = arguments;
+
+    var words = this._words;
+    var n = arguments.length;
+    for( var i = 0; i < n; ++i ){
+        var index = arguments$1[ i ];
+        words[ index >>> 5 ] &= ~( 1 << index );
+    }
+    return this;
+};
+
+/**
  * Set all bits of the array
  * @return {BitArray} this object
  */
 BitArray.prototype.setAll = function setAll (){
-    return this._assignRange( 0, this.length, true );
+    return this._assignRange( 0, this.length - 1, true );
 };
 
 /**
@@ -54153,7 +54207,7 @@ BitArray.prototype.setAll = function setAll (){
  * @return {BitArray} this object
  */
 BitArray.prototype.clearAll = function clearAll (){
-    return this._assignRange( 0, this.length, false );
+    return this._assignRange( 0, this.length - 1, false );
 };
 
 /**
@@ -54181,12 +54235,19 @@ BitArray.prototype._isRangeValue = function _isRangeValue ( start, end, value ){
         if( words[ k ] !== wordValue ) { return false; }
     }
     // set parts of the range not spanning complete words
-    var i, n;
-    for( i = start, n = wordStart << 5; i < n; ++i ){
-        if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) { return false; }
-    }
-    for( i = wordEnd << 5, n = end; i < n; ++i ){
-        if( ( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) { return false; }
+    if( end - start < 32 ){
+        for( var i = start, n = end + 1; i < n; ++i ){
+            if( !!( words[ i >>> 5 ] & ( 1 << i ) ) !== value ) { return false; }
+        }
+    }else{
+        var startWord = wordStart << 5;
+        var endWord = wordEnd << 5;
+        for( var i$1 = start, n$1 = startWord << 5; i$1 < n$1; ++i$1 ){
+            if( !!( words[ i$1 >>> 5 ] & ( 1 << i$1 ) ) !== value ) { return false; }
+        }
+        for( var i$2 = endWord, n$2 = end + 1; i$2 < n$2; ++i$2 ){
+            if( !!( words[ i$2 >>> 5 ] & ( 1 << i$2 ) ) !== value ) { return false; }
+        }
     }
     return true;
 };
@@ -54216,7 +54277,7 @@ BitArray.prototype.isRangeClear = function isRangeClear ( start, end ){
  * @return {Boolean} test result
  */
 BitArray.prototype.isAllSet = function isAllSet (){
-    return this._isAllValue( 0, this.length, true );
+    return this._isRangeValue( 0, this.length - 1, true );
 };
 
 /**
@@ -54224,7 +54285,7 @@ BitArray.prototype.isAllSet = function isAllSet (){
  * @return {Boolean} test result
  */
 BitArray.prototype.isAllClear = function isAllClear (){
-    return this._isAllValue( 0, this.length, false );
+    return this._isRangeValue( 0, this.length - 1, false );
 };
 
 /**
@@ -54262,10 +54323,27 @@ BitArray.prototype.isClear = function isClear (){
 };
 
 /**
+ * Test if two BitArrays are identical in all their values
+ * @param {BitArray} otherBitarray - the other BitArray
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isEqualTo = function isEqualTo ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        if ( words1[ k ] !== words2[ k ] ) {
+            return false
+        }
+    }
+    return true;
+};
+
+/**
  * How many set bits?
  * @return {Integer} number of set bits
  */
-BitArray.prototype.getSize = function getSize ( /*start, end*/ ){
+BitArray.prototype.getSize = function getSize (){
     var count = this._words.length;
     var words = this._words;
     var size = 0;
@@ -54273,6 +54351,44 @@ BitArray.prototype.getSize = function getSize ( /*start, end*/ ){
         size += hammingWeight( words[ i ] );
     }
     return size;
+};
+
+/**
+ * Calculate difference betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.difference = function difference ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        words1[ k ] = words1[ k ] & ~words2[ k ];
+    }
+    for( var k$1 = words1.length; k$1 < count; ++k$1 ){
+        words1[ k$1 ] = 0;
+    }
+    return this;
+};
+
+/**
+ * Calculate union betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.union = function union ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        words1[ k ] |= words2[ k ];
+    }
+    for( var k$1 = words1.length; k$1 < count; ++k$1 ){
+        words1[ k$1 ] = 0;
+    }
+    return this;
 };
 
 /**
@@ -54292,6 +54408,39 @@ BitArray.prototype.intersection = function intersection ( otherBitarray ){
         words1[ k$1 ] = 0;
     }
     return this;
+};
+
+/**
+ * Test if there is any intersection betwen this and another bit array.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {Boolean} test result
+ */
+BitArray.prototype.intersects = function intersects ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        if( ( words1[ k ] & words2[ k ] ) !== 0 ){
+            return true;
+        }
+    }
+    return false;
+};
+
+/**
+ * Calculate the number of bits in common betwen this and another bit array.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {Integer} size
+ */
+BitArray.prototype.getIntersectionSize = function getIntersectionSize ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    var size = 0;
+    for( var k = 0; k < count; ++k ){
+        size += hammingWeight( words1[ k ] & words2[ k ] );
+    }
+    return size;
 };
 
 /**
@@ -92936,6 +93085,10 @@ var ValidationParser = (function (XmlParser$$1) {
 
 ParserRegistry.add( "validation", ValidationParser );
 
+// https://github.com/nodeca/pako
+// MIT License, Copyright (c) 2014 by Vitaly Puzrin
+
+
 // 'use strict';
 
 
@@ -96069,7 +96222,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.0";
+var version$1 = "0.10.1-0";
 
 /**
  * @file Version
