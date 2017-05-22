@@ -225,6 +225,131 @@ describe( 'BitArray', function () {
 
     } );
 
+    it( 'union', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        var bc = new BitArray( 40 );
+        
+        ba.set( 2 );
+        bb.set( 38 );
+        bc.set( 2 );
+        bc.set( 38 );
+
+        ba.union( bb )
+
+        assert.isTrue( ba instanceof BitArray, "after union" );
+        assert.deepEqual( ba._words, bc._words, "after union" );
+        assert.strictEqual( ba.length, 40, "after union" );
+
+    } );
+
+    it( 'difference', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        var bc = new BitArray( 40 );
+        var bd = new BitArray( 40 );
+        
+        ba.setAll();
+        bb.set( 38 );
+        bb.set( 2 );
+        bc.set( 2 );
+
+        ba.difference( bb );
+        bc.difference( bb );
+
+        assert.isTrue( ba instanceof BitArray, "after difference" );
+        assert.deepEqual( bc._words, bd._words, "after difference" );
+        assert.strictEqual( ba.getSize(), 38, "after difference" );
+
+    } );
+
+    it( 'intersects getIntersectionSize', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        
+        ba.setAll();
+        bb.set( 38 );
+        
+        assert.isTrue( ba.intersects( bb ), "intersection" );
+        assert.strictEqual( ba.getIntersectionSize( bb ), 1, "intersection size" );
+
+        ba.clear ( 38 );
+
+        assert.isFalse( ba.intersects( bb ), "no intersection" );
+        assert.strictEqual( ba.getIntersectionSize( bb ), 0, "intersection size is zero when there are is intersection" )
+
+        assert.strictEqual( ba.getSize(), 39, "no value change with intersects" );
+
+    } );
+
+    it( 'isEqualTo', function () {
+
+        var ba = new BitArray( 40 );
+        var bb = new BitArray( 40 );
+        
+        assert.isTrue( ba.isEqualTo( bb ), "equals" );
+
+        ba.set ( 38 );
+
+        assert.isFalse( ba.isEqualTo( bb ), "doesn't equal" );
+        
+        bb.set ( 38 );
+
+        assert.isTrue( ba.isEqualTo( bb ), "equals" );
+
+    } );
+
+    it( 'isAllClear', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isTrue( ba.isAllClear(), "is empty" );
+
+        ba.set ( 38 );
+
+        assert.isFalse( ba.isAllClear(), "is not empty" );
+        
+    } );
+
+    it( 'isAllSet', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isFalse( ba.isAllSet(), "is not all set (empty bitarray)" );
+
+        ba.set ( 38 );
+
+        assert.isFalse( ba.isAllSet(), "is not all set (sparse bitarray)" );
+
+        ba.setAll();
+
+        assert.isTrue( ba.isAllSet(), "is all set" );
+
+        
+    } );
+
+    it( 'isRangeSet', function () {
+
+        var ba = new BitArray( 40 );
+        
+        assert.isFalse( ba.isRangeSet( 0, 39 ), "before set" );
+
+        ba.set ( 1, 2, 3 );
+
+        assert.isTrue( ba.isRangeSet( 1, 3 ), "after set" );
+        assert.isFalse( ba.isRangeSet( 0, 3 ), "after set" );
+
+        ba.setAll();
+
+        assert.isTrue( ba.isRangeSet( 0, 3 ), "after set" );
+
+        
+    } );
+
+    
 } );
 
 

@@ -54262,6 +54262,23 @@ BitArray.prototype.isClear = function isClear (){
 };
 
 /**
+ * Test if two BitArrays are identical in all their values
+ * @param {BitArray} otherBitarray - the other BitArray
+ * @return {Boolean} test result
+ */
+BitArray.prototype.isEqualTo = function isEqualTo ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        if ( words1[ k ] !== words2[ k ] ) {
+            return false
+        }
+    }
+    return true;
+};
+
+/**
  * How many set bits?
  * @return {Integer} number of set bits
  */
@@ -54273,6 +54290,44 @@ BitArray.prototype.getSize = function getSize ( /*start, end*/ ){
         size += hammingWeight( words[ i ] );
     }
     return size;
+};
+
+/**
+ * Calculate difference betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.difference = function difference ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        words1[ k ] = words1[ k ] & ~words2[ k ];
+    }
+    for( var k$1 = words1.length; k$1 < count; ++k$1 ){
+        words1[ k$1 ] = 0;
+    }
+    return this;
+};
+
+/**
+ * Calculate union betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.union = function union ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        words1[ k ] |= words2[ k ];
+    }
+    for( var k$1 = words1.length; k$1 < count; ++k$1 ){
+        words1[ k$1 ] = 0;
+    }
+    return this;
 };
 
 /**
@@ -54292,6 +54347,40 @@ BitArray.prototype.intersection = function intersection ( otherBitarray ){
         words1[ k$1 ] = 0;
     }
     return this;
+};
+
+/**
+ * Calculate intersection betwen this and another bit array.
+ * Store result in this object.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {BitArray} this object
+ */
+BitArray.prototype.intersects = function intersects ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    for( var k = 0; k < count; ++k ){
+        if ( ( words1[ k ] & words2[ k ] ) !== 0 ){
+            return true;
+        }
+    }
+    return false;
+};
+
+/**
+ * Calculate the number of bits in common betwen this and another bit array.
+ * @param  {BitArray} otherBitarray - the other bit array
+ * @return {Integer} size
+ */
+BitArray.prototype.getIntersectionSize = function getIntersectionSize ( otherBitarray ){
+    var words1 = this._words;
+    var words2 = otherBitarray._words;
+    var count = Math.min( words1.length, words2.length );
+    var size = 0;
+    for( var k = 0; k < count; ++k ){
+        size += hammingWeight( words1[ k ] & words2[ k ] );
+    }
+    return size;
 };
 
 /**
