@@ -11,7 +11,7 @@ Promise.all( [
 
     struc.autoView( "LIG" )
 
-    map.addRepresentation( "surface", {
+    var surfRepr = map.addRepresentation( "surface", {
         boxSize: 10,
         useWorker: false,
         wrap: true,
@@ -23,5 +23,13 @@ Promise.all( [
     struc.addRepresentation( "ball+stick", { sele: "hetero" } );
 
     stage.setFocus( 95 );
+
+    stage.mouseObserver.signals.scrolled.add( function( delta ){
+        if( stage.mouseObserver.altKey ){
+            var d = Math.sign( delta ) / 5;
+            var l = surfRepr.getParameters().isolevel;
+            surfRepr.setParameters( { isolevel: l + d } );
+        }
+    } );
 
 } );

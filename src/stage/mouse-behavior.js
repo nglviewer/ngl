@@ -5,7 +5,7 @@
  */
 
 
-import { RightMouseButton } from "../constants.js";
+import { RightMouseButton, MiddleMouseButton } from "../constants.js";
 import { almostIdentity } from "../math/math-utils.js";
 
 
@@ -42,6 +42,10 @@ class MouseBehavior{
         }else if( this.mouse.ctrlKey ){
             const sp = this.stage.getParameters();
             this.stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
+        }else if( this.mouse.altKey ){
+            // nothing yet
+        }else if( this.mouse.metaKey ){
+            // nothing yet
         }else{
             this.controls.zoom( delta );
         }
@@ -52,6 +56,8 @@ class MouseBehavior{
 
         if( this.mouse.which === RightMouseButton ){
             this.controls.pan( x, y );
+        }else if( this.mouse.which === MiddleMouseButton ){
+            // nothing yet
         }else{
             this.controls.rotate( x, y );
         }
