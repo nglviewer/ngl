@@ -183,6 +183,15 @@ class MouseObserver{
 
     }
 
+    get key(){
+        let key = 0;
+        if( this.altKey ) key += 1;
+        if( this.ctrlKey ) key += 2;
+        if( this.metaKey ) key += 4;
+        if( this.shiftKey ) key += 8;
+        return key;
+    }
+
     setParameters( params ){
         var p = Object.assign( {}, params );
         this.hoverTimeout = defaults( p.hoverTimeout, this.hoverTimeout );

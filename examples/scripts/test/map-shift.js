@@ -24,12 +24,10 @@ Promise.all( [
 
     stage.setFocus( 95 );
 
-    stage.mouseObserver.signals.scrolled.add( function( delta ){
-        if( stage.mouseObserver.altKey ){
-            var d = Math.sign( delta ) / 5;
-            var l = surfRepr.getParameters().isolevel;
-            surfRepr.setParameters( { isolevel: l + d } );
-        }
+    stage.mouseControls.add( "scroll-alt", function( stage, delta ){
+        var d = Math.sign( delta ) / 5;
+        var l = surfRepr.getParameters().isolevel;
+        surfRepr.setParameters( { isolevel: l + d } );
     } );
 
 } );

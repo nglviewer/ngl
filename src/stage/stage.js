@@ -19,6 +19,7 @@ import TrackballControls from "../controls/trackball-controls.js";
 import PickingControls from "../controls/picking-controls.js";
 import ViewerControls from "../controls/viewer-controls.js";
 import AnimationControls from "../controls/animation-controls.js";
+import MouseControls from "../controls/mouse-controls.js";
 
 import PickingBehavior from "./picking-behavior.js";
 import MouseBehavior from "./mouse-behavior.js";
@@ -147,6 +148,7 @@ class Stage{
          * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
+        this.mouseControls = new MouseControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
         this.mouseBehavior = new MouseBehavior( this );
