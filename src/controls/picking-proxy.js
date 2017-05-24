@@ -206,6 +206,60 @@ class PickingProxy{
         return this.type === type ? this.object : undefined;
     }
 
+    getLabel(){
+        let msg = "nothing";
+        if( this.arrow ){
+            msg = "arrow: " + ( this.arrow.name || this.pid ) + " (" + this.arrow.shape.name + ")";
+        }else if( this.atom ){
+            msg = "atom: " +
+                this.atom.qualifiedName() +
+                " (" + this.atom.structure.name + ")";
+        }else if( this.axes ){
+            msg = "axes";
+        }else if( this.bond ){
+            msg = "bond: " +
+                this.bond.atom1.qualifiedName() + " - " + this.bond.atom2.qualifiedName() +
+                " (" + this.bond.structure.name + ")";
+        }else if( this.cone ){
+            msg = "cone: " + ( this.cone.name || this.pid ) + " (" + this.cone.shape.name + ")";
+        }else if( this.clash ){
+            msg = "clash: " + this.clash.clash.sele1 + " - " + this.clash.clash.sele2;
+        }else if( this.contact ){
+            msg = "contact: " +
+                this.contact.atom1.qualifiedName() + " - " + this.contact.atom2.qualifiedName() +
+                " (" + this.contact.structure.name + ")";
+        }else if( this.cylinder ){
+            msg = "cylinder: " + ( this.cylinder.name || this.pid ) + " (" + this.cylinder.shape.name + ")";
+        }else if( this.distance ){
+            msg = "distance: " +
+                this.distance.atom1.qualifiedName() + " - " + this.distance.atom2.qualifiedName() +
+                " (" + this.distance.structure.name + ")";
+        }else if( this.ellipsoid ){
+            msg = "ellipsoid: " + ( this.ellipsoid.name || this.pid ) + " (" + this.ellipsoid.shape.name + ")";
+        }else if( this.mesh ){
+            msg = "mesh: " + ( this.mesh.name || this.mesh.serial ) + " (" + this.mesh.shape.name + ")";
+        }else if( this.slice ){
+            msg = "slice: " +
+                this.slice.value.toPrecision( 3 ) +
+                " (" + this.slice.volume.name + ")";
+        }else if( this.sphere ){
+            msg = "sphere: " + ( this.sphere.name || this.pid ) + " (" + this.sphere.shape.name + ")";
+        }else if( this.surface ){
+            msg = "surface: " + this.surface.surface.name;
+        }else if( this.unitcell ){
+            msg = "unitcell: " +
+                this.unitcell.unitcell.spacegroup +
+                " (" + this.unitcell.structure.name + ")";
+        }else if( this.unknown ){
+            msg = "unknown";
+        }else if( this.volume ){
+            msg = "volume: " +
+                this.volume.value.toPrecision( 3 ) +
+                " (" + this.volume.volume.name + ")";
+        }
+        return msg;
+    }
+
 }
 
 

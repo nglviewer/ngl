@@ -364,63 +364,6 @@ NGL.StageWidget = function( stage ){
 };
 
 
-NGL.getPickingMessage = function( d, prefix ){
-    var msg = "nothing";
-    if( d ){
-        if( d.arrow ){
-            msg = "arrow: " + ( d.arrow.name || d.pid ) + " (" + d.arrow.shape.name + ")";
-        }else if( d.atom ){
-            msg = "atom: " +
-                d.atom.qualifiedName() +
-                " (" + d.atom.structure.name + ")";
-        }else if( d.axes ){
-            msg = "axes";
-        }else if( d.bond ){
-            msg = "bond: " +
-                d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-                " (" + d.bond.structure.name + ")";
-        }else if( d.cone ){
-            msg = "cone: " + ( d.cone.name || d.pid ) + " (" + d.cone.shape.name + ")";
-        }else if( d.clash ){
-            msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
-        }else if( d.contact ){
-            msg = "contact: " +
-                d.contact.atom1.qualifiedName() + " - " + d.contact.atom2.qualifiedName() +
-                " (" + d.contact.structure.name + ")";
-        }else if( d.cylinder ){
-            msg = "cylinder: " + ( d.cylinder.name || d.pid ) + " (" + d.cylinder.shape.name + ")";
-        }else if( d.distance ){
-            msg = "distance: " +
-                d.distance.atom1.qualifiedName() + " - " + d.distance.atom2.qualifiedName() +
-                " (" + d.distance.structure.name + ")";
-        }else if( d.ellipsoid ){
-            msg = "ellipsoid: " + ( d.ellipsoid.name || d.pid ) + " (" + d.ellipsoid.shape.name + ")";
-        }else if( d.mesh ){
-            msg = "mesh: " + ( d.mesh.name || d.mesh.serial ) + " (" + d.mesh.shape.name + ")";
-        }else if( d.slice ){
-            msg = "slice: " +
-                d.slice.value.toPrecision( 3 ) +
-                " (" + d.slice.volume.name + ")";
-        }else if( d.sphere ){
-            msg = "sphere: " + ( d.sphere.name || d.pid ) + " (" + d.sphere.shape.name + ")";
-        }else if( d.surface ){
-            msg = "surface: " + d.surface.surface.name;
-        }else if( d.unitcell ){
-            msg = "unitcell: " +
-                d.unitcell.unitcell.spacegroup +
-                " (" + d.unitcell.structure.name + ")";
-        }else if( d.unknown ){
-            msg = "unknown";
-        }else if( d.volume ){
-            msg = "volume: " +
-                d.volume.value.toPrecision( 3 ) +
-                " (" + d.volume.volume.name + ")";
-        }
-    }
-    return prefix ? prefix + " " + msg : msg;
-};
-
-
 // Viewport
 
 NGL.ViewportWidget = function( stage ){
@@ -456,35 +399,6 @@ NGL.ViewportWidget = function( stage ){
 
     }, false );
 
-    // tooltip
-
-    var tooltipText = new UI.Text();
-
-    var tooltipPanel = new UI.OverlayPanel()
-        .setPosition( "absolute" )
-        .setDisplay( "none" )
-        .setOpacity( "0.9" )
-        .setPointerEvents( "none" )
-        .add( tooltipText );
-
-    var cp = new NGL.Vector2();
-    stage.signals.hovered.add( function( d ){
-        var text = NGL.getPickingMessage( d, "" );
-        if( text !== "nothing" ){
-            cp.copy( d.canvasPosition ).addScalar( 5 );
-            tooltipText.setValue( text );
-            tooltipPanel
-                .setBottom( cp.y + "px" )
-                .setLeft( cp.x + "px" )
-                .setDisplay( "block" );
-        }else{
-            tooltipPanel.setDisplay( "none" );
-        }
-
-    } );
-
-    container.add( tooltipPanel );
-
     return container;
 
 };
@@ -508,8 +422,8 @@ NGL.ToolbarWidget = function( stage ){
         .setFloat( "right" )
         .add( statsText );
 
-    stage.signals.clicked.add( function( d ){
-        messageText.setValue( NGL.getPickingMessage( d, "Clicked" ) );
+    stage.signals.clicked.add( function( pickingProxy ){
+        messageText.setValue( pickingProxy.getLabel() );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){

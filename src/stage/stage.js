@@ -134,6 +134,23 @@ class Stage{
         if( !this.viewer.renderer ) return;
 
         /**
+         * Tooltip element
+         * @type {Element}
+         */
+        this.tooltip = document.createElement( "div" );
+        Object.assign( this.tooltip.style, {
+            display: "none",
+            position: "absolute",
+            zIndex: 10,
+            pointerEvents: "none",
+            backgroundColor: "rgba( 0, 0, 0, 0.6 )",
+            color: "lightgrey",
+            padding: "0.5em",
+            fontFamily: "sans-serif"
+        } );
+        this.viewer.container.appendChild( this.tooltip );
+
+        /**
          * @type {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
@@ -178,6 +195,7 @@ class Stage{
             ambientColor: 0xdddddd,
             ambientIntensity: 0.2,
             hoverTimeout: 0,
+            tooltip: true
         }, params );
 
         this.parameters = {
@@ -240,6 +258,9 @@ class Stage{
             },
             hoverTimeout: {
                 type: "integer", max: 10000, min: -1
+            },
+            tooltip: {
+                type: "boolean"
             },
         };
 

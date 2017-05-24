@@ -51,6 +51,20 @@ function movePickAction( stage, pickingProxy ){
     }
 }
 
+function tooltipPickAction( stage, pickingProxy ){
+    const tt = stage.tooltip;
+    const sp = stage.getParameters();
+    if( sp.tooltip && pickingProxy ){
+        const cp = pickingProxy.canvasPosition;
+        tt.innerText = pickingProxy.getLabel();
+        tt.style.bottom = cp.y + 3 + "px";
+        tt.style.left = cp.x + 3 + "px";
+        tt.style.display = "block";
+    }else{
+        tt.style.display = "none";
+    }
+}
+
 
 function triggerFromString( str ){
     const tokens = str.split( /[-+]/ );
@@ -92,6 +106,7 @@ const ActionPresets = {
         [ "drag-ctrl-left", rotateComponentDragAction ],
 
         [ "clickPick-middle", movePickAction ],
+        [ "hoverPick", tooltipPickAction ],
     ],
     pymol: [
         [ "drag-left", rotateDragAction ],
