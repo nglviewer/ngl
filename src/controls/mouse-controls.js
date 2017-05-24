@@ -25,24 +25,30 @@ function focusScrollAction( stage, delta ){
     stage.setFocus( focus + step );
 }
 
-function panDragAction( stage, x, y ){
-    stage.trackballControls.pan( x, y );
+function panDragAction( stage, dx, dy ){
+    stage.trackballControls.pan( dx, dy );
 }
 
-function rotateDragAction( stage, x, y ){
-    stage.trackballControls.rotate( x, y );
+function rotateDragAction( stage, dx, dy ){
+    stage.trackballControls.rotate( dx, dy );
 }
 
-function zoomDragAction( stage, x, y ){
-    stage.trackballControls.zoom( y );
+function zoomDragAction( stage, dx, dy ){
+    stage.trackballControls.zoom( dy );
 }
 
-function panComponentDragAction( stage, x, y ){
-    stage.trackballControls.panComponent( x, y );
+function panComponentDragAction( stage, dx, dy ){
+    stage.trackballControls.panComponent( dx, dy );
 }
 
-function rotateComponentDragAction( stage, x, y ){
-    stage.trackballControls.rotateComponent( x, y );
+function rotateComponentDragAction( stage, dx, dy ){
+    stage.trackballControls.rotateComponent( dx, dy );
+}
+
+function movePickAction( stage, pickingProxy ){
+    if( pickingProxy ){
+        stage.animationControls.move( pickingProxy.position.clone() );
+    }
 }
 
 
@@ -54,6 +60,8 @@ function triggerFromString( str ){
     if( tokens.includes( "drag" ) ) type = "drag";
     if( tokens.includes( "click" ) ) type = "click";
     if( tokens.includes( "hover" ) ) type = "hover";
+    if( tokens.includes( "clickPick" ) ) type = "clickPick";
+    if( tokens.includes( "hoverPick" ) ) type = "hoverPick";
 
     let key = 0;
     if( tokens.includes( "alt" ) ) key += 1;
@@ -62,25 +70,38 @@ function triggerFromString( str ){
     if( tokens.includes( "shift" ) ) key += 8;
 
     let button = 0;
-    if( tokens.includes( "left" ) ) button = 1;
-    if( tokens.includes( "middle" ) ) button = 2;
-    if( tokens.includes( "right" ) ) button = 3;
+    if( tokens.includes( "left" ) ) button += 1;
+    if( tokens.includes( "right" ) ) button += 2;
+    if( tokens.includes( "middle" ) ) button += 4;
 
     return [ type, key, button ];
 }
 
 
-const DefaultActionList = [
-    [ "scroll", zoomScrollAction ],
-    [ "scroll-ctrl", clipNearScrollAction ],
-    [ "scroll-shift", focusScrollAction ],
+const ActionPresets = {
+    default: [
+        [ "scroll", zoomScrollAction ],
+        [ "scroll-ctrl", clipNearScrollAction ],
+        [ "scroll-shift", focusScrollAction ],
 
-    [ "drag-right", panDragAction ],
-    [ "drag-left", rotateDragAction ],
-    [ "drag-shift-right", zoomDragAction ],
-    [ "drag-ctrl-right", panComponentDragAction ],
-    [ "drag-ctrl-left", rotateComponentDragAction ],
-];
+        [ "drag-right", panDragAction ],
+        [ "drag-left", rotateDragAction ],
+        [ "drag-middle", zoomDragAction ],
+        [ "drag-left+right", zoomDragAction ],
+        [ "drag-ctrl-right", panComponentDragAction ],
+        [ "drag-ctrl-left", rotateComponentDragAction ],
+
+        [ "clickPick-middle", movePickAction ],
+    ],
+    pymol: [
+        [ "drag-left", rotateDragAction ],
+        [ "drag-middle", panDragAction ],
+        [ "drag-right", zoomDragAction ],
+        [ "drag-shift-right", focusScrollAction ],
+
+        [ "clickPick-ctrl+shift-middle", movePickAction ],
+    ]
+};
 
 
 class MouseControls{
@@ -103,7 +124,7 @@ class MouseControls{
     run( type, ...args ){
 
         const key = this.mouse.key || 0;
-        const button = this.mouse.which || 0;
+        const button = this.mouse.buttons || 0;
 
         this.actionList.forEach( a => {
             if( a.type === type && a.key === key && a.button === button ){
@@ -141,11 +162,7 @@ class MouseControls{
 
     preset( name ){
 
-        let list = [];
-
-        if( name === "default" ){
-            list = DefaultActionList;
-        }
+        const list = ActionPresets[ name ] || [];
 
         list.forEach( action => {
             this.add( ...action );

@@ -13,36 +13,34 @@ class MouseBehavior{
         this.mouse = stage.mouseObserver;
         this.controls = stage.mouseControls;
 
-        this.stage.signals.hovered.add( this._onHover, this );
         this.mouse.signals.scrolled.add( this._onScroll, this );
         this.mouse.signals.dragged.add( this._onDrag, this );
-
-    }
-
-    _onHover( pickingProxy ){
-
-        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
-            this.stage.transformComponent = pickingProxy.component;
-        }
+        this.mouse.signals.clicked.add( this._onClick, this );
+        this.mouse.signals.hovered.add( this._onHover, this );
 
     }
 
     _onScroll( delta ){
-
         this.controls.run( "scroll", delta );
-
     }
 
-    _onDrag( x, y ){
+    _onDrag( dx, dy ){
+        this.controls.run( "drag", dx, dy );
+    }
 
-        this.controls.run( "drag", x, y );
+    _onClick( x, y ){
+        this.controls.run( "click", x, y );
+    }
 
+    _onHover( x, y ){
+        this.controls.run( "hover", x, y );
     }
 
     dispose(){
-        this.stage.signals.hovered.remove( this._onHover, this );
         this.mouse.signals.scrolled.remove( this._onScroll, this );
         this.mouse.signals.dragged.remove( this._onDrag, this );
+        this.mouse.signals.clicked.remove( this._onClick, this );
+        this.mouse.signals.hovered.remove( this._onHover, this );
     }
 
 }

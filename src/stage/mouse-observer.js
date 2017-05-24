@@ -133,6 +133,12 @@ class MouseObserver{
          */
         this.which = undefined;
         /**
+         * Indicates which mouse buttons were pressed:
+         * 0: No button; 1: Left button; 2: Right button; 4: Middle button
+         * @type {Integer}
+         */
+        this.buttons = undefined;
+        /**
          * Flag indicating if the mouse is pressed down
          * @type {Boolean}
          */
@@ -210,7 +216,8 @@ class MouseObserver{
             this.scrolled = false;
             if( this.hoverTimeout !== -1 ){
                 this.hovering = true;
-                this.signals.hovered.dispatch();
+                const cp = this.canvasPosition;
+                this.signals.hovered.dispatch( cp.x, cp.y );
             }
         }
         requestAnimationFrame( this._listen );
@@ -260,11 +267,11 @@ class MouseObserver{
         this.prevPosition.copy( this.position );
         this.position.set( event.layerX, event.layerY );
         this._setCanvasPosition( event );
-        var x = this.prevPosition.x - this.position.x;
-        var y = this.prevPosition.y - this.position.y;
-        this.signals.moved.dispatch( x, y );
+        const dx = this.prevPosition.x - this.position.x;
+        const dy = this.prevPosition.y - this.position.y;
+        this.signals.moved.dispatch( dx, dy );
         if( this.pressed ){
-            this.signals.dragged.dispatch( x, y );
+            this.signals.dragged.dispatch( dx, dy );
         }
     }
 
@@ -276,6 +283,7 @@ class MouseObserver{
         this.down.set( event.layerX, event.layerY );
         this.position.set( event.layerX, event.layerY );
         this.which = event.which;
+        this.buttons = event.buttons;
         this.pressed = true;
         this._setCanvasPosition( event );
     }
@@ -290,11 +298,13 @@ class MouseObserver{
     _onMouseup( event ){
         event.preventDefault();
         this._setKeys( event );
-        this.signals.clicked.dispatch();
+        const cp = this.canvasPosition;
+        this.signals.clicked.dispatch( cp.x, cp.y );
         // if( this.distance() > 3 || event.which === RightMouseButton ){
         //     this.signals.dropped.dispatch();
         // }
         this.which = undefined;
+        this.buttons = undefined;
         this.pressed = undefined;
     }
 
@@ -349,6 +359,7 @@ class MouseObserver{
             case 1: {
                 this._setKeys( event );
                 this.which = undefined;
+                this.buttons = undefined;
                 this.moving = true;
                 this.hovering = false;
                 this.lastMoved = performance.now();
@@ -358,17 +369,18 @@ class MouseObserver{
                     event.touches[ 0 ].pageY
                 );
                 this._setCanvasPosition( event.touches[ 0 ] );
-                const x = this.prevPosition.x - this.position.x;
-                const y = this.prevPosition.y - this.position.y;
-                this.signals.moved.dispatch( x, y );
+                const dx = this.prevPosition.x - this.position.x;
+                const dy = this.prevPosition.y - this.position.y;
+                this.signals.moved.dispatch( dx, dy );
                 if( this.pressed ){
-                    this.signals.dragged.dispatch( x, y );
+                    this.signals.dragged.dispatch( dx, dy );
                 }
                 break;
             }
 
             case 2: {
                 this.which = RightMouseButton;
+                this.buttons = 2;
                 const touchDistance = getTouchDistance( event );
                 const delta = touchDistance - this.lastTouchDistance;
                 this.lastTouchDistance = touchDistance;
@@ -380,11 +392,11 @@ class MouseObserver{
                         ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
                         ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2
                     );
-                    const x = this.prevPosition.x - this.position.x;
-                    const y = this.prevPosition.y - this.position.y;
-                    this.signals.moved.dispatch( x, y );
+                    const dx = this.prevPosition.x - this.position.x;
+                    const dy = this.prevPosition.y - this.position.y;
+                    this.signals.moved.dispatch( dx, dy );
                     if( this.pressed ){
-                        this.signals.dragged.dispatch( x, y );
+                        this.signals.dragged.dispatch( dx, dy );
                     }
                 }
 
