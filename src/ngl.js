@@ -157,6 +157,7 @@ import StaticDatasource from "./datasource/static-datasource.js";
 import {
     LeftMouseButton, MiddleMouseButton, RightMouseButton
 } from "./constants.js";
+import MouseActions from "./controls/mouse-actions.js";
 
 //
 
@@ -220,6 +221,7 @@ export {
     LeftMouseButton,
     MiddleMouseButton,
     RightMouseButton,
+    MouseActions,
 
     Signal,
 

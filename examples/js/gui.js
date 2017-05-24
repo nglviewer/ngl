@@ -423,7 +423,7 @@ NGL.ToolbarWidget = function( stage ){
         .add( statsText );
 
     stage.signals.clicked.add( function( pickingProxy ){
-        messageText.setValue( pickingProxy.getLabel() );
+        messageText.setValue( pickingProxy ? pickingProxy.getLabel() : "nothing" );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){

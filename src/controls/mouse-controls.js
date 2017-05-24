@@ -5,65 +5,7 @@
  */
 
 
-import { almostIdentity } from "../math/math-utils.js";
-
-
-function zoomScrollAction( stage, delta ){
-    stage.trackballControls.zoom( delta );
-}
-
-function clipNearScrollAction( stage, delta ){
-    const sp = stage.getParameters();
-    stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
-}
-
-function focusScrollAction( stage, delta ){
-    const sp = stage.getParameters();
-    const focus = sp.clipNear * 2;
-    const sign = Math.sign( delta );
-    const step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
-    stage.setFocus( focus + step );
-}
-
-function panDragAction( stage, dx, dy ){
-    stage.trackballControls.pan( dx, dy );
-}
-
-function rotateDragAction( stage, dx, dy ){
-    stage.trackballControls.rotate( dx, dy );
-}
-
-function zoomDragAction( stage, dx, dy ){
-    stage.trackballControls.zoom( dy );
-}
-
-function panComponentDragAction( stage, dx, dy ){
-    stage.trackballControls.panComponent( dx, dy );
-}
-
-function rotateComponentDragAction( stage, dx, dy ){
-    stage.trackballControls.rotateComponent( dx, dy );
-}
-
-function movePickAction( stage, pickingProxy ){
-    if( pickingProxy ){
-        stage.animationControls.move( pickingProxy.position.clone() );
-    }
-}
-
-function tooltipPickAction( stage, pickingProxy ){
-    const tt = stage.tooltip;
-    const sp = stage.getParameters();
-    if( sp.tooltip && pickingProxy ){
-        const cp = pickingProxy.canvasPosition;
-        tt.innerText = pickingProxy.getLabel();
-        tt.style.bottom = cp.y + 3 + "px";
-        tt.style.left = cp.x + 3 + "px";
-        tt.style.display = "block";
-    }else{
-        tt.style.display = "none";
-    }
-}
+import { ActionPresets } from "./mouse-actions.js";
 
 
 function triggerFromString( str ){
@@ -92,37 +34,12 @@ function triggerFromString( str ){
 }
 
 
-const ActionPresets = {
-    default: [
-        [ "scroll", zoomScrollAction ],
-        [ "scroll-ctrl", clipNearScrollAction ],
-        [ "scroll-shift", focusScrollAction ],
-
-        [ "drag-right", panDragAction ],
-        [ "drag-left", rotateDragAction ],
-        [ "drag-middle", zoomDragAction ],
-        [ "drag-left+right", zoomDragAction ],
-        [ "drag-ctrl-right", panComponentDragAction ],
-        [ "drag-ctrl-left", rotateComponentDragAction ],
-
-        [ "clickPick-middle", movePickAction ],
-        [ "hoverPick", tooltipPickAction ],
-    ],
-    pymol: [
-        [ "drag-left", rotateDragAction ],
-        [ "drag-middle", panDragAction ],
-        [ "drag-right", zoomDragAction ],
-        [ "drag-shift-right", focusScrollAction ],
-
-        [ "clickPick-ctrl+shift-middle", movePickAction ],
-    ]
-};
-
-
+/**
+ * Mouse controls
+ */
 class MouseControls{
 
     /**
-     * create mouse controls
      * @param  {Stage} stage - the stage object
      */
     constructor( stage ){
@@ -149,6 +66,12 @@ class MouseControls{
 
     }
 
+    /**
+     * Add a new mouse action
+     * @param {String} triggerStr - the trigger for the action
+     * @param {Function} callback - the callback function for the action
+     * @return {undefined}
+     */
     add( triggerStr, callback ){
 
         const [ type, key, button ] = triggerFromString( triggerStr );
@@ -157,6 +80,12 @@ class MouseControls{
 
     }
 
+    /**
+     * Remove a mouse action
+     * @param {String} triggerStr - the trigger for the action
+     * @param {Function} [callback] - the callback function for the action
+     * @return {undefined}
+     */
     remove( triggerStr, callback ){
 
         const wildcard = triggerStr.includes( "*" );
@@ -185,6 +114,10 @@ class MouseControls{
 
     }
 
+    /**
+     * Remove all mouse actions
+     * @return {undefined}
+     */
     clear(){
 
         this.actionList.length = 0;
