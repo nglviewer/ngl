@@ -61,7 +61,7 @@ class MouseActions{
             const l = reprComp.getParameters().isolevel;
             const s = Math.sign( l );
             reprComp.setParameters( { isolevel: l + ( s * d ) } );
-        } );
+        }, "volume" );
     }
 
     /**
