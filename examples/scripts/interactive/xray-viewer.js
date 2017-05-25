@@ -62,8 +62,8 @@ function load2fofc( input ){
             isolevel: 2.5,
             boxSize: 10,
             useWorker: false,
-            wireframe: true,
-            contour: true
+            contour: true,
+            opaqueBack: false
         } );
     } );
 }
@@ -75,16 +75,16 @@ function loadFofc( input ){
             isolevel: 2,
             boxSize: 10,
             useWorker: false,
-            wireframe: true,
-            contour: true
+            contour: true,
+            opaqueBack: false
         } );
         o.addRepresentation( "surface", {
             color: "tomato",
             isolevel: -2,
             boxSize: 10,
             useWorker: false,
-            wireframe: true,
-            contour: true
+            contour: true,
+            opaqueBack: false
         } );
     } );
 }
@@ -119,3 +119,39 @@ var loadFofcButton = createFileButton( "load fofc", {
     }
 }, { top: "60px", left: "12px" } );
 addElement( loadFofcButton );
+
+
+var surfaceSelect = createSelect( [
+    [ "wireframe", "wireframe" ],
+    [ "smooth", "smooth" ],
+    [ "flat", "flat" ]
+], {
+    onchange: function( e ){
+        var v = e.target.value;
+        var p;
+        if( v === "wireframe" ){
+            p = {
+                contour: true,
+                flatShaded: false,
+                opacity: 1,
+                metalness: 0
+            }
+        }else if( v === "smooth" ){
+            p = {
+                contour: false,
+                flatShaded: false,
+                opacity: 0.5,
+                metalness: 0
+            }
+        }else if( v === "flat" ){
+            p = {
+                contour: false,
+                flatShaded: true,
+                opacity: 0.5,
+                metalness: 0.2
+            }
+        }
+        stage.getRepresentationsByName( "surface" ).setParameters( p );
+    }
+}, { top: "84px", left: "12px" } );
+addElement( surfaceSelect );
