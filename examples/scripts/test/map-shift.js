@@ -24,7 +24,11 @@ Promise.all( [
 
     stage.setFocus( 95 );
 
-    stage.mouseControls.add( "scroll-alt", function( stage, delta ){
+    // remove default scroll mouse action
+    stage.mouseControls.remove( "scroll" );
+
+    // change isolevel on mouse scroll
+    stage.mouseControls.add( "scroll", function( stage, delta ){
         var d = Math.sign( delta ) / 5;
         var l = surfRepr.getParameters().isolevel;
         surfRepr.setParameters( { isolevel: l + d } );

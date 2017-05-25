@@ -19,13 +19,13 @@ class PickingBehavior{
     }
 
     _onClick( x, y ){
-        var pickingProxy = this.stage.pickingControls.pick( x, y );
+        const pickingProxy = this.stage.pickingControls.pick( x, y );
         this.stage.signals.clicked.dispatch( pickingProxy );
         this.controls.run( "clickPick", pickingProxy );
     }
 
     _onHover( x, y ){
-        var pickingProxy = this.stage.pickingControls.pick( x, y );
+        const pickingProxy = this.stage.pickingControls.pick( x, y );
         if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
             this.stage.transformComponent = pickingProxy.component;
         }

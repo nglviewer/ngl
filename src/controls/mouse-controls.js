@@ -104,7 +104,14 @@ class MouseControls{
 
     }
 
+    /**
+     * Set mouse action preset
+     * @param  {String} name - one of "default", "pymol", "coot"
+     * @return {undefined}
+     */
     preset( name ){
+
+        this.clear();
 
         const list = ActionPresets[ name ] || [];
 

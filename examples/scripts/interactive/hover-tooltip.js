@@ -16,6 +16,9 @@ stage.viewer.container.appendChild( tooltip );
 // load a structure file
 stage.loadFile( "data://1blu.mmtf", { defaultRepresentation: true } );
 
+// remove default hoverPick mouse action
+stage.mouseControls.remove( "hoverPick" );
+
 // listen to `hovered` signal to move tooltip around and change its text
 stage.signals.hovered.add( function( pickingProxy ){
     if( pickingProxy && ( pickingProxy.atom || pickingProxy.bond ) ){
