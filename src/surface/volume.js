@@ -30,7 +30,7 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     function getSurface( isolevel, smooth, box, matrix, contour, wrap ){
         const sd = mc.triangulate( isolevel, smooth, box, contour, wrap );
-        if( smooth ){
+        if( smooth && !contour ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
