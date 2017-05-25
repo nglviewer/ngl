@@ -51750,6 +51750,12 @@ var MouseObserver = function MouseObserver( domElement, params ){
      */
     this.which = undefined;
     /**
+     * Indicates which mouse buttons were pressed:
+     * 0: No button; 1: Left button; 2: Right button; 4: Middle button
+     * @type {Integer}
+     */
+    this.buttons = undefined;
+    /**
      * Flag indicating if the mouse is pressed down
      * @type {Boolean}
      */
@@ -51800,6 +51806,17 @@ var MouseObserver = function MouseObserver( domElement, params ){
 
 };
 
+var prototypeAccessors$3 = { key: {} };
+
+prototypeAccessors$3.key.get = function (){
+    var key = 0;
+    if( this.altKey ) { key += 1; }
+    if( this.ctrlKey ) { key += 2; }
+    if( this.metaKey ) { key += 4; }
+    if( this.shiftKey ) { key += 8; }
+    return key;
+};
+
 MouseObserver.prototype.setParameters = function setParameters ( params ){
     var p = Object.assign( {}, params );
     this.hoverTimeout = defaults( p.hoverTimeout, this.hoverTimeout );
@@ -51818,7 +51835,8 @@ MouseObserver.prototype._listen = function _listen (){
         this.scrolled = false;
         if( this.hoverTimeout !== -1 ){
             this.hovering = true;
-            this.signals.hovered.dispatch();
+            var cp = this.canvasPosition;
+            this.signals.hovered.dispatch( cp.x, cp.y );
         }
     }
     requestAnimationFrame( this._listen );
@@ -51870,11 +51888,11 @@ MouseObserver.prototype._onMousemove = function _onMousemove ( event ){
     this.prevPosition.copy( this.position );
     this.position.set( event.layerX, event.layerY );
     this._setCanvasPosition( event );
-    var x = this.prevPosition.x - this.position.x;
-    var y = this.prevPosition.y - this.position.y;
-    this.signals.moved.dispatch( x, y );
+    var dx = this.prevPosition.x - this.position.x;
+    var dy = this.prevPosition.y - this.position.y;
+    this.signals.moved.dispatch( dx, dy );
     if( this.pressed ){
-        this.signals.dragged.dispatch( x, y );
+        this.signals.dragged.dispatch( dx, dy );
     }
 };
 
@@ -51886,6 +51904,7 @@ MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
     this.down.set( event.layerX, event.layerY );
     this.position.set( event.layerX, event.layerY );
     this.which = event.which;
+    this.buttons = event.buttons;
     this.pressed = true;
     this._setCanvasPosition( event );
 };
@@ -51900,11 +51919,13 @@ MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
 MouseObserver.prototype._onMouseup = function _onMouseup ( event ){
     event.preventDefault();
     this._setKeys( event );
-    this.signals.clicked.dispatch();
+    var cp = this.canvasPosition;
+    this.signals.clicked.dispatch( cp.x, cp.y );
     // if( this.distance() > 3 || event.which === RightMouseButton ){
     // this.signals.dropped.dispatch();
     // }
     this.which = undefined;
+    this.buttons = undefined;
     this.pressed = undefined;
 };
 
@@ -51959,6 +51980,7 @@ MouseObserver.prototype._onTouchmove = function _onTouchmove ( event ){
         case 1: {
             this._setKeys( event );
             this.which = undefined;
+            this.buttons = undefined;
             this.moving = true;
             this.hovering = false;
             this.lastMoved = performance.now();
@@ -51968,17 +51990,18 @@ MouseObserver.prototype._onTouchmove = function _onTouchmove ( event ){
                 event.touches[ 0 ].pageY
             );
             this._setCanvasPosition( event.touches[ 0 ] );
-            var x = this.prevPosition.x - this.position.x;
-            var y = this.prevPosition.y - this.position.y;
-            this.signals.moved.dispatch( x, y );
+            var dx = this.prevPosition.x - this.position.x;
+            var dy = this.prevPosition.y - this.position.y;
+            this.signals.moved.dispatch( dx, dy );
             if( this.pressed ){
-                this.signals.dragged.dispatch( x, y );
+                this.signals.dragged.dispatch( dx, dy );
             }
             break;
         }
 
         case 2: {
             this.which = RightMouseButton;
+            this.buttons = 2;
             var touchDistance = getTouchDistance( event );
             var delta = touchDistance - this.lastTouchDistance;
             this.lastTouchDistance = touchDistance;
@@ -51990,11 +52013,11 @@ MouseObserver.prototype._onTouchmove = function _onTouchmove ( event ){
                     ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2,
                     ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2
                 );
-                var x$1 = this.prevPosition.x - this.position.x;
-                var y$1 = this.prevPosition.y - this.position.y;
-                this.signals.moved.dispatch( x$1, y$1 );
+                var dx$1 = this.prevPosition.x - this.position.x;
+                var dy$1 = this.prevPosition.y - this.position.y;
+                this.signals.moved.dispatch( dx$1, dy$1 );
                 if( this.pressed ){
-                    this.signals.dragged.dispatch( x$1, y$1 );
+                    this.signals.dragged.dispatch( dx$1, dy$1 );
                 }
             }
 
@@ -52035,6 +52058,8 @@ MouseObserver.prototype.dispose = function dispose (){
     domElement.removeEventListener( 'touchmove', this._onTouchmove );
 };
 
+Object.defineProperties( MouseObserver.prototype, prototypeAccessors$3 );
+
 /**
  * @file Trackball Controls
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -52069,19 +52094,13 @@ var TrackballControls = function TrackballControls( stage, params ){
 
 };
 
-var prototypeAccessors$3 = { component: {} };
+var prototypeAccessors$4 = { component: {} };
 
-prototypeAccessors$3.component.get = function (){
+prototypeAccessors$4.component.get = function (){
     return this.stage.transformComponent;
 };
 
-TrackballControls.prototype.zoom = function zoom ( delta ){
-
-    this.controls.zoom( this.zoomSpeed * delta * 0.02 );
-
-};
-
-TrackballControls.prototype.pan = function pan ( x, y ){
+TrackballControls.prototype._setPanVector = function _setPanVector ( x, y ){
 
     var scaleFactor;
     var camera = this.viewer.camera;
@@ -52097,50 +52116,86 @@ TrackballControls.prototype.pan = function pan ( x, y ){
     tmpPanVector.set( x, y, 0 );
     tmpPanVector.multiplyScalar( this.panSpeed * scaleFactor );
 
-    if( this.mouse.ctrlKey && this.component ){
-        tmpPanMatrix.extractRotation( this.component.transform );
-        tmpPanMatrix.premultiply( this.viewer.rotationGroup.matrix );
-        tmpPanMatrix.getInverse( tmpPanMatrix );
-        tmpPanVector.applyMatrix4( tmpPanMatrix );
-        this.component.position.add( tmpPanVector );
-        this.component.updateMatrix();
-    }else{
-        tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
-        tmpPanVector.applyMatrix4( tmpPanMatrix );
-        this.controls.translate( tmpPanVector );
-    }
+};
+
+TrackballControls.prototype._getRotateXY = function _getRotateXY ( x, y ){
+
+    return[
+        this.rotateSpeed * -x * 0.01,
+        this.rotateSpeed * y * 0.01
+    ];
+
+};
+
+TrackballControls.prototype.zoom = function zoom ( delta ){
+
+    this.controls.zoom( this.zoomSpeed * delta * 0.02 );
+
+};
+
+TrackballControls.prototype.pan = function pan ( x, y ){
+
+    this._setPanVector( x, y );
+
+    tmpPanMatrix.getInverse( this.viewer.rotationGroup.matrix );
+    tmpPanVector.applyMatrix4( tmpPanMatrix );
+    this.controls.translate( tmpPanVector );
+
+};
+
+TrackballControls.prototype.panComponent = function panComponent ( x, y ){
+
+    if( !this.component ) { return; }
+
+    this._setPanVector( x, y );
+
+    tmpPanMatrix.extractRotation( this.component.transform );
+    tmpPanMatrix.premultiply( this.viewer.rotationGroup.matrix );
+    tmpPanMatrix.getInverse( tmpPanMatrix );
+    tmpPanVector.applyMatrix4( tmpPanMatrix );
+    this.component.position.add( tmpPanVector );
+    this.component.updateMatrix();
 
 };
 
 TrackballControls.prototype.rotate = function rotate ( x, y ){
 
-    var dx = this.rotateSpeed * -x * 0.01;
-    var dy = this.rotateSpeed * y * 0.01;
+    var ref = this._getRotateXY( x, y );
+        var dx = ref[0];
+        var dy = ref[1];
 
-    if( this.mouse.ctrlKey && this.component ){
-        tmpRotateMatrix.extractRotation( this.component.transform );
-        tmpRotateMatrix.premultiply( this.viewer.rotationGroup.matrix );
-        tmpRotateMatrix.getInverse( tmpRotateMatrix );
-        tmpRotateVector.set( 1, 0, 0 );
-        tmpRotateVector.applyMatrix4( tmpRotateMatrix );
-        tmpRotateXMatrix.makeRotationAxis( tmpRotateVector, dy );
-        tmpRotateVector.set( 0, 1, 0 );
-        tmpRotateVector.applyMatrix4( tmpRotateMatrix );
-        tmpRotateYMatrix.makeRotationAxis( tmpRotateVector, dx );
-        tmpRotateXMatrix.multiply( tmpRotateYMatrix );
-        tmpRotateQuaternion.setFromRotationMatrix( tmpRotateXMatrix );
-        this.component.quaternion.premultiply( tmpRotateQuaternion );
-        this.component.updateMatrix();
-    }else{
-        tmpRotateXMatrix.makeRotationX( dy );
-        tmpRotateYMatrix.makeRotationY( dx );
-        tmpRotateXMatrix.multiply( tmpRotateYMatrix );
-        this.controls.applyMatrix( tmpRotateXMatrix );
-    }
+    tmpRotateXMatrix.makeRotationX( dy );
+    tmpRotateYMatrix.makeRotationY( dx );
+    tmpRotateXMatrix.multiply( tmpRotateYMatrix );
+    this.controls.applyMatrix( tmpRotateXMatrix );
 
 };
 
-Object.defineProperties( TrackballControls.prototype, prototypeAccessors$3 );
+TrackballControls.prototype.rotateComponent = function rotateComponent ( x, y ){
+
+    if( !this.component ) { return; }
+
+    var ref = this._getRotateXY( x, y );
+        var dx = ref[0];
+        var dy = ref[1];
+
+    tmpRotateMatrix.extractRotation( this.component.transform );
+    tmpRotateMatrix.premultiply( this.viewer.rotationGroup.matrix );
+    tmpRotateMatrix.getInverse( tmpRotateMatrix );
+    tmpRotateVector.set( 1, 0, 0 );
+    tmpRotateVector.applyMatrix4( tmpRotateMatrix );
+    tmpRotateXMatrix.makeRotationAxis( tmpRotateVector, dy );
+    tmpRotateVector.set( 0, 1, 0 );
+    tmpRotateVector.applyMatrix4( tmpRotateMatrix );
+    tmpRotateYMatrix.makeRotationAxis( tmpRotateVector, dx );
+    tmpRotateXMatrix.multiply( tmpRotateYMatrix );
+    tmpRotateQuaternion.setFromRotationMatrix( tmpRotateXMatrix );
+    this.component.quaternion.premultiply( tmpRotateQuaternion );
+    this.component.updateMatrix();
+
+};
+
+Object.defineProperties( TrackballControls.prototype, prototypeAccessors$4 );
 
 /**
  * @file Picking Proxy
@@ -52194,46 +52249,46 @@ var PickingProxy = function PickingProxy( pickingData, stage ){
 
 };
 
-var prototypeAccessors$4 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},axes: {},bond: {},cone: {},clash: {},contact: {},cylinder: {},distance: {},ellipsoid: {},mesh: {},slice: {},sphere: {},surface: {},unitcell: {},unknown: {},volume: {} };
+var prototypeAccessors$5 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},axes: {},bond: {},cone: {},clash: {},contact: {},cylinder: {},distance: {},ellipsoid: {},mesh: {},slice: {},sphere: {},surface: {},unitcell: {},unknown: {},volume: {} };
 
 /**
  * Kind of the picked data
  * @member {String}
  */
-prototypeAccessors$4.type.get = function (){ return this.picker.type; };
+prototypeAccessors$5.type.get = function (){ return this.picker.type; };
 
 /**
  * If the `alt` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$4.altKey.get = function (){ return this.mouse.altKey; };
+prototypeAccessors$5.altKey.get = function (){ return this.mouse.altKey; };
 /**
  * If the `ctrl` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$4.ctrlKey.get = function (){ return this.mouse.ctrlKey; };
+prototypeAccessors$5.ctrlKey.get = function (){ return this.mouse.ctrlKey; };
 /**
  * If the `meta` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$4.metaKey.get = function (){ return this.mouse.metaKey; };
+prototypeAccessors$5.metaKey.get = function (){ return this.mouse.metaKey; };
 /**
  * If the `shift` key was pressed
  * @member {Boolean}
  */
-prototypeAccessors$4.shiftKey.get = function (){ return this.mouse.shiftKey; };
+prototypeAccessors$5.shiftKey.get = function (){ return this.mouse.shiftKey; };
 
 /**
  * Position of the mouse on the canvas
  * @member {Vector2}
  */
-prototypeAccessors$4.canvasPosition.get = function (){ return this.mouse.canvasPosition; };
+prototypeAccessors$5.canvasPosition.get = function (){ return this.mouse.canvasPosition; };
 
 /**
  * The component the picked data is part of
  * @member {Component}
  */
-prototypeAccessors$4.component.get = function (){
+prototypeAccessors$5.component.get = function (){
     return this.stage.getComponentsByObject( this.picker.data ).list[ 0 ];
 };
 
@@ -52241,7 +52296,7 @@ prototypeAccessors$4.component.get = function (){
  * The picked object data
  * @member {Object}
  */
-prototypeAccessors$4.object.get = function (){
+prototypeAccessors$5.object.get = function (){
     return this.picker.getObject( this.pid );
 };
 
@@ -52249,7 +52304,7 @@ prototypeAccessors$4.object.get = function (){
  * The 3d position in the scene of the picked object
  * @member {Vector3}
  */
-prototypeAccessors$4.position.get = function (){
+prototypeAccessors$5.position.get = function (){
     return this.picker.getPosition( this.pid, this.instance, this.component );
 };
 
@@ -52257,7 +52312,7 @@ prototypeAccessors$4.position.get = function (){
  * The atom of a picked bond that is closest to the mouse
  * @member {AtomProxy}
  */
-prototypeAccessors$4.closestBondAtom.get = function (){
+prototypeAccessors$5.closestBondAtom.get = function (){
 
     if( this.type !== "bond" ) { return undefined; }
 
@@ -52275,77 +52330,131 @@ prototypeAccessors$4.closestBondAtom.get = function (){
 /**
  * @member {Object}
  */
-prototypeAccessors$4.arrow.get = function (){ return this._objectIfType( "arrow" ); };
+prototypeAccessors$5.arrow.get = function (){ return this._objectIfType( "arrow" ); };
 /**
  * @member {AtomProxy}
  */
-prototypeAccessors$4.atom.get = function (){ return this._objectIfType( "atom" ); };
+prototypeAccessors$5.atom.get = function (){ return this._objectIfType( "atom" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.axes.get = function (){ return this._objectIfType( "axes" ); };
+prototypeAccessors$5.axes.get = function (){ return this._objectIfType( "axes" ); };
 /**
  * @member {BondProxy}
  */
-prototypeAccessors$4.bond.get = function (){ return this._objectIfType( "bond" ); };
+prototypeAccessors$5.bond.get = function (){ return this._objectIfType( "bond" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.cone.get = function (){ return this._objectIfType( "cone" ); };
+prototypeAccessors$5.cone.get = function (){ return this._objectIfType( "cone" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.clash.get = function (){ return this._objectIfType( "clash" ); };
+prototypeAccessors$5.clash.get = function (){ return this._objectIfType( "clash" ); };
 /**
  * @member {BondProxy}
  */
-prototypeAccessors$4.contact.get = function (){ return this._objectIfType( "contact" ); };
+prototypeAccessors$5.contact.get = function (){ return this._objectIfType( "contact" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.cylinder.get = function (){ return this._objectIfType( "cylinder" ); };
+prototypeAccessors$5.cylinder.get = function (){ return this._objectIfType( "cylinder" ); };
 /**
  * @member {BondProxy}
  */
-prototypeAccessors$4.distance.get = function (){ return this._objectIfType( "distance" ); };
+prototypeAccessors$5.distance.get = function (){ return this._objectIfType( "distance" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.ellipsoid.get = function (){ return this._objectIfType( "ellipsoid" ); };
+prototypeAccessors$5.ellipsoid.get = function (){ return this._objectIfType( "ellipsoid" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.mesh.get = function (){ return this._objectIfType( "mesh" ); };
+prototypeAccessors$5.mesh.get = function (){ return this._objectIfType( "mesh" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.slice.get = function (){ return this._objectIfType( "slice" ); };
+prototypeAccessors$5.slice.get = function (){ return this._objectIfType( "slice" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.sphere.get = function (){ return this._objectIfType( "sphere" ); };
+prototypeAccessors$5.sphere.get = function (){ return this._objectIfType( "sphere" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.surface.get = function (){ return this._objectIfType( "surface" ); };
+prototypeAccessors$5.surface.get = function (){ return this._objectIfType( "surface" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.unitcell.get = function (){ return this._objectIfType( "unitcell" ); };
+prototypeAccessors$5.unitcell.get = function (){ return this._objectIfType( "unitcell" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.unknown.get = function (){ return this._objectIfType( "unknown" ); };
+prototypeAccessors$5.unknown.get = function (){ return this._objectIfType( "unknown" ); };
 /**
  * @member {Object}
  */
-prototypeAccessors$4.volume.get = function (){ return this._objectIfType( "volume" ); };
+prototypeAccessors$5.volume.get = function (){ return this._objectIfType( "volume" ); };
 
 PickingProxy.prototype._objectIfType = function _objectIfType ( type ){
     return this.type === type ? this.object : undefined;
 };
 
-Object.defineProperties( PickingProxy.prototype, prototypeAccessors$4 );
+PickingProxy.prototype.getLabel = function getLabel (){
+    var msg = "nothing";
+    if( this.arrow ){
+        msg = "arrow: " + ( this.arrow.name || this.pid ) + " (" + this.arrow.shape.name + ")";
+    }else if( this.atom ){
+        msg = "atom: " +
+            this.atom.qualifiedName() +
+            " (" + this.atom.structure.name + ")";
+    }else if( this.axes ){
+        msg = "axes";
+    }else if( this.bond ){
+        msg = "bond: " +
+            this.bond.atom1.qualifiedName() + " - " + this.bond.atom2.qualifiedName() +
+            " (" + this.bond.structure.name + ")";
+    }else if( this.cone ){
+        msg = "cone: " + ( this.cone.name || this.pid ) + " (" + this.cone.shape.name + ")";
+    }else if( this.clash ){
+        msg = "clash: " + this.clash.clash.sele1 + " - " + this.clash.clash.sele2;
+    }else if( this.contact ){
+        msg = "contact: " +
+            this.contact.atom1.qualifiedName() + " - " + this.contact.atom2.qualifiedName() +
+            " (" + this.contact.structure.name + ")";
+    }else if( this.cylinder ){
+        msg = "cylinder: " + ( this.cylinder.name || this.pid ) + " (" + this.cylinder.shape.name + ")";
+    }else if( this.distance ){
+        msg = "distance: " +
+            this.distance.atom1.qualifiedName() + " - " + this.distance.atom2.qualifiedName() +
+            " (" + this.distance.structure.name + ")";
+    }else if( this.ellipsoid ){
+        msg = "ellipsoid: " + ( this.ellipsoid.name || this.pid ) + " (" + this.ellipsoid.shape.name + ")";
+    }else if( this.mesh ){
+        msg = "mesh: " + ( this.mesh.name || this.mesh.serial ) + " (" + this.mesh.shape.name + ")";
+    }else if( this.slice ){
+        msg = "slice: " +
+            this.slice.value.toPrecision( 3 ) +
+            " (" + this.slice.volume.name + ")";
+    }else if( this.sphere ){
+        msg = "sphere: " + ( this.sphere.name || this.pid ) + " (" + this.sphere.shape.name + ")";
+    }else if( this.surface ){
+        msg = "surface: " + this.surface.surface.name;
+    }else if( this.unitcell ){
+        msg = "unitcell: " +
+            this.unitcell.unitcell.spacegroup +
+            " (" + this.unitcell.structure.name + ")";
+    }else if( this.unknown ){
+        msg = "unknown";
+    }else if( this.volume ){
+        msg = "volume: " +
+            this.volume.value.toPrecision( 3 ) +
+            " (" + this.volume.volume.name + ")";
+    }
+    return msg;
+};
+
+Object.defineProperties( PickingProxy.prototype, prototypeAccessors$5 );
 
 /**
  * @file Picking Controls
@@ -52431,13 +52540,13 @@ var ViewerControls = function ViewerControls( stage ){
 
 };
 
-var prototypeAccessors$5 = { position: {},rotation: {} };
+var prototypeAccessors$6 = { position: {},rotation: {} };
 
 /**
  * scene center position
  * @type {Vector3}
  */
-prototypeAccessors$5.position.get = function (){
+prototypeAccessors$6.position.get = function (){
 
     return this.viewer.translationGroup.position;
 
@@ -52447,7 +52556,7 @@ prototypeAccessors$5.position.get = function (){
  * scene rotation
  * @type {Quaternion}
  */
-prototypeAccessors$5.rotation.get = function (){
+prototypeAccessors$6.rotation.get = function (){
 
     return this.viewer.rotationGroup.quaternion;
 
@@ -52624,7 +52733,7 @@ ViewerControls.prototype.applyMatrix = function applyMatrix ( matrix ){
 
 };
 
-Object.defineProperties( ViewerControls.prototype, prototypeAccessors$5 );
+Object.defineProperties( ViewerControls.prototype, prototypeAccessors$6 );
 
 /**
  * @file Animation
@@ -53066,6 +53175,340 @@ AnimationControls.prototype.dispose = function dispose (){
 };
 
 /**
+ * @file Mouse Actions
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Mouse actions provided as static methods
+ */
+var MouseActions = function MouseActions () {};
+
+MouseActions.zoomScroll = function zoomScroll ( stage, delta ){
+    stage.trackballControls.zoom( delta );
+};
+
+/**
+ * Move near clipping plane based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move clipping plane
+ * @return {undefined}
+ */
+MouseActions.clipNearScroll = function clipNearScroll ( stage, delta ){
+    var sp = stage.getParameters();
+    stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
+};
+
+/**
+ * Move focus planes based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move focus planes
+ * @return {undefined}
+ */
+MouseActions.focusScroll = function focusScroll ( stage, delta ){
+    var sp = stage.getParameters();
+    var focus = sp.clipNear * 2;
+    var sign = Math.sign( delta );
+    var step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
+    stage.setFocus( focus + step );
+};
+
+/**
+ * Change isolevel of volume surfaces based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to change isolevel
+ * @return {undefined}
+ */
+MouseActions.isolevelScroll = function isolevelScroll ( stage, delta ){
+    var d = Math.sign( delta ) / 5;
+    stage.eachRepresentation( function( reprComp ){
+        if( reprComp.repr.type !== "surface" ) { return; }
+        var l = reprComp.getParameters().isolevel;
+        var s = Math.sign( l );
+        reprComp.setParameters( { isolevel: l + ( s * d ) } );
+    }, "volume" );
+};
+
+/**
+ * Pan scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
+MouseActions.panDrag = function panDrag ( stage, dx, dy ){
+    stage.trackballControls.pan( dx, dy );
+};
+
+/**
+ * Rotate scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
+MouseActions.rotateDrag = function rotateDrag ( stage, dx, dy ){
+    stage.trackballControls.rotate( dx, dy );
+};
+
+/**
+ * Zoom scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom
+ * @param {Number} dy - amount to zoom
+ * @return {undefined}
+ */
+MouseActions.zoomDrag = function zoomDrag ( stage, dx, dy ){
+    stage.trackballControls.zoom( ( dx + dy ) / -2 );
+};
+
+/**
+ * Zoom scene based on mouse coordinate changes and
+ * move focus planes based on camera position (zoom)
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom
+ * @param {Number} dy - amount to zoom
+ * @return {undefined}
+ */
+MouseActions.zoomFocusDrag = function zoomFocusDrag ( stage, dx, dy ){
+    stage.trackballControls.zoom( ( dx + dy ) / -2 );
+    var z = stage.viewer.camera.position.z;
+    stage.setFocus( 100 - Math.abs( z / 10 ) );
+};
+
+/**
+ * Pan picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
+MouseActions.panComponentDrag = function panComponentDrag ( stage, dx, dy ){
+    stage.trackballControls.panComponent( dx, dy );
+};
+
+/**
+ * Rotate picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
+MouseActions.rotateComponentDrag = function rotateComponentDrag ( stage, dx, dy ){
+    stage.trackballControls.rotateComponent( dx, dy );
+};
+
+/**
+ * Move picked element to the center of the screen
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
+MouseActions.movePick = function movePick ( stage, pickingProxy ){
+    if( pickingProxy ){
+        stage.animationControls.move( pickingProxy.position.clone() );
+    }
+};
+
+/**
+ * Show tooltip with information of picked element
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
+MouseActions.tooltipPick = function tooltipPick ( stage, pickingProxy ){
+    var tt = stage.tooltip;
+    var sp = stage.getParameters();
+    if( sp.tooltip && pickingProxy ){
+        var cp = pickingProxy.canvasPosition;
+        tt.innerText = pickingProxy.getLabel();
+        tt.style.bottom = cp.y + 3 + "px";
+        tt.style.left = cp.x + 3 + "px";
+        tt.style.display = "block";
+    }else{
+        tt.style.display = "none";
+    }
+};
+
+
+var ActionPresets = {
+    default: [
+        [ "scroll", MouseActions.zoomScroll ],
+        [ "scroll-ctrl", MouseActions.clipNearScroll ],
+        [ "scroll-shift", MouseActions.focusScroll ],
+        [ "scroll-alt", MouseActions.isolevelScroll ],
+
+        [ "drag-right", MouseActions.panDrag ],
+        [ "drag-left", MouseActions.rotateDrag ],
+        [ "drag-middle", MouseActions.zoomDrag ],
+        [ "drag-left+right", MouseActions.zoomDrag ],
+        [ "drag-ctrl-right", MouseActions.panComponentDrag ],
+        [ "drag-ctrl-left", MouseActions.rotateComponentDrag ],
+
+        [ "clickPick-middle", MouseActions.movePick ],
+        [ "hoverPick", MouseActions.tooltipPick ] ],
+    pymol: [
+        [ "drag-left", MouseActions.rotateDrag ],
+        [ "drag-middle", MouseActions.panDrag ],
+        [ "drag-right", MouseActions.zoomDrag ],
+        [ "drag-shift-right", MouseActions.focusScroll ],
+
+        [ "clickPick-ctrl+shift-middle", MouseActions.movePick ] ],
+    coot: [
+        [ "scroll", MouseActions.isolevelScroll ],
+
+        [ "drag-left", MouseActions.rotateDrag ],
+        [ "drag-middle", MouseActions.panDrag ],
+        [ "drag-ctrl-left", MouseActions.panDrag ],
+        [ "drag-right", MouseActions.zoomFocusDrag ],
+        [ "drag-ctrl-right", MouseActions.focusScroll ],
+
+        [ "clickPick-middle", MouseActions.movePick ] ]
+};
+
+/**
+ * @file Mouse Controls
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+function triggerFromString( str ){
+    var tokens = str.split( /[-+]/ );
+
+    var type = "";
+    if( tokens.includes( "scroll" ) ) { type = "scroll"; }
+    if( tokens.includes( "drag" ) ) { type = "drag"; }
+    if( tokens.includes( "click" ) ) { type = "click"; }
+    if( tokens.includes( "hover" ) ) { type = "hover"; }
+    if( tokens.includes( "clickPick" ) ) { type = "clickPick"; }
+    if( tokens.includes( "hoverPick" ) ) { type = "hoverPick"; }
+
+    var key = 0;
+    if( tokens.includes( "alt" ) ) { key += 1; }
+    if( tokens.includes( "ctrl" ) ) { key += 2; }
+    if( tokens.includes( "meta" ) ) { key += 4; }
+    if( tokens.includes( "shift" ) ) { key += 8; }
+
+    var button = 0;
+    if( tokens.includes( "left" ) ) { button += 1; }
+    if( tokens.includes( "right" ) ) { button += 2; }
+    if( tokens.includes( "middle" ) ) { button += 4; }
+
+    return [ type, key, button ];
+}
+
+
+/**
+ * Mouse controls
+ */
+var MouseControls = function MouseControls( stage, params ){
+
+    var p = params || {};
+
+    this.stage = stage;
+    this.mouse = stage.mouseObserver;
+
+    this.actionList = [];
+
+    this.preset( p.preset || "default" );
+
+};
+
+MouseControls.prototype.run = function run ( type ){
+        var this$1 = this;
+        var args = [], len = arguments.length - 1;
+        while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
+
+
+    var key = this.mouse.key || 0;
+    var button = this.mouse.buttons || 0;
+
+    this.actionList.forEach( function (a) {
+        if( a.type === type && a.key === key && a.button === button ){
+            a.callback.apply( a, [ this$1.stage ].concat( args ) );
+        }
+    } );
+
+};
+
+/**
+ * Add a new mouse action
+ * @param {String} triggerStr - the trigger for the action
+ * @param {Function} callback - the callback function for the action
+ * @return {undefined}
+ */
+MouseControls.prototype.add = function add ( triggerStr, callback ){
+
+    var ref = triggerFromString( triggerStr );
+        var type = ref[0];
+        var key = ref[1];
+        var button = ref[2];
+
+    this.actionList.push( { type: type, key: key, button: button, callback: callback } );
+
+};
+
+/**
+ * Remove a mouse action
+ * @param {String} triggerStr - the trigger for the action
+ * @param {Function} [callback] - the callback function for the action
+ * @return {undefined}
+ */
+MouseControls.prototype.remove = function remove ( triggerStr, callback ){
+
+    var wildcard = triggerStr.includes( "*" );
+    var ref = triggerFromString( triggerStr );
+        var type = ref[0];
+        var key = ref[1];
+        var button = ref[2];
+
+    var actionList = this.actionList.filter( function( a ){
+        return !(
+            ( a.type === type || ( wildcard && type === "" ) ) &&
+            ( a.key === key || ( wildcard && key === 0 ) ) &&
+            ( a.button === button || ( wildcard && button === 0 ) ) &&
+            ( a.callback === callback || callback === undefined )
+        );
+    } );
+
+    this.actionList = actionList;
+
+};
+
+/**
+ * Set mouse action preset
+ * @param  {String} name - one of "default", "pymol", "coot"
+ * @return {undefined}
+ */
+MouseControls.prototype.preset = function preset ( name ){
+        var this$1 = this;
+
+
+    this.clear();
+
+    var list = ActionPresets[ name ] || [];
+
+    list.forEach( function (action) {
+        (ref = this$1).add.apply( ref, action );
+            var ref;
+    } );
+
+};
+
+/**
+ * Remove all mouse actions
+ * @return {undefined}
+ */
+MouseControls.prototype.clear = function clear (){
+
+    this.actionList.length = 0;
+
+};
+
+/**
  * @file Picking Behavior
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -53076,33 +53519,31 @@ var PickingBehavior = function PickingBehavior( stage ){
 
     this.stage = stage;
     this.mouse = stage.mouseObserver;
+    this.controls = stage.mouseControls;
 
-    this.mouse.signals.clicked.add( this.onClick, this );
-    this.mouse.signals.hovered.add( this.onHover, this );
+    this.mouse.signals.clicked.add( this._onClick, this );
+    this.mouse.signals.hovered.add( this._onHover, this );
 
 };
 
-PickingBehavior.prototype.pick = function pick (){
-    var cp = this.mouse.canvasPosition;
-    return this.stage.pickingControls.pick( cp.x, cp.y );
+PickingBehavior.prototype._onClick = function _onClick ( x, y ){
+    var pickingProxy = this.stage.pickingControls.pick( x, y );
+    this.stage.signals.clicked.dispatch( pickingProxy );
+    this.controls.run( "clickPick", pickingProxy );
 };
 
-PickingBehavior.prototype.onClick = function onClick (){
-    var pp = this.pick();
-    if( pp && this.mouse.which === MiddleMouseButton ){
-        this.stage.animationControls.move( pp.position.clone() );
+PickingBehavior.prototype._onHover = function _onHover ( x, y ){
+    var pickingProxy = this.stage.pickingControls.pick( x, y );
+    if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
+        this.stage.transformComponent = pickingProxy.component;
     }
-    this.stage.signals.clicked.dispatch( pp );
-    if( Debug ) { Log.log( "clicked", pp ); }
-};
-
-PickingBehavior.prototype.onHover = function onHover (){
-    this.stage.signals.hovered.dispatch( this.pick() );
+    this.stage.signals.hovered.dispatch( pickingProxy );
+    this.controls.run( "hoverPick", pickingProxy );
 };
 
 PickingBehavior.prototype.dispose = function dispose (){
-    this.mouse.signals.clicked.remove( this.onClick, this );
-    this.mouse.signals.hovered.remove( this.onHover, this );
+    this.mouse.signals.clicked.remove( this._onClick, this );
+    this.mouse.signals.hovered.remove( this._onHover, this );
 };
 
 /**
@@ -53116,59 +53557,36 @@ var MouseBehavior = function MouseBehavior( stage/*, params*/ ){
 
     this.stage = stage;
     this.mouse = stage.mouseObserver;
-    this.controls = stage.trackballControls;
+    this.controls = stage.mouseControls;
 
-    this.stage.signals.hovered.add( this._onHover, this );
     this.mouse.signals.scrolled.add( this._onScroll, this );
     this.mouse.signals.dragged.add( this._onDrag, this );
-
-};
-
-MouseBehavior.prototype._onHover = function _onHover ( pickingProxy ){
-
-    if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
-        this.stage.transformComponent = pickingProxy.component;
-    }
+    this.mouse.signals.clicked.add( this._onClick, this );
+    this.mouse.signals.hovered.add( this._onHover, this );
 
 };
 
 MouseBehavior.prototype._onScroll = function _onScroll ( delta ){
-
-    if( this.mouse.shiftKey ){
-        var sp = this.stage.getParameters();
-        var focus = sp.clipNear * 2;
-        var sign = Math.sign( delta );
-        var step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
-        this.stage.setFocus( focus + step );
-    }else if( this.mouse.ctrlKey ){
-        var sp$1 = this.stage.getParameters();
-        this.stage.setParameters( { clipNear: sp$1.clipNear + delta / 10 } );
-    }else if( this.mouse.altKey ){
-        // nothing yet
-    }else if( this.mouse.metaKey ){
-        // nothing yet
-    }else{
-        this.controls.zoom( delta );
-    }
-
+    this.controls.run( "scroll", delta );
 };
 
-MouseBehavior.prototype._onDrag = function _onDrag ( x, y ){
+MouseBehavior.prototype._onDrag = function _onDrag ( dx, dy ){
+    this.controls.run( "drag", dx, dy );
+};
 
-    if( this.mouse.which === RightMouseButton ){
-        this.controls.pan( x, y );
-    }else if( this.mouse.which === MiddleMouseButton ){
-        // nothing yet
-    }else{
-        this.controls.rotate( x, y );
-    }
+MouseBehavior.prototype._onClick = function _onClick ( x, y ){
+    this.controls.run( "click", x, y );
+};
 
+MouseBehavior.prototype._onHover = function _onHover ( x, y ){
+    this.controls.run( "hover", x, y );
 };
 
 MouseBehavior.prototype.dispose = function dispose (){
-    this.stage.signals.hovered.remove( this._onHover, this );
     this.mouse.signals.scrolled.remove( this._onScroll, this );
     this.mouse.signals.dragged.remove( this._onDrag, this );
+    this.mouse.signals.clicked.remove( this._onClick, this );
+    this.mouse.signals.hovered.remove( this._onHover, this );
 };
 
 /**
@@ -57489,9 +57907,9 @@ var Surface = function Surface( name, path, data ){
 
 };
 
-var prototypeAccessors$10 = { type: {} };
+var prototypeAccessors$11 = { type: {} };
 
-prototypeAccessors$10.type.get = function (){ return "Surface"; };
+prototypeAccessors$11.type.get = function (){ return "Surface"; };
 
 /**
  * set surface data
@@ -57717,7 +58135,7 @@ Surface.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Surface.prototype, prototypeAccessors$10 );
+Object.defineProperties( Surface.prototype, prototypeAccessors$11 );
 
 /**
  * @file Volume
@@ -57798,9 +58216,9 @@ var Volume = function Volume( name, path, data, nx, ny, nz, atomindex ){
 
 };
 
-var prototypeAccessors$9 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
+var prototypeAccessors$10 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
 
-prototypeAccessors$9.type.get = function (){ return "Volume"; };
+prototypeAccessors$10.type.get = function (){ return "Volume"; };
 
 /**
  * set volume data
@@ -58031,7 +58449,7 @@ Volume.prototype.getSigmaForValue = function getSigmaForValue ( value ){
 
 };
 
-prototypeAccessors$9.position.get = function (){
+prototypeAccessors$10.position.get = function (){
 
     if( !this._position ){
 
@@ -58153,7 +58571,7 @@ Volume.prototype.getDataSize = function getDataSize ( size, scale ){
 
 };
 
-prototypeAccessors$9.min.get = function (){
+prototypeAccessors$10.min.get = function (){
 
     if( this._min === undefined ){
         this._min = arrayMin( this.data );
@@ -58162,7 +58580,7 @@ prototypeAccessors$9.min.get = function (){
 
 };
 
-prototypeAccessors$9.max.get = function (){
+prototypeAccessors$10.max.get = function (){
 
     if( this._max === undefined ){
         this._max = arrayMax$1( this.data );
@@ -58171,7 +58589,7 @@ prototypeAccessors$9.max.get = function (){
 
 };
 
-prototypeAccessors$9.sum.get = function (){
+prototypeAccessors$10.sum.get = function (){
 
     if( this._sum === undefined ){
         this._sum = arraySum( this.data );
@@ -58180,7 +58598,7 @@ prototypeAccessors$9.sum.get = function (){
 
 };
 
-prototypeAccessors$9.mean.get = function (){
+prototypeAccessors$10.mean.get = function (){
 
     if( this._mean === undefined ){
         this._mean = arrayMean( this.data );
@@ -58189,7 +58607,7 @@ prototypeAccessors$9.mean.get = function (){
 
 };
 
-prototypeAccessors$9.rms.get = function (){
+prototypeAccessors$10.rms.get = function (){
 
     if( this._rms === undefined ){
         this._rms = arrayRms( this.data );
@@ -58228,7 +58646,7 @@ Volume.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Volume.prototype, prototypeAccessors$9 );
+Object.defineProperties( Volume.prototype, prototypeAccessors$10 );
 
 /**
  * @file Filtered Volume
@@ -58244,18 +58662,18 @@ var FilteredVolume = function FilteredVolume( volume, minValue, maxValue, outsid
 
 };
 
-var prototypeAccessors$8 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
+var prototypeAccessors$9 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
 
-prototypeAccessors$8.header.get = function (){ return this.volume.header; };
-prototypeAccessors$8.matrix.get = function (){ return this.volume.matrix; };
-prototypeAccessors$8.normalMatrix.get = function (){ return this.volume.normalMatrix; };
-prototypeAccessors$8.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
-prototypeAccessors$8.center.get = function (){ return this.volume.center; };
-prototypeAccessors$8.boundingBox.get = function (){ return this.volume.boundingBox; };
-prototypeAccessors$8.min.get = function (){ return this.volume.min; };
-prototypeAccessors$8.max.get = function (){ return this.volume.max; };
-prototypeAccessors$8.mean.get = function (){ return this.volume.mean; };
-prototypeAccessors$8.rms.get = function (){ return this.volume.rms; };
+prototypeAccessors$9.header.get = function (){ return this.volume.header; };
+prototypeAccessors$9.matrix.get = function (){ return this.volume.matrix; };
+prototypeAccessors$9.normalMatrix.get = function (){ return this.volume.normalMatrix; };
+prototypeAccessors$9.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
+prototypeAccessors$9.center.get = function (){ return this.volume.center; };
+prototypeAccessors$9.boundingBox.get = function (){ return this.volume.boundingBox; };
+prototypeAccessors$9.min.get = function (){ return this.volume.min; };
+prototypeAccessors$9.max.get = function (){ return this.volume.max; };
+prototypeAccessors$9.mean.get = function (){ return this.volume.mean; };
+prototypeAccessors$9.rms.get = function (){ return this.volume.rms; };
 
 FilteredVolume.prototype._getFilterHash = function _getFilterHash ( minValue, maxValue, outside ){
 
@@ -58348,7 +58766,7 @@ FilteredVolume.prototype.setFilter = function setFilter ( minValue, maxValue, ou
 
 };
 
-Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$8 );
+Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$9 );
 
 FilteredVolume.prototype.getValueForSigma = Volume.prototype.getValueForSigma;
 FilteredVolume.prototype.getSigmaForValue = Volume.prototype.getSigmaForValue;
@@ -60525,9 +60943,9 @@ var Assembly = function Assembly( name ){
 
 };
 
-var prototypeAccessors$11 = { type: {} };
+var prototypeAccessors$12 = { type: {} };
 
-prototypeAccessors$11.type.get = function (){ return "Assembly"; };
+prototypeAccessors$12.type.get = function (){ return "Assembly"; };
 
 /**
  * Add transformed parts to the assembly
@@ -60653,7 +61071,7 @@ Assembly.prototype.getSelection = function getSelection (){
     return selectionFromChains( chainList );
 };
 
-Object.defineProperties( Assembly.prototype, prototypeAccessors$11 );
+Object.defineProperties( Assembly.prototype, prototypeAccessors$12 );
 
 
 var AssemblyPart = function AssemblyPart( matrixList, chainList ){
@@ -62396,49 +62814,49 @@ var BondProxy = function BondProxy( structure, index ){
 
 };
 
-var prototypeAccessors$12 = { atom1: {},atom2: {},atomIndex1: {},atomIndex2: {},bondOrder: {} };
+var prototypeAccessors$13 = { atom1: {},atom2: {},atomIndex1: {},atomIndex2: {},bondOrder: {} };
 
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$12.atom1.get = function () {
+prototypeAccessors$13.atom1.get = function () {
     return this.structure.getAtomProxy( this.atomIndex1 );
 };
 
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$12.atom2.get = function () {
+prototypeAccessors$13.atom2.get = function () {
     return this.structure.getAtomProxy( this.atomIndex2 );
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$12.atomIndex1.get = function () {
+prototypeAccessors$13.atomIndex1.get = function () {
     return this.bondStore.atomIndex1[ this.index ];
 };
-prototypeAccessors$12.atomIndex1.set = function ( value ) {
+prototypeAccessors$13.atomIndex1.set = function ( value ) {
     this.bondStore.atomIndex1[ this.index ] = value;
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$12.atomIndex2.get = function () {
+prototypeAccessors$13.atomIndex2.get = function () {
     return this.bondStore.atomIndex2[ this.index ];
 };
-prototypeAccessors$12.atomIndex2.set = function ( value ) {
+prototypeAccessors$13.atomIndex2.set = function ( value ) {
     this.bondStore.atomIndex2[ this.index ] = value;
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$12.bondOrder.get = function () {
+prototypeAccessors$13.bondOrder.get = function () {
     return this.bondStore.bondOrder[ this.index ];
 };
-prototypeAccessors$12.bondOrder.set = function ( value ) {
+prototypeAccessors$13.bondOrder.set = function ( value ) {
     this.bondStore.bondOrder[ this.index ] = value;
 };
 
@@ -62526,7 +62944,7 @@ BondProxy.prototype.toObject = function toObject (){
     };
 };
 
-Object.defineProperties( BondProxy.prototype, prototypeAccessors$12 );
+Object.defineProperties( BondProxy.prototype, prototypeAccessors$13 );
 
 /**
  * @file Atom Proxy
@@ -62576,41 +62994,41 @@ var AtomProxy = function AtomProxy( structure, index ){
 
 };
 
-var prototypeAccessors$13 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {} };
+var prototypeAccessors$14 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {} };
 
 /**
  * @type {BondHash}
  */
-prototypeAccessors$13.bondHash.get = function (){ return this.structure.bondHash; };
+prototypeAccessors$14.bondHash.get = function (){ return this.structure.bondHash; };
 
 /**
  * Molecular enity
  * @type {Entity}
  */
-prototypeAccessors$13.entity.get = function () {
+prototypeAccessors$14.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
-prototypeAccessors$13.entityIndex.get = function () {
+prototypeAccessors$14.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.chainIndex ];
 };
-prototypeAccessors$13.modelIndex.get = function () {
+prototypeAccessors$14.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
-prototypeAccessors$13.chainIndex.get = function () {
+prototypeAccessors$14.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.residueIndex ];
 };
 /**
  * @type {ResidueProxy}
  */
-prototypeAccessors$13.residue.get = function () {
+prototypeAccessors$14.residue.get = function () {
     console.warn( "residue - might be expensive" );
     return this.structure.getResidueProxy( this.residueIndex );
 };
 
-prototypeAccessors$13.residueIndex.get = function () {
+prototypeAccessors$14.residueIndex.get = function () {
     return this.atomStore.residueIndex[ this.index ];
 };
-prototypeAccessors$13.residueIndex.set = function ( value ) {
+prototypeAccessors$14.residueIndex.set = function ( value ) {
     this.atomStore.residueIndex[ this.index ] = value;
 };
 
@@ -62620,35 +63038,35 @@ prototypeAccessors$13.residueIndex.set = function ( value ) {
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$13.sstruc.get = function () {
+prototypeAccessors$14.sstruc.get = function () {
     return this.residueStore.getSstruc( this.residueIndex );
 };
 /**
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$13.inscode.get = function () {
+prototypeAccessors$14.inscode.get = function () {
     return this.residueStore.getInscode( this.residueIndex );
 };
 /**
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$13.resno.get = function () {
+prototypeAccessors$14.resno.get = function () {
     return this.residueStore.resno[ this.residueIndex ];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$13.chainname.get = function () {
+prototypeAccessors$14.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$13.chainid.get = function () {
+prototypeAccessors$14.chainid.get = function () {
     return this.chainStore.getChainid( this.chainIndex );
 };
 
@@ -62657,16 +63075,16 @@ prototypeAccessors$13.chainid.get = function () {
 /**
  * @type {ResidueType}
  */
-prototypeAccessors$13.residueType.get = function () {
+prototypeAccessors$14.residueType.get = function () {
     return this.residueMap.get( this.residueStore.residueTypeId[ this.residueIndex ] );
 };
 /**
  * @type {AtomType}
  */
-prototypeAccessors$13.atomType.get = function () {
+prototypeAccessors$14.atomType.get = function () {
     return  this.atomMap.get( this.atomStore.atomTypeId[ this.index ] );
 };
-prototypeAccessors$13.residueAtomOffset.get = function () {
+prototypeAccessors$14.residueAtomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueIndex ];
 };
 
@@ -62676,14 +63094,14 @@ prototypeAccessors$13.residueAtomOffset.get = function () {
  * Residue name
  * @type {String}
  */
-prototypeAccessors$13.resname.get = function () {
+prototypeAccessors$14.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  * @type {Boolean}
  */
-prototypeAccessors$13.hetero.get = function () {
+prototypeAccessors$14.hetero.get = function () {
     return this.residueType.hetero;
 };
 
@@ -62693,28 +63111,28 @@ prototypeAccessors$13.hetero.get = function () {
  * Atom name
  * @type {String}
  */
-prototypeAccessors$13.atomname.get = function () {
+prototypeAccessors$14.atomname.get = function () {
     return this.atomType.atomname;
 };
 /**
  * Element
  * @type {String}
  */
-prototypeAccessors$13.element.get = function () {
+prototypeAccessors$14.element.get = function () {
     return this.atomType.element;
 };
 /**
  * Van-der-Waals radius
  * @type {Float}
  */
-prototypeAccessors$13.vdw.get = function () {
+prototypeAccessors$14.vdw.get = function () {
     return this.atomType.vdw;
 };
 /**
  * Covalent radius
  * @type {Float}
  */
-prototypeAccessors$13.covalent.get = function () {
+prototypeAccessors$14.covalent.get = function () {
     return this.atomType.covalent;
 };
 
@@ -62724,10 +63142,10 @@ prototypeAccessors$13.covalent.get = function () {
  * X coordinate
  * @type {Float}
  */
-prototypeAccessors$13.x.get = function () {
+prototypeAccessors$14.x.get = function () {
     return this.atomStore.x[ this.index ];
 };
-prototypeAccessors$13.x.set = function ( value ) {
+prototypeAccessors$14.x.set = function ( value ) {
     this.atomStore.x[ this.index ] = value;
 };
 
@@ -62735,10 +63153,10 @@ prototypeAccessors$13.x.set = function ( value ) {
  * Y coordinate
  * @type {Float}
  */
-prototypeAccessors$13.y.get = function () {
+prototypeAccessors$14.y.get = function () {
     return this.atomStore.y[ this.index ];
 };
-prototypeAccessors$13.y.set = function ( value ) {
+prototypeAccessors$14.y.set = function ( value ) {
     this.atomStore.y[ this.index ] = value;
 };
 
@@ -62746,10 +63164,10 @@ prototypeAccessors$13.y.set = function ( value ) {
  * Z coordinate
  * @type {Float}
  */
-prototypeAccessors$13.z.get = function () {
+prototypeAccessors$14.z.get = function () {
     return this.atomStore.z[ this.index ];
 };
-prototypeAccessors$13.z.set = function ( value ) {
+prototypeAccessors$14.z.set = function ( value ) {
     this.atomStore.z[ this.index ] = value;
 };
 
@@ -62757,10 +63175,10 @@ prototypeAccessors$13.z.set = function ( value ) {
  * Serial number
  * @type {Integer}
  */
-prototypeAccessors$13.serial.get = function () {
+prototypeAccessors$14.serial.get = function () {
     return this.atomStore.serial[ this.index ];
 };
-prototypeAccessors$13.serial.set = function ( value ) {
+prototypeAccessors$14.serial.set = function ( value ) {
     this.atomStore.serial[ this.index ] = value;
 };
 
@@ -62768,10 +63186,10 @@ prototypeAccessors$13.serial.set = function ( value ) {
  * B-factor value
  * @type {Float}
  */
-prototypeAccessors$13.bfactor.get = function () {
+prototypeAccessors$14.bfactor.get = function () {
     return this.atomStore.bfactor[ this.index ];
 };
-prototypeAccessors$13.bfactor.set = function ( value ) {
+prototypeAccessors$14.bfactor.set = function ( value ) {
     this.atomStore.bfactor[ this.index ] = value;
 };
 
@@ -62779,10 +63197,10 @@ prototypeAccessors$13.bfactor.set = function ( value ) {
  * Occupancy value
  * @type {Float}
  */
-prototypeAccessors$13.occupancy.get = function () {
+prototypeAccessors$14.occupancy.get = function () {
     return this.atomStore.occupancy[ this.index ];
 };
-prototypeAccessors$13.occupancy.set = function ( value ) {
+prototypeAccessors$14.occupancy.set = function ( value ) {
     this.atomStore.occupancy[ this.index ] = value;
 };
 
@@ -62790,10 +63208,10 @@ prototypeAccessors$13.occupancy.set = function ( value ) {
  * Alternate location identifier
  * @type {String}
  */
-prototypeAccessors$13.altloc.get = function () {
+prototypeAccessors$14.altloc.get = function () {
     return this.atomStore.getAltloc( this.index );
 };
-prototypeAccessors$13.altloc.set = function ( value ) {
+prototypeAccessors$14.altloc.set = function ( value ) {
     this.atomStore.setAltloc( this.index, value );
 };
 
@@ -63215,7 +63633,7 @@ AtomProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( AtomProxy.prototype, prototypeAccessors$13 );
+Object.defineProperties( AtomProxy.prototype, prototypeAccessors$14 );
 
 /**
  * @file Residue Proxy
@@ -63260,37 +63678,37 @@ var ResidueProxy = function ResidueProxy( structure, index ){
 
 };
 
-var prototypeAccessors$14 = { entity: {},entityIndex: {},chain: {},chainIndex: {},atomOffset: {},atomCount: {},atomEnd: {},modelIndex: {},chainname: {},chainid: {},resno: {},sstruc: {},inscode: {},residueType: {},resname: {},hetero: {},moleculeType: {},backboneType: {},backboneStartType: {},backboneEndType: {},traceAtomIndex: {},direction1AtomIndex: {},direction2AtomIndex: {},backboneStartAtomIndex: {},backboneEndAtomIndex: {},rungEndAtomIndex: {} };
+var prototypeAccessors$15 = { entity: {},entityIndex: {},chain: {},chainIndex: {},atomOffset: {},atomCount: {},atomEnd: {},modelIndex: {},chainname: {},chainid: {},resno: {},sstruc: {},inscode: {},residueType: {},resname: {},hetero: {},moleculeType: {},backboneType: {},backboneStartType: {},backboneEndType: {},traceAtomIndex: {},direction1AtomIndex: {},direction2AtomIndex: {},backboneStartAtomIndex: {},backboneEndAtomIndex: {},rungEndAtomIndex: {} };
 
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$14.entity.get = function () {
+prototypeAccessors$15.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
-prototypeAccessors$14.entityIndex.get = function () {
+prototypeAccessors$15.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.chainIndex ];
 };
 /**
  * Chain
  * @type {ChainProxy}
  */
-prototypeAccessors$14.chain.get = function () {
+prototypeAccessors$15.chain.get = function () {
     return this.structure.getChainProxy( this.chainIndex );
 };
 
-prototypeAccessors$14.chainIndex.get = function () {
+prototypeAccessors$15.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.index ];
 };
-prototypeAccessors$14.chainIndex.set = function ( value ) {
+prototypeAccessors$15.chainIndex.set = function ( value ) {
     this.residueStore.chainIndex[ this.index ] = value;
 };
 
-prototypeAccessors$14.atomOffset.get = function () {
+prototypeAccessors$15.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.index ];
 };
-prototypeAccessors$14.atomOffset.set = function ( value ) {
+prototypeAccessors$15.atomOffset.set = function ( value ) {
     this.residueStore.atomOffset[ this.index ] = value;
 };
 
@@ -63298,34 +63716,34 @@ prototypeAccessors$14.atomOffset.set = function ( value ) {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$14.atomCount.get = function () {
+prototypeAccessors$15.atomCount.get = function () {
     return this.residueStore.atomCount[ this.index ];
 };
-prototypeAccessors$14.atomCount.set = function ( value ) {
+prototypeAccessors$15.atomCount.set = function ( value ) {
     this.residueStore.atomCount[ this.index ] = value;
 };
 
-prototypeAccessors$14.atomEnd.get = function () {
+prototypeAccessors$15.atomEnd.get = function () {
     return this.atomOffset + this.atomCount - 1;
 };
 
 //
 
-prototypeAccessors$14.modelIndex.get = function () {
+prototypeAccessors$15.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$14.chainname.get = function () {
+prototypeAccessors$15.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$14.chainid.get = function () {
+prototypeAccessors$15.chainid.get = function () {
     return this.chainStore.getChainid( this.chainIndex );
 };
 
@@ -63335,10 +63753,10 @@ prototypeAccessors$14.chainid.get = function () {
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$14.resno.get = function () {
+prototypeAccessors$15.resno.get = function () {
     return this.residueStore.resno[ this.index ];
 };
-prototypeAccessors$14.resno.set = function ( value ) {
+prototypeAccessors$15.resno.set = function ( value ) {
     this.residueStore.resno[ this.index ] = value;
 };
 
@@ -63346,10 +63764,10 @@ prototypeAccessors$14.resno.set = function ( value ) {
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$14.sstruc.get = function () {
+prototypeAccessors$15.sstruc.get = function () {
     return this.residueStore.getSstruc( this.index );
 };
-prototypeAccessors$14.sstruc.set = function ( value ) {
+prototypeAccessors$15.sstruc.set = function ( value ) {
     this.residueStore.setSstruc( this.index, value );
 };
 
@@ -63357,16 +63775,16 @@ prototypeAccessors$14.sstruc.set = function ( value ) {
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$14.inscode.get = function () {
+prototypeAccessors$15.inscode.get = function () {
     return this.residueStore.getInscode( this.index );
 };
-prototypeAccessors$14.inscode.set = function ( value ) {
+prototypeAccessors$15.inscode.set = function ( value ) {
     this.residueStore.getInscode( this.index, value );
 };
 
 //
 
-prototypeAccessors$14.residueType.get = function () {
+prototypeAccessors$15.residueType.get = function () {
     return this.residueMap.get( this.residueStore.residueTypeId[ this.index ] );
 };
 
@@ -63374,44 +63792,44 @@ prototypeAccessors$14.residueType.get = function () {
  * Residue name
  * @type {String}
  */
-prototypeAccessors$14.resname.get = function () {
+prototypeAccessors$15.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  * @type {Boolean}
  */
-prototypeAccessors$14.hetero.get = function () {
+prototypeAccessors$15.hetero.get = function () {
     return this.residueType.hetero;
 };
-prototypeAccessors$14.moleculeType.get = function () {
+prototypeAccessors$15.moleculeType.get = function () {
     return this.residueType.moleculeType;
 };
-prototypeAccessors$14.backboneType.get = function () {
+prototypeAccessors$15.backboneType.get = function () {
     return this.residueType.backboneType;
 };
-prototypeAccessors$14.backboneStartType.get = function () {
+prototypeAccessors$15.backboneStartType.get = function () {
     return this.residueType.backboneStartType;
 };
-prototypeAccessors$14.backboneEndType.get = function () {
+prototypeAccessors$15.backboneEndType.get = function () {
     return this.residueType.backboneEndType;
 };
-prototypeAccessors$14.traceAtomIndex.get = function () {
+prototypeAccessors$15.traceAtomIndex.get = function () {
     return this.residueType.traceAtomIndex + this.atomOffset;
 };
-prototypeAccessors$14.direction1AtomIndex.get = function () {
+prototypeAccessors$15.direction1AtomIndex.get = function () {
     return this.residueType.direction1AtomIndex + this.atomOffset;
 };
-prototypeAccessors$14.direction2AtomIndex.get = function () {
+prototypeAccessors$15.direction2AtomIndex.get = function () {
     return this.residueType.direction2AtomIndex + this.atomOffset;
 };
-prototypeAccessors$14.backboneStartAtomIndex.get = function () {
+prototypeAccessors$15.backboneStartAtomIndex.get = function () {
     return this.residueType.backboneStartAtomIndex + this.atomOffset;
 };
-prototypeAccessors$14.backboneEndAtomIndex.get = function () {
+prototypeAccessors$15.backboneEndAtomIndex.get = function () {
     return this.residueType.backboneEndAtomIndex + this.atomOffset;
 };
-prototypeAccessors$14.rungEndAtomIndex.get = function () {
+prototypeAccessors$15.rungEndAtomIndex.get = function () {
     return this.residueType.rungEndAtomIndex + this.atomOffset;
 };
 
@@ -63711,7 +64129,7 @@ ResidueProxy.prototype.toObject = function toObject (){
     };
 };
 
-Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$14 );
+Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$15 );
 
 /**
  * @file Polymer
@@ -63769,19 +64187,19 @@ var Polymer = function Polymer( structure, residueIndexStart, residueIndexEnd ){
 
 };
 
-var prototypeAccessors$16 = { chainIndex: {},modelIndex: {},chainname: {} };
+var prototypeAccessors$17 = { chainIndex: {},modelIndex: {},chainname: {} };
 
-prototypeAccessors$16.chainIndex.get = function () {
+prototypeAccessors$17.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.residueIndexStart ];
 };
-prototypeAccessors$16.modelIndex.get = function () {
+prototypeAccessors$17.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
 
 /**
  * @type {String}
  */
-prototypeAccessors$16.chainname.get = function () {
+prototypeAccessors$17.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 
@@ -63976,7 +64394,7 @@ Polymer.prototype.qualifiedName = function qualifiedName (){
     return rpStart.qualifiedName() + " - " + rpEnd.qualifiedName();
 };
 
-Object.defineProperties( Polymer.prototype, prototypeAccessors$16 );
+Object.defineProperties( Polymer.prototype, prototypeAccessors$17 );
 
 /**
  * @file Chain Proxy
@@ -64011,41 +64429,41 @@ var ChainProxy = function ChainProxy( structure, index ){
 
 };
 
-var prototypeAccessors$15 = { entity: {},model: {},entityIndex: {},modelIndex: {},residueOffset: {},residueCount: {},residueEnd: {},atomOffset: {},atomEnd: {},atomCount: {},chainname: {},chainid: {},__firstResidueProxy: {} };
+var prototypeAccessors$16 = { entity: {},model: {},entityIndex: {},modelIndex: {},residueOffset: {},residueCount: {},residueEnd: {},atomOffset: {},atomEnd: {},atomCount: {},chainname: {},chainid: {},__firstResidueProxy: {} };
 
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$15.entity.get = function () {
+prototypeAccessors$16.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
 /**
  * Model
  * @type {ModelProxy}
  */
-prototypeAccessors$15.model.get = function () {
+prototypeAccessors$16.model.get = function () {
     return this.structure.getModelProxy( this.modelIndex );
 };
 
-prototypeAccessors$15.entityIndex.get = function () {
+prototypeAccessors$16.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.index ];
 };
-prototypeAccessors$15.entityIndex.set = function ( value ) {
+prototypeAccessors$16.entityIndex.set = function ( value ) {
     this.chainStore.entityIndex[ this.index ] = value;
 };
 
-prototypeAccessors$15.modelIndex.get = function () {
+prototypeAccessors$16.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.index ];
 };
-prototypeAccessors$15.modelIndex.set = function ( value ) {
+prototypeAccessors$16.modelIndex.set = function ( value ) {
     this.chainStore.modelIndex[ this.index ] = value;
 };
 
-prototypeAccessors$15.residueOffset.get = function () {
+prototypeAccessors$16.residueOffset.get = function () {
     return this.chainStore.residueOffset[ this.index ];
 };
-prototypeAccessors$15.residueOffset.set = function ( value ) {
+prototypeAccessors$16.residueOffset.set = function ( value ) {
     this.chainStore.residueOffset[ this.index ] = value;
 };
 
@@ -64053,21 +64471,21 @@ prototypeAccessors$15.residueOffset.set = function ( value ) {
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$15.residueCount.get = function () {
+prototypeAccessors$16.residueCount.get = function () {
     return this.chainStore.residueCount[ this.index ];
 };
-prototypeAccessors$15.residueCount.set = function ( value ) {
+prototypeAccessors$16.residueCount.set = function ( value ) {
     this.chainStore.residueCount[ this.index ] = value;
 };
 
-prototypeAccessors$15.residueEnd.get = function () {
+prototypeAccessors$16.residueEnd.get = function () {
     return this.residueOffset + this.residueCount - 1;
 };
 
-prototypeAccessors$15.atomOffset.get = function () {
+prototypeAccessors$16.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueOffset ];
 };
-prototypeAccessors$15.atomEnd.get = function () {
+prototypeAccessors$16.atomEnd.get = function () {
     return (
         this.residueStore.atomOffset[ this.residueEnd ] +
         this.residueStore.atomCount[ this.residueEnd ] - 1
@@ -64077,7 +64495,7 @@ prototypeAccessors$15.atomEnd.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$15.atomCount.get = function () {
+prototypeAccessors$16.atomCount.get = function () {
     if( this.residueCount === 0 ){
         return 0;
     }else{
@@ -64091,10 +64509,10 @@ prototypeAccessors$15.atomCount.get = function () {
  * Chain name
  * @type {String}
  */
-prototypeAccessors$15.chainname.get = function () {
+prototypeAccessors$16.chainname.get = function () {
     return this.chainStore.getChainname( this.index );
 };
-prototypeAccessors$15.chainname.set = function ( value ) {
+prototypeAccessors$16.chainname.set = function ( value ) {
     this.chainStore.setChainname( this.index, value );
 };
 
@@ -64102,16 +64520,16 @@ prototypeAccessors$15.chainname.set = function ( value ) {
  * Chain id
  * @type {String}
  */
-prototypeAccessors$15.chainid.get = function () {
+prototypeAccessors$16.chainid.get = function () {
     return this.chainStore.getChainid( this.index );
 };
-prototypeAccessors$15.chainid.set = function ( value ) {
+prototypeAccessors$16.chainid.set = function ( value ) {
     this.chainStore.setChainid( this.index, value );
 };
 
 //
 
-prototypeAccessors$15.__firstResidueProxy.get = function () {
+prototypeAccessors$16.__firstResidueProxy.get = function () {
     this.__residueProxy.index = this.residueOffset;
     return this.__residueProxy;
 };
@@ -64384,7 +64802,7 @@ ChainProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( ChainProxy.prototype, prototypeAccessors$15 );
+Object.defineProperties( ChainProxy.prototype, prototypeAccessors$16 );
 
 /**
  * @file Model Proxy
@@ -64421,39 +64839,39 @@ var ModelProxy = function ModelProxy( structure, index ){
 
 };
 
-var prototypeAccessors$17 = { chainOffset: {},chainCount: {},residueOffset: {},atomOffset: {},chainEnd: {},residueEnd: {},atomEnd: {},residueCount: {},atomCount: {} };
+var prototypeAccessors$18 = { chainOffset: {},chainCount: {},residueOffset: {},atomOffset: {},chainEnd: {},residueEnd: {},atomEnd: {},residueCount: {},atomCount: {} };
 
-prototypeAccessors$17.chainOffset.get = function () {
+prototypeAccessors$18.chainOffset.get = function () {
     return this.modelStore.chainOffset[ this.index ];
 };
-prototypeAccessors$17.chainOffset.set = function ( value ) {
+prototypeAccessors$18.chainOffset.set = function ( value ) {
     this.modelStore.chainOffset[ this.index ] = value;
 };
 
-prototypeAccessors$17.chainCount.get = function () {
+prototypeAccessors$18.chainCount.get = function () {
     return this.modelStore.chainCount[ this.index ];
 };
-prototypeAccessors$17.chainCount.set = function ( value ) {
+prototypeAccessors$18.chainCount.set = function ( value ) {
     this.modelStore.chainCount[ this.index ] = value;
 };
 
-prototypeAccessors$17.residueOffset.get = function () {
+prototypeAccessors$18.residueOffset.get = function () {
     return this.chainStore.residueOffset[ this.chainOffset ];
 };
-prototypeAccessors$17.atomOffset.get = function () {
+prototypeAccessors$18.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueOffset ];
 };
 
-prototypeAccessors$17.chainEnd.get = function () {
+prototypeAccessors$18.chainEnd.get = function () {
     return this.chainOffset + this.chainCount - 1;
 };
-prototypeAccessors$17.residueEnd.get = function () {
+prototypeAccessors$18.residueEnd.get = function () {
     return (
         this.chainStore.residueOffset[ this.chainEnd ] +
         this.chainStore.residueCount[ this.chainEnd ] - 1
     );
 };
-prototypeAccessors$17.atomEnd.get = function () {
+prototypeAccessors$18.atomEnd.get = function () {
     return (
         this.residueStore.atomOffset[ this.residueEnd ] +
         this.residueStore.atomCount[ this.residueEnd ] - 1
@@ -64464,7 +64882,7 @@ prototypeAccessors$17.atomEnd.get = function () {
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$17.residueCount.get = function () {
+prototypeAccessors$18.residueCount.get = function () {
     if( this.chainCount === 0 ){
         return 0;
     }else{
@@ -64476,7 +64894,7 @@ prototypeAccessors$17.residueCount.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$17.atomCount.get = function () {
+prototypeAccessors$18.atomCount.get = function () {
     if( this.residueCount === 0 ){
         return 0;
     }else{
@@ -64607,7 +65025,7 @@ ModelProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( ModelProxy.prototype, prototypeAccessors$17 );
+Object.defineProperties( ModelProxy.prototype, prototypeAccessors$18 );
 
 /**
  * @file Structure
@@ -64646,7 +65064,7 @@ var Structure = function Structure( name, path ){
 
 };
 
-var prototypeAccessors$7 = { type: {} };
+var prototypeAccessors$8 = { type: {} };
 
 Structure.prototype.init = function init ( name, path ){
 
@@ -64724,7 +65142,7 @@ Structure.prototype.init = function init ( name, path ){
 
 };
 
-prototypeAccessors$7.type.get = function (){ return "Structure"; };
+prototypeAccessors$8.type.get = function (){ return "Structure"; };
 
 Structure.prototype.finalizeAtoms = function finalizeAtoms (){
 
@@ -65714,7 +66132,7 @@ Structure.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Structure.prototype, prototypeAccessors$7 );
+Object.defineProperties( Structure.prototype, prototypeAccessors$8 );
 
 /**
  * @file Queue
@@ -66853,9 +67271,9 @@ var Buffer = function Buffer( data, params ){
 
 };
 
-var prototypeAccessors$19 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$20 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
 
-prototypeAccessors$19.parameters.get = function (){
+prototypeAccessors$20.parameters.get = function (){
 
     return {
         opaqueBack: { updateShader: true },
@@ -66877,40 +67295,40 @@ prototypeAccessors$19.parameters.get = function (){
 
 };
 
-prototypeAccessors$19.matrix.set = function ( m ){
+prototypeAccessors$20.matrix.set = function ( m ){
     this.setMatrix( m );
 };
-prototypeAccessors$19.matrix.get = function (){
+prototypeAccessors$20.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$19.transparent.get = function () {
+prototypeAccessors$20.transparent.get = function () {
     return this.opacity < 1 || this.forceTransparent;
 };
 
-prototypeAccessors$19.size.get = function () {
+prototypeAccessors$20.size.get = function () {
     return this._positionDataSize;
 };
 
-prototypeAccessors$19.attributeSize.get = function () {
+prototypeAccessors$20.attributeSize.get = function () {
     return this.size;
 };
 
-prototypeAccessors$19.pickable.get = function (){
+prototypeAccessors$20.pickable.get = function (){
     return !!this.picking;
 };
 
-prototypeAccessors$19.dynamic.get = function (){ return true; };
+prototypeAccessors$20.dynamic.get = function (){ return true; };
 
 /**
  * @abstract
  */
-prototypeAccessors$19.vertexShader.get = function (){};
+prototypeAccessors$20.vertexShader.get = function (){};
 
 /**
  * @abstract
  */
-prototypeAccessors$19.fragmentShader.get = function (){};
+prototypeAccessors$20.fragmentShader.get = function (){};
 
 Buffer.prototype.setMatrix = function setMatrix ( m ){
 
@@ -67653,7 +68071,7 @@ Buffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Buffer.prototype, prototypeAccessors$19 );
+Object.defineProperties( Buffer.prototype, prototypeAccessors$20 );
 
 /**
  * @file Mesh Buffer
@@ -68929,16 +69347,16 @@ var ArrowBuffer = function ArrowBuffer( data, params ){
 
 };
 
-var prototypeAccessors$20 = { matrix: {},pickable: {} };
+var prototypeAccessors$21 = { matrix: {},pickable: {} };
 
-prototypeAccessors$20.matrix.set = function ( m ){
+prototypeAccessors$21.matrix.set = function ( m ){
     Buffer.prototype.setMatrix.call( this, m );
 };
-prototypeAccessors$20.matrix.get = function (){
+prototypeAccessors$21.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$20.pickable.get = function (){
+prototypeAccessors$21.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -69070,7 +69488,7 @@ ArrowBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$20 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$21 );
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
@@ -69836,7 +70254,7 @@ var Shape$1 = function Shape$$1( name, params ){
 
 };
 
-var prototypeAccessors$18 = { center: {},type: {} };
+var prototypeAccessors$19 = { center: {},type: {} };
 
 /**
  * Add a buffer
@@ -70212,7 +70630,7 @@ Shape$1.prototype.dispose = function dispose (){
 
 };
 
-prototypeAccessors$18.center.get = function (){
+prototypeAccessors$19.center.get = function (){
 
     if( !this._center ){
         this._center = this.boundingBox.getCenter();
@@ -70221,9 +70639,9 @@ prototypeAccessors$18.center.get = function (){
 
 };
 
-prototypeAccessors$18.type.get = function (){ return "Shape"; };
+prototypeAccessors$19.type.get = function (){ return "Shape"; };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$18 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$19 );
 
 /**
  * @file Representation
@@ -71004,16 +71422,16 @@ var DoubleSidedBuffer = function DoubleSidedBuffer( buffer ){
 
 };
 
-var prototypeAccessors$21 = { matrix: {},pickable: {} };
+var prototypeAccessors$22 = { matrix: {},pickable: {} };
 
-prototypeAccessors$21.matrix.set = function ( m ){
+prototypeAccessors$22.matrix.set = function ( m ){
     Buffer.prototype.setMatrix.call( this, m );
 };
-prototypeAccessors$21.matrix.get = function (){
+prototypeAccessors$22.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$21.pickable.get = function (){
+prototypeAccessors$22.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -71106,7 +71524,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$21 );
+Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$22 );
 
 DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
 
@@ -73440,9 +73858,9 @@ var Component = function Component( stage, params ){
 
 };
 
-var prototypeAccessors$6 = { type: {} };
+var prototypeAccessors$7 = { type: {} };
 
-prototypeAccessors$6.type.get = function (){ return "component"; };
+prototypeAccessors$7.type.get = function (){ return "component"; };
 
 /**
  * Set position transform
@@ -73760,7 +74178,7 @@ Component.prototype.eachRepresentation = function eachRepresentation ( callback 
 
 };
 
-Object.defineProperties( Component.prototype, prototypeAccessors$6 );
+Object.defineProperties( Component.prototype, prototypeAccessors$7 );
 
 /**
  * @file Representation Component
@@ -74262,6 +74680,23 @@ var Stage = function Stage( idOrElement, params ){
     if( !this.viewer.renderer ) { return; }
 
     /**
+     * Tooltip element
+     * @type {Element}
+     */
+    this.tooltip = document.createElement( "div" );
+    Object.assign( this.tooltip.style, {
+        display: "none",
+        position: "absolute",
+        zIndex: 10,
+        pointerEvents: "none",
+        backgroundColor: "rgba( 0, 0, 0, 0.6 )",
+        color: "lightgrey",
+        padding: "0.5em",
+        fontFamily: "sans-serif"
+    } );
+    this.viewer.container.appendChild( this.tooltip );
+
+    /**
      * @type {MouseObserver}
      */
     this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
@@ -74276,6 +74711,7 @@ var Stage = function Stage( idOrElement, params ){
      * @type {AnimationControls}
      */
     this.animationControls = new AnimationControls( this );
+    this.mouseControls = new MouseControls( this );
 
     this.pickingBehavior = new PickingBehavior( this );
     this.mouseBehavior = new MouseBehavior( this );
@@ -74305,6 +74741,8 @@ var Stage = function Stage( idOrElement, params ){
         ambientColor: 0xdddddd,
         ambientIntensity: 0.2,
         hoverTimeout: 0,
+        tooltip: true,
+        mousePreset: "default"
     }, params );
 
     this.parameters = {
@@ -74312,7 +74750,7 @@ var Stage = function Stage( idOrElement, params ){
             type: "color"
         },
         quality: {
-            type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+            type: "select", options: { auto: "auto", low: "low", medium: "medium", high: "high" }
         },
         sampleLevel: {
             type: "range", step: 1, max: 5, min: -1
@@ -74348,7 +74786,7 @@ var Stage = function Stage( idOrElement, params ){
             type: "range", step: 1, max: 100, min: 0
         },
         cameraType: {
-            type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+            type: "select", options: { perspective: "perspective", orthographic: "orthographic" }
         },
         cameraFov: {
             type: "range", step: 1, max: 120, min: 15
@@ -74367,6 +74805,12 @@ var Stage = function Stage( idOrElement, params ){
         },
         hoverTimeout: {
             type: "integer", max: 10000, min: -1
+        },
+        tooltip: {
+            type: "boolean"
+        },
+        mousePreset: {
+            type: "select", options: { default: "default", pymol: "pymol", coot: "coot" }
         },
     };
 
@@ -74406,6 +74850,7 @@ Stage.prototype.setParameters = function setParameters ( params ){
     if( p.rotateSpeed !== undefined ) { controls.rotateSpeed = p.rotateSpeed; }
     if( p.zoomSpeed !== undefined ) { controls.zoomSpeed = p.zoomSpeed; }
     if( p.panSpeed !== undefined ) { controls.panSpeed = p.panSpeed; }
+    if( p.mousePreset !== undefined ) { this.mouseControls.preset( p.mousePreset ); }
     this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
     viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
     viewer.setFog( undefined, p.fogNear, p.fogFar );
@@ -85717,10 +86162,10 @@ var Parser = function Parser( streamer, params ){
 
 };
 
-var prototypeAccessors$22 = { type: {},__objName: {} };
+var prototypeAccessors$23 = { type: {},__objName: {} };
 
-prototypeAccessors$22.type.get = function (){ return ""; };
-prototypeAccessors$22.__objName.get = function (){ return ""; };
+prototypeAccessors$23.type.get = function (){ return ""; };
+prototypeAccessors$23.__objName.get = function (){ return ""; };
 
 Parser.prototype.parse = function parse (){
         var this$1 = this;
@@ -85747,7 +86192,7 @@ Parser.prototype._afterParse = function _afterParse (){
 
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$22 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$23 );
 
 /**
  * @file Structure Builder
@@ -85954,9 +86399,9 @@ var Entity = function Entity( structure, index, description, type, chainIndexLis
 
 };
 
-var prototypeAccessors$23 = { type: {} };
+var prototypeAccessors$24 = { type: {} };
 
-prototypeAccessors$23.type.get = function (){ return "Entity"; };
+prototypeAccessors$24.type.get = function (){ return "Entity"; };
 
 Entity.prototype.getEntityType = function getEntityType (){
     return this.entityType;
@@ -85989,7 +86434,7 @@ Entity.prototype.eachChain = function eachChain ( callback ){
 
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$23 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$24 );
 
 /**
  * @file Unitcell
@@ -90042,11 +90487,11 @@ var Frames = function Frames( name, path ){
 
 };
 
-var prototypeAccessors$24 = { type: {} };
+var prototypeAccessors$25 = { type: {} };
 
-prototypeAccessors$24.type.get = function (){ return "Frames"; };
+prototypeAccessors$25.type.get = function (){ return "Frames"; };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$24 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$25 );
 
 /**
  * @file Trajectory Parser
@@ -92824,9 +93269,9 @@ var Validation = function Validation( name, path ){
 
 };
 
-var prototypeAccessors$25 = { type: {} };
+var prototypeAccessors$26 = { type: {} };
 
-prototypeAccessors$25.type.get = function (){ return "validation"; };
+prototypeAccessors$26.type.get = function (){ return "validation"; };
 
 Validation.prototype.fromXml = function fromXml ( xml ){
 
@@ -93037,7 +93482,7 @@ Validation.prototype.getClashData = function getClashData ( params ){
 
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$25 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$26 );
 
 /**
  * @file Validation Parser
@@ -96222,7 +96667,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.1-0";
+var version$1 = "0.10.1-1";
 
 /**
  * @file Version
@@ -96273,5 +96718,5 @@ if( typeof window !== 'undefined' && !window.Promise ){
 
 //
 
-export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection$1 as Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Kdtree, SpatialHash, MolecularSurface, LeftMouseButton, MiddleMouseButton, RightMouseButton, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection$1 as Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Kdtree, SpatialHash, MolecularSurface, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
