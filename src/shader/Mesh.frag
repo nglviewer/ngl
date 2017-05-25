@@ -40,6 +40,8 @@ void main(){
 
     #if defined( PICKING )
 
+        if( opacity < 0.7 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #elif defined( NOLIGHT )
