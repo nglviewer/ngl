@@ -192,6 +192,7 @@ const ActionPresets = {
         [ "drag-shift-right", MouseActions.focusScroll ],
 
         [ "clickPick-ctrl+shift-middle", MouseActions.movePick ],
+        [ "hoverPick", MouseActions.tooltipPick ],
     ],
     coot: [
         [ "scroll", MouseActions.isolevelScroll ],
@@ -203,6 +204,7 @@ const ActionPresets = {
         [ "drag-ctrl-right", MouseActions.focusScroll ],
 
         [ "clickPick-middle", MouseActions.movePick ],
+        [ "hoverPick", MouseActions.tooltipPick ],
     ]
 };
 
