@@ -1,6 +1,6 @@
 
 stage.setParameters( {
-    camera: "orthographic",
+    cameraType: "orthographic",
     mousePreset: "coot"
 } );
 
@@ -32,7 +32,7 @@ stage.loadFile( "data://3ek3-fofc.map.gz" ).then( function( o ){
         useWorker: false,
         wireframe: true,
         contour: true
-    }  );
+    } );
     o.addRepresentation( "surface", {
         color: "tomato",
         isolevel: -2,
@@ -40,5 +40,5 @@ stage.loadFile( "data://3ek3-fofc.map.gz" ).then( function( o ){
         useWorker: false,
         wireframe: true,
         contour: true
-    }  );
+    } );
 } );
