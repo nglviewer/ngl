@@ -53355,7 +53355,8 @@ var ActionPresets = {
         [ "drag-right", MouseActions.zoomDrag ],
         [ "drag-shift-right", MouseActions.focusScroll ],
 
-        [ "clickPick-ctrl+shift-middle", MouseActions.movePick ] ],
+        [ "clickPick-ctrl+shift-middle", MouseActions.movePick ],
+        [ "hoverPick", MouseActions.tooltipPick ] ],
     coot: [
         [ "scroll", MouseActions.isolevelScroll ],
 
@@ -53365,7 +53366,8 @@ var ActionPresets = {
         [ "drag-right", MouseActions.zoomFocusDrag ],
         [ "drag-ctrl-right", MouseActions.focusScroll ],
 
-        [ "clickPick-middle", MouseActions.movePick ] ]
+        [ "clickPick-middle", MouseActions.movePick ],
+        [ "hoverPick", MouseActions.tooltipPick ] ]
 };
 
 /**
@@ -53559,11 +53561,16 @@ var MouseBehavior = function MouseBehavior( stage/*, params*/ ){
     this.mouse = stage.mouseObserver;
     this.controls = stage.mouseControls;
 
+    this.mouse.signals.moved.add( this._onMove, this );
     this.mouse.signals.scrolled.add( this._onScroll, this );
     this.mouse.signals.dragged.add( this._onDrag, this );
     this.mouse.signals.clicked.add( this._onClick, this );
     this.mouse.signals.hovered.add( this._onHover, this );
 
+};
+
+MouseBehavior.prototype._onMove = function _onMove ( /*x, y*/ ){
+    this.stage.tooltip.style.display = "none";
 };
 
 MouseBehavior.prototype._onScroll = function _onScroll ( delta ){
@@ -53583,6 +53590,7 @@ MouseBehavior.prototype._onHover = function _onHover ( x, y ){
 };
 
 MouseBehavior.prototype.dispose = function dispose (){
+    this.mouse.signals.moved.remove( this._onMove, this );
     this.mouse.signals.scrolled.remove( this._onScroll, this );
     this.mouse.signals.dragged.remove( this._onDrag, this );
     this.mouse.signals.clicked.remove( this._onClick, this );
@@ -67131,7 +67139,7 @@ Trajectory.prototype.getPath = function getPath ( index, callback ){
 
 ShaderRegistry.add('shader/Mesh.vert', "#define STANDARD\nuniform float nearClip;\nuniform vec3 clipCenter;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#include color_pars_vertex\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#endif\n#include common\nvoid main(){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#elif defined( NOLIGHT )\nvColor = color;\n#else\n#include color_vertex\n#include beginnormal_vertex\n#include defaultnormal_vertex\n#ifndef FLAT_SHADED\nvNormal = normalize( transformedNormal );\n#endif\n#endif\n#include begin_vertex\n#include project_vertex\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
-ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform float clipRadius;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#include bsdfs\n#include lights_pars\n#include lights_physical_pars_fragment\n#endif\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#elif defined( NOLIGHT )\ngl_FragColor = vec4( vColor, opacity );\n#else\nvec4 diffuseColor = vec4( diffuse, opacity );\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\nvec3 totalEmissiveLight = emissive;\n#include color_fragment\n#include roughnessmap_fragment\n#include metalnessmap_fragment\n#include normal_flip\n#include normal_fragment\n#include dull_interior_fragment\n#include lights_physical_fragment\n#include lights_template\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#include opaque_back_fragment\n#endif\n}");
+ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform float clipRadius;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#include bsdfs\n#include lights_pars\n#include lights_physical_pars_fragment\n#endif\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( PICKING )\nif( opacity < 0.7 )\ndiscard;\ngl_FragColor = vec4( vPickingColor, objectId );\n#elif defined( NOLIGHT )\ngl_FragColor = vec4( vColor, opacity );\n#else\nvec4 diffuseColor = vec4( diffuse, opacity );\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\nvec3 totalEmissiveLight = emissive;\n#include color_fragment\n#include roughnessmap_fragment\n#include metalnessmap_fragment\n#include normal_flip\n#include normal_fragment\n#include dull_interior_fragment\n#include lights_physical_fragment\n#include lights_template\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#include opaque_back_fragment\n#endif\n}");
 
 /**
  * @file Buffer
@@ -71758,21 +71766,13 @@ var SurfaceRepresentation = (function (Representation$$1) {
 
     };
 
-    SurfaceRepresentation.prototype.getSurfaceData = function getSurfaceData (){
+    SurfaceRepresentation.prototype.create = function create (){
 
-        return {
+        var sd = {
             position: this.surface.getPosition(),
             color: this.surface.getColor( this.getColorParams() ),
             index: this.surface.getIndex(),
-            normal: this.surface.getNormal(),
-            picking: this.surface.getPicking()
         };
-
-    };
-
-    SurfaceRepresentation.prototype.create = function create (){
-
-        var sd = this.getSurfaceData();
 
         var buffer;
 
@@ -71784,6 +71784,9 @@ var SurfaceRepresentation = (function (Representation$$1) {
             } ) );
 
         } else {
+
+            sd.normal = this.surface.getNormal(),
+            sd.picking = this.surface.getPicking();
 
             var surfaceBuffer = new SurfaceBuffer(
                 sd, this.getBufferParams( {
@@ -72470,7 +72473,7 @@ var DotRepresentation = (function (Representation$$1) {
 
 ShaderRegistry.add('shader/Image.vert', "uniform float clipRadius;\nuniform vec3 clipCenter;\nvarying vec2 vUv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\nvoid main() {\n#include begin_vertex\n#include project_vertex\nvUv = uv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n}");
 
-ShaderRegistry.add('shader/Image.frag', "uniform sampler2D map;\nuniform float opacity;\nuniform vec2 mapSize;\nuniform float nearClip;\nuniform float clipRadius;\nvarying vec2 vUv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform sampler2D pickingMap;\nuniform float objectId;\n#else\n#include fog_pars_fragment\n#endif\n#if defined( CUBIC_INTERPOLATION )\n#if defined( CATMULROM_FILTER ) || defined( MITCHELL_FILTER )\n#if defined( CATMULROM_FILTER )\nconst float B = 0.0;\nconst float C = 0.5;\n#elif defined( MITCHELL_FILTER )\nconst float B = 0.333;\nconst float C = 0.333;\n#endif\nfloat filter( float x ){\nfloat f = x;\nif( f < 0.0 ){\nf = -f;\n}\nif( f < 1.0 ){\nreturn ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) +\n( -18.0 + 12.0 * B + 6.0 *C ) * ( f * f ) +\n( 6.0 - 2.0 * B ) ) / 6.0;\n}else if( f >= 1.0 && f < 2.0 ){\nreturn ( ( -B - 6.0 * C ) * ( f * f * f )\n+ ( 6.0 * B + 30.0 * C ) * ( f *f ) +\n( - ( 12.0 * B ) - 48.0 * C ) * f +\n8.0 * B + 24.0 * C ) / 6.0;\n}else{\nreturn 0.0;\n}\n}\n#elif defined( BSPLINE_FILTER )\nfloat filter( float x ){\nfloat f = x;\nif( f < 0.0 ){\nf = -f;\n}\nif( f >= 0.0 && f <= 1.0 ){\nreturn ( 2.0 / 3.0 ) + ( 0.5 ) * ( f * f * f ) - ( f * f );\n}else if( f > 1.0 && f <= 2.0 ){\nreturn 1.0 / 6.0 * pow( ( 2.0 - f ), 3.0 );\n}\nreturn 1.0;\n}\n#else\nfloat filter( float x ){\nreturn 1.0;\n}\n#endif\nvec4 biCubic( sampler2D tex, vec2 texCoord ){\nvec2 texelSize = 1.0 / mapSize;\ntexCoord -= texelSize / 2.0;\nvec4 nSum = vec4( 0.0 );\nfloat nDenom = 0.0;\nvec2 cell = fract( texCoord * mapSize );\nfor( float m = -1.0; m <= 2.0; ++m ){\nfor( float n = -1.0; n <= 2.0; ++n ){\nvec4 vecData = texture2D(\ntex, texCoord + texelSize * vec2( m, n )\n);\nfloat c = filter( m - cell.x ) * filter( -n + cell.y );\nnSum += vecData * c;\nnDenom += c;\n}\n}\nreturn nSum / nDenom;\n}\n#endif\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( CUBIC_INTERPOLATION )\ngl_FragColor = biCubic( map, vUv );\n#else\ngl_FragColor = texture2D( map, vUv );\n#endif\n#if defined( PICKING )\nif( gl_FragColor.a < 0.5 )\ndiscard;\ngl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );\n#else\nif( gl_FragColor.a < 0.01 )\ndiscard;\ngl_FragColor.a *= opacity;\n#include fog_fragment\n#endif\n}");
+ShaderRegistry.add('shader/Image.frag', "uniform sampler2D map;\nuniform float opacity;\nuniform vec2 mapSize;\nuniform float nearClip;\nuniform float clipRadius;\nvarying vec2 vUv;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform sampler2D pickingMap;\nuniform float objectId;\n#else\n#include fog_pars_fragment\n#endif\n#if defined( CUBIC_INTERPOLATION )\n#if defined( CATMULROM_FILTER ) || defined( MITCHELL_FILTER )\n#if defined( CATMULROM_FILTER )\nconst float B = 0.0;\nconst float C = 0.5;\n#elif defined( MITCHELL_FILTER )\nconst float B = 0.333;\nconst float C = 0.333;\n#endif\nfloat filter( float x ){\nfloat f = x;\nif( f < 0.0 ){\nf = -f;\n}\nif( f < 1.0 ){\nreturn ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) +\n( -18.0 + 12.0 * B + 6.0 *C ) * ( f * f ) +\n( 6.0 - 2.0 * B ) ) / 6.0;\n}else if( f >= 1.0 && f < 2.0 ){\nreturn ( ( -B - 6.0 * C ) * ( f * f * f )\n+ ( 6.0 * B + 30.0 * C ) * ( f *f ) +\n( - ( 12.0 * B ) - 48.0 * C ) * f +\n8.0 * B + 24.0 * C ) / 6.0;\n}else{\nreturn 0.0;\n}\n}\n#elif defined( BSPLINE_FILTER )\nfloat filter( float x ){\nfloat f = x;\nif( f < 0.0 ){\nf = -f;\n}\nif( f >= 0.0 && f <= 1.0 ){\nreturn ( 2.0 / 3.0 ) + ( 0.5 ) * ( f * f * f ) - ( f * f );\n}else if( f > 1.0 && f <= 2.0 ){\nreturn 1.0 / 6.0 * pow( ( 2.0 - f ), 3.0 );\n}\nreturn 1.0;\n}\n#else\nfloat filter( float x ){\nreturn 1.0;\n}\n#endif\nvec4 biCubic( sampler2D tex, vec2 texCoord ){\nvec2 texelSize = 1.0 / mapSize;\ntexCoord -= texelSize / 2.0;\nvec4 nSum = vec4( 0.0 );\nfloat nDenom = 0.0;\nvec2 cell = fract( texCoord * mapSize );\nfor( float m = -1.0; m <= 2.0; ++m ){\nfor( float n = -1.0; n <= 2.0; ++n ){\nvec4 vecData = texture2D(\ntex, texCoord + texelSize * vec2( m, n )\n);\nfloat c = filter( m - cell.x ) * filter( -n + cell.y );\nnSum += vecData * c;\nnDenom += c;\n}\n}\nreturn nSum / nDenom;\n}\n#endif\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( CUBIC_INTERPOLATION )\ngl_FragColor = biCubic( map, vUv );\n#else\ngl_FragColor = texture2D( map, vUv );\n#endif\n#if defined( PICKING )\nif( gl_FragColor.a < 0.7 )\ndiscard;\ngl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );\n#else\nif( gl_FragColor.a < 0.01 )\ndiscard;\ngl_FragColor.a *= opacity;\n#include fog_fragment\n#endif\n}");
 
 /**
  * @file Image Buffer
@@ -96667,7 +96670,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.1-1";
+var version$1 = "0.10.1-2";
 
 /**
  * @file Version
