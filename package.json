@@ -17,7 +17,7 @@
     "devpublish": "npm publish --tag next",
     "doc": "esdoc",
     "watch": "rollup -c -w",
-    "deploy": "./scripts/deploy.sh",
+    "deploy": "./scripts/deploy.sh prerelease",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
     "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
