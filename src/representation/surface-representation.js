@@ -204,21 +204,13 @@ class SurfaceRepresentation extends Representation{
 
     }
 
-    getSurfaceData(){
+    create(){
 
-        return {
+        const sd = {
             position: this.surface.getPosition(),
             color: this.surface.getColor( this.getColorParams() ),
             index: this.surface.getIndex(),
-            normal: this.surface.getNormal(),
-            picking: this.surface.getPicking()
         };
-
-    }
-
-    create(){
-
-        const sd = this.getSurfaceData();
 
         let buffer;
 
@@ -230,6 +222,9 @@ class SurfaceRepresentation extends Representation{
             } ) );
 
         } else {
+
+            sd.normal = this.surface.getNormal(),
+            sd.picking = this.surface.getPicking()
 
             const surfaceBuffer = new SurfaceBuffer(
                 sd, this.getBufferParams( {
