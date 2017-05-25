@@ -89,12 +89,26 @@ class MouseActions{
     /**
      * Zoom scene based on mouse coordinate changes
      * @param {Stage} stage - the stage
-     * @param {Number} dx - ignored
+     * @param {Number} dx - amount to zoom
      * @param {Number} dy - amount to zoom
      * @return {undefined}
      */
     static zoomDrag( stage, dx, dy ){
-        stage.trackballControls.zoom( dy );
+        stage.trackballControls.zoom( ( dx + dy ) / -2 );
+    }
+
+    /**
+     * Zoom scene based on mouse coordinate changes and
+     * move focus planes based on camera position (zoom)
+     * @param {Stage} stage - the stage
+     * @param {Number} dx - amount to zoom
+     * @param {Number} dy - amount to zoom
+     * @return {undefined}
+     */
+    static zoomFocusDrag( stage, dx, dy ){
+        stage.trackballControls.zoom( ( dx + dy ) / -2 );
+        const z = stage.viewer.camera.position.z;
+        stage.setFocus( 100 - Math.abs( z / 10 ) );
     }
 
     /**
@@ -185,7 +199,7 @@ const ActionPresets = {
         [ "drag-left", MouseActions.rotateDrag ],
         [ "drag-middle", MouseActions.panDrag ],
         [ "drag-ctrl-left", MouseActions.panDrag ],
-        [ "drag-right", MouseActions.zoomDrag ],
+        [ "drag-right", MouseActions.zoomFocusDrag ],
         [ "drag-ctrl-right", MouseActions.focusScroll ],
 
         [ "clickPick-middle", MouseActions.movePick ],
