@@ -591,14 +591,25 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
-        q = index( fx, fy, fz );
-        var q1 = index( fx + 1, fy, fz ),
-            qy = index( fx, fy + 1, fz ),
-            qz = index( fx, fy, fz + 1 ),
-            q1y = index( fx + 1, fy + 1, fz ),
-            q1z = index( fx + 1, fy, fz + 1 ),
-            qyz = index( fx, fy + 1, fz + 1 ),
+        var q1, qy, qz, q1y, q1z, qyz, q1yz;
+        if( wrap ){
+            q = index( fx, fy, fz );
+            q1 = index( fx + 1, fy, fz );
+            qy = index( fx, fy + 1, fz );
+            qz = index( fx, fy, fz + 1 );
+            q1y = index( fx + 1, fy + 1, fz );
+            q1z = index( fx + 1, fy, fz + 1 );
+            qyz = index( fx, fy + 1, fz + 1 );
             q1yz = index( fx + 1, fy + 1, fz + 1 );
+        }else{
+            q1 = q + 1;
+            qy = q + yd;
+            qz = q + zd;
+            q1y = qy + 1;
+            q1z = qz + 1;
+            qyz = qy + zd;
+            q1yz = qyz + 1;
+        }
 
         var cubeindex = 0,
             field0 = field[ q ],
