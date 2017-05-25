@@ -73,8 +73,8 @@ addElement( loadStructureButton );
 
 var polymerSelect = createSelect( [
     [ "cartoon", "cartoon" ],
-    [ "spacefill", "spacefill"],
-    [ "licorice", "licorice", ],
+    [ "spacefill", "spacefill" ],
+    [ "licorice", "licorice" ],
     [ "surface", "surface" ]
 ], {
     onchange: function( e ){
