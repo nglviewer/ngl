@@ -59,7 +59,7 @@ function load2fofc( input ){
     return stage.loadFile( input ).then( function( o ){
         o.addRepresentation( "surface", {
             color: "skyblue",
-            isolevel: 2.5,
+            isolevel: 1.5,
             boxSize: 10,
             useWorker: false,
             contour: true,
@@ -72,7 +72,7 @@ function loadFofc( input ){
     return stage.loadFile( input ).then( function( o ){
         o.addRepresentation( "surface", {
             color: "lightgreen",
-            isolevel: 2,
+            isolevel: 3,
             boxSize: 10,
             useWorker: false,
             contour: true,
@@ -80,7 +80,7 @@ function loadFofc( input ){
         } );
         o.addRepresentation( "surface", {
             color: "tomato",
-            isolevel: -2,
+            isolevel: -3,
             boxSize: 10,
             useWorker: false,
             contour: true,
@@ -122,6 +122,7 @@ addElement( loadFofcButton );
 
 
 var surfaceSelect = createSelect( [
+    [ "contour", "contour" ],
     [ "wireframe", "wireframe" ],
     [ "smooth", "smooth" ],
     [ "flat", "flat" ]
@@ -129,26 +130,37 @@ var surfaceSelect = createSelect( [
     onchange: function( e ){
         var v = e.target.value;
         var p;
-        if( v === "wireframe" ){
+        if( v === "contour" ){
             p = {
                 contour: true,
                 flatShaded: false,
                 opacity: 1,
-                metalness: 0
+                metalness: 0,
+                wireframe: false
+            }
+        }else if( v === "wireframe" ){
+            p = {
+                contour: false,
+                flatShaded: false,
+                opacity: 1,
+                metalness: 0,
+                wireframe: true
             }
         }else if( v === "smooth" ){
             p = {
                 contour: false,
                 flatShaded: false,
                 opacity: 0.5,
-                metalness: 0
+                metalness: 0,
+                wireframe: false
             }
         }else if( v === "flat" ){
             p = {
                 contour: false,
                 flatShaded: true,
                 opacity: 0.5,
-                metalness: 0.2
+                metalness: 0.2,
+                wireframe: false
             }
         }
         stage.getRepresentationsByName( "surface" ).setParameters( p );
