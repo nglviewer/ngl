@@ -1,4 +1,9 @@
 
+stage.setParameters( {
+    camera: "orthographic",
+    mousePreset: "coot"
+} );
+
 stage.loadFile( "data://3ek3.cif" ).then( function( o ){
     o.addRepresentation( "licorice", {
         colorValue: "yellow",
@@ -13,6 +18,7 @@ stage.loadFile( "data://3ek3-2fofc.map.gz" ).then( function( o ){
         color: "skyblue",
         isolevel: 2.5,
         boxSize: 10,
+        useWorker: false,
         wireframe: true,
         contour: true
     } );
@@ -23,6 +29,7 @@ stage.loadFile( "data://3ek3-fofc.map.gz" ).then( function( o ){
         color: "lightgreen",
         isolevel: 2,
         boxSize: 10,
+        useWorker: false,
         wireframe: true,
         contour: true
     }  );
@@ -30,6 +37,7 @@ stage.loadFile( "data://3ek3-fofc.map.gz" ).then( function( o ){
         color: "tomato",
         isolevel: -2,
         boxSize: 10,
+        useWorker: false,
         wireframe: true,
         contour: true
     }  );
