@@ -49,6 +49,22 @@ class MouseActions{
     }
 
     /**
+     * Change isolevel of volume surfaces based on scroll-delta
+     * @param {Stage} stage - the stage
+     * @param {Number} delta - amount to change isolevel
+     * @return {undefined}
+     */
+    static isolevelScroll( stage, delta ){
+        const d = Math.sign( delta ) / 5;
+        stage.eachRepresentation( function( reprComp ){
+            if( reprComp.repr.type !== "surface" ) return;
+            const l = reprComp.getParameters().isolevel;
+            const s = Math.sign( l );
+            reprComp.setParameters( { isolevel: l + ( s * d ) } );
+        } );
+    }
+
+    /**
      * Pan scene based on mouse coordinate changes
      * @param {Stage} stage - the stage
      * @param {Number} dx - amount to pan in x direction
@@ -143,6 +159,7 @@ const ActionPresets = {
         [ "scroll", MouseActions.zoomScroll ],
         [ "scroll-ctrl", MouseActions.clipNearScroll ],
         [ "scroll-shift", MouseActions.focusScroll ],
+        [ "scroll-alt", MouseActions.isolevelScroll ],
 
         [ "drag-right", MouseActions.panDrag ],
         [ "drag-left", MouseActions.rotateDrag ],
@@ -161,6 +178,17 @@ const ActionPresets = {
         [ "drag-shift-right", MouseActions.focusScroll ],
 
         [ "clickPick-ctrl+shift-middle", MouseActions.movePick ],
+    ],
+    coot: [
+        [ "scroll", MouseActions.isolevelScroll ],
+
+        [ "drag-left", MouseActions.rotateDrag ],
+        [ "drag-middle", MouseActions.panDrag ],
+        [ "drag-ctrl-left", MouseActions.panDrag ],
+        [ "drag-right", MouseActions.zoomDrag ],
+        [ "drag-ctrl-right", MouseActions.focusScroll ],
+
+        [ "clickPick-middle", MouseActions.movePick ],
     ]
 };
 
