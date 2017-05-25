@@ -195,7 +195,8 @@ class Stage{
             ambientColor: 0xdddddd,
             ambientIntensity: 0.2,
             hoverTimeout: 0,
-            tooltip: true
+            tooltip: true,
+            mousePreset: "default"
         }, params );
 
         this.parameters = {
@@ -203,7 +204,7 @@ class Stage{
                 type: "color"
             },
             quality: {
-                type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+                type: "select", options: { auto: "auto", low: "low", medium: "medium", high: "high" }
             },
             sampleLevel: {
                 type: "range", step: 1, max: 5, min: -1
@@ -239,7 +240,7 @@ class Stage{
                 type: "range", step: 1, max: 100, min: 0
             },
             cameraType: {
-                type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+                type: "select", options: { perspective: "perspective", orthographic: "orthographic" }
             },
             cameraFov: {
                 type: "range", step: 1, max: 120, min: 15
@@ -261,6 +262,9 @@ class Stage{
             },
             tooltip: {
                 type: "boolean"
+            },
+            mousePreset: {
+                type: "select", options: { default: "default", pymol: "pymol", coot: "coot" }
             },
         };
 
@@ -300,6 +304,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        if( p.mousePreset !== undefined ) this.mouseControls.preset( p.mousePreset );
         this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );

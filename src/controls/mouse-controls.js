@@ -40,16 +40,20 @@ function triggerFromString( str ){
 class MouseControls{
 
     /**
-     * @param  {Stage} stage - the stage object
+     * @param {Stage} stage - the stage object
+     * @param {Object} [params] - the parameters
+     * @param {String} params.preset - one of "default", "pymol", "coot"
      */
-    constructor( stage ){
+    constructor( stage, params ){
+
+        const p = params || {};
 
         this.stage = stage;
         this.mouse = stage.mouseObserver;
 
         this.actionList = [];
 
-        this.preset( "default" );
+        this.preset( p.preset || "default" );
 
     }
 
