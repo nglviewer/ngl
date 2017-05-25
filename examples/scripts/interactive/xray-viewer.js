@@ -80,7 +80,8 @@ function loadFofc( input ){
         } );
         o.addRepresentation( "surface", {
             color: "tomato",
-            isolevel: -3,
+            isolevel: 3,
+            negateIsolevel: true,
             boxSize: 10,
             useWorker: false,
             contour: true,
@@ -137,7 +138,7 @@ var surfaceSelect = createSelect( [
                 opacity: 1,
                 metalness: 0,
                 wireframe: false
-            }
+            };
         }else if( v === "wireframe" ){
             p = {
                 contour: false,
@@ -145,7 +146,7 @@ var surfaceSelect = createSelect( [
                 opacity: 1,
                 metalness: 0,
                 wireframe: true
-            }
+            };
         }else if( v === "smooth" ){
             p = {
                 contour: false,
@@ -153,7 +154,7 @@ var surfaceSelect = createSelect( [
                 opacity: 0.5,
                 metalness: 0,
                 wireframe: false
-            }
+            };
         }else if( v === "flat" ){
             p = {
                 contour: false,
@@ -161,7 +162,7 @@ var surfaceSelect = createSelect( [
                 opacity: 0.5,
                 metalness: 0.2,
                 wireframe: false
-            }
+            };
         }
         stage.getRepresentationsByName( "surface" ).setParameters( p );
     }

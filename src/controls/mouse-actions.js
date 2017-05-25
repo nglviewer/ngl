@@ -59,8 +59,7 @@ class MouseActions{
         stage.eachRepresentation( function( reprComp ){
             if( reprComp.repr.type !== "surface" ) return;
             const l = reprComp.getParameters().isolevel;
-            const s = Math.sign( l );
-            reprComp.setParameters( { isolevel: l + ( s * d ) } );
+            reprComp.setParameters( { isolevel: l + d } );
         }, "volume" );
     }
 
