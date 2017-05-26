@@ -46,9 +46,17 @@ function createFileButton( label, properties, style ){
 }
 
 
+var struc;
 function loadStructure( input ){
+    struc = undefined;
+    surf2fofc = undefined;
+    surfFofc = undefined;
+    surfFofcNeg = undefined;
+    isolevel2fofcText.innerText = "";
+    isolevelFofcText.innerText = "";
     stage.removeAllComponents();
     return stage.loadFile( input ).then( function( o ){
+        struc = o;
         o.autoView();
         o.addRepresentation( "licorice", {
             colorValue: "yellow",
@@ -57,9 +65,16 @@ function loadStructure( input ){
     } );
 }
 
+var surf2fofc;
 function load2fofc( input ){
     return stage.loadFile( input ).then( function( o ){
-        o.addRepresentation( "surface", {
+        isolevel2fofcText.innerText = "2fofc level: 1.5\u03C3";
+        if( surfFofc ){
+            isolevelFofcText.innerText = "fofc level: 3.0\u03C3";
+            surfFofc.setParameters( { isolevel: 3 } );
+            surfFofcNeg.setParameters( { isolevel: 3 } );
+        }
+        surf2fofc = o.addRepresentation( "surface", {
             color: "skyblue",
             isolevel: 1.5,
             boxSize: 10,
@@ -70,9 +85,15 @@ function load2fofc( input ){
     } );
 }
 
+var surfFofc, surfFofcNeg;
 function loadFofc( input ){
     return stage.loadFile( input ).then( function( o ){
-        o.addRepresentation( "surface", {
+        isolevelFofcText.innerText = "fofc level: 3.0\u03C3";
+        if( surf2fofc ){
+            isolevel2fofcText.innerText = "2fofc level: 1.5\u03C3";
+            surf2fofc.setParameters( { isolevel: 1.5 } );
+        }
+        surfFofc = o.addRepresentation( "surface", {
             color: "lightgreen",
             isolevel: 3,
             boxSize: 10,
@@ -80,7 +101,7 @@ function loadFofc( input ){
             contour: true,
             opaqueBack: false
         } );
-        o.addRepresentation( "surface", {
+        surfFofcNeg = o.addRepresentation( "surface", {
             color: "tomato",
             isolevel: 3,
             negateIsolevel: true,
@@ -170,6 +191,68 @@ var surfaceSelect = createSelect( [
     }
 }, { top: "84px", left: "12px" } );
 addElement( surfaceSelect );
+
+
+var seleText = createElement( "span", {
+    innerText: "center selection",
+    title: "press enter to apply and center"
+}, { top: "120px", left: "12px" } );
+addElement( seleText );
+
+var lastSele;
+function checkSele( str ){
+    var selection = new NGL.Selection( str );
+    return !selection.selection[ "error" ];
+}
+var seleInput = createElement( "input", {
+    type: "text",
+    title: "press enter to apply and center",
+    onkeypress: function( e ){
+        var value = e.target.value;
+        var character = String.fromCharCode( e.which );
+        if( e.keyCode === 13 ){
+            e.preventDefault();
+            if( checkSele( value ) ){
+                if( struc ){
+                    lastSele = value;
+                    struc.autoView( value );
+                    var z = stage.viewer.camera.position.z;
+                    stage.setFocus( 100 - Math.abs( z / 10 ) );
+                    e.target.style.backgroundColor = "white";
+                }
+            }else{
+                e.target.style.backgroundColor = "tomato";
+            }
+        }else if( lastSele !== value + character ){
+            e.target.style.backgroundColor = "skyblue";
+        }else{
+            e.target.style.backgroundColor = "white";
+        }
+    }
+}, { top: "140px", left: "12px", width: "100px" } );
+addElement( seleInput );
+
+
+var isolevel2fofcText = createElement(
+    "span", {}, { bottom: "32px", left: "12px" }
+);
+addElement( isolevel2fofcText );
+
+var isolevelFofcText = createElement(
+    "span", {}, { bottom: "12px", left: "12px" }
+);
+addElement( isolevelFofcText );
+
+stage.mouseControls.add( "scroll", function(){
+    if( surf2fofc ){
+        var level2fofc = surf2fofc.getParameters().isolevel.toFixed( 1 );
+        isolevel2fofcText.innerText = "2fofc level: " + level2fofc + "\u03C3";
+    }
+    if( surfFofc ){
+        var levelFofc = surfFofc.getParameters().isolevel.toFixed( 1 );
+        isolevelFofcText.innerText = "fofc level: " + levelFofc + "\u03C3";
+    }
+} );
 
 
 loadStructure( "data://3ek3.cif" );
