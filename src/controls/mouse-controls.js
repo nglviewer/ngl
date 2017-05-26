@@ -8,6 +8,40 @@
 import { ActionPresets } from "./mouse-actions.js";
 
 
+/**
+ * Strings to describe mouse events (including optional keyboard modifiers).
+ * Must contain an event type: "scroll", "drag", "click", "hover", "clickPick"
+ * or "hoverPick". Optionally contain one or more (seperated by plus signs)
+ * keyboard modifiers: "alt", "ctrl", "meta" or "shift". Can contain the mouse
+ * button performing the event: "left", "middle" or "right". The type, key and
+ * button parts must be seperated by dashes.
+ *
+ * @example
+ * // triggered on scroll event (no key or button)
+ * "scroll"
+ *
+ * @example
+ * // triggered on scroll event while shift key is pressed
+ * "scroll-shift"
+ *
+ * @example
+ * // triggered on drag event with left mouse button
+ * "drag-left"
+ *
+ * @example
+ * // triggered on drag event with right mouse button
+ * // while ctrl and shift keys are pressed
+ * "drag-right-ctrl+shift"
+ *
+ * @typedef {String} TriggerString
+ */
+
+
+/**
+ * Get event type, key and button
+ * @param  {TriggerString} str - input trigger string
+ * @return {Array} event type, key and button
+ */
 function triggerFromString( str ){
     const tokens = str.split( /[-+]/ );
 
@@ -71,9 +105,25 @@ class MouseControls{
     }
 
     /**
-     * Add a new mouse action
-     * @param {String} triggerStr - the trigger for the action
-     * @param {Function} callback - the callback function for the action
+     * Add a new mouse action triggered by an event, key and button combination.
+     * The {@link MouseActions} class provides a number of static methods for
+     * use as callback functions.
+     *
+     * @example
+     * // change ambient light intensity on mouse scroll
+     * // while the ctrl and shift keys are pressed
+     * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
+     *     var ai = stage.getParameters().ambientIntensity;
+     *     stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
+     * } );
+     *
+     * @example
+     * // Call the MouseActions.zoomDrag method on mouse drag events
+     * // with left and right mouse buttons simultaneous
+     * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
+     *
+     * @param {TriggerString} triggerStr - the trigger for the action
+     * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
      * @return {undefined}
      */
     add( triggerStr, callback ){
@@ -85,8 +135,25 @@ class MouseControls{
     }
 
     /**
-     * Remove a mouse action
-     * @param {String} triggerStr - the trigger for the action
+     * Remove a mouse action. The trigger string can contain an asterix (*)
+     * as a wildcard for any key or mouse button. When the callback function
+     * is given, only actions that call that function are removed.
+     *
+     * @example
+     * // remove actions triggered solely by a scroll event
+     * stage.mouseControls.remove( "scroll" );
+     *
+     * @example
+     * // remove actions triggered by a scroll event, including
+     * // those requiring a key pressed or mouse button used
+     * stage.mouseControls.remove( "scroll-*" );
+     *
+     * @example
+     * // remove actions triggered by a scroll event
+     * // while the shift key is pressed
+     * stage.mouseControls.remove( "scroll-shift" );
+     *
+     * @param {TriggerString} triggerStr - the trigger for the action
      * @param {Function} [callback] - the callback function for the action
      * @return {undefined}
      */

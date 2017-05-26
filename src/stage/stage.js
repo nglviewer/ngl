@@ -90,8 +90,9 @@ const tmpZoomVector = new Vector3();
 
 /**
  * Stage class, central for creating molecular scenes with NGL.
+ *
  * @example
- *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage{
 
@@ -165,6 +166,9 @@ class Stage{
          * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
+        /**
+         * @type {MouseControls}
+         */
         this.mouseControls = new MouseControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
