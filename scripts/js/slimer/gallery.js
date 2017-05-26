@@ -120,7 +120,7 @@ function buildExamplePage( exampleNames, exampleUrl ){
         pageLines.push(
             "" +
             "<form method='post' id='" + name + "' action='https://codepen.io/pen/define/' target='_blank'>" +
-            "<input type='submit' value='CodePen'/>" +
+            "<input type='submit' value='View/Edit' style='cursor:pointer'/>" +
             "<input type='hidden' name='data' value='" + json + "'/>" +
             "</form>"
         );
