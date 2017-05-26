@@ -52779,7 +52779,12 @@ Animation.prototype._tick = function _tick (){};
 Animation.prototype.tick = function tick ( stats ){
 
     this.elapsedTime = stats.currentTime - this.startTime;
-    this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+
+    if( this.duration === 0 ){
+        this.alpha = 1;
+    }else{
+        this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+    }
 
     this._tick( stats );
 
@@ -53010,7 +53015,11 @@ var AnimationControls = function AnimationControls( stage ){
  */
 AnimationControls.prototype.add = function add ( animation ){
 
-    this.animationList.push( animation );
+    if( animation.duration === 0 ){
+        animation.tick( this.viewer.stats );
+    }else{
+        this.animationList.push( animation );
+    }
 
     return animation;
 
@@ -53675,18 +53684,18 @@ var AnimationBehavior = function AnimationBehavior( stage ){
     this.viewer = stage.viewer;
     this.animationControls = stage.animationControls;
 
-    this.viewer.signals.ticked.add( this.onTick, this );
+    this.viewer.signals.ticked.add( this._onTick, this );
 
 };
 
-AnimationBehavior.prototype.onTick = function onTick ( stats ){
+AnimationBehavior.prototype._onTick = function _onTick ( stats ){
 
     this.animationControls.run( stats );
 
 };
 
 AnimationBehavior.prototype.dispose = function dispose (){
-    this.viewer.signals.ticked.remove( this.onTick, this );
+    this.viewer.signals.ticked.remove( this._onTick, this );
 };
 
 /**
@@ -67326,7 +67335,8 @@ var Buffer = function Buffer( data, params ){
 
     this.pickingUniforms = {
         nearClip: { value: 0.0 },
-        objectId: { value: 0 }
+        objectId: { value: 0 },
+        opacity: { value: this.opacity }
     };
 
     this.group = new Group();
@@ -93499,7 +93509,7 @@ Validation.prototype.getClashData = function getClashData ( params ){
     var p = params || {};
 
     var s = p.structure;
-    var as = s.atomSet;
+    var atomSet = s.atomSet;
     var c = new Color( defaults( p.color, "#f0027f" ) );
 
     var ap1 = s.getAtomProxy();
@@ -93537,8 +93547,8 @@ Validation.prototype.getClashData = function getClashData ( params ){
         ap1.index = atomDict[ c.sele1 ];
         ap2.index = atomDict[ c.sele2 ];
 
-        if( !as.has( ap1.index ) || !as.has( ap2.index ) ||
-            ap1.index === undefined || ap2.index === undefined ) { return; }
+        if( ap1.index === undefined || ap2.index === undefined ||
+            !atomSet.isSet( ap1.index, ap2.index ) ) { return; }
 
         vDir.subVectors( ap2, ap1 ).setLength( ap1.vdw );
         vPos1.copy( ap1 ).add( vDir );
@@ -96757,7 +96767,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.1-3";
+var version$1 = "0.10.1-4";
 
 /**
  * @file Version
