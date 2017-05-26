@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>NGL - grid</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+    <script src="../build/js/ngl.dev.js"></script>
+    <script>
+        var stage;
+
+        document.addEventListener( "DOMContentLoaded", function(){
+
+            var width = 200;
+            var height = 150;
+
+            var viewport = document.createElement( "div" );
+            viewport.style.width = width + "px";
+            viewport.style.height = height + "px";
+            document.body.appendChild( viewport );
+            stage = new NGL.Stage( viewport, { backgroundColor: "white" } );
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "http://www.rcsb.org/pdb/json/getCurrent");
+            xhr.responseType = "json";
+            xhr.onload = function( e ){
+
+                var pdbList = this.response.idList.slice( 0, 50 );
+
+                pdbList.reduce( function( acc, name ){
+                    return acc.then( function(){
+                        return stage.loadFile( "rcsb://" + name ).then( function( o ){
+
+                            stage.eachRepresentation( function( r ){
+                                r.dispose();
+                            } );
+                            o.autoView();
+                            o.addRepresentation( "cartoon" );
+
+                        } ).then( function(){
+
+                            return stage.makeImage();
+
+                        } ).then( function( imgBlob ){
+
+                            var objectURL = URL.createObjectURL( imgBlob );
+                            var img = document.createElement( "img" );
+                            img.src = objectURL;
+                            img.style.width = width + "px";
+                            img.style.height = height + "px";
+
+                            document.body.appendChild( img );
+
+                        } );
+                    } );
+                }, Promise.resolve( [] ) ).then( function(){
+
+                    console.log( "done" )
+
+                } );
+
+            };
+            xhr.send();
+
+        } );
+    </script>
+</body>
+</html>
