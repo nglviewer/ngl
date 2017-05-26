@@ -28,8 +28,14 @@ function renderExample( name ){
         const page = webpage.create();
         page.onConsoleMessage = function( msg, line, file, level ){
             if( [ "error", "warning" ].includes( level ) ){
-                console.log( level.toUpperCase(), msg );
+                console.log( "CONSOLE." + level.toUpperCase(), msg );
             }
+        };
+        page.onError = function( msg, stack ){
+            console.log( "ERROR", msg );
+        };
+        page.onResourceError = function( e ){
+            console.log( "RESOURCE-ERROR", e.errorString );
         };
         page.onCallback = function( cmd ){
             switch( cmd ){
