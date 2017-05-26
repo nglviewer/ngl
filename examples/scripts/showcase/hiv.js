@@ -16,6 +16,8 @@ function createElement( name, properties, style ){
 
 stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
 
+    o.autoView();
+
     var point = o.addRepresentation( "point" );
 
     var surface = o.addRepresentation( "surface", {
@@ -41,12 +43,10 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
         colorScheme: "chainindex"
     } );
 
-    stage.tasks.onZeroOnce( function(){ stage.autoView(); } );
-
     var pointButton = createElement( "input", {
       type: "button",
       value: "toggle points",
-    }, { top: "1em", left: "1em" } );
+    }, { top: "12px", left: "12px" } );
     pointButton.onclick = function( e ){
         point.toggleVisibility();
     };
@@ -55,7 +55,7 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
     var surfaceButton = createElement( "input", {
       type: "button",
       value: "toggle surface",
-    }, { top: "3em", left: "1em" } );
+    }, { top: "36px", left: "12px" } );
     surfaceButton.onclick = function( e ){
         surface.toggleVisibility();
     };
@@ -64,7 +64,7 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
     var cartoonButton = createElement( "input", {
       type: "button",
       value: "toggle cartoon",
-    }, { top: "5em", left: "1em" } );
+    }, { top: "60px", left: "12px" } );
     cartoonButton.onclick = function( e ){
         cartoon.toggleVisibility();
     };
@@ -73,7 +73,7 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
     var centerAllButton = createElement( "input", {
       type: "button",
       value: "center all",
-    }, { top: "8em", left: "1em" } );
+    }, { top: "96px", left: "12px" } );
     centerAllButton.onclick = function( e ){
         stage.autoView()
     };
@@ -82,7 +82,7 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
     var centerSubunitButton = createElement( "input", {
       type: "button",
       value: "center subunit",
-    }, { top: "10em", left: "1em" } );
+    }, { top: "120px", left: "12px" } );
     centerSubunitButton.onclick = function( e ){
         o.autoView( ":f0 or :f1 or :f2 or :f3 or :f4 or :f5" )
     };
@@ -90,16 +90,16 @@ stage.loadFile( "rcsb://3j3q.mmtf" ).then( function( o ){
 
     addElement( createElement( "span", {
       innerText: "surface transparency",
-    }, { top: "11em", left: "1em", color: "lightgrey" } ) );
+    }, { top: "156px", left: "12px", color: "lightgrey" } ) );
     var opacityRange = createElement( "input", {
       type: "range",
       value: 0,
       min: 0,
-      max: 10,
+      max: 100,
       step: 1
-    }, { top: "15em", left: "1em" } );
+    }, { top: "172px", left: "12px" } );
     opacityRange.oninput = function( e ){
-        surface.setParameters( { opacity: 1 - ( e.target.value / 10 ) } );
+        surface.setParameters( { opacity: 1 - ( e.target.value / 100 ) } );
     };
     addElement( opacityRange );
 
