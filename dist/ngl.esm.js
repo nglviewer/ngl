@@ -53226,8 +53226,7 @@ MouseActions.isolevelScroll = function isolevelScroll ( stage, delta ){
     stage.eachRepresentation( function( reprComp ){
         if( reprComp.repr.type !== "surface" ) { return; }
         var l = reprComp.getParameters().isolevel;
-        var s = Math.sign( l );
-        reprComp.setParameters( { isolevel: l + ( s * d ) } );
+        reprComp.setParameters( { isolevel: l + d } );
     }, "volume" );
 };
 
@@ -53377,6 +53376,40 @@ var ActionPresets = {
  */
 
 
+/**
+ * Strings to describe mouse events (including optional keyboard modifiers).
+ * Must contain an event type: "scroll", "drag", "click", "hover", "clickPick"
+ * or "hoverPick". Optionally contain one or more (seperated by plus signs)
+ * keyboard modifiers: "alt", "ctrl", "meta" or "shift". Can contain the mouse
+ * button performing the event: "left", "middle" or "right". The type, key and
+ * button parts must be seperated by dashes.
+ *
+ * @example
+ * // triggered on scroll event (no key or button)
+ * "scroll"
+ *
+ * @example
+ * // triggered on scroll event while shift key is pressed
+ * "scroll-shift"
+ *
+ * @example
+ * // triggered on drag event with left mouse button
+ * "drag-left"
+ *
+ * @example
+ * // triggered on drag event with right mouse button
+ * // while ctrl and shift keys are pressed
+ * "drag-right-ctrl+shift"
+ *
+ * @typedef {String} TriggerString
+ */
+
+
+/**
+ * Get event type, key and button
+ * @param  {TriggerString} str - input trigger string
+ * @return {Array} event type, key and button
+ */
 function triggerFromString( str ){
     var tokens = str.split( /[-+]/ );
 
@@ -53437,9 +53470,25 @@ MouseControls.prototype.run = function run ( type ){
 };
 
 /**
- * Add a new mouse action
- * @param {String} triggerStr - the trigger for the action
- * @param {Function} callback - the callback function for the action
+ * Add a new mouse action triggered by an event, key and button combination.
+ * The {@link MouseActions} class provides a number of static methods for
+ * use as callback functions.
+ *
+ * @example
+ * // change ambient light intensity on mouse scroll
+ * // while the ctrl and shift keys are pressed
+ * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
+ * var ai = stage.getParameters().ambientIntensity;
+ * stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
+ * } );
+ *
+ * @example
+ * // Call the MouseActions.zoomDrag method on mouse drag events
+ * // with left and right mouse buttons simultaneous
+ * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
+ * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
  * @return {undefined}
  */
 MouseControls.prototype.add = function add ( triggerStr, callback ){
@@ -53454,8 +53503,25 @@ MouseControls.prototype.add = function add ( triggerStr, callback ){
 };
 
 /**
- * Remove a mouse action
- * @param {String} triggerStr - the trigger for the action
+ * Remove a mouse action. The trigger string can contain an asterix (*)
+ * as a wildcard for any key or mouse button. When the callback function
+ * is given, only actions that call that function are removed.
+ *
+ * @example
+ * // remove actions triggered solely by a scroll event
+ * stage.mouseControls.remove( "scroll" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event, including
+ * // those requiring a key pressed or mouse button used
+ * stage.mouseControls.remove( "scroll-*" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event
+ * // while the shift key is pressed
+ * stage.mouseControls.remove( "scroll-shift" );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
  * @param {Function} [callback] - the callback function for the action
  * @return {undefined}
  */
@@ -57019,14 +57085,25 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
     function polygonize( fx, fy, fz, q, edgeFilter ) {
 
         // cache indices
-        q = index( fx, fy, fz );
-        var q1 = index( fx + 1, fy, fz ),
-            qy = index( fx, fy + 1, fz ),
-            qz = index( fx, fy, fz + 1 ),
-            q1y = index( fx + 1, fy + 1, fz ),
-            q1z = index( fx + 1, fy, fz + 1 ),
-            qyz = index( fx, fy + 1, fz + 1 ),
+        var q1, qy, qz, q1y, q1z, qyz, q1yz;
+        if( wrap ){
+            q = index( fx, fy, fz );
+            q1 = index( fx + 1, fy, fz );
+            qy = index( fx, fy + 1, fz );
+            qz = index( fx, fy, fz + 1 );
+            q1y = index( fx + 1, fy + 1, fz );
+            q1z = index( fx + 1, fy, fz + 1 );
+            qyz = index( fx, fy + 1, fz + 1 );
             q1yz = index( fx + 1, fy + 1, fz + 1 );
+        }else{
+            q1 = q + 1;
+            qy = q + yd;
+            qz = q + zd;
+            q1y = qy + 1;
+            q1z = qz + 1;
+            qyz = qy + zd;
+            q1yz = qyz + 1;
+        }
 
         var cubeindex = 0,
             field0 = field[ q ],
@@ -58158,7 +58235,7 @@ function VolumeSurface( data, nx, ny, nz, atomindex ){
 
     function getSurface( isolevel, smooth, box, matrix, contour, wrap ){
         var sd = mc.triangulate( isolevel, smooth, box, contour, wrap );
-        if( smooth ){
+        if( smooth && !contour ){
             laplacianSmooth( sd.position, sd.index, smooth, true );
             sd.normal = computeVertexNormals( sd.position, sd.index );
         }
@@ -71612,6 +71689,9 @@ var SurfaceRepresentation = (function (Representation$$1) {
             isolevel: {
                 type: "number", precision: 2, max: 1000, min: -1000
             },
+            negateIsolevel: {
+                type: "boolean"
+            },
             smooth: {
                 type: "integer", precision: 1, max: 10, min: 0
             },
@@ -71678,6 +71758,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
 
         this.isolevelType  = defaults( p.isolevelType, "sigma" );
         this.isolevel = defaults( p.isolevel, 2.0 );
+        this.negateIsolevel = defaults( p.negateIsolevel, false );
         this.smooth = defaults( p.smooth, 0 );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
@@ -71720,6 +71801,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
             }else{
                 isolevel = this.isolevel;
             }
+            if( this.negateIsolevel ) { isolevel *= -1; }
 
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
@@ -71901,6 +71983,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
 
         if( this.surface && (
                 params.isolevel !== undefined ||
+                params.negateIsolevel !== undefined ||
                 params.smooth !== undefined ||
                 params.wrap !== undefined ||
                 params.boxSize !== undefined ||
@@ -74646,8 +74729,9 @@ var tmpZoomVector = new Vector3();
 
 /**
  * Stage class, central for creating molecular scenes with NGL.
+ *
  * @example
- *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 var Stage = function Stage( idOrElement, params ){
 
@@ -74714,6 +74798,9 @@ var Stage = function Stage( idOrElement, params ){
      * @type {AnimationControls}
      */
     this.animationControls = new AnimationControls( this );
+    /**
+     * @type {MouseControls}
+     */
     this.mouseControls = new MouseControls( this );
 
     this.pickingBehavior = new PickingBehavior( this );
@@ -96670,7 +96757,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.1-2";
+var version$1 = "0.10.1-3";
 
 /**
  * @file Version
