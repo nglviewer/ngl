@@ -182,6 +182,10 @@ examples.reduce( function( acc, name ){
     } );
 }, Promise.resolve( [] ) ).then( function(){
     fs.write(
+        "../build/gallery/scripts.json",
+        JSON.stringify( exampleNames )
+    );
+    fs.write(
         "../build/gallery/index.html",
         buildExamplePage( exampleNames, exampleUrl )
     );
