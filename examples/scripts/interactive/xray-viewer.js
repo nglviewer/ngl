@@ -2,8 +2,8 @@
 stage.setParameters( {
     cameraType: "orthographic",
     mousePreset: "coot",
-    lightIntensity: 0.2,
-    ambientIntensity: 1.0
+    lightIntensity: 0.4,
+    ambientIntensity: 0.9
 } );
 
 
