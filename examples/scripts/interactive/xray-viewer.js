@@ -170,3 +170,8 @@ var surfaceSelect = createSelect( [
     }
 }, { top: "84px", left: "12px" } );
 addElement( surfaceSelect );
+
+
+loadStructure( "data://3ek3.cif" );
+load2fofc( "data://3ek3-2fofc.map.gz" );
+loadFofc( "data://3ek3-fofc.map.gz" );
