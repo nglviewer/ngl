@@ -865,9 +865,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             zEnd2 = zEnd + 2;
 
             for ( z = zBeg2; z < zEnd2; ++z ) {
-                z_offset = zd * z;
                 for ( y = yBeg2; y < yEnd2; ++y ) {
-                    y_offset = z_offset + yd * y;
                     for ( x = xBeg2; x < xEnd2; ++x ) {
                         if( contour ) {
                             q3 = index( x, y, z ) * 3;
