@@ -1,7 +1,7 @@
 
 // name a loaded component and access it via `stage.getComponentsByName`
 
-stage.loadFile( "rcsb://1crn", { name: "myProtein" } ).then( function( o ){
+stage.loadFile( "data://1crn.pdb", { name: "myProtein" } ).then( function( o ){
 
     o.autoView();
     o.addRepresentation( "cartoon" );
