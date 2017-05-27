@@ -196,7 +196,7 @@ addElement( surfaceSelect );
 var seleText = createElement( "span", {
     innerText: "center selection",
     title: "press enter to apply and center"
-}, { top: "120px", left: "12px" } );
+}, { top: "120px", left: "12px", color: "lightgrey" } );
 addElement( seleText );
 
 var lastSele;
@@ -234,12 +234,12 @@ addElement( seleInput );
 
 
 var isolevel2fofcText = createElement(
-    "span", {}, { bottom: "32px", left: "12px" }
+    "span", {}, { bottom: "32px", left: "12px", color: "lightgrey" }
 );
 addElement( isolevel2fofcText );
 
 var isolevelFofcText = createElement(
-    "span", {}, { bottom: "12px", left: "12px" }
+    "span", {}, { bottom: "12px", left: "12px", color: "lightgrey" }
 );
 addElement( isolevelFofcText );
 
