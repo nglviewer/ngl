@@ -91,7 +91,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
@@ -113,7 +113,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
     prepareData( sview, i, callback ){
 
-        var info = this.__infoList[ i ];
+        let info = this.__infoList[ i ];
         if( !info ){
             info = {};
             this.__infoList[ i ] = info;
@@ -122,21 +122,20 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
         if( !info.molsurf || info.sele !== sview.selection.string ){
 
             if( this.filterSele ){
-                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
-                var bbSize = sviewFilter.boundingBox.getSize();
-                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, ( maxDim / 2 ) + 6.0 );
+                const sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                const bbSize = sviewFilter.boundingBox.getSize();
+                const maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                const asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, ( maxDim / 2 ) + 6.0 );
                 sview = sview.getView(
                     new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
                 );
-                // this.filterSele = "";
             }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );
 
-            var p = this.getSurfaceParams();
-            var onSurfaceFinish = function( surface ){
+            const p = this.getSurfaceParams();
+            const onSurfaceFinish = function( surface ){
                 info.surface = surface;
                 callback( i );
             };
@@ -159,9 +158,9 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
         if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
                 this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
-            this.__infoList.forEach( function( info ){
+            this.__infoList.forEach( info => {
                 info.molsurf.dispose();
-            }.bind( this ) );
+            } );
             this.__infoList.length = 0;
         }
 
@@ -170,23 +169,23 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
             return;
         }
 
-        var after = function(){
+        const after = function(){
             this.__sele = this.selection.string;
             this.__surfaceParams = JSON.stringify( this.getSurfaceParams() );
             this.__forceNewMolsurf = false;
             callback();
         }.bind( this );
 
-        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
-        var assembly = this.structure.biomolDict[ name ];
+        const name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
+        const assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
-            assembly.partList.forEach( function( part, i ){
-                var sview = part.getView( this.structureView );
-                this.prepareData( sview, i, function( _i ){
+            assembly.partList.forEach( ( part, i ) => {
+                const sview = part.getView( this.structureView );
+                this.prepareData( sview, i, ( _i ) => {
                     if( _i === assembly.partList.length - 1 ) after();
-                }.bind( this ) );
-            }, this );
+                } );
+            } );
         }else{
             this.prepareData( this.structureView, 0, after );
         }
@@ -195,32 +194,34 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
     createData( sview, i ){
 
-        var info = this.__infoList[ i ];
-        var surface = info.surface;
+        const info = this.__infoList[ i ];
+        const surface = info.surface;
 
-        var surfaceData = {
+        const surfaceData = {
             position: surface.getPosition(),
             color: surface.getColor( this.getColorParams() ),
             index: surface.getFilteredIndex( this.filterSele, sview )
         };
 
+        const bufferList = [];
+
         if( surface.contour ){
 
-            var contourBuffer = new ContourBuffer(
+            const contourBuffer = new ContourBuffer(
                 surfaceData,
                 this.getBufferParams( {
                     wireframe: false
                 } )
             );
 
-            return { bufferList: [ contourBuffer ], info: info };
+            bufferList.push( contourBuffer )
 
         } else {
 
             surfaceData.normal = surface.getNormal();
             surfaceData.picking = surface.getPicking( sview.getStructure() );
 
-            var surfaceBuffer = new SurfaceBuffer(
+            const surfaceBuffer = new SurfaceBuffer(
                 surfaceData,
                 this.getBufferParams( {
                     background: this.background,
@@ -229,19 +230,19 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
                 } )
             );
 
-            var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+            const doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
 
-            return {
-                bufferList: [ doubleSidedBuffer ],
-                info: info
-            };
+            bufferList.push( doubleSidedBuffer );
+
         }
+
+        return { bufferList, info };
 
     }
 
     updateData( what, data ){
 
-        var surfaceData = {};
+        const surfaceData = {};
 
         if( what.position ){
             this.__forceNewMolsurf = true;
@@ -289,7 +290,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
     getSurfaceParams( params ){
 
-        var p = Object.assign( {
+        const p = Object.assign( {
             type: this.surfaceType,
             probeRadius: this.probeRadius,
             scaleFactor: this.scaleFactor,
@@ -305,7 +306,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
 
     getColorParams(){
 
-        var p = super.getColorParams();
+        const p = super.getColorParams();
 
         p.volume = this.colorVolume;
 
