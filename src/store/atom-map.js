@@ -9,68 +9,43 @@ import AtomType from "./atom-type.js";
 import { guessElement } from "../structure/structure-utils.js";
 
 
-function AtomMap( structure ){
+function getHash( atomname, element ){
+    return atomname + "|" + element;
+}
 
-    var idDict = {};
-    var typeList = [];
 
-    function getHash( atomname, element ){
-        return atomname + "|" + element;
+class AtomMap{
+
+    constructor( structure ){
+
+        this.structure = structure;
+
+        this.dict = {};
+        this.list = [];
+
     }
 
-    function add( atomname, element ){
+    add( atomname, element ){
         atomname = atomname.toUpperCase();
         if( !element ){
             element = guessElement( atomname );
         }else{
             element = element.toUpperCase();
         }
-        var hash = getHash( atomname, element );
-        var id = idDict[ hash ];
+        const hash = getHash( atomname, element );
+        let id = this.dict[ hash ];
         if( id === undefined ){
-            var atomType = new AtomType( structure, atomname, element );
-            id = typeList.length;
-            idDict[ hash ] = id;
-            typeList.push( atomType );
+            const atomType = new AtomType( this.structure, atomname, element );
+            id = this.list.length;
+            this.dict[ hash ] = id;
+            this.list.push( atomType );
         }
         return id;
     }
 
-    function get( id ){
-        return typeList[ id ];
+    get( id ){
+        return this.list[ id ];
     }
-
-    // API
-
-    this.add = add;
-    this.get = get;
-
-    this.list = typeList;
-    this.dict = idDict;
-
-    this.toJSON = function(){
-        var output = {
-            metadata: {
-                version: 0.1,
-                type: 'AtomMap',
-                generator: 'AtomMapExporter'
-            },
-            idDict: idDict,
-            typeList: typeList.map( function( atomType ){
-                return atomType.toJSON();
-            } )
-        };
-        return output;
-    };
-
-    this.fromJSON = function( input ){
-        idDict = input.idDict;
-        typeList = input.typeList.map( function( input ){
-            return new AtomType( structure, input.atomname, input.element );
-        } );
-        this.list = typeList;
-        this.dict = idDict;
-    };
 
 }
 

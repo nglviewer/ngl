@@ -364,63 +364,6 @@ NGL.StageWidget = function( stage ){
 };
 
 
-NGL.getPickingMessage = function( d, prefix ){
-    var msg = "nothing";
-    if( d ){
-        if( d.arrow ){
-            msg = "arrow: " + ( d.arrow.name || d.pid ) + " (" + d.arrow.shape.name + ")";
-        }else if( d.atom ){
-            msg = "atom: " +
-                d.atom.qualifiedName() +
-                " (" + d.atom.structure.name + ")";
-        }else if( d.axes ){
-            msg = "axes";
-        }else if( d.bond ){
-            msg = "bond: " +
-                d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-                " (" + d.bond.structure.name + ")";
-        }else if( d.cone ){
-            msg = "cone: " + ( d.cone.name || d.pid ) + " (" + d.cone.shape.name + ")";
-        }else if( d.clash ){
-            msg = "clash: " + d.clash.clash.sele1 + " - " + d.clash.clash.sele2;
-        }else if( d.contact ){
-            msg = "contact: " +
-                d.contact.atom1.qualifiedName() + " - " + d.contact.atom2.qualifiedName() +
-                " (" + d.contact.structure.name + ")";
-        }else if( d.cylinder ){
-            msg = "cylinder: " + ( d.cylinder.name || d.pid ) + " (" + d.cylinder.shape.name + ")";
-        }else if( d.distance ){
-            msg = "distance: " +
-                d.distance.atom1.qualifiedName() + " - " + d.distance.atom2.qualifiedName() +
-                " (" + d.distance.structure.name + ")";
-        }else if( d.ellipsoid ){
-            msg = "ellipsoid: " + ( d.ellipsoid.name || d.pid ) + " (" + d.ellipsoid.shape.name + ")";
-        }else if( d.mesh ){
-            msg = "mesh: " + ( d.mesh.name || d.mesh.serial ) + " (" + d.mesh.shape.name + ")";
-        }else if( d.slice ){
-            msg = "slice: " +
-                d.slice.value.toPrecision( 3 ) +
-                " (" + d.slice.volume.name + ")";
-        }else if( d.sphere ){
-            msg = "sphere: " + ( d.sphere.name || d.pid ) + " (" + d.sphere.shape.name + ")";
-        }else if( d.surface ){
-            msg = "surface: " + d.surface.surface.name;
-        }else if( d.unitcell ){
-            msg = "unitcell: " +
-                d.unitcell.unitcell.spacegroup +
-                " (" + d.unitcell.structure.name + ")";
-        }else if( d.unknown ){
-            msg = "unknown";
-        }else if( d.volume ){
-            msg = "volume: " +
-                d.volume.value.toPrecision( 3 ) +
-                " (" + d.volume.volume.name + ")";
-        }
-    }
-    return prefix ? prefix + " " + msg : msg;
-};
-
-
 // Viewport
 
 NGL.ViewportWidget = function( stage ){
@@ -456,35 +399,6 @@ NGL.ViewportWidget = function( stage ){
 
     }, false );
 
-    // tooltip
-
-    var tooltipText = new UI.Text();
-
-    var tooltipPanel = new UI.OverlayPanel()
-        .setPosition( "absolute" )
-        .setDisplay( "none" )
-        .setOpacity( "0.9" )
-        .setPointerEvents( "none" )
-        .add( tooltipText );
-
-    var cp = new NGL.Vector2();
-    stage.signals.hovered.add( function( d ){
-        var text = NGL.getPickingMessage( d, "" );
-        if( text !== "nothing" ){
-            cp.copy( d.canvasPosition ).addScalar( 5 );
-            tooltipText.setValue( text );
-            tooltipPanel
-                .setBottom( cp.y + "px" )
-                .setLeft( cp.x + "px" )
-                .setDisplay( "block" );
-        }else{
-            tooltipPanel.setDisplay( "none" );
-        }
-
-    } );
-
-    container.add( tooltipPanel );
-
     return container;
 
 };
@@ -508,8 +422,8 @@ NGL.ToolbarWidget = function( stage ){
         .setFloat( "right" )
         .add( statsText );
 
-    stage.signals.clicked.add( function( d ){
-        messageText.setValue( NGL.getPickingMessage( d, "Clicked" ) );
+    stage.signals.clicked.add( function( pickingProxy ){
+        messageText.setValue( pickingProxy ? pickingProxy.getLabel() : "nothing" );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){
@@ -538,7 +452,7 @@ NGL.MenubarWidget = function( stage, preferences ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage, preferences ) );
-    if( NGL.ExampleRegistry && NGL.ExampleRegistry.count > 0 ){
+    if( NGL.examplesListUrl && NGL.examplesScriptUrl ){
         container.add( new NGL.MenubarExamplesWidget( stage ) );
     }
     if( NGL.PluginRegistry && NGL.PluginRegistry.count > 0 ){
@@ -812,23 +726,24 @@ NGL.MenubarExamplesWidget = function( stage ){
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
-    var createDivider = UI.MenubarHelper.createDivider;
-    var menuConfig = [];
+    var optionsPanel = UI.MenubarHelper.createOptionsPanel( [] );
+    optionsPanel.setWidth( "300px" );
 
-    NGL.ExampleRegistry.names.sort().forEach( function( name ){
-        if( name === "__divider__" ){
-            menuConfig.push( createDivider() );
-        }else if( name.charAt( 0 ) === "_" ){
-            return;  // hidden
-        }else{
+    var xhr = new XMLHttpRequest();
+    xhr.open( "GET", NGL.examplesListUrl );
+    xhr.responseType = "json";
+    xhr.onload = function( e ){
+
+        this.response.sort().forEach( function( name ){
             var option = createOption( name, function(){
-                NGL.ExampleRegistry.load( name, stage );
+                stage.loadFile( NGL.examplesScriptUrl + name + ".js" );
             } );
-            menuConfig.push( option );
-        }
-    } );
+            optionsPanel.add( option );
+        } );
 
-    var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+    };
+    xhr.send();
+
     return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
 
 };

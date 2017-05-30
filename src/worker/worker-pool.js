@@ -58,7 +58,6 @@ function WorkerPool( name, maxCount ){
 
             if( worker.pending === 0 ){
 
-                minPending = worker.pending;
                 nextWorker = worker;
                 break;
 

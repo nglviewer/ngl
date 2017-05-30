@@ -7,10 +7,8 @@
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
-import Unitcell from "../symmetry/unitcell.js";
 import {
-    buildUnitcellAssembly, calculateBonds,
-    calculateChainnames, calculateSecondaryStructure
+    calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from "../structure/structure-utils.js";
 
 
@@ -154,11 +152,6 @@ class GroParser extends StructureParser{
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        s.unitcell = new Unitcell(
-            boxes[ 0 ][ 0 ], boxes[ 0 ][ 4 ], boxes[ 0 ][ 8 ],
-            90, 90, 90, "P 1"
-        );
-
         sb.finalize();
         s.finalizeAtoms();
         calculateChainnames( s );
@@ -166,7 +159,6 @@ class GroParser extends StructureParser{
         s.finalizeBonds();
 
         calculateSecondaryStructure( s );
-        buildUnitcellAssembly( s );
 
         if( Debug ) Log.timeEnd( "GroParser._parse " + this.name );
 

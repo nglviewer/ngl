@@ -37,7 +37,7 @@ class StructureRepresentation extends Representation{
      */
     constructor( structure, viewer, params ){
 
-        var p = params || {};
+        const p = params || {};
 
         super( structure, viewer, p );
 
@@ -84,7 +84,7 @@ class StructureRepresentation extends Representation{
         this.structureView = this.structure.getView( this.selection );
 
         if( structure.biomolDict ){
-            var biomolOptions = {
+            const biomolOptions = {
                 "default": "default",
                 "": ( structure.unitcell ? "AU" : "FULL" )
             };
@@ -115,7 +115,7 @@ class StructureRepresentation extends Representation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "element" );
 
         this.radius = defaults( p.radius, "vdw" );
@@ -137,16 +137,16 @@ class StructureRepresentation extends Representation{
 
     getAssembly(){
 
-        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
+        const name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
         return this.structure.biomolDict[ name ];
 
     }
 
     getQuality(){
 
-        var atomCount;
-        var s = this.structureView;
-        var assembly = this.getAssembly();
+        let atomCount;
+        const s = this.structureView;
+        const assembly = this.getAssembly();
         if( assembly ){
             atomCount = assembly.getAtomCount( s );
         }else{
@@ -155,7 +155,7 @@ class StructureRepresentation extends Representation{
         if( Mobile ){
             atomCount *= 4;
         }
-        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+        const backboneOnly = s.atomStore.count / s.residueStore.count < 2;
         if( backboneOnly ){
             atomCount *= 10;
         }
@@ -174,13 +174,13 @@ class StructureRepresentation extends Representation{
 
         if( this.structureView.atomCount === 0 ) return;
 
-        var assembly = this.getAssembly();
+        const assembly = this.getAssembly();
 
         if( assembly ){
             assembly.partList.forEach( function( part, i ){
-                var sview = part.getView( this.structureView );
+                const sview = part.getView( this.structureView );
                 if( sview.atomCount === 0 ) return;
-                var data = this.createData( sview, i );
+                const data = this.createData( sview, i );
                 if( data ){
                     data.sview = sview;
                     data.instanceList = part.getInstanceList();
@@ -188,7 +188,7 @@ class StructureRepresentation extends Representation{
                 }
             }, this );
         }else{
-            var data = this.createData( this.structureView, 0 );
+            const data = this.createData( this.structureView, 0 );
             if( data ){
                 data.sview = this.structureView;
                 this.dataList.push( data );
@@ -226,7 +226,7 @@ class StructureRepresentation extends Representation{
 
     getColorParams(){
 
-        var p = super.getColorParams();
+        const p = super.getColorParams();
         p.structure = this.structure;
 
         return p;
@@ -324,7 +324,7 @@ class StructureRepresentation extends Representation{
 
     getParameters(){
 
-        var params = Object.assign(
+        const params = Object.assign(
             super.getParameters(),
             {
                 sele: this.selection ? this.selection.string : undefined,
@@ -338,8 +338,8 @@ class StructureRepresentation extends Representation{
 
     attach( callback ){
 
-        var viewer = this.viewer;
-        var bufferList = this.bufferList;
+        const viewer = this.viewer;
+        const bufferList = this.bufferList;
 
         this.dataList.forEach( function( data ){
             data.bufferList.forEach( function( buffer ){

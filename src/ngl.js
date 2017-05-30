@@ -140,6 +140,7 @@ import "./parser/validation-parser.js";
 import Shape from "./geometry/shape.js";
 import Kdtree from "./geometry/kdtree.js";
 import SpatialHash from "./geometry/spatial-hash.js";
+import MolecularSurface from "./surface/molecular-surface.js";
 
 //
 
@@ -151,6 +152,13 @@ import "./datasource/rcsb-datasource.js";
 import "./datasource/pubchem-datasource.js";
 import "./datasource/passthrough-datasource.js";
 import StaticDatasource from "./datasource/static-datasource.js";
+
+//
+
+import {
+    LeftMouseButton, MiddleMouseButton, RightMouseButton
+} from "./constants.js";
+import MouseActions from "./controls/mouse-actions.js";
 
 //
 
@@ -209,6 +217,12 @@ export {
 
     Kdtree,
     SpatialHash,
+    MolecularSurface,
+
+    LeftMouseButton,
+    MiddleMouseButton,
+    RightMouseButton,
+    MouseActions,
 
     Signal,
 

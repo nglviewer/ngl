@@ -130,7 +130,8 @@ class Buffer{
 
         this.pickingUniforms = {
             nearClip: { value: 0.0 },
-            objectId: { value: 0 }
+            objectId: { value: 0 },
+            opacity: { value: this.opacity }
         };
 
         this.group = new Group();

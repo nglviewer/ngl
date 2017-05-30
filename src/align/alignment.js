@@ -272,13 +272,13 @@ class Alignment{
         this.ali1 = '';
         this.ali2 = '';
 
-        var scoreFn = this.makeScoreFn();
+        const scoreFn = this.makeScoreFn();
 
-        var i = this.n;
-        var j = this.m;
-        var mat = "S";
+        let i = this.n;
+        let j = this.m;
+        let mat;
 
-        if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
+        if( this.S[i][j] >= this.V[i][j] ){
             mat = "S";
             this.score = this.S[i][j];
         }else if( this.V[i][j] >= this.H[i][j] ){

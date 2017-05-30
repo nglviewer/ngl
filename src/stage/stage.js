@@ -19,6 +19,7 @@ import TrackballControls from "../controls/trackball-controls.js";
 import PickingControls from "../controls/picking-controls.js";
 import ViewerControls from "../controls/viewer-controls.js";
 import AnimationControls from "../controls/animation-controls.js";
+import MouseControls from "../controls/mouse-controls.js";
 
 import PickingBehavior from "./picking-behavior.js";
 import MouseBehavior from "./mouse-behavior.js";
@@ -89,8 +90,9 @@ const tmpZoomVector = new Vector3();
 
 /**
  * Stage class, central for creating molecular scenes with NGL.
+ *
  * @example
- *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage{
 
@@ -133,6 +135,23 @@ class Stage{
         if( !this.viewer.renderer ) return;
 
         /**
+         * Tooltip element
+         * @type {Element}
+         */
+        this.tooltip = document.createElement( "div" );
+        Object.assign( this.tooltip.style, {
+            display: "none",
+            position: "absolute",
+            zIndex: 10,
+            pointerEvents: "none",
+            backgroundColor: "rgba( 0, 0, 0, 0.6 )",
+            color: "lightgrey",
+            padding: "0.5em",
+            fontFamily: "sans-serif"
+        } );
+        this.viewer.container.appendChild( this.tooltip );
+
+        /**
          * @type {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
@@ -147,6 +166,10 @@ class Stage{
          * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
+        /**
+         * @type {MouseControls}
+         */
+        this.mouseControls = new MouseControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
         this.mouseBehavior = new MouseBehavior( this );
@@ -176,6 +199,8 @@ class Stage{
             ambientColor: 0xdddddd,
             ambientIntensity: 0.2,
             hoverTimeout: 0,
+            tooltip: true,
+            mousePreset: "default"
         }, params );
 
         this.parameters = {
@@ -183,7 +208,7 @@ class Stage{
                 type: "color"
             },
             quality: {
-                type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+                type: "select", options: { auto: "auto", low: "low", medium: "medium", high: "high" }
             },
             sampleLevel: {
                 type: "range", step: 1, max: 5, min: -1
@@ -219,7 +244,7 @@ class Stage{
                 type: "range", step: 1, max: 100, min: 0
             },
             cameraType: {
-                type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+                type: "select", options: { perspective: "perspective", orthographic: "orthographic" }
             },
             cameraFov: {
                 type: "range", step: 1, max: 120, min: 15
@@ -238,6 +263,12 @@ class Stage{
             },
             hoverTimeout: {
                 type: "integer", max: 10000, min: -1
+            },
+            tooltip: {
+                type: "boolean"
+            },
+            mousePreset: {
+                type: "select", options: { default: "default", pymol: "pymol", coot: "coot" }
             },
         };
 
@@ -277,6 +308,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        if( p.mousePreset !== undefined ) this.mouseControls.preset( p.mousePreset );
         this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );

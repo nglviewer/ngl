@@ -56,7 +56,7 @@ class Assembly{
         return part;
     }
 
-    getCount( structure, methodName ){
+    _getCount( structure, methodName ){
 
         var count = 0;
 
@@ -75,7 +75,7 @@ class Assembly{
      */
     getAtomCount( structure ){
 
-        return this.getCount( structure, "getAtomCount" );
+        return this._getCount( structure, "getAtomCount" );
 
     }
 
@@ -86,7 +86,7 @@ class Assembly{
      */
     getResidueCount( structure ){
 
-        return this.getCount( structure, "getResidueCount" );
+        return this._getCount( structure, "getResidueCount" );
 
     }
 
@@ -147,6 +147,12 @@ class Assembly{
 
     }
 
+    getCenter( structure ){
+
+        return this.getBoundingBox( structure ).getCenter();
+
+    }
+
     getSelection(){
         var chainList = [];
         this.partList.forEach( function( part ){
@@ -169,7 +175,7 @@ class AssemblyPart{
 
     get type (){ return "AssemblyPart"; }
 
-    getCount( structure, propertyName ){
+    _getCount( structure, propertyName ){
 
         var count = 0;
         var chainList = this.chainList;
@@ -186,13 +192,13 @@ class AssemblyPart{
 
     getAtomCount( structure ){
 
-        return this.getCount( structure, "atomCount" );
+        return this._getCount( structure, "atomCount" );
 
     }
 
     getResidueCount( structure ){
 
-        return this.getCount( structure, "residueCount" );
+        return this._getCount( structure, "residueCount" );
 
     }
 

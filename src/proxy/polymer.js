@@ -6,7 +6,6 @@
 
 
 import { Log } from "../globals.js";
-import Bitset from "../utils/bitset.js";
 
 
 /**
@@ -216,18 +215,18 @@ class Polymer{
         }
         // console.log( array, offset, end, count )
 
-        var as = this.structure.atomSetCache[ "__" + type ];
-        if( as === undefined ){
+        let atomSet = this.structure.atomSetCache[ "__" + type ];
+        if( atomSet === undefined ){
             Log.warn( "no precomputed atomSet for: " + type );
-            as = this.structure.getAtomSet( false );
+            atomSet = this.structure.getAtomSet( false );
             this.eachResidue( function( rp ){
                 var ap = rp.getAtomByName( type );
-                as.add_unsafe( ap.index );
+                atomSet.set( ap.index );
             } );
         }
         var j = 0;
 
-        as.forEach( function( index ){
+        atomSet.forEach( function( index ){
             if( index >= offset && index < end ){
                 for( var i = 1; i < n; ++i ){
                     array[ i - 1 ].index = array[ i ].index;
@@ -239,44 +238,6 @@ class Polymer{
                 }
             }
         } );
-
-    }
-
-    eachDirectionAtomsN( n, callback ){
-
-        var n2 = n * 2;
-        var offset = this.atomOffset;
-        var count = this.atomCount;
-        var end = offset + count;
-        if( count < n ) return;
-
-        var array = new Array( n2 );
-        for( var i = 0; i < n2; ++i ){
-            array[ i ] = this.structure.getAtomProxy();
-        }
-
-        var as1 = this.structure.atomSetCache.__direction1;
-        var as2 = this.structure.atomSetCache.__direction2;
-        if( as1 === undefined || as2 === undefined ){
-            Log.error( "no precomputed atomSet for direction1 or direction2" );
-            return;
-        }
-        var j = 0;
-
-        Bitset.forEach( function( index1, index2 ){
-            if( index1 >= offset && index1 < end && index2 >= offset && index2 < end ){
-                for( var i = 1; i < n; ++i ){
-                    array[ i - 1 ].index = array[ i ].index;
-                    array[ i - 1 + n ].index = array[ i + n ].index;
-                }
-                array[ n - 1 ].index = index1;
-                array[ n - 1 + n ].index = index2;
-                j += 1;
-                if( j >= n ){
-                    callback.apply( this, array );
-                }
-            }
-        }, as1, as2 );
 
     }
 

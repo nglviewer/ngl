@@ -6,63 +6,61 @@
 
 
 import { Log } from "../globals.js";
-import Bitset from "../utils/bitset.js";
+import BitArray from "../utils/bitarray.js";
 import Kdtree from "./kdtree.js";
 import BondStore from "../store/bond-store.js";
 
 
-function Contact( sview1, sview2 ){
+class Contact{
 
-    this.sview1 = sview1;
-    this.sview2 = sview2;
+    constructor( sview1, sview2 ){
 
-    // this.kdtree1 = new Kdtree( sview1 );
-    this.kdtree2 = new Kdtree( sview2 );
+        this.sview1 = sview1;
+        this.sview2 = sview2;
 
-}
+        // this.kdtree1 = new Kdtree( sview1 );
+        this.kdtree2 = new Kdtree( sview2 );
 
-Contact.prototype = {
+    }
 
-    within: function( maxDistance, minDistance ){
+    within( maxDistance, minDistance ){
 
         Log.time( "Contact within" );
 
         // var kdtree1 = this.kdtree1;
-        var kdtree2 = this.kdtree2;
+        const kdtree2 = this.kdtree2;
 
-        var ap2 = this.sview1.getAtomProxy();
-        var atomSet = this.sview1.getAtomSet( false );
-        var bondStore = new BondStore();
+        const ap2 = this.sview1.getAtomProxy();
+        const atomSet = this.sview1.getAtomSet( false );
+        const bondStore = new BondStore();
 
         this.sview1.eachAtom( function( ap1 ){
 
-            var found = false;
-            var contacts = kdtree2.nearest(
-                ap1, Infinity, maxDistance
-            );
+            let found = false;
+            const contacts = kdtree2.nearest( ap1, Infinity, maxDistance );
 
-            for( var j = 0, m = contacts.length; j < m; ++j ){
+            for( let j = 0, m = contacts.length; j < m; ++j ){
 
-                var d = contacts[ j ];
+                const d = contacts[ j ];
                 ap2.index = d.index;
 
                 if( ap1.residueIndex !== ap2.residueIndex &&
-                    ( !minDistance || d.distance > minDistance ) ){
+                    ( !minDistance || d.distance > minDistance )
+                ){
                     found = true;
-                    atomSet.add_unsafe( ap2.index );
+                    atomSet.set( ap2.index );
                     bondStore.addBond( ap1, ap2, 1 );
                 }
 
             }
 
             if( found ){
-                atomSet.add_unsafe( ap1.index );
+                atomSet.set( ap1.index );
             }
 
         } );
 
-        var bondSet = new Bitset( bondStore.count );
-        bondSet.set_all( true );
+        const bondSet = new BitArray( bondStore.count, true );
 
         Log.timeEnd( "Contact within" );
 
@@ -74,7 +72,7 @@ Contact.prototype = {
 
     }
 
-};
+}
 
 
 export default Contact;

@@ -24,9 +24,10 @@ import ContourBuffer from "../buffer/contour-buffer.js";
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
  * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
  * @property {Boolean} background - Render the surface in the background, unlit.
- * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring of the transparency parameter.
+ * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring the transparency parameter.
  * @property {Integer} boxSize - Size of the box to triangulate volume data in. Set to zero to triangulate the whole volume. For volume data only.
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
+ * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
 
 
@@ -57,6 +58,9 @@ class SurfaceRepresentation extends Representation{
             isolevel: {
                 type: "number", precision: 2, max: 1000, min: -1000
             },
+            negateIsolevel: {
+                type: "boolean"
+            },
             smooth: {
                 type: "integer", precision: 1, max: 10, min: 0
             },
@@ -77,7 +81,10 @@ class SurfaceRepresentation extends Representation{
             },
             useWorker: {
                 type: "boolean", rebuild: true
-            }
+            },
+            wrap: {
+                type: "boolean", rebuild: true
+            },
 
         }, this.parameters );
 
@@ -110,12 +117,13 @@ class SurfaceRepresentation extends Representation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
 
         this.isolevelType  = defaults( p.isolevelType, "sigma" );
         this.isolevel = defaults( p.isolevel, 2.0 );
+        this.negateIsolevel = defaults( p.negateIsolevel, false );
         this.smooth = defaults( p.smooth, 0 );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
@@ -123,6 +131,7 @@ class SurfaceRepresentation extends Representation{
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.contour = defaults( p.contour, false );
         this.useWorker = defaults( p.useWorker, true );
+        this.wrap = defaults( p.wrap, false );
 
         super.init( p );
 
@@ -146,18 +155,20 @@ class SurfaceRepresentation extends Representation{
 
         if( this.volume ){
 
-            var isolevel;
+            let isolevel;
 
             if( this.isolevelType === "sigma" ){
                 isolevel = this.volume.getValueForSigma( this.isolevel );
             }else{
                 isolevel = this.isolevel;
             }
+            if( this.negateIsolevel ) isolevel *= -1;
 
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
                 this.__smooth !== this.smooth ||
                 this.__contour !== this.contour ||
+                this.__wrap !== this.wrap ||
                 this.__boxSize !== this.boxSize ||
                 ( this.boxSize > 0 &&
                     !this.__boxCenter.equals( this.boxCenter ) )
@@ -165,25 +176,26 @@ class SurfaceRepresentation extends Representation{
                 this.__isolevel = isolevel;
                 this.__smooth = this.smooth;
                 this.__contour = this.contour;
+                this.__wrap = this.wrap
                 this.__boxSize = this.boxSize;
                 this.__boxCenter.copy( this.boxCenter );
                 this.__box.copy( this.box );
 
-                var onSurfaceFinish = function( surface ){
+                const onSurfaceFinish = surface => {
                     this.surface = surface;
                     callback();
-                }.bind( this );
+                };
 
                 if( this.useWorker ){
                     this.volume.getSurfaceWorker(
                         isolevel, this.smooth, this.boxCenter, this.boxSize,
-                        this.contour, onSurfaceFinish
+                        this.contour, this.wrap, onSurfaceFinish
                     );
                 }else{
                     onSurfaceFinish(
                         this.volume.getSurface(
                             isolevel, this.smooth, this.boxCenter, this.boxSize,
-                            this.contour
+                            this.contour, this.wrap
                         )
                     );
                 }
@@ -197,23 +209,15 @@ class SurfaceRepresentation extends Representation{
 
     }
 
-    getSurfaceData(){
+    create(){
 
-        return {
+        const sd = {
             position: this.surface.getPosition(),
             color: this.surface.getColor( this.getColorParams() ),
             index: this.surface.getIndex(),
-            normal: this.surface.getNormal(),
-            picking: this.surface.getPicking()
         };
 
-    }
-
-    create(){
-
-        var sd = this.getSurfaceData();
-
-        var buffer;
+        let buffer;
 
         if( this.contour ){
 
@@ -224,7 +228,10 @@ class SurfaceRepresentation extends Representation{
 
         } else {
 
-            var surfaceBuffer = new SurfaceBuffer(
+            sd.normal = this.surface.getNormal(),
+            sd.picking = this.surface.getPicking()
+
+            const surfaceBuffer = new SurfaceBuffer(
                 sd, this.getBufferParams( {
                     background: this.background,
                     opaqueBack: this.opaqueBack,
@@ -245,7 +252,7 @@ class SurfaceRepresentation extends Representation{
 
         what = what || {};
 
-        var surfaceData = {};
+        const surfaceData = {};
 
         if( what.position ){
             surfaceData.position = this.surface.getPosition();
@@ -337,7 +344,9 @@ class SurfaceRepresentation extends Representation{
 
         if( this.surface && (
                 params.isolevel !== undefined ||
+                params.negateIsolevel !== undefined ||
                 params.smooth !== undefined ||
+                params.wrap !== undefined ||
                 params.boxSize !== undefined ||
                 ( this.boxSize > 0 &&
                     !this.__box.equals( this.box ) )
@@ -357,7 +366,7 @@ class SurfaceRepresentation extends Representation{
 
     getColorParams(){
 
-        var p = super.getColorParams();
+        const p = super.getColorParams();
 
         p.volume = this.colorVolume;
 

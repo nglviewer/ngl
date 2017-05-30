@@ -13,10 +13,14 @@ All notable changes to this project will be documented in this file, following t
 - support for non orthogonal cell in cube file parser
 - dsn6/brix volume file parser
 - psf topology/structure file parser
+- wwPDB validation report xml parser, representation and colorschemes
 - support for picking Shape objects, Volume slices, Contact bonds
 - scroll mouse behavior to change far/near clipping and fog
 - label primitive for Shape class
 - support for reversing color schemes with `colorReverse` parameter
+- independent component movement via `.setPosition`, `.setRotation`, `.setScale`, `.setTransform`
+- `bonded` and `ring` selection language keywords
+- resname list to selection language, `[ALA,GLU]`
 
 ### Changed
 - renamed `volume` parameter in molecular surface representation to `colorVolume`
@@ -28,10 +32,13 @@ All notable changes to this project will be documented in this file, following t
 - replaced PickingData with PickingProxy
 - updated three.js to r85
 - updated chroma.js to 1.3.3
+- replaced utils/bitset with utils/bitarray
+- tweaked aminoacid keywords in selection language to follow rasmol/jmol, vmd
 
 ### Removed
 - stage/component.centerView method, use .autoView instead
 - GidPool, picking handled by Picker objects
+- deprecated use of `#` for element selection, use `_` instead
 
 
 ## [v0.9.3] - 2016-10-14

@@ -5,9 +5,10 @@
  */
 
 
-var LeftMouseButton = 1;
-var MiddleMouseButton = 2;
-var RightMouseButton = 3;
+const LeftMouseButton = 1;
+const MiddleMouseButton = 2;
+const RightMouseButton = 3;
+
 
 export {
     LeftMouseButton,

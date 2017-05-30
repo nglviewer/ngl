@@ -9,33 +9,20 @@ import Store from "./store.js";
 
 
 /**
- * Model store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Model store
  */
-function ModelStore( size ){
+class ModelStore extends Store{
 
-    Store.call( this, size );
+    get __fields(){
+
+        return [
+            [ "chainOffset", 1, "uint32" ],
+            [ "chainCount", 1, "uint32" ]
+        ];
+
+    }
 
 }
-
-ModelStore.prototype = Object.assign( Object.create(
-
-    Store.prototype ), {
-
-    constructor: ModelStore,
-
-    type: "ModelStore",
-
-    __fields: [
-
-        [ "chainOffset", 1, "uint32" ],
-        [ "chainCount", 1, "uint32" ]
-
-    ]
-
-} );
 
 
 export default ModelStore;

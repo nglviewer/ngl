@@ -28,12 +28,12 @@ node js/node/timeParsing.js --dir ../build/data/mmtf-all/ --out ../build/logs/mm
 ```
 
 
-## Render tests
+## Render gallery
 
 ```
-slimerjs js/slimer/test.js
+slimerjs js/slimer/gallery.js
 ```
 
 ```
-slimerjs js/slimer/test.js 8091
+slimerjs js/slimer/gallery.js port:8091
 ```

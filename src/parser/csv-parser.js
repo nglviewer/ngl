@@ -5,20 +5,38 @@
  */
 
 
+import { defaults } from "../utils.js";
 import { ParserRegistry } from "../globals.js";
 import Parser from "./parser.js";
 
 
+/**
+ * CSV parser
+ */
 class CsvParser extends Parser{
 
+    /**
+     * [constructor description]
+     * @param  {Streamer} streamer - the streamer object
+     * @param  {Object} params - parameter object
+     * @param  {Char} params.delimiter - delimiter character
+     * @param  {Char} params.comment - comment character
+     * @param  {Boolean} params.columnNames - use first data line as column names
+     */
     constructor( streamer, params ){
 
-        super( streamer, params );
+        const p = params || {};
+
+        super( streamer, p );
+
+        this.delimiter  = defaults( p.delimiter, "," );
+        this.comment = defaults( p.comment, "#" );
+        this.columnNames = defaults( p.columnNames, false );
 
         this.table = {
             name: this.name,
             path: this.path,
-            colNames: [],
+            columnNames: [],
             data: []
         };
 
@@ -29,31 +47,31 @@ class CsvParser extends Parser{
 
     _parse(){
 
-        var data = this.table.data;
-        var reDelimiter = /\s*,\s*/;
+        const data = this.table.data;
+        const reDelimiter = new RegExp( "\s*" + this.delimiter + "\s*" );
 
-        this.streamer.eachChunkOfLines( function( chunk, chunkNo/*, chunkCount*/ ){
+        let j = 0;
 
-            var n = chunk.length;
+        this.streamer.eachChunkOfLines( chunk => {
 
-            for( var i = 0; i < n; ++i ){
+            const n = chunk.length;
+
+            for( let i = 0; i < n; ++i ){
 
                 var line = chunk[ i ].trim();
-                var values = line.split( reDelimiter );
+                if( line.startsWith( this.comment ) ) continue;
+                const values = line.split( reDelimiter );
 
-                if( chunkNo === 0 && i === 0 ){
-
-                    this.table.colNames = values;
-
+                if( j === 0 ){
+                    this.table.columnNames = values;
                 }else if( line ){
-
                     data.push( values );
-
                 }
+                ++j;
 
             }
 
-        }.bind( this ) );
+        } );
 
     }
 

@@ -668,6 +668,9 @@ class TextBuffer extends QuadBuffer{
 
     }
 
+    set wireframe ( value ){}
+    get wireframe (){ return false; }
+
     get isText (){ return true; }
     get vertexShader (){ return "SDFFont.vert"; }
     get fragmentShader (){ return "SDFFont.frag"; }

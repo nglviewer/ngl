@@ -9,40 +9,27 @@ import Store from "./store.js";
 
 
 /**
- * Bond store class
- * @class
- * @extends Store
- * @param {Integer} [size] - initial size
+ * Bond store
  */
-function BondStore( size ){
+class BondStore extends Store{
 
-    Store.call( this, size );
+    get __fields(){
 
-}
+        return [
+            [ "atomIndex1", 1, "int32" ],
+            [ "atomIndex2", 1, "int32" ],
+            [ "bondOrder", 1, "int8" ]
+        ];
 
-BondStore.prototype = Object.assign( Object.create(
+    }
 
-    Store.prototype ), {
-
-    constructor: BondStore,
-
-    type: "BondStore",
-
-    __fields: [
-
-        [ "atomIndex1", 1, "int32" ],
-        [ "atomIndex2", 1, "int32" ],
-        [ "bondOrder", 1, "int8" ],
-
-    ],
-
-    addBond: function( atom1, atom2, bondOrder ){
+    addBond( atom1, atom2, bondOrder ){
 
         this.growIfFull();
 
-        var i = this.count;
-        var ai1 = atom1.index;
-        var ai2 = atom2.index;
+        const i = this.count;
+        const ai1 = atom1.index;
+        const ai2 = atom2.index;
 
         if( ai1 < ai2 ){
             this.atomIndex1[ i ] = ai1;
@@ -55,9 +42,9 @@ BondStore.prototype = Object.assign( Object.create(
 
         this.count += 1;
 
-    },
+    }
 
-    addBondIfConnected: function( atom1, atom2, bondOrder ){
+    addBondIfConnected( atom1, atom2, bondOrder ){
 
         if( atom1.connectedTo( atom2 ) ){
             this.addBond( atom1, atom2, bondOrder );
@@ -68,7 +55,7 @@ BondStore.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 export default BondStore;

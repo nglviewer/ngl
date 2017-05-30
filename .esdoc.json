@@ -1,7 +1,7 @@
 {
     "title": "NGL Viewer",
     "source": "./src",
-    "destination": "./build/docs/api",
+    "destination": "./build/docs",
     "manual": {
         "globalIndex": false,
         "asset": "./doc/images",
@@ -26,8 +26,13 @@
         "faq": [],
         "changelog": [ "./CHANGELOG.md" ]
     },
+    "plugins": [
+        {
+            "name": "./doc/plugins/header.js"
+        }
+    ],
     "undocumentIdentifier": false,
     "coverage": false,
-    "includeSource": false,
+    "includeSource": true,
     "lint": false
 }

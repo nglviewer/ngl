@@ -280,7 +280,8 @@ function Interpolator( m, tension ){
 
     this.getColor = function( iterator, colFn, col, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -318,7 +319,8 @@ function Interpolator( m, tension ){
 
     this.getPicking = function( iterator, pickFn, pick, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -354,7 +356,8 @@ function Interpolator( m, tension ){
 
     this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;

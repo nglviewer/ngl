@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import {
+    SecStrucHelix, SecStrucSheet, SecStrucTurn,
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
 } from "../structure/structure-constants.js";
@@ -51,10 +52,6 @@ class AtomProxy{
          * @type {AtomMap}
          */
         this.atomMap = structure.atomMap;
-        /**
-         * @type {BondHash}
-         */
-        this.bondHash = structure.bondHash;
 
         /**
          * The index of the atom, pointing to the data in the corresponding {@link AtomStore}
@@ -63,6 +60,11 @@ class AtomProxy{
         this.index = index;
 
     }
+
+    /**
+     * @type {BondHash}
+     */
+    get bondHash(){ return this.structure.bondHash; }
 
     /**
      * Molecular enity
@@ -289,13 +291,13 @@ class AtomProxy{
     eachBond( callback, bp ){
 
         bp = bp || this.structure._bp;
-        var idx = this.index;
-        var bondHash = this.bondHash;
-        var indexArray = bondHash.indexArray;
-        var n = bondHash.countArray[ idx ];
-        var offset = bondHash.offsetArray[ idx ];
+        const idx = this.index;
+        const bondHash = this.bondHash;
+        const indexArray = bondHash.indexArray;
+        const n = bondHash.countArray[ idx ];
+        const offset = bondHash.offsetArray[ idx ];
 
-        for( var i = 0; i < n; ++i ){
+        for( let i = 0; i < n; ++i ){
             bp.index = indexArray[ offset + i ];
             callback( bp );
         }
@@ -399,7 +401,7 @@ class AtomProxy{
      * @return {Boolean} flag
      */
     isNucleic(){
-        var moleculeType = this.residueType.moleculeType;
+        const moleculeType = this.residueType.moleculeType;
         return (
             moleculeType === RnaType ||
             moleculeType === DnaType
@@ -444,6 +446,34 @@ class AtomProxy{
      */
     isSaccharide(){
         return this.residueType.moleculeType === SaccharideType;
+    }
+
+    /**
+     * If atom is part of a helix
+     * @return {Boolean} flag
+     */
+    isHelix(){
+        return SecStrucHelix.includes( this.sstruc );
+    }
+
+    /**
+     * If atom is part of a sheet
+     * @return {Boolean} flag
+     */
+    isSheet(){
+        return SecStrucSheet.includes( this.sstruc );
+    }
+
+    /**
+     * If atom is part of a turn
+     * @return {Boolean} flag
+     */
+    isTurn(){
+        return SecStrucTurn.includes( this.sstruc ) && this.isProtein();
+    }
+
+    isBonded(){
+        return this.bondHash.countArray[ this.index ] !== 0;
     }
 
     /**

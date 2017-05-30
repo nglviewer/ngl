@@ -11,7 +11,7 @@ import { Browser, RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import { DistancePicker } from "../utils/picker.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import Bitset from "../utils/bitset.js";
+import BitArray from "../utils/bitarray.js";
 import StructureRepresentation from "./structure-representation.js";
 import Selection from "../selection.js";
 import BondStore from "../store/bond-store.js";
@@ -198,8 +198,7 @@ class DistanceRepresentation extends StructureRepresentation{
             position = position.subarray( 0, n * 3 );
         }
 
-        var bondSet = new Bitset( bondStore.count );
-        bondSet.set_all( true );
+        var bondSet = new BitArray( bondStore.count, true );
 
         return {
             text: text,
@@ -312,7 +311,7 @@ class DistanceRepresentation extends StructureRepresentation{
         }
 
         if( what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 

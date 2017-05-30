@@ -42,7 +42,7 @@ function Grid( length, width, height, dataCtor, elemSize ){
         if ( offset === undefined ) offset = 0;
 
         for( j = 0; j < elemSize; ++j ){
-            array[ j ] = data[ i + j ];
+            array[ offset + j ] = data[ i + j ];
         }
 
     };

@@ -97,24 +97,18 @@ class StructureView extends Structure{
 
         this.atomSet = this.getAtomSet( this.selection, true );
         if( this.structure.atomSet ){
-            if( Debug ) Log.time( "StructureView.refresh#atomSet.intersection" );
             this.atomSet = this.atomSet.intersection( this.structure.atomSet );
-            if( Debug ) Log.timeEnd( "StructureView.refresh#atomSet.intersection" );
         }
 
         this.bondSet = this.getBondSet();
 
-        if( Debug ) Log.time( "StructureView.refresh#atomSetDict.new_intersection" );
-        for( var name in this.atomSetDict ){
-            var as = this.atomSetDict[ name ];
-            this.atomSetCache[ "__" + name ] = as.new_intersection( this.atomSet );
+        for( let name in this.atomSetDict ){
+            const atomSet = this.atomSetDict[ name ];
+            this.atomSetCache[ "__" + name ] = atomSet.makeIntersection( this.atomSet );
         }
-        if( Debug ) Log.timeEnd( "StructureView.refresh#atomSetDict.new_intersection" );
 
-        if( Debug ) Log.time( "StructureView.refresh#size" );
-        this.atomCount = this.atomSet.size();
-        this.bondCount = this.bondSet.size();
-        if( Debug ) Log.timeEnd( "StructureView.refresh#size" );
+        this.atomCount = this.atomSet.getSize();
+        this.bondCount = this.bondSet.getSize();
 
         this.boundingBox = this.getBoundingBox();
         this.center = this.boundingBox.getCenter();
@@ -137,13 +131,13 @@ class StructureView extends Structure{
 
     getSelection( selection ){
 
-        var seleList = [];
+        const seleList = [];
 
         if( selection && selection.string ){
             seleList.push( selection.string );
         }
 
-        var parentSelection = this.structure.getSelection();
+        const parentSelection = this.structure.getSelection();
         if( parentSelection && parentSelection.string ){
             seleList.push( parentSelection.string );
         }
@@ -152,7 +146,7 @@ class StructureView extends Structure{
             seleList.push( this.selection.string );
         }
 
-        var sele = "";
+        let sele = "";
         if( seleList.length > 0 ){
             sele = "( " + seleList.join( " ) AND ( " ) + " )";
         }
@@ -177,17 +171,17 @@ class StructureView extends Structure{
 
     eachAtom( callback, selection ){
 
-        var ap = this.getAtomProxy();
-        var as = this.getAtomSet( selection );
-        var n = this.atomStore.count;
+        const ap = this.getAtomProxy();
+        const atomSet = this.getAtomSet( selection );
+        const n = this.atomStore.count;
 
-        if( as && as.size() < n ){
-            as.forEach( function( index ){
+        if( atomSet.getSize() < n ){
+            atomSet.forEach( function( index ){
                 ap.index = index;
                 callback( ap );
             } );
         }else{
-            for( var i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
                 ap.index = i;
                 callback( ap );
             }
@@ -228,16 +222,12 @@ class StructureView extends Structure{
 
     getAtomSet( selection, ignoreView ){
 
-        if( Debug ) Log.time( "StructureView.getAtomSet" );
-
-        var as = this.structure.getAtomSet( selection );
+        let atomSet = this.structure.getAtomSet( selection );
         if( !ignoreView && this.atomSet ){
-            as = as.new_intersection( this.atomSet );
+            atomSet = atomSet.makeIntersection( this.atomSet );
         }
 
-        if( Debug ) Log.timeEnd( "StructureView.getAtomSet" );
-
-        return as;
+        return atomSet;
 
     }
 

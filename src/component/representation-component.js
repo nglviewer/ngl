@@ -148,6 +148,16 @@ class RepresentationComponent extends Component{
 
     }
 
+    /**
+     * Toggle visibility of the component, takes parent visibility into account
+     * @return {RepresentationComponent} this object
+     */
+    toggleVisibility(){
+
+        return this.setVisibility( !this.visible );
+
+    }
+
     updateVisibility(){
 
         this.repr.setVisibility( this.getVisibility() );

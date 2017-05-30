@@ -14,57 +14,53 @@ import { getTypedArray } from "../utils.js";
  * @class
  * @param {Integer} [size] - initial size
  */
-function Store( size ){
+class Store{
 
-    if( Number.isInteger( size ) ){
+    constructor( size ){
 
-        this.init( size );
+        if( Number.isInteger( size ) ){
 
-    }else{
+            this.init( size );
 
-        this.init( 0 );
+        }else{
+
+            this.init( 0 );
+
+        }
 
     }
 
-}
-
-Store.prototype = {
-
-    constructor: Store,
-
-    type: "Store",
-
-    init: function( size ){
+    init( size ){
 
         this.length = size;
         this.count = 0;
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+        for( let i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this.__fields[ i ][ 0 ];
-            var itemSize = this.__fields[ i ][ 1 ];
-            var arrayType = this.__fields[ i ][ 2 ];
-            var arraySize = this.length * itemSize;
+            const name = this.__fields[ i ][ 0 ];
+            const itemSize = this.__fields[ i ][ 1 ];
+            const arrayType = this.__fields[ i ][ 2 ];
+            const arraySize = this.length * itemSize;
 
             this[ name ] = getTypedArray( arrayType, arraySize );
 
         }
 
-    },
+    }
 
-    resize: function( size ){
+    resize( size ){
 
         // Log.time( "Store.resize" );
 
         this.length = Math.round( size || 0 );
         this.count = Math.min( this.count, this.length );
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+        for( let i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this.__fields[ i ][ 0 ];
-            var itemSize = this.__fields[ i ][ 1 ];
-            var arraySize = this.length * itemSize;
-            var tmpArray = new this[ name ].constructor( arraySize );
+            const name = this.__fields[ i ][ 0 ];
+            const itemSize = this.__fields[ i ][ 1 ];
+            const arraySize = this.length * itemSize;
+            const tmpArray = new this[ name ].constructor( arraySize );
 
             if( this[ name ].length > arraySize ){
                 tmpArray.set( this[ name ].subarray( 0, arraySize ) );
@@ -77,64 +73,64 @@ Store.prototype = {
 
         // Log.timeEnd( "Store.resize" );
 
-    },
+    }
 
-    growIfFull: function(){
+    growIfFull(){
 
         if( this.count >= this.length ){
-            var size = Math.round( this.length * 1.5 );
+            const size = Math.round( this.length * 1.5 );
             this.resize( Math.max( 256, size ) );
         }
 
-    },
+    }
 
-    copyFrom: function( other, thisOffset, otherOffset, length ){
+    copyFrom( other, thisOffset, otherOffset, length ){
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+        for( let i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this.__fields[ i ][ 0 ];
-            var itemSize = this.__fields[ i ][ 1 ];
-            var thisField = this[ name ];
-            var otherField = other[ name ];
+            const name = this.__fields[ i ][ 0 ];
+            const itemSize = this.__fields[ i ][ 1 ];
+            const thisField = this[ name ];
+            const otherField = other[ name ];
 
-            for( var j = 0; j < length; ++j ){
-                var thisIndex = itemSize * ( thisOffset + j );
-                var otherIndex = itemSize * ( otherOffset + j );
-                for( var k = 0; k < itemSize; ++k ){
+            for( let j = 0; j < length; ++j ){
+                const thisIndex = itemSize * ( thisOffset + j );
+                const otherIndex = itemSize * ( otherOffset + j );
+                for( let k = 0; k < itemSize; ++k ){
                     thisField[ thisIndex + k ] = otherField[ otherIndex + k ];
                 }
             }
 
         }
 
-    },
+    }
 
-    copyWithin: function( offsetTarget, offsetSource, length ){
+    copyWithin( offsetTarget, offsetSource, length ){
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+        for( let i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this.__fields[ i ][ 0 ];
-            var itemSize = this.__fields[ i ][ 1 ];
-            var thisField = this[ name ];
+            const name = this.__fields[ i ][ 0 ];
+            const itemSize = this.__fields[ i ][ 1 ];
+            const thisField = this[ name ];
 
-            for( var j = 0; j < length; ++j ){
-                var targetIndex = itemSize * ( offsetTarget + j );
-                var sourceIndex = itemSize * ( offsetSource + j );
-                for( var k = 0; k < itemSize; ++k ){
+            for( let j = 0; j < length; ++j ){
+                const targetIndex = itemSize * ( offsetTarget + j );
+                const sourceIndex = itemSize * ( offsetSource + j );
+                for( let k = 0; k < itemSize; ++k ){
                     thisField[ targetIndex + k ] = thisField[ sourceIndex + k ];
                 }
             }
 
         }
 
-    },
+    }
 
-    sort: function( compareFunction ){
+    sort( compareFunction ){
 
         Log.time( "Store.sort" );
 
-        var thisStore = this;
-        var tmpStore = new this.constructor( 1 );
+        const thisStore = this;
+        const tmpStore = new this.constructor( 1 );
 
         function swap( index1, index2 ){
             if( index1 === index2 ) return;
@@ -145,9 +141,9 @@ Store.prototype = {
 
         function quicksort( left, right ){
             if( left < right ){
-                var pivot = Math.floor( ( left + right ) / 2 );
-                var left_new = left;
-                var right_new = right;
+                let pivot = Math.floor( ( left + right ) / 2 );
+                let left_new = left;
+                let right_new = right;
                 do{
                     while( compareFunction( left_new, pivot ) < 0 ){
                         left_new += 1;
@@ -175,29 +171,29 @@ Store.prototype = {
 
         Log.timeEnd( "Store.sort" );
 
-    },
+    }
 
-    clear: function(){
+    clear(){
 
         this.count = 0;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         delete this.length;
         delete this.count;
 
-        for( var i = 0, il = this.__fields.length; i < il; ++i ){
+        for( let i = 0, il = this.__fields.length; i < il; ++i ){
 
-            var name = this.__fields[ i ][ 0 ];
+            const name = this.__fields[ i ][ 0 ];
             delete this[ name ];
 
         }
 
     }
 
-};
+}
 
 
 export default Store;

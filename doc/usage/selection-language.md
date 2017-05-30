@@ -13,34 +13,37 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 
 ### Keywords
 
-*   *all*, *****
-*   *sidechain*
-*   *sidechainAttached*
-*   *backbone*
-*   *protein*
-*   *nucleic*
-*   *rna*
-*   *dna*
-*   *hetero*
-*   *ion*
-*   *saccharide*/*sugar*
-*   *polymer*
-*   *water*
-*   *hydrogen*
-*   *helix*
-*   *sheet*
-*   *turn* (not helix and not sheet)
-*   *small* (Gly, Ala)
-*   *nucleophilic* (Ser, Thr, Cys)
-*   *hydrophobic* (Val, Leu, Ile, Met, Pro)
-*   *aromatic* (Phe, Tyr, Trp)
-*   *amid* (Asn, Gln)
-*   *acidic* (Asp, Glu)
-*   *basic* (His, Lys, Arg)
-*   *charged* (Asp, Glu, His, Lys, Arg)
-*   *polar* (Asp, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
-*   *nonpolar* (Ala, Cys, Gly, Ile, Leu, Met, Phe, Pro, Val, Trp)
-
+* *all*, *****
+* *sidechain*
+* *sidechainAttached*
+* *backbone*
+* *protein*
+* *nucleic*
+* *rna*
+* *dna*
+* *hetero*
+* *ion*
+* *saccharide*/*sugar*
+* *polymer*
+* *water*
+* *hydrogen*
+* *helix*
+* *sheet*
+* *turn* (not helix and not sheet)
+* *small* (Gly, Ala, Ser)
+* *nucleophilic* (Ser, Thr, Cys)
+* *hydrophobic* (Ala, Val, Leu, Ile, Met, Pro, Phe, Trp)
+* *aromatic* (Phe, Tyr, Trp, His)
+* *amid* (Asn, Gln)
+* *acidic* (Asp, Glu)
+* *basic* (His, Lys, Arg)
+* *charged* (Asp, Glu, His, Lys, Arg)
+* *polar* (Asp, Cys, Gly, Glu, His, Lys, Arg, Asn, Gln, Ser, Thr, Tyr)
+* *nonpolar* (Ala, Ile, Leu, Met, Phe, Pro, Val, Trp)
+* *cyclic* (His, Phe, Pro, Trp, Tyr)
+* *aliphatic* (Ala, Gly, Ile, Leu, Val)
+* *bonded* (all atoms with at least one bond)
+* *ring* (all atoms within rings)
 
 ### Expressions
 
@@ -51,6 +54,7 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 *   model: **/0**, **/1**, ...
 *   residue name: *ALA*, *GLU*, *SOL*, *DMPC*, ...
 *   numeric residue name: *[032]*, *[1AB]*, ...
+*   list of residue names: *[ALA,GLU,MET]*, *[ARG,LYS]*, ...
 *   element name: **_H**, **_C**, **_O**, ...
 *   alternate location: **%A**, **%B**, ... or **%** for non-alternate location atoms
 *   insertion code: **^A**, **^B**, ... or **^** for residues with no insertion code
