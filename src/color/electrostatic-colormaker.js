@@ -115,8 +115,9 @@ const partialCharges = {
     }
 };
 
-// Constant for now (might want to make parameters?)
 const maxRadius = 12.0;
+const nHBondDistance = 1.04;
+const nHCharge = 0.25;
 
 /*
  * Populates position vector with location of implicit or explicit H
@@ -153,15 +154,15 @@ function backboneNHPosition( ap, position ){
     if( ca && c ){
 
         position.normalize();
-        position.multiplyScalar( 1.04 ); // N-H dist
+        position.multiplyScalar( nHBondDistance );
         position.add( ap );
         return position
 
     }
 }
 
-/* Takes the Vector3 positions and builds an object with
- * x,y,z and count attributes
+/* Takes an array of Vector3 objects and
+ * converts to an object that looks like an AtomStore
  */
 function buildStoreLike( positions ){
     const n = positions.length;
@@ -179,12 +180,16 @@ function buildStoreLike( positions ){
     return { x: x, y: y, z: z, count: n }
 }
 
+/*
+ * Color a surface by electrostatic charge. This is a highly
+ * approximate calculation!
+ */
 class ElectrostaticColormaker extends Colormaker {
     constructor( params ) {
         super( params )
 
         if( !params.scale ){
-            this.scale = "RdYlGn";
+            this.scale = "rwb";
         }
         if( !params.domain ) {
             this.domain = [ -0.5, 0, 0.5 ];
@@ -192,7 +197,6 @@ class ElectrostaticColormaker extends Colormaker {
 
         const scale = this.getScale();
 
-        // Create a spatial hash of coordinates for this structure
         function chargeForAtom( a ){
             if( !a.isProtein() ) { return 0.0; }
             return ( ( partialCharges[ a.resname ] &&
@@ -200,26 +204,29 @@ class ElectrostaticColormaker extends Colormaker {
                     partialCharges[ "backbone" ][ a.atomname ] || 0.0 );
         }
 
-        const structure = this.structure;
-        const charges = new Float32Array( structure.atomCount );
-
-        const hPositions = []; // For now store as array of Vector3
+        const structure = this.structure,
+              charges = new Float32Array( structure.atomCount ),
+              hPositions = [],
+              hCharges = [];
 
         structure.eachAtom( ( ap ) => {
-            charges[ ap.index ] = chargeForAtom( ap );
+            charges[ ap.index ] = chargeForAtom( ap ) * ap.occupancy;
             if( ap.atomname === "N" ){
-              const hPos = backboneNHPosition( ap );
-              if( hPos !== undefined ){ hPositions.push( hPos ); }
+                const hPos = backboneNHPosition( ap );
+                if( hPos !== undefined ){
+                    hPositions.push( hPos );
+                    hCharges.push( nHCharge * ap.occupancy );
+                }
             }
         } );
 
         const bbox = this.structure.getBoundingBox();
-        bbox.expandByScalar( 1.04 ); // Worst case
+        bbox.expandByScalar( nHBondDistance ); // Worst case
 
         // SpatialHash requires x,y,z and count
         const hStore = buildStoreLike( hPositions );
-        const hHash = new SpatialHash( hStore, bbox );
-        const hash = new SpatialHash( this.structure.atomStore, bbox );
+        const hHash = new SpatialHash( hStore, bbox ),
+              hash = new SpatialHash( this.structure.atomStore, bbox );
 
         const ap = this.atomProxy;
         const delta = new Vector3();
@@ -239,7 +246,7 @@ class ElectrostaticColormaker extends Colormaker {
                     delta.z = v.z - ap.z;
                     const r2 = delta.lengthSq();
                     if( r2 < maxRadius2 ) {
-                        p += charge / delta.lengthSq();
+                        p += charge / r2;
                     }
                 }
             }
@@ -252,7 +259,7 @@ class ElectrostaticColormaker extends Colormaker {
                 delta.z = v.z - hStore.z[ neighbour ];
                 const r2 = delta.lengthSq();
                 if( r2 < maxRadius2 ) {
-                    p += 0.25 / delta.lengthSq();
+                    p += hCharges[ neighbour ] / r2;
                 }
 
             }
