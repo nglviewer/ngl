@@ -47,6 +47,7 @@ import "./color/chainid-colormaker.js";
 import "./color/chainindex-colormaker.js";
 import "./color/chainname-colormaker.js";
 import "./color/densityfit-colormaker.js";
+import "./color/electrostatic-colormaker.js";
 import "./color/element-colormaker.js";
 import "./color/entityindex-colormaker.js";
 import "./color/entitytype-colormaker.js";
