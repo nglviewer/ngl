@@ -1,9 +1,18 @@
+/**
+ * @file Atomindex Colormaker
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
+ * @private
+ */
+
+
 import { Vector3 } from "../../lib/three.es6.js";
 
-import Colormaker from "./colormaker.js";
 import { ColormakerRegistry } from "../globals.js";
+import Colormaker from "./colormaker.js";
 import SpatialHash from "../geometry/spatial-hash.js";
 
+
+// from CHARMM
 const partialCharges = {
     "ARG": {
         "CD": 0.1,
@@ -119,16 +128,21 @@ const maxRadius = 12.0;
 const nHBondDistance = 1.04;
 const nHCharge = 0.25;
 
-/*
+
+/**
  * Populates position vector with location of implicit or explicit H
  * Returns position or undefined if not able to locate H
+ *
+ * @param {AtomProxy} ap - the nitrogen atom
+ * @param {Vector3} [position] - optional target
+ * @return {Vectors|undefined} the hydrogen atom position
  */
 function backboneNHPosition( ap, position ){
 
     position = position || new Vector3();
 
     let h = false, ca = false, c = false;
-    position.set( 2* ap.x, 2 * ap.y, 2 * ap.z );
+    position.set( 2 * ap.x, 2 * ap.y, 2 * ap.z );
 
     ap.eachBondedAtom( function( a2 ){
         // Any time we detect H, reset position and skip
@@ -161,8 +175,13 @@ function backboneNHPosition( ap, position ){
     }
 }
 
-/* Takes an array of Vector3 objects and
+
+/**
+ * Takes an array of Vector3 objects and
  * converts to an object that looks like an AtomStore
+ *
+ * @param {Vector3[]} positions - array of positions
+ * @return {Object} AtomStore-like object
  */
 function buildStoreLike( positions ){
     const n = positions.length;
@@ -180,11 +199,22 @@ function buildStoreLike( positions ){
     return { x: x, y: y, z: z, count: n }
 }
 
-/*
- * Color a surface by electrostatic charge. This is a highly
- * approximate calculation!
+
+/**
+ * Color a surface by electrostatic charge. This is a highly approximate
+ * calculation! The partial charges are CHARMM with hydrogens added to heavy
+ * atoms and hydrogen positions generated for amides.
+ *
+ * __Name:__ _electrostatic_
+ *
+ * @example
+ * stage.loadFile( "rcsb://3dqb" ).then( function( o ){
+ *     o.addRepresentation( "surface", { colorScheme: "electrostatic" } );
+ *     o.autoView();
+ * } );
  */
 class ElectrostaticColormaker extends Colormaker {
+
     constructor( params ) {
         super( params )
 
@@ -199,9 +229,11 @@ class ElectrostaticColormaker extends Colormaker {
 
         function chargeForAtom( a ){
             if( !a.isProtein() ) { return 0.0; }
-            return ( ( partialCharges[ a.resname ] &&
+            return (
+                ( partialCharges[ a.resname ] &&
                     partialCharges[ a.resname ][ a.atomname ] ) ||
-                    partialCharges[ "backbone" ][ a.atomname ] || 0.0 );
+                partialCharges[ "backbone" ][ a.atomname ] || 0.0
+            );
         }
 
         const structure = this.structure,
@@ -209,7 +241,7 @@ class ElectrostaticColormaker extends Colormaker {
               hPositions = [],
               hCharges = [];
 
-        structure.eachAtom( ( ap ) => {
+        structure.eachAtom( ap => {
             charges[ ap.index ] = chargeForAtom( ap ) * ap.occupancy;
             if( ap.atomname === "N" ){
                 const hPos = backboneNHPosition( ap );
@@ -267,8 +299,10 @@ class ElectrostaticColormaker extends Colormaker {
         }
 
     }
+
 }
 
 ColormakerRegistry.add( "electrostatic", ElectrostaticColormaker );
+
 
 export default ElectrostaticColormaker;

@@ -19,6 +19,7 @@ stage.loadFile( "rcsb://1crn" ).then( function( o ){
 - [chainindex](../class/src/color/chainindex-colormaker.js~ChainindexColormaker.html)
 - [chainname](../class/src/color/chainname-colormaker.js~ChainnameColormaker.html)
 - [densityfit](../class/src/color/densityfit-colormaker.js~DensityfitColormaker.html)
+- [electrostatic](../class/src/color/electrostatic-colormaker.js~ElectrostaticColormaker.html)
 - [element](../class/src/color/element-colormaker.js~ElementColormaker.html)
 - [entityindex](../class/src/color/entityindex-colormaker.js~EntityindexColormaker.html)
 - [entitytype](../class/src/color/entitytype-colormaker.js~EntitytypeColormaker.html)
