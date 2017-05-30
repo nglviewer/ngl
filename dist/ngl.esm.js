@@ -56477,7 +56477,6 @@ function WorkerPool( name, maxCount ){
 
             if( worker.pending === 0 ){
 
-                minPending = worker.pending;
                 nextWorker = worker;
                 break;
 
@@ -57368,9 +57367,7 @@ function MarchingCubes( field, nx, ny, nz, atomindex ){
             zEnd2 = zEnd + 2;
 
             for ( z = zBeg2; z < zEnd2; ++z ) {
-                z_offset = zd * z;
                 for ( y = yBeg2; y < yEnd2; ++y ) {
-                    y_offset = z_offset + yd * y;
                     for ( x = xBeg2; x < xEnd2; ++x ) {
                         if( contour ) {
                             q3 = index( x, y, z ) * 3;
@@ -70783,7 +70780,10 @@ Object.defineProperties( Shape$1.prototype, prototypeAccessors$19 );
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} [params] - representation parameters
  */
-var Representation = function Representation( object, viewer/*, params*/ ){
+var Representation = function Representation( object, viewer, params ){
+
+    // eslint-disable-next-line no-unused-vars
+    var p = params || {};
 
     this.type = "";
 
@@ -76042,9 +76042,9 @@ Alignment.prototype.trace = function trace (){
 
     var i = this.n;
     var j = this.m;
-    var mat = "S";
+    var mat;
 
-    if( this.S[i][j] >= this.V[i][j] && this.S[i][j] >= this.V[i][j] ){
+    if( this.S[i][j] >= this.V[i][j] ){
         mat = "S";
         this.score = this.S[i][j];
     }else if( this.V[i][j] >= this.H[i][j] ){
@@ -76626,6 +76626,309 @@ var DensityfitColormaker = (function (Colormaker$$1) {
 
 
 ColormakerRegistry.add( "densityfit", DensityfitColormaker );
+
+/**
+ * @file Atomindex Colormaker
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
+ * @private
+ */
+
+
+// from CHARMM
+var partialCharges = {
+    "ARG": {
+        "CD": 0.1,
+        "CZ": 0.5,
+        "NE": -0.1
+    },
+    "ASN": {
+        "CG": 0.55,
+        "OD1": -0.55
+    },
+    "ASP": {
+        "CB": -0.16,
+        "CG": 0.36,
+        "OD1": -0.6,
+        "OD2": -0.6
+    },
+    "CYS": {
+        "CB": 0.19,
+        "SG": -0.19
+    },
+    "GLN": {
+        "CD": 0.55,
+        "OE1": -0.55
+    },
+    "GLU": {
+        "CD": 0.36,
+        "CG": -0.16,
+        "OE1": -0.6,
+        "OE2": -0.6,
+    },
+    "HIS": {
+        "CB": 0.1,
+        "CD2": 0.2,
+        "CE1": 0.45,
+        "CG": 0.15,
+        "ND1": 0.05,
+        "NE2": 0.05
+    },
+    "LYS": {
+        "CE": 0.25,
+        "NZ": 0.75
+    },
+    "MET": {
+        "CE": 0.06,
+        "CG": 0.06,
+        "SD": -0.12
+    },
+    "PTR": {
+        "C": 0.55,
+        "CA": 0.1,
+        "CZ": 0.25,
+        "N": -0.35,
+        "O": -0.55,
+        "O1P": -0.85,
+        "O2P": -0.85,
+        "O3P": -0.85,
+        "OG1": -1.1,
+        "P": 1.4
+    },
+    "SEP": {
+        "C": 0.55,
+        "CA": 0.1,
+        "CB": 0.25,
+        "N": -0.35,
+        "O": -0.55,
+        "O1P": -0.85,
+        "O2P": -0.85,
+        "O3P": -0.85,
+        "OG1": -1.1,
+        "P": 1.4
+    },
+    "SER": {
+        "CB": 0.25,
+        "OG": -0.25
+    },
+    "THR": {
+        "CB": 0.25,
+        "OG1": -0.25
+    },
+    "TPO": {
+        "C": 0.55,
+        "CA": 0.1,
+        "CB": 0.25,
+        "N": -0.35,
+        "O": -0.55,
+        "OG1": -1.1,
+        "O1P": -0.85,
+        "O2P": -0.85,
+        "O3P": -0.85,
+        "P": 1.4
+    },
+    "TRP": {
+        "CD1": 0.06,
+        "CD2": 0.1,
+        "CE2": -0.04,
+        "CE3": -0.03,
+        "CG": -0.03,
+        "NE1": -0.06
+    },
+    "TYR": {
+        "CZ": 0.25,
+        "OH": -0.25
+    },
+    "backbone": {
+        "C": 0.55,
+        "O": -0.55,
+        "N": -0.35,
+        "CA": 0.1
+    }
+};
+
+var maxRadius = 12.0;
+var nHBondDistance = 1.04;
+var nHCharge = 0.25;
+
+
+/**
+ * Populates position vector with location of implicit or explicit H
+ * Returns position or undefined if not able to locate H
+ *
+ * @param {AtomProxy} ap - the nitrogen atom
+ * @param {Vector3} [position] - optional target
+ * @return {Vectors|undefined} the hydrogen atom position
+ */
+function backboneNHPosition( ap, position ){
+
+    position = position || new Vector3();
+
+    var h = false, ca = false, c = false;
+    position.set( 2 * ap.x, 2 * ap.y, 2 * ap.z );
+
+    ap.eachBondedAtom( function( a2 ){
+        // Any time we detect H, reset position and skip
+        // future tests
+        if( h ) { return; }
+        if( a2.atomname === "H" ){
+            position.set( a2 );
+            h = true;
+            return;
+        }
+        if( !ca && a2.atomname === "CA" ){
+            position.sub( a2 );
+            ca = true;
+        }
+        else if( !c && a2.atomname === "C" ){
+            c = true;
+            position.sub( a2 );
+        }
+    } );
+
+    if( h ){ return position; }
+
+    if( ca && c ){
+
+        position.normalize();
+        position.multiplyScalar( nHBondDistance );
+        position.add( ap );
+        return position
+
+    }
+}
+
+
+/**
+ * Takes an array of Vector3 objects and
+ * converts to an object that looks like an AtomStore
+ *
+ * @param {Vector3[]} positions - array of positions
+ * @return {Object} AtomStore-like object
+ */
+function buildStoreLike( positions ){
+    var n = positions.length;
+    var x = new Float32Array( n );
+    var y = new Float32Array( n );
+    var z = new Float32Array( n );
+
+    for( var i = 0; i < positions.length; i++ ){
+        var v = positions [ i ];
+        x[ i ] = v.x;
+        y[ i ] = v.y;
+        z[ i ] = v.z;
+    }
+
+    return { x: x, y: y, z: z, count: n }
+}
+
+
+/**
+ * Color a surface by electrostatic charge. This is a highly approximate
+ * calculation! The partial charges are CHARMM with hydrogens added to heavy
+ * atoms and hydrogen positions generated for amides.
+ *
+ * __Name:__ _electrostatic_
+ *
+ * @example
+ * stage.loadFile( "rcsb://3dqb" ).then( function( o ){
+ *     o.addRepresentation( "surface", { colorScheme: "electrostatic" } );
+ *     o.autoView();
+ * } );
+ */
+var ElectrostaticColormaker = (function (Colormaker$$1) {
+    function ElectrostaticColormaker( params ) {
+        Colormaker$$1.call( this, params );
+
+        if( !params.scale ){
+            this.scale = "rwb";
+        }
+        if( !params.domain ) {
+            this.domain = [ -0.5, 0, 0.5 ];
+        }
+
+        var scale = this.getScale();
+
+        function chargeForAtom( a ){
+            if( !a.isProtein() ) { return 0.0; }
+            return (
+                ( partialCharges[ a.resname ] &&
+                    partialCharges[ a.resname ][ a.atomname ] ) ||
+                partialCharges[ "backbone" ][ a.atomname ] || 0.0
+            );
+        }
+
+        var structure = this.structure,
+              charges = new Float32Array( structure.atomCount ),
+              hPositions = [],
+              hCharges = [];
+
+        structure.eachAtom( function (ap) {
+            charges[ ap.index ] = chargeForAtom( ap ) * ap.occupancy;
+            if( ap.atomname === "N" ){
+                var hPos = backboneNHPosition( ap );
+                if( hPos !== undefined ){
+                    hPositions.push( hPos );
+                    hCharges.push( nHCharge * ap.occupancy );
+                }
+            }
+        } );
+
+        var bbox = this.structure.getBoundingBox();
+        bbox.expandByScalar( nHBondDistance ); // Worst case
+
+        // SpatialHash requires x,y,z and count
+        var hStore = buildStoreLike( hPositions );
+        var hHash = new SpatialHash( hStore, bbox ),
+              hash = new SpatialHash( this.structure.atomStore, bbox );
+
+        var ap = this.atomProxy;
+        var delta = new Vector3();
+        var maxRadius2 = maxRadius * maxRadius;
+
+        this.positionColor = function( v ){
+            var p = 0.0;
+            var neighbours = hash.within( v.x, v.y, v.z, maxRadius );
+
+            for( var i = 0; i < neighbours.length; i++ ){
+                var neighbour = neighbours[ i ],
+                      charge = charges[ neighbour ];
+                if( charge !== 0.0 ) {
+                    ap.index = neighbour;
+                    delta.x = v.x - ap.x;
+                    delta.y = v.y - ap.y;
+                    delta.z = v.z - ap.z;
+                    var r2 = delta.lengthSq();
+                    if( r2 < maxRadius2 ) {
+                        p += charge / r2;
+                    }
+                }
+            }
+
+            var hNeighbours = hHash.within( v.x, v.y, v.z, maxRadius );
+            for( var i$1 = 0; i$1 < hNeighbours.length; i$1++ ){
+                var neighbour$1 = hNeighbours[ i$1 ];
+                delta.x = v.x - hStore.x[ neighbour$1 ];
+                delta.y = v.y - hStore.y[ neighbour$1 ];
+                delta.z = v.z - hStore.z[ neighbour$1 ];
+                var r2$1 = delta.lengthSq();
+                if( r2$1 < maxRadius2 ) {
+                    p += hCharges[ neighbour$1 ] / r2$1;
+                }
+
+            }
+            return scale( p );
+        };
+
+    }
+
+    if ( Colormaker$$1 ) ElectrostaticColormaker.__proto__ = Colormaker$$1;
+    ElectrostaticColormaker.prototype = Object.create( Colormaker$$1 && Colormaker$$1.prototype );
+    ElectrostaticColormaker.prototype.constructor = ElectrostaticColormaker;
+
+    return ElectrostaticColormaker;
+}(Colormaker));
+
+ColormakerRegistry.add( "electrostatic", ElectrostaticColormaker );
 
 /**
  * @file Element Colormaker
@@ -79876,7 +80179,8 @@ function Interpolator( m, tension ){
 
     this.getColor = function( iterator, colFn, col, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -79914,7 +80218,8 @@ function Interpolator( m, tension ){
 
     this.getPicking = function( iterator, pickFn, pick, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -79950,7 +80255,8 @@ function Interpolator( m, tension ){
 
     this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -82181,8 +82487,7 @@ var HyperballRepresentation = (function (LicoriceRepresentation$$1) {
                 shrink: this.shrink,
                 radialSegments: this.radialSegments,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {
@@ -82757,7 +83062,7 @@ function Grid( length, width, height, dataCtor, elemSize ){
         if ( offset === undefined ) { offset = 0; }
 
         for( j = 0; j < elemSize; ++j ){
-            array[ j ] = data[ i + j ];
+            array[ offset + j ] = data[ i + j ];
         }
 
     };
@@ -86872,8 +87177,6 @@ var PdbParser = (function (StructureParser$$1) {
 
         function _parseChunkOfLines( _i, _n, lines ){
 
-            var j, jl;
-
             for( var i = _i; i < _n; ++i ){
 
                 line = lines[ i ];
@@ -86912,7 +87215,7 @@ var PdbParser = (function (StructureParser$$1) {
 
                     if( firstModelOnly && modelIdx > 0 ) { continue; }
 
-                    var x, y, z, ls, dd;
+                    var x = (void 0), y = (void 0), z = (void 0), ls = (void 0), dd = (void 0);
 
                     if( isPqr ){
 
@@ -86939,7 +87242,7 @@ var PdbParser = (function (StructureParser$$1) {
 
                     if( asTrajectory ){
 
-                        j = currentCoord * 3;
+                        var j = currentCoord * 3;
 
                         currentFrame[ j + 0 ] = x;
                         currentFrame[ j + 1 ] = y;
@@ -86951,7 +87254,7 @@ var PdbParser = (function (StructureParser$$1) {
 
                     }
 
-                    var element;
+                    var element = (void 0);
 
                     if( isPqr ){
 
@@ -87037,47 +87340,47 @@ var PdbParser = (function (StructureParser$$1) {
 
                 }else if( recordName === 'CONECT' ){
 
-                    var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
+                    var fromIdx = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
                     var pos = [ 11, 16, 21, 26 ];
                     var bondIndex = {};
 
-                    if( from === undefined ){
+                    if( fromIdx === undefined ){
                         // Log.log( "missing CONNECT serial" );
                         continue;
                     }
 
-                    for( j = 0; j < 4; ++j ){
+                    for( var j$1 = 0; j$1 < 4; ++j$1 ){
 
-                        var to = parseInt( line.substr( pos[ j ], 5 ) );
-                        if( Number.isNaN( to ) ) { continue; }
-                        to = serialDict[ to ];
-                        if( to === undefined ){
+                        var toIdx = parseInt( line.substr( pos[ j$1 ], 5 ) );
+                        if( Number.isNaN( toIdx ) ) { continue; }
+                        toIdx = serialDict[ toIdx ];
+                        if( toIdx === undefined ){
                             // Log.log( "missing CONNECT serial" );
                             continue;
-                        }/*else if( to < from ){
+                        }/*else if( toIdx < fromIdx ){
                             // likely a duplicate in standard PDB format
                             // but not necessarily, so better remove duplicates
                             // in a pass after parsing (and auto bonding)
                             continue;
                         }*/
 
-                        if( from < to ){
-                            ap1.index = from;
-                            ap2.index = to;
+                        if( fromIdx < toIdx ){
+                            ap1.index = fromIdx;
+                            ap2.index = toIdx;
                         }else{
-                            ap1.index = to;
-                            ap2.index = from;
+                            ap1.index = toIdx;
+                            ap2.index = fromIdx;
                         }
 
-                        // interpret records where a 'to' atom is given multiple times
+                        // interpret records where a 'toIdx' atom is given multiple times
                         // as double/triple bonds, e.g. CONECT 1529 1528 1528 is a double bond
-                        if( bondIndex[ to ] !== undefined ){
-                            s.bondStore.bondOrder[ bondIndex[ to ] ] += 1;
+                        if( bondIndex[ toIdx ] !== undefined ){
+                            s.bondStore.bondOrder[ bondIndex[ toIdx ] ] += 1;
                         }else{
                             var hash = ap1.index + "|" + ap2.index;
                             if( bondDict[ hash ] === undefined ){
                                 bondDict[ hash ] = true;
-                                bondIndex[ to ] = s.bondStore.count;
+                                bondIndex[ toIdx ] = s.bondStore.count;
                                 s.bondStore.addBond( ap1, ap2, 1 );  // start/assume with single bond
                             }
                         }
@@ -87122,7 +87425,7 @@ var PdbParser = (function (StructureParser$$1) {
                     var comp = line.substr( 10, 70 ).trim();
                     var keyEnd = comp.indexOf( ":" );
                     var key = comp.substring( 0, keyEnd );
-                    var value;
+                    var value = (void 0);
 
                     if( entityKeyList.includes( key ) ){
                         currentEntityKey = key;
@@ -87199,8 +87502,8 @@ var PdbParser = (function (StructureParser$$1) {
                         }
 
                         var chainList = line.substr( 41, 30 ).split( "," );
-                        for( j, jl = chainList.length; j < jl; ++j ){
-                            var c = chainList[ j ].trim();
+                        for( var j$2 = 0, jl = chainList.length; j$2 < jl; ++j$2 ){
+                            var c = chainList[ j$2 ].trim();
                             if( c ) { currentPart.chainList.push( c ); }
                         }
 
@@ -88302,16 +88605,13 @@ var CifParser = (function (StructureParser$$1) {
 
                         // Log.log( "LOOP VALUE", line );
 
-                        var nn, ls;
-
                         if( !line ){
 
                             continue;
 
                         }else if( currentCategory==="atom_site" ){
 
-                            nn = pointerNames.length;
-                            ls = line.split( reWhitespace );
+                            var ls = line.split( reWhitespace );
 
                             if( first ){
 
@@ -88447,8 +88747,8 @@ var CifParser = (function (StructureParser$$1) {
 
                         }else{
 
-                            ls = line.match( reQuotedWhitespace );
-                            nn = ls.length;
+                            var ls$1 = line.match( reQuotedWhitespace );
+                            var nn = ls$1.length;
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
@@ -88457,7 +88757,7 @@ var CifParser = (function (StructureParser$$1) {
                             }*/
 
                             for( var j = 0; j < nn; ++j ){
-                                loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
+                                loopPointers[ currentLoopIndex + j ].push( ls$1[ j ] );
                             }
 
                             currentLoopIndex += nn;
@@ -88752,11 +89052,6 @@ var GroParser = (function (StructureParser$$1) {
             _parseChunkOfLines( 0, lines.length, lines );
         } );
 
-        s.unitcell = new Unitcell(
-            boxes[ 0 ][ 0 ], boxes[ 0 ][ 4 ], boxes[ 0 ][ 8 ],
-            90, 90, 90, "P 1"
-        );
-
         sb.finalize();
         s.finalizeAtoms();
         calculateChainnames( s );
@@ -88764,7 +89059,6 @@ var GroParser = (function (StructureParser$$1) {
         s.finalizeBonds();
 
         calculateSecondaryStructure( s );
-        buildUnitcellAssembly( s );
 
         if( Debug ) { Log.timeEnd( "GroParser._parse " + this.name ); }
 
@@ -91634,12 +91928,10 @@ var MrcParser = (function (VolumeParser$$1) {
 
             // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
             // if the file was converted by mapmode2to0 - scale the data
-            var b1 = 1;
-            var b0 = 0;
             if( intView[ 39 ] === -128 && intView[ 40 ] === 127 ){
                 // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
-                b1 = ( header.DMAX - header.DMIN ) / 255.0;
-                b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
+                var b1 = ( header.DMAX - header.DMIN ) / 255.0;
+                var b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
                 for( var j = 0, jl = data.length; j < jl; ++j ){
                     data[ j ] = b1 * data[ j ] + b0;
                 }
@@ -96767,7 +97059,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.1";
+var version$1 = "0.10.2-0";
 
 /**
  * @file Version
