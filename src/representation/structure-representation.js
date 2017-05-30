@@ -129,7 +129,9 @@ class StructureRepresentation extends Representation{
 
         super.init( p );
 
-        this.selection.signals.stringChanged.add( this.build, this );
+        this.selection.signals.stringChanged.add( function( /*sele*/ ){
+            this.build();
+        }, this );
 
         this.build();
 
