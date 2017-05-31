@@ -37,7 +37,7 @@ class VolumeColormaker extends Colormaker{
                 vec.copy( coords );
                 vec.applyMatrix4( inverseMatrix );
 
-                // Trilinear interpolation test
+                // position of grid cell
                 var x0 = Math.floor( vec.x );
                 var y0 = Math.floor( vec.y );
                 var z0 = Math.floor( vec.z );
@@ -62,24 +62,25 @@ class VolumeColormaker extends Colormaker{
                 var vyz = data[ iyz ];
                 var v1yz = data[ i1yz ];
 
+                // Position of point in fraction of grid
                 var xd = vec.x - x0;
                 var yd = vec.y - y0;
                 var zd = vec.z - z0;
 
+                // 1st Dimension
                 var c00 = lerp( v, v1, xd );
                 var c01 = lerp( vz, v1z, xd );
                 var c10 = lerp( vy, v1y, xd );
                 var c11 = lerp( vyz, v1yz, xd );
 
+                // 2nd Dimension
                 var c0 = lerp( c00, c10, yd );
                 var c1 = lerp( c01, c11, yd );
+
+                // 3rd Dimension
                 var c = lerp( c0, c1, zd );
 
                 return valueScale( c );
-
-                //vec.round();
-                //var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
-                //return valueScale( data[ index ] );
 
             };
 
