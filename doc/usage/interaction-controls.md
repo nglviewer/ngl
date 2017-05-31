@@ -72,6 +72,8 @@ stage.setSpin( [ 0, 1, 0 ], 0.01 );
 
 Whenever the user clicks or hovers over the viewer canvas the appropriate [StageSignal](../typedef/index.html#static-typedef-StageSignals) is dispatched from [Stage.signals](../class/src/stage/stage.js~Stage.html#instance-member-signals). Any function added to those those signals is then called with a [PickingProxy](../class/src/controls/picking-proxy.js~PickingProxy.html) instance that provides access to what was picked.
 
+Note that the [MouseControls](../class/src/controls/mouse-controls.js~MouseControls.html) class (see [below](#controls)) provides more convenient means to bind picking events to custom actions.
+
 
 ### Clicked
 
@@ -126,7 +128,18 @@ stage.signals.hovered.add( function( pickingProxy ){
 
 ## Mouse
 
-For convenience, there is a [MouseObserver](../class/src/stage/mouse-observer.js~MouseObserver.html) class which is available as a property of the stage: [Stage.mouseObserver](../class/src/stage/stage.js~Stage.html#instance-member-mouseObserver) and dispatches [MouseSignals](../typedef/index.html#static-typedef-MouseSignals) originating from the viewer canvas.
+### Controls
+
+For convenience, there is a [MouseControls](../class/src/controls/mouse-controls.js~MouseControls.html) class which is available as a property of the stage: [Stage.mouseControls](../class/src/stage/stage.js~Stage.html#instance-member-mouseControls) and can be used to bind actions (any user-defined function or predefined methods from the [MouseActions](../class/src/controls/mouse-actions.js~MouseActions.html) class) to mouse events with keyboard modifiers.
+
+```
+stage.mouseControls.add( "drag-left+right", NGL.MouseActions.zoomDrag );
+```
+
+
+### Observer
+
+For low-level control, there is a [MouseObserver](../class/src/stage/mouse-observer.js~MouseObserver.html) class which is available as a property of the stage: [Stage.mouseObserver](../class/src/stage/stage.js~Stage.html#instance-member-mouseObserver) and dispatches [MouseSignals](../typedef/index.html#static-typedef-MouseSignals) originating from the viewer canvas.
 
 ```
 stage.mouseObserver.signals.scroll.add( function( delta ){ ... } );

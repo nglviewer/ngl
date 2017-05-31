@@ -46,7 +46,12 @@ class Animation{
     tick( stats ){
 
         this.elapsedTime = stats.currentTime - this.startTime;
-        this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+
+        if( this.duration === 0 ){
+            this.alpha = 1;
+        }else{
+            this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+        }
 
         this._tick( stats );
 

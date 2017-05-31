@@ -22,8 +22,9 @@
 <body>
     <script src="../build/js/ngl.dev.js"></script>
     <script>
+        var stage;
         document.addEventListener( "DOMContentLoaded", function(){
-            var stage = new NGL.Stage( "viewport" );
+            stage = new NGL.Stage( "viewport" );
             stage.viewer.container.addEventListener( "dblclick", function(){
                 stage.toggleFullscreen();
             } );

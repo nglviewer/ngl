@@ -881,16 +881,13 @@ class CifParser extends StructureParser{
 
                         // Log.log( "LOOP VALUE", line );
 
-                        var nn, ls;
-
                         if( !line ){
 
                             continue;
 
                         }else if( currentCategory==="atom_site" ){
 
-                            nn = pointerNames.length;
-                            ls = line.split( reWhitespace );
+                            const ls = line.split( reWhitespace );
 
                             if( first ){
 
@@ -926,7 +923,7 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+                            const _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
 
                             if( modelNum !== _modelNum ){
 
@@ -952,16 +949,16 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
+                            const atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                             if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                            var x = parseFloat( ls[ Cartn_x ] );
-                            var y = parseFloat( ls[ Cartn_y ] );
-                            var z = parseFloat( ls[ Cartn_z ] );
+                            const x = parseFloat( ls[ Cartn_x ] );
+                            const y = parseFloat( ls[ Cartn_y ] );
+                            const z = parseFloat( ls[ Cartn_z ] );
 
                             if( asTrajectory ){
 
-                                var frameOffset = currentCoord * 3;
+                                const frameOffset = currentCoord * 3;
 
                                 currentFrame[ frameOffset + 0 ] = x;
                                 currentFrame[ frameOffset + 1 ] = y;
@@ -975,20 +972,20 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var resname = ls[ label_comp_id ];
-                            var resno = parseInt( ls[ auth_seq_id ] );
-                            var inscode = ls[ pdbx_PDB_ins_code ];
+                            const resname = ls[ label_comp_id ];
+                            const resno = parseInt( ls[ auth_seq_id ] );
+                            let inscode = ls[ pdbx_PDB_ins_code ];
                             inscode = ( inscode === '?' ) ? '' : inscode;
-                            var chainname = ls[ auth_asym_id ];
-                            var chainid = ls[ label_asym_id ];
-                            var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
+                            const chainname = ls[ auth_asym_id ];
+                            const chainid = ls[ label_asym_id ];
+                            const hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
                             //
 
-                            var element = ls[ type_symbol ];
-                            var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                            var occ = parseFloat( ls[ occupancy ] );
-                            var altloc = ls[ label_alt_id ];
+                            const element = ls[ type_symbol ];
+                            const bfactor = parseFloat( ls[ B_iso_or_equiv ] );
+                            const occ = parseFloat( ls[ occupancy ] );
+                            let altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
                             atomStore.growIfFull();
@@ -1007,7 +1004,7 @@ class CifParser extends StructureParser{
                             if( Debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
                                 // actually a many-to-many mapping
-                                var assignedChainname = asymIdDict[ chainid ];
+                                const assignedChainname = asymIdDict[ chainid ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
                                     if( Debug ) Log.warn( assignedChainname, chainname );
                                 }
@@ -1016,7 +1013,7 @@ class CifParser extends StructureParser{
                             asymIdDict[ chainid ] = chainname;
 
                             // entity mapping: chainIndex -> label_entity_id
-                            var entityId = ls[ label_entity_id ];
+                            const entityId = ls[ label_entity_id ];
                             if( !chainIndexDict[ entityId ] ){
                                 chainIndexDict[ entityId ] = new Set();
                             }
@@ -1026,8 +1023,8 @@ class CifParser extends StructureParser{
 
                         }else{
 
-                            ls = line.match( reQuotedWhitespace );
-                            nn = ls.length;
+                            const ls = line.match( reQuotedWhitespace );
+                            const nn = ls.length;
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
@@ -1035,7 +1032,7 @@ class CifParser extends StructureParser{
                                 Log.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
                             }*/
 
-                            for( var j = 0; j < nn; ++j ){
+                            for( let j = 0; j < nn; ++j ){
                                 loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
                             }
 
@@ -1049,7 +1046,7 @@ class CifParser extends StructureParser{
 
                         // Log.log( "NEWLINE STRING", line );
 
-                        var str = line.substring( 1, line.length - 1 );
+                        const str = line.substring( 1, line.length - 1 );
 
                         if( currentName === false ){
                             cif[ currentCategory ] = str;

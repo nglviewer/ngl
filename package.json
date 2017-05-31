@@ -1,6 +1,6 @@
 {
   "name": "ngl",
-  "version": "0.10.1-2",
+  "version": "0.10.2-1",
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
   "module": "dist/ngl.esm.js",
@@ -49,7 +49,7 @@
     "babel-preset-es2015": "^6.13.2",
     "babel-register": "^6.24.1",
     "babelrc-rollup": "^3.0.0",
-    "chai": "^3.5.0",
+    "chai": "^4.0.0",
     "download": "^6.0.0",
     "esdoc": "^0.5.2",
     "eslint": "^3.19.0",

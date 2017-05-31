@@ -23,12 +23,13 @@
     <script src="js/gui.js"></script>
 
     <!-- EXTRA -->
-    <script src="js/examples.js"></script>
     <script src="js/plugins.js"></script>
 
     <script>
         NGL.cssDirectory = "css/";
         NGL.documentationUrl = "../build/docs/";
+        NGL.examplesListUrl = "../build/gallery/scripts.json";
+        NGL.examplesScriptUrl = "./scripts/";
 
         // Datasources
         NGL.DatasourceRegistry.add(
@@ -44,8 +45,6 @@
         document.addEventListener( "DOMContentLoaded", function(){
             stage = new NGL.Stage();
             NGL.StageWidget( stage );
-            var example = NGL.getQuery( "example" );
-            if( example ) NGL.ExampleRegistry.load( example, stage );
             var load = NGL.getQuery( "load" );
             if( load ) stage.loadFile( load, { defaultRepresentation: true } );
             var script = NGL.getQuery( "script" );

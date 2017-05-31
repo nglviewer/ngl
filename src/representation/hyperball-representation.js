@@ -77,8 +77,7 @@ class HyperballRepresentation extends LicoriceRepresentation{
                 shrink: this.shrink,
                 radialSegments: this.radialSegments,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {

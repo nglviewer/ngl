@@ -28,8 +28,14 @@ function renderExample( name ){
         const page = webpage.create();
         page.onConsoleMessage = function( msg, line, file, level ){
             if( [ "error", "warning" ].includes( level ) ){
-                console.log( level.toUpperCase(), msg );
+                console.log( "CONSOLE." + level.toUpperCase(), msg );
             }
+        };
+        page.onError = function( msg, stack ){
+            console.log( "ERROR", msg );
+        };
+        page.onResourceError = function( e ){
+            console.log( "RESOURCE-ERROR", e.errorString );
         };
         page.onCallback = function( cmd ){
             switch( cmd ){
@@ -113,8 +119,8 @@ function buildExamplePage( exampleNames, exampleUrl ){
         const json = JSON.stringify( data );
         pageLines.push(
             "" +
-            "<form method='post' id='" + name + "' action='http://codepen.io/pen/define/' target='_blank'>" +
-            "<input type='submit' value='CodePen'/>" +
+            "<form method='post' id='" + name + "' action='https://codepen.io/pen/define/' target='_blank'>" +
+            "<input type='submit' value='View/Edit' style='cursor:pointer'/>" +
             "<input type='hidden' name='data' value='" + json + "'/>" +
             "</form>"
         );
@@ -175,6 +181,10 @@ examples.reduce( function( acc, name ){
         return renderExample( name );
     } );
 }, Promise.resolve( [] ) ).then( function(){
+    fs.write(
+        "../build/gallery/scripts.json",
+        JSON.stringify( exampleNames )
+    );
     fs.write(
         "../build/gallery/index.html",
         buildExamplePage( exampleNames, exampleUrl )

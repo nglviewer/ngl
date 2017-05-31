@@ -58,6 +58,9 @@ class SurfaceRepresentation extends Representation{
             isolevel: {
                 type: "number", precision: 2, max: 1000, min: -1000
             },
+            negateIsolevel: {
+                type: "boolean"
+            },
             smooth: {
                 type: "integer", precision: 1, max: 10, min: 0
             },
@@ -120,6 +123,7 @@ class SurfaceRepresentation extends Representation{
 
         this.isolevelType  = defaults( p.isolevelType, "sigma" );
         this.isolevel = defaults( p.isolevel, 2.0 );
+        this.negateIsolevel = defaults( p.negateIsolevel, false );
         this.smooth = defaults( p.smooth, 0 );
         this.background = defaults( p.background, false );
         this.opaqueBack = defaults( p.opaqueBack, true );
@@ -158,6 +162,7 @@ class SurfaceRepresentation extends Representation{
             }else{
                 isolevel = this.isolevel;
             }
+            if( this.negateIsolevel ) isolevel *= -1;
 
             if( !this.surface ||
                 this.__isolevel !== isolevel ||
@@ -339,6 +344,7 @@ class SurfaceRepresentation extends Representation{
 
         if( this.surface && (
                 params.isolevel !== undefined ||
+                params.negateIsolevel !== undefined ||
                 params.smooth !== undefined ||
                 params.wrap !== undefined ||
                 params.boxSize !== undefined ||

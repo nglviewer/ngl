@@ -38,7 +38,11 @@ class AnimationControls{
      */
     add( animation ){
 
-        this.animationList.push( animation );
+        if( animation.duration === 0 ){
+            animation.tick( this.viewer.stats );
+        }else{
+            this.animationList.push( animation );
+        }
 
         return animation;
 

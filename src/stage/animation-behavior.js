@@ -12,18 +12,18 @@ class AnimationBehavior{
         this.viewer = stage.viewer;
         this.animationControls = stage.animationControls;
 
-        this.viewer.signals.ticked.add( this.onTick, this );
+        this.viewer.signals.ticked.add( this._onTick, this );
 
     }
 
-    onTick( stats ){
+    _onTick( stats ){
 
         this.animationControls.run( stats );
 
     }
 
     dispose(){
-        this.viewer.signals.ticked.remove( this.onTick, this );
+        this.viewer.signals.ticked.remove( this._onTick, this );
     }
 
 }

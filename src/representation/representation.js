@@ -53,7 +53,10 @@ import Counter from "../utils/counter.js";
  */
 class Representation{
 
-    constructor( object, viewer/*, params*/ ){
+    constructor( object, viewer, params ){
+
+        // eslint-disable-next-line no-unused-vars
+        const p = params || {};
 
         this.type = "";
 
@@ -159,7 +162,7 @@ class Representation{
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
 
         this.clipNear = defaults( p.clipNear, 0 );
         this.clipRadius = defaults( p.clipRadius, 0 );
@@ -197,7 +200,7 @@ class Representation{
 
         // handle common parameters when applicable
 
-        var tp = this.parameters;
+        const tp = this.parameters;
 
         if( tp.sphereDetail === true ){
             tp.sphereDetail = {
@@ -288,7 +291,7 @@ class Representation{
 
     setColor( value, p ){
 
-        var types = Object.keys( ColormakerRegistry.getSchemes() );
+        const types = Object.keys( ColormakerRegistry.getSchemes() );
 
         if( types.includes( value ) ){
 
@@ -360,7 +363,7 @@ class Representation{
 
         if( Debug ) Log.time( "Representation.make " + this.type );
 
-        var _make = function(){
+        const _make = function(){
 
             if( updateWhat ){
                 this.update( updateWhat );
@@ -412,9 +415,9 @@ class Representation{
 
         if( this.visible ){
 
-            var lazyProps = this.lazyProps;
-            var bufferParams = lazyProps.bufferParams;
-            var what = lazyProps.what;
+            const lazyProps = this.lazyProps;
+            const bufferParams = lazyProps.bufferParams;
+            const what = lazyProps.what;
 
             if( lazyProps.build ){
 
@@ -457,15 +460,15 @@ class Representation{
      */
     setParameters( params, what, rebuild ){
 
-        var p = params || {};
-        var tp = this.parameters;
+        const p = params || {};
+        const tp = this.parameters;
 
         what = what || {};
         rebuild = rebuild || false;
 
-        var bufferParams = {};
+        const bufferParams = {};
 
-        for( var name in p ){
+        for( let name in p ){
 
             if( p[ name ] === undefined ) continue;
             if( tp[ name ] === undefined ) continue;
@@ -543,17 +546,17 @@ class Representation{
 
     getParameters(){
 
-        var params = {
+        const params = {
             lazy: this.lazy,
             visible: this.visible,
             quality: this.quality
         };
 
-        Object.keys( this.parameters ).forEach( function( name ){
+        Object.keys( this.parameters ).forEach( name => {
             if( this.parameters[ name ] !== null ){
                 params[ name ] = this[ name ];
             }
-        }, this );
+        } );
 
         return params;
 
@@ -561,13 +564,10 @@ class Representation{
 
     clear(){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.remove( buffer );
             buffer.dispose();
-
-        }, this );
-
+        } );
         this.bufferList.length = 0;
 
         this.viewer.requestRender();

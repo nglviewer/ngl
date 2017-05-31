@@ -130,7 +130,8 @@ class Buffer{
 
         this.pickingUniforms = {
             nearClip: { value: 0.0 },
-            objectId: { value: 0 }
+            objectId: { value: 0 },
+            opacity: { value: this.opacity }
         };
 
         this.group = new Group();
@@ -189,15 +190,15 @@ class Buffer{
         return this.group.matrix.clone();
     }
 
-    get transparent () {
+    get transparent (){
         return this.opacity < 1 || this.forceTransparent;
     }
 
-    get size () {
+    get size (){
         return this._positionDataSize;
     }
 
-    get attributeSize () {
+    get attributeSize (){
         return this.size;
     }
 
@@ -695,24 +696,26 @@ class Buffer{
 
         for( let name in p ){
 
-            if( p[ name ] === undefined ) continue;
+            const value = p[ name ];
+
+            if( value === undefined ) continue;
             if( tp[ name ] === undefined ) continue;
 
-            this[ name ] = p[ name ];
+            this[ name ] = value;
 
             if( tp[ name ].property ){
                 if( tp[ name ].property !== true ){
-                    propertyData[ tp[ name ].property ] = p[ name ];
+                    propertyData[ tp[ name ].property ] = value;
                 }else{
-                    propertyData[ name ] = p[ name ];
+                    propertyData[ name ] = value;
                 }
             }
 
             if( tp[ name ].uniform ){
                 if( tp[ name ].uniform !== true ){
-                    uniformData[ tp[ name ].uniform ] = p[ name ];
+                    uniformData[ tp[ name ].uniform ] = value;
                 }else{
-                    uniformData[ name ] = p[ name ];
+                    uniformData[ name ] = value;
                 }
             }
 
@@ -724,7 +727,7 @@ class Buffer{
                 doVisibilityUpdate = true;
             }
 
-            if( this.dynamic && name === "wireframe" && p[ name ] === true ){
+            if( this.dynamic && name === "wireframe" && value === true ){
                 this.updateWireframeIndex();
             }
 
