@@ -552,11 +552,11 @@ class Representation{
             quality: this.quality
         };
 
-        Object.keys( this.parameters ).forEach( function( name ){
+        Object.keys( this.parameters ).forEach( name => {
             if( this.parameters[ name ] !== null ){
                 params[ name ] = this[ name ];
             }
-        }, this );
+        } );
 
         return params;
 
@@ -564,13 +564,10 @@ class Representation{
 
     clear(){
 
-        this.bufferList.forEach( function( buffer ){
-
+        this.bufferList.forEach( buffer => {
             this.viewer.remove( buffer );
             buffer.dispose();
-
-        }, this );
-
+        } );
         this.bufferList.length = 0;
 
         this.viewer.requestRender();
