@@ -67394,15 +67394,15 @@ prototypeAccessors$20.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$20.transparent.get = function () {
+prototypeAccessors$20.transparent.get = function (){
     return this.opacity < 1 || this.forceTransparent;
 };
 
-prototypeAccessors$20.size.get = function () {
+prototypeAccessors$20.size.get = function (){
     return this._positionDataSize;
 };
 
-prototypeAccessors$20.attributeSize.get = function () {
+prototypeAccessors$20.attributeSize.get = function (){
     return this.size;
 };
 
@@ -67906,24 +67906,26 @@ Buffer.prototype.setParameters = function setParameters ( params ){
 
     for( var name in p ){
 
-        if( p[ name ] === undefined ) { continue; }
+        var value = p[ name ];
+
+        if( value === undefined ) { continue; }
         if( tp[ name ] === undefined ) { continue; }
 
-        this$1[ name ] = p[ name ];
+        this$1[ name ] = value;
 
         if( tp[ name ].property ){
             if( tp[ name ].property !== true ){
-                propertyData[ tp[ name ].property ] = p[ name ];
+                propertyData[ tp[ name ].property ] = value;
             }else{
-                propertyData[ name ] = p[ name ];
+                propertyData[ name ] = value;
             }
         }
 
         if( tp[ name ].uniform ){
             if( tp[ name ].uniform !== true ){
-                uniformData[ tp[ name ].uniform ] = p[ name ];
+                uniformData[ tp[ name ].uniform ] = value;
             }else{
-                uniformData[ name ] = p[ name ];
+                uniformData[ name ] = value;
             }
         }
 
@@ -67935,7 +67937,7 @@ Buffer.prototype.setParameters = function setParameters ( params ){
             doVisibilityUpdate = true;
         }
 
-        if( this$1.dynamic && name === "wireframe" && p[ name ] === true ){
+        if( this$1.dynamic && name === "wireframe" && value === true ){
             this$1.updateWireframeIndex();
         }
 
@@ -71274,6 +71276,8 @@ Representation.prototype.updateParameters = function updateParameters ( bufferPa
 };
 
 Representation.prototype.getParameters = function getParameters (){
+        var this$1 = this;
+
 
     var params = {
         lazy: this.lazy,
@@ -71281,25 +71285,24 @@ Representation.prototype.getParameters = function getParameters (){
         quality: this.quality
     };
 
-    Object.keys( this.parameters ).forEach( function( name ){
-        if( this.parameters[ name ] !== null ){
-            params[ name ] = this[ name ];
+    Object.keys( this.parameters ).forEach( function (name) {
+        if( this$1.parameters[ name ] !== null ){
+            params[ name ] = this$1[ name ];
         }
-    }, this );
+    } );
 
     return params;
 
 };
 
 Representation.prototype.clear = function clear (){
+        var this$1 = this;
 
-    this.bufferList.forEach( function( buffer ){
 
-        this.viewer.remove( buffer );
+    this.bufferList.forEach( function (buffer) {
+        this$1.viewer.remove( buffer );
         buffer.dispose();
-
-    }, this );
-
+    } );
     this.bufferList.length = 0;
 
     this.viewer.requestRender();
@@ -73208,7 +73211,9 @@ var StructureRepresentation = (function (Representation$$1) {
 
         Representation$$1.prototype.init.call( this, p );
 
-        this.selection.signals.stringChanged.add( this.build, this );
+        this.selection.signals.stringChanged.add( function( /*sele*/ ){
+            this.build();
+        }, this );
 
         this.build();
 
@@ -75634,7 +75639,7 @@ Stage.prototype.setQuality = function setQuality ( value ) {
  */
 Stage.prototype.eachComponent = function eachComponent ( callback, type ){
 
-    this.compList.forEach( function( o, i ){
+    this.compList.slice().forEach( function( o, i ){
 
         if( !type || o.type === type ){
             callback( o, i );
@@ -75654,7 +75659,7 @@ Stage.prototype.eachRepresentation = function eachRepresentation ( callback, typ
 
     this.eachComponent( function( comp ){
 
-        comp.reprList.forEach( function( repr ){
+        comp.reprList.slice().forEach( function( repr ){
             callback( repr, comp );
         } );
 
@@ -84981,7 +84986,6 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
                 sview = sview.getView(
                     new Selection$1( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
                 );
-                // this.filterSele = "";
             }
 
             info.sele = sview.selection.string;
@@ -85008,12 +85012,14 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
     };
 
     MolecularSurfaceRepresentation.prototype.prepare = function prepare ( callback ){
+        var this$1 = this;
+
 
         if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
                 this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
-            this.__infoList.forEach( function( info ){
+            this.__infoList.forEach( function (info) {
                 info.molsurf.dispose();
-            }.bind( this ) );
+            } );
             this.__infoList.length = 0;
         }
 
@@ -85033,12 +85039,12 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
         var assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
-            assembly.partList.forEach( function( part, i ){
-                var sview = part.getView( this.structureView );
-                this.prepareData( sview, i, function( _i ){
+            assembly.partList.forEach( function ( part, i ) {
+                var sview = part.getView( this$1.structureView );
+                this$1.prepareData( sview, i, function ( _i ) {
                     if( _i === assembly.partList.length - 1 ) { after(); }
-                }.bind( this ) );
-            }, this );
+                } );
+            } );
         }else{
             this.prepareData( this.structureView, 0, after );
         }
@@ -85056,6 +85062,8 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
             index: surface.getFilteredIndex( this.filterSele, sview )
         };
 
+        var bufferList = [];
+
         if( surface.contour ){
 
             var contourBuffer = new ContourBuffer(
@@ -85065,7 +85073,7 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
                 } )
             );
 
-            return { bufferList: [ contourBuffer ], info: info };
+            bufferList.push( contourBuffer );
 
         } else {
 
@@ -85083,11 +85091,11 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
 
             var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
 
-            return {
-                bufferList: [ doubleSidedBuffer ],
-                info: info
-            };
+            bufferList.push( doubleSidedBuffer );
+
         }
+
+        return { bufferList: bufferList, info: info };
 
     };
 
@@ -97059,7 +97067,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-0";
+var version$1 = "0.10.2-1";
 
 /**
  * @file Version
