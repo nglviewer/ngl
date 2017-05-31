@@ -990,7 +990,7 @@ class Stage{
      */
     eachComponent( callback, type ){
 
-        this.compList.forEach( function( o, i ){
+        this.compList.slice().forEach( function( o, i ){
 
             if( !type || o.type === type ){
                 callback( o, i );
@@ -1010,7 +1010,7 @@ class Stage{
 
         this.eachComponent( function( comp ){
 
-            comp.reprList.forEach( function( repr ){
+            comp.reprList.slice().forEach( function( repr ){
                 callback( repr, comp );
             } );
 
