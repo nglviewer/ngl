@@ -381,6 +381,7 @@ class Stage{
             var colorReverse = false;
             if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
+                colorScale = "rainbow";
                 colorReverse = true;
             }
 
@@ -456,15 +457,16 @@ class Stage{
             }else{
 
                 object.addRepresentation( "cartoon", {
-                    color: colorScheme,
+                    colorScheme: colorScheme,
                     colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 0.7,
                     aspectRatio: 5,
                     quality: "auto"
                 } );
                 if( atomCount < 50000 ){
                     object.addRepresentation( "base", {
-                        color: colorScheme,
+                        colorScheme: colorScheme,
                         colorScale: colorScale,
                         colorReverse: colorReverse,
                         quality: "auto"

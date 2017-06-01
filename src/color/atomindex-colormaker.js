@@ -6,6 +6,7 @@
 
 
 import { ColormakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Colormaker from "./colormaker.js";
 
 
@@ -30,6 +31,7 @@ class AtomindexColormaker extends Colormaker{
 
         if( !params.scale ){
             this.scale = "rainbow";
+            this.reverse = defaults( params.reverse, true );
         }
 
         this.scalePerModel = {};
