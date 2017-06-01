@@ -1,5 +1,5 @@
 
-stage.loadFile( "rcsb://1EMA.mmtf" ).then( function( o ){
+stage.loadFile( "data://1ema.cif" ).then( function( o ){
 
     o.addRepresentation( "cartoon", {
         color: "white",
