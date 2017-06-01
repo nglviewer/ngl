@@ -6,6 +6,7 @@ const webpage = require( "webpage" );
 
 let port = 80;
 let examples = false;
+let images = true;
 
 
 const argCount = system.args.length;
@@ -15,6 +16,9 @@ for( let i = 1; i < argCount; ++i ){
         port = parseInt( value );
     }else if( name === "name" ){
         examples = value.split( "," );
+    }
+    else if ( name === "images" ){
+        images = ( value == "true" );
     }
 }
 
@@ -187,20 +191,22 @@ function getExampleNames( dir, prefix = "" ){
 const exampleNames = getExampleNames( exampleDir );
 if( !examples ) examples = exampleNames;
 
-
 examples.reduce( function( acc, name ){
     return acc.then( function(){
-        console.log( "START", name );
-        return renderExample( name );
+        if( images ){
+            console.log( "START", name );
+            return renderExample( name );
+        }
     } );
 }, Promise.resolve( [] ) ).then( function(){
     fs.write(
         "../build/gallery/scripts.json",
-        JSON.stringify( exampleNames )
-    );
-    fs.write(
-        "../build/gallery/index.html",
-        buildExamplePage( exampleNames, exampleUrl )
-    );
+        JSON.stringify( exampleNames ) );
+    if ( images ) {
+        fs.write(
+            "../build/gallery/index.html",
+            buildExamplePage( exampleNames, exampleUrl )
+        );
+    }
     slimer.exit();
 } );
