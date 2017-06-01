@@ -8,6 +8,7 @@
     "lint": "eslint src test",
     "prebuild": "npm run-script lint",
     "build": "rollup -c",
+    "postbuild": "node ./scripts/makeScriptsList.js",
     "pretest": "npm run build",
     "test": "mocha",
     "preversion": "npm test",

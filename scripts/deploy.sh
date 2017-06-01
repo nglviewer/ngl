@@ -27,6 +27,7 @@ cp -r ${DIR}/../examples/plugins/ ./plugins/;
 cp -r ${DIR}/../examples/scripts/ ./scripts/;
 cp -r ${DIR}/../build/docs/ ./api/;
 cp -r ${DIR}/../build/gallery/ ./gallery/;
+cp ${DIR}/../build/scriptsList.json ./scripts/list.json;
 
 cp ${DIR}/../dist/ngl.js ./js/ngl.js;
 
