@@ -70,7 +70,7 @@ class PointRepresentation extends StructureRepresentation{
         this.forceTransparent = defaults( p.forceTransparent, false );
         this.edgeBleach = defaults( p.edgeBleach, 0.0 );
 
-        super.init( this, p );
+        super.init( p );
 
     }
 
