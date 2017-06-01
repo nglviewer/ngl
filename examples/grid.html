@@ -8,42 +8,64 @@
 <body>
     <script src="../build/js/ngl.dev.js"></script>
     <script>
-        var stage, viewport;
-        var width = 200;
-        var height = 150;
-        var hiddenImg;
+        var stage, viewport, heading;
+        var width = 150;
+        var height = 200;
+        var done = false;
+        var hiddenImg, activeName;
 
         function loadList( pdbList ){
+            var i = 0;
             pdbList.reduce( function( acc, name ){
                 return acc.then( function(){
+                    i += 1;
+                    heading.innerText = "Grid loading entry " + i + " of " + pdbList.length + " entries";
                     return stage.loadFile( "rcsb://" + name )
+                        .then( addDiv )
                         .then( prepareImage )
                         .then( makeImage )
                         .then( appendImage );
                 } );
             }, Promise.resolve() ).then( function(){
-                console.log( "done" )
+                done = true;
+                heading.innerText = "Grid showing " + pdbList.length + " entries";
             } );
         }
 
-        function prepareImage( o ){
+        function addDiv( o ){
+            var div = document.createElement( "div" );
+            div.style.display = "inline-block";
+            div.appendChild( viewport );
+            activeName = name;
+            document.body.appendChild( div );
+            return {
+                div: div,
+                comp: o
+            };
+        }
+
+        function prepareImage( data ){
+            var o = data.comp;
             stage.eachRepresentation( function( r ){
                 r.dispose();
             } );
             stage.defaultFileRepresentation( o );
             o.autoView();
             stage.autoView();
-            return o.name;
+            var pa = o.structure.getPrincipalAxes();
+            stage.animationControls.rotate( pa.getRotationQuaternion(), 0 );
+            return data;
         }
 
         function showEntry( name ){
             var o = stage.getComponentsByName( name ).list[ 0 ];
-            prepareImage( o );
+            prepareImage( { comp: o } );
         }
 
-        function makeImage( name ){
+        function makeImage( data ){
             return stage.makeImage().then( function( imgBlob ){
-                return [ name, imgBlob ];
+                data.imgBlob = imgBlob;
+                return data;
             } );
         }
 
@@ -59,34 +81,30 @@
             return array.slice( 0, n );
         }
 
-        function appendImage( nameAndBlob ){
-            var div = document.createElement( "div" );
-            div.style.display = "inline-block";
-            div.appendChild( viewport );
-            document.body.appendChild( div );
+        function appendImage( data ){
+            var div = data.div;
+            var name = data.comp.name;
+            var imgBlob = data.imgBlob;
 
-            var name = nameAndBlob[ 0 ];
-            var blob = nameAndBlob[ 1 ];
-            var objectURL = URL.createObjectURL( blob );
+            var objectURL = URL.createObjectURL( imgBlob );
             var img = document.createElement( "img" );
             img.src = objectURL;
             img.style.width = width + "px";
             img.style.height = height + "px";
             img.title = name;
             img.style.display = "none";
-            img.onclick = function(){
-                console.log( name )
+            var activate = function( e ){
+                if( !done || e.buttons !== 0 || activeName === name ) return;
                 img.style.display = "none";
                 div.appendChild( viewport );
-                if( hiddenImg ){
-                    hiddenImg.style.display = "inline-block";
-                }
+                activeName = name;
+                if( hiddenImg ) hiddenImg.style.display = "inline-block";
                 hiddenImg = img;
                 showEntry( name );
             };
-            if( hiddenImg ){
-                hiddenImg.style.display = "inline-block";
-            }
+            img.addEventListener( "mouseup", activate );
+            img.addEventListener( "mousemove", activate );
+            if( hiddenImg ) hiddenImg.style.display = "inline-block";
             hiddenImg = img;
             div.appendChild( img );
         }
@@ -103,23 +121,29 @@
         }
 
         document.addEventListener( "DOMContentLoaded", function(){
+            heading = document.getElementById( "heading" );
             viewport = document.createElement( "div" );
             viewport.style.display = "inline-block";
             viewport.style.width = width + "px";
             viewport.style.height = height + "px";
             document.body.appendChild( viewport );
-            stage = new NGL.Stage( viewport, { backgroundColor: "white" } );
+            stage = new NGL.Stage( viewport, {
+                backgroundColor: "white",
+                tooltip: false
+            } );
+            stage.mouseObserver.handleScroll = false;
 
-            var archive = NGL.getQuery( "archive" );
-            var list = NGL.getQuery( "list" );
-            if( archive ){
-                loadArchive( archive );
-            }else if( list ){
-                loadList( list.split( "," ) );
+            var archiveSample = NGL.getQuery( "archiveSample" );
+            var idList = NGL.getQuery( "idList" );
+            if( archiveSample ){
+                loadArchive( archiveSample );
+            }else if( idList ){
+                loadList( idList.split( "," ) );
             }else{
                 loadArchive( 30 );
             }
         } );
     </script>
+    <h1 id="heading">Grid</h1>
 </body>
 </html>
