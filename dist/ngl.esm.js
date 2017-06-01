@@ -51699,6 +51699,7 @@ var MouseObserver = function MouseObserver( domElement, params ){
     var p = Object.assign( {}, params );
 
     this.hoverTimeout = defaults( p.hoverTimeout, 50 );
+    this.handleScroll = defaults( p.handleScroll, true );
 
     this.domElement = domElement;
 
@@ -51793,16 +51794,16 @@ var MouseObserver = function MouseObserver( domElement, params ){
 
     this._listen();
 
-    domElement.addEventListener( 'mousewheel', this._onMousewheel );
-    domElement.addEventListener( 'wheel', this._onMousewheel );
-    domElement.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
-    domElement.addEventListener( 'mousemove', this._onMousemove );
-    domElement.addEventListener( 'mousedown', this._onMousedown );
-    domElement.addEventListener( 'mouseup', this._onMouseup );
-    domElement.addEventListener( 'contextmenu', this._onContextmenu );
-    domElement.addEventListener( 'touchstart', this._onTouchstart );
-    domElement.addEventListener( 'touchend', this._onTouchend );
-    domElement.addEventListener( 'touchmove', this._onTouchmove );
+    document.addEventListener( 'mousewheel', this._onMousewheel );
+    document.addEventListener( 'wheel', this._onMousewheel );
+    document.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
+    document.addEventListener( 'mousemove', this._onMousemove );
+    document.addEventListener( 'mousedown', this._onMousedown );
+    document.addEventListener( 'mouseup', this._onMouseup );
+    document.addEventListener( 'contextmenu', this._onContextmenu );
+    document.addEventListener( 'touchstart', this._onTouchstart );
+    document.addEventListener( 'touchend', this._onTouchend );
+    document.addEventListener( 'touchmove', this._onTouchmove );
 
 };
 
@@ -51851,6 +51852,9 @@ MouseObserver.prototype._listen = function _listen (){
 MouseObserver.prototype._onMousewheel = function _onMousewheel ( event ){
         var this$1 = this;
 
+    if( event.target !== this.domElement || !this.handleScroll ){
+        return;
+    }
     event.preventDefault();
     this._setKeys( event );
 
@@ -51880,13 +51884,15 @@ MouseObserver.prototype._onMousewheel = function _onMousewheel ( event ){
  * @return {undefined}
  */
 MouseObserver.prototype._onMousemove = function _onMousemove ( event ){
-    event.preventDefault();
+    if( event.target === this.domElement ){
+        event.preventDefault();
+    }
     this._setKeys( event );
     this.moving = true;
     this.hovering = false;
     this.lastMoved = performance.now();
     this.prevPosition.copy( this.position );
-    this.position.set( event.layerX, event.layerY );
+    this.position.set( event.clientX, event.clientY );
     this._setCanvasPosition( event );
     var dx = this.prevPosition.x - this.position.x;
     var dy = this.prevPosition.y - this.position.y;
@@ -51897,12 +51903,15 @@ MouseObserver.prototype._onMousemove = function _onMousemove ( event ){
 };
 
 MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
+    if( event.target !== this.domElement ){
+        return;
+    }
     event.preventDefault();
     this._setKeys( event );
     this.moving = false;
     this.hovering = false;
-    this.down.set( event.layerX, event.layerY );
-    this.position.set( event.layerX, event.layerY );
+    this.down.set( event.clientX, event.clientY );
+    this.position.set( event.clientX, event.clientY );
     this.which = event.which;
     this.buttons = event.buttons;
     this.pressed = true;
@@ -51917,7 +51926,9 @@ MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
  * @return {undefined}
  */
 MouseObserver.prototype._onMouseup = function _onMouseup ( event ){
-    event.preventDefault();
+    if( event.target === this.domElement ){
+        event.preventDefault();
+    }
     this._setKeys( event );
     var cp = this.canvasPosition;
     this.signals.clicked.dispatch( cp.x, cp.y );
@@ -51930,10 +51941,15 @@ MouseObserver.prototype._onMouseup = function _onMouseup ( event ){
 };
 
 MouseObserver.prototype._onContextmenu = function _onContextmenu ( event ){
-    event.preventDefault();
+    if( event.target === this.domElement ){
+        event.preventDefault();
+    }
 };
 
 MouseObserver.prototype._onTouchstart = function _onTouchstart ( event ){
+    if( event.target !== this.domElement ){
+        return;
+    }
     event.preventDefault();
     this.pressed = true;
     switch( event.touches.length ){
@@ -51969,12 +51985,16 @@ MouseObserver.prototype._onTouchstart = function _onTouchstart ( event ){
 };
 
 MouseObserver.prototype._onTouchend = function _onTouchend ( event ){
-    event.preventDefault();
+    if( event.target === this.domElement ){
+        event.preventDefault();
+    }
     this.pressed = false;
 };
 
 MouseObserver.prototype._onTouchmove = function _onTouchmove ( event ){
-    event.preventDefault();
+    if( event.target === this.domElement ){
+        event.preventDefault();
+    }
     switch( event.touches.length ){
 
         case 1: {
@@ -52045,17 +52065,16 @@ MouseObserver.prototype._setKeys = function _setKeys ( event ){
 };
 
 MouseObserver.prototype.dispose = function dispose (){
-    var domElement = this.domElement;
-    domElement.removeEventListener( 'mousewheel', this._onMousewheel );
-    domElement.removeEventListener( 'wheel', this._onMousewheel );
-    domElement.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
-    domElement.removeEventListener( 'mousemove', this._onMousemove );
-    domElement.removeEventListener( 'mousedown', this._onMousedown );
-    domElement.removeEventListener( 'mouseup', this._onMouseup );
-    domElement.removeEventListener( 'contextmenu', this._onContextmenu );
-    domElement.removeEventListener( 'touchstart', this._onTouchstart );
-    domElement.removeEventListener( 'touchend', this._onTouchend );
-    domElement.removeEventListener( 'touchmove', this._onTouchmove );
+    document.removeEventListener( 'mousewheel', this._onMousewheel );
+    document.removeEventListener( 'wheel', this._onMousewheel );
+    document.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
+    document.removeEventListener( 'mousemove', this._onMousemove );
+    document.removeEventListener( 'mousedown', this._onMousedown );
+    document.removeEventListener( 'mouseup', this._onMouseup );
+    document.removeEventListener( 'contextmenu', this._onContextmenu );
+    document.removeEventListener( 'touchstart', this._onTouchstart );
+    document.removeEventListener( 'touchend', this._onTouchend );
+    document.removeEventListener( 'touchmove', this._onTouchmove );
 };
 
 Object.defineProperties( MouseObserver.prototype, prototypeAccessors$3 );
@@ -53330,10 +53349,10 @@ MouseActions.tooltipPick = function tooltipPick ( stage, pickingProxy ){
     var tt = stage.tooltip;
     var sp = stage.getParameters();
     if( sp.tooltip && pickingProxy ){
-        var cp = pickingProxy.canvasPosition;
+        var mp = pickingProxy.mouse.position;
         tt.innerText = pickingProxy.getLabel();
-        tt.style.bottom = cp.y + 3 + "px";
-        tt.style.left = cp.x + 3 + "px";
+        tt.style.bottom = window.innerHeight - mp.y + 3 + "px";
+        tt.style.left = mp.x + 3 + "px";
         tt.style.display = "block";
     }else{
         tt.style.display = "none";
@@ -74796,7 +74815,7 @@ var Stage = function Stage( idOrElement, params ){
         padding: "0.5em",
         fontFamily: "sans-serif"
     } );
-    this.viewer.container.appendChild( this.tooltip );
+    document.body.appendChild( this.tooltip );
 
     /**
      * @type {MouseObserver}
@@ -77698,17 +77717,58 @@ var VolumeColormaker = (function (Colormaker$$1) {
             var data = volume.data;
             var nx = volume.nx;
             var ny = volume.ny;
+            var nxy = nx * ny;
             var vec = new Vector3();
 
             this.positionColor = function( coords ){
 
                 vec.copy( coords );
                 vec.applyMatrix4( inverseMatrix );
-                vec.round();
 
-                var index = ( ( ( ( vec.z * ny ) + vec.y ) * nx ) + vec.x );
+                // position of grid cell
+                var x0 = Math.floor( vec.x );
+                var y0 = Math.floor( vec.y );
+                var z0 = Math.floor( vec.z );
 
-                return valueScale( data[ index ] );
+                // Indices
+                var i = ( ( ( ( z0 * ny ) + y0 ) * nx ) + x0 );
+                var i1 = i + 1;
+                var iy = i + nx;
+                var iz = i + nxy;
+                var i1y = iy + 1;
+                var i1z = iz + 1;
+                var iyz = iy + nxy;
+                var i1yz = iyz + 1;
+
+                // Values
+                var v = data[ i ];
+                var v1 = data[ i1 ];
+                var vy = data[ iy ];
+                var vz = data[ iz ];
+                var v1y = data[ i1y ];
+                var v1z = data[ i1z ];
+                var vyz = data[ iyz ];
+                var v1yz = data[ i1yz ];
+
+                // Position of point in fraction of grid
+                var xd = vec.x - x0;
+                var yd = vec.y - y0;
+                var zd = vec.z - z0;
+
+                // 1st Dimension
+                var c00 = lerp( v, v1, xd );
+                var c01 = lerp( vz, v1z, xd );
+                var c10 = lerp( vy, v1y, xd );
+                var c11 = lerp( vyz, v1yz, xd );
+
+                // 2nd Dimension
+                var c0 = lerp( c00, c10, yd );
+                var c1 = lerp( c01, c11, yd );
+
+                // 3rd Dimension
+                var c = lerp( c0, c1, zd );
+
+                return valueScale( c );
 
             };
 
@@ -97067,7 +97127,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-1";
+var version$1 = "0.10.2-2";
 
 /**
  * @file Version
