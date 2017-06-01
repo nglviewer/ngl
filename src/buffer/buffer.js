@@ -88,6 +88,7 @@ class Buffer{
         this.dullInterior = defaults( p.dullInterior, false );
         this.side = defaults( p.side, "double" );
         this.opacity = defaults( p.opacity, 1.0 );
+        this.depthWrite = defaults( p.depthWrite, true );
         this.clipNear = defaults( p.clipNear, 0 );
         this.clipRadius = defaults( p.clipRadius, 0 );
         this.clipCenter = defaults( p.clipCenter, new Vector3() );
@@ -168,6 +169,7 @@ class Buffer{
             dullInterior: { updateShader: true },
             side: { updateShader: true, property: true },
             opacity: { uniform: true },
+            depthWrite: { property: true },
             clipNear: { updateShader: true, property: true },
             clipRadius: { updateShader: true, property: true, uniform: true },
             clipCenter: { uniform: true },
@@ -245,7 +247,7 @@ class Buffer{
             fragmentShader: "",
             depthTest: true,
             transparent: this.transparent,
-            depthWrite: true,
+            depthWrite: this.depthWrite,
             lights: true,
             fog: true,
             side: side,
@@ -262,7 +264,7 @@ class Buffer{
             fragmentShader: "",
             depthTest: true,
             transparent: this.transparent,
-            depthWrite: true,
+            depthWrite: this.depthWrite,
             lights: false,
             fog: true,
             side: side,
@@ -277,7 +279,7 @@ class Buffer{
             fragmentShader: "",
             depthTest: true,
             transparent: false,
-            depthWrite: true,
+            depthWrite: this.depthWrite,
             lights: false,
             fog: false,
             side: side,

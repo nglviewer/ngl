@@ -81,6 +81,9 @@ class Representation{
             opacity: {
                 type: "range", step: 0.01, max: 1, min: 0, buffer: true
             },
+            depthWrite: {
+                type: "boolean", buffer: true
+            },
             side: {
                 type: "select", buffer: true,
                 options: { front: "front", back: "back", double: "double" },
@@ -170,6 +173,7 @@ class Representation{
         this.flatShaded = defaults( p.flatShaded, false );
         this.side = defaults( p.side, "double" );
         this.opacity = defaults( p.opacity, 1.0 );
+        this.depthWrite = defaults( p.depthWrite, true );
         this.wireframe = defaults( p.wireframe, false );
         this.linewidth = defaults( p.linewidth, 2 );
 
@@ -275,6 +279,7 @@ class Representation{
             clipCenter: this.clipCenter,
             flatShaded: this.flatShaded,
             opacity: this.opacity,
+            depthWrite: this.depthWrite,
             side: this.side,
             wireframe: this.wireframe,
             linewidth: this.linewidth,
