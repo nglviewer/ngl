@@ -13,7 +13,8 @@ function flatten( arr ){
     }, [] );
 }
 
-function getExampleNames( dir, prefix = "" ){
+function getExampleNames( dir, prefix ){
+    prefix = prefix || "";
     return flatten( fs.readdirSync( dir )
         .filter( name => !name.startsWith( "." ) )
         .map( name => {
