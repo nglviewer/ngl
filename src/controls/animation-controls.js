@@ -5,6 +5,9 @@
  */
 
 
+import { Vector3, Quaternion } from "../../lib/three.es6.js";
+
+import { ensureMatrix4 } from "../utils.js";
 import {
     SpinAnimation, RockAnimation, MoveAnimation,
     ZoomAnimation, RotateAnimation
@@ -184,6 +187,28 @@ class AnimationControls{
         return [
             this.move( moveTo, duration ),
             this.zoom( zoomTo, duration )
+        ];
+
+    }
+
+    /**
+     * Add an orient animation
+     * @param  {OrientationMatrix|Array} orientTo - target orientation
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {Array} the animations
+     */
+    orient( orientTo, duration ){
+
+        const p = new Vector3();
+        const q = new Quaternion();
+        const s = new Vector3();
+
+        ensureMatrix4( orientTo ).decompose( p, q, s );
+
+        return [
+            this.move( p.negate(), duration ),
+            this.rotate( q, duration ),
+            this.zoom( -s.x, duration )
         ];
 
     }
