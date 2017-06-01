@@ -26,3 +26,8 @@ The following code creates a viewer and loads the structure of PDB entry *1CRN* 
 </body>
 </html>
 ```
+
+
+## Notes
+
+- If the size of your DOM element (here "viewport") is not know upon calling the `Stage` constructor make sure that you call `stage.handleResize()` when the size is known.
