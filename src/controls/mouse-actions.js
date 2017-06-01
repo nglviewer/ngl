@@ -154,10 +154,10 @@ class MouseActions{
         const tt = stage.tooltip;
         const sp = stage.getParameters();
         if( sp.tooltip && pickingProxy ){
-            const cp = pickingProxy.canvasPosition;
+            const mp = pickingProxy.mouse.position;
             tt.innerText = pickingProxy.getLabel();
-            tt.style.bottom = cp.y + 3 + "px";
-            tt.style.left = cp.x + 3 + "px";
+            tt.style.bottom = window.innerHeight - mp.y + 3 + "px";
+            tt.style.left = mp.x + 3 + "px";
             tt.style.display = "block";
         }else{
             tt.style.display = "none";

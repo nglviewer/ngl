@@ -82,6 +82,7 @@ class MouseObserver{
         var p = Object.assign( {}, params );
 
         this.hoverTimeout = defaults( p.hoverTimeout, 50 );
+        this.handleScroll = defaults( p.handleScroll, true );
 
         this.domElement = domElement;
 
@@ -176,16 +177,16 @@ class MouseObserver{
 
         this._listen();
 
-        domElement.addEventListener( 'mousewheel', this._onMousewheel );
-        domElement.addEventListener( 'wheel', this._onMousewheel );
-        domElement.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
-        domElement.addEventListener( 'mousemove', this._onMousemove );
-        domElement.addEventListener( 'mousedown', this._onMousedown );
-        domElement.addEventListener( 'mouseup', this._onMouseup );
-        domElement.addEventListener( 'contextmenu', this._onContextmenu );
-        domElement.addEventListener( 'touchstart', this._onTouchstart );
-        domElement.addEventListener( 'touchend', this._onTouchend );
-        domElement.addEventListener( 'touchmove', this._onTouchmove );
+        document.addEventListener( 'mousewheel', this._onMousewheel );
+        document.addEventListener( 'wheel', this._onMousewheel );
+        document.addEventListener( 'MozMousePixelScroll', this._onMousewheel );
+        document.addEventListener( 'mousemove', this._onMousemove );
+        document.addEventListener( 'mousedown', this._onMousedown );
+        document.addEventListener( 'mouseup', this._onMouseup );
+        document.addEventListener( 'contextmenu', this._onContextmenu );
+        document.addEventListener( 'touchstart', this._onTouchstart );
+        document.addEventListener( 'touchend', this._onTouchend );
+        document.addEventListener( 'touchmove', this._onTouchmove );
 
     }
 
@@ -230,6 +231,9 @@ class MouseObserver{
      * @return {undefined}
      */
     _onMousewheel( event ){
+        if( event.target !== this.domElement || !this.handleScroll ){
+            return;
+        }
         event.preventDefault();
         this._setKeys( event );
 
@@ -259,13 +263,15 @@ class MouseObserver{
      * @return {undefined}
      */
     _onMousemove( event ){
-        event.preventDefault();
+        if( event.target === this.domElement ){
+            event.preventDefault();
+        }
         this._setKeys( event );
         this.moving = true;
         this.hovering = false;
         this.lastMoved = performance.now();
         this.prevPosition.copy( this.position );
-        this.position.set( event.layerX, event.layerY );
+        this.position.set( event.clientX, event.clientY );
         this._setCanvasPosition( event );
         const dx = this.prevPosition.x - this.position.x;
         const dy = this.prevPosition.y - this.position.y;
@@ -276,12 +282,15 @@ class MouseObserver{
     }
 
     _onMousedown( event ){
+        if( event.target !== this.domElement ){
+            return;
+        }
         event.preventDefault();
         this._setKeys( event );
         this.moving = false;
         this.hovering = false;
-        this.down.set( event.layerX, event.layerY );
-        this.position.set( event.layerX, event.layerY );
+        this.down.set( event.clientX, event.clientY );
+        this.position.set( event.clientX, event.clientY );
         this.which = event.which;
         this.buttons = event.buttons;
         this.pressed = true;
@@ -296,7 +305,9 @@ class MouseObserver{
      * @return {undefined}
      */
     _onMouseup( event ){
-        event.preventDefault();
+        if( event.target === this.domElement ){
+            event.preventDefault();
+        }
         this._setKeys( event );
         const cp = this.canvasPosition;
         this.signals.clicked.dispatch( cp.x, cp.y );
@@ -309,10 +320,15 @@ class MouseObserver{
     }
 
     _onContextmenu( event ){
-        event.preventDefault();
+        if( event.target === this.domElement ){
+            event.preventDefault();
+        }
     }
 
     _onTouchstart( event ){
+        if( event.target !== this.domElement ){
+            return;
+        }
         event.preventDefault();
         this.pressed = true;
         switch( event.touches.length ){
@@ -348,12 +364,16 @@ class MouseObserver{
     }
 
     _onTouchend( event ){
-        event.preventDefault();
+        if( event.target === this.domElement ){
+            event.preventDefault();
+        }
         this.pressed = false;
     }
 
     _onTouchmove( event ){
-        event.preventDefault();
+        if( event.target === this.domElement ){
+            event.preventDefault();
+        }
         switch( event.touches.length ){
 
             case 1: {
@@ -424,17 +444,16 @@ class MouseObserver{
     }
 
     dispose(){
-        var domElement = this.domElement;
-        domElement.removeEventListener( 'mousewheel', this._onMousewheel );
-        domElement.removeEventListener( 'wheel', this._onMousewheel );
-        domElement.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
-        domElement.removeEventListener( 'mousemove', this._onMousemove );
-        domElement.removeEventListener( 'mousedown', this._onMousedown );
-        domElement.removeEventListener( 'mouseup', this._onMouseup );
-        domElement.removeEventListener( 'contextmenu', this._onContextmenu );
-        domElement.removeEventListener( 'touchstart', this._onTouchstart );
-        domElement.removeEventListener( 'touchend', this._onTouchend );
-        domElement.removeEventListener( 'touchmove', this._onTouchmove );
+        document.removeEventListener( 'mousewheel', this._onMousewheel );
+        document.removeEventListener( 'wheel', this._onMousewheel );
+        document.removeEventListener( 'MozMousePixelScroll', this._onMousewheel );
+        document.removeEventListener( 'mousemove', this._onMousemove );
+        document.removeEventListener( 'mousedown', this._onMousedown );
+        document.removeEventListener( 'mouseup', this._onMouseup );
+        document.removeEventListener( 'contextmenu', this._onContextmenu );
+        document.removeEventListener( 'touchstart', this._onTouchstart );
+        document.removeEventListener( 'touchend', this._onTouchend );
+        document.removeEventListener( 'touchmove', this._onTouchmove );
     }
 
 }

@@ -149,7 +149,7 @@ class Stage{
             padding: "0.5em",
             fontFamily: "sans-serif"
         } );
-        this.viewer.container.appendChild( this.tooltip );
+        document.body.appendChild( this.tooltip );
 
         /**
          * @type {MouseObserver}
