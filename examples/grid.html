@@ -111,7 +111,7 @@
 
         function loadArchive( count ){
             var xhr = new XMLHttpRequest();
-            xhr.open( "GET", "http://www.rcsb.org/pdb/json/getCurrent" );
+            xhr.open( "GET", "//www3.rcsb.org/pdb/json/getCurrent" );
             xhr.responseType = "json";
             xhr.onload = function(){
                 list = sample( this.response.idList, count );

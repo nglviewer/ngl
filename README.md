@@ -9,8 +9,8 @@ NGL Viewer is a web application for molecular visualization. [WebGL](https://get
 
 See it in action:
 
-* [Web application](http://arose.github.io/ngl/?example=3pqr)
-* [Documentation](http://arose.github.io/ngl/api/)
+* [Web application](https://arose.github.io/ngl/?example=3pqr)
+* [Documentation](https://arose.github.io/ngl/api/)
 * [CodePen template](https://codepen.io/pen?template=JNLMXb)
 * [Pens tagged _ngl_](https://codepen.io/tag/ngl/)
 
