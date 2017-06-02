@@ -25,8 +25,17 @@ class Animation{
         this.startTime = performance.now();
         this.elapsedTime = 0;
 
+        this._resolveList = [];
         this._init( ...args );
 
+    }
+
+    /**
+     * True when all animation has finished
+     * @type {Boolean}
+     */
+    get done(){
+        return this.alpha === 1;
     }
 
     /**
@@ -55,7 +64,34 @@ class Animation{
 
         this._tick( stats );
 
-        return this.alpha === 1;
+        if( this.done ){
+            this._resolveList.forEach( resolve => {
+                resolve();
+            } );
+        }
+
+        return this.done;
+
+    }
+
+    /**
+     * Promise-like interface
+     * @param  {Function} callback - a callback
+     * @return {Promise} a promise
+     */
+    then( callback ){
+
+        let p;
+
+        if( this.done ){
+            p = Promise.resolve();
+        }else{
+            p = new Promise( resolve => {
+                this._resolveList.push( resolve );
+            } );
+        }
+
+        return p.then( callback );
 
     }
 
@@ -219,11 +255,66 @@ class RotateAnimation extends Animation{
 }
 
 
+/**
+ * Animation list.
+ */
+class AnimationList{
+
+    constructor( list ){
+
+        this._list = list || [];
+        this._resolveList = [];
+
+    }
+
+    /**
+     * True when all animations have finished
+     * @type {Boolean}
+     */
+    get done(){
+        return this._list.every( animation => {
+            return animation.done;
+        } );
+    }
+
+    /**
+     * Promise-like interface
+     * @param  {Function} callback - a callback
+     * @return {Promise} a promise
+     */
+    then( callback ){
+
+        let p;
+
+        if( this.done ){
+            p = Promise.resolve();
+        }else{
+            p = new Promise( resolve => {
+                this._resolveList.push( resolve );
+                this._list.forEach( animation => {
+                    animation.then( () => {
+                        this._resolveList.forEach( callback => {
+                            callback();
+                        } );
+                        this._resolveList.length = 0;
+                    } );
+                } );
+            } );
+        }
+
+        return p.then( callback );
+
+    }
+
+}
+
+
 export {
     Animation,
     SpinAnimation,
     RockAnimation,
     MoveAnimation,
     ZoomAnimation,
-    RotateAnimation
+    RotateAnimation,
+    AnimationList
 };

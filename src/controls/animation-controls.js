@@ -10,7 +10,7 @@ import { Vector3, Quaternion } from "../../lib/three.es6.js";
 import { ensureMatrix4 } from "../utils.js";
 import {
     SpinAnimation, RockAnimation, MoveAnimation,
-    ZoomAnimation, RotateAnimation
+    ZoomAnimation, RotateAnimation, AnimationList
 } from "../animation/animation.js";
 
 
@@ -184,10 +184,10 @@ class AnimationControls{
      */
     zoomMove( moveTo, zoomTo, duration ){
 
-        return [
+        return new AnimationList( [
             this.move( moveTo, duration ),
             this.zoom( zoomTo, duration )
-        ];
+        ] );
 
     }
 
@@ -205,11 +205,11 @@ class AnimationControls{
 
         ensureMatrix4( orientTo ).decompose( p, q, s );
 
-        return [
+        return new AnimationList( [
             this.move( p.negate(), duration ),
             this.rotate( q, duration ),
             this.zoom( -s.x, duration )
-        ];
+        ] );
 
     }
 
