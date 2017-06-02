@@ -256,6 +256,29 @@ class RotateAnimation extends Animation{
 
 
 /**
+ * Value animation. Call callback with interpolated value.
+ */
+class ValueAnimation extends Animation{
+
+    _init( valueFrom, valueTo, callback ){
+
+        this.valueFrom = valueFrom;
+        this.valueTo = valueTo;
+
+        this.callback = callback;
+
+    }
+
+    _tick( /*stats*/ ){
+
+        this.callback( lerp( this.valueFrom, this.valueTo, this.alpha ) );
+
+    }
+
+}
+
+
+/**
  * Animation list.
  */
 class AnimationList{
@@ -316,5 +339,6 @@ export {
     MoveAnimation,
     ZoomAnimation,
     RotateAnimation,
+    ValueAnimation,
     AnimationList
 };

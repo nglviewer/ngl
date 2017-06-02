@@ -9,8 +9,8 @@ import { Vector3, Quaternion } from "../../lib/three.es6.js";
 
 import { ensureMatrix4 } from "../utils.js";
 import {
-    SpinAnimation, RockAnimation, MoveAnimation,
-    ZoomAnimation, RotateAnimation, AnimationList
+    SpinAnimation, RockAnimation, MoveAnimation, ZoomAnimation,
+    RotateAnimation, ValueAnimation, AnimationList
 } from "../animation/animation.js";
 
 
@@ -210,6 +210,22 @@ class AnimationControls{
             this.rotate( q, duration ),
             this.zoom( -s.x, duration )
         ] );
+
+    }
+
+    /**
+     * Add a value animation
+     * @param  {Number} valueFrom - start value
+     * @param  {Number} valueTo - target value
+     * @param  {Function} callback - called on every tick
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {ValueAnimation} the animation
+     */
+    value( valueFrom, valueTo, callback, duration ){
+
+        return this.add(
+            new ValueAnimation( duration, this.controls, valueFrom, valueTo, callback )
+        );
 
     }
 
