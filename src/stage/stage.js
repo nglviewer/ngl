@@ -269,7 +269,7 @@ class Stage{
             },
             mousePreset: {
                 type: "select", options: { default: "default", pymol: "pymol", coot: "coot" }
-            },
+            }
         };
 
         this.setParameters( p );  // must come after the viewer has been instantiated
@@ -662,6 +662,24 @@ class Stage{
     handleResize(){
 
         this.viewer.handleResize();
+
+    }
+
+    /**
+     * Set width and height
+     * @param {String} width - CSS width value
+     * @param {String} height - CSS height value
+     * @return {undefined}
+     */
+    setSize( width, height ){
+
+        const container = this.viewer.container;
+
+        if( container !== document.body ){
+            if( width !== undefined ) container.style.width = width;
+            if( height !== undefined ) container.style.height = height;
+            this.handleResize();
+        }
 
     }
 
