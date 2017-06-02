@@ -141,12 +141,12 @@ class Stage{
         this.tooltip = document.createElement( "div" );
         Object.assign( this.tooltip.style, {
             display: "none",
-            position: "absolute",
+            position: "fixed",
             zIndex: 10,
             pointerEvents: "none",
             backgroundColor: "rgba( 0, 0, 0, 0.6 )",
             color: "lightgrey",
-            padding: "0.5em",
+            padding: "8px",
             fontFamily: "sans-serif"
         } );
         document.body.appendChild( this.tooltip );

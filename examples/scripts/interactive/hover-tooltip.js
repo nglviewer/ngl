@@ -1,17 +1,17 @@
 
-// create tooltip element and add to the viewer canvas
+// create tooltip element and add to document body
 var tooltip = document.createElement( "div" );
 Object.assign( tooltip.style, {
     display: "none",
-    position: "absolute",
+    position: "fixed",
     zIndex: 10,
     pointerEvents: "none",
     backgroundColor: "rgba( 0, 0, 0, 0.6 )",
     color: "lightgrey",
-    padding: "0.5em",
+    padding: "8px",
     fontFamily: "sans-serif"
 } );
-stage.viewer.container.appendChild( tooltip );
+document.body.appendChild( tooltip );
 
 // load a structure file
 stage.loadFile( "data://1blu.mmtf", { defaultRepresentation: true } );
@@ -23,10 +23,10 @@ stage.mouseControls.remove( "hoverPick" );
 stage.signals.hovered.add( function( pickingProxy ){
     if( pickingProxy && ( pickingProxy.atom || pickingProxy.bond ) ){
         var atom = pickingProxy.atom || pickingProxy.closestBondAtom;
-        var cp = pickingProxy.canvasPosition;
+        var mp = pickingProxy.mouse.position;
         tooltip.innerText = "ATOM: " + atom.qualifiedName();
-        tooltip.style.bottom = cp.y + 3 + "px";
-        tooltip.style.left = cp.x + 3 + "px";
+        tooltip.style.bottom = window.innerHeight - mp.y + 3 + "px";
+        tooltip.style.left = mp.x + 3 + "px";
         tooltip.style.display = "block";
     }else{
         tooltip.style.display = "none";
