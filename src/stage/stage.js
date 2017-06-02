@@ -178,7 +178,7 @@ class Stage{
         this.spinAnimation = this.animationControls.spin( null );
         this.rockAnimation = this.animationControls.rock( null );
 
-        var p = Object.assign( {
+        const p = Object.assign( {
             impostor: true,
             quality: "medium",
             workerDefault: true,
@@ -285,12 +285,12 @@ class Stage{
      */
     setParameters( params ){
 
-        var p = Object.assign( {}, params );
-        var tp = this.parameters;
-        var viewer = this.viewer;
-        var controls = this.trackballControls;
+        const p = Object.assign( {}, params );
+        const tp = this.parameters;
+        const viewer = this.viewer;
+        const controls = this.trackballControls;
 
-        for( var name in p ){
+        for( let name in p ){
 
             if( p[ name ] === undefined ) continue;
             if( !tp[ name ] ) continue;
@@ -333,8 +333,8 @@ class Stage{
      */
     getParameters(){
 
-        var params = {};
-        for( var name in this.parameters ){
+        const params = {};
+        for( let name in this.parameters ){
             params[ name ] = this.parameters[ name ].value;
         }
         return params;
@@ -352,11 +352,11 @@ class Stage{
 
             object.setSelection( "/0" );
 
-            var atomCount, residueCount, instanceCount;
-            var structure = object.structure;
+            let atomCount, residueCount, instanceCount;
+            const structure = object.structure;
 
             if( structure.biomolDict.BU1 ){
-                var assembly = structure.biomolDict.BU1;
+                const assembly = structure.biomolDict.BU1;
                 atomCount = assembly.getAtomCount( structure );
                 residueCount = assembly.getResidueCount( structure );
                 instanceCount = assembly.getInstanceCount();
@@ -371,17 +371,17 @@ class Stage{
                 atomCount *= 4;
             }
 
-            var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
+            const backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
             if( backboneOnly ){
                 atomCount *= 10;
             }
 
-            var colorScheme = "chainname";
-            var colorScale = "RdYlBu";
-            var colorReverse = false;
+            let colorScheme = "chainname";
+            let colorScale = "RdYlBu";
+            let colorReverse = false;
             if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
-                colorScale = "rainbow";
+                colorScale = "spectral";
                 colorReverse = true;
             }
 
@@ -403,7 +403,7 @@ class Stage{
                 atomCount > 700000
             ){
 
-                var scaleFactor = (
+                let scaleFactor = (
                     Math.min(
                         1.5,
                         Math.max(
@@ -533,18 +533,18 @@ class Stage{
      */
     loadFile( path, params ){
 
-        var p = Object.assign( {}, this.defaultFileParams, params );
+        const p = Object.assign( {}, this.defaultFileParams, params );
 
         // placeholder component
-        var component = new Component( this, p );
+        let component = new Component( this, p );
         component.name = getFileInfo( path ).name;
         this.addComponent( component );
 
         // tasks
-        var tasks = this.tasks;
+        const tasks = this.tasks;
         tasks.increment();
 
-        var onLoadFn = function( object ){
+        const onLoadFn = function( object ){
 
             // remove placeholder component
             this.removeComponent( component );
@@ -563,7 +563,7 @@ class Stage{
 
         }.bind( this );
 
-        var onErrorFn = function( e ){
+        const onErrorFn = function( e ){
 
             component.setStatus( e );
             tasks.decrement();
@@ -571,8 +571,8 @@ class Stage{
 
         };
 
-        var ext = defaults( p.ext, getFileInfo( path ).ext );
-        var promise;
+        const ext = defaults( p.ext, getFileInfo( path ).ext );
+        let promise;
 
         if( ext === "dcd" ){
             promise = Promise.reject( "loadFile: ext 'dcd' must be loaded into a structure component" );
@@ -612,10 +612,10 @@ class Stage{
      */
     addComponentFromObject( object, params ){
 
-        var CompClass = ComponentRegistry.get( object.type );
+        const CompClass = ComponentRegistry.get( object.type );
 
         if( CompClass ){
-            var component = new CompClass( this, object, params );
+            const component = new CompClass( this, object, params );
             this.addComponent( component );
             return component
         }
@@ -631,7 +631,7 @@ class Stage{
      */
     removeComponent( component ){
 
-        var idx = this.compList.indexOf( component );
+        const idx = this.compList.indexOf( component );
         if( idx !== -1 ){
             this.compList.splice( idx, 1 );
             component.dispose();
@@ -698,7 +698,7 @@ class Stage{
             return;
         }
 
-        var self = this;
+        const self = this;
         element = element || this.viewer.container;
         this.lastFullscreenElement = element;
 
@@ -713,7 +713,7 @@ class Stage{
 
             if( !getFullscreenElement() && self.lastFullscreenElement ){
 
-                var element = self.lastFullscreenElement;
+                const element = self.lastFullscreenElement;
                 element.style.width = element.dataset.normalWidth;
                 element.style.height = element.dataset.normalHeight;
 
@@ -914,8 +914,8 @@ class Stage{
      */
     makeImage( params ){
 
-        var viewer = this.viewer;
-        var tasks = this.tasks;
+        const viewer = this.viewer;
+        const tasks = this.tasks;
 
         return new Promise( function( resolve, reject ){
 
@@ -940,7 +940,7 @@ class Stage{
 
         this.parameters.impostor.value = value;
 
-        var types = [
+        const types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
             "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
@@ -954,7 +954,7 @@ class Stage{
                 return;
             }
 
-            var p = repr.getParameters();
+            const p = repr.getParameters();
             p.disableImpostor = !value;
             repr.build( p );
 
@@ -966,11 +966,11 @@ class Stage{
 
         this.parameters.quality.value = value;
 
-        var types = [
+        const types = [
             "tube", "cartoon", "ribbon", "trace", "rope"
         ];
 
-        var impostorTypes = [
+        const impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
             "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
@@ -980,7 +980,7 @@ class Stage{
 
             if( repr.type === "script" ) return;
 
-            var p = repr.getParameters();
+            const p = repr.getParameters();
 
             if( !types.includes( repr.getType() ) ){
 
@@ -1046,7 +1046,7 @@ class Stage{
      */
     getComponentsByName( name, type ){
 
-        var compList = [];
+        const compList = [];
 
         this.eachComponent( function( comp ){
 
@@ -1067,7 +1067,7 @@ class Stage{
      */
     getComponentsByObject( object ){
 
-        var compList = [];
+        const compList = [];
 
         this.eachComponent( function( comp ){
 
@@ -1089,7 +1089,7 @@ class Stage{
      */
     getRepresentationsByName( name, type ){
 
-        var compName, reprName;
+        let compName, reprName;
 
         if( typeof name !== "object" ){
             compName = undefined;
@@ -1099,7 +1099,7 @@ class Stage{
             reprName = name.repr;
         }
 
-        var reprList = [];
+        const reprList = [];
 
         this.eachRepresentation( function( repr, comp ){
 
@@ -1124,8 +1124,8 @@ class Stage{
      */
     getAnythingByName( name ){
 
-        var compList = this.getComponentsByName( name ).list;
-        var reprList = this.getRepresentationsByName( name ).list;
+        const compList = this.getComponentsByName( name ).list;
+        const reprList = this.getRepresentationsByName( name ).list;
 
         return new Collection( compList.concat( reprList ) );
 
