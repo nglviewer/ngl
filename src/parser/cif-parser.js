@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
@@ -25,6 +25,14 @@ const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
 const reDoubleQuote = /"/g;
 const reTrimQuotes = /^['"]+|['"]+$/g;
 
+
+function trimQuotes( str ){
+    if( str && str[0] === str[ str.length-1 ] && ( str[0] === "'" || str[0] === '"' ) ){
+        return str.substring( 1,  str.length-1 );
+    }else{
+        return str;
+    }
+}
 
 function ensureArray( dict, field ){
     if( !Array.isArray( dict[ field ] ) ){
@@ -159,6 +167,131 @@ function parseChemComp( cif, structure, structureBuilder ){
             structure.bondStore.addBond( ap1, ap2, bondOrder );
 
         }
+
+    }
+
+}
+
+
+function parseCore( cif, structure, structureBuilder ){
+
+    var atomStore = structure.atomStore;
+    var atomMap = structure.atomMap;
+
+    if( cif.data ){
+        structure.id = cif.data;
+        structure.name = cif.data;
+    }
+
+    structure.unitcell = new Unitcell( {
+        a: parseFloat( cif.cell_length_a ),
+        b: parseFloat( cif.cell_length_b ),
+        c: parseFloat( cif.cell_length_c ),
+        alpha: parseFloat( cif.cell_angle_alpha ),
+        beta: parseFloat( cif.cell_angle_beta ),
+        gamma: parseFloat( cif.cell_angle_gamma ),
+        spacegroup: trimQuotes( cif.symmetry_space_group_name_H )
+    } );
+
+    const v = new Vector3();
+    const c = new Vector3();
+    const n = cif.atom_site_type_symbol.length;
+
+    for( let i = 0; i < n; ++i ){
+
+        atomStore.growIfFull();
+
+        const atomname = cif.atom_site_label[ i ];
+        const element = cif.atom_site_type_symbol[ i ];
+
+        atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+        v.set(
+            cif.atom_site_fract_x[ i ],
+            cif.atom_site_fract_y[ i ],
+            cif.atom_site_fract_z[ i ]
+        );
+        v.applyMatrix4( structure.unitcell.fracToCart );
+        c.add( v );
+
+        atomStore.x[ i ] = v.x;
+        atomStore.y[ i ] = v.y;
+        atomStore.z[ i ] = v.z;
+        atomStore.occupancy[ i ] = parseFloat( cif.atom_site_occupancy[ i ] );
+        atomStore.serial[ i ] = i;
+
+        structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+    }
+
+    c.divideScalar( n );
+    structure.center = c;
+    buildUnitcellAssembly( structure );
+
+    const v2 = new Vector3();
+    const v3 = new Vector3();
+    const ml = structure.biomolDict.SUPERCELL.partList[ 0 ].matrixList;
+
+    let k = n;
+
+    function covalent( idx ){
+        return atomMap.get( atomStore.atomTypeId[ idx ] ).covalent;
+    }
+    const identityMatrix = new Matrix4();
+
+    for( let i = 0; i < n; ++i ){
+
+        const covalentI = covalent( i );
+
+        v.set(
+            atomStore.x[ i ],
+            atomStore.y[ i ],
+            atomStore.z[ i ]
+        );
+
+        ml.forEach( function( m ){
+
+            if( identityMatrix.equals( m ) ) return;
+
+            v2.copy( v );
+            v2.applyMatrix4( m );
+
+            for( let j = 0; j < n; ++j ){
+
+                v3.set(
+                    atomStore.x[ j ],
+                    atomStore.y[ j ],
+                    atomStore.z[ j ]
+                );
+
+                const distSquared = v2.distanceToSquared( v3 );
+                const d = covalent( j ) + covalentI;
+                const d1 = d + 0.3;
+                const d2 = d - 0.5;
+
+                if( distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 ) ){
+
+                    atomStore.growIfFull();
+
+                    atomStore.atomTypeId[ k ] = atomStore.atomTypeId[ i ];
+                    atomStore.x[ k ] = v2.x;
+                    atomStore.y[ k ] = v2.y;
+                    atomStore.z[ k ] = v2.z;
+                    atomStore.occupancy[ k ] = atomStore.occupancy[ i ];
+                    atomStore.serial[ k ] = k;
+                    atomStore.altloc[ k ] = "A".charCodeAt( 0 );
+
+                    structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+                    k += 1;
+                    return;
+
+                }
+
+            }
+
+        } );
+
 
     }
 
@@ -437,16 +570,9 @@ function processSymmetry( cif, structure, asymIdDict ){
 
     if( cif.symmetry ){
 
-        var symmetry = cif.symmetry;
-
-        var sGroup = symmetry[ "space_group_name_H-M" ];
-        if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-            ( sGroup[0] === "'" || sGroup[0] === '"' )
-        ){
-            sGroup = sGroup.substring( 1, sGroup.length-1 );
-        }
-
-        unitcellDict.spacegroup = sGroup;
+        unitcellDict.spacegroup = trimQuotes(
+            cif.symmetry[ "space_group_name_H-M" ]
+        );
 
     }
 
@@ -747,7 +873,7 @@ class CifParser extends StructureParser{
 
                 }else if( line.substring( 0, 5 )==="data_" ){
 
-                    // var data = line.substring( 5 );
+                    cif.data = line.substring( 5 ).trim();
 
                     // Log.log( "DATA", data );
 
@@ -1087,6 +1213,15 @@ class CifParser extends StructureParser{
             s.finalizeAtoms();
             s.finalizeBonds();
             assignResidueTypeBonds( s );
+
+        }else if( cif.atom_site_type_symbol && cif.atom_site_label && cif.atom_site_fract_x ){
+
+            parseCore( cif, s, sb );
+            sb.finalize();
+            s.finalizeAtoms();
+            calculateBonds( s );
+            s.finalizeBonds();
+            // assignResidueTypeBonds( s );
 
         }else{
 
