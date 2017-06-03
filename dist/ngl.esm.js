@@ -46596,6 +46596,171 @@ var CyclicResname = [ "HIS", "PHE", "PRO", "TRP", "TYR" ];
 var AliphaticResname = [ "ALA", "GLY", "ILE", "LEU", "VAL" ];
 
 
+function atomTestFn( a, s ){
+
+    // returning -1 means the rule is not applicable
+    if( s.atomname===undefined && s.element===undefined &&
+            s.altloc===undefined && s.atomindex===undefined &&
+            s.keyword===undefined && s.inscode===undefined &&
+            s.resname===undefined && s.sstruc===undefined &&
+            s.resno===undefined && s.chainname===undefined &&
+            s.model===undefined
+    ) { return -1; }
+
+    if( s.keyword!==undefined ){
+        if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) { return false; }
+        if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) { return false; }
+        if( s.keyword===kwd.BONDED && !a.isBonded() ) { return false; }
+        if( s.keyword===kwd.RING && !a.isRing() ) { return false; }
+
+        if( s.keyword===kwd.HETERO && !a.isHetero() ) { return false; }
+        if( s.keyword===kwd.PROTEIN && !a.isProtein() ) { return false; }
+        if( s.keyword===kwd.NUCLEIC && !a.isNucleic() ) { return false; }
+        if( s.keyword===kwd.RNA && !a.isRna() ) { return false; }
+        if( s.keyword===kwd.DNA && !a.isDna() ) { return false; }
+        if( s.keyword===kwd.POLYMER && !a.isPolymer() ) { return false; }
+        if( s.keyword===kwd.WATER && !a.isWater() ) { return false; }
+        if( s.keyword===kwd.HELIX && !a.isHelix() ) { return false; }
+        if( s.keyword===kwd.SHEET && !a.isSheet() ) { return false; }
+        if( s.keyword===kwd.TURN && !a.isTurn() ) { return false; }
+        if( s.keyword===kwd.ION && !a.isIon() ) { return false; }
+        if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) { return false; }
+    }
+
+    if( s.atomname!==undefined && s.atomname!==a.atomname ) { return false; }
+    if( s.element!==undefined && s.element!==a.element ) { return false; }
+    if( s.altloc!==undefined && s.altloc!==a.altloc ) { return false; }
+
+    if( s.atomindex!==undefined &&
+            binarySearchIndexOf( s.atomindex, a.index ) < 0
+    ) { return false; }
+
+    if( s.resname!==undefined ){
+        if( Array.isArray( s.resname ) ){
+            if( !s.resname.includes( a.resname ) ) { return false; }
+        }else{
+            if( s.resname!==a.resname ) { return false; }
+        }
+    }
+    if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) { return false; }
+    if( s.resno!==undefined ){
+        if( Array.isArray( s.resno ) && s.resno.length===2 ){
+            if( s.resno[0]>a.resno || s.resno[1]<a.resno ) { return false; }
+        }else{
+            if( s.resno!==a.resno ) { return false; }
+        }
+    }
+    if( s.inscode!==undefined && s.inscode!==a.inscode ) { return false; }
+
+    if( s.chainname!==undefined && s.chainname!==a.chainname ) { return false; }
+    if( s.model!==undefined && s.model!==a.modelIndex ) { return false; }
+
+    return true;
+
+}
+
+
+function residueTestFn( r, s ){
+
+    // returning -1 means the rule is not applicable
+    if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
+            s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
+            s.atomindex===undefined &&
+            ( s.keyword===undefined || AtomOnlyKeywords.includes( s.keyword ) )
+    ) { return -1; }
+
+    if( s.keyword!==undefined ){
+        if( s.keyword===kwd.HETERO && !r.isHetero() ) { return false; }
+        if( s.keyword===kwd.PROTEIN && !r.isProtein() ) { return false; }
+        if( s.keyword===kwd.NUCLEIC && !r.isNucleic() ) { return false; }
+        if( s.keyword===kwd.RNA && !r.isRna() ) { return false; }
+        if( s.keyword===kwd.DNA && !r.isDna() ) { return false; }
+        if( s.keyword===kwd.POLYMER && !r.isPolymer() ) { return false; }
+        if( s.keyword===kwd.WATER && !r.isWater() ) { return false; }
+        if( s.keyword===kwd.HELIX && !r.isHelix() ) { return false; }
+        if( s.keyword===kwd.SHEET && !r.isSheet() ) { return false; }
+        if( s.keyword===kwd.TURN && !r.isTurn() ) { return false; }
+        if( s.keyword===kwd.ION && !r.isIon() ) { return false; }
+        if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) { return false; }
+    }
+
+    if( s.atomindex!==undefined &&
+            rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
+    ) { return false; }
+
+    if( s.resname!==undefined ){
+        if( Array.isArray( s.resname ) ){
+            if( !s.resname.includes( r.resname ) ) { return false; }
+        }else{
+            if( s.resname!==r.resname ) { return false; }
+        }
+    }
+    if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) { return false; }
+    if( s.resno!==undefined ){
+        if( Array.isArray( s.resno ) && s.resno.length===2 ){
+            if( s.resno[0]>r.resno || s.resno[1]<r.resno ) { return false; }
+        }else{
+            if( s.resno!==r.resno ) { return false; }
+        }
+    }
+    if( s.inscode!==undefined && s.inscode!==r.inscode ) { return false; }
+
+    if( s.chainname!==undefined && s.chainname!==r.chainname ) { return false; }
+    if( s.model!==undefined && s.model!==r.modelIndex ) { return false; }
+
+    return true;
+
+}
+
+
+function chainTestFn( c, s ){
+
+    // returning -1 means the rule is not applicable
+    if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
+            ( s.keyword===undefined || !ChainKeywords.includes( s.keyword ) )
+    ) { return -1; }
+
+    if( s.keyword!==undefined ){
+        if( s.keyword===kwd.HETERO && !c.isHetero() ) { return false; }
+        if( s.keyword===kwd.PROTEIN && !c.isProtein() ) { return false; }
+        if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) { return false; }
+        if( s.keyword===kwd.RNA && !c.isRna() ) { return false; }
+        if( s.keyword===kwd.DNA && !c.isDna() ) { return false; }
+        if( s.keyword===kwd.POLYMER && !c.isPolymer() ) { return false; }
+        if( s.keyword===kwd.WATER && !c.isWater() ) { return false; }
+        if( s.keyword===kwd.ION && !c.isIon() ) { return false; }
+        if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) { return false; }
+    }
+
+    if( s.atomindex!==undefined &&
+            rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
+    ) { return false; }
+
+    if( s.chainname!==undefined && s.chainname!==c.chainname ) { return false; }
+
+    if( s.model!==undefined && s.model!==c.modelIndex ) { return false; }
+
+    return true;
+
+}
+
+
+function modelTestFn( m, s ){
+
+    // returning -1 means the rule is not applicable
+    if( s.model===undefined && s.atomindex===undefined ) { return -1; }
+
+    if( s.atomindex!==undefined &&
+            rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
+    ) { return false; }
+
+    if( s.model!==undefined && s.model!==m.index ) { return false; }
+
+    return true;
+
+}
+
+
 /**
  * Selection
  */
@@ -47101,11 +47266,11 @@ Selection$1.prototype._makeTest = function _makeTest ( fn, selection ){
 
         var and = selection.operator === "AND";
         var na = false;
-        var ret;
 
         for( var i = 0; i < n; ++i ){
 
             var s = selection.rules[ i ];
+            var ret = (void 0);
 
             if( s.hasOwnProperty( "operator" ) ){
 
@@ -47116,7 +47281,6 @@ Selection$1.prototype._makeTest = function _makeTest ( fn, selection ){
                 }
 
                 if( ret === -1 ){
-                    // return -1;
                     na = true;
                     continue;
                 }else if( ret === true ){
@@ -47136,7 +47300,6 @@ Selection$1.prototype._makeTest = function _makeTest ( fn, selection ){
                 // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
 
                 if( ret === -1 ){
-                    // return -1;
                     na = true;
                     continue;
                 }else if( ret === true ){
@@ -47230,70 +47393,7 @@ Selection$1.prototype.makeAtomTest = function makeAtomTest ( atomOnly ){
 
     }
 
-    var fn = function( a, s ){
-
-        // returning -1 means the rule is not applicable
-        if( s.atomname===undefined && s.element===undefined &&
-                s.altloc===undefined && s.atomindex===undefined &&
-                s.keyword===undefined && s.inscode===undefined &&
-                s.resname===undefined && s.sstruc===undefined &&
-                s.resno===undefined && s.chainname===undefined &&
-                s.model===undefined
-        ) { return -1; }
-
-        if( s.keyword!==undefined ){
-            if( s.keyword===kwd.BACKBONE && !a.isBackbone() ) { return false; }
-            if( s.keyword===kwd.SIDECHAIN && !a.isSidechain() ) { return false; }
-            if( s.keyword===kwd.BONDED && !a.isBonded() ) { return false; }
-            if( s.keyword===kwd.RING && !a.isRing() ) { return false; }
-
-            if( s.keyword===kwd.HETERO && !a.isHetero() ) { return false; }
-            if( s.keyword===kwd.PROTEIN && !a.isProtein() ) { return false; }
-            if( s.keyword===kwd.NUCLEIC && !a.isNucleic() ) { return false; }
-            if( s.keyword===kwd.RNA && !a.isRna() ) { return false; }
-            if( s.keyword===kwd.DNA && !a.isDna() ) { return false; }
-            if( s.keyword===kwd.POLYMER && !a.isPolymer() ) { return false; }
-            if( s.keyword===kwd.WATER && !a.isWater() ) { return false; }
-            if( s.keyword===kwd.HELIX && !a.isHelix() ) { return false; }
-            if( s.keyword===kwd.SHEET && !a.isSheet() ) { return false; }
-            if( s.keyword===kwd.TURN && !a.isTurn() ) { return false; }
-            if( s.keyword===kwd.ION && !a.isIon() ) { return false; }
-            if( s.keyword===kwd.SACCHARIDE && !a.isSaccharide() ) { return false; }
-        }
-
-        if( s.atomname!==undefined && s.atomname!==a.atomname ) { return false; }
-        if( s.element!==undefined && s.element!==a.element ) { return false; }
-        if( s.altloc!==undefined && s.altloc!==a.altloc ) { return false; }
-
-        if( s.atomindex!==undefined &&
-                binarySearchIndexOf( s.atomindex, a.index ) < 0
-        ) { return false; }
-
-        if( s.resname!==undefined ){
-            if( Array.isArray( s.resname ) ){
-                if( !s.resname.includes( a.resname ) ) { return false; }
-            }else{
-                if( s.resname!==a.resname ) { return false; }
-            }
-        }
-        if( s.sstruc!==undefined && s.sstruc!==a.sstruc ) { return false; }
-        if( s.resno!==undefined ){
-            if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                if( s.resno[0]>a.resno || s.resno[1]<a.resno ) { return false; }
-            }else{
-                if( s.resno!==a.resno ) { return false; }
-            }
-        }
-        if( s.inscode!==undefined && s.inscode!==a.inscode ) { return false; }
-
-        if( s.chainname!==undefined && s.chainname!==a.chainname ) { return false; }
-        if( s.model!==undefined && s.model!==a.modelIndex ) { return false; }
-
-        return true;
-
-    };
-
-    return this._makeTest( fn, selection );
+    return this._makeTest( atomTestFn, selection );
 
 };
 
@@ -47321,59 +47421,7 @@ Selection$1.prototype.makeResidueTest = function makeResidueTest ( residueOnly )
 
     }
 
-    var fn = function( r, s ){
-
-        // returning -1 means the rule is not applicable
-        if( s.resname===undefined && s.resno===undefined && s.inscode===undefined &&
-                s.sstruc===undefined && s.model===undefined && s.chainname===undefined &&
-                s.atomindex===undefined &&
-                ( s.keyword===undefined || AtomOnlyKeywords.includes( s.keyword ) )
-        ) { return -1; }
-
-        if( s.keyword!==undefined ){
-            if( s.keyword===kwd.HETERO && !r.isHetero() ) { return false; }
-            if( s.keyword===kwd.PROTEIN && !r.isProtein() ) { return false; }
-            if( s.keyword===kwd.NUCLEIC && !r.isNucleic() ) { return false; }
-            if( s.keyword===kwd.RNA && !r.isRna() ) { return false; }
-            if( s.keyword===kwd.DNA && !r.isDna() ) { return false; }
-            if( s.keyword===kwd.POLYMER && !r.isPolymer() ) { return false; }
-            if( s.keyword===kwd.WATER && !r.isWater() ) { return false; }
-            if( s.keyword===kwd.HELIX && !r.isHelix() ) { return false; }
-            if( s.keyword===kwd.SHEET && !r.isSheet() ) { return false; }
-            if( s.keyword===kwd.TURN && !r.isTurn() ) { return false; }
-            if( s.keyword===kwd.ION && !r.isIon() ) { return false; }
-            if( s.keyword===kwd.SACCHARIDE && !r.isSaccharide() ) { return false; }
-        }
-
-        if( s.atomindex!==undefined &&
-                rangeInSortedArray( s.atomindex, r.atomOffset, r.atomEnd ) === 0
-        ) { return false; }
-
-        if( s.resname!==undefined ){
-            if( Array.isArray( s.resname ) ){
-                if( !s.resname.includes( r.resname ) ) { return false; }
-            }else{
-                if( s.resname!==r.resname ) { return false; }
-            }
-        }
-        if( s.sstruc!==undefined && s.sstruc!==r.sstruc ) { return false; }
-        if( s.resno!==undefined ){
-            if( Array.isArray( s.resno ) && s.resno.length===2 ){
-                if( s.resno[0]>r.resno || s.resno[1]<r.resno ) { return false; }
-            }else{
-                if( s.resno!==r.resno ) { return false; }
-            }
-        }
-        if( s.inscode!==undefined && s.inscode!==r.inscode ) { return false; }
-
-        if( s.chainname!==undefined && s.chainname!==r.chainname ) { return false; }
-        if( s.model!==undefined && s.model!==r.modelIndex ) { return false; }
-
-        return true;
-
-    };
-
-    return this._makeTest( fn, selection );
+    return this._makeTest( residueTestFn, selection );
 
 };
 
@@ -47404,38 +47452,9 @@ Selection$1.prototype.makeChainTest = function makeChainTest ( chainOnly ){
 
     }
 
-    var fn = function( c, s ){
 
-        // returning -1 means the rule is not applicable
-        if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
-                ( s.keyword===undefined || !ChainKeywords.includes( s.keyword ) )
-        ) { return -1; }
 
-        if( s.keyword!==undefined ){
-            if( s.keyword===kwd.HETERO && !c.isHetero() ) { return false; }
-            if( s.keyword===kwd.PROTEIN && !c.isProtein() ) { return false; }
-            if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) { return false; }
-            if( s.keyword===kwd.RNA && !c.isRna() ) { return false; }
-            if( s.keyword===kwd.DNA && !c.isDna() ) { return false; }
-            if( s.keyword===kwd.POLYMER && !c.isPolymer() ) { return false; }
-            if( s.keyword===kwd.WATER && !c.isWater() ) { return false; }
-            if( s.keyword===kwd.ION && !c.isIon() ) { return false; }
-            if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) { return false; }
-        }
-
-        if( s.atomindex!==undefined &&
-                rangeInSortedArray( s.atomindex, c.atomOffset, c.atomEnd ) === 0
-        ) { return false; }
-
-        if( s.chainname!==undefined && s.chainname!==c.chainname ) { return false; }
-
-        if( s.model!==undefined && s.model!==c.modelIndex ) { return false; }
-
-        return true;
-
-    };
-
-    return this._makeTest( fn, selection );
+    return this._makeTest( chainTestFn, selection );
 
 };
 
@@ -47466,22 +47485,7 @@ Selection$1.prototype.makeModelTest = function makeModelTest ( modelOnly ){
 
     }
 
-    var fn = function( m, s ){
-
-        // returning -1 means the rule is not applicable
-        if( s.model===undefined && s.atomindex===undefined ) { return -1; }
-
-        if( s.atomindex!==undefined &&
-                rangeInSortedArray( s.atomindex, m.atomOffset, m.atomEnd ) === 0
-        ) { return false; }
-
-        if( s.model!==undefined && s.model!==m.index ) { return false; }
-
-        return true;
-
-    };
-
-    return this._makeTest( fn, selection );
+    return this._makeTest( modelTestFn, selection );
 
 };
 
@@ -62241,23 +62245,21 @@ function buildUnitcellAssembly( structure ){
     var vec = new Vector3();
     var supercellAssembly = new Assembly( "SUPERCELL" );
     var supercellMatrixList = Array.prototype.concat.call(
-        getMatrixList(),                         // 555
-        getMatrixList( vec.set(  1,  1,  1 ) ),  // 666
-        getMatrixList( vec.set( -1, -1, -1 ) ),  // 444
-
         getMatrixList( vec.set(  1,  0,  0 ) ),  // 655
-        getMatrixList( vec.set(  1,  1,  0 ) ),  // 665
-        getMatrixList( vec.set(  1,  0,  1 ) ),  // 656
         getMatrixList( vec.set(  0,  1,  0 ) ),  // 565
-        getMatrixList( vec.set(  0,  1,  1 ) ),  // 566
         getMatrixList( vec.set(  0,  0,  1 ) ),  // 556
 
         getMatrixList( vec.set( -1,  0,  0 ) ),  // 455
+        getMatrixList( vec.set(  0, -1,  0 ) ),  // 545
+        getMatrixList( vec.set(  0,  0, -1 ) ),  // 554
+
+        getMatrixList( vec.set(  1,  1,  0 ) ),  // 665
+        getMatrixList( vec.set(  1,  0,  1 ) ),  // 656
+        getMatrixList( vec.set(  0,  1,  1 ) ),  // 566
+
         getMatrixList( vec.set( -1, -1,  0 ) ),  // 445
         getMatrixList( vec.set( -1,  0, -1 ) ),  // 454
-        getMatrixList( vec.set(  0, -1,  0 ) ),  // 545
         getMatrixList( vec.set(  0, -1, -1 ) ),  // 544
-        getMatrixList( vec.set(  0,  0, -1 ) ),  // 554
 
         getMatrixList( vec.set(  1, -1, -1 ) ),  // 644
         getMatrixList( vec.set(  1,  1, -1 ) ),  // 664
@@ -62271,7 +62273,11 @@ function buildUnitcellAssembly( structure ){
         getMatrixList( vec.set(  1,  0, -1 ) ),  // 654
         getMatrixList( vec.set( -1,  0,  1 ) ),  // 456
         getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
-        getMatrixList( vec.set( -1,  1,  0 ) )   // 465
+        getMatrixList( vec.set( -1,  1,  0 ) ),  // 465
+
+        getMatrixList(),                         // 555
+        getMatrixList( vec.set(  1,  1,  1 ) ),  // 666
+        getMatrixList( vec.set( -1, -1, -1 ) )   // 444
     );
     if( structure.biomolDict.NCS ){
         var ncsSupercellMatrixList = [];
@@ -73569,6 +73575,7 @@ var StructureRepresentation = (function (Representation$$1) {
             }else{
                 this.radius = params.radiusType;
             }
+            delete params.radiusType;
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){
                 rebuild = true;
@@ -74981,12 +74988,12 @@ var Stage = function Stage( idOrElement, params ){
     this.tooltip = document.createElement( "div" );
     Object.assign( this.tooltip.style, {
         display: "none",
-        position: "absolute",
+        position: "fixed",
         zIndex: 10,
         pointerEvents: "none",
         backgroundColor: "rgba( 0, 0, 0, 0.6 )",
         color: "lightgrey",
-        padding: "0.5em",
+        padding: "8px",
         fontFamily: "sans-serif"
     } );
     document.body.appendChild( this.tooltip );
@@ -88004,6 +88011,14 @@ var reDoubleQuote = /"/g;
 var reTrimQuotes = /^['"]+|['"]+$/g;
 
 
+function trimQuotes( str ){
+    if( str && str[0] === str[ str.length-1 ] && ( str[0] === "'" || str[0] === '"' ) ){
+        return str.substring( 1,  str.length-1 );
+    }else{
+        return str;
+    }
+}
+
 function ensureArray( dict, field ){
     if( !Array.isArray( dict[ field ] ) ){
         Object.keys( dict ).forEach( function( key ){
@@ -88139,6 +88154,133 @@ function parseChemComp( cif, structure, structureBuilder ){
         }
 
     }
+
+}
+
+
+function parseCore( cif, structure, structureBuilder ){
+
+    var atomStore = structure.atomStore;
+    var atomMap = structure.atomMap;
+
+    if( cif.data ){
+        structure.id = cif.data;
+        structure.name = cif.data;
+    }
+
+    structure.unitcell = new Unitcell( {
+        a: parseFloat( cif.cell_length_a ),
+        b: parseFloat( cif.cell_length_b ),
+        c: parseFloat( cif.cell_length_c ),
+        alpha: parseFloat( cif.cell_angle_alpha ),
+        beta: parseFloat( cif.cell_angle_beta ),
+        gamma: parseFloat( cif.cell_angle_gamma ),
+        spacegroup: trimQuotes( cif.symmetry_space_group_name_H )
+    } );
+
+    var v = new Vector3();
+    var c = new Vector3();
+    var n = cif.atom_site_type_symbol.length;
+
+    for( var i = 0; i < n; ++i ){
+
+        atomStore.growIfFull();
+
+        var atomname = cif.atom_site_label[ i ];
+        var element = cif.atom_site_type_symbol[ i ];
+
+        atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+        v.set(
+            cif.atom_site_fract_x[ i ],
+            cif.atom_site_fract_y[ i ],
+            cif.atom_site_fract_z[ i ]
+        );
+        v.applyMatrix4( structure.unitcell.fracToCart );
+        c.add( v );
+
+        atomStore.x[ i ] = v.x;
+        atomStore.y[ i ] = v.y;
+        atomStore.z[ i ] = v.z;
+        atomStore.occupancy[ i ] = parseFloat( cif.atom_site_occupancy[ i ] );
+        atomStore.serial[ i ] = i;
+
+        structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+    }
+
+    c.divideScalar( n );
+    structure.center = c;
+    buildUnitcellAssembly( structure );
+
+    var v2 = new Vector3();
+    var v3 = new Vector3();
+    var ml = structure.biomolDict.SUPERCELL.partList[ 0 ].matrixList;
+
+    var k = n;
+
+    function covalent( idx ){
+        return atomMap.get( atomStore.atomTypeId[ idx ] ).covalent;
+    }
+    var identityMatrix = new Matrix4();
+
+    var loop = function ( i ) {
+
+        var covalentI = covalent( i );
+
+        v.set(
+            atomStore.x[ i ],
+            atomStore.y[ i ],
+            atomStore.z[ i ]
+        );
+
+        ml.forEach( function( m ){
+
+            if( identityMatrix.equals( m ) ) { return; }
+
+            v2.copy( v );
+            v2.applyMatrix4( m );
+
+            for( var j = 0; j < n; ++j ){
+
+                v3.set(
+                    atomStore.x[ j ],
+                    atomStore.y[ j ],
+                    atomStore.z[ j ]
+                );
+
+                var distSquared = v2.distanceToSquared( v3 );
+                var d = covalent( j ) + covalentI;
+                var d1 = d + 0.3;
+                var d2 = d - 0.5;
+
+                if( distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 ) ){
+
+                    atomStore.growIfFull();
+
+                    atomStore.atomTypeId[ k ] = atomStore.atomTypeId[ i ];
+                    atomStore.x[ k ] = v2.x;
+                    atomStore.y[ k ] = v2.y;
+                    atomStore.z[ k ] = v2.z;
+                    atomStore.occupancy[ k ] = atomStore.occupancy[ i ];
+                    atomStore.serial[ k ] = k;
+                    atomStore.altloc[ k ] = "A".charCodeAt( 0 );
+
+                    structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+                    k += 1;
+                    return;
+
+                }
+
+            }
+
+        } );
+
+
+    };
+
+    for( var i$1 = 0; i$1 < n; ++i$1 )loop( i$1 );
 
 }
 
@@ -88415,16 +88557,9 @@ function processSymmetry( cif, structure, asymIdDict ){
 
     if( cif.symmetry ){
 
-        var symmetry = cif.symmetry;
-
-        var sGroup = symmetry[ "space_group_name_H-M" ];
-        if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-            ( sGroup[0] === "'" || sGroup[0] === '"' )
-        ){
-            sGroup = sGroup.substring( 1, sGroup.length-1 );
-        }
-
-        unitcellDict.spacegroup = sGroup;
+        unitcellDict.spacegroup = trimQuotes(
+            cif.symmetry[ "space_group_name_H-M" ]
+        );
 
     }
 
@@ -88734,7 +88869,7 @@ var CifParser = (function (StructureParser$$1) {
 
                 }else if( line.substring( 0, 5 )==="data_" ){
 
-                    // var data = line.substring( 5 );
+                    cif.data = line.substring( 5 ).trim();
 
                     // Log.log( "DATA", data );
 
@@ -89074,6 +89209,15 @@ var CifParser = (function (StructureParser$$1) {
             s.finalizeAtoms();
             s.finalizeBonds();
             assignResidueTypeBonds( s );
+
+        }else if( cif.atom_site_type_symbol && cif.atom_site_label && cif.atom_site_fract_x ){
+
+            parseCore( cif, s, sb );
+            sb.finalize();
+            s.finalizeAtoms();
+            calculateBonds( s );
+            s.finalizeBonds();
+            // assignResidueTypeBonds( s );
 
         }else{
 
@@ -97322,7 +97466,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-3";
+var version$1 = "0.10.2-4";
 
 /**
  * @file Version
