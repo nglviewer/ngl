@@ -217,7 +217,9 @@ function parseCore( cif, structure, structureBuilder ){
         atomStore.x[ i ] = v.x;
         atomStore.y[ i ] = v.y;
         atomStore.z[ i ] = v.z;
-        atomStore.occupancy[ i ] = parseFloat( cif.atom_site_occupancy[ i ] );
+        if( cif.atom_site_occupancy ){
+            atomStore.occupancy[ i ] = parseFloat( cif.atom_site_occupancy[ i ] );
+        }
         atomStore.serial[ i ] = i;
 
         structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
