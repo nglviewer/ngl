@@ -294,6 +294,7 @@ class StructureRepresentation extends Representation{
             }else{
                 this.radius = params.radiusType;
             }
+            delete params.radiusType;
             what.radius = true;
             if( !ExtensionFragDepth || this.disableImpostor ){
                 rebuild = true;
