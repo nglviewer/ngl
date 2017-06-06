@@ -37,8 +37,6 @@ class ChainProxy{
          */
         this.index = index;
 
-        this.__residueProxy = this.structure.getResidueProxy();
-
     }
 
     /**
@@ -135,87 +133,6 @@ class ChainProxy{
     }
     set chainid ( value ) {
         this.chainStore.setChainid( this.index, value );
-    }
-
-    //
-
-    get __firstResidueProxy () {
-        this.__residueProxy.index = this.residueOffset;
-        return this.__residueProxy;
-    }
-
-    //
-
-    /**
-     * If first residue is from a protein
-     * @return {Boolean} flag
-     */
-    isProtein(){
-        return this.__firstResidueProxy.isProtein();
-    }
-
-    /**
-     * If first residue is nucleic
-     * @return {Boolean} flag
-     */
-    isNucleic(){
-        return this.__firstResidueProxy.isNucleic();
-    }
-
-    /**
-     * If first residue is rna
-     * @return {Boolean} flag
-     */
-    isRna(){
-        return this.__firstResidueProxy.isRna();
-    }
-
-    /**
-     * If first residue is dna
-     * @return {Boolean} flag
-     */
-    isDna(){
-        return this.__firstResidueProxy.isDna();
-    }
-
-    /**
-     * If first residue is a polymer
-     * @return {Boolean} flag
-     */
-    isPolymer(){
-        return this.__firstResidueProxy.isPolymer();
-    }
-
-    /**
-     * If first residue is a hetero group
-     * @return {Boolean} flag
-     */
-    isHetero(){
-        return this.__firstResidueProxy.isHetero();
-    }
-
-    /**
-     * If first residue is a water molecule
-     * @return {Boolean} flag
-     */
-    isWater(){
-        return this.__firstResidueProxy.isWater();
-    }
-
-    /**
-     * If first residue is an ion
-     * @return {Boolean} flag
-     */
-    isIon(){
-        return this.__firstResidueProxy.isIon();
-    }
-
-    /**
-     * If first residue is a saccharide
-     * @return {Boolean} flag
-     */
-    isSaccharide(){
-        return this.__firstResidueProxy.isSaccharide();
     }
 
     //

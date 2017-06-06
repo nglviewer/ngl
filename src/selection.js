@@ -37,8 +37,7 @@ const AtomOnlyKeywords = [
 ];
 
 const ChainKeywords = [
-    kwd.HETERO, kwd.PROTEIN, kwd.NUCLEIC, kwd.RNA, kwd.DNA,
-    kwd.POLYMER, kwd.WATER, kwd.ION, kwd.SACCHARIDE
+    kwd.POLYMER, kwd.WATER
 ];
 
 const SmallResname = [ "ALA", "GLY", "SER" ];
@@ -176,19 +175,12 @@ function chainTestFn( c, s ){
 
     // returning -1 means the rule is not applicable
     if( s.chainname===undefined && s.model===undefined && s.atomindex===undefined &&
-            ( s.keyword===undefined || !ChainKeywords.includes( s.keyword ) )
+            ( s.keyword===undefined || !ChainKeywords.includes( s.keyword ) || !c.entity )
     ) return -1;
 
     if( s.keyword!==undefined ){
-        if( s.keyword===kwd.HETERO && !c.isHetero() ) return false;
-        if( s.keyword===kwd.PROTEIN && !c.isProtein() ) return false;
-        if( s.keyword===kwd.NUCLEIC && !c.isNucleic() ) return false;
-        if( s.keyword===kwd.RNA && !c.isRna() ) return false;
-        if( s.keyword===kwd.DNA && !c.isDna() ) return false;
-        if( s.keyword===kwd.POLYMER && !c.isPolymer() ) return false;
-        if( s.keyword===kwd.WATER && !c.isWater() ) return false;
-        if( s.keyword===kwd.ION && !c.isIon() ) return false;
-        if( s.keyword===kwd.SACCHARIDE && !c.isSaccharide() ) return false;
+        if( s.keyword===kwd.POLYMER && !c.entity.isPolymer() ) return false;
+        if( s.keyword===kwd.WATER && !c.entity.isWater() ) return false;
     }
 
     if( s.atomindex!==undefined &&
