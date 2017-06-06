@@ -37,18 +37,45 @@ Promise.all( pdbs.map( function( id ){
     stage.tasks.onZeroOnce( function(){ stage.autoView(); } );
     stage.setParameters( { clipNear: 50 } );
 
+    addElement( createElement( "span", {
+      innerText: "near clip",
+    }, { top: "12px", left: "12px", color: "lightgrey" } ) );
     var clipRange = createElement( "input", {
       type: "range",
       value: 50,
       min: 0,
       max: 100,
       step: 1
-    }, { top: "1em", left: "1em" } );
-
+    }, { top: "28px", left: "12px" } );
     clipRange.oninput = function( e ){
         stage.setParameters( { clipNear: e.target.value } );
     };
-
     addElement( clipRange );
+
+    function center(){
+        ol.map( function( o, i ){
+            var s = o.structure;
+            var bu1 = s.biomolDict.BU1;
+            o.setPosition( bu1.getCenter( s ).negate() );
+        } );
+    }
+
+    var animateButton = createElement( "input", {
+      type: "button",
+      value: "animate",
+    }, { top: "52px", left: "12px" } );
+    var pos = [ 1175, 875, 400, -200, -1000 ];
+    animateButton.onclick = function( e ){
+        center();
+        var ac = stage.animationControls;
+        ol.map( function( o, i ){
+            var s = o.structure;
+            var bu1 = s.biomolDict.BU1;
+            var p = bu1.getCenter( s );
+            p.x += pos[ i ];
+            ac.moveComponent( ol[ i ], p, 1500 );
+        } );
+    };
+    addElement( animateButton );
 
 } );

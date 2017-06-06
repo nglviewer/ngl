@@ -20,7 +20,7 @@ import {
 class AnimationControls{
 
     /**
-     * create animation controls
+     * Create animation controls
      * @param  {Stage} stage - the stage object
      */
     constructor( stage ){
@@ -225,6 +225,56 @@ class AnimationControls{
 
         return this.add(
             new ValueAnimation( duration, this.controls, valueFrom, valueTo, callback )
+        );
+
+    }
+
+    /**
+     * Add a component spin animation
+     * @param  {Component} component - object to move
+     * @param  {Vector3} axis - axis to spin around
+     * @param  {Number} angle - amount to spin per frame, radians
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {SpinAnimation} the animation
+     */
+    spinComponent( component, axis, angle, duration ){
+
+        return this.add(
+            new SpinAnimation( duration, component.controls, axis, angle )
+        );
+
+    }
+
+    /**
+     * Add a component rock animation
+     * @param  {Component} component - object to move
+     * @param  {Vector3} axis - axis to rock around
+     * @param  {Number} angle - amount to spin per frame, radians
+     * @param  {Number} end - maximum extend of motion, radians
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {SpinAnimation} the animation
+     */
+    rockComponent( component, axis, angle, end, duration ){
+
+        return this.add(
+            new RockAnimation( duration, component.controls, axis, angle, end )
+        );
+
+    }
+
+    /**
+     * Add a component move animation
+     * @param  {Component} component - object to move
+     * @param  {Vector3} moveTo - target position
+     * @param  {Number} duration - animation time in milliseconds
+     * @return {MoveAnimation} the animation
+     */
+    moveComponent( component, moveTo, duration ){
+
+        const moveFrom = component.controls.position.clone().negate();
+
+        return this.add(
+            new MoveAnimation( duration, component.controls, moveFrom, moveTo )
         );
 
     }

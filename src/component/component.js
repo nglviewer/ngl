@@ -11,6 +11,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
 import { generateUUID } from "../math/math-utils.js";
+import ComponentControls from "../controls/component-controls.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
 
@@ -88,6 +89,8 @@ class Component{
         this.quaternion = new Quaternion();
         this.scale = new Vector3( 1, 1, 1 );
         this.transform = new Matrix4();
+
+        this.controls = new ComponentControls( this );
 
     }
 

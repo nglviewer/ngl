@@ -14,7 +14,7 @@ import {
 
 
 /**
- * Scene orientation matrix, a 4x4 transformation matrix with rotation part
+ * Orientation matrix, a 4x4 transformation matrix with rotation part
  * used for scene rotation, scale part for scene camera distance and
  * position part for scene translation
  * @typedef {Matrix4} OrientationMatrix - orientation matrix
