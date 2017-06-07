@@ -1294,6 +1294,8 @@ class CifParser extends StructureParser{
             }
             buildUnitcellAssembly( s );
 
+            s.extraData.cif = cif;
+
         }
 
         if( Debug ) Log.timeEnd( "CifParser._parse " + this.name );

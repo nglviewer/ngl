@@ -50,6 +50,13 @@ import ModelProxy from "../proxy/model-proxy.js";
 
 
 /**
+ * Structure extra data.
+ * @typedef {Object} StructureExtraData - structure extra data
+ * @property {Object} [cif] - dictionary from cif parser
+ */
+
+
+/**
  * Structure
  */
 class Structure{
@@ -81,6 +88,10 @@ class Structure{
          * @type {StructureHeader}
          */
         this.header = {};
+        /**
+         * @type {StructureExtraData}
+         */
+        this.extraData = {};
 
         this.atomSetCache = undefined;
         this.atomSetDict = {};
