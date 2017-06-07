@@ -215,15 +215,29 @@ class Component{
 
     }
 
-    addAnnotation( position, text ){
+    /**
+     * Add an anotation object
+     * @param {Vector3} position - the 3d position
+     * @param {String|Element} content - the HTML content
+     * @param {Object} [params] - parameters
+     * @param {Integer} params.offsetX - 2d offset in x direction
+     * @param {Integer} params.offsetY - 2d offset in y direction
+     * @return {Annotation} the added annotation object
+     */
+    addAnnotation( position, content, params ){
 
-        const annotation = new Annotation( this, position, text );
+        const annotation = new Annotation( this, position, content, params );
         this.annotationList.push( annotation );
 
         return annotation;
 
     }
 
+    /**
+     * Remove the give annotation from the component
+     * @param {Annotation} annotation - the annotation to remove
+     * @return {undefined}
+     */
     removeAnnotation( annotation ){
 
         var idx = this.annotationList.indexOf( annotation );
@@ -234,6 +248,10 @@ class Component{
 
     }
 
+    /**
+     * Remove all annotations from the component
+     * @return {undefined}
+     */
     removeAllAnnotations(){
 
         this.annotationList.forEach( function( annotation ){

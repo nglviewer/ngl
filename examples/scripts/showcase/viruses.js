@@ -32,6 +32,7 @@ Promise.all( pdbs.map( function( id ){
             scaleFactor: 0.10,
             surfaceType: "sas"
         } );
+        o.addAnnotation( bu1.getCenter( s ), o.name );
     } );
 
     stage.tasks.onZeroOnce( function(){ stage.autoView(); } );
