@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
+import { smoothstep } from "../math/math-utils.js";
 
 
 /**
@@ -40,6 +41,7 @@ class Annotation{
         this._viewerPosition = new Vector3();
         this._updateViewerPosition();
         this._canvasPosition = new Vector3();
+        this._cameraPosition = new Vector3();
 
         this.element = document.createElement( "div" );
         Object.assign( this.element.style, {
@@ -124,13 +126,32 @@ class Annotation{
 
     _update(){
 
+        if( !this.getVisibility() ) return;
+
         const s = this.element.style;
         const cp = this._canvasPosition;
+        const vp = this._viewerPosition;
         const cr = this._clientRect;
 
-        this.stage.viewerControls.getPositionOnCanvas(
-            this._viewerPosition, cp
+        this._cameraPosition.copy( vp )
+            .add( this.viewer.translationGroup.position )
+            .applyMatrix4( this.viewer.rotationGroup.matrix )
+            .sub( this.viewer.camera.position );
+
+        if( this._cameraPosition.z < 0 ){
+            s.display = "none";
+            return;
+        }else{
+            s.display = "block";
+        }
+
+        s.opacity = 1 - smoothstep(
+            this.viewer.scene.fog.near,
+            this.viewer.scene.fog.far,
+            this._cameraPosition.length()
         );
+
+        this.stage.viewerControls.getPositionOnCanvas( vp, cp );
 
         s.bottom = ( this.offsetX + cp.y + cr.height / 2 ) + "px";
         s.left = ( this.offsetY + cp.x - cr.width / 2 ) + "px";
