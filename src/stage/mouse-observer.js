@@ -243,7 +243,7 @@ class MouseObserver{
         }
         if( this.scrolled || ( !this.moving && !this.hovering ) ){
             this.scrolled = false;
-            if( this.hoverTimeout !== -1 ){
+            if( this.hoverTimeout !== -1 && this.overElement ){
                 this.hovering = true;
                 const cp = this.canvasPosition;
                 this.signals.hovered.dispatch( cp.x, cp.y );
@@ -293,6 +293,9 @@ class MouseObserver{
     _onMousemove( event ){
         if( event.target === this.domElement ){
             event.preventDefault();
+            this.overElement = true;
+        }else{
+            this.overElement = false;
         }
         this._setKeys( event );
         this.moving = true;
@@ -401,6 +404,9 @@ class MouseObserver{
     _onTouchmove( event ){
         if( event.target === this.domElement ){
             event.preventDefault();
+            this.overElement = true;
+        }else{
+            this.overElement = false;
         }
         switch( event.touches.length ){
 
