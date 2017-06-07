@@ -10,6 +10,9 @@ import { assignResidueTypeBonds } from "../structure/structure-utils.js";
 import StructureParser from "./structure-parser.js";
 
 
+const reItem = /> <(.+)>/;
+
+
 class SdfParser extends StructureParser{
 
     get type (){ return "sdf"; }
@@ -21,50 +24,57 @@ class SdfParser extends StructureParser{
 
         if( Debug ) Log.time( "SdfParser._parse " + this.name );
 
-        var s = this.structure;
-        var sb = this.structureBuilder;
+        const s = this.structure;
+        const sb = this.structureBuilder;
 
-        var firstModelOnly = this.firstModelOnly;
-        var asTrajectory = this.asTrajectory;
+        const firstModelOnly = this.firstModelOnly;
+        const asTrajectory = this.asTrajectory;
 
-        var headerLines = this.streamer.peekLines( 2 );
+        const headerLines = this.streamer.peekLines( 2 );
 
         s.id = headerLines[ 0 ].trim();
         s.title = headerLines[ 1 ].trim();
 
-        var frames = s.frames;
-        var doFrames = false;
-        var currentFrame, currentCoord;
+        const frames = s.frames;
+        let doFrames = false;
+        let currentFrame, currentCoord;
 
-        var atomMap = s.atomMap;
-        var atomStore = s.atomStore;
+        const atomMap = s.atomMap;
+        const atomStore = s.atomStore;
         atomStore.resize( Math.round( this.streamer.data.length / 50 ) );
 
-        var ap1 = s.getAtomProxy();
-        var ap2 = s.getAtomProxy();
+        const ap1 = s.getAtomProxy();
+        const ap2 = s.getAtomProxy();
 
-        var idx = 0;
-        var lineNo = 0;
-        var modelIdx = 0;
-        var modelAtomIdxStart = 0;
+        let idx = 0;
+        let lineNo = 0;
+        let modelIdx = 0;
+        let modelAtomIdxStart = 0;
 
-        var atomCount, bondCount, atomStart, atomEnd, bondStart, bondEnd;
+        const sdfData = [];
+        let currentItem = false;
+        let currentData = {};
+        let mItem;
+        s.extraData.sdf = sdfData;
+
+        let atomCount, bondCount, atomStart, atomEnd, bondStart, bondEnd;
 
         function _parseChunkOfLines( _i, _n, lines ){
 
-            for( var i = _i; i < _n; ++i ){
+            for( let i = _i; i < _n; ++i ){
 
-                var line = lines[ i ];
+                const line = lines[ i ];
 
                 if( line.substr( 0, 4 ) === "$$$$" ){
 
                     lineNo = -1;
                     ++modelIdx;
                     modelAtomIdxStart = atomStore.count;
+                    sdfData.push( currentData );
+                    currentData = {};
+                    currentItem = false;
 
-                }
-
-                if( lineNo === 3 ){
+                }else if( lineNo === 3 ){
 
                     atomCount = parseInt( line.substr( 0, 3 ) );
                     bondCount = parseInt( line.substr( 3, 3 ) );
@@ -84,19 +94,17 @@ class SdfParser extends StructureParser{
 
                     }
 
-                }
-
-                if( lineNo >= atomStart && lineNo < atomEnd ){
+                }else if( lineNo >= atomStart && lineNo < atomEnd ){
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
-                    var x = parseFloat( line.substr( 0, 10 ) );
-                    var y = parseFloat( line.substr( 10, 10 ) );
-                    var z = parseFloat( line.substr( 20, 10 ) );
+                    const x = parseFloat( line.substr( 0, 10 ) );
+                    const y = parseFloat( line.substr( 10, 10 ) );
+                    const z = parseFloat( line.substr( 20, 10 ) );
 
                     if( asTrajectory ){
 
-                        var j = currentCoord * 3;
+                        const j = currentCoord * 3;
 
                         currentFrame[ j + 0 ] = x;
                         currentFrame[ j + 1 ] = y;
@@ -108,8 +116,8 @@ class SdfParser extends StructureParser{
 
                     }
 
-                    var element = line.substr( 31, 3 ).trim();
-                    var atomname = element + ( idx + 1 );
+                    const element = line.substr( 31, 3 ).trim();
+                    const atomname = element + ( idx + 1 );
 
                     atomStore.growIfFull();
                     atomStore.atomTypeId[ idx ] = atomMap.add( atomname, element );
@@ -123,18 +131,26 @@ class SdfParser extends StructureParser{
 
                     idx += 1;
 
-                }
-
-                if( lineNo >= bondStart && lineNo < bondEnd ){
+                }else if( lineNo >= bondStart && lineNo < bondEnd ){
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
                     if( asTrajectory && modelIdx > 0 ) continue;
 
                     ap1.index = parseInt( line.substr( 0, 3 ) ) - 1 + modelAtomIdxStart;
                     ap2.index = parseInt( line.substr( 3, 3 ) ) - 1 + modelAtomIdxStart;
-                    var order = parseInt( line.substr( 6, 3 ) );
+                    const order = parseInt( line.substr( 6, 3 ) );
 
                     s.bondStore.addBond( ap1, ap2, order );
+
+                // eslint-disable-next-line no-cond-assign
+                }else if( mItem = line.match( reItem ) ){
+
+                    currentItem = mItem[ 1 ];
+                    currentData[ currentItem ] = [];
+
+                }else if( currentItem !== false && line ){
+
+                    currentData[ currentItem ].push( line );
 
                 }
 
@@ -166,6 +182,7 @@ class SdfParser extends StructureParser{
 }
 
 ParserRegistry.add( "sdf", SdfParser );
+ParserRegistry.add( "sd", SdfParser );
 
 
 export default SdfParser;

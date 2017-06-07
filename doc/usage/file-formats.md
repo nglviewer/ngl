@@ -116,7 +116,7 @@ TODO:
 
 ### SDF
 
-Extension: **.sdf**
+Extension: **.sdf**, **.sd**
 
 Specification: [http://download.accelrys.com/freeware/ctfile-formats/](http://download.accelrys.com/freeware/ctfile-formats/)
 
@@ -137,6 +137,7 @@ Supported features:
 	* *altloc*: not available, left empty
 	* *inscode*: not available, left empty
 * Connectivity: read from bond block, includes bond order
+* Associated data items are added to the `structure.extraData` property with key `sdf`
 
 
 ### MOL2

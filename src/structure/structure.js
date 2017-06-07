@@ -53,6 +53,7 @@ import ModelProxy from "../proxy/model-proxy.js";
  * Structure extra data.
  * @typedef {Object} StructureExtraData - structure extra data
  * @property {Object} [cif] - dictionary from cif parser
+ * @property {Object[]} [sdf] - associated data items from sdf parser, one per compound
  */
 
 
