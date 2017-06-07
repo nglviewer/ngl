@@ -22,6 +22,7 @@ class Annotation{
      * @param {Object} [params] - parameters
      * @param {Integer} params.offsetX - 2d offset in x direction
      * @param {Integer} params.offsetY - 2d offset in y direction
+     * @param {Boolean} params.visible - visibility flag
      */
     constructor( component, position, content, params ){
 
@@ -29,6 +30,7 @@ class Annotation{
 
         this.offsetX = defaults( p.offsetX, 0 );
         this.offsetY = defaults( p.offsetY, 0 );
+        this.visible = defaults( p.visible, true );
 
         this.component = component;
         this.stage = component.stage;
@@ -49,12 +51,12 @@ class Annotation{
             color: "lightgrey",
             padding: "8px",
             fontFamily: "sans-serif",
-            left: "-1000px"
+            left: "-10000px"
         } );
 
         this.viewer.container.appendChild( this.element );
         this.setContent( content );
-        this.setVisibility( defaults( p.visible, true ) );
+        this.updateVisibility();
         this.viewer.signals.ticked.add( this._update, this );
         this.component.signals.matrixChanged.add( this._updateViewerPosition, this );
 
@@ -69,7 +71,7 @@ class Annotation{
 
         const displayValue = this.element.style.display;
         if( displayValue === "none" ){
-            this.element.style.left = "-1000px";
+            this.element.style.left = "-10000px";
             this.element.style.display = "block";
         }
 
@@ -95,7 +97,20 @@ class Annotation{
      */
     setVisibility( value ){
 
-        this.element.style.display = value ? "block" : "none";
+        this.visible = value;
+        this.updateVisibility();
+
+    }
+
+    getVisibility(){
+
+        return this.visible && this.component.visible;
+
+    }
+
+    updateVisibility(){
+
+        this.element.style.display = this.getVisibility() ? "block" : "none";
 
     }
 

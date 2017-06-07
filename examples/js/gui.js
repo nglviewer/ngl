@@ -1583,11 +1583,23 @@ NGL.StructureComponentWidget = function( component, stage ){
         stage.animationControls.move( component.getCenter() );
     } );
 
-    // Remove annotations
+    // Annotations visibility
 
-    var removeAnnotations = new UI.Button( "remove" ).onClick( function(){
-        component.removeAllAnnotations();
+    var showAnnotations = new UI.Button( "show" ).onClick( function(){
+        component.annotationList.forEach( function( annotation ){
+            annotation.setVisibility( true );
+        } );
     } );
+
+    var hideAnnotations = new UI.Button( "hide" ).onClick( function(){
+        component.annotationList.forEach( function( annotation ){
+            annotation.setVisibility( false );
+        } );
+    } );
+
+    var annotationButtons = new UI.Panel()
+        .setDisplay( "inline-block" )
+        .add( showAnnotations, hideAnnotations );
 
     // Open validation
 
@@ -1664,7 +1676,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Principal axes", alignAxes )
-        .addMenuEntry( "Annotations", removeAnnotations )
+        .addMenuEntry( "Annotations", annotationButtons )
         .addMenuEntry( "Validation", vali )
         .addMenuEntry( "Position", position )
         .addMenuEntry( "Rotation", rotation )

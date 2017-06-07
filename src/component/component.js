@@ -370,6 +370,10 @@ class Component{
             repr.updateVisibility();
         } );
 
+        this.annotationList.forEach( function( annotation ){
+            annotation.updateVisibility();
+        } );
+
         this.signals.visibilityChanged.dispatch( value );
 
         return this;
