@@ -142,7 +142,7 @@ class Stage{
         Object.assign( this.tooltip.style, {
             display: "none",
             position: "fixed",
-            zIndex: 10,
+            zIndex: 2 + ( parseInt( this.viewer.container.style.zIndex ) || 0 ),
             pointerEvents: "none",
             backgroundColor: "rgba( 0, 0, 0, 0.6 )",
             color: "lightgrey",

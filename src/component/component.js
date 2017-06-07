@@ -11,6 +11,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
 import { generateUUID } from "../math/math-utils.js";
+import Annotation from "../component/annotation.js";
 import ComponentControls from "../controls/component-controls.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
@@ -83,6 +84,7 @@ class Component{
         this.viewer = stage.viewer;
 
         this.reprList = [];
+        this.annotationList = [];
 
         this.matrix = new Matrix4();
         this.position = new Vector3();
@@ -213,6 +215,34 @@ class Component{
 
     }
 
+    addAnnotation( position, text ){
+
+        const annotation = new Annotation( this, position, text );
+        this.annotationList.push( annotation );
+
+        return annotation;
+
+    }
+
+    removeAnnotation( annotation ){
+
+        var idx = this.annotationList.indexOf( annotation );
+        if( idx !== -1 ){
+            this.annotationList.splice( idx, 1 );
+            annotation.dispose();
+        }
+
+    }
+
+    removeAllAnnotations(){
+
+        this.annotationList.forEach( function( annotation ){
+            annotation.dispose();
+        } );
+        this.annotationList.length = 0;
+
+    }
+
     /**
      * Add a new representation to the component
      * @param {String} type - the name of the representation
@@ -289,24 +319,22 @@ class Component{
      */
     removeAllRepresentations(){
 
-        // copy via .slice because side effects may change reprList
-        this.reprList.slice().forEach( function( repr ){
-            this.removeRepresentation( repr );
-        }, this );
-
-    }
-
-    clearRepresentations(){
-
-        console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
-        this.removeAllRepresentations();
+        this.reprList.forEach( repr => {
+            repr.dispose();
+            this.signals.representationRemoved.dispatch( repr );
+        } );
+        this.reprList.length = 0;
 
     }
 
     dispose(){
 
+        this.removeAllAnnotations();
         this.removeAllRepresentations();
+
+        delete this.annotationList;
         delete this.reprList;
+
         this.signals.disposed.dispatch();
 
     }

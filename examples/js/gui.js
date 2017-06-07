@@ -1583,6 +1583,12 @@ NGL.StructureComponentWidget = function( component, stage ){
         stage.animationControls.move( component.getCenter() );
     } );
 
+    // Remove annotations
+
+    var removeAnnotations = new UI.Button( "remove" ).onClick( function(){
+        component.removeAllAnnotations();
+    } );
+
     // Open validation
 
     function validationInputOnChange( e ){
@@ -1658,6 +1664,7 @@ NGL.StructureComponentWidget = function( component, stage ){
         )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Principal axes", alignAxes )
+        .addMenuEntry( "Annotations", removeAnnotations )
         .addMenuEntry( "Validation", vali )
         .addMenuEntry( "Position", position )
         .addMenuEntry( "Rotation", rotation )
