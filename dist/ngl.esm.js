@@ -51654,6 +51654,34 @@ function getTouchDistance( event ){
 }
 
 
+function getMouseButtons( event ){
+    if( typeof event === 'object' ){
+        if( 'buttons' in event ){
+            return event.buttons;
+        }else if( 'which' in event ){
+            var b = event.which;
+            if( b === 2 ){
+                return 4;
+            } else if( b === 3 ){
+                return 2;
+            } else if( b > 0 ){
+                return 1 << ( b - 1 );
+            }
+        }else if( 'button' in event ){
+            var b$1 = event.button;
+            if( b$1 === 1 ){
+                return 4;
+            } else if( b$1 === 2 ){
+                return 2;
+            } else if( b$1 >= 0 ){
+                return 1<<b$1;
+            }
+        }
+    }
+    return 0;
+}
+
+
 /**
  * Mouse observer
  *
@@ -51830,7 +51858,7 @@ MouseObserver.prototype._listen = function _listen (){
     }
     if( this.scrolled || ( !this.moving && !this.hovering ) ){
         this.scrolled = false;
-        if( this.hoverTimeout !== -1 ){
+        if( this.hoverTimeout !== -1 && this.overElement ){
             this.hovering = true;
             var cp = this.canvasPosition;
             this.signals.hovered.dispatch( cp.x, cp.y );
@@ -51882,6 +51910,9 @@ MouseObserver.prototype._onMousewheel = function _onMousewheel ( event ){
 MouseObserver.prototype._onMousemove = function _onMousemove ( event ){
     if( event.target === this.domElement ){
         event.preventDefault();
+        this.overElement = true;
+    }else{
+        this.overElement = false;
     }
     this._setKeys( event );
     this.moving = true;
@@ -51909,7 +51940,7 @@ MouseObserver.prototype._onMousedown = function _onMousedown ( event ){
     this.down.set( event.clientX, event.clientY );
     this.position.set( event.clientX, event.clientY );
     this.which = event.which;
-    this.buttons = event.buttons;
+    this.buttons = getMouseButtons( event );
     this.pressed = true;
     this._setCanvasPosition( event );
 };
@@ -51990,6 +52021,9 @@ MouseObserver.prototype._onTouchend = function _onTouchend ( event ){
 MouseObserver.prototype._onTouchmove = function _onTouchmove ( event ){
     if( event.target === this.domElement ){
         event.preventDefault();
+        this.overElement = true;
+    }else{
+        this.overElement = false;
     }
     switch( event.touches.length ){
 
@@ -52048,8 +52082,14 @@ MouseObserver.prototype._distance = function _distance (){
 
 MouseObserver.prototype._setCanvasPosition = function _setCanvasPosition ( event ){
     var box = this.domElement.getBoundingClientRect();
-    var offsetX = event.clientX - box.left;
-    var offsetY = event.clientY - box.top;
+    var offsetX, offsetY;
+    if( 'offsetX' in event && 'offsetY' in event ){
+        offsetX = event.offsetX;
+        offsetY = event.offsetY;
+    }else{
+        offsetX = event.clientX - box.left;
+        offsetY = event.clientY - box.top;
+    }
     this.canvasPosition.set( offsetX, box.height - offsetY );
 };
 
@@ -53928,6 +53968,161 @@ AnimationBehavior.prototype._onTick = function _onTick ( stats ){
 
 AnimationBehavior.prototype.dispose = function dispose (){
     this.viewer.signals.ticked.remove( this._onTick, this );
+};
+
+/**
+ * @file Annotation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+/**
+ * Annotation HTML element floating on top of a position rendered in 3d
+ */
+var Annotation = function Annotation( component, position, content, params ){
+
+    var p = params || {};
+
+    this.offsetX = defaults( p.offsetX, 0 );
+    this.offsetY = defaults( p.offsetY, 0 );
+    this.visible = defaults( p.visible, true );
+
+    this.component = component;
+    this.stage = component.stage;
+    this.viewer = this.stage.viewer;
+    this.position = position;
+
+    this._viewerPosition = new Vector3();
+    this._updateViewerPosition();
+    this._canvasPosition = new Vector3();
+    this._cameraPosition = new Vector3();
+
+    this.element = document.createElement( "div" );
+    Object.assign( this.element.style, {
+        display: "block",
+        position: "fixed",
+        zIndex: 1 + ( parseInt( this.viewer.container.style.zIndex ) || 0 ),
+        pointerEvents: "none",
+        backgroundColor: "rgba( 0, 0, 0, 0.6 )",
+        color: "lightgrey",
+        padding: "8px",
+        fontFamily: "sans-serif",
+        left: "-10000px"
+    } );
+
+    this.viewer.container.appendChild( this.element );
+    this.setContent( content );
+    this.updateVisibility();
+    this.viewer.signals.ticked.add( this._update, this );
+    this.component.signals.matrixChanged.add( this._updateViewerPosition, this );
+
+};
+
+/**
+ * Set HTML content of the annotation
+ * @param {String|Element} value - HTML content
+ * @return {undefined}
+ */
+Annotation.prototype.setContent = function setContent ( value ){
+
+    var displayValue = this.element.style.display;
+    if( displayValue === "none" ){
+        this.element.style.left = "-10000px";
+        this.element.style.display = "block";
+    }
+
+    if( value instanceof Element ){
+        this.element.innerHTML = "";
+        this.element.appendChild( value );
+    }else{
+        this.element.innerHTML = value;
+    }
+
+    this._clientRect = this.element.getBoundingClientRect();
+
+    if( displayValue === "none" ){
+        this.element.style.display = displayValue;
+    }
+
+};
+
+/**
+ * Set visibility of the annotation
+ * @param {Boolean} value - visibility flag
+ * @return {undefined}
+ */
+Annotation.prototype.setVisibility = function setVisibility ( value ){
+
+    this.visible = value;
+    this.updateVisibility();
+
+};
+
+Annotation.prototype.getVisibility = function getVisibility (){
+
+    return this.visible && this.component.visible;
+
+};
+
+Annotation.prototype.updateVisibility = function updateVisibility (){
+
+    this.element.style.display = this.getVisibility() ? "block" : "none";
+
+};
+
+Annotation.prototype._updateViewerPosition = function _updateViewerPosition (){
+
+    this._viewerPosition
+        .copy( this.position )
+        .applyMatrix4( this.component.matrix );
+
+};
+
+Annotation.prototype._update = function _update (){
+
+    if( !this.getVisibility() ) { return; }
+
+    var s = this.element.style;
+    var cp = this._canvasPosition;
+    var vp = this._viewerPosition;
+    var cr = this._clientRect;
+
+    this._cameraPosition.copy( vp )
+        .add( this.viewer.translationGroup.position )
+        .applyMatrix4( this.viewer.rotationGroup.matrix )
+        .sub( this.viewer.camera.position );
+
+    if( this._cameraPosition.z < 0 ){
+        s.display = "none";
+        return;
+    }else{
+        s.display = "block";
+    }
+
+    s.opacity = 1 - smoothstep(
+        this.viewer.scene.fog.near,
+        this.viewer.scene.fog.far,
+        this._cameraPosition.length()
+    );
+
+    this.stage.viewerControls.getPositionOnCanvas( vp, cp );
+
+    s.bottom = ( this.offsetX + cp.y + cr.height / 2 ) + "px";
+    s.left = ( this.offsetY + cp.x - cr.width / 2 ) + "px";
+
+};
+
+/**
+ * Safely remove the annotation
+ * @return {undefined}
+ */
+Annotation.prototype.dispose = function dispose (){
+
+    this.viewer.container.removeChild( this.element );
+    this.viewer.signals.ticked.remove( this._update, this );
+    this.component.signals.matrixChanged.remove( this._updateViewerPosition, this );
+
 };
 
 /**
@@ -65384,6 +65579,14 @@ Object.defineProperties( ModelProxy.prototype, prototypeAccessors$20 );
 
 
 /**
+ * Structure extra data.
+ * @typedef {Object} StructureExtraData - structure extra data
+ * @property {Object} [cif] - dictionary from cif parser
+ * @property {Object[]} [sdf] - associated data items from sdf parser, one per compound
+ */
+
+
+/**
  * Structure
  */
 var Structure = function Structure( name, path ){
@@ -65411,6 +65614,10 @@ Structure.prototype.init = function init ( name, path ){
      * @type {StructureHeader}
      */
     this.header = {};
+    /**
+     * @type {StructureExtraData}
+     */
+    this.extraData = {};
 
     this.atomSetCache = undefined;
     this.atomSetDict = {};
@@ -69808,7 +70015,6 @@ ArrowBuffer.prototype.setParameters = function setParameters ( params ){
         this.wireframe = params.wireframe;
         this.setVisibility( this.visible );
     }
-    delete params.wireframe;
 
     this.cylinderBuffer.setParameters( params );
     this.coneBuffer.setParameters( params );
@@ -74202,6 +74408,7 @@ var Component = function Component( stage, params ){
     this.viewer = stage.viewer;
 
     this.reprList = [];
+    this.annotationList = [];
 
     this.matrix = new Matrix4();
     this.position = new Vector3();
@@ -74337,6 +74544,52 @@ Component.prototype.updateMatrix = function updateMatrix (){
 };
 
 /**
+ * Add an anotation object
+ * @param {Vector3} position - the 3d position
+ * @param {String|Element} content - the HTML content
+ * @param {Object} [params] - parameters
+ * @param {Integer} params.offsetX - 2d offset in x direction
+ * @param {Integer} params.offsetY - 2d offset in y direction
+ * @return {Annotation} the added annotation object
+ */
+Component.prototype.addAnnotation = function addAnnotation ( position, content, params ){
+
+    var annotation = new Annotation( this, position, content, params );
+    this.annotationList.push( annotation );
+
+    return annotation;
+
+};
+
+/**
+ * Remove the give annotation from the component
+ * @param {Annotation} annotation - the annotation to remove
+ * @return {undefined}
+ */
+Component.prototype.removeAnnotation = function removeAnnotation ( annotation ){
+
+    var idx = this.annotationList.indexOf( annotation );
+    if( idx !== -1 ){
+        this.annotationList.splice( idx, 1 );
+        annotation.dispose();
+    }
+
+};
+
+/**
+ * Remove all annotations from the component
+ * @return {undefined}
+ */
+Component.prototype.removeAllAnnotations = function removeAllAnnotations (){
+
+    this.annotationList.forEach( function( annotation ){
+        annotation.dispose();
+    } );
+    this.annotationList.length = 0;
+
+};
+
+/**
  * Add a new representation to the component
  * @param {String} type - the name of the representation
  * @param {Object} object - the object on which the representation should be based
@@ -74411,25 +74664,25 @@ Component.prototype.updateRepresentations = function updateRepresentations ( wha
  * @return {undefined}
  */
 Component.prototype.removeAllRepresentations = function removeAllRepresentations (){
+        var this$1 = this;
 
-    // copy via .slice because side effects may change reprList
-    this.reprList.slice().forEach( function( repr ){
-        this.removeRepresentation( repr );
-    }, this );
 
-};
-
-Component.prototype.clearRepresentations = function clearRepresentations (){
-
-    console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
-    this.removeAllRepresentations();
+    this.reprList.forEach( function (repr) {
+        repr.dispose();
+        this$1.signals.representationRemoved.dispatch( repr );
+    } );
+    this.reprList.length = 0;
 
 };
 
 Component.prototype.dispose = function dispose (){
 
+    this.removeAllAnnotations();
     this.removeAllRepresentations();
+
+    delete this.annotationList;
     delete this.reprList;
+
     this.signals.disposed.dispatch();
 
 };
@@ -74445,6 +74698,10 @@ Component.prototype.setVisibility = function setVisibility ( value ){
 
     this.eachRepresentation( function( repr ){
         repr.updateVisibility();
+    } );
+
+    this.annotationList.forEach( function( annotation ){
+        annotation.updateVisibility();
     } );
 
     this.signals.visibilityChanged.dispatch( value );
@@ -75043,7 +75300,7 @@ var Stage = function Stage( idOrElement, params ){
     Object.assign( this.tooltip.style, {
         display: "none",
         position: "fixed",
-        zIndex: 10,
+        zIndex: 2 + ( parseInt( this.viewer.container.style.zIndex ) || 0 ),
         pointerEvents: "none",
         backgroundColor: "rgba( 0, 0, 0, 0.6 )",
         color: "lightgrey",
@@ -89344,6 +89601,8 @@ var CifParser = (function (StructureParser$$1) {
             }
             buildUnitcellAssembly( s );
 
+            s.extraData.cif = cif;
+
         }
 
         if( Debug ) { Log.timeEnd( "CifParser._parse " + this.name ); }
@@ -91158,6 +91417,9 @@ ParserRegistry.add( "psf", PsfParser );
  */
 
 
+var reItem = /> <(.+)>/;
+
+
 var SdfParser = (function (StructureParser$$1) {
     function SdfParser () {
         StructureParser$$1.apply(this, arguments);
@@ -91205,6 +91467,12 @@ var SdfParser = (function (StructureParser$$1) {
         var modelIdx = 0;
         var modelAtomIdxStart = 0;
 
+        var sdfData = [];
+        var currentItem = false;
+        var currentData = {};
+        var mItem;
+        s.extraData.sdf = sdfData;
+
         var atomCount, bondCount, atomStart, atomEnd, bondStart, bondEnd;
 
         function _parseChunkOfLines( _i, _n, lines ){
@@ -91218,10 +91486,11 @@ var SdfParser = (function (StructureParser$$1) {
                     lineNo = -1;
                     ++modelIdx;
                     modelAtomIdxStart = atomStore.count;
+                    sdfData.push( currentData );
+                    currentData = {};
+                    currentItem = false;
 
-                }
-
-                if( lineNo === 3 ){
+                }else if( lineNo === 3 ){
 
                     atomCount = parseInt( line.substr( 0, 3 ) );
                     bondCount = parseInt( line.substr( 3, 3 ) );
@@ -91241,9 +91510,7 @@ var SdfParser = (function (StructureParser$$1) {
 
                     }
 
-                }
-
-                if( lineNo >= atomStart && lineNo < atomEnd ){
+                }else if( lineNo >= atomStart && lineNo < atomEnd ){
 
                     if( firstModelOnly && modelIdx > 0 ) { continue; }
 
@@ -91280,9 +91547,7 @@ var SdfParser = (function (StructureParser$$1) {
 
                     idx += 1;
 
-                }
-
-                if( lineNo >= bondStart && lineNo < bondEnd ){
+                }else if( lineNo >= bondStart && lineNo < bondEnd ){
 
                     if( firstModelOnly && modelIdx > 0 ) { continue; }
                     if( asTrajectory && modelIdx > 0 ) { continue; }
@@ -91292,6 +91557,16 @@ var SdfParser = (function (StructureParser$$1) {
                     var order = parseInt( line.substr( 6, 3 ) );
 
                     s.bondStore.addBond( ap1, ap2, order );
+
+                // eslint-disable-next-line no-cond-assign
+                }else if( mItem = line.match( reItem ) ){
+
+                    currentItem = mItem[ 1 ];
+                    currentData[ currentItem ] = [];
+
+                }else if( currentItem !== false && line ){
+
+                    currentData[ currentItem ].push( line );
 
                 }
 
@@ -91326,6 +91601,7 @@ var SdfParser = (function (StructureParser$$1) {
 }(StructureParser));
 
 ParserRegistry.add( "sdf", SdfParser );
+ParserRegistry.add( "sd", SdfParser );
 
 /**
  * @file Frames
@@ -97522,7 +97798,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-5";
+var version$1 = "0.10.2-6";
 
 /**
  * @file Version
