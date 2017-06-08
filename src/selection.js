@@ -543,6 +543,41 @@ class Selection{
                 continue;
             }
 
+            if( cu === "LIGAND" ){
+                pushRule( {
+                    operator: "AND",
+                    rules: [
+                        {
+                            operator: "OR",
+                            rules: [
+                                { keyword: kwd.HETERO },
+                                {
+                                    negate: true,
+                                    operator: undefined,
+                                    rules: [
+                                        { keyword: kwd.POLYMER }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            negate: true,
+                            operator: undefined,
+                            rules: [
+                                {
+                                    operator: "OR",
+                                    rules: [
+                                        { keyword: kwd.WATER },
+                                        { keyword: kwd.ION }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                } );
+                continue;
+            }
+
             if( SelectAllKeyword.indexOf( cu ) !== -1 ){
                 pushRule( { keyword: kwd.ALL } );
                 continue;

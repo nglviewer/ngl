@@ -473,7 +473,7 @@ class Stage{
                     } );
                 }
                 object.addRepresentation( "ball+stick", {
-                    sele: "( not polymer or hetero ) and not ( water or ion )",
+                    sele: "ligand",
                     colorScheme: "element",
                     scale: 2.0,
                     aspectRatio: 1.5,
