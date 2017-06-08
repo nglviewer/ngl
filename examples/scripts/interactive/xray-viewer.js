@@ -52,10 +52,14 @@ function loadStructure( input ){
     surf2fofc = undefined;
     surfFofc = undefined;
     surfFofcNeg = undefined;
+    file2fofcText.innerText = "2fofc file: none";
+    fileFofcText.innerText = "fofc file: none";
     isolevel2fofcText.innerText = "";
     isolevelFofcText.innerText = "";
+    boxSizeRange.value = 10;
     stage.removeAllComponents();
     return stage.loadFile( input ).then( function( o ){
+        fileStructureText.innerText = "structure file: " + o.name;
         struc = o;
         o.autoView();
         o.addRepresentation( "licorice", {
@@ -68,11 +72,13 @@ function loadStructure( input ){
 var surf2fofc;
 function load2fofc( input ){
     return stage.loadFile( input ).then( function( o ){
+        file2fofcText.innerText = "2fofc file: " + o.name;
         isolevel2fofcText.innerText = "2fofc level: 1.5\u03C3";
+        boxSizeRange.value = 10;
         if( surfFofc ){
             isolevelFofcText.innerText = "fofc level: 3.0\u03C3";
-            surfFofc.setParameters( { isolevel: 3 } );
-            surfFofcNeg.setParameters( { isolevel: 3 } );
+            surfFofc.setParameters( { isolevel: 3, boxSize: 10 } );
+            surfFofcNeg.setParameters( { isolevel: 3, boxSize: 10 } );
         }
         surf2fofc = o.addRepresentation( "surface", {
             color: "skyblue",
@@ -88,10 +94,12 @@ function load2fofc( input ){
 var surfFofc, surfFofcNeg;
 function loadFofc( input ){
     return stage.loadFile( input ).then( function( o ){
+        fileFofcText.innerText = "fofc file: " + o.name;
         isolevelFofcText.innerText = "fofc level: 3.0\u03C3";
+        boxSizeRange.value = 10;
         if( surf2fofc ){
             isolevel2fofcText.innerText = "2fofc level: 1.5\u03C3";
-            surf2fofc.setParameters( { isolevel: 1.5 } );
+            surf2fofc.setParameters( { isolevel: 1.5, boxSize: 10 } );
         }
         surfFofc = o.addRepresentation( "surface", {
             color: "lightgreen",
@@ -118,6 +126,7 @@ var loadStructureButton = createFileButton( "load structure", {
     accept: ".pdb,.cif,.ent,.gz",
     onchange: function( e ){
         if( e.target.files[ 0 ] ){
+            exampleSelect.value = "";
             loadStructure( e.target.files[ 0 ] );
         }
     }
@@ -143,6 +152,57 @@ var loadFofcButton = createFileButton( "load fofc", {
     }
 }, { top: "60px", left: "12px" } );
 addElement( loadFofcButton );
+
+var exampleSelect = createSelect( [
+    [ "", "load example" ],
+    [ "3ek3", "3ek3" ],
+    [ "3nzd", "3nzd" ]
+], {
+    onchange: function( e ){
+        loadExample( e.target.value );
+    }
+}, { top: "84px", left: "12px" } );
+addElement( exampleSelect );
+
+
+var seleText = createElement( "span", {
+    innerText: "center selection",
+    title: "press enter to apply and center"
+}, { top: "114px", left: "12px", color: "lightgrey" } );
+addElement( seleText );
+
+var lastSele;
+function checkSele( str ){
+    var selection = new NGL.Selection( str );
+    return !selection.selection[ "error" ];
+}
+var seleInput = createElement( "input", {
+    type: "text",
+    title: "press enter to apply and center",
+    onkeypress: function( e ){
+        var value = e.target.value;
+        var character = String.fromCharCode( e.which );
+        if( e.keyCode === 13 ){
+            e.preventDefault();
+            if( checkSele( value ) ){
+                if( struc ){
+                    lastSele = value;
+                    struc.autoView( value );
+                    var z = stage.viewer.camera.position.z;
+                    stage.setFocus( 100 - Math.abs( z / 10 ) );
+                    e.target.style.backgroundColor = "white";
+                }
+            }else{
+                e.target.style.backgroundColor = "tomato";
+            }
+        }else if( lastSele !== value + character ){
+            e.target.style.backgroundColor = "skyblue";
+        }else{
+            e.target.style.backgroundColor = "white";
+        }
+    }
+}, { top: "134px", left: "12px", width: "100px" } );
+addElement( seleInput );
 
 
 var surfaceSelect = createSelect( [
@@ -189,53 +249,13 @@ var surfaceSelect = createSelect( [
         }
         stage.getRepresentationsByName( "surface" ).setParameters( p );
     }
-}, { top: "84px", left: "12px" } );
+}, { top: "170px", left: "12px" } );
 addElement( surfaceSelect );
-
-
-var seleText = createElement( "span", {
-    innerText: "center selection",
-    title: "press enter to apply and center"
-}, { top: "120px", left: "12px", color: "lightgrey" } );
-addElement( seleText );
-
-var lastSele;
-function checkSele( str ){
-    var selection = new NGL.Selection( str );
-    return !selection.selection[ "error" ];
-}
-var seleInput = createElement( "input", {
-    type: "text",
-    title: "press enter to apply and center",
-    onkeypress: function( e ){
-        var value = e.target.value;
-        var character = String.fromCharCode( e.which );
-        if( e.keyCode === 13 ){
-            e.preventDefault();
-            if( checkSele( value ) ){
-                if( struc ){
-                    lastSele = value;
-                    struc.autoView( value );
-                    var z = stage.viewer.camera.position.z;
-                    stage.setFocus( 100 - Math.abs( z / 10 ) );
-                    e.target.style.backgroundColor = "white";
-                }
-            }else{
-                e.target.style.backgroundColor = "tomato";
-            }
-        }else if( lastSele !== value + character ){
-            e.target.style.backgroundColor = "skyblue";
-        }else{
-            e.target.style.backgroundColor = "white";
-        }
-    }
-}, { top: "140px", left: "12px", width: "100px" } );
-addElement( seleInput );
 
 var toggle2fofcButton = createElement( "input", {
   type: "button",
   value: "toggle 2fofc",
-}, { top: "164px", left: "12px" } );
+}, { top: "194px", left: "12px" } );
 toggle2fofcButton.onclick = function( e ){
     surf2fofc.toggleVisibility();
 };
@@ -244,12 +264,29 @@ addElement( toggle2fofcButton );
 var toggleFofcButton = createElement( "input", {
   type: "button",
   value: "toggle fofc",
-}, { top: "188px", left: "12px" } );
+}, { top: "218px", left: "12px" } );
 toggleFofcButton.onclick = function( e ){
     surfFofc.toggleVisibility();
     surfFofcNeg.toggleVisibility();
 };
 addElement( toggleFofcButton );
+
+addElement( createElement( "span", {
+  innerText: "box size",
+}, { top: "242px", left: "12px", color: "lightgrey" } ) );
+var boxSizeRange = createElement( "input", {
+  type: "range",
+  value: 10,
+  min: 1,
+  max: 50,
+  step: 1
+}, { top: "258px", left: "12px" } );
+boxSizeRange.oninput = function( e ){
+    stage.getRepresentationsByName( "surface" ).setParameters( {
+        boxSize: parseInt( e.target.value )
+    } );
+};
+addElement( boxSizeRange );
 
 
 var isolevel2fofcText = createElement(
@@ -261,6 +298,23 @@ var isolevelFofcText = createElement(
     "span", {}, { bottom: "12px", left: "12px", color: "lightgrey" }
 );
 addElement( isolevelFofcText );
+
+
+var fileStructureText = createElement( "span", {
+    innerText: "structure file: none"
+}, { bottom: "52px", right: "12px", color: "lightgrey" } );
+addElement( fileStructureText );
+
+var file2fofcText = createElement( "span", {
+    innerText: "2fofc file: none"
+}, { bottom: "32px", right: "12px", color: "lightgrey" } );
+addElement( file2fofcText );
+
+var fileFofcText = createElement( "span", {
+    innerText: "fofc file: none"
+}, { bottom: "12px", right: "12px", color: "lightgrey" } );
+addElement( fileFofcText );
+
 
 stage.mouseControls.add( "scroll", function(){
     if( surf2fofc ){
@@ -274,6 +328,17 @@ stage.mouseControls.add( "scroll", function(){
 } );
 
 
-loadStructure( "data://3ek3.cif" );
-load2fofc( "data://3ek3-2fofc.map.gz" );
-loadFofc( "data://3ek3-fofc.map.gz" );
+function loadExample( id ){
+    if( id === "3ek3" ){
+        loadStructure( "data://3ek3.cif" );
+        load2fofc( "data://3ek3-2fofc.map.gz" );
+        loadFofc( "data://3ek3-fofc.map.gz" );
+    }else if( id === "3nzd" ){
+        loadStructure( "data://3nzd.cif" );
+        load2fofc( "data://3nzd.ccp4.gz" );
+        loadFofc( "data://3nzd_diff.ccp4.gz" );
+    }
+    exampleSelect.value = "";
+}
+
+loadExample( "3ek3" );
