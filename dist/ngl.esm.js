@@ -47082,6 +47082,41 @@ Selection$1.prototype.parse = function parse ( string ){
             continue;
         }
 
+        if( cu === "LIGAND" ){
+            pushRule( {
+                operator: "AND",
+                rules: [
+                    {
+                        operator: "OR",
+                        rules: [
+                            { keyword: kwd.HETERO },
+                            {
+                                negate: true,
+                                operator: undefined,
+                                rules: [
+                                    { keyword: kwd.POLYMER }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        negate: true,
+                        operator: undefined,
+                        rules: [
+                            {
+                                operator: "OR",
+                                rules: [
+                                    { keyword: kwd.WATER },
+                                    { keyword: kwd.ION }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            } );
+            continue;
+        }
+
         if( SelectAllKeyword.indexOf( cu ) !== -1 ){
             pushRule( { keyword: kwd.ALL } );
             continue;
@@ -53555,7 +53590,7 @@ MouseActions.zoomDrag = function zoomDrag ( stage, dx, dy ){
 MouseActions.zoomFocusDrag = function zoomFocusDrag ( stage, dx, dy ){
     stage.trackballControls.zoom( ( dx + dy ) / -2 );
     var z = stage.viewer.camera.position.z;
-    stage.setFocus( 100 - Math.abs( z / 10 ) );
+    stage.setFocus( 100 - Math.abs( z / 8 ) );
 };
 
 /**
@@ -75633,7 +75668,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                 } );
             }
             object.addRepresentation( "ball+stick", {
-                sele: "hetero and not ( water or ion )",
+                sele: "ligand",
                 colorScheme: "element",
                 scale: 2.0,
                 aspectRatio: 1.5,
@@ -76251,7 +76286,7 @@ Stage.prototype.getRepresentationsByName = function getRepresentationsByName ( n
 
     var compName, reprName;
 
-    if( typeof name !== "object" ){
+    if( typeof name !== "object" || name instanceof RegExp ){
         compName = undefined;
         reprName = name;
     }else{
@@ -97798,7 +97833,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-6";
+var version$1 = "0.10.2-7";
 
 /**
  * @file Version
