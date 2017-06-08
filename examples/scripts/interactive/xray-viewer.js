@@ -253,40 +253,56 @@ var surfaceSelect = createSelect( [
 addElement( surfaceSelect );
 
 var toggle2fofcButton = createElement( "input", {
-  type: "button",
-  value: "toggle 2fofc",
+    type: "button",
+    value: "toggle 2fofc",
+    onclick: function( e ){
+        surf2fofc.toggleVisibility();
+    }
 }, { top: "194px", left: "12px" } );
-toggle2fofcButton.onclick = function( e ){
-    surf2fofc.toggleVisibility();
-};
 addElement( toggle2fofcButton );
 
 var toggleFofcButton = createElement( "input", {
-  type: "button",
-  value: "toggle fofc",
+    type: "button",
+    value: "toggle fofc",
+    onclick: function( e ){
+        surfFofc.toggleVisibility();
+        surfFofcNeg.toggleVisibility();
+    }
 }, { top: "218px", left: "12px" } );
-toggleFofcButton.onclick = function( e ){
-    surfFofc.toggleVisibility();
-    surfFofcNeg.toggleVisibility();
-};
 addElement( toggleFofcButton );
 
 addElement( createElement( "span", {
   innerText: "box size",
 }, { top: "242px", left: "12px", color: "lightgrey" } ) );
 var boxSizeRange = createElement( "input", {
-  type: "range",
-  value: 10,
-  min: 1,
-  max: 50,
-  step: 1
+    type: "range",
+    value: 10,
+    min: 1,
+    max: 50,
+    step: 1,
+    oninput: function( e ){
+        stage.getRepresentationsByName( "surface" ).setParameters( {
+            boxSize: parseInt( e.target.value )
+        } );
+    }
 }, { top: "258px", left: "12px" } );
-boxSizeRange.oninput = function( e ){
-    stage.getRepresentationsByName( "surface" ).setParameters( {
-        boxSize: parseInt( e.target.value )
-    } );
-};
 addElement( boxSizeRange );
+
+var screenshotButton = createElement( "input", {
+    type: "button",
+    value: "screenshot",
+    onclick: function(){
+        stage.makeImage( {
+            factor: 1,
+            antialias: false,
+            trim: false,
+            transparent: false
+        } ).then( function( blob ){
+            NGL.download( blob, "ngl-xray-viewer-screenshot.png" );
+        } );
+    }
+}, { top: "282px", left: "12px" } );
+addElement( screenshotButton );
 
 
 var isolevel2fofcText = createElement(
