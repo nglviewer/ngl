@@ -1091,7 +1091,7 @@ class Stage{
 
         let compName, reprName;
 
-        if( typeof name !== "object" ){
+        if( typeof name !== "object" || name instanceof RegExp){
             compName = undefined;
             reprName = name;
         }else{
