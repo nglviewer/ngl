@@ -197,7 +197,6 @@ class ArrowBuffer{
             this.wireframe = params.wireframe;
             this.setVisibility( this.visible );
         }
-        delete params.wireframe;
 
         this.cylinderBuffer.setParameters( params );
         this.coneBuffer.setParameters( params );
