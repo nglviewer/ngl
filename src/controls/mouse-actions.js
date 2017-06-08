@@ -107,7 +107,7 @@ class MouseActions{
     static zoomFocusDrag( stage, dx, dy ){
         stage.trackballControls.zoom( ( dx + dy ) / -2 );
         const z = stage.viewer.camera.position.z;
-        stage.setFocus( 100 - Math.abs( z / 10 ) );
+        stage.setFocus( 100 - Math.abs( z / 7 ) );
     }
 
     /**

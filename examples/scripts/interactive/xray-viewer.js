@@ -232,6 +232,25 @@ var seleInput = createElement( "input", {
 }, { top: "140px", left: "12px", width: "100px" } );
 addElement( seleInput );
 
+var toggle2fofcButton = createElement( "input", {
+  type: "button",
+  value: "toggle 2fofc",
+}, { top: "164px", left: "12px" } );
+toggle2fofcButton.onclick = function( e ){
+    surf2fofc.toggleVisibility();
+};
+addElement( toggle2fofcButton );
+
+var toggleFofcButton = createElement( "input", {
+  type: "button",
+  value: "toggle fofc",
+}, { top: "188px", left: "12px" } );
+toggleFofcButton.onclick = function( e ){
+    surfFofc.toggleVisibility();
+    surfFofcNeg.toggleVisibility();
+};
+addElement( toggleFofcButton );
+
 
 var isolevel2fofcText = createElement(
     "span", {}, { bottom: "32px", left: "12px", color: "lightgrey" }
