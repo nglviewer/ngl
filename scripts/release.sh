@@ -9,6 +9,7 @@ npm version $LEVEL;
 npm run-script doc;
 npm run-script gallery;
 ./deploy.sh $LEVEL;
+cd ../${DIR};
 if [ "$LEVEL" = "prerelease" ]; then
 	npm publish --tag next;
 else
