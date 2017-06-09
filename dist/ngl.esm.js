@@ -97833,7 +97833,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.2-7";
+var version$1 = "0.10.2";
 
 /**
  * @file Version
