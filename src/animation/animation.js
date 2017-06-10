@@ -279,6 +279,26 @@ class ValueAnimation extends Animation{
 
 
 /**
+ * Timeout animation. Call callback after duration.
+ */
+class TimeoutAnimation extends Animation{
+
+    _init( callback ){
+
+        this.callback = callback;
+
+    }
+
+    _tick( /*stats*/ ){
+
+        if( this.alpha === 1 ) this.callback();
+
+    }
+
+}
+
+
+/**
  * Animation list.
  */
 class AnimationList{
@@ -340,5 +360,6 @@ export {
     ZoomAnimation,
     RotateAnimation,
     ValueAnimation,
+    TimeoutAnimation,
     AnimationList
 };

@@ -10,7 +10,7 @@ import { Vector3, Quaternion } from "../../lib/three.es6.js";
 import { ensureMatrix4 } from "../utils.js";
 import {
     SpinAnimation, RockAnimation, MoveAnimation, ZoomAnimation,
-    RotateAnimation, ValueAnimation, AnimationList
+    RotateAnimation, ValueAnimation, TimeoutAnimation, AnimationList
 } from "../animation/animation.js";
 
 
@@ -225,6 +225,20 @@ class AnimationControls{
 
         return this.add(
             new ValueAnimation( duration, this.controls, valueFrom, valueTo, callback )
+        );
+
+    }
+
+    /**
+     * Add a timeout animation
+     * @param  {Function} callback - called after duration
+     * @param  {Number} duration - timeout in milliseconds
+     * @return {TimeoutAnimation} the animation
+     */
+    timeout( callback, duration ){
+
+        return this.add(
+            new TimeoutAnimation( duration, this.controls, callback )
         );
 
     }
