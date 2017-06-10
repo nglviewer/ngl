@@ -9,7 +9,8 @@ Promise.all([
         colorVolume: localResolution.volume,
         colorScheme: "volume",
         colorScale: "rwb",
-        colorDomain: [ 7, 14 ]
+        colorReverse: true,
+        colorDomain: [ 5, 14 ]
     } );
     localResolution.addRepresentation( "dot", {
         thresholdMin: 0,
@@ -19,7 +20,8 @@ Promise.all([
         radius: 0.6,
         colorScheme: "value",
         colorScale: "rwb",
-        colorDomain: [ 7, 14 ]
+        colorReverse: true,
+        colorDomain: [ 5, 14 ]
     } );
     stage.autoView();
 } );

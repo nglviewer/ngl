@@ -41,7 +41,7 @@ class Colormaker{
      */
     constructor( params ){
 
-        var p = params || {};
+        const p = params || {};
 
         this.scale = defaults( p.scale, "uniform" );
         this.mode = defaults( p.mode, "hcl" );
@@ -61,18 +61,18 @@ class Colormaker{
 
     getScale( params ){
 
-        var p = params || {};
+        const p = params || {};
 
-        var scale = defaults( p.scale, this.scale );
+        let scale = defaults( p.scale, this.scale );
         if( scale === "rainbow" ){
             scale = [ "red", "orange", "yellow", "green", "blue" ];
         }else if( scale === "rwb" ){
             scale = [ "red", "white", "blue" ];
         }
 
-        var domain = defaults( p.domain, this.domain );
+        let domain = defaults( p.domain, this.domain );
         if( this.reverse ){
-            domain.reverse();
+            domain = domain.slice().reverse();
         }
 
         return chroma
