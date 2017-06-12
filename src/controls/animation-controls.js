@@ -35,6 +35,16 @@ class AnimationControls{
     }
 
     /**
+     * True when all animations are paused
+     * @type {Boolean}
+     */
+    get paused(){
+
+        return this.animationList.every( animation => animation.paused );
+
+    }
+
+    /**
      * Add an animation
      * @param {Animation} animation - the animation
      * @return {Animation} the animation
@@ -290,6 +300,40 @@ class AnimationControls{
         return this.add(
             new MoveAnimation( duration, component.controls, moveFrom, moveTo )
         );
+
+    }
+
+    /**
+     * Pause all animations
+     * @return {undefined}
+     */
+    pause(){
+
+        this.animationList.forEach( animation => animation.pause() );
+
+    }
+
+    /**
+     * Resume all animations
+     * @return {undefined}
+     */
+    resume(){
+
+        this.animationList.forEach( animation => animation.resume() );
+
+    }
+
+    /**
+     * Toggle all animations
+     * @return {undefined}
+     */
+    toggle(){
+
+        if( this.paused ){
+            this.resume();
+        }else{
+            this.pause();
+        }
 
     }
 

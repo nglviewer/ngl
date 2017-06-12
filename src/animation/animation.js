@@ -23,19 +23,31 @@ class Animation{
         this.controls = controls;
 
         this.startTime = performance.now();
-        this.elapsedTime = 0;
+        this.pausedTime = -1;
+        this.elapsedDuration = 0;
+        this.pausedDuration = 0;
+        this.ignoreGlobalToggle = false;
 
+        this._paused = false;
         this._resolveList = [];
         this._init( ...args );
 
     }
 
     /**
-     * True when all animation has finished
+     * True when animation has finished
      * @type {Boolean}
      */
     get done(){
         return this.alpha === 1;
+    }
+
+    /**
+     * True when animation is paused
+     * @type {Boolean}
+     */
+    get paused(){
+        return this._paused;
     }
 
     /**
@@ -54,23 +66,70 @@ class Animation{
 
     tick( stats ){
 
-        this.elapsedTime = stats.currentTime - this.startTime;
+        if( this._paused ) return;
+
+        this.elapsedDuration = stats.currentTime - this.startTime - this.pausedDuration;
 
         if( this.duration === 0 ){
             this.alpha = 1;
         }else{
-            this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+            this.alpha = smoothstep( 0, 1, this.elapsedDuration / this.duration );
         }
 
         this._tick( stats );
 
         if( this.done ){
-            this._resolveList.forEach( resolve => {
-                resolve();
-            } );
+            this._resolveList.forEach( resolve => resolve() );
         }
 
         return this.done;
+
+    }
+
+    /**
+     * Pause animation
+     * @param {Boolean} [hold] - put animation on a hold which
+     *                           must be release before it can be resumed
+     * @return {undefined}
+     */
+    pause( hold ){
+
+        if( hold ) this._hold = true;
+
+        if( this.pausedTime === -1 ){
+            this.pausedTime = performance.now();
+        }
+        this._paused = true;
+
+    }
+
+    /**
+     * Resume animation
+     * @param {Boolean} [releaseHold] - release a hold on the animation
+     * @return {undefined}
+     */
+    resume( releaseHold ){
+
+        if( !releaseHold && this._hold ) return;
+
+        this.pausedDuration += performance.now() - this.pausedTime;
+        this._paused = false;
+        this._hold = false;
+        this.pausedTime = -1;
+
+    }
+
+    /**
+     * Toggle animation
+     * @return {undefined}
+     */
+    toggle(){
+
+        if( this._paused ){
+            this.resume();
+        }else{
+            this.pause();
+        }
 
     }
 
@@ -86,9 +145,7 @@ class Animation{
         if( this.done ){
             p = Promise.resolve();
         }else{
-            p = new Promise( resolve => {
-                this._resolveList.push( resolve );
-            } );
+            p = new Promise( resolve => this._resolveList.push( resolve ) );
         }
 
         return p.then( callback );
