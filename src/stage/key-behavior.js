@@ -29,9 +29,9 @@ class KeyBehavior{
      * @param  {Event} event - key event
      * @return {undefined}
      */
-    _onKeydown( event ){
+    _onKeydown( /*event*/ ){
 
-        console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
+        // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
 
     }
 
@@ -40,9 +40,9 @@ class KeyBehavior{
      * @param  {Event} event - key event
      * @return {undefined}
      */
-    _onKeyup( event ){
+    _onKeyup( /*event*/ ){
 
-        console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
+        // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
 
     }
 
@@ -53,16 +53,16 @@ class KeyBehavior{
      */
     _onKeypress( event ){
 
-        console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
+        // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
 
         switch( event.keyCode ) {
-            case 105:  // i
+            case 73: case 105:  // I i
                 this.stage.toggleSpin();
                 break;
-            case 107:  // k
+            case 75: case 107:  // K k
                 this.stage.toggleRock();
                 break;
-            case 112:  // p
+            case 80: case 112:  // P p
                 this.stage.animationControls.toggle();
                 break;
         }
