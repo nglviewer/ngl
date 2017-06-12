@@ -24,6 +24,7 @@ import MouseControls from "../controls/mouse-controls.js";
 import PickingBehavior from "./picking-behavior.js";
 import MouseBehavior from "./mouse-behavior.js";
 import AnimationBehavior from "./animation-behavior.js";
+import KeyBehavior from "./key-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -174,6 +175,7 @@ class Stage{
         this.pickingBehavior = new PickingBehavior( this );
         this.mouseBehavior = new MouseBehavior( this );
         this.animationBehavior = new AnimationBehavior( this );
+        this.keyBehavior = new KeyBehavior( this );
 
         /**
          * @type {SpinAnimation}
