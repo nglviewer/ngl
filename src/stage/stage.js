@@ -785,9 +785,14 @@ class Stage{
 
     }
 
-    toggleSpin(){
+    /**
+     * Set spin
+     * @param {Boolean} flag - if true start rocking and stop spinning
+     * @return {undefined}
+     */
+    setSpin( flag ){
 
-        if( this.spinAnimation.paused ){
+        if( flag ){
             this.spinAnimation.resume( true );
             this.rockAnimation.pause( true );
         }else{
@@ -796,14 +801,39 @@ class Stage{
 
     }
 
-    toggleRock(){
+    /**
+     * Set rock
+     * @param {Boolean} flag - if true start rocking and stop spinning
+     * @return {undefined}
+     */
+    setRock( flag ){
 
-        if( this.rockAnimation.paused ){
+        if( flag ){
             this.rockAnimation.resume( true );
             this.spinAnimation.pause( true );
         }else{
             this.rockAnimation.pause( true );
         }
+
+    }
+
+    /**
+     * Toggle spin
+     * @return {undefined}
+     */
+    toggleSpin(){
+
+        this.setSpin( this.spinAnimation.paused );
+
+    }
+
+    /**
+     * Toggle rock
+     * @return {undefined}
+     */
+    toggleRock(){
+
+        this.setRock( this.rockAnimation.paused );
 
     }
 
