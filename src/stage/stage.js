@@ -175,8 +175,16 @@ class Stage{
         this.mouseBehavior = new MouseBehavior( this );
         this.animationBehavior = new AnimationBehavior( this );
 
-        this.spinAnimation = this.animationControls.spin( null );
-        this.rockAnimation = this.animationControls.rock( null );
+        /**
+         * @type {SpinAnimation}
+         */
+        this.spinAnimation = this.animationControls.spin( [ 0, 1, 0 ], 0.005 );
+        this.spinAnimation.pause( true );
+        /**
+         * @type {RockAnimation}
+         */
+        this.rockAnimation = this.animationControls.rock( [ 0, 1, 0 ], 0.005 );
+        this.rockAnimation.pause( true );
 
         const p = Object.assign( {
             impostor: true,
@@ -775,6 +783,28 @@ class Stage{
 
     }
 
+    toggleSpin(){
+
+        if( this.spinAnimation.paused ){
+            this.spinAnimation.resume( true );
+            this.rockAnimation.pause( true );
+        }else{
+            this.spinAnimation.pause( true );
+        }
+
+    }
+
+    toggleRock(){
+
+        if( this.rockAnimation.paused ){
+            this.rockAnimation.resume( true );
+            this.spinAnimation.pause( true );
+        }else{
+            this.rockAnimation.pause( true );
+        }
+
+    }
+
     setFocus( value ){
 
         const clipNear = clamp( value / 2, 0, 49.9 );
@@ -787,69 +817,6 @@ class Stage{
             fogNear: pclamp( clipFar - diffHalf ),
             fogFar: pclamp( clipFar + diffHalf )
         } );
-
-    }
-
-    /**
-     * Spin the whole scene around an axis at the center
-     * @example
-     * stage.setSpin( [ 0, 1, 0 ], 0.01 );
-     *
-     * @param {Number[]|Vector3} axis - the axis to spin around
-     * @param {Number} angle - amount to spin per frame, radians
-     * @return {undefined}
-     */
-    setSpin( axis, angle ){
-
-        if( this.rockAnimation.axis ){
-            this.setRock( null );
-        }
-
-        if( Array.isArray( axis ) ){
-            axis = new Vector3().fromArray( axis );
-        }
-
-        if( axis !== undefined ){
-            this.spinAnimation.axis = axis;
-        }
-        if( angle !== undefined ){
-            this.spinAnimation.angle = angle;
-        }
-
-    }
-
-    /**
-     * Rock the whole scene around an axis at the center
-     * @example
-     * stage.setRock( [ 0, 1, 0 ], 0.01, 0.3 );
-     *
-     * @param {Number[]|Vector3} axis - the axis to rock around
-     * @param {Number} angle - amount to spin per frame, radians
-     * @param {Number} end - maximum extend of motion, radians
-     * @return {undefined}
-     */
-    setRock( axis, angle, end ){
-
-        if( this.spinAnimation.axis ){
-            this.setSpin( null );
-        }
-
-        if( Array.isArray( axis ) ){
-            axis = new Vector3().fromArray( axis );
-        }
-
-        if( axis !== undefined ){
-            this.rockAnimation.axis = axis;
-        }
-        if( angle !== undefined ){
-            this.rockAnimation.angleStep = angle;
-        }
-        if( end !== undefined ){
-            this.rockAnimation.angleEnd = end;
-        }
-
-        this.rockAnimation.angleSum = 0;
-        this.rockAnimation.direction = 1;
 
     }
 

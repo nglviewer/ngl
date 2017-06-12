@@ -646,20 +646,12 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         stage.autoView( 1000 );
     }
 
-    function onSpinOnClick(){
-        stage.setSpin( [ 0, 1, 0 ], 0.005 );
+    function onToggleSpinClick(){
+        stage.toggleSpin();
     }
 
-    function onSpinOffClick(){
-        stage.setSpin( null, null );
-    }
-
-    function onRockOnClick(){
-        stage.setRock( [ 0, 1, 0 ], 0.005 );
-    }
-
-    function onRockOffClick(){
-        stage.setRock( null, null );
+    function onToggleRockClick(){
+        stage.toggleRock();
     }
 
     function onGetOrientationClick(){
@@ -704,11 +696,8 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
         createDivider(),
-        createOption( 'Spin on', onSpinOnClick ),
-        createOption( 'Spin off', onSpinOffClick ),
-        createDivider(),
-        createOption( 'Rock on', onRockOnClick ),
-        createOption( 'Rock off', onRockOffClick ),
+        createOption( 'Toggle spin', onToggleSpinClick ),
+        createOption( 'Toggle rock', onToggleRockClick ),
         createDivider(),
         createOption( 'Get orientation', onGetOrientationClick ),
         createOption( 'Set orientation', onSetOrientationClick ),
