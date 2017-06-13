@@ -122,7 +122,7 @@ class Trajectory{
         p.superpose = defaults( p.superpose, true );
         this.setParameters( p );
 
-        this.name = trajPath.replace( /^.*[\\\/]/, '' );
+        this.name = trajPath.replace( /^.*[\\/]/, '' );
 
         // selection to restrict atoms used for superposition
         this.selection = new Selection(

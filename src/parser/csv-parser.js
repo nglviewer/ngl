@@ -48,7 +48,7 @@ class CsvParser extends Parser{
     _parse(){
 
         const data = this.table.data;
-        const reDelimiter = new RegExp( "\s*" + this.delimiter + "\s*" );
+        const reDelimiter = new RegExp( "\\s*" + this.delimiter + "\\s*" );
 
         let j = 0;
 

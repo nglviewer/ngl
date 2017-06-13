@@ -416,7 +416,7 @@ function processSymmetry( cif, structure, asymIdDict ){
 
             var matDict = {};
 
-            var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+            var l = expr.replace( /[()']/g, "" ).split( "," );
 
             l.forEach( function( e ){
 
