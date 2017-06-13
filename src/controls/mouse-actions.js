@@ -177,6 +177,7 @@ const ActionPresets = {
         [ "drag-right", MouseActions.panDrag ],
         [ "drag-left", MouseActions.rotateDrag ],
         [ "drag-middle", MouseActions.zoomDrag ],
+        [ "drag-shift-right", MouseActions.zoomDrag ],
         [ "drag-left+right", MouseActions.zoomDrag ],
         [ "drag-ctrl-right", MouseActions.panComponentDrag ],
         [ "drag-ctrl-left", MouseActions.rotateComponentDrag ],
