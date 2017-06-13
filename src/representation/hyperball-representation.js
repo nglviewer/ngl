@@ -104,7 +104,7 @@ class HyperballRepresentation extends LicoriceRepresentation{
 
         if( !what || what.color ){
             sphereData.color = atomData.color;
-            stickData.color = bondData.color1;
+            stickData.color = bondData.color;
             stickData.color2 = bondData.color2;
         }
 

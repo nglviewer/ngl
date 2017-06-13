@@ -138,7 +138,7 @@ class ContactRepresentation extends StructureRepresentation{
         }
 
         if( !what || what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 
