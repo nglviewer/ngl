@@ -337,11 +337,9 @@ class Component{
      */
     removeAllRepresentations(){
 
-        this.reprList.forEach( repr => {
+        this.reprList.slice( 0 ).forEach( function( repr ){
             repr.dispose();
-            this.signals.representationRemoved.dispatch( repr );
         } );
-        this.reprList.length = 0;
 
     }
 
