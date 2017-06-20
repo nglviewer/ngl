@@ -103,6 +103,8 @@ import ConeBuffer from "./buffer/cone-buffer.js";
 import CylinderBuffer from "./buffer/cylinder-buffer.js";
 import EllipsoidBuffer from "./buffer/ellipsoid-buffer.js";
 import SphereBuffer from "./buffer/sphere-buffer.js";
+import PointBuffer from "./buffer/point-buffer.js";
+import LineBuffer from "./buffer/line-buffer.js";
 import TextBuffer from "./buffer/text-buffer.js";
 
 //
@@ -133,6 +135,7 @@ import "./parser/json-parser.js";
 import "./parser/text-parser.js";
 import "./parser/xml-parser.js";
 
+import "./parser/kin-parser.js";
 import "./parser/validation-parser.js";
 
 //
@@ -207,6 +210,8 @@ export {
 
     BufferRepresentation,
     SphereBuffer,
+    PointBuffer,
+    LineBuffer,
     EllipsoidBuffer,
     CylinderBuffer,
     ConeBuffer,
