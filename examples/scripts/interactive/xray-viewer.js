@@ -57,6 +57,8 @@ function loadStructure( input ){
     isolevel2fofcText.innerText = "";
     isolevelFofcText.innerText = "";
     boxSizeRange.value = 10;
+    seleInput.value = "";
+    stage.setFocus( 0 );
     stage.removeAllComponents();
     return stage.loadFile( input ).then( function( o ){
         fileStructureText.innerText = "structure file: " + o.name;
@@ -156,10 +158,19 @@ addElement( loadFofcButton );
 var exampleSelect = createSelect( [
     [ "", "load example" ],
     [ "3ek3", "3ek3" ],
-    [ "3nzd", "3nzd" ]
+    [ "3nzd", "3nzd" ],
+    [ "1lee", "1lee" ]
 ], {
     onchange: function( e ){
-        loadExample( e.target.value );
+        var id = e.target.value;
+        loadExample( id ).then( function(){
+            if( id === "3nzd" ){
+                seleInput.value = "NDP";
+            }else if( id === "1lee" ){
+                seleInput.value = "R36 and (.C28 or .N1)";
+            }
+            applySele( seleInput.value );
+        } );
     }
 }, { top: "84px", left: "12px" } );
 addElement( exampleSelect );
@@ -176,6 +187,14 @@ function checkSele( str ){
     var selection = new NGL.Selection( str );
     return !selection.selection[ "error" ];
 }
+function applySele( value ){
+    if( value ){
+        lastSele = value;
+        struc.autoView( value );
+        var z = stage.viewer.camera.position.z;
+        stage.setFocus( 100 - Math.abs( z / 10 ) );
+    }
+}
 var seleInput = createElement( "input", {
     type: "text",
     title: "press enter to apply and center",
@@ -186,12 +205,9 @@ var seleInput = createElement( "input", {
             e.preventDefault();
             if( checkSele( value ) ){
                 if( struc ){
-                    lastSele = value;
-                    struc.autoView( value );
-                    var z = stage.viewer.camera.position.z;
-                    stage.setFocus( 100 - Math.abs( z / 10 ) );
-                    e.target.style.backgroundColor = "white";
+                    applySele( value );
                 }
+                e.target.style.backgroundColor = "white";
             }else{
                 e.target.style.backgroundColor = "tomato";
             }
@@ -201,7 +217,7 @@ var seleInput = createElement( "input", {
             e.target.style.backgroundColor = "white";
         }
     }
-}, { top: "134px", left: "12px", width: "100px" } );
+}, { top: "134px", left: "12px", width: "120px" } );
 addElement( seleInput );
 
 
@@ -345,16 +361,28 @@ stage.mouseControls.add( "scroll", function(){
 
 
 function loadExample( id ){
+    var pl;
     if( id === "3ek3" ){
-        loadStructure( "data://3ek3.cif" );
-        load2fofc( "data://3ek3-2fofc.map.gz" );
-        loadFofc( "data://3ek3-fofc.map.gz" );
+        pl = [
+            loadStructure( "data://3ek3.cif" ),
+            load2fofc( "data://3ek3-2fofc.map.gz" ),
+            loadFofc( "data://3ek3-fofc.map.gz" )
+        ]
     }else if( id === "3nzd" ){
-        loadStructure( "data://3nzd.cif" );
-        load2fofc( "data://3nzd.ccp4.gz" );
-        loadFofc( "data://3nzd_diff.ccp4.gz" );
+        pl = [
+            loadStructure( "data://3nzd.cif" ),
+            load2fofc( "data://3nzd.ccp4.gz" ),
+            loadFofc( "data://3nzd_diff.ccp4.gz" )
+        ]
+    }else if( id === "1lee" ){
+        pl = [
+            loadStructure( "data://1lee.pdb" ),
+            load2fofc( "data://1lee.ccp4" ),
+            loadFofc( "data://1lee_diff.ccp4" )
+        ]
     }
     exampleSelect.value = "";
+    return Promise.all( pl );
 }
 
 loadExample( "3ek3" );
