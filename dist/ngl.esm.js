@@ -42644,7 +42644,7 @@ function getFileInfo( file ){
     var queryIndex = path.lastIndexOf( '?' );
     path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
 
-    var name = path.replace( /^.*[\\\/]/, '' );
+    var name = path.replace( /^.*[\\/]/, '' );
     var base = name.substring( 0, name.lastIndexOf( '.' ) );
 
     var nameSplit = name.split( '.' );
@@ -46021,7 +46021,7 @@ Colormaker.prototype.getScale = function getScale ( params ){
 
     var domain = defaults( p.domain, this.domain );
     if( this.reverse ){
-        domain.reverse();
+        domain = domain.slice().reverse();
     }
 
     return chroma$1
@@ -52845,22 +52845,34 @@ var Animation = function Animation( duration, controls ){
     this.controls = controls;
 
     this.startTime = performance.now();
-    this.elapsedTime = 0;
+    this.pausedTime = -1;
+    this.elapsedDuration = 0;
+    this.pausedDuration = 0;
+    this.ignoreGlobalToggle = false;
 
+    this._paused = false;
     this._resolveList = [];
     (ref = this)._init.apply( ref, args );
     var ref;
 
 };
 
-var prototypeAccessors$7 = { done: {} };
+var prototypeAccessors$8 = { done: {},paused: {} };
 
 /**
- * True when all animation has finished
+ * True when animation has finished
  * @type {Boolean}
  */
-prototypeAccessors$7.done.get = function (){
+prototypeAccessors$8.done.get = function (){
     return this.alpha === 1;
+};
+
+/**
+ * True when animation is paused
+ * @type {Boolean}
+ */
+prototypeAccessors$8.paused.get = function (){
+    return this._paused;
 };
 
 /**
@@ -52879,23 +52891,70 @@ Animation.prototype._tick = function _tick (){};
 
 Animation.prototype.tick = function tick ( stats ){
 
-    this.elapsedTime = stats.currentTime - this.startTime;
+    if( this._paused ) { return; }
+
+    this.elapsedDuration = stats.currentTime - this.startTime - this.pausedDuration;
 
     if( this.duration === 0 ){
         this.alpha = 1;
     }else{
-        this.alpha = smoothstep( 0, 1, this.elapsedTime / this.duration );
+        this.alpha = smoothstep( 0, 1, this.elapsedDuration / this.duration );
     }
 
     this._tick( stats );
 
     if( this.done ){
-        this._resolveList.forEach( function (resolve) {
-            resolve();
-        } );
+        this._resolveList.forEach( function (resolve) { return resolve(); } );
     }
 
     return this.done;
+
+};
+
+/**
+ * Pause animation
+ * @param {Boolean} [hold] - put animation on a hold which
+ *                       must be release before it can be resumed
+ * @return {undefined}
+ */
+Animation.prototype.pause = function pause ( hold ){
+
+    if( hold ) { this._hold = true; }
+
+    if( this.pausedTime === -1 ){
+        this.pausedTime = performance.now();
+    }
+    this._paused = true;
+
+};
+
+/**
+ * Resume animation
+ * @param {Boolean} [releaseHold] - release a hold on the animation
+ * @return {undefined}
+ */
+Animation.prototype.resume = function resume ( releaseHold ){
+
+    if( !releaseHold && this._hold ) { return; }
+
+    this.pausedDuration += performance.now() - this.pausedTime;
+    this._paused = false;
+    this._hold = false;
+    this.pausedTime = -1;
+
+};
+
+/**
+ * Toggle animation
+ * @return {undefined}
+ */
+Animation.prototype.toggle = function toggle (){
+
+    if( this._paused ){
+        this.resume();
+    }else{
+        this.pause();
+    }
 
 };
 
@@ -52913,16 +52972,14 @@ Animation.prototype.then = function then ( callback ){
     if( this.done ){
         p = Promise.resolve();
     }else{
-        p = new Promise( function (resolve) {
-            this$1._resolveList.push( resolve );
-        } );
+        p = new Promise( function (resolve) { return this$1._resolveList.push( resolve ); } );
     }
 
     return p.then( callback );
 
 };
 
-Object.defineProperties( Animation.prototype, prototypeAccessors$7 );
+Object.defineProperties( Animation.prototype, prototypeAccessors$8 );
 
 
 /**
@@ -53152,6 +53209,34 @@ var ValueAnimation = (function (Animation) {
 
 
 /**
+ * Timeout animation. Call callback after duration.
+ */
+var TimeoutAnimation = (function (Animation) {
+    function TimeoutAnimation () {
+        Animation.apply(this, arguments);
+    }
+
+    if ( Animation ) TimeoutAnimation.__proto__ = Animation;
+    TimeoutAnimation.prototype = Object.create( Animation && Animation.prototype );
+    TimeoutAnimation.prototype.constructor = TimeoutAnimation;
+
+    TimeoutAnimation.prototype._init = function _init ( callback ){
+
+        this.callback = callback;
+
+    };
+
+    TimeoutAnimation.prototype._tick = function _tick ( /*stats*/ ){
+
+        if( this.alpha === 1 ) { this.callback(); }
+
+    };
+
+    return TimeoutAnimation;
+}(Animation));
+
+
+/**
  * Animation list.
  */
 var AnimationList = function AnimationList( list ){
@@ -53224,6 +53309,18 @@ var AnimationControls = function AnimationControls( stage ){
 
     this.animationList = [];
     this.finishedList = [];
+
+};
+
+var prototypeAccessors$7 = { paused: {} };
+
+/**
+ * True when all animations are paused
+ * @type {Boolean}
+ */
+prototypeAccessors$7.paused.get = function (){
+
+    return this.animationList.every( function (animation) { return animation.paused; } );
 
 };
 
@@ -53425,6 +53522,20 @@ AnimationControls.prototype.value = function value ( valueFrom, valueTo, callbac
 };
 
 /**
+ * Add a timeout animation
+ * @param  {Function} callback - called after duration
+ * @param  {Number} duration - timeout in milliseconds
+ * @return {TimeoutAnimation} the animation
+ */
+AnimationControls.prototype.timeout = function timeout ( callback, duration ){
+
+    return this.add(
+        new TimeoutAnimation( duration, this.controls, callback )
+    );
+
+};
+
+/**
  * Add a component spin animation
  * @param  {Component} component - object to move
  * @param  {Vector3} axis - axis to spin around
@@ -53475,6 +53586,40 @@ AnimationControls.prototype.moveComponent = function moveComponent ( component, 
 };
 
 /**
+ * Pause all animations
+ * @return {undefined}
+ */
+AnimationControls.prototype.pause = function pause (){
+
+    this.animationList.forEach( function (animation) { return animation.pause(); } );
+
+};
+
+/**
+ * Resume all animations
+ * @return {undefined}
+ */
+AnimationControls.prototype.resume = function resume (){
+
+    this.animationList.forEach( function (animation) { return animation.resume(); } );
+
+};
+
+/**
+ * Toggle all animations
+ * @return {undefined}
+ */
+AnimationControls.prototype.toggle = function toggle (){
+
+    if( this.paused ){
+        this.resume();
+    }else{
+        this.pause();
+    }
+
+};
+
+/**
  * Clear all animations
  * @return {undefined}
  */
@@ -53489,6 +53634,8 @@ AnimationControls.prototype.dispose = function dispose (){
     this.clear();
 
 };
+
+Object.defineProperties( AnimationControls.prototype, prototypeAccessors$7 );
 
 /**
  * @file Mouse Actions
@@ -53658,6 +53805,7 @@ var ActionPresets = {
         [ "drag-right", MouseActions.panDrag ],
         [ "drag-left", MouseActions.rotateDrag ],
         [ "drag-middle", MouseActions.zoomDrag ],
+        [ "drag-shift-right", MouseActions.zoomDrag ],
         [ "drag-left+right", MouseActions.zoomDrag ],
         [ "drag-ctrl-right", MouseActions.panComponentDrag ],
         [ "drag-ctrl-left", MouseActions.rotateComponentDrag ],
@@ -54006,6 +54154,78 @@ AnimationBehavior.prototype.dispose = function dispose (){
 };
 
 /**
+ * @file Key Behavior
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+
+var KeyBehavior = function KeyBehavior( stage ){
+
+    this.stage = stage;
+
+    this._onKeydown = this._onKeydown.bind( this );
+    this._onKeyup = this._onKeyup.bind( this );
+    this._onKeypress = this._onKeypress.bind( this );
+
+    document.addEventListener( 'keydown', this._onKeydown );
+    document.addEventListener( 'keyup', this._onKeyup );
+    document.addEventListener( 'keypress', this._onKeypress );
+
+};
+
+/**
+ * handle key down
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeydown = function _onKeydown ( /*event*/ ){
+
+    // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
+
+};
+
+/**
+ * handle key up
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeyup = function _onKeyup ( /*event*/ ){
+
+    // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
+
+};
+
+/**
+ * handle key press
+ * @param  {Event} event - key event
+ * @return {undefined}
+ */
+KeyBehavior.prototype._onKeypress = function _onKeypress ( event ){
+
+    // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
+
+    switch( event.keyCode ) {
+        case 73: case 105:  // I i
+            this.stage.toggleSpin();
+            break;
+        case 75: case 107:  // K k
+            this.stage.toggleRock();
+            break;
+        case 80: case 112:  // P p
+            this.stage.animationControls.toggle();
+            break;
+    }
+
+};
+
+KeyBehavior.prototype.dispose = function dispose (){
+    document.removeEventListener( 'keydown', this._onKeypress );
+    document.removeEventListener( 'keyup', this._onKeypress );
+    document.removeEventListener( 'keypress', this._onKeypress );
+};
+
+/**
  * @file Annotation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -54190,13 +54410,13 @@ var ComponentControls = function ComponentControls( component ){
 
 };
 
-var prototypeAccessors$9 = { position: {},rotation: {} };
+var prototypeAccessors$10 = { position: {},rotation: {} };
 
 /**
  * component center position
  * @type {Vector3}
  */
-prototypeAccessors$9.position.get = function (){
+prototypeAccessors$10.position.get = function (){
 
     return this.component.position;
 
@@ -54206,7 +54426,7 @@ prototypeAccessors$9.position.get = function (){
  * component rotation
  * @type {Quaternion}
  */
-prototypeAccessors$9.rotation.get = function (){
+prototypeAccessors$10.rotation.get = function (){
 
     return this.component.quaternion;
 
@@ -54251,7 +54471,7 @@ ComponentControls.prototype.spin = function spin ( axis, angle ){
 
 };
 
-Object.defineProperties( ComponentControls.prototype, prototypeAccessors$9 );
+Object.defineProperties( ComponentControls.prototype, prototypeAccessors$10 );
 
 /**
  * @file Vector Utils
@@ -58553,9 +58773,9 @@ var Surface = function Surface( name, path, data ){
 
 };
 
-var prototypeAccessors$13 = { type: {} };
+var prototypeAccessors$14 = { type: {} };
 
-prototypeAccessors$13.type.get = function (){ return "Surface"; };
+prototypeAccessors$14.type.get = function (){ return "Surface"; };
 
 /**
  * set surface data
@@ -58781,7 +59001,7 @@ Surface.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Surface.prototype, prototypeAccessors$13 );
+Object.defineProperties( Surface.prototype, prototypeAccessors$14 );
 
 /**
  * @file Volume
@@ -58862,9 +59082,9 @@ var Volume = function Volume( name, path, data, nx, ny, nz, atomindex ){
 
 };
 
-var prototypeAccessors$12 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
+var prototypeAccessors$13 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
 
-prototypeAccessors$12.type.get = function (){ return "Volume"; };
+prototypeAccessors$13.type.get = function (){ return "Volume"; };
 
 /**
  * set volume data
@@ -59095,7 +59315,7 @@ Volume.prototype.getSigmaForValue = function getSigmaForValue ( value ){
 
 };
 
-prototypeAccessors$12.position.get = function (){
+prototypeAccessors$13.position.get = function (){
 
     if( !this._position ){
 
@@ -59217,7 +59437,7 @@ Volume.prototype.getDataSize = function getDataSize ( size, scale ){
 
 };
 
-prototypeAccessors$12.min.get = function (){
+prototypeAccessors$13.min.get = function (){
 
     if( this._min === undefined ){
         this._min = arrayMin( this.data );
@@ -59226,7 +59446,7 @@ prototypeAccessors$12.min.get = function (){
 
 };
 
-prototypeAccessors$12.max.get = function (){
+prototypeAccessors$13.max.get = function (){
 
     if( this._max === undefined ){
         this._max = arrayMax$1( this.data );
@@ -59235,7 +59455,7 @@ prototypeAccessors$12.max.get = function (){
 
 };
 
-prototypeAccessors$12.sum.get = function (){
+prototypeAccessors$13.sum.get = function (){
 
     if( this._sum === undefined ){
         this._sum = arraySum( this.data );
@@ -59244,7 +59464,7 @@ prototypeAccessors$12.sum.get = function (){
 
 };
 
-prototypeAccessors$12.mean.get = function (){
+prototypeAccessors$13.mean.get = function (){
 
     if( this._mean === undefined ){
         this._mean = arrayMean( this.data );
@@ -59253,7 +59473,7 @@ prototypeAccessors$12.mean.get = function (){
 
 };
 
-prototypeAccessors$12.rms.get = function (){
+prototypeAccessors$13.rms.get = function (){
 
     if( this._rms === undefined ){
         this._rms = arrayRms( this.data );
@@ -59292,7 +59512,7 @@ Volume.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Volume.prototype, prototypeAccessors$12 );
+Object.defineProperties( Volume.prototype, prototypeAccessors$13 );
 
 /**
  * @file Filtered Volume
@@ -59308,18 +59528,18 @@ var FilteredVolume = function FilteredVolume( volume, minValue, maxValue, outsid
 
 };
 
-var prototypeAccessors$11 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
+var prototypeAccessors$12 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
 
-prototypeAccessors$11.header.get = function (){ return this.volume.header; };
-prototypeAccessors$11.matrix.get = function (){ return this.volume.matrix; };
-prototypeAccessors$11.normalMatrix.get = function (){ return this.volume.normalMatrix; };
-prototypeAccessors$11.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
-prototypeAccessors$11.center.get = function (){ return this.volume.center; };
-prototypeAccessors$11.boundingBox.get = function (){ return this.volume.boundingBox; };
-prototypeAccessors$11.min.get = function (){ return this.volume.min; };
-prototypeAccessors$11.max.get = function (){ return this.volume.max; };
-prototypeAccessors$11.mean.get = function (){ return this.volume.mean; };
-prototypeAccessors$11.rms.get = function (){ return this.volume.rms; };
+prototypeAccessors$12.header.get = function (){ return this.volume.header; };
+prototypeAccessors$12.matrix.get = function (){ return this.volume.matrix; };
+prototypeAccessors$12.normalMatrix.get = function (){ return this.volume.normalMatrix; };
+prototypeAccessors$12.inverseMatrix.get = function (){ return this.volume.inverseMatrix; };
+prototypeAccessors$12.center.get = function (){ return this.volume.center; };
+prototypeAccessors$12.boundingBox.get = function (){ return this.volume.boundingBox; };
+prototypeAccessors$12.min.get = function (){ return this.volume.min; };
+prototypeAccessors$12.max.get = function (){ return this.volume.max; };
+prototypeAccessors$12.mean.get = function (){ return this.volume.mean; };
+prototypeAccessors$12.rms.get = function (){ return this.volume.rms; };
 
 FilteredVolume.prototype._getFilterHash = function _getFilterHash ( minValue, maxValue, outside ){
 
@@ -59412,7 +59632,7 @@ FilteredVolume.prototype.setFilter = function setFilter ( minValue, maxValue, ou
 
 };
 
-Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$11 );
+Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$12 );
 
 FilteredVolume.prototype.getValueForSigma = Volume.prototype.getValueForSigma;
 FilteredVolume.prototype.getSigmaForValue = Volume.prototype.getSigmaForValue;
@@ -61589,9 +61809,9 @@ var Assembly = function Assembly( name ){
 
 };
 
-var prototypeAccessors$14 = { type: {} };
+var prototypeAccessors$15 = { type: {} };
 
-prototypeAccessors$14.type.get = function (){ return "Assembly"; };
+prototypeAccessors$15.type.get = function (){ return "Assembly"; };
 
 /**
  * Add transformed parts to the assembly
@@ -61717,7 +61937,7 @@ Assembly.prototype.getSelection = function getSelection (){
     return selectionFromChains( chainList );
 };
 
-Object.defineProperties( Assembly.prototype, prototypeAccessors$14 );
+Object.defineProperties( Assembly.prototype, prototypeAccessors$15 );
 
 
 var AssemblyPart = function AssemblyPart( matrixList, chainList ){
@@ -63462,49 +63682,49 @@ var BondProxy = function BondProxy( structure, index ){
 
 };
 
-var prototypeAccessors$15 = { atom1: {},atom2: {},atomIndex1: {},atomIndex2: {},bondOrder: {} };
+var prototypeAccessors$16 = { atom1: {},atom2: {},atomIndex1: {},atomIndex2: {},bondOrder: {} };
 
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$15.atom1.get = function () {
+prototypeAccessors$16.atom1.get = function () {
     return this.structure.getAtomProxy( this.atomIndex1 );
 };
 
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$15.atom2.get = function () {
+prototypeAccessors$16.atom2.get = function () {
     return this.structure.getAtomProxy( this.atomIndex2 );
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$15.atomIndex1.get = function () {
+prototypeAccessors$16.atomIndex1.get = function () {
     return this.bondStore.atomIndex1[ this.index ];
 };
-prototypeAccessors$15.atomIndex1.set = function ( value ) {
+prototypeAccessors$16.atomIndex1.set = function ( value ) {
     this.bondStore.atomIndex1[ this.index ] = value;
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$15.atomIndex2.get = function () {
+prototypeAccessors$16.atomIndex2.get = function () {
     return this.bondStore.atomIndex2[ this.index ];
 };
-prototypeAccessors$15.atomIndex2.set = function ( value ) {
+prototypeAccessors$16.atomIndex2.set = function ( value ) {
     this.bondStore.atomIndex2[ this.index ] = value;
 };
 
 /**
  * @type {Integer}
  */
-prototypeAccessors$15.bondOrder.get = function () {
+prototypeAccessors$16.bondOrder.get = function () {
     return this.bondStore.bondOrder[ this.index ];
 };
-prototypeAccessors$15.bondOrder.set = function ( value ) {
+prototypeAccessors$16.bondOrder.set = function ( value ) {
     this.bondStore.bondOrder[ this.index ] = value;
 };
 
@@ -63592,7 +63812,7 @@ BondProxy.prototype.toObject = function toObject (){
     };
 };
 
-Object.defineProperties( BondProxy.prototype, prototypeAccessors$15 );
+Object.defineProperties( BondProxy.prototype, prototypeAccessors$16 );
 
 /**
  * @file Atom Proxy
@@ -63642,41 +63862,41 @@ var AtomProxy = function AtomProxy( structure, index ){
 
 };
 
-var prototypeAccessors$16 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {} };
+var prototypeAccessors$17 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {} };
 
 /**
  * @type {BondHash}
  */
-prototypeAccessors$16.bondHash.get = function (){ return this.structure.bondHash; };
+prototypeAccessors$17.bondHash.get = function (){ return this.structure.bondHash; };
 
 /**
  * Molecular enity
  * @type {Entity}
  */
-prototypeAccessors$16.entity.get = function () {
+prototypeAccessors$17.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
-prototypeAccessors$16.entityIndex.get = function () {
+prototypeAccessors$17.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.chainIndex ];
 };
-prototypeAccessors$16.modelIndex.get = function () {
+prototypeAccessors$17.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
-prototypeAccessors$16.chainIndex.get = function () {
+prototypeAccessors$17.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.residueIndex ];
 };
 /**
  * @type {ResidueProxy}
  */
-prototypeAccessors$16.residue.get = function () {
+prototypeAccessors$17.residue.get = function () {
     console.warn( "residue - might be expensive" );
     return this.structure.getResidueProxy( this.residueIndex );
 };
 
-prototypeAccessors$16.residueIndex.get = function () {
+prototypeAccessors$17.residueIndex.get = function () {
     return this.atomStore.residueIndex[ this.index ];
 };
-prototypeAccessors$16.residueIndex.set = function ( value ) {
+prototypeAccessors$17.residueIndex.set = function ( value ) {
     this.atomStore.residueIndex[ this.index ] = value;
 };
 
@@ -63686,35 +63906,35 @@ prototypeAccessors$16.residueIndex.set = function ( value ) {
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$16.sstruc.get = function () {
+prototypeAccessors$17.sstruc.get = function () {
     return this.residueStore.getSstruc( this.residueIndex );
 };
 /**
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$16.inscode.get = function () {
+prototypeAccessors$17.inscode.get = function () {
     return this.residueStore.getInscode( this.residueIndex );
 };
 /**
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$16.resno.get = function () {
+prototypeAccessors$17.resno.get = function () {
     return this.residueStore.resno[ this.residueIndex ];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$16.chainname.get = function () {
+prototypeAccessors$17.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$16.chainid.get = function () {
+prototypeAccessors$17.chainid.get = function () {
     return this.chainStore.getChainid( this.chainIndex );
 };
 
@@ -63723,16 +63943,16 @@ prototypeAccessors$16.chainid.get = function () {
 /**
  * @type {ResidueType}
  */
-prototypeAccessors$16.residueType.get = function () {
+prototypeAccessors$17.residueType.get = function () {
     return this.residueMap.get( this.residueStore.residueTypeId[ this.residueIndex ] );
 };
 /**
  * @type {AtomType}
  */
-prototypeAccessors$16.atomType.get = function () {
+prototypeAccessors$17.atomType.get = function () {
     return  this.atomMap.get( this.atomStore.atomTypeId[ this.index ] );
 };
-prototypeAccessors$16.residueAtomOffset.get = function () {
+prototypeAccessors$17.residueAtomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueIndex ];
 };
 
@@ -63742,14 +63962,14 @@ prototypeAccessors$16.residueAtomOffset.get = function () {
  * Residue name
  * @type {String}
  */
-prototypeAccessors$16.resname.get = function () {
+prototypeAccessors$17.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  * @type {Boolean}
  */
-prototypeAccessors$16.hetero.get = function () {
+prototypeAccessors$17.hetero.get = function () {
     return this.residueType.hetero;
 };
 
@@ -63759,28 +63979,28 @@ prototypeAccessors$16.hetero.get = function () {
  * Atom name
  * @type {String}
  */
-prototypeAccessors$16.atomname.get = function () {
+prototypeAccessors$17.atomname.get = function () {
     return this.atomType.atomname;
 };
 /**
  * Element
  * @type {String}
  */
-prototypeAccessors$16.element.get = function () {
+prototypeAccessors$17.element.get = function () {
     return this.atomType.element;
 };
 /**
  * Van-der-Waals radius
  * @type {Float}
  */
-prototypeAccessors$16.vdw.get = function () {
+prototypeAccessors$17.vdw.get = function () {
     return this.atomType.vdw;
 };
 /**
  * Covalent radius
  * @type {Float}
  */
-prototypeAccessors$16.covalent.get = function () {
+prototypeAccessors$17.covalent.get = function () {
     return this.atomType.covalent;
 };
 
@@ -63790,10 +64010,10 @@ prototypeAccessors$16.covalent.get = function () {
  * X coordinate
  * @type {Float}
  */
-prototypeAccessors$16.x.get = function () {
+prototypeAccessors$17.x.get = function () {
     return this.atomStore.x[ this.index ];
 };
-prototypeAccessors$16.x.set = function ( value ) {
+prototypeAccessors$17.x.set = function ( value ) {
     this.atomStore.x[ this.index ] = value;
 };
 
@@ -63801,10 +64021,10 @@ prototypeAccessors$16.x.set = function ( value ) {
  * Y coordinate
  * @type {Float}
  */
-prototypeAccessors$16.y.get = function () {
+prototypeAccessors$17.y.get = function () {
     return this.atomStore.y[ this.index ];
 };
-prototypeAccessors$16.y.set = function ( value ) {
+prototypeAccessors$17.y.set = function ( value ) {
     this.atomStore.y[ this.index ] = value;
 };
 
@@ -63812,10 +64032,10 @@ prototypeAccessors$16.y.set = function ( value ) {
  * Z coordinate
  * @type {Float}
  */
-prototypeAccessors$16.z.get = function () {
+prototypeAccessors$17.z.get = function () {
     return this.atomStore.z[ this.index ];
 };
-prototypeAccessors$16.z.set = function ( value ) {
+prototypeAccessors$17.z.set = function ( value ) {
     this.atomStore.z[ this.index ] = value;
 };
 
@@ -63823,10 +64043,10 @@ prototypeAccessors$16.z.set = function ( value ) {
  * Serial number
  * @type {Integer}
  */
-prototypeAccessors$16.serial.get = function () {
+prototypeAccessors$17.serial.get = function () {
     return this.atomStore.serial[ this.index ];
 };
-prototypeAccessors$16.serial.set = function ( value ) {
+prototypeAccessors$17.serial.set = function ( value ) {
     this.atomStore.serial[ this.index ] = value;
 };
 
@@ -63834,10 +64054,10 @@ prototypeAccessors$16.serial.set = function ( value ) {
  * B-factor value
  * @type {Float}
  */
-prototypeAccessors$16.bfactor.get = function () {
+prototypeAccessors$17.bfactor.get = function () {
     return this.atomStore.bfactor[ this.index ];
 };
-prototypeAccessors$16.bfactor.set = function ( value ) {
+prototypeAccessors$17.bfactor.set = function ( value ) {
     this.atomStore.bfactor[ this.index ] = value;
 };
 
@@ -63845,10 +64065,10 @@ prototypeAccessors$16.bfactor.set = function ( value ) {
  * Occupancy value
  * @type {Float}
  */
-prototypeAccessors$16.occupancy.get = function () {
+prototypeAccessors$17.occupancy.get = function () {
     return this.atomStore.occupancy[ this.index ];
 };
-prototypeAccessors$16.occupancy.set = function ( value ) {
+prototypeAccessors$17.occupancy.set = function ( value ) {
     this.atomStore.occupancy[ this.index ] = value;
 };
 
@@ -63856,10 +64076,10 @@ prototypeAccessors$16.occupancy.set = function ( value ) {
  * Alternate location identifier
  * @type {String}
  */
-prototypeAccessors$16.altloc.get = function () {
+prototypeAccessors$17.altloc.get = function () {
     return this.atomStore.getAltloc( this.index );
 };
-prototypeAccessors$16.altloc.set = function ( value ) {
+prototypeAccessors$17.altloc.set = function ( value ) {
     this.atomStore.setAltloc( this.index, value );
 };
 
@@ -64281,7 +64501,7 @@ AtomProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( AtomProxy.prototype, prototypeAccessors$16 );
+Object.defineProperties( AtomProxy.prototype, prototypeAccessors$17 );
 
 /**
  * @file Residue Proxy
@@ -64326,37 +64546,37 @@ var ResidueProxy = function ResidueProxy( structure, index ){
 
 };
 
-var prototypeAccessors$17 = { entity: {},entityIndex: {},chain: {},chainIndex: {},atomOffset: {},atomCount: {},atomEnd: {},modelIndex: {},chainname: {},chainid: {},resno: {},sstruc: {},inscode: {},residueType: {},resname: {},hetero: {},moleculeType: {},backboneType: {},backboneStartType: {},backboneEndType: {},traceAtomIndex: {},direction1AtomIndex: {},direction2AtomIndex: {},backboneStartAtomIndex: {},backboneEndAtomIndex: {},rungEndAtomIndex: {} };
+var prototypeAccessors$18 = { entity: {},entityIndex: {},chain: {},chainIndex: {},atomOffset: {},atomCount: {},atomEnd: {},modelIndex: {},chainname: {},chainid: {},resno: {},sstruc: {},inscode: {},residueType: {},resname: {},hetero: {},moleculeType: {},backboneType: {},backboneStartType: {},backboneEndType: {},traceAtomIndex: {},direction1AtomIndex: {},direction2AtomIndex: {},backboneStartAtomIndex: {},backboneEndAtomIndex: {},rungEndAtomIndex: {} };
 
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$17.entity.get = function () {
+prototypeAccessors$18.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
-prototypeAccessors$17.entityIndex.get = function () {
+prototypeAccessors$18.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.chainIndex ];
 };
 /**
  * Chain
  * @type {ChainProxy}
  */
-prototypeAccessors$17.chain.get = function () {
+prototypeAccessors$18.chain.get = function () {
     return this.structure.getChainProxy( this.chainIndex );
 };
 
-prototypeAccessors$17.chainIndex.get = function () {
+prototypeAccessors$18.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.index ];
 };
-prototypeAccessors$17.chainIndex.set = function ( value ) {
+prototypeAccessors$18.chainIndex.set = function ( value ) {
     this.residueStore.chainIndex[ this.index ] = value;
 };
 
-prototypeAccessors$17.atomOffset.get = function () {
+prototypeAccessors$18.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.index ];
 };
-prototypeAccessors$17.atomOffset.set = function ( value ) {
+prototypeAccessors$18.atomOffset.set = function ( value ) {
     this.residueStore.atomOffset[ this.index ] = value;
 };
 
@@ -64364,34 +64584,34 @@ prototypeAccessors$17.atomOffset.set = function ( value ) {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$17.atomCount.get = function () {
+prototypeAccessors$18.atomCount.get = function () {
     return this.residueStore.atomCount[ this.index ];
 };
-prototypeAccessors$17.atomCount.set = function ( value ) {
+prototypeAccessors$18.atomCount.set = function ( value ) {
     this.residueStore.atomCount[ this.index ] = value;
 };
 
-prototypeAccessors$17.atomEnd.get = function () {
+prototypeAccessors$18.atomEnd.get = function () {
     return this.atomOffset + this.atomCount - 1;
 };
 
 //
 
-prototypeAccessors$17.modelIndex.get = function () {
+prototypeAccessors$18.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$17.chainname.get = function () {
+prototypeAccessors$18.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$17.chainid.get = function () {
+prototypeAccessors$18.chainid.get = function () {
     return this.chainStore.getChainid( this.chainIndex );
 };
 
@@ -64401,10 +64621,10 @@ prototypeAccessors$17.chainid.get = function () {
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$17.resno.get = function () {
+prototypeAccessors$18.resno.get = function () {
     return this.residueStore.resno[ this.index ];
 };
-prototypeAccessors$17.resno.set = function ( value ) {
+prototypeAccessors$18.resno.set = function ( value ) {
     this.residueStore.resno[ this.index ] = value;
 };
 
@@ -64412,10 +64632,10 @@ prototypeAccessors$17.resno.set = function ( value ) {
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$17.sstruc.get = function () {
+prototypeAccessors$18.sstruc.get = function () {
     return this.residueStore.getSstruc( this.index );
 };
-prototypeAccessors$17.sstruc.set = function ( value ) {
+prototypeAccessors$18.sstruc.set = function ( value ) {
     this.residueStore.setSstruc( this.index, value );
 };
 
@@ -64423,16 +64643,16 @@ prototypeAccessors$17.sstruc.set = function ( value ) {
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$17.inscode.get = function () {
+prototypeAccessors$18.inscode.get = function () {
     return this.residueStore.getInscode( this.index );
 };
-prototypeAccessors$17.inscode.set = function ( value ) {
+prototypeAccessors$18.inscode.set = function ( value ) {
     this.residueStore.getInscode( this.index, value );
 };
 
 //
 
-prototypeAccessors$17.residueType.get = function () {
+prototypeAccessors$18.residueType.get = function () {
     return this.residueMap.get( this.residueStore.residueTypeId[ this.index ] );
 };
 
@@ -64440,44 +64660,44 @@ prototypeAccessors$17.residueType.get = function () {
  * Residue name
  * @type {String}
  */
-prototypeAccessors$17.resname.get = function () {
+prototypeAccessors$18.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  * @type {Boolean}
  */
-prototypeAccessors$17.hetero.get = function () {
+prototypeAccessors$18.hetero.get = function () {
     return this.residueType.hetero;
 };
-prototypeAccessors$17.moleculeType.get = function () {
+prototypeAccessors$18.moleculeType.get = function () {
     return this.residueType.moleculeType;
 };
-prototypeAccessors$17.backboneType.get = function () {
+prototypeAccessors$18.backboneType.get = function () {
     return this.residueType.backboneType;
 };
-prototypeAccessors$17.backboneStartType.get = function () {
+prototypeAccessors$18.backboneStartType.get = function () {
     return this.residueType.backboneStartType;
 };
-prototypeAccessors$17.backboneEndType.get = function () {
+prototypeAccessors$18.backboneEndType.get = function () {
     return this.residueType.backboneEndType;
 };
-prototypeAccessors$17.traceAtomIndex.get = function () {
+prototypeAccessors$18.traceAtomIndex.get = function () {
     return this.residueType.traceAtomIndex + this.atomOffset;
 };
-prototypeAccessors$17.direction1AtomIndex.get = function () {
+prototypeAccessors$18.direction1AtomIndex.get = function () {
     return this.residueType.direction1AtomIndex + this.atomOffset;
 };
-prototypeAccessors$17.direction2AtomIndex.get = function () {
+prototypeAccessors$18.direction2AtomIndex.get = function () {
     return this.residueType.direction2AtomIndex + this.atomOffset;
 };
-prototypeAccessors$17.backboneStartAtomIndex.get = function () {
+prototypeAccessors$18.backboneStartAtomIndex.get = function () {
     return this.residueType.backboneStartAtomIndex + this.atomOffset;
 };
-prototypeAccessors$17.backboneEndAtomIndex.get = function () {
+prototypeAccessors$18.backboneEndAtomIndex.get = function () {
     return this.residueType.backboneEndAtomIndex + this.atomOffset;
 };
-prototypeAccessors$17.rungEndAtomIndex.get = function () {
+prototypeAccessors$18.rungEndAtomIndex.get = function () {
     return this.residueType.rungEndAtomIndex + this.atomOffset;
 };
 
@@ -64777,7 +64997,7 @@ ResidueProxy.prototype.toObject = function toObject (){
     };
 };
 
-Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$17 );
+Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$18 );
 
 /**
  * @file Polymer
@@ -64835,19 +65055,19 @@ var Polymer = function Polymer( structure, residueIndexStart, residueIndexEnd ){
 
 };
 
-var prototypeAccessors$19 = { chainIndex: {},modelIndex: {},chainname: {} };
+var prototypeAccessors$20 = { chainIndex: {},modelIndex: {},chainname: {} };
 
-prototypeAccessors$19.chainIndex.get = function () {
+prototypeAccessors$20.chainIndex.get = function () {
     return this.residueStore.chainIndex[ this.residueIndexStart ];
 };
-prototypeAccessors$19.modelIndex.get = function () {
+prototypeAccessors$20.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.chainIndex ];
 };
 
 /**
  * @type {String}
  */
-prototypeAccessors$19.chainname.get = function () {
+prototypeAccessors$20.chainname.get = function () {
     return this.chainStore.getChainname( this.chainIndex );
 };
 
@@ -65042,7 +65262,7 @@ Polymer.prototype.qualifiedName = function qualifiedName (){
     return rpStart.qualifiedName() + " - " + rpEnd.qualifiedName();
 };
 
-Object.defineProperties( Polymer.prototype, prototypeAccessors$19 );
+Object.defineProperties( Polymer.prototype, prototypeAccessors$20 );
 
 /**
  * @file Chain Proxy
@@ -65075,41 +65295,41 @@ var ChainProxy = function ChainProxy( structure, index ){
 
 };
 
-var prototypeAccessors$18 = { entity: {},model: {},entityIndex: {},modelIndex: {},residueOffset: {},residueCount: {},residueEnd: {},atomOffset: {},atomEnd: {},atomCount: {},chainname: {},chainid: {} };
+var prototypeAccessors$19 = { entity: {},model: {},entityIndex: {},modelIndex: {},residueOffset: {},residueCount: {},residueEnd: {},atomOffset: {},atomEnd: {},atomCount: {},chainname: {},chainid: {} };
 
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$18.entity.get = function () {
+prototypeAccessors$19.entity.get = function () {
     return this.structure.entityList[ this.entityIndex ];
 };
 /**
  * Model
  * @type {ModelProxy}
  */
-prototypeAccessors$18.model.get = function () {
+prototypeAccessors$19.model.get = function () {
     return this.structure.getModelProxy( this.modelIndex );
 };
 
-prototypeAccessors$18.entityIndex.get = function () {
+prototypeAccessors$19.entityIndex.get = function () {
     return this.chainStore.entityIndex[ this.index ];
 };
-prototypeAccessors$18.entityIndex.set = function ( value ) {
+prototypeAccessors$19.entityIndex.set = function ( value ) {
     this.chainStore.entityIndex[ this.index ] = value;
 };
 
-prototypeAccessors$18.modelIndex.get = function () {
+prototypeAccessors$19.modelIndex.get = function () {
     return this.chainStore.modelIndex[ this.index ];
 };
-prototypeAccessors$18.modelIndex.set = function ( value ) {
+prototypeAccessors$19.modelIndex.set = function ( value ) {
     this.chainStore.modelIndex[ this.index ] = value;
 };
 
-prototypeAccessors$18.residueOffset.get = function () {
+prototypeAccessors$19.residueOffset.get = function () {
     return this.chainStore.residueOffset[ this.index ];
 };
-prototypeAccessors$18.residueOffset.set = function ( value ) {
+prototypeAccessors$19.residueOffset.set = function ( value ) {
     this.chainStore.residueOffset[ this.index ] = value;
 };
 
@@ -65117,21 +65337,21 @@ prototypeAccessors$18.residueOffset.set = function ( value ) {
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$18.residueCount.get = function () {
+prototypeAccessors$19.residueCount.get = function () {
     return this.chainStore.residueCount[ this.index ];
 };
-prototypeAccessors$18.residueCount.set = function ( value ) {
+prototypeAccessors$19.residueCount.set = function ( value ) {
     this.chainStore.residueCount[ this.index ] = value;
 };
 
-prototypeAccessors$18.residueEnd.get = function () {
+prototypeAccessors$19.residueEnd.get = function () {
     return this.residueOffset + this.residueCount - 1;
 };
 
-prototypeAccessors$18.atomOffset.get = function () {
+prototypeAccessors$19.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueOffset ];
 };
-prototypeAccessors$18.atomEnd.get = function () {
+prototypeAccessors$19.atomEnd.get = function () {
     return (
         this.residueStore.atomOffset[ this.residueEnd ] +
         this.residueStore.atomCount[ this.residueEnd ] - 1
@@ -65141,7 +65361,7 @@ prototypeAccessors$18.atomEnd.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$18.atomCount.get = function () {
+prototypeAccessors$19.atomCount.get = function () {
     if( this.residueCount === 0 ){
         return 0;
     }else{
@@ -65155,10 +65375,10 @@ prototypeAccessors$18.atomCount.get = function () {
  * Chain name
  * @type {String}
  */
-prototypeAccessors$18.chainname.get = function () {
+prototypeAccessors$19.chainname.get = function () {
     return this.chainStore.getChainname( this.index );
 };
-prototypeAccessors$18.chainname.set = function ( value ) {
+prototypeAccessors$19.chainname.set = function ( value ) {
     this.chainStore.setChainname( this.index, value );
 };
 
@@ -65166,10 +65386,10 @@ prototypeAccessors$18.chainname.set = function ( value ) {
  * Chain id
  * @type {String}
  */
-prototypeAccessors$18.chainid.get = function () {
+prototypeAccessors$19.chainid.get = function () {
     return this.chainStore.getChainid( this.index );
 };
-prototypeAccessors$18.chainid.set = function ( value ) {
+prototypeAccessors$19.chainid.set = function ( value ) {
     this.chainStore.setChainid( this.index, value );
 };
 
@@ -65367,7 +65587,7 @@ ChainProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( ChainProxy.prototype, prototypeAccessors$18 );
+Object.defineProperties( ChainProxy.prototype, prototypeAccessors$19 );
 
 /**
  * @file Model Proxy
@@ -65404,39 +65624,39 @@ var ModelProxy = function ModelProxy( structure, index ){
 
 };
 
-var prototypeAccessors$20 = { chainOffset: {},chainCount: {},residueOffset: {},atomOffset: {},chainEnd: {},residueEnd: {},atomEnd: {},residueCount: {},atomCount: {} };
+var prototypeAccessors$21 = { chainOffset: {},chainCount: {},residueOffset: {},atomOffset: {},chainEnd: {},residueEnd: {},atomEnd: {},residueCount: {},atomCount: {} };
 
-prototypeAccessors$20.chainOffset.get = function () {
+prototypeAccessors$21.chainOffset.get = function () {
     return this.modelStore.chainOffset[ this.index ];
 };
-prototypeAccessors$20.chainOffset.set = function ( value ) {
+prototypeAccessors$21.chainOffset.set = function ( value ) {
     this.modelStore.chainOffset[ this.index ] = value;
 };
 
-prototypeAccessors$20.chainCount.get = function () {
+prototypeAccessors$21.chainCount.get = function () {
     return this.modelStore.chainCount[ this.index ];
 };
-prototypeAccessors$20.chainCount.set = function ( value ) {
+prototypeAccessors$21.chainCount.set = function ( value ) {
     this.modelStore.chainCount[ this.index ] = value;
 };
 
-prototypeAccessors$20.residueOffset.get = function () {
+prototypeAccessors$21.residueOffset.get = function () {
     return this.chainStore.residueOffset[ this.chainOffset ];
 };
-prototypeAccessors$20.atomOffset.get = function () {
+prototypeAccessors$21.atomOffset.get = function () {
     return this.residueStore.atomOffset[ this.residueOffset ];
 };
 
-prototypeAccessors$20.chainEnd.get = function () {
+prototypeAccessors$21.chainEnd.get = function () {
     return this.chainOffset + this.chainCount - 1;
 };
-prototypeAccessors$20.residueEnd.get = function () {
+prototypeAccessors$21.residueEnd.get = function () {
     return (
         this.chainStore.residueOffset[ this.chainEnd ] +
         this.chainStore.residueCount[ this.chainEnd ] - 1
     );
 };
-prototypeAccessors$20.atomEnd.get = function () {
+prototypeAccessors$21.atomEnd.get = function () {
     return (
         this.residueStore.atomOffset[ this.residueEnd ] +
         this.residueStore.atomCount[ this.residueEnd ] - 1
@@ -65447,7 +65667,7 @@ prototypeAccessors$20.atomEnd.get = function () {
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$20.residueCount.get = function () {
+prototypeAccessors$21.residueCount.get = function () {
     if( this.chainCount === 0 ){
         return 0;
     }else{
@@ -65459,7 +65679,7 @@ prototypeAccessors$20.residueCount.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$20.atomCount.get = function () {
+prototypeAccessors$21.atomCount.get = function () {
     if( this.residueCount === 0 ){
         return 0;
     }else{
@@ -65590,7 +65810,7 @@ ModelProxy.prototype.toObject = function toObject (){
 
 };
 
-Object.defineProperties( ModelProxy.prototype, prototypeAccessors$20 );
+Object.defineProperties( ModelProxy.prototype, prototypeAccessors$21 );
 
 /**
  * @file Structure
@@ -65637,7 +65857,7 @@ var Structure = function Structure( name, path ){
 
 };
 
-var prototypeAccessors$10 = { type: {} };
+var prototypeAccessors$11 = { type: {} };
 
 Structure.prototype.init = function init ( name, path ){
 
@@ -65719,7 +65939,7 @@ Structure.prototype.init = function init ( name, path ){
 
 };
 
-prototypeAccessors$10.type.get = function (){ return "Structure"; };
+prototypeAccessors$11.type.get = function (){ return "Structure"; };
 
 Structure.prototype.finalizeAtoms = function finalizeAtoms (){
 
@@ -66709,7 +66929,7 @@ Structure.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Structure.prototype, prototypeAccessors$10 );
+Object.defineProperties( Structure.prototype, prototypeAccessors$11 );
 
 /**
  * @file Queue
@@ -67273,7 +67493,7 @@ var Trajectory = function Trajectory( trajPath, structure, params ){
     p.superpose = defaults( p.superpose, true );
     this.setParameters( p );
 
-    this.name = trajPath.replace( /^.*[\\\/]/, '' );
+    this.name = trajPath.replace( /^.*[\\/]/, '' );
 
     // selection to restrict atoms used for superposition
     this.selection = new Selection$1(
@@ -67850,9 +68070,9 @@ var Buffer = function Buffer( data, params ){
 
 };
 
-var prototypeAccessors$22 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$23 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
 
-prototypeAccessors$22.parameters.get = function (){
+prototypeAccessors$23.parameters.get = function (){
 
     return {
         opaqueBack: { updateShader: true },
@@ -67875,40 +68095,40 @@ prototypeAccessors$22.parameters.get = function (){
 
 };
 
-prototypeAccessors$22.matrix.set = function ( m ){
+prototypeAccessors$23.matrix.set = function ( m ){
     this.setMatrix( m );
 };
-prototypeAccessors$22.matrix.get = function (){
+prototypeAccessors$23.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$22.transparent.get = function (){
+prototypeAccessors$23.transparent.get = function (){
     return this.opacity < 1 || this.forceTransparent;
 };
 
-prototypeAccessors$22.size.get = function (){
+prototypeAccessors$23.size.get = function (){
     return this._positionDataSize;
 };
 
-prototypeAccessors$22.attributeSize.get = function (){
+prototypeAccessors$23.attributeSize.get = function (){
     return this.size;
 };
 
-prototypeAccessors$22.pickable.get = function (){
+prototypeAccessors$23.pickable.get = function (){
     return !!this.picking;
 };
 
-prototypeAccessors$22.dynamic.get = function (){ return true; };
+prototypeAccessors$23.dynamic.get = function (){ return true; };
 
 /**
  * @abstract
  */
-prototypeAccessors$22.vertexShader.get = function (){};
+prototypeAccessors$23.vertexShader.get = function (){};
 
 /**
  * @abstract
  */
-prototypeAccessors$22.fragmentShader.get = function (){};
+prototypeAccessors$23.fragmentShader.get = function (){};
 
 Buffer.prototype.setMatrix = function setMatrix ( m ){
 
@@ -68653,7 +68873,7 @@ Buffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( Buffer.prototype, prototypeAccessors$22 );
+Object.defineProperties( Buffer.prototype, prototypeAccessors$23 );
 
 /**
  * @file Mesh Buffer
@@ -69929,16 +70149,16 @@ var ArrowBuffer = function ArrowBuffer( data, params ){
 
 };
 
-var prototypeAccessors$23 = { matrix: {},pickable: {} };
+var prototypeAccessors$24 = { matrix: {},pickable: {} };
 
-prototypeAccessors$23.matrix.set = function ( m ){
+prototypeAccessors$24.matrix.set = function ( m ){
     Buffer.prototype.setMatrix.call( this, m );
 };
-prototypeAccessors$23.matrix.get = function (){
+prototypeAccessors$24.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$23.pickable.get = function (){
+prototypeAccessors$24.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -70069,7 +70289,7 @@ ArrowBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$23 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$24 );
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
@@ -70835,7 +71055,7 @@ var Shape$1 = function Shape$$1( name, params ){
 
 };
 
-var prototypeAccessors$21 = { center: {},type: {} };
+var prototypeAccessors$22 = { center: {},type: {} };
 
 /**
  * Add a buffer
@@ -71211,7 +71431,7 @@ Shape$1.prototype.dispose = function dispose (){
 
 };
 
-prototypeAccessors$21.center.get = function (){
+prototypeAccessors$22.center.get = function (){
 
     if( !this._center ){
         this._center = this.boundingBox.getCenter();
@@ -71220,9 +71440,9 @@ prototypeAccessors$21.center.get = function (){
 
 };
 
-prototypeAccessors$21.type.get = function (){ return "Shape"; };
+prototypeAccessors$22.type.get = function (){ return "Shape"; };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$21 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$22 );
 
 /**
  * @file Representation
@@ -72012,16 +72232,16 @@ var DoubleSidedBuffer = function DoubleSidedBuffer( buffer ){
 
 };
 
-var prototypeAccessors$24 = { matrix: {},pickable: {} };
+var prototypeAccessors$25 = { matrix: {},pickable: {} };
 
-prototypeAccessors$24.matrix.set = function ( m ){
+prototypeAccessors$25.matrix.set = function ( m ){
     Buffer.prototype.setMatrix.call( this, m );
 };
-prototypeAccessors$24.matrix.get = function (){
+prototypeAccessors$25.matrix.get = function (){
     return this.group.matrix.clone();
 };
 
-prototypeAccessors$24.pickable.get = function (){
+prototypeAccessors$25.pickable.get = function (){
     return !!this.picking;
 };
 
@@ -72114,7 +72334,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose (){
 
 };
 
-Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$24 );
+Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$25 );
 
 DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
 
@@ -74455,9 +74675,9 @@ var Component = function Component( stage, params ){
 
 };
 
-var prototypeAccessors$8 = { type: {} };
+var prototypeAccessors$9 = { type: {} };
 
-prototypeAccessors$8.type.get = function (){ return "component"; };
+prototypeAccessors$9.type.get = function (){ return "component"; };
 
 /**
  * Set position transform
@@ -74699,14 +74919,10 @@ Component.prototype.updateRepresentations = function updateRepresentations ( wha
  * @return {undefined}
  */
 Component.prototype.removeAllRepresentations = function removeAllRepresentations (){
-        var this$1 = this;
 
-
-    this.reprList.forEach( function (repr) {
+    this.reprList.slice( 0 ).forEach( function( repr ){
         repr.dispose();
-        this$1.signals.representationRemoved.dispatch( repr );
     } );
-    this.reprList.length = 0;
 
 };
 
@@ -74825,7 +75041,7 @@ Component.prototype.eachRepresentation = function eachRepresentation ( callback 
 
 };
 
-Object.defineProperties( Component.prototype, prototypeAccessors$8 );
+Object.defineProperties( Component.prototype, prototypeAccessors$9 );
 
 /**
  * @file Representation Component
@@ -75367,9 +75583,18 @@ var Stage = function Stage( idOrElement, params ){
     this.pickingBehavior = new PickingBehavior( this );
     this.mouseBehavior = new MouseBehavior( this );
     this.animationBehavior = new AnimationBehavior( this );
+    this.keyBehavior = new KeyBehavior( this );
 
-    this.spinAnimation = this.animationControls.spin( null );
-    this.rockAnimation = this.animationControls.rock( null );
+    /**
+     * @type {SpinAnimation}
+     */
+    this.spinAnimation = this.animationControls.spin( [ 0, 1, 0 ], 0.005 );
+    this.spinAnimation.pause( true );
+    /**
+     * @type {RockAnimation}
+     */
+    this.rockAnimation = this.animationControls.rock( [ 0, 1, 0 ], 0.005 );
+    this.rockAnimation.pause( true );
 
     var p = Object.assign( {
         impostor: true,
@@ -75562,13 +75787,15 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
             instanceCount = 1;
         }
 
+        var sizeScore = atomCount;
+
         if( Mobile ){
-            atomCount *= 4;
+            sizeScore *= 4;
         }
 
         var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
         if( backboneOnly ){
-            atomCount *= 10;
+            sizeScore *= 10;
         }
 
         var colorScheme = "chainname";
@@ -75580,7 +75807,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
             colorReverse = true;
         }
 
-        if( Debug ) { console.log( atomCount, instanceCount, backboneOnly ); }
+        if( Debug ) { console.log( sizeScore, atomCount, instanceCount, backboneOnly ); }
 
         if( residueCount / instanceCount < 4 ){
 
@@ -75594,8 +75821,8 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
             } );
 
         }else if(
-            ( instanceCount > 5 && atomCount > 15000 ) ||
-            atomCount > 700000
+            ( instanceCount > 5 && sizeScore > 15000 ) ||
+            sizeScore > 700000
         ){
 
             var scaleFactor = (
@@ -75603,7 +75830,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                     1.5,
                     Math.max(
                         0.1,
-                        2000 / ( atomCount / instanceCount )
+                        2000 / ( sizeScore / instanceCount )
                     )
                 )
             );
@@ -75620,7 +75847,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                 useWorker: false
             } );
 
-        }else if( atomCount > 250000 ){
+        }else if( sizeScore > 250000 ){
 
             object.addRepresentation( "backbone", {
                 lineOnly: true,
@@ -75629,7 +75856,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                 colorReverse: colorReverse
             } );
 
-        }else if( atomCount > 100000 ){
+        }else if( sizeScore > 100000 ){
 
             object.addRepresentation( "backbone", {
                 quality: "low",
@@ -75640,7 +75867,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                 scale: 2.0
             } );
 
-        }else if( atomCount > 80000 ){
+        }else if( sizeScore > 80000 ){
 
             object.addRepresentation( "backbone", {
                 colorScheme: colorScheme,
@@ -75659,7 +75886,7 @@ Stage.prototype.defaultFileRepresentation = function defaultFileRepresentation (
                 aspectRatio: 5,
                 quality: "auto"
             } );
-            if( atomCount < 50000 ){
+            if( sizeScore < 50000 ){
                 object.addRepresentation( "base", {
                     colorScheme: colorScheme,
                     colorScale: colorScale,
@@ -75970,6 +76197,58 @@ Stage.prototype.toggleFullscreen = function toggleFullscreen ( element ){
 
 };
 
+/**
+ * Set spin
+ * @param {Boolean} flag - if true start rocking and stop spinning
+ * @return {undefined}
+ */
+Stage.prototype.setSpin = function setSpin ( flag ){
+
+    if( flag ){
+        this.spinAnimation.resume( true );
+        this.rockAnimation.pause( true );
+    }else{
+        this.spinAnimation.pause( true );
+    }
+
+};
+
+/**
+ * Set rock
+ * @param {Boolean} flag - if true start rocking and stop spinning
+ * @return {undefined}
+ */
+Stage.prototype.setRock = function setRock ( flag ){
+
+    if( flag ){
+        this.rockAnimation.resume( true );
+        this.spinAnimation.pause( true );
+    }else{
+        this.rockAnimation.pause( true );
+    }
+
+};
+
+/**
+ * Toggle spin
+ * @return {undefined}
+ */
+Stage.prototype.toggleSpin = function toggleSpin (){
+
+    this.setSpin( this.spinAnimation.paused );
+
+};
+
+/**
+ * Toggle rock
+ * @return {undefined}
+ */
+Stage.prototype.toggleRock = function toggleRock (){
+
+    this.setRock( this.rockAnimation.paused );
+
+};
+
 Stage.prototype.setFocus = function setFocus ( value ){
 
     var clipNear = clamp( value / 2, 0, 49.9 );
@@ -75982,69 +76261,6 @@ Stage.prototype.setFocus = function setFocus ( value ){
         fogNear: pclamp( clipFar - diffHalf ),
         fogFar: pclamp( clipFar + diffHalf )
     } );
-
-};
-
-/**
- * Spin the whole scene around an axis at the center
- * @example
- * stage.setSpin( [ 0, 1, 0 ], 0.01 );
- *
- * @param {Number[]|Vector3} axis - the axis to spin around
- * @param {Number} angle - amount to spin per frame, radians
- * @return {undefined}
- */
-Stage.prototype.setSpin = function setSpin ( axis, angle ){
-
-    if( this.rockAnimation.axis ){
-        this.setRock( null );
-    }
-
-    if( Array.isArray( axis ) ){
-        axis = new Vector3().fromArray( axis );
-    }
-
-    if( axis !== undefined ){
-        this.spinAnimation.axis = axis;
-    }
-    if( angle !== undefined ){
-        this.spinAnimation.angle = angle;
-    }
-
-};
-
-/**
- * Rock the whole scene around an axis at the center
- * @example
- * stage.setRock( [ 0, 1, 0 ], 0.01, 0.3 );
- *
- * @param {Number[]|Vector3} axis - the axis to rock around
- * @param {Number} angle - amount to spin per frame, radians
- * @param {Number} end - maximum extend of motion, radians
- * @return {undefined}
- */
-Stage.prototype.setRock = function setRock ( axis, angle, end ){
-
-    if( this.spinAnimation.axis ){
-        this.setSpin( null );
-    }
-
-    if( Array.isArray( axis ) ){
-        axis = new Vector3().fromArray( axis );
-    }
-
-    if( axis !== undefined ){
-        this.rockAnimation.axis = axis;
-    }
-    if( angle !== undefined ){
-        this.rockAnimation.angleStep = angle;
-    }
-    if( end !== undefined ){
-        this.rockAnimation.angleEnd = end;
-    }
-
-    this.rockAnimation.angleSum = 0;
-    this.rockAnimation.direction = 1;
 
 };
 
@@ -82206,7 +82422,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         }
 
         if( !what || what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 
@@ -83127,13 +83343,13 @@ var HyperballRepresentation = (function (LicoriceRepresentation$$1) {
 
         if( !what || what.color ){
             sphereData.color = atomData.color;
-            stickData.color = bondData.color1;
+            stickData.color = bondData.color;
             stickData.color2 = bondData.color2;
         }
 
         if( !what || what.radius ){
             sphereData.radius = atomData.radius;
-            stickData.radius = bondData.radius1;
+            stickData.radius = bondData.radius;
             stickData.radius2 = bondData.radius2;
         }
 
@@ -87183,10 +87399,10 @@ var Parser = function Parser( streamer, params ){
 
 };
 
-var prototypeAccessors$25 = { type: {},__objName: {} };
+var prototypeAccessors$26 = { type: {},__objName: {} };
 
-prototypeAccessors$25.type.get = function (){ return ""; };
-prototypeAccessors$25.__objName.get = function (){ return ""; };
+prototypeAccessors$26.type.get = function (){ return ""; };
+prototypeAccessors$26.__objName.get = function (){ return ""; };
 
 Parser.prototype.parse = function parse (){
         var this$1 = this;
@@ -87213,7 +87429,7 @@ Parser.prototype._afterParse = function _afterParse (){
 
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$25 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$26 );
 
 /**
  * @file Structure Builder
@@ -87420,9 +87636,9 @@ var Entity = function Entity( structure, index, description, type, chainIndexLis
 
 };
 
-var prototypeAccessors$26 = { type: {} };
+var prototypeAccessors$27 = { type: {} };
 
-prototypeAccessors$26.type.get = function (){ return "Entity"; };
+prototypeAccessors$27.type.get = function (){ return "Entity"; };
 
 Entity.prototype.getEntityType = function getEntityType (){
     return this.entityType;
@@ -87455,7 +87671,7 @@ Entity.prototype.eachChain = function eachChain ( callback ){
 
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$26 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$27 );
 
 /**
  * @file Unitcell
@@ -88749,7 +88965,7 @@ function processSymmetry( cif, structure, asymIdDict ){
 
             var matDict = {};
 
-            var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+            var l = expr.replace( /[()']/g, "" ).split( "," );
 
             l.forEach( function( e ){
 
@@ -91655,11 +91871,11 @@ var Frames = function Frames( name, path ){
 
 };
 
-var prototypeAccessors$27 = { type: {} };
+var prototypeAccessors$28 = { type: {} };
 
-prototypeAccessors$27.type.get = function (){ return "Frames"; };
+prototypeAccessors$28.type.get = function (){ return "Frames"; };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$27 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$28 );
 
 /**
  * @file Trajectory Parser
@@ -93035,11 +93251,11 @@ function OBJLoader() {
 
     this.regexp = {
         // v float float float
-        vertex_pattern           : /^v\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+        vertex_pattern           : /^v\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
         // vn float float float
-        normal_pattern           : /^vn\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+        normal_pattern           : /^vn\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
         // vt float float
-        uv_pattern               : /^vt\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+        uv_pattern               : /^vt\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
         // f vertex vertex vertex
         face_vertex              : /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
         // f vertex/uv vertex/uv vertex/uv
@@ -94017,7 +94233,7 @@ var CsvParser = (function (Parser$$1) {
 
 
         var data = this.table.data;
-        var reDelimiter = new RegExp( "\s*" + this.delimiter + "\s*" );
+        var reDelimiter = new RegExp( "\\s*" + this.delimiter + "\\s*" );
 
         var j = 0;
 
@@ -94435,9 +94651,9 @@ var Validation = function Validation( name, path ){
 
 };
 
-var prototypeAccessors$28 = { type: {} };
+var prototypeAccessors$29 = { type: {} };
 
-prototypeAccessors$28.type.get = function (){ return "validation"; };
+prototypeAccessors$29.type.get = function (){ return "validation"; };
 
 Validation.prototype.fromXml = function fromXml ( xml ){
 
@@ -94648,7 +94864,7 @@ Validation.prototype.getClashData = function getClashData ( params ){
 
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$28 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$29 );
 
 /**
  * @file Validation Parser
@@ -97833,7 +98049,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.3";
+var version$1 = "0.10.4-0";
 
 /**
  * @file Version
