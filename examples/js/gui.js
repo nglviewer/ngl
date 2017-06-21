@@ -1484,6 +1484,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             } );
         }
         var queue = new NGL.Queue( fn, e.target.files );
+        e.target.value = "";
     }
 
     var framesInput = document.createElement( "input" );
