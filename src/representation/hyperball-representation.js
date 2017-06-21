@@ -110,7 +110,7 @@ class HyperballRepresentation extends LicoriceRepresentation{
 
         if( !what || what.radius ){
             sphereData.radius = atomData.radius;
-            stickData.radius = bondData.radius1;
+            stickData.radius = bondData.radius;
             stickData.radius2 = bondData.radius2;
         }
 
