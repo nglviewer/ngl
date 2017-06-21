@@ -377,13 +377,15 @@ class Stage{
                 instanceCount = 1;
             }
 
+            let sizeScore = atomCount;
+
             if( Mobile ){
-                atomCount *= 4;
+                sizeScore *= 4;
             }
 
             const backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
             if( backboneOnly ){
-                atomCount *= 10;
+                sizeScore *= 10;
             }
 
             let colorScheme = "chainname";
@@ -395,7 +397,7 @@ class Stage{
                 colorReverse = true;
             }
 
-            if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
+            if( Debug ) console.log( sizeScore, atomCount, instanceCount, backboneOnly );
 
             if( residueCount / instanceCount < 4 ){
 
@@ -409,8 +411,8 @@ class Stage{
                 } );
 
             }else if(
-                ( instanceCount > 5 && atomCount > 15000 ) ||
-                atomCount > 700000
+                ( instanceCount > 5 && sizeScore > 15000 ) ||
+                sizeScore > 700000
             ){
 
                 let scaleFactor = (
@@ -418,7 +420,7 @@ class Stage{
                         1.5,
                         Math.max(
                             0.1,
-                            2000 / ( atomCount / instanceCount )
+                            2000 / ( sizeScore / instanceCount )
                         )
                     )
                 );
@@ -435,7 +437,7 @@ class Stage{
                     useWorker: false
                 } );
 
-            }else if( atomCount > 250000 ){
+            }else if( sizeScore > 250000 ){
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
@@ -444,7 +446,7 @@ class Stage{
                     colorReverse: colorReverse
                 } );
 
-            }else if( atomCount > 100000 ){
+            }else if( sizeScore > 100000 ){
 
                 object.addRepresentation( "backbone", {
                     quality: "low",
@@ -455,7 +457,7 @@ class Stage{
                     scale: 2.0
                 } );
 
-            }else if( atomCount > 80000 ){
+            }else if( sizeScore > 80000 ){
 
                 object.addRepresentation( "backbone", {
                     colorScheme: colorScheme,
@@ -474,7 +476,7 @@ class Stage{
                     aspectRatio: 5,
                     quality: "auto"
                 } );
-                if( atomCount < 50000 ){
+                if( sizeScore < 50000 ){
                     object.addRepresentation( "base", {
                         colorScheme: colorScheme,
                         colorScale: colorScale,
