@@ -2187,14 +2187,18 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
                 .setMarginRight( "69px" )
         );
 
+    function setFrame( value ){
+        frame.setValue( value );
+        frameRange.setValue( value );
+        numframes.clear().add( frame.setWidth( "70px" ) );
+    }
+
     function init( value ){
 
-        numframes.clear().add( frame.setWidth( "70px" ) );
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
-        frame.setValue( traj.currentFrame );
-        frameRange.setValue( traj.currentFrame );
+        setFrame( traj.currentFrame );
 
         if( component.defaultStep !== undefined ){
             step.setValue( component.defaultStep );
@@ -2209,12 +2213,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     }
 
     signals.gotNumframes.add( init );
-
-    signals.frameChanged.add( function( value ){
-        frame.setValue( value );
-        frameRange.setValue( value );
-        numframes.clear().add( frame.setWidth( "70px" ) );
-    } );
+    signals.frameChanged.add( setFrame );
 
     // Name
 
