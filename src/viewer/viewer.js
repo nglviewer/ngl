@@ -633,43 +633,44 @@ function Viewer( idOrElement ){
 
     }
 
-    function getImage( picking ){
+    function getPickingPixels(){
 
-        render( picking );
+        const n = width * height * 4
+        let imgBuffer = SupportsReadPixelsFloat ? new Float32Array( n ) : new Uint8Array( n );
+
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, 0, 0, width, height, imgBuffer
+        );
+
+        if( SupportsReadPixelsFloat ){
+            const imgBuffer2 = new Uint8Array( n );
+            for( let i = 0; i < n; i += 4 ){
+                imgBuffer2[ i     ] = Math.round( imgBuffer[ i     ] * 255 );
+                imgBuffer2[ i + 1 ] = Math.round( imgBuffer[ i + 1 ] * 255 );
+                imgBuffer2[ i + 2 ] = Math.round( imgBuffer[ i + 2 ] * 255 );
+                imgBuffer2[ i + 3 ] = Math.round( imgBuffer[ i + 3 ] * 255 );
+            }
+            imgBuffer = imgBuffer2;
+        }
+
+        return imgBuffer;
+
+    }
+
+    function getImage( picking ){
 
         return new Promise( function( resolve ){
 
             if( picking ){
 
-                const n = width * height * 4
-                let imgBuffer;
-                if( SupportsReadPixelsFloat ){
-                    imgBuffer = new Float32Array( n );
-                }else{
-                    imgBuffer = new Uint8Array( n );
-                }
-
-                renderer.readRenderTargetPixels(
-                    pickingTarget, 0, 0, width, height, imgBuffer
-                );
-
-                const canvas = document.createElement( 'canvas' );
+                const canvas = document.createElement( "canvas" );
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext( "2d" );
-                if( SupportsReadPixelsFloat ){
-                    const imgBuffer2 = new Uint8Array( n );
-                    for( let i = 0; i < n; i += 4 ){
-                        imgBuffer2[ i     ] = Math.round( imgBuffer[ i     ] * 255 );
-                        imgBuffer2[ i + 1 ] = Math.round( imgBuffer[ i + 1 ] * 255 );
-                        imgBuffer2[ i + 2 ] = Math.round( imgBuffer[ i + 2 ] * 255 );
-                        imgBuffer2[ i + 3 ] = Math.round( imgBuffer[ i + 3 ] * 255 );
-                    }
-                    imgBuffer = imgBuffer2;
-                }
-                const pixels = ctx.getImageData( 0, 0, width, height );
-                pixels.data.set( imgBuffer );
-                ctx.putImageData( pixels, 0, 0 );
+                const imgData = ctx.getImageData( 0, 0, width, height );
+                imgData.data.set( getPickingPixels() );
+                ctx.putImageData( imgData, 0, 0 );
                 canvas.toBlob( resolve, "image/png" );
 
             }else{
@@ -1197,6 +1198,7 @@ function Viewer( idOrElement ){
     this.remove = remove;
     this.clear = clear;
 
+    this.getPickingPixels = getPickingPixels;
     this.getImage = getImage;
     this.makeImage = makeImage;
 
