@@ -313,6 +313,7 @@ class StructureComponent extends Component{
 }
 
 ComponentRegistry.add( "structure", StructureComponent );
+ComponentRegistry.add( "structureview", StructureComponent );
 
 
 export default StructureComponent;
