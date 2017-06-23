@@ -1,5 +1,7 @@
 import buble from 'rollup-plugin-buble';
 import json from 'rollup-plugin-json';
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
 
 var path = require('path');
 var pkg = require('./package.json');
@@ -49,6 +51,11 @@ function text () {
 export default {
   entry: 'src/ngl.js',
   plugins: [
+    resolve({
+      jsnext: true,
+      main: true
+    }),
+    commonjs(),
     glsl(),
     text(),
     json(),
