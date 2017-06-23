@@ -192,6 +192,7 @@ class KinParser extends Parser{
 
         let isVectorList = false;
         let prevVecLabel = "";
+        let prevVecPosition, prevVecColor;
         let vecName, vecDefaultColor, vecMaster;
         let vecLabel1, vecLabel2, vecPosition1, vecPosition2, vecColor1, vecColor2;
 
@@ -253,6 +254,17 @@ class KinParser extends Parser{
                     // @vectorlist {x} color=white master={small overlap} master={dots}
 
                     [ vecName, vecDefaultColor, vecMaster ] = parseListDef( line );
+
+                    if( vecMaster ){
+                        vecMaster.forEach( function( name ){
+                            if( !kinemage.masterDict[ name ] ){
+                                kinemage.masterDict[ name ] = {
+                                    indent: false,
+                                    visible: false
+                                };
+                            }
+                        } );
+                    }
 
                     isVectorList = true;
                     prevVecLabel = "";
@@ -345,19 +357,12 @@ class KinParser extends Parser{
 
                     if( idx2 === -1 ){
 
-                        const j = vecLabel2.length - 1;
+                        vecLabel2.push( prevVecLabel );
+                        vecPosition2.push( ...prevVecPosition );
+                        vecColor2.push( ...prevVecColor );
 
-                        vecLabel2.push( vecLabel1[ j ] );
-                        vecPosition2.push(
-                            vecPosition1[ j * 3 ],
-                            vecPosition1[ j * 3 + 1 ],
-                            vecPosition1[ j * 3 + 2 ]
-                        );
-                        vecColor2.push(
-                            vecColor1[ j * 3 ],
-                            vecColor1[ j * 3 + 1 ],
-                            vecColor1[ j * 3 + 2 ]
-                        );
+                        prevVecPosition = position1;
+                        prevVecColor = color1;
 
                     }else{
 
@@ -376,6 +381,9 @@ class KinParser extends Parser{
                         vecLabel2.push( label2 );
                         vecPosition2.push( ...position2 );
                         vecColor2.push( ...color2 );
+
+                        prevVecPosition = position2;
+                        prevVecColor = color2;
 
                     }
 
