@@ -38,30 +38,9 @@ class PickingControls{
             if( pickerArray && pickingData.pid >= pickerArray.length ){
                 console.error( "pid >= picker.array.length" );
             }else{
-                var pp = new PickingProxy( pickingData, this.stage );
-                pp.geom_id = pickingData.geom_id;   // mjg
-                return pp;
+                return new PickingProxy( pickingData, this.stage );
             }
         }
-
-        /*
-        tmpCanvasPosition.copy( mouse.canvasPosition );
-
-        return {
-            "atom": pickedAtom,
-            "bond": pickedBond,
-            "volume": pickedVolume,
-            "instance": instance,
-            "position": tmpObjectPosition,
-            "geom_id": pickingData.geom_id, // mjg
-            "component": component,
-            "canvasPosition": tmpCanvasPosition,
-            "altKey": mouse.altKey,
-            "ctrlKey": mouse.ctrlKey,
-            "metaKey":  mouse.metaKey,
-            "shiftKey":  mouse.shiftKey
-        };
-        */
     }
 
 }
