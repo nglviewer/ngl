@@ -50124,7 +50124,7 @@ function _trimCanvas( canvas, r, g, b, a ){
     var canvasHeight = canvas.height;
     var canvasWidth = canvas.width;
 
-    var ctx = canvas.getContext( '2d' );
+    var ctx = canvas.getContext( "2d" );
     var pixels = ctx.getImageData( 0, 0, canvasWidth, canvasHeight ).data;
 
     var x, y, doBreak, off;
@@ -50193,11 +50193,11 @@ function _trimCanvas( canvas, r, g, b, a ){
     }
     var bottomX = x;
 
-    var trimedCanvas = document.createElement( 'canvas' );
+    var trimedCanvas = document.createElement( "canvas" );
     trimedCanvas.width = bottomX - topX;
     trimedCanvas.height = bottomY - topY;
 
-    var trimedCtx = trimedCanvas.getContext( '2d' );
+    var trimedCtx = trimedCanvas.getContext( "2d" );
     trimedCtx.drawImage(
         canvas,
         topX, topY,
@@ -50231,10 +50231,10 @@ function makeImage( viewer, params ){
 
     var p = params || {};
 
-    var trim = p.trim!==undefined ? p.trim : false;
-    var factor = p.factor!==undefined ? p.factor : 1;
-    var antialias = p.antialias!==undefined ? p.antialias : false;
-    var transparent = p.transparent!==undefined ? p.transparent : false;
+    var trim = defaults( p.trim, false );
+    var factor = defaults( p.factor, 1 );
+    var antialias = defaults( p.antialias, false );
+    var transparent = defaults( p.transparent, false );
 
     var renderer = viewer.renderer;
     var camera = viewer.camera;
@@ -50269,10 +50269,10 @@ function makeImage( viewer, params ){
     function trimCanvas( canvas ){
         if( trim ){
             var bg = backgroundColor;
-            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
-            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
-            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
-            var a = ( transparent ? 0 : 255 ) | 0;
+            var r = transparent ? 0 : bg.r * 255;
+            var g = transparent ? 0 : bg.g * 255;
+            var b = transparent ? 0 : bg.b * 255;
+            var a = transparent ? 0 : 255;
             return _trimCanvas( canvas, r, g, b, a );
         }else{
             return canvas;
@@ -50328,8 +50328,6 @@ function sortProjectedPosition( scene, camera ){
 
     // console.time( "sort" );
 
-    var i;
-
     scene.traverseVisible( function ( o ){
 
         if( !( o instanceof Points ) || !o.sortParticles ){
@@ -50379,7 +50377,7 @@ function sortProjectedPosition( scene, camera ){
 
         }
 
-        for( i = 0; i < n; ++i ){
+        for( var i = 0; i < n; ++i ){
 
             vertex.fromArray( attributes.position.array, i * 3 );
             vertex.applyMatrix4( modelViewProjectionMatrix );
@@ -50409,13 +50407,13 @@ function sortProjectedPosition( scene, camera ){
             tmpTab = sortData[ name ];
             sortData[ name ] = array;
 
-            for( i = 0; i < n; ++i ){
+            for( var i$1 = 0; i$1 < n; ++i$1 ){
 
-                index = sortArray[ i ];
+                index = sortArray[ i$1 ];
 
                 for( var j = 0; j < itemSize; ++j ){
                     indexSrc = index * itemSize + j;
-                    indexDst = i * itemSize + j;
+                    indexDst = i$1 * itemSize + j;
                     tmpTab[ indexDst ] = array[ indexSrc ];
                 }
 
@@ -51088,10 +51086,52 @@ function Viewer( idOrElement ){
 
     }
 
-    function getImage(){
+    function getPickingPixels(){
+
+        var n = width * height * 4;
+        var imgBuffer = SupportsReadPixelsFloat ? new Float32Array( n ) : new Uint8Array( n );
+
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, 0, 0, width, height, imgBuffer
+        );
+
+        return imgBuffer;
+
+    }
+
+    function getImage( picking ){
 
         return new Promise( function( resolve ){
-            renderer.domElement.toBlob( resolve, "image/png" );
+
+            if( picking ){
+
+                var n = width * height * 4;
+                var imgBuffer = getPickingPixels();
+
+                if( SupportsReadPixelsFloat ){
+                    var imgBuffer2 = new Uint8Array( n );
+                    for( var i = 0; i < n; ++i ){
+                        imgBuffer2[ i ] = Math.round( imgBuffer[ i ] * 255 );
+                    }
+                    imgBuffer = imgBuffer2;
+                }
+
+                var canvas = document.createElement( "canvas" );
+                canvas.width = width;
+                canvas.height = height;
+                var ctx = canvas.getContext( "2d" );
+                var imgData = ctx.getImageData( 0, 0, width, height );
+                imgData.data.set( imgBuffer );
+                ctx.putImageData( imgData, 0, 0 );
+                canvas.toBlob( resolve, "image/png" );
+
+            }else{
+
+                renderer.domElement.toBlob( resolve, "image/png" );
+
+            }
+
         } );
 
     }
@@ -51611,6 +51651,7 @@ function Viewer( idOrElement ){
     this.remove = remove;
     this.clear = clear;
 
+    this.getPickingPixels = getPickingPixels;
     this.getImage = getImage;
     this.makeImage = makeImage$$1;
 
@@ -67945,6 +67986,7 @@ ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\nuniform vec3 diffuse;\
  * @property {String} side - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Boolean} depthWrite - depth write
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
  * @property {Boolean} flatShaded - render flat shaded
@@ -67956,6 +67998,7 @@ ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\nuniform vec3 diffuse;\
  * @property {Color} diffuse - diffuse color for lighting
  * @property {Boolean} forceTransparent - force the material to allow transparency
  * @property {Matrix4} matrix - additional transformation matrix
+ * @property {Boolean} disablePicking - disable picking
  */
 
 
@@ -68009,6 +68052,7 @@ var Buffer = function Buffer( data, params ){
     this.metalness = defaults( p.metalness, 0.0 );
     this.diffuse = defaults( p.diffuse, 0xffffff );
     this.forceTransparent = defaults( p.forceTransparent, false );
+    this.disablePicking = defaults( p.disablePicking, false );
 
     this.geometry = new BufferGeometry();
 
@@ -68115,7 +68159,7 @@ prototypeAccessors$23.attributeSize.get = function (){
 };
 
 prototypeAccessors$23.pickable.get = function (){
-    return !!this.picking;
+    return !!this.picking && !this.disablePicking;
 };
 
 prototypeAccessors$23.dynamic.get = function (){ return true; };
@@ -71462,6 +71506,7 @@ Object.defineProperties( Shape$1.prototype, prototypeAccessors$22 );
  * @property {Vector3} [clipCenter] - position of for spherical clipping
  * @property {Boolean} [flatShaded] - render flat shaded
  * @property {Float} [opacity] - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Boolean} [depthWrite] - depth write
  * @property {String} [side] - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Boolean} [wireframe] - render as wireframe
@@ -71479,6 +71524,7 @@ Object.defineProperties( Shape$1.prototype, prototypeAccessors$22 );
  * @property {Float} [roughness] - how rough the material is, between 0 and 1
  * @property {Float} [metalness] - how metallic the material is, between 0 and 1
  * @property {Color} [diffuse] - diffuse color for lighting
+ * @property {Boolean} [disablePicking] - disable picking
  */
 
 
@@ -71567,6 +71613,10 @@ var Representation = function Representation( object, viewer, params ){
             type: "hidden", buffer: true
         },
 
+        disablePicking: {
+            type: "boolean", rebuild: true
+        },
+
     };
 
     /**
@@ -71637,6 +71687,8 @@ Representation.prototype.init = function init ( params ){
     };
 
     this.matrix = defaults( p.matrix, new Matrix4() );
+
+    this.disablePicking = defaults( p.disablePicking, false );
 
     // handle common parameters when applicable
 
@@ -71724,7 +71776,9 @@ Representation.prototype.getBufferParams = function getBufferParams ( p ){
         metalness: this.metalness,
         diffuse: this.diffuse,
 
-        matrix: this.matrix
+        matrix: this.matrix,
+
+        disablePicking: this.disablePicking
 
     }, p );
 
@@ -72195,6 +72249,7 @@ var DoubleSidedBuffer = function DoubleSidedBuffer( buffer ){
     this.geometry = buffer.geometry;
     this.picking = buffer.picking;
     this.background = buffer.background;
+    this.disablePicking = buffer.disablePicking;
 
     this.group = new Group();
     this.wireframeGroup = new Group();
@@ -72242,7 +72297,7 @@ prototypeAccessors$25.matrix.get = function (){
 };
 
 prototypeAccessors$25.pickable.get = function (){
-    return !!this.picking;
+    return !!this.picking && !this.disablePicking;
 };
 
 DoubleSidedBuffer.prototype.getMesh = function getMesh ( picking ){
@@ -78893,6 +78948,8 @@ var FramesTrajectory = (function (Trajectory$$1) {
         this.frames = frames.coordinates;
         this.boxes = frames.boxes;
 
+        this.getNumframes();
+
     }
 
     if ( Trajectory$$1 ) FramesTrajectory.__proto__ = Trajectory$$1;
@@ -79873,6 +79930,7 @@ var StructureComponent = (function (Component$$1) {
 }(Component));
 
 ComponentRegistry.add( "structure", StructureComponent );
+ComponentRegistry.add( "structureview", StructureComponent );
 
 /**
  * @file Surface Component
@@ -85775,6 +85833,7 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
+        p.disablePicking = defaults( p.disablePicking, true );
 
         this.surfaceType = defaults( p.surfaceType, "ms" );
         this.probeRadius = defaults( p.probeRadius, 1.4 );
@@ -98049,7 +98108,7 @@ function StaticDatasource( baseUrl ){
 
 }
 
-var version$1 = "0.10.4-0";
+var version$1 = "0.10.4-1";
 
 /**
  * @file Version
