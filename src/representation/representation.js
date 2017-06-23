@@ -24,6 +24,7 @@ import Counter from "../utils/counter.js";
  * @property {Vector3} [clipCenter] - position of for spherical clipping
  * @property {Boolean} [flatShaded] - render flat shaded
  * @property {Float} [opacity] - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Boolean} [depthWrite] - depth write
  * @property {String} [side] - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Boolean} [wireframe] - render as wireframe
@@ -41,6 +42,7 @@ import Counter from "../utils/counter.js";
  * @property {Float} [roughness] - how rough the material is, between 0 and 1
  * @property {Float} [metalness] - how metallic the material is, between 0 and 1
  * @property {Color} [diffuse] - diffuse color for lighting
+ * @property {Boolean} [disablePicking] - disable picking
  */
 
 
@@ -131,6 +133,10 @@ class Representation{
                 type: "hidden", buffer: true
             },
 
+            disablePicking: {
+                type: "boolean", rebuild: true
+            },
+
         };
 
         /**
@@ -201,6 +207,8 @@ class Representation{
         };
 
         this.matrix = defaults( p.matrix, new Matrix4() );
+
+        this.disablePicking = defaults( p.disablePicking, false );
 
         // handle common parameters when applicable
 
@@ -288,7 +296,9 @@ class Representation{
             metalness: this.metalness,
             diffuse: this.diffuse,
 
-            matrix: this.matrix
+            matrix: this.matrix,
+
+            disablePicking: this.disablePicking
 
         }, p );
 

@@ -44,6 +44,7 @@ class DoubleSidedBuffer{
         this.geometry = buffer.geometry;
         this.picking = buffer.picking;
         this.background = buffer.background;
+        this.disablePicking = buffer.disablePicking;
 
         this.group = new Group();
         this.wireframeGroup = new Group();
@@ -89,7 +90,7 @@ class DoubleSidedBuffer{
     }
 
     get pickable (){
-        return !!this.picking;
+        return !!this.picking && !this.disablePicking;
     }
 
     getMesh( picking ){

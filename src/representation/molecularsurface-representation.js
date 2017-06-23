@@ -94,6 +94,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation{
         const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
+        p.disablePicking = defaults( p.disablePicking, true );
 
         this.surfaceType = defaults( p.surfaceType, "ms" );
         this.probeRadius = defaults( p.probeRadius, 1.4 );

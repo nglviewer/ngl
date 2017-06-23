@@ -27,6 +27,7 @@ import { getShader } from "../shader/shader-utils.js";
  * @property {String} side - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Boolean} depthWrite - depth write
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
  * @property {Boolean} flatShaded - render flat shaded
@@ -38,6 +39,7 @@ import { getShader } from "../shader/shader-utils.js";
  * @property {Color} diffuse - diffuse color for lighting
  * @property {Boolean} forceTransparent - force the material to allow transparency
  * @property {Matrix4} matrix - additional transformation matrix
+ * @property {Boolean} disablePicking - disable picking
  */
 
 
@@ -101,6 +103,7 @@ class Buffer{
         this.metalness = defaults( p.metalness, 0.0 );
         this.diffuse = defaults( p.diffuse, 0xffffff );
         this.forceTransparent = defaults( p.forceTransparent, false );
+        this.disablePicking = defaults( p.disablePicking, false );
 
         this.geometry = new BufferGeometry();
 
@@ -205,7 +208,7 @@ class Buffer{
     }
 
     get pickable (){
-        return !!this.picking;
+        return !!this.picking && !this.disablePicking;
     }
 
     get dynamic (){ return true; }
