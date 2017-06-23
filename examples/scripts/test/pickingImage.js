@@ -1,5 +1,5 @@
 
-stage.loadFile( "data://3sn6.cif" ).then( function( o ){
+stage.loadFile( "data://3SN6.cif" ).then( function( o ){
 
     o.addRepresentation( "cartoon" );
     o.autoView();
