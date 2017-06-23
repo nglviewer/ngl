@@ -172,7 +172,11 @@ import {
 import Version from "./version.js";
 
 
+import { gpgpuTest } from "./utils/gpgpu.js";
+
 export {
+    gpgpuTest,
+
     Version,
     Debug,
     setDebug,
