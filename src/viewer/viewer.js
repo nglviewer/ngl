@@ -7,9 +7,9 @@
 
 import {
     PerspectiveCamera, OrthographicCamera,
-    Box3, Vector3, Color,
+    Box3, Vector3, Matrix4, Color,
     WebGLRenderer, WebGLRenderTarget,
-    NearestFilter, AdditiveBlending,
+    NearestFilter, LinearFilter, AdditiveBlending,
     RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
     ShaderMaterial,
     PlaneGeometry,
@@ -41,6 +41,92 @@ import Signal from "../../lib/signals.es6.js";
 
 const pixelBufferFloat = new Float32Array( 4 );
 const pixelBufferUint = new Uint8Array( 4 );
+
+
+var tmpMatrix = new Matrix4();
+
+function onBeforeRender( renderer, scene, camera, geometry, material/*, group*/ ){
+
+    var u = material.uniforms;
+    var updateList = [];
+
+    if( u.objectId ){
+        u.objectId.value = SupportsReadPixelsFloat ? this.id : this.id / 255;
+        updateList.push( "objectId" );
+    }
+
+    if( u.modelViewMatrixInverse || u.modelViewMatrixInverseTranspose ||
+        u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
+    ){
+        this.modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, this.matrixWorld );
+    }
+
+    if( u.modelViewMatrixInverse ){
+        u.modelViewMatrixInverse.value.getInverse( this.modelViewMatrix );
+        updateList.push( "modelViewMatrixInverse" );
+    }
+
+    if( u.modelViewMatrixInverseTranspose ){
+        if( u.modelViewMatrixInverse ){
+            u.modelViewMatrixInverseTranspose.value.copy(
+                u.modelViewMatrixInverse.value
+            ).transpose();
+        }else{
+            u.modelViewMatrixInverseTranspose.value
+                .getInverse( this.modelViewMatrix )
+                .transpose();
+        }
+        updateList.push( "modelViewMatrixInverseTranspose" );
+    }
+
+    if( u.modelViewProjectionMatrix ){
+        camera.updateProjectionMatrix();
+        u.modelViewProjectionMatrix.value.multiplyMatrices(
+            camera.projectionMatrix, this.modelViewMatrix
+        );
+        updateList.push( "modelViewProjectionMatrix" );
+    }
+
+    if( u.modelViewProjectionMatrixInverse ){
+        if( u.modelViewProjectionMatrix ){
+            tmpMatrix.copy(
+                u.modelViewProjectionMatrix.value
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }else{
+            camera.updateProjectionMatrix();
+            tmpMatrix.multiplyMatrices(
+                camera.projectionMatrix, this.modelViewMatrix
+            );
+            u.modelViewProjectionMatrixInverse.value.getInverse(
+                tmpMatrix
+            );
+        }
+        updateList.push( "modelViewProjectionMatrixInverse" );
+    }
+
+    if( updateList.length ){
+
+        var materialProperties = renderer.properties.get( material );
+
+        if( materialProperties.program ){
+
+            var gl = renderer.getContext();
+            var p = materialProperties.program;
+            gl.useProgram( p.program );
+            var pu = p.getUniforms();
+
+            updateList.forEach( function( name ){
+                pu.setValue( gl, name, u[ name ].value );
+            } );
+
+        }
+
+    }
+
+}
 
 
 /**
@@ -235,13 +321,13 @@ function Viewer( idOrElement ){
         );
         pickingTarget.texture.generateMipmaps = false;
 
-        // msaa textures
+        // ssaa textures
 
         sampleTarget = new WebGLRenderTarget(
             dprWidth, dprHeight,
             {
-                minFilter: NearestFilter,
-                magFilter: NearestFilter,
+                minFilter: LinearFilter,
+                magFilter: LinearFilter,
                 format: RGBAFormat,
             }
         );
@@ -427,6 +513,7 @@ function Viewer( idOrElement ){
             }else{
                 object.userData.buffer = buffer;
                 object.userData.instance = instance;
+                object.onBeforeRender = onBeforeRender;
             }
         }
 
@@ -464,9 +551,9 @@ function Viewer( idOrElement ){
         }
 
         if( instance ){
-            updateBoundingBox( buffer.geometry, instance.matrix );
+            updateBoundingBox( buffer.geometry, buffer.matrix, instance.matrix );
         }else{
-            updateBoundingBox( buffer.geometry );
+            updateBoundingBox( buffer.geometry, buffer.matrix );
         }
 
         // Log.timeEnd( "Viewer.addBuffer" );
@@ -491,20 +578,21 @@ function Viewer( idOrElement ){
 
     }
 
-    function updateBoundingBox( geometry, matrix ){
+    function updateBoundingBox( geometry, matrix, instanceMatrix ){
 
-        function updateGeometry( geometry, matrix ){
+        function updateGeometry( geometry, matrix, instanceMatrix ){
 
             if( !geometry.boundingBox ){
                 geometry.computeBoundingBox();
             }
 
-            var geoBoundingBox;
+            var geoBoundingBox = geometry.boundingBox.clone();
+
             if( matrix ){
-                geoBoundingBox = geometry.boundingBox.clone();
                 geoBoundingBox.applyMatrix4( matrix );
-            }else{
-                geoBoundingBox = geometry.boundingBox;
+            }
+            if( instanceMatrix ){
+                geoBoundingBox.applyMatrix4( instanceMatrix );
             }
 
             if( geoBoundingBox.min.equals( geoBoundingBox.max ) ){
@@ -520,33 +608,77 @@ function Viewer( idOrElement ){
         function updateNode( node ){
 
             if( node.geometry !== undefined ){
-                var matrix;
-                if( node.userData.instance ){
-                    matrix = node.userData.instance.matrix;
+                var matrix, instanceMatrix;
+                if( node.userData.buffer ){
+                    matrix = node.userData.buffer.matrix;
                 }
-                updateGeometry( node.geometry, matrix );
+                if( node.userData.instance ){
+                    instanceMatrix = node.userData.instance.matrix;
+                }
+                updateGeometry( node.geometry, matrix, instanceMatrix );
             }
 
         }
 
         if( geometry ){
-            updateGeometry( geometry, matrix );
+            updateGeometry( geometry, matrix, instanceMatrix );
         }else{
             boundingBox.makeEmpty();
             modelGroup.traverse( updateNode );
             backgroundGroup.traverse( updateNode );
         }
 
-        boundingBox.size( boundingBoxSize );
+        boundingBox.getSize( boundingBoxSize );
         boundingBoxLength = boundingBoxSize.length();
-        // controls.maxDistance = boundingBoxLength * 10;  // TODO
 
     }
 
-    function getImage(){
+    function getPickingPixels(){
+
+        const n = width * height * 4;
+        const imgBuffer = SupportsReadPixelsFloat ? new Float32Array( n ) : new Uint8Array( n );
+
+        render( true );
+        renderer.readRenderTargetPixels(
+            pickingTarget, 0, 0, width, height, imgBuffer
+        );
+
+        return imgBuffer;
+
+    }
+
+    function getImage( picking ){
 
         return new Promise( function( resolve ){
-            renderer.domElement.toBlob( resolve, "image/png" );
+
+            if( picking ){
+
+                const n = width * height * 4;
+                let imgBuffer = getPickingPixels();
+
+                if( SupportsReadPixelsFloat ){
+                    const imgBuffer2 = new Uint8Array( n );
+                    for( let i = 0; i < n; ++i ){
+                        imgBuffer2[ i ] = Math.round( imgBuffer[ i ] * 255 );
+                    }
+                    imgBuffer = imgBuffer2;
+                }
+
+                const canvas = document.createElement( "canvas" );
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext( "2d" );
+                const imgData = ctx.getImageData( 0, 0, width, height );
+                imgData.data.set( imgBuffer );
+                ctx.putImageData( imgData, 0, 0 );
+                canvas.toBlob( resolve, "image/png" );
+
+            }else{
+
+                renderer.domElement.toBlob( resolve, "image/png" );
+
+            }
+
         } );
 
     }
@@ -782,8 +914,8 @@ function Viewer( idOrElement ){
         //         rgba.map( c => { return c.toPrecision( 2 ) } )
         //     );
         //     Log.log( "picked pid", pid );
-        //     Log.log( "picked gid", gid );
         //     Log.log( "picked oid", oid );
+        //     Log.log( "picked object", object );
         //     Log.log( "picked instance", instance );
         //     Log.log( "picked position", x, y );
         //     Log.log( "devicePixelRatio", window.devicePixelRatio );
@@ -845,7 +977,7 @@ function Viewer( idOrElement ){
         }
 
         bRadius = Math.max( 10, boundingBoxLength * 0.5 );
-        bRadius += boundingBox.center( distVector ).length();
+        bRadius += boundingBox.getCenter( distVector ).length();
         // console.log( "bRadius", bRadius )
         if( bRadius === Infinity || bRadius === -Infinity || isNaN( bRadius ) ){
             // console.warn( "something wrong with bRadius" );
@@ -955,14 +1087,14 @@ function Viewer( idOrElement ){
 
     }
 
-    function __renderMultiSample(){
+    function __renderSuperSample(){
 
-        // based on the Manual Multi-Sample Anti-Aliasing Render Pass
+        // based on the Supersample Anti-Aliasing Render Pass
         // contributed to three.js by bhouston / http://clara.io/
         //
-        // This manual approach to MSAA re-renders the scene ones for
+        // This manual approach to SSAA re-renders the scene ones for
         // each sample with camera jitter and accumulates the results.
-        // References: https://en.wikipedia.org/wiki/Multisample_anti-aliasing
+        // References: https://en.wikipedia.org/wiki/Supersampling
 
         var offsetList = JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
 
@@ -1032,7 +1164,7 @@ function Viewer( idOrElement ){
         if( picking ){
             if( !lastRenderedPicking ) __renderPickingGroup();
         }else if( sampleLevel > 0 ){
-            __renderMultiSample();
+            __renderSuperSample();
         }else{
             __renderModelGroup();
         }
@@ -1068,6 +1200,7 @@ function Viewer( idOrElement ){
     this.remove = remove;
     this.clear = clear;
 
+    this.getPickingPixels = getPickingPixels;
     this.getImage = getImage;
     this.makeImage = makeImage;
 
@@ -1091,6 +1224,10 @@ function Viewer( idOrElement ){
     this.scene = scene;
     this.perspectiveCamera = perspectiveCamera;
     this.boundingBox = boundingBox;
+    this.updateBoundingBox = function(){
+        updateBoundingBox();
+        if( Debug ) updateHelper();
+    }
 
     Object.defineProperties( this, {
         camera: { get: function(){ return camera; } },

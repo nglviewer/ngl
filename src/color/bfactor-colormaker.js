@@ -9,6 +9,18 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by b-factor. The {@link AtomProxy.bfactor} property is used for coloring.
+ * By default the min and max b-factor values are used for the scale`s domain.
+ *
+ * __Name:__ _bfactor_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "ball+stick", { colorScheme: "bfactor" } );
+ *     o.autoView();
+ * } );
+ */
 class BfactorColormaker extends Colormaker{
 
     constructor( params ){
@@ -39,12 +51,12 @@ class BfactorColormaker extends Colormaker{
 
         }
 
-        var bfactorScale = this.getScale();
+        this.bfactorScale = this.getScale();
 
-        this.atomColor = function( a ){
-            return bfactorScale( a.bfactor );
-        };
+    }
 
+    atomColor( a ){
+        return this.bfactorScale( a.bfactor );
     }
 
 }

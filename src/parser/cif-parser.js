@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Vector3, Matrix4 } from "../../lib/three.es6.js";
 
 import { Debug, Log, ParserRegistry } from "../globals.js";
 import StructureParser from "./structure-parser.js";
@@ -25,6 +25,14 @@ const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
 const reDoubleQuote = /"/g;
 const reTrimQuotes = /^['"]+|['"]+$/g;
 
+
+function trimQuotes( str ){
+    if( str && str[0] === str[ str.length-1 ] && ( str[0] === "'" || str[0] === '"' ) ){
+        return str.substring( 1,  str.length-1 );
+    }else{
+        return str;
+    }
+}
 
 function ensureArray( dict, field ){
     if( !Array.isArray( dict[ field ] ) ){
@@ -165,6 +173,133 @@ function parseChemComp( cif, structure, structureBuilder ){
 }
 
 
+function parseCore( cif, structure, structureBuilder ){
+
+    var atomStore = structure.atomStore;
+    var atomMap = structure.atomMap;
+
+    if( cif.data ){
+        structure.id = cif.data;
+        structure.name = cif.data;
+    }
+
+    structure.unitcell = new Unitcell( {
+        a: parseFloat( cif.cell_length_a ),
+        b: parseFloat( cif.cell_length_b ),
+        c: parseFloat( cif.cell_length_c ),
+        alpha: parseFloat( cif.cell_angle_alpha ),
+        beta: parseFloat( cif.cell_angle_beta ),
+        gamma: parseFloat( cif.cell_angle_gamma ),
+        spacegroup: trimQuotes( cif.symmetry_space_group_name_H )
+    } );
+
+    const v = new Vector3();
+    const c = new Vector3();
+    const n = cif.atom_site_type_symbol.length;
+
+    for( let i = 0; i < n; ++i ){
+
+        atomStore.growIfFull();
+
+        const atomname = cif.atom_site_label[ i ];
+        const element = cif.atom_site_type_symbol[ i ];
+
+        atomStore.atomTypeId[ i ] = atomMap.add( atomname, element );
+
+        v.set(
+            cif.atom_site_fract_x[ i ],
+            cif.atom_site_fract_y[ i ],
+            cif.atom_site_fract_z[ i ]
+        );
+        v.applyMatrix4( structure.unitcell.fracToCart );
+        c.add( v );
+
+        atomStore.x[ i ] = v.x;
+        atomStore.y[ i ] = v.y;
+        atomStore.z[ i ] = v.z;
+        if( cif.atom_site_occupancy ){
+            atomStore.occupancy[ i ] = parseFloat( cif.atom_site_occupancy[ i ] );
+        }
+        atomStore.serial[ i ] = i;
+
+        structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+    }
+
+    c.divideScalar( n );
+    structure.center = c;
+    buildUnitcellAssembly( structure );
+
+    const v2 = new Vector3();
+    const v3 = new Vector3();
+    const ml = structure.biomolDict.SUPERCELL.partList[ 0 ].matrixList;
+
+    let k = n;
+
+    function covalent( idx ){
+        return atomMap.get( atomStore.atomTypeId[ idx ] ).covalent;
+    }
+    const identityMatrix = new Matrix4();
+
+    for( let i = 0; i < n; ++i ){
+
+        const covalentI = covalent( i );
+
+        v.set(
+            atomStore.x[ i ],
+            atomStore.y[ i ],
+            atomStore.z[ i ]
+        );
+
+        ml.forEach( function( m ){
+
+            if( identityMatrix.equals( m ) ) return;
+
+            v2.copy( v );
+            v2.applyMatrix4( m );
+
+            for( let j = 0; j < n; ++j ){
+
+                v3.set(
+                    atomStore.x[ j ],
+                    atomStore.y[ j ],
+                    atomStore.z[ j ]
+                );
+
+                const distSquared = v2.distanceToSquared( v3 );
+                const d = covalent( j ) + covalentI;
+                const d1 = d + 0.3;
+                const d2 = d - 0.5;
+
+                if( distSquared < ( d1 * d1 ) && distSquared > ( d2 * d2 ) ){
+
+                    atomStore.growIfFull();
+
+                    atomStore.atomTypeId[ k ] = atomStore.atomTypeId[ i ];
+                    atomStore.x[ k ] = v2.x;
+                    atomStore.y[ k ] = v2.y;
+                    atomStore.z[ k ] = v2.z;
+                    atomStore.occupancy[ k ] = atomStore.occupancy[ i ];
+                    atomStore.serial[ k ] = k;
+                    atomStore.altloc[ k ] = "A".charCodeAt( 0 );
+
+                    structureBuilder.addAtom( 0, "", "", "HET", 1, 1 );
+
+                    k += 1;
+                    return;
+
+                }
+
+            }
+
+        } );
+
+
+    }
+
+}
+
+
 function processSecondaryStructure( cif, structure, asymIdDict ){
 
     var helices = [];
@@ -281,7 +416,7 @@ function processSymmetry( cif, structure, asymIdDict ){
 
             var matDict = {};
 
-            var l = expr.replace( /[\(\)']/g, "" ).split( "," );
+            var l = expr.replace( /[()']/g, "" ).split( "," );
 
             l.forEach( function( e ){
 
@@ -313,7 +448,7 @@ function processSymmetry( cif, structure, asymIdDict ){
         gen.assembly_id.forEach( function( id, i ){
 
             var md = {};
-            var oe = gen.oper_expression[ i ].replace( /'\(|'/g, "" );
+            var oe = gen.oper_expression[ i ].replace( /['"]\(|['"]/g, "" );
 
             if( oe.includes( ")(" ) || oe.indexOf( "(" ) > 0 ){
 
@@ -437,16 +572,9 @@ function processSymmetry( cif, structure, asymIdDict ){
 
     if( cif.symmetry ){
 
-        var symmetry = cif.symmetry;
-
-        var sGroup = symmetry[ "space_group_name_H-M" ];
-        if( sGroup[0] === sGroup[ sGroup.length-1 ] &&
-            ( sGroup[0] === "'" || sGroup[0] === '"' )
-        ){
-            sGroup = sGroup.substring( 1, sGroup.length-1 );
-        }
-
-        unitcellDict.spacegroup = sGroup;
+        unitcellDict.spacegroup = trimQuotes(
+            cif.symmetry[ "space_group_name_H-M" ]
+        );
 
     }
 
@@ -574,7 +702,7 @@ function processConnections( cif, structure, asymIdDict ){
             if( !atomIndices1 ){
                 var selection1 = new Selection( sele1 );
                 if( selection1.selection.error ){
-                    Log.warn( "invalid selection for connection", sele1 );
+                    if( Debug ) Log.warn( "invalid selection for connection", sele1 );
                     continue;
                 }
                 atomIndices1 = structure.getAtomIndices( selection1 );
@@ -594,7 +722,7 @@ function processConnections( cif, structure, asymIdDict ){
             if( !atomIndices2 ){
                 var selection2 = new Selection( sele2 );
                 if( selection2.selection.error ){
-                    Log.warn( "invalid selection for connection", sele2 );
+                    if( Debug ) Log.warn( "invalid selection for connection", sele2 );
                     continue;
                 }
                 atomIndices2 = structure.getAtomIndices( selection2 );
@@ -621,7 +749,7 @@ function processConnections( cif, structure, asymIdDict ){
             // console.log( k, l );
 
             if( k === 0 || l === 0 ){
-                Log.warn( "no atoms found for", sele1, sele2 );
+                if( Debug ) Log.warn( "no atoms found for", sele1, sele2 );
                 continue;
             }
 
@@ -747,7 +875,7 @@ class CifParser extends StructureParser{
 
                 }else if( line.substring( 0, 5 )==="data_" ){
 
-                    // var data = line.substring( 5 );
+                    cif.data = line.substring( 5 ).trim();
 
                     // Log.log( "DATA", data );
 
@@ -823,7 +951,7 @@ class CifParser extends StructureParser{
 
                             if( !cif[ category ] ) cif[ category ] = {};
                             if( cif[ category ][ name ] ){
-                                Log.warn( category, name, "already exists" );
+                                if( Debug ) Log.warn( category, name, "already exists" );
                             }else{
                                 cif[ category ][ name ] = [];
                                 loopPointers.push( cif[ category ][ name ] );
@@ -855,7 +983,7 @@ class CifParser extends StructureParser{
                             if( !cif[ category ] ) cif[ category ] = {};
 
                             if( cif[ category ][ name ] ){
-                                Log.warn( category, name, "already exists" );
+                                if( Debug ) Log.warn( category, name, "already exists" );
                             }else{
                                 cif[ category ][ name ] = value;
                             }
@@ -881,16 +1009,13 @@ class CifParser extends StructureParser{
 
                         // Log.log( "LOOP VALUE", line );
 
-                        var nn, ls;
-
                         if( !line ){
 
                             continue;
 
                         }else if( currentCategory==="atom_site" ){
 
-                            nn = pointerNames.length;
-                            ls = line.split( reWhitespace );
+                            const ls = line.split( reWhitespace );
 
                             if( first ){
 
@@ -926,7 +1051,7 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
+                            const _modelNum = parseInt( ls[ pdbx_PDB_model_num ] );
 
                             if( modelNum !== _modelNum ){
 
@@ -952,16 +1077,16 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
+                            const atomname = ls[ label_atom_id ].replace( reDoubleQuote, '' );
                             if( cAlphaOnly && atomname !== 'CA' ) continue;
 
-                            var x = parseFloat( ls[ Cartn_x ] );
-                            var y = parseFloat( ls[ Cartn_y ] );
-                            var z = parseFloat( ls[ Cartn_z ] );
+                            const x = parseFloat( ls[ Cartn_x ] );
+                            const y = parseFloat( ls[ Cartn_y ] );
+                            const z = parseFloat( ls[ Cartn_z ] );
 
                             if( asTrajectory ){
 
-                                var frameOffset = currentCoord * 3;
+                                const frameOffset = currentCoord * 3;
 
                                 currentFrame[ frameOffset + 0 ] = x;
                                 currentFrame[ frameOffset + 1 ] = y;
@@ -975,20 +1100,20 @@ class CifParser extends StructureParser{
 
                             //
 
-                            var resname = ls[ label_comp_id ];
-                            var resno = parseInt( ls[ auth_seq_id ] );
-                            var inscode = ls[ pdbx_PDB_ins_code ];
+                            const resname = ls[ label_comp_id ];
+                            const resno = parseInt( ls[ auth_seq_id ] );
+                            let inscode = ls[ pdbx_PDB_ins_code ];
                             inscode = ( inscode === '?' ) ? '' : inscode;
-                            var chainname = ls[ auth_asym_id ];
-                            var chainid = ls[ label_asym_id ];
-                            var hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
+                            const chainname = ls[ auth_asym_id ];
+                            const chainid = ls[ label_asym_id ];
+                            const hetero = ( ls[ group_PDB ][ 0 ] === 'H' ) ? 1 : 0;
 
                             //
 
-                            var element = ls[ type_symbol ];
-                            var bfactor = parseFloat( ls[ B_iso_or_equiv ] );
-                            var occ = parseFloat( ls[ occupancy ] );
-                            var altloc = ls[ label_alt_id ];
+                            const element = ls[ type_symbol ];
+                            const bfactor = parseFloat( ls[ B_iso_or_equiv ] );
+                            const occ = parseFloat( ls[ occupancy ] );
+                            let altloc = ls[ label_alt_id ];
                             altloc = ( altloc === '.' ) ? '' : altloc;
 
                             atomStore.growIfFull();
@@ -1007,16 +1132,16 @@ class CifParser extends StructureParser{
                             if( Debug ){
                                 // check if one-to-many (chainname-asymId) relationship is
                                 // actually a many-to-many mapping
-                                var assignedChainname = asymIdDict[ chainid ];
+                                const assignedChainname = asymIdDict[ chainid ];
                                 if( assignedChainname !== undefined && assignedChainname !== chainname ){
-                                    Log.warn( assignedChainname, chainname );
+                                    if( Debug ) Log.warn( assignedChainname, chainname );
                                 }
                             }
                             // chainname mapping: label_asym_id -> auth_asym_id
                             asymIdDict[ chainid ] = chainname;
 
                             // entity mapping: chainIndex -> label_entity_id
-                            var entityId = ls[ label_entity_id ];
+                            const entityId = ls[ label_entity_id ];
                             if( !chainIndexDict[ entityId ] ){
                                 chainIndexDict[ entityId ] = new Set();
                             }
@@ -1026,8 +1151,8 @@ class CifParser extends StructureParser{
 
                         }else{
 
-                            ls = line.match( reQuotedWhitespace );
-                            nn = ls.length;
+                            const ls = line.match( reQuotedWhitespace );
+                            const nn = ls.length;
 
                             if( currentLoopIndex === loopPointers.length ){
                                 currentLoopIndex = 0;
@@ -1035,7 +1160,7 @@ class CifParser extends StructureParser{
                                 Log.warn( "cif parsing error, wrong number of loop data entries", nn, loopPointers.length );
                             }*/
 
-                            for( var j = 0; j < nn; ++j ){
+                            for( let j = 0; j < nn; ++j ){
                                 loopPointers[ currentLoopIndex + j ].push( ls[ j ] );
                             }
 
@@ -1049,7 +1174,7 @@ class CifParser extends StructureParser{
 
                         // Log.log( "NEWLINE STRING", line );
 
-                        var str = line.substring( 1, line.length - 1 );
+                        const str = line.substring( 1, line.length - 1 );
 
                         if( currentName === false ){
                             cif[ currentCategory ] = str;
@@ -1090,6 +1215,15 @@ class CifParser extends StructureParser{
             s.finalizeAtoms();
             s.finalizeBonds();
             assignResidueTypeBonds( s );
+
+        }else if( cif.atom_site_type_symbol && cif.atom_site_label && cif.atom_site_fract_x ){
+
+            parseCore( cif, s, sb );
+            sb.finalize();
+            s.finalizeAtoms();
+            calculateBonds( s );
+            s.finalizeBonds();
+            // assignResidueTypeBonds( s );
 
         }else{
 
@@ -1159,6 +1293,8 @@ class CifParser extends StructureParser{
                 assignSecondaryStructure( s, secStruct );
             }
             buildUnitcellAssembly( s );
+
+            s.extraData.cif = cif;
 
         }
 

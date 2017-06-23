@@ -7,62 +7,59 @@
 
 import { defaults } from "../utils.js";
 import { RepresentationRegistry } from "../globals.js";
+import { ContactPicker } from "../utils/picker.js";
 import { calculateCenterArray } from "../math/array-utils.js";
 import StructureRepresentation from "./structure-representation.js";
 import { polarContacts, polarBackboneContacts } from "../geometry/contact-utils.js";
 import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
-function ContactRepresentation( structure, viewer, params ){
+class ContactRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-ContactRepresentation.prototype = Object.assign( Object.create(
+        this.type = "contact";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: ContactRepresentation,
+            contactType: {
+                type: "select", rebuild: true,
+                options: {
+                    "polar": "polar",
+                    "polarBackbone": "polar backbone"
+                }
+            },
+            maxDistance: {
+                type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
+            },
+            maxAngle: {
+                type: "integer", max: 180, min: 0, rebuild: true
+            },
+            radialSegments: true,
+            disableImpostor: true
 
-    type: "contact",
+        }, this.parameters );
 
-    defaultSize: 0.25,
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        contactType: {
-            type: "select", rebuild: true,
-            options: {
-                "polar": "polar",
-                "polarBackbone": "polar backbone"
-            }
-        },
-        maxDistance: {
-            type: "number", precision: 1, max: 10, min: 0.1, rebuild: true
-        },
-        maxAngle: {
-            type: "integer", max: 180, min: 0, rebuild: true
-        },
-        radialSegments: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.25 );
 
         this.contactType = defaults( p.contactType, "polarBackbone" );
         this.maxDistance = defaults( p.maxDistance, 3.5 );
         this.maxAngle = defaults( p.maxAngle, 40 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getContactData: function( sview ){
+    getContactData( sview ){
 
         var contactsFnDict = {
             "polar": polarContacts,
@@ -75,26 +72,31 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
         return contactData;
 
-    },
+    }
 
-    getBondData: function( sview, what, params ){
+    getBondData( sview, what, params ){
 
-        return sview.getBondData( this.getBondParams( what, params ) );
+        var bondData = sview.getBondData( this.getBondParams( what, params ) );
+        if( bondData.picking ){
+            bondData.picking = new ContactPicker(
+                bondData.picking.array,
+                bondData.picking.structure,
+                params.bondStore
+            );
+        }
+        return bondData;
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var contactData = this.getContactData( sview );
 
-        var bondParams = {
-            bondSet: contactData.bondSet,
-            bondStore: contactData.bondStore
-        };
-        var bondData = this.getBondData( sview, undefined, bondParams );
-
         var cylinderBuffer = new CylinderBuffer(
-            bondData,
+            this.getBondData( sview, undefined, {
+                bondSet: contactData.bondSet,
+                bondStore: contactData.bondStore
+            } ),
             this.getBufferParams( {
                 openEnded: false,
                 radialSegments: this.radialSegments,
@@ -109,9 +111,9 @@ ContactRepresentation.prototype = Object.assign( Object.create(
             bondStore: contactData.bondStore
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         if( !what || what.position ){
             var contactData = this.getContactData( data.sview );
@@ -128,7 +130,6 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         var cylinderData = {};
 
         if( !what || what.position ){
-
             cylinderData.position = calculateCenterArray(
                 bondData.position1, bondData.position2
             );
@@ -137,7 +138,7 @@ ContactRepresentation.prototype = Object.assign( Object.create(
         }
 
         if( !what || what.color ){
-            cylinderData.color = bondData.color1;
+            cylinderData.color = bondData.color;
             cylinderData.color2 = bondData.color2;
         }
 
@@ -149,7 +150,7 @@ ContactRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "contact", ContactRepresentation );

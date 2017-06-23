@@ -7,6 +7,7 @@
 
 import "../shader/Ribbon.vert";
 
+import { getUintArray } from "../utils.js";
 import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
@@ -17,17 +18,19 @@ const quadIndices = new Uint16Array( [
 ] );
 
 
+/**
+ * Ribbon buffer. Draws a thin ribbon.
+ */
 class RibbonBuffer extends MeshBuffer{
 
     /**
-     * make tube mesh buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.normal - normals
      * @param  {Float32Array} data.dir - binormals
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -41,9 +44,7 @@ class RibbonBuffer extends MeshBuffer{
         var meshPosition = new Float32Array( x );
         var meshColor = new Float32Array( x );
         var meshNormal = new Float32Array( x );
-
-        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
-        var meshIndex = new TypedArray( x );
+        var meshIndex = getUintArray( x, x / 3 );
 
         super( {
             position: meshPosition,

@@ -6,26 +6,44 @@ uniform float yOffset;
 uniform float zOffset;
 uniform bool ortho;
 
-varying vec3 vViewPosition;
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+    varying vec3 vViewPosition;
+#endif
+
 varying vec2 texCoord;
 
 #if defined( RADIUS_CLIP )
     varying vec3 vClipCenter;
 #endif
 
+#if defined( PICKING )
+    #include unpack_color
+    attribute float primitiveId;
+    varying vec3 vPickingColor;
+#else
+    #include color_pars_vertex
+#endif
+
 attribute vec2 mapping;
 attribute vec2 inputTexCoord;
 attribute float inputSize;
 
-#include color_pars_vertex
+#include matrix_scale
 #include common
 
 void main(void){
 
-    #include color_vertex
+    #if defined( PICKING )
+        vPickingColor = unpackColor( primitiveId );
+    #else
+        #include color_vertex
+    #endif
+
     texCoord = inputTexCoord;
 
-    float _zOffset = zOffset;
+    float scale = matrixScale( modelViewMatrix );
+
+    float _zOffset = zOffset * scale;
     if( texCoord.x == 10.0 ){
         _zOffset -= 0.001;
     }
@@ -36,16 +54,18 @@ void main(void){
     }
     vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
-    cameraCornerPos.xy += mapping * inputSize * 0.01;
-    cameraCornerPos.x += xOffset;
-    cameraCornerPos.y += yOffset;
+    cameraCornerPos.xy += mapping * inputSize * 0.01 * scale;
+    cameraCornerPos.x += xOffset * scale;
+    cameraCornerPos.y += yOffset * scale;
     if( !ortho ){
         cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;
     }
 
     gl_Position = projectionMatrix * cameraCornerPos;
 
-    vViewPosition = -cameraCornerPos.xyz;
+    #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
+        vViewPosition = -cameraCornerPos.xyz;
+    #endif
 
     #if defined( RADIUS_CLIP )
         vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;

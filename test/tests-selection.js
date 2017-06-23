@@ -554,7 +554,7 @@ describe( 'parsing', function () {
     } );
 
     it( 'element H', function () {
-        var sele = "#H";
+        var sele = "_H";
         var selection = new Selection( sele );
         var selectionObj = {
             "operator": undefined,
@@ -693,6 +693,42 @@ describe( 'parsing', function () {
             "operator": undefined,
             "rules": [
                 { "resno": [ -12, -8 ] }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
+
+    it( 'bonded', function () {
+        var sele = "bonded";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "keyword": kwd.BONDED }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
+
+    it( 'ring', function () {
+        var sele = "ring";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "keyword": kwd.RING }
+            ]
+        };
+        assert.deepEqual( selection.selection, selectionObj );
+    } );
+
+    it( 'resname list', function () {
+        var sele = "[ALA,MET,GLU]";
+        var selection = new Selection( sele );
+        var selectionObj = {
+            "operator": undefined,
+            "rules": [
+                { "resname": [ "ALA", "MET", "GLU" ] }
             ]
         };
         assert.deepEqual( selection.selection, selectionObj );

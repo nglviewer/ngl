@@ -10,47 +10,59 @@ import { defaults } from "../utils.js";
 import BallAndStickRepresentation from "./ballandstick-representation.js";
 
 
-function BaseRepresentation( structure, viewer, params ){
+/**
+ * Base representation. Show cylinders for RNA/DNA ladders.
+ *
+ * __Name:__ _base_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1d66" ).then( function( o ){
+ *     o.addRepresentation( "cartoon", { sele: "nucleic" } );
+ *     o.addRepresentation( "base", { color: "resname" } );
+ *     o.autoView( "nucleic" );
+ * } );
+ */
+class BaseRepresentation extends BallAndStickRepresentation{
 
-    BallAndStickRepresentation.call( this, structure, viewer, params );
+    /**
+     * @param  {Structure} structure - the structure object
+     * @param  {Viewer} viewer - the viewer object
+     * @param  {BallAndStickRepresentationParameters} params - parameters object
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-BaseRepresentation.prototype = Object.assign( Object.create(
+        this.type = "base";
 
-    BallAndStickRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: BaseRepresentation,
+        }, this.parameters, {
 
-    type: "base",
+            multipleBond: null,
+            bondSpacing: null,
 
-    defaultSize: 0.3,
+        } );
 
-    parameters: Object.assign( {
+    }
 
-    }, BallAndStickRepresentation.prototype.parameters, {
-
-        multipleBond: null,
-        bondSpacing: null,
-
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.aspectRatio = defaults( p.aspectRatio, 1.0 );
+        p.radius = defaults( p.radius, 0.3 );
 
-        BallAndStickRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getAtomData: function( sview, what, params ){
+    getAtomData( sview, what, params ){
 
         return sview.getRungAtomData( this.getAtomParams( what, params ) );
 
-    },
+    }
 
-    getBondData: function( sview, what, params ){
+    getBondData( sview, what, params ){
 
         var p = this.getBondParams( what, params );
         p.colorParams.rung = true;
@@ -59,7 +71,7 @@ BaseRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "base", BaseRepresentation );

@@ -6,20 +6,21 @@
  */
 
 
+import { Vector3, Quaternion, Matrix4, Euler } from "../../lib/three.es6.js";
 import Signal from "../../lib/signals.es6.js";
 
 import { defaults } from "../utils.js";
 import { generateUUID } from "../math/math-utils.js";
+import Annotation from "../component/annotation.js";
+import ComponentControls from "../controls/component-controls.js";
 import { makeRepresentation } from "../representation/representation-utils.js";
 // import RepresentationComponent from "./representation-component.js";
 
 
 let nextComponentId = 0;
 
-const SignalNames = [
-    "representationAdded", "representationRemoved", "visibilityChanged",
-    "statusChanged", "nameChanged", "disposed"
-];
+const _m = new Matrix4();
+const _v = new Vector3();
 
 
 /**
@@ -29,35 +30,29 @@ const SignalNames = [
  * @property {Boolean} visible - component visibility
  */
 
+
 /**
- * {@link Signal}, dispatched when a representation is added
  * @example
  * component.signals.representationAdded.add( function( representationComponent ){ ... } );
- * @event Component#representationAdded
- * @type {RepresentationComponent}
+ *
+ * @typedef {Object} ComponentSignals
+ * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added
+ * @property {Signal<RepresentationComponent>} representationRemoved - when a representation is removed
+ * @property {Signal<Matrix4>} matrixChanged - on matrix change
+ * @property {Signal<Boolean>} visibilityChanged - on visibility change
+ * @property {Signal<String>} statusChanged - on status change
+ * @property {Signal<String>} nameChanged - on name change
+ * @property {Signal} disposed - on dispose
  */
+
 
 /**
- * {@link Signal}, dispatched when a representation is removed
- * @example
- * component.signals.representationRemoved.add( function( representationComponent ){ ... } );
- * @event Component#representationRemoved
- * @type {RepresentationComponent}
+ * Base class for components
+ * @interface
  */
-
-/**
- * {@link Signal}, dispatched when the visibility changes
- * @example
- * component.signals.visibilityChanged.add( function( value ){ ... } );
- * @event Component#visibilityChanged
- * @type {Boolean}
- */
-
-
 class Component{
 
     /**
-     * Base class for components
      * @param {Stage} stage - stage object the component belongs to
      * @param {ComponentParameters} params - parameter object
      */
@@ -71,26 +66,203 @@ class Component{
         this.uuid = generateUUID();
         this.visible = p.visible !== undefined ? p.visible : true;
 
-        // construct instance signals
-        this.signals = {};
-        this._signalNames.forEach( name => {
-            this.signals[ name ] = new Signal();
-        } );
+        /**
+         * Events emitted by the component
+         * @type {ComponentSignals}
+         */
+        this.signals = {
+            representationAdded: new Signal(),
+            representationRemoved: new Signal(),
+            visibilityChanged: new Signal(),
+            matrixChanged: new Signal(),
+            statusChanged: new Signal(),
+            nameChanged: new Signal(),
+            disposed: new Signal(),
+        };
 
         this.stage = stage;
         this.viewer = stage.viewer;
 
         this.reprList = [];
+        this.annotationList = [];
+
+        this.matrix = new Matrix4();
+        this.position = new Vector3();
+        this.quaternion = new Quaternion();
+        this.scale = new Vector3( 1, 1, 1 );
+        this.transform = new Matrix4();
+
+        this.controls = new ComponentControls( this );
 
     }
 
     get type(){ return "component"; }
 
-    get _signalNames(){ return SignalNames; }
+    /**
+     * Set position transform
+     *
+     * @example
+     * // translate by 25 angstrom along x axis
+     * component.setPosition( [ 25, 0, 0 ] );
+     *
+     * @param {Vector3|Array} p - the coordinates
+     * @return {Component} this object
+     */
+    setPosition( p ){
+
+        if( Array.isArray( p ) ){
+            this.position.fromArray( p );
+        }else{
+            this.position.copy( p );
+        }
+        this.updateMatrix();
+
+        return this;
+
+    }
+
+    /**
+     * Set rotation transform
+     *
+     * @example
+     * // rotate by 2 degree radians on x axis
+     * component.setRotation( [ 2, 0, 0 ] );
+     *
+     * @param {Quaternion|Euler|Array} r - the rotation
+     * @return {Component} this object
+     */
+    setRotation( r ){
+
+        if( Array.isArray( r ) ){
+            if( r.length === 3 ){
+                const e = new Euler().fromArray( r );
+                this.quaternion.setFromEuler( e );
+            }else{
+                this.quaternion.fromArray( r );
+            }
+        }else if( r instanceof Euler ){
+            this.quaternion.setFromEuler( r );
+        }else{
+            this.quaternion.copy( r );
+        }
+        this.updateMatrix();
+
+        return this;
+
+    }
+
+    /**
+     * Set scale transform
+     *
+     * @example
+     * // scale by factor of two
+     * component.setScale( 2 );
+     *
+     * @param {Number} s - the scale
+     * @return {Component} this object
+     */
+    setScale( s ){
+
+        this.scale.set( s, s, s );
+        this.updateMatrix();
+
+        return this;
+
+    }
+
+    /**
+     * Set general transform. Is applied before and in addition
+     * to the position, rotation and scale transformations
+     *
+     * @example
+     * component.setTransform( matrix );
+     *
+     * @param {Matrix4} m - the matrix
+     * @return {Component} this object
+     */
+    setTransform( m ){
+
+        this.transform.copy( m );
+        this.updateMatrix();
+
+        return this;
+
+    }
+
+    updateMatrix(){
+
+        var c = this.getCenterUntransformed( _v );
+        this.matrix.makeTranslation( -c.x, -c.y, -c.z );
+
+        _m.makeRotationFromQuaternion( this.quaternion );
+        this.matrix.premultiply( _m );
+
+        _m.makeScale( this.scale.x, this.scale.y, this.scale.z );
+        this.matrix.premultiply( _m );
+
+        var p = this.position;
+        _m.makeTranslation( p.x + c.x, p.y + c.y, p.z + c.z );
+        this.matrix.premultiply( _m );
+
+        this.matrix.premultiply( this.transform );
+
+        this.reprList.forEach( repr => {
+            repr.setParameters( { matrix: this.matrix } );
+        } );
+        this.stage.viewer.updateBoundingBox();
+
+        this.signals.matrixChanged.dispatch( this.matrix );
+
+    }
+
+    /**
+     * Add an anotation object
+     * @param {Vector3} position - the 3d position
+     * @param {String|Element} content - the HTML content
+     * @param {Object} [params] - parameters
+     * @param {Integer} params.offsetX - 2d offset in x direction
+     * @param {Integer} params.offsetY - 2d offset in y direction
+     * @return {Annotation} the added annotation object
+     */
+    addAnnotation( position, content, params ){
+
+        const annotation = new Annotation( this, position, content, params );
+        this.annotationList.push( annotation );
+
+        return annotation;
+
+    }
+
+    /**
+     * Remove the give annotation from the component
+     * @param {Annotation} annotation - the annotation to remove
+     * @return {undefined}
+     */
+    removeAnnotation( annotation ){
+
+        var idx = this.annotationList.indexOf( annotation );
+        if( idx !== -1 ){
+            this.annotationList.splice( idx, 1 );
+            annotation.dispose();
+        }
+
+    }
+
+    /**
+     * Remove all annotations from the component
+     * @return {undefined}
+     */
+    removeAllAnnotations(){
+
+        this.annotationList.forEach( function( annotation ){
+            annotation.dispose();
+        } );
+        this.annotationList.length = 0;
+
+    }
 
     /**
      * Add a new representation to the component
-     * @fires Component#representationAdded
      * @param {String} type - the name of the representation
      * @param {Object} object - the object on which the representation should be based
      * @param {RepresentationParameters} [params] - representation parameters
@@ -101,6 +273,7 @@ class Component{
 
         var p = params || {};
         var sp = this.stage.getParameters();
+        p.matrix = this.matrix.clone();
         p.quality = p.quality || sp.quality;
         p.disableImpostor = defaults( p.disableImpostor, !sp.impostor );
         p.useWorker = defaults( p.useWorker, sp.workerDefault );
@@ -134,7 +307,6 @@ class Component{
 
     /**
      * Removes a representation component
-     * @fires Component#representationRemoved
      * @param {RepresentationComponent} repr - the representation component
      * @return {undefined}
      */
@@ -161,36 +333,30 @@ class Component{
 
     /**
      * Removes all representation components
-     * @fires Component#representationRemoved
      * @return {undefined}
      */
     removeAllRepresentations(){
 
-        // copy via .slice because side effects may change reprList
-        this.reprList.slice().forEach( function( repr ){
-            this.removeRepresentation( repr );
-        }, this );
-
-    }
-
-    clearRepresentations(){
-
-        console.warn( ".clearRepresentations is deprecated, use .removeAllRepresentations() instead" );
-        this.removeAllRepresentations();
+        this.reprList.slice( 0 ).forEach( function( repr ){
+            repr.dispose();
+        } );
 
     }
 
     dispose(){
 
+        this.removeAllAnnotations();
         this.removeAllRepresentations();
+
+        delete this.annotationList;
         delete this.reprList;
+
         this.signals.disposed.dispatch();
 
     }
 
     /**
      * Set the visibility of the component, including added representations
-     * @fires Component#visibilityChanged
      * @param {Boolean} value - visibility flag
      * @return {Component} this object
      */
@@ -200,6 +366,10 @@ class Component{
 
         this.eachRepresentation( function( repr ){
             repr.updateVisibility();
+        } );
+
+        this.annotationList.forEach( function( annotation ){
+            annotation.updateVisibility();
         } );
 
         this.signals.visibilityChanged.dispatch( value );
@@ -226,21 +396,41 @@ class Component{
 
     }
 
+    /**
+     * @return {Box3} the component's bounding box
+     */
     getBox(){
 
-        // console.warn( "not implemented" )
+        return this.getBoxUntransformed( ...arguments )
+                    .clone().applyMatrix4( this.matrix );
 
     }
 
+    /**
+     * @return {Vector3} the component's center position
+     */
     getCenter(){
 
-        return this.getBox().center();
+        return this.getCenterUntransformed( ...arguments )
+                    .clone().applyMatrix4( this.matrix );
 
     }
 
     getZoom(){
 
         return this.stage.getZoomForBox( this.getBox( ...arguments ) );
+
+    }
+
+    /**
+     * @abstract
+     * @return {Box3} the untransformed component's bounding box
+     */
+    getBoxUntransformed(){}
+
+    getCenterUntransformed(){
+
+        return this.getBoxUntransformed().getCenter();
 
     }
 

@@ -135,7 +135,7 @@ NGL.Preferences = function( id, defaultParams ){
         lightIntensity: 1.0,
         ambientColor: 0xdddddd,
         ambientIntensity: 0.2,
-        hoverTimeout: 50,
+        hoverTimeout: 0,
     };
 
     // overwrite default values with params
@@ -263,7 +263,7 @@ NGL.StageWidget = function( stage ){
     //
 
     document.body.addEventListener(
-        'touchmove', function( e ){ e.preventDefault(); }, false
+        'touchmove', function( e ){ e.preventDefault(); }, { passive: false }
     );
 
     //
@@ -364,27 +364,6 @@ NGL.StageWidget = function( stage ){
 };
 
 
-NGL.getPickingMessage = function( d, prefix ){
-    var msg;
-    if( d.atom ){
-        msg = "atom: " +
-            d.atom.qualifiedName() +
-            " (" + d.atom.structure.name + ")";
-    }else if( d.bond ){
-        msg = "bond: " +
-            d.bond.atom1.qualifiedName() + " - " + d.bond.atom2.qualifiedName() +
-            " (" + d.bond.structure.name + ")";
-    }else if( d.volume ){
-        msg = "volume: " +
-            d.volume.value.toPrecision( 3 ) +
-            " (" + d.volume.volume.name + ")";
-    }else{
-        msg = "nothing";
-    }
-    return prefix ? prefix + " " + msg : msg;
-};
-
-
 // Viewport
 
 NGL.ViewportWidget = function( stage ){
@@ -420,34 +399,6 @@ NGL.ViewportWidget = function( stage ){
 
     }, false );
 
-    // tooltip
-
-    var tooltipText = new UI.Text();
-
-    var tooltipPanel = new UI.OverlayPanel()
-        .setPosition( "absolute" )
-        .setDisplay( "none" )
-        .setOpacity( "0.9" )
-        .setPointerEvents( "none" )
-        .add( tooltipText );
-
-    stage.signals.hovered.add( function( d ){
-        var text = NGL.getPickingMessage( d, "" );
-        if( text !== "nothing" ){
-            d.canvasPosition.addScalar( 5 );
-            tooltipText.setValue( text );
-            tooltipPanel
-                .setBottom( d.canvasPosition.y  + "px" )
-                .setLeft( d.canvasPosition.x + "px" )
-                .setDisplay( "block" );
-        }else{
-            tooltipPanel.setDisplay( "none" );
-        }
-
-    } );
-
-    container.add( tooltipPanel );
-
     return container;
 
 };
@@ -471,8 +422,8 @@ NGL.ToolbarWidget = function( stage ){
         .setFloat( "right" )
         .add( statsText );
 
-    stage.signals.clicked.add( function( d ){
-        messageText.setValue( NGL.getPickingMessage( d, "Clicked" ) );
+    stage.signals.clicked.add( function( pickingProxy ){
+        messageText.setValue( pickingProxy ? pickingProxy.getLabel() : "nothing" );
     } );
 
     stage.viewer.stats.signals.updated.add( function(){
@@ -501,7 +452,7 @@ NGL.MenubarWidget = function( stage, preferences ){
 
     container.add( new NGL.MenubarFileWidget( stage ) );
     container.add( new NGL.MenubarViewWidget( stage, preferences ) );
-    if( NGL.ExampleRegistry && NGL.ExampleRegistry.count > 0 ){
+    if( NGL.examplesListUrl && NGL.examplesScriptUrl ){
         container.add( new NGL.MenubarExamplesWidget( stage ) );
     }
     if( NGL.PluginRegistry && NGL.PluginRegistry.count > 0 ){
@@ -695,12 +646,12 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         stage.autoView( 1000 );
     }
 
-    function onSpinOnClick(){
-        stage.setSpin( [ 0, 1, 0 ], 0.005 );
+    function onToggleSpinClick(){
+        stage.toggleSpin();
     }
 
-    function onSpinOffClick(){
-        stage.setSpin( null, null );
+    function onToggleRockClick(){
+        stage.toggleRock();
     }
 
     function onGetOrientationClick(){
@@ -745,8 +696,8 @@ NGL.MenubarViewWidget = function( stage, preferences ){
         createOption( 'Full screen', onFullScreenOptionClick, 'expand' ),
         createOption( 'Center', onCenterOptionClick, 'bullseye' ),
         createDivider(),
-        createOption( 'Spin on', onSpinOnClick ),
-        createOption( 'Spin off', onSpinOffClick ),
+        createOption( 'Toggle spin', onToggleSpinClick ),
+        createOption( 'Toggle rock', onToggleRockClick ),
         createDivider(),
         createOption( 'Get orientation', onGetOrientationClick ),
         createOption( 'Set orientation', onSetOrientationClick ),
@@ -764,23 +715,24 @@ NGL.MenubarExamplesWidget = function( stage ){
     // configure menu contents
 
     var createOption = UI.MenubarHelper.createOption;
-    var createDivider = UI.MenubarHelper.createDivider;
-    var menuConfig = [];
+    var optionsPanel = UI.MenubarHelper.createOptionsPanel( [] );
+    optionsPanel.setWidth( "300px" );
 
-    NGL.ExampleRegistry.names.sort().forEach( function( name ){
-        if( name === "__divider__" ){
-            menuConfig.push( createDivider() );
-        }else if( name.charAt( 0 ) === "_" ){
-            return;  // hidden
-        }else{
+    var xhr = new XMLHttpRequest();
+    xhr.open( "GET", NGL.examplesListUrl );
+    xhr.responseType = "json";
+    xhr.onload = function( e ){
+
+        this.response.sort().forEach( function( name ){
             var option = createOption( name, function(){
-                NGL.ExampleRegistry.load( name, stage );
+                stage.loadFile( NGL.examplesScriptUrl + name + ".js" );
             } );
-            menuConfig.push( option );
-        }
-    } );
+            optionsPanel.add( option );
+        } );
 
-    var optionsPanel = UI.MenubarHelper.createOptionsPanel( menuConfig );
+    };
+    xhr.send();
+
     return UI.MenubarHelper.createMenuContainer( 'Examples', optionsPanel );
 
 };
@@ -1532,6 +1484,7 @@ NGL.StructureComponentWidget = function( component, stage ){
             } );
         }
         var queue = new NGL.Queue( fn, e.target.files );
+        e.target.value = "";
     }
 
     var framesInput = document.createElement( "input" );
@@ -1614,8 +1567,29 @@ NGL.StructureComponentWidget = function( component, stage ){
 
     var alignAxes = new UI.Button( "align" ).onClick( function(){
         var pa = component.structure.getPrincipalAxes();
-        stage.animationControls.rotate( pa.getRotationQuaternion() );
+        var q = pa.getRotationQuaternion();
+        q.multiply( component.quaternion.clone().inverse() );
+        stage.animationControls.rotate( q );
+        stage.animationControls.move( component.getCenter() );
     } );
+
+    // Annotations visibility
+
+    var showAnnotations = new UI.Button( "show" ).onClick( function(){
+        component.annotationList.forEach( function( annotation ){
+            annotation.setVisibility( true );
+        } );
+    } );
+
+    var hideAnnotations = new UI.Button( "hide" ).onClick( function(){
+        component.annotationList.forEach( function( annotation ){
+            annotation.setVisibility( false );
+        } );
+    } );
+
+    var annotationButtons = new UI.Panel()
+        .setDisplay( "inline-block" )
+        .add( showAnnotations, hideAnnotations );
 
     // Open validation
 
@@ -1640,6 +1614,41 @@ NGL.StructureComponentWidget = function( component, stage ){
         componentPanel.setMenuDisplay( "none" );
     } );
 
+    // Position
+
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
+    } );
+
     // Component panel
 
     var componentPanel = new UI.ComponentPanel( component )
@@ -1657,7 +1666,11 @@ NGL.StructureComponentWidget = function( component, stage ){
         )
         .addMenuEntry( "Trajectory", traj )
         .addMenuEntry( "Principal axes", alignAxes )
-        .addMenuEntry( "Validation", vali );
+        .addMenuEntry( "Annotations", annotationButtons )
+        .addMenuEntry( "Validation", vali )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     if( NGL.DatasourceRegistry.listing &&
         NGL.DatasourceRegistry.trajectory
@@ -1685,11 +1698,9 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1697,22 +1708,53 @@ NGL.SurfaceComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "surface": "surface",
                 "dot": "dot"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
+
+    // Position
+
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
+    } );
 
     // Component panel
 
@@ -1723,7 +1765,10 @@ NGL.SurfaceComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.surface.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
@@ -1744,11 +1789,9 @@ NGL.VolumeComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1756,7 +1799,6 @@ NGL.VolumeComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "surface": "surface",
@@ -1764,15 +1806,47 @@ NGL.VolumeComponentWidget = function( component, stage ){
                 "slice": "slice"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
+
+    // Position
+
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
+    } );
 
     // Component panel
 
@@ -1783,7 +1857,10 @@ NGL.VolumeComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.volume.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
@@ -1804,11 +1881,9 @@ NGL.ShapeComponentWidget = function( component, stage ){
     var reprContainer = new UI.Panel();
 
     signals.representationAdded.add( function( repr ){
-
         reprContainer.add(
             new NGL.RepresentationComponentWidget( repr, stage )
         );
-
     } );
 
     // Add representation
@@ -1816,21 +1891,52 @@ NGL.ShapeComponentWidget = function( component, stage ){
     var repr = new UI.Select()
         .setColor( '#444' )
         .setOptions( (function(){
-
             var reprOptions = {
                 "": "[ add ]",
                 "buffer": "buffer"
             };
             return reprOptions;
-
         })() )
         .onChange( function(){
-
             component.addRepresentation( repr.getValue() );
             repr.setValue( "" );
             componentPanel.setMenuDisplay( "none" );
-
         } );
+
+    // Position
+
+    var position = new UI.Vector3()
+        .onChange( function(){
+            component.setPosition( position.getValue() );
+        } );
+
+    // Rotation
+
+    var q = new NGL.Quaternion();
+    var e = new NGL.Euler();
+    var rotation = new UI.Vector3()
+        .setRange( -6.28, 6.28 )
+        .onChange( function(){
+            e.setFromVector3( rotation.getValue() );
+            q.setFromEuler( e );
+            component.setRotation( q );
+        } );
+
+    // Scale
+
+    var scale = new UI.Number( 1 )
+        .setRange( 0.01, 100 )
+        .onChange( function(){
+            component.setScale( scale.getValue() );
+        } );
+
+    // Matrix
+
+    signals.matrixChanged.add( function(){
+        position.setValue( component.position );
+        rotation.setValue( e.setFromQuaternion( component.quaternion ) );
+        scale.setValue( component.scale.x );
+    } );
 
     // Component panel
 
@@ -1841,7 +1947,10 @@ NGL.ShapeComponentWidget = function( component, stage ){
         .addMenuEntry(
             "File", new UI.Text( component.shape.path )
                         .setMaxWidth( "100px" )
-                        .setWordWrap( "break-word" ) );
+                        .setWordWrap( "break-word" ) )
+        .addMenuEntry( "Position", position )
+        .addMenuEntry( "Rotation", rotation )
+        .addMenuEntry( "Scale", scale );
 
     // Fill container
 
@@ -2078,14 +2187,18 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
                 .setMarginRight( "69px" )
         );
 
+    function setFrame( value ){
+        frame.setValue( value );
+        frameRange.setValue( value );
+        numframes.clear().add( frame.setWidth( "70px" ) );
+    }
+
     function init( value ){
 
-        numframes.clear().add( frame.setWidth( "70px" ) );
         frame.setRange( -1, value - 1 );
         frameRange.setRange( -1, value - 1 );
 
-        frame.setValue( traj.currentFrame );
-        frameRange.setValue( traj.currentFrame );
+        setFrame( traj.currentFrame );
 
         if( component.defaultStep !== undefined ){
             step.setValue( component.defaultStep );
@@ -2100,12 +2213,7 @@ NGL.TrajectoryComponentWidget = function( component, stage ){
     }
 
     signals.gotNumframes.add( init );
-
-    signals.frameChanged.add( function( value ){
-        frame.setValue( value );
-        frameRange.setValue( value );
-        numframes.clear().add( frame.setWidth( "70px" ) );
-    } );
+    signals.frameChanged.add( setFrame );
 
     // Name
 

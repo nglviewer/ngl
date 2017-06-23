@@ -13,38 +13,30 @@ import SphereBuffer from "../buffer/sphere-buffer.js";
 import HyperballStickBuffer from "../buffer/hyperballstick-buffer.js";
 
 
-function HyperballRepresentation( structure, viewer, params ){
+class HyperballRepresentation extends LicoriceRepresentation{
 
-    LicoriceRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-    this.defaultScale.vdw = 0.2;
+        super( structure, viewer, params );
 
-}
+        this.type = "hyperball";
 
-HyperballRepresentation.prototype = Object.assign( Object.create(
+        this.parameters = Object.assign( {
 
-    LicoriceRepresentation.prototype ), {
+            shrink: {
+                type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
+            }
 
-    constructor: HyperballRepresentation,
+        }, this.parameters, {
 
-    type: "hyperball",
+            multipleBond: null,
+            bondSpacing: null,
 
-    defaultSize: 1.0,
+        } );
 
-    parameters: Object.assign( {
+    }
 
-        shrink: {
-            type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
-        }
-
-    }, LicoriceRepresentation.prototype.parameters, {
-
-        multipleBond: null,
-        bondSpacing: null,
-
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.scale = defaults( p.scale, 0.2 );
@@ -52,21 +44,21 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
 
         this.shrink = defaults( p.shrink, 0.12 );
 
-        LicoriceRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getBondParams: function( what, params ){
+    getBondParams( what, params ){
 
         if( !what || what.radius ){
             params = Object.assign( { radius2: true }, params );
         }
 
-        return LicoriceRepresentation.prototype.getBondParams.call( this, what, params );
+        return super.getBondParams( what, params );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var sphereBuffer = new SphereBuffer(
             sview.getAtomData( this.getAtomParams() ),
@@ -85,17 +77,16 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
                 shrink: this.shrink,
                 radialSegments: this.radialSegments,
                 dullInterior: true
-            } ),
-            this.disableImpostor
+            } )
         );
 
         return {
             bufferList: [ sphereBuffer, stickBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams() );
         var bondData = data.sview.getBondData( this.getBondParams() );
@@ -113,13 +104,13 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
 
         if( !what || what.color ){
             sphereData.color = atomData.color;
-            stickData.color = bondData.color1;
+            stickData.color = bondData.color;
             stickData.color2 = bondData.color2;
         }
 
         if( !what || what.radius ){
             sphereData.radius = atomData.radius;
-            stickData.radius = bondData.radius1;
+            stickData.radius = bondData.radius;
             stickData.radius2 = bondData.radius2;
         }
 
@@ -128,7 +119,7 @@ HyperballRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "hyperball", HyperballRepresentation );

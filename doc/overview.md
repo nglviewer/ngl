@@ -7,4 +7,4 @@ NGL provides a web application with an efficient graphical user interface (GUI) 
 
 ## Developers
 
-The NGL viewer can be [embedded]{@tutorial embedding} within other web-pages and controlled via a JavaScript API.
+The NGL viewer can be [embedded](./manual/usage/embedding.html) within other web-pages and controlled via a JavaScript API.

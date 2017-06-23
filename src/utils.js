@@ -5,7 +5,7 @@
  */
 
 
-import { Vector3, Matrix4, Quaternion } from "../lib/three.es6.js";
+import { Vector2, Vector3, Matrix4, Quaternion } from "../lib/three.es6.js";
 
 
 function getQuery( id ){
@@ -271,7 +271,7 @@ function getFileInfo( file ){
     var queryIndex = path.lastIndexOf( '?' );
     path = path.substring( 0, queryIndex === -1 ? path.length : queryIndex );
 
-    var name = path.replace( /^.*[\\\/]/, '' );
+    var name = path.replace( /^.*[\\/]/, '' );
     var base = name.substring( 0, name.lastIndexOf( '.' ) );
 
     var nameSplit = name.split( '.' );
@@ -551,18 +551,49 @@ function getTypedArray( arrayType, arraySize ){
 }
 
 
+function getUintArray( sizeOrArray, maxUnit ){
+    const TypedArray = maxUnit > 65535 ? Uint32Array : Uint16Array;
+    return new TypedArray( sizeOrArray );
+}
+
+
+function _ensureClassFromArg( arg, constructor ){
+    return arg instanceof constructor ? arg : new constructor( arg );
+}
+
+
+function _ensureClassFromArray( array, constructor ){
+    if( array === undefined ){
+        array = new constructor();
+    }else if( Array.isArray( array ) ){
+        array = new constructor().fromArray( array );
+    }
+    return array;
+}
+
+
+function ensureVector2( v ){
+    return _ensureClassFromArray( v, Vector2 );
+}
+
+
 function ensureVector3( v ){
-    return v instanceof Vector3 ? v : new Vector3().fromArray( v );
+    return _ensureClassFromArray( v, Vector3 );
 }
 
 
 function ensureMatrix4( m ){
-    return m instanceof Matrix4 ? m : new Matrix4().fromArray( m );
+    return _ensureClassFromArray( m, Matrix4 );
 }
 
 
 function ensureQuaternion( q ){
-    return q instanceof Quaternion ? q : new Quaternion().fromArray( q );
+    return _ensureClassFromArray( q, Quaternion );
+}
+
+
+function ensureFloat32Array( a ){
+    return _ensureClassFromArg( a, Float32Array );
 }
 
 
@@ -587,7 +618,10 @@ export {
     uint8ToString,
     uint8ToLines,
     getTypedArray,
+    getUintArray,
+    ensureVector2,
     ensureVector3,
     ensureMatrix4,
-    ensureQuaternion
+    ensureQuaternion,
+    ensureFloat32Array
 };

@@ -169,13 +169,11 @@ class MrcParser extends VolumeParser{
 
             // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
             // if the file was converted by mapmode2to0 - scale the data
-            var b1 = 1;
-            var b0 = 0;
             if( intView[ 39 ] === -128 && intView[ 40 ] === 127 ){
                 // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
-                b1 = ( header.DMAX - header.DMIN ) / 255.0;
-                b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
-                for( var j = 0, jl = data.length; j < jl; ++j ){
+                const b1 = ( header.DMAX - header.DMIN ) / 255.0;
+                const b0 = 0.5 * ( header.DMIN + header.DMAX + b1 );
+                for( let j = 0, jl = data.length; j < jl; ++j ){
                     data[ j ] = b1 * data[ j ] + b0;
                 }
             }

@@ -15,10 +15,12 @@ import { uniformArray3 } from "../math/array-utils.js";
 import Buffer from "./buffer.js";
 
 
+/**
+ * Vector buffer. Draws vectors as lines.
+ */
 class VectorBuffer extends Buffer{
 
     /**
-     * make vector buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.vector - vectors
@@ -86,7 +88,7 @@ class VectorBuffer extends Buffer{
 
     }
 
-    get line (){ return true; }
+    get isLine (){ return true; }
     get vertexShader (){ return "Line.vert"; }
     get fragmentShader (){ return "Line.frag"; }
 

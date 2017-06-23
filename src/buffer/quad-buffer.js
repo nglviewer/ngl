@@ -21,6 +21,10 @@ const mappingIndices = new Uint16Array( [
 ] );
 
 
+/**
+ * Quad buffer. Draws screen-aligned quads. Used to render impostors.
+ * @interface
+ */
 class QuadBuffer extends MappedBuffer{
 
     get mapping (){ return mapping; }

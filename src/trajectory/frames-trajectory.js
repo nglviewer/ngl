@@ -20,6 +20,8 @@ class FramesTrajectory extends Trajectory{
         this.frames = frames.coordinates;
         this.boxes = frames.boxes;
 
+        this.getNumframes();
+
     }
 
     get type (){ return "frames"; }

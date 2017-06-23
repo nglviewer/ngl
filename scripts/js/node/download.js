@@ -18,7 +18,7 @@ function parseIdListFile( path ){
 }
 
 function getUrl( id, format, gz ){
-    if( format === "mmcif" ){
+    if( format === "cif" ){
         return "http://files.rcsb.org/download/" + id + ".cif" + ( gz ? ".gz" : "" );
     }else if( format === "pdb" ){
         return "http://files.rcsb.org/download/" + id + ".pdb" + ( gz ? ".gz" : "" );
@@ -34,7 +34,7 @@ function downloadIds( idList, options ){
     var format = options.format;
     var gz = options.gz;
     var pool = new http.Agent();
-    pool.maxSockets = 5;
+    pool.maxSockets = 1;
     if( !fs.existsSync( outPath ) ){
         fs.mkdirSync( outPath );
     }
@@ -50,13 +50,13 @@ function downloadIds( idList, options ){
         }
         return ds;
     } ) ).catch( function( e ){
-        console.error( e )
+        console.error( e, idList )
     } );
 }
 
 function downloadIdsChunked( idList, options ){
     var t0 = performance.now();
-    doChunked( idList, downloadIds, options, 10 ).then( function(){
+    doChunked( idList, downloadIds, options, 1 ).then( function(){
         var t1 = performance.now();
         console.log( t1 - t0 );
     } );
@@ -74,9 +74,13 @@ parser.addArgument( "--outDir", {
     help: "dir out path"
 });
 parser.addArgument( "--format", {
-    help: "mmtf, bb.mmtf, mmcif or pdb"
+    help: "mmtf, bb.mmtf, cif or pdb"
 });
 parser.addArgument( "--gz", {
+    action: "storeTrue",
+    help: "gzip use"
+});
+parser.addArgument( "--allCurrent", {
     action: "storeTrue",
     help: "gzip use"
 });
@@ -91,4 +95,16 @@ if( args.idListFile !== null ){
             gz: args.gz
         }
     );
+}else if( args.allCurrent ){
+    var url = "http://www.rcsb.org/pdb/json/getCurrent";
+    download( url ).then( function( res ){
+        downloadIdsChunked(
+            JSON.parse( res ).idList,
+            {
+                outPath: args.outDir,
+                format: args.format.toLowerCase(),
+                gz: args.gz
+            }
+        );
+    } );
 }

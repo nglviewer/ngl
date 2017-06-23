@@ -90,7 +90,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         ){
 
             // ignore backbone to backbone contacts
-            data.bondSet.flip_unsafe( i );
+            data.bondSet.clear( i );
             continue;
 
         }else if( ap1.atomname === "N" || ap2.atomname === "N" ){
@@ -121,7 +121,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
             v2.subVectors( atomX, atomN );
 
             if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
-                data.bondSet.flip_unsafe( i );
+                data.bondSet.clear( i );
             }
 
         }else if(
@@ -130,7 +130,7 @@ function polarContacts( structure, maxDistance, maxAngle ){
         ){
 
             if( !checkAngle( ap1, ap2, "OH", "CZ" ) ){
-                data.bondSet.flip_unsafe( i );
+                data.bondSet.clear( i );
             }
 
         }
@@ -209,7 +209,7 @@ function polarBackboneContacts( structure, maxDistance, maxAngle ){
         // Log.log( radToDeg( v1.angleTo( v2 ) ) );
 
         if( radToDeg( v1.angleTo( v2 ) ) > maxAngle ){
-            data.bondSet.flip_unsafe( i );
+            data.bondSet.clear( i );
         }
 
     }

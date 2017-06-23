@@ -8,46 +8,43 @@
 import { RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Spline from "../geometry/spline.js";
-import Representation from "./representation.js";
 import StructureRepresentation from "./structure-representation.js";
 import TraceBuffer from "../buffer/trace-buffer.js";
 
 
-function TraceRepresentation( structure, viewer, params ){
+class TraceRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-TraceRepresentation.prototype = Object.assign( Object.create(
+        this.type = "trace";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: TraceRepresentation,
+            subdiv: {
+                type: "integer", max: 50, min: 1, rebuild: true
+            },
+            tension: {
+                type: "number", precision: 1, max: 1.0, min: 0.1
+            },
+            smoothSheet: {
+                type: "boolean", rebuild: true
+            }
 
-    type: "trace",
+        }, this.parameters, {
 
-    parameters: Object.assign( {
+            flatShaded: null,
+            side: null,
+            wireframe: null
 
-        subdiv: {
-            type: "integer", max: 50, min: 1, rebuild: true
-        },
-        tension: {
-            type: "number", precision: 1, max: 1.0, min: 0.1
-        },
-        smoothSheet: {
-            type: "boolean", rebuild: true
-        }
+        } );
 
-    }, Representation.prototype.parameters, {
+        this.init( params );
 
-        flatShaded: null,
-        side: null,
-        wireframe: null
+    }
 
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
         p.colorScheme = defaults( p.colorScheme, "chainname" );
@@ -66,11 +63,11 @@ TraceRepresentation.prototype = Object.assign( Object.create(
         this.tension = defaults( p.tension, NaN );
         this.smoothSheet = defaults( p.smoothSheet, false );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getSplineParams: function( params ){
+    getSplineParams( params ){
 
         return Object.assign( {
             subdiv: this.subdiv,
@@ -79,14 +76,14 @@ TraceRepresentation.prototype = Object.assign( Object.create(
             smoothSheet: this.smoothSheet
         }, params );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var bufferList = [];
         var polymerList = [];
 
-        this.structure.eachPolymer( function( polymer ){
+        this.structure.eachPolymer( polymer => {
 
             if( polymer.residueCount < 4 ) return;
             polymerList.push( polymer );
@@ -102,16 +99,16 @@ TraceRepresentation.prototype = Object.assign( Object.create(
                 )
             );
 
-        }.bind( this ), sview.getSelection() );
+        }, sview.getSelection() );
 
         return {
             bufferList: bufferList,
             polymerList: polymerList
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         what = what || {};
 
@@ -137,9 +134,9 @@ TraceRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -148,15 +145,13 @@ TraceRepresentation.prototype = Object.assign( Object.create(
             what.position = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "trace", TraceRepresentation );

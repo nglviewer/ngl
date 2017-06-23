@@ -5,6 +5,8 @@
  */
 
 
+import Signal from "../../lib/signals.es6.js";
+
 import { ComponentRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
 import Component from "./component.js";
@@ -15,24 +17,34 @@ import StructureView from "../structure/structure-view.js";
 import { superpose } from "../align/align-utils.js";
 
 
-const SignalNames = [
-    "trajectoryAdded", "trajectoryRemoved", "defaultAssemblyChanged"
-];
-
 
 /**
- * {@link Signal}, dispatched when the default assembly is changed
+ * Extends {@link ComponentSignals}
+ *
  * @example
- * structureComponent.signals.defaultAssemblyChanged.add( function( value ){ ... } );
- * @event StructureComponent#defaultAssemblyChanged
- * @type {String}
+ * component.signals.representationAdded.add( function( representationComponent ){ ... } );
+ *
+ * @typedef {Object} StructureComponentSignals
+ * @property {Signal<RepresentationComponent>} trajectoryAdded - when a trajectory is added
+ * @property {Signal<RepresentationComponent>} trajectoryRemoved - when a trajectory is removed
+ * @property {Signal<String>} defaultAssemblyChanged - on default assembly change
  */
 
 
+/**
+ * Component wrapping a {@link Structure} object
+ *
+ * @example
+ * // get a structure component by loading a structure file into the stage
+ * stage.loadFile( "rcsb://4opj" ).then( function( structureComponent ){
+ *     structureComponent.addRepresentation( "cartoon" );
+ *     structureComponent.autoView();
+ * } );
+ */
 class StructureComponent extends Component{
 
     /**
-     * Create component wrapping a structure object
+     * Create structure component
      * @param {Stage} stage - stage object the component belongs to
      * @param {Structure} structure - structure object to wrap
      * @param {ComponentParameters} params - component parameters
@@ -45,9 +57,18 @@ class StructureComponent extends Component{
         super( stage, p );
 
         /**
+         * Events emitted by the component
+         * @type {StructureComponentSignals}
+         */
+        this.signals = Object.assign( this.signals, {
+            trajectoryAdded: new Signal(),
+            trajectoryRemoved: new Signal(),
+            defaultAssemblyChanged: new Signal()
+        } );
+
+        /**
          * The wrapped structure
-         * @alias StructureComponent#structure
-         * @member {Structure}
+         * @type {Structure}
          */
         this.structure = structure;
 
@@ -59,16 +80,9 @@ class StructureComponent extends Component{
 
     /**
      * Component type
-     * @alias StructureComponent#type
-     * @constant
      * @type {String}
-     * @default
      */
     get type(){ return "structure"; }
-
-    get _signalNames(){
-        return super._signalNames.concat( SignalNames );
-    }
 
     /**
      * Initialize selection
@@ -80,17 +94,15 @@ class StructureComponent extends Component{
 
         /**
          * Selection for {@link StructureComponent#structureView}
-         * @alias StructureComponent#selection
          * @private
-         * @member {Selection}
+         * @type {Selection}
          */
         this.selection = new Selection( sele );
 
         /**
          * View on {@link StructureComponent#structure}.
          * Change its selection via {@link StructureComponent#setSelection}.
-         * @alias StructureComponent#structureView
-         * @member {StructureView}
+         * @type {StructureView}
          */
         this.structureView = new StructureView(
             this.structure, this.selection
@@ -109,7 +121,6 @@ class StructureComponent extends Component{
 
     /**
      * Set selection of {@link StructureComponent#structureView}
-     * @alias StructureComponent#setSelection
      * @param {String} string - selection string
      * @return {StructureComponent} this object
      */
@@ -123,8 +134,6 @@ class StructureComponent extends Component{
 
     /**
      * Set the default assembly
-     * @alias StructureComponent#setDefaultAssembly
-     * @fires StructureComponent#defaultAssemblyChanged
      * @param {String} value - assembly name
      * @return {undefined}
      */
@@ -140,7 +149,6 @@ class StructureComponent extends Component{
 
     /**
      * Rebuild all representations
-     * @alias StructureComponent#rebuildRepresentations
      * @return {undefined}
      */
     rebuildRepresentations(){
@@ -153,7 +161,6 @@ class StructureComponent extends Component{
 
     /**
      * Rebuild all trajectories
-     * @alias StructureComponent#rebuildTrajectories
      * @return {undefined}
      */
     rebuildTrajectories(){
@@ -166,8 +173,6 @@ class StructureComponent extends Component{
 
     /**
      * Add a new structure representation to the component
-     * @alias StructureComponent#addRepresentation
-     * @fires Component#representationAdded
      * @param {String} type - the name of the representation, one of:
      *                        axes, backbone, ball+stick, base, cartoon, contact,
      *                        distance, helixorient, hyperball, label, licorice, line
@@ -256,7 +261,7 @@ class StructureComponent extends Component{
 
     }
 
-    getBox( sele ){
+    getBoxUntransformed( sele ){
 
         var bb;
 
@@ -270,9 +275,9 @@ class StructureComponent extends Component{
 
     }
 
-    getCenter( sele ){
+    getCenterUntransformed( sele ){
 
-        if( sele ){
+        if( sele && typeof sele === "string" ){
             return this.structure.atomCenter( new Selection( sele ) );
         }else{
             return this.structure.center;
@@ -308,6 +313,7 @@ class StructureComponent extends Component{
 }
 
 ComponentRegistry.add( "structure", StructureComponent );
+ComponentRegistry.add( "structureview", StructureComponent );
 
 
 export default StructureComponent;

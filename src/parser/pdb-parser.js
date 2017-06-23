@@ -49,7 +49,7 @@ class PdbParser extends StructureParser{
      */
     constructor( streamer, params ){
 
-        var p = params || {};
+        const p = params || {};
 
         super( streamer, p );
 
@@ -64,6 +64,14 @@ class PdbParser extends StructureParser{
         // http://www.wwpdb.org/documentation/file-format.php
 
         if( Debug ) Log.time( "PdbParser._parse " + this.name );
+
+        var isLegacy = false;
+        var headerLine = this.streamer.peekLines( 1 )[ 0 ];
+        var headerId = headerLine.substr( 62, 4 );
+        var legacyId = headerLine.substr( 72, 4 );
+        if( headerId === legacyId && legacyId.trim() ){
+            isLegacy = true;
+        }
 
         var isPqr = this.type === "pqr";
         var reWhitespace = /\s+/;
@@ -145,9 +153,7 @@ class PdbParser extends StructureParser{
 
         function _parseChunkOfLines( _i, _n, lines ){
 
-            var j, jl;
-
-            for( var i = _i; i < _n; ++i ){
+            for( let i = _i; i < _n; ++i ){
 
                 line = lines[ i ];
                 recordName = line.substr( 0, 6 );
@@ -185,7 +191,7 @@ class PdbParser extends StructureParser{
 
                     if( firstModelOnly && modelIdx > 0 ) continue;
 
-                    var x, y, z, ls, dd;
+                    let x, y, z, ls, dd;
 
                     if( isPqr ){
 
@@ -212,7 +218,7 @@ class PdbParser extends StructureParser{
 
                     if( asTrajectory ){
 
-                        j = currentCoord * 3;
+                        const j = currentCoord * 3;
 
                         currentFrame[ j + 0 ] = x;
                         currentFrame[ j + 1 ] = y;
@@ -224,7 +230,7 @@ class PdbParser extends StructureParser{
 
                     }
 
-                    var element;
+                    let element;
 
                     if( isPqr ){
 
@@ -246,18 +252,24 @@ class PdbParser extends StructureParser{
                         if( hex && serial === 99999 ){
                             serialRadix = 16;
                         }
-                        element = line.substr( 76, 2 ).trim();
                         hetero = ( line[ 0 ] === 'H' ) ? 1 : 0;
-                        chainname = line[ 21 ].trim() || line.substr( 72, 4 ).trim();  // segid
-                        resno = parseInt( line.substr( 22, 4 ), resnoRadix );
+                        chainname = line[ 21 ].trim();
+                        resno = parseInt( line.substr( 22, 4 ), resnoRadix ) || 1;
                         if( hex && resno === 9999 ){
                             resnoRadix = 16;
                         }
                         inscode = line[ 26 ].trim();
-                        resname = line.substr( 17, 4 ).trim();
+                        resname = line.substr( 17, 4 ).trim() || "MOL";
                         bfactor = parseFloat( line.substr( 60, 6 ) );
                         altloc = line[ 16 ].trim();
                         occupancy = parseFloat( line.substr( 54, 6 ) );
+
+                        if( !isLegacy ){
+                            element = line.substr( 76, 2 ).trim();
+                            if( !chainname ){
+                                chainname = line.substr( 72, 4 ).trim();  // segid
+                            }
+                        }
 
                     }
 
@@ -304,47 +316,47 @@ class PdbParser extends StructureParser{
 
                 }else if( recordName === 'CONECT' ){
 
-                    var from = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
-                    var pos = [ 11, 16, 21, 26 ];
-                    var bondIndex = {};
+                    const fromIdx = serialDict[ parseInt( line.substr( 6, 5 ) ) ];
+                    const pos = [ 11, 16, 21, 26 ];
+                    const bondIndex = {};
 
-                    if( from === undefined ){
+                    if( fromIdx === undefined ){
                         // Log.log( "missing CONNECT serial" );
                         continue;
                     }
 
-                    for( j = 0; j < 4; ++j ){
+                    for( let j = 0; j < 4; ++j ){
 
-                        var to = parseInt( line.substr( pos[ j ], 5 ) );
-                        if( Number.isNaN( to ) ) continue;
-                        to = serialDict[ to ];
-                        if( to === undefined ){
+                        var toIdx = parseInt( line.substr( pos[ j ], 5 ) );
+                        if( Number.isNaN( toIdx ) ) continue;
+                        toIdx = serialDict[ toIdx ];
+                        if( toIdx === undefined ){
                             // Log.log( "missing CONNECT serial" );
                             continue;
-                        }/*else if( to < from ){
+                        }/*else if( toIdx < fromIdx ){
                             // likely a duplicate in standard PDB format
                             // but not necessarily, so better remove duplicates
                             // in a pass after parsing (and auto bonding)
                             continue;
                         }*/
 
-                        if( from < to ){
-                            ap1.index = from;
-                            ap2.index = to;
+                        if( fromIdx < toIdx ){
+                            ap1.index = fromIdx;
+                            ap2.index = toIdx;
                         }else{
-                            ap1.index = to;
-                            ap2.index = from;
+                            ap1.index = toIdx;
+                            ap2.index = fromIdx;
                         }
 
-                        // interpret records where a 'to' atom is given multiple times
+                        // interpret records where a 'toIdx' atom is given multiple times
                         // as double/triple bonds, e.g. CONECT 1529 1528 1528 is a double bond
-                        if( bondIndex[ to ] !== undefined ){
-                            s.bondStore.bondOrder[ bondIndex[ to ] ] += 1;
+                        if( bondIndex[ toIdx ] !== undefined ){
+                            s.bondStore.bondOrder[ bondIndex[ toIdx ] ] += 1;
                         }else{
                             var hash = ap1.index + "|" + ap2.index;
                             if( bondDict[ hash ] === undefined ){
                                 bondDict[ hash ] = true;
-                                bondIndex[ to ] = s.bondStore.count;
+                                bondIndex[ toIdx ] = s.bondStore.count;
                                 s.bondStore.addBond( ap1, ap2, 1 );  // start/assume with single bond
                             }
                         }
@@ -359,7 +371,7 @@ class PdbParser extends StructureParser{
                     endChain = line[ 31 ].trim();
                     endResi = parseInt( line.substr( 33, 4 ) );
                     endIcode = line[ 37 ].trim();
-                    var helixType = parseInt( line.substr( 39, 1 ) );
+                    let helixType = parseInt( line.substr( 39, 1 ) );
                     helixType = ( HelixTypes[ helixType ] || HelixTypes[""] ).charCodeAt( 0 );
                     helices.push( [
                         startChain, startResi, startIcode,
@@ -386,10 +398,10 @@ class PdbParser extends StructureParser{
 
                 }else if( recordName === 'COMPND' ){
 
-                    var comp = line.substr( 10, 70 ).trim();
-                    var keyEnd = comp.indexOf( ":" );
-                    var key = comp.substring( 0, keyEnd );
-                    var value;
+                    const comp = line.substr( 10, 70 ).trim();
+                    const keyEnd = comp.indexOf( ":" );
+                    const key = comp.substring( 0, keyEnd );
+                    let value;
 
                     if( entityKeyList.includes( key ) ){
                         currentEntityKey = key;
@@ -423,7 +435,7 @@ class PdbParser extends StructureParser{
 
                 }else if( line.startsWith( 'TER' ) ){
 
-                    var cp = s.getChainProxy( s.chainStore.count - 1 );
+                    const cp = s.getChainProxy( s.chainStore.count - 1 );
                     chainDict[ cp.chainname ] = cp.index;
                     chainIdx += 1;
                     chainid = chainIdx.toString();
@@ -433,7 +445,7 @@ class PdbParser extends StructureParser{
 
                     if( line.substr( 11, 12 ) === "BIOMOLECULE:" ){
 
-                        var name = line.substr( 23 ).trim();
+                        let name = line.substr( 23 ).trim();
                         if( /^(0|[1-9][0-9]*)$/.test( name ) ) name = "BU" + name;
 
                         currentBiomol = new Assembly( name );
@@ -441,15 +453,15 @@ class PdbParser extends StructureParser{
 
                     }else if( line.substr( 13, 5 ) === "BIOMT" ){
 
-                        var biomt = line.split( /\s+/ );
-                        var row = parseInt( line[ 18 ] ) - 1;
+                        const biomt = line.split( /\s+/ );
+                        const row = parseInt( line[ 18 ] ) - 1;
 
                         if( row === 0 ){
                             currentMatrix = new Matrix4();
                             currentPart.matrixList.push( currentMatrix );
                         }
 
-                        var biomtElms = currentMatrix.elements;
+                        const biomtElms = currentMatrix.elements;
 
                         biomtElms[ 4 * 0 + row ] = parseFloat( biomt[ 4 ] );
                         biomtElms[ 4 * 1 + row ] = parseFloat( biomt[ 5 ] );
@@ -465,9 +477,9 @@ class PdbParser extends StructureParser{
                             currentPart = currentBiomol.addPart();
                         }
 
-                        var chainList = line.substr( 41, 30 ).split( "," );
-                        for( j, jl = chainList.length; j < jl; ++j ){
-                            var c = chainList[ j ].trim();
+                        const chainList = line.substr( 41, 30 ).split( "," );
+                        for( let j = 0, jl = chainList.length; j < jl; ++j ){
+                            const c = chainList[ j ].trim();
                             if( c ) currentPart.chainList.push( c );
                         }
 
@@ -504,24 +516,24 @@ class PdbParser extends StructureParser{
                     // ignore 'given' operators
                     if( line[ 59 ] === "1" ) continue;
 
-                    var ncs = line.split( /\s+/ );
-                    var ncsMat = ncs[ 1 ].trim();
+                    const ncs = line.split( /\s+/ );
+                    const ncsMat = ncs[ 1 ].trim();
 
                     if( line[ 5 ] === "1" && ncsMat === "1" ){
-                        var ncsName = "NCS";
+                        const ncsName = "NCS";
                         currentBiomol = new Assembly( ncsName );
                         biomolDict[ ncsName ] = currentBiomol;
                         currentPart = currentBiomol.addPart();
                     }
 
-                    var ncsRow = parseInt( line[ 5 ] ) - 1;
+                    const ncsRow = parseInt( line[ 5 ] ) - 1;
 
                     if( ncsRow === 0 ){
                         currentMatrix = new Matrix4();
                         currentPart.matrixList.push( currentMatrix );
                     }
 
-                    var ncsElms = currentMatrix.elements;
+                    const ncsElms = currentMatrix.elements;
 
                     ncsElms[ 4 * 0 + ncsRow ] = parseFloat( ncs[ 2 ] );
                     ncsElms[ 4 * 1 + ncsRow ] = parseFloat( ncs[ 3 ] );
@@ -534,9 +546,9 @@ class PdbParser extends StructureParser{
                         unitcellDict.origx = new Matrix4();
                     }
 
-                    var orgix = line.split( /\s+/ );
-                    var origxRow = parseInt( line[ 5 ] ) - 1;
-                    var origxElms = unitcellDict.origx.elements;
+                    const orgix = line.split( /\s+/ );
+                    const origxRow = parseInt( line[ 5 ] ) - 1;
+                    const origxElms = unitcellDict.origx.elements;
 
                     origxElms[ 4 * 0 + origxRow ] = parseFloat( orgix[ 1 ] );
                     origxElms[ 4 * 1 + origxRow ] = parseFloat( orgix[ 2 ] );
@@ -549,9 +561,9 @@ class PdbParser extends StructureParser{
                         unitcellDict.scale = new Matrix4();
                     }
 
-                    var scale = line.split( /\s+/ );
-                    var scaleRow = parseInt( line[ 5 ] ) - 1;
-                    var scaleElms = unitcellDict.scale.elements;
+                    const scale = line.split( /\s+/ );
+                    const scaleRow = parseInt( line[ 5 ] ) - 1;
+                    const scaleElms = unitcellDict.scale.elements;
 
                     scaleElms[ 4 * 0 + scaleRow ] = parseFloat( scale[ 1 ] );
                     scaleElms[ 4 * 1 + scaleRow ] = parseFloat( scale[ 2 ] );
@@ -570,18 +582,18 @@ class PdbParser extends StructureParser{
                     // 56 - 66       LString        sGroup        Space group.
                     // 67 - 70       Integer        z             Z value.
 
-                    var aLength = parseFloat( line.substr( 6, 9 ) );
-                    var bLength = parseFloat( line.substr( 15, 9 ) );
-                    var cLength = parseFloat( line.substr( 24, 9 ) );
+                    const aLength = parseFloat( line.substr( 6, 9 ) );
+                    const bLength = parseFloat( line.substr( 15, 9 ) );
+                    const cLength = parseFloat( line.substr( 24, 9 ) );
 
-                    var alpha = parseFloat( line.substr( 33, 7 ) );
-                    var beta = parseFloat( line.substr( 40, 7 ) );
-                    var gamma = parseFloat( line.substr( 47, 7 ) );
+                    const alpha = parseFloat( line.substr( 33, 7 ) );
+                    const beta = parseFloat( line.substr( 40, 7 ) );
+                    const gamma = parseFloat( line.substr( 47, 7 ) );
 
-                    var sGroup = line.substr( 55, 11 ).trim();
+                    const sGroup = line.substr( 55, 11 ).trim();
                     // var zValue = parseInt( line.substr( 66, 4 ) );
 
-                    var box = new Float32Array( 9 );
+                    const box = new Float32Array( 9 );
                     box[ 0 ] = aLength;
                     box[ 4 ] = bLength;
                     box[ 8 ] = cLength;
@@ -664,16 +676,18 @@ class PdbParser extends StructureParser{
             s.unitcell = undefined;
         }
 
+        if( helices.length || sheets.length ){
+            assignSecondaryStructure( s, secStruct );
+        }
+
         sb.finalize();
         s.finalizeAtoms();
-        calculateChainnames( s );
+        if( !isLegacy ) calculateChainnames( s );
         calculateBonds( s );
         s.finalizeBonds();
 
         if( !helices.length && !sheets.length ){
             calculateSecondaryStructure( s );
-        }else{
-            assignSecondaryStructure( s, secStruct );
         }
         buildUnitcellAssembly( s );
 

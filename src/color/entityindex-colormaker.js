@@ -9,6 +9,9 @@ import { ColormakerRegistry } from "../globals.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by entiry index
+ */
 class EntityindexColormaker extends Colormaker{
 
     constructor( params ){

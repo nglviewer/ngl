@@ -16,21 +16,27 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  */
 class ValidationRepresentation extends StructureRepresentation{
 
-    get type (){ return "validation"; }
+    constructor( structure, viewer, params ){
 
-    get parameters (){
+        super( structure, viewer, params );
 
-        return Object.assign( super.parameters, {
+        this.type = "validation";
+
+        this.parameters = Object.assign( {
+
+        }, this.parameters, {
             radiusType: null,
             radius: null,
             scale: null
         } );
 
+        this.init( params );
+
     }
 
     init( params ){
 
-        var p = params || {};
+        const p = params || {};
         p.colorValue = defaults( p.colorValue, "#f0027f" );
 
         super.init( p );
@@ -41,24 +47,18 @@ class ValidationRepresentation extends StructureRepresentation{
 
         if( !sview.validation ) return;
 
-        var clashData = sview.validation.getClashData( {
+        const clashData = sview.validation.getClashData( {
             structure: sview,
             color: this.colorValue
         } );
 
-        var cylinderBuffer = new CylinderBuffer(
+        const cylinderBuffer = new CylinderBuffer(
             clashData, this.getBufferParams( { openEnded: false } )
         );
 
         return {
             bufferList: [ cylinderBuffer ]
         };
-
-    }
-
-    updateData( /*what, data*/ ){
-
-        this.build();
 
     }
 

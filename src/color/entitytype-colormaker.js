@@ -13,6 +13,9 @@ import {
 } from "../structure/structure-constants.js";
 
 
+/**
+ * Color by entity type
+ */
 class EntitytypeColormaker extends Colormaker{
 
     atomColor( a ){

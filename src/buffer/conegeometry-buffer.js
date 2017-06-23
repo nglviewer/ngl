@@ -18,9 +18,29 @@ const target = new Vector3();
 const up = new Vector3( 0, 1, 0 );
 
 
+/**
+ * Cone geometry buffer.
+ *
+ * @example
+ * var coneGeometryBuffer = new ConeGeometryBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 1, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
 class ConeGeometryBuffer extends GeometryBuffer{
 
-    // position1, position2, color, radius, picking
+    /**
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position1 - from positions
+     * @param {Float32Array} data.position2 - to positions
+     * @param {Float32Array} data.color - colors
+     * @param {Float32Array} data.radius - radii
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     */
     constructor( data, params ){
 
         const p = params || {};
@@ -72,7 +92,7 @@ class ConeGeometryBuffer extends GeometryBuffer{
 
     setAttributes( data, initNormals ){
 
-        var geoData = {};
+        var meshData = {};
 
         if( data.position1 && data.position2 ){
             calculateCenterArray(
@@ -80,22 +100,18 @@ class ConeGeometryBuffer extends GeometryBuffer{
             );
             this._from.set( data.position1 );
             this._to.set( data.position2 );
-            geoData.position = this._position;
+            meshData.position = this._position;
         }
 
         if( data.color ){
-            geoData.color = data.color;
-        }
-
-        if( data.picking ){
-            geoData.picking = data.picking;
+            meshData.color = data.color;
         }
 
         if( data.radius ){
             this._radius.set( data.radius );
         }
 
-        super.setAttributes( geoData, initNormals );
+        super.setAttributes( meshData, initNormals );
 
     }
 

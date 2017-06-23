@@ -8,6 +8,7 @@
 import { Vector3 } from "../../lib/three.es6.js";
 
 import { ColormakerRegistry } from "../globals.js";
+import { AtomPicker } from "../utils/picker.js";
 import RadiusFactory from "../utils/radius-factory.js";
 import { copyArray } from "../math/array-utils.js";
 import { spline } from "../math/math-utils.js";
@@ -279,7 +280,8 @@ function Interpolator( m, tension ){
 
     this.getColor = function( iterator, colFn, col, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -317,7 +319,8 @@ function Interpolator( m, tension ){
 
     this.getPicking = function( iterator, pickFn, pick, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -353,7 +356,8 @@ function Interpolator( m, tension ){
 
     this.getSize = function( iterator, sizeFn, size, offset, isCyclic ){
         iterator.reset();
-        var i0 = iterator.next();  // first element not needed, replaced in the loop
+        iterator.next();  // first element not needed
+        var i0;
         var i1 = iterator.next();
         //
         var n = iterator.size;
@@ -508,10 +512,7 @@ Spline.prototype = {
 
         var structure = polymer.structure;
         var iterator = this.getAtomIterator( "trace" );
-
         var pick = new Float32Array( nCol );
-        pick.object = structure;
-        pick.type = "atom"
 
         function pickFn( item ){
             return item.index;
@@ -522,7 +523,7 @@ Spline.prototype = {
         );
 
         return {
-            "picking": pick
+            "picking": new AtomPicker( pick, structure )
         };
 
     },

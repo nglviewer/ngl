@@ -10,10 +10,12 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a {@link Script} object
+ */
 class ScriptComponent extends Component{
 
     /**
-     * Create component wrapping a script object
      * @param {Stage} stage - stage object the component belongs to
      * @param {Script} script - script object to wrap
      * @param {ComponentParameters} params - component parameters

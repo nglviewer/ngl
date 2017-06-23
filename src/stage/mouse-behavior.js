@@ -5,40 +5,48 @@
  */
 
 
-import { RightMouseButton } from "../constants.js";
-
-
 class MouseBehavior{
 
     constructor( stage/*, params*/ ){
 
+        this.stage = stage;
         this.mouse = stage.mouseObserver;
-        this.controls = stage.trackballControls;
+        this.controls = stage.mouseControls;
 
-        this.mouse.signals.scrolled.add( this.onScroll, this );
-        this.mouse.signals.dragged.add( this.onDrag, this );
-
-    }
-
-    onScroll( delta ){
-
-        this.controls.zoom( delta );
+        this.mouse.signals.moved.add( this._onMove, this );
+        this.mouse.signals.scrolled.add( this._onScroll, this );
+        this.mouse.signals.dragged.add( this._onDrag, this );
+        this.mouse.signals.clicked.add( this._onClick, this );
+        this.mouse.signals.hovered.add( this._onHover, this );
 
     }
 
-    onDrag( x, y ){
+    _onMove( /*x, y*/ ){
+        this.stage.tooltip.style.display = "none";
+    }
 
-        if( this.mouse.which === RightMouseButton ){
-            this.controls.pan( x, y );
-        }else{
-            this.controls.rotate( x, y );
-        }
+    _onScroll( delta ){
+        this.controls.run( "scroll", delta );
+    }
 
+    _onDrag( dx, dy ){
+        this.controls.run( "drag", dx, dy );
+    }
+
+    _onClick( x, y ){
+        this.controls.run( "click", x, y );
+    }
+
+    _onHover( x, y ){
+        this.controls.run( "hover", x, y );
     }
 
     dispose(){
-        this.mouse.signals.scrolled.remove( this.onScroll, this );
-        this.mouse.signals.dragged.remove( this.onDrag, this );
+        this.mouse.signals.moved.remove( this._onMove, this );
+        this.mouse.signals.scrolled.remove( this._onScroll, this );
+        this.mouse.signals.dragged.remove( this._onDrag, this );
+        this.mouse.signals.clicked.remove( this._onClick, this );
+        this.mouse.signals.hovered.remove( this._onHover, this );
     }
 
 }

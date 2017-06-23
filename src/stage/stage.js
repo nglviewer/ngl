@@ -10,7 +10,7 @@ import Signal from "../../lib/signals.es6.js";
 
 import { Debug, Log, Mobile, ComponentRegistry } from "../globals.js";
 import { defaults, getFileInfo } from "../utils.js";
-import { degToRad } from "../math/math-utils.js";
+import { degToRad, clamp, pclamp } from "../math/math-utils.js";
 import Counter from "../utils/counter.js";
 import Viewer from "../viewer/viewer.js";
 import MouseObserver from "./mouse-observer.js";
@@ -19,10 +19,12 @@ import TrackballControls from "../controls/trackball-controls.js";
 import PickingControls from "../controls/picking-controls.js";
 import ViewerControls from "../controls/viewer-controls.js";
 import AnimationControls from "../controls/animation-controls.js";
+import MouseControls from "../controls/mouse-controls.js";
 
 import PickingBehavior from "./picking-behavior.js";
 import MouseBehavior from "./mouse-behavior.js";
 import AnimationBehavior from "./animation-behavior.js";
+import KeyBehavior from "./key-behavior.js";
 
 import Component from "../component/component.js";
 // eslint-disable-next-line no-unused-vars
@@ -69,83 +71,29 @@ const tmpZoomVector = new Vector3();
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
- * @property {Integer} hoverTimeout - timeout until the {@link Stage#event:hovered|hovered}
- *                                      signal is fired, set to -1 to ignore hovering
- */
-
-/**
- * Picking data object.
- * @typedef {Object} PickingData - picking data
- * @property {Vector2} canvasPosition - mouse x and y position in pixels relative to the canvas
- * @property {Boolean} [altKey] - whether the alt key was pressed
- * @property {Boolean} [ctrlKey] - whether the control key was pressed
- * @property {Boolean} [metaKey] - whether the meta key was pressed
- * @property {Boolean} [shiftKey] - whether the shift key was pressed
- * @property {AtomProxy} [atom] - picked atom
- * @property {BondProxy} [bond] - picked bond
- * @property {Volume} [volume] - picked volume
- * @property {Object} [instance] - instance data
- * @property {Integer} instance.id - instance id
- * @property {String|Integer} instance.name - instance name
- * @property {Matrix4} instance.matrix - transformation matrix of the instance
- * @property {Vector3} [position] - xyz position of the picked object
- * @property {Component} [component] - component holding the picked object
+ * @property {Integer} hoverTimeout - timeout for hovering
  */
 
 
 /**
- * {@link Signal}, dispatched when stage parameters change
- * @example
- * stage.signals.parametersChanged.add( function( stageParameters ){ ... } );
- * @event Stage#parametersChanged
- * @type {StageParameters}
- */
-
-/**
- * {@link Signal}, dispatched when the fullscreen is entered or left
- * @example
- * stage.signals.fullscreenChanged.add( function( isFullscreen ){ ... } );
- * @event Stage#fullscreenChanged
- * @type {Boolean}
- */
-
-/**
- * {@link Signal}, dispatched when a component is added to the stage
  * @example
  * stage.signals.componentAdded.add( function( component ){ ... } );
- * @event Stage#componentAdded
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched when a component is removed from the stage
- * @example
- * stage.signals.componentRemoved.add( function( component ){ ... } );
- * @event Stage#componentRemoved
- * @type {Component}
- */
-
-/**
- * {@link Signal}, dispatched upon clicking in the viewer canvas
- * @example
- * stage.signals.clicked.add( function( pickingData ){ ... } );
- * @event Stage#clicked
- * @type {PickingData}
- */
-
-/**
- * {@link Signal}, dispatched upon hovering over the viewer canvas
- * @example
- * stage.signals.hovered.add( function( pickingData ){ ... } );
- * @event Stage#hovered
- * @type {PickingData}
+ *
+ * @typedef {Object} StageSignals
+ * @property {Signal<StageParameters>} parametersChanged - on parameters change
+ * @property {Signal<Boolean>} fullscreenChanged - on fullscreen change
+ * @property {Signal<Component>} componentAdded - when a component is added
+ * @property {Signal<Component>} componentRemoved - when a component is removed
+ * @property {Signal<PickingProxy|undefined>} clicked - on click
+ * @property {Signal<PickingProxy|undefined>} hovered - on hover
  */
 
 
 /**
  * Stage class, central for creating molecular scenes with NGL.
+ *
  * @example
- *     var stage = new Stage( "elementId", { backgroundColor: "white" } );
+ * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage{
 
@@ -156,6 +104,10 @@ class Stage{
      */
     constructor( idOrElement, params ){
 
+        /**
+         * Events emitted by the stage
+         * @type {StageSignals}
+         */
         this.signals = {
             parametersChanged: new Signal(),
             fullscreenChanged: new Signal(),
@@ -172,7 +124,7 @@ class Stage{
         /**
          * Counter that keeps track of various potentially long-running tasks,
          * including file loading and surface calculation.
-         * @member {Counter}
+         * @type {Counter}
          */
         this.tasks = new Counter();
         this.compList = [];
@@ -184,28 +136,59 @@ class Stage{
         if( !this.viewer.renderer ) return;
 
         /**
-         * @member {MouseObserver}
+         * Tooltip element
+         * @type {Element}
+         */
+        this.tooltip = document.createElement( "div" );
+        Object.assign( this.tooltip.style, {
+            display: "none",
+            position: "fixed",
+            zIndex: 2 + ( parseInt( this.viewer.container.style.zIndex ) || 0 ),
+            pointerEvents: "none",
+            backgroundColor: "rgba( 0, 0, 0, 0.6 )",
+            color: "lightgrey",
+            padding: "8px",
+            fontFamily: "sans-serif"
+        } );
+        document.body.appendChild( this.tooltip );
+
+        /**
+         * @type {MouseObserver}
          */
         this.mouseObserver = new MouseObserver( this.viewer.renderer.domElement );
 
         /**
-         * @member {ViewerControls}
+         * @type {ViewerControls}
          */
         this.viewerControls = new ViewerControls( this );
         this.trackballControls = new TrackballControls( this );
         this.pickingControls = new PickingControls( this );
         /**
-         * @member {AnimationControls}
+         * @type {AnimationControls}
          */
         this.animationControls = new AnimationControls( this );
+        /**
+         * @type {MouseControls}
+         */
+        this.mouseControls = new MouseControls( this );
 
         this.pickingBehavior = new PickingBehavior( this );
         this.mouseBehavior = new MouseBehavior( this );
         this.animationBehavior = new AnimationBehavior( this );
+        this.keyBehavior = new KeyBehavior( this );
 
-        this.spinAnimation = this.animationControls.spin( null );
+        /**
+         * @type {SpinAnimation}
+         */
+        this.spinAnimation = this.animationControls.spin( [ 0, 1, 0 ], 0.005 );
+        this.spinAnimation.pause( true );
+        /**
+         * @type {RockAnimation}
+         */
+        this.rockAnimation = this.animationControls.rock( [ 0, 1, 0 ], 0.005 );
+        this.rockAnimation.pause( true );
 
-        var p = Object.assign( {
+        const p = Object.assign( {
             impostor: true,
             quality: "medium",
             workerDefault: true,
@@ -225,7 +208,9 @@ class Stage{
             lightIntensity: 1.0,
             ambientColor: 0xdddddd,
             ambientIntensity: 0.2,
-            hoverTimeout: 500,
+            hoverTimeout: 0,
+            tooltip: true,
+            mousePreset: "default"
         }, params );
 
         this.parameters = {
@@ -233,7 +218,7 @@ class Stage{
                 type: "color"
             },
             quality: {
-                type: "select", options: { "auto": "auto", "low": "low", "medium": "medium", "high": "high" }
+                type: "select", options: { auto: "auto", low: "low", medium: "medium", high: "high" }
             },
             sampleLevel: {
                 type: "range", step: 1, max: 5, min: -1
@@ -269,7 +254,7 @@ class Stage{
                 type: "range", step: 1, max: 100, min: 0
             },
             cameraType: {
-                type: "select", options: { "perspective": "perspective", "orthographic": "orthographic" }
+                type: "select", options: { perspective: "perspective", orthographic: "orthographic" }
             },
             cameraFov: {
                 type: "range", step: 1, max: 120, min: 15
@@ -289,6 +274,12 @@ class Stage{
             hoverTimeout: {
                 type: "integer", max: 10000, min: -1
             },
+            tooltip: {
+                type: "boolean"
+            },
+            mousePreset: {
+                type: "select", options: { default: "default", pymol: "pymol", coot: "coot" }
+            }
         };
 
         this.setParameters( p );  // must come after the viewer has been instantiated
@@ -299,18 +290,17 @@ class Stage{
 
     /**
      * Set stage parameters
-     * @fires Stage#parametersChanged
      * @param {StageParameters} params - stage parameters
      * @return {Stage} this object
      */
     setParameters( params ){
 
-        var p = Object.assign( {}, params );
-        var tp = this.parameters;
-        var viewer = this.viewer;
-        var controls = this.trackballControls;
+        const p = Object.assign( {}, params );
+        const tp = this.parameters;
+        const viewer = this.viewer;
+        const controls = this.trackballControls;
 
-        for( var name in p ){
+        for( let name in p ){
 
             if( p[ name ] === undefined ) continue;
             if( !tp[ name ] ) continue;
@@ -328,6 +318,7 @@ class Stage{
         if( p.rotateSpeed !== undefined ) controls.rotateSpeed = p.rotateSpeed;
         if( p.zoomSpeed !== undefined ) controls.zoomSpeed = p.zoomSpeed;
         if( p.panSpeed !== undefined ) controls.panSpeed = p.panSpeed;
+        if( p.mousePreset !== undefined ) this.mouseControls.preset( p.mousePreset );
         this.mouseObserver.setParameters( { hoverTimeout: p.hoverTimeout } );
         viewer.setClip( p.clipNear, p.clipFar, p.clipDist );
         viewer.setFog( undefined, p.fogNear, p.fogFar );
@@ -352,8 +343,8 @@ class Stage{
      */
     getParameters(){
 
-        var params = {};
-        for( var name in this.parameters ){
+        const params = {};
+        for( let name in this.parameters ){
             params[ name ] = this.parameters[ name ].value;
         }
         return params;
@@ -371,11 +362,11 @@ class Stage{
 
             object.setSelection( "/0" );
 
-            var atomCount, residueCount, instanceCount;
-            var structure = object.structure;
+            let atomCount, residueCount, instanceCount;
+            const structure = object.structure;
 
             if( structure.biomolDict.BU1 ){
-                var assembly = structure.biomolDict.BU1;
+                const assembly = structure.biomolDict.BU1;
                 atomCount = assembly.getAtomCount( structure );
                 residueCount = assembly.getResidueCount( structure );
                 instanceCount = assembly.getInstanceCount();
@@ -386,21 +377,27 @@ class Stage{
                 instanceCount = 1;
             }
 
+            let sizeScore = atomCount;
+
             if( Mobile ){
-                atomCount *= 4;
+                sizeScore *= 4;
             }
 
-            var backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
+            const backboneOnly = structure.atomStore.count / structure.residueStore.count < 2;
             if( backboneOnly ){
-                atomCount *= 10;
+                sizeScore *= 10;
             }
 
-            var colorScheme = "chainname";
+            let colorScheme = "chainname";
+            let colorScale = "RdYlBu";
+            let colorReverse = false;
             if( structure.getChainnameCount( "polymer and /0" ) === 1 ){
                 colorScheme = "residueindex";
+                colorScale = "spectral";
+                colorReverse = true;
             }
 
-            if( Debug ) console.log( atomCount, instanceCount, backboneOnly );
+            if( Debug ) console.log( sizeScore, atomCount, instanceCount, backboneOnly );
 
             if( residueCount / instanceCount < 4 ){
 
@@ -414,16 +411,16 @@ class Stage{
                 } );
 
             }else if(
-                ( instanceCount > 5 && atomCount > 15000 ) ||
-                atomCount > 700000
+                ( instanceCount > 5 && sizeScore > 15000 ) ||
+                sizeScore > 700000
             ){
 
-                var scaleFactor = (
+                let scaleFactor = (
                     Math.min(
                         1.5,
                         Math.max(
                             0.1,
-                            2000 / ( atomCount / instanceCount )
+                            2000 / ( sizeScore / instanceCount )
                         )
                     )
                 );
@@ -435,54 +432,60 @@ class Stage{
                     probeRadius: 1.4,
                     scaleFactor: scaleFactor,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     useWorker: false
                 } );
 
-            }else if( atomCount > 250000 ){
+            }else if( sizeScore > 250000 ){
 
                 object.addRepresentation( "backbone", {
                     lineOnly: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu"
+                    colorScale: colorScale,
+                    colorReverse: colorReverse
                 } );
 
-            }else if( atomCount > 100000 ){
+            }else if( sizeScore > 100000 ){
 
                 object.addRepresentation( "backbone", {
                     quality: "low",
                     disableImpostor: true,
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
-            }else if( atomCount > 80000 ){
+            }else if( sizeScore > 80000 ){
 
                 object.addRepresentation( "backbone", {
                     colorScheme: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 2.0
                 } );
 
             }else{
 
                 object.addRepresentation( "cartoon", {
-                    color: colorScheme,
-                    colorScale: "RdYlBu",
+                    colorScheme: colorScheme,
+                    colorScale: colorScale,
+                    colorReverse: colorReverse,
                     scale: 0.7,
                     aspectRatio: 5,
                     quality: "auto"
                 } );
-                if( atomCount < 50000 ){
+                if( sizeScore < 50000 ){
                     object.addRepresentation( "base", {
-                        color: colorScheme,
-                        colorScale: "RdYlBu",
+                        colorScheme: colorScheme,
+                        colorScale: colorScale,
+                        colorReverse: colorReverse,
                         quality: "auto"
                     } );
                 }
                 object.addRepresentation( "ball+stick", {
-                    sele: "hetero and not ( water or ion )",
+                    sele: "ligand",
                     colorScheme: "element",
                     scale: 2.0,
                     aspectRatio: 1.5,
@@ -533,7 +536,6 @@ class Stage{
      *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
      * } );
      *
-     * @fires Stage#componentAdded
      * @param  {String|File|Blob} path - either a URL or an object containing the file data
      * @param  {LoaderParameters} params - loading parameters
      * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
@@ -543,18 +545,18 @@ class Stage{
      */
     loadFile( path, params ){
 
-        var p = Object.assign( {}, this.defaultFileParams, params );
+        const p = Object.assign( {}, this.defaultFileParams, params );
 
         // placeholder component
-        var component = new Component( this, p );
+        let component = new Component( this, p );
         component.name = getFileInfo( path ).name;
         this.addComponent( component );
 
         // tasks
-        var tasks = this.tasks;
+        const tasks = this.tasks;
         tasks.increment();
 
-        var onLoadFn = function( object ){
+        const onLoadFn = function( object ){
 
             // remove placeholder component
             this.removeComponent( component );
@@ -563,9 +565,7 @@ class Stage{
 
             if( component.type === "script" ){
                 component.run();
-            }
-
-            if( p.defaultRepresentation ){
+            }else if( p.defaultRepresentation ){
                 this.defaultFileRepresentation( component );
             }
 
@@ -575,7 +575,7 @@ class Stage{
 
         }.bind( this );
 
-        var onErrorFn = function( e ){
+        const onErrorFn = function( e ){
 
             component.setStatus( e );
             tasks.decrement();
@@ -583,8 +583,8 @@ class Stage{
 
         };
 
-        var ext = defaults( p.ext, getFileInfo( path ).ext );
-        var promise;
+        const ext = defaults( p.ext, getFileInfo( path ).ext );
+        let promise;
 
         if( ext === "dcd" ){
             promise = Promise.reject( "loadFile: ext 'dcd' must be loaded into a structure component" );
@@ -624,10 +624,10 @@ class Stage{
      */
     addComponentFromObject( object, params ){
 
-        var CompClass = ComponentRegistry.get( object.type );
+        const CompClass = ComponentRegistry.get( object.type );
 
         if( CompClass ){
-            var component = new CompClass( this, object, params );
+            const component = new CompClass( this, object, params );
             this.addComponent( component );
             return component
         }
@@ -643,7 +643,7 @@ class Stage{
      */
     removeComponent( component ){
 
-        var idx = this.compList.indexOf( component );
+        const idx = this.compList.indexOf( component );
         if( idx !== -1 ){
             this.compList.splice( idx, 1 );
             component.dispose();
@@ -678,8 +678,25 @@ class Stage{
     }
 
     /**
+     * Set width and height
+     * @param {String} width - CSS width value
+     * @param {String} height - CSS height value
+     * @return {undefined}
+     */
+    setSize( width, height ){
+
+        const container = this.viewer.container;
+
+        if( container !== document.body ){
+            if( width !== undefined ) container.style.width = width;
+            if( height !== undefined ) container.style.height = height;
+            this.handleResize();
+        }
+
+    }
+
+    /**
      * Toggle fullscreen
-     * @fires Stage#fullscreenChanged
      * @param  {Element} [element] - document element to put into fullscreen,
      *                               defaults to the viewer container
      * @return {undefined}
@@ -693,7 +710,7 @@ class Stage{
             return;
         }
 
-        var self = this;
+        const self = this;
         element = element || this.viewer.container;
         this.lastFullscreenElement = element;
 
@@ -708,7 +725,7 @@ class Stage{
 
             if( !getFullscreenElement() && self.lastFullscreenElement ){
 
-                var element = self.lastFullscreenElement;
+                const element = self.lastFullscreenElement;
                 element.style.width = element.dataset.normalWidth;
                 element.style.height = element.dataset.normalHeight;
 
@@ -771,28 +788,75 @@ class Stage{
     }
 
     /**
-     * Spin the whole scene around an axis at the center
-     * @example
-     * stage.setSpin( [ 0, 1, 0 ], 0.01 );
-     *
-     * @param {Number[]|Vector3} axis - the axis to spin around
-     * @param {Number} angle - amount to spin per render call
+     * Set spin
+     * @param {Boolean} flag - if true start rocking and stop spinning
      * @return {undefined}
      */
-    setSpin( axis, angle ){
+    setSpin( flag ){
 
-        if( Array.isArray( axis ) ){
-            axis = new Vector3().fromArray( axis );
+        if( flag ){
+            this.spinAnimation.resume( true );
+            this.rockAnimation.pause( true );
+        }else{
+            this.spinAnimation.pause( true );
         }
 
-        this.spinAnimation.axis = axis;
-        this.spinAnimation.angle = angle;
+    }
+
+    /**
+     * Set rock
+     * @param {Boolean} flag - if true start rocking and stop spinning
+     * @return {undefined}
+     */
+    setRock( flag ){
+
+        if( flag ){
+            this.rockAnimation.resume( true );
+            this.spinAnimation.pause( true );
+        }else{
+            this.rockAnimation.pause( true );
+        }
+
+    }
+
+    /**
+     * Toggle spin
+     * @return {undefined}
+     */
+    toggleSpin(){
+
+        this.setSpin( this.spinAnimation.paused );
+
+    }
+
+    /**
+     * Toggle rock
+     * @return {undefined}
+     */
+    toggleRock(){
+
+        this.setRock( this.rockAnimation.paused );
+
+    }
+
+    setFocus( value ){
+
+        const clipNear = clamp( value / 2, 0, 49.9 );
+        const clipFar = 100 - clipNear;
+        const diffHalf = ( clipFar - clipNear ) / 2;
+
+        this.setParameters( {
+            clipNear,
+            clipFar,
+            fogNear: pclamp( clipFar - diffHalf ),
+            fogFar: pclamp( clipFar + diffHalf )
+        } );
 
     }
 
     getZoomForBox( boundingBox ){
 
-        const bbSize = boundingBox.size( tmpZoomVector );
+        const bbSize = boundingBox.getSize( tmpZoomVector );
         const maxSize = Math.max( bbSize.x, bbSize.y, bbSize.z );
         const minSize = Math.min( bbSize.x, bbSize.y, bbSize.z );
         let distance = maxSize + Math.sqrt( minSize );
@@ -823,9 +887,9 @@ class Stage{
 
     }
 
-    getCenter(){
+    getCenter( optionalTarget ){
 
-        return this.getBox().center();
+        return this.getBox().getCenter( optionalTarget );
 
     }
 
@@ -851,8 +915,8 @@ class Stage{
      */
     makeImage( params ){
 
-        var viewer = this.viewer;
-        var tasks = this.tasks;
+        const viewer = this.viewer;
+        const tasks = this.tasks;
 
         return new Promise( function( resolve, reject ){
 
@@ -877,7 +941,7 @@ class Stage{
 
         this.parameters.impostor.value = value;
 
-        var types = [
+        const types = [
             "spacefill", "ball+stick", "licorice", "hyperball",
             "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
@@ -891,7 +955,7 @@ class Stage{
                 return;
             }
 
-            var p = repr.getParameters();
+            const p = repr.getParameters();
             p.disableImpostor = !value;
             repr.build( p );
 
@@ -903,11 +967,11 @@ class Stage{
 
         this.parameters.quality.value = value;
 
-        var types = [
+        const types = [
             "tube", "cartoon", "ribbon", "trace", "rope"
         ];
 
-        var impostorTypes = [
+        const impostorTypes = [
             "spacefill", "ball+stick", "licorice", "hyperball",
             "backbone", "rocket", "helixorient", "contact", "distance",
             "dot"
@@ -917,7 +981,7 @@ class Stage{
 
             if( repr.type === "script" ) return;
 
-            var p = repr.getParameters();
+            const p = repr.getParameters();
 
             if( !types.includes( repr.getType() ) ){
 
@@ -947,7 +1011,7 @@ class Stage{
      */
     eachComponent( callback, type ){
 
-        this.compList.forEach( function( o, i ){
+        this.compList.slice().forEach( function( o, i ){
 
             if( !type || o.type === type ){
                 callback( o, i );
@@ -967,7 +1031,7 @@ class Stage{
 
         this.eachComponent( function( comp ){
 
-            comp.reprList.forEach( function( repr ){
+            comp.reprList.slice().forEach( function( repr ){
                 callback( repr, comp );
             } );
 
@@ -983,7 +1047,7 @@ class Stage{
      */
     getComponentsByName( name, type ){
 
-        var compList = [];
+        const compList = [];
 
         this.eachComponent( function( comp ){
 
@@ -1004,7 +1068,7 @@ class Stage{
      */
     getComponentsByObject( object ){
 
-        var compList = [];
+        const compList = [];
 
         this.eachComponent( function( comp ){
 
@@ -1026,9 +1090,9 @@ class Stage{
      */
     getRepresentationsByName( name, type ){
 
-        var compName, reprName;
+        let compName, reprName;
 
-        if( typeof name !== "object" ){
+        if( typeof name !== "object" || name instanceof RegExp ){
             compName = undefined;
             reprName = name;
         }else{
@@ -1036,7 +1100,7 @@ class Stage{
             reprName = name.repr;
         }
 
-        var reprList = [];
+        const reprList = [];
 
         this.eachRepresentation( function( repr, comp ){
 
@@ -1061,8 +1125,8 @@ class Stage{
      */
     getAnythingByName( name ){
 
-        var compList = this.getComponentsByName( name ).list;
-        var reprList = this.getRepresentationsByName( name ).list;
+        const compList = this.getComponentsByName( name ).list;
+        const reprList = this.getRepresentationsByName( name ).list;
 
         return new Collection( compList.concat( reprList ) );
 

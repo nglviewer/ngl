@@ -5,20 +5,18 @@
  */
 
 
-import { Vector2, Vector3 } from "../../lib/three.es6.js";
+import PickingProxy from "./picking-proxy.js";
 
 
-const tmpObjectPosition = new Vector3();
-const tmpCanvasPosition = new Vector2();
-
-
+/**
+ * Picking controls
+ */
 class PickingControls{
 
     constructor( stage/*, params*/ ){
 
         this.stage = stage;
         this.viewer = stage.viewer;
-        this.mouseObserver = stage.mouseObserver;
 
     }
 
@@ -26,56 +24,27 @@ class PickingControls{
      * get picking data
      * @param {Number} x - canvas x coordinate
      * @param {Number} y - canvas y coordinate
-     * @return {PickingData} picking data
+     * @return {PickingProxy|undefined} picking proxy
      */
     pick( x, y ){
-        const mouse = this.mouseObserver;
+
         const pickingData = this.viewer.pick( x, y );
-        const instance = pickingData.instance;
 
-        let pickedAtom, pickedBond, pickedVolume;
-        if( pickingData.picker ){
-            const p = pickingData.picker;
-            const o = p.object;
-            const idx = p[ pickingData.pid ];
-            if( p.type === "atom" ){
-                pickedAtom = o.getAtomProxy( idx );
-            }else if( p.type === "bond" ){
-                pickedBond = o.getBondProxy( idx );
-            }else if( p.type === "volume" ){
-                pickedVolume = {
-                    volume: o,
-                    index: idx,
-                    value: o.data[ idx ],
-                    x: o.dataPosition[ idx * 3 ],
-                    y: o.dataPosition[ idx * 3 + 1 ],
-                    z: o.dataPosition[ idx * 3 + 2 ],
-                };
+        if( pickingData.picker &&
+            pickingData.picker.type !== "ignore" &&
+            pickingData.pid !== undefined
+        ){
+            const pickerArray = pickingData.picker.array
+            if( pickerArray && pickingData.pid >= pickerArray.length ){
+                console.error( "pid >= picker.array.length" );
+            }else{
+                var pp = new PickingProxy( pickingData, this.stage );
+                pp.geom_id = pickingData.geom_id;   // mjg
+                return pp;
             }
         }
 
-        let object, component;
-        if( pickedAtom || pickedBond || pickedVolume ){
-            if( pickedAtom ){
-                tmpObjectPosition.copy( pickedAtom );
-                object = pickedAtom.structure;
-            }else if( pickedBond ){
-                tmpObjectPosition.copy( pickedBond.atom1 )
-                    .add( pickedBond.atom2 )
-                    .multiplyScalar( 0.5 );
-                object = pickedBond.structure;
-            }else if( pickedVolume ){
-                tmpObjectPosition.copy( pickedVolume );
-                object = pickedVolume.volume;
-            }
-            if( instance ){
-                tmpObjectPosition.applyProjection( instance.matrix );
-            }
-            if( object ){
-                component = this.stage.getComponentsByObject( object ).list[ 0 ];
-            }
-        }
-
+        /*
         tmpCanvasPosition.copy( mouse.canvasPosition );
 
         return {
@@ -92,6 +61,7 @@ class PickingControls{
             "metaKey":  mouse.metaKey,
             "shiftKey":  mouse.shiftKey
         };
+        */
     }
 
 }

@@ -5,7 +5,7 @@
  */
 
 
-import { Matrix4, Uniform } from "../../lib/three.es6.js";
+import { Matrix4 } from "../../lib/three.es6.js";
 
 import "../shader/HyperballStickImpostor.vert";
 import "../shader/HyperballStickImpostor.frag";
@@ -14,61 +14,22 @@ import { defaults } from "../utils.js";
 import BoxBuffer from "./box-buffer.js";
 
 
-var tmpMatrix = new Matrix4();
-
-function matrixCalc( object, camera ){
-
-    var u = object.material.uniforms;
-
-    if( u.modelViewMatrixInverse ){
-        u.modelViewMatrixInverse.value.getInverse(
-            object.modelViewMatrix
-        );
-    }
-
-    if( u.modelViewMatrixInverseTranspose ){
-        if( u.modelViewMatrixInverse ){
-            u.modelViewMatrixInverseTranspose.value.copy(
-                u.modelViewMatrixInverse.value
-            ).transpose();
-        }else{
-            u.modelViewMatrixInverseTranspose.value
-                .getInverse( object.modelViewMatrix )
-                .transpose();
-        }
-    }
-
-    if( u.modelViewProjectionMatrix ){
-        u.modelViewProjectionMatrix.value.multiplyMatrices(
-            camera.projectionMatrix, object.modelViewMatrix
-        );
-    }
-
-    if( u.modelViewProjectionMatrixInverse ){
-        if( u.modelViewProjectionMatrix ){
-            tmpMatrix.copy(
-                u.modelViewProjectionMatrix.value
-            );
-            u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
-        }else{
-            tmpMatrix.multiplyMatrices(
-                camera.projectionMatrix, object.modelViewMatrix
-            );
-            u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
-        }
-    }
-
-}
-
-
+/**
+ * Hyperball stick impostor buffer.
+ *
+ * @example
+ * var hyperballStickImpostorBuffer = new HyperballStickImpostorBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 2, 2, 2 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius1: new Float32Array( [ 1 ] ),
+ *     radius2: new Float32Array( [ 2 ] )
+ * } );
+ */
 class HyperballStickImpostorBuffer extends BoxBuffer{
 
     /**
-     * make hyperball stick impostor buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position1 - from positions
      * @param  {Float32Array} data.position2 - to positions
@@ -76,7 +37,7 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
      * @param  {Float32Array} data.color2 - to colors
      * @param  {Float32Array} data.radius1 - from radii
      * @param  {Float32Array} data.radius2 - to radii
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -88,17 +49,10 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
 
         var shrink = defaults( p.shrink, 0.14 );
 
-        var modelViewProjectionMatrix = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-        var modelViewProjectionMatrixInverse = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-        var modelViewMatrixInverseTranspose = new Uniform( new Matrix4() )
-            .onUpdate( matrixCalc );
-
         this.addUniforms( {
-            "modelViewProjectionMatrix": modelViewProjectionMatrix,
-            "modelViewProjectionMatrixInverse": modelViewProjectionMatrixInverse,
-            "modelViewMatrixInverseTranspose": modelViewMatrixInverseTranspose,
+            "modelViewProjectionMatrix": { value: new Matrix4() },
+            "modelViewProjectionMatrixInverse": { value: new Matrix4() },
+            "modelViewMatrixInverseTranspose": { value: new Matrix4() },
             "shrink": { value: shrink },
         } );
 
@@ -126,7 +80,7 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
 
     }
 
-    get impostor (){ return true; }
+    get isImpostor (){ return true; }
     get vertexShader (){ return "HyperballStickImpostor.vert"; }
     get fragmentShader (){ return "HyperballStickImpostor.frag"; }
 

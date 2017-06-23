@@ -711,8 +711,8 @@ function calculateBondsWithin( structure, onlyAddRung ){
             a1.index = r.traceAtomIndex;
             a2.index = r.rungEndAtomIndex;
             rungBondStore.addBond( a1, a2 );
-            rungAtomSet.add_unsafe( a1.index );
-            rungAtomSet.add_unsafe( a2.index );
+            rungAtomSet.set( a1.index );
+            rungAtomSet.set( a2.index );
         }
 
     } );
@@ -751,8 +751,8 @@ function calculateBondsBetween( structure, onlyAddBackbone ){
                 ap1.index = rp1.traceAtomIndex;
                 ap2.index = rp2.traceAtomIndex;
                 backboneBondStore.addBond( ap1, ap2 );
-                backboneAtomSet.add_unsafe( ap1.index );
-                backboneAtomSet.add_unsafe( ap2.index );
+                backboneAtomSet.set( ap1.index );
+                backboneAtomSet.set( ap2.index );
             }
         }
     }
@@ -853,23 +853,21 @@ function buildUnitcellAssembly( structure ){
     var vec = new Vector3();
     var supercellAssembly = new Assembly( "SUPERCELL" );
     var supercellMatrixList = Array.prototype.concat.call(
-        getMatrixList(),                         // 555
-        getMatrixList( vec.set(  1,  1,  1 ) ),  // 666
-        getMatrixList( vec.set( -1, -1, -1 ) ),  // 444
-
         getMatrixList( vec.set(  1,  0,  0 ) ),  // 655
-        getMatrixList( vec.set(  1,  1,  0 ) ),  // 665
-        getMatrixList( vec.set(  1,  0,  1 ) ),  // 656
         getMatrixList( vec.set(  0,  1,  0 ) ),  // 565
-        getMatrixList( vec.set(  0,  1,  1 ) ),  // 566
         getMatrixList( vec.set(  0,  0,  1 ) ),  // 556
 
         getMatrixList( vec.set( -1,  0,  0 ) ),  // 455
+        getMatrixList( vec.set(  0, -1,  0 ) ),  // 545
+        getMatrixList( vec.set(  0,  0, -1 ) ),  // 554
+
+        getMatrixList( vec.set(  1,  1,  0 ) ),  // 665
+        getMatrixList( vec.set(  1,  0,  1 ) ),  // 656
+        getMatrixList( vec.set(  0,  1,  1 ) ),  // 566
+
         getMatrixList( vec.set( -1, -1,  0 ) ),  // 445
         getMatrixList( vec.set( -1,  0, -1 ) ),  // 454
-        getMatrixList( vec.set(  0, -1,  0 ) ),  // 545
         getMatrixList( vec.set(  0, -1, -1 ) ),  // 544
-        getMatrixList( vec.set(  0,  0, -1 ) ),  // 554
 
         getMatrixList( vec.set(  1, -1, -1 ) ),  // 644
         getMatrixList( vec.set(  1,  1, -1 ) ),  // 664
@@ -883,7 +881,11 @@ function buildUnitcellAssembly( structure ){
         getMatrixList( vec.set(  1,  0, -1 ) ),  // 654
         getMatrixList( vec.set( -1,  0,  1 ) ),  // 456
         getMatrixList( vec.set(  1, -1,  0 ) ),  // 645
-        getMatrixList( vec.set( -1,  1,  0 ) )   // 465
+        getMatrixList( vec.set( -1,  1,  0 ) ),  // 465
+
+        getMatrixList(),                         // 555
+        getMatrixList( vec.set(  1,  1,  1 ) ),  // 666
+        getMatrixList( vec.set( -1, -1, -1 ) )   // 444
     );
     if( structure.biomolDict.NCS ){
         var ncsSupercellMatrixList = [];
@@ -906,7 +908,7 @@ function buildUnitcellAssembly( structure ){
 
 
 const elm1 = [ "H", "C", "O", "N", "S", "P" ];
-const elm2 = [ "NA", "CL" ];
+const elm2 = [ "NA", "CL", "FE" ];
 
 function guessElement( atomName ){
 

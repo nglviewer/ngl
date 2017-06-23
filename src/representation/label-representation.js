@@ -48,119 +48,118 @@ import TextBuffer from "../buffer/text-buffer.js";
 
 
 /**
- * Label representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {LabelRepresentationParameters} params - label representation parameters
+ * Label representation
  */
-function LabelRepresentation( structure, viewer, params ){
+class LabelRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    /**
+     * Create Label representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {LabelRepresentationParameters} params - label representation parameters
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-LabelRepresentation.prototype = Object.assign( Object.create(
+        this.type = "label";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: LabelRepresentation,
-
-    type: "label",
-
-    parameters: Object.assign( {
-
-        labelType: {
-            type: "select", options: LabelFactory.types, rebuild: true
-        },
-        labelText: {
-            type: "hidden", rebuild: true
-        },
-        fontFamily: {
-            type: "select", options: {
-                "sans-serif": "sans-serif",
-                "monospace": "monospace",
-                "serif": "serif"
+            labelType: {
+                type: "select", options: LabelFactory.types, rebuild: true
             },
-            buffer: true
-        },
-        fontStyle: {
-            type: "select", options: {
-                "normal": "normal",
-                "italic": "italic"
+            labelText: {
+                type: "hidden", rebuild: true
             },
-            buffer: true
-        },
-        fontWeight: {
-            type: "select", options: {
-                "normal": "normal",
-                "bold": "bold"
+            fontFamily: {
+                type: "select", options: {
+                    "sans-serif": "sans-serif",
+                    "monospace": "monospace",
+                    "serif": "serif"
+                },
+                buffer: true
             },
-            buffer: true
-        },
-        sdf: {
-            type: "boolean", buffer: true
-        },
-        xOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        yOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        zOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: true
-        },
-        attachment: {
-            type: "select", options: {
-                "bottom-left": "bottom-left",
-                "bottom-center": "bottom-center",
-                "bottom-right": "bottom-right",
-                "middle-left": "middle-left",
-                "middle-center": "middle-center",
-                "middle-right": "middle-right",
-                "top-left": "top-left",
-                "top-center": "top-center",
-                "top-right": "top-right"
+            fontStyle: {
+                type: "select", options: {
+                    "normal": "normal",
+                    "italic": "italic"
+                },
+                buffer: true
             },
-            rebuild: true
-        },
-        showBorder: {
-            type: "boolean", buffer: true
-        },
-        borderColor: {
-            type: "color", buffer: true
-        },
-        borderWidth: {
-            type: "number", precision: 2, max: 0.3, min: 0, buffer: true
-        },
-        showBackground: {
-            type: "boolean", rebuild: true
-        },
-        backgroundColor: {
-            type: "color", buffer: true
-        },
-        backgroundMargin: {
-            type: "number", precision: 2, max: 2, min: 0, rebuild: true
-        },
-        backgroundOpacity: {
-            type: "range", step: 0.01, max: 1, min: 0, buffer: true
-        },
+            fontWeight: {
+                type: "select", options: {
+                    "normal": "normal",
+                    "bold": "bold"
+                },
+                buffer: true
+            },
+            sdf: {
+                type: "boolean", buffer: true
+            },
+            xOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            yOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            zOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: true
+            },
+            attachment: {
+                type: "select", options: {
+                    "bottom-left": "bottom-left",
+                    "bottom-center": "bottom-center",
+                    "bottom-right": "bottom-right",
+                    "middle-left": "middle-left",
+                    "middle-center": "middle-center",
+                    "middle-right": "middle-right",
+                    "top-left": "top-left",
+                    "top-center": "top-center",
+                    "top-right": "top-right"
+                },
+                rebuild: true
+            },
+            showBorder: {
+                type: "boolean", buffer: true
+            },
+            borderColor: {
+                type: "color", buffer: true
+            },
+            borderWidth: {
+                type: "number", precision: 2, max: 0.3, min: 0, buffer: true
+            },
+            showBackground: {
+                type: "boolean", rebuild: true
+            },
+            backgroundColor: {
+                type: "color", buffer: true
+            },
+            backgroundMargin: {
+                type: "number", precision: 2, max: 2, min: 0, rebuild: true
+            },
+            backgroundOpacity: {
+                type: "range", step: 0.01, max: 1, min: 0, buffer: true
+            },
 
-    }, StructureRepresentation.prototype.parameters, {
+        }, this.parameters, {
 
-        side: null,
-        flatShaded: null,
-        wireframe: null,
-        linewidth: null,
+            side: null,
+            flatShaded: null,
+            wireframe: null,
+            linewidth: null,
 
-        roughness: null,
-        metalness: null,
-        diffuse: null,
+            roughness: null,
+            metalness: null,
+            diffuse: null,
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    init( params ){
 
         var p = params || {};
 
@@ -182,11 +181,11 @@ LabelRepresentation.prototype = Object.assign( Object.create(
         this.backgroundMargin = defaults( p.backgroundMargin, 0.5 );
         this.backgroundOpacity = defaults( p.backgroundOpacity, 1.0 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var what = { position: true, color: true, radius: true };
         var atomData = sview.getAtomData( this.getAtomParams( what ) );
@@ -229,9 +228,9 @@ LabelRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ textBuffer ]
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
         var textData = {};
@@ -252,7 +251,7 @@ LabelRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "label", LabelRepresentation );

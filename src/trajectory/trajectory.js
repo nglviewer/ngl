@@ -15,6 +15,7 @@ import { circularMean } from "../math/array-utils.js";
 import { lerp, spline } from "../math/math-utils.js";
 import Selection from "../selection.js";
 import Superposition from "../align/superposition.js";
+import TrajectoryPlayer from "./trajectory-player.js";
 
 
 function centerPbc( coords, mean, box ){
@@ -121,7 +122,7 @@ class Trajectory{
         p.superpose = defaults( p.superpose, true );
         this.setParameters( p );
 
-        this.name = trajPath.replace( /^.*[\\\/]/, '' );
+        this.name = trajPath.replace( /^.*[\\/]/, '' );
 
         // selection to restrict atoms used for superposition
         this.selection = new Selection(
@@ -135,6 +136,7 @@ class Trajectory{
 
         // should come after this.selection is set
         this.setStructure( structure );
+        this.setPlayer( new TrajectoryPlayer( this ) );
 
         this.trajPath = trajPath;
 

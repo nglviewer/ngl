@@ -10,10 +10,19 @@ import { defaults } from "../utils.js";
 import Component from "./component.js";
 
 
+/**
+ * Component wrapping a {@link Shape} object
+ *
+ * @example
+ * // get a shape component by adding a shape object to the stage
+ * var shape = new NGL.Shape( "shape" );
+ * shape.addSphere( [ 0, 0, 0 ], [ 1, 0, 0 ], 1.5 );
+ * var shapeComponent = stage.addComponentFromObject( shape );
+ * shapeComponent.addRepresentation( "buffer" );
+ */
 class ShapeComponent extends Component{
 
     /**
-     * Create component wrapping a shape object
      * @param {Stage} stage - stage object the component belongs to
      * @param {Shape} shape - shape object to wrap
      * @param {ComponentParameters} params - component parameters
@@ -31,16 +40,12 @@ class ShapeComponent extends Component{
 
     /**
      * Component type
-     * @alias ShapeComponent#type
-     * @constant
      * @type {String}
-     * @default
      */
     get type(){ return "shape"; }
 
     /**
      * Add a new shape representation to the component
-     * @alias ShapeComponent#addRepresentation
      * @param {String} type - the name of the representation, one of:
      *                        buffer.
      * @param {BufferRepresentationParameters} params - representation parameters
@@ -53,13 +58,13 @@ class ShapeComponent extends Component{
 
     }
 
-    getBox(){
+    getBoxUntransformed(){
 
         return this.shape.boundingBox;
 
     }
 
-    getCenter(){
+    getCenterUntransformed(){
 
         return this.shape.center;
 

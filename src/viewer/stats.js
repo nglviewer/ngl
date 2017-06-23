@@ -11,9 +11,7 @@ import Signal from "../../lib/signals.es6.js";
 function Stats(){
 
     this.signals = {
-
         updated: new Signal(),
-
     };
 
     this.begin();

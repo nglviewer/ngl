@@ -47,6 +47,7 @@ import "./color/chainid-colormaker.js";
 import "./color/chainindex-colormaker.js";
 import "./color/chainname-colormaker.js";
 import "./color/densityfit-colormaker.js";
+import "./color/electrostatic-colormaker.js";
 import "./color/element-colormaker.js";
 import "./color/entityindex-colormaker.js";
 import "./color/entitytype-colormaker.js";
@@ -139,6 +140,7 @@ import "./parser/validation-parser.js";
 import Shape from "./geometry/shape.js";
 import Kdtree from "./geometry/kdtree.js";
 import SpatialHash from "./geometry/spatial-hash.js";
+import MolecularSurface from "./surface/molecular-surface.js";
 
 //
 
@@ -153,167 +155,44 @@ import StaticDatasource from "./datasource/static-datasource.js";
 
 //
 
+import {
+    LeftMouseButton, MiddleMouseButton, RightMouseButton
+} from "./constants.js";
+import MouseActions from "./controls/mouse-actions.js";
+
+//
+
 import Signal from "../lib/signals.es6.js";
 import {
-    Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Plane, Color
+    Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
 } from "../lib/three.es6.js";
 
 //
 
-import { version as Version } from "../package.json";
-
-
-/**
- * Promise class
- * @name Promise
- * @class
- * @global
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise}
- */
-
-/**
- * Blob class
- * @name Blob
- * @class
- * @global
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Blob}
- */
-
-/**
- * File class
- * @name File
- * @class
- * @global
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/File}
- */
-
-/**
- * Signal class, used to dispatch events
- * @name Signal
- * @class
- * @global
- * @see {@link https://millermedeiros.github.io/js-signals/docs/symbols/Signal.html}
- *
- * @example
- * function onHover( pickingData ){
- *     // ...
- * }
- * stage.signals.hovered.add( onHover );  // add listener
- * stage.signals.hovered.remove( onHover );  // remove listener
- *
- * @example
- * function onClick( pickingData ){
- *     // ...
- * }
- * // add listener that is removed after first execution
- * stage.signals.hovered.addOnce( onHover );
- */
-
-/**
- * 3x3 matrix from three.js
- * @name Matrix3
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Matrix3}
- */
-
-/**
- * 4x4 transformation matrix from three.js
- * @name Matrix4
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Matrix4}
- */
-
-/**
- * 2d vector class from three.js
- * @name Vector2
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Vector2}
- */
-
-/**
- * 3d vector class from three.js
- * @name Vector3
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Vector3}
- */
-
-/**
- * 3d vector class from three.js
- * @name Box3
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Box3}
- */
-
-/**
- * Quaternion class from three.js
- * @name Quaternion
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Quaternion}
- */
-
-/**
- * Plane class from three.js
- * @name Plane
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Plane}
- */
-
-/**
- * Color class from three.js
- * @name Color
- * @class
- * @global
- * @see {@link http://threejs.org/docs/#Reference/Math/Color}
- */
+import Version from "./version.js";
 
 
 export {
-    /**
-     * Version name
-     * @static
-     * @type {String}
-     */
     Version,
     Debug,
     setDebug,
     DatasourceRegistry,
     StaticDatasource,
     ParserRegistry,
-    /**
-     * autoLoad function
-     * @see {@link autoLoad}
-     */
     autoLoad,
     RepresentationRegistry,
     ColormakerRegistry,
     Colormaker,
     Selection,
     PdbWriter,
-    /**
-     * Stage class
-     * @see {@link Stage}
-     */
     Stage,
     Collection,
     ComponentCollection,
     RepresentationCollection,
-    /**
-     * Assembly class
-     * @see {@link Assembly}
-     */
+
     Assembly,
     TrajectoryPlayer,
-    /**
-     * superpose function
-     * @see {@link superpose}
-     */
+
     superpose,
     guessElement,
 
@@ -326,95 +205,34 @@ export {
     getFileInfo,
     uniqueArray,
 
-    /**
-     * Buffer representation class
-     * @see {@link BufferRepresentation}
-     */
     BufferRepresentation,
-    /**
-     * Sphere buffer class
-     * @see {@link SphereBuffer}
-     */
     SphereBuffer,
-    /**
-     * Ellipsoid buffer class
-     * @see {@link EllipsoidBuffer}
-     */
     EllipsoidBuffer,
-    /**
-     * Cylinder buffer class
-     * @see {@link CylinderBuffer}
-     */
     CylinderBuffer,
-    /**
-     * Cone buffer class
-     * @see {@link ConeBuffer}
-     */
     ConeBuffer,
-    /**
-     * Arrow buffer class
-     * @see {@link ArrowBuffer}
-     */
     ArrowBuffer,
-    /**
-     * Text buffer class
-     * @see {@link TextBuffer}
-     */
     TextBuffer,
 
-    /**
-     * Shape class
-     * @see {@link Shape}
-     */
     Shape,
 
     Kdtree,
     SpatialHash,
+    MolecularSurface,
 
-    /**
-     * Signal class
-     * @see {@link Signal}
-     */
+    LeftMouseButton,
+    MiddleMouseButton,
+    RightMouseButton,
+    MouseActions,
+
     Signal,
 
-    /**
-     * Matrix3 class
-     * @see {@link Matrix3}
-     */
     Matrix3,
-    /**
-     * Matrix4 class
-     * @see {@link Matrix4}
-     */
     Matrix4,
-    /**
-     * Vector2 class
-     * @see {@link Vector2}
-     */
     Vector2,
-    /**
-     * Vector3 class
-     * @see {@link Vector3}
-     */
     Vector3,
-    /**
-     * Box3 class
-     * @see {@link Box3}
-     */
     Box3,
-    /**
-     * Quaternion class
-     * @see {@link Quaternion}
-     */
     Quaternion,
-    /**
-     * Plane class
-     * @see {@link Plane}
-     */
+    Euler,
     Plane,
-    /**
-     * Color class
-     * @see {@link Color}
-     */
     Color
 };

@@ -6,9 +6,13 @@
 
 
 import { ColormakerRegistry } from "../globals.js";
+import { defaults } from "../utils.js";
 import Colormaker from "./colormaker.js";
 
 
+/**
+ * Color by residue index
+ */
 class ResidueindexColormaker extends Colormaker{
 
     constructor( params ){
@@ -16,18 +20,17 @@ class ResidueindexColormaker extends Colormaker{
         super( params );
 
         if( !params.scale ){
-            this.scale = "roygb";
+            this.scale = "rainbow";
+            this.reverse = defaults( params.reverse, true );
         }
         if( !params.domain ){
 
-            // this.domain = [ 0, this.structure.residueStore.count ];
+            const scalePerChain = {};
 
-            var scalePerChain = {};
-
-            this.structure.eachChain( function( cp ){
+            this.structure.eachChain( cp => {
                 this.domain = [ cp.residueOffset, cp.residueEnd ];
                 scalePerChain[ cp.index ] = this.getScale();
-            }.bind( this ) );
+            } );
 
             this.atomColor = function( a ){
                 return scalePerChain[ a.chainIndex ]( a.residueIndex );
@@ -35,7 +38,7 @@ class ResidueindexColormaker extends Colormaker{
 
         }else{
 
-            var residueindexScale = this.getScale();
+            const residueindexScale = this.getScale();
 
             this.atomColor = function( a ){
                 return residueindexScale( a.residueIndex );

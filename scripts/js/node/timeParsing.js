@@ -66,19 +66,24 @@ function getFileObject( filePath ){
 function parseFiles( fileList ){
     return Promise.all( fileList.map( function( filePath ){
         var file = getFileObject( filePath );
+        console.log( filePath );
+        logger.write( filePath.toString() + "\n" );
         return NGL.autoLoad( file ).then( function( o ){
-            // console.log( o.atomCount );
+            logger.write( o.atomCount.toString() + "\n" );
         } ).catch( function( err ){
-            console.log( "moin", err );
+            error.write( fileList.toString() + "\n" );
+            error.write( err.toString() + "\n" );
         } );
     } ) );
 }
 
 function parseFilesChunked( fileList ){
     var t0 = performance.now();
-    doChunked( fileList, parseFiles, {}, 100 ).then( function(){
+    doChunked( fileList, parseFiles, {}, 1 ).then( function(){
         var t1 = performance.now();
-        console.log( t1 - t0 );
+        var d = t1 - t0;
+        console.log( d );
+        logger.write( d.toString() );
     } );
 }
 
@@ -88,9 +93,15 @@ var parser = new ArgumentParser( {
     description: "Time parsing of files with NGL."
 } );
 parser.addArgument( "--dir", {
-    help: "dir in path"
+    help: "input path"
+});
+parser.addArgument( "--out", {
+    help: "output path"
 });
 var args = parser.parseArgs();
+
+var logger = fs.createWriteStream( path.join( args.out, "log.txt" ) );
+var error = fs.createWriteStream( path.join( args.out, "err.txt" ) );
 
 if( args.dir !== null ){
     parseFilesChunked( getDirFiles( args.dir ) );

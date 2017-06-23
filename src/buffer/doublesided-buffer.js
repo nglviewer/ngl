@@ -15,14 +15,25 @@ function setVisibilityFalse( m ){ m.visible = false; }
 
 
 /**
- * A double-sided mesh buffer
+ * A double-sided mesh buffer. Takes a buffer and renders the front and
+ * the back as seperate objects to avoid some artifacts when rendering
+ * transparent meshes. Also allows to render the back of a mesh opaque
+ * while the front is transparent.
  * @implements {Buffer}
+ *
+ * @example
+ * var sphereGeometryBuffer = new SphereGeometryBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ * var doubleSidedBuffer = new DoubleSidedBuffer( sphereGeometryBuffer );
  */
 class DoubleSidedBuffer{
 
     /**
-     * make a double sided buffer
-     * @param  {Buffer} buffer - the buffer to render double-sided
+     * Create a double sided buffer
+     * @param  {Buffer} buffer - the buffer to be rendered double-sided
      */
     constructor( buffer ){
 
@@ -33,10 +44,14 @@ class DoubleSidedBuffer{
         this.geometry = buffer.geometry;
         this.picking = buffer.picking;
         this.background = buffer.background;
+        this.disablePicking = buffer.disablePicking;
 
         this.group = new Group();
         this.wireframeGroup = new Group();
         this.pickingGroup = new Group();
+
+        // requires Group objects to be present
+        this.matrix = buffer.matrix;
 
         this.frontMeshes = [];
         this.backMeshes = [];
@@ -67,8 +82,15 @@ class DoubleSidedBuffer{
 
     }
 
+    set matrix ( m ){
+        Buffer.prototype.setMatrix.call( this, m );
+    }
+    get matrix (){
+        return this.group.matrix.clone();
+    }
+
     get pickable (){
-        return !!this.picking;
+        return !!this.picking && !this.disablePicking;
     }
 
     getMesh( picking ){
@@ -130,6 +152,11 @@ class DoubleSidedBuffer{
             this.backMeshes.forEach( setVisibilityTrue );
 
         }
+
+        if( data.matrix !== undefined ){
+            this.matrix = data.matrix;
+        }
+        delete data.matrix;
 
         if( data.side !== undefined ){
             this.side = data.side;

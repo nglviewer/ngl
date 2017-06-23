@@ -41,6 +41,9 @@ var ElementColors = {
 var DefaultElementColor = 0xFFFFFF;
 
 
+/**
+ * Color by element
+ */
 class ElementColormaker extends Colormaker{
 
     constructor( params ){

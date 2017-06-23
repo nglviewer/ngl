@@ -15,87 +15,86 @@ import DoubleSidedBuffer from "../buffer/doublesided-buffer";
 import Selection from "../selection.js";
 
 
-function MolecularSurfaceRepresentation( structure, viewer, params ){
+class MolecularSurfaceRepresentation extends StructureRepresentation{
 
-    this.__infoList = [];
+    constructor( structure, viewer, params ){
 
-    StructureRepresentation.call( this, structure, viewer, params );
+        super( structure, viewer, params );
 
-    // TODO find a more direct way
-    this.structure.signals.refreshed.add( function(){
-        this.__forceNewMolsurf = true;
-    }, this );
+        this.type = "surface";
 
-}
+        this.parameters = Object.assign( {
 
-MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
-
-    StructureRepresentation.prototype ), {
-
-    constructor: MolecularSurfaceRepresentation,
-
-    type: "surface",
-
-    parameters: Object.assign( {
-
-        surfaceType: {
-            type: "select", rebuild: true,
-            options: {
-                "vws": "vws",
-                "sas": "sas",
-                "ms": "ms",
-                "ses": "ses",
-                "av": "av"
+            surfaceType: {
+                type: "select", rebuild: true,
+                options: {
+                    "vws": "vws",
+                    "sas": "sas",
+                    "ms": "ms",
+                    "ses": "ses",
+                    "av": "av"
+                }
+            },
+            probeRadius: {
+                type: "number", precision: 1, max: 20, min: 0,
+                rebuild: true
+            },
+            smooth: {
+                type: "integer", precision: 1, max: 10, min: 0,
+                rebuild: true
+            },
+            scaleFactor: {
+                type: "number", precision: 1, max: 5, min: 0,
+                rebuild: true
+            },
+            cutoff: {
+                type: "number", precision: 2, max: 50, min: 0,
+                rebuild: true
+            },
+            contour: {
+                type: "boolean", rebuild: true
+            },
+            background: {
+                type: "boolean", rebuild: true  // FIXME
+            },
+            opaqueBack: {
+                type: "boolean", buffer: true
+            },
+            filterSele: {
+                type: "text", rebuild: true
+            },
+            colorVolume: {
+                type: "hidden"
+            },
+            useWorker: {
+                type: "boolean", rebuild: true
             }
-        },
-        probeRadius: {
-            type: "number", precision: 1, max: 20, min: 0,
-            rebuild: true
-        },
-        smooth: {
-            type: "integer", precision: 1, max: 10, min: 0,
-            rebuild: true
-        },
-        scaleFactor: {
-            type: "number", precision: 1, max: 5, min: 0,
-            rebuild: true
-        },
-        cutoff: {
-            type: "number", precision: 2, max: 50, min: 0,
-            rebuild: true
-        },
-        contour: {
-            type: "boolean", rebuild: true
-        },
-        background: {
-            type: "boolean", rebuild: true  // FIXME
-        },
-        opaqueBack: {
-            type: "boolean", buffer: true
-        },
-        filterSele: {
-            type: "text", rebuild: true
-        },
-        colorVolume: {
-            type: "hidden"
-        },
-        useWorker: {
-            type: "boolean", rebuild: true
-        }
 
-    }, StructureRepresentation.prototype.parameters, {
+        }, this.parameters, {
 
-        radiusType: null,
-        radius: null,
-        scale: null
+            radiusType: null,
+            radius: null,
+            scale: null
 
-    } ),
+        } );
 
-    init: function( params ){
+        this.__infoList = [];
 
-        var p = params || {};
+        // TODO find a more direct way
+        this.structure.signals.refreshed.add( function(){
+            this.__forceNewMolsurf = true;
+        }, this );
+
+        this.init( params );
+
+    }
+
+    init( params ){
+
+        const p = params || {};
         p.colorScheme = defaults( p.colorScheme, "uniform" );
         p.colorValue = defaults( p.colorValue, 0xDDDDDD );
+        p.disablePicking = defaults( p.disablePicking, true );
 
         this.surfaceType = defaults( p.surfaceType, "ms" );
         this.probeRadius = defaults( p.probeRadius, 1.4 );
@@ -109,13 +108,13 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         this.colorVolume = defaults( p.colorVolume, undefined );
         this.useWorker = defaults( p.useWorker, true );
 
-        StructureRepresentation.prototype.init.call( this, params );
+        super.init( params );
 
-    },
+    }
 
-    prepareData: function( sview, i, callback ){
+    prepareData( sview, i, callback ){
 
-        var info = this.__infoList[ i ];
+        let info = this.__infoList[ i ];
         if( !info ){
             info = {};
             this.__infoList[ i ] = info;
@@ -124,21 +123,20 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
         if( !info.molsurf || info.sele !== sview.selection.string ){
 
             if( this.filterSele ){
-                var sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
-                var bbSize = sviewFilter.boundingBox.size();
-                var maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
-                var asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, ( maxDim / 2 ) + 6.0 );
+                const sviewFilter = sview.structure.getView( new Selection( this.filterSele ) );
+                const bbSize = sviewFilter.boundingBox.getSize();
+                const maxDim = Math.max( bbSize.x, bbSize.y, bbSize.z );
+                const asWithin = sview.getAtomSetWithinPoint( sviewFilter.center, ( maxDim / 2 ) + 6.0 );
                 sview = sview.getView(
                     new Selection( sview.getAtomSetWithinSelection( asWithin, 3 ).toSeleString() )
                 );
-                // this.filterSele = "";
             }
 
             info.sele = sview.selection.string;
             info.molsurf = new MolecularSurface( sview );
 
-            var p = this.getSurfaceParams();
-            var onSurfaceFinish = function( surface ){
+            const p = this.getSurfaceParams();
+            const onSurfaceFinish = function( surface ){
                 info.surface = surface;
                 callback( i );
             };
@@ -155,15 +153,15 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    prepare: function( callback ){
+    prepare( callback ){
 
         if( this.__forceNewMolsurf || this.__sele !== this.selection.string ||
                 this.__surfaceParams !== JSON.stringify( this.getSurfaceParams() ) ){
-            this.__infoList.forEach( function( info ){
+            this.__infoList.forEach( info => {
                 info.molsurf.dispose();
-            }.bind( this ) );
+            } );
             this.__infoList.length = 0;
         }
 
@@ -172,57 +170,59 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             return;
         }
 
-        var after = function(){
+        const after = function(){
             this.__sele = this.selection.string;
             this.__surfaceParams = JSON.stringify( this.getSurfaceParams() );
             this.__forceNewMolsurf = false;
             callback();
         }.bind( this );
 
-        var name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
-        var assembly = this.structure.biomolDict[ name ];
+        const name = this.assembly === "default" ? this.defaultAssembly : this.assembly;
+        const assembly = this.structure.biomolDict[ name ];
 
         if( assembly ){
-            assembly.partList.forEach( function( part, i ){
-                var sview = part.getView( this.structureView );
-                this.prepareData( sview, i, function( _i ){
+            assembly.partList.forEach( ( part, i ) => {
+                const sview = part.getView( this.structureView );
+                this.prepareData( sview, i, ( _i ) => {
                     if( _i === assembly.partList.length - 1 ) after();
-                }.bind( this ) );
-            }, this );
+                } );
+            } );
         }else{
             this.prepareData( this.structureView, 0, after );
         }
 
-    },
+    }
 
-    createData: function( sview, i ){
+    createData( sview, i ){
 
-        var info = this.__infoList[ i ];
-        var surface = info.surface;
+        const info = this.__infoList[ i ];
+        const surface = info.surface;
 
-        var surfaceData = {
+        const surfaceData = {
             position: surface.getPosition(),
             color: surface.getColor( this.getColorParams() ),
             index: surface.getFilteredIndex( this.filterSele, sview )
         };
 
+        const bufferList = [];
+
         if( surface.contour ){
 
-            var contourBuffer = new ContourBuffer(
+            const contourBuffer = new ContourBuffer(
                 surfaceData,
                 this.getBufferParams( {
                     wireframe: false
                 } )
             );
 
-            return { bufferList: [ contourBuffer ], info: info };
+            bufferList.push( contourBuffer )
 
         } else {
 
             surfaceData.normal = surface.getNormal();
             surfaceData.picking = surface.getPicking( sview.getStructure() );
 
-            var surfaceBuffer = new SurfaceBuffer(
+            const surfaceBuffer = new SurfaceBuffer(
                 surfaceData,
                 this.getBufferParams( {
                     background: this.background,
@@ -231,19 +231,19 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
                 } )
             );
 
-            var doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
+            const doubleSidedBuffer = new DoubleSidedBuffer( surfaceBuffer );
 
-            return {
-                bufferList: [ doubleSidedBuffer ],
-                info: info
-            };
+            bufferList.push( doubleSidedBuffer );
+
         }
 
-    },
+        return { bufferList, info };
 
-    updateData: function( what, data ){
+    }
 
-        var surfaceData = {};
+    updateData( what, data ){
+
+        const surfaceData = {};
 
         if( what.position ){
             this.__forceNewMolsurf = true;
@@ -261,9 +261,9 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         data.bufferList[ 0 ].setAttributes( surfaceData );
 
-    },
+    }
 
-    setParameters: function( params, what, rebuild ){
+    setParameters( params, what, rebuild ){
 
         what = what || {};
 
@@ -283,17 +283,15 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
             params.wireframe = false;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
-    },
+    }
 
-    getSurfaceParams: function( params ){
+    getSurfaceParams( params ){
 
-        var p = Object.assign( {
+        const p = Object.assign( {
             type: this.surfaceType,
             probeRadius: this.probeRadius,
             scaleFactor: this.scaleFactor,
@@ -305,36 +303,36 @@ MolecularSurfaceRepresentation.prototype = Object.assign( Object.create(
 
         return p;
 
-    },
+    }
 
-    getColorParams: function(){
+    getColorParams(){
 
-        var p = StructureRepresentation.prototype.getColorParams.call( this );
+        const p = super.getColorParams();
 
         p.volume = this.colorVolume;
 
         return p;
 
-    },
+    }
 
-    clear: function(){
+    clear(){
 
-        StructureRepresentation.prototype.clear.call( this );
-
-    },
-
-    dispose: function(){
-
-        this.__infoList.forEach( function( info ){
-            info.molsurf.dispose();
-        }.bind( this ) );
-        this.__infoList.length = 0;
-
-        StructureRepresentation.prototype.dispose.call( this );
+        super.clear();
 
     }
 
-} );
+    dispose(){
+
+        this.__infoList.forEach( info => {
+            info.molsurf.dispose();
+        } );
+        this.__infoList.length = 0;
+
+        super.dispose();
+
+    }
+
+}
 
 
 RepresentationRegistry.add( "surface", MolecularSurfaceRepresentation );

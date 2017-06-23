@@ -84,7 +84,7 @@ function makeRepresentation( type, object, viewer, params ){
 
     }
 
-    var repr = new ReprClass( object, viewer, params );
+    const repr = new ReprClass( object, viewer, params );
 
     if( Debug ) Log.timeEnd( "makeRepresentation " + type );
 

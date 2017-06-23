@@ -5,44 +5,37 @@
  */
 
 
-import { MiddleMouseButton } from "../constants.js";
-import { Debug, Log } from "../globals.js";
-
-
 class PickingBehavior{
 
     constructor( stage ){
 
         this.stage = stage;
         this.mouse = stage.mouseObserver;
+        this.controls = stage.mouseControls;
 
-        this.mouse.signals.clicked.add( this.onClick, this );
-        this.mouse.signals.hovered.add( this.onHover, this );
+        this.mouse.signals.clicked.add( this._onClick, this );
+        this.mouse.signals.hovered.add( this._onHover, this );
 
     }
 
-    pick(){
-        return this.stage.pickingControls.pick(
-            this.mouse.canvasPosition.x, this.mouse.canvasPosition.y
-        );
+    _onClick( x, y ){
+        const pickingProxy = this.stage.pickingControls.pick( x, y );
+        this.stage.signals.clicked.dispatch( pickingProxy );
+        this.controls.run( "clickPick", pickingProxy );
     }
 
-    onClick(){
-        var pd = this.pick();
-        if( pd.position && this.mouse.which === MiddleMouseButton ){
-            this.stage.animationControls.move( pd.position.clone() );
+    _onHover( x, y ){
+        const pickingProxy = this.stage.pickingControls.pick( x, y );
+        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
+            this.stage.transformComponent = pickingProxy.component;
         }
-        this.stage.signals.clicked.dispatch( pd );
-        if( Debug ) Log.log( "clicked", pd );
-    }
-
-    onHover(){
-        this.stage.signals.hovered.dispatch( this.pick() );
+        this.stage.signals.hovered.dispatch( pickingProxy );
+        this.controls.run( "hoverPick", pickingProxy );
     }
 
     dispose(){
-        this.mouse.signals.clicked.remove( this.onClick, this );
-        this.mouse.signals.hovered.remove( this.onHover, this );
+        this.mouse.signals.clicked.remove( this._onClick, this );
+        this.mouse.signals.hovered.remove( this._onHover, this );
     }
 
 }

@@ -8,6 +8,7 @@
 <body>
     <script src="../build/js/ngl.dev.js"></script>
     <script>
+        var stage;
         document.addEventListener( "DOMContentLoaded", function(){
             stage = new NGL.Stage( "viewport" );
             stage.loadFile( "rcsb://1crn.mmtf", { defaultRepresentation: true } );

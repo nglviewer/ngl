@@ -13,14 +13,24 @@ import "../shader/SphereImpostor.frag";
 import QuadBuffer from "./quad-buffer.js";
 
 
+/**
+ * Sphere impostor buffer.
+ *
+ * @example
+ * var sphereImpostorBuffer = new SphereImpostorBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
 class SphereImpostorBuffer extends QuadBuffer{
 
     /**
-     * make sphere impostor buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.radius - radii
+     * @param {Picker} [data.picking] - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -41,7 +51,7 @@ class SphereImpostorBuffer extends QuadBuffer{
 
     }
 
-    get impostor (){ return true; }
+    get isImpostor (){ return true; }
     get vertexShader (){ return "SphereImpostor.vert"; }
     get fragmentShader (){ return "SphereImpostor.frag"; }
 

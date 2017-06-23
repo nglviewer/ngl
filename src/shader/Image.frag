@@ -5,13 +5,20 @@ uniform float nearClip;
 uniform float clipRadius;
 
 varying vec2 vUv;
-varying vec3 vViewPosition;
+#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || !defined( PICKING )
+    varying vec3 vViewPosition;
+#endif
 
 #if defined( RADIUS_CLIP )
     varying vec3 vClipCenter;
 #endif
 
-#include fog_pars_fragment
+#if defined( PICKING )
+    uniform sampler2D pickingMap;
+    uniform float objectId;
+#else
+    #include fog_pars_fragment
+#endif
 
 
 #if defined( CUBIC_INTERPOLATION )
@@ -28,25 +35,19 @@ varying vec3 vViewPosition;
 
         float filter( float x ){
             float f = x;
-            if( f < 0.0 )
-            {
+            if( f < 0.0 ){
                 f = -f;
             }
-            if( f < 1.0 )
-            {
+            if( f < 1.0 ){
                 return ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) +
                     ( -18.0 + 12.0 * B + 6.0 *C ) * ( f * f ) +
                     ( 6.0 - 2.0 * B ) ) / 6.0;
-            }
-            else if( f >= 1.0 && f < 2.0 )
-            {
+            }else if( f >= 1.0 && f < 2.0 ){
                 return ( ( -B - 6.0 * C ) * ( f * f * f )
                     + ( 6.0 * B + 30.0 * C ) * ( f *f ) +
                     ( - ( 12.0 * B ) - 48.0 * C  ) * f +
-                    8.0 * B + 24.0 * C)/ 6.0;
-            }
-            else
-            {
+                    8.0 * B + 24.0 * C ) / 6.0;
+            }else{
                 return 0.0;
             }
         }
@@ -59,7 +60,7 @@ varying vec3 vViewPosition;
                 f = -f;
             }
             if( f >= 0.0 && f <= 1.0 ){
-                return ( 2.0 / 3.0 ) + ( 0.5 ) * ( f*f*f ) - ( f*f );
+                return ( 2.0 / 3.0 ) + ( 0.5 ) * ( f * f * f ) - ( f * f );
             }else if( f > 1.0 && f <= 2.0 ){
                 return 1.0 / 6.0 * pow( ( 2.0 - f ), 3.0 );
             }
@@ -107,11 +108,19 @@ void main(){
         gl_FragColor = texture2D( map, vUv );
     #endif
 
-    gl_FragColor.a *= opacity;
+    #if defined( PICKING )
 
-    if( gl_FragColor.a < 0.01 )
-        discard;
+        if( gl_FragColor.a < 0.7 )
+            discard;
+        gl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );
 
-    #include fog_fragment
+    #else
+
+        if( gl_FragColor.a < 0.01 )
+            discard;
+        gl_FragColor.a *= opacity;
+        #include fog_fragment
+
+    #endif
 
 }

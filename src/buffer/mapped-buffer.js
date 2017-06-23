@@ -7,23 +7,30 @@
 
 import Buffer from "./buffer.js";
 
-import { calculateCenterArray } from "../math/array-utils.js";
+import { getUintArray } from "../utils.js";
+import { calculateCenterArray, serialArray } from "../math/array-utils.js";
 
 
+/**
+ * Mapped buffer. Sends mapping attribute to the GPU and repeats data in
+ * others attributes. Used to render imposters.
+ * @interface
+ */
 class MappedBuffer extends Buffer{
 
     constructor( data, params ){
 
         super( data, params );
 
-        var TypedArray = this.attributeSize > 65535 ? Uint32Array : Uint16Array;
-        this.index = new TypedArray( this.indexSize );
+        this.index = getUintArray( this.indexSize, this.attributeSize );
         this.makeIndex();
         this.initIndex( this.index, 1 );
 
         this.addAttributes( {
             "mapping": { type: this.mappingType, value: null },
         } );
+
+        this.setAttributes( { primitiveId: serialArray( this.size ) } );
 
     }
 

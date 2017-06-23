@@ -17,8 +17,14 @@ const negateVector = new Vector3( -1, -1, -1 );
 const tmpMatrix = new Matrix4();
 
 
+/**
+ * Principal axes
+ */
 class PrincipalAxes {
 
+    /**
+     * @param  {Matrix} points - 3 by N matrix
+     */
     constructor( points ){
 
         // console.time( "PrincipalAxes" );
@@ -78,6 +84,11 @@ class PrincipalAxes {
 
     }
 
+    /**
+     * Get the basis matrix descriping the axes
+     * @param  {Matrix4} [optionalTarget] - target object
+     * @return {Matrix4} the basis
+     */
     getBasisMatrix( optionalTarget ){
 
         const basis = optionalTarget || new Matrix4();
@@ -91,6 +102,11 @@ class PrincipalAxes {
 
     }
 
+    /**
+     * Get a quaternion descriping the axes rotation
+     * @param  {Quaternion} [optionalTarget] - target object
+     * @return {Quaternion} the rotation
+     */
     getRotationQuaternion( optionalTarget ){
 
         const q = optionalTarget || new Quaternion();
@@ -100,6 +116,12 @@ class PrincipalAxes {
 
     }
 
+    /**
+     * Get the scale/length for each dimension for a box around the axes
+     * to enclose the atoms of a structure
+     * @param  {Structure|StructureView} structure - the structure
+     * @return {{d1a: Number, d2a: Number, d3a: Number, d1b: Number, d2b: Number, d3b: Number}} scale
+     */
     getProjectedScaleForAtoms( structure ){
 
         let d1a = -Infinity;

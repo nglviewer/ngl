@@ -9,8 +9,9 @@ import { Color } from "../../lib/three.es6.js";
 
 import { Browser, RepresentationRegistry } from "../globals.js";
 import { defaults } from "../utils.js";
+import { DistancePicker } from "../utils/picker.js";
 import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import Bitset from "../utils/bitset.js";
+import BitArray from "../utils/bitarray.js";
 import StructureRepresentation from "./structure-representation.js";
 import Selection from "../selection.js";
 import BondStore from "../store/bond-store.js";
@@ -42,72 +43,69 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
 
 
 /**
- * Distance representation object
- * @class
- * @extends StructureRepresentation
- * @example
- * stage.loadFile( "rcsb://1crn" ).then( function( o ){
- *     o.addRepresentation( "cartoon" );
- *     // either give selections (uses first selected atom) ...
- *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
- *     // or atom indices
- *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
- *     o.addRepresentation( "distance", { atomPair: atomPair } );
- *     stage.autoView();
- * } );
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {DistanceRepresentationParameters} params - distance representation parameters
+ * Distance representation
  */
-function DistanceRepresentation( structure, viewer, params ){
+class DistanceRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    /**
+     * Create Distance representation object
+     * @example
+     * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+     *     o.addRepresentation( "cartoon" );
+     *     // either give selections (uses first selected atom) ...
+     *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
+     *     // or atom indices
+     *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
+     *     o.addRepresentation( "distance", { atomPair: atomPair } );
+     *     stage.autoView();
+     * } );
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {DistanceRepresentationParameters} params - distance representation parameters
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-DistanceRepresentation.prototype = Object.assign( Object.create(
+        this.type = "distance";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: DistanceRepresentation,
+            labelSize: {
+                type: "number", precision: 3, max: 10.0, min: 0.001
+            },
+            labelColor: {
+                type: "color"
+            },
+            labelVisible: {
+                type: "boolean"
+            },
+            labelZOffset: {
+                type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
+            },
+            labelUnit: {
+                type: "select", rebuild: true,
+                options: { "": "", angstrom: "angstrom", nm: "nm" },
+            },
+            atomPair: {
+                type: "hidden", rebuild: true
+            },
+            radialSegments: true,
+            disableImpostor: true
 
-    type: "distance",
+        }, this.parameters, {
+            flatShaded: null,
+            assembly: null
+        } );
 
-    defaultSize: 0.15,
+        this.init( params );
 
-    parameters: Object.assign( {
+    }
 
-        labelSize: {
-            type: "number", precision: 3, max: 10.0, min: 0.001
-        },
-        labelColor: {
-            type: "color"
-        },
-        labelVisible: {
-            type: "boolean"
-        },
-        labelZOffset: {
-            type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
-        },
-        labelUnit: {
-            type: "select", rebuild: true,
-            options: { "": "", angstrom: "angstrom", nm: "nm" },
-        },
-        atomPair: {
-            type: "hidden", rebuild: true
-        },
-        radialSegments: true,
-        disableImpostor: true
-
-    }, StructureRepresentation.prototype.parameters, {
-        flatShaded: null,
-        assembly: null
-    } ),
-
-    init: function( params ){
+    init( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.15 );
 
         this.fontFamily = defaults( p.fontFamily, "sans-serif" );
         this.fontStyle = defaults( p.fontStyle, "normal" );
@@ -120,11 +118,11 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.labelUnit = defaults( p.labelUnit, "" );
         this.atomPair = defaults( p.atomPair, [] );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getDistanceData: function( sview, atomPair ){
+    getDistanceData( sview, atomPair ){
 
         var n = atomPair.length;
         var text = new Array( n );
@@ -178,8 +176,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             var d = ap1.distanceTo( ap2 )
             switch ( this.labelUnit ) {
                 case "angstrom":
-                    // 0x212B fails in TextBuffer
-                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 197 );
+                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 0x212B );
                     break;
                 case "nm":
                     text[ i ] = ( d / 10 ).toFixed( 2 ) + " nm";
@@ -202,8 +199,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             position = position.subarray( 0, n * 3 );
         }
 
-        var bondSet = new Bitset( bondStore.count );
-        bondSet.set_all( true );
+        var bondSet = new BitArray( bondStore.count, true );
 
         return {
             text: text,
@@ -212,15 +208,23 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bondStore: bondStore
         };
 
-    },
+    }
 
-    getBondData: function( sview, what, params ){
+    getBondData( sview, what, params ){
 
-        return sview.getBondData( this.getBondParams( what, params ) );
+        var bondData = sview.getBondData( this.getBondParams( what, params ) );
+        if( bondData.picking ){
+            bondData.picking = new DistancePicker(
+                bondData.picking.array,
+                bondData.picking.structure,
+                params.bondStore
+            );
+        }
+        return bondData;
 
-    },
+    }
 
-    create: function(){
+    create(){
 
         if( this.structureView.atomCount === 0 ) return;
 
@@ -274,19 +278,19 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             bufferList: [ this.textBuffer, this.cylinderBuffer ]
         } );
 
-    },
+    }
 
-    update: function( what ){
+    update( what ){
 
         if( what.position ){
             this.build();
         }else{
-            StructureRepresentation.prototype.update.call( this, what );
+            super.update( what );
         }
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         var bondParams = {
             bondSet: data.bondSet,
@@ -319,13 +323,11 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
         this.textBuffer.setAttributes( textData );
         this.cylinderBuffer.setAttributes( cylinderData );
 
-    },
+    }
 
-    setVisibility: function( value, noRenderRequest ){
+    setVisibility( value, noRenderRequest ){
 
-        StructureRepresentation.prototype.setVisibility.call(
-            this, value, true
-        );
+        super.setVisibility( value, true );
 
         if( this.textBuffer ){
             this.textBuffer.setVisibility(
@@ -337,9 +339,9 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
         return this;
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -352,9 +354,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
             what.labelColor = true;
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         if( params && params.labelVisible !== undefined ){
             this.setVisibility( this.visible );
@@ -364,7 +364,7 @@ DistanceRepresentation.prototype = Object.assign( Object.create(
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "distance", DistanceRepresentation );

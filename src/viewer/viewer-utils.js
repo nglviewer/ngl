@@ -7,19 +7,20 @@
 
 import { Vector3, Matrix4, Points } from "../../lib/three.es6.js";
 
+import { defaults } from "../utils.js";
 import TiledRenderer from "./tiled-renderer.js";
 import { quicksortCmp } from "../math/array-utils.js";
 
 
 function _trimCanvas( canvas, r, g, b, a ){
 
-    var canvasHeight = canvas.height;
-    var canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const canvasWidth = canvas.width;
 
-    var ctx = canvas.getContext( '2d' );
-    var pixels = ctx.getImageData( 0, 0, canvasWidth, canvasHeight ).data;
+    const ctx = canvas.getContext( "2d" );
+    const pixels = ctx.getImageData( 0, 0, canvasWidth, canvasHeight ).data;
 
-    var x, y, doBreak, off;
+    let x, y, doBreak, off;
 
     doBreak = false;
     for( y = 0; y < canvasHeight; y++ ) {
@@ -35,7 +36,7 @@ function _trimCanvas( canvas, r, g, b, a ){
             break;
         }
     }
-    var topY = y;
+    const topY = y;
 
     doBreak = false;
     for( x = 0; x < canvasWidth; x++ ) {
@@ -51,7 +52,7 @@ function _trimCanvas( canvas, r, g, b, a ){
             break;
         }
     }
-    var topX = x;
+    const topX = x;
 
     doBreak = false;
     for( y = canvasHeight-1; y >= 0; y-- ) {
@@ -67,7 +68,7 @@ function _trimCanvas( canvas, r, g, b, a ){
             break;
         }
     }
-    var bottomY = y;
+    const bottomY = y;
 
     doBreak = false;
     for( x = canvasWidth-1; x >= 0; x-- ) {
@@ -83,14 +84,13 @@ function _trimCanvas( canvas, r, g, b, a ){
             break;
         }
     }
-    var bottomX = x;
+    const bottomX = x;
 
-    var trimedCanvas = document.createElement( 'canvas' );
-
+    const trimedCanvas = document.createElement( "canvas" );
     trimedCanvas.width = bottomX - topX;
     trimedCanvas.height = bottomY - topY;
 
-    var trimedCtx = trimedCanvas.getContext( '2d' );
+    const trimedCtx = trimedCanvas.getContext( "2d" );
 
     trimedCtx.drawImage(
         canvas,
@@ -123,25 +123,25 @@ function _trimCanvas( canvas, r, g, b, a ){
  */
 function makeImage( viewer, params ){
 
-    var p = params || {};
+    const p = params || {};
 
-    var trim = p.trim!==undefined ? p.trim : false;
-    var factor = p.factor!==undefined ? p.factor : 1;
-    var antialias = p.antialias!==undefined ? p.antialias : false;
-    var transparent = p.transparent!==undefined ? p.transparent : false;
+    const trim = defaults( p.trim, false );
+    const factor = defaults( p.factor, 1 );
+    const antialias = defaults( p.antialias, false );
+    const transparent = defaults( p.transparent, false );
 
-    var renderer = viewer.renderer;
-    var camera = viewer.camera;
+    const renderer = viewer.renderer;
+    const camera = viewer.camera;
 
-    var originalClearAlpha = renderer.getClearAlpha();
-    var backgroundColor = renderer.getClearColor();
+    const originalClearAlpha = renderer.getClearAlpha();
+    const backgroundColor = renderer.getClearColor();
 
     function setLineWidthAndPixelSize( invert ){
-        var _factor = factor;
+        let _factor = factor;
         if( antialias ) _factor *= 2;
         if( invert ) _factor = 1 / _factor;
         viewer.scene.traverse( function( o ){
-            var m = o.material;
+            const m = o.material;
             if( m && m.linewidth ){
                 m.linewidth *= _factor;
             }
@@ -153,7 +153,7 @@ function makeImage( viewer, params ){
             }
         } );
         viewer.scene.traverse( function( o ){
-            var m = o.material;
+            const m = o.material;
             if( m && m.uniforms && m.uniforms.size ){
                 delete m.uniforms.size.__seen;
             }
@@ -162,11 +162,11 @@ function makeImage( viewer, params ){
 
     function trimCanvas( canvas ){
         if( trim ){
-            var bg = backgroundColor;
-            var r = ( transparent ? 0 : bg.r * 255 ) | 0;
-            var g = ( transparent ? 0 : bg.g * 255 ) | 0;
-            var b = ( transparent ? 0 : bg.b * 255 ) | 0;
-            var a = ( transparent ? 0 : 255 ) | 0;
+            const bg = backgroundColor;
+            const r = transparent ? 0 : bg.r * 255;
+            const g = transparent ? 0 : bg.g * 255;
+            const b = transparent ? 0 : bg.b * 255;
+            const a = transparent ? 0 : 255;
             return _trimCanvas( canvas, r, g, b, a );
         }else{
             return canvas;
@@ -181,7 +181,7 @@ function makeImage( viewer, params ){
 
     return new Promise( function( resolve ){
 
-        var tiledRenderer = new TiledRenderer(
+        const tiledRenderer = new TiledRenderer(
             renderer, camera, viewer,
             {
                 factor: factor,
@@ -196,7 +196,7 @@ function makeImage( viewer, params ){
         tiledRenderer.renderAsync();
 
         function onFinish( i, n ){
-            var canvas = trimCanvas( tiledRenderer.canvas );
+            const canvas = trimCanvas( tiledRenderer.canvas );
             canvas.toBlob(
                 function( blob ){
                     renderer.setClearAlpha( originalClearAlpha );
@@ -214,15 +214,13 @@ function makeImage( viewer, params ){
 }
 
 
-var vertex = new Vector3();
-var matrix = new Matrix4();
-var modelViewProjectionMatrix = new Matrix4();
+const vertex = new Vector3();
+const matrix = new Matrix4();
+const modelViewProjectionMatrix = new Matrix4();
 
 function sortProjectedPosition( scene, camera ){
 
     // console.time( "sort" );
-
-    var i;
 
     scene.traverseVisible( function ( o ){
 
@@ -230,8 +228,8 @@ function sortProjectedPosition( scene, camera ){
             return;
         }
 
-        var attributes = o.geometry.attributes;
-        var n = attributes.position.count;
+        const attributes = o.geometry.attributes;
+        const n = attributes.position.count;
 
         if( n === 0 ) return;
 
@@ -242,7 +240,7 @@ function sortProjectedPosition( scene, camera ){
             camera.projectionMatrix, matrix
         );
 
-        var sortData, sortArray, zArray, cmpFn;
+        let sortData, sortArray, zArray, cmpFn;
 
         if( !o.userData.sortData ){
 
@@ -273,10 +271,10 @@ function sortProjectedPosition( scene, camera ){
 
         }
 
-        for( i = 0; i < n; ++i ){
+        for( let i = 0; i < n; ++i ){
 
             vertex.fromArray( attributes.position.array, i * 3 );
-            vertex.applyProjection( modelViewProjectionMatrix );
+            vertex.applyMatrix4( modelViewProjectionMatrix );
 
             // negate, so that sorting order is reversed
             zArray[ i ] = -vertex.z;
@@ -286,13 +284,13 @@ function sortProjectedPosition( scene, camera ){
 
         quicksortCmp( sortArray, cmpFn );
 
-        var index, indexSrc, indexDst, tmpTab;
+        let index, indexSrc, indexDst, tmpTab;
 
-        for( var name in attributes ){
+        for( let name in attributes ){
 
-            var attr = attributes[ name ];
-            var array = attr.array;
-            var itemSize = attr.itemSize;
+            const attr = attributes[ name ];
+            const array = attr.array;
+            const itemSize = attr.itemSize;
 
             if( !sortData[ name ] ){
                 sortData[ name ] = new Float32Array(
@@ -303,11 +301,11 @@ function sortProjectedPosition( scene, camera ){
             tmpTab = sortData[ name ];
             sortData[ name ] = array;
 
-            for( i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
 
                 index = sortArray[ i ];
 
-                for( var j = 0; j < itemSize; ++j ){
+                for( let j = 0; j < itemSize; ++j ){
                     indexSrc = index * itemSize + j;
                     indexDst = i * itemSize + j;
                     tmpTab[ indexDst ] = array[ indexSrc ];
@@ -327,29 +325,29 @@ function sortProjectedPosition( scene, camera ){
 }
 
 
-var projectionMatrixInverse = new Matrix4();
-var projectionMatrixTranspose = new Matrix4();
+const projectionMatrixInverse = new Matrix4();
+const projectionMatrixTranspose = new Matrix4();
 
 function updateMaterialUniforms( group, camera, renderer, cDist, bRadius ){
 
-    var canvasHeight = renderer.getSize().height;
-    var pixelRatio = renderer.getPixelRatio();
-    var ortho = camera.type === "OrthographicCamera" ? true : false;
+    const canvasHeight = renderer.getSize().height;
+    const pixelRatio = renderer.getPixelRatio();
+    const ortho = camera.type === "OrthographicCamera" ? true : false;
 
     projectionMatrixInverse.getInverse( camera.projectionMatrix );
     projectionMatrixTranspose.copy( camera.projectionMatrix ).transpose();
 
     group.traverse( function( o ){
 
-        var m = o.material;
+        const m = o.material;
         if( !m ) return;
 
-        var u = o.material.uniforms;
+        const u = o.material.uniforms;
         if( !u ) return;
 
         if( m.clipNear ){
-            var nearFactor = ( 50 - m.clipNear ) / 50;
-            var nearClip = cDist - ( bRadius * nearFactor );
+            const nearFactor = ( 50 - m.clipNear ) / 50;
+            const nearClip = cDist - ( bRadius * nearFactor );
             u.nearClip.value = nearClip;
         }
 

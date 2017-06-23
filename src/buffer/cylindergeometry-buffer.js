@@ -8,7 +8,7 @@
 import { Matrix4, Vector3, CylinderBufferGeometry } from "../../lib/three.es6.js";
 
 import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
+import { calculateCenterArray, serialBlockArray } from "../math/array-utils.js";
 import GeometryBuffer from "./geometry-buffer.js";
 
 
@@ -18,11 +18,33 @@ const target = new Vector3();
 const up = new Vector3( 0, 1, 0 );
 
 
+/**
+ * Cylinder geometry buffer.
+ *
+ * @example
+ * var cylinderGeometryBuffer = new CylinderGeometryBuffer( {
+ *     position1: new Float32Array( [ 0, 0, 0 ] ),
+ *     position2: new Float32Array( [ 1, 1, 1 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     color2: new Float32Array( [ 0, 1, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
 class CylinderGeometryBuffer extends GeometryBuffer{
 
-    // from, to, color, color2, radius, picking
+    /**
+     * @param {Object} data - buffer data
+     * @param {Float32Array} data.position1 - from positions
+     * @param {Float32Array} data.position2 - to positions
+     * @param {Float32Array} data.color - from colors
+     * @param {Float32Array} data.color2 - to colors
+     * @param {Float32Array} data.radius - radii
+     * @param {Picker} [data.picking] - picking ids
+     * @param {BufferParameters} [params] - parameters object
+     */
     constructor( data, params ){
 
+        const d = data || {};
         const p = params || {};
 
         const radialSegments = defaults( p.radialSegments, 10 );
@@ -39,29 +61,38 @@ class CylinderGeometryBuffer extends GeometryBuffer{
         );
         geo.applyMatrix( matrix );
 
-        const n = data.position1.length;
-        const m = data.radius.length;
+        const n = d.position1.length;
+        const m = d.radius.length;
+
+        //
+
+        const geoLength = geo.attributes.position.array.length / 3;
+        const count = n / 3;
+        const primitiveId = new Float32Array( count * 2 * geoLength );
+        serialBlockArray( count, geoLength, 0, primitiveId );
+        serialBlockArray( count, geoLength, count * geoLength, primitiveId );
+
+        //
 
         const position = new Float32Array( n * 2 );
         const color = new Float32Array( n * 2 );
-        const picking = new Float32Array( ( n * 2 ) / 3 );
 
         super( {
             position: position,
             color: color,
-            picking: picking
+            primitiveId: primitiveId,
+            picking: d.picking
         }, p, geo );
 
         this.__center = new Float32Array( n );
 
         this._position = position;
         this._color = color;
-        this._picking = picking;
         this._from = new Float32Array( n * 2 );
         this._to = new Float32Array( n * 2 );
         this._radius = new Float32Array( m * 2 );
 
-        this.setAttributes( data, true );
+        this.setAttributes( d, true );
 
     }
 
@@ -79,9 +110,7 @@ class CylinderGeometryBuffer extends GeometryBuffer{
 
     setAttributes( data, initNormals ){
 
-        var n = this._position.length / 2;
-        var m = this._radius.length / 2;
-        var geoData = {};
+        const meshData = {};
 
         if( data.position1 && data.position2 ){
             calculateCenterArray(
@@ -91,33 +120,28 @@ class CylinderGeometryBuffer extends GeometryBuffer{
                 data.position1, this.__center, this._position
             );
             calculateCenterArray(
-                this.__center, data.position2, this._position, n
+                this.__center, data.position2, this._position, data.position1.length
             );
             this._from.set( data.position1 );
-            this._from.set( this.__center, n );
+            this._from.set( this.__center, data.position1.length );
             this._to.set( this.__center );
-            this._to.set( data.position2, n );
-            geoData.position = this._position;
+            this._to.set( data.position2, this.__center.length );
+            meshData.position = this._position;
         }
 
         if( data.color && data.color2 ){
             this._color.set( data.color );
-            this._color.set( data.color2, n );
-            geoData.color = this._color;
-        }
-
-        if( data.picking ){
-            this._picking.set( data.picking );
-            this._picking.set( data.picking, n );
-            geoData.picking = this._picking;
+            this._color.set( data.color2, data.color.length );
+            meshData.color = this._color;
         }
 
         if( data.radius ){
             this._radius.set( data.radius );
-            this._radius.set( data.radius, m );
+            this._radius.set( data.radius, data.radius.length );
+            meshData.radius = this._radius;
         }
 
-        super.setAttributes( geoData, initNormals );
+        super.setAttributes( meshData, initNormals );
 
     }
 

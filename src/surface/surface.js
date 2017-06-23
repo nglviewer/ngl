@@ -7,61 +7,65 @@
 
 import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from "../../lib/three.es6.js";
 
-import { Debug, Log } from "../globals.js";
-import { ColormakerRegistry } from "../globals.js";
-import { uniformArray, uniformArray3 } from "../math/array-utils.js";
+import { Debug, Log, ColormakerRegistry } from "../globals.js";
+import { getUintArray } from "../utils.js";
+import { AtomPicker, SurfacePicker } from "../utils/picker.js";
+import { uniformArray, uniformArray3, serialArray } from "../math/array-utils.js";
 import Selection from "../selection.js";
 
 
 /**
  * Surface
- * @class
- * @param {String} name - surface name
- * @param {String} path - source path
- * @param {Object} data - surface data
- * @param {Float32Array} data.position - surface positions
- * @param {Int32Array} data.index - surface indices
- * @param {Float32Array} data.normal - surface normals
- * @param {Float32Array} data.color - surface colors
- * @param {Int32Array} data.atomindex - atom indices
- * @param {boolean} data.contour - contour mode flag
  */
-function Surface( name, path, data ){
+class Surface{
 
-    this.name = name;
-    this.path = path;
-    this.info = {};
+    /**
+     * @param {String} name - surface name
+     * @param {String} path - source path
+     * @param {Object} data - surface data
+     * @param {Float32Array} data.position - surface positions
+     * @param {Int32Array} data.index - surface indices
+     * @param {Float32Array} data.normal - surface normals
+     * @param {Float32Array} data.color - surface colors
+     * @param {Int32Array} data.atomindex - atom indices
+     * @param {boolean} data.contour - contour mode flag
+     */
+    constructor( name, path, data ){
 
-    this.center = new Vector3();
-    this.boundingBox = new Box3();
+        this.name = name || "";
+        this.path = path || "";
+        this.info = {};
 
-    if( data instanceof Geometry ||
-        data instanceof BufferGeometry ||
-        data instanceof Group
-    ){
+        this.center = new Vector3();
+        this.boundingBox = new Box3();
 
-        // to be removed
-        this.fromGeometry( data );
+        if( data instanceof Geometry ||
+            data instanceof BufferGeometry ||
+            data instanceof Group
+        ){
 
-    }else if( data ){
+            // to be removed
+            this.fromGeometry( data );
 
-        this.set(
-            data.position,
-            data.index,
-            data.normal,
-            data.color,
-            data.atomindex,
-            data.contour
-        );
+        }else if( data ){
+
+            this.set(
+                data.position,
+                data.index,
+                data.normal,
+                data.color,
+                data.atomindex,
+                data.contour
+            );
+
+            this.boundingBox.setFromArray( data.position );
+            this.boundingBox.getCenter( this.center );
+
+        }
 
     }
 
-}
-
-Surface.prototype = {
-
-    constructor: Surface,
-    type: "Surface",
+    get type(){ return "Surface"; }
 
     /**
      * set surface data
@@ -73,24 +77,39 @@ Surface.prototype = {
      * @param {boolean} contour - contour mode flag
      * @return {undefined}
      */
-    set: function( position, index, normal, color, atomindex, contour ){
+    set( position, index, normal, color, atomindex, contour ){
 
+        /**
+         * @type {Float32Array}
+         */
         this.position = position;
+        /**
+         * @type {Uint32Array|Uint16Array|undefined}
+         */
         this.index = index;
+        /**
+         * @type {Float32Array|undefined}
+         */
         this.normal = normal;
+        /**
+         * @type {Float32Array|undefined}
+         */
         this.color = color;
+        /**
+         * @type {Int32Array|undefined}
+         */
         this.atomindex = atomindex;
 
         this.size = position.length / 3;
         this.contour = contour;
 
-    },
+    }
 
-    fromGeometry: function( geometry ){
+    fromGeometry( geometry ){
 
         if( Debug ) Log.time( "GeometrySurface.fromGeometry" );
 
-        var geo;
+        let geo;
 
         if( geometry instanceof Geometry ){
             geometry.computeVertexNormals( true );
@@ -103,15 +122,15 @@ Surface.prototype = {
 
         if( !geo.boundingBox ) geo.computeBoundingBox();
 
-        this.center.copy( geo.boundingBox.center() );
         this.boundingBox.copy( geo.boundingBox );
+        this.boundingBox.getCenter( this.center );
 
-        var position, color, index, normal;
+        let position, color, index, normal;
 
         if( geo instanceof BufferGeometry ){
 
-            var attr = geo.attributes;
-            var an = attr.normal ? attr.normal.array : false;
+            const attr = geo.attributes;
+            const an = attr.normal ? attr.normal.array : false;
 
             // assume there are no normals if the first is zero
             if( !an || ( an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0 ) ){
@@ -128,122 +147,113 @@ Surface.prototype = {
 
         if( Debug ) Log.timeEnd( "GeometrySurface.setGeometry" );
 
-    },
+    }
 
-    getPosition: function(){
+    getPosition(){
 
         return this.position;
 
-    },
+    }
 
-    getColor: function( params ){
+    getColor( params ){
 
-        var p = params || {};
+        const p = params || {};
+        p.surface = this;
 
-        var n = this.size;
-        var i, array, colormaker;
+        const n = this.size;
+        const array = new Float32Array( n * 3 );
+        const colormaker = ColormakerRegistry.getScheme( p );
 
-        if( p.scheme === "volume" ){
+        if( colormaker.volumeColor || p.scheme === "random" ){
 
-            var v = new Vector3();
-            var pos = this.position;
-            colormaker = ColormakerRegistry.getScheme( p );
-            array = new Float32Array( n * 3 );
+            for( let i = 0; i < n; ++i ){
+                colormaker.volumeColorToArray( i, array, i * 3 );
+            }
 
-            for( i = 0; i < n; ++i ){
+        }else if( colormaker.positionColor ){
+
+            const v = new Vector3();
+            const pos = this.position;
+
+            for( let i = 0; i < n; ++i ){
                 var i3 = i * 3;
                 v.set( pos[ i3 ], pos[ i3 + 1 ], pos[ i3 + 2 ] );
                 colormaker.positionColorToArray( v, array, i3 );
             }
 
-        }else if( p.scheme === "random" ){
+        }else if( colormaker.atomColor && this.atomindex ){
 
-            colormaker = ColormakerRegistry.getScheme( p );
-            array = new Float32Array( n * 3 );
+            const atomProxy = p.structure.getAtomProxy();
+            const atomindex = this.atomindex;
 
-            for( i = 0; i < n; ++i ){
-                colormaker.volumeColorToArray( i, array, i * 3 );
-            }
-
-        }else if( this.atomindex ){
-
-            p.surface = this;  // FIXME should this be p.surface???
-            array = new Float32Array( n * 3 );
-            colormaker = ColormakerRegistry.getScheme( p );
-            var atomProxy = p.structure.getAtomProxy();
-            var atomindex = this.atomindex;
-
-            for( i = 0; i < n; ++i ){
+            for( let i = 0; i < n; ++i ){
                 atomProxy.index = atomindex[ i ];
                 colormaker.atomColorToArray( atomProxy, array, i * 3 );
             }
 
         }else{
 
-            var tc = new Color( p.value );
-            array = uniformArray3( n, tc.r, tc.g, tc.b );
+            const tc = new Color( p.value );
+            uniformArray3( n, tc.r, tc.g, tc.b, array );
 
         }
 
         return array;
 
-    },
+    }
 
-    getPicking: function( structure ){
+    getPicking( structure ){
 
-        const picking = this.atomindex;
-        if( picking && structure ){
-            picking.object = structure;
-            picking.type = "atom";
+        if( this.atomindex && structure ){
+            return new AtomPicker( this.atomindex, structure );
+        }else{
+            return new SurfacePicker( serialArray( this.size ), this );
         }
 
-        return picking;
+    }
 
-    },
-
-    getNormal: function(){
+    getNormal(){
 
         return this.normal;
 
-    },
+    }
 
-    getSize: function( size, scale ){
+    getSize( size, scale ){
 
         return uniformArray( this.size, size * scale );
 
-    },
+    }
 
-    getIndex: function(){
+    getIndex(){
 
         return this.index;
 
-    },
+    }
 
-    getFilteredIndex: function( sele, structure ){
+    getFilteredIndex( sele, structure ){
 
         if( sele && this.atomindex ){
 
-            var selection = new Selection( sele );
-            var as = structure.getAtomSet( selection );
-            var filteredIndex = [];
+            const selection = new Selection( sele );
+            const atomSet = structure.getAtomSet( selection );
+            const filteredIndex = [];
 
-            var atomindex = this.atomindex;
-            var index = this.index;
-            var n = index.length;
-            var j = 0;
-            var a;
+            const atomindex = this.atomindex;
+            const index = this.index;
+            const n = index.length;
+            const elementSize = this.contour ? 2 : 3;
 
-            var elementSize = this.contour ? 2 : 3;
+            let j = 0;
 
-            for( var i = 0; i < n; i += elementSize ){
+            for( let i = 0; i < n; i += elementSize ){
 
-                var include = true;
+                let include = true;
 
-                for( a = 0 ; a < elementSize; a++ ){
+                for( let a = 0 ; a < elementSize; a++ ){
 
-                    var idx = index[ i + a ];
-                    var ai = atomindex[ idx ];
-                    if( !as.has( ai ) ){
+                    const idx = index[ i + a ];
+                    const ai = atomindex[ idx ];
+                    if( !atomSet.get( ai ) ){
                         include = false;
                         break;
                     }
@@ -251,7 +261,7 @@ Surface.prototype = {
 
                 if( !include ) { continue ; }
 
-                for( a = 0; a < elementSize; a ++, j++ ){
+                for( let a = 0; a < elementSize; a ++, j++ ){
 
                     filteredIndex[ j ] = index[ i + a ];
 
@@ -259,8 +269,7 @@ Surface.prototype = {
 
             }
 
-            var TypedArray = this.position.length / 3 > 65535 ? Uint32Array : Uint16Array;
-            return new TypedArray( filteredIndex );
+            return getUintArray( filteredIndex, this.position.length / 3 );
 
         }else{
 
@@ -268,21 +277,21 @@ Surface.prototype = {
 
         }
 
-    },
+    }
 
-    getAtomindex: function(){
+    getAtomindex(){
 
         return this.atomindex;
 
-    },
+    }
 
-    dispose: function(){
+    dispose(){
 
         //
 
     }
 
-};
+}
 
 
 export default Surface;

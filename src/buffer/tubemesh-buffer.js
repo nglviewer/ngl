@@ -7,7 +7,7 @@
 
 import { Vector3 } from "../../lib/three.es6.js";
 
-import { defaults } from "../utils.js";
+import { defaults, getUintArray } from "../utils.js";
 import { serialArray } from "../math/array-utils.js";
 import MeshBuffer from "./mesh-buffer.js";
 
@@ -16,10 +16,12 @@ var vTangent = new Vector3();
 var vMeshNormal = new Vector3();
 
 
+/**
+ * Tube mesh buffer. Draws a tube.
+ */
 class TubeMeshBuffer extends MeshBuffer{
 
     /**
-     * make tube mesh buffer
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
      * @param  {Float32Array} data.normal - normals
@@ -27,7 +29,7 @@ class TubeMeshBuffer extends MeshBuffer{
      * @param  {Float32Array} data.tangent - tangents
      * @param  {Float32Array} data.color - colors
      * @param  {Float32Array} data.size - sizes
-     * @param  {Float32Array} data.picking - picking ids
+     * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
     constructor( data, params ){
@@ -44,14 +46,12 @@ class TubeMeshBuffer extends MeshBuffer{
         var n = d.position.length / 3;
         var n1 = n - 1;
         var x = n * radialSegments * 3 + 2 * capVertices * 3;
+        var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
 
         var meshPosition = new Float32Array( x );
         var meshColor = new Float32Array( x );
         var meshNormal = new Float32Array( x );
-
-        var xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3;
-        var TypedArray = x / 3 > 65535 ? Uint32Array : Uint16Array;
-        var meshIndex = new TypedArray( xi );
+        var meshIndex = getUintArray( xi, x / 3 );
 
         super( {
             position: meshPosition,

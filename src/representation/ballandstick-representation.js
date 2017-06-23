@@ -14,10 +14,9 @@ import LineBuffer from "../buffer/line-buffer.js";
 
 
 /**
- * Ball And Stick representation parameter object.
+ * Ball And Stick representation parameter object. Extends {@link RepresentationParameters} and
+ * {@link StructureRepresentationParameters}.
  * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
- * @mixes RepresentationParameters
- * @mixes StructureRepresentationParameters
  *
  * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)
  * @property {Integer} radialSegments - cylinder quality (number of segments)
@@ -33,65 +32,70 @@ import LineBuffer from "../buffer/line-buffer.js";
 
 
 /**
- * Ball And Stick representation object
- * @class
- * @extends StructureRepresentation
- * @param {Structure} structure - the structure to be represented
- * @param {Viewer} viewer - a viewer object
- * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+ * Ball And Stick representation. Show atoms as spheres and bonds as cylinders.
+ *
+ * __Name:__ _ball+stick_
+ *
+ * @example
+ * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+ *     o.addRepresentation( "ball+stick" );
+ *     o.autoView();
+ * } );
  */
-function BallAndStickRepresentation( structure, viewer, params ){
+class BallAndStickRepresentation extends StructureRepresentation{
 
-    StructureRepresentation.call( this, structure, viewer, params );
+    /**
+     * Create Ball And Stick representation object
+     * @param {Structure} structure - the structure to be represented
+     * @param {Viewer} viewer - a viewer object
+     * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+     */
+    constructor( structure, viewer, params ){
 
-}
+        super( structure, viewer, params );
 
-BallAndStickRepresentation.prototype = Object.assign( Object.create(
+        this.type = "ball+stick";
 
-    StructureRepresentation.prototype ), {
+        this.parameters = Object.assign( {
 
-    constructor: BallAndStickRepresentation,
-
-    type: "ball+stick",
-
-    defaultSize: 0.15,
-
-    parameters: Object.assign( {
-
-        sphereDetail: true,
-        radialSegments: true,
-        openEnded: true,
-        disableImpostor: true,
-        aspectRatio: {
-            type: "number", precision: 1, max: 10.0, min: 1.0
-        },
-        lineOnly: {
-            type: "boolean", rebuild: true
-        },
-        cylinderOnly: {
-            type: "boolean", rebuild: true
-        },
-        multipleBond: {
-            type: "select", rebuild: true,
-            options: {
-                "off" : "off",
-                "symmetric" : "symmetric",
-                "offset": "offset"
+            sphereDetail: true,
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true,
+            aspectRatio: {
+                type: "number", precision: 1, max: 10.0, min: 1.0
+            },
+            lineOnly: {
+                type: "boolean", rebuild: true
+            },
+            cylinderOnly: {
+                type: "boolean", rebuild: true
+            },
+            multipleBond: {
+                type: "select", rebuild: true,
+                options: {
+                    "off" : "off",
+                    "symmetric" : "symmetric",
+                    "offset": "offset"
+                }
+            },
+            bondScale: {
+                type: "number", precision: 2, max: 1.0, min: 0.01
+            },
+            bondSpacing: {
+                type: "number", precision: 2, max: 2.0, min: 0.5
             }
-        },
-        bondScale: {
-            type: "number", precision: 2, max: 1.0, min: 0.01
-        },
-        bondSpacing: {
-            type: "number", precision: 2, max: 2.0, min: 0.5
-        }
 
-    }, StructureRepresentation.prototype.parameters ),
+        }, this.parameters );
 
-    init: function( params ){
+        this.init( params );
+
+    }
+
+    init( params ){
 
         var p = params || {};
-        p.radius = defaults( p.radius, this.defaultSize );
+        p.radius = defaults( p.radius, 0.15 );
 
         this.aspectRatio = defaults( p.aspectRatio, 2.0 );
         this.lineOnly = defaults( p.lineOnly, false );
@@ -100,27 +104,27 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
         this.bondSpacing = defaults( p.bondSpacing, 1.0 );
         this.bondScale = defaults( p.bondScale, 0.4 );
 
-        StructureRepresentation.prototype.init.call( this, p );
+        super.init( p );
 
-    },
+    }
 
-    getAtomParams: function( what, params ){
+    getAtomParams( what, params ){
 
         params = Object.assign( {
             radiusParams: { "radius": this.radius, "scale": this.scale * this.aspectRatio }
         }, params );
 
-        return StructureRepresentation.prototype.getAtomParams.call( this, what, params );
+        return super.getAtomParams( what, params );
 
-    },
+    }
 
-    getAtomData: function( sview, what, params ){
+    getAtomData( sview, what, params ){
 
         return sview.getAtomData( this.getAtomParams( what, params ) );
 
-    },
+    }
 
-    getBondParams: function( what, params ){
+    getBondParams( what, params ){
 
         params = Object.assign( {
             multipleBond: this.multipleBond,
@@ -128,17 +132,17 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             bondScale:  this.bondScale
         }, params );
 
-        return StructureRepresentation.prototype.getBondParams.call( this, what, params );
+        return super.getBondParams( what, params );
 
-    },
+    }
 
-    getBondData: function( sview, what, params ){
+    getBondData( sview, what, params ){
 
         return sview.getBondData( this.getBondParams( what, params ) );
 
-    },
+    }
 
-    createData: function( sview ){
+    createData( sview ){
 
         var bondData = this.getBondData( sview );
         var bufferList = [];
@@ -187,9 +191,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
             bufferList: bufferList
         };
 
-    },
+    }
 
-    updateData: function( what, data ){
+    updateData( what, data ){
 
         if( this.multipleBond !== "off" && what && what.radius ){
             what.position = true;
@@ -257,9 +261,9 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-    },
+    }
 
-    setParameters: function( params ){
+    setParameters( params ){
 
         var rebuild = false;
         var what = {};
@@ -273,15 +277,13 @@ BallAndStickRepresentation.prototype = Object.assign( Object.create(
 
         }
 
-        StructureRepresentation.prototype.setParameters.call(
-            this, params, what, rebuild
-        );
+        super.setParameters( params, what, rebuild );
 
         return this;
 
     }
 
-} );
+}
 
 
 RepresentationRegistry.add( "ball+stick", BallAndStickRepresentation );

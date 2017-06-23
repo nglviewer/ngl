@@ -27,10 +27,12 @@ function entityTypeFromString( string ){
 }
 
 
+/**
+ * Entity of a {@link Structure}
+ */
 class Entity{
 
     /**
-     * Create a entity of a {@link Structure}
      * @param {Structure} structure - structure the entity belongs to
      * @param {Integer} index - index within structure.entityList
      * @param {String} description - entity description
