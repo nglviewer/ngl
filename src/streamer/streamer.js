@@ -110,24 +110,6 @@ class Streamer {
     return d.lines
   }
 
-  lineCount () {
-    console.warn('lineCount - deprecated')
-
-    const data = this.data
-    const n = data.length
-
-    // FIXME does not work for multi-char newline
-    const newline = this.isBinary() ? this.newline.charCodeAt(0) : this.newline
-
-    let count = 0
-    for (let i = 0; i < n; ++i) {
-      if (data[ i ] === newline) ++count
-    }
-    if (data[ n - 1 ] !== newline) ++count
-
-    return count
-  }
-
   chunkCount () {
     return Math.floor(this.data.length / this.chunkSize) + 1
   }
