@@ -7,49 +7,46 @@
 import { DecompressorRegistry } from '../globals.js'
 import { uint8ToString, defaults } from '../utils.js'
 
-function Streamer (src, params) {
-  var p = params || {}
+class Streamer {
+  constructor (src, params) {
+    const p = params || {}
 
-  this.compressed = defaults(p.compressed, false)
-  this.binary = defaults(p.binary, false)
-  this.json = defaults(p.json, false)
-  this.xml = defaults(p.xml, false)
+    this.compressed = defaults(p.compressed, false)
+    this.binary = defaults(p.binary, false)
+    this.json = defaults(p.json, false)
+    this.xml = defaults(p.xml, false)
 
-  this.src = src
-  this.chunkSize = 1024 * 1024 * 10
-  this.newline = '\n'
+    this.src = src
+    this.chunkSize = 1024 * 1024 * 10
+    this.newline = '\n'
 
-  this.__pointer = 0
-  this.__partialLine = ''
+    this.__pointer = 0
+    this.__partialLine = ''
 
-  if (this.__srcName) {
-    this[ this.__srcName ] = src
+    if (this.__srcName) {
+      this[ this.__srcName ] = src
+    }
   }
-}
 
-Streamer.prototype = {
+  get type () { return '' }
 
-  constructor: Streamer,
+  get __srcName () { return undefined }
 
-  type: '',
-
-  __srcName: undefined,
-
-  isBinary: function () {
+  isBinary () {
     return this.binary || this.compressed
-  },
+  }
 
-  onload: function () {},
+  onload () {}
 
-  onprogress: function () {},
+  onprogress () {}
 
-  onerror: function () {},
+  onerror () {}
 
-  read: function () {
+  read () {
     return new Promise((resolve, reject) => {
       try {
         this._read(data => {
-          var decompressFn = DecompressorRegistry.get(this.compressed)
+          const decompressFn = DecompressorRegistry.get(this.compressed)
 
           if (this.compressed && decompressFn) {
             this.data = decompressFn(data)
@@ -66,15 +63,14 @@ Streamer.prototype = {
         reject(e)
       }
     })
-  },
+  }
 
-  _read: function (callback) {
-        // overwrite this method when this.src does not contain the data
-
+  _read (callback) {
+    // overwrite this method when this.src does not contain the data
     callback(this.src)
-  },
+  }
 
-  _chunk: function (start, end) {
+  _chunk (start, end) {
     end = Math.min(this.data.length, end)
 
     if (start === 0 && this.data.length === end) {
@@ -86,63 +82,62 @@ Streamer.prototype = {
         return this.data.substring(start, end)
       }
     }
-  },
+  }
 
-  chunk: function (start) {
-    var end = start + this.chunkSize
+  chunk (start) {
+    const end = start + this.chunkSize
 
     return this._chunk(start, end)
-  },
+  }
 
-  peekLines: function (m) {
-    var data = this.data
-    var n = data.length
+  peekLines (m) {
+    const data = this.data
+    const n = data.length
 
-        // FIXME does not work for multi-char newline
-    var newline = this.isBinary() ? this.newline.charCodeAt(0) : this.newline
+    // FIXME does not work for multi-char newline
+    const newline = this.isBinary() ? this.newline.charCodeAt(0) : this.newline
 
-    var i
-    var count = 0
-
+    let i
+    let count = 0
     for (i = 0; i < n; ++i) {
       if (data[ i ] === newline) ++count
       if (count === m) break
     }
 
-    var chunk = this._chunk(0, i + 1)
-    var d = this.chunkToLines(chunk, '', i > n)
+    const chunk = this._chunk(0, i + 1)
+    const d = this.chunkToLines(chunk, '', i > n)
 
     return d.lines
-  },
+  }
 
-  lineCount: function () {
+  lineCount () {
     console.warn('lineCount - deprecated')
 
-    var data = this.data
-    var n = data.length
+    const data = this.data
+    const n = data.length
 
-        // FIXME does not work for multi-char newline
-    var newline = this.isBinary() ? this.newline.charCodeAt(0) : this.newline
+    // FIXME does not work for multi-char newline
+    const newline = this.isBinary() ? this.newline.charCodeAt(0) : this.newline
 
-    var count = 0
-    for (var i = 0; i < n; ++i) {
+    let count = 0
+    for (let i = 0; i < n; ++i) {
       if (data[ i ] === newline) ++count
     }
     if (data[ n - 1 ] !== newline) ++count
 
     return count
-  },
+  }
 
-  chunkCount: function () {
+  chunkCount () {
     return Math.floor(this.data.length / this.chunkSize) + 1
-  },
+  }
 
-  asText: function () {
+  asText () {
     return this.isBinary() ? uint8ToString(this.data) : this.data
-  },
+  }
 
-  chunkToLines: function (chunk, partialLine, isLast) {
-    var newline = this.newline
+  chunkToLines (chunk, partialLine, isLast) {
+    const newline = this.newline
 
     if (!this.isBinary() && chunk.length === this.data.length) {
       return {
@@ -151,14 +146,14 @@ Streamer.prototype = {
       }
     }
 
-    var str = this.isBinary() ? uint8ToString(chunk) : chunk
-    var lines = []
-    var idx = str.lastIndexOf(newline)
+    let lines = []
+    const str = this.isBinary() ? uint8ToString(chunk) : chunk
+    const idx = str.lastIndexOf(newline)
 
     if (idx === -1) {
       partialLine += str
     } else {
-      var str2 = partialLine + str.substr(0, idx)
+      const str2 = partialLine + str.substr(0, idx)
       lines = lines.concat(str2.split(newline))
 
       if (idx === str.length - newline.length) {
@@ -176,10 +171,10 @@ Streamer.prototype = {
       lines: lines,
       partialLine: partialLine
     }
-  },
+  }
 
-  nextChunk: function () {
-    var start = this.__pointer
+  nextChunk () {
+    const start = this.__pointer
 
     if (start > this.data.length) {
       return undefined
@@ -187,55 +182,54 @@ Streamer.prototype = {
 
     this.__pointer += this.chunkSize
     return this.chunk(start)
-  },
+  }
 
-  nextChunkOfLines: function () {
-    var chunk = this.nextChunk()
+  nextChunkOfLines () {
+    const chunk = this.nextChunk()
 
     if (chunk === undefined) {
       return undefined
     }
 
-    var isLast = this.__pointer > this.data.length
-    var d = this.chunkToLines(chunk, this.__partialLine, isLast)
+    const isLast = this.__pointer > this.data.length
+    const d = this.chunkToLines(chunk, this.__partialLine, isLast)
 
     this.__partialLine = d.partialLine
 
     return d.lines
-  },
+  }
 
-  eachChunk: function (callback) {
-    var chunkSize = this.chunkSize
-    var n = this.data.length
-    var chunkCount = this.chunkCount()
+  eachChunk (callback) {
+    const chunkSize = this.chunkSize
+    const n = this.data.length
+    const chunkCount = this.chunkCount()
 
-    for (var i = 0; i < n; i += chunkSize) {
-      var chunk = this.chunk(i)
-      var chunkNo = Math.round(i / chunkSize)
+    for (let i = 0; i < n; i += chunkSize) {
+      const chunk = this.chunk(i)
+      const chunkNo = Math.round(i / chunkSize)
 
       callback(chunk, chunkNo, chunkCount)
     }
-  },
+  }
 
-  eachChunkOfLines: function (callback) {
-    this.eachChunk(function (chunk, chunkNo, chunkCount) {
-      var isLast = chunkNo === chunkCount + 1
-      var d = this.chunkToLines(chunk, this.__partialLine, isLast)
+  eachChunkOfLines (callback) {
+    this.eachChunk((chunk, chunkNo, chunkCount) => {
+      const isLast = chunkNo === chunkCount + 1
+      const d = this.chunkToLines(chunk, this.__partialLine, isLast)
 
       this.__partialLine = d.partialLine
 
       callback(d.lines, chunkNo, chunkCount)
-    }.bind(this))
-  },
+    })
+  }
 
-  dispose: function () {
+  dispose () {
     delete this.src
 
     if (this.__srcName) {
       delete this[ this.__srcName ]
     }
   }
-
 }
 
 export default Streamer

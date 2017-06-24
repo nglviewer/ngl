@@ -6,25 +6,14 @@
 
 import Streamer from './streamer.js'
 
-function StringStreamer (str, params) {
-  Streamer.call(this, str, params)
-}
+class StringStreamer extends Streamer {
+  get type () { return 'string' }
 
-StringStreamer.prototype = Object.assign(Object.create(
+  get __srcName () { return 'str' }
 
-  Streamer.prototype), {
-
-    constructor: StringStreamer,
-
-    type: 'string',
-
-    __srcName: 'str',
-
-    _chunk: function (start, end) {
-      return this.data.substr(start, end)
-    }
-
+  _chunk (start, end) {
+    return this.data.substr(start, end)
   }
-)
+}
 
 export default StringStreamer

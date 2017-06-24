@@ -91,16 +91,16 @@ const tmpZoomVector = new Vector3()
  * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage {
-    /**
-     * Create a Stage instance
-     * @param {String|Element} [idOrElement] - dom id or element
-     * @param {StageParameters} params - parameters object
-     */
+  /**
+   * Create a Stage instance
+   * @param {String|Element} [idOrElement] - dom id or element
+   * @param {StageParameters} params - parameters object
+   */
   constructor (idOrElement, params) {
-        /**
-         * Events emitted by the stage
-         * @type {StageSignals}
-         */
+    /**
+     * Events emitted by the stage
+     * @type {StageSignals}
+     */
     this.signals = {
       parametersChanged: new Signal(),
       fullscreenChanged: new Signal(),
@@ -112,26 +112,26 @@ class Stage {
       hovered: new Signal()
     }
 
-        //
+    //
 
-        /**
-         * Counter that keeps track of various potentially long-running tasks,
-         * including file loading and surface calculation.
-         * @type {Counter}
-         */
+    /**
+     * Counter that keeps track of various potentially long-running tasks,
+     * including file loading and surface calculation.
+     * @type {Counter}
+     */
     this.tasks = new Counter()
     this.compList = []
     this.defaultFileParams = {}
 
-        //
+    //
 
     this.viewer = new Viewer(idOrElement)
     if (!this.viewer.renderer) return
 
-        /**
-         * Tooltip element
-         * @type {Element}
-         */
+    /**
+     * Tooltip element
+     * @type {Element}
+     */
     this.tooltip = document.createElement('div')
     Object.assign(this.tooltip.style, {
       display: 'none',
@@ -145,24 +145,24 @@ class Stage {
     })
     document.body.appendChild(this.tooltip)
 
-        /**
-         * @type {MouseObserver}
-         */
+    /**
+     * @type {MouseObserver}
+     */
     this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement)
 
-        /**
-         * @type {ViewerControls}
-         */
+    /**
+     * @type {ViewerControls}
+     */
     this.viewerControls = new ViewerControls(this)
     this.trackballControls = new TrackballControls(this)
     this.pickingControls = new PickingControls(this)
-        /**
-         * @type {AnimationControls}
-         */
+    /**
+     * @type {AnimationControls}
+     */
     this.animationControls = new AnimationControls(this)
-        /**
-         * @type {MouseControls}
-         */
+    /**
+     * @type {MouseControls}
+     */
     this.mouseControls = new MouseControls(this)
 
     this.pickingBehavior = new PickingBehavior(this)
@@ -170,14 +170,14 @@ class Stage {
     this.animationBehavior = new AnimationBehavior(this)
     this.keyBehavior = new KeyBehavior(this)
 
-        /**
-         * @type {SpinAnimation}
-         */
+    /**
+     * @type {SpinAnimation}
+     */
     this.spinAnimation = this.animationControls.spin([ 0, 1, 0 ], 0.005)
     this.spinAnimation.pause(true)
-        /**
-         * @type {RockAnimation}
-         */
+    /**
+     * @type {RockAnimation}
+     */
     this.rockAnimation = this.animationControls.rock([ 0, 1, 0 ], 0.005)
     this.rockAnimation.pause(true)
 
@@ -280,11 +280,11 @@ class Stage {
     this.viewer.animate()
   }
 
-    /**
-     * Set stage parameters
-     * @param {StageParameters} params - stage parameters
-     * @return {Stage} this object
-     */
+  /**
+   * Set stage parameters
+   * @param {StageParameters} params - stage parameters
+   * @return {Stage} this object
+   */
   setParameters (params) {
     const p = Object.assign({}, params)
     const tp = this.parameters
@@ -301,7 +301,7 @@ class Stage {
       tp[ name ].value = p[ name ]
     }
 
-        // apply parameters
+    // apply parameters
     if (p.quality !== undefined) this.setQuality(p.quality)
     if (p.impostor !== undefined) this.setImpostor(p.impostor)
     if (p.rotateSpeed !== undefined) controls.rotateSpeed = p.rotateSpeed
@@ -319,16 +319,16 @@ class Stage {
         )
 
     this.signals.parametersChanged.dispatch(
-            this.getParameters()
-        )
+      this.getParameters()
+    )
 
     return this
   }
 
-    /**
-     * Get stage parameters
-     * @return {StageParameters} parameter object
-     */
+  /**
+   * Get stage parameters
+   * @return {StageParameters} parameter object
+   */
   getParameters () {
     const params = {}
     for (let name in this.parameters) {
@@ -337,11 +337,11 @@ class Stage {
     return params
   }
 
-    /**
-     * Create default representations for the given component
-     * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
-     * @return {undefined}
-     */
+  /**
+   * Create default representations for the given component
+   * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
+   * @return {undefined}
+   */
   defaultFileRepresentation (object) {
     if (object.type === 'structure') {
       object.setSelection('/0')
@@ -393,18 +393,18 @@ class Stage {
           quality: 'auto'
         })
       } else if (
-                (instanceCount > 5 && sizeScore > 15000) ||
-                sizeScore > 700000
-            ) {
+        (instanceCount > 5 && sizeScore > 15000) ||
+        sizeScore > 700000
+      ) {
         let scaleFactor = (
-                    Math.min(
-                        1.5,
-                        Math.max(
-                            0.1,
-                            2000 / (sizeScore / instanceCount)
-                        )
-                    )
-                )
+          Math.min(
+            1.5,
+            Math.max(
+              0.1,
+              2000 / (sizeScore / instanceCount)
+            )
+          )
+        )
         if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.15)
 
         object.addRepresentation('surface', {
@@ -468,8 +468,10 @@ class Stage {
         })
       }
 
-            // add frames as trajectory
-      if (object.structure.frames.length) object.addTrajectory()
+      // add frames as trajectory
+      if (object.structure.frames.length) {
+        object.addTrajectory()
+      }
     } else if (object.type === 'surface' || object.type === 'volume') {
       object.addRepresentation('surface')
     }
@@ -477,54 +479,54 @@ class Stage {
     this.tasks.onZeroOnce(this.autoView, this)
   }
 
-    /**
-     * Load a file onto the stage
-     *
-     * @example
-     * // load from URL
-     * stage.loadFile( "http://files.rcsb.org/download/5IOS.cif" );
-     *
-     * @example
-     * // load binary data in CCP4 format via a Blob
-     * var binaryBlob = new Blob( [ ccp4Data ], { type: 'application/octet-binary'} );
-     * stage.loadFile( binaryBlob, { ext: "ccp4" } );
-     *
-     * @example
-     * // load string data in PDB format via a Blob
-     * var stringBlob = new Blob( [ pdbData ], { type: 'text/plain'} );
-     * stage.loadFile( stringBlob, { ext: "pdb" } );
-     *
-     * @example
-     * // load a File object
-     * stage.loadFile( file );
-     *
-     * @example
-     * // load from URL and add a 'ball+stick' representation with double/triple bonds
-     * stage.loadFile( "http://files.rcsb.org/download/1crn.cif" ).then( function( comp ){
-     *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
-     * } );
-     *
-     * @param  {String|File|Blob} path - either a URL or an object containing the file data
-     * @param  {LoaderParameters} params - loading parameters
-     * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
-     * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
-     *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
-     *                   depending on the type of the loaded file.
-     */
+  /**
+   * Load a file onto the stage
+   *
+   * @example
+   * // load from URL
+   * stage.loadFile( "http://files.rcsb.org/download/5IOS.cif" );
+   *
+   * @example
+   * // load binary data in CCP4 format via a Blob
+   * var binaryBlob = new Blob( [ ccp4Data ], { type: 'application/octet-binary'} );
+   * stage.loadFile( binaryBlob, { ext: "ccp4" } );
+   *
+   * @example
+   * // load string data in PDB format via a Blob
+   * var stringBlob = new Blob( [ pdbData ], { type: 'text/plain'} );
+   * stage.loadFile( stringBlob, { ext: "pdb" } );
+   *
+   * @example
+   * // load a File object
+   * stage.loadFile( file );
+   *
+   * @example
+   * // load from URL and add a 'ball+stick' representation with double/triple bonds
+   * stage.loadFile( "http://files.rcsb.org/download/1crn.cif" ).then( function( comp ){
+   *     comp.addRepresentation( "ball+stick", { multipleBond: true } );
+   * } );
+   *
+   * @param  {String|File|Blob} path - either a URL or an object containing the file data
+   * @param  {LoaderParameters} params - loading parameters
+   * @param  {Boolean} params.asTrajectory - load multi-model structures as a trajectory
+   * @return {Promise} A Promise object that resolves to a {@link StructureComponent},
+   *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
+   *                   depending on the type of the loaded file.
+   */
   loadFile (path, params) {
     const p = Object.assign({}, this.defaultFileParams, params)
 
-        // placeholder component
+    // placeholder component
     let component = new Component(this, p)
     component.name = getFileInfo(path).name
     this.addComponent(component)
 
-        // tasks
+    // tasks
     const tasks = this.tasks
     tasks.increment()
 
     const onLoadFn = function (object) {
-            // remove placeholder component
+      // remove placeholder component
       this.removeComponent(component)
 
       component = this.addComponentFromObject(object, p)
@@ -560,11 +562,11 @@ class Stage {
     return promise.then(onLoadFn, onErrorFn)
   }
 
-    /**
-     * Add the given component to the stage
-     * @param {Component} component - the component to add
-     * @return {undefined}
-     */
+  /**
+   * Add the given component to the stage
+   * @param {Component} component - the component to add
+   * @return {undefined}
+   */
   addComponent (component) {
     if (!component) {
       Log.warn('Stage.addComponent: no component given')
@@ -576,12 +578,12 @@ class Stage {
     this.signals.componentAdded.dispatch(component)
   }
 
-    /**
-     * Create a component from the given object and add to the stage
-     * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
-     * @param {ComponentParameters} params - parameter object
-     * @return {Component} the created component
-     */
+  /**
+   * Create a component from the given object and add to the stage
+   * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
+   * @param {ComponentParameters} params - parameter object
+   * @return {Component} the created component
+   */
   addComponentFromObject (object, params) {
     const CompClass = ComponentRegistry.get(object.type)
 
@@ -594,11 +596,11 @@ class Stage {
     Log.warn('no component for object type', object.type)
   }
 
-    /**
-     * Remove the given component
-     * @param  {Component} component - the component to remove
-     * @return {undefined}
-     */
+  /**
+   * Remove the given component
+   * @param  {Component} component - the component to remove
+   * @return {undefined}
+   */
   removeComponent (component) {
     const idx = this.compList.indexOf(component)
     if (idx !== -1) {
@@ -608,11 +610,11 @@ class Stage {
     }
   }
 
-    /**
-     * Remove all components from the stage
-     * @param  {String} [type] - component type to remove
-     * @return {undefined}
-     */
+  /**
+   * Remove all components from the stage
+   * @param  {String} [type] - component type to remove
+   * @return {undefined}
+   */
   removeAllComponents (type) {
     this.compList.slice().forEach(function (o) {
       if (!type || o.type === type) {
@@ -621,20 +623,20 @@ class Stage {
     }, this)
   }
 
-    /**
-     * Handle any size-changes of the container element
-     * @return {undefined}
-     */
+  /**
+   * Handle any size-changes of the container element
+   * @return {undefined}
+   */
   handleResize () {
     this.viewer.handleResize()
   }
 
-    /**
-     * Set width and height
-     * @param {String} width - CSS width value
-     * @param {String} height - CSS height value
-     * @return {undefined}
-     */
+  /**
+   * Set width and height
+   * @param {String} width - CSS width value
+   * @param {String} height - CSS height value
+   * @return {undefined}
+   */
   setSize (width, height) {
     const container = this.viewer.container
 
@@ -645,12 +647,12 @@ class Stage {
     }
   }
 
-    /**
-     * Toggle fullscreen
-     * @param  {Element} [element] - document element to put into fullscreen,
-     *                               defaults to the viewer container
-     * @return {undefined}
-     */
+  /**
+   * Toggle fullscreen
+   * @param  {Element} [element] - document element to put into fullscreen,
+   *                               defaults to the viewer container
+   * @return {undefined}
+   */
   toggleFullscreen (element) {
     if (!document.fullscreenEnabled && !document.mozFullScreenEnabled &&
             !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
@@ -663,11 +665,11 @@ class Stage {
     element = element || this.viewer.container
     this.lastFullscreenElement = element
 
-        //
+    //
 
     function getFullscreenElement () {
       return document.fullscreenElement || document.mozFullScreenElement ||
-                document.webkitFullscreenElement || document.msFullscreenElement
+              document.webkitFullscreenElement || document.msFullscreenElement
     }
 
     function resizeElement () {
@@ -686,7 +688,7 @@ class Stage {
       }
     }
 
-        //
+    //
 
     if (!getFullscreenElement()) {
       element.dataset.normalWidth = element.style.width
@@ -712,7 +714,7 @@ class Stage {
       this.handleResize()
       this.signals.fullscreenChanged.dispatch(true)
 
-            // workaround for Safari
+      // workaround for Safari
       setTimeout(function () { self.handleResize() }, 100)
     } else {
       if (document.exitFullscreen) {
@@ -727,11 +729,11 @@ class Stage {
     }
   }
 
-    /**
-     * Set spin
-     * @param {Boolean} flag - if true start rocking and stop spinning
-     * @return {undefined}
-     */
+  /**
+   * Set spin
+   * @param {Boolean} flag - if true start rocking and stop spinning
+   * @return {undefined}
+   */
   setSpin (flag) {
     if (flag) {
       this.spinAnimation.resume(true)
@@ -741,11 +743,11 @@ class Stage {
     }
   }
 
-    /**
-     * Set rock
-     * @param {Boolean} flag - if true start rocking and stop spinning
-     * @return {undefined}
-     */
+  /**
+   * Set rock
+   * @param {Boolean} flag - if true start rocking and stop spinning
+   * @return {undefined}
+   */
   setRock (flag) {
     if (flag) {
       this.rockAnimation.resume(true)
@@ -755,18 +757,18 @@ class Stage {
     }
   }
 
-    /**
-     * Toggle spin
-     * @return {undefined}
-     */
+  /**
+   * Toggle spin
+   * @return {undefined}
+   */
   toggleSpin () {
     this.setSpin(this.spinAnimation.paused)
   }
 
-    /**
-     * Toggle rock
-     * @return {undefined}
-     */
+  /**
+   * Toggle rock
+   * @return {undefined}
+   */
   toggleRock () {
     this.setRock(this.rockAnimation.paused)
   }
@@ -815,11 +817,11 @@ class Stage {
     return this.getBox().getCenter(optionalTarget)
   }
 
-    /**
-     * Add a zoom and a move animation with automatic targets
-     * @param  {Integer} duration - animation time in milliseconds
-     * @return {undefined}
-     */
+  /**
+   * Add a zoom and a move animation with automatic targets
+   * @param  {Integer} duration - animation time in milliseconds
+   * @return {undefined}
+   */
   autoView (duration) {
     this.animationControls.zoomMove(
             this.getCenter(),
@@ -828,11 +830,11 @@ class Stage {
         )
   }
 
-    /**
-     * Make image from what is shown in a viewer canvas
-     * @param  {ImageParameters} params - image generation parameters
-     * @return {Promise} A Promise object that resolves to an image {@link Blob}.
-     */
+  /**
+   * Make image from what is shown in a viewer canvas
+   * @param  {ImageParameters} params - image generation parameters
+   * @return {Promise} A Promise object that resolves to an image {@link Blob}.
+   */
   makeImage (params) {
     const viewer = this.viewer
     const tasks = this.tasks
@@ -909,12 +911,12 @@ class Stage {
     })
   }
 
-    /**
-     * Iterator over each component and executing the callback
-     * @param  {Function} callback - function to execute
-     * @param  {String}   type - limit iteration to components of this type
-     * @return {undefined}
-     */
+  /**
+   * Iterator over each component and executing the callback
+   * @param  {Function} callback - function to execute
+   * @param  {String}   type - limit iteration to components of this type
+   * @return {undefined}
+   */
   eachComponent (callback, type) {
     this.compList.slice().forEach(function (o, i) {
       if (!type || o.type === type) {
@@ -923,12 +925,12 @@ class Stage {
     })
   }
 
-    /**
-     * Iterator over each representation and executing the callback
-     * @param  {Function} callback - function to execute
-     * @param  {String}   type - limit iteration to components of this type
-     * @return {undefined}
-     */
+  /**
+   * Iterator over each representation and executing the callback
+   * @param  {Function} callback - function to execute
+   * @param  {String}   type - limit iteration to components of this type
+   * @return {undefined}
+   */
   eachRepresentation (callback, type) {
     this.eachComponent(function (comp) {
       comp.reprList.slice().forEach(function (repr) {
@@ -937,12 +939,12 @@ class Stage {
     }, type)
   }
 
-    /**
-     * Get collection of components by name
-     * @param  {String|RegExp}   name - the component name
-     * @param  {String} type - limit iteration to components of this type
-     * @return {ComponentCollection} collection of selected components
-     */
+  /**
+   * Get collection of components by name
+   * @param  {String|RegExp}   name - the component name
+   * @param  {String} type - limit iteration to components of this type
+   * @return {ComponentCollection} collection of selected components
+   */
   getComponentsByName (name, type) {
     const compList = []
 
@@ -955,11 +957,11 @@ class Stage {
     return new ComponentCollection(compList)
   }
 
-    /**
-     * Get collection of components by object
-     * @param  {Object} object - the object to find
-     * @return {ComponentCollection} collection of selected components
-     */
+  /**
+   * Get collection of components by object
+   * @param  {Object} object - the object to find
+   * @return {ComponentCollection} collection of selected components
+   */
   getComponentsByObject (object) {
     const compList = []
 
@@ -972,12 +974,12 @@ class Stage {
     return new ComponentCollection(compList)
   }
 
-    /**
-     * Get collection of representations by name
-     * @param  {String|RegExp}   name - the representation name
-     * @param  {String} type - limit iteration to components of this type
-     * @return {RepresentationCollection} collection of selected components
-     */
+  /**
+   * Get collection of representations by name
+   * @param  {String|RegExp}   name - the representation name
+   * @param  {String} type - limit iteration to components of this type
+   * @return {RepresentationCollection} collection of selected components
+   */
   getRepresentationsByName (name, type) {
     let compName, reprName
 
@@ -1004,11 +1006,11 @@ class Stage {
     return new RepresentationCollection(reprList)
   }
 
-    /**
-     * Get collection of components and representations by name
-     * @param  {String|RegExp}   name - the component or representation name
-     * @return {Collection} collection of selected components and representations
-     */
+  /**
+   * Get collection of components and representations by name
+   * @param  {String|RegExp}   name - the component or representation name
+   * @return {Collection} collection of selected components and representations
+   */
   getAnythingByName (name) {
     const compList = this.getComponentsByName(name).list
     const reprList = this.getRepresentationsByName(name).list
@@ -1016,10 +1018,10 @@ class Stage {
     return new Collection(compList.concat(reprList))
   }
 
-    /**
-     * Cleanup when disposing of a stage object
-     * @return {undefined}
-     */
+  /**
+   * Cleanup when disposing of a stage object
+   * @return {undefined}
+   */
   dispose () {
     this.tasks.dispose()
   }
