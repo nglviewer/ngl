@@ -14,14 +14,15 @@ function BinaryStreamer (bin, params) {
 
 BinaryStreamer.prototype = Object.assign(Object.create(
 
-    Streamer.prototype), {
+  Streamer.prototype), {
 
-      constructor: BinaryStreamer,
+    constructor: BinaryStreamer,
 
-      type: 'binary',
+    type: 'binary',
 
-      __srcName: 'bin'
+    __srcName: 'bin'
 
-    })
+  }
+)
 
 export default BinaryStreamer

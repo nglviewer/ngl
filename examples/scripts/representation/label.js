@@ -1,19 +1,15 @@
 
-stage.loadFile( "data://1crn.pdb" ).then( function( o ){
+stage.loadFile('data://1crn.pdb').then(function (o) {
+  o.addRepresentation('tube', { radius: 'sstruc' })
+  o.addRepresentation('ball+stick', { sele: 'sidechainAttached' })
+  o.addRepresentation('label', {
+    sele: '.CA', color: 'element'
+  })
+  o.autoView()
+})
 
-    o.addRepresentation( "tube", { radius: "sstruc" } );
-    o.addRepresentation( "ball+stick", { sele: "sidechainAttached" } );
-    o.addRepresentation( "label", {
-        sele: ".CA", color: "element"
-    } );
-    o.autoView();
-
-} );
-
-stage.loadFile( "data://1crn.ply" ).then( function( o ){
-
-    o.addRepresentation( "surface", {
-        opacity: 0.3, side: "front"
-    } );
-
-} );
+stage.loadFile('data://1crn.ply').then(function (o) {
+  o.addRepresentation('surface', {
+    opacity: 0.3, side: 'front'
+  })
+})

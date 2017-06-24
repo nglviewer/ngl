@@ -1,56 +1,52 @@
 
-stage.loadFile( "data://1crn_apbs.pqr" ).then( function( o ){
+stage.loadFile('data://1crn_apbs.pqr').then(function (o) {
+  o.addRepresentation('cartoon', {
+    colorScheme: 'bfactor',
+    colorScale: 'rwb',
+    colorDomain: [ -1, 0, 1 ]
+  })
+  o.addRepresentation('licorice', {
+    colorScheme: 'bfactor',
+    colorScale: 'rwb',
+    colorDomain: [ -1, 0, 1 ]
+  })
 
-    o.addRepresentation( "cartoon", {
-        colorScheme: "bfactor",
-        colorScale: "rwb",
-        colorDomain: [ -1, 0, 1 ]
-    } );
-    o.addRepresentation( "licorice", {
-        colorScheme: "bfactor",
-        colorScale: "rwb",
-        colorDomain: [ -1, 0, 1 ]
-    } );
+  o.autoView()
+})
 
-    o.autoView();
+stage.loadFile('data://1crn_apbs_pot.dx.gz').then(function (o) {
+  o.addRepresentation('dot', {
+    thresholdType: 'value',
+    thresholdMin: -5,
+    thresholdMax: 5,
+    thresholdOut: true,
+    dotType: 'sphere',
+    radius: 'abs-value',
+    scale: 0.001,
+    visible: true,
+    colorScheme: 'value',
+    colorScale: 'rwb'
+  })
 
-} );
+  o.addRepresentation('surface', {
+    isolevelType: 'value',
+    isolevel: -0.4,
+    smooth: 1,
+    color: 'red',
+    opacity: 0.6,
+    side: 'back',
+    opaqueBack: false
+  })
 
-stage.loadFile( "data://1crn_apbs_pot.dx.gz" ).then( function( o ){
+  o.addRepresentation('surface', {
+    isolevelType: 'value',
+    isolevel: 0.4,
+    smooth: 1,
+    color: 'blue',
+    opacity: 0.6,
+    side: 'front',
+    opaqueBack: false
+  })
 
-    o.addRepresentation( "dot", {
-        thresholdType: "value",
-        thresholdMin: -5,
-        thresholdMax: 5,
-        thresholdOut: true,
-        dotType: "sphere",
-        radius: "abs-value",
-        scale: 0.001,
-        visible: true,
-        colorScheme: "value",
-        colorScale: "rwb"
-    } );
-
-    o.addRepresentation( "surface", {
-        isolevelType: "value",
-        isolevel: -0.4,
-        smooth: 1,
-        color: "red",
-        opacity: 0.6,
-        side: "back",
-        opaqueBack: false
-    } );
-
-    o.addRepresentation( "surface", {
-        isolevelType: "value",
-        isolevel: 0.4,
-        smooth: 1,
-        color: "blue",
-        opacity: 0.6,
-        side: "front",
-        opaqueBack: false
-    } );
-
-    stage.autoView();
-
-} );
+  stage.autoView()
+})

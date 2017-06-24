@@ -119,9 +119,9 @@ function download (data, downloadName) {
         // native saveAs in IE 10+
     navigator.msSaveOrOpenBlob(data, downloadName)
   } else if ((isSafari || isChromeIos) && window.FileReader) {
-    if (data instanceof Blob) {
+    if (data instanceof window.Blob) {
             // no downloading of blob urls in Safari
-      var reader = new FileReader()
+      var reader = new window.FileReader()
       reader.onloadend = function () {
         open(reader.result)
       }
@@ -130,8 +130,8 @@ function download (data, downloadName) {
       open(data)
     }
   } else {
-    if (data instanceof Blob) {
-      data = URL.createObjectURL(data)
+    if (data instanceof window.Blob) {
+      data = window.URL.createObjectURL(data)
     }
 
     if ('download' in a) {
@@ -147,15 +147,15 @@ function download (data, downloadName) {
       openUrl(data)
     }
 
-    if (data instanceof Blob) {
-      URL.revokeObjectURL(data)
+    if (data instanceof window.Blob) {
+      window.URL.revokeObjectURL(data)
     }
   }
 }
 
 function submit (url, data, callback, onerror) {
-  if (data instanceof FormData) {
-    var xhr = new XMLHttpRequest()
+  if (data instanceof window.FormData) {
+    var xhr = new window.XMLHttpRequest()
     xhr.open('POST', url)
 
     xhr.addEventListener('load', function () {
@@ -195,8 +195,8 @@ function getFileInfo (file) {
 
   var path, compressed, protocol
 
-  if ((typeof File !== 'undefined' && file instanceof File) ||
-        (typeof Blob !== 'undefined' && file instanceof Blob)
+  if ((typeof window !== 'undefined' && file instanceof window.File) ||
+        (typeof window !== 'undefined' && file instanceof window.Blob)
     ) {
     path = file.name || ''
   } else {

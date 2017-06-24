@@ -6,11 +6,11 @@
 
 import { Debug } from '../globals.js'
 
-if (typeof WebGLRenderingContext !== 'undefined' && WebGLRenderingContext) {
-  const wrcp = WebGLRenderingContext.prototype
+if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
+  const wrcp = window.WebGLRenderingContext.prototype
 
-    // wrap WebGL debug function used by three.js and
-    // ignore calls to them when the debug flag is not set
+  // wrap WebGL debug function used by three.js and
+  // ignore calls to them when the debug flag is not set
 
   const _getShaderParameter = wrcp.getShaderParameter
   wrcp.getShaderParameter = function getShaderParameter () {
@@ -83,7 +83,7 @@ const JitterVectors = [
 
 JitterVectors.forEach(offsetList => {
   offsetList.forEach(offset => {
-        // 0.0625 = 1 / 16
+    // 0.0625 = 1 / 16
     offset[ 0 ] *= 0.0625
     offset[ 1 ] *= 0.0625
   })

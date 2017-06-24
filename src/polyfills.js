@@ -31,9 +31,9 @@ if (typeof window !== 'undefined') {
   })()
 }
 
-if (typeof HTMLCanvasElement !== 'undefined' && !HTMLCanvasElement.prototype.toBlob) {
+if (typeof window.HTMLCanvasElement !== 'undefined' && !window.HTMLCanvasElement.prototype.toBlob) {
   // http://code.google.com/p/chromium/issues/detail?id=67587#57
-  Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+  Object.defineProperty(window.HTMLCanvasElement.prototype, 'toBlob', {
 
     value: function (callback, type, quality) {
       var bin = window.atob(this.toDataURL(type, quality).split(',')[ 1 ])
@@ -57,7 +57,7 @@ if (typeof HTMLCanvasElement !== 'undefined' && !HTMLCanvasElement.prototype.toB
         a8[ j ] = bin.charCodeAt(j++)
       }
 
-      callback(new Blob([ a8 ], { 'type': type || 'image/png' }))
+      callback(new window.Blob([ a8 ], { 'type': type || 'image/png' }))
     }
 
   })
@@ -408,6 +408,7 @@ if (Function.prototype.name === undefined && Object.defineProperty !== undefined
 
 if (typeof window !== 'undefined') {
   if (window.performance === undefined) {
+    /* global self */
     self.performance = {}
   }
 

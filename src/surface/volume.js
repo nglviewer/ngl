@@ -54,6 +54,7 @@ WorkerRegistry.add('surf', function func (e, callback) {
   const a = e.data.args
   const p = e.data.params
   if (a) {
+    /* global self */
     self.volsurf = new VolumeSurface(a[0], a[1], a[2], a[3], a[4])
   }
   if (p) {

@@ -62,8 +62,8 @@ class Loader {
       xml: xmlFileTypes.includes(this.ext)
     }
 
-    if ((typeof File !== 'undefined' && src instanceof File) ||
-        (typeof Blob !== 'undefined' && src instanceof Blob)
+    if ((typeof File !== 'undefined' && src instanceof window.File) ||
+        (typeof Blob !== 'undefined' && src instanceof window.Blob)
     ) {
       this.streamer = new FileStreamer(src, streamerParams)
     } else {

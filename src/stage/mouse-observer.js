@@ -230,7 +230,7 @@ class MouseObserver {
      * @return {undefined}
      */
   _listen () {
-    if (performance.now() - this.lastMoved > this.hoverTimeout) {
+    if (window.performance.now() - this.lastMoved > this.hoverTimeout) {
       this.moving = false
     }
     if (this.scrolled || (!this.moving && !this.hovering)) {
@@ -241,7 +241,7 @@ class MouseObserver {
         this.signals.hovered.dispatch(cp.x, cp.y)
       }
     }
-    requestAnimationFrame(this._listen)
+    window.requestAnimationFrame(this._listen)
   }
 
     /**
@@ -292,7 +292,7 @@ class MouseObserver {
     this._setKeys(event)
     this.moving = true
     this.hovering = false
-    this.lastMoved = performance.now()
+    this.lastMoved = window.performance.now()
     this.prevPosition.copy(this.position)
     this.position.set(event.clientX, event.clientY)
     this._setCanvasPosition(event)
@@ -405,7 +405,7 @@ class MouseObserver {
         this.buttons = undefined
         this.moving = true
         this.hovering = false
-        this.lastMoved = performance.now()
+        this.lastMoved = window.performance.now()
         this.prevPosition.copy(this.position)
         this.position.set(
                     event.touches[ 0 ].pageX,

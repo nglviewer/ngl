@@ -27,6 +27,7 @@ function onmessage (e) {
   var name = e.data.__name
   var postId = e.data.__postId
 
+  /* global self */
   if (name === undefined) {
     console.error('message __name undefined')
   } else if (self.func === undefined) {
@@ -53,7 +54,7 @@ function makeWorkerBlob (func, deps) {
   str += '\n\n\nself.func = ' + func.toString() + ';'
   str += '\n\n\nself.onmessage = ' + onmessage.toString() + ';'
     // console.log( str );
-  return new Blob([ str ], { type: 'application/javascript' })
+  return new window.Blob([ str ], { type: 'application/javascript' })
 }
 
 export {

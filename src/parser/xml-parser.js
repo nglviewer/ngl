@@ -40,7 +40,7 @@ class XmlParser extends Parser {
     if (Debug) Log.time('XmlParser._parse ' + this.name)
 
     if (this.useDomParser) {
-      if (this.streamer.data instanceof Document) {
+      if (this.streamer.data instanceof window.Document) {
         this.xml.data = this.streamer.data
       } else {
         this.xml.data = this.__domParser(this.streamer.asText())

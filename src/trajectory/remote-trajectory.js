@@ -43,7 +43,7 @@ class RemoteTrajectory extends Trajectory {
   _loadFrame (i, callback) {
         // TODO implement max frameCache size, re-use arrays
 
-    var request = new XMLHttpRequest()
+    var request = new window.XMLHttpRequest()
 
     var ds = DatasourceRegistry.trajectory
     var url = ds.getFrameUrl(this.trajPath, i)
@@ -77,7 +77,7 @@ class RemoteTrajectory extends Trajectory {
   }
 
   getNumframes () {
-    var request = new XMLHttpRequest()
+    var request = new window.XMLHttpRequest()
 
     var ds = DatasourceRegistry.trajectory
     var url = ds.getNumframesUrl(this.trajPath)
@@ -97,7 +97,7 @@ class RemoteTrajectory extends Trajectory {
 
     Log.time('loadPath')
 
-    var request = new XMLHttpRequest()
+    var request = new window.XMLHttpRequest()
 
     var ds = DatasourceRegistry.trajectory
     var url = ds.getPathUrl(this.trajPath, index)

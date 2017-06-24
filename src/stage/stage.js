@@ -691,8 +691,8 @@ class Stage {
     if (!getFullscreenElement()) {
       element.dataset.normalWidth = element.style.width
       element.dataset.normalHeight = element.style.height
-      element.style.width = screen.width + 'px'
-      element.style.height = screen.height + 'px'
+      element.style.width = window.screen.width + 'px'
+      element.style.height = window.screen.height + 'px'
 
       if (element.requestFullscreen) {
         element.requestFullscreen()

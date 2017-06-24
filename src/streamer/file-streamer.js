@@ -12,66 +12,67 @@ function FileStreamer (file, params) {
 
 FileStreamer.prototype = Object.assign(Object.create(
 
-    Streamer.prototype), {
+  Streamer.prototype), {
 
-      constructor: FileStreamer,
+    constructor: FileStreamer,
 
-      type: 'file',
+    type: 'file',
 
-      __srcName: 'file',
+    __srcName: 'file',
 
-      _read: function (callback) {
-        var reader
+    _read: function (callback) {
+      var reader
 
-        if (typeof importScripts === 'function') {
-            // Use FileReaderSync within Worker
+      if (typeof importScripts === 'function') {
+          // Use FileReaderSync within Worker
 
-          reader = new FileReaderSync()
-          var data
-          if (this.binary || this.compressed) {
-            data = reader.readAsArrayBuffer(this.file)
-          } else {
-            data = reader.readAsText(this.file)
-          }
-
-            //
-
-          callback(data)
+        reader = new window.FileReaderSync()
+        var data
+        if (this.binary || this.compressed) {
+          data = reader.readAsArrayBuffer(this.file)
         } else {
-          reader = new FileReader()
+          data = reader.readAsText(this.file)
+        }
 
-            //
+          //
 
-          reader.onload = function (event) {
-            callback(event.target.result)
-          }
+        callback(data)
+      } else {
+        reader = new window.FileReader()
 
-            //
+          //
 
-          if (typeof this.onprogress === 'function') {
-            reader.onprogress = function (event) {
-              this.onprogress(event)
-            }.bind(this)
-          }
+        reader.onload = function (event) {
+          callback(event.target.result)
+        }
 
-            //
+          //
 
-          if (typeof this.onerror === 'function') {
-            reader.onerror = function (event) {
-              this.onerror(event)
-            }.bind(this)
-          }
+        if (typeof this.onprogress === 'function') {
+          reader.onprogress = function (event) {
+            this.onprogress(event)
+          }.bind(this)
+        }
 
-            //
+          //
 
-          if (this.binary || this.compressed) {
-            reader.readAsArrayBuffer(this.file)
-          } else {
-            reader.readAsText(this.file)
-          }
+        if (typeof this.onerror === 'function') {
+          reader.onerror = function (event) {
+            this.onerror(event)
+          }.bind(this)
+        }
+
+          //
+
+        if (this.binary || this.compressed) {
+          reader.readAsArrayBuffer(this.file)
+        } else {
+          reader.readAsText(this.file)
         }
       }
+    }
 
-    })
+  }
+)
 
 export default FileStreamer

@@ -132,7 +132,7 @@ function Viewer (idOrElement) {
   var container
   if (typeof idOrElement === 'string') {
     container = document.getElementById(idOrElement)
-  } else if (idOrElement instanceof Element) {
+  } else if (idOrElement instanceof window.Element) {
     container = idOrElement
   } else {
     container = document.createElement('div')
@@ -783,7 +783,7 @@ function Viewer (idOrElement) {
 
   function animate () {
     signals.ticked.dispatch(stats)
-    var delta = performance.now() - stats.startTime
+    var delta = window.performance.now() - stats.startTime
 
     if (delta > 500 && !isStill && sampleLevel < 3 && sampleLevel !== -1) {
       var currentSampleLevel = sampleLevel
@@ -795,7 +795,7 @@ function Viewer (idOrElement) {
       if (Debug) Log.log('rendered still frame')
     }
 
-    requestAnimationFrame(animate)
+    window.requestAnimationFrame(animate)
   }
 
   function pick (x, y) {
@@ -858,14 +858,14 @@ function Viewer (idOrElement) {
     }
 
         // start gathering stats anew after inactivity
-    if (performance.now() - stats.startTime > 22) {
+    if (window.performance.now() - stats.startTime > 22) {
       stats.begin()
       isStill = false
     }
 
     renderPending = true
 
-    requestAnimationFrame(function requestRenderAnimation () {
+    window.requestAnimationFrame(function requestRenderAnimation () {
       render()
       stats.update()
     })

@@ -5,7 +5,10 @@
   "main": "dist/ngl.js",
   "module": "dist/ngl.esm.js",
   "scripts": {
-    "lint": "standard --env mocha --env browser --env worker \"src/**/*.js\" \"test/**/*.js\"",
+    "lint": "npm run-script lint-src && npm run-script lint-test && npm run-script lint-script",
+    "lint-src": "standard \"src/**/*.js\"",
+    "lint-test": "standard --env mocha \"test/**/*.js\"",
+    "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
     "prebuild": "npm run-script lint",
     "build": "rollup -c",
     "postbuild": "node ./scripts/makeScriptsList.js",

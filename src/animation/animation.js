@@ -18,7 +18,7 @@ class Animation {
     this.duration = defaults(duration, 1000)
     this.controls = controls
 
-    this.startTime = performance.now()
+    this.startTime = window.performance.now()
     this.pausedTime = -1
     this.elapsedDuration = 0
     this.pausedDuration = 0
@@ -90,7 +90,7 @@ class Animation {
     if (hold) this._hold = true
 
     if (this.pausedTime === -1) {
-      this.pausedTime = performance.now()
+      this.pausedTime = window.performance.now()
     }
     this._paused = true
   }
@@ -103,7 +103,7 @@ class Animation {
   resume (releaseHold) {
     if (!releaseHold && this._hold) return
 
-    this.pausedDuration += performance.now() - this.pausedTime
+    this.pausedDuration += window.performance.now() - this.pausedTime
     this._paused = false
     this._hold = false
     this.pausedTime = -1

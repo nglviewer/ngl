@@ -71,7 +71,7 @@ class Annotation {
       this.element.style.display = 'block'
     }
 
-    if (value instanceof Element) {
+    if (value instanceof window.Element) {
       this.element.innerHTML = ''
       this.element.appendChild(value)
     } else {

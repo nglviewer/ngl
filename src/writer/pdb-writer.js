@@ -25,23 +25,23 @@ function PdbWriter (structure, params) {
     writeAtoms()
   }
 
-    // http://www.wwpdb.org/documentation/file-format
+  // http://www.wwpdb.org/documentation/file-format
 
-    // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
-    // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
+  // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
+  // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
 
   function DEF (x, y) {
     return x !== undefined ? x : y
   }
 
   var atomFormat =
-        'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
+    'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
   var hetatmFormat =
-        'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
+    'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
   function writeTitle () {
-        // FIXME multiline if title line longer than 80 chars
+    // FIXME multiline if title line longer than 80 chars
     records.push(sprintf('TITEL %-74s', structure.name))
   }
 
@@ -52,13 +52,13 @@ function PdbWriter (structure, params) {
 
     if (structure.trajectory) {
       records.push(sprintf(
-                'REMARK %-73s',
-                "Trajectory '" + structure.trajectory.name + "'"
-            ))
+        'REMARK %-73s',
+        "Trajectory '" + structure.trajectory.name + "'"
+      ))
       records.push(sprintf(
-                'REMARK %-73s',
-                'Frame ' + structure.trajectory.frame + ''
-            ))
+        'REMARK %-73s',
+        'Frame ' + structure.trajectory.frame + ''
+      ))
     }
   }
 
@@ -73,25 +73,25 @@ function PdbWriter (structure, params) {
         var formatString = a.hetero ? hetatmFormat : atomFormat
         var serial = renumberSerial ? ia : a.serial
 
-                // Alignment of one-letter atom name such as C starts at column 14,
-                // while two-letter atom name such as FE starts at column 13.
+        // Alignment of one-letter atom name such as C starts at column 14,
+        // while two-letter atom name such as FE starts at column 13.
         var atomname = a.atomname
         if (atomname.length === 1) atomname = ' ' + atomname
 
         records.push(sprintf(
-                    formatString,
+          formatString,
 
-                    serial,
-                    atomname,
-                    a.resname,
-                    DEF(a.chainname, ' '),
-                    a.resno,
-                    a.x, a.y, a.z,
-                    DEF(a.occurence, 1.0),
-                    DEF(a.bfactor, 0.0),
-                    DEF(a.segid, ''),
-                    DEF(a.element, '')
-                ))
+          serial,
+          atomname,
+          a.resname,
+          DEF(a.chainname, ' '),
+          a.resno,
+          a.x, a.y, a.z,
+          DEF(a.occurence, 1.0),
+          DEF(a.bfactor, 0.0),
+          DEF(a.segid, ''),
+          DEF(a.element, '')
+        ))
         ia += 1
       })
 
@@ -108,10 +108,7 @@ function PdbWriter (structure, params) {
   }
 
   function getBlob () {
-    return new Blob(
-            [ getString() ],
-            { type: 'text/plain' }
-        )
+    return new window.Blob([ getString() ], { type: 'text/plain' })
   }
 
   function _download (name, ext) {
@@ -124,7 +121,7 @@ function PdbWriter (structure, params) {
     download(blob, file)
   }
 
-    // API
+  // API
 
   this.getString = getString
   this.getBlob = getBlob

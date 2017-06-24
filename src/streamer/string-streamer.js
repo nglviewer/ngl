@@ -12,18 +12,19 @@ function StringStreamer (str, params) {
 
 StringStreamer.prototype = Object.assign(Object.create(
 
-    Streamer.prototype), {
+  Streamer.prototype), {
 
-      constructor: StringStreamer,
+    constructor: StringStreamer,
 
-      type: 'string',
+    type: 'string',
 
-      __srcName: 'str',
+    __srcName: 'str',
 
-      _chunk: function (start, end) {
-        return this.data.substr(start, end)
-      }
+    _chunk: function (start, end) {
+      return this.data.substr(start, end)
+    }
 
-    })
+  }
+)
 
 export default StringStreamer

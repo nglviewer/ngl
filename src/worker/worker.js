@@ -12,7 +12,7 @@ function Worker (name) {
   var onmessageDict = {}
   var onerrorDict = {}
 
-  var blobUrl = URL.createObjectURL(WorkerRegistry.get(name))
+  var blobUrl = window.URL.createObjectURL(WorkerRegistry.get(name))
   var worker = new window.Worker(blobUrl)
 
   WorkerRegistry.activeWorkerCount += 1
@@ -80,7 +80,7 @@ function Worker (name) {
   this.terminate = function () {
     if (worker) {
       worker.terminate()
-      URL.revokeObjectURL(blobUrl)
+      window.URL.revokeObjectURL(blobUrl)
       WorkerRegistry.activeWorkerCount -= 1
     } else {
       Log.log('no worker to terminate')

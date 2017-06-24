@@ -34,12 +34,12 @@ Stats.prototype = {
   },
 
   begin: function () {
-    this.startTime = performance.now()
+    this.startTime = window.performance.now()
     this.lastFrames = this.frames
   },
 
   end: function () {
-    var time = performance.now()
+    var time = window.performance.now()
 
     this.count += 1
     this.frames += 1

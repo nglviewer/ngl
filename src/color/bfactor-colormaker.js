@@ -6,6 +6,7 @@
 
 import { ColormakerRegistry } from '../globals.js'
 import Colormaker from './colormaker.js'
+import Selection from '../selection.js'
 
 /**
  * Color by b-factor. The {@link AtomProxy.bfactor} property is used for coloring.

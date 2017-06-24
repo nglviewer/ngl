@@ -12,92 +12,93 @@ function NetworkStreamer (url, params) {
 
 NetworkStreamer.prototype = Object.assign(Object.create(
 
-    Streamer.prototype), {
+  Streamer.prototype), {
 
-      constructor: NetworkStreamer,
+    constructor: NetworkStreamer,
 
-      type: 'network',
+    type: 'network',
 
-      __srcName: 'url',
+    __srcName: 'url',
 
-      _read: function (callback) {
-        var url = this.src
+    _read: function (callback) {
+      var url = this.src
 
-        if (typeof importScripts === 'function') {
-            // FIXME
-            // adjust relative path when inside a web worker
-          if (url.substr(0, 3) === '../') url = '../' + url
-        }
-
-        var xhr = new XMLHttpRequest()
-        xhr.open('GET', url, true)
-
-        //
-
-        xhr.addEventListener('load', function () {
-          if (xhr.status === 200 || xhr.status === 304 ||
-                // when requesting from local file system
-                // the status in Google Chrome/Chromium is 0
-                xhr.status === 0
-            ) {
-            try {
-              callback(xhr.response)
-            } catch (e) {
-              this.onerror(e)
-            }
-          } else {
-            if (typeof this.onerror === 'function') {
-              this.onerror(xhr.status)
-            }
-
-            throw new Error('NetworkStreamer._read: status code ' + xhr.status)
-          }
-        }.bind(this), false)
-
-        //
-
-        // if( typeof this.onprogress === "function" ){
-
-        //     xhr.addEventListener( 'progress', function ( event ) {
-
-        //         this.onprogress( event );
-
-        //     }.bind( this ), false );
-
-        // }
-
-        //
-
-        if (typeof this.onerror === 'function') {
-          xhr.addEventListener('error', function (event) {
-            this.onerror(event)
-          }.bind(this), false)
-        }
-
-        //
-
-        if (this.isBinary()) {
-          xhr.responseType = 'arraybuffer'
-        } else if (this.json) {
-          xhr.responseType = 'json'
-        } else if (this.xml) {
-          xhr.responseType = 'document'
-        } else {
-          xhr.responseType = 'text'
-        }
-        // xhr.crossOrigin = true;
-
-        xhr.send(null)
-
-        // try {
-        //     xhr.send( null );
-        // }catch( e ){
-        //     if( typeof this.onerror === "function" ){
-        //         this.onerror( e.message );
-        //     }
-        // }
+      if (typeof importScripts === 'function') {
+          // FIXME
+          // adjust relative path when inside a web worker
+        if (url.substr(0, 3) === '../') url = '../' + url
       }
 
-    })
+      var xhr = new window.XMLHttpRequest()
+      xhr.open('GET', url, true)
+
+      //
+
+      xhr.addEventListener('load', function () {
+        if (xhr.status === 200 || xhr.status === 304 ||
+              // when requesting from local file system
+              // the status in Google Chrome/Chromium is 0
+              xhr.status === 0
+          ) {
+          try {
+            callback(xhr.response)
+          } catch (e) {
+            this.onerror(e)
+          }
+        } else {
+          if (typeof this.onerror === 'function') {
+            this.onerror(xhr.status)
+          }
+
+          throw new Error('NetworkStreamer._read: status code ' + xhr.status)
+        }
+      }.bind(this), false)
+
+      //
+
+      // if( typeof this.onprogress === "function" ){
+
+      //     xhr.addEventListener( 'progress', function ( event ) {
+
+      //         this.onprogress( event );
+
+      //     }.bind( this ), false );
+
+      // }
+
+      //
+
+      if (typeof this.onerror === 'function') {
+        xhr.addEventListener('error', function (event) {
+          this.onerror(event)
+        }.bind(this), false)
+      }
+
+      //
+
+      if (this.isBinary()) {
+        xhr.responseType = 'arraybuffer'
+      } else if (this.json) {
+        xhr.responseType = 'json'
+      } else if (this.xml) {
+        xhr.responseType = 'document'
+      } else {
+        xhr.responseType = 'text'
+      }
+      // xhr.crossOrigin = true;
+
+      xhr.send(null)
+
+      // try {
+      //     xhr.send( null );
+      // }catch( e ){
+      //     if( typeof this.onerror === "function" ){
+      //         this.onerror( e.message );
+      //     }
+      // }
+    }
+
+  }
+)
 
 export default NetworkStreamer
