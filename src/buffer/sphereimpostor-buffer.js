@@ -4,14 +4,12 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import '../shader/SphereImpostor.vert'
+import '../shader/SphereImpostor.frag'
 
-import "../shader/SphereImpostor.vert";
-import "../shader/SphereImpostor.frag";
-
-import QuadBuffer from "./quad-buffer.js";
-
+import QuadBuffer from './quad-buffer.js'
 
 /**
  * Sphere impostor buffer.
@@ -23,8 +21,7 @@ import QuadBuffer from "./quad-buffer.js";
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class SphereImpostorBuffer extends QuadBuffer{
-
+class SphereImpostorBuffer extends QuadBuffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
@@ -33,29 +30,25 @@ class SphereImpostorBuffer extends QuadBuffer{
      * @param {Picker} [data.picking] - picking ids
      * @param  {BufferParameters} params - parameter object
      */
-    constructor( data, params ){
+  constructor (data, params) {
+    super(data, params)
 
-        super( data, params );
+    this.addUniforms({
+      'projectionMatrixInverse': { value: new Matrix4() },
+      'ortho': { value: 0.0 }
+    })
 
-        this.addUniforms( {
-            "projectionMatrixInverse": { value: new Matrix4() },
-            "ortho": { value: 0.0 },
-        } );
+    this.addAttributes({
+      'radius': { type: 'f', value: null }
+    })
 
-        this.addAttributes( {
-            "radius": { type: "f", value: null },
-        } );
+    this.setAttributes(data)
+    this.makeMapping()
+  }
 
-        this.setAttributes( data );
-        this.makeMapping();
-
-    }
-
-    get isImpostor (){ return true; }
-    get vertexShader (){ return "SphereImpostor.vert"; }
-    get fragmentShader (){ return "SphereImpostor.frag"; }
-
+  get isImpostor () { return true }
+  get vertexShader () { return 'SphereImpostor.vert' }
+  get fragmentShader () { return 'SphereImpostor.frag' }
 }
 
-
-export default SphereImpostorBuffer;
+export default SphereImpostorBuffer

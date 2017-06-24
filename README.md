@@ -3,6 +3,7 @@
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
 [![npm version](https://badge.fury.io/js/ngl.svg)](https://badge.fury.io/js/ngl)
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)
+[![Standard](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat)](https://standardjs.com)
 
 
 NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.

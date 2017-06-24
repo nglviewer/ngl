@@ -4,167 +4,138 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Debug, Log, ParserRegistry } from '../globals.js'
+import { degToRad } from '../math/math-utils.js'
+import VolumeParser from './volume-parser.js'
 
-import { Debug, Log, ParserRegistry } from "../globals.js";
-import { degToRad } from "../math/math-utils.js";
-import VolumeParser from "./volume-parser.js";
+class DxParser extends VolumeParser {
+  get type () { return 'dx' }
 
-
-class DxParser extends VolumeParser{
-
-    get type (){ return "dx"; }
-
-    _parse(){
-
+  _parse () {
         // http://www.poissonboltzmann.org/docs/file-format-info/
 
-        if( Debug ) Log.time( "DxParser._parse " + this.name );
+    if (Debug) Log.time('DxParser._parse ' + this.name)
 
-        var v = this.volume;
-        var headerLines = this.streamer.peekLines( 30 );
-        var headerInfo = this.parseHeaderLines( headerLines );
-        var header = this.volume.header;
-        var dataLineStart = headerInfo.dataLineStart;
+    var v = this.volume
+    var headerLines = this.streamer.peekLines(30)
+    var headerInfo = this.parseHeaderLines(headerLines)
+    var header = this.volume.header
+    var dataLineStart = headerInfo.dataLineStart
 
-        var reWhitespace = /\s+/;
-        var size = header.nx * header.ny * header.nz;
-        var data = new Float32Array( size );
-        var count = 0;
-        var lineNo = 0;
+    var reWhitespace = /\s+/
+    var size = header.nx * header.ny * header.nz
+    var data = new Float32Array(size)
+    var count = 0
+    var lineNo = 0
 
-        function _parseChunkOfLines( _i, _n, lines ){
+    function _parseChunkOfLines (_i, _n, lines) {
+      for (var i = _i; i < _n; ++i) {
+        if (count < size && lineNo > dataLineStart) {
+          var line = lines[ i ].trim()
 
-            for( var i = _i; i < _n; ++i ){
+          if (line !== '') {
+            var ls = line.split(reWhitespace)
 
-                if( count < size && lineNo > dataLineStart ){
-
-                    var line = lines[ i ].trim();
-
-                    if( line !== "" ){
-
-                        var ls = line.split( reWhitespace );
-
-                        for( var j = 0, lj = ls.length; j < lj; ++j ){
-                            data[ count ] = parseFloat( ls[ j ] );
-                            ++count;
-                        }
-
-                    }
-
-                }
-
-                ++lineNo;
-
+            for (var j = 0, lj = ls.length; j < lj; ++j) {
+              data[ count ] = parseFloat(ls[ j ])
+              ++count
             }
-
+          }
         }
 
-        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
-            _parseChunkOfLines( 0, lines.length, lines );
-        } );
-
-        v.setData( data, header.nz, header.ny, header.nx );
-
-        if( Debug ) Log.timeEnd( "DxParser._parse " + this.name );
-
+        ++lineNo
+      }
     }
 
-    parseHeaderLines( headerLines ){
+    this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
+      _parseChunkOfLines(0, lines.length, lines)
+    })
 
-        var header = {};
-        var reWhitespace = /\s+/;
-        var n = headerLines.length;
+    v.setData(data, header.nz, header.ny, header.nx)
 
-        var dataLineStart = 0;
-        var headerByteCount = 0;
-        var deltaLineCount = 0;
+    if (Debug) Log.timeEnd('DxParser._parse ' + this.name)
+  }
 
-        for( var i = 0; i < n; ++i ){
+  parseHeaderLines (headerLines) {
+    var header = {}
+    var reWhitespace = /\s+/
+    var n = headerLines.length
 
-            var ls;
-            var line = headerLines[ i ];
+    var dataLineStart = 0
+    var headerByteCount = 0
+    var deltaLineCount = 0
 
-            if( line.startsWith( "object 1" ) ){
+    for (var i = 0; i < n; ++i) {
+      var ls
+      var line = headerLines[ i ]
 
-                ls = line.split( reWhitespace );
+      if (line.startsWith('object 1')) {
+        ls = line.split(reWhitespace)
 
-                header.nx = parseInt( ls[ 5 ] );
-                header.ny = parseInt( ls[ 6 ] );
-                header.nz = parseInt( ls[ 7 ] );
+        header.nx = parseInt(ls[ 5 ])
+        header.ny = parseInt(ls[ 6 ])
+        header.nz = parseInt(ls[ 7 ])
+      } else if (line.startsWith('origin')) {
+        ls = line.split(reWhitespace)
 
-            }else if( line.startsWith( "origin" ) ){
+        header.xmin = parseFloat(ls[ 1 ])
+        header.ymin = parseFloat(ls[ 2 ])
+        header.zmin = parseFloat(ls[ 3 ])
+      } else if (line.startsWith('delta')) {
+        ls = line.split(reWhitespace)
 
-                ls = line.split( reWhitespace );
-
-                header.xmin = parseFloat( ls[ 1 ] );
-                header.ymin = parseFloat( ls[ 2 ] );
-                header.zmin = parseFloat( ls[ 3 ] );
-
-            }else if( line.startsWith( "delta" ) ){
-
-                ls = line.split( reWhitespace );
-
-                if( deltaLineCount === 0 ){
-                    header.hx = parseFloat( ls[ 1 ] ) * this.voxelSize;
-                }else if( deltaLineCount === 1 ){
-                    header.hy = parseFloat( ls[ 2 ] ) * this.voxelSize;
-                }else if( deltaLineCount === 2 ){
-                    header.hz = parseFloat( ls[ 3 ] ) * this.voxelSize;
-                }
-
-                deltaLineCount += 1;
-
-            }else if( line.startsWith( "object 3" ) ){
-
-                dataLineStart = i;
-                headerByteCount += line.length + 1;
-                break;
-
-            }
-
-            headerByteCount += line.length + 1;
-
+        if (deltaLineCount === 0) {
+          header.hx = parseFloat(ls[ 1 ]) * this.voxelSize
+        } else if (deltaLineCount === 1) {
+          header.hy = parseFloat(ls[ 2 ]) * this.voxelSize
+        } else if (deltaLineCount === 2) {
+          header.hz = parseFloat(ls[ 3 ]) * this.voxelSize
         }
 
-        this.volume.header = header;
+        deltaLineCount += 1
+      } else if (line.startsWith('object 3')) {
+        dataLineStart = i
+        headerByteCount += line.length + 1
+        break
+      }
 
-        return {
-            dataLineStart: dataLineStart,
-            headerByteCount: headerByteCount
-        };
-
+      headerByteCount += line.length + 1
     }
 
-    getMatrix(){
+    this.volume.header = header
 
-        var h = this.volume.header;
-        var matrix = new Matrix4();
+    return {
+      dataLineStart: dataLineStart,
+      headerByteCount: headerByteCount
+    }
+  }
 
-        matrix.multiply(
-            new Matrix4().makeRotationY( degToRad( 90 ) )
-        );
+  getMatrix () {
+    var h = this.volume.header
+    var matrix = new Matrix4()
 
-        matrix.multiply(
+    matrix.multiply(
+            new Matrix4().makeRotationY(degToRad(90))
+        )
+
+    matrix.multiply(
             new Matrix4().makeTranslation(
                 -h.zmin, h.ymin, h.xmin
             )
-        );
+        )
 
-        matrix.multiply(
+    matrix.multiply(
             new Matrix4().makeScale(
                 -h.hz, h.hy, h.hx
             )
-        );
+        )
 
-        return matrix;
-
-    }
-
+    return matrix
+  }
 }
 
-ParserRegistry.add( "dx", DxParser );
+ParserRegistry.add('dx', DxParser)
 
-
-export default DxParser;
+export default DxParser

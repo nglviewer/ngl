@@ -4,9 +4,7 @@
  * @private
  */
 
-
-import EllipsoidGeometryBuffer from "./ellipsoidgeometry-buffer.js";
-
+import EllipsoidGeometryBuffer from './ellipsoidgeometry-buffer.js'
 
 /**
  * Ellipsoid buffer. Returns an {@link EllipsoidGeometryBuffer}
@@ -20,8 +18,7 @@ import EllipsoidGeometryBuffer from "./ellipsoidgeometry-buffer.js";
  *     minorAxis: new Float32Array( [ 0.5, 0, 0.5 ] ),
  * } );
  */
-class EllipsoidBuffer{
-
+class EllipsoidBuffer {
     /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position - center positions
@@ -32,13 +29,9 @@ class EllipsoidBuffer{
      * @param {Picker} [data.picking] - picking ids
      * @param {BufferParameters} [params] - parameters object
      */
-    constructor( data, params ){
-
-        return new EllipsoidGeometryBuffer( data, params );
-
-    }
-
+  constructor (data, params) {
+    return new EllipsoidGeometryBuffer(data, params)
+  }
 }
 
-
-export default EllipsoidBuffer;
+export default EllipsoidBuffer

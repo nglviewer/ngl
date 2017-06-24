@@ -4,125 +4,109 @@
  * @private
  */
 
+import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import { calculateCenterArray } from '../math/array-utils.js'
+import LicoriceRepresentation from './licorice-representation.js'
+import SphereBuffer from '../buffer/sphere-buffer.js'
+import HyperballStickBuffer from '../buffer/hyperballstick-buffer.js'
 
-import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import { calculateCenterArray } from "../math/array-utils.js";
-import LicoriceRepresentation from "./licorice-representation.js";
-import SphereBuffer from "../buffer/sphere-buffer.js";
-import HyperballStickBuffer from "../buffer/hyperballstick-buffer.js";
+class HyperballRepresentation extends LicoriceRepresentation {
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
+    this.type = 'hyperball'
 
-class HyperballRepresentation extends LicoriceRepresentation{
+    this.parameters = Object.assign({
 
-    constructor( structure, viewer, params ){
+      shrink: {
+        type: 'number', precision: 3, max: 1.0, min: 0.001, buffer: true
+      }
 
-        super( structure, viewer, params );
+    }, this.parameters, {
 
-        this.type = "hyperball";
+      multipleBond: null,
+      bondSpacing: null
 
-        this.parameters = Object.assign( {
+    })
+  }
 
-            shrink: {
-                type: "number", precision: 3, max: 1.0, min: 0.001, buffer: true
-            }
+  init (params) {
+    var p = params || {}
+    p.scale = defaults(p.scale, 0.2)
+    p.radius = defaults(p.radius, 'vdw')
 
-        }, this.parameters, {
+    this.shrink = defaults(p.shrink, 0.12)
 
-            multipleBond: null,
-            bondSpacing: null,
+    super.init(p)
+  }
 
-        } );
-
+  getBondParams (what, params) {
+    if (!what || what.radius) {
+      params = Object.assign({ radius2: true }, params)
     }
 
-    init( params ){
+    return super.getBondParams(what, params)
+  }
 
-        var p = params || {};
-        p.scale = defaults( p.scale, 0.2 );
-        p.radius = defaults( p.radius, "vdw" );
+  createData (sview) {
+    var sphereBuffer = new SphereBuffer(
+            sview.getAtomData(this.getAtomParams()),
+            this.getBufferParams({
+              sphereDetail: this.sphereDetail,
+              disableImpostor: this.disableImpostor,
+              dullInterior: true
+            })
+        )
 
-        this.shrink = defaults( p.shrink, 0.12 );
+    this.__center = new Float32Array(sview.bondCount * 3)
 
-        super.init( p );
+    var stickBuffer = new HyperballStickBuffer(
+            sview.getBondData(this.getBondParams()),
+            this.getBufferParams({
+              shrink: this.shrink,
+              radialSegments: this.radialSegments,
+              dullInterior: true
+            })
+        )
 
+    return {
+      bufferList: [ sphereBuffer, stickBuffer ]
+    }
+  }
+
+  updateData (what, data) {
+    var atomData = data.sview.getAtomData(this.getAtomParams())
+    var bondData = data.sview.getBondData(this.getBondParams())
+    var sphereData = {}
+    var stickData = {}
+
+    if (!what || what.position) {
+      sphereData.position = atomData.position
+      var from = bondData.position1
+      var to = bondData.position2
+      stickData.position = calculateCenterArray(from, to, this.__center)
+      stickData.position1 = from
+      stickData.position2 = to
     }
 
-    getBondParams( what, params ){
-
-        if( !what || what.radius ){
-            params = Object.assign( { radius2: true }, params );
-        }
-
-        return super.getBondParams( what, params );
-
+    if (!what || what.color) {
+      sphereData.color = atomData.color
+      stickData.color = bondData.color
+      stickData.color2 = bondData.color2
     }
 
-    createData( sview ){
-
-        var sphereBuffer = new SphereBuffer(
-            sview.getAtomData( this.getAtomParams() ),
-            this.getBufferParams( {
-                sphereDetail: this.sphereDetail,
-                disableImpostor: this.disableImpostor,
-                dullInterior: true
-            } )
-        );
-
-        this.__center = new Float32Array( sview.bondCount * 3 );
-
-        var stickBuffer = new HyperballStickBuffer(
-            sview.getBondData( this.getBondParams() ),
-            this.getBufferParams( {
-                shrink: this.shrink,
-                radialSegments: this.radialSegments,
-                dullInterior: true
-            } )
-        );
-
-        return {
-            bufferList: [ sphereBuffer, stickBuffer ]
-        };
-
+    if (!what || what.radius) {
+      sphereData.radius = atomData.radius
+      stickData.radius = bondData.radius
+      stickData.radius2 = bondData.radius2
     }
 
-    updateData( what, data ){
-
-        var atomData = data.sview.getAtomData( this.getAtomParams() );
-        var bondData = data.sview.getBondData( this.getBondParams() );
-        var sphereData = {};
-        var stickData = {};
-
-        if( !what || what.position ){
-            sphereData.position = atomData.position;
-            var from = bondData.position1;
-            var to = bondData.position2;
-            stickData.position = calculateCenterArray( from, to, this.__center );
-            stickData.position1 = from;
-            stickData.position2 = to;
-        }
-
-        if( !what || what.color ){
-            sphereData.color = atomData.color;
-            stickData.color = bondData.color;
-            stickData.color2 = bondData.color2;
-        }
-
-        if( !what || what.radius ){
-            sphereData.radius = atomData.radius;
-            stickData.radius = bondData.radius;
-            stickData.radius2 = bondData.radius2;
-        }
-
-        data.bufferList[ 0 ].setAttributes( sphereData );
-        data.bufferList[ 1 ].setAttributes( stickData );
-
-    }
-
+    data.bufferList[ 0 ].setAttributes(sphereData)
+    data.bufferList[ 1 ].setAttributes(stickData)
+  }
 }
 
+RepresentationRegistry.add('hyperball', HyperballRepresentation)
 
-RepresentationRegistry.add( "hyperball", HyperballRepresentation );
-
-
-export default HyperballRepresentation;
+export default HyperballRepresentation

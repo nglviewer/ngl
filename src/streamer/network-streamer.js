@@ -4,70 +4,55 @@
  * @private
  */
 
+import Streamer from './streamer.js'
 
-import Streamer from "./streamer.js";
-
-
-function NetworkStreamer( url, params ){
-
-    Streamer.call( this, url, params );
-
+function NetworkStreamer (url, params) {
+  Streamer.call(this, url, params)
 }
 
-NetworkStreamer.prototype = Object.assign( Object.create(
+NetworkStreamer.prototype = Object.assign(Object.create(
 
-    Streamer.prototype ), {
+    Streamer.prototype), {
 
-    constructor: NetworkStreamer,
+      constructor: NetworkStreamer,
 
-    type: "network",
+      type: 'network',
 
-    __srcName: "url",
+      __srcName: 'url',
 
-    _read: function( callback ){
+      _read: function (callback) {
+        var url = this.src
 
-        var url = this.src;
-
-        if( typeof importScripts === 'function' ){
-
+        if (typeof importScripts === 'function') {
             // FIXME
             // adjust relative path when inside a web worker
-            if( url.substr( 0, 3 ) === "../" ) url = "../" + url;
-
+          if (url.substr(0, 3) === '../') url = '../' + url
         }
 
-        var xhr = new XMLHttpRequest();
-        xhr.open( "GET", url, true );
+        var xhr = new XMLHttpRequest()
+        xhr.open('GET', url, true)
 
         //
 
-        xhr.addEventListener( 'load', function () {
-
-            if( xhr.status === 200 || xhr.status === 304 ||
+        xhr.addEventListener('load', function () {
+          if (xhr.status === 200 || xhr.status === 304 ||
                 // when requesting from local file system
                 // the status in Google Chrome/Chromium is 0
                 xhr.status === 0
-            ){
-
-                try {
-                    callback( xhr.response );
-                } catch ( e ) {
-                    this.onerror( e );
-                }
-
-            } else {
-
-                if( typeof this.onerror === "function" ){
-
-                    this.onerror( xhr.status );
-
-                }
-
-                throw "NetworkStreamer._read: status code " + xhr.status;
-
+            ) {
+            try {
+              callback(xhr.response)
+            } catch (e) {
+              this.onerror(e)
+            }
+          } else {
+            if (typeof this.onerror === 'function') {
+              this.onerror(xhr.status)
             }
 
-        }.bind( this ), false );
+            throw new Error('NetworkStreamer._read: status code ' + xhr.status)
+          }
+        }.bind(this), false)
 
         //
 
@@ -83,30 +68,26 @@ NetworkStreamer.prototype = Object.assign( Object.create(
 
         //
 
-        if( typeof this.onerror === "function" ){
-
-            xhr.addEventListener( 'error', function ( event ) {
-
-                this.onerror( event );
-
-            }.bind( this ), false );
-
+        if (typeof this.onerror === 'function') {
+          xhr.addEventListener('error', function (event) {
+            this.onerror(event)
+          }.bind(this), false)
         }
 
         //
 
-        if( this.isBinary() ){
-            xhr.responseType = "arraybuffer";
-        }else if( this.json ){
-            xhr.responseType = "json";
-        }else if( this.xml ){
-            xhr.responseType = "document";
-        }else{
-            xhr.responseType = "text";
+        if (this.isBinary()) {
+          xhr.responseType = 'arraybuffer'
+        } else if (this.json) {
+          xhr.responseType = 'json'
+        } else if (this.xml) {
+          xhr.responseType = 'document'
+        } else {
+          xhr.responseType = 'text'
         }
         // xhr.crossOrigin = true;
 
-        xhr.send( null );
+        xhr.send(null)
 
         // try {
         //     xhr.send( null );
@@ -115,10 +96,8 @@ NetworkStreamer.prototype = Object.assign( Object.create(
         //         this.onerror( e.message );
         //     }
         // }
+      }
 
-    }
+    })
 
-} );
-
-
-export default NetworkStreamer;
+export default NetworkStreamer

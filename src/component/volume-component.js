@@ -4,11 +4,9 @@
  * @private
  */
 
-
-import { ComponentRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import Component from "./component.js";
-
+import { ComponentRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import Component from './component.js'
 
 /**
  * Component wrapping a {@link Volume} object
@@ -20,29 +18,26 @@ import Component from "./component.js";
  *     volumeComponent.autoView();
  * } );
  */
-class VolumeComponent extends Component{
-
+class VolumeComponent extends Component {
     /**
      * @param {Stage} stage - stage object the component belongs to
      * @param {Volume} volume - volume object to wrap
      * @param {ComponentParameters} params - component parameters
      */
-    constructor( stage, volume, params ){
+  constructor (stage, volume, params) {
+    var p = params || {}
+    p.name = defaults(p.name, volume.name)
 
-        var p = params || {};
-        p.name = defaults( p.name, volume.name );
+    super(stage, p)
 
-        super( stage, p );
-
-        this.volume = volume;
-
-    }
+    this.volume = volume
+  }
 
     /**
      * Component type
      * @type {String}
      */
-    get type(){ return "volume"; }
+  get type () { return 'volume' }
 
     /**
      * Add a new volume representation to the component
@@ -52,35 +47,25 @@ class VolumeComponent extends Component{
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation( type, params ){
+  addRepresentation (type, params) {
+    return super.addRepresentation(type, this.volume, params)
+  }
 
-        return super.addRepresentation( type, this.volume, params );
+  getBoxUntransformed () {
+    return this.volume.boundingBox
+  }
 
-    }
+  getCenterUntransformed () {
+    return this.volume.center
+  }
 
-    getBoxUntransformed(){
+  dispose () {
+    this.volume.dispose()
 
-        return this.volume.boundingBox;
-
-    }
-
-    getCenterUntransformed(){
-
-        return this.volume.center;
-
-    }
-
-    dispose(){
-
-        this.volume.dispose();
-
-        super.dispose();
-
-    }
-
+    super.dispose()
+  }
 }
 
-ComponentRegistry.add( "volume", VolumeComponent );
+ComponentRegistry.add('volume', VolumeComponent)
 
-
-export default VolumeComponent;
+export default VolumeComponent

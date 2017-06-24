@@ -4,64 +4,53 @@
  * @private
  */
 
+import { Color } from '../../lib/three.es6.js'
 
-import { Color } from "../../lib/three.es6.js";
-
-import Selection from "../selection.js";
-import Colormaker from "./colormaker.js";
-import { ColormakerRegistry } from "../globals.js";
-
+import Selection from '../selection.js'
+import Colormaker from './colormaker.js'
+import { ColormakerRegistry } from '../globals.js'
 
 /**
  * Color based on {@link Selection}
  */
-class SelectionColormaker extends Colormaker{
+class SelectionColormaker extends Colormaker {
+  constructor (params) {
+    super(params)
 
-    constructor( params ){
+    const dataList = params.dataList || []
 
-        super( params );
+    this.colormakerList = []
+    this.selectionList = []
 
-        const dataList = params.dataList || [];
+    dataList.forEach(pair => {
+      const [ scheme, sele, params = {} ] = pair
 
-        this.colormakerList = [];
-        this.selectionList = [];
+      if (ColormakerRegistry.hasScheme(scheme)) {
+        Object.assign(params, {
+          scheme: scheme,
+          structure: this.structure
+        })
+      } else {
+        Object.assign(params, {
+          scheme: 'uniform',
+          value: new Color(scheme).getHex()
+        })
+      }
 
-        dataList.forEach( pair => {
+      this.colormakerList.push(ColormakerRegistry.getScheme(params))
+      this.selectionList.push(new Selection(sele))
+    })
+  }
 
-            const [ scheme, sele, params={} ] = pair;
-
-            if( ColormakerRegistry.hasScheme( scheme ) ){
-                Object.assign( params, {
-                    scheme: scheme,
-                    structure: this.structure
-                } );
-            }else{
-                Object.assign( params, {
-                    scheme: "uniform",
-                    value: new Color( scheme ).getHex()
-                } );
-            }
-
-            this.colormakerList.push( ColormakerRegistry.getScheme( params ) );
-            this.selectionList.push( new Selection( sele ) );
-
-        } );
-
+  atomColor (a) {
+    for (let i = 0, n = this.selectionList.length; i < n; ++i) {
+      if (this.selectionList[ i ].test(a)) {
+        return this.colormakerList[ i ].atomColor(a)
+      }
     }
 
-    atomColor( a ){
-
-        for( let i = 0, n = this.selectionList.length; i < n; ++i ){
-            if( this.selectionList[ i ].test( a ) ){
-                return this.colormakerList[ i ].atomColor( a );
-            }
-        }
-
-        return 0xFFFFFF;
-
-    }
-
+    return 0xFFFFFF
+  }
 }
 
-
-export default SelectionColormaker;
+export default SelectionColormaker

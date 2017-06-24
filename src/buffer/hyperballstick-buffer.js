@@ -4,12 +4,10 @@
  * @private
  */
 
-
-import { ExtensionFragDepth } from "../globals.js";
-import { calculateMinArray } from "../math/array-utils.js";
-import CylinderGeometryBuffer from "./cylindergeometry-buffer.js";
-import HyperballStickImpostorBuffer from "./hyperballstickimpostor-buffer.js";
-
+import { ExtensionFragDepth } from '../globals.js'
+import { calculateMinArray } from '../math/array-utils.js'
+import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
+import HyperballStickImpostorBuffer from './hyperballstickimpostor-buffer.js'
 
 /**
  * Hyperball stick buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -27,31 +25,26 @@ import HyperballStickImpostorBuffer from "./hyperballstickimpostor-buffer.js";
  *     radius2: new Float32Array( [ 2 ] )
  * } );
  */
-class HyperballStickBuffer{
-
-	/**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position1 - from positions
-     * @param  {Float32Array} data.position2 - to positions
-     * @param  {Float32Array} data.color - from colors
-     * @param  {Float32Array} data.color2 - to colors
-     * @param  {Float32Array} data.radius1 - from radii
-     * @param  {Float32Array} data.radius2 - to radii
-     * @param  {Float32Array} data.picking - picking ids
-     * @param  {BufferParameters} params - parameter object
-     */
-    constructor( data, params ){
-
-        if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
-            data.radius = calculateMinArray( data.radius1, data.radius2 );
-            return new CylinderGeometryBuffer( data, params );
-        }else{
-            return new HyperballStickImpostorBuffer( data, params );
-        }
-
+class HyperballStickBuffer {
+  /**
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position1 - from positions
+   * @param  {Float32Array} data.position2 - to positions
+   * @param  {Float32Array} data.color - from colors
+   * @param  {Float32Array} data.color2 - to colors
+   * @param  {Float32Array} data.radius1 - from radii
+   * @param  {Float32Array} data.radius2 - to radii
+   * @param  {Float32Array} data.picking - picking ids
+   * @param  {BufferParameters} params - parameter object
+   */
+  constructor (data, params) {
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+      data.radius = calculateMinArray(data.radius1, data.radius2)
+      return new CylinderGeometryBuffer(data, params)
+    } else {
+      return new HyperballStickImpostorBuffer(data, params)
     }
-
+  }
 }
 
-
-export default HyperballStickBuffer;
+export default HyperballStickBuffer

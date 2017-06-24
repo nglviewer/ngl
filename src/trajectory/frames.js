@@ -4,22 +4,16 @@
  * @private
  */
 
+class Frames {
+  constructor (name, path) {
+    this.name = name
+    this.path = path
 
-class Frames{
+    this.coordinates = []
+    this.boxes = []
+  }
 
-    constructor( name, path ){
-
-        this.name = name;
-        this.path = path;
-
-        this.coordinates = [];
-        this.boxes = [];
-
-    }
-
-    get type (){ return "Frames"; }
-
+  get type () { return 'Frames' }
 }
 
-
-export default Frames;
+export default Frames

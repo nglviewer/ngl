@@ -4,9 +4,7 @@
  * @private
  */
 
-
-import ConeGeometryBuffer from "./conegeometry-buffer.js";
-
+import ConeGeometryBuffer from './conegeometry-buffer.js'
 
 /**
  * Cone buffer. Returns a {@link ConeGeometryBuffer}
@@ -21,8 +19,7 @@ import ConeGeometryBuffer from "./conegeometry-buffer.js";
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class ConeBuffer{
-
+class ConeBuffer {
     /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position1 - from positions
@@ -32,13 +29,9 @@ class ConeBuffer{
      * @param {Picker} [data.picking] - picking ids
      * @param {BufferParameters} [params] - parameters object
      */
-    constructor( data, params ){
-
-        return new ConeGeometryBuffer( data, params );
-
-    }
-
+  constructor (data, params) {
+    return new ConeGeometryBuffer(data, params)
+  }
 }
 
-
-export default ConeBuffer;
+export default ConeBuffer

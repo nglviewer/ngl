@@ -4,11 +4,9 @@
  * @private
  */
 
+import Signal from '../../lib/signals.es6.js'
 
-import Signal from "../../lib/signals.es6.js";
-
-import { defaults } from "../utils.js";
-
+import { defaults } from '../utils.js'
 
 /**
  * Trajectory player parameter object.
@@ -24,240 +22,192 @@ import { defaults } from "../utils.js";
  * @property {String} direction - either "forward" or "backward"
  */
 
-
 /**
  * Trajectory player for animating coordinate frames
  * @example
  * var player = new NGL.TrajectoryPlayer( trajComp.trajectory, { step: 1, timeout: 50 } );
  * player.play();
  */
-class TrajectoryPlayer{
-
+class TrajectoryPlayer {
     /**
      * make trajectory player
      * @param {Trajectory} traj - the trajectory
      * @param {TrajectoryPlayerParameters} [params] - parameter object
      */
-    constructor( traj, params ){
-
-        this.signals = {
-            startedRunning: new Signal(),
-            haltedRunning: new Signal()
-        };
-
-        var p = Object.assign( {}, params );
-
-        traj.signals.playerChanged.add( function( player ){
-            if( player !== this ){
-                this.pause();
-            }
-        }, this );
-
-        var n = defaults( traj.numframes, 1 );
-        this.traj = traj;
-        this.start = defaults( p.start, 0 );
-        this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
-
-        this.step = defaults( p.step, Math.ceil( ( n + 1 ) / 100 ) );
-        this.timeout = defaults( p.timeout, 50 );
-        this.interpolateType = defaults( p.interpolateType, "" );
-        this.interpolateStep = defaults( p.interpolateStep, 5 );
-        this.mode = defaults( p.mode, "loop" );  // loop, once
-        this.direction = defaults( p.direction, "forward" );  // forward, backward
-
-        this._stopFlag = false;
-        this._running = false;
-
-        traj.signals.gotNumframes.add( function( n ){
-            this.end = Math.min( defaults( p.end, n - 1 ), n - 1 );
-        }, this );
-
+  constructor (traj, params) {
+    this.signals = {
+      startedRunning: new Signal(),
+      haltedRunning: new Signal()
     }
 
-    _animate(){
+    var p = Object.assign({}, params)
 
-        var i;
-        this._running = true;
+    traj.signals.playerChanged.add(function (player) {
+      if (player !== this) {
+        this.pause()
+      }
+    }, this)
 
-        if( !this.traj.inProgress && !this._stopFlag ){
+    var n = defaults(traj.numframes, 1)
+    this.traj = traj
+    this.start = defaults(p.start, 0)
+    this.end = Math.min(defaults(p.end, n - 1), n - 1)
 
-            if( this.direction === "forward" ){
-                i = this.traj.currentFrame + this.step;
-            }else{
-                i = this.traj.currentFrame - this.step;
-            }
+    this.step = defaults(p.step, Math.ceil((n + 1) / 100))
+    this.timeout = defaults(p.timeout, 50)
+    this.interpolateType = defaults(p.interpolateType, '')
+    this.interpolateStep = defaults(p.interpolateStep, 5)
+    this.mode = defaults(p.mode, 'loop')  // loop, once
+    this.direction = defaults(p.direction, 'forward')  // forward, backward
 
-            if( i >= this.end || i < this.start ){
+    this._stopFlag = false
+    this._running = false
 
-                if( this.mode === "once" ){
+    traj.signals.gotNumframes.add(function (n) {
+      this.end = Math.min(defaults(p.end, n - 1), n - 1)
+    }, this)
+  }
 
-                    this.pause();
+  _animate () {
+    var i
+    this._running = true
 
-                    if( this.direction === "forward" ){
-                        i = this.end;
-                    }else{
-                        i = this.start;
-                    }
+    if (!this.traj.inProgress && !this._stopFlag) {
+      if (this.direction === 'forward') {
+        i = this.traj.currentFrame + this.step
+      } else {
+        i = this.traj.currentFrame - this.step
+      }
 
-                }else{
+      if (i >= this.end || i < this.start) {
+        if (this.mode === 'once') {
+          this.pause()
 
-                    if( this.direction === "forward" ){
-                        i = this.start;
-                    }else{
-                        i = this.end;
-                    }
+          if (this.direction === 'forward') {
+            i = this.end
+          } else {
+            i = this.start
+          }
+        } else {
+          if (this.direction === 'forward') {
+            i = this.start
+          } else {
+            i = this.end
+          }
+        }
+      }
 
-                }
+      if (!this.interpolateType) {
+        this.traj.setFrame(i)
+      }
+    }
 
-            }
+    if (!this._stopFlag) {
+      if (!this.traj.inProgress && this.interpolateType) {
+        var ip, ipp, ippp
 
-            if( !this.interpolateType ){
-                this.traj.setFrame( i );
-            }
-
+        if (this.direction === 'forward') {
+          ip = Math.max(this.start, i - this.step)
+          ipp = Math.max(this.start, i - 2 * this.step)
+          ippp = Math.max(this.start, i - 3 * this.step)
+        } else {
+          ip = Math.min(this.end, i + this.step)
+          ipp = Math.min(this.end, i + 2 * this.step)
+          ippp = Math.min(this.end, i + 3 * this.step)
         }
 
-        if( !this._stopFlag ){
-
-            if( !this.traj.inProgress && this.interpolateType ){
-
-                var ip, ipp, ippp;
-
-                if( this.direction === "forward" ){
-
-                    ip = Math.max( this.start, i - this.step );
-                    ipp = Math.max( this.start, i - 2 * this.step );
-                    ippp = Math.max( this.start, i - 3 * this.step );
-
-                }else{
-
-                    ip = Math.min( this.end, i + this.step );
-                    ipp = Math.min( this.end, i + 2 * this.step );
-                    ippp = Math.min( this.end, i + 3 * this.step );
-
-                }
-
-                this._interpolate(
+        this._interpolate(
                     i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-                );
-
-            }else{
-
-                setTimeout( this._animate.bind( this ), this.timeout );
-
-            }
-
-        }else{
-
-            this._running = false;
-
-        }
-
+                )
+      } else {
+        setTimeout(this._animate.bind(this), this.timeout)
+      }
+    } else {
+      this._running = false
     }
+  }
 
-    _interpolate( i, ip, ipp, ippp, d, t ){
+  _interpolate (i, ip, ipp, ippp, d, t) {
+    t += d
 
-        t += d;
+    if (t <= 1) {
+      var deltaTime = Math.round(this.timeout * d)
 
-        if( t <= 1 ){
-
-            var deltaTime = Math.round( this.timeout * d );
-
-            this.traj.setFrameInterpolated(
+      this.traj.setFrameInterpolated(
                 i, ip, ipp, ippp, t, this.interpolateType,
-                function(){
-                    setTimeout( function(){
-                        this._interpolate( i, ip, ipp, ippp, d, t );
-                    }.bind( this ), deltaTime );
-                }.bind( this )
-            );
-
-        }else{
-
-            setTimeout( this._animate.bind( this ), 0 );
-
-        }
-
+                function () {
+                  setTimeout(function () {
+                    this._interpolate(i, ip, ipp, ippp, d, t)
+                  }.bind(this), deltaTime)
+                }.bind(this)
+            )
+    } else {
+      setTimeout(this._animate.bind(this), 0)
     }
+  }
 
     /**
      * toggle between playing and pausing the animation
      * @return {undefined}
      */
-    toggle(){
-
-        if( this._running ){
-            this.pause();
-        }else{
-            this.play();
-        }
-
+  toggle () {
+    if (this._running) {
+      this.pause()
+    } else {
+      this.play()
     }
+  }
 
     /**
      * start the animation
      * @return {undefined}
      */
-    play(){
+  play () {
+    if (!this._running) {
+      if (this.traj.player !== this) {
+        this.traj.setPlayer(this)
+      }
 
-        if( !this._running ){
-
-            if( this.traj.player !== this ){
-                this.traj.setPlayer( this );
-            }
-
-            var frame = this.traj.currentFrame;
+      var frame = this.traj.currentFrame
 
             // snap to the grid implied by this.step division and multiplication
             // thus minimizing cache misses
-            var i = Math.ceil( frame / this.step ) * this.step;
+      var i = Math.ceil(frame / this.step) * this.step
 
             // wrap when restarting from the limit (i.e. end or start)
-            if( this.direction === "forward" && frame >= this.end ){
+      if (this.direction === 'forward' && frame >= this.end) {
+        i = this.start
+      } else if (this.direction === 'backward' && frame <= this.start) {
+        i = this.end
+      }
 
-                i = this.start;
+      this.traj.setFrame(i)
 
-            }else if( this.direction === "backward" && frame <= this.start ){
-
-                i = this.end;
-
-            }
-
-            this.traj.setFrame( i );
-
-            this._stopFlag = false;
-            this._animate();
-            this.signals.startedRunning.dispatch();
-
-        }
-
+      this._stopFlag = false
+      this._animate()
+      this.signals.startedRunning.dispatch()
     }
+  }
 
     /**
      * pause the animation
      * @return {undefined}
      */
-    pause(){
-
-        if( this._running ){
-            this._stopFlag = true;
-            this.signals.haltedRunning.dispatch();
-        }
-
+  pause () {
+    if (this._running) {
+      this._stopFlag = true
+      this.signals.haltedRunning.dispatch()
     }
+  }
 
     /**
      * stop the animation (pause and return to start-frame)
      * @return {undefined}
      */
-    stop(){
-
-        this.traj.setFrame( this.start );
-        this.pause();
-
-    }
-
+  stop () {
+    this.traj.setFrame(this.start)
+    this.pause()
+  }
 }
 
-
-export default TrajectoryPlayer;
+export default TrajectoryPlayer

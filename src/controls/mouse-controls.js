@@ -4,9 +4,7 @@
  * @private
  */
 
-
-import { ActionPresets } from "./mouse-actions.js";
-
+import { ActionPresets } from './mouse-actions.js'
 
 /**
  * Strings to describe mouse events (including optional keyboard modifiers).
@@ -36,73 +34,66 @@ import { ActionPresets } from "./mouse-actions.js";
  * @typedef {String} TriggerString
  */
 
-
 /**
  * Get event type, key and button
  * @param  {TriggerString} str - input trigger string
  * @return {Array} event type, key and button
  */
-function triggerFromString( str ){
-    const tokens = str.split( /[-+]/ );
+function triggerFromString (str) {
+  const tokens = str.split(/[-+]/)
 
-    let type = "";
-    if( tokens.includes( "scroll" ) ) type = "scroll";
-    if( tokens.includes( "drag" ) ) type = "drag";
-    if( tokens.includes( "click" ) ) type = "click";
-    if( tokens.includes( "hover" ) ) type = "hover";
-    if( tokens.includes( "clickPick" ) ) type = "clickPick";
-    if( tokens.includes( "hoverPick" ) ) type = "hoverPick";
+  let type = ''
+  if (tokens.includes('scroll')) type = 'scroll'
+  if (tokens.includes('drag')) type = 'drag'
+  if (tokens.includes('click')) type = 'click'
+  if (tokens.includes('hover')) type = 'hover'
+  if (tokens.includes('clickPick')) type = 'clickPick'
+  if (tokens.includes('hoverPick')) type = 'hoverPick'
 
-    let key = 0;
-    if( tokens.includes( "alt" ) ) key += 1;
-    if( tokens.includes( "ctrl" ) ) key += 2;
-    if( tokens.includes( "meta" ) ) key += 4;
-    if( tokens.includes( "shift" ) ) key += 8;
+  let key = 0
+  if (tokens.includes('alt')) key += 1
+  if (tokens.includes('ctrl')) key += 2
+  if (tokens.includes('meta')) key += 4
+  if (tokens.includes('shift')) key += 8
 
-    let button = 0;
-    if( tokens.includes( "left" ) ) button += 1;
-    if( tokens.includes( "right" ) ) button += 2;
-    if( tokens.includes( "middle" ) ) button += 4;
+  let button = 0
+  if (tokens.includes('left')) button += 1
+  if (tokens.includes('right')) button += 2
+  if (tokens.includes('middle')) button += 4
 
-    return [ type, key, button ];
+  return [ type, key, button ]
 }
-
 
 /**
  * Mouse controls
  */
-class MouseControls{
-
+class MouseControls {
     /**
      * @param {Stage} stage - the stage object
      * @param {Object} [params] - the parameters
      * @param {String} params.preset - one of "default", "pymol", "coot"
      */
-    constructor( stage, params ){
+  constructor (stage, params) {
+    const p = params || {}
 
-        const p = params || {};
+    this.stage = stage
+    this.mouse = stage.mouseObserver
 
-        this.stage = stage;
-        this.mouse = stage.mouseObserver;
+    this.actionList = []
 
-        this.actionList = [];
+    this.preset(p.preset || 'default')
+  }
 
-        this.preset( p.preset || "default" );
+  run (type, ...args) {
+    const key = this.mouse.key || 0
+    const button = this.mouse.buttons || 0
 
-    }
-
-    run( type, ...args ){
-
-        const key = this.mouse.key || 0;
-        const button = this.mouse.buttons || 0;
-
-        this.actionList.forEach( a => {
-            if( a.type === type && a.key === key && a.button === button ){
-                a.callback( this.stage, ...args );
-            }
-        } );
-
-    }
+    this.actionList.forEach(a => {
+      if (a.type === type && a.key === key && a.button === button) {
+        a.callback(this.stage, ...args)
+      }
+    })
+  }
 
     /**
      * Add a new mouse action triggered by an event, key and button combination.
@@ -126,13 +117,11 @@ class MouseControls{
      * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
      * @return {undefined}
      */
-    add( triggerStr, callback ){
+  add (triggerStr, callback) {
+    const [ type, key, button ] = triggerFromString(triggerStr)
 
-        const [ type, key, button ] = triggerFromString( triggerStr );
-
-        this.actionList.push( { type, key, button, callback } );
-
-    }
+    this.actionList.push({ type, key, button, callback })
+  }
 
     /**
      * Remove a mouse action. The trigger string can contain an asterix (*)
@@ -157,52 +146,44 @@ class MouseControls{
      * @param {Function} [callback] - the callback function for the action
      * @return {undefined}
      */
-    remove( triggerStr, callback ){
+  remove (triggerStr, callback) {
+    const wildcard = triggerStr.includes('*')
+    const [ type, key, button ] = triggerFromString(triggerStr)
 
-        const wildcard = triggerStr.includes( "*" );
-        const [ type, key, button ] = triggerFromString( triggerStr );
+    const actionList = this.actionList.filter(function (a) {
+      return !(
+                (a.type === type || (wildcard && type === '')) &&
+                (a.key === key || (wildcard && key === 0)) &&
+                (a.button === button || (wildcard && button === 0)) &&
+                (a.callback === callback || callback === undefined)
+            )
+    })
 
-        const actionList = this.actionList.filter( function( a ){
-            return !(
-                ( a.type === type || ( wildcard && type === "" ) ) &&
-                ( a.key === key || ( wildcard && key === 0 ) ) &&
-                ( a.button === button || ( wildcard && button === 0 ) ) &&
-                ( a.callback === callback || callback === undefined )
-            );
-        } );
-
-        this.actionList = actionList;
-
-    }
+    this.actionList = actionList
+  }
 
     /**
      * Set mouse action preset
      * @param  {String} name - one of "default", "pymol", "coot"
      * @return {undefined}
      */
-    preset( name ){
+  preset (name) {
+    this.clear()
 
-        this.clear();
+    const list = ActionPresets[ name ] || []
 
-        const list = ActionPresets[ name ] || [];
-
-        list.forEach( action => {
-            this.add( ...action );
-        } );
-
-    }
+    list.forEach(action => {
+      this.add(...action)
+    })
+  }
 
     /**
      * Remove all mouse actions
      * @return {undefined}
      */
-    clear(){
-
-        this.actionList.length = 0;
-
-    }
-
+  clear () {
+    this.actionList.length = 0
+  }
 }
 
-
-export default MouseControls;
+export default MouseControls

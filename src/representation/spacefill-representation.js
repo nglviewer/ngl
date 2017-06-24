@@ -4,79 +4,65 @@
  * @private
  */
 
+import { RepresentationRegistry } from '../globals.js'
+import StructureRepresentation from './structure-representation.js'
+import SphereBuffer from '../buffer/sphere-buffer.js'
 
-import { RepresentationRegistry } from "../globals.js";
-import StructureRepresentation from "./structure-representation.js";
-import SphereBuffer from "../buffer/sphere-buffer.js";
+class SpacefillRepresentation extends StructureRepresentation {
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
+    this.type = 'spacefill'
 
-class SpacefillRepresentation extends StructureRepresentation{
+    this.parameters = Object.assign({
+      sphereDetail: true,
+      disableImpostor: true
+    }, this.parameters)
 
-    constructor( structure, viewer, params ){
+    this.init(params)
+  }
 
-        super( structure, viewer, params );
+  init (params) {
+    var p = params || {}
 
-        this.type = "spacefill";
+    super.init(p)
+  }
 
-        this.parameters = Object.assign( {
-            sphereDetail: true,
-            disableImpostor: true
-        }, this.parameters );
+  createData (sview) {
+    var sphereBuffer = new SphereBuffer(
+            sview.getAtomData(this.getAtomParams()),
+            this.getBufferParams({
+              sphereDetail: this.sphereDetail,
+              dullInterior: true,
+              disableImpostor: this.disableImpostor
+            })
+        )
 
-        this.init( params );
+    return {
+      bufferList: [ sphereBuffer ]
+    }
+  }
 
+  updateData (what, data) {
+    var atomData = data.sview.getAtomData(this.getAtomParams(what))
+    var sphereData = {}
+
+    if (!what || what.position) {
+      sphereData.position = atomData.position
     }
 
-    init( params ){
-
-        var p = params || {};
-
-        super.init( p );
-
+    if (!what || what.color) {
+      sphereData.color = atomData.color
     }
 
-    createData( sview ){
-
-        var sphereBuffer = new SphereBuffer(
-            sview.getAtomData( this.getAtomParams() ),
-            this.getBufferParams( {
-                sphereDetail: this.sphereDetail,
-                dullInterior: true,
-                disableImpostor: this.disableImpostor
-            } )
-        );
-
-        return {
-            bufferList: [ sphereBuffer ]
-        };
-
+    if (!what || what.radius) {
+      sphereData.radius = atomData.radius
     }
 
-    updateData( what, data ){
-
-        var atomData = data.sview.getAtomData( this.getAtomParams( what ) );
-        var sphereData = {};
-
-        if( !what || what.position ){
-            sphereData.position = atomData.position;
-        }
-
-        if( !what || what.color ){
-            sphereData.color = atomData.color;
-        }
-
-        if( !what || what.radius ){
-            sphereData.radius = atomData.radius;
-        }
-
-        data.bufferList[ 0 ].setAttributes( sphereData );
-
-    }
-
+    data.bufferList[ 0 ].setAttributes(sphereData)
+  }
 }
 
+RepresentationRegistry.add('spacefill', SpacefillRepresentation)
 
-RepresentationRegistry.add( "spacefill", SpacefillRepresentation );
-
-
-export default SpacefillRepresentation;
+export default SpacefillRepresentation

@@ -4,11 +4,9 @@
  * @private
  */
 
-
-import { ExtensionFragDepth } from "../globals.js";
-import CylinderGeometryBuffer from "./cylindergeometry-buffer.js";
-import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
-
+import { ExtensionFragDepth } from '../globals.js'
+import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
+import CylinderImpostorBuffer from './cylinderimpostor-buffer.js'
 
 /**
  * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -25,8 +23,7 @@ import CylinderImpostorBuffer from "./cylinderimpostor-buffer.js";
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class CylinderBuffer{
-
+class CylinderBuffer {
     /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position1 - from positions
@@ -38,17 +35,13 @@ class CylinderBuffer{
      * @param {BufferParameters} [params] - parameters object
      * @return {CylinderGeometryBuffer|CylinderImpostorBuffer} the buffer object
      */
-    constructor( data, params ){
-
-        if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
-            return new CylinderGeometryBuffer( data, params );
-        }else{
-            return new CylinderImpostorBuffer( data, params );
-        }
-
+  constructor (data, params) {
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+      return new CylinderGeometryBuffer(data, params)
+    } else {
+      return new CylinderImpostorBuffer(data, params)
     }
-
+  }
 }
 
-
-export default CylinderBuffer;
+export default CylinderBuffer

@@ -4,88 +4,74 @@
  * @private
  */
 
+import Signal from '../../lib/signals.es6.js'
 
-import Signal from "../../lib/signals.es6.js";
+import { Log } from '../globals.js'
+import { defaults } from '../utils.js'
+import Queue from '../utils/queue.js'
+import { circularMean } from '../math/array-utils.js'
+import { lerp, spline } from '../math/math-utils.js'
+import Selection from '../selection.js'
+import Superposition from '../align/superposition.js'
+import TrajectoryPlayer from './trajectory-player.js'
 
+function centerPbc (coords, mean, box) {
+  if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
+    return
+  }
 
-import { Log } from "../globals.js";
-import { defaults } from "../utils.js";
-import Queue from "../utils/queue.js";
-import { circularMean } from "../math/array-utils.js";
-import { lerp, spline } from "../math/math-utils.js";
-import Selection from "../selection.js";
-import Superposition from "../align/superposition.js";
-import TrajectoryPlayer from "./trajectory-player.js";
+  var i
+  var n = coords.length
 
+  var bx = box[ 0 ]
+  var by = box[ 1 ]
+  var bz = box[ 2 ]
+  var mx = mean[ 0 ]
+  var my = mean[ 1 ]
+  var mz = mean[ 2 ]
 
-function centerPbc( coords, mean, box ){
+  var fx = -mx + bx + bx / 2
+  var fy = -my + by + by / 2
+  var fz = -mz + bz + bz / 2
 
-    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-        return;
-    }
-
-    var i;
-    var n = coords.length;
-
-    var bx = box[ 0 ], by = box[ 1 ], bz = box[ 2 ];
-    var mx = mean[ 0 ], my = mean[ 1 ], mz = mean[ 2 ];
-
-    var fx = - mx + bx + bx / 2;
-    var fy = - my + by + by / 2;
-    var fz = - mz + bz + bz / 2;
-
-    for( i = 0; i < n; i += 3 ){
-        coords[ i + 0 ] = ( coords[ i + 0 ] + fx ) % bx;
-        coords[ i + 1 ] = ( coords[ i + 1 ] + fy ) % by;
-        coords[ i + 2 ] = ( coords[ i + 2 ] + fz ) % bz;
-    }
-
+  for (i = 0; i < n; i += 3) {
+    coords[ i + 0 ] = (coords[ i + 0 ] + fx) % bx
+    coords[ i + 1 ] = (coords[ i + 1 ] + fy) % by
+    coords[ i + 2 ] = (coords[ i + 2 ] + fz) % bz
+  }
 }
 
-
-function removePbc( x, box ){
-
-    if( box[ 0 ]===0 || box[ 8 ]===0 || box[ 4 ]===0 ){
-        return;
-    }
+function removePbc (x, box) {
+  if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
+    return
+  }
 
     // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
     // in-place
 
-    var i, j, d, dist;
-    var n = x.length;
+  var i, j, d, dist
+  var n = x.length
 
-    for( i = 3; i < n; i += 3 ){
+  for (i = 3; i < n; i += 3) {
+    for (j = 0; j < 3; ++j) {
+      dist = x[ i + j ] - x[ i - 3 + j ]
 
-        for( j = 0; j < 3; ++j ){
-
-            dist = x[ i + j ] - x[ i - 3 + j ];
-
-            if( Math.abs( dist ) > 0.9 * box[ j * 3 + j ] ){
-
-                if( dist > 0 ){
-
-                    for( d = 0; d < 3; ++d ){
-                        x[ i + d ] -= box[ j * 3 + d ];
-                    }
-
-                }else{
-
-                    for( d = 0; d < 3; ++d ){
-                        x[ i + d ] += box[ j * 3 + d ];
-                    }
-
-                }
-            }
-
+      if (Math.abs(dist) > 0.9 * box[ j * 3 + j ]) {
+        if (dist > 0) {
+          for (d = 0; d < 3; ++d) {
+            x[ i + d ] -= box[ j * 3 + d ]
+          }
+        } else {
+          for (d = 0; d < 3; ++d) {
+            x[ i + d ] += box[ j * 3 + d ]
+          }
         }
-
+      }
     }
+  }
 
-    return x;
-
+  return x
 }
-
 
 /**
  * Trajectory parameter object.
@@ -97,7 +83,6 @@ function removePbc( x, box ){
  * @property {Boolean} superpose - superpose on initial frame
  */
 
-
 /**
  * Trajectory object for tying frames and structure together
  * @class
@@ -105,453 +90,364 @@ function removePbc( x, box ){
  * @param {Structure} structure - the structure object
  * @param {TrajectoryParameters} params - trajectory parameters
  */
-class Trajectory{
+class Trajectory {
+  constructor (trajPath, structure, params) {
+    this.signals = {
+      gotNumframes: new Signal(),
+      frameChanged: new Signal(),
+      selectionChanged: new Signal(),
+      playerChanged: new Signal()
+    }
 
-    constructor( trajPath, structure, params ){
+    var p = params || {}
+    p.centerPbc = defaults(p.centerPbc, true)
+    p.removePbc = defaults(p.removePbc, true)
+    p.superpose = defaults(p.superpose, true)
+    this.setParameters(p)
 
-        this.signals = {
-            gotNumframes: new Signal(),
-            frameChanged: new Signal(),
-            selectionChanged: new Signal(),
-            playerChanged: new Signal(),
-        };
-
-        var p = params || {};
-        p.centerPbc = defaults( p.centerPbc, true );
-        p.removePbc = defaults( p.removePbc, true );
-        p.superpose = defaults( p.superpose, true );
-        this.setParameters( p );
-
-        this.name = trajPath.replace( /^.*[\\/]/, '' );
+    this.name = trajPath.replace(/^.*[\\/]/, '')
 
         // selection to restrict atoms used for superposition
-        this.selection = new Selection(
-            defaults( p.sele, "backbone and not hydrogen" )
-        );
+    this.selection = new Selection(
+            defaults(p.sele, 'backbone and not hydrogen')
+        )
 
-        this.selection.signals.stringChanged.add( function(){
-            this.makeIndices();
-            this.resetCache();
-        }, this );
+    this.selection.signals.stringChanged.add(function () {
+      this.makeIndices()
+      this.resetCache()
+    }, this)
 
         // should come after this.selection is set
-        this.setStructure( structure );
-        this.setPlayer( new TrajectoryPlayer( this ) );
+    this.setStructure(structure)
+    this.setPlayer(new TrajectoryPlayer(this))
 
-        this.trajPath = trajPath;
+    this.trajPath = trajPath
 
-        this.numframes = undefined;
-        this.getNumframes();
+    this.numframes = undefined
+    this.getNumframes()
+  }
 
-    }
+  setStructure (structure) {
+    this.structure = structure
+    this.atomCount = structure.atomCount
 
-    setStructure( structure ){
+    this.makeAtomIndices()
 
-        this.structure = structure;
-        this.atomCount = structure.atomCount;
+    this.saveInitialStructure()
 
-        this.makeAtomIndices();
+    this.backboneIndices = this.getIndices(
+            new Selection('backbone and not hydrogen')
+        )
+    this.makeIndices()
 
-        this.saveInitialStructure();
+    this.frameCache = []
+    this.boxCache = []
+    this.pathCache = []
+    this.frameCacheSize = 0
+    this.currentFrame = -1
+  }
 
-        this.backboneIndices = this.getIndices(
-            new Selection( "backbone and not hydrogen" )
-        );
-        this.makeIndices();
+  saveInitialStructure () {
+    var i = 0
+    var initialStructure = new Float32Array(3 * this.atomCount)
 
-        this.frameCache = [];
-        this.boxCache = [];
-        this.pathCache = [];
-        this.frameCacheSize = 0;
-        this.currentFrame = -1;
+    this.structure.eachAtom(function (a) {
+      initialStructure[ i + 0 ] = a.x
+      initialStructure[ i + 1 ] = a.y
+      initialStructure[ i + 2 ] = a.z
 
-    }
+      i += 3
+    })
 
-    saveInitialStructure(){
+    this.initialStructure = initialStructure
+  }
 
-        var i = 0;
-        var initialStructure = new Float32Array( 3 * this.atomCount );
+  setSelection (string) {
+    this.selection.setString(string)
 
-        this.structure.eachAtom( function( a ){
+    return this
+  }
 
-            initialStructure[ i + 0 ] = a.x;
-            initialStructure[ i + 1 ] = a.y;
-            initialStructure[ i + 2 ] = a.z;
+  getIndices (selection) {
+    var indices
 
-            i += 3;
+    if (selection && selection.test) {
+      var i = 0
+      var test = selection.test
+      indices = []
 
-        } );
-
-        this.initialStructure = initialStructure;
-
-    }
-
-    setSelection( string ){
-
-        this.selection.setString( string );
-
-        return this;
-
-    }
-
-    getIndices( selection ){
-
-        var indices;
-
-        if( selection && selection.test ){
-
-            var i = 0;
-            var test = selection.test;
-            indices = [];
-
-            this.structure.eachAtom( function( ap ){
-                if( test( ap ) ){
-                    indices.push( i );
-                }
-                i += 1;
-            } );
-
-        }else{
-
-            indices = this.structure.getAtomIndices( this.selection );
-
+      this.structure.eachAtom(function (ap) {
+        if (test(ap)) {
+          indices.push(i)
         }
-
-        return indices;
-
+        i += 1
+      })
+    } else {
+      indices = this.structure.getAtomIndices(this.selection)
     }
 
-    makeIndices(){
+    return indices
+  }
 
+  makeIndices () {
         // indices to restrict atoms used for superposition
-        this.indices = this.getIndices( this.selection );
+    this.indices = this.getIndices(this.selection)
 
-        var i, j;
-        var n = this.indices.length * 3;
+    var i, j
+    var n = this.indices.length * 3
 
-        this.coords1 = new Float32Array( n );
-        this.coords2 = new Float32Array( n );
+    this.coords1 = new Float32Array(n)
+    this.coords2 = new Float32Array(n)
 
-        var y = this.initialStructure;
-        var coords2 = this.coords2;
+    var y = this.initialStructure
+    var coords2 = this.coords2
 
-        for( i = 0; i < n; i += 3 ){
+    for (i = 0; i < n; i += 3) {
+      j = this.indices[ i / 3 ] * 3
 
-            j = this.indices[ i / 3 ] * 3;
+      coords2[ i + 0 ] = y[ j + 0 ]
+      coords2[ i + 1 ] = y[ j + 1 ]
+      coords2[ i + 2 ] = y[ j + 2 ]
+    }
+  }
 
-            coords2[ i + 0 ] = y[ j + 0 ];
-            coords2[ i + 1 ] = y[ j + 1 ];
-            coords2[ i + 2 ] = y[ j + 2 ];
+  makeAtomIndices () {
+    Log.error('Trajectory.makeAtomIndices not implemented')
+  }
 
-        }
+  getNumframes () {
+    Log.error('Trajectory.loadFrame not implemented')
+  }
 
+  resetCache () {
+    this.frameCache = []
+    this.boxCache = []
+    this.pathCache = []
+    this.frameCacheSize = 0
+    this.setFrame(this.currentFrame)
+
+    return this
+  }
+
+  setParameters (params) {
+    var p = params
+    var resetCache = false
+
+    if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
+      this.centerPbc = p.centerPbc
+      resetCache = true
     }
 
-    makeAtomIndices(){
-
-        Log.error( "Trajectory.makeAtomIndices not implemented" );
-
+    if (p.removePbc !== undefined && p.removePbc !== this.removePbc) {
+      this.removePbc = p.removePbc
+      resetCache = true
     }
 
-    getNumframes(){
-
-        Log.error( "Trajectory.loadFrame not implemented" );
-
+    if (p.superpose !== undefined && p.superpose !== this.superpose) {
+      this.superpose = p.superpose
+      resetCache = true
     }
 
-    resetCache(){
+    if (resetCache) this.resetCache()
+  }
 
-        this.frameCache = [];
-        this.boxCache = [];
-        this.pathCache = [];
-        this.frameCacheSize = 0;
-        this.setFrame( this.currentFrame );
+  setFrame (i, callback) {
+    if (i === undefined) return this
 
-        return this;
+    this.inProgress = true
 
+    i = parseInt(i)
+
+    if (i === -1 || this.frameCache[ i ]) {
+      this.updateStructure(i, callback)
+    } else {
+      this.loadFrame(i, function () {
+        this.updateStructure(i, callback)
+      }.bind(this))
     }
 
-    setParameters( params ){
+    return this
+  }
 
-        var p = params;
-        var resetCache = false;
+  interpolate (i, ip, ipp, ippp, t, type, callback) {
+    var fc = this.frameCache
 
-        if( p.centerPbc !== undefined && p.centerPbc !== this.centerPbc ){
-            this.centerPbc = p.centerPbc;
-            resetCache = true;
-        }
+    var c = fc[ i ]
+    var cp = fc[ ip ]
+    var cpp = fc[ ipp ]
+    var cppp = fc[ ippp ]
 
-        if( p.removePbc !== undefined && p.removePbc !== this.removePbc ){
-            this.removePbc = p.removePbc;
-            resetCache = true;
-        }
+    var j
+    var m = c.length
+    var coords = new Float32Array(m)
 
-        if( p.superpose !== undefined && p.superpose !== this.superpose ){
-            this.superpose = p.superpose;
-            resetCache = true;
-        }
-
-        if( resetCache ) this.resetCache();
-
-    }
-
-    setFrame( i, callback ){
-
-        if( i === undefined ) return this;
-
-        this.inProgress = true;
-
-        i = parseInt( i );
-
-        if( i === -1 || this.frameCache[ i ] ){
-
-            this.updateStructure( i, callback );
-
-        }else{
-
-            this.loadFrame( i, function(){
-
-                this.updateStructure( i, callback );
-
-            }.bind( this ) );
-
-        }
-
-        return this;
-
-    }
-
-    interpolate( i, ip, ipp, ippp, t, type, callback ){
-
-        var fc = this.frameCache;
-
-        var c = fc[ i ];
-        var cp = fc[ ip ];
-        var cpp = fc[ ipp ];
-        var cppp = fc[ ippp ];
-
-        var j;
-        var m = c.length;
-        var coords = new Float32Array( m );
-
-        if( type === "spline" ){
-
-            for( j = 0; j < m; j += 3 ){
-
-                coords[ j + 0 ] = spline(
+    if (type === 'spline') {
+      for (j = 0; j < m; j += 3) {
+        coords[ j + 0 ] = spline(
                     cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-                );
-                coords[ j + 1 ] = spline(
+                )
+        coords[ j + 1 ] = spline(
                     cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-                );
-                coords[ j + 2 ] = spline(
+                )
+        coords[ j + 2 ] = spline(
                     cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-                );
-
-            }
-
-        }else{
-
-            for( j = 0; j < m; j += 3 ){
-
-                coords[ j + 0 ] = lerp( cp[ j + 0 ], c[ j + 0 ], t );
-                coords[ j + 1 ] = lerp( cp[ j + 1 ], c[ j + 1 ], t );
-                coords[ j + 2 ] = lerp( cp[ j + 2 ], c[ j + 2 ], t );
-
-            }
-
-        }
-
-        this.structure.updatePosition( coords );
-        this.currentFrame = i;
-        this.signals.frameChanged.dispatch( i );
-
-        if( typeof callback === "function" ){
-
-            callback();
-
-        }
-
+                )
+      }
+    } else {
+      for (j = 0; j < m; j += 3) {
+        coords[ j + 0 ] = lerp(cp[ j + 0 ], c[ j + 0 ], t)
+        coords[ j + 1 ] = lerp(cp[ j + 1 ], c[ j + 1 ], t)
+        coords[ j + 2 ] = lerp(cp[ j + 2 ], c[ j + 2 ], t)
+      }
     }
 
-    setFrameInterpolated( i, ip, ipp, ippp, t, type, callback ){
+    this.structure.updatePosition(coords)
+    this.currentFrame = i
+    this.signals.frameChanged.dispatch(i)
 
-        if( i === undefined ) return this;
+    if (typeof callback === 'function') {
+      callback()
+    }
+  }
 
-        var fc = this.frameCache;
+  setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
+    if (i === undefined) return this
 
-        var iList = [];
+    var fc = this.frameCache
 
-        if( !fc[ ippp ] ) iList.push( ippp );
-        if( !fc[ ipp ] ) iList.push( ipp );
-        if( !fc[ ip ] ) iList.push( ip );
-        if( !fc[ i ] ) iList.push( i );
+    var iList = []
 
-        if( iList.length ){
+    if (!fc[ ippp ]) iList.push(ippp)
+    if (!fc[ ipp ]) iList.push(ipp)
+    if (!fc[ ip ]) iList.push(ip)
+    if (!fc[ i ]) iList.push(i)
 
-            this.loadFrame( iList, function(){
-
-                this.interpolate( i, ip, ipp, ippp, t, type, callback );
-
-            }.bind( this ) );
-
-        }else{
-
-            this.interpolate( i, ip, ipp, ippp, t, type, callback );
-
-        }
-
-        return this;
-
+    if (iList.length) {
+      this.loadFrame(iList, function () {
+        this.interpolate(i, ip, ipp, ippp, t, type, callback)
+      }.bind(this))
+    } else {
+      this.interpolate(i, ip, ipp, ippp, t, type, callback)
     }
 
-    loadFrame( i, callback ){
+    return this
+  }
 
-        if( Array.isArray( i ) ){
+  loadFrame (i, callback) {
+    if (Array.isArray(i)) {
+      var queue
+      var fn = function (j, wcallback) {
+        this._loadFrame(j, wcallback)
+        if (queue.length() === 0 && typeof callback === 'function') callback()
+      }.bind(this)
+      queue = new Queue(fn, i)
+    } else {
+      this._loadFrame(i, callback)
+    }
+  }
 
-            var queue;
-            var fn = function( j, wcallback ){
-                this._loadFrame( j, wcallback );
-                if( queue.length() === 0 && typeof callback === "function" ) callback();
-            }.bind( this );
-            queue = new Queue( fn, i );
+  _loadFrame (i, callback) {
+    Log.error('Trajectory._loadFrame not implemented', i, callback)
+  }
 
-        }else{
+  updateStructure (i, callback) {
+    if (this._disposed) return
 
-            this._loadFrame( i, callback );
-
-        }
-
+    if (i === -1) {
+      this.structure.updatePosition(this.initialStructure)
+    } else {
+      this.structure.updatePosition(this.frameCache[ i ])
     }
 
-    _loadFrame( i, callback ){
-
-        Log.error( "Trajectory._loadFrame not implemented", i, callback );
-
+    this.structure.trajectory = {
+      name: this.trajPath,
+      frame: i
     }
 
-    updateStructure( i, callback ){
-
-        if( this._disposed ) return;
-
-        if( i === -1 ){
-            this.structure.updatePosition( this.initialStructure );
-        }else{
-            this.structure.updatePosition( this.frameCache[ i ] );
-        }
-
-        this.structure.trajectory = {
-            name: this.trajPath,
-            frame: i
-        };
-
-        if( typeof callback === "function" ){
-            callback();
-        }
-
-        this.currentFrame = i;
-        this.inProgress = false;
-        this.signals.frameChanged.dispatch( i );
-
+    if (typeof callback === 'function') {
+      callback()
     }
 
-    getCircularMean( indices, coords, box ){
+    this.currentFrame = i
+    this.inProgress = false
+    this.signals.frameChanged.dispatch(i)
+  }
 
-        return [
-            circularMean( coords, box[ 0 ], 3, 0, indices ),
-            circularMean( coords, box[ 1 ], 3, 1, indices ),
-            circularMean( coords, box[ 2 ], 3, 2, indices )
-        ];
+  getCircularMean (indices, coords, box) {
+    return [
+      circularMean(coords, box[ 0 ], 3, 0, indices),
+      circularMean(coords, box[ 1 ], 3, 1, indices),
+      circularMean(coords, box[ 2 ], 3, 2, indices)
+    ]
+  }
 
+  doSuperpose (x) {
+    var i, j
+    var n = this.indices.length * 3
+
+    var coords1 = this.coords1
+    var coords2 = this.coords2
+
+    for (i = 0; i < n; i += 3) {
+      j = this.indices[ i / 3 ] * 3
+
+      coords1[ i + 0 ] = x[ j + 0 ]
+      coords1[ i + 1 ] = x[ j + 1 ]
+      coords1[ i + 2 ] = x[ j + 2 ]
     }
-
-    doSuperpose( x ){
-
-        var i, j;
-        var n = this.indices.length * 3;
-
-        var coords1 = this.coords1;
-        var coords2 = this.coords2;
-
-        for( i = 0; i < n; i += 3 ){
-
-            j = this.indices[ i / 3 ] * 3;
-
-            coords1[ i + 0 ] = x[ j + 0 ];
-            coords1[ i + 1 ] = x[ j + 1 ];
-            coords1[ i + 2 ] = x[ j + 2 ];
-
-        }
 
         // TODO re-use superposition object
-        var sp = new Superposition( coords1, coords2 );
-        sp.transform( x );
+    var sp = new Superposition(coords1, coords2)
+    sp.transform(x)
+  }
 
-    }
+  process (i, box, coords, numframes) {
+    this.setNumframes(numframes)
 
-    process( i, box, coords, numframes ){
-
-        this.setNumframes( numframes );
-
-        if( box ){
-
-            if( this.backboneIndices.length > 0 && this.centerPbc ){
-                var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-                var mean = this.getCircularMean(
+    if (box) {
+      if (this.backboneIndices.length > 0 && this.centerPbc) {
+        var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ]
+        var mean = this.getCircularMean(
                     this.backboneIndices, coords, box2
-                );
-                centerPbc( coords, mean, box2 );
-            }
+                )
+        centerPbc(coords, mean, box2)
+      }
 
-            if( this.removePbc ){
-                removePbc( coords, box );
-            }
-
-        }
-
-        if( this.indices.length > 0 && this.superpose ){
-            this.doSuperpose( coords );
-        }
-
-        this.frameCache[ i ] = coords;
-        this.boxCache[ i ] = box;
-        this.frameCacheSize += 1;
-
+      if (this.removePbc) {
+        removePbc(coords, box)
+      }
     }
 
-    setNumframes( n ){
-
-        if( n !== this.numframes ){
-
-            this.numframes = n;
-            this.signals.gotNumframes.dispatch( n );
-
-        }
-
+    if (this.indices.length > 0 && this.superpose) {
+      this.doSuperpose(coords)
     }
 
-    dispose(){
+    this.frameCache[ i ] = coords
+    this.boxCache[ i ] = box
+    this.frameCacheSize += 1
+  }
 
-        this.frameCache = [];  // aid GC
-        this._disposed = true;
-        if( this.player ) this.player.stop();
-
+  setNumframes (n) {
+    if (n !== this.numframes) {
+      this.numframes = n
+      this.signals.gotNumframes.dispatch(n)
     }
+  }
 
-    setPlayer( player ){
+  dispose () {
+    this.frameCache = []  // aid GC
+    this._disposed = true
+    if (this.player) this.player.stop()
+  }
 
-        this.player = player;
-        this.signals.playerChanged.dispatch( player );
+  setPlayer (player) {
+    this.player = player
+    this.signals.playerChanged.dispatch(player)
+  }
 
-    }
-
-    getPath( index, callback ){
-
-        Log.error( "Trajectory.getPath not implemented", index, callback );
-
-    }
-
+  getPath (index, callback) {
+    Log.error('Trajectory.getPath not implemented', index, callback)
+  }
 }
 
-
-export default Trajectory;
+export default Trajectory

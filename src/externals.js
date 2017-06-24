@@ -4,11 +4,9 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-
 /**
  * @external {Signal} https://millermedeiros.github.io/js-signals/docs/symbols/Signal.html
  */
-
 
 /**
  * @external {TypedArray} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
@@ -25,7 +23,6 @@
 /**
  * @external {Char} https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
  */
-
 
 /**
  * @external {Matrix3} https://threejs.org/docs/#api/math/Matrix3
