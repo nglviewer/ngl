@@ -19,27 +19,27 @@ import SurfaceParser from './surface-parser.js'
  */
 function OBJLoader () {
   this.regexp = {
-        // v float float float
-    vertex_pattern: /^v\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // vn float float float
-    normal_pattern: /^vn\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // vt float float
-    uv_pattern: /^vt\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // f vertex vertex vertex
+    // v float float float
+    vertex_pattern: /^v\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // vn float float float
+    normal_pattern: /^vn\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // vt float float
+    uv_pattern: /^vt\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // f vertex vertex vertex
     face_vertex: /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
-        // f vertex/uv vertex/uv vertex/uv
+    // f vertex/uv vertex/uv vertex/uv
     face_vertex_uv: /^f\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+))?/,
-        // f vertex/uv/normal vertex/uv/normal vertex/uv/normal
+    // f vertex/uv/normal vertex/uv/normal vertex/uv/normal
     face_vertex_uv_normal: /^f\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+)\/(-?\d+))?/,
-        // f vertex//normal vertex//normal vertex//normal
+    // f vertex//normal vertex//normal vertex//normal
     face_vertex_normal: /^f\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)(?:\s+(-?\d+)\/\/(-?\d+))?/,
-        // o object_name | g group_name
+    // o object_name | g group_name
     object_pattern: /^[og]\s*(.+)?/,
-        // s boolean
+    // s boolean
     smoothing_pattern: /^s\s+(\d+|on|off)/,
-        // mtllib file_reference
+    // mtllib file_reference
     material_library_pattern: /^mtllib /,
-        // usemtl material_name
+    // usemtl material_name
     material_use_pattern: /^usemtl /
   }
 }
@@ -242,7 +242,7 @@ OBJLoader.prototype = {
             parseFloat(result[ 2 ]),
             parseFloat(result[ 3 ])
           )
-        } else if (lineSecondChar === 't' && (result = this.regexp.uv_pattern.exec(line)) !== null) {
+        } else if (lineSecondChar === 't' && this.regexp.uv_pattern.exec(line) !== null) {
 
           // ignore uv line
 
@@ -260,7 +260,7 @@ OBJLoader.prototype = {
             // result[ 2 ], result[ 5 ], result[ 8 ], result[ 11 ],  // ignore uv part
             result[ 3 ], result[ 6 ], result[ 9 ], result[ 12 ]
           )
-        } else if ((result = this.regexp.face_vertex_uv.exec(line)) !== null) {
+        } else if (this.regexp.face_vertex_uv.exec(line) !== null) {
 
           // ignore uv line
 
@@ -314,7 +314,7 @@ OBJLoader.prototype = {
         // eslint-disable-next-line no-empty
       } else if (this.regexp.material_library_pattern.test(line)) {
         // eslint-disable-next-line no-empty
-      } else if ((result = this.regexp.smoothing_pattern.exec(line)) !== null) {
+      } else if (this.regexp.smoothing_pattern.exec(line) !== null) {
       } else {
         // Handle null terminated files without exception
         if (line === '\0') continue
