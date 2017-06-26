@@ -12,14 +12,14 @@ import Store from './store.js'
 class ResidueStore extends Store {
   get __fields () {
     return [
-            [ 'chainIndex', 1, 'uint32' ],
-            [ 'atomOffset', 1, 'uint32' ],
-            [ 'atomCount', 1, 'uint16' ],
-            [ 'residueTypeId', 1, 'uint16' ],
+      [ 'chainIndex', 1, 'uint32' ],
+      [ 'atomOffset', 1, 'uint32' ],
+      [ 'atomCount', 1, 'uint16' ],
+      [ 'residueTypeId', 1, 'uint16' ],
 
-            [ 'resno', 1, 'int32' ],
-            [ 'sstruc', 1, 'uint8' ],
-            [ 'inscode', 1, 'uint8' ]
+      [ 'resno', 1, 'int32' ],
+      [ 'sstruc', 1, 'uint8' ],
+      [ 'inscode', 1, 'uint8' ]
     ]
   }
 

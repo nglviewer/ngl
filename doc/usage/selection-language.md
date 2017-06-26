@@ -46,6 +46,7 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 * *bonded* (all atoms with at least one bond)
 * *ring* (all atoms within rings)
 
+
 ### Expressions
 
 * residue number: *1*, *2*, *100*
@@ -63,7 +64,9 @@ Select the side-chain and C-alpha atoms plus the backbone nitrogen in case of pr
 Some of these expressions can be combined (in this order) - residue numer (range), insertion code, chain name, atom name, alternate location, model - like this
 
 ```
-10^A:F.CA%C/0  // select C-alpha atoms of residue 10 with insertion code A from chain F in model 0 at alternate location C
+// select C-alpha atoms of residue 10 with insertion code A
+// from chain F in model 0 at alternate location C
+10^A:F.CA%C/0
 ```
 
 which is the same as
@@ -78,7 +81,6 @@ Single expressions may be left out as long as the order (see above) is kept, for
 :A/0 # select chain A from model 0
 ```
 
-
 ### Atomindex
 
 A list of atom indices can be given as a comma seperated list (no spaces in between) prefixed with the `@` character.
@@ -87,11 +89,10 @@ A list of atom indices can be given as a comma seperated list (no spaces in betw
 @0,1,4,5,11,23,42
 ```
 
-
 ### Logical operators (in order of binding strength)
 
-*   *NOT*
-*   *AND*
-*   *OR*
+* *NOT*
+* *AND*
+* *OR*
 
 Additionally, parentheses *()* can be used for grouping: `:A and ( 1 or 10 or 100 ) # select residues 1, 10 and 100 from chain A`

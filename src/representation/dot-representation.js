@@ -12,7 +12,27 @@ import FilteredVolume from '../surface/filtered-volume.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import PointBuffer from '../buffer/point-buffer.js'
 
+/**
+ * Dot representation parameter object. Extends {@link RepresentationParameters}
+ *
+ * @typedef {Object} DotRepresentationParameters - dot representation parameters
+ *
+ * @property {String} thresholdType - Meaning of the threshold values. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
+ * @property {Number} thresholdMin - Minimum value to be displayed. For volume data only.
+ * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
+ * @property {Number} thresholdOut - Show only values falling outside of the treshold minumum and maximum. For volume data only.
+ */
+
+/**
+ * Dot representation
+ */
 class DotRepresentation extends Representation {
+  /**
+   * Create Dot representation object
+   * @param {Surface|Volume} surface - the surface or volume to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {DotRepresentationParameters} params - dot representation parameters
+   */
   constructor (surface, viewer, params) {
     super(surface, viewer, params)
 

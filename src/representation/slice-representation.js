@@ -9,7 +9,31 @@ import Representation from './representation.js'
 import ImageBuffer from '../buffer/image-buffer.js'
 import VolumeSlice from '../surface/volume-slice.js'
 
+/**
+ * Slice representation parameter object. Extends {@link RepresentationParameters}
+ *
+ * @typedef {Object} SliceRepresentationParameters - slice representation parameters
+ *
+ * @property {String} filter - filter applied to map the volume data on the slice, one of "nearest", "linear", "cubic-bspline", "cubic-catmulrom", "cubic-mitchell".
+ * @property {String} positionType - Meaning of the position value. Either "persent" od "coordinate".
+ * @property {Number} position - position of the slice.
+ * @property {String} dimension - one of "x", "y" or "z"
+ * @property {String} thresholdType - Meaning of the threshold values. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
+ * @property {Number} thresholdMin - Minimum value to be displayed. For volume data only.
+ * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
+ * @property {Boolean} normalize - Flag indicating wheather to normalize the data in a slice when coloring.
+ */
+
+/**
+ * Slice representation
+ */
 class SliceRepresentation extends Representation {
+  /**
+   * Create Slice representation object
+   * @param {Volume} surface - the volume to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {SliceRepresentationParameters} params - slice representation parameters
+   */
   constructor (volume, viewer, params) {
     super(volume, viewer, params)
 

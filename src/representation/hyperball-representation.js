@@ -11,6 +11,9 @@ import LicoriceRepresentation from './licorice-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import HyperballStickBuffer from '../buffer/hyperballstick-buffer.js'
 
+/**
+ * Hyperball Representation
+ */
 class HyperballRepresentation extends LicoriceRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

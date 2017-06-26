@@ -23,6 +23,7 @@ import RadiusFactory from '../utils/radius-factory.js'
 
 /**
  * Structure representation
+ * @interface
  */
 class StructureRepresentation extends Representation {
     /**

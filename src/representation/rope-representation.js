@@ -10,6 +10,9 @@ import CartoonRepresentation from './cartoon-representation.js'
 import Helixorient from '../geometry/helixorient.js'
 import Spline from '../geometry/spline.js'
 
+/**
+ * Rope Representation
+ */
 class RopeRepresentation extends CartoonRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

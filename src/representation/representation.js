@@ -45,7 +45,7 @@ import Counter from '../utils/counter.js'
 
 /**
  * Representation object
- * @class
+ * @interface
  * @param {Object} object - the object to be represented
  * @param {Viewer} viewer - a viewer object
  * @param {RepresentationParameters} [params] - representation parameters

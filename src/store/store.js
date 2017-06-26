@@ -9,19 +9,26 @@ import { getTypedArray } from '../utils.js'
 
 /**
  * Store class
- * @class
- * @param {Integer} [size] - initial size
+ * @interface
  */
 class Store {
+  /**
+   * @param {Integer} [size] - initial size
+   */
   constructor (size) {
     if (Number.isInteger(size)) {
-      this.init(size)
+      this._init(size)
     } else {
-      this.init(0)
+      this._init(0)
     }
   }
 
-  init (size) {
+  /**
+   * Initialize the store
+   * @param  {Integer} size - size to initialize
+   * @return {undefined}
+   */
+  _init (size) {
     this.length = size
     this.count = 0
 
@@ -35,8 +42,13 @@ class Store {
     }
   }
 
+  /**
+   * Resize the store to the new size
+   * @param  {Integer} size - new size
+   * @return {undefined}
+   */
   resize (size) {
-        // Log.time( "Store.resize" );
+    // Log.time( "Store.resize" );
 
     this.length = Math.round(size || 0)
     this.count = Math.min(this.count, this.length)
@@ -55,9 +67,13 @@ class Store {
       this[ name ] = tmpArray
     }
 
-        // Log.timeEnd( "Store.resize" );
+    // Log.timeEnd( "Store.resize" );
   }
 
+  /**
+   * Resize the store to 1.5 times its current size if full
+   * @return {undefined}
+   */
   growIfFull () {
     if (this.count >= this.length) {
       const size = Math.round(this.length * 1.5)
@@ -65,6 +81,14 @@ class Store {
     }
   }
 
+  /**
+   * Copy data from one store to another
+   * @param  {Store} other - store to copy from
+   * @param  {Integer} thisOffset - offset to start copying to
+   * @param  {Integer} otherOffset - offset to start copying from
+   * @param  {Integer} length - number of entries to copy
+   * @return {undefined}
+   */
   copyFrom (other, thisOffset, otherOffset, length) {
     for (let i = 0, il = this.__fields.length; i < il; ++i) {
       const name = this.__fields[ i ][ 0 ]
@@ -82,6 +106,13 @@ class Store {
     }
   }
 
+  /**
+   * Copy data within this store
+   * @param  {Integer} thisOffset - offset to start copying to
+   * @param  {Integer} otherOffset - offset to start copying from
+   * @param  {Integer} length - number of entries to copy
+   * @return {undefined}
+   */
   copyWithin (offsetTarget, offsetSource, length) {
     for (let i = 0, il = this.__fields.length; i < il; ++i) {
       const name = this.__fields[ i ][ 0 ]
@@ -98,6 +129,11 @@ class Store {
     }
   }
 
+  /**
+   * Sort entries in the store given the compare function
+   * @param  {[type]} compareFunction - function to sort by
+   * @return {undefined}
+   */
   sort (compareFunction) {
     Log.time('Store.sort')
 
@@ -144,10 +180,18 @@ class Store {
     Log.timeEnd('Store.sort')
   }
 
+  /**
+   * Empty the store
+   * @return {undefined}
+   */
   clear () {
     this.count = 0
   }
 
+  /**
+   * Dispose of the store entries and fields
+   * @return {undefined}
+   */
   dispose () {
     delete this.length
     delete this.count

@@ -12,6 +12,9 @@ import StructureRepresentation from './structure-representation.js'
 import { polarContacts, polarBackboneContacts } from '../geometry/contact-utils.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
+/**
+ * Contact representation.
+ */
 class ContactRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

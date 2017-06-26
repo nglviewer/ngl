@@ -9,6 +9,9 @@ import { defaults } from '../utils.js'
 import StructureRepresentation from './structure-representation.js'
 import PointBuffer from '../buffer/point-buffer.js'
 
+/**
+ * Point Representation
+ */
 class PointRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

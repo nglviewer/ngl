@@ -10,6 +10,9 @@ import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
+/**
+ * Unitcell Representation
+ */
 class UnitcellRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

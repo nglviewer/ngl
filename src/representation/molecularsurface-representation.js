@@ -13,6 +13,9 @@ import ContourBuffer from '../buffer/contour-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import Selection from '../selection.js'
 
+/**
+ * Molecular Surface Representation
+ */
 class MolecularSurfaceRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

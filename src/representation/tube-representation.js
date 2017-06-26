@@ -8,6 +8,9 @@ import { RepresentationRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import CartoonRepresentation from './cartoon-representation.js'
 
+/**
+ * Tube Representation
+ */
 class TubeRepresentation extends CartoonRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
