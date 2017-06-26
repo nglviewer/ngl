@@ -8,7 +8,7 @@ import { Vector3, Matrix4, Quaternion } from '../../lib/three.es6.js'
 import Signal from '../../lib/signals.es6.js'
 
 import {
-    ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
+  ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
 } from '../utils.js'
 
 /**
@@ -32,42 +32,42 @@ const tmpAlignMatrix = new Matrix4()
  * Viewer controls
  */
 class ViewerControls {
-    /**
-     * @param  {Stage} stage - the stage object
-     */
+  /**
+   * @param  {Stage} stage - the stage object
+   */
   constructor (stage) {
     this.stage = stage
     this.viewer = stage.viewer
 
-        /**
-         * @type {{changed: Signal}}
-         */
+    /**
+     * @type {{changed: Signal}}
+     */
     this.signals = {
       changed: new Signal()
     }
   }
 
-    /**
-     * scene center position
-     * @type {Vector3}
-     */
+  /**
+   * scene center position
+   * @type {Vector3}
+   */
   get position () {
     return this.viewer.translationGroup.position
   }
 
-    /**
-     * scene rotation
-     * @type {Quaternion}
-     */
+  /**
+   * scene rotation
+   * @type {Quaternion}
+   */
   get rotation () {
     return this.viewer.rotationGroup.quaternion
   }
 
-    /**
-     * Trigger render and emit changed event
-     * @emits {ViewerControls.signals.changed}
-     * @return {undefined}
-     */
+  /**
+   * Trigger render and emit changed event
+   * @emits {ViewerControls.signals.changed}
+   * @return {undefined}
+   */
   changed () {
     this.viewer.requestRender()
     this.signals.changed.dispatch()
@@ -78,21 +78,21 @@ class ViewerControls {
     const viewer = this.viewer
 
     tmpCanvasVector.copy(position)
-            .add(viewer.translationGroup.position)
-            .applyMatrix4(viewer.rotationGroup.matrix)
-            .project(viewer.camera)
+      .add(viewer.translationGroup.position)
+      .applyMatrix4(viewer.rotationGroup.matrix)
+      .project(viewer.camera)
 
     return canvasPosition.set(
-            (tmpCanvasVector.x + 1) * viewer.width / 2,
-            (tmpCanvasVector.y + 1) * viewer.height / 2
-        )
+      (tmpCanvasVector.x + 1) * viewer.width / 2,
+      (tmpCanvasVector.y + 1) * viewer.height / 2
+    )
   }
 
-    /**
-     * get scene orientation
-     * @param {Matrix4} optionalTarget - pre-allocated target matrix
-     * @return {OrientationMatrix} scene orientation
-     */
+  /**
+   * get scene orientation
+   * @param {Matrix4} optionalTarget - pre-allocated target matrix
+   * @return {OrientationMatrix} scene orientation
+   */
   getOrientation (optionalTarget) {
     const m = ensureMatrix4(optionalTarget)
 
@@ -104,11 +104,11 @@ class ViewerControls {
     return m
   }
 
-    /**
-     * set scene orientation
-     * @param {OrientationMatrix|Array} orientation - scene orientation
-     * @return {undefined}
-     */
+  /**
+   * set scene orientation
+   * @param {OrientationMatrix|Array} orientation - scene orientation
+   * @return {undefined}
+   */
   orient (orientation) {
     ensureMatrix4(orientation).decompose(tmpP, tmpQ, tmpS)
 
@@ -120,79 +120,79 @@ class ViewerControls {
     this.changed()
   }
 
-    /**
-     * translate scene
-     * @param  {Vector3|Array} vector - translation vector
-     * @return {undefined}
-     */
+  /**
+   * translate scene
+   * @param  {Vector3|Array} vector - translation vector
+   * @return {undefined}
+   */
   translate (vector) {
     this.viewer.translationGroup.position
-            .add(ensureVector3(vector))
+      .add(ensureVector3(vector))
     this.changed()
   }
 
-    /**
-     * center scene
-     * @param  {Vector3|Array} position - center position
-     * @return {undefined}
-     */
+  /**
+   * center scene
+   * @param  {Vector3|Array} position - center position
+   * @return {undefined}
+   */
   center (position) {
     this.viewer.translationGroup.position
-            .copy(ensureVector3(position)).negate()
+      .copy(ensureVector3(position)).negate()
     this.changed()
   }
 
-    /**
-     * zoom scene
-     * @param  {Number} delta - zoom change
-     * @return {undefined}
-     */
+  /**
+   * zoom scene
+   * @param  {Number} delta - zoom change
+   * @return {undefined}
+   */
   zoom (delta) {
     this.distance(this.viewer.camera.position.z * (1 - delta))
   }
 
-    /**
-     * camera distance
-     * @param  {Number} z - distance
-     * @return {undefined}
-     */
+  /**
+   * camera distance
+   * @param  {Number} z - distance
+   * @return {undefined}
+   */
   distance (z) {
     this.viewer.camera.position.z = z
     this.viewer.updateZoom()
     this.changed()
   }
 
-    /**
-     * spin scene on axis
-     * @param  {Vector3|Array} axis - rotation axis
-     * @param  {Number} angle - amount to spin
-     * @return {undefined}
-     */
+  /**
+   * spin scene on axis
+   * @param  {Vector3|Array} axis - rotation axis
+   * @param  {Number} angle - amount to spin
+   * @return {undefined}
+   */
   spin (axis, angle) {
     tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
     tmpRotateVector
-            .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
+      .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
 
     this.viewer.rotationGroup.rotateOnAxis(tmpRotateVector, angle)
     this.changed()
   }
 
-    /**
-     * rotate scene
-     * @param  {Quaternion|Array} quaternion - rotation quaternion
-     * @return {undefined}
-     */
+  /**
+   * rotate scene
+   * @param  {Quaternion|Array} quaternion - rotation quaternion
+   * @return {undefined}
+   */
   rotate (quaternion) {
     this.viewer.rotationGroup
-            .setRotationFromQuaternion(ensureQuaternion(quaternion))
+      .setRotationFromQuaternion(ensureQuaternion(quaternion))
     this.changed()
   }
 
-    /**
-     * align scene to basis matrix
-     * @param  {Matrix4|Array} basis - basis matrix
-     * @return {undefined}
-     */
+  /**
+   * align scene to basis matrix
+   * @param  {Matrix4|Array} basis - basis matrix
+   * @return {undefined}
+   */
   align (basis) {
     tmpAlignMatrix.getInverse(ensureMatrix4(basis))
 
@@ -200,11 +200,11 @@ class ViewerControls {
     this.changed()
   }
 
-    /**
-     * apply rotation matrix to scene
-     * @param  {Matrix4|Array} matrix - rotation matrix
-     * @return {undefined}
-     */
+  /**
+   * apply rotation matrix to scene
+   * @param  {Matrix4|Array} matrix - rotation matrix
+   * @return {undefined}
+   */
   applyMatrix (matrix) {
     this.viewer.rotationGroup.applyMatrix(ensureMatrix4(matrix))
     this.changed()

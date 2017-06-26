@@ -12,13 +12,13 @@ import Store from './store.js'
 class ChainStore extends Store {
   get __fields () {
     return [
-            [ 'entityIndex', 1, 'uint16' ],
-            [ 'modelIndex', 1, 'uint16' ],
-            [ 'residueOffset', 1, 'uint32' ],
-            [ 'residueCount', 1, 'uint32' ],
+      [ 'entityIndex', 1, 'uint16' ],
+      [ 'modelIndex', 1, 'uint16' ],
+      [ 'residueOffset', 1, 'uint32' ],
+      [ 'residueCount', 1, 'uint32' ],
 
-            [ 'chainname', 4, 'uint8' ],
-            [ 'chainid', 4, 'uint8' ]
+      [ 'chainname', 4, 'uint8' ],
+      [ 'chainid', 4, 'uint8' ]
     ]
   }
 

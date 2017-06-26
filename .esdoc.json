@@ -17,7 +17,9 @@
             "./doc/usage/interaction-controls.md",
             "./doc/usage/molecular-representations.md",
             "./doc/usage/scripting.md",
-            "./doc/usage/selection-language.md"
+            "./doc/usage/selection-language.md",
+            "./doc/usage/structure-data.md",
+            "./doc/usage/volume-representations.md"
         ],
         "tutorial": [],
         "configuration": [],

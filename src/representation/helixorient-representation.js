@@ -11,6 +11,9 @@ import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import VectorBuffer from '../buffer/vector-buffer.js'
 
+/**
+ * Helixorient Representation
+ */
 class HelixorientRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

@@ -14,6 +14,7 @@ import LineBuffer from '../buffer/line-buffer.js'
 /**
  * Ball And Stick representation parameter object. Extends {@link RepresentationParameters} and
  * {@link StructureRepresentationParameters}.
+ *
  * @typedef {Object} BallAndStickRepresentationParameters - ball and stick representation parameters
  *
  * @property {Integer} sphereDetail - sphere quality (icosahedron subdivisions)

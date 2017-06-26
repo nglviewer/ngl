@@ -8,6 +8,9 @@ import { RepresentationRegistry } from '../globals.js'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 
+/**
+ * Spacefill Representation
+ */
 class SpacefillRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

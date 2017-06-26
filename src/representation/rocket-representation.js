@@ -11,6 +11,9 @@ import StructureRepresentation from './structure-representation.js'
 import Helixbundle from '../geometry/helixbundle.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
+/**
+ * Rocket Representation
+ */
 class RocketRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

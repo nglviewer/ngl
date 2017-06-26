@@ -12,9 +12,9 @@ import Store from './store.js'
 class BondStore extends Store {
   get __fields () {
     return [
-            [ 'atomIndex1', 1, 'int32' ],
-            [ 'atomIndex2', 1, 'int32' ],
-            [ 'bondOrder', 1, 'int8' ]
+      [ 'atomIndex1', 1, 'int32' ],
+      [ 'atomIndex2', 1, 'int32' ],
+      [ 'bondOrder', 1, 'int8' ]
     ]
   }
 

@@ -10,6 +10,9 @@ import Spline from '../geometry/spline.js'
 import StructureRepresentation from './structure-representation.js'
 import TraceBuffer from '../buffer/trace-buffer.js'
 
+/**
+ * Trace Representation
+ */
 class TraceRepresentation extends StructureRepresentation {
   constructor (structure, viewer, params) {
     super(structure, viewer, params)

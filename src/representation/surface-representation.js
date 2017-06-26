@@ -14,9 +14,9 @@ import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import ContourBuffer from '../buffer/contour-buffer.js'
 
 /**
- * Surface representation parameter object.
+ * Surface representation parameter object. Extends {@link RepresentationParameters}
+ *
  * @typedef {Object} SurfaceRepresentationParameters - surface representation parameters
- * @mixes RepresentationParameters
  *
  * @property {String} isolevelType - Meaning of the isolevel value. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
@@ -32,12 +32,12 @@ import ContourBuffer from '../buffer/contour-buffer.js'
  * Surface representation
  */
 class SurfaceRepresentation extends Representation {
-    /**
-     * Create Surface representation object
-     * @param {Surface|Volume} surface - the surface or volume to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {SurfaceRepresentationParameters} params - surface representation parameters
-     */
+  /**
+   * Create Surface representation object
+   * @param {Surface|Volume} surface - the surface or volume to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {SurfaceRepresentationParameters} params - surface representation parameters
+   */
   constructor (surface, viewer, params) {
     super(surface, viewer, params)
 
