@@ -26,6 +26,8 @@ Documentation:
 Features
 --------
 
+[![Join the chat at https://gitter.im/nglviewer/Lobby](https://badges.gitter.im/nglviewer/Lobby.svg)](https://gitter.im/nglviewer/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 * Molecular structures (mmCIF, PDB, PQR, GRO, SDF, MOL2, MMTF)
 * Density volumes (MRC/MAP/CCP4, DX/DXBIN, CUBE, BRIX/DSN6, XPLOR/CNS)
 * User interaction (mouse picking, selection language, image export)
