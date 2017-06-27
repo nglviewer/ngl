@@ -12,27 +12,27 @@ class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
 
   _parse () {
-        // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
+    // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
 
-        // The DCD format is structured as follows
-        //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
-        // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
-        // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
-        //                         interval
-        // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
-        // ==========================================================================
-        // NTITLE          TITLE
-        // INT (=2)        C*MAXTITL
-        //                 (=32)
-        // ==========================================================================
-        // NATOM
-        // #atoms
-        // INT
-        // ==========================================================================
-        // X(I), I=1,NATOM         (DOUBLE)
-        // Y(I), I=1,NATOM
-        // Z(I), I=1,NATOM
-        // ==========================================================================
+    // The DCD format is structured as follows
+    //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
+    // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
+    // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
+    //                         interval
+    // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
+    // ==========================================================================
+    // NTITLE          TITLE
+    // INT (=2)        C*MAXTITL
+    //                 (=32)
+    // ==========================================================================
+    // NATOM
+    // #atoms
+    // INT
+    // ==========================================================================
+    // X(I), I=1,NATOM         (DOUBLE)
+    // Y(I), I=1,NATOM
+    // Z(I), I=1,NATOM
+    // ==========================================================================
 
     if (Debug) Log.time('DcdParser._parse ' + this.name)
 
@@ -49,11 +49,11 @@ class DcdParser extends TrajectoryParser {
     var header = {}
     var nextPos = 0
 
-        // header block
+    // header block
 
     var intView = new Int32Array(bin, 0, 23)
     var ef = intView[ 0 ] !== dv.getInt32(0)  // endianess flag
-        // swap byte order when big endian (84 indicates little endian)
+    // swap byte order when big endian (84 indicates little endian)
     if (intView[ 0 ] !== 84) {
       n = bin.byteLength
       for (i = 0; i < n; i += 4) {
@@ -63,18 +63,18 @@ class DcdParser extends TrajectoryParser {
     if (intView[ 0 ] !== 84) {
       Log.error('dcd bad format, header block start')
     }
-        // format indicator, should read 'CORD'
+    // format indicator, should read 'CORD'
     var formatString = String.fromCharCode(
-            dv.getUint8(4), dv.getUint8(5),
-            dv.getUint8(6), dv.getUint8(7)
-        )
+        dv.getUint8(4), dv.getUint8(5),
+        dv.getUint8(6), dv.getUint8(7)
+      )
     if (formatString !== 'CORD') {
       Log.error('dcd bad format, format string')
     }
     var isCharmm = false
     var extraBlock = false
     var fourDims = false
-        // version field in charmm, unused in X-PLOR
+    // version field in charmm, unused in X-PLOR
     if (intView[ 22 ] !== 0) {
       isCharmm = true
       if (intView[ 12 ] !== 0) extraBlock = true
@@ -94,7 +94,7 @@ class DcdParser extends TrajectoryParser {
     }
     nextPos = nextPos + 21 * 4 + 8
 
-        // title block
+    // title block
 
     var titleLength = dv.getInt32(nextPos, ef)
     var titlePos = nextPos + 1
@@ -102,14 +102,14 @@ class DcdParser extends TrajectoryParser {
       Log.error('dcd bad format, title block start')
     }
     header.TITLE = uint8ToString(
-            new Uint8Array(bin, titlePos, titleLength)
-        )
+      new Uint8Array(bin, titlePos, titleLength)
+    )
     if (dv.getInt32(titlePos + titleLength + 4 - 1, ef) !== titleLength) {
       Log.error('dcd bad format, title block end')
     }
     nextPos = nextPos + titleLength + 8
 
-        // natom block
+    // natom block
 
     if (dv.getInt32(nextPos, ef) !== 4) {
       Log.error('dcd bad format, natom block start')
@@ -120,15 +120,15 @@ class DcdParser extends TrajectoryParser {
     }
     nextPos = nextPos + 4 + 8
 
-        // fixed atoms block
+    // fixed atoms block
 
     if (header.NAMNF > 0) {
-            // TODO read coordinates and indices of fixed atoms
+      // TODO read coordinates and indices of fixed atoms
       Log.error('dcd format with fixed atoms unsupported, aborting')
       return
     }
 
-        // frames
+    // frames
 
     var natom = header.NATOM
     var natom4 = natom * 4
@@ -146,7 +146,7 @@ class DcdParser extends TrajectoryParser {
         nextPos += 4  // block end
       }
 
-            // xyz coordinates
+      // xyz coordinates
       var coord = new Float32Array(natom * 3)
       for (var j = 0; j < 3; ++j) {
         if (dv.getInt32(nextPos, ef) !== natom4) {
@@ -171,9 +171,9 @@ class DcdParser extends TrajectoryParser {
       }
     }
 
-        // console.log( header );
-        // console.log( header.TITLE );
-        // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+    // console.log( header );
+    // console.log( header.TITLE );
+    // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
     if (Debug) Log.timeEnd('DcdParser._parse ' + this.name)
   }
