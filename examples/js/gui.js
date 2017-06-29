@@ -172,6 +172,9 @@ NGL.StageWidget = function (stage) {
   var viewport = new NGL.ViewportWidget(stage).setId('viewport')
   document.body.appendChild(viewport.dom)
 
+  // ensure initial focus on viewer canvas for key-stroke listening
+  stage.viewer.renderer.domElement.focus()
+
   //
 
   var preferences = new NGL.Preferences('ngl-stage-widget')
@@ -227,8 +230,8 @@ NGL.StageWidget = function (stage) {
   //
 
   document.body.addEventListener(
-        'touchmove', function (e) { e.preventDefault() }, { passive: false }
-    )
+    'touchmove', function (e) { e.preventDefault() }, { passive: false }
+  )
 
   //
 
