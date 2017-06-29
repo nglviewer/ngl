@@ -1345,7 +1345,7 @@ NGL.StructureComponentWidget = function (component, stage) {
 
     // Open trajectory
 
-  var trajExt = [ 'dcd', 'dcd.gz', 'trr', 'trr.gz' ]
+  var trajExt = [ 'dcd', 'dcd.gz', 'trr', 'trr.gz', 'xtc', 'xtc.gz' ]
 
   function framesInputOnChange (e) {
     var fn = function (file, callback) {
