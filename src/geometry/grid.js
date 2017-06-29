@@ -4,78 +4,60 @@
  * @private
  */
 
+function Grid (length, width, height, DataCtor, elemSize) {
+  DataCtor = DataCtor || Int32Array
+  elemSize = elemSize || 1
 
-function Grid( length, width, height, dataCtor, elemSize ){
+  var j
 
-    dataCtor = dataCtor || Int32Array;
-    elemSize = elemSize || 1;
+  var data = new DataCtor(length * width * height * elemSize)
 
-    var j;
+  function index (x, y, z) {
+    return ((((x * width) + y) * height) + z) * elemSize
+  }
 
-    var data = new dataCtor( length * width * height * elemSize );
+  this.data = data
 
-    function index( x, y, z ){
+  this.index = index
 
-        return ( ( ( ( x * width ) + y ) * height ) + z ) * elemSize;
+  this.set = function (x, y, z) {
+    var i = index(x, y, z)
 
+    for (j = 0; j < elemSize; ++j) {
+      data[ i + j ] = arguments[ 3 + j ]
     }
+  }
 
-    this.data = data;
+  this.toArray = function (x, y, z, array, offset) {
+    var i = index(x, y, z)
 
-    this.index = index;
+    if (array === undefined) array = []
+    if (offset === undefined) offset = 0
 
-    this.set = function( x, y, z ){
+    for (j = 0; j < elemSize; ++j) {
+      array[ offset + j ] = data[ i + j ]
+    }
+  }
 
-        var i = index( x, y, z );
+  this.fromArray = function (x, y, z, array, offset) {
+    var i = index(x, y, z)
 
-        for( j = 0; j < elemSize; ++j ){
-            data[ i + j ] = arguments[ 3 + j ];
-        }
+    if (offset === undefined) offset = 0
 
-    };
+    for (j = 0; j < elemSize; ++j) {
+      data[ i + j ] = array[ offset + j ]
+    }
+  }
 
-    this.toArray = function( x, y, z, array, offset ){
+  this.copy = function (grid) {
+    this.data.set(grid.data)
+  }
 
-        var i = index( x, y, z );
-
-        if ( array === undefined ) array = [];
-        if ( offset === undefined ) offset = 0;
-
-        for( j = 0; j < elemSize; ++j ){
-            array[ j ] = data[ i + j ];
-        }
-
-    };
-
-    this.fromArray = function( x, y, z, array, offset ){
-
-        var i = index( x, y, z );
-
-        if ( offset === undefined ) offset = 0;
-
-        for( j = 0; j < elemSize; ++j ){
-            data[ i + j ] = array[ offset + j ];
-        }
-
-    };
-
-    this.copy = function( grid ){
-
-        this.data.set( grid.data );
-
-    };
-
-    this.clone = function(){
-
-        return new Grid(
-
-            length, width, height, dataCtor, elemSize
-
-        ).copy( this );
-
-    };
-
+  this.clone = function () {
+    return new Grid(
+      length, width, height, DataCtor, elemSize
+    ).copy(this)
+  }
 }
 
-
-export default Grid;
+export default Grid

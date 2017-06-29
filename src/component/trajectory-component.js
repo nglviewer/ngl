@@ -4,12 +4,10 @@
  * @private
  */
 
+import Signal from '../../lib/signals.es6.js'
 
-import Signal from "../../lib/signals.es6.js";
-
-import { defaults } from "../utils.js";
-import Component from "./component.js";
-
+import { defaults } from '../utils.js'
+import Component from './component.js'
 
 /**
  * Trajectory component parameter object.
@@ -25,7 +23,6 @@ import Component from "./component.js";
  * @property {String} defaultDirection - either "forward" or "backward"
  */
 
-
 /**
  * Extends {@link ComponentSignals}
  *
@@ -39,74 +36,70 @@ import Component from "./component.js";
  * @property {Signal<String>} parametersChanged - on parameters change
  */
 
-
 /**
  * Component wrapping a {@link Trajectory} object
  */
-class TrajectoryComponent extends Component{
-
+class TrajectoryComponent extends Component {
     /**
      * @param {Stage} stage - stage object the component belongs to
      * @param {Trajectory} trajectory - the trajectory object
      * @param {TrajectoryComponentParameters} params - component parameters
      * @param {StructureComponent} parent - the parent structure
      */
-    constructor( stage, trajectory, params, parent ){
+  constructor (stage, trajectory, params, parent) {
+    var p = params || {}
+    p.name = defaults(p.name, trajectory.name)
 
-        var p = params || {};
-        p.name = defaults( p.name, trajectory.name );
-
-        super( stage, p );
+    super(stage, p)
 
         /**
          * Events emitted by the component
          * @type {TrajectoryComponentSignals}
          */
-        this.signals = Object.assign( this.signals, {
-            frameChanged: new Signal(),
-            playerChanged: new Signal(),
-            gotNumframes: new Signal(),
-            parametersChanged: new Signal()
-        } );
+    this.signals = Object.assign(this.signals, {
+      frameChanged: new Signal(),
+      playerChanged: new Signal(),
+      gotNumframes: new Signal(),
+      parametersChanged: new Signal()
+    })
 
-        this.trajectory = trajectory;
-        this.parent = parent;
-        this.status = "loaded";
+    this.trajectory = trajectory
+    this.parent = parent
+    this.status = 'loaded'
 
-        this.defaultStep = defaults( p.defaultStep, undefined );
-        this.defaultTimeout = defaults( p.defaultTimeout, 50 );
-        this.defaultInterpolateType = defaults( p.defaultInterpolateType, "" );
-        this.defaultInterpolateStep = defaults( p.defaultInterpolateStep, 5 );
-        this.defaultMode = defaults( p.defaultMode, "loop" );
-        this.defaultDirection = defaults( p.defaultDirection, "forward" );
+    this.defaultStep = defaults(p.defaultStep, undefined)
+    this.defaultTimeout = defaults(p.defaultTimeout, 50)
+    this.defaultInterpolateType = defaults(p.defaultInterpolateType, '')
+    this.defaultInterpolateStep = defaults(p.defaultInterpolateStep, 5)
+    this.defaultMode = defaults(p.defaultMode, 'loop')
+    this.defaultDirection = defaults(p.defaultDirection, 'forward')
 
         // signals
 
-        trajectory.signals.frameChanged.add( i => {
-            this.signals.frameChanged.dispatch( i );
-        } );
+    trajectory.signals.frameChanged.add(i => {
+      this.signals.frameChanged.dispatch(i)
+    })
 
-        trajectory.signals.playerChanged.add( player => {
-            this.signals.playerChanged.dispatch( player );
-        } );
+    trajectory.signals.playerChanged.add(player => {
+      this.signals.playerChanged.dispatch(player)
+    })
 
-        trajectory.signals.gotNumframes.add( n => {
-            this.signals.gotNumframes.dispatch( n );
-        } );
+    trajectory.signals.gotNumframes.add(n => {
+      this.signals.gotNumframes.dispatch(n)
+    })
 
         //
 
-        if( p.initialFrame !== undefined ){
-            this.setFrame( p.initialFrame );
-        }
-
+    if (p.initialFrame !== undefined) {
+      this.setFrame(p.initialFrame)
     }
+  }
 
     /**
      * Component type
      * @type {String}
      */
-    get type(){ return "trajectory" }
+  get type () { return 'trajectory' }
 
     /**
      * Add trajectory representation
@@ -114,45 +107,35 @@ class TrajectoryComponent extends Component{
      * @param {RepresentationParameters} params - parameters
      * @return {RepresentationComponent} the added representation component
      */
-    addRepresentation( type, params ){
-
-        return super.addRepresentation( type, this.trajectory, params );
-
-    }
+  addRepresentation (type, params) {
+    return super.addRepresentation(type, this.trajectory, params)
+  }
 
     /**
      * Set the frame of the trajectory
      * @param {Integer} i - frame number
      * @return {undefined}
      */
-    setFrame( i ){
-
-        this.trajectory.setFrame( i );
-
-    }
+  setFrame (i) {
+    this.trajectory.setFrame(i)
+  }
 
     /**
      * Set trajectory parameters
      * @param {TrajectoryParameters} params - trajectory parameters
      * @return {undefined}
      */
-    setParameters( params ){
+  setParameters (params) {
+    this.trajectory.setParameters(params)
+    this.signals.parametersChanged.dispatch(params)
+  }
 
-        this.trajectory.setParameters( params );
-        this.signals.parametersChanged.dispatch( params );
+  dispose () {
+    this.trajectory.dispose()
+    super.dispose()
+  }
 
-    }
-
-    dispose(){
-
-        this.trajectory.dispose();
-        super.dispose();
-
-    }
-
-    getCenter(){}
-
+  getCenter () {}
 }
 
-
-export default TrajectoryComponent;
+export default TrajectoryComponent

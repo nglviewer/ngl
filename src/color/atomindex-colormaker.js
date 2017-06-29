@@ -4,10 +4,9 @@
  * @private
  */
 
-
-import { ColormakerRegistry } from "../globals.js";
-import Colormaker from "./colormaker.js";
-
+import { ColormakerRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import Colormaker from './colormaker.js'
 
 /**
  * Color by atom index. The {@link AtomProxy.index} property is used for coloring.
@@ -22,38 +21,33 @@ import Colormaker from "./colormaker.js";
  *     o.autoView();
  * } );
  */
-class AtomindexColormaker extends Colormaker{
+class AtomindexColormaker extends Colormaker {
+  constructor (params) {
+    super(params)
 
-    constructor( params ){
-
-        super( params );
-
-        if( !params.scale ){
-            this.scale = "rainbow";
-        }
-
-        this.scalePerModel = {};
-
-        this.structure.eachModel( mp => {
-            this.domain = [ mp.atomOffset, mp.atomEnd ];
-            this.scalePerModel[ mp.index ] = this.getScale();
-        } );
-
+    if (!params.scale) {
+      this.scale = 'rainbow'
+      this.reverse = defaults(params.reverse, true)
     }
+
+    this.scalePerModel = {}
+
+    this.structure.eachModel(mp => {
+      this.domain = [ mp.atomOffset, mp.atomEnd ]
+      this.scalePerModel[ mp.index ] = this.getScale()
+    })
+  }
 
     /**
      * get color for an atom
      * @param  {AtomProxy} atom - atom to get color for
      * @return {Integer} hex atom color
      */
-    atomColor( atom ){
-        return this.scalePerModel[ atom.modelIndex ]( atom.index );
-    }
-
+  atomColor (atom) {
+    return this.scalePerModel[ atom.modelIndex ](atom.index)
+  }
 }
 
+ColormakerRegistry.add('atomindex', AtomindexColormaker)
 
-ColormakerRegistry.add( "atomindex", AtomindexColormaker );
-
-
-export default AtomindexColormaker;
+export default AtomindexColormaker

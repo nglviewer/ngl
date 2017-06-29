@@ -4,15 +4,12 @@
  * @private
  */
 
+import { IcosahedronBufferGeometry, Vector3 } from '../../lib/three.es6.js'
 
-import { IcosahedronBufferGeometry, Vector3 } from "../../lib/three.es6.js";
+import { defaults } from '../utils.js'
+import GeometryBuffer from './geometry-buffer.js'
 
-import { defaults } from "../utils.js";
-import GeometryBuffer from "./geometry-buffer.js";
-
-
-const scale = new Vector3();
-
+const scale = new Vector3()
 
 /**
  * Sphere geometry buffer.
@@ -24,8 +21,7 @@ const scale = new Vector3();
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class SphereGeometryBuffer extends GeometryBuffer{
-
+class SphereGeometryBuffer extends GeometryBuffer {
     /**
      * @param {Object} data - attribute object
      * @param {Float32Array} data.position - positions
@@ -34,37 +30,29 @@ class SphereGeometryBuffer extends GeometryBuffer{
      * @param {Picker} [data.picking] - picking ids
      * @param {BufferParameters} params - parameter object
      */
-    constructor( data, params ){
+  constructor (data, params) {
+    const p = params || {}
+    const detail = defaults(p.sphereDetail, 1)
+    const geo = new IcosahedronBufferGeometry(1, detail)
 
-        const p = params || {};
-        const detail = defaults( p.sphereDetail, 1 );
-        const geo = new IcosahedronBufferGeometry( 1, detail );
+    super(data, p, geo)
 
-        super( data, p, geo );
+    this.setAttributes(data, true)
+  }
 
-        this.setAttributes( data, true );
+  applyPositionTransform (matrix, i) {
+    const r = this._radius[ i ]
+    scale.set(r, r, r)
+    matrix.scale(scale)
+  }
 
+  setAttributes (data, initNormals) {
+    if (data.radius) {
+      this._radius = data.radius
     }
 
-    applyPositionTransform( matrix, i ){
-
-        const r = this._radius[ i ];
-        scale.set( r, r, r );
-        matrix.scale( scale );
-
-    }
-
-    setAttributes( data, initNormals ){
-
-        if( data.radius ){
-            this._radius = data.radius;
-        }
-
-        super.setAttributes( data, initNormals );
-
-    }
-
+    super.setAttributes(data, initNormals)
+  }
 }
 
-
-export default SphereGeometryBuffer;
+export default SphereGeometryBuffer

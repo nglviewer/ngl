@@ -4,27 +4,23 @@
  * @private
  */
 
+import { DatasourceRegistry, ParserRegistry } from '../globals.js'
+import { getFileInfo } from '../utils.js'
+import ParserLoader from './parser-loader.js'
+import ScriptLoader from './script-loader.js'
+import PluginLoader from './plugin-loader.js'
 
-import { DatasourceRegistry, ParserRegistry } from "../globals.js";
-import { getFileInfo } from "../utils.js";
-import ParserLoader from "./parser-loader.js";
-import ScriptLoader from "./script-loader.js";
-import PluginLoader from "./plugin-loader.js";
-
-
-function getDataInfo( src ){
-
-    var info = getFileInfo( src );
-    var datasource = DatasourceRegistry.get( info.protocol );
-    if( datasource ){
-        info = getFileInfo( datasource.getUrl( info.src ) );
-        if( !info.ext && datasource.getExt ){
-            info.ext = datasource.getExt( src );
-        }
+function getDataInfo (src) {
+  var info = getFileInfo(src)
+  var datasource = DatasourceRegistry.get(info.protocol)
+  if (datasource) {
+    info = getFileInfo(datasource.getUrl(info.src))
+    if (!info.ext && datasource.getExt) {
+      info.ext = datasource.getExt(src)
     }
-    return info;
+  }
+  return info
 }
-
 
 /**
  * Load a file
@@ -51,30 +47,27 @@ function getDataInfo( src ){
  * @param  {LoaderParameters} params - loading parameters
  * @return {Promise} Promise resolves to the loaded data
  */
-function autoLoad( file, params ){
+function autoLoad (file, params) {
+  var p = Object.assign(getDataInfo(file), params)
 
-    var p = Object.assign( getDataInfo( file ), params );
+  var LoaderClass
+  if (ParserRegistry.names.includes(p.ext)) {
+    LoaderClass = ParserLoader
+  } else if ([ 'ngl', 'js' ].includes(p.ext)) {
+    LoaderClass = ScriptLoader
+  } else if (p.ext === 'plugin') {
+    LoaderClass = PluginLoader
+  }
 
-    var loaderClass;
-    if( ParserRegistry.names.includes( p.ext ) ){
-        loaderClass = ParserLoader;
-    }else if( [ "ngl", "js" ].includes( p.ext ) ){
-        loaderClass = ScriptLoader;
-    }else if( p.ext === "plugin" ){
-        loaderClass = PluginLoader;
-    }
-
-    if( loaderClass ){
-        var loader = new loaderClass( p.src, p );
-        return loader.load();
-    }else{
-        return Promise.reject( "autoLoad: ext '" + p.ext + "' unknown" );
-    }
-
+  if (LoaderClass) {
+    var loader = new LoaderClass(p.src, p)
+    return loader.load()
+  } else {
+    return Promise.reject(new Error("autoLoad: ext '" + p.ext + "' unknown"))
+  }
 }
 
-
 export {
-    getDataInfo,
-	autoLoad
-};
+  getDataInfo,
+  autoLoad
+}

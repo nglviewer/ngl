@@ -4,29 +4,17 @@
  * @private
  */
 
+import Streamer from './streamer.js'
 
-import Streamer from "./streamer.js";
+class BinaryStreamer extends Streamer {
+  constructor (bin, params) {
+    if (bin instanceof ArrayBuffer) bin = new Uint8Array(bin)
+    super(bin, params)
+  }
 
+  get type () { return 'binary' }
 
-function BinaryStreamer( bin, params ){
-
-    if( bin instanceof ArrayBuffer ) bin = new Uint8Array( bin );
-
-    Streamer.call( this, bin, params );
-
+  get __srcName () { return 'bin' }
 }
 
-BinaryStreamer.prototype = Object.assign( Object.create(
-
-    Streamer.prototype ), {
-
-    constructor: BinaryStreamer,
-
-    type: "binary",
-
-    __srcName: "bin",
-
-} );
-
-
-export default BinaryStreamer;
+export default BinaryStreamer

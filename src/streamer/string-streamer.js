@@ -4,33 +4,16 @@
  * @private
  */
 
+import Streamer from './streamer.js'
 
-import Streamer from "./streamer.js";
+class StringStreamer extends Streamer {
+  get type () { return 'string' }
 
+  get __srcName () { return 'str' }
 
-function StringStreamer( str, params ){
-
-    Streamer.call( this, str, params );
-
+  _chunk (start, end) {
+    return this.data.substr(start, end)
+  }
 }
 
-StringStreamer.prototype = Object.assign( Object.create(
-
-    Streamer.prototype ), {
-
-    constructor: StringStreamer,
-
-    type: "string",
-
-    __srcName: "str",
-
-    _chunk: function( start, end ){
-
-        return this.data.substr( start, end );
-
-    },
-
-} );
-
-
-export default StringStreamer;
+export default StringStreamer

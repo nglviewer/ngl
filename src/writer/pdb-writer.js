@@ -4,154 +4,128 @@
  * @private
  */
 
+import { download } from '../utils.js'
 
-import { download } from "../utils.js";
+import { sprintf } from '../../lib/sprintf.es6.js'
 
-import { sprintf } from "../../lib/sprintf.es6.js";
+function PdbWriter (structure, params) {
+  var p = Object.assign({}, params)
 
+  var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true
+  var remarks = p.remarks || []
+  if (!Array.isArray(remarks)) remarks = [ remarks ]
 
-function PdbWriter( structure, params ){
+  var records
 
-    var p = Object.assign( {}, params );
+  function writeRecords () {
+    records = []
 
-    var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true;
-    var remarks = p.remarks || [];
-    if( !Array.isArray( remarks ) ) remarks = [ remarks ];
+    writeTitle()
+    writeRemarks()
+    writeAtoms()
+  }
 
-    var records;
+  // http://www.wwpdb.org/documentation/file-format
 
-    function writeRecords(){
+  // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
+  // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
 
-        records = [];
+  function DEF (x, y) {
+    return x !== undefined ? x : y
+  }
 
-        writeTitle();
-        writeRemarks();
-        writeAtoms();
+  var atomFormat =
+    'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
+  var hetatmFormat =
+    'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
+
+  function writeTitle () {
+    // FIXME multiline if title line longer than 80 chars
+    records.push(sprintf('TITEL %-74s', structure.name))
+  }
+
+  function writeRemarks () {
+    remarks.forEach(function (str) {
+      records.push(sprintf('REMARK %-73s', str))
+    })
+
+    if (structure.trajectory) {
+      records.push(sprintf(
+        'REMARK %-73s',
+        "Trajectory '" + structure.trajectory.name + "'"
+      ))
+      records.push(sprintf(
+        'REMARK %-73s',
+        'Frame ' + structure.trajectory.frame + ''
+      ))
     }
+  }
 
-    // http://www.wwpdb.org/documentation/file-format
+  function writeAtoms () {
+    var ia = 1
+    var im = 1
 
-    // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
-    // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
+    structure.eachModel(function (m) {
+      records.push(sprintf('MODEL %-74d', im++))
 
-    function DEF( x, y ){
-        return x !== undefined ? x : y;
-    }
+      m.eachAtom(function (a) {
+        var formatString = a.hetero ? hetatmFormat : atomFormat
+        var serial = renumberSerial ? ia : a.serial
 
-    var atomFormat =
-        "ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+        // Alignment of one-letter atom name such as C starts at column 14,
+        // while two-letter atom name such as FE starts at column 13.
+        var atomname = a.atomname
+        if (atomname.length === 1) atomname = ' ' + atomname
 
-    var hetatmFormat =
-        "HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s";
+        records.push(sprintf(
+          formatString,
 
-    function writeTitle(){
+          serial,
+          atomname,
+          a.resname,
+          DEF(a.chainname, ' '),
+          a.resno,
+          a.x, a.y, a.z,
+          DEF(a.occurence, 1.0),
+          DEF(a.bfactor, 0.0),
+          DEF(a.segid, ''),
+          DEF(a.element, '')
+        ))
+        ia += 1
+      })
 
-        // FIXME multiline if title line longer than 80 chars
-        records.push( sprintf( "TITEL %-74s", structure.name ) );
+      records.push(sprintf('%-80s', 'ENDMDL'))
+      im += 1
+    })
 
-    }
+    records.push(sprintf('%-80s', 'END'))
+  }
 
-    function writeRemarks(){
+  function getString () {
+    writeRecords()
+    return records.join('\n')
+  }
 
-        remarks.forEach( function( str ){
-            records.push( sprintf( "REMARK %-73s", str ) );
-        } );
+  function getBlob () {
+    return new window.Blob([ getString() ], { type: 'text/plain' })
+  }
 
-        if( structure.trajectory ){
-            records.push( sprintf(
-                "REMARK %-73s",
-                "Trajectory '" + structure.trajectory.name + "'"
-            ) );
-            records.push( sprintf(
-                "REMARK %-73s",
-                "Frame " + structure.trajectory.frame + ""
-            ) );
-        }
+  function _download (name, ext) {
+    name = name || 'structure'
+    ext = ext || 'pdb'
 
-    }
+    var file = name + '.' + ext
+    var blob = getBlob()
 
-    function writeAtoms(){
+    download(blob, file)
+  }
 
-        var ia = 1;
-        var im = 1;
+  // API
 
-        structure.eachModel( function( m ){
-
-            records.push( sprintf( "MODEL %-74d", im++ ) );
-
-            m.eachAtom( function( a ){
-
-                var formatString = a.hetero ? hetatmFormat : atomFormat;
-                var serial = renumberSerial ? ia : a.serial;
-
-                // Alignment of one-letter atom name such as C starts at column 14,
-                // while two-letter atom name such as FE starts at column 13.
-                var atomname = a.atomname;
-                if( atomname.length === 1 ) atomname = " " + atomname;
-
-                records.push( sprintf(
-                    formatString,
-
-                    serial,
-                    atomname,
-                    a.resname,
-                    DEF( a.chainname, " " ),
-                    a.resno,
-                    a.x, a.y, a.z,
-                    DEF( a.occurence, 1.0 ),
-                    DEF( a.bfactor, 0.0 ),
-                    DEF( a.segid, "" ),
-                    DEF( a.element, "" )
-                ) );
-                ia += 1;
-
-            } );
-
-            records.push( sprintf( "%-80s", "ENDMDL" ) );
-            im += 1;
-
-        } );
-
-        records.push( sprintf( "%-80s", "END" ) );
-
-    }
-
-    function getString(){
-
-        writeRecords();
-        return records.join( "\n" );
-
-    }
-
-    function getBlob(){
-
-        return new Blob(
-            [ getString() ],
-            { type: 'text/plain' }
-        );
-
-    }
-
-    function _download( name, ext ){
-
-        name = name || "structure";
-        ext = ext || "pdb";
-
-        var file = name + "." + ext;
-        var blob = getBlob();
-
-        download( blob, file );
-
-    }
-
-    // API
-
-    this.getString = getString;
-    this.getBlob = getBlob;
-    this.download = _download;
-
+  this.getString = getString
+  this.getBlob = getBlob
+  this.download = _download
 }
 
-
-export default PdbWriter;
+export default PdbWriter

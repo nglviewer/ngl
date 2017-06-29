@@ -4,11 +4,9 @@
  * @private
  */
 
-
-import { ComponentRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import Component from "./component.js";
-
+import { ComponentRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import Component from './component.js'
 
 /**
  * Component wrapping a {@link Shape} object
@@ -20,29 +18,26 @@ import Component from "./component.js";
  * var shapeComponent = stage.addComponentFromObject( shape );
  * shapeComponent.addRepresentation( "buffer" );
  */
-class ShapeComponent extends Component{
-
+class ShapeComponent extends Component {
     /**
      * @param {Stage} stage - stage object the component belongs to
      * @param {Shape} shape - shape object to wrap
      * @param {ComponentParameters} params - component parameters
      */
-    constructor( stage, shape, params ){
+  constructor (stage, shape, params) {
+    var p = params || {}
+    p.name = defaults(p.name, shape.name)
 
-        var p = params || {};
-        p.name = defaults( p.name, shape.name );
+    super(stage, p)
 
-        super( stage, p );
-
-        this.shape = shape;
-
-    }
+    this.shape = shape
+  }
 
     /**
      * Component type
      * @type {String}
      */
-    get type(){ return "shape"; }
+  get type () { return 'shape' }
 
     /**
      * Add a new shape representation to the component
@@ -52,34 +47,24 @@ class ShapeComponent extends Component{
      * @return {RepresentationComponent} the created representation wrapped into
      *                                   a representation component object
      */
-    addRepresentation( type, params ){
+  addRepresentation (type, params) {
+    return super.addRepresentation(type, this.shape, params)
+  }
 
-        return super.addRepresentation( type, this.shape, params );
+  getBoxUntransformed () {
+    return this.shape.boundingBox
+  }
 
-    }
+  getCenterUntransformed () {
+    return this.shape.center
+  }
 
-    getBoxUntransformed(){
-
-        return this.shape.boundingBox;
-
-    }
-
-    getCenterUntransformed(){
-
-        return this.shape.center;
-
-    }
-
-    dispose(){
-
-        this.shape.dispose();
-        super.dispose();
-
-    }
-
+  dispose () {
+    this.shape.dispose()
+    super.dispose()
+  }
 }
 
-ComponentRegistry.add( "shape", ShapeComponent );
+ComponentRegistry.add('shape', ShapeComponent)
 
-
-export default ShapeComponent;
+export default ShapeComponent

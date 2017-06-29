@@ -4,181 +4,156 @@
  * @private
  */
 
+import Buffer from './buffer.js'
 
-import Buffer from "./buffer.js";
-
-import { getUintArray } from "../utils.js";
-import { calculateCenterArray, serialArray } from "../math/array-utils.js";
-
+import { getUintArray } from '../utils.js'
+import { calculateCenterArray, serialArray } from '../math/array-utils.js'
 
 /**
  * Mapped buffer. Sends mapping attribute to the GPU and repeats data in
  * others attributes. Used to render imposters.
  * @interface
  */
-class MappedBuffer extends Buffer{
+class MappedBuffer extends Buffer {
+  constructor (data, params) {
+    super(data, params)
 
-    constructor( data, params ){
+    this.index = getUintArray(this.indexSize, this.attributeSize)
+    this.makeIndex()
+    this.initIndex(this.index, 1)
 
-        super( data, params );
+    this.addAttributes({
+      'mapping': { type: this.mappingType, value: null }
+    })
 
-        this.index = getUintArray( this.indexSize, this.attributeSize );
-        this.makeIndex();
-        this.initIndex( this.index, 1 );
+    this.setAttributes({ primitiveId: serialArray(this.size) })
+  }
 
-        this.addAttributes( {
-            "mapping": { type: this.mappingType, value: null },
-        } );
+  get attributeSize () {
+    return this.size * this.mappingSize
+  }
 
-        this.setAttributes( { primitiveId: serialArray( this.size ) } );
+  get indexSize () {
+    return this.size * this.mappingIndicesSize
+  }
 
+    /**
+     * @abstract
+     */
+  get mapping () {}
+
+    /**
+     * @abstract
+     */
+  get mappingIndices () {}
+
+    /**
+     * @abstract
+     */
+  get mappingIndicesSize () {}
+
+    /**
+     * @abstract
+     */
+  get mappingType () {}
+
+    /**
+     * @abstract
+     */
+  get mappingSize () {}
+
+    /**
+     * @abstract
+     */
+  get mappingItemSize () {}
+
+  addAttributes (attributes) {
+    var nullValueAttributes = {}
+    for (var name in attributes) {
+      var a = attributes[ name ]
+      nullValueAttributes[ name ] = {
+        type: a.type,
+        value: null
+      }
     }
 
-    get attributeSize () {
-        return this.size * this.mappingSize;
+    super.addAttributes(nullValueAttributes)
+  }
+
+  getAttributeIndex (dataIndex) {
+    return dataIndex * 3 * this.mappingSize
+  }
+
+  setAttributes (data) {
+    if (data && !data.position && data.position1 && data.position2) {
+      data.position = calculateCenterArray(data.position1, data.position2)
     }
 
-    get indexSize () {
-        return this.size * this.mappingIndicesSize;
-    }
+    var size = this.size
+    var mappingSize = this.mappingSize
+    var attributes = this.geometry.attributes
 
-    /**
-     * @abstract
-     */
-    get mapping (){}
+    var a, d, itemSize, array, n, i, j
 
-    /**
-     * @abstract
-     */
-    get mappingIndices (){}
+    for (var name in data) {
+      if (name === 'index' || name === 'picking') continue
 
-    /**
-     * @abstract
-     */
-    get mappingIndicesSize (){}
+      d = data[ name ]
+      a = attributes[ name ]
+      itemSize = a.itemSize
+      array = a.array
 
-    /**
-     * @abstract
-     */
-    get mappingType (){}
+      for (var k = 0; k < size; ++k) {
+        n = k * itemSize
+        i = n * mappingSize
 
-    /**
-     * @abstract
-     */
-    get mappingSize (){}
+        for (var l = 0; l < mappingSize; ++l) {
+          j = i + (itemSize * l)
 
-    /**
-     * @abstract
-     */
-    get mappingItemSize (){}
-
-    addAttributes( attributes ){
-
-        var nullValueAttributes = {};
-        for( var name in attributes ){
-            var a = attributes[ name ];
-            nullValueAttributes[ name ] = {
-                type: a.type,
-                value: null
-            };
+          for (var m = 0; m < itemSize; ++m) {
+            array[ j + m ] = d[ n + m ]
+          }
         }
+      }
 
-        super.addAttributes( nullValueAttributes );
-
+      a.needsUpdate = true
     }
+  }
 
-    getAttributeIndex( dataIndex ){
+  makeMapping () {
+    var size = this.size
+    var mapping = this.mapping
+    var mappingSize = this.mappingSize
+    var mappingItemSize = this.mappingItemSize
 
-        return dataIndex * 3 * this.mappingSize;
+    var aMapping = this.geometry.attributes.mapping.array
 
+    for (var v = 0; v < size; v++) {
+      aMapping.set(mapping, v * mappingItemSize * mappingSize)
     }
+  }
 
-    setAttributes( data ){
+  makeIndex () {
+    var size = this.size
+    var mappingSize = this.mappingSize
+    var mappingIndices = this.mappingIndices
+    var mappingIndicesSize = this.mappingIndicesSize
 
-        if( data && !data.position && data.position1 && data.position2 ){
-            data.position = calculateCenterArray( data.position1, data.position2 );
-        }
+    var index = this.index
 
-        var size = this.size;
-        var mappingSize = this.mappingSize;
-        var attributes = this.geometry.attributes;
+    var ix, it
 
-        var a, d, itemSize, array, n, i, j;
+    for (var v = 0; v < size; v++) {
+      ix = v * mappingIndicesSize
+      it = v * mappingSize
 
-        for( var name in data ){
+      index.set(mappingIndices, ix)
 
-            if( name === "index" || name === "picking" ) continue;
-
-            d = data[ name ];
-            a = attributes[ name ];
-            itemSize = a.itemSize;
-            array = a.array;
-
-            for( var k = 0; k < size; ++k ) {
-
-                n = k * itemSize;
-                i = n * mappingSize;
-
-                for( var l = 0; l < mappingSize; ++l ) {
-
-                    j = i + ( itemSize * l );
-
-                    for( var m = 0; m < itemSize; ++m ) {
-                        array[ j + m ] = d[ n + m ];
-                    }
-
-                }
-
-            }
-
-            a.needsUpdate = true;
-
-        }
-
+      for (var s = 0; s < mappingIndicesSize; ++s) {
+        index[ ix + s ] += it
+      }
     }
-
-    makeMapping(){
-
-        var size = this.size;
-        var mapping = this.mapping;
-        var mappingSize = this.mappingSize;
-        var mappingItemSize = this.mappingItemSize;
-
-        var aMapping = this.geometry.attributes.mapping.array;
-
-        for( var v = 0; v < size; v++ ) {
-            aMapping.set( mapping, v * mappingItemSize * mappingSize );
-        }
-
-    }
-
-    makeIndex(){
-
-        var size = this.size;
-        var mappingSize = this.mappingSize;
-        var mappingIndices = this.mappingIndices;
-        var mappingIndicesSize = this.mappingIndicesSize;
-
-        var index = this.index;
-
-        var ix, it;
-
-        for( var v = 0; v < size; v++ ) {
-
-            ix = v * mappingIndicesSize;
-            it = v * mappingSize;
-
-            index.set( mappingIndices, ix );
-
-            for( var s = 0; s < mappingIndicesSize; ++s ){
-                index[ ix + s ] += it;
-            }
-
-        }
-
-    }
-
+  }
 }
 
-
-export default MappedBuffer;
+export default MappedBuffer

@@ -1003,6 +1003,7 @@ UI.PopupMenu = function( iconClass, heading, constraintTo ){
 
         }
 
+        panel.setMaxHeight( ( window.innerHeight / 1.2 ) + "px" );
         this.setMenuDisplay( "block" );
 
         tether = new Tether( {

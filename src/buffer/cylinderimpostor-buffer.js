@@ -4,15 +4,13 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import '../shader/CylinderImpostor.vert'
+import '../shader/CylinderImpostor.frag'
 
-import "../shader/CylinderImpostor.vert";
-import "../shader/CylinderImpostor.frag";
-
-import { defaults } from "../utils.js";
-import AlignedBoxBuffer from "./alignedbox-buffer.js";
-
+import { defaults } from '../utils.js'
+import AlignedBoxBuffer from './alignedbox-buffer.js'
 
 /**
  * Cylinder impostor buffer.
@@ -26,8 +24,7 @@ import AlignedBoxBuffer from "./alignedbox-buffer.js";
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class CylinderImpostorBuffer extends AlignedBoxBuffer{
-
+class CylinderImpostorBuffer extends AlignedBoxBuffer {
     /**
      * make cylinder impostor buffer
      * @param  {Object} data - attribute object
@@ -39,58 +36,50 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer{
      * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
-    constructor( data, params ){
+  constructor (data, params) {
+    super(data, params)
 
-        super( data, params );
+    var p = params || {}
 
-        var p = params || {};
+    this.openEnded = defaults(p.openEnded, false)
 
-        this.openEnded = defaults( p.openEnded, false );
+    this.addUniforms({
+      'modelViewMatrixInverse': { value: new Matrix4() },
+      'ortho': { value: 0.0 }
+    })
 
-        this.addUniforms( {
-            "modelViewMatrixInverse": { value: new Matrix4() },
-            "ortho": { value: 0.0 },
-        } );
+    this.addAttributes({
+      'position1': { type: 'v3', value: null },
+      'position2': { type: 'v3', value: null },
+      'color2': { type: 'c', value: null },
+      'radius': { type: 'f', value: null }
+    })
 
-        this.addAttributes( {
-            "position1": { type: "v3", value: null },
-            "position2": { type: "v3", value: null },
-            "color2": { type: "c", value: null },
-            "radius": { type: "f", value: null },
-        } );
+    this.setAttributes(data)
+    this.makeMapping()
+  }
 
-        this.setAttributes( data );
-        this.makeMapping();
+  get parameters () {
+    return Object.assign({
 
+      openEnded: { updateShader: true }
+
+    }, super.parameters)
+  }
+
+  getDefines (type) {
+    var defines = AlignedBoxBuffer.prototype.getDefines.call(this, type)
+
+    if (!this.openEnded) {
+      defines.CAP = 1
     }
 
-    get parameters (){
+    return defines
+  }
 
-        return Object.assign( {
-
-            openEnded: { updateShader: true }
-
-        }, super.parameters );
-
-    }
-
-    getDefines( type ){
-
-        var defines = AlignedBoxBuffer.prototype.getDefines.call( this, type );
-
-        if( !this.openEnded ){
-            defines.CAP = 1;
-        }
-
-        return defines;
-
-    }
-
-    get isImpostor (){ return true; }
-    get vertexShader (){ return "CylinderImpostor.vert"; }
-    get fragmentShader (){ return "CylinderImpostor.frag"; }
-
+  get isImpostor () { return true }
+  get vertexShader () { return 'CylinderImpostor.vert' }
+  get fragmentShader () { return 'CylinderImpostor.frag' }
 }
 
-
-export default CylinderImpostorBuffer;
+export default CylinderImpostorBuffer

@@ -4,13 +4,11 @@
  * @private
  */
 
+import { Color } from '../../lib/three.es6.js'
 
-import { Color } from "../../lib/three.es6.js";
+import { defaults } from '../utils.js'
 
-import { defaults } from "../utils.js";
-
-import chroma from "../../lib/chroma.es6.js";
-
+import chroma from '../../lib/chroma.es6.js'
 
 /**
  * Colormaker parameter object.
@@ -28,60 +26,54 @@ import chroma from "../../lib/chroma.es6.js";
  * @property {Surface} [surface] - surface object
  */
 
-
 /**
  * Class for making colors.
  * @interface
  */
-class Colormaker{
-
+class Colormaker {
     /**
      * Create a colormaker instance
      * @param  {ColormakerParameters} params - colormaker parameter
      */
-    constructor( params ){
+  constructor (params) {
+    const p = params || {}
 
-        var p = params || {};
+    this.scale = defaults(p.scale, 'uniform')
+    this.mode = defaults(p.mode, 'hcl')
+    this.domain = defaults(p.domain, [ 0, 1 ])
+    this.value = new Color(defaults(p.value, 0xFFFFFF)).getHex()
+    this.reverse = defaults(p.reverse, false)
 
-        this.scale = defaults( p.scale, "uniform" );
-        this.mode = defaults( p.mode, "hcl" );
-        this.domain = defaults( p.domain, [ 0, 1 ] );
-        this.value = new Color( defaults( p.value, 0xFFFFFF ) ).getHex();
-        this.reverse = defaults( p.reverse, false );
+    this.structure = p.structure
+    this.volume = p.volume
+    this.surface = p.surface
 
-        this.structure = p.structure;
-        this.volume = p.volume;
-        this.surface = p.surface;
+    if (this.structure) {
+      this.atomProxy = this.structure.getAtomProxy()
+    }
+  }
 
-        if( this.structure ){
-            this.atomProxy = this.structure.getAtomProxy();
-        }
+  getScale (params) {
+    const p = params || {}
 
+    let scale = defaults(p.scale, this.scale)
+    if (scale === 'rainbow') {
+      scale = [ 'red', 'orange', 'yellow', 'green', 'blue' ]
+    } else if (scale === 'rwb') {
+      scale = [ 'red', 'white', 'blue' ]
     }
 
-    getScale( params ){
-
-        var p = params || {};
-
-        var scale = defaults( p.scale, this.scale );
-        if( scale === "rainbow" ){
-            scale = [ "red", "orange", "yellow", "green", "blue" ];
-        }else if( scale === "rwb" ){
-            scale = [ "red", "white", "blue" ];
-        }
-
-        var domain = defaults( p.domain, this.domain );
-        if( this.reverse ){
-            domain.reverse();
-        }
-
-        return chroma
-            .scale( scale )
-            .mode( defaults( p.mode, this.mode ) )
-            .domain( domain )
-            .out( "num" );
-
+    let domain = defaults(p.domain, this.domain)
+    if (this.reverse) {
+      domain = domain.slice().reverse()
     }
+
+    return chroma
+            .scale(scale)
+            .mode(defaults(p.mode, this.mode))
+            .domain(domain)
+            .out('num')
+  }
 
     /**
      * safe a color to an array
@@ -90,18 +82,16 @@ class Colormaker{
      * @param  {Integer} offset - index into the array
      * @return {Array} the destination array
      */
-    colorToArray( color, array, offset ){
+  colorToArray (color, array, offset) {
+    if (array === undefined) array = []
+    if (offset === undefined) offset = 0
 
-        if( array === undefined ) array = [];
-        if( offset === undefined ) offset = 0;
+    array[ offset + 0 ] = (color >> 16 & 255) / 255
+    array[ offset + 1 ] = (color >> 8 & 255) / 255
+    array[ offset + 2 ] = (color & 255) / 255
 
-        array[ offset + 0 ] = ( color >> 16 & 255 ) / 255;
-        array[ offset + 1 ] = ( color >> 8 & 255 ) / 255;
-        array[ offset + 2 ] = ( color & 255 ) / 255;
-
-        return array;
-
-    }
+    return array
+  }
 
     /**
      * safe a atom color to an array
@@ -110,13 +100,11 @@ class Colormaker{
      * @param  {Integer} offset - index into the array
      * @return {Array} the destination array
      */
-    atomColorToArray( atom, array, offset ){
-
-        return this.colorToArray(
-            this.atomColor( atom ), array, offset
-        );
-
-    }
+  atomColorToArray (atom, array, offset) {
+    return this.colorToArray(
+            this.atomColor(atom), array, offset
+        )
+  }
 
     /**
      * return the color for an bond
@@ -124,12 +112,10 @@ class Colormaker{
      * @param  {Boolean} fromTo - whether to use the first or second atom of the bond
      * @return {Integer} hex bond color
      */
-    bondColor( bond, fromTo ){
-
-        this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2;
-        return this.atomColor( this.atomProxy );
-
-    }
+  bondColor (bond, fromTo) {
+    this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2
+    return this.atomColor(this.atomProxy)
+  }
 
     /**
      * safe a bond color to an array
@@ -139,13 +125,11 @@ class Colormaker{
      * @param  {Integer} offset - index into the array
      * @return {Array} the destination array
      */
-    bondColorToArray( bond, fromTo, array, offset ){
-
-        return this.colorToArray(
-            this.bondColor( bond, fromTo ), array, offset
-        );
-
-    }
+  bondColorToArray (bond, fromTo, array, offset) {
+    return this.colorToArray(
+            this.bondColor(bond, fromTo), array, offset
+        )
+  }
 
     /**
      * safe a volume cell color to an array
@@ -154,13 +138,11 @@ class Colormaker{
      * @param  {Integer} offset - index into the array
      * @return {Array} the destination array
      */
-    volumeColorToArray( index, array, offset ){
-
-        return this.colorToArray(
-            this.volumeColor( index ), array, offset
-        );
-
-    }
+  volumeColorToArray (index, array, offset) {
+    return this.colorToArray(
+            this.volumeColor(index), array, offset
+        )
+  }
 
     /**
      * safe a color for coordinates in space to an array
@@ -169,15 +151,11 @@ class Colormaker{
      * @param  {Integer} offset - index into the array
      * @return {Array} the destination array
      */
-    positionColorToArray( coords, array, offset ){
-
-        return this.colorToArray(
-            this.positionColor( coords ), array, offset
-        );
-
-    }
-
+  positionColorToArray (coords, array, offset) {
+    return this.colorToArray(
+            this.positionColor(coords), array, offset
+        )
+  }
 }
 
-
-export default Colormaker;
+export default Colormaker

@@ -4,11 +4,9 @@
  * @private
  */
 
-
-import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import BallAndStickRepresentation from "./ballandstick-representation.js";
-
+import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import BallAndStickRepresentation from './ballandstick-representation.js'
 
 /**
  * Backbone representation. Show cylinders (or lines) connecting .CA (protein)
@@ -22,58 +20,46 @@ import BallAndStickRepresentation from "./ballandstick-representation.js";
  *     o.autoView();
  * } );
  */
-class BackboneRepresentation extends BallAndStickRepresentation{
-
+class BackboneRepresentation extends BallAndStickRepresentation {
     /**
      * @param  {Structure} structure - the structure object
      * @param  {Viewer} viewer - the viewer object
      * @param  {BallAndStickRepresentationParameters} params - parameters object
      */
-    constructor( structure, viewer, params ){
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
-        super( structure, viewer, params );
+    this.type = 'backbone'
 
-        this.type = "backbone";
+    this.parameters = Object.assign({
 
-        this.parameters = Object.assign( {
+    }, this.parameters, {
 
-        }, this.parameters, {
+      multipleBond: null,
+      bondSpacing: null
 
-            multipleBond: null,
-            bondSpacing: null,
+    })
 
-        } );
+    this.init(params)
+  }
 
-        this.init( params );
+  init (params) {
+    var p = params || {}
+    p.aspectRatio = defaults(p.aspectRatio, 1.0)
+    p.radius = defaults(p.radius, 0.25)
 
-    }
+    super.init(p)
+  }
 
-    init( params ){
+  getAtomData (sview, what, params) {
+    return sview.getBackboneAtomData(this.getAtomParams(what, params))
+  }
 
-        var p = params || {};
-        p.aspectRatio = defaults( p.aspectRatio, 1.0 );
-        p.radius = defaults( p.radius, 0.25 );
-
-        super.init( p );
-
-    }
-
-    getAtomData( sview, what, params ){
-
-        return sview.getBackboneAtomData( this.getAtomParams( what, params ) );
-
-    }
-
-    getBondData( sview, what, params ){
-
-        return sview.getBackboneBondData( this.getBondParams( what, params ) );
-
-    }
-
+  getBondData (sview, what, params) {
+    return sview.getBackboneBondData(this.getBondParams(what, params))
+  }
 }
 
+RepresentationRegistry.add('backbone', BackboneRepresentation)
 
-RepresentationRegistry.add( "backbone", BackboneRepresentation );
-
-
-export default BackboneRepresentation;
+export default BackboneRepresentation

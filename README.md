@@ -3,26 +3,34 @@
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
 [![npm version](https://badge.fury.io/js/ngl.svg)](https://badge.fury.io/js/ngl)
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)
+[![Standard](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat)](https://standardjs.com)
+[![Gitter](https://badges.gitter.im/nglviewer/Lobby.svg)](https://gitter.im/nglviewer/Lobby)
 
 
 NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.
 
 See it in action:
 
-* [Web application](http://arose.github.io/ngl/?example=3pqr)
-* [Documentation](http://arose.github.io/ngl/api/)
+* [Web application](https://arose.github.io/ngl/?script=showcase/ferredoxin)
+* [X-ray viewer](https://codepen.io/arose/full/oWOQMg/)
+* [Gallery](http://arose.github.io/ngl/gallery/index.html)
 * [CodePen template](https://codepen.io/pen?template=JNLMXb)
 * [Pens tagged _ngl_](https://codepen.io/tag/ngl/)
 
+
+Documentation:
+
+* [Reference](http://arose.github.io/ngl/api/identifiers.html)
+* [Manual](http://arose.github.io/ngl/api/manual/index.html)
 
 
 Features
 --------
 
 * Molecular structures (mmCIF, PDB, PQR, GRO, SDF, MOL2, MMTF)
-* Density volumes (MRC/MAP/CCP4, DX/DXBIN, CUBE)
+* Density volumes (MRC/MAP/CCP4, DX/DXBIN, CUBE, BRIX/DSN6, XPLOR/CNS)
 * User interaction (mouse picking, selection language, image export)
-* Coordinate trajectories (animation, remote access via [MDSrv](https://github.com/arose/mdsrv/))
+* Coordinate trajectories (DCD/PSF, animation, remote access via [MDSrv](https://github.com/arose/mdsrv/))
 * Embeddable (single file, API)
 
 

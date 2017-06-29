@@ -50,6 +50,7 @@ Supported features:
 	* *hetero*: determined from "group_PDB" field, which is "ATOM" or "HETATM"
 	* *occupancy*: read from "occupancy" field
 * Connectivity: read from the "_struct_conn" item, which generally contains data on hetero atom connectivity. Entries with "_conn_type_id" equal to "hydrog" are currently ignored. Connectivity for non-hetero atoms is calculated during post-processing.
+* The cif dictionary is added to the `structure.extraData` property, with key `cif`, excluding "_atom_site" items
 
 
 ### PDB/PQR
@@ -115,7 +116,7 @@ TODO:
 
 ### SDF
 
-Extension: **.sdf**
+Extension: **.sdf**, **.sd**
 
 Specification: [http://download.accelrys.com/freeware/ctfile-formats/](http://download.accelrys.com/freeware/ctfile-formats/)
 
@@ -136,6 +137,7 @@ Supported features:
 	* *altloc*: not available, left empty
 	* *inscode*: not available, left empty
 * Connectivity: read from bond block, includes bond order
+* Associated data items are added to the `structure.extraData` property with key `sdf`
 
 
 ### MOL2

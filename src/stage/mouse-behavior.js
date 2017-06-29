@@ -4,73 +4,46 @@
  * @private
  */
 
+class MouseBehavior {
+  constructor (stage/*, params */) {
+    this.stage = stage
+    this.mouse = stage.mouseObserver
+    this.controls = stage.mouseControls
 
-import { RightMouseButton, MiddleMouseButton } from "../constants.js";
-import { almostIdentity } from "../math/math-utils.js";
+    this.mouse.signals.moved.add(this._onMove, this)
+    this.mouse.signals.scrolled.add(this._onScroll, this)
+    this.mouse.signals.dragged.add(this._onDrag, this)
+    this.mouse.signals.clicked.add(this._onClick, this)
+    this.mouse.signals.hovered.add(this._onHover, this)
+  }
 
+  _onMove (/* x, y */) {
+    this.stage.tooltip.style.display = 'none'
+  }
 
-class MouseBehavior{
+  _onScroll (delta) {
+    this.controls.run('scroll', delta)
+  }
 
-    constructor( stage/*, params*/ ){
+  _onDrag (dx, dy) {
+    this.controls.run('drag', dx, dy)
+  }
 
-        this.stage = stage;
-        this.mouse = stage.mouseObserver;
-        this.controls = stage.trackballControls;
+  _onClick (x, y) {
+    this.controls.run('click', x, y)
+  }
 
-        this.stage.signals.hovered.add( this._onHover, this );
-        this.mouse.signals.scrolled.add( this._onScroll, this );
-        this.mouse.signals.dragged.add( this._onDrag, this );
+  _onHover (x, y) {
+    this.controls.run('hover', x, y)
+  }
 
-    }
-
-    _onHover( pickingProxy ){
-
-        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
-            this.stage.transformComponent = pickingProxy.component;
-        }
-
-    }
-
-    _onScroll( delta ){
-
-        if( this.mouse.shiftKey ){
-            const sp = this.stage.getParameters();
-            const focus = sp.clipNear * 2;
-            const sign = Math.sign( delta );
-            const step = sign * almostIdentity( ( 100 - focus ) / 10, 5, 0.2 );
-            this.stage.setFocus( focus + step );
-        }else if( this.mouse.ctrlKey ){
-            const sp = this.stage.getParameters();
-            this.stage.setParameters( { clipNear: sp.clipNear + delta / 10 } );
-        }else if( this.mouse.altKey ){
-            // nothing yet
-        }else if( this.mouse.metaKey ){
-            // nothing yet
-        }else{
-            this.controls.zoom( delta );
-        }
-
-    }
-
-    _onDrag( x, y ){
-
-        if( this.mouse.which === RightMouseButton ){
-            this.controls.pan( x, y );
-        }else if( this.mouse.which === MiddleMouseButton ){
-            // nothing yet
-        }else{
-            this.controls.rotate( x, y );
-        }
-
-    }
-
-    dispose(){
-        this.stage.signals.hovered.remove( this._onHover, this );
-        this.mouse.signals.scrolled.remove( this._onScroll, this );
-        this.mouse.signals.dragged.remove( this._onDrag, this );
-    }
-
+  dispose () {
+    this.mouse.signals.moved.remove(this._onMove, this)
+    this.mouse.signals.scrolled.remove(this._onScroll, this)
+    this.mouse.signals.dragged.remove(this._onDrag, this)
+    this.mouse.signals.clicked.remove(this._onClick, this)
+    this.mouse.signals.hovered.remove(this._onHover, this)
+  }
 }
 
-
-export default MouseBehavior;
+export default MouseBehavior

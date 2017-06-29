@@ -28,8 +28,14 @@ function renderExample( name ){
         const page = webpage.create();
         page.onConsoleMessage = function( msg, line, file, level ){
             if( [ "error", "warning" ].includes( level ) ){
-                console.log( level.toUpperCase(), msg );
+                console.log( "CONSOLE." + level.toUpperCase(), msg );
             }
+        };
+        page.onError = function( msg, stack ){
+            console.log( "ERROR", msg );
+        };
+        page.onResourceError = function( e ){
+            console.log( "RESOURCE-ERROR", e.errorString );
         };
         page.onCallback = function( cmd ){
             switch( cmd ){
@@ -90,6 +96,18 @@ const jsPrefix = (
     "}, false );\n\n\n"
 );
 
+const ga = (
+    "<script>\n" +
+    "    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\n" +
+    "    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n" +
+    "    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n" +
+    "    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');\n" +
+    "\n" +
+    "    ga('create', 'UA-69549173-1', 'auto');\n" +
+    "    ga('send', 'pageview');\n" +
+    "</script>\n\n\n"
+);
+
 
 function buildExamplePage( exampleNames, exampleUrl ){
     const pageLines = [];
@@ -113,8 +131,8 @@ function buildExamplePage( exampleNames, exampleUrl ){
         const json = JSON.stringify( data );
         pageLines.push(
             "" +
-            "<form method='post' id='" + name + "' action='http://codepen.io/pen/define/' target='_blank'>" +
-            "<input type='submit' value='CodePen'/>" +
+            "<form method='post' id='" + name + "' action='https://codepen.io/pen/define/' target='_blank'>" +
+            "<input type='submit' value='View/Edit' style='cursor:pointer'/>" +
             "<input type='hidden' name='data' value='" + json + "'/>" +
             "</form>"
         );
@@ -135,6 +153,7 @@ function buildExamplePage( exampleNames, exampleUrl ){
         "<body>\n" +
             "<h1>NGL@" + nglVersion + " gallery</h1>\n" +
             pageLines.join( "\n" ) + "\n" +
+            ga +
         "</body>\n" +
         "</html>"
     );
