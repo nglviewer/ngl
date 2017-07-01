@@ -94787,7 +94787,7 @@ function StaticDatasource (baseUrl) {
   };
 }
 
-var version$1 = "0.10.5-0";
+var version$1 = "0.10.5-1";
 
 /**
  * @file Version
