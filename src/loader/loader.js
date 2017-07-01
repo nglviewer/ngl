@@ -18,7 +18,8 @@ import NetworkStreamer from '../streamer/network-streamer.js'
  */
 
 const binaryFileExtensions = [
-  'brix', 'ccp4', 'dcd', 'dsn6', 'dxbin', 'map', 'mmtf', 'mrc', 'trr', 'xtc'
+  'brix', 'ccp4', 'dcd', 'dsn6', 'dxbin', 'map', 'mmtf',
+  'mrc', 'netcdf', 'trr', 'xtc'
 ]
 
 const jsonFileTypes = [

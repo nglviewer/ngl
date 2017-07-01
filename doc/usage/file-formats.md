@@ -336,6 +336,11 @@ Extension: **.ply**
 Extension: **.csv**
 
 
+### NETCDF
+
+Extension: **.netcdf**
+
+
 ### TXT
 
 Extensions: **.txt**, **.text**
