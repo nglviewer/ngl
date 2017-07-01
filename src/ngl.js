@@ -127,6 +127,7 @@ import './parser/ply-parser.js'
 
 import './parser/csv-parser.js'
 import './parser/json-parser.js'
+import './parser/msgpack-parser.js'
 import './parser/netcdf-parser.js'
 import './parser/text-parser.js'
 import './parser/xml-parser.js'

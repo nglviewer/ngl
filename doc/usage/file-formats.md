@@ -336,6 +336,11 @@ Extension: **.json**
 Extension: **.csv**
 
 
+### MSGPACK
+
+Extension: **.msgpack**
+
+
 ### NETCDF
 
 Extension: **.netcdf**
