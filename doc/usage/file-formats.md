@@ -200,12 +200,22 @@ Extension: **.psf**
 
 ## Trajectories
 
-Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. Trajectory files in *DCD* format are added to a *Structure*.
+Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag. Trajectory files in *DCD*, *TRR* or *XTC* format are added to a *Structure*.
 
 
 ### DCD
 
 Extension: **.dcd**
+
+
+### TRR
+
+Extension: **.trr**
+
+
+### XTC
+
+Extension: **.xtc**
 
 
 ## Densities
