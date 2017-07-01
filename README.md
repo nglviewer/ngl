@@ -30,7 +30,7 @@ Features
 * Molecular structures (mmCIF, PDB, PQR, GRO, SDF, MOL2, MMTF)
 * Density volumes (MRC/MAP/CCP4, DX/DXBIN, CUBE, BRIX/DSN6, XPLOR/CNS)
 * User interaction (mouse picking, selection language, animation, image export)
-* Coordinate trajectories (DCD/PSF, TRR, XTC, remote access via [MDSrv](https://github.com/arose/mdsrv/))
+* Coordinate trajectories (DCD/PSF, NCTRAJ, TRR, XTC, remote access via [MDSrv](https://github.com/arose/mdsrv/))
 * Embeddable (single file, API)
 
 

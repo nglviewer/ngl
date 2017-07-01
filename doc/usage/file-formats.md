@@ -213,6 +213,11 @@ Extension: **.dcd**
 Extension: **.trr**
 
 
+### NCTRAJ
+
+Extensions: **.nctraj**, **.ncdf**, **.nc**
+
+
 ### XTC
 
 Extension: **.xtc**
