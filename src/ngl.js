@@ -113,6 +113,7 @@ import './parser/sdf-parser.js'
 
 import './parser/dcd-parser.js'
 import './parser/trr-parser.js'
+import './parser/xtc-parser.js'
 
 import './parser/cube-parser.js'
 import './parser/dsn6-parser.js'
