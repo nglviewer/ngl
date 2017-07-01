@@ -48438,7 +48438,7 @@ var NetworkStreamer = (function (Streamer$$1) {
  */
 
 var binaryFileExtensions = [
-  'mmtf', 'dcd', 'mrc', 'ccp4', 'map', 'dsn6', 'brix', 'dxbin'
+  'brix', 'ccp4', 'dcd', 'dsn6', 'dxbin', 'map', 'mmtf', 'mrc', 'trr', 'xtc'
 ];
 
 var jsonFileTypes = [
@@ -53624,45 +53624,55 @@ AnimationBehavior.prototype.dispose = function dispose () {
 
 var KeyBehavior = function KeyBehavior (stage) {
   this.stage = stage;
+  this.domElement = stage.viewer.renderer.domElement;
 
+  // ensure the domElement is focusable
+  this.domElement.setAttribute('tabIndex', '-1');
+  this.domElement.style.outline = 'none';
+  this.domElement.autofocus = true;
+  this.domElement.focus();
+
+  this._focusDomElement = this._focusDomElement.bind(this);
   this._onKeydown = this._onKeydown.bind(this);
   this._onKeyup = this._onKeyup.bind(this);
   this._onKeypress = this._onKeypress.bind(this);
 
-  document.addEventListener('keydown', this._onKeydown);
-  document.addEventListener('keyup', this._onKeyup);
-  document.addEventListener('keypress', this._onKeypress);
+  this.domElement.addEventListener('mousedown', this._focusDomElement);
+  this.domElement.addEventListener('touchstart', this._focusDomElement);
+  this.domElement.addEventListener('keydown', this._onKeydown);
+  this.domElement.addEventListener('keyup', this._onKeyup);
+  this.domElement.addEventListener('keypress', this._onKeypress);
 };
 
-  /**
-   * handle key down
-   * @param{Event} event - key event
-   * @return {undefined}
-   */
+/**
+ * handle key down
+ * @param{Event} event - key event
+ * @return {undefined}
+ */
 KeyBehavior.prototype._onKeydown = function _onKeydown (/* event */) {
 
-      // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
+  // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
 
 };
 
-  /**
-   * handle key up
-   * @param{Event} event - key event
-   * @return {undefined}
-   */
+/**
+ * handle key up
+ * @param{Event} event - key event
+ * @return {undefined}
+ */
 KeyBehavior.prototype._onKeyup = function _onKeyup (/* event */) {
 
-      // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
+  // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
 
 };
 
-  /**
-   * handle key press
-   * @param{Event} event - key event
-   * @return {undefined}
-   */
+/**
+ * handle key press
+ * @param{Event} event - key event
+ * @return {undefined}
+ */
 KeyBehavior.prototype._onKeypress = function _onKeypress (event) {
-      // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
+  // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
 
   switch (event.keyCode) {
     case 73: case 105:// I i
@@ -53677,10 +53687,16 @@ KeyBehavior.prototype._onKeypress = function _onKeypress (event) {
   }
 };
 
+KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
+  this.domElement.focus();
+};
+
 KeyBehavior.prototype.dispose = function dispose () {
-  document.removeEventListener('keydown', this._onKeypress);
-  document.removeEventListener('keyup', this._onKeypress);
-  document.removeEventListener('keypress', this._onKeypress);
+  this.domElement.removeEventListener('mousedown', this._focusDomElement);
+  this.domElement.removeEventListener('touchstart', this._focusDomElement);
+  this.domElement.removeEventListener('keydown', this._onKeypress);
+  this.domElement.removeEventListener('keyup', this._onKeypress);
+  this.domElement.removeEventListener('keypress', this._onKeypress);
 };
 
 /**
@@ -88476,27 +88492,27 @@ var DcdParser = (function (TrajectoryParser$$1) {
   prototypeAccessors.type.get = function () { return 'dcd' };
 
   DcdParser.prototype._parse = function _parse () {
-        // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
+    // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
 
-        // The DCD format is structured as follows
-        //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
-        // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
-        // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
-        //                         interval
-        // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
-        // ==========================================================================
-        // NTITLE          TITLE
-        // INT (=2)        C*MAXTITL
-        //                 (=32)
-        // ==========================================================================
-        // NATOM
-        // #atoms
-        // INT
-        // ==========================================================================
-        // X(I), I=1,NATOM         (DOUBLE)
-        // Y(I), I=1,NATOM
-        // Z(I), I=1,NATOM
-        // ==========================================================================
+    // The DCD format is structured as follows
+    //   (FORTRAN UNFORMATTED, with Fortran data type descriptions):
+    // HDR     NSET    ISTRT   NSAVC   5-ZEROS NATOM-NFREAT    DELTA   9-ZEROS
+    // `CORD'  #files  step 1  step    zeroes  (zero)          timestep  (zeroes)
+    //                         interval
+    // C*4     INT     INT     INT     5INT    INT             DOUBLE  9INT
+    // ==========================================================================
+    // NTITLE          TITLE
+    // INT (=2)        C*MAXTITL
+    //                 (=32)
+    // ==========================================================================
+    // NATOM
+    // #atoms
+    // INT
+    // ==========================================================================
+    // X(I), I=1,NATOM         (DOUBLE)
+    // Y(I), I=1,NATOM
+    // Z(I), I=1,NATOM
+    // ==========================================================================
 
     if (Debug) { Log.time('DcdParser._parse ' + this.name); }
 
@@ -88513,11 +88529,11 @@ var DcdParser = (function (TrajectoryParser$$1) {
     var header = {};
     var nextPos = 0;
 
-        // header block
+    // header block
 
     var intView = new Int32Array(bin, 0, 23);
     var ef = intView[ 0 ] !== dv.getInt32(0);  // endianess flag
-        // swap byte order when big endian (84 indicates little endian)
+    // swap byte order when big endian (84 indicates little endian)
     if (intView[ 0 ] !== 84) {
       n = bin.byteLength;
       for (i = 0; i < n; i += 4) {
@@ -88527,18 +88543,18 @@ var DcdParser = (function (TrajectoryParser$$1) {
     if (intView[ 0 ] !== 84) {
       Log.error('dcd bad format, header block start');
     }
-        // format indicator, should read 'CORD'
+    // format indicator, should read 'CORD'
     var formatString = String.fromCharCode(
-            dv.getUint8(4), dv.getUint8(5),
-            dv.getUint8(6), dv.getUint8(7)
-        );
+        dv.getUint8(4), dv.getUint8(5),
+        dv.getUint8(6), dv.getUint8(7)
+      );
     if (formatString !== 'CORD') {
       Log.error('dcd bad format, format string');
     }
     var isCharmm = false;
     var extraBlock = false;
     var fourDims = false;
-        // version field in charmm, unused in X-PLOR
+    // version field in charmm, unused in X-PLOR
     if (intView[ 22 ] !== 0) {
       isCharmm = true;
       if (intView[ 12 ] !== 0) { extraBlock = true; }
@@ -88558,7 +88574,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
     }
     nextPos = nextPos + 21 * 4 + 8;
 
-        // title block
+    // title block
 
     var titleLength = dv.getInt32(nextPos, ef);
     var titlePos = nextPos + 1;
@@ -88566,14 +88582,14 @@ var DcdParser = (function (TrajectoryParser$$1) {
       Log.error('dcd bad format, title block start');
     }
     header.TITLE = uint8ToString(
-            new Uint8Array(bin, titlePos, titleLength)
-        );
+      new Uint8Array(bin, titlePos, titleLength)
+    );
     if (dv.getInt32(titlePos + titleLength + 4 - 1, ef) !== titleLength) {
       Log.error('dcd bad format, title block end');
     }
     nextPos = nextPos + titleLength + 8;
 
-        // natom block
+    // natom block
 
     if (dv.getInt32(nextPos, ef) !== 4) {
       Log.error('dcd bad format, natom block start');
@@ -88584,15 +88600,15 @@ var DcdParser = (function (TrajectoryParser$$1) {
     }
     nextPos = nextPos + 4 + 8;
 
-        // fixed atoms block
+    // fixed atoms block
 
     if (header.NAMNF > 0) {
-            // TODO read coordinates and indices of fixed atoms
+      // TODO read coordinates and indices of fixed atoms
       Log.error('dcd format with fixed atoms unsupported, aborting');
       return
     }
 
-        // frames
+    // frames
 
     var natom = header.NATOM;
     var natom4 = natom * 4;
@@ -88610,7 +88626,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
         nextPos += 4;  // block end
       }
 
-            // xyz coordinates
+      // xyz coordinates
       var coord = new Float32Array(natom * 3);
       for (var j = 0; j < 3; ++j) {
         if (dv.getInt32(nextPos, ef) !== natom4) {
@@ -88635,9 +88651,9 @@ var DcdParser = (function (TrajectoryParser$$1) {
       }
     }
 
-        // console.log( header );
-        // console.log( header.TITLE );
-        // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+    // console.log( header );
+    // console.log( header.TITLE );
+    // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
 
     if (Debug) { Log.timeEnd('DcdParser._parse ' + this.name); }
   };
@@ -88648,6 +88664,533 @@ var DcdParser = (function (TrajectoryParser$$1) {
 }(TrajectoryParser));
 
 ParserRegistry.add('dcd', DcdParser);
+
+/**
+ * @file Trr Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var TrrParser = (function (TrajectoryParser$$1) {
+  function TrrParser () {
+    TrajectoryParser$$1.apply(this, arguments);
+  }
+
+  if ( TrajectoryParser$$1 ) TrrParser.__proto__ = TrajectoryParser$$1;
+  TrrParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
+  TrrParser.prototype.constructor = TrrParser;
+
+  var prototypeAccessors = { type: {} };
+
+  prototypeAccessors.type.get = function () { return 'trr' };
+
+  TrrParser.prototype._parse = function _parse () {
+    // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/trrio.cpp
+
+    if (Debug) { Log.time('TrrParser._parse ' + this.name); }
+
+    var bin = this.streamer.data;
+    if (bin instanceof Uint8Array) {
+      bin = bin.buffer;
+    }
+    var dv = new DataView(bin);
+
+    var f = this.frames;
+    var coordinates = f.coordinates;
+    var boxes = f.boxes;
+    // var header = {}
+
+    var offset = 0;
+    // const frameInfo = []
+
+    while (true) {
+      // const frame = {}
+
+      // const magicnum = dv.getInt32(offset)
+      // const i1 = dv.getFloat32(offset + 4)
+      offset += 8;
+
+      var versionSize = dv.getInt32(offset);
+      offset += 4;
+      offset += versionSize;
+
+      // const irSize = dv.getInt32(offset)
+      // const eSize = dv.getInt32(offset + 4)
+      var boxSize = dv.getInt32(offset + 8);
+      var virSize = dv.getInt32(offset + 12);
+      var presSize = dv.getInt32(offset + 16);
+      // const topSize = dv.getInt32(offset + 20)
+      // const symSize = dv.getInt32(offset + 24)
+      var coordSize = dv.getInt32(offset + 28);
+      var velocitySize = dv.getInt32(offset + 32);
+      var forceSize = dv.getInt32(offset + 36);
+      var natoms = dv.getInt32(offset + 40);
+      // frame.natoms = natoms
+      // frame.step = dv.getInt32(offset + 44)
+      // const nre = dv.getInt32(offset + 48)
+      offset += 52;
+
+      var floatSize = boxSize / 9;
+      var natoms3 = natoms * 3;
+
+      // TODO
+      // if (floatSize === 8) {
+      //   frame.time = dv.getFloat64(offset)
+      //   frame.lambda = dv.getFloat64(offset + 8)
+      // } else {
+      //   frame.time = dv.getFloat32(offset)
+      //   frame.lambda = dv.getFloat32(offset + 4)
+      // }
+      offset += 2 * floatSize;
+
+      if (boxSize) {
+        var box = new Float32Array(9);
+        if (floatSize === 8) {
+          for (var i = 0; i < 9; ++i) {
+            box[i] = dv.getFloat64(offset) * 10;
+            offset += 8;
+          }
+        } else {
+          for (var i$1 = 0; i$1 < 9; ++i$1) {
+            box[i$1] = dv.getFloat32(offset) * 10;
+            offset += 4;
+          }
+        }
+        boxes.push(box);
+      }
+
+      // ignore, unused
+      offset += virSize;
+
+      // ignore, unused
+      offset += presSize;
+
+      if (coordSize) {
+        var frameCoords = (void 0);
+        if (floatSize === 8) {
+          frameCoords = new Float32Array(natoms3);
+          for (var i$2 = 0; i$2 < natoms3; ++i$2) {
+            frameCoords[i$2] = dv.getFloat64(offset) * 10;
+            offset += 8;
+          }
+        } else {
+          var tmp = new Uint32Array(bin, offset, natoms3);
+          for (var i$3 = 0; i$3 < natoms3; ++i$3) {
+            var value = tmp[i$3];
+            tmp[i$3] = (
+              ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) |
+              ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
+            );
+          }
+          frameCoords = new Float32Array(bin, offset, natoms3);
+          for (var i$4 = 0; i$4 < natoms3; ++i$4) {
+            frameCoords[i$4] *= 10;
+            offset += 4;
+          }
+        }
+        coordinates.push(frameCoords);
+      }
+
+      // ignore, unused
+      offset += velocitySize;
+
+      // ignore, unused
+      offset += forceSize;
+
+      // frameInfo.push(frame)
+
+      if (offset >= bin.byteLength) { break }
+    }
+
+    if (Debug) { Log.timeEnd('TrrParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( TrrParser.prototype, prototypeAccessors );
+
+  return TrrParser;
+}(TrajectoryParser));
+
+ParserRegistry.add('trr', TrrParser);
+
+/**
+ * @file Xtc Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var MagicInts = new Uint32Array([
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64,
+  80, 101, 128, 161, 203, 256, 322, 406, 512, 645, 812, 1024, 1290,
+  1625, 2048, 2580, 3250, 4096, 5060, 6501, 8192, 10321, 13003,
+  16384, 20642, 26007, 32768, 41285, 52015, 65536, 82570, 104031,
+  131072, 165140, 208063, 262144, 330280, 416127, 524287, 660561,
+  832255, 1048576, 1321122, 1664510, 2097152, 2642245, 3329021,
+  4194304, 5284491, 6658042, 8388607, 10568983, 13316085, 16777216
+]);
+var FirstIdx = 9;
+// const LastIdx = MagicInts.length
+
+function sizeOfInt (size) {
+  var num = 1;
+  var numOfBits = 0;
+  while (size >= num && numOfBits < 32) {
+    numOfBits++;
+    num <<= 1;
+  }
+  return numOfBits
+}
+
+var _tmpBytes = new Uint8Array(32);
+
+function sizeOfInts (numOfInts, sizes) {
+  var numOfBytes = 1;
+  var numOfBits = 0;
+  _tmpBytes[0] = 1;
+  for (var i = 0; i < numOfInts; i++) {
+    var bytecnt = (void 0);
+    var tmp = 0;
+    for (bytecnt = 0; bytecnt < numOfBytes; bytecnt++) {
+      tmp += _tmpBytes[bytecnt] * sizes[i];
+      _tmpBytes[bytecnt] = tmp & 0xff;
+      tmp >>= 8;
+    }
+    while (tmp !== 0) {
+      _tmpBytes[bytecnt++] = tmp & 0xff;
+      tmp >>= 8;
+    }
+    numOfBytes = bytecnt;
+  }
+  var num = 1;
+  numOfBytes--;
+  while (_tmpBytes[numOfBytes] >= num) {
+    numOfBits++;
+    num *= 2;
+  }
+  return numOfBits + numOfBytes * 8
+}
+
+function decodeBits (buf, cbuf, numOfBits, buf2) {
+  var mask = (1 << numOfBits) - 1;
+  var lastBB0 = buf2[1];
+  var lastBB1 = buf2[2];
+  var cnt = buf[0];
+  var num = 0;
+
+  while (numOfBits >= 8) {
+    lastBB1 = (lastBB1 << 8) | cbuf[cnt++];
+    num |= (lastBB1 >> lastBB0) << (numOfBits - 8);
+    numOfBits -= 8;
+  }
+
+  if (numOfBits > 0) {
+    if (lastBB0 < numOfBits) {
+      lastBB0 += 8;
+      lastBB1 = (lastBB1 << 8) | cbuf[cnt++];
+    }
+    lastBB0 -= numOfBits;
+    num |= (lastBB1 >> lastBB0) & ((1 << numOfBits) - 1);
+  }
+
+  num &= mask;
+  buf[0] = cnt;
+  buf[1] = lastBB0;
+  buf[2] = lastBB1;
+
+  return num
+}
+
+var _tmpIntBytes = new Int32Array(32);
+
+function decodeInts (buf, cbuf, numOfInts, numOfBits, sizes, nums, buf2) {
+  var numOfBytes = 0;
+  _tmpIntBytes[1] = 0;
+  _tmpIntBytes[2] = 0;
+  _tmpIntBytes[3] = 0;
+
+  while (numOfBits > 8) {
+    // this is inversed??? why??? because of the endiannness???
+    _tmpIntBytes[numOfBytes++] = decodeBits(buf, cbuf, 8, buf2);
+    numOfBits -= 8;
+  }
+
+  if (numOfBits > 0) {
+    _tmpIntBytes[numOfBytes++] = decodeBits(buf, cbuf, numOfBits, buf2);
+  }
+
+  for (var i = numOfInts - 1; i > 0; i--) {
+    var num = 0;
+    for (var j = numOfBytes - 1; j >= 0; j--) {
+      num = (num << 8) | _tmpIntBytes[j];
+      var p = (num / sizes[i]) | 0;
+      _tmpIntBytes[j] = p;
+      num = num - p * sizes[i];
+    }
+    nums[i] = num;
+  }
+  nums[0] = (
+    _tmpIntBytes[0] |
+    (_tmpIntBytes[1] << 8) |
+    (_tmpIntBytes[2] << 16) |
+    (_tmpIntBytes[3] << 24)
+  );
+}
+
+var XtcParser = (function (TrajectoryParser$$1) {
+  function XtcParser () {
+    TrajectoryParser$$1.apply(this, arguments);
+  }
+
+  if ( TrajectoryParser$$1 ) XtcParser.__proto__ = TrajectoryParser$$1;
+  XtcParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
+  XtcParser.prototype.constructor = XtcParser;
+
+  var prototypeAccessors = { type: {} };
+
+  prototypeAccessors.type.get = function () { return 'xtc' };
+
+  XtcParser.prototype._parse = function _parse () {
+    // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/xtcio.cpp
+    // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/libxdrf.cpp
+
+    if (Debug) { Log.time('XtcParser._parse ' + this.name); }
+
+    var bin = this.streamer.data;
+    if (bin instanceof Uint8Array) {
+      bin = bin.buffer;
+    }
+    var dv = new DataView(bin);
+
+    var f = this.frames;
+    var coordinates = f.coordinates;
+    var boxes = f.boxes;
+    // var header = {}
+
+    var minMaxInt = new Int32Array(6);
+    var sizeint = new Int32Array(3);
+    var bitsizeint = new Int32Array(3);
+    var sizesmall = new Uint32Array(3);
+    var thiscoord = new Float32Array(3);
+    var prevcoord = new Float32Array(3);
+
+    var offset = 0;
+    var buf = new Int32Array(3);
+    var buf2 = new Uint32Array(buf.buffer);
+
+    while (true) {
+      var frameCoords = (void 0);
+
+      // const magicnum = dv.getInt32(offset)
+      var natoms = dv.getInt32(offset + 4);
+      // const step = dv.getInt32(offset + 8)
+      offset += 12;
+
+      var natoms3 = natoms * 3;
+
+      // frame.time = dv.getFloat32(offset)
+      offset += 4;
+      var box = new Float32Array(9);
+      for (var i = 0; i < 9; ++i) {
+        box[i] = dv.getFloat32(offset) * 10;
+        offset += 4;
+      }
+      boxes.push(box);
+
+      if (natoms <= 9) {  // no compression
+        for (var i$1 = 0; i$1 < natoms; ++i$1) {
+          frameCoords[i$1] = dv.getFloat32(offset);
+          offset += 4;
+        }
+      } else {
+        buf[0] = buf[1] = buf[2] = 0.0;
+        sizeint[0] = sizeint[1] = sizeint[2] = 0;
+        sizesmall[0] = sizesmall[1] = sizesmall[2] = 0;
+        bitsizeint[0] = bitsizeint[1] = bitsizeint[2] = 0;
+        thiscoord[0] = thiscoord[1] = thiscoord[2] = 0;
+        prevcoord[0] = prevcoord[1] = prevcoord[2] = 0;
+
+        frameCoords = new Float32Array(natoms3);
+        var lfp = 0;
+
+        var lsize = dv.getInt32(offset);
+        offset += 4;
+        var precision = dv.getFloat32(offset);
+        offset += 4;
+
+        minMaxInt[0] = dv.getInt32(offset);
+        minMaxInt[1] = dv.getInt32(offset + 4);
+        minMaxInt[2] = dv.getInt32(offset + 8);
+        minMaxInt[3] = dv.getInt32(offset + 12);
+        minMaxInt[4] = dv.getInt32(offset + 16);
+        minMaxInt[5] = dv.getInt32(offset + 20);
+        sizeint[0] = minMaxInt[3] - minMaxInt[0] + 1;
+        sizeint[1] = minMaxInt[4] - minMaxInt[1] + 1;
+        sizeint[2] = minMaxInt[5] - minMaxInt[2] + 1;
+        offset += 24;
+
+        var bitsize = (void 0);
+        if ((sizeint[0] | sizeint[1] | sizeint[2]) > 0xffffff) {
+          bitsizeint[0] = sizeOfInt(sizeint[0]);
+          bitsizeint[1] = sizeOfInt(sizeint[1]);
+          bitsizeint[2] = sizeOfInt(sizeint[2]);
+          bitsize = 0;  // flag the use of large sizes
+        } else {
+          bitsize = sizeOfInts(3, sizeint);
+        }
+
+        var smallidx = dv.getInt32(offset);
+        offset += 4;
+        // if (smallidx == 0) {alert("Undocumented error 1"); return;}
+
+        var tmpIdx = smallidx + 8;
+        // const maxidx = (LastIdx < tmpIdx) ? LastIdx : tmpIdx
+        // const minidx = maxidx - 8  // often this equal smallidx
+        tmpIdx = smallidx - 1;
+        tmpIdx = (FirstIdx > tmpIdx) ? FirstIdx : tmpIdx;
+        var smaller = (MagicInts[tmpIdx] / 2) | 0;
+        var smallnum = (MagicInts[smallidx] / 2) | 0;
+
+        sizesmall[0] = sizesmall[1] = sizesmall[2] = MagicInts[smallidx];
+        // larger = MagicInts[maxidx]
+
+        var adz = Math.ceil(dv.getInt32(offset) / 4) * 4;
+        offset += 4;
+        // if (tmpIdx == 0) {alert("Undocumented error 2"); return;}
+
+        // buf = new Int32Array(bin, offset);
+        // buf8 = new Uint8Array(bin, offset);
+
+        // tmpIdx += 3; rndup = tmpIdx%4;
+        // for (i=tmpIdx+rndup-1; i>=tmpIdx; i--) buf8[i] = 0;
+
+        // now unpack buf2...
+
+        var invPrecision = 1.0 / precision;
+        var run = 0;
+        var i$2 = 0;
+
+        var buf8 = new Uint8Array(bin, offset);  // 229...
+
+        thiscoord[0] = thiscoord[1] = thiscoord[2] = 0;
+
+        while (i$2 < lsize) {
+          if (bitsize === 0) {
+            thiscoord[0] = decodeBits(buf, buf8, bitsizeint[0], buf2);
+            thiscoord[1] = decodeBits(buf, buf8, bitsizeint[1], buf2);
+            thiscoord[2] = decodeBits(buf, buf8, bitsizeint[2], buf2);
+          } else {
+            decodeInts(buf, buf8, 3, bitsize, sizeint, thiscoord, buf2);
+          }
+
+          i$2++;
+
+          thiscoord[0] += minMaxInt[0];
+          thiscoord[1] += minMaxInt[1];
+          thiscoord[2] += minMaxInt[2];
+
+          prevcoord[0] = thiscoord[0];
+          prevcoord[1] = thiscoord[1];
+          prevcoord[2] = thiscoord[2];
+
+          var flag = decodeBits(buf, buf8, 1, buf2);
+          var isSmaller = 0;
+
+          if (flag === 1) {
+            run = decodeBits(buf, buf8, 5, buf2);
+            isSmaller = run % 3;
+            run -= isSmaller;
+            isSmaller--;
+          }
+
+          // if ((lfp-ptrstart)+run > size3){
+          //   fprintf(stderr, "(xdrfile error) Buffer overrun during decompression.\n");
+          //   return 0;
+          // }
+
+          if (run > 0) {
+            thiscoord[0] = thiscoord[1] = thiscoord[2] = 0;
+
+            for (var k = 0; k < run; k += 3) {
+              decodeInts(buf, buf8, 3, smallidx, sizesmall, thiscoord, buf2);
+              i$2++;
+
+              thiscoord[0] += prevcoord[0] - smallnum;
+              thiscoord[1] += prevcoord[1] - smallnum;
+              thiscoord[2] += prevcoord[2] - smallnum;
+
+              if (k === 0) {
+                // interchange first with second atom for
+                // better compression of water molecules
+                var tmpSwap = thiscoord[0];
+                thiscoord[0] = prevcoord[0];
+                prevcoord[0] = tmpSwap;
+
+                tmpSwap = thiscoord[1];
+                thiscoord[1] = prevcoord[1];
+                prevcoord[1] = tmpSwap;
+
+                tmpSwap = thiscoord[2];
+                thiscoord[2] = prevcoord[2];
+                prevcoord[2] = tmpSwap;
+
+                frameCoords[lfp++] = prevcoord[0] * invPrecision;
+                frameCoords[lfp++] = prevcoord[1] * invPrecision;
+                frameCoords[lfp++] = prevcoord[2] * invPrecision;
+              } else {
+                prevcoord[0] = thiscoord[0];
+                prevcoord[1] = thiscoord[1];
+                prevcoord[2] = thiscoord[2];
+              }
+              frameCoords[lfp++] = thiscoord[0] * invPrecision;
+              frameCoords[lfp++] = thiscoord[1] * invPrecision;
+              frameCoords[lfp++] = thiscoord[2] * invPrecision;
+            }
+          } else {
+            frameCoords[lfp++] = thiscoord[0] * invPrecision;
+            frameCoords[lfp++] = thiscoord[1] * invPrecision;
+            frameCoords[lfp++] = thiscoord[2] * invPrecision;
+          }
+
+          smallidx += isSmaller;
+
+          if (isSmaller < 0) {
+            smallnum = smaller;
+            if (smallidx > FirstIdx) {
+              smaller = (MagicInts[smallidx - 1] / 2) | 0;
+            } else {
+              smaller = 0;
+            }
+          } else if (isSmaller > 0) {
+            smaller = smallnum;
+            smallnum = (MagicInts[smallidx] / 2) | 0;
+          }
+          sizesmall[0] = sizesmall[1] = sizesmall[2] = MagicInts[smallidx];
+
+          if (sizesmall[0] === 0 || sizesmall[1] === 0 || sizesmall[2] === 0) {
+            console.error('(xdrfile error) Undefined error.');
+            return
+          }
+        }
+        offset += adz;
+      }
+
+      for (var c = 0; c < natoms3; c++) {
+        frameCoords[c] *= 10;
+      }
+
+      coordinates.push(frameCoords);
+
+      if (offset >= bin.byteLength) { break }
+    }
+
+    if (Debug) { Log.timeEnd('XtcParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( XtcParser.prototype, prototypeAccessors );
+
+  return XtcParser;
+}(TrajectoryParser));
+
+ParserRegistry.add('xtc', XtcParser);
 
 /**
  * @file Volume Parser
@@ -89707,27 +90250,27 @@ var SurfaceParser = (function (Parser$$1) {
  */
 function OBJLoader () {
   this.regexp = {
-        // v float float float
-    vertex_pattern: /^v\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // vn float float float
-    normal_pattern: /^vn\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // vt float float
-    uv_pattern: /^vt\s+([\d|.|+|\-|e|E]+)\s+([\d|.|+|\-|e|E]+)/,
-        // f vertex vertex vertex
+    // v float float float
+    vertex_pattern: /^v\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // vn float float float
+    normal_pattern: /^vn\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // vt float float
+    uv_pattern: /^vt\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
+    // f vertex vertex vertex
     face_vertex: /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
-        // f vertex/uv vertex/uv vertex/uv
+    // f vertex/uv vertex/uv vertex/uv
     face_vertex_uv: /^f\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+))?/,
-        // f vertex/uv/normal vertex/uv/normal vertex/uv/normal
+    // f vertex/uv/normal vertex/uv/normal vertex/uv/normal
     face_vertex_uv_normal: /^f\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+)\/(-?\d+))?/,
-        // f vertex//normal vertex//normal vertex//normal
+    // f vertex//normal vertex//normal vertex//normal
     face_vertex_normal: /^f\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)(?:\s+(-?\d+)\/\/(-?\d+))?/,
-        // o object_name | g group_name
+    // o object_name | g group_name
     object_pattern: /^[og]\s*(.+)?/,
-        // s boolean
+    // s boolean
     smoothing_pattern: /^s\s+(\d+|on|off)/,
-        // mtllib file_reference
+    // mtllib file_reference
     material_library_pattern: /^mtllib /,
-        // usemtl material_name
+    // usemtl material_name
     material_use_pattern: /^usemtl /
   };
 }
@@ -89934,7 +90477,7 @@ OBJLoader.prototype = {
             parseFloat(result[ 2 ]),
             parseFloat(result[ 3 ])
           );
-        } else if (lineSecondChar === 't' && (result = this$1.regexp.uv_pattern.exec(line)) !== null) {
+        } else if (lineSecondChar === 't' && this$1.regexp.uv_pattern.exec(line) !== null) {
 
           // ignore uv line
 
@@ -89952,7 +90495,7 @@ OBJLoader.prototype = {
             // result[ 2 ], result[ 5 ], result[ 8 ], result[ 11 ],  // ignore uv part
             result[ 3 ], result[ 6 ], result[ 9 ], result[ 12 ]
           );
-        } else if ((result = this$1.regexp.face_vertex_uv.exec(line)) !== null) {
+        } else if (this$1.regexp.face_vertex_uv.exec(line) !== null) {
 
           // ignore uv line
 
@@ -90006,7 +90549,7 @@ OBJLoader.prototype = {
         // eslint-disable-next-line no-empty
       } else if (this$1.regexp.material_library_pattern.test(line)) {
         // eslint-disable-next-line no-empty
-      } else if ((result = this$1.regexp.smoothing_pattern.exec(line)) !== null) {
+      } else if (this$1.regexp.smoothing_pattern.exec(line) !== null) {
       } else {
         // Handle null terminated files without exception
         if (line === '\0') { continue }
@@ -94244,7 +94787,7 @@ function StaticDatasource (baseUrl) {
   };
 }
 
-var version$1 = "0.10.4";
+var version$1 = "0.10.5-0";
 
 /**
  * @file Version
@@ -94293,5 +94836,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Kdtree, SpatialHash, MolecularSurface, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
