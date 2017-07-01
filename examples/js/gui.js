@@ -689,14 +689,13 @@ NGL.MenubarPluginsWidget = function (stage) {
 }
 
 NGL.MenubarHelpWidget = function (stage, preferences) {
-    // event handlers
+  // event handlers
 
   function onOverviewOptionClick () {
     overviewWidget
       .setOpacity('0.9')
-      .setLeft('50px')
-      .setTop('80px')
       .setDisplay('block')
+      .setWidgetPosition( 50, 80 )
   }
 
   function onDocOptionClick () {
@@ -718,9 +717,8 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
   function onPreferencesOptionClick () {
     preferencesWidget
       .setOpacity('0.9')
-      .setLeft('50px')
-      .setTop('80px')
       .setDisplay('block')
+      .setWidgetPosition( 50, 80 )
   }
 
     // export image
@@ -764,9 +762,47 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
 NGL.OverviewWidget = function (stage, preferences) {
   var container = new UI.OverlayPanel()
 
+  var xOffset = 0
+  var yOffset = 0
+
+  var prevX = 0
+  var prevY = 0
+
+  function onMousemove (e) {
+    if (prevX === 0) {
+      prevX = e.clientX
+      prevY = e.clientY
+    }
+    xOffset -= prevX - e.clientX
+    yOffset -= prevY - e.clientY
+    prevX = e.clientX
+    prevY = e.clientY
+    container.dom.style.top = yOffset + 'px'
+    container.dom.style.left = xOffset + 'px'
+  }
+
+  function setWidgetPosition (left, top) {
+    xOffset = left
+    yOffset = top
+    prevX = 0
+    prevY = 0
+    container.dom.style.top = yOffset + 'px'
+    container.dom.style.left = xOffset + 'px'
+  }
+  container.setWidgetPosition = setWidgetPosition
+
   var headingPanel = new UI.Panel()
     .setBorderBottom('1px solid #555')
     .setHeight('25px')
+    .setCursor('move')
+    .onMouseDown(function (e) {
+      if (e.which === 1) {
+        document.addEventListener('mousemove', onMousemove)
+      }
+      document.addEventListener('mouseup', function (e) {
+        document.removeEventListener('mousemove', onMousemove)
+      })
+    })
 
   var listingPanel = new UI.Panel()
     .setMarginTop('10px')
@@ -873,9 +909,47 @@ NGL.OverviewWidget = function (stage, preferences) {
 NGL.PreferencesWidget = function (stage, preferences) {
   var container = new UI.OverlayPanel()
 
+  var xOffset = 0
+  var yOffset = 0
+
+  var prevX = 0
+  var prevY = 0
+
+  function onMousemove (e) {
+    if (prevX === 0) {
+      prevX = e.clientX
+      prevY = e.clientY
+    }
+    xOffset -= prevX - e.clientX
+    yOffset -= prevY - e.clientY
+    prevX = e.clientX
+    prevY = e.clientY
+    container.dom.style.top = yOffset + 'px'
+    container.dom.style.left = xOffset + 'px'
+  }
+
+  function setWidgetPosition (left, top) {
+    xOffset = left
+    yOffset = top
+    prevX = 0
+    prevY = 0
+    container.dom.style.top = yOffset + 'px'
+    container.dom.style.left = xOffset + 'px'
+  }
+  container.setWidgetPosition = setWidgetPosition
+
   var headingPanel = new UI.Panel()
     .setBorderBottom('1px solid #555')
     .setHeight('25px')
+    .setCursor('move')
+    .onMouseDown(function (e) {
+      if (e.which === 1) {
+        document.addEventListener('mousemove', onMousemove)
+      }
+      document.addEventListener('mouseup', function (e) {
+        document.removeEventListener('mousemove', onMousemove)
+      })
+    })
 
   var listingPanel = new UI.Panel()
     .setMarginTop('10px')

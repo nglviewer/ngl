@@ -196,7 +196,8 @@ UI.OverlayPanel = function () {
   UI.Panel.call(this)
 
   this.dom.className = 'Panel OverlayPanel'
-  this.dom.tabIndex = 0
+  this.dom.tabIndex = '-1'
+  this.dom.style.outline = 'none'
 
   return this
 }
@@ -818,10 +819,48 @@ UI.PopupMenu = function (iconClass, heading, constraintTo) {
     .setDisplay('none')
     .attach(this.dom)
 
+  var xOffset = 0
+  var yOffset = 0
+
+  var prevX = 0
+  var prevY = 0
+
+  function onMousemove (e) {
+    if (prevX === 0) {
+      prevX = e.clientX
+      prevY = e.clientY
+    }
+    xOffset += prevX - e.clientX
+    yOffset += prevY - e.clientY
+    prevX = e.clientX
+    prevY = e.clientY
+    tether.setOptions({
+      element: panel.dom,
+      target: icon.dom,
+      attachment: 'top right',
+      targetAttachment: 'top left',
+      offset: yOffset + 'px ' + xOffset + 'px',
+      constraints: [{
+        to: constraintTo,
+        pin: ['top', 'bottom']
+      }]
+    })
+    tether.position()
+  }
+
   var headingPanel = new UI.Panel()
     .setBorderBottom('1px solid #555')
     .setMarginBottom('10px')
     .setHeight('25px')
+    .setCursor('move')
+    .onMouseDown(function (e) {
+      if (e.which === 1) {
+        document.addEventListener('mousemove', onMousemove)
+      }
+      document.addEventListener('mouseup', function (e) {
+        document.removeEventListener('mousemove', onMousemove)
+      })
+    })
 
   headingPanel
     .add(
@@ -852,19 +891,20 @@ UI.PopupMenu = function (iconClass, heading, constraintTo) {
     panel.setMaxHeight((window.innerHeight / 1.2) + 'px')
     this.setMenuDisplay('block')
 
+    xOffset = 5;
+    yOffset = 0;
+
     tether = new Tether({
       element: panel.dom,
       target: icon.dom,
       attachment: 'top right',
       targetAttachment: 'top left',
       offset: '0px 5px',
-      constraints: [
-        {
-          to: constraintTo,
-          attachment: 'element',
-          pin: [ 'top', 'bottom' ]
-        }
-      ]
+      constraints: [{
+        to: constraintTo,
+        attachment: 'element',
+        pin: ['top', 'bottom']
+      }]
     })
 
     tether.position()
