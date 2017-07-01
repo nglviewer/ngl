@@ -328,7 +328,7 @@ Promise.all( [
 
 ### JSON
 
-Extension: **.ply**
+Extension: **.json**
 
 
 ### CSV
