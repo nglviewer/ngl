@@ -110,8 +110,10 @@ import './parser/mmtf-parser.js'
 import './parser/mol2-parser.js'
 import './parser/pdb-parser.js'
 import './parser/pqr-parser.js'
-import './parser/psf-parser.js'
 import './parser/sdf-parser.js'
+
+import './parser/prmtop-parser.js'
+import './parser/psf-parser.js'
 
 import './parser/dcd-parser.js'
 import './parser/nctraj-parser.js'

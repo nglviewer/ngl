@@ -193,6 +193,16 @@ Supported features:
 * Connectivity: read from "bondAtomList", "bondOrderList" fields and their "groupTypeList[]" counterparts
 
 
+## Topologies
+
+Topology are different from structure files as they not contain coordinate data.
+
+
+### PRMTOP
+
+Extension: **.prmtop**
+
+
 ### PSF
 
 Extension: **.psf**
@@ -200,7 +210,7 @@ Extension: **.psf**
 
 ## Trajectories
 
-Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag. Trajectory files in *DCD*, *TRR* or *XTC* format are added to a *Structure*.
+Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag. Trajectory files in *DCD*, *NCTRAJ*, *TRR* or *XTC* format are added to a *Structure*.
 
 
 ### DCD

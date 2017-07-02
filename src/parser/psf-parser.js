@@ -56,7 +56,7 @@ class PsfParser extends StructureParser {
           const ls = line.split(reWhitespace)
 
           const serial = parseInt(ls[ 0 ])
-                    // const segid = ls[ 1 ];
+          // const segid = ls[ 1 ];
           const resno = parseInt(ls[ 2 ])
           const resname = ls[ 3 ]
           const atomname = ls[ 4 ]
