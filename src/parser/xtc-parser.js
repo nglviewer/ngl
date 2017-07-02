@@ -126,6 +126,7 @@ function decodeInts (buf, cbuf, numOfInts, numOfBits, sizes, nums, buf2) {
 
 class XtcParser extends TrajectoryParser {
   get type () { return 'xtc' }
+  get isBinary () { return true }
 
   _parse () {
     // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/xtcio.cpp

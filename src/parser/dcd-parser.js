@@ -10,6 +10,7 @@ import { uint8ToString } from '../utils.js'
 
 class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
+  get isBinary () { return true }
 
   _parse () {
     // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html

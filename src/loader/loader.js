@@ -4,6 +4,7 @@
  * @private
  */
 
+import { ParserRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import FileStreamer from '../streamer/file-streamer.js'
 import NetworkStreamer from '../streamer/network-streamer.js'
@@ -17,35 +18,20 @@ import NetworkStreamer from '../streamer/network-streamer.js'
  * @property {String} name - set data name
  */
 
-const binaryFileExtensions = [
-  'brix', 'ccp4', 'dcd', 'dsn6', 'dxbin', 'map', 'mmtf', 'mrc',
-  'msgpack', 'nc', 'ncdf', 'nctraj', 'netcdf', 'trr', 'xtc'
-]
-
-const jsonFileTypes = [
-  'json'
-]
-
-const xmlFileTypes = [
-  'xml', 'validation'
-]
-
 /**
  * Loader base class
  */
 class Loader {
-    /**
-     * Construct a loader object
-     * @param  {String|File|Blob} src - data source, string is interpreted as an URL
-     * @param  {LoaderParameters} params - parameters object
-     */
+  /**
+   * Construct a loader object
+   * @param  {String|File|Blob} src - data source, string is interpreted as an URL
+   * @param  {LoaderParameters} params - parameters object
+   */
   constructor (src, params) {
-    var p = Object.assign({}, params)
-
-    var binary = binaryFileExtensions.includes(p.ext)
+    const p = Object.assign({}, params)
 
     this.compressed = defaults(p.compressed, false)
-    this.binary = defaults(p.binary, binary)
+    this.binary = defaults(p.binary, ParserRegistry.isBinary(p.ext))
     this.name = defaults(p.name, '')
     this.ext = defaults(p.ext, '')
     this.dir = defaults(p.dir, '')
@@ -54,13 +40,13 @@ class Loader {
 
     this.params = params
 
-        //
+    //
 
-    var streamerParams = {
+    const streamerParams = {
       compressed: this.compressed,
       binary: this.binary,
-      json: jsonFileTypes.includes(this.ext),
-      xml: xmlFileTypes.includes(this.ext)
+      json: ParserRegistry.isJson(this.ext),
+      xml: ParserRegistry.isXml(this.ext)
     }
 
     if ((typeof File !== 'undefined' && src instanceof window.File) ||
@@ -76,11 +62,11 @@ class Loader {
     }
   }
 
-    /**
-     * Load data
-     * @abstract
-     * @return {Promise} resolves to the loaded data {@link Object}
-     */
+  /**
+   * Load data
+   * @abstract
+   * @return {Promise} resolves to the loaded data {@link Object}
+   */
   load () {
     return Promise.reject(new Error('not implemented'))
   }

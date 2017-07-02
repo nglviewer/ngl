@@ -10,6 +10,7 @@ import NetcdfReader from '../utils/netcdf-reader'
 
 class NctrajParser extends TrajectoryParser {
   get type () { return 'nctraj' }
+  get isBinary () { return true }
 
   _parse () {
     // http://ambermd.org/netcdf/nctraj.xhtml

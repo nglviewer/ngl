@@ -9,6 +9,7 @@ import TrajectoryParser from './trajectory-parser.js'
 
 class TrrParser extends TrajectoryParser {
   get type () { return 'trr' }
+  get isBinary () { return true }
 
   _parse () {
     // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/trrio.cpp

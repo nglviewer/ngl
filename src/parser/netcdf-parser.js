@@ -23,6 +23,7 @@ class NetcdfParser extends Parser {
 
   get type () { return 'netcdf' }
   get __objName () { return 'netcdf' }
+  get isBinary () { return true }
 
   _parse () {
     if (Debug) Log.time('NetcdfParser._parse ' + this.name)

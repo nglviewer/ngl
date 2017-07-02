@@ -424,15 +424,16 @@ NGL.MenubarWidget = function (stage, preferences) {
 }
 
 NGL.MenubarFileWidget = function (stage) {
-  var fileTypesOpen = NGL.ParserRegistry.names.concat([ 'ngl', 'gz' ])
-  var dcdIndex = fileTypesOpen.indexOf('dcd')
-  if (dcdIndex !== -1) fileTypesOpen.splice(dcdIndex, 1)  // disallow dcd files
-  var fileTypesImport = fileTypesOpen
+  var fileTypesOpen = NGL.flatten([
+    NGL.ParserRegistry.getStructureExtensions(),
+    NGL.ParserRegistry.getVolumeExtensions(),
+    NGL.ParserRegistry.getSurfaceExtensions()
+  ]).concat([ 'ngl', 'js', 'gz' ])
 
   function fileInputOnChange (e) {
     var fn = function (file, callback) {
       var ext = file.name.split('.').pop().toLowerCase()
-      if (fileTypesImport.includes(ext)) {
+      if (fileTypesOpen.includes(ext)) {
         stage.loadFile(file, {
           defaultRepresentation: true
         }).then(function () { callback() })
@@ -1422,10 +1423,10 @@ NGL.StructureComponentWidget = function (component, stage) {
 
     // Open trajectory
 
-  var trajExt = [
-    'dcd', 'dcd.gz', 'nc', 'nc.gz', 'ncdf', 'ncdf.gz',
-    'nctraj', 'nctraj.gz', 'trr', 'trr.gz', 'xtc', 'xtc.gz'
-  ]
+  var trajExt = []
+  NGL.ParserRegistry.getTrajectoryExtensions().forEach(function (ext) {
+    trajExt.push('.'+ext, '.'+ext+'.gz')
+  })
 
   function framesInputOnChange (e) {
     var fn = function (file, callback) {
@@ -1442,7 +1443,7 @@ NGL.StructureComponentWidget = function (component, stage) {
   framesInput.type = 'file'
   framesInput.multiple = true
   framesInput.style.display = 'none'
-  framesInput.accept = '.' + trajExt.join(',.')
+  framesInput.accept = trajExt.join(',.')
   framesInput.addEventListener('change', framesInputOnChange, false)
 
   var traj = new UI.Button('open').onClick(function () {
@@ -1455,7 +1456,8 @@ NGL.StructureComponentWidget = function (component, stage) {
   var remoteTraj = new UI.Button('import').onClick(function () {
     componentPanel.setMenuDisplay('none')
 
-    var remoteTrajExt = [ 'xtc', 'trr', 'dcd', 'netcdf', 'nc' ]
+    // TODO factor list of extensions out
+    var remoteTrajExt = [ 'xtc', 'trr', 'dcd', 'ncdf', 'nc' ]
     var datasource = NGL.DatasourceRegistry.listing
     var dirWidget
 

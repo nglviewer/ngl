@@ -32,6 +32,7 @@ const SstrucMap = {
 
 class MmtfParser extends StructureParser {
   get type () { return 'mmtf' }
+  get isBinary () { return true }
 
   _parse () {
         // https://github.com/rcsb/mmtf

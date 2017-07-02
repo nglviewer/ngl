@@ -24,6 +24,7 @@ class MsgpackParser extends Parser {
 
   get type () { return 'msgpack' }
   get __objName () { return 'msgpack' }
+  get isBinary () { return true }
 
   _parse () {
     if (Debug) Log.time('MsgpackParser._parse ' + this.name)

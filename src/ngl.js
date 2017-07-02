@@ -28,7 +28,9 @@ import TrajectoryPlayer from './trajectory/trajectory-player.js'
 import { superpose } from './align/align-utils.js'
 import { guessElement } from './structure/structure-utils.js'
 
-import { throttle, download, getQuery, uniqueArray, getFileInfo } from './utils.js'
+import {
+  flatten, throttle, download, getQuery, uniqueArray, getFileInfo
+} from './utils.js'
 import Queue from './utils/queue.js'
 import Counter from './utils/counter.js'
 
@@ -200,6 +202,8 @@ export {
 
   superpose,
   guessElement,
+
+  flatten,
 
   Queue,
   Counter,
