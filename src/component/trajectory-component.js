@@ -40,22 +40,22 @@ import Component from './component.js'
  * Component wrapping a {@link Trajectory} object
  */
 class TrajectoryComponent extends Component {
-    /**
-     * @param {Stage} stage - stage object the component belongs to
-     * @param {Trajectory} trajectory - the trajectory object
-     * @param {TrajectoryComponentParameters} params - component parameters
-     * @param {StructureComponent} parent - the parent structure
-     */
+  /**
+   * @param {Stage} stage - stage object the component belongs to
+   * @param {Trajectory} trajectory - the trajectory object
+   * @param {TrajectoryComponentParameters} params - component parameters
+   * @param {StructureComponent} parent - the parent structure
+   */
   constructor (stage, trajectory, params, parent) {
-    var p = params || {}
+    const p = params || {}
     p.name = defaults(p.name, trajectory.name)
 
     super(stage, p)
 
-        /**
-         * Events emitted by the component
-         * @type {TrajectoryComponentSignals}
-         */
+    /**
+     * Events emitted by the component
+     * @type {TrajectoryComponentSignals}
+     */
     this.signals = Object.assign(this.signals, {
       frameChanged: new Signal(),
       playerChanged: new Signal(),
@@ -74,7 +74,7 @@ class TrajectoryComponent extends Component {
     this.defaultMode = defaults(p.defaultMode, 'loop')
     this.defaultDirection = defaults(p.defaultDirection, 'forward')
 
-        // signals
+    // signals
 
     trajectory.signals.frameChanged.add(i => {
       this.signals.frameChanged.dispatch(i)
@@ -95,36 +95,36 @@ class TrajectoryComponent extends Component {
     }
   }
 
-    /**
-     * Component type
-     * @type {String}
-     */
+  /**
+   * Component type
+   * @type {String}
+   */
   get type () { return 'trajectory' }
 
-    /**
-     * Add trajectory representation
-     * @param {String} type - representation type, currently only: "trajectory"
-     * @param {RepresentationParameters} params - parameters
-     * @return {RepresentationComponent} the added representation component
-     */
+  /**
+   * Add trajectory representation
+   * @param {String} type - representation type, currently only: "trajectory"
+   * @param {RepresentationParameters} params - parameters
+   * @return {RepresentationComponent} the added representation component
+   */
   addRepresentation (type, params) {
     return super.addRepresentation(type, this.trajectory, params)
   }
 
-    /**
-     * Set the frame of the trajectory
-     * @param {Integer} i - frame number
-     * @return {undefined}
-     */
+  /**
+   * Set the frame of the trajectory
+   * @param {Integer} i - frame number
+   * @return {undefined}
+   */
   setFrame (i) {
     this.trajectory.setFrame(i)
   }
 
-    /**
-     * Set trajectory parameters
-     * @param {TrajectoryParameters} params - trajectory parameters
-     * @return {undefined}
-     */
+  /**
+   * Set trajectory parameters
+   * @param {TrajectoryParameters} params - trajectory parameters
+   * @return {undefined}
+   */
   setParameters (params) {
     this.trajectory.setParameters(params)
     this.signals.parametersChanged.dispatch(params)
