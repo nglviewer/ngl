@@ -4999,7 +4999,7 @@ var mat3array = new Float32Array( 9 );
 
 // Flattening for arrays of vectors and matrices
 
-function flatten( array, nBlocks, blockSize ) {
+function flatten$1( array, nBlocks, blockSize ) {
 
 	var firstElem = array[ 0 ];
 
@@ -5189,19 +5189,19 @@ function setValue1iv( gl, v ) { gl.uniform1iv( this.addr, v ); }
 
 function setValueV2a( gl, v ) {
 
-	gl.uniform2fv( this.addr, flatten( v, this.size, 2 ) );
+	gl.uniform2fv( this.addr, flatten$1( v, this.size, 2 ) );
 
 }
 
 function setValueV3a( gl, v ) {
 
-	gl.uniform3fv( this.addr, flatten( v, this.size, 3 ) );
+	gl.uniform3fv( this.addr, flatten$1( v, this.size, 3 ) );
 
 }
 
 function setValueV4a( gl, v ) {
 
-	gl.uniform4fv( this.addr, flatten( v, this.size, 4 ) );
+	gl.uniform4fv( this.addr, flatten$1( v, this.size, 4 ) );
 
 }
 
@@ -5209,19 +5209,19 @@ function setValueV4a( gl, v ) {
 
 function setValueM2a( gl, v ) {
 
-	gl.uniformMatrix2fv( this.addr, false, flatten( v, this.size, 4 ) );
+	gl.uniformMatrix2fv( this.addr, false, flatten$1( v, this.size, 4 ) );
 
 }
 
 function setValueM3a( gl, v ) {
 
-	gl.uniformMatrix3fv( this.addr, false, flatten( v, this.size, 9 ) );
+	gl.uniformMatrix3fv( this.addr, false, flatten$1( v, this.size, 9 ) );
 
 }
 
 function setValueM4a( gl, v ) {
 
-	gl.uniformMatrix4fv( this.addr, false, flatten( v, this.size, 16 ) );
+	gl.uniformMatrix4fv( this.addr, false, flatten$1( v, this.size, 16 ) );
 
 }
 
@@ -42836,6 +42836,18 @@ function defaults (value, defaultValue) {
   return value !== undefined ? value : defaultValue
 }
 
+function flatten (array, ret) {
+  ret = defaults(ret, []);
+  for (var i = 0; i < array.length; i++) {
+    if (Array.isArray(array[i])) {
+      flatten(array[i], ret);
+    } else {
+      ret.push(array[i]);
+    }
+  }
+  return ret
+}
+
 function getProtocol () {
   var protocol = window.location.protocol;
   return protocol.match(/http(s)?:/gi) === null ? 'http:' : protocol
@@ -43246,91 +43258,6 @@ prototypeAccessors.names.get = function () {
 };
 
 Object.defineProperties( Registry.prototype, prototypeAccessors );
-
-/**
- * @file Worker Utils
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-function getWorkerDeps (vars) {
-  var deps = vars;
-  vars.forEach(function (sym) {
-    if (sym.__deps) {
-      Array.prototype.push.apply(deps, getWorkerDeps(sym.__deps));
-    }
-  });
-  return deps
-}
-
-function makeWorkerString (vars) {
-  var deps = uniqueArray(getWorkerDeps(vars));
-  return deps.map(function (sym) {
-    return sym.toString()
-  }).join('\n\n\n')
-}
-
-function onmessage (e) {
-  var name = e.data.__name;
-  var postId = e.data.__postId;
-
-  /* global self */
-  if (name === undefined) {
-    console.error('message __name undefined');
-  } else if (self.func === undefined) {
-    console.error('worker func undefined', name);
-  } else {
-    var callback = function (aMessage, transferList) {
-      aMessage = aMessage || {};
-      if (postId !== undefined) { aMessage.__postId = postId; }
-
-      try {
-        self.postMessage(aMessage, transferList);
-      } catch (error) {
-        console.error('self.postMessage:', error);
-        self.postMessage(aMessage);
-      }
-    };
-
-    self.func(e, callback);
-  }
-}
-
-function makeWorkerBlob (func, deps) {
-  var str = "'use strict';\n\n" + makeWorkerString(deps);
-  str += '\n\n\nself.func = ' + func.toString() + ';';
-  str += '\n\n\nself.onmessage = ' + onmessage.toString() + ';';
-    // console.log( str );
-  return new window.Blob([ str ], { type: 'application/javascript' })
-}
-
-/**
- * @file Worker Registry
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-var WorkerRegistry$1 = function WorkerRegistry () {
-  this.activeWorkerCount = 0;
-
-  this._funcDict = {};
-  this._depsDict = {};
-  this._blobDict = {};
-};
-
-WorkerRegistry$1.prototype.add = function add (name, func, deps) {
-  this._funcDict[ name ] = func;
-  this._depsDict[ name ] = deps;
-};
-
-WorkerRegistry$1.prototype.get = function get (name) {
-  if (!this._blobDict[ name ]) {
-    this._blobDict[ name ] = makeWorkerBlob(
-              this._funcDict[ name ], this._depsDict[ name ]
-          );
-  }
-  return this._blobDict[ name ]
-};
 
 /**
  * @file Math Utils
@@ -47956,6 +47883,169 @@ ColormakerRegistry$1.prototype.hasScheme = function hasScheme (id) {
 };
 
 /**
+ * @file Parser Registry
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var ParserRegistry$1 = (function (Registry$$1) {
+  function ParserRegistry () {
+    Registry$$1.call(this, 'parser');
+  }
+
+  if ( Registry$$1 ) ParserRegistry.__proto__ = Registry$$1;
+  ParserRegistry.prototype = Object.create( Registry$$1 && Registry$$1.prototype );
+  ParserRegistry.prototype.constructor = ParserRegistry;
+
+  ParserRegistry.prototype.__hasObjName = function __hasObjName (key, objName) {
+    var parser = this.get(key);
+    return parser && parser.prototype.__objName === objName
+  };
+
+  ParserRegistry.prototype.isTrajectory = function isTrajectory (key) {
+    return this.__hasObjName(key, 'frames')
+  };
+
+  ParserRegistry.prototype.isStructure = function isStructure (key) {
+    return this.__hasObjName(key, 'structure')
+  };
+
+  ParserRegistry.prototype.isVolume = function isVolume (key) {
+    return this.__hasObjName(key, 'volume')
+  };
+
+  ParserRegistry.prototype.isSurface = function isSurface (key) {
+    return this.__hasObjName(key, 'surface')
+  };
+
+  ParserRegistry.prototype.isBinary = function isBinary (key) {
+    var parser = this.get(key);
+    return parser && parser.prototype.isBinary
+  };
+
+  ParserRegistry.prototype.isXml = function isXml (key) {
+    var parser = this.get(key);
+    return parser && parser.prototype.isXml
+  };
+
+  ParserRegistry.prototype.isJson = function isJson (key) {
+    var parser = this.get(key);
+    return parser && parser.prototype.isJson
+  };
+
+  ParserRegistry.prototype.getTrajectoryExtensions = function getTrajectoryExtensions () {
+    var this$1 = this;
+
+    return this.names.filter(function (name) { return this$1.isTrajectory(name); })
+  };
+
+  ParserRegistry.prototype.getStructureExtensions = function getStructureExtensions () {
+    var this$1 = this;
+
+    return this.names.filter(function (name) { return this$1.isStructure(name); })
+  };
+
+  ParserRegistry.prototype.getVolumeExtensions = function getVolumeExtensions () {
+    var this$1 = this;
+
+    return this.names.filter(function (name) { return this$1.isVolume(name); })
+  };
+
+  ParserRegistry.prototype.getSurfaceExtensions = function getSurfaceExtensions () {
+    var this$1 = this;
+
+    return this.names.filter(function (name) { return this$1.isSurface(name); })
+  };
+
+  return ParserRegistry;
+}(Registry));
+
+/**
+ * @file Worker Utils
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+function getWorkerDeps (vars) {
+  var deps = vars;
+  vars.forEach(function (sym) {
+    if (sym.__deps) {
+      Array.prototype.push.apply(deps, getWorkerDeps(sym.__deps));
+    }
+  });
+  return deps
+}
+
+function makeWorkerString (vars) {
+  var deps = uniqueArray(getWorkerDeps(vars));
+  return deps.map(function (sym) {
+    return sym.toString()
+  }).join('\n\n\n')
+}
+
+function onmessage (e) {
+  var name = e.data.__name;
+  var postId = e.data.__postId;
+
+  /* global self */
+  if (name === undefined) {
+    console.error('message __name undefined');
+  } else if (self.func === undefined) {
+    console.error('worker func undefined', name);
+  } else {
+    var callback = function (aMessage, transferList) {
+      aMessage = aMessage || {};
+      if (postId !== undefined) { aMessage.__postId = postId; }
+
+      try {
+        self.postMessage(aMessage, transferList);
+      } catch (error) {
+        console.error('self.postMessage:', error);
+        self.postMessage(aMessage);
+      }
+    };
+
+    self.func(e, callback);
+  }
+}
+
+function makeWorkerBlob (func, deps) {
+  var str = "'use strict';\n\n" + makeWorkerString(deps);
+  str += '\n\n\nself.func = ' + func.toString() + ';';
+  str += '\n\n\nself.onmessage = ' + onmessage.toString() + ';';
+    // console.log( str );
+  return new window.Blob([ str ], { type: 'application/javascript' })
+}
+
+/**
+ * @file Worker Registry
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var WorkerRegistry$1 = function WorkerRegistry () {
+  this.activeWorkerCount = 0;
+
+  this._funcDict = {};
+  this._depsDict = {};
+  this._blobDict = {};
+};
+
+WorkerRegistry$1.prototype.add = function add (name, func, deps) {
+  this._funcDict[ name ] = func;
+  this._depsDict[ name ] = deps;
+};
+
+WorkerRegistry$1.prototype.get = function get (name) {
+  if (!this._blobDict[ name ]) {
+    this._blobDict[ name ] = makeWorkerBlob(
+              this._funcDict[ name ], this._depsDict[ name ]
+          );
+  }
+  return this._blobDict[ name ]
+};
+
+/**
  * @file Globals
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -48012,7 +48102,7 @@ var WorkerRegistry = new WorkerRegistry$1();
 var ColormakerRegistry = new ColormakerRegistry$1();
 var DatasourceRegistry = new Registry('datasource');
 var RepresentationRegistry = new Registry('representatation');
-var ParserRegistry = new Registry('parser');
+var ParserRegistry = new ParserRegistry$1();
 var ShaderRegistry = new Registry('shader');
 var DecompressorRegistry = new Registry('decompressor');
 var ComponentRegistry = new Registry('component');
@@ -48437,28 +48527,14 @@ var NetworkStreamer = (function (Streamer$$1) {
  * @property {String} name - set data name
  */
 
-var binaryFileExtensions = [
-  'brix', 'ccp4', 'dcd', 'dsn6', 'dxbin', 'map', 'mmtf', 'mrc', 'trr', 'xtc'
-];
-
-var jsonFileTypes = [
-  'json'
-];
-
-var xmlFileTypes = [
-  'xml', 'validation'
-];
-
 /**
  * Loader base class
  */
 var Loader$1 = function Loader (src, params) {
   var p = Object.assign({}, params);
 
-  var binary = binaryFileExtensions.includes(p.ext);
-
   this.compressed = defaults(p.compressed, false);
-  this.binary = defaults(p.binary, binary);
+  this.binary = defaults(p.binary, ParserRegistry.isBinary(p.ext));
   this.name = defaults(p.name, '');
   this.ext = defaults(p.ext, '');
   this.dir = defaults(p.dir, '');
@@ -48467,13 +48543,13 @@ var Loader$1 = function Loader (src, params) {
 
   this.params = params;
 
-      //
+  //
 
   var streamerParams = {
     compressed: this.compressed,
     binary: this.binary,
-    json: jsonFileTypes.includes(this.ext),
-    xml: xmlFileTypes.includes(this.ext)
+    json: ParserRegistry.isJson(this.ext),
+    xml: ParserRegistry.isXml(this.ext)
   };
 
   if ((typeof File !== 'undefined' && src instanceof window.File) ||
@@ -48489,11 +48565,11 @@ var Loader$1 = function Loader (src, params) {
   }
 };
 
-  /**
-   * Load data
-   * @abstract
-   * @return {Promise} resolves to the loaded data {@link Object}
-   */
+/**
+ * Load data
+ * @abstract
+ * @return {Promise} resolves to the loaded data {@link Object}
+ */
 Loader$1.prototype.load = function load () {
   return Promise.reject(new Error('not implemented'))
 };
@@ -66257,6 +66333,8 @@ function removePbc (x, box) {
  * Trajectory parameter object.
  * @typedef {Object} TrajectoryParameters - parameters
  *
+ * @property {Number} deltaTime - timestep between frames in picoseconds
+ * @property {Number} timeOffset - starting time of frames in picoseconds
  * @property {String} sele - to restrict atoms used for superposition
  * @property {Boolean} centerPbc - center on initial frame
  * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
@@ -66279,6 +66357,8 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
   };
 
   var p = params || {};
+  p.deltaTime = defaults(p.deltaTime, 0);
+  p.timeOffset = defaults(p.timeOffset, 0);
   p.centerPbc = defaults(p.centerPbc, true);
   p.removePbc = defaults(p.removePbc, true);
   p.superpose = defaults(p.superpose, true);
@@ -66427,6 +66507,14 @@ Trajectory.prototype.setParameters = function setParameters (params) {
   if (p.superpose !== undefined && p.superpose !== this.superpose) {
     this.superpose = p.superpose;
     resetCache = true;
+  }
+
+  if (p.deltaTime !== undefined && p.deltaTime !== this.deltaTime) {
+    this.deltaTime = p.deltaTime;
+  }
+
+  if (p.timeOffset !== undefined && p.timeOffset !== this.timeOffset) {
+    this.timeOffset = p.timeOffset;
   }
 
   if (resetCache) { this.resetCache(); }
@@ -66632,6 +66720,15 @@ Trajectory.prototype.getPath = function getPath (index, callback) {
   Log.error('Trajectory.getPath not implemented', index, callback);
 };
 
+/**
+ * Get time for frame
+ * @param{Integer} i - frame index
+ * @return {Number} time in picoseconds
+ */
+Trajectory.prototype.getFrameTime = function getFrameTime (i) {
+  return this.timeOffset + i * this.deltaTime
+};
+
 ShaderRegistry.add('shader/Mesh.vert', "#define STANDARD\nuniform float nearClip;\nuniform vec3 clipCenter;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#include color_pars_vertex\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#endif\n#include common\nvoid main(){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#elif defined( NOLIGHT )\nvColor = color;\n#else\n#include color_vertex\n#include beginnormal_vertex\n#include defaultnormal_vertex\n#ifndef FLAT_SHADED\nvNormal = normalize( transformedNormal );\n#endif\n#endif\n#include begin_vertex\n#include project_vertex\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
 ShaderRegistry.add('shader/Mesh.frag', "#define STANDARD\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float nearClip;\nuniform float clipRadius;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#include bsdfs\n#include lights_pars\n#include lights_physical_pars_fragment\n#endif\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( PICKING )\nif( opacity < 0.7 )\ndiscard;\ngl_FragColor = vec4( vPickingColor, objectId );\n#elif defined( NOLIGHT )\ngl_FragColor = vec4( vColor, opacity );\n#else\nvec4 diffuseColor = vec4( diffuse, opacity );\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\nvec3 totalEmissiveLight = emissive;\n#include color_fragment\n#include roughnessmap_fragment\n#include metalnessmap_fragment\n#include normal_flip\n#include normal_fragment\n#include dull_interior_fragment\n#include lights_physical_fragment\n#include lights_template\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#include opaque_back_fragment\n#endif\n}");
@@ -66691,7 +66788,7 @@ function setObjectMatrix (object, matrix) {
  * Buffer class. Base class for buffers.
  * @interface
  */
-var Buffer = function Buffer (data, params) {
+var Buffer$1 = function Buffer (data, params) {
   var d = data || {};
   var p = params || {};
 
@@ -66831,20 +66928,20 @@ prototypeAccessors$24.vertexShader.get = function () {};
    */
 prototypeAccessors$24.fragmentShader.get = function () {};
 
-Buffer.prototype.setMatrix = function setMatrix (m) {
+Buffer$1.prototype.setMatrix = function setMatrix (m) {
   setObjectMatrix(this.group, m);
   setObjectMatrix(this.wireframeGroup, m);
   setObjectMatrix(this.pickingGroup, m);
 };
 
-Buffer.prototype.initIndex = function initIndex (index) {
+Buffer$1.prototype.initIndex = function initIndex (index) {
   this.geometry.setIndex(
           new BufferAttribute(index, 1)
       );
   this.geometry.getIndex().setDynamic(this.dynamic);
 };
 
-Buffer.prototype.makeMaterial = function makeMaterial () {
+Buffer$1.prototype.makeMaterial = function makeMaterial () {
   var side = getThreeSide(this.side);
 
   var m = new ShaderMaterial({
@@ -66904,7 +67001,7 @@ Buffer.prototype.makeMaterial = function makeMaterial () {
   this.updateShader();
 };
 
-Buffer.prototype.makeWireframeGeometry = function makeWireframeGeometry () {
+Buffer$1.prototype.makeWireframeGeometry = function makeWireframeGeometry () {
   this.makeWireframeIndex();
 
   var geometry = this.geometry;
@@ -66923,7 +67020,7 @@ Buffer.prototype.makeWireframeGeometry = function makeWireframeGeometry () {
   this.wireframeGeometry = wireframeGeometry;
 };
 
-Buffer.prototype.makeWireframeIndex = function makeWireframeIndex () {
+Buffer$1.prototype.makeWireframeIndex = function makeWireframeIndex () {
   var edges = [];
 
   function checkEdge (a, b) {
@@ -67021,7 +67118,7 @@ Buffer.prototype.makeWireframeIndex = function makeWireframeIndex () {
   }
 };
 
-Buffer.prototype.updateWireframeIndex = function updateWireframeIndex () {
+Buffer$1.prototype.updateWireframeIndex = function updateWireframeIndex () {
   this.wireframeGeometry.setDrawRange(0, Infinity);
   if (this.wireframeIndexVersion < this.indexVersion) { this.makeWireframeIndex(); }
 
@@ -67040,7 +67137,7 @@ Buffer.prototype.updateWireframeIndex = function updateWireframeIndex () {
   this.wireframeGeometry.setDrawRange(0, this.wireframeIndexCount);
 };
 
-Buffer.prototype.getRenderOrder = function getRenderOrder () {
+Buffer$1.prototype.getRenderOrder = function getRenderOrder () {
   var renderOrder = 0;
 
   if (this.isText) {
@@ -67056,7 +67153,7 @@ Buffer.prototype.getRenderOrder = function getRenderOrder () {
   return renderOrder
 };
 
-Buffer.prototype._getMesh = function _getMesh (materialName) {
+Buffer$1.prototype._getMesh = function _getMesh (materialName) {
   if (!this.material) { this.makeMaterial(); }
 
   var g = this.geometry;
@@ -67079,11 +67176,11 @@ Buffer.prototype._getMesh = function _getMesh (materialName) {
   return mesh
 };
 
-Buffer.prototype.getMesh = function getMesh () {
+Buffer$1.prototype.getMesh = function getMesh () {
   return this._getMesh('material')
 };
 
-Buffer.prototype.getWireframeMesh = function getWireframeMesh () {
+Buffer$1.prototype.getWireframeMesh = function getWireframeMesh () {
   var mesh;
 
   if (!this.material) { this.makeMaterial(); }
@@ -67099,23 +67196,23 @@ Buffer.prototype.getWireframeMesh = function getWireframeMesh () {
   return mesh
 };
 
-Buffer.prototype.getPickingMesh = function getPickingMesh () {
+Buffer$1.prototype.getPickingMesh = function getPickingMesh () {
   return this._getMesh('pickingMaterial')
 };
 
-Buffer.prototype.getShader = function getShader$1 (name, type) {
+Buffer$1.prototype.getShader = function getShader$1 (name, type) {
   return getShader(name, this.getDefines(type))
 };
 
-Buffer.prototype.getVertexShader = function getVertexShader (type) {
+Buffer$1.prototype.getVertexShader = function getVertexShader (type) {
   return this.getShader(this.vertexShader, type)
 };
 
-Buffer.prototype.getFragmentShader = function getFragmentShader (type) {
+Buffer$1.prototype.getFragmentShader = function getFragmentShader (type) {
   return this.getShader(this.fragmentShader, type)
 };
 
-Buffer.prototype.getDefines = function getDefines (type) {
+Buffer$1.prototype.getDefines = function getDefines (type) {
   var defines = {};
 
   if (this.clipNear) {
@@ -67146,7 +67243,7 @@ Buffer.prototype.getDefines = function getDefines (type) {
   return defines
 };
 
-Buffer.prototype.getParameters = function getParameters () {
+Buffer$1.prototype.getParameters = function getParameters () {
     var this$1 = this;
 
   var params = {};
@@ -67158,7 +67255,7 @@ Buffer.prototype.getParameters = function getParameters () {
   return params
 };
 
-Buffer.prototype.addUniforms = function addUniforms (uniforms) {
+Buffer$1.prototype.addUniforms = function addUniforms (uniforms) {
   this.uniforms = UniformsUtils.merge(
           [ this.uniforms, uniforms ]
       );
@@ -67168,7 +67265,7 @@ Buffer.prototype.addUniforms = function addUniforms (uniforms) {
       );
 };
 
-Buffer.prototype.addAttributes = function addAttributes (attributes) {
+Buffer$1.prototype.addAttributes = function addAttributes (attributes) {
     var this$1 = this;
 
   for (var name in attributes) {
@@ -67194,7 +67291,7 @@ Buffer.prototype.addAttributes = function addAttributes (attributes) {
   }
 };
 
-Buffer.prototype.updateRenderOrder = function updateRenderOrder () {
+Buffer$1.prototype.updateRenderOrder = function updateRenderOrder () {
   var renderOrder = this.getRenderOrder();
   function setRenderOrder (mesh) {
     mesh.renderOrder = renderOrder;
@@ -67206,7 +67303,7 @@ Buffer.prototype.updateRenderOrder = function updateRenderOrder () {
   }
 };
 
-Buffer.prototype.updateShader = function updateShader () {
+Buffer$1.prototype.updateShader = function updateShader () {
   var m = this.material;
   var wm = this.wireframeMaterial;
   var pm = this.pickingMaterial;
@@ -67229,7 +67326,7 @@ Buffer.prototype.updateShader = function updateShader () {
    * @param {BufferParameters} params - buffer parameters object
    * @return {undefined}
    */
-Buffer.prototype.setParameters = function setParameters (params) {
+Buffer$1.prototype.setParameters = function setParameters (params) {
     var this$1 = this;
 
   if (!params) { return }
@@ -67293,7 +67390,7 @@ Buffer.prototype.setParameters = function setParameters (params) {
   if (doVisibilityUpdate) { this.setVisibility(this.visible); }
 };
 
-Buffer.prototype.setAttributes = function setAttributes (data) {
+Buffer$1.prototype.setAttributes = function setAttributes (data) {
     var this$1 = this;
 
       /**
@@ -67350,7 +67447,7 @@ Buffer.prototype.setAttributes = function setAttributes (data) {
   }
 };
 
-Buffer.prototype.setUniforms = function setUniforms (data) {
+Buffer$1.prototype.setUniforms = function setUniforms (data) {
     var this$1 = this;
 
   if (!data) { return }
@@ -67396,7 +67493,7 @@ Buffer.prototype.setUniforms = function setUniforms (data) {
   }
 };
 
-Buffer.prototype.setProperties = function setProperties (data) {
+Buffer$1.prototype.setProperties = function setProperties (data) {
     var this$1 = this;
 
   if (!data) { return }
@@ -67437,7 +67534,7 @@ Buffer.prototype.setProperties = function setProperties (data) {
    * @param {Boolean} value - visibility value
    * @return {undefined}
    */
-Buffer.prototype.setVisibility = function setVisibility (value) {
+Buffer$1.prototype.setVisibility = function setVisibility (value) {
   this.visible = value;
 
   if (this.wireframe) {
@@ -67459,7 +67556,7 @@ Buffer.prototype.setVisibility = function setVisibility (value) {
    * Free buffer resources
    * @return {undefined}
    */
-Buffer.prototype.dispose = function dispose () {
+Buffer$1.prototype.dispose = function dispose () {
   if (this.material) { this.material.dispose(); }
   if (this.wireframeMaterial) { this.wireframeMaterial.dispose(); }
   if (this.pickingMaterial) { this.pickingMaterial.dispose(); }
@@ -67468,7 +67565,7 @@ Buffer.prototype.dispose = function dispose () {
   if (this.wireframeGeometry) { this.wireframeGeometry.dispose(); }
 };
 
-Object.defineProperties( Buffer.prototype, prototypeAccessors$24 );
+Object.defineProperties( Buffer$1.prototype, prototypeAccessors$24 );
 
 /**
  * @file Mesh Buffer
@@ -67489,7 +67586,7 @@ Object.defineProperties( Buffer.prototype, prototypeAccessors$24 );
  *     )
  * } );
  */
-var MeshBuffer = (function (Buffer$$1) {
+var MeshBuffer = (function (Buffer) {
   function MeshBuffer (data, params) {
     var d = data || {};
 
@@ -67497,7 +67594,7 @@ var MeshBuffer = (function (Buffer$$1) {
       d.primitiveId = serialArray(d.position.length / 3);
     }
 
-    Buffer$$1.call(this, d, params);
+    Buffer.call(this, d, params);
 
     this.addAttributes({
       'normal': { type: 'v3', value: d.normal }
@@ -67508,8 +67605,8 @@ var MeshBuffer = (function (Buffer$$1) {
     }
   }
 
-  if ( Buffer$$1 ) MeshBuffer.__proto__ = Buffer$$1;
-  MeshBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) MeshBuffer.__proto__ = Buffer;
+  MeshBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   MeshBuffer.prototype.constructor = MeshBuffer;
 
   var prototypeAccessors = { vertexShader: {},fragmentShader: {} };
@@ -67520,7 +67617,7 @@ var MeshBuffer = (function (Buffer$$1) {
   Object.defineProperties( MeshBuffer.prototype, prototypeAccessors );
 
   return MeshBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Geometry Buffer
@@ -67763,9 +67860,9 @@ ShaderRegistry.add('shader/SphereImpostor.frag', "#define STANDARD\n#define IMPO
  * others attributes. Used to render imposters.
  * @interface
  */
-var MappedBuffer = (function (Buffer$$1) {
+var MappedBuffer = (function (Buffer) {
   function MappedBuffer (data, params) {
-    Buffer$$1.call(this, data, params);
+    Buffer.call(this, data, params);
 
     this.index = getUintArray(this.indexSize, this.attributeSize);
     this.makeIndex();
@@ -67778,8 +67875,8 @@ var MappedBuffer = (function (Buffer$$1) {
     this.setAttributes({ primitiveId: serialArray(this.size) });
   }
 
-  if ( Buffer$$1 ) MappedBuffer.__proto__ = Buffer$$1;
-  MappedBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) MappedBuffer.__proto__ = Buffer;
+  MappedBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   MappedBuffer.prototype.constructor = MappedBuffer;
 
   var prototypeAccessors = { attributeSize: {},indexSize: {},mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
@@ -67832,7 +67929,7 @@ var MappedBuffer = (function (Buffer$$1) {
       };
     }
 
-    Buffer$$1.prototype.addAttributes.call(this, nullValueAttributes);
+    Buffer.prototype.addAttributes.call(this, nullValueAttributes);
   };
 
   MappedBuffer.prototype.getAttributeIndex = function getAttributeIndex (dataIndex) {
@@ -67913,7 +68010,7 @@ var MappedBuffer = (function (Buffer$$1) {
   Object.defineProperties( MappedBuffer.prototype, prototypeAccessors );
 
   return MappedBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Quad Buffer
@@ -68635,7 +68732,7 @@ var ArrowBuffer = function ArrowBuffer (data, params) {
 var prototypeAccessors$25 = { matrix: {},pickable: {} };
 
 prototypeAccessors$25.matrix.set = function (m) {
-  Buffer.prototype.setMatrix.call(this, m);
+  Buffer$1.prototype.setMatrix.call(this, m);
 };
 prototypeAccessors$25.matrix.get = function () {
   return this.group.matrix.clone()
@@ -68748,7 +68845,7 @@ ArrowBuffer.prototype.setParameters = function setParameters (params) {
 };
 
 ArrowBuffer.prototype.setVisibility = function setVisibility () {
-  Buffer.prototype.setVisibility.apply(this, arguments);
+  Buffer$1.prototype.setVisibility.apply(this, arguments);
 };
 
 ArrowBuffer.prototype.dispose = function dispose () {
@@ -70575,7 +70672,7 @@ var DoubleSidedBuffer = function DoubleSidedBuffer (buffer) {
 var prototypeAccessors$26 = { matrix: {},pickable: {} };
 
 prototypeAccessors$26.matrix.set = function (m) {
-  Buffer.prototype.setMatrix.call(this, m);
+  Buffer$1.prototype.setMatrix.call(this, m);
 };
 prototypeAccessors$26.matrix.get = function () {
   return this.group.matrix.clone()
@@ -70658,7 +70755,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose () {
 
 Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$26 );
 
-DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
+DoubleSidedBuffer.prototype.setVisibility = Buffer$1.prototype.setVisibility;
 
 ShaderRegistry.add('shader/Line.vert', "uniform float nearClip;\nuniform vec3 clipCenter;\nvarying vec3 vViewPosition;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#include color_pars_vertex\nvoid main(){\n#include color_vertex\n#include begin_vertex\n#include project_vertex\nvViewPosition = -mvPosition.xyz;\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
@@ -70673,13 +70770,13 @@ ShaderRegistry.add('shader/Line.frag', "uniform float opacity;\nuniform float ne
 /**
  * Contour buffer. A buffer that draws lines (instead of triangle meshes).
  */
-var ContourBuffer = (function (Buffer$$1) {
+var ContourBuffer = (function (Buffer) {
   function ContourBuffer () {
-    Buffer$$1.apply(this, arguments);
+    Buffer.apply(this, arguments);
   }
 
-  if ( Buffer$$1 ) ContourBuffer.__proto__ = Buffer$$1;
-  ContourBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) ContourBuffer.__proto__ = Buffer;
+  ContourBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   ContourBuffer.prototype.constructor = ContourBuffer;
 
   var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
@@ -70691,7 +70788,7 @@ var ContourBuffer = (function (Buffer$$1) {
   Object.defineProperties( ContourBuffer.prototype, prototypeAccessors );
 
   return ContourBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Surface Representation
@@ -71096,7 +71193,7 @@ function makePointTexture (params) {
  *     color: new Float32Array( [ 1, 0, 0 ] )
  * } );
  */
-var PointBuffer = (function (Buffer$$1) {
+var PointBuffer = (function (Buffer) {
   function PointBuffer (data, params) {
     var d = data || {};
     var p = params || {};
@@ -71105,7 +71202,7 @@ var PointBuffer = (function (Buffer$$1) {
       d.primitiveId = serialArray(d.position.length / 3);
     }
 
-    Buffer$$1.call(this, d, p);
+    Buffer.call(this, d, p);
 
     this.pointSize = defaults(p.pointSize, 1);
     this.sizeAttenuation = defaults(p.sizeAttenuation, true);
@@ -71123,8 +71220,8 @@ var PointBuffer = (function (Buffer$$1) {
     });
   }
 
-  if ( Buffer$$1 ) PointBuffer.__proto__ = Buffer$$1;
-  PointBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) PointBuffer.__proto__ = Buffer;
+  PointBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   PointBuffer.prototype.constructor = PointBuffer;
 
   var prototypeAccessors = { parameters: {},isPoint: {},vertexShader: {},fragmentShader: {} };
@@ -71140,11 +71237,11 @@ var PointBuffer = (function (Buffer$$1) {
       forceTransparent: {},
       edgeBleach: { uniform: true }
 
-    }, Buffer$$1.prototype.parameters)
+    }, Buffer.prototype.parameters)
   };
 
   PointBuffer.prototype.makeMaterial = function makeMaterial () {
-    Buffer$$1.prototype.makeMaterial.call(this);
+    Buffer.prototype.makeMaterial.call(this);
 
     this.makeTexture();
 
@@ -71168,7 +71265,7 @@ var PointBuffer = (function (Buffer$$1) {
   };
 
   PointBuffer.prototype.getDefines = function getDefines (type) {
-    var defines = Buffer$$1.prototype.getDefines.call(this, type);
+    var defines = Buffer.prototype.getDefines.call(this, type);
 
     if (this.sizeAttenuation) {
       defines.USE_SIZEATTENUATION = 1;
@@ -71191,11 +71288,11 @@ var PointBuffer = (function (Buffer$$1) {
       data.map = this.tex;
     }
 
-    Buffer$$1.prototype.setUniforms.call(this, data);
+    Buffer.prototype.setUniforms.call(this, data);
   };
 
   PointBuffer.prototype.dispose = function dispose () {
-    Buffer$$1.prototype.dispose.call(this);
+    Buffer.prototype.dispose.call(this);
 
     if (this.tex) { this.tex.dispose(); }
   };
@@ -71207,7 +71304,7 @@ var PointBuffer = (function (Buffer$$1) {
   Object.defineProperties( PointBuffer.prototype, prototypeAccessors );
 
   return PointBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Dot Representation
@@ -71558,12 +71655,12 @@ var quadUvs = new Float32Array([
 /**
  * Image buffer. Draw a single image. Optionally interpolate.
  */
-var ImageBuffer = (function (Buffer$$1) {
+var ImageBuffer = (function (Buffer) {
   function ImageBuffer (data, params) {
     var d = data || {};
     var p = params || {};
 
-    Buffer$$1.call(this, {
+    Buffer.call(this, {
       position: d.position,
       index: quadIndices,
       picking: d.picking
@@ -71600,8 +71697,8 @@ var ImageBuffer = (function (Buffer$$1) {
     this.geometry.addAttribute('uv', new BufferAttribute(quadUvs, 2));
   }
 
-  if ( Buffer$$1 ) ImageBuffer.__proto__ = Buffer$$1;
-  ImageBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) ImageBuffer.__proto__ = Buffer;
+  ImageBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   ImageBuffer.prototype.constructor = ImageBuffer;
 
   var prototypeAccessors = { parameters: {},vertexShader: {},fragmentShader: {} };
@@ -71611,11 +71708,11 @@ var ImageBuffer = (function (Buffer$$1) {
 
       filter: { updateShader: true, uniform: true }
 
-    }, Buffer$$1.prototype.parameters)
+    }, Buffer.prototype.parameters)
   };
 
   ImageBuffer.prototype.getDefines = function getDefines (type) {
-    var defines = Buffer$$1.prototype.getDefines.call(this, type);
+    var defines = Buffer.prototype.getDefines.call(this, type);
 
     if (this.filter.startsWith('cubic')) {
       defines.CUBIC_INTERPOLATION = 1;
@@ -71650,7 +71747,7 @@ var ImageBuffer = (function (Buffer$$1) {
   };
 
   ImageBuffer.prototype.makeMaterial = function makeMaterial () {
-    Buffer$$1.prototype.makeMaterial.call(this);
+    Buffer.prototype.makeMaterial.call(this);
     this.updateTexture();
 
     var m = this.material;
@@ -71676,7 +71773,7 @@ var ImageBuffer = (function (Buffer$$1) {
       data.map = this.tex;
     }
 
-    Buffer$$1.prototype.setUniforms.call(this, data);
+    Buffer.prototype.setUniforms.call(this, data);
   };
 
   prototypeAccessors.vertexShader.get = function () { return 'Image.vert' };
@@ -71685,7 +71782,7 @@ var ImageBuffer = (function (Buffer$$1) {
   Object.defineProperties( ImageBuffer.prototype, prototypeAccessors );
 
   return ImageBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Volume Slice
@@ -72398,12 +72495,12 @@ var StructureRepresentation = (function (Representation$$1) {
  *     color2: new Float32Array( [ 0, 1, 0 ] )
  * } );
  */
-var LineBuffer = (function (Buffer$$1) {
+var LineBuffer = (function (Buffer) {
   function LineBuffer (data, params) {
     var size = data.position1.length / 3;
     var attrSize = size * 4;
 
-    Buffer$$1.call(this, {
+    Buffer.call(this, {
       position: new Float32Array(attrSize * 3),
       color: new Float32Array(attrSize * 3)
     }, params);
@@ -72411,8 +72508,8 @@ var LineBuffer = (function (Buffer$$1) {
     this.setAttributes(data);
   }
 
-  if ( Buffer$$1 ) LineBuffer.__proto__ = Buffer$$1;
-  LineBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) LineBuffer.__proto__ = Buffer;
+  LineBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   LineBuffer.prototype.constructor = LineBuffer;
 
   var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
@@ -72493,7 +72590,7 @@ var LineBuffer = (function (Buffer$$1) {
   Object.defineProperties( LineBuffer.prototype, prototypeAccessors );
 
   return LineBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Trajectory Representation
@@ -74000,9 +74097,9 @@ Stage.prototype.loadFile = function loadFile (path, params) {
   var ext = defaults(p.ext, getFileInfo(path).ext);
   var promise;
 
-  if (ext === 'dcd') {
+  if (ParserRegistry.isTrajectory(ext)) {
     promise = Promise.reject(
-      new Error("loadFile: ext 'dcd' must be loaded into a structure component")
+      new Error('loadFile: ext "' + ext + '" is a trajectory and must be loaded into a structure component')
     );
   } else {
     promise = autoLoad(path, p);
@@ -76584,10 +76681,10 @@ var TrajectoryComponent = (function (Component$$1) {
 
     Component$$1.call(this, stage, p);
 
-        /**
-         * Events emitted by the component
-         * @type {TrajectoryComponentSignals}
-         */
+    /**
+     * Events emitted by the component
+     * @type {TrajectoryComponentSignals}
+     */
     this.signals = Object.assign(this.signals, {
       frameChanged: new Signal(),
       playerChanged: new Signal(),
@@ -76606,7 +76703,7 @@ var TrajectoryComponent = (function (Component$$1) {
     this.defaultMode = defaults(p.defaultMode, 'loop');
     this.defaultDirection = defaults(p.defaultDirection, 'forward');
 
-        // signals
+    // signals
 
     trajectory.signals.frameChanged.add(function (i) {
       this$1.signals.frameChanged.dispatch(i);
@@ -76633,36 +76730,36 @@ var TrajectoryComponent = (function (Component$$1) {
 
   var prototypeAccessors = { type: {} };
 
-    /**
-     * Component type
-     * @type {String}
-     */
+  /**
+   * Component type
+   * @type {String}
+   */
   prototypeAccessors.type.get = function () { return 'trajectory' };
 
-    /**
-     * Add trajectory representation
-     * @param {String} type - representation type, currently only: "trajectory"
-     * @param {RepresentationParameters} params - parameters
-     * @return {RepresentationComponent} the added representation component
-     */
+  /**
+   * Add trajectory representation
+   * @param {String} type - representation type, currently only: "trajectory"
+   * @param {RepresentationParameters} params - parameters
+   * @return {RepresentationComponent} the added representation component
+   */
   TrajectoryComponent.prototype.addRepresentation = function addRepresentation (type, params) {
     return Component$$1.prototype.addRepresentation.call(this, type, this.trajectory, params)
   };
 
-    /**
-     * Set the frame of the trajectory
-     * @param {Integer} i - frame number
-     * @return {undefined}
-     */
+  /**
+   * Set the frame of the trajectory
+   * @param {Integer} i - frame number
+   * @return {undefined}
+   */
   TrajectoryComponent.prototype.setFrame = function setFrame (i) {
     this.trajectory.setFrame(i);
   };
 
-    /**
-     * Set trajectory parameters
-     * @param {TrajectoryParameters} params - trajectory parameters
-     * @return {undefined}
-     */
+  /**
+   * Set trajectory parameters
+   * @param {TrajectoryParameters} params - trajectory parameters
+   * @return {undefined}
+   */
   TrajectoryComponent.prototype.setParameters = function setParameters (params) {
     this.trajectory.setParameters(params);
     this.signals.parametersChanged.dispatch(params);
@@ -80199,7 +80296,7 @@ RepresentationRegistry.add('distance', DistanceRepresentation);
 /**
  * Vector buffer. Draws vectors as lines.
  */
-var VectorBuffer = (function (Buffer$$1) {
+var VectorBuffer = (function (Buffer) {
   function VectorBuffer (data, params) {
     var p = params || {};
 
@@ -80211,7 +80308,7 @@ var VectorBuffer = (function (Buffer$$1) {
     var linePosition = new Float32Array(n2 * 3);
     var lineColor = uniformArray3(n2, color.r, color.g, color.b);
 
-    Buffer$$1.call(this, {
+    Buffer.call(this, {
       position: linePosition,
       color: lineColor
     }, p);
@@ -80221,8 +80318,8 @@ var VectorBuffer = (function (Buffer$$1) {
     this.setAttributes(data);
   }
 
-  if ( Buffer$$1 ) VectorBuffer.__proto__ = Buffer$$1;
-  VectorBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) VectorBuffer.__proto__ = Buffer;
+  VectorBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   VectorBuffer.prototype.constructor = VectorBuffer;
 
   var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
@@ -80267,7 +80364,7 @@ var VectorBuffer = (function (Buffer$$1) {
   Object.defineProperties( VectorBuffer.prototype, prototypeAccessors );
 
   return VectorBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Helixorient Representation
@@ -83893,7 +83990,7 @@ RepresentationRegistry.add('spacefill', SpacefillRepresentation);
 /**
  * Trace buffer. Draws a series of lines.
  */
-var TraceBuffer = (function (Buffer$$1) {
+var TraceBuffer = (function (Buffer) {
   function TraceBuffer (data, params) {
     var d = data || {};
     var p = params || {};
@@ -83904,7 +84001,7 @@ var TraceBuffer = (function (Buffer$$1) {
     var linePosition = new Float32Array(n1 * 3 * 2);
     var lineColor = new Float32Array(n1 * 3 * 2);
 
-    Buffer$$1.call(this, {
+    Buffer.call(this, {
       position: linePosition,
       color: lineColor
     }, p);
@@ -83912,8 +84009,8 @@ var TraceBuffer = (function (Buffer$$1) {
     this.setAttributes(data);
   }
 
-  if ( Buffer$$1 ) TraceBuffer.__proto__ = Buffer$$1;
-  TraceBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
+  if ( Buffer ) TraceBuffer.__proto__ = Buffer;
+  TraceBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   TraceBuffer.prototype.constructor = TraceBuffer;
 
   var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
@@ -83978,7 +84075,7 @@ var TraceBuffer = (function (Buffer$$1) {
   Object.defineProperties( TraceBuffer.prototype, prototypeAccessors );
 
   return TraceBuffer;
-}(Buffer));
+}(Buffer$1));
 
 /**
  * @file Trace Representation
@@ -84360,10 +84457,13 @@ var Parser = function Parser (streamer, params) {
   this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$27 = { type: {},__objName: {} };
+var prototypeAccessors$27 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
 
 prototypeAccessors$27.type.get = function () { return '' };
 prototypeAccessors$27.__objName.get = function () { return '' };
+prototypeAccessors$27.isBinary.get = function () { return false };
+prototypeAccessors$27.isJson.get = function () { return false };
+prototypeAccessors$27.isXml.get = function () { return false };
 
 Parser.prototype.parse = function parse () {
     var this$1 = this;
@@ -87515,9 +87615,10 @@ var MmtfParser = (function (StructureParser$$1) {
   MmtfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   MmtfParser.prototype.constructor = MmtfParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'mmtf' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   MmtfParser.prototype._parse = function _parse () {
         // https://github.com/rcsb/mmtf
@@ -88108,156 +88209,6 @@ var PqrParser = (function (PdbParser$$1) {
 ParserRegistry.add('pqr', PqrParser);
 
 /**
- * @file Psf Parser
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-var TitleMode = 1;
-var AtomMode = 2;
-var BondMode = 3;
-var AngleMode = 4;
-var DihedralMode = 5;
-var ImproperMode = 6;
-
-var reWhitespace$2 = /\s+/;
-var reTitle = /(^\*|REMARK)*/;
-
-var PsfParser = (function (StructureParser$$1) {
-  function PsfParser () {
-    StructureParser$$1.apply(this, arguments);
-  }
-
-  if ( StructureParser$$1 ) PsfParser.__proto__ = StructureParser$$1;
-  PsfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
-  PsfParser.prototype.constructor = PsfParser;
-
-  var prototypeAccessors = { type: {} };
-
-  prototypeAccessors.type.get = function () { return 'psf' };
-
-  PsfParser.prototype._parse = function _parse () {
-    // http://www.ks.uiuc.edu/Training/Tutorials/namd/namd-tutorial-unix-html/node23.html
-
-    if (Debug) { Log.time('PsfParser._parse ' + this.name); }
-
-    var s = this.structure;
-    var sb = this.structureBuilder;
-
-    //
-
-    var atomMap = s.atomMap;
-    var atomStore = s.atomStore;
-
-    var title = [];
-
-    var mode;
-    var idx = 0;
-    var bondIdx = 0;
-    var bAtomIndex1, bAtomIndex2, bBondOrder;
-
-    function _parseChunkOfLines (_i, _n, lines) {
-      for (var i = _i; i < _n; ++i) {
-        var line = lines[ i ].trim();
-
-        if (!line) {
-          mode = undefined;
-          continue
-        }
-
-        if (mode === AtomMode) {
-          var ls = line.split(reWhitespace$2);
-
-          var serial = parseInt(ls[ 0 ]);
-                    // const segid = ls[ 1 ];
-          var resno = parseInt(ls[ 2 ]);
-          var resname = ls[ 3 ];
-          var atomname = ls[ 4 ];
-
-          atomStore.growIfFull();
-          atomStore.atomTypeId[ idx ] = atomMap.add(atomname);
-
-          atomStore.serial[ idx ] = serial;
-
-          sb.addAtom(0, '', '', resname, resno, 1);
-
-          idx += 1;
-        } else if (mode === BondMode) {
-          var ls$1 = line.split(reWhitespace$2);
-
-          for (var j = 0, m = ls$1.length; j < m; j += 2) {
-            bAtomIndex1[ bondIdx ] = parseInt(ls$1[ j ]) - 1;
-            bAtomIndex2[ bondIdx ] = parseInt(ls$1[ j + 1 ]) - 1;
-            bBondOrder[ bondIdx ] = 1;
-            bondIdx += 1;
-          }
-        } else if (mode === TitleMode) {
-          title.push(line.replace(reTitle, '').trim());
-        } else if (mode === AngleMode) {
-
-          // not currently used
-
-        } else if (mode === DihedralMode) {
-
-          // not currently used
-
-        } else if (mode === ImproperMode) {
-
-          // not currently used
-
-        } else if (line.includes('!NATOM')) {
-          mode = AtomMode;
-
-          var numAtoms = parseInt(line.split(reWhitespace$2)[ 0 ]);
-          atomStore.resize(numAtoms);
-        } else if (line.includes('!NBOND')) {
-          mode = BondMode;
-
-          var numBonds = parseInt(line.split(reWhitespace$2)[ 0 ]);
-          bAtomIndex1 = new Uint32Array(numBonds);
-          bAtomIndex2 = new Uint32Array(numBonds);
-          bBondOrder = new Uint8Array(numBonds);
-        } else if (line.includes('!NTITLE')) {
-          mode = TitleMode;
-        } else if (line.includes('!NTHETA')) {
-          mode = AngleMode;
-        } else if (line.includes('!NPHI')) {
-          mode = DihedralMode;
-        } else if (line.includes('!NIMPHI')) {
-          mode = ImproperMode;
-        }
-      }
-    }
-
-    this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
-      _parseChunkOfLines(0, lines.length, lines);
-    });
-
-    s.title = title.join(' ');
-
-    s.bondStore.length = bBondOrder.length;
-    s.bondStore.count = bondIdx;
-    s.bondStore.atomIndex1 = bAtomIndex1;
-    s.bondStore.atomIndex2 = bAtomIndex2;
-    s.bondStore.bondOrder = bBondOrder;
-
-    sb.finalize();
-    s.finalizeAtoms();
-    calculateChainnames(s);
-    s.finalizeBonds();
-    assignResidueTypeBonds(s);
-
-    if (Debug) { Log.timeEnd('PsfParser._parse ' + this.name); }
-  };
-
-  Object.defineProperties( PsfParser.prototype, prototypeAccessors );
-
-  return PsfParser;
-}(StructureParser));
-
-ParserRegistry.add('psf', PsfParser);
-
-/**
  * @file Sdf Parser
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -88279,8 +88230,8 @@ var SdfParser = (function (StructureParser$$1) {
   prototypeAccessors.type.get = function () { return 'sdf' };
 
   SdfParser.prototype._parse = function _parse () {
-        // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
-        // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
+    // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
+    // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
 
     if (Debug) { Log.time('SdfParser._parse ' + this.name); }
 
@@ -88389,7 +88340,7 @@ var SdfParser = (function (StructureParser$$1) {
 
           s.bondStore.addBond(ap1, ap2, order);
 
-                // eslint-disable-next-line no-cond-assign
+        // eslint-disable-next-line no-cond-assign
         } else if (mItem = line.match(reItem)) {
           currentItem = mItem[ 1 ];
           currentData[ currentItem ] = [];
@@ -88424,6 +88375,381 @@ var SdfParser = (function (StructureParser$$1) {
 
 ParserRegistry.add('sdf', SdfParser);
 ParserRegistry.add('sd', SdfParser);
+
+/**
+ * @file Prmtop Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var TitleMode = 1;
+var PointersMode = 2;
+var AtomNameMode = 3;
+var ChargeMode = 4;
+var MassMode = 5;
+var ResidueLabelMode = 6;
+var ResiduePointerMode = 7;
+var BondsIncHydrogenMode = 8;
+var BondsWithoutHydrogenMode = 9;
+var RadiiMode = 10;
+
+function parseIntSubstr (line, start, length) {
+  return parseInt(line.substr(start, length).trim())
+}
+
+var PrmtopParser = (function (StructureParser$$1) {
+  function PrmtopParser () {
+    StructureParser$$1.apply(this, arguments);
+  }
+
+  if ( StructureParser$$1 ) PrmtopParser.__proto__ = StructureParser$$1;
+  PrmtopParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
+  PrmtopParser.prototype.constructor = PrmtopParser;
+
+  var prototypeAccessors = { type: {} };
+
+  prototypeAccessors.type.get = function () { return 'prmtop' };
+
+  PrmtopParser.prototype._parse = function _parse () {
+    // http://ambermd.org/prmtop.pdf
+    // http://ambermd.org/formats.html#topology
+
+    if (Debug) { Log.time('PrmtopParser._parse ' + this.name); }
+
+    var s = this.structure;
+    var sb = this.structureBuilder;
+
+    //
+
+    var atomMap = s.atomMap;
+    var atomStore = s.atomStore;
+
+    var title = [];
+    var pointersDict = {};
+    var pointers = [
+      'NATOM', 'NTYPES', 'NBONH', 'MBONA', 'NTHETH', 'MTHETA',
+      'NPHIH', 'MPHIA', 'NHPARM', 'NPARM', 'NNB', 'NRES',
+      'NBONA', 'NTHETA', 'NPHIA', 'NUMBND', 'NUMANG', 'NPTRA',
+      'NATYP', 'NPHB', 'IFPERT', 'NBPER', 'NGPER', 'NDPER',
+      'MBPER', 'MGPER', 'MDPER', 'IFBOX', 'NMXRS', 'IFCAP',
+      'NUMEXTRA', 'NCOPY'
+    ];
+    pointers.forEach(function (name) { pointersDict[ name ] = 0; });
+
+    var atomNames;
+    var bAtomIndex1;
+    var bAtomIndex2;
+    var bBondOrder;
+    var residueLabels;
+    var residuePointers;
+
+    var mode;
+    // let currentFormat
+    var curIdx;
+    var bondIdx;
+
+    function _parseChunkOfLines (_i, _n, lines) {
+      for (var i = _i; i < _n; ++i) {
+        var line = lines[ i ];
+        var lt = line.trim();
+
+        if (!lt) {
+          continue
+        } else if (line.startsWith('%FORMAT')) {
+          // currentFormat = lt.substring(8, lt.length - 1)
+        } else if (line.startsWith('%FLAG')) {
+          var flag = line.substr(5).trim();
+          curIdx = 0;
+
+          if (flag === 'TITLE') {
+            mode = TitleMode;
+          } else if (flag === 'POINTERS') {
+            mode = PointersMode;
+          } else if (flag === 'ATOM_NAME') {
+            mode = AtomNameMode;
+          } else if (flag === 'CHARGE') {
+            mode = ChargeMode;
+          } else if (flag === 'MASS') {
+            mode = MassMode;
+          } else if (flag === 'RESIDUE_LABEL') {
+            mode = ResidueLabelMode;
+          } else if (flag === 'RESIDUE_POINTER') {
+            mode = ResiduePointerMode;
+          } else if (flag === 'BONDS_INC_HYDROGEN') {
+            bondIdx = 0;
+            mode = BondsIncHydrogenMode;
+          } else if (flag === 'BONDS_WITHOUT_HYDROGEN') {
+            bondIdx = pointersDict['NBONH'];
+            mode = BondsWithoutHydrogenMode;
+          } else if (flag === 'RADII') {
+            mode = RadiiMode;
+          } else {
+            mode = undefined;
+          }
+        } else if (mode === TitleMode) {
+          title.push(lt);
+        } else if (mode === PointersMode) {
+          var n = Math.min(curIdx + 10, 32);
+          for (var i$1 = 0; curIdx < n; ++i$1, ++curIdx) {
+            pointersDict[pointers[curIdx]] = parseInt(
+              line.substr(i$1 * 8, 8).trim()
+            );
+          }
+          atomNames = new Array(pointersDict.NATOM);
+          atomStore.resize(pointersDict.NATOM);
+          var bondCount = pointersDict.NBONH + pointersDict.MBONA;
+          bAtomIndex1 = new Uint32Array(bondCount);
+          bAtomIndex2 = new Uint32Array(bondCount);
+          bBondOrder = new Uint8Array(bondCount);
+          residueLabels = new Array(pointersDict.NRES);
+          residuePointers = new Uint32Array(pointersDict.NRES);
+        } else if (mode === AtomNameMode) {
+          var n$1 = Math.min(curIdx + 20, pointersDict.NATOM);
+          for (var i$2 = 0; curIdx < n$1; ++i$2, ++curIdx) {
+            atomNames[curIdx] = line.substr(i$2 * 4, 4).trim();
+          }
+        } else if (mode === ChargeMode) {
+
+          // not currently used
+
+        } else if (mode === MassMode) {
+
+          // not currently used
+
+        } else if (mode === ResidueLabelMode) {
+          var n$2 = Math.min(curIdx + 20, pointersDict.NRES);
+          for (var i$3 = 0; curIdx < n$2; ++i$3, ++curIdx) {
+            residueLabels[curIdx] = line.substr(i$3 * 4, 4).trim();
+          }
+        } else if (mode === ResiduePointerMode) {
+          var n$3 = Math.min(curIdx + 10, pointersDict.NRES);
+          for (var i$4 = 0; curIdx < n$3; ++i$4, ++curIdx) {
+            residuePointers[curIdx] = parseIntSubstr(line, i$4 * 8, 8);
+          }
+        } else if (mode === BondsIncHydrogenMode) {
+          var n$4 = Math.min(curIdx + 10, pointersDict.NBONH * 3);
+          for (var i$5 = 0; curIdx < n$4; ++i$5, ++curIdx) {
+            var r = curIdx % 3;
+            if (r === 0) {
+              bAtomIndex1[bondIdx] = parseIntSubstr(line, i$5 * 8, 8) / 3;
+            } if (r === 1) {
+              bAtomIndex2[bondIdx] = parseIntSubstr(line, i$5 * 8, 8) / 3;
+              bBondOrder[bondIdx] = 1;
+              ++bondIdx;
+            }
+          }
+        } else if (mode === BondsWithoutHydrogenMode) {
+          var n$5 = Math.min(curIdx + 10, pointersDict.MBONA * 3);
+          for (var i$6 = 0; curIdx < n$5; ++i$6, ++curIdx) {
+            var r$1 = curIdx % 3;
+            if (r$1 === 0) {
+              bAtomIndex1[bondIdx] = parseIntSubstr(line, i$6 * 8, 8) / 3;
+            } if (r$1 === 1) {
+              bAtomIndex2[bondIdx] = parseIntSubstr(line, i$6 * 8, 8) / 3;
+              bBondOrder[bondIdx] = 1;
+              ++bondIdx;
+            }
+          }
+        } else if (mode === RadiiMode) {
+
+          // not currently used
+
+        }
+      }
+    }
+
+    this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
+      _parseChunkOfLines(0, lines.length, lines);
+    });
+
+    s.title = title.join(' ');
+
+    var atomCount = pointersDict.NATOM;
+    var curResIdx = 0;
+    var curResname = residueLabels[0];
+    var curResno = 1;
+    for (var i = 0; i < atomCount; ++i) {
+      if (i + 1 === residuePointers[curResIdx + 1]) {
+        ++curResIdx;
+        curResname = residueLabels[curResIdx];
+        curResno = curResIdx + 1;
+      }
+      atomStore.atomTypeId[i] = atomMap.add(atomNames[i]);
+      atomStore.serial[i] = i + 1;
+      sb.addAtom(0, '', '', curResname, curResno, 1);
+    }
+
+    s.bondStore.length = bBondOrder.length;
+    s.bondStore.count = bBondOrder.length;
+    s.bondStore.atomIndex1 = bAtomIndex1;
+    s.bondStore.atomIndex2 = bAtomIndex2;
+    s.bondStore.bondOrder = bBondOrder;
+
+    sb.finalize();
+    s.finalizeAtoms();
+    calculateChainnames(s);
+    s.finalizeBonds();
+    assignResidueTypeBonds(s);
+
+    if (Debug) { Log.timeEnd('PrmtopParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( PrmtopParser.prototype, prototypeAccessors );
+
+  return PrmtopParser;
+}(StructureParser));
+
+ParserRegistry.add('prmtop', PrmtopParser);
+
+/**
+ * @file Psf Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var TitleMode$1 = 1;
+var AtomMode = 2;
+var BondMode = 3;
+var AngleMode = 4;
+var DihedralMode = 5;
+var ImproperMode = 6;
+
+var reWhitespace$2 = /\s+/;
+var reTitle = /(^\*|REMARK)*/;
+
+var PsfParser = (function (StructureParser$$1) {
+  function PsfParser () {
+    StructureParser$$1.apply(this, arguments);
+  }
+
+  if ( StructureParser$$1 ) PsfParser.__proto__ = StructureParser$$1;
+  PsfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
+  PsfParser.prototype.constructor = PsfParser;
+
+  var prototypeAccessors = { type: {} };
+
+  prototypeAccessors.type.get = function () { return 'psf' };
+
+  PsfParser.prototype._parse = function _parse () {
+    // http://www.ks.uiuc.edu/Training/Tutorials/namd/namd-tutorial-unix-html/node23.html
+
+    if (Debug) { Log.time('PsfParser._parse ' + this.name); }
+
+    var s = this.structure;
+    var sb = this.structureBuilder;
+
+    //
+
+    var atomMap = s.atomMap;
+    var atomStore = s.atomStore;
+
+    var title = [];
+
+    var mode;
+    var idx = 0;
+    var bondIdx = 0;
+    var bAtomIndex1, bAtomIndex2, bBondOrder;
+
+    function _parseChunkOfLines (_i, _n, lines) {
+      for (var i = _i; i < _n; ++i) {
+        var line = lines[ i ].trim();
+
+        if (!line) {
+          mode = undefined;
+          continue
+        }
+
+        if (mode === AtomMode) {
+          var ls = line.split(reWhitespace$2);
+
+          var serial = parseInt(ls[ 0 ]);
+          // const segid = ls[ 1 ];
+          var resno = parseInt(ls[ 2 ]);
+          var resname = ls[ 3 ];
+          var atomname = ls[ 4 ];
+
+          atomStore.growIfFull();
+          atomStore.atomTypeId[ idx ] = atomMap.add(atomname);
+
+          atomStore.serial[ idx ] = serial;
+
+          sb.addAtom(0, '', '', resname, resno, 1);
+
+          idx += 1;
+        } else if (mode === BondMode) {
+          var ls$1 = line.split(reWhitespace$2);
+
+          for (var j = 0, m = ls$1.length; j < m; j += 2) {
+            bAtomIndex1[ bondIdx ] = parseInt(ls$1[ j ]) - 1;
+            bAtomIndex2[ bondIdx ] = parseInt(ls$1[ j + 1 ]) - 1;
+            bBondOrder[ bondIdx ] = 1;
+            bondIdx += 1;
+          }
+        } else if (mode === TitleMode$1) {
+          title.push(line.replace(reTitle, '').trim());
+        } else if (mode === AngleMode) {
+
+          // not currently used
+
+        } else if (mode === DihedralMode) {
+
+          // not currently used
+
+        } else if (mode === ImproperMode) {
+
+          // not currently used
+
+        } else if (line.includes('!NATOM')) {
+          mode = AtomMode;
+
+          var numAtoms = parseInt(line.split(reWhitespace$2)[ 0 ]);
+          atomStore.resize(numAtoms);
+        } else if (line.includes('!NBOND')) {
+          mode = BondMode;
+
+          var numBonds = parseInt(line.split(reWhitespace$2)[ 0 ]);
+          bAtomIndex1 = new Uint32Array(numBonds);
+          bAtomIndex2 = new Uint32Array(numBonds);
+          bBondOrder = new Uint8Array(numBonds);
+        } else if (line.includes('!NTITLE')) {
+          mode = TitleMode$1;
+        } else if (line.includes('!NTHETA')) {
+          mode = AngleMode;
+        } else if (line.includes('!NPHI')) {
+          mode = DihedralMode;
+        } else if (line.includes('!NIMPHI')) {
+          mode = ImproperMode;
+        }
+      }
+    }
+
+    this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
+      _parseChunkOfLines(0, lines.length, lines);
+    });
+
+    s.title = title.join(' ');
+
+    s.bondStore.length = bBondOrder.length;
+    s.bondStore.count = bondIdx;
+    s.bondStore.atomIndex1 = bAtomIndex1;
+    s.bondStore.atomIndex2 = bAtomIndex2;
+    s.bondStore.bondOrder = bBondOrder;
+
+    sb.finalize();
+    s.finalizeAtoms();
+    calculateChainnames(s);
+    s.finalizeBonds();
+    assignResidueTypeBonds(s);
+
+    if (Debug) { Log.timeEnd('PsfParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( PsfParser.prototype, prototypeAccessors );
+
+  return PsfParser;
+}(StructureParser));
+
+ParserRegistry.add('psf', PsfParser);
 
 /**
  * @file Frames
@@ -88487,9 +88813,10 @@ var DcdParser = (function (TrajectoryParser$$1) {
   DcdParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   DcdParser.prototype.constructor = DcdParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'dcd' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   DcdParser.prototype._parse = function _parse () {
     // http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
@@ -88666,6 +88993,1180 @@ var DcdParser = (function (TrajectoryParser$$1) {
 ParserRegistry.add('dcd', DcdParser);
 
 /**
+ * @file IO Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ *
+ * Adapted from https://github.com/image-js/iobuffer
+ * MIT License, Copyright (c) 2015 Michaël Zasso
+ */
+
+var defaultByteLength = 1024 * 8;
+var charArray = [];
+
+/**
+ * IOBuffer
+ * @constructor
+ * @param {undefined|number|ArrayBuffer|TypedArray|IOBuffer|Buffer} data - The data to construct the IOBuffer with.
+ *
+ * If it's a number, it will initialize the buffer with the number as
+ * the buffer's length. If it's undefined, it will initialize the buffer
+ * with a default length of 8 Kb. If its an ArrayBuffer, a TypedArray,
+ * an IOBuffer instance, or a Node.js Buffer, it will create a view over
+ * the underlying ArrayBuffer.
+ * @param {object} [options]
+ * @param {number} [options.offset=0] - Ignore the first n bytes of the ArrayBuffer
+ * @property {ArrayBuffer} buffer - Reference to the internal ArrayBuffer object
+ * @property {number} length - Byte length of the internal ArrayBuffer
+ * @property {number} offset - The current offset of the buffer's pointer
+ * @property {number} byteLength - Byte length of the internal ArrayBuffer
+ * @property {number} byteOffset - Byte offset of the internal ArrayBuffer
+ */
+var IOBuffer = function IOBuffer (data, options) {
+  options = options || {};
+  var dataIsGiven = false;
+  if (data === undefined) {
+    data = defaultByteLength;
+  }
+  if (typeof data === 'number') {
+    data = new ArrayBuffer(data);
+  } else {
+    dataIsGiven = true;
+    this._lastWrittenByte = data.byteLength;
+  }
+
+  var offset = options.offset ? options.offset >>> 0 : 0;
+  var byteLength = data.byteLength - offset;
+  var dvOffset = offset;
+  if (data.buffer) {
+    if (data.byteLength !== data.buffer.byteLength) {
+      dvOffset = data.byteOffset + offset;
+    }
+    data = data.buffer;
+  }
+  if (dataIsGiven) {
+    this._lastWrittenByte = byteLength;
+  } else {
+    this._lastWrittenByte = 0;
+  }
+  this.buffer = data;
+  this.length = byteLength;
+  this.byteLength = byteLength;
+  this.byteOffset = dvOffset;
+  this.offset = 0;
+  this.littleEndian = true;
+  this._data = new DataView(this.buffer, dvOffset, byteLength);
+  this._mark = 0;
+  this._marks = [];
+};
+
+/**
+ * Checks if the memory allocated to the buffer is sufficient to store more bytes after the offset
+ * @param {number} [byteLength=1] The needed memory in bytes
+ * @return {boolean} Returns true if there is sufficient space and false otherwise
+ */
+IOBuffer.prototype.available = function available (byteLength) {
+  if (byteLength === undefined) { byteLength = 1; }
+  return (this.offset + byteLength) <= this.length
+};
+
+/**
+ * Check if little-endian mode is used for reading and writing multi-byte values
+ * @return {boolean} Returns true if little-endian mode is used, false otherwise
+ */
+IOBuffer.prototype.isLittleEndian = function isLittleEndian () {
+  return this.littleEndian
+};
+
+/**
+ * Set little-endian mode for reading and writing multi-byte values
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.setLittleEndian = function setLittleEndian () {
+  this.littleEndian = true;
+  return this
+};
+
+/**
+ * Check if big-endian mode is used for reading and writing multi-byte values
+ * @return {boolean} Returns true if big-endian mode is used, false otherwise
+ */
+IOBuffer.prototype.isBigEndian = function isBigEndian () {
+  return !this.littleEndian
+};
+
+/**
+ * Switches to big-endian mode for reading and writing multi-byte values
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.setBigEndian = function setBigEndian () {
+  this.littleEndian = false;
+  return this
+};
+
+/**
+ * Move the pointer n bytes forward
+ * @param {number} n
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.skip = function skip (n) {
+  if (n === undefined) { n = 1; }
+  this.offset += n;
+  return this
+};
+
+/**
+ * Move the pointer to the given offset
+ * @param {number} offset
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.seek = function seek (offset) {
+  this.offset = offset;
+  return this
+};
+
+/**
+ * Store the current pointer offset.
+ * @see {@link IOBuffer#reset}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.mark = function mark () {
+  this._mark = this.offset;
+  return this
+};
+
+/**
+ * Move the pointer back to the last pointer offset set by mark
+ * @see {@link IOBuffer#mark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.reset = function reset () {
+  this.offset = this._mark;
+  return this
+};
+
+/**
+ * Push the current pointer offset to the mark stack
+ * @see {@link IOBuffer#popMark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.pushMark = function pushMark () {
+  this._marks.push(this.offset);
+  return this
+};
+
+/**
+ * Pop the last pointer offset from the mark stack, and set the current pointer offset to the popped value
+ * @see {@link IOBuffer#pushMark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.popMark = function popMark () {
+  var offset = this._marks.pop();
+  if (offset === undefined) { throw new Error('Mark stack empty') }
+  this.seek(offset);
+  return this
+};
+
+/**
+ * Move the pointer offset back to 0
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.rewind = function rewind () {
+  this.offset = 0;
+  return this
+};
+
+/**
+ * Make sure the buffer has sufficient memory to write a given byteLength at the current pointer offset
+ * If the buffer's memory is insufficient, this method will create a new buffer (a copy) with a length
+ * that is twice (byteLength + current offset)
+ * @param {number} [byteLength = 1]
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.ensureAvailable = function ensureAvailable (byteLength) {
+  if (byteLength === undefined) { byteLength = 1; }
+  if (!this.available(byteLength)) {
+    var lengthNeeded = this.offset + byteLength;
+    var newLength = lengthNeeded * 2;
+    var newArray = new Uint8Array(newLength);
+    newArray.set(new Uint8Array(this.buffer));
+    this.buffer = newArray.buffer;
+    this.length = this.byteLength = newLength;
+    this._data = new DataView(this.buffer);
+  }
+  return this
+};
+
+/**
+ * Read a byte and return false if the byte's value is 0, or true otherwise
+ * Moves pointer forward
+ * @return {boolean}
+ */
+IOBuffer.prototype.readBoolean = function readBoolean () {
+  return this.readUint8() !== 0
+};
+
+/**
+ * Read a signed 8-bit integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt8 = function readInt8 () {
+  return this._data.getInt8(this.offset++)
+};
+
+/**
+ * Read an unsigned 8-bit integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint8 = function readUint8 () {
+  return this._data.getUint8(this.offset++)
+};
+
+/**
+ * Alias for {@link IOBuffer#readUint8}
+ * @return {number}
+ */
+IOBuffer.prototype.readByte = function readByte () {
+  return this.readUint8()
+};
+
+/**
+ * Read n bytes and move pointer forward.
+ * @param {number} n
+ * @return {Uint8Array}
+ */
+IOBuffer.prototype.readBytes = function readBytes (n) {
+    var this$1 = this;
+
+  if (n === undefined) { n = 1; }
+  var bytes = new Uint8Array(n);
+  for (var i = 0; i < n; i++) {
+    bytes[i] = this$1.readByte();
+  }
+  return bytes
+};
+
+/**
+ * Read a 16-bit signed integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt16 = function readInt16 () {
+  var value = this._data.getInt16(this.offset, this.littleEndian);
+  this.offset += 2;
+  return value
+};
+
+/**
+ * Read a 16-bit unsigned integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint16 = function readUint16 () {
+  var value = this._data.getUint16(this.offset, this.littleEndian);
+  this.offset += 2;
+  return value
+};
+
+/**
+ * Read a 32-bit signed integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt32 = function readInt32 () {
+  var value = this._data.getInt32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 32-bit unsigned integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint32 = function readUint32 () {
+  var value = this._data.getUint32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 32-bit floating number and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readFloat32 = function readFloat32 () {
+  var value = this._data.getFloat32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 64-bit floating number and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readFloat64 = function readFloat64 () {
+  var value = this._data.getFloat64(this.offset, this.littleEndian);
+  this.offset += 8;
+  return value
+};
+
+/**
+ * Read 1-byte ascii character and move pointer forward
+ * @return {string}
+ */
+IOBuffer.prototype.readChar = function readChar () {
+  return String.fromCharCode(this.readInt8())
+};
+
+/**
+ * Read n 1-byte ascii characters and move pointer forward
+ * @param {number} n
+ * @return {string}
+ */
+IOBuffer.prototype.readChars = function readChars (n) {
+    var this$1 = this;
+
+  if (n === undefined) { n = 1; }
+  charArray.length = n;
+  for (var i = 0; i < n; i++) {
+    charArray[i] = this$1.readChar();
+  }
+  return charArray.join('')
+};
+
+/**
+ * Write 0xff if the passed value is truthy, 0x00 otherwise
+ * @param {any} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeBoolean = function writeBoolean (value) {
+  this.writeUint8(value ? 0xff : 0x00);
+  return this
+};
+
+/**
+ * Write value as an 8-bit signed integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt8 = function writeInt8 (value) {
+  this.ensureAvailable(1);
+  this._data.setInt8(this.offset++, value);
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as a 8-bit unsigned integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint8 = function writeUint8 (value) {
+  this.ensureAvailable(1);
+  this._data.setUint8(this.offset++, value);
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * An alias for {@link IOBuffer#writeUint8}
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeByte = function writeByte (value) {
+  return this.writeUint8(value)
+};
+
+/**
+ * Write bytes
+ * @param {Array|Uint8Array} bytes
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeBytes = function writeBytes (bytes) {
+    var this$1 = this;
+
+  this.ensureAvailable(bytes.length);
+  for (var i = 0; i < bytes.length; i++) {
+    this$1._data.setUint8(this$1.offset++, bytes[i]);
+  }
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as an 16-bit signed integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt16 = function writeInt16 (value) {
+  this.ensureAvailable(2);
+  this._data.setInt16(this.offset, value, this.littleEndian);
+  this.offset += 2;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as a 16-bit unsigned integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint16 = function writeUint16 (value) {
+  this.ensureAvailable(2);
+  this._data.setUint16(this.offset, value, this.littleEndian);
+  this.offset += 2;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit signed integer at the current pointer offset
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt32 = function writeInt32 (value) {
+  this.ensureAvailable(4);
+  this._data.setInt32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit unsigned integer at the current pointer offset
+ * @param {number} value - The value to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint32 = function writeUint32 (value) {
+  this.ensureAvailable(4);
+  this._data.setUint32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit floating number at the current pointer offset
+ * @param {number} value - The value to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeFloat32 = function writeFloat32 (value) {
+  this.ensureAvailable(4);
+  this._data.setFloat32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 64-bit floating number at the current pointer offset
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeFloat64 = function writeFloat64 (value) {
+  this.ensureAvailable(8);
+  this._data.setFloat64(this.offset, value, this.littleEndian);
+  this.offset += 8;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write the charCode of the passed string's first character to the current pointer offset
+ * @param {string} str - The character to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeChar = function writeChar (str) {
+  return this.writeUint8(str.charCodeAt(0))
+};
+
+/**
+ * Write the charCodes of the passed string's characters to the current pointer offset
+ * @param {string} str
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeChars = function writeChars (str) {
+    var this$1 = this;
+
+  for (var i = 0; i < str.length; i++) {
+    this$1.writeUint8(str.charCodeAt(i));
+  }
+  return this
+};
+
+/**
+ * Export a Uint8Array view of the internal buffer.
+ * The view starts at the byte offset and its length
+ * is calculated to stop at the last written byte or the original length.
+ * @return {Uint8Array}
+ */
+IOBuffer.prototype.toArray = function toArray () {
+  return new Uint8Array(this.buffer, this.byteOffset, this._lastWrittenByte)
+};
+
+/**
+ * Same as {@link IOBuffer#toArray} but returns a Buffer if possible. Otherwise returns a Uint8Array.
+ * @return {Buffer|Uint8Array}
+ */
+IOBuffer.prototype.getBuffer = function getBuffer () {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(this.toArray())
+  } else {
+    return this.toArray()
+  }
+};
+
+/**
+ * Update the last written byte offset
+ * @private
+ */
+IOBuffer.prototype._updateLastWrittenByte = function _updateLastWrittenByte () {
+  if (this.offset > this._lastWrittenByte) {
+    this._lastWrittenByte = this.offset;
+  }
+};
+
+/**
+ * @file Netcdf Reader
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ *
+ * Adapted from https://github.com/cheminfo-js/netcdfjs
+ * MIT License, Copyright (c) 2016 cheminfo
+ */
+
+/**
+ * Throws a non-valid NetCDF exception if the statement it's true
+ * @ignore
+ * @param {boolean} statement - Throws if true
+ * @param {string} reason - Reason to throw
+ */
+function notNetcdf (statement, reason) {
+  if (statement) {
+    throw new TypeError('Not a valid NetCDF v3.x file: ' + reason)
+  }
+}
+
+/**
+ * Moves 1, 2, or 3 bytes to next 4-byte boundary
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ */
+function padding (buffer) {
+  if ((buffer.offset % 4) !== 0) {
+    buffer.skip(4 - (buffer.offset % 4));
+  }
+}
+
+/**
+ * Reads the name
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @return {string} - Name
+ */
+function readName (buffer) {
+  // Read name
+  var nameLength = buffer.readUint32();
+  var name = buffer.readChars(nameLength);
+
+  // validate name
+  // TODO
+
+  // Apply padding
+  padding(buffer);
+  return name
+}
+
+var types = {
+  BYTE: 1,
+  CHAR: 2,
+  SHORT: 3,
+  INT: 4,
+  FLOAT: 5,
+  DOUBLE: 6
+};
+
+/**
+ * Parse a number into their respective type
+ * @ignore
+ * @param {number} type - integer that represents the type
+ * @return {string} - parsed value of the type
+ */
+function num2str (type) {
+  switch (Number(type)) {
+    case types.BYTE:
+      return 'byte'
+    case types.CHAR:
+      return 'char'
+    case types.SHORT:
+      return 'short'
+    case types.INT:
+      return 'int'
+    case types.FLOAT:
+      return 'float'
+    case types.DOUBLE:
+      return 'double'
+    default:
+      return 'undefined'
+  }
+}
+
+/**
+ * Parse a number type identifier to his size in bytes
+ * @ignore
+ * @param {number} type - integer that represents the type
+ * @return {number} -size of the type
+ */
+function num2bytes (type) {
+  switch (Number(type)) {
+    case types.BYTE:
+      return 1
+    case types.CHAR:
+      return 1
+    case types.SHORT:
+      return 2
+    case types.INT:
+      return 4
+    case types.FLOAT:
+      return 4
+    case types.DOUBLE:
+      return 8
+    default:
+      return -1
+  }
+}
+
+/**
+ * Reverse search of num2str
+ * @ignore
+ * @param {string} type - string that represents the type
+ * @return {number} - parsed value of the type
+ */
+function str2num (type) {
+  switch (String(type)) {
+    case 'byte':
+      return types.BYTE
+    case 'char':
+      return types.CHAR
+    case 'short':
+      return types.SHORT
+    case 'int':
+      return types.INT
+    case 'float':
+      return types.FLOAT
+    case 'double':
+      return types.DOUBLE
+    default:
+      return -1
+  }
+}
+
+/**
+ * Auxiliary function to read numeric data
+ * @ignore
+ * @param {number} size - Size of the element to read
+ * @param {function} bufferReader - Function to read next value
+ * @return {Array<number>|number}
+ */
+function readNumber (size, bufferReader) {
+  if (size !== 1) {
+    var numbers = new Array(size);
+    for (var i = 0; i < size; i++) {
+      numbers[i] = bufferReader();
+    }
+    return numbers
+  } else {
+    return bufferReader()
+  }
+}
+
+/**
+ * Given a type and a size reads the next element
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @param {number} type - Type of the data to read
+ * @param {number} size - Size of the element to read
+ * @return {string|Array<number>|number}
+ */
+function readType (buffer, type, size) {
+  switch (type) {
+    case types.BYTE:
+      return buffer.readBytes(size)
+    case types.CHAR:
+      return trimNull(buffer.readChars(size))
+    case types.SHORT:
+      return readNumber(size, buffer.readInt16.bind(buffer))
+    case types.INT:
+      return readNumber(size, buffer.readInt32.bind(buffer))
+    case types.FLOAT:
+      return readNumber(size, buffer.readFloat32.bind(buffer))
+    case types.DOUBLE:
+      return readNumber(size, buffer.readFloat64.bind(buffer))
+    default:
+      notNetcdf(true, 'non valid type ' + type);
+      return undefined
+  }
+}
+
+/**
+ * Removes null terminate value
+ * @ignore
+ * @param {string} value - String to trim
+ * @return {string} - Trimmed string
+ */
+function trimNull (value) {
+  if (value.charCodeAt(value.length - 1) === 0) {
+    return value.substring(0, value.length - 1)
+  }
+  return value
+}
+
+// const STREAMING = 4294967295;
+
+/**
+ * Read data for the given non-record variable
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @param {object} variable - Variable metadata
+ * @return {Array} - Data of the element
+ */
+function nonRecord (buffer, variable) {
+  // variable type
+  var type = str2num(variable.type);
+
+  // size of the data
+  var size = variable.size / num2bytes(type);
+
+  // iterates over the data
+  var data = new Array(size);
+  for (var i = 0; i < size; i++) {
+    data[i] = readType(buffer, type, 1);
+  }
+
+  return data
+}
+
+/**
+ * Read data for the given record variable
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @param {object} variable - Variable metadata
+ * @param {object} recordDimension - Record dimension metadata
+ * @return {Array} - Data of the element
+ */
+function record (buffer, variable, recordDimension) {
+  // variable type
+  var type = str2num(variable.type);
+  var width = variable.size ? variable.size / num2bytes(type) : 1;
+
+  // size of the data
+  // TODO streaming data
+  var size = recordDimension.length;
+
+  // iterates over the data
+  var data = new Array(size);
+  var step = recordDimension.recordStep;
+
+  for (var i = 0; i < size; i++) {
+    var currentOffset = buffer.offset;
+    data[i] = readType(buffer, type, width);
+    buffer.seek(currentOffset + step);
+  }
+
+  return data
+}
+
+// Grammar constants
+var ZERO = 0;
+var NC_DIMENSION = 10;
+var NC_VARIABLE = 11;
+var NC_ATTRIBUTE = 12;
+
+/**
+ * Read the header of the file
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @param {number} version - Version of the file
+ * @return {object} - Object with the fields:
+ *  * `recordDimension`: Number with the length of record dimension
+ *  * `dimensions`: List of dimensions
+ *  * `globalAttributes`: List of global attributes
+ *  * `variables`: List of variables
+ */
+function header (buffer, version) {
+  // Length of record dimension
+  // sum of the varSize's of all the record variables.
+  var header = {recordDimension: {length: buffer.readUint32()}};
+
+  // Version
+  header.version = version;
+
+  // List of dimensions
+  var dimList = dimensionsList(buffer);
+  header.recordDimension.id = dimList.recordId;
+  header.recordDimension.name = dimList.recordName;
+  header.dimensions = dimList.dimensions;
+
+  // List of global attributes
+  header.globalAttributes = attributesList(buffer);
+
+  // List of variables
+  var variables = variablesList(buffer, dimList.recordId, version);
+  header.variables = variables.variables;
+  header.recordDimension.recordStep = variables.recordStep;
+
+  return header
+}
+
+/**
+ * List of dimensions
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @return {object} - List of dimensions and record dimension with:
+ *  * `name`: String with the name of the dimension
+ *  * `size`: Number with the size of the dimension
+ */
+function dimensionsList (buffer) {
+  var dimensions, recordId, recordName;
+  var dimList = buffer.readUint32();
+  if (dimList === ZERO) {
+    notNetcdf((buffer.readUint32() !== ZERO), 'wrong empty tag for list of dimensions');
+    return []
+  } else {
+    notNetcdf((dimList !== NC_DIMENSION), 'wrong tag for list of dimensions');
+
+    // Length of dimensions
+    var dimensionSize = buffer.readUint32();
+    dimensions = new Array(dimensionSize);
+    for (var dim = 0; dim < dimensionSize; dim++) {
+      // Read name
+      var name = readName(buffer);
+
+      // Read dimension size
+      var size = buffer.readUint32();
+      if (size === 0) {
+        recordId = dim;
+        recordName = name;
+      }
+
+      dimensions[dim] = {
+        name: name,
+        size: size
+      };
+    }
+  }
+  return {
+    dimensions: dimensions,
+    recordId: recordId,
+    recordName: recordName
+  }
+}
+
+/**
+ * List of attributes
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @return {Array<object>} - List of attributes with:
+ *  * `name`: String with the name of the attribute
+ *  * `type`: String with the type of the attribute
+ *  * `value`: A number or string with the value of the attribute
+ */
+function attributesList (buffer) {
+  var attributes;
+  var gAttList = buffer.readUint32();
+  if (gAttList === ZERO) {
+    notNetcdf((buffer.readUint32() !== ZERO), 'wrong empty tag for list of attributes');
+    return []
+  } else {
+    notNetcdf((gAttList !== NC_ATTRIBUTE), 'wrong tag for list of attributes');
+
+    // Length of attributes
+    var attributeSize = buffer.readUint32();
+    attributes = new Array(attributeSize);
+    for (var gAtt = 0; gAtt < attributeSize; gAtt++) {
+      // Read name
+      var name = readName(buffer);
+
+      // Read type
+      var type = buffer.readUint32();
+      notNetcdf(((type < 1) || (type > 6)), 'non valid type ' + type);
+
+      // Read attribute
+      var size = buffer.readUint32();
+      var value = readType(buffer, type, size);
+
+      // Apply padding
+      padding(buffer);
+
+      attributes[gAtt] = {
+        name: name,
+        type: num2str(type),
+        value: value
+      };
+    }
+  }
+  return attributes
+}
+
+/**
+ * List of variables
+ * @ignore
+ * @param {IOBuffer} buffer - Buffer for the file data
+ * @param {number} recordId - Id if the record dimension
+ * @param {number} version - Version of the file
+ * @return {object} - Number of recordStep and list of variables with:
+ *  * `name`: String with the name of the variable
+ *  * `dimensions`: Array with the dimension IDs of the variable
+ *  * `attributes`: Array with the attributes of the variable
+ *  * `type`: String with the type of the variable
+ *  * `size`: Number with the size of the variable
+ *  * `offset`: Number with the offset where of the variable begins
+ *  * `record`: True if is a record variable, false otherwise
+ */
+function variablesList (buffer, recordId, version) {
+  var varList = buffer.readUint32();
+  var recordStep = 0;
+  var variables;
+  if (varList === ZERO) {
+    notNetcdf(
+      (buffer.readUint32() !== ZERO),
+      'wrong empty tag for list of variables'
+    );
+    return []
+  } else {
+    notNetcdf((varList !== NC_VARIABLE), 'wrong tag for list of variables');
+
+    // Length of variables
+    var variableSize = buffer.readUint32();
+    variables = new Array(variableSize);
+    for (var v = 0; v < variableSize; v++) {
+      // Read name
+      var name = readName(buffer);
+
+      // Read dimensionality of the variable
+      var dimensionality = buffer.readUint32();
+
+      // Index into the list of dimensions
+      var dimensionsIds = new Array(dimensionality);
+      for (var dim = 0; dim < dimensionality; dim++) {
+        dimensionsIds[dim] = buffer.readUint32();
+      }
+
+      // Read variables size
+      var attributes = attributesList(buffer);
+
+      // Read type
+      var type = buffer.readUint32();
+      notNetcdf(((type < 1) && (type > 6)), 'non valid type ' + type);
+
+      // Read variable size
+      // The 32-bit varSize field is not large enough to contain the
+      // size of variables that require more than 2^32 - 4 bytes,
+      // so 2^32 - 1 is used in the varSize field for such variables.
+      var varSize = buffer.readUint32();
+
+      // Read offset
+      var offset = buffer.readUint32();
+      if (version === 2) {
+        notNetcdf((offset > 0), 'offsets larger than 4GB not supported');
+        offset = buffer.readUint32();
+      }
+
+      // Count amount of record variables
+      if (dimensionsIds[0] === recordId) {
+        recordStep += varSize;
+      }
+
+      variables[v] = {
+        name: name,
+        dimensions: dimensionsIds,
+        attributes: attributes,
+        type: num2str(type),
+        size: varSize,
+        offset: offset,
+        record: (dimensionsIds[0] === recordId)
+      };
+    }
+  }
+
+  return {
+    variables: variables,
+    recordStep: recordStep
+  }
+}
+
+/**
+ * Reads a NetCDF v3.x file
+ * https://www.unidata.ucar.edu/software/netcdf/docs/file_format_specifications.html
+ */
+var NetcdfReader = function NetcdfReader (data) {
+  var buffer = new IOBuffer(data);
+  buffer.setBigEndian();
+
+  // Validate that it's a NetCDF file
+  notNetcdf((buffer.readChars(3) !== 'CDF'), 'should start with CDF');
+
+  // Check the NetCDF format
+  var version = buffer.readByte();
+  notNetcdf((version > 2), 'unknown version');
+
+  // Read the header
+  this.header = header(buffer, version);
+  this.buffer = buffer;
+};
+
+var prototypeAccessors$30 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
+
+/**
+ * @return {string} - Version for the NetCDF format
+ */
+prototypeAccessors$30.version.get = function () {
+  if (this.header.version === 1) {
+    return 'classic format'
+  } else {
+    return '64-bit offset format'
+  }
+};
+
+/**
+ * @return {object} - Metadata for the record dimension
+ ** `length`: Number of elements in the record dimension
+ ** `id`: Id number in the list of dimensions for the record dimension
+ ** `name`: String with the name of the record dimension
+ ** `recordStep`: Number with the record variables step size
+ */
+prototypeAccessors$30.recordDimension.get = function () {
+  return this.header.recordDimension
+};
+
+/**
+ * @return {Array<object>} - List of dimensions with:
+ ** `name`: String with the name of the dimension
+ ** `size`: Number with the size of the dimension
+ */
+prototypeAccessors$30.dimensions.get = function () {
+  return this.header.dimensions
+};
+
+/**
+ * @return {Array<object>} - List of global attributes with:
+ ** `name`: String with the name of the attribute
+ ** `type`: String with the type of the attribute
+ ** `value`: A number or string with the value of the attribute
+ */
+prototypeAccessors$30.globalAttributes.get = function () {
+  return this.header.globalAttributes
+};
+
+/**
+ * @return {Array<object>} - List of variables with:
+ ** `name`: String with the name of the variable
+ ** `dimensions`: Array with the dimension IDs of the variable
+ ** `attributes`: Array with the attributes of the variable
+ ** `type`: String with the type of the variable
+ ** `size`: Number with the size of the variable
+ ** `offset`: Number with the offset where of the variable begins
+ ** `record`: True if is a record variable, false otherwise
+ */
+prototypeAccessors$30.variables.get = function () {
+  return this.header.variables
+};
+
+/**
+ * Checks if a variable is available
+ * @param {string|object} variableName - Name of the variable to check
+ * @return {Boolean} - Variable existence
+ */
+NetcdfReader.prototype.hasDataVariable = function hasDataVariable (variableName) {
+  return this.header.variables.findIndex(function (val) {
+    return val.name === variableName
+  }) !== -1
+};
+
+/**
+ * Retrieves the data for a given variable
+ * @param {string|object} variableName - Name of the variable to search or variable object
+ * @return {Array} - List with the variable values
+ */
+NetcdfReader.prototype.getDataVariable = function getDataVariable (variableName) {
+  var variable;
+  if (typeof variableName === 'string') {
+          // search the variable
+    variable = this.header.variables.find(function (val) {
+      return val.name === variableName
+    });
+  } else {
+    variable = variableName;
+  }
+
+  // throws if variable not found
+  notNetcdf((variable === undefined), 'variable not found');
+
+  // go to the offset position
+  this.buffer.seek(variable.offset);
+
+  if (variable.record) {
+    // record variable case
+    return record(this.buffer, variable, this.header.recordDimension)
+  } else {
+    // non-record variable case
+    return nonRecord(this.buffer, variable)
+  }
+};
+
+Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$30 );
+
+/**
+ * @file Nctraj Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var NctrajParser = (function (TrajectoryParser$$1) {
+  function NctrajParser () {
+    TrajectoryParser$$1.apply(this, arguments);
+  }
+
+  if ( TrajectoryParser$$1 ) NctrajParser.__proto__ = TrajectoryParser$$1;
+  NctrajParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
+  NctrajParser.prototype.constructor = NctrajParser;
+
+  var prototypeAccessors = { type: {},isBinary: {} };
+
+  prototypeAccessors.type.get = function () { return 'nctraj' };
+  prototypeAccessors.isBinary.get = function () { return true };
+
+  NctrajParser.prototype._parse = function _parse () {
+    // http://ambermd.org/netcdf/nctraj.xhtml
+
+    if (Debug) { Log.time('NctrajParser._parse ' + this.name); }
+
+    var netcdfReader = new NetcdfReader(this.streamer.data);
+
+    var f = this.frames;
+    var coordinates = f.coordinates;
+    var boxes = f.boxes;
+    // const header = {}
+
+    netcdfReader.getDataVariable('coordinates').forEach(function (c) {
+      coordinates.push(new Float32Array(c));
+    });
+
+    if (netcdfReader.hasDataVariable('cell_lengths')) {
+      netcdfReader.getDataVariable('cell_lengths').forEach(function (b) {
+        boxes.push(new Float32Array(b));
+      });
+    }
+
+    if (Debug) { Log.timeEnd('NctrajParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( NctrajParser.prototype, prototypeAccessors );
+
+  return NctrajParser;
+}(TrajectoryParser));
+
+ParserRegistry.add('nctraj', NctrajParser);
+ParserRegistry.add('ncdf', NctrajParser);
+ParserRegistry.add('nc', NctrajParser);
+
+/**
  * @file Trr Parser
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -88680,9 +90181,10 @@ var TrrParser = (function (TrajectoryParser$$1) {
   TrrParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   TrrParser.prototype.constructor = TrrParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'trr' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   TrrParser.prototype._parse = function _parse () {
     // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/trrio.cpp
@@ -88944,9 +90446,10 @@ var XtcParser = (function (TrajectoryParser$$1) {
   XtcParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   XtcParser.prototype.constructor = XtcParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'xtc' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   XtcParser.prototype._parse = function _parse () {
     // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/xtcio.cpp
@@ -89361,9 +90864,10 @@ var Dsn6Parser = (function (VolumeParser$$1) {
   Dsn6Parser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   Dsn6Parser.prototype.constructor = Dsn6Parser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'dsn6' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   Dsn6Parser.prototype._parse = function _parse () {
         // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
@@ -89734,9 +91238,10 @@ var DxbinParser = (function (DxParser$$1) {
   DxbinParser.prototype = Object.create( DxParser$$1 && DxParser$$1.prototype );
   DxbinParser.prototype.constructor = DxbinParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'dxbin' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   DxbinParser.prototype._parse = function _parse () {
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
@@ -89788,9 +91293,10 @@ var MrcParser = (function (VolumeParser$$1) {
   MrcParser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   MrcParser.prototype.constructor = MrcParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: {},isBinary: {} };
 
   prototypeAccessors.type.get = function () { return 'mrc' };
+  prototypeAccessors.isBinary.get = function () { return true };
 
   MrcParser.prototype._parse = function _parse () {
         // MRC
@@ -91106,10 +92612,11 @@ var JsonParser = (function (Parser$$1) {
   JsonParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   JsonParser.prototype.constructor = JsonParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: {},__objName: {},isJson: {} };
 
   prototypeAccessors.type.get = function () { return 'json' };
   prototypeAccessors.__objName.get = function () { return 'json' };
+  prototypeAccessors.isJson.get = function () { return true };
 
   JsonParser.prototype._parse = function _parse () {
     if (this.streamer.isBinary() || this.string) {
@@ -91125,6 +92632,94 @@ var JsonParser = (function (Parser$$1) {
 }(Parser));
 
 ParserRegistry.add('json', JsonParser);
+
+/**
+ * @file Msgpack Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var MsgpackParser = (function (Parser$$1) {
+  function MsgpackParser (streamer, params) {
+    var p = params || {};
+
+    Parser$$1.call(this, streamer, p);
+
+    this.msgpack = {
+      name: this.name,
+      path: this.path,
+      data: undefined
+    };
+  }
+
+  if ( Parser$$1 ) MsgpackParser.__proto__ = Parser$$1;
+  MsgpackParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
+  MsgpackParser.prototype.constructor = MsgpackParser;
+
+  var prototypeAccessors = { type: {},__objName: {},isBinary: {} };
+
+  prototypeAccessors.type.get = function () { return 'msgpack' };
+  prototypeAccessors.__objName.get = function () { return 'msgpack' };
+  prototypeAccessors.isBinary.get = function () { return true };
+
+  MsgpackParser.prototype._parse = function _parse () {
+    if (Debug) { Log.time('MsgpackParser._parse ' + this.name); }
+
+    this.msgpack.data = decodeMsgpack(this.streamer.data);
+
+    if (Debug) { Log.timeEnd('MsgpackParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( MsgpackParser.prototype, prototypeAccessors );
+
+  return MsgpackParser;
+}(Parser));
+
+ParserRegistry.add('msgpack', MsgpackParser);
+
+/**
+ * @file Netcdf Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var NetcdfParser = (function (Parser$$1) {
+  function NetcdfParser (streamer, params) {
+    var p = params || {};
+
+    Parser$$1.call(this, streamer, p);
+
+    this.netcdf = {
+      name: this.name,
+      path: this.path,
+      data: undefined
+    };
+  }
+
+  if ( Parser$$1 ) NetcdfParser.__proto__ = Parser$$1;
+  NetcdfParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
+  NetcdfParser.prototype.constructor = NetcdfParser;
+
+  var prototypeAccessors = { type: {},__objName: {},isBinary: {} };
+
+  prototypeAccessors.type.get = function () { return 'netcdf' };
+  prototypeAccessors.__objName.get = function () { return 'netcdf' };
+  prototypeAccessors.isBinary.get = function () { return true };
+
+  NetcdfParser.prototype._parse = function _parse () {
+    if (Debug) { Log.time('NetcdfParser._parse ' + this.name); }
+
+    this.netcdf.data = new NetcdfReader(this.streamer.data);
+
+    if (Debug) { Log.timeEnd('NetcdfParser._parse ' + this.name); }
+  };
+
+  Object.defineProperties( NetcdfParser.prototype, prototypeAccessors );
+
+  return NetcdfParser;
+}(Parser));
+
+ParserRegistry.add('netcdf', NetcdfParser);
 
 /**
  * @file Text Parser
@@ -91299,10 +92894,11 @@ var XmlParser = (function (Parser$$1) {
   XmlParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   XmlParser.prototype.constructor = XmlParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: {},__objName: {},isXml: {} };
 
   prototypeAccessors.type.get = function () { return 'xml' };
   prototypeAccessors.__objName.get = function () { return 'xml' };
+  prototypeAccessors.isXml.get = function () { return true };
 
   XmlParser.prototype.__xmlParser = function __xmlParser (xml) {
     return parseXml(xml)
@@ -91436,9 +93032,9 @@ var Validation = function Validation (name, path) {
   this.clashSele = 'NONE';
 };
 
-var prototypeAccessors$30 = { type: {} };
+var prototypeAccessors$31 = { type: {} };
 
-prototypeAccessors$30.type.get = function () { return 'validation' };
+prototypeAccessors$31.type.get = function () { return 'validation' };
 
 Validation.prototype.fromXml = function fromXml (xml) {
   if (Debug) { Log.time('Validation.fromXml'); }
@@ -91629,7 +93225,7 @@ Validation.prototype.getClashData = function getClashData (params) {
   }
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$30 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$31 );
 
 /**
  * @file Validation Parser
@@ -91651,9 +93247,10 @@ var ValidationParser = (function (XmlParser$$1) {
   ValidationParser.prototype = Object.create( XmlParser$$1 && XmlParser$$1.prototype );
   ValidationParser.prototype.constructor = ValidationParser;
 
-  var prototypeAccessors = { __objName: {} };
+  var prototypeAccessors = { __objName: {},isXml: {} };
 
   prototypeAccessors.__objName.get = function () { return 'validation' };
+  prototypeAccessors.isXml.get = function () { return true };
 
   ValidationParser.prototype._parse = function _parse () {
     XmlParser$$1.prototype._parse.call(this);
@@ -94787,7 +96384,7 @@ function StaticDatasource (baseUrl) {
   };
 }
 
-var version$1 = "0.10.5-1";
+var version$1 = "0.10.5-2";
 
 /**
  * @file Version
@@ -94836,5 +96433,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
