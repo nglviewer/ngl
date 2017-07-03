@@ -468,7 +468,7 @@ NGL.MenubarFileWidget = function (stage) {
     var dirWidget
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
-      if (fileTypesImport.includes(ext)) {
+      if (fileTypesOpen.includes(ext)) {
         stage.loadFile(datasource.getUrl(info.path), {
           defaultRepresentation: true
         })
@@ -480,7 +480,7 @@ NGL.MenubarFileWidget = function (stage) {
 
     dirWidget = new NGL.DirectoryListingWidget(
       datasource, stage, 'Import file',
-      fileTypesImport, onListingClick
+      fileTypesOpen, onListingClick
     )
 
     dirWidget
