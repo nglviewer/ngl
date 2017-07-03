@@ -19,14 +19,14 @@ else
 	cd ./arose.github.io/ngl/;
 fi
 
-cp -r ${DIR}/../data/ ./data/;
-cp -r ${DIR}/../examples/css/ ./css/;
-cp -r ${DIR}/../examples/fonts/ ./fonts/;
-cp -r ${DIR}/../examples/js/ ./js/;
-cp -r ${DIR}/../examples/plugins/ ./plugins/;
-cp -r ${DIR}/../examples/scripts/ ./scripts/;
-cp -r ${DIR}/../build/docs/ ./api/;
-cp -r ${DIR}/../build/gallery/ ./gallery/;
+cp -r ${DIR}/../data/. ./data/;
+cp -r ${DIR}/../examples/css/. ./css/;
+cp -r ${DIR}/../examples/fonts/. ./fonts/;
+cp -r ${DIR}/../examples/js/. ./js/;
+cp -r ${DIR}/../examples/plugins/. ./plugins/;
+cp -r ${DIR}/../examples/scripts/. ./scripts/;
+cp -r ${DIR}/../build/docs/. ./api/;
+cp -r ${DIR}/../build/gallery/. ./gallery/;
 cp ${DIR}/../build/scriptsList.json ./scripts/list.json;
 
 cp ${DIR}/../dist/ngl.js ./js/ngl.js;
