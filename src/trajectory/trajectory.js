@@ -104,9 +104,9 @@ class Trajectory {
     var p = params || {}
     p.deltaTime = defaults(p.deltaTime, 0)
     p.timeOffset = defaults(p.timeOffset, 0)
-    p.centerPbc = defaults(p.centerPbc, true)
-    p.removePbc = defaults(p.removePbc, true)
-    p.superpose = defaults(p.superpose, true)
+    p.centerPbc = defaults(p.centerPbc, false)
+    p.removePbc = defaults(p.removePbc, false)
+    p.superpose = defaults(p.superpose, false)
     this.setParameters(p)
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
