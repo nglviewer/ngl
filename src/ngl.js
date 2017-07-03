@@ -28,7 +28,9 @@ import TrajectoryPlayer from './trajectory/trajectory-player.js'
 import { superpose } from './align/align-utils.js'
 import { guessElement } from './structure/structure-utils.js'
 
-import { throttle, download, getQuery, uniqueArray, getFileInfo } from './utils.js'
+import {
+  flatten, throttle, download, getQuery, uniqueArray, getFileInfo
+} from './utils.js'
 import Queue from './utils/queue.js'
 import Counter from './utils/counter.js'
 
@@ -108,11 +110,15 @@ import './parser/mmtf-parser.js'
 import './parser/mol2-parser.js'
 import './parser/pdb-parser.js'
 import './parser/pqr-parser.js'
-import './parser/psf-parser.js'
 import './parser/sdf-parser.js'
 
+import './parser/prmtop-parser.js'
+import './parser/psf-parser.js'
+
 import './parser/dcd-parser.js'
+import './parser/nctraj-parser.js'
 import './parser/trr-parser.js'
+import './parser/xtc-parser.js'
 
 import './parser/cube-parser.js'
 import './parser/dsn6-parser.js'
@@ -126,6 +132,8 @@ import './parser/ply-parser.js'
 
 import './parser/csv-parser.js'
 import './parser/json-parser.js'
+import './parser/msgpack-parser.js'
+import './parser/netcdf-parser.js'
 import './parser/text-parser.js'
 import './parser/xml-parser.js'
 
@@ -196,6 +204,8 @@ export {
 
   superpose,
   guessElement,
+
+  flatten,
 
   Queue,
   Counter,

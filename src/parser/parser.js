@@ -19,6 +19,9 @@ class Parser {
 
   get type () { return '' }
   get __objName () { return '' }
+  get isBinary () { return false }
+  get isJson () { return false }
+  get isXml () { return false }
 
   parse () {
     return this.streamer.read().then(() => {

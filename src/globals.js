@@ -6,8 +6,9 @@
 
 import { getBrowser, getQuery, boolean } from './utils.js'
 import Registry from './utils/registry.js'
-import _WorkerRegistry from './worker/worker-registry.js'
 import _ColormakerRegistry from './color/colormaker-registry.js'
+import _ParserRegistry from './parser/parser-registry.js'
+import _WorkerRegistry from './worker/worker-registry.js'
 
 /**
  * The browser name: "Opera", "Chrome", "Firefox", "Mobile Safari",
@@ -60,7 +61,7 @@ const WorkerRegistry = new _WorkerRegistry()
 const ColormakerRegistry = new _ColormakerRegistry()
 const DatasourceRegistry = new Registry('datasource')
 const RepresentationRegistry = new Registry('representatation')
-const ParserRegistry = new Registry('parser')
+const ParserRegistry = new _ParserRegistry()
 const ShaderRegistry = new Registry('shader')
 const DecompressorRegistry = new Registry('decompressor')
 const ComponentRegistry = new Registry('component')

@@ -11,6 +11,7 @@ import VolumeParser from './volume-parser.js'
 
 class MrcParser extends VolumeParser {
   get type () { return 'mrc' }
+  get isBinary () { return true }
 
   _parse () {
         // MRC

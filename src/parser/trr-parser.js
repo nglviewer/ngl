@@ -9,6 +9,7 @@ import TrajectoryParser from './trajectory-parser.js'
 
 class TrrParser extends TrajectoryParser {
   get type () { return 'trr' }
+  get isBinary () { return true }
 
   _parse () {
     // https://github.com/gromacs/gromacs/blob/master/src/gromacs/fileio/trrio.cpp
@@ -59,6 +60,7 @@ class TrrParser extends TrajectoryParser {
       const floatSize = boxSize / 9
       const natoms3 = natoms * 3
 
+      // TODO
       // if (floatSize === 8) {
       //   frame.time = dv.getFloat64(offset)
       //   frame.lambda = dv.getFloat64(offset + 8)

@@ -14,8 +14,8 @@ class SdfParser extends StructureParser {
   get type () { return 'sdf' }
 
   _parse () {
-        // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
-        // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
+    // https://en.wikipedia.org/wiki/Chemical_table_file#SDF
+    // http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
 
     if (Debug) Log.time('SdfParser._parse ' + this.name)
 
@@ -124,7 +124,7 @@ class SdfParser extends StructureParser {
 
           s.bondStore.addBond(ap1, ap2, order)
 
-                // eslint-disable-next-line no-cond-assign
+        // eslint-disable-next-line no-cond-assign
         } else if (mItem = line.match(reItem)) {
           currentItem = mItem[ 1 ]
           currentData[ currentItem ] = []

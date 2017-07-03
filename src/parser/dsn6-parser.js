@@ -12,6 +12,7 @@ import VolumeParser from './volume-parser.js'
 
 class Dsn6Parser extends VolumeParser {
   get type () { return 'dsn6' }
+  get isBinary () { return true }
 
   _parse () {
         // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html

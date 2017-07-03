@@ -10,6 +10,7 @@ import DxParser from './dx-parser.js'
 
 class DxbinParser extends DxParser {
   get type () { return 'dxbin' }
+  get isBinary () { return true }
 
   _parse () {
         // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216

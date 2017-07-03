@@ -7,7 +7,9 @@
 import { Vector3 } from '../../lib/three.es6.js'
 import Signal from '../../lib/signals.es6.js'
 
-import { Debug, Log, Mobile, ComponentRegistry } from '../globals.js'
+import {
+  Debug, Log, Mobile, ComponentRegistry, ParserRegistry
+} from '../globals.js'
 import { defaults, getFileInfo } from '../utils.js'
 import { degToRad, clamp, pclamp } from '../math/math-utils.js'
 import Counter from '../utils/counter.js'
@@ -551,9 +553,9 @@ class Stage {
     const ext = defaults(p.ext, getFileInfo(path).ext)
     let promise
 
-    if (ext === 'dcd') {
+    if (ParserRegistry.isTrajectory(ext)) {
       promise = Promise.reject(
-        new Error("loadFile: ext 'dcd' must be loaded into a structure component")
+        new Error('loadFile: ext "' + ext + '" is a trajectory and must be loaded into a structure component')
       )
     } else {
       promise = autoLoad(path, p)

@@ -43,6 +43,18 @@ function pick (object) {
   }, {})
 }
 
+function flatten (array, ret) {
+  ret = defaults(ret, [])
+  for (let i = 0; i < array.length; i++) {
+    if (Array.isArray(array[i])) {
+      flatten(array[i], ret)
+    } else {
+      ret.push(array[i])
+    }
+  }
+  return ret
+}
+
 function getProtocol () {
   var protocol = window.location.protocol
   return protocol.match(/http(s)?:/gi) === null ? 'http:' : protocol
@@ -485,6 +497,7 @@ export {
     boolean,
     defaults,
     pick,
+    flatten,
     getProtocol,
     getBrowser,
     getAbsolutePath,

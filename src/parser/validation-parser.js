@@ -19,6 +19,7 @@ class ValidationParser extends XmlParser {
   }
 
   get __objName () { return 'validation' }
+  get isXml () { return true }
 
   _parse () {
     super._parse()

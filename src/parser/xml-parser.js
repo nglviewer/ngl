@@ -26,6 +26,7 @@ class XmlParser extends Parser {
 
   get type () { return 'xml' }
   get __objName () { return 'xml' }
+  get isXml () { return true }
 
   __xmlParser (xml) {
     return parseXml(xml)

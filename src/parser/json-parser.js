@@ -25,6 +25,7 @@ class JsonParser extends Parser {
 
   get type () { return 'json' }
   get __objName () { return 'json' }
+  get isJson () { return true }
 
   _parse () {
     if (this.streamer.isBinary() || this.string) {

@@ -193,6 +193,16 @@ Supported features:
 * Connectivity: read from "bondAtomList", "bondOrderList" fields and their "groupTypeList[]" counterparts
 
 
+## Topologies
+
+Topology are different from structure files as they not contain coordinate data.
+
+
+### PRMTOP
+
+Extension: **.prmtop**
+
+
 ### PSF
 
 Extension: **.psf**
@@ -200,12 +210,27 @@ Extension: **.psf**
 
 ## Trajectories
 
-Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag in the *File* menu. Trajectory files in *DCD* format are added to a *Structure*.
+Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can also be loaded as trajectories by setting the *asTrajectory* flag. Trajectory files in *DCD*, *NCTRAJ*, *TRR* or *XTC* format are added to a *Structure*.
 
 
 ### DCD
 
 Extension: **.dcd**
+
+
+### TRR
+
+Extension: **.trr**
+
+
+### NCTRAJ
+
+Extensions: **.nctraj**, **.ncdf**, **.nc**
+
+
+### XTC
+
+Extension: **.xtc**
 
 
 ## Densities
@@ -318,12 +343,22 @@ Promise.all( [
 
 ### JSON
 
-Extension: **.ply**
+Extension: **.json**
 
 
 ### CSV
 
 Extension: **.csv**
+
+
+### MSGPACK
+
+Extension: **.msgpack**
+
+
+### NETCDF
+
+Extension: **.netcdf**
 
 
 ### TXT
