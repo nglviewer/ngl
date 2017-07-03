@@ -1443,7 +1443,7 @@ NGL.StructureComponentWidget = function (component, stage) {
   framesInput.type = 'file'
   framesInput.multiple = true
   framesInput.style.display = 'none'
-  framesInput.accept = trajExt.join(',.')
+  framesInput.accept = trajExt.join(',')
   framesInput.addEventListener('change', framesInputOnChange, false)
 
   var traj = new UI.Button('open').onClick(function () {
