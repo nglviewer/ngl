@@ -2089,7 +2089,6 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
   })
 
   var numframes = new UI.Panel()
-    .setMarginLeft('5px')
     .setDisplay('inline')
     .add(new UI.Icon('spinner')
       .addClass('spin')
@@ -2109,8 +2108,8 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       time.setValue("")
     }
     frameRange.setValue(value)
-    numframes.clear().add(frame.setWidth('35px'))
-    frameTime.clear().add(time.setWidth('45px'))
+    numframes.clear().add(frame.setWidth('40px'))
+    frameTime.clear().add(time.setWidth('90px'))
   }
 
   function init (value) {
@@ -2136,21 +2135,21 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
   // Name
 
   var name = new UI.EllipsisText(component.name)
-    .setWidth('98px')
+    .setWidth('103px')
 
   signals.nameChanged.add(function (value) {
     name.setValue(value)
   })
 
   container.addStatic(name)
-  container.addStatic(numframes)
   container.addStatic(frameTime)
 
   // frames
 
   var frame = new UI.Integer(-1)
+    .setWidth('40px')
+    .setTextAlign('right')
     .setMarginLeft('5px')
-    .setWidth('35px')
     .setRange(-1, -1)
     .onChange(function (e) {
       traj.setFrame(frame.getValue())
@@ -2158,10 +2157,11 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     })
 
   var time = new UI.Text()
-    .setWidth('45px')
+    .setTextAlign('right')
+    .setWidth('90px')
 
   var step = new UI.Integer(1)
-    .setWidth('30px')
+    .setWidth('50px')
     .setRange(1, 10000)
     .onChange(function () {
       player.step = step.getValue()
@@ -2170,7 +2170,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
   var frameRow = new UI.Panel()
 
   var frameRange = new UI.Range(-1, -1, -1, 1)
-    .setWidth('197px')
+    .setWidth('147px')
     .setMargin('0px')
     .setPadding('0px')
     .setBorder('0px')
@@ -2273,8 +2273,8 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       .setValue(true)
   })
 
-  frameRow.add(playerButton)
-  frameRow.add(frameRange)
+  frameRow.add(playerButton, frameRange, numframes)
+
 
   // Selection
 
@@ -2309,7 +2309,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   var setDeltaTime = new UI.Number(traj.deltaTime)
     .setWidth('55px')
-    .setRange(0, 10000)
+    .setRange(0, 1000000)
     .onChange(function () {
       component.setParameters({
         'deltaTime': setDeltaTime.getValue()
