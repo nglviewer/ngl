@@ -200,7 +200,7 @@ Topology are different from structure files as they not contain coordinate data.
 
 ### PRMTOP
 
-Extension: **.prmtop**
+Extensions: **.prmtop**, **.parm7**
 
 
 ### PSF

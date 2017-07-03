@@ -214,5 +214,6 @@ class PrmtopParser extends StructureParser {
 }
 
 ParserRegistry.add('prmtop', PrmtopParser)
+ParserRegistry.add('parm7', PrmtopParser)
 
 export default PrmtopParser
