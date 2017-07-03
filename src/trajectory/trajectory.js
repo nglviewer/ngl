@@ -77,6 +77,8 @@ function removePbc (x, box) {
  * Trajectory parameter object.
  * @typedef {Object} TrajectoryParameters - parameters
  *
+ * @property {Number} deltaTime - timestep between frames in picoseconds
+ * @property {Number} timeOffset - starting time of frames in picoseconds
  * @property {String} sele - to restrict atoms used for superposition
  * @property {Boolean} centerPbc - center on initial frame
  * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
@@ -100,6 +102,8 @@ class Trajectory {
     }
 
     var p = params || {}
+    p.deltaTime = defaults(p.deltaTime, 0)
+    p.timeOffset = defaults(p.timeOffset, 0)
     p.centerPbc = defaults(p.centerPbc, true)
     p.removePbc = defaults(p.removePbc, true)
     p.superpose = defaults(p.superpose, true)
@@ -246,6 +250,14 @@ class Trajectory {
     if (p.superpose !== undefined && p.superpose !== this.superpose) {
       this.superpose = p.superpose
       resetCache = true
+    }
+
+    if (p.deltaTime !== undefined && p.deltaTime !== this.deltaTime) {
+      this.deltaTime = p.deltaTime
+    }
+
+    if (p.timeOffset !== undefined && p.timeOffset !== this.timeOffset) {
+      this.timeOffset = p.timeOffset
     }
 
     if (resetCache) this.resetCache()
@@ -447,6 +459,15 @@ class Trajectory {
 
   getPath (index, callback) {
     Log.error('Trajectory.getPath not implemented', index, callback)
+  }
+
+  /**
+   * Get time for frame
+   * @param  {Integer} i - frame index
+   * @return {Number} time in picoseconds
+   */
+  getFrameTime (i) {
+    return this.timeOffset + i * this.deltaTime
   }
 }
 
