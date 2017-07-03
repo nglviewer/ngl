@@ -170,7 +170,7 @@ function flatten( arr ){
 
 
 function getExampleNames( dir, prefix = "" ){
-    return flatten( fs.list( dir )
+    return flatten( fs.list( dir ).sort()
         .filter( name => !name.startsWith( "." ) )
         .map( name => {
             const path = fs.join( dir, name );
