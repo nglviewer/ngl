@@ -4,128 +4,129 @@
  * @private
  */
 
-import { download } from '../utils.js'
+import { defaults, ensureArray } from '../utils.js'
+import Writer from './writer.js'
 
 import { sprintf } from '../../lib/sprintf.es6.js'
 
-function PdbWriter (structure, params) {
-  var p = Object.assign({}, params)
+// http://www.wwpdb.org/documentation/file-format
 
-  var renumberSerial = p.renumberSerial !== undefined ? p.renumberSerial : true
-  var remarks = p.remarks || []
-  if (!Array.isArray(remarks)) remarks = [ remarks ]
+// Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
+// ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
 
-  var records
+const AtomFormat =
+  'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
-  function writeRecords () {
-    records = []
+const HetatmFormat =
+  'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
-    writeTitle()
-    writeRemarks()
-    writeAtoms()
+/**
+ * Create a PDB file from a Structure object
+ */
+class PdbWriter extends Writer {
+  /**
+   * @param  {Structure} structure - the structure object
+   * @param  {Object} params - parameters]
+   */
+  constructor (structure, params) {
+    const p = Object.assign({}, params)
+
+    super()
+
+    this.renumberSerial = defaults(p.renumberSerial, true)
+    this.remarks = ensureArray(defaults(p.remarks, []))
+
+    this.structure = structure
+    this._records = []
   }
 
-  // http://www.wwpdb.org/documentation/file-format
+  get mimeType () { return 'text/plain' }
+  get defaultName () { return 'structure' }
+  get defaultExt () { return 'pdb' }
 
-  // Sample PDB line, the coords X,Y,Z are fields 5,6,7 on each line.
-  // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
+  _writeRecords () {
+    this._records.length = 0
 
-  function DEF (x, y) {
-    return x !== undefined ? x : y
+    this._writeTitle()
+    this._writeRemarks()
+    this._writeAtoms()
   }
 
-  var atomFormat =
-    'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
-
-  var hetatmFormat =
-    'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
-
-  function writeTitle () {
+  _writeTitle () {
     // FIXME multiline if title line longer than 80 chars
-    records.push(sprintf('TITEL %-74s', structure.name))
+    this._records.push(sprintf('TITEL %-74s', this.structure.name))
   }
 
-  function writeRemarks () {
-    remarks.forEach(function (str) {
-      records.push(sprintf('REMARK %-73s', str))
+  _writeRemarks () {
+    this.remarks.forEach(str => {
+      this._records.push(sprintf('REMARK %-73s', str))
     })
 
-    if (structure.trajectory) {
-      records.push(sprintf(
+    if (this.structure.trajectory) {
+      this._records.push(sprintf(
         'REMARK %-73s',
-        "Trajectory '" + structure.trajectory.name + "'"
+        "Trajectory '" + this.structure.trajectory.name + "'"
       ))
-      records.push(sprintf(
+      this._records.push(sprintf(
         'REMARK %-73s',
-        'Frame ' + structure.trajectory.frame + ''
+        'Frame ' + this.structure.trajectory.frame + ''
       ))
     }
   }
 
-  function writeAtoms () {
-    var ia = 1
-    var im = 1
+  _writeAtoms () {
+    let ia = 1
+    let im = 1
 
-    structure.eachModel(function (m) {
-      records.push(sprintf('MODEL %-74d', im++))
+    this.structure.eachModel(m => {
+      this._records.push(sprintf('MODEL %-74d', im++))
 
-      m.eachAtom(function (a) {
-        var formatString = a.hetero ? hetatmFormat : atomFormat
-        var serial = renumberSerial ? ia : a.serial
+      m.eachAtom(a => {
+        const formatString = a.hetero ? HetatmFormat : AtomFormat
+        const serial = this.renumberSerial ? ia : a.serial
 
         // Alignment of one-letter atom name such as C starts at column 14,
         // while two-letter atom name such as FE starts at column 13.
-        var atomname = a.atomname
+        let atomname = a.atomname
         if (atomname.length === 1) atomname = ' ' + atomname
 
-        records.push(sprintf(
+        this._records.push(sprintf(
           formatString,
 
           serial,
           atomname,
           a.resname,
-          DEF(a.chainname, ' '),
+          defaults(a.chainname, ' '),
           a.resno,
           a.x, a.y, a.z,
-          DEF(a.occurence, 1.0),
-          DEF(a.bfactor, 0.0),
-          DEF(a.segid, ''),
-          DEF(a.element, '')
+          defaults(a.occurence, 1.0),
+          defaults(a.bfactor, 0.0),
+          defaults(a.segid, ''),
+          defaults(a.element, '')
         ))
         ia += 1
       })
 
-      records.push(sprintf('%-80s', 'ENDMDL'))
+      this._records.push(sprintf('%-80s', 'ENDMDL'))
       im += 1
     })
 
-    records.push(sprintf('%-80s', 'END'))
+    this._records.push(sprintf('%-80s', 'END'))
   }
 
-  function getString () {
-    writeRecords()
-    return records.join('\n')
+  getString () {
+    console.warn('PdbWriter.getString() is deprecated, use .getData instead')
+    return this.getData()
   }
 
-  function getBlob () {
-    return new window.Blob([ getString() ], { type: 'text/plain' })
+  /**
+   * Get string containing the PDB file data
+   * @return {String} PDB file
+   */
+  getData () {
+    this._writeRecords()
+    return this._records.join('\n')
   }
-
-  function _download (name, ext) {
-    name = name || 'structure'
-    ext = ext || 'pdb'
-
-    var file = name + '.' + ext
-    var blob = getBlob()
-
-    download(blob, file)
-  }
-
-  // API
-
-  this.getString = getString
-  this.getBlob = getBlob
-  this.download = _download
 }
 
 export default PdbWriter
