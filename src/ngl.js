@@ -19,6 +19,7 @@ import {
 import { autoLoad, getDataInfo } from './loader/loader-utils.js'
 import Selection from './selection.js'
 import PdbWriter from './writer/pdb-writer.js'
+import StlWriter from './writer/stl-writer.js'
 import Stage from './stage/stage.js'
 import Collection from './component/collection.js'
 import ComponentCollection from './component/component-collection.js'
@@ -194,6 +195,7 @@ export {
   Colormaker,
   Selection,
   PdbWriter,
+  StlWriter,
   Stage,
   Collection,
   ComponentCollection,
