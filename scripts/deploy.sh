@@ -11,6 +11,7 @@ if [ -d "arose.github.io" ]; then
 	cd ./arose.github.io/;
 	git fetch --all;
 	git reset --hard origin/master;
+	cd ../
 else
 	git clone "https://github.com/arose/arose.github.io.git";
 fi
