@@ -208,8 +208,8 @@ class PrmtopParser extends StructureParser {
     s.finalizeAtoms()
     s.finalizeBonds()
     calculateBondsWithin(s, true)
-    calculateBondsBetween(s, true)
-    calculateChainnames(s)
+    calculateBondsBetween(s, true, true)
+    calculateChainnames(s, true)
     assignResidueTypeBonds(s)
 
     if (Debug) Log.timeEnd('PrmtopParser._parse ' + this.name)

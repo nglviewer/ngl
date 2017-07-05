@@ -171,7 +171,7 @@ class TopParser extends StructureParser {
     s.finalizeAtoms()
     s.finalizeBonds()
     calculateBondsWithin(s, true)
-    calculateBondsBetween(s, true)
+    calculateBondsBetween(s, true, true)
     assignResidueTypeBonds(s)
 
     if (Debug) Log.timeEnd('TopParser._parse ' + this.name)
