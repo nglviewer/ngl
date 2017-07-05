@@ -52,7 +52,7 @@ import Counter from '../utils/counter.js'
  */
 class Representation {
   constructor (object, viewer, params) {
-        // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
     const p = params || {}
 
     this.type = ''
@@ -138,28 +138,28 @@ class Representation {
 
     }
 
-        /**
-         * @member {Viewer}
-         */
+    /**
+     * @member {Viewer}
+     */
     this.viewer = viewer
 
-        /**
-         * Counter that keeps track of tasks related to the creation of
-         * the representation, including surface calculations.
-         * @member {Counter}
-         */
+    /**
+     * Counter that keeps track of tasks related to the creation of
+     * the representation, including surface calculations.
+     * @member {Counter}
+     */
     this.tasks = new Counter()
 
-        /**
-         * @member {Queue}
-         * @private
-         */
+    /**
+     * @member {Queue}
+     * @private
+     */
     this.queue = new Queue(this.make.bind(this))
 
-        /**
-         * @member {Array}
-         * @private
-         */
+    /**
+     * @member {Array}
+     * @private
+     */
     this.bufferList = []
 
     if (this.parameters.colorScheme) {
@@ -207,7 +207,7 @@ class Representation {
 
     this.disablePicking = defaults(p.disablePicking, false)
 
-        // handle common parameters when applicable
+    // handle common parameters when applicable
 
     const tp = this.parameters
 
@@ -320,12 +320,12 @@ class Representation {
     return this
   }
 
-    // TODO
-    // get prepare(){ return false; }
+  // TODO
+  // get prepare(){ return false; }
 
   create () {
 
-        // this.bufferList.length = 0;
+    // this.bufferList.length = 0;
 
   }
 
@@ -345,7 +345,7 @@ class Representation {
       return
     }
 
-        // don't let tasks accumulate
+    // don't let tasks accumulate
     if (this.queue.length() > 0) {
       this.tasks.change(1 - this.queue.length())
       this.queue.kill()
@@ -394,12 +394,12 @@ class Representation {
     callback()
   }
 
-    /**
-     * Set the visibility of the representation
-     * @param {Boolean} value - visibility flag
-     * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
-     * @return {Representation} this object
-     */
+  /**
+   * Set the visibility of the representation
+   * @param {Boolean} value - visibility flag
+   * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
+   * @return {Representation} this object
+   */
   setVisibility (value, noRenderRequest) {
     this.visible = value
 
@@ -428,19 +428,19 @@ class Representation {
     return this
   }
 
-    /**
-     * Set the visibility of the representation
-     * @param {RepresentationParameters} params - parameters object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {Representation} this object
-     */
+  /**
+   * Set the visibility of the representation
+   * @param {RepresentationParameters} params - parameters object
+   * @param {Object} [what] - buffer data attributes to be updated,
+   *                        note that this needs to be implemented in the
+   *                        derived classes. Generally it allows more
+   *                        fine-grained control over updating than
+   *                        forcing a rebuild.
+   * @param {Boolean} what.position - update position data
+   * @param {Boolean} what.color - update color data
+   * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+   * @return {Representation} this object
+   */
   setParameters (params, what, rebuild) {
     const p = params || {}
     const tp = this.parameters
@@ -457,11 +457,11 @@ class Representation {
       if (tp[ name ].int) p[ name ] = parseInt(p[ name ])
       if (tp[ name ].float) p[ name ] = parseFloat(p[ name ])
 
-            // no value change
+      // no value change
       if (p[ name ] === this[ name ] && (
-                    !p[ name ].equals || p[ name ].equals(this[ name ])
-                )
-            ) continue
+          !p[ name ].equals || p[ name ].equals(this[ name ])
+        )
+      ) continue
 
       if (this[ name ].set) {
         this[ name ].set(p[ name ])
@@ -469,7 +469,7 @@ class Representation {
         this[ name ] = p[ name ]
       }
 
-            // buffer param
+      // buffer param
       if (tp[ name ].buffer) {
         if (tp[ name ].buffer === true) {
           bufferParams[ name ] = p[ name ]
@@ -478,21 +478,21 @@ class Representation {
         }
       }
 
-            // mark for update
+      // mark for update
       if (tp[ name ].update) {
         what[ tp[ name ].update ] = true
       }
 
-            // mark for rebuild
+      // mark for rebuild
       if (tp[ name ].rebuild &&
-                !(tp[ name ].rebuild === 'impostor' &&
-                    ExtensionFragDepth && !this.disableImpostor)
-            ) {
+        !(tp[ name ].rebuild === 'impostor' &&
+          ExtensionFragDepth && !this.disableImpostor)
+      ) {
         rebuild = true
       }
     }
 
-        //
+    //
 
     if (rebuild) {
       this.build()
