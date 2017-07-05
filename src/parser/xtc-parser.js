@@ -364,6 +364,13 @@ class XtcParser extends TrajectoryParser {
       if (offset >= bin.byteLength) break
     }
 
+    if (times.length >= 1) {
+      f.timeOffset = times[0]
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0]
+    }
+
     if (Debug) Log.timeEnd('XtcParser._parse ' + this.name)
   }
 }

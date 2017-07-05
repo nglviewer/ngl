@@ -137,7 +137,7 @@ class DcdParser extends TrajectoryParser {
     for (let i = 0, n = header.NSET; i < n; ++i) {
       if (extraBlock) {
         nextPos += 4  // block start
-                // unitcell: A, alpha, B, beta, gamma, C (doubles)
+        // unitcell: A, alpha, B, beta, gamma, C (doubles)
         const box = new Float32Array(9)
         box[ 0 ] = dv.getFloat64(nextPos, ef)
         box[ 4 ] = dv.getFloat64(nextPos + 2 * 8, ef)
@@ -172,9 +172,16 @@ class DcdParser extends TrajectoryParser {
       }
     }
 
-    // console.log( header );
-    // console.log( header.TITLE );
-    // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+    if (header.DELTA) {
+      f.deltaTime = header.DELTA * 20.45482949774598
+    }
+    if (header.ISTART >= 1) {
+      f.timeOffset = (header.ISTART - 1) * f.deltaTime
+    }
+
+    // console.log(header)
+    // console.log(header.TITLE)
+    // console.log('isCharmm', isCharmm, 'extraBlock', extraBlock, 'fourDims, fourDims)
 
     if (Debug) Log.timeEnd('DcdParser._parse ' + this.name)
   }
