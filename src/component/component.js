@@ -46,23 +46,23 @@ const _v = new Vector3()
  * @interface
  */
 class Component {
-    /**
-     * @param {Stage} stage - stage object the component belongs to
-     * @param {ComponentParameters} params - parameter object
-     */
+  /**
+   * @param {Stage} stage - stage object the component belongs to
+   * @param {ComponentParameters} params - parameter object
+   */
   constructor (stage, params) {
     Object.defineProperty(this, 'id', { value: nextComponentId++ })
 
-    var p = params || {}
+    const p = params || {}
 
     this.name = p.name
     this.uuid = generateUUID()
     this.visible = p.visible !== undefined ? p.visible : true
 
-        /**
-         * Events emitted by the component
-         * @type {ComponentSignals}
-         */
+    /**
+     * Events emitted by the component
+     * @type {ComponentSignals}
+     */
     this.signals = {
       representationAdded: new Signal(),
       representationRemoved: new Signal(),
@@ -90,16 +90,16 @@ class Component {
 
   get type () { return 'component' }
 
-    /**
-     * Set position transform
-     *
-     * @example
-     * // translate by 25 angstrom along x axis
-     * component.setPosition( [ 25, 0, 0 ] );
-     *
-     * @param {Vector3|Array} p - the coordinates
-     * @return {Component} this object
-     */
+  /**
+   * Set position transform
+   *
+   * @example
+   * // translate by 25 angstrom along x axis
+   * component.setPosition( [ 25, 0, 0 ] );
+   *
+   * @param {Vector3|Array} p - the coordinates
+   * @return {Component} this object
+   */
   setPosition (p) {
     if (Array.isArray(p)) {
       this.position.fromArray(p)
@@ -111,16 +111,16 @@ class Component {
     return this
   }
 
-    /**
-     * Set rotation transform
-     *
-     * @example
-     * // rotate by 2 degree radians on x axis
-     * component.setRotation( [ 2, 0, 0 ] );
-     *
-     * @param {Quaternion|Euler|Array} r - the rotation
-     * @return {Component} this object
-     */
+  /**
+   * Set rotation transform
+   *
+   * @example
+   * // rotate by 2 degree radians on x axis
+   * component.setRotation( [ 2, 0, 0 ] );
+   *
+   * @param {Quaternion|Euler|Array} r - the rotation
+   * @return {Component} this object
+   */
   setRotation (r) {
     if (Array.isArray(r)) {
       if (r.length === 3) {
@@ -139,16 +139,16 @@ class Component {
     return this
   }
 
-    /**
-     * Set scale transform
-     *
-     * @example
-     * // scale by factor of two
-     * component.setScale( 2 );
-     *
-     * @param {Number} s - the scale
-     * @return {Component} this object
-     */
+  /**
+   * Set scale transform
+   *
+   * @example
+   * // scale by factor of two
+   * component.setScale( 2 );
+   *
+   * @param {Number} s - the scale
+   * @return {Component} this object
+   */
   setScale (s) {
     this.scale.set(s, s, s)
     this.updateMatrix()
@@ -156,16 +156,16 @@ class Component {
     return this
   }
 
-    /**
-     * Set general transform. Is applied before and in addition
-     * to the position, rotation and scale transformations
-     *
-     * @example
-     * component.setTransform( matrix );
-     *
-     * @param {Matrix4} m - the matrix
-     * @return {Component} this object
-     */
+  /**
+   * Set general transform. Is applied before and in addition
+   * to the position, rotation and scale transformations
+   *
+   * @example
+   * component.setTransform( matrix );
+   *
+   * @param {Matrix4} m - the matrix
+   * @return {Component} this object
+   */
   setTransform (m) {
     this.transform.copy(m)
     this.updateMatrix()
@@ -174,7 +174,7 @@ class Component {
   }
 
   updateMatrix () {
-    var c = this.getCenterUntransformed(_v)
+    const c = this.getCenterUntransformed(_v)
     this.matrix.makeTranslation(-c.x, -c.y, -c.z)
 
     _m.makeRotationFromQuaternion(this.quaternion)
@@ -183,7 +183,7 @@ class Component {
     _m.makeScale(this.scale.x, this.scale.y, this.scale.z)
     this.matrix.premultiply(_m)
 
-    var p = this.position
+    const p = this.position
     _m.makeTranslation(p.x + c.x, p.y + c.y, p.z + c.z)
     this.matrix.premultiply(_m)
 
@@ -197,15 +197,15 @@ class Component {
     this.signals.matrixChanged.dispatch(this.matrix)
   }
 
-    /**
-     * Add an anotation object
-     * @param {Vector3} position - the 3d position
-     * @param {String|Element} content - the HTML content
-     * @param {Object} [params] - parameters
-     * @param {Integer} params.offsetX - 2d offset in x direction
-     * @param {Integer} params.offsetY - 2d offset in y direction
-     * @return {Annotation} the added annotation object
-     */
+  /**
+   * Add an anotation object
+   * @param {Vector3} position - the 3d position
+   * @param {String|Element} content - the HTML content
+   * @param {Object} [params] - parameters
+   * @param {Integer} params.offsetX - 2d offset in x direction
+   * @param {Integer} params.offsetY - 2d offset in y direction
+   * @return {Annotation} the added annotation object
+   */
   addAnnotation (position, content, params) {
     const annotation = new Annotation(this, position, content, params)
     this.annotationList.push(annotation)
@@ -213,23 +213,23 @@ class Component {
     return annotation
   }
 
-    /**
-     * Remove the give annotation from the component
-     * @param {Annotation} annotation - the annotation to remove
-     * @return {undefined}
-     */
+  /**
+   * Remove the give annotation from the component
+   * @param {Annotation} annotation - the annotation to remove
+   * @return {undefined}
+   */
   removeAnnotation (annotation) {
-    var idx = this.annotationList.indexOf(annotation)
+    const idx = this.annotationList.indexOf(annotation)
     if (idx !== -1) {
       this.annotationList.splice(idx, 1)
       annotation.dispose()
     }
   }
 
-    /**
-     * Remove all annotations from the component
-     * @return {undefined}
-     */
+  /**
+   * Remove all annotations from the component
+   * @return {undefined}
+   */
   removeAllAnnotations () {
     this.annotationList.forEach(function (annotation) {
       annotation.dispose()
@@ -237,26 +237,26 @@ class Component {
     this.annotationList.length = 0
   }
 
-    /**
-     * Add a new representation to the component
-     * @param {String} type - the name of the representation
-     * @param {Object} object - the object on which the representation should be based
-     * @param {RepresentationParameters} [params] - representation parameters
-     * @return {RepresentationComponent} the created representation wrapped into
-     *                                   a representation component object
-     */
+  /**
+   * Add a new representation to the component
+   * @param {String} type - the name of the representation
+   * @param {Object} object - the object on which the representation should be based
+   * @param {RepresentationParameters} [params] - representation parameters
+   * @return {RepresentationComponent} the created representation wrapped into
+   *                                   a representation component object
+   */
   addRepresentation (type, object, params) {
-    var p = params || {}
-    var sp = this.stage.getParameters()
+    const p = params || {}
+    const sp = this.stage.getParameters()
     p.matrix = this.matrix.clone()
     p.quality = p.quality || sp.quality
     p.disableImpostor = defaults(p.disableImpostor, !sp.impostor)
     p.useWorker = defaults(p.useWorker, sp.workerDefault)
     p.visible = defaults(p.visible, true)
 
-    var p2 = Object.assign({}, p, { visible: this.visible && p.visible })
-    var repr = makeRepresentation(type, object, this.viewer, p2)
-    var reprComp = this.__getRepresentationComponent(repr, p)
+    const p2 = Object.assign({}, p, { visible: this.visible && p.visible })
+    const repr = makeRepresentation(type, object, this.viewer, p2)
+    const reprComp = this.__getRepresentationComponent(repr, p)
 
     this.reprList.push(reprComp)
     this.signals.representationAdded.dispatch(reprComp)
@@ -265,23 +265,23 @@ class Component {
   }
 
   addBufferRepresentation (buffer, params) {
-        // always use component base class method
+    // always use component base class method
     return Component.prototype.addRepresentation.call(
-            this, 'buffer', buffer, params
-        )
+      this, 'buffer', buffer, params
+    )
   }
 
   hasRepresentation (repr) {
     return this.reprList.indexOf(repr) !== -1
   }
 
-    /**
-     * Removes a representation component
-     * @param {RepresentationComponent} repr - the representation component
-     * @return {undefined}
-     */
+  /**
+   * Removes a representation component
+   * @param {RepresentationComponent} repr - the representation component
+   * @return {undefined}
+   */
   removeRepresentation (repr) {
-    var idx = this.reprList.indexOf(repr)
+    const idx = this.reprList.indexOf(repr)
     if (idx !== -1) {
       this.reprList.splice(idx, 1)
       repr.dispose()
@@ -297,10 +297,10 @@ class Component {
     this.stage.viewer.requestRender()
   }
 
-    /**
-     * Removes all representation components
-     * @return {undefined}
-     */
+  /**
+   * Removes all representation components
+   * @return {undefined}
+   */
   removeAllRepresentations () {
     this.reprList.slice(0).forEach(function (repr) {
       repr.dispose()
@@ -317,11 +317,11 @@ class Component {
     this.signals.disposed.dispatch()
   }
 
-    /**
-     * Set the visibility of the component, including added representations
-     * @param {Boolean} value - visibility flag
-     * @return {Component} this object
-     */
+  /**
+   * Set the visibility of the component, including added representations
+   * @param {Boolean} value - visibility flag
+   * @return {Component} this object
+   */
   setVisibility (value) {
     this.visible = value
 
@@ -352,47 +352,47 @@ class Component {
     return this
   }
 
-    /**
-     * @return {Box3} the component's bounding box
-     */
+  /**
+   * @return {Box3} the component's bounding box
+   */
   getBox () {
     return this.getBoxUntransformed(...arguments)
-                    .clone().applyMatrix4(this.matrix)
+              .clone().applyMatrix4(this.matrix)
   }
 
-    /**
-     * @return {Vector3} the component's center position
-     */
+  /**
+   * @return {Vector3} the component's center position
+   */
   getCenter () {
     return this.getCenterUntransformed(...arguments)
-                    .clone().applyMatrix4(this.matrix)
+              .clone().applyMatrix4(this.matrix)
   }
 
   getZoom () {
     return this.stage.getZoomForBox(this.getBox(...arguments))
   }
 
-    /**
-     * @abstract
-     * @return {Box3} the untransformed component's bounding box
-     */
+  /**
+   * @abstract
+   * @return {Box3} the untransformed component's bounding box
+   */
   getBoxUntransformed () {}
 
   getCenterUntransformed () {
     return this.getBoxUntransformed().getCenter()
   }
 
-    /**
-     * Automatically center and zoom the component
-     * @param  {Integer} [duration] - duration of the animation, defaults to 0
-     * @return {undefined}
-     */
+  /**
+   * Automatically center and zoom the component
+   * @param  {Integer} [duration] - duration of the animation, defaults to 0
+   * @return {undefined}
+   */
   autoView (duration) {
     this.stage.animationControls.zoomMove(
-            this.getCenter(),
-            this.getZoom(),
-            defaults(duration, 0)
-        )
+      this.getCenter(),
+      this.getZoom(),
+      defaults(duration, 0)
+    )
   }
 
   eachRepresentation (callback) {

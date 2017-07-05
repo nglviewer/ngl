@@ -345,6 +345,27 @@ var calculateSecondaryStructure = (function () {
   }
 }())
 
+// const ChainnameAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+//                           "abcdefghijklmnopqrstuvwxyz" +
+//                           "0123456789";
+const ChainnameAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+function getChainname (index) {
+  const n = ChainnameAlphabet.length
+  let j = index
+  let k = 0
+  let chainname = ChainnameAlphabet[j % n]
+  while (j >= n) {
+    j = Math.floor(j / n)
+    chainname += ChainnameAlphabet[j % n]
+    k += 1
+  }
+  if (k >= 5) {
+    Log.warn('chainname overflow')
+  }
+  return chainname
+}
+
 function calculateChainnames (structure) {
   if (Debug) Log.time('calculateChainnames')
 
@@ -354,12 +375,6 @@ function calculateChainnames (structure) {
   })
 
   if (doAutoChainName) {
-        // var names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-        //             "abcdefghijklmnopqrstuvwxyz" +
-        //             "0123456789";
-    var names = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    var n = names.length
-
     var modelStore = structure.modelStore
     var chainStore = structure.chainStore
     var residueStore = structure.residueStore
@@ -377,21 +392,6 @@ function calculateChainnames (structure) {
       chainStore.residueCount[ ci ] = rCount
       chainStore.count += 1
       modelStore.chainCount[ mIndex ] += 1
-    }
-
-    var getName = function (i) {
-      var j = i
-      var k = 0
-      var chainname = names[ j % n ]
-      while (j >= n) {
-        j = Math.floor(j / n)
-        chainname += names[ j % n ]
-        k += 1
-      }
-      if (k >= 5) {
-        Log.warn('chainname overflow')
-      }
-      return chainname
     }
 
     var ap1 = structure.getAtomProxy()
@@ -432,7 +432,7 @@ function calculateChainnames (structure) {
           }
         }
 
-                // current chain goes to end of the structure
+        // current chain goes to end of the structure
         if (!newChain && rp2.index === residueStore.count - 1) {
           newChain = true
           rEnd = rp2.index
@@ -441,7 +441,7 @@ function calculateChainnames (structure) {
         if (newChain) {
           chainData.push({
             mIndex: mi,
-            chainname: getName(i),
+            chainname: getChainname(i),
             rStart: rStart,
             rCount: rEnd - rStart + 1
           })
@@ -453,11 +453,11 @@ function calculateChainnames (structure) {
             mi += 1
           }
 
-                    // new chain for the last residue of the structure
+          // new chain for the last residue of the structure
           if (rp2.index === residueStore.count - 1 && rEnd !== rp2.index) {
             chainData.push({
               mIndex: mi,
-              chainname: getName(i),
+              chainname: getChainname(i),
               rStart: residueStore.count - 1,
               rCount: 1
             })
@@ -469,7 +469,7 @@ function calculateChainnames (structure) {
       })
     }
 
-        //
+    //
 
     chainStore.count = 0
     chainData.forEach(function (d) {
@@ -610,18 +610,18 @@ function calculateBondsWithin (structure, onlyAddRung) {
         if (tmp !== undefined && (tmp = tmp[ ai2 ]) !== undefined) {
           bp.index = tmp
           var residueTypeBondIndex = r.residueType.getBondIndex(ai1, ai2)
-                    // overwrite residueType bondOrder with value from existing bond
+          // overwrite residueType bondOrder with value from existing bond
           bondOrders[ residueTypeBondIndex ] = bp.bondOrder
         } else {
           a1.index = ai1
           a2.index = ai2
-                    // only add bond if not already in bondStore
+          // only add bond if not already in bondStore
           bondStore.addBond(a1, a2, bondOrders[ i ])
         }
       }
     }
 
-        // get RNA/DNA rung pseudo bonds
+    // get RNA/DNA rung pseudo bonds
     var traceAtomIndex = r.residueType.traceAtomIndex
     var rungEndAtomIndex = r.residueType.rungEndAtomIndex
     if (traceAtomIndex !== -1 && rungEndAtomIndex !== -1) {
@@ -638,7 +638,7 @@ function calculateBondsWithin (structure, onlyAddRung) {
   if (Debug) Log.timeEnd('calculateBondsWithin')
 }
 
-function calculateBondsBetween (structure, onlyAddBackbone) {
+function calculateBondsBetween (structure, onlyAddBackbone, assumeConnectedBackbone) {
   if (Debug) Log.time('calculateBondsBetween')
 
   var bondStore = structure.bondStore
@@ -657,7 +657,7 @@ function calculateBondsBetween (structure, onlyAddBackbone) {
     if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
       ap1.index = rp1.backboneEndAtomIndex
       ap2.index = rp2.backboneStartAtomIndex
-      if (ap1.connectedTo(ap2)) {
+      if (ap1.connectedTo(ap2) || assumeConnectedBackbone) {
         if (!onlyAddBackbone) {
           bondStore.addBond(ap1, ap2, 1)  // assume single bond
         }
@@ -675,7 +675,7 @@ function calculateBondsBetween (structure, onlyAddBackbone) {
   var rp1 = structure.getResidueProxy()
   var rp2 = structure.getResidueProxy()
 
-    // check for cyclic chains
+  // check for cyclic chains
   structure.eachChain(function (cp) {
     if (cp.residueCount === 0) return
     rp1.index = cp.residueOffset
@@ -894,12 +894,13 @@ export {
   reorderAtoms,
   assignSecondaryStructure,
   calculateSecondaryStructure,
+  getChainname,
   calculateChainnames,
   calculateBonds,
   calculateResidueBonds,
   calculateBondsWithin,
   calculateBondsBetween,
   buildUnitcellAssembly,
-    guessElement,
-    assignResidueTypeBonds
+  guessElement,
+  assignResidueTypeBonds
 }

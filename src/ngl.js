@@ -19,6 +19,7 @@ import {
 import { autoLoad, getDataInfo } from './loader/loader-utils.js'
 import Selection from './selection.js'
 import PdbWriter from './writer/pdb-writer.js'
+import StlWriter from './writer/stl-writer.js'
 import Stage from './stage/stage.js'
 import Collection from './component/collection.js'
 import ComponentCollection from './component/component-collection.js'
@@ -114,6 +115,7 @@ import './parser/sdf-parser.js'
 
 import './parser/prmtop-parser.js'
 import './parser/psf-parser.js'
+import './parser/top-parser.js'
 
 import './parser/dcd-parser.js'
 import './parser/nctraj-parser.js'
@@ -194,6 +196,7 @@ export {
   Colormaker,
   Selection,
   PdbWriter,
+  StlWriter,
   Stage,
   Collection,
   ComponentCollection,

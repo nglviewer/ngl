@@ -122,4 +122,4 @@ var centerButton = createElement('input', {
 }, { top: '108px', left: '12px' })
 addElement(centerButton)
 
-loadStructure('data://3sn6.cif')
+loadStructure('data://3SN6.cif')

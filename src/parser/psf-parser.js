@@ -7,7 +7,8 @@
 import { Debug, Log, ParserRegistry } from '../globals.js'
 import StructureParser from './structure-parser.js'
 import {
-    assignResidueTypeBonds, calculateChainnames
+  assignResidueTypeBonds, calculateBondsBetween,
+  calculateBondsWithin, getChainname
 } from '../structure/structure-utils.js'
 
 const TitleMode = 1
@@ -39,7 +40,10 @@ class PsfParser extends StructureParser {
     const title = []
 
     let mode
+    let chainid
+    let lastSegid
     let idx = 0
+    let chainIdx = 0
     let bondIdx = 0
     let bAtomIndex1, bAtomIndex2, bBondOrder
 
@@ -56,19 +60,25 @@ class PsfParser extends StructureParser {
           const ls = line.split(reWhitespace)
 
           const serial = parseInt(ls[ 0 ])
-          // const segid = ls[ 1 ];
+          const segid = ls[ 1 ]
           const resno = parseInt(ls[ 2 ])
           const resname = ls[ 3 ]
           const atomname = ls[ 4 ]
+
+          if (segid !== lastSegid) {
+            chainid = getChainname(chainIdx)
+            ++chainIdx
+          }
 
           atomStore.growIfFull()
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname)
 
           atomStore.serial[ idx ] = serial
 
-          sb.addAtom(0, '', '', resname, resno, 1)
+          sb.addAtom(0, chainid, chainid, resname, resno)
 
           idx += 1
+          lastSegid = segid
         } else if (mode === BondMode) {
           const ls = line.split(reWhitespace)
 
@@ -82,15 +92,15 @@ class PsfParser extends StructureParser {
           title.push(line.replace(reTitle, '').trim())
         } else if (mode === AngleMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (mode === DihedralMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (mode === ImproperMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (line.includes('!NATOM')) {
           mode = AtomMode
@@ -128,9 +138,11 @@ class PsfParser extends StructureParser {
     s.bondStore.atomIndex2 = bAtomIndex2
     s.bondStore.bondOrder = bBondOrder
 
+    calculateBondsWithin(s, true)
+    calculateBondsBetween(s, true, true)
+
     sb.finalize()
     s.finalizeAtoms()
-    calculateChainnames(s)
     s.finalizeBonds()
     assignResidueTypeBonds(s)
 

@@ -459,6 +459,10 @@ function getUintArray (sizeOrArray, maxUnit) {
   return new TypedArray(sizeOrArray)
 }
 
+function ensureArray (value) {
+  return Array.isArray(value) ? value : [value]
+}
+
 function _ensureClassFromArg (arg, constructor) {
   return arg instanceof constructor ? arg : new constructor(arg)
 }
@@ -515,6 +519,7 @@ export {
     uint8ToLines,
     getTypedArray,
     getUintArray,
+    ensureArray,
     ensureVector2,
     ensureVector3,
     ensureMatrix4,

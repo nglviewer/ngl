@@ -200,12 +200,23 @@ Topology are different from structure files as they not contain coordinate data.
 
 ### PRMTOP
 
-Extension: **.prmtop**
+Topology format used by Amber.
+
+Extensions: **.prmtop**, **.parm7**
 
 
 ### PSF
 
+Topology format used by Charmm.
+
 Extension: **.psf**
+
+
+### TOP
+
+Topology format used by Gromacs.
+
+Extension: **.top**
 
 
 ## Trajectories
@@ -215,20 +226,28 @@ Structure files in *mmCIF*, *PDB*, *GRO*, *SDF*, *MOL2* or *MMTF* format can als
 
 ### DCD
 
+Uncompressed, binary trajectory format used by Charmm.
+
 Extension: **.dcd**
 
 
 ### TRR
+
+Uncompressed, binary trajectory format used by Gromacs.
 
 Extension: **.trr**
 
 
 ### NCTRAJ
 
+Uncompressed, binary trajectory format used by Amber.
+
 Extensions: **.nctraj**, **.ncdf**, **.nc**
 
 
 ### XTC
+
+Compressed, binary trajectory format used by Gromacs.
 
 Extension: **.xtc**
 

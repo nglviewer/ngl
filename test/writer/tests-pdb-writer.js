@@ -9,20 +9,21 @@ import fs from 'fs'
 
 describe('writer/pdb-writer', function () {
   describe('writing', function () {
-    it('getString', function () {
+    it('getData', function () {
       var file = path.join(__dirname, '/../data/1crn.pdb')
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
       pdbParser.parse(function (structure) {
         var pdbWriter = new PdbWriter(structure)
-        var string = pdbWriter.getString()
+        var string = pdbWriter.getData()
         assert.strictEqual(string.length, 26156)
         var lines = string.split('\n')
         assert.strictEqual(lines.length, 331)
       })
     })
 
+    // skip because there is no Blob in node.js
     it.skip('getBlob', function () {
       var file = path.join(__dirname, '/../data/1crn.pdb')
       var str = fs.readFileSync(file, 'utf-8')
