@@ -35,7 +35,7 @@ class MmtfParser extends StructureParser {
   get isBinary () { return true }
 
   _parse () {
-        // https://github.com/rcsb/mmtf
+    // https://github.com/rcsb/mmtf
 
     if (Debug) Log.time('MmtfParser._parse ' + this.name)
 
@@ -91,7 +91,7 @@ class MmtfParser extends StructureParser {
 
     numBonds += numGroups  // add numGroups to have space for polymer bonds
 
-        //
+    //
 
     if (this.asTrajectory) {
       for (i = 0, il = sd.numModels; i < il; ++i) {
@@ -110,7 +110,7 @@ class MmtfParser extends StructureParser {
       }
     }
 
-        // bondStore
+    // bondStore
     var bAtomIndex1 = new Uint32Array(numBonds)
     var bAtomIndex2 = new Uint32Array(numBonds)
     var bBondOrder = new Uint8Array(numBonds)
@@ -128,7 +128,7 @@ class MmtfParser extends StructureParser {
     var mChainOffset = new Uint32Array(numModels)
     var mChainCount = new Uint32Array(numModels)
 
-        // set-up model-chain relations
+    // set-up model-chain relations
     var chainOffset = 0
     for (i = 0, il = numModels; i < il; ++i) {
       var modelChainCount = chainsPerModel[ i ]
@@ -140,7 +140,7 @@ class MmtfParser extends StructureParser {
       chainOffset += modelChainCount
     }
 
-        // set-up chain-residue relations
+    // set-up chain-residue relations
     var groupsPerChain = sd.groupsPerChain
     var groupOffset = 0
     for (i = 0, il = numChains; i < il; ++i) {
@@ -153,8 +153,8 @@ class MmtfParser extends StructureParser {
       groupOffset += chainGroupCount
     }
 
-        /// ///
-        // get data from group map
+    /// ///
+    // get data from group map
 
     var atomOffset = 0
     var bondOffset = 0
@@ -173,7 +173,7 @@ class MmtfParser extends StructureParser {
         bondOffset += 1
       }
 
-            //
+      //
 
       gAtomOffset[ i ] = atomOffset
       gAtomCount[ i ] = groupAtomCount
@@ -184,7 +184,7 @@ class MmtfParser extends StructureParser {
       }
     }
 
-        // extra bonds
+    // extra bonds
 
     var bondAtomList = sd.bondAtomList
     if (bondAtomList) {
@@ -203,7 +203,7 @@ class MmtfParser extends StructureParser {
       }
     }
 
-        //
+    //
 
     s.bondStore.length = bBondOrder.length
     s.bondStore.count = bondOffset
@@ -247,7 +247,7 @@ class MmtfParser extends StructureParser {
     s.modelStore.chainOffset = mChainOffset
     s.modelStore.chainCount = mChainCount
 
-        //
+    //
 
     var groupTypeDict = {}
     for (i = 0, il = sd.groupList.length; i < il; ++i) {
@@ -275,8 +275,8 @@ class MmtfParser extends StructureParser {
       }
 
       groupTypeDict[ i ] = s.residueMap.add(
-                groupType.groupName, atomTypeIdList, hetFlag, chemCompType, bonds
-            )
+        groupType.groupName, atomTypeIdList, hetFlag, chemCompType, bonds
+      )
     }
 
     for (i = 0, il = numGroups; i < il; ++i) {
@@ -293,13 +293,13 @@ class MmtfParser extends StructureParser {
     if (sd.secStructList) {
       var secStructLength = sd.secStructList.length
       for (i = 0, il = s.residueStore.count; i < il; ++i) {
-                // with ( i % secStructLength ) secStruct entries are reused
+        // with ( i % secStructLength ) secStruct entries are reused
         var sstruc = SstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ]
         if (sstruc !== undefined) s.residueStore.sstruc[ i ] = sstruc
       }
     }
 
-        //
+    //
 
     if (sd.entityList) {
       sd.entityList.forEach(function (e, i) {
@@ -367,10 +367,10 @@ class MmtfParser extends StructureParser {
       s.unitcell = undefined
     }
 
-        // calculate backbone bonds
+    // calculate backbone bonds
     calculateBondsBetween(s, true)
 
-        // calculate rung bonds
+    // calculate rung bonds
     calculateBondsWithin(s, true)
 
     s.finalizeAtoms()

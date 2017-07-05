@@ -432,7 +432,7 @@ function calculateChainnames (structure) {
           }
         }
 
-                // current chain goes to end of the structure
+        // current chain goes to end of the structure
         if (!newChain && rp2.index === residueStore.count - 1) {
           newChain = true
           rEnd = rp2.index
@@ -675,7 +675,7 @@ function calculateBondsBetween (structure, onlyAddBackbone) {
   var rp1 = structure.getResidueProxy()
   var rp2 = structure.getResidueProxy()
 
-    // check for cyclic chains
+  // check for cyclic chains
   structure.eachChain(function (cp) {
     if (cp.residueCount === 0) return
     rp1.index = cp.residueOffset

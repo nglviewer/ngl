@@ -5,44 +5,44 @@
  */
 
 function StructureBuilder (structure) {
-  var currentModelindex = null
-  var currentChainid = null
-  var currentResname = null
-  var currentResno = null
-  var currentInscode = null
-  var currentHetero = null
+  let currentModelindex = null
+  let currentChainid = null
+  let currentResname = null
+  let currentResno = null
+  let currentInscode = null
+  let currentHetero = null
 
-  var previousResname
-  var previousHetero
+  let previousResname
+  let previousHetero
 
-  var atomStore = structure.atomStore
-  var residueStore = structure.residueStore
-  var chainStore = structure.chainStore
-  var modelStore = structure.modelStore
+  const atomStore = structure.atomStore
+  const residueStore = structure.residueStore
+  const chainStore = structure.chainStore
+  const modelStore = structure.modelStore
 
-  var residueMap = structure.residueMap
+  const residueMap = structure.residueMap
 
-  var ai = -1
-  var ri = -1
-  var ci = -1
-  var mi = -1
+  let ai = -1
+  let ri = -1
+  let ci = -1
+  let mi = -1
 
   function addResidueType (ri) {
-    var count = residueStore.atomCount[ ri ]
-    var offset = residueStore.atomOffset[ ri ]
-    var atomTypeIdList = new Array(count)
-    for (var i = 0; i < count; ++i) {
+    const count = residueStore.atomCount[ ri ]
+    const offset = residueStore.atomOffset[ ri ]
+    const atomTypeIdList = new Array(count)
+    for (let i = 0; i < count; ++i) {
       atomTypeIdList[ i ] = atomStore.atomTypeId[ offset + i ]
     }
     residueStore.residueTypeId[ ri ] = residueMap.add(
-            previousResname, atomTypeIdList, previousHetero
-        )
+      previousResname, atomTypeIdList, previousHetero
+    )
   }
 
   this.addAtom = function (modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode) {
-    var addModel = false
-    var addChain = false
-    var addResidue = false
+    let addModel = false
+    let addChain = false
+    let addResidue = false
 
     if (currentModelindex !== modelindex) {
       addModel = true
