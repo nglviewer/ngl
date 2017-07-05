@@ -8,7 +8,8 @@ import { Debug, Log, ParserRegistry } from '../globals.js'
 import StructureParser from './structure-parser.js'
 import { WaterNames } from '../structure/structure-constants.js'
 import {
-    assignResidueTypeBonds, calculateChainnames, getChainname
+  assignResidueTypeBonds, calculateBondsBetween,
+  calculateBondsWithin, getChainname
 } from '../structure/structure-utils.js'
 
 const SystemMode = 1
@@ -58,7 +59,7 @@ class TopParser extends StructureParser {
         }
 
         const fieldMatch = line.match(reField)
-        if ( fieldMatch !== null ) {
+        if (fieldMatch !== null) {
           const name = fieldMatch[1]
           if (name === 'moleculetype') {
             mode = MoleculetypeMode
@@ -162,24 +163,6 @@ class TopParser extends StructureParser {
           ++atomIdx
           lastResno = resno
         })
-        lastResno = -1
-        resIdx -= molResCount
-        molType.atoms.forEach(function (atomData) {
-          const [resno, resname, atomname] = atomData
-          if (resno !== lastResno) {
-            if (lastResno !== -1) {
-              rp1.index = resIdx - 1
-              rp2.index = resIdx
-              ap1.index = rp1.backboneEndAtomIndex
-              ap2.index = rp2.backboneStartAtomIndex
-              backboneBondStore.addBond(ap1, ap2)
-              backboneAtomSet.set(ap1.index)
-              backboneAtomSet.set(ap2.index)
-            }
-            ++resIdx
-          }
-          lastResno = resno
-        })
         molType.bonds.forEach(function (bondData) {
           bondStore.atomIndex1[bondIdx] = atomOffset + bondData[0] - 1
           bondStore.atomIndex2[bondIdx] = atomOffset + bondData[1] - 1
@@ -193,6 +176,9 @@ class TopParser extends StructureParser {
 
     bondStore.count = bondCount
     s.atomSetDict.backbone = backboneAtomSet
+
+    calculateBondsWithin(s, true)
+    calculateBondsBetween(s, true, true)
 
     sb.finalize()
     s.finalizeAtoms()
