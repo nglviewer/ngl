@@ -11,6 +11,7 @@ class Frames {
 
     this.coordinates = []
     this.boxes = []
+    this.times = []
   }
 
   get type () { return 'Frames' }

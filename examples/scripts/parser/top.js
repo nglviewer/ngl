@@ -4,8 +4,7 @@ stage.loadFile('data://gpcr.top').then(function (o) {
     o.addTrajectory(frames, {
       initialFrame: 0,
       centerPbc: true,
-      removePbc: true,
-      deltaTime: 100
+      removePbc: true
     })
     o.addRepresentation('cartoon')
     o.addRepresentation('backbone')
