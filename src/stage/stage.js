@@ -317,8 +317,8 @@ class Stage {
     viewer.setSampling(p.sampleLevel)
     viewer.setBackground(p.backgroundColor)
     viewer.setLight(
-            p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
-        )
+      p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
+    )
 
     this.signals.parametersChanged.dispatch(
       this.getParameters()
@@ -801,8 +801,8 @@ class Stage {
     const aspectFactor = (height < width ? 1 : aspect)
 
     distance = Math.abs(
-            ((distance * 0.5) / aspectFactor) / Math.sin(fov / 2)
-        )
+      ((distance * 0.5) / aspectFactor) / Math.sin(fov / 2)
+    )
     distance += this.parameters.clipDist.value
     return -distance
   }
@@ -826,10 +826,10 @@ class Stage {
    */
   autoView (duration) {
     this.animationControls.zoomMove(
-            this.getCenter(),
-            this.getZoom(),
-            defaults(duration, 0)
-        )
+      this.getCenter(),
+      this.getZoom(),
+      defaults(duration, 0)
+    )
   }
 
   /**
