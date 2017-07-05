@@ -4,22 +4,42 @@
  * @private
  */
 
-import { download } from '../utils.js'
+import Writer from './writer.js'
 
-function StlWriter (surface) {
-  var records
+// https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
 
-  function writeRecords () {
-    records = []
+/**
+ * Create an STL File from a surface Object (for 3D printing)
+ * 
+ * @example
+ * molsurf = new NGL.MolecularSurface(structure)
+ * surf = molsurf.getSurface({type: ‘av’, probeRadius: 1.4})
+ * stl = new NGL.StlWriter(surf)
+ * stl.download(‘my_file_name’)
+ * @class StlWriter
+ * @extends {Writer}
+ */
+class StlWriter extends Writer {
+  constructor (surface) {
+    super()
 
-    writeHeader()
-    writeFacets()
-    writeFooter()
+    this.surface = surface
+    this._records = []
   }
 
-  // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
+  get mimeType () { return 'text/plain' }
+  get defaultName () { return 'surface' }
+  get defaultExt () { return 'stl' }
 
-  function avgNormal (normals, vertIndices) {
+  _writeRecords () {
+    this._records.length = 0
+
+    this._writeHeader()
+    this._writeFacets()
+    this._writeFooter()
+  }
+
+  _avgNormal (normals, vertIndices) {
     let v = []
     for (let i = 0; i < 3; i++) {
       v[i] = (normals[vertIndices[0] + i] + normals[vertIndices[1] + i] + normals[vertIndices[2] + i]) / 3
@@ -27,61 +47,41 @@ function StlWriter (surface) {
     return v
   }
 
-  function writeHeader () {
-    records.push('solid surface')
+  _writeHeader () {
+    this._records.push('solid surface')
   }
 
-  function writeFooter () {
-    records.push('endsolid surface')
+  _writeFooter () {
+    this._records.push('endsolid surface')
   }
 
-  function writeLoop (vertices) {
-    records.push('outer loop')
+  _writeLoop (vertices) {
+    this._records.push('outer loop')
     for (let i = 0; i < 3; i++) {
-      records.push(`    vertex ${surface.position[vertices[i] * 3]} ${surface.position[vertices[i] * 3 + 1]} ${surface.position[vertices[i] * 3 + 2]}`)
+      this._records.push(`    vertex ${this.surface.position[vertices[i] * 3]} ${this.surface.position[vertices[i] * 3 + 1]} ${this.surface.position[vertices[i] * 3 + 2]}`)
     }
-    records.push('outer loop')
+    this._records.push('outer loop')
   }
 
-  function writeFacets () {
-    for (let i = 0; i < surface.index.length / 3; i++) {
-      let vert1Index = surface.index[i * 3]
-      let vert2Index = surface.index[i * 3 + 1]
-      let vert3Index = surface.index[i * 3 + 2]
+  _writeFacets () {
+    for (let i = 0; i < this.surface.index.length / 3; i++) {
+      let vert1Index = this.surface.index[i * 3]
+      let vert2Index = this.surface.index[i * 3 + 1]
+      let vert3Index = this.surface.index[i * 3 + 2]
 
-      let facetNormal = avgNormal(surface.normal, [vert1Index, vert2Index, vert3Index])
-      records.push(`facet normal ${facetNormal[0]} ${facetNormal[1]} ${facetNormal[2]}`)
+      let facetNormal = this._avgNormal(this.surface.normal, [vert1Index, vert2Index, vert3Index])
+      this._records.push(`facet normal ${facetNormal[0]} ${facetNormal[1]} ${facetNormal[2]}`)
 
-      writeLoop([vert1Index, vert2Index, vert3Index])
+      this._writeLoop([vert1Index, vert2Index, vert3Index])
 
-      records.push('endfacet')
+      this._records.push('endfacet')
     }
   }
 
-  function getString () {
-    writeRecords()
-    return records.join('\n')
+  getData () {
+    this._writeRecords()
+    return this._records.join('\n')
   }
-
-  function getBlob () {
-    return new window.Blob([ getString() ], { type: 'text/plain' })
-  }
-
-  function _download (name, ext) {
-    name = name || 'surface'
-    ext = ext || 'stl'
-
-    var file = name + '.' + ext
-    var blob = getBlob()
-
-    download(blob, file)
-  }
-
-  // API
-
-  this.getString = getString
-  this.getBlob = getBlob
-  this.download = _download
 }
 
 export default StlWriter
