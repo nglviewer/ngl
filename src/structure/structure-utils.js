@@ -638,7 +638,7 @@ function calculateBondsWithin (structure, onlyAddRung) {
   if (Debug) Log.timeEnd('calculateBondsWithin')
 }
 
-function calculateBondsBetween (structure, onlyAddBackbone) {
+function calculateBondsBetween (structure, onlyAddBackbone, assumeConnectedBackbone) {
   if (Debug) Log.time('calculateBondsBetween')
 
   var bondStore = structure.bondStore
@@ -657,7 +657,7 @@ function calculateBondsBetween (structure, onlyAddBackbone) {
     if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
       ap1.index = rp1.backboneEndAtomIndex
       ap2.index = rp2.backboneStartAtomIndex
-      if (ap1.connectedTo(ap2)) {
+      if (ap1.connectedTo(ap2) || assumeConnectedBackbone) {
         if (!onlyAddBackbone) {
           bondStore.addBond(ap1, ap2, 1)  // assume single bond
         }
