@@ -115,6 +115,7 @@ import './parser/sdf-parser.js'
 
 import './parser/prmtop-parser.js'
 import './parser/psf-parser.js'
+import './parser/top-parser.js'
 
 import './parser/dcd-parser.js'
 import './parser/nctraj-parser.js'
