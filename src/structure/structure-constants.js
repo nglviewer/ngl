@@ -1043,7 +1043,7 @@ const DefaultCovalentRadius = 1.6
 
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
 const ResidueHydrophobicity = {
-    // AA  DGwif   DGwoct  Oct-IF
+  // AA  DGwif   DGwoct  Oct-IF
   'ALA': [ 0.17, 0.50, 0.33 ],
   'ARG': [ 0.81, 1.81, 1.00 ],
   'ASN': [ 0.42, 0.85, 0.43 ],
@@ -1054,7 +1054,7 @@ const ResidueHydrophobicity = {
   'GLU': [ 2.02, 3.63, 1.61 ],
   'GLH': [ -0.01, 0.11, 0.12 ],
   'GLY': [ 0.01, 1.15, 1.14 ],
-    // "His+": [  0.96,  2.33,  1.37 ],
+  // "His+": [  0.96,  2.33,  1.37 ],
   'HIS': [ 0.17, 0.11, -0.06 ],
   'ILE': [ -0.31, -1.12, -0.81 ],
   'LEU': [ -0.56, -1.25, -0.69 ],

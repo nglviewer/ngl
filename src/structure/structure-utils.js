@@ -366,7 +366,6 @@ function getChainname (index) {
   return chainname
 }
 
-
 function calculateChainnames (structure) {
   if (Debug) Log.time('calculateChainnames')
 
@@ -376,7 +375,6 @@ function calculateChainnames (structure) {
   })
 
   if (doAutoChainName) {
-
     var modelStore = structure.modelStore
     var chainStore = structure.chainStore
     var residueStore = structure.residueStore
@@ -612,18 +610,18 @@ function calculateBondsWithin (structure, onlyAddRung) {
         if (tmp !== undefined && (tmp = tmp[ ai2 ]) !== undefined) {
           bp.index = tmp
           var residueTypeBondIndex = r.residueType.getBondIndex(ai1, ai2)
-                    // overwrite residueType bondOrder with value from existing bond
+          // overwrite residueType bondOrder with value from existing bond
           bondOrders[ residueTypeBondIndex ] = bp.bondOrder
         } else {
           a1.index = ai1
           a2.index = ai2
-                    // only add bond if not already in bondStore
+          // only add bond if not already in bondStore
           bondStore.addBond(a1, a2, bondOrders[ i ])
         }
       }
     }
 
-        // get RNA/DNA rung pseudo bonds
+    // get RNA/DNA rung pseudo bonds
     var traceAtomIndex = r.residueType.traceAtomIndex
     var rungEndAtomIndex = r.residueType.rungEndAtomIndex
     if (traceAtomIndex !== -1 && rungEndAtomIndex !== -1) {

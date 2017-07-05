@@ -82,15 +82,15 @@ class PsfParser extends StructureParser {
           title.push(line.replace(reTitle, '').trim())
         } else if (mode === AngleMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (mode === DihedralMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (mode === ImproperMode) {
 
-          // not currently used
+          // currently not used
 
         } else if (line.includes('!NATOM')) {
           mode = AtomMode
