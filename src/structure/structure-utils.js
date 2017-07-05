@@ -427,7 +427,7 @@ function calculateChainnames (structure) {
         } else if (bbType1 !== bbTypeUnk && bbType1 === bbType2) {
           ap1.index = rp1.backboneEndAtomIndex
           ap2.index = rp2.backboneStartAtomIndex
-          if (!ap1.connectedTo(ap2)) {
+          if (!ap1.connectedTo(ap2) && !ap1.hasBondTo(ap2)) {
             newChain = true
           }
         }
@@ -638,7 +638,7 @@ function calculateBondsWithin (structure, onlyAddRung) {
   if (Debug) Log.timeEnd('calculateBondsWithin')
 }
 
-function calculateBondsBetween (structure, onlyAddBackbone, assumeConnectedBackbone) {
+function calculateBondsBetween (structure, onlyAddBackbone) {
   if (Debug) Log.time('calculateBondsBetween')
 
   var bondStore = structure.bondStore
@@ -657,7 +657,7 @@ function calculateBondsBetween (structure, onlyAddBackbone, assumeConnectedBackb
     if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
       ap1.index = rp1.backboneEndAtomIndex
       ap2.index = rp2.backboneStartAtomIndex
-      if (ap1.connectedTo(ap2) || assumeConnectedBackbone) {
+      if (ap1.connectedTo(ap2) || ap1.hasBondTo(ap2)) {
         if (!onlyAddBackbone) {
           bondStore.addBond(ap1, ap2, 1)  // assume single bond
         }
