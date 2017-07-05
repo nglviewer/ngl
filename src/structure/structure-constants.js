@@ -1206,7 +1206,7 @@ const SaccharideNames = [
 const ProteinBackboneAtoms = [
   'CA', 'C', 'N', 'O',
   'O1', 'O2', 'OC1', 'OC2', 'OX1', 'OXT',
-  'H', 'H1', 'H2', 'H3', 'HA',
+  'H', 'H1', 'H2', 'H3', 'HA', 'HN',
   'BB'
 ]
 
