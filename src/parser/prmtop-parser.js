@@ -7,7 +7,8 @@
 import { Debug, Log, ParserRegistry } from '../globals.js'
 import StructureParser from './structure-parser.js'
 import {
-    assignResidueTypeBonds, calculateBondsWithin, getChainname
+    assignResidueTypeBonds, calculateBondsBetween,
+    calculateBondsWithin, calculateChainnames
 } from '../structure/structure-utils.js'
 
 const TitleMode = 1
@@ -203,11 +204,12 @@ class PrmtopParser extends StructureParser {
     s.bondStore.atomIndex2 = bAtomIndex2
     s.bondStore.bondOrder = bBondOrder
 
-    calculateBondsWithin(s, true)
-
     sb.finalize()
     s.finalizeAtoms()
     s.finalizeBonds()
+    calculateBondsWithin(s, true)
+    calculateBondsBetween(s, true)
+    calculateChainnames(s)
     assignResidueTypeBonds(s)
 
     if (Debug) Log.timeEnd('PrmtopParser._parse ' + this.name)

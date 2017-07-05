@@ -5,8 +5,10 @@ stage.loadFile('data://DPDP.prmtop').then(function (o) {
       initialFrame: 0,
       deltaTime: 200
     })
-    o.addRepresentation('ball+stick')
+    o.addRepresentation('licorice', {scale: 0.5})
+    o.addRepresentation('spacefill', {sele: 'not :B'})
     o.addRepresentation('cartoon')
+    o.addRepresentation('backbone')
     stage.autoView()
   })
 })

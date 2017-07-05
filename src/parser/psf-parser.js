@@ -138,12 +138,11 @@ class PsfParser extends StructureParser {
     s.bondStore.atomIndex2 = bAtomIndex2
     s.bondStore.bondOrder = bBondOrder
 
-    calculateBondsWithin(s, true)
-    calculateBondsBetween(s, true, true)
-
     sb.finalize()
     s.finalizeAtoms()
     s.finalizeBonds()
+    calculateBondsWithin(s, true)
+    calculateBondsBetween(s, true)
     assignResidueTypeBonds(s)
 
     if (Debug) Log.timeEnd('PsfParser._parse ' + this.name)
