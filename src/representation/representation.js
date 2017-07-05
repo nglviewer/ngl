@@ -463,7 +463,7 @@ class Representation {
         )
       ) continue
 
-      if (this[ name ].set) {
+      if (this[ name ] && this[ name ].set) {
         this[ name ].set(p[ name ])
       } else {
         this[ name ] = p[ name ]
