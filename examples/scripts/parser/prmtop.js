@@ -6,6 +6,7 @@ stage.loadFile('data://DPDP.prmtop').then(function (o) {
       deltaTime: 200
     })
     o.addRepresentation('ball+stick')
+    o.addRepresentation('cartoon')
     stage.autoView()
   })
 })
