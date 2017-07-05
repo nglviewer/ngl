@@ -111,17 +111,17 @@ class Trajectory {
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
 
-        // selection to restrict atoms used for superposition
+    // selection to restrict atoms used for superposition
     this.selection = new Selection(
-            defaults(p.sele, 'backbone and not hydrogen')
-        )
+      defaults(p.sele, 'backbone and not hydrogen')
+    )
 
     this.selection.signals.stringChanged.add(function () {
       this.makeIndices()
       this.resetCache()
     }, this)
 
-        // should come after this.selection is set
+    // should come after this.selection is set
     this.setStructure(structure)
     this.setPlayer(new TrajectoryPlayer(this))
 
@@ -140,8 +140,8 @@ class Trajectory {
     this.saveInitialStructure()
 
     this.backboneIndices = this.getIndices(
-            new Selection('backbone and not hydrogen')
-        )
+      new Selection('backbone and not hydrogen')
+    )
     this.makeIndices()
 
     this.frameCache = []
@@ -194,7 +194,7 @@ class Trajectory {
   }
 
   makeIndices () {
-        // indices to restrict atoms used for superposition
+    // indices to restrict atoms used for superposition
     this.indices = this.getIndices(this.selection)
 
     var i, j
@@ -296,14 +296,14 @@ class Trajectory {
     if (type === 'spline') {
       for (j = 0; j < m; j += 3) {
         coords[ j + 0 ] = spline(
-                    cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-                )
+          cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+        )
         coords[ j + 1 ] = spline(
-                    cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-                )
+          cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+        )
         coords[ j + 2 ] = spline(
-                    cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-                )
+          cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+        )
       }
     } else {
       for (j = 0; j < m; j += 3) {
@@ -408,7 +408,7 @@ class Trajectory {
       coords1[ i + 2 ] = x[ j + 2 ]
     }
 
-        // TODO re-use superposition object
+    // TODO re-use superposition object
     var sp = new Superposition(coords1, coords2)
     sp.transform(x)
   }
@@ -420,8 +420,8 @@ class Trajectory {
       if (this.backboneIndices.length > 0 && this.centerPbc) {
         var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ]
         var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                )
+          this.backboneIndices, coords, box2
+        )
         centerPbc(coords, mean, box2)
       }
 
