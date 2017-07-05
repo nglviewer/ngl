@@ -8,7 +8,9 @@ mkdir -p ../build/;
 cd ../build/;
 
 if [ -d "arose.github.io" ]; then
-	git pull;
+	cd ./arose.github.io/;
+	git fetch --all;
+	git reset --hard origin/master;
 else
 	git clone "https://github.com/arose/arose.github.io.git";
 fi
