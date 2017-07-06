@@ -2126,7 +2126,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     }
 
     player.step = step.getValue()
-    player.end = value
+    player.end = value - 1
   }
 
   signals.gotNumframes.add(init)
