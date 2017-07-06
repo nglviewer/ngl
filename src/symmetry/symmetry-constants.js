@@ -348,6 +348,6 @@ var EncodedSymOp = {
 }
 
 export {
-    SymOpCode,
-    EncodedSymOp
+  SymOpCode,
+  EncodedSymOp
 }

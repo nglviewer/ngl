@@ -9,7 +9,7 @@ import { Color, Vector3, Matrix4 } from '../../lib/three.es6.js'
 import { defaults } from '../utils.js'
 import { degToRad } from '../math/math-utils.js'
 import {
-    uniformArray, uniformArray3, centerArray3
+  uniformArray, uniformArray3, centerArray3
 } from '../math/array-utils.js'
 import { UnitcellPicker } from '../utils/picker.js'
 
@@ -17,62 +17,62 @@ import { UnitcellPicker } from '../utils/picker.js'
  * Unitcell class
  */
 class Unitcell {
-    /**
-     * @param  {Object} params - unitcell parameters
-     * @param  {Number} params.a - length a
-     * @param  {Number} params.b - length b
-     * @param  {Number} params.c - length c
-     * @param  {Number} params.alpha - angle alpha
-     * @param  {Number} params.beta - angle beta
-     * @param  {Number} params.gamma - angle gamma
-     * @param  {String} params.spacegroup - spacegroup
-     * @param  {Matrix4} [params.cartToFrac] - transformation matrix from
-     *                                         cartesian to fractional coordinates
-     * @param  {Matrix4} [params.scale] - alias for `params.cartToFrac`
-     */
+  /**
+   * @param  {Object} params - unitcell parameters
+   * @param  {Number} params.a - length a
+   * @param  {Number} params.b - length b
+   * @param  {Number} params.c - length c
+   * @param  {Number} params.alpha - angle alpha
+   * @param  {Number} params.beta - angle beta
+   * @param  {Number} params.gamma - angle gamma
+   * @param  {String} params.spacegroup - spacegroup
+   * @param  {Matrix4} [params.cartToFrac] - transformation matrix from
+   *                                         cartesian to fractional coordinates
+   * @param  {Matrix4} [params.scale] - alias for `params.cartToFrac`
+   */
   constructor (params) {
     const p = params || {}
 
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.a = p.a || 1
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.b = p.b || 1
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.c = p.c || 1
 
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.alpha = p.alpha || 90
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.beta = p.beta || 90
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.gamma = p.gamma || 90
 
-        /**
-         * @type {String}
-         */
+    /**
+     * @type {String}
+     */
     this.spacegroup = p.spacegroup || 'P 1'
-        /**
-         * @type {Matrix4}
-         */
+    /**
+     * @type {Matrix4}
+     */
     this.cartToFrac = p.cartToFrac || p.scale
-        /**
-         * @type {Matrix4}
-         */
+    /**
+     * @type {Matrix4}
+     */
     this.fracToCart = new Matrix4()
 
-        //
+    //
 
     const alphaRad = degToRad(this.alpha)
     const betaRad = degToRad(this.beta)
@@ -83,34 +83,33 @@ class Unitcell {
     const sinBeta = Math.sin(betaRad)
     const sinGamma = Math.sin(gammaRad)
 
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.volume = (
-            this.a * this.b * this.c *
-            Math.sqrt(
-                1 - cosAlpha * cosAlpha - cosBeta * cosBeta - cosGamma * cosGamma +
-                2.0 * cosAlpha * cosBeta * cosGamma
-            )
-        )
+      this.a * this.b * this.c *
+      Math.sqrt(
+        1 - cosAlpha * cosAlpha - cosBeta * cosBeta - cosGamma * cosGamma +
+        2.0 * cosAlpha * cosBeta * cosGamma
+      )
+    )
 
-        //
+    //
 
     if (this.cartToFrac === undefined) {
-            // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
+      // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
 
       const cStar = (this.a * this.b * sinGamma) / this.volume
       const cosAlphaStar = (
-                (cosBeta * cosGamma - cosAlpha) /
-                (sinBeta * sinGamma)
-            )
+        (cosBeta * cosGamma - cosAlpha) / (sinBeta * sinGamma)
+      )
 
       this.fracToCart.set(
-                this.a, 0, 0, 0,
-                this.b * cosGamma, this.b * sinGamma, 0, 0,
-                this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
-                0, 0, 0, 1
-            ).transpose()
+        this.a, 0, 0, 0,
+        this.b * cosGamma, this.b * sinGamma, 0, 0,
+        this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
+        0, 0, 0, 1
+      ).transpose()
       this.cartToFrac = new Matrix4().getInverse(this.fracToCart)
     } else {
       this.fracToCart.getInverse(this.cartToFrac)
@@ -129,9 +128,9 @@ class Unitcell {
     let cornerOffset = 0
     function addCorner (x, y, z) {
       v.set(x, y, z)
-                .multiply(centerFrac)
-                .applyMatrix4(uc.fracToCart)
-                .toArray(vertexPosition, cornerOffset)
+        .multiply(centerFrac)
+        .applyMatrix4(uc.fracToCart)
+        .toArray(vertexPosition, cornerOffset)
       cornerOffset += 3
     }
     addCorner(0, 0, 0)
@@ -170,9 +169,9 @@ class Unitcell {
     let edgeOffset = 0
     function addEdge (a, b) {
       v.fromArray(vertexPosition, a * 3)
-                .toArray(edgePosition1, edgeOffset)
+        .toArray(edgePosition1, edgeOffset)
       v.fromArray(vertexPosition, b * 3)
-                .toArray(edgePosition2, edgeOffset)
+        .toArray(edgePosition2, edgeOffset)
       edgeOffset += 3
     }
     addEdge(0, 1)

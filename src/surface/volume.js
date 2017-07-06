@@ -128,6 +128,14 @@ class Volume {
     if (this.worker) this.worker.terminate()
   }
 
+  /**
+   * Set statistics, which can be different from the data in this volume,
+   * if this volume is a slice of a bigger volume
+   * @param {Number|undefined} min - minimum value of the whole data set
+   * @param {Number|undefined} max - maximum value of the whole data set
+   * @param {Number|undefined} mean - average value of the whole data set
+   * @param {Number|undefined} rms - sigma value of the whole data set
+   */
   setStats (min, max, mean, rms) {
     this._min = min
     this._max = max

@@ -53,14 +53,14 @@ const CyclicResname = [ 'HIS', 'PHE', 'PRO', 'TRP', 'TYR' ]
 const AliphaticResname = [ 'ALA', 'GLY', 'ILE', 'LEU', 'VAL' ]
 
 function atomTestFn (a, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.atomname === undefined && s.element === undefined &&
-            s.altloc === undefined && s.atomindex === undefined &&
-            s.keyword === undefined && s.inscode === undefined &&
-            s.resname === undefined && s.sstruc === undefined &&
-            s.resno === undefined && s.chainname === undefined &&
-            s.model === undefined
-    ) return -1
+    s.altloc === undefined && s.atomindex === undefined &&
+    s.keyword === undefined && s.inscode === undefined &&
+    s.resname === undefined && s.sstruc === undefined &&
+    s.resno === undefined && s.chainname === undefined &&
+    s.model === undefined
+  ) return -1
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.BACKBONE && !a.isBackbone()) return false
@@ -87,8 +87,8 @@ function atomTestFn (a, s) {
   if (s.altloc !== undefined && s.altloc !== a.altloc) return false
 
   if (s.atomindex !== undefined &&
-            binarySearchIndexOf(s.atomindex, a.index) < 0
-    ) return false
+      binarySearchIndexOf(s.atomindex, a.index) < 0
+  ) return false
 
   if (s.resname !== undefined) {
     if (Array.isArray(s.resname)) {
@@ -114,12 +114,12 @@ function atomTestFn (a, s) {
 }
 
 function residueTestFn (r, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.resname === undefined && s.resno === undefined && s.inscode === undefined &&
-            s.sstruc === undefined && s.model === undefined && s.chainname === undefined &&
-            s.atomindex === undefined &&
-            (s.keyword === undefined || AtomOnlyKeywords.includes(s.keyword))
-    ) return -1
+      s.sstruc === undefined && s.model === undefined && s.chainname === undefined &&
+      s.atomindex === undefined &&
+      (s.keyword === undefined || AtomOnlyKeywords.includes(s.keyword))
+  ) return -1
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.HETERO && !r.isHetero()) return false
@@ -137,8 +137,8 @@ function residueTestFn (r, s) {
   }
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, r.atomOffset, r.atomEnd) === 0
-    ) return false
+      rangeInSortedArray(s.atomindex, r.atomOffset, r.atomEnd) === 0
+  ) return false
 
   if (s.resname !== undefined) {
     if (Array.isArray(s.resname)) {
@@ -164,10 +164,10 @@ function residueTestFn (r, s) {
 }
 
 function chainTestFn (c, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.chainname === undefined && s.model === undefined && s.atomindex === undefined &&
-            (s.keyword === undefined || !ChainKeywords.includes(s.keyword) || !c.entity)
-    ) return -1
+      (s.keyword === undefined || !ChainKeywords.includes(s.keyword) || !c.entity)
+  ) return -1
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.POLYMER && !c.entity.isPolymer()) return false
@@ -175,8 +175,8 @@ function chainTestFn (c, s) {
   }
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, c.atomOffset, c.atomEnd) === 0
-    ) return false
+      rangeInSortedArray(s.atomindex, c.atomOffset, c.atomEnd) === 0
+  ) return false
 
   if (s.chainname !== undefined && s.chainname !== c.chainname) return false
 
@@ -186,12 +186,12 @@ function chainTestFn (c, s) {
 }
 
 function modelTestFn (m, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.model === undefined && s.atomindex === undefined) return -1
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, m.atomOffset, m.atomEnd) === 0
-    ) return false
+      rangeInSortedArray(s.atomindex, m.atomOffset, m.atomEnd) === 0
+  ) return false
 
   if (s.model !== undefined && s.model !== m.index) return false
 
@@ -202,10 +202,10 @@ function modelTestFn (m, s) {
  * Selection
  */
 class Selection {
-    /**
-     * Create Selection
-     * @param {String} string - selection string, see {@tutorial selection-language}
-     */
+  /**
+   * Create Selection
+   * @param {String} string - selection string, see {@tutorial selection-language}
+   */
   constructor (string) {
     this.signals = {
       stringChanged: new Signal()
@@ -220,12 +220,12 @@ class Selection {
     if (string === undefined) string = this.string || ''
     if (string === this.string) return
 
-        //
+      //
 
     try {
       this.parse(string)
     } catch (e) {
-            // Log.error( e.stack );
+      // Log.error( e.stack );
       this.selection = { 'error': e.message }
     }
 
@@ -264,7 +264,7 @@ class Selection {
     }
     const chunks = string.split(/\s+/)
 
-        // Log.log( string, chunks )
+    // Log.log( string, chunks )
 
     const createNewContext = operator => {
       newSelection = {
@@ -300,16 +300,16 @@ class Selection {
       const c = chunks[ i ]
       const cu = c.toUpperCase()
 
-            // handle parens
+      // handle parens
 
       if (c === '(') {
-                // Log.log( "(" );
+        // Log.log( "(" );
 
         not = false
         createNewContext()
         continue
       } else if (c === ')') {
-                // Log.log( ")" );
+        // Log.log( ")" );
 
         getPrevContext()
         if (selection.negate) {
@@ -318,7 +318,7 @@ class Selection {
         continue
       }
 
-            // leave 'not' context
+      // leave 'not' context
 
       if (not > 0) {
         if (cu === 'NOT') {
@@ -333,10 +333,10 @@ class Selection {
         }
       }
 
-            // handle logic operators
+      // handle logic operators
 
       if (cu === 'AND') {
-                // Log.log( "AND" );
+        // Log.log( "AND" );
 
         if (selection.operator === 'OR') {
           const lastRule = selection.rules.pop()
@@ -347,7 +347,7 @@ class Selection {
         }
         continue
       } else if (cu === 'OR') {
-                // Log.log( "OR" );
+        // Log.log( "OR" );
 
         if (selection.operator === 'AND') {
           getPrevContext('OR')
@@ -356,7 +356,7 @@ class Selection {
         }
         continue
       } else if (c.toUpperCase() === 'NOT') {
-                // Log.log( "NOT", j );
+        // Log.log( "NOT", j );
 
         not = 1
         createNewContext()
@@ -364,11 +364,11 @@ class Selection {
         continue
       } else {
 
-                // Log.log( "chunk", c, j, selection );
+        // Log.log( "chunk", c, j, selection );
 
       }
 
-            // handle keyword attributes
+      // handle keyword attributes
 
       const keyword = kwd[ cu ]
       if (keyword !== undefined) {
@@ -445,18 +445,18 @@ class Selection {
         pushRule({
           operator: 'OR',
           rules: [
-                        { keyword: kwd.SIDECHAIN },
+            { keyword: kwd.SIDECHAIN },
             {
               operator: 'AND',
               negate: false,
               rules: [
-                                { keyword: kwd.PROTEIN },
+                { keyword: kwd.PROTEIN },
                 {
                   operator: 'OR',
                   negate: false,
                   rules: [
-                                        { atomname: 'CA' },
-                                        { atomname: 'BB' }
+                    { atomname: 'CA' },
+                    { atomname: 'BB' }
                   ]
                 }
               ]
@@ -465,28 +465,28 @@ class Selection {
               operator: 'AND',
               negate: false,
               rules: [
-                                { resname: 'PRO' },
-                                { atomname: 'N' }
+                { resname: 'PRO' },
+                { atomname: 'N' }
               ]
             },
             {
               operator: 'AND',
               negate: false,
               rules: [
-                                { keyword: kwd.NUCLEIC },
+                { keyword: kwd.NUCLEIC },
                 {
                   operator: 'OR',
                   negate: true,
                   rules: [
-                                        { atomname: 'P' },
-                                        { atomname: 'OP1' },
-                                        { atomname: 'OP2' },
-                                        { atomname: "O3'" },
-                                        { atomname: 'O3*' },
-                                        { atomname: "O5'" },
-                                        { atomname: 'O5*' },
-                                        { atomname: "C5'" },
-                                        { atomname: 'C5*' }
+                    { atomname: 'P' },
+                    { atomname: 'OP1' },
+                    { atomname: 'OP2' },
+                    { atomname: "O3'" },
+                    { atomname: 'O3*' },
+                    { atomname: "O5'" },
+                    { atomname: 'O5*' },
+                    { atomname: "C5'" },
+                    { atomname: 'C5*' }
                   ]
                 }
               ]
@@ -503,12 +503,12 @@ class Selection {
             {
               operator: 'OR',
               rules: [
-                                { keyword: kwd.HETERO },
+                { keyword: kwd.HETERO },
                 {
                   negate: true,
                   operator: undefined,
                   rules: [
-                                        { keyword: kwd.POLYMER }
+                    { keyword: kwd.POLYMER }
                   ]
                 }
               ]
@@ -520,8 +520,8 @@ class Selection {
                 {
                   operator: 'OR',
                   rules: [
-                                        { keyword: kwd.WATER },
-                                        { keyword: kwd.ION }
+                    { keyword: kwd.WATER },
+                    { keyword: kwd.ION }
                   ]
                 }
               ]
@@ -536,7 +536,7 @@ class Selection {
         continue
       }
 
-            // handle atom expressions
+      // handle atom expressions
 
       if (c.charAt(0) === '@') {
         const indexList = c.substr(1).split(',')
@@ -564,17 +564,17 @@ class Selection {
         pushRule({ resname: resname })
         continue
       } else if (
-                (c.length >= 1 && c.length <= 4) &&
-                c[0] !== '^' && c[0] !== ':' && c[0] !== '.' && c[0] !== '%' && c[0] !== '/' &&
-                isNaN(parseInt(c))
-            ) {
+        (c.length >= 1 && c.length <= 4) &&
+        c[0] !== '^' && c[0] !== ':' && c[0] !== '.' && c[0] !== '%' && c[0] !== '/' &&
+        isNaN(parseInt(c))
+      ) {
         pushRule({ resname: cu })
         continue
       }
 
-            // there must be only one constraint per rule
-            // otherwise a test quickly becomes not applicable
-            // e.g. chainTest for chainname when resno is present too
+      // there must be only one constraint per rule
+      // otherwise a test quickly becomes not applicable
+      // e.g. chainTest for chainname when resno is present too
 
       const sele = {
         operator: 'AND',
@@ -653,7 +653,7 @@ class Selection {
         }
       }
 
-            // round up
+      // round up
 
       if (sele.rules.length === 1) {
         pushRule(sele.rules[ 0 ])
@@ -664,13 +664,13 @@ class Selection {
       }
     }
 
-        // cleanup
+    // cleanup
 
     if (
-            this.selection.operator === undefined &&
-            this.selection.rules.length === 1 &&
-            this.selection.rules[ 0 ].hasOwnProperty('operator')
-        ) {
+      this.selection.operator === undefined &&
+      this.selection.rules.length === 1 &&
+      this.selection.rules[ 0 ].hasOwnProperty('operator')
+    ) {
       this.selection = this.selection.rules[ 0 ]
     }
   }
@@ -694,9 +694,9 @@ class Selection {
       }
     }
 
-        // ( x and y ) can short circuit on false
-        // ( x or y ) can short circuit on true
-        // not ( x and y )
+    // ( x and y ) can short circuit on false
+    // ( x or y ) can short circuit on true
+    // not ( x and y )
 
     return function test (entity) {
       const and = selection.operator === 'AND'
@@ -728,7 +728,7 @@ class Selection {
 
           ret = fn(entity, s)
 
-                    // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
+          // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
 
           if (ret === -1) {
             na = true
@@ -775,12 +775,12 @@ class Selection {
     }
 
     if (filtered.rules.length > 0) {
-            // TODO maybe the filtered rules could be returned
-            // in some case, but the way how tests are applied
-            // e.g. when traversing a structure would also need
-            // to change
+      // TODO maybe the filtered rules could be returned
+      // in some case, but the way how tests are applied
+      // e.g. when traversing a structure would also need
+      // to change
       return selection
-            // return filtered;
+      // return filtered;
     } else {
       return null
     }
@@ -790,7 +790,7 @@ class Selection {
     let selection
 
     if (atomOnly) {
-            // console.log( this.selection )
+      // console.log( this.selection )
 
       selection = this._filter(function (s) {
         if (s.keyword !== undefined && !AtomOnlyKeywords.includes(s.keyword)) return true
@@ -812,7 +812,7 @@ class Selection {
     let selection
 
     if (residueOnly) {
-            // console.log( this.selection )
+      // console.log( this.selection )
 
       selection = this._filter(function (s) {
         if (s.keyword !== undefined && AtomOnlyKeywords.includes(s.keyword)) return true
@@ -834,11 +834,11 @@ class Selection {
     let selection
 
     if (chainOnly) {
-            // console.log( this.selection )
+      // console.log( this.selection )
 
       selection = this._filter(function (s) {
         if (s.keyword !== undefined && !ChainKeywords.includes(s.keyword)) return true
-                // if( s.model!==undefined ) return true;
+        // if( s.model!==undefined ) return true;
         if (s.resname !== undefined) return true
         if (s.resno !== undefined) return true
         if (s.atomname !== undefined) return true
@@ -859,7 +859,7 @@ class Selection {
     let selection
 
     if (modelOnly) {
-            // console.log( this.selection )
+      // console.log( this.selection )
 
       selection = this._filter(function (s) {
         if (s.keyword !== undefined) return true
@@ -884,5 +884,5 @@ class Selection {
 export default Selection
 
 export {
-    kwd
+  kwd
 }
