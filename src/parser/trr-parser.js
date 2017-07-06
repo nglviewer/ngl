@@ -24,6 +24,7 @@ class TrrParser extends TrajectoryParser {
     const coordinates = f.coordinates
     const boxes = f.boxes
     // const header = {}
+    const times = f.times
 
     let offset = 0
     // const frameInfo = []
@@ -58,14 +59,14 @@ class TrrParser extends TrajectoryParser {
       const floatSize = boxSize / 9
       const natoms3 = natoms * 3
 
-      // TODO
-      // if (floatSize === 8) {
-      //   frame.time = dv.getFloat64(offset)
-      //   frame.lambda = dv.getFloat64(offset + 8)
-      // } else {
-      //   frame.time = dv.getFloat32(offset)
-      //   frame.lambda = dv.getFloat32(offset + 4)
-      // }
+      // let lambda
+      if (floatSize === 8) {
+        times.push(dv.getFloat64(offset))
+        // lambda = dv.getFloat64(offset + 8)
+      } else {
+        times.push(dv.getFloat32(offset))
+        // lambda = dv.getFloat32(offset + 4)
+      }
       offset += 2 * floatSize
 
       if (boxSize) {
@@ -125,6 +126,13 @@ class TrrParser extends TrajectoryParser {
       // frameInfo.push(frame)
 
       if (offset >= bin.byteLength) break
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0]
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0]
     }
 
     if (Debug) Log.timeEnd('TrrParser._parse ' + this.name)
