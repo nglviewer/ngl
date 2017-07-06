@@ -10,7 +10,7 @@ import Writer from './writer.js'
 
 /**
  * Create an STL File from a surface Object (for 3D printing)
- * 
+ *
  * @example
  * molsurf = new NGL.MolecularSurface(structure)
  * surf = molsurf.getSurface({type: ‘av’, probeRadius: 1.4})
@@ -42,7 +42,7 @@ class StlWriter extends Writer {
   _avgNormal (normals, vertIndices) {
     let v = []
     for (let i = 0; i < 3; i++) {
-      v[i] = (normals[vertIndices[0] + i] + normals[vertIndices[1] + i] + normals[vertIndices[2] + i]) / 3
+      v[i] = (normals[vertIndices[0] * 3 + i] + normals[vertIndices[1] * 3 + i] + normals[vertIndices[2] * 3 + i]) / 3
     }
     return v
   }
