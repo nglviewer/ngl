@@ -20,21 +20,20 @@ function centerPbc (coords, mean, box) {
     return
   }
 
-  var i
-  var n = coords.length
+  const n = coords.length
 
-  var bx = box[ 0 ]
-  var by = box[ 1 ]
-  var bz = box[ 2 ]
-  var mx = mean[ 0 ]
-  var my = mean[ 1 ]
-  var mz = mean[ 2 ]
+  const bx = box[ 0 ]
+  const by = box[ 1 ]
+  const bz = box[ 2 ]
+  const mx = mean[ 0 ]
+  const my = mean[ 1 ]
+  const mz = mean[ 2 ]
 
-  var fx = -mx + bx + bx / 2
-  var fy = -my + by + by / 2
-  var fz = -mz + bz + bz / 2
+  const fx = -mx + bx + bx / 2
+  const fy = -my + by + by / 2
+  const fz = -mz + bz + bz / 2
 
-  for (i = 0; i < n; i += 3) {
+  for (let i = 0; i < n; i += 3) {
     coords[ i + 0 ] = (coords[ i + 0 ] + fx) % bx
     coords[ i + 1 ] = (coords[ i + 1 ] + fy) % by
     coords[ i + 2 ] = (coords[ i + 2 ] + fz) % bz
@@ -46,11 +45,11 @@ function removePbc (x, box) {
     return
   }
 
-    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
-    // in-place
+  // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
+  // in-place
 
-  var i, j, d, dist
-  var n = x.length
+  let i, j, d, dist
+  const n = x.length
 
   for (i = 3; i < n; i += 3) {
     for (j = 0; j < 3; ++j) {
@@ -111,17 +110,17 @@ class Trajectory {
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
 
-        // selection to restrict atoms used for superposition
+    // selection to restrict atoms used for superposition
     this.selection = new Selection(
-            defaults(p.sele, 'backbone and not hydrogen')
-        )
+      defaults(p.sele, 'backbone and not hydrogen')
+    )
 
     this.selection.signals.stringChanged.add(function () {
       this.makeIndices()
       this.resetCache()
     }, this)
 
-        // should come after this.selection is set
+    // should come after this.selection is set
     this.setStructure(structure)
     this.setPlayer(new TrajectoryPlayer(this))
 
@@ -140,8 +139,8 @@ class Trajectory {
     this.saveInitialStructure()
 
     this.backboneIndices = this.getIndices(
-            new Selection('backbone and not hydrogen')
-        )
+      new Selection('backbone and not hydrogen')
+    )
     this.makeIndices()
 
     this.frameCache = []
@@ -173,11 +172,11 @@ class Trajectory {
   }
 
   getIndices (selection) {
-    var indices
+    let indices
 
     if (selection && selection.test) {
-      var i = 0
-      var test = selection.test
+      let i = 0
+      const test = selection.test
       indices = []
 
       this.structure.eachAtom(function (ap) {
@@ -194,20 +193,19 @@ class Trajectory {
   }
 
   makeIndices () {
-        // indices to restrict atoms used for superposition
+    // indices to restrict atoms used for superposition
     this.indices = this.getIndices(this.selection)
 
-    var i, j
-    var n = this.indices.length * 3
+    const n = this.indices.length * 3
 
     this.coords1 = new Float32Array(n)
     this.coords2 = new Float32Array(n)
 
-    var y = this.initialStructure
-    var coords2 = this.coords2
+    const y = this.initialStructure
+    const coords2 = this.coords2
 
-    for (i = 0; i < n; i += 3) {
-      j = this.indices[ i / 3 ] * 3
+    for (let i = 0; i < n; i += 3) {
+      const j = this.indices[ i / 3 ] * 3
 
       coords2[ i + 0 ] = y[ j + 0 ]
       coords2[ i + 1 ] = y[ j + 1 ]
@@ -234,8 +232,8 @@ class Trajectory {
   }
 
   setParameters (params) {
-    var p = params
-    var resetCache = false
+    const p = params
+    let resetCache = false
 
     if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
       this.centerPbc = p.centerPbc
@@ -273,40 +271,39 @@ class Trajectory {
     if (i === -1 || this.frameCache[ i ]) {
       this.updateStructure(i, callback)
     } else {
-      this.loadFrame(i, function () {
+      this.loadFrame(i, () => {
         this.updateStructure(i, callback)
-      }.bind(this))
+      })
     }
 
     return this
   }
 
   interpolate (i, ip, ipp, ippp, t, type, callback) {
-    var fc = this.frameCache
+    const fc = this.frameCache
 
-    var c = fc[ i ]
-    var cp = fc[ ip ]
-    var cpp = fc[ ipp ]
-    var cppp = fc[ ippp ]
+    const c = fc[ i ]
+    const cp = fc[ ip ]
+    const cpp = fc[ ipp ]
+    const cppp = fc[ ippp ]
 
-    var j
-    var m = c.length
-    var coords = new Float32Array(m)
+    const m = c.length
+    const coords = new Float32Array(m)
 
     if (type === 'spline') {
-      for (j = 0; j < m; j += 3) {
+      for (let j = 0; j < m; j += 3) {
         coords[ j + 0 ] = spline(
-                    cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-                )
+          cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+        )
         coords[ j + 1 ] = spline(
-                    cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-                )
+          cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+        )
         coords[ j + 2 ] = spline(
-                    cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-                )
+          cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+        )
       }
     } else {
-      for (j = 0; j < m; j += 3) {
+      for (let j = 0; j < m; j += 3) {
         coords[ j + 0 ] = lerp(cp[ j + 0 ], c[ j + 0 ], t)
         coords[ j + 1 ] = lerp(cp[ j + 1 ], c[ j + 1 ], t)
         coords[ j + 2 ] = lerp(cp[ j + 2 ], c[ j + 2 ], t)
@@ -325,9 +322,9 @@ class Trajectory {
   setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
     if (i === undefined) return this
 
-    var fc = this.frameCache
+    const fc = this.frameCache
 
-    var iList = []
+    const iList = []
 
     if (!fc[ ippp ]) iList.push(ippp)
     if (!fc[ ipp ]) iList.push(ipp)
@@ -335,9 +332,9 @@ class Trajectory {
     if (!fc[ i ]) iList.push(i)
 
     if (iList.length) {
-      this.loadFrame(iList, function () {
+      this.loadFrame(iList, () => {
         this.interpolate(i, ip, ipp, ippp, t, type, callback)
-      }.bind(this))
+      })
     } else {
       this.interpolate(i, ip, ipp, ippp, t, type, callback)
     }
@@ -347,11 +344,11 @@ class Trajectory {
 
   loadFrame (i, callback) {
     if (Array.isArray(i)) {
-      var queue
-      var fn = function (j, wcallback) {
+      let queue
+      const fn = (j, wcallback) => {
         this._loadFrame(j, wcallback)
         if (queue.length() === 0 && typeof callback === 'function') callback()
-      }.bind(this)
+      }
       queue = new Queue(fn, i)
     } else {
       this._loadFrame(i, callback)
@@ -394,22 +391,21 @@ class Trajectory {
   }
 
   doSuperpose (x) {
-    var i, j
-    var n = this.indices.length * 3
+    const n = this.indices.length * 3
 
-    var coords1 = this.coords1
-    var coords2 = this.coords2
+    const coords1 = this.coords1
+    const coords2 = this.coords2
 
-    for (i = 0; i < n; i += 3) {
-      j = this.indices[ i / 3 ] * 3
+    for (let i = 0; i < n; i += 3) {
+      const j = this.indices[ i / 3 ] * 3
 
       coords1[ i + 0 ] = x[ j + 0 ]
       coords1[ i + 1 ] = x[ j + 1 ]
       coords1[ i + 2 ] = x[ j + 2 ]
     }
 
-        // TODO re-use superposition object
-    var sp = new Superposition(coords1, coords2)
+    // TODO re-use superposition object
+    const sp = new Superposition(coords1, coords2)
     sp.transform(x)
   }
 
@@ -418,10 +414,10 @@ class Trajectory {
 
     if (box) {
       if (this.backboneIndices.length > 0 && this.centerPbc) {
-        var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ]
-        var mean = this.getCircularMean(
-                    this.backboneIndices, coords, box2
-                )
+        const box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ]
+        const mean = this.getCircularMean(
+          this.backboneIndices, coords, box2
+        )
         centerPbc(coords, mean, box2)
       }
 

@@ -16,25 +16,25 @@ class BondHash {
     const countArray = new Uint8Array(atomCount)
     const offsetArray = new Int32Array(atomCount)
 
-        // count bonds per atom
+    // count bonds per atom
     for (let i = 0; i < bondCount; ++i) {
       countArray[ atomIndex1Array[ i ] ] += 1
       countArray[ atomIndex2Array[ i ] ] += 1
     }
 
-        // get offsets to atom bonds
+    // get offsets to atom bonds
     for (let i = 1; i < atomCount; ++i) {
       offsetArray[ i ] += offsetArray[ i - 1 ] + countArray[ i - 1 ]
     }
 
-        // prepare index array
+    // prepare index array
     const bondCount2 = bondCount * 2
     const indexArray = new Int32Array(bondCount2)
     for (let j = 0; j < bondCount2; ++j) {
       indexArray[ j ] = -1
     }
 
-        // build index array
+    // build index array
     for (let i = 0; i < bondCount; ++i) {
       const idx1 = atomIndex1Array[ i ]
       const idx2 = atomIndex2Array[ i ]

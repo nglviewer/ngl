@@ -37,7 +37,6 @@ class TopParser extends StructureParser {
     const atomMap = s.atomMap
     const atomStore = s.atomStore
     const bondStore = s.bondStore
-    const backboneBondStore = s.backboneBondStore
 
     const molecules = []
     const moleculetypeDict = {}
@@ -129,12 +128,6 @@ class TopParser extends StructureParser {
     atomStore.resize(atomCount)
     bondStore.resize(bondCount)
 
-    const ap1 = s.getAtomProxy()
-    const ap2 = s.getAtomProxy()
-    const rp1 = s.getResidueProxy()
-    const rp2 = s.getResidueProxy()
-    const backboneAtomSet = s.getAtomSet(false)
-
     let atomIdx = 0
     let resIdx = 0
     let chainidIdx = 0
@@ -149,13 +142,11 @@ class TopParser extends StructureParser {
       const chainname = getChainname(chainnameIdx)
       for (let i = 0; i < molCount; ++i) {
         lastResno = -1
-        let molResCount = 0
         const chainid = WaterNames.includes(name) ? chainname : getChainname(chainidIdx)
         molType.atoms.forEach(function (atomData) {
           const [resno, resname, atomname] = atomData
           if (resno !== lastResno) {
             ++resIdx
-            ++molResCount
           }
           atomStore.atomTypeId[atomIdx] = atomMap.add(atomname)
           atomStore.serial[atomIdx] = atomIdx + 1
@@ -175,14 +166,12 @@ class TopParser extends StructureParser {
     })
 
     bondStore.count = bondCount
-    s.atomSetDict.backbone = backboneAtomSet
-
-    calculateBondsWithin(s, true)
-    calculateBondsBetween(s, true, true)
 
     sb.finalize()
     s.finalizeAtoms()
     s.finalizeBonds()
+    calculateBondsWithin(s, true)
+    calculateBondsBetween(s, true, true)
     assignResidueTypeBonds(s)
 
     if (Debug) Log.timeEnd('TopParser._parse ' + this.name)

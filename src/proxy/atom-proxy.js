@@ -317,6 +317,20 @@ class AtomProxy {
     })
   }
 
+  /**
+   * Check if this atom is bonded to the given atom,
+   * assumes both atoms are from the same structure
+   * @param  {AtomProxy} ap - the given atom
+   * @return {Boolean} whether a bond exists or not
+   */
+  hasBondTo (ap) {
+    let hasBond = false
+    this.eachBondedAtom(function (bap) {
+      if (ap.index === bap.index) hasBond = true
+    })
+    return hasBond
+  }
+
   //
 
   /**

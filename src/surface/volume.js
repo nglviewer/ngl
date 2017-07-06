@@ -11,13 +11,13 @@ import { defaults } from '../utils.js'
 import WorkerPool from '../worker/worker-pool.js'
 import { VolumePicker } from '../utils/picker.js'
 import {
-    uniformArray, serialArray,
-    arrayMin, arrayMax, arraySum, arrayMean, arrayRms
+  uniformArray, serialArray,
+  arrayMin, arrayMax, arraySum, arrayMean, arrayRms
 } from '../math/array-utils'
 import MarchingCubes from './marching-cubes.js'
 import { laplacianSmooth, computeVertexNormals } from './surface-utils.js'
 import {
-    applyMatrix4toVector3array, applyMatrix3toVector3array
+  applyMatrix4toVector3array, applyMatrix3toVector3array
 } from '../math/vector-utils.js'
 import { m3new, m3makeNormal } from '../math/matrix-utils.js'
 import Surface from './surface.js'
@@ -76,16 +76,16 @@ WorkerRegistry.add('surf', function func (e, callback) {
  * Volume
  */
 class Volume {
-    /**
-     * Make Volume instance
-     * @param {String} name - volume name
-     * @param {String} path - source path
-     * @param {Float32array} data - volume 3d grid
-     * @param {Integer} nx - x dimension of the 3d volume
-     * @param {Integer} ny - y dimension of the 3d volume
-     * @param {Integer} nz - z dimension of the 3d volume
-     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
-     */
+  /**
+   * Make Volume instance
+   * @param {String} name - volume name
+   * @param {String} path - source path
+   * @param {Float32array} data - volume 3d grid
+   * @param {Integer} nx - x dimension of the 3d volume
+   * @param {Integer} ny - y dimension of the 3d volume
+   * @param {Integer} nz - z dimension of the 3d volume
+   * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
+   */
   constructor (name, path, data, nx, ny, nz, atomindex) {
     this.name = name
     this.path = path
@@ -101,15 +101,15 @@ class Volume {
 
   get type () { return 'Volume' }
 
-    /**
-     * set volume data
-     * @param {Float32array} data - volume 3d grid
-     * @param {Integer} nx - x dimension of the 3d volume
-     * @param {Integer} ny - y dimension of the 3d volume
-     * @param {Integer} nz - z dimension of the 3d volume
-     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
-     * @return {undefined}
-     */
+  /**
+   * set volume data
+   * @param {Float32array} data - volume 3d grid
+   * @param {Integer} nx - x dimension of the 3d volume
+   * @param {Integer} ny - y dimension of the 3d volume
+   * @param {Integer} nz - z dimension of the 3d volume
+   * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
+   * @return {undefined}
+   */
   setData (data, nx, ny, nz, atomindex) {
     this.nx = nx || 1
     this.ny = ny || 1
@@ -128,11 +128,11 @@ class Volume {
     if (this.worker) this.worker.terminate()
   }
 
-    /**
-     * set transformation matrix
-     * @param {Matrix4} matrix - 4x4 transformation matrix
-     * @return {undefined}
-     */
+  /**
+   * set transformation matrix
+   * @param {Matrix4} matrix - 4x4 transformation matrix
+   * @return {undefined}
+   */
   setMatrix (matrix) {
     this.matrix.copy(matrix)
 
@@ -157,16 +157,16 @@ class Volume {
     bb.applyMatrix4(this.matrix)
     bb.getCenter(this.center)
 
-        // make normal matrix
+    // make normal matrix
 
     const me = this.matrix.elements
     const r0 = new Vector3(me[0], me[1], me[2])
     const r1 = new Vector3(me[4], me[5], me[6])
     const r2 = new Vector3(me[8], me[9], me[10])
     const cp = new Vector3()
-        //        [ r0 ]       [ r1 x r2 ]
-        // M3x3 = [ r1 ]   N = [ r2 x r0 ]
-        //        [ r2 ]       [ r0 x r1 ]
+    //        [ r0 ]       [ r1 x r2 ]
+    // M3x3 = [ r1 ]   N = [ r2 x r0 ]
+    //        [ r2 ]       [ r0 x r1 ]
     const ne = this.normalMatrix.elements
     cp.crossVectors(r1, r2)
     ne[ 0 ] = cp.x
@@ -184,10 +184,10 @@ class Volume {
     this.inverseMatrix.getInverse(this.matrix)
   }
 
-    /**
-     * set atom indices
-     * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
-     * @return {undefined}
+  /**
+   * set atom indices
+   * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
+   * @return {undefined}
      */
   setAtomindex (atomindex) {
     this.atomindex = atomindex
@@ -228,18 +228,18 @@ class Volume {
     isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel
     smooth = defaults(smooth, 0)
 
-        //
+    //
 
     if (this.volsurf === undefined) {
       this.volsurf = new VolumeSurface(
-                this.data, this.nx, this.ny, this.nz, this.atomindex
-            )
+        this.data, this.nx, this.ny, this.nz, this.atomindex
+      )
     }
 
     const box = this._getBox(center, size)
     const sd = this.volsurf.getSurface(
-            isolevel, smooth, box, this.matrix.elements, contour, wrap
-        )
+      isolevel, smooth, box, this.matrix.elements, contour, wrap
+    )
 
     return this._makeSurface(sd, isolevel, smooth)
   }
@@ -248,7 +248,7 @@ class Volume {
     isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel
     smooth = smooth || 0
 
-        //
+    //
 
     if (window.Worker) {
       if (this.workerPool === undefined) {
@@ -274,22 +274,19 @@ class Volume {
       }
 
       worker.post(msg, undefined,
-
-                e => {
-                  const sd = e.data.sd
-                  const p = e.data.p
-                  callback(this._makeSurface(sd, p.isolevel, p.smooth))
-                },
-
-                e => {
-                  console.warn(
-                        'Volume.getSurfaceWorker error - trying without worker', e
-                    )
-                  const surface = this.getSurface(isolevel, smooth, center, size, contour, wrap)
-                  callback(surface)
-                }
-
-            )
+        e => {
+          const sd = e.data.sd
+          const p = e.data.p
+          callback(this._makeSurface(sd, p.isolevel, p.smooth))
+        },
+        e => {
+          console.warn(
+            'Volume.getSurfaceWorker error - trying without worker', e
+          )
+          const surface = this.getSurface(isolevel, smooth, center, size, contour, wrap)
+          callback(surface)
+        }
+      )
     } else {
       const surface = this.getSurface(isolevel, smooth, center, size, contour, wrap)
       callback(surface)
@@ -349,13 +346,13 @@ class Volume {
     const n = this.position.length / 3
     const array = new Float32Array(n * 3)
 
-        // var atoms = p.structure.atoms;
-        // var atomindex = this.atomindex;
+    // var atoms = p.structure.atoms;
+    // var atomindex = this.atomindex;
 
     for (let i = 0; i < n; ++i) {
       colormaker.volumeColorToArray(i, array, i * 3)
-            // a = atoms[ atomindex[ i ] ];
-            // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
+      // a = atoms[ atomindex[ i ] ];
+      // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
     }
 
     return array
@@ -447,19 +444,17 @@ class Volume {
 
   clone () {
     const vol = new Volume(
+      this.name,
+      this.path,
 
-            this.name,
-            this.path,
+      this.data,
 
-            this.data,
+      this.nx,
+      this.ny,
+      this.nz,
 
-            this.nx,
-            this.ny,
-            this.nz,
-
-            this.atomindex
-
-        )
+      this.atomindex
+    )
 
     vol.matrix.copy(this.matrix)
     vol.header = Object.assign({}, this.header)
