@@ -7,6 +7,7 @@
 import { Vector3, Matrix4 } from '../../lib/three.es6.js'
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import VolumeParser from './volume-parser.js'
 
 class MrcParser extends VolumeParser {
@@ -27,18 +28,12 @@ class MrcParser extends VolumeParser {
 
     if (Debug) Log.time('MrcParser._parse ' + this.name)
 
-    let bin = this.streamer.data
-
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-
     const v = this.volume
     const header = {}
 
+    const bin = ensureBuffer(this.streamer.data)
     const intView = new Int32Array(bin, 0, 56)
     const floatView = new Float32Array(bin, 0, 56)
-
     const dv = new DataView(bin)
 
     // 53  MAP         Character string 'MAP ' to identify file type

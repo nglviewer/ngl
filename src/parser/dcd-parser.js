@@ -5,8 +5,8 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { uint8ToString, ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
-import { uint8ToString } from '../utils.js'
 
 class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
@@ -37,10 +37,7 @@ class DcdParser extends TrajectoryParser {
 
     if (Debug) Log.time('DcdParser._parse ' + this.name)
 
-    let bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
+    const bin = ensureBuffer(this.streamer.data)
     const dv = new DataView(bin)
 
     const f = this.frames

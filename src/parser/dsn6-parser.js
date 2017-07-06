@@ -7,6 +7,7 @@
 import { Matrix4 } from '../../lib/three.es6.js'
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import { degToRad } from '../math/math-utils.js'
 import VolumeParser from './volume-parser.js'
 
@@ -20,15 +21,11 @@ class Dsn6Parser extends VolumeParser {
 
     if (Debug) Log.time('Dsn6Parser._parse ' + this.name)
 
-    let bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-
     const v = this.volume
     const header = {}
     let divisor, summand
 
+    const bin = ensureBuffer(this.streamer.data)
     const intView = new Int16Array(bin)
     const byteView = new Uint8Array(bin)
     const brixStr = String.fromCharCode.apply(null, byteView.subarray(0, 512))

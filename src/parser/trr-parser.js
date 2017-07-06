@@ -5,6 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
 
 class TrrParser extends TrajectoryParser {
@@ -16,16 +17,13 @@ class TrrParser extends TrajectoryParser {
 
     if (Debug) Log.time('TrrParser._parse ' + this.name)
 
-    var bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-    var dv = new DataView(bin)
+    const bin = ensureBuffer(this.streamer.data)
+    const dv = new DataView(bin)
 
-    var f = this.frames
-    var coordinates = f.coordinates
-    var boxes = f.boxes
-    // var header = {}
+    const f = this.frames
+    const coordinates = f.coordinates
+    const boxes = f.boxes
+    // const header = {}
 
     let offset = 0
     // const frameInfo = []

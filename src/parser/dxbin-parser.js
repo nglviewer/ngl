@@ -5,7 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
-import { uint8ToLines } from '../utils.js'
+import { uint8ToLines, ensureBuffer } from '../utils.js'
 import DxParser from './dx-parser.js'
 
 class DxbinParser extends DxParser {
@@ -17,11 +17,7 @@ class DxbinParser extends DxParser {
 
     if (Debug) Log.time('DxbinParser._parse ' + this.name)
 
-    let bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-
+    const bin = ensureBuffer(this.streamer.data)
     const headerLines = uint8ToLines(new Uint8Array(bin, 0, 1000))
     const headerInfo = this.parseHeaderLines(headerLines)
     const header = this.volume.header

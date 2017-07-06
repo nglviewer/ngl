@@ -463,6 +463,10 @@ function ensureArray (value) {
   return Array.isArray(value) ? value : [value]
 }
 
+function ensureBuffer (a) {
+  return (a.buffer && a.buffer instanceof ArrayBuffer) ? a.buffer : a
+}
+
 function _ensureClassFromArg (arg, constructor) {
   return arg instanceof constructor ? arg : new constructor(arg)
 }
@@ -520,6 +524,7 @@ export {
   getTypedArray,
   getUintArray,
   ensureArray,
+  ensureBuffer,
   ensureVector2,
   ensureVector3,
   ensureMatrix4,

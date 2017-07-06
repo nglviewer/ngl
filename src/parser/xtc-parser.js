@@ -5,6 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
 
 const MagicInts = new Uint32Array([
@@ -134,10 +135,7 @@ class XtcParser extends TrajectoryParser {
 
     if (Debug) Log.time('XtcParser._parse ' + this.name)
 
-    let bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
+    const bin = ensureBuffer(this.streamer.data)
     const dv = new DataView(bin)
 
     const f = this.frames
