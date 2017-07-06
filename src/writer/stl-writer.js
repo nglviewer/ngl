@@ -9,7 +9,7 @@ import Writer from './writer.js'
 // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
 
 /**
- * Create an STL File from a surface Object (for 3D printing)
+ * Create an STL File from a surface Object (e.g. for 3D printing)
  *
  * @example
  * molsurf = new NGL.MolecularSurface(structure)
@@ -17,7 +17,6 @@ import Writer from './writer.js'
  * stl = new NGL.StlWriter(surf)
  * stl.download(‘my_file_name’)
  * @class StlWriter
- * @extends {Writer}
  */
 class StlWriter extends Writer {
   constructor (surface) {
