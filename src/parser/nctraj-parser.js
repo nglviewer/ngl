@@ -23,7 +23,6 @@ class NctrajParser extends TrajectoryParser {
     const coordinates = f.coordinates
     const boxes = f.boxes
     const times = f.times
-    // const header = {}
 
     netcdfReader.getDataVariable('coordinates').forEach(function (c) {
       coordinates.push(new Float32Array(c))

@@ -142,7 +142,6 @@ class XtcParser extends TrajectoryParser {
     const coordinates = f.coordinates
     const boxes = f.boxes
     const times = f.times
-    // const header = {}
 
     const minMaxInt = new Int32Array(6)
     const sizeint = new Int32Array(3)

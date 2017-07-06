@@ -23,15 +23,11 @@ class TrrParser extends TrajectoryParser {
     const f = this.frames
     const coordinates = f.coordinates
     const boxes = f.boxes
-    // const header = {}
     const times = f.times
 
     let offset = 0
-    // const frameInfo = []
 
     while (true) {
-      // const frame = {}
-
       // const magicnum = dv.getInt32(offset)
       // const i1 = dv.getFloat32(offset + 4)
       offset += 8
@@ -51,8 +47,7 @@ class TrrParser extends TrajectoryParser {
       const velocitySize = dv.getInt32(offset + 32)
       const forceSize = dv.getInt32(offset + 36)
       const natoms = dv.getInt32(offset + 40)
-      // frame.natoms = natoms
-      // frame.step = dv.getInt32(offset + 44)
+      // const step = dv.getInt32(offset + 44)
       // const nre = dv.getInt32(offset + 48)
       offset += 52
 
@@ -122,8 +117,6 @@ class TrrParser extends TrajectoryParser {
 
       // ignore, unused
       offset += forceSize
-
-      // frameInfo.push(frame)
 
       if (offset >= bin.byteLength) break
     }
