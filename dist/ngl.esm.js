@@ -58825,15 +58825,15 @@ var prototypeAccessors$15 = { type: {},position: {},min: {},max: {},sum: {},mean
 
 prototypeAccessors$15.type.get = function () { return 'Volume' };
 
-  /**
-   * set volume data
-   * @param {Float32array} data - volume 3d grid
-   * @param {Integer} nx - x dimension of the 3d volume
-   * @param {Integer} ny - y dimension of the 3d volume
-   * @param {Integer} nz - z dimension of the 3d volume
-   * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
-   * @return {undefined}
-   */
+/**
+ * set volume data
+ * @param {Float32array} data - volume 3d grid
+ * @param {Integer} nx - x dimension of the 3d volume
+ * @param {Integer} ny - y dimension of the 3d volume
+ * @param {Integer} nz - z dimension of the 3d volume
+ * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
+ * @return {undefined}
+ */
 Volume.prototype.setData = function setData (data, nx, ny, nz, atomindex) {
   this.nx = nx || 1;
   this.ny = ny || 1;
@@ -58852,11 +58852,11 @@ Volume.prototype.setData = function setData (data, nx, ny, nz, atomindex) {
   if (this.worker) { this.worker.terminate(); }
 };
 
-  /**
-   * set transformation matrix
-   * @param {Matrix4} matrix - 4x4 transformation matrix
-   * @return {undefined}
-   */
+/**
+ * set transformation matrix
+ * @param {Matrix4} matrix - 4x4 transformation matrix
+ * @return {undefined}
+ */
 Volume.prototype.setMatrix = function setMatrix (matrix) {
   this.matrix.copy(matrix);
 
@@ -58881,16 +58881,16 @@ Volume.prototype.setMatrix = function setMatrix (matrix) {
   bb.applyMatrix4(this.matrix);
   bb.getCenter(this.center);
 
-      // make normal matrix
+  // make normal matrix
 
   var me = this.matrix.elements;
   var r0 = new Vector3(me[0], me[1], me[2]);
   var r1 = new Vector3(me[4], me[5], me[6]);
   var r2 = new Vector3(me[8], me[9], me[10]);
   var cp = new Vector3();
-      //      [ r0 ]     [ r1 x r2 ]
-      // M3x3 = [ r1 ] N = [ r2 x r0 ]
-      //      [ r2 ]     [ r0 x r1 ]
+  //      [ r0 ]     [ r1 x r2 ]
+  // M3x3 = [ r1 ] N = [ r2 x r0 ]
+  //      [ r2 ]     [ r0 x r1 ]
   var ne = this.normalMatrix.elements;
   cp.crossVectors(r1, r2);
   ne[ 0 ] = cp.x;
@@ -58908,10 +58908,10 @@ Volume.prototype.setMatrix = function setMatrix (matrix) {
   this.inverseMatrix.getInverse(this.matrix);
 };
 
-  /**
-   * set atom indices
-   * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
-   * @return {undefined}
+/**
+ * set atom indices
+ * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
+ * @return {undefined}
    */
 Volume.prototype.setAtomindex = function setAtomindex (atomindex) {
   this.atomindex = atomindex;
@@ -58952,18 +58952,18 @@ Volume.prototype.getSurface = function getSurface (isolevel, smooth, center, siz
   isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel;
   smooth = defaults(smooth, 0);
 
-      //
+  //
 
   if (this.volsurf === undefined) {
     this.volsurf = new VolumeSurface(
-              this.data, this.nx, this.ny, this.nz, this.atomindex
-          );
+      this.data, this.nx, this.ny, this.nz, this.atomindex
+    );
   }
 
   var box = this._getBox(center, size);
   var sd = this.volsurf.getSurface(
-          isolevel, smooth, box, this.matrix.elements, contour, wrap
-      );
+    isolevel, smooth, box, this.matrix.elements, contour, wrap
+  );
 
   return this._makeSurface(sd, isolevel, smooth)
 };
@@ -58974,7 +58974,7 @@ Volume.prototype.getSurfaceWorker = function getSurfaceWorker (isolevel, smooth,
   isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel;
   smooth = smooth || 0;
 
-      //
+  //
 
   if (window.Worker) {
     if (this.workerPool === undefined) {
@@ -59000,22 +59000,19 @@ Volume.prototype.getSurfaceWorker = function getSurfaceWorker (isolevel, smooth,
     };
 
     worker.post(msg, undefined,
-
-              function (e) {
-                var sd = e.data.sd;
-                var p = e.data.p;
-                callback(this$1._makeSurface(sd, p.isolevel, p.smooth));
-              },
-
-              function (e) {
-                console.warn(
-                      'Volume.getSurfaceWorker error - trying without worker', e
-                  );
-                var surface = this$1.getSurface(isolevel, smooth, center, size, contour, wrap);
-                callback(surface);
-              }
-
-          );
+      function (e) {
+        var sd = e.data.sd;
+        var p = e.data.p;
+        callback(this$1._makeSurface(sd, p.isolevel, p.smooth));
+      },
+      function (e) {
+        console.warn(
+          'Volume.getSurfaceWorker error - trying without worker', e
+        );
+        var surface = this$1.getSurface(isolevel, smooth, center, size, contour, wrap);
+        callback(surface);
+      }
+    );
   } else {
     var surface = this.getSurface(isolevel, smooth, center, size, contour, wrap);
     callback(surface);
@@ -59075,13 +59072,13 @@ Volume.prototype.getDataColor = function getDataColor (params) {
   var n = this.position.length / 3;
   var array = new Float32Array(n * 3);
 
-      // var atoms = p.structure.atoms;
-      // var atomindex = this.atomindex;
+  // var atoms = p.structure.atoms;
+  // var atomindex = this.atomindex;
 
   for (var i = 0; i < n; ++i) {
     colormaker.volumeColorToArray(i, array, i * 3);
-          // a = atoms[ atomindex[ i ] ];
-          // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
+    // a = atoms[ atomindex[ i ] ];
+    // if( a ) colormaker.atomColorToArray( a, array, i * 3 );
   }
 
   return array
@@ -59173,19 +59170,17 @@ prototypeAccessors$15.rms.get = function () {
 
 Volume.prototype.clone = function clone () {
   var vol = new Volume(
+    this.name,
+    this.path,
 
-          this.name,
-          this.path,
+    this.data,
 
-          this.data,
+    this.nx,
+    this.ny,
+    this.nz,
 
-          this.nx,
-          this.ny,
-          this.nz,
-
-          this.atomindex
-
-      );
+    this.atomindex
+  );
 
   vol.matrix.copy(this.matrix);
   vol.header = Object.assign({}, this.header);
@@ -59243,7 +59238,7 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
   var filterHash = this._getFilterHash(minValue, maxValue, outside);
 
   if (filterHash === this._filterHash) {
-          // already filtered
+    // already filtered
     return
   } else if (minValue === -Infinity && maxValue === Infinity) {
     this.data = data;
@@ -59253,7 +59248,7 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
     var n = data.length;
 
     if (!this._dataBuffer) {
-              // ArrayBuffer for re-use as Float32Array backend
+      // ArrayBuffer for re-use as Float32Array backend
 
       this._dataBuffer = new ArrayBuffer(n * 4);
       this._positionBuffer = new ArrayBuffer(n * 3 * 4);
@@ -59272,8 +59267,8 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
       var v = data[ i ];
 
       if ((!outside && v >= minValue && v <= maxValue) ||
-                  (outside && (v < minValue || v > maxValue))
-              ) {
+          (outside && (v < minValue || v > maxValue))
+      ) {
         var j3 = j * 3;
 
         filteredData[ j ] = v;
@@ -59288,7 +59283,7 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
       }
     }
 
-          // set views
+    // set views
 
     this.data = new Float32Array(this._dataBuffer, 0, j);
     this.position = new Float32Array(this._positionBuffer, 0, j * 3);
@@ -65123,9 +65118,9 @@ Object.defineProperties( ModelProxy.prototype, prototypeAccessors$23 );
  * Structure
  */
 var Structure = function Structure (name, path) {
-      /**
-       * @type {{refreshed: Signal}}
-       */
+  /**
+   * @type {{refreshed: Signal}}
+   */
   this.signals = {
     refreshed: new Signal()
   };
@@ -65140,33 +65135,33 @@ Structure.prototype.init = function init (name, path) {
   this.path = path;
   this.title = '';
   this.id = '';
-      /**
-       * @type {StructureHeader}
-       */
+  /**
+   * @type {StructureHeader}
+   */
   this.header = {};
-      /**
-       * @type {StructureExtraData}
-       */
+  /**
+   * @type {StructureExtraData}
+   */
   this.extraData = {};
 
   this.atomSetCache = undefined;
   this.atomSetDict = {};
   this.biomolDict = {};
-      /**
-       * @type {Entity[]}
-       */
+  /**
+   * @type {Entity[]}
+   */
   this.entityList = [];
-      /**
-       * @type {Unitcell}
-       */
+  /**
+   * @type {Unitcell}
+   */
   this.unitcell = undefined;
 
   this.frames = [];
   this.boxes = [];
 
-      /**
-       * @type {Validation}
-       */
+  /**
+   * @type {Validation}
+   */
   this.validation = undefined;
 
   this.bondStore = new BondStore(0);
@@ -65177,34 +65172,34 @@ Structure.prototype.init = function init (name, path) {
   this.chainStore = new ChainStore(0);
   this.modelStore = new ModelStore(0);
 
-      /**
-       * @type {AtomMap}
-       */
+  /**
+   * @type {AtomMap}
+   */
   this.atomMap = new AtomMap(this);
-      /**
-       * @type {ResidueMap}
-       */
+  /**
+   * @type {ResidueMap}
+   */
   this.residueMap = new ResidueMap(this);
 
-      /**
-       * @type {BondHash}
-       */
+  /**
+   * @type {BondHash}
+   */
   this.bondHash = undefined;
-      /**
-       * @type {SpatialHash}
-       */
+  /**
+   * @type {SpatialHash}
+   */
   this.spatialHash = undefined;
 
   this.atomSet = undefined;
   this.bondSet = undefined;
 
-      /**
-       * @type {Vector3}
-       */
+  /**
+   * @type {Vector3}
+   */
   this.center = undefined;
-      /**
-       * @type {Box3}
-       */
+  /**
+   * @type {Box3}
+   */
   this.boundingBox = undefined;
 
   this._bp = this.getBondProxy();
@@ -65240,7 +65235,7 @@ Structure.prototype.finalizeBonds = function finalizeBonds () {
   }
 };
 
-  //
+//
 
 Structure.prototype.getBondProxy = function getBondProxy (index) {
   return new BondProxy(this, index)
@@ -65262,10 +65257,10 @@ Structure.prototype.getModelProxy = function getModelProxy (index) {
   return new ModelProxy(this, index)
 };
 
-  //
+//
 
 Structure.prototype.getBondSet = function getBondSet (/* selection */) {
-      // TODO implement selection parameter
+  // TODO implement selection parameter
 
   var n = this.bondStore.count;
   var bondSet = new BitArray(n);
@@ -65288,7 +65283,7 @@ Structure.prototype.getBondSet = function getBondSet (/* selection */) {
 };
 
 Structure.prototype.getBackboneBondSet = function getBackboneBondSet (/* selection */) {
-      // TODO implement selection parameter
+  // TODO implement selection parameter
 
   var n = this.backboneBondStore.count;
   var backboneBondSet = new BitArray(n);
@@ -65312,7 +65307,7 @@ Structure.prototype.getBackboneBondSet = function getBackboneBondSet (/* selecti
 };
 
 Structure.prototype.getRungBondSet = function getRungBondSet (/* selection */) {
-      // TODO implement selection parameter
+  // TODO implement selection parameter
 
   var n = this.rungBondStore.count;
   var rungBondSet = new BitArray(n);
@@ -65335,6 +65330,15 @@ Structure.prototype.getRungBondSet = function getRungBondSet (/* selection */) {
   return rungBondSet
 };
 
+/**
+ * Get a set of atoms
+ * @param{Boolean|Selection|BitArray} selection - object defining how to
+ *                                    initialize the atom set.
+ *                                    Boolean: init with value;
+ *                                    Selection: init with selection;
+ *                                    BitArray: return bit array
+ * @return {BitArray} set of atoms
+ */
 Structure.prototype.getAtomSet = function getAtomSet (selection) {
   var atomSet;
   var n = this.atomStore.count;
@@ -65362,12 +65366,12 @@ Structure.prototype.getAtomSet = function getAtomSet (selection) {
   return atomSet
 };
 
-  /**
-   * Get set of atom around a set of atoms from a selection
-   * @param{Selection} selection - the selection object
-   * @param{Number} radius - radius to select within
-   * @return {BitArray} set of atoms
-   */
+/**
+ * Get set of atoms around a set of atoms from a selection
+ * @param{Selection} selection - the selection object
+ * @param{Number} radius - radius to select within
+ * @return {BitArray} set of atoms
+ */
 Structure.prototype.getAtomSetWithinSelection = function getAtomSetWithinSelection (selection, radius) {
   var spatialHash = this.spatialHash;
   var atomSet = this.getAtomSet(false);
@@ -65383,6 +65387,12 @@ Structure.prototype.getAtomSetWithinSelection = function getAtomSetWithinSelecti
   return atomSet
 };
 
+/**
+ * Get set of atoms around a point
+ * @param{Vector3|AtomProxy} point - the point
+ * @param{Number} radius - radius to select within
+ * @return {BitArray} set of atoms
+ */
 Structure.prototype.getAtomSetWithinPoint = function getAtomSetWithinPoint (point, radius) {
   var p = point;
   var atomSet = this.getAtomSet(false);
@@ -65394,6 +65404,15 @@ Structure.prototype.getAtomSetWithinPoint = function getAtomSetWithinPoint (poin
   return atomSet
 };
 
+/**
+ * Get set of atoms within a volume
+ * @param{Volume} volume - the volume
+ * @param{Number} radius - radius to select within
+ * @param{[type]} minValue - minimum value to be considered as within the volume
+ * @param{[type]} maxValue - maximum value to be considered as within the volume
+ * @param{[type]} outside - use only values falling outside of the min/max values
+ * @return {BitArray} set of atoms
+ */
 Structure.prototype.getAtomSetWithinVolume = function getAtomSetWithinVolume (volume, radius, minValue, maxValue, outside) {
     var this$1 = this;
 
@@ -65413,6 +65432,11 @@ Structure.prototype.getAtomSetWithinVolume = function getAtomSetWithinVolume (vo
   return atomSet
 };
 
+/**
+ * Get set of all atoms within the groups of a selection
+ * @param{Selection} selection - the selection object
+ * @return {BitArray} set of atoms
+ */
 Structure.prototype.getAtomSetWithinGroup = function getAtomSetWithinGroup (selection) {
   var atomResidueIndex = this.atomStore.residueIndex;
   var atomSet = this.getAtomSet(false);
@@ -65428,7 +65452,7 @@ Structure.prototype.getAtomSetWithinGroup = function getAtomSetWithinGroup (sele
   return atomSet
 };
 
-  //
+//
 
 Structure.prototype.getSelection = function getSelection () {
   return false
@@ -65438,12 +65462,12 @@ Structure.prototype.getStructure = function getStructure () {
   return this
 };
 
-  /**
-   * Entity iterator
-   * @param{function(entity: Entity)} callback - the callback
-   * @param{EntityType} type - entity type
-   * @return {undefined}
-   */
+/**
+ * Entity iterator
+ * @param{function(entity: Entity)} callback - the callback
+ * @param{EntityType} type - entity type
+ * @return {undefined}
+ */
 Structure.prototype.eachEntity = function eachEntity (callback, type) {
   this.entityList.forEach(function (entity) {
     if (type === undefined || entity.getEntityType() === type) {
@@ -65452,12 +65476,12 @@ Structure.prototype.eachEntity = function eachEntity (callback, type) {
   });
 };
 
-  /**
-   * Bond iterator
-   * @param{function(bond: BondProxy)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Bond iterator
+ * @param{function(bond: BondProxy)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachBond = function eachBond (callback, selection) {
   var bp = this.getBondProxy();
   var bondSet;
@@ -65483,12 +65507,12 @@ Structure.prototype.eachBond = function eachBond (callback, selection) {
   }
 };
 
-  /**
-   * Atom iterator
-   * @param{function(atom: AtomProxy)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Atom iterator
+ * @param{function(atom: AtomProxy)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachAtom = function eachAtom (callback, selection) {
   if (selection && selection.test) {
     this.eachModel(function (mp) {
@@ -65504,12 +65528,12 @@ Structure.prototype.eachAtom = function eachAtom (callback, selection) {
   }
 };
 
-  /**
-   * Residue iterator
-   * @param{function(residue: ResidueProxy)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Residue iterator
+ * @param{function(residue: ResidueProxy)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachResidue = function eachResidue (callback, selection) {
   var i;
   if (selection && selection.test) {
@@ -65539,12 +65563,12 @@ Structure.prototype.eachResidue = function eachResidue (callback, selection) {
   }
 };
 
-  /**
-   * Multi-residue iterator
-   * @param {Integer} n - window size
-   * @param{function(residueList: ResidueProxy[])} callback - the callback
-   * @return {undefined}
-   */
+/**
+ * Multi-residue iterator
+ * @param {Integer} n - window size
+ * @param{function(residueList: ResidueProxy[])} callback - the callback
+ * @return {undefined}
+ */
 Structure.prototype.eachResidueN = function eachResidueN (n, callback) {
     var this$1 = this;
 
@@ -65566,12 +65590,12 @@ Structure.prototype.eachResidueN = function eachResidueN (n, callback) {
   }
 };
 
-  /**
-   * Polymer iterator
-   * @param{function(polymer: Polymer)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Polymer iterator
+ * @param{function(polymer: Polymer)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachPolymer = function eachPolymer (callback, selection) {
   if (selection && selection.modelOnlyTest) {
     var modelOnlyTest = selection.modelOnlyTest;
@@ -65588,12 +65612,12 @@ Structure.prototype.eachPolymer = function eachPolymer (callback, selection) {
   }
 };
 
-  /**
-   * Chain iterator
-   * @param{function(chain: ChainProxy)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Chain iterator
+ * @param{function(chain: ChainProxy)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachChain = function eachChain (callback, selection) {
   if (selection && selection.test) {
     this.eachModel(function (mp) {
@@ -65609,12 +65633,12 @@ Structure.prototype.eachChain = function eachChain (callback, selection) {
   }
 };
 
-  /**
-   * Model iterator
-   * @param{function(model: ModelProxy)} callback - the callback
-   * @param{Selection} [selection] - the selection
-   * @return {undefined}
-   */
+/**
+ * Model iterator
+ * @param{function(model: ModelProxy)} callback - the callback
+ * @param{Selection} [selection] - the selection
+ * @return {undefined}
+ */
 Structure.prototype.eachModel = function eachModel (callback, selection) {
   var i;
   var n = this.modelStore.count;
@@ -65643,7 +65667,7 @@ Structure.prototype.eachModel = function eachModel (callback, selection) {
   }
 };
 
-  //
+//
 
 Structure.prototype.getAtomData = function getAtomData (params) {
   var p = Object.assign({}, params);
@@ -65790,13 +65814,13 @@ Structure.prototype.getBondData = function getBondData (params) {
           vShift.multiplyScalar(absOffset);
           vShift.negate();
 
-                      // Shortening is calculated so that neighbouring double
-                      // bonds on tetrahedral geometry (e.g. sulphonamide)
-                      // are not quite touching (arccos(1.9 / 2) ~ 109deg)
-                      // but don't shorten beyond 10% each end or it looks odd
+          // Shortening is calculated so that neighbouring double
+          // bonds on tetrahedral geometry (e.g. sulphonamide)
+          // are not quite touching (arccos(1.9 / 2) ~ 109deg)
+          // but don't shorten beyond 10% each end or it looks odd
           vShortening.subVectors(ap2, ap1).multiplyScalar(
-                          Math.max(0.1, absOffset / 1.88)
-                      );
+            Math.max(0.1, absOffset / 1.88)
+          );
           ap1.positionToArray(position1, i3);
           ap2.positionToArray(position2, i3);
 
@@ -65826,7 +65850,7 @@ Structure.prototype.getBondData = function getBondData (params) {
             vt.addVectors(ap2, vShift).toArray(position2, i3 + 3);
             vt.subVectors(ap2, vShift).toArray(position2, i3 + 6);
           } else {
-                        // todo, better fallback
+            // todo, better fallback
             ap1.positionToArray(position1, i3);
             ap2.positionToArray(position2, i3);
           }
@@ -65913,14 +65937,14 @@ Structure.prototype.getRungBondData = function getRungBondData (params) {
   return this.getBondData(params)
 };
 
-  //
+//
 
-  /**
-   * Gets the bounding box of the (selected) structure atoms
-   * @param{Selection} [selection] - the selection
-   * @param{Box3} [box] - optional target
-   * @return {Vector3} the box
-   */
+/**
+ * Gets the bounding box of the (selected) structure atoms
+ * @param{Selection} [selection] - the selection
+ * @param{Box3} [box] - optional target
+ * @return {Vector3} the box
+ */
 Structure.prototype.getBoundingBox = function getBoundingBox (selection, box) {
   if (Debug) { Log.time('getBoundingBox'); }
 
@@ -65956,11 +65980,11 @@ Structure.prototype.getBoundingBox = function getBoundingBox (selection, box) {
   return box
 };
 
-  /**
-   * Gets the principal axes of the (selected) structure atoms
-   * @param{Selection} [selection] - the selection
-   * @return {PrincipalAxes} the principal axes
-   */
+/**
+ * Gets the principal axes of the (selected) structure atoms
+ * @param{Selection} [selection] - the selection
+ * @return {PrincipalAxes} the principal axes
+ */
 Structure.prototype.getPrincipalAxes = function getPrincipalAxes (selection) {
   if (Debug) { Log.time('getPrincipalAxes'); }
 
@@ -65980,11 +66004,11 @@ Structure.prototype.getPrincipalAxes = function getPrincipalAxes (selection) {
   return new PrincipalAxes(coords)
 };
 
-  /**
-   * Gets the center of the (selected) structure atoms
-   * @param{Selection} [selection] - the selection
-   * @return {Vector3} the center
-   */
+/**
+ * Gets the center of the (selected) structure atoms
+ * @param{Selection} [selection] - the selection
+ * @return {Vector3} the center
+ */
 Structure.prototype.atomCenter = function atomCenter (selection) {
   if (selection) {
     return this.getBoundingBox(selection).getCenter()
@@ -66023,11 +66047,11 @@ Structure.prototype.getAtomIndices = function getAtomIndices (selection) {
   return indices
 };
 
-  /**
-   * Get number of unique chainnames
-   * @param{Selection} selection - limit count to selection
-   * @return {Integer} count
-   */
+/**
+ * Get number of unique chainnames
+ * @param{Selection} selection - limit count to selection
+ * @return {Integer} count
+ */
 Structure.prototype.getChainnameCount = function getChainnameCount (selection) {
   var chainnames = new Set();
   this.eachChain(function (cp) {
@@ -66039,7 +66063,7 @@ Structure.prototype.getChainnameCount = function getChainnameCount (selection) {
   return chainnames.size
 };
 
-  //
+//
 
 Structure.prototype.updatePosition = function updatePosition (position) {
   var i = 0;
@@ -66056,11 +66080,11 @@ Structure.prototype.refreshPosition = function refreshPosition () {
   this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox);
 };
 
-  /**
-   * Calls dispose() method of property objects.
-   * Unsets properties to help garbage collection.
-   * @return {undefined}
-   */
+/**
+ * Calls dispose() method of property objects.
+ * Unsets properties to help garbage collection.
+ * @return {undefined}
+ */
 Structure.prototype.dispose = function dispose () {
   if (this.frames) { this.frames.length = 0; }
   if (this.boxes) { this.boxes.length = 0; }
@@ -66323,6 +66347,8 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
   traj.signals.gotNumframes.add(function (n) {
     this.end = Math.min(defaults(p.end, n - 1), n - 1);
   }, this);
+
+  this._animate = this._animate.bind(this);
 };
 
 TrajectoryPlayer.prototype._animate = function _animate () {
@@ -66374,10 +66400,10 @@ TrajectoryPlayer.prototype._animate = function _animate () {
       }
 
       this._interpolate(
-                  i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-              );
+        i, ip, ipp, ippp, 1 / this.interpolateStep, 0
+      );
     } else {
-      setTimeout(this._animate.bind(this), this.timeout);
+      setTimeout(this._animate, this.timeout);
     }
   } else {
     this._running = false;
@@ -66385,28 +66411,30 @@ TrajectoryPlayer.prototype._animate = function _animate () {
 };
 
 TrajectoryPlayer.prototype._interpolate = function _interpolate (i, ip, ipp, ippp, d, t) {
+    var this$1 = this;
+
   t += d;
 
   if (t <= 1) {
     var deltaTime = Math.round(this.timeout * d);
 
     this.traj.setFrameInterpolated(
-              i, ip, ipp, ippp, t, this.interpolateType,
-              function () {
-                setTimeout(function () {
-                  this._interpolate(i, ip, ipp, ippp, d, t);
-                }.bind(this), deltaTime);
-              }.bind(this)
-          );
+      i, ip, ipp, ippp, t, this.interpolateType,
+      function () {
+        setTimeout(function () {
+          this$1._interpolate(i, ip, ipp, ippp, d, t);
+        }, deltaTime);
+      }
+    );
   } else {
-    setTimeout(this._animate.bind(this), 0);
+    setTimeout(this._animate, 0);
   }
 };
 
-  /**
-   * toggle between playing and pausing the animation
-   * @return {undefined}
-   */
+/**
+ * toggle between playing and pausing the animation
+ * @return {undefined}
+ */
 TrajectoryPlayer.prototype.toggle = function toggle () {
   if (this._running) {
     this.pause();
@@ -66415,10 +66443,10 @@ TrajectoryPlayer.prototype.toggle = function toggle () {
   }
 };
 
-  /**
-   * start the animation
-   * @return {undefined}
-   */
+/**
+ * start the animation
+ * @return {undefined}
+ */
 TrajectoryPlayer.prototype.play = function play () {
   if (!this._running) {
     if (this.traj.player !== this) {
@@ -66427,11 +66455,10 @@ TrajectoryPlayer.prototype.play = function play () {
 
     var frame = this.traj.currentFrame;
 
-          // snap to the grid implied by this.step division and multiplication
-          // thus minimizing cache misses
+    // snap to the grid implied by this.step division and multiplication
+    // thus minimizing cache misses
     var i = Math.ceil(frame / this.step) * this.step;
-
-          // wrap when restarting from the limit (i.e. end or start)
+    // wrap when restarting from the limit (i.e. end or start)
     if (this.direction === 'forward' && frame >= this.end) {
       i = this.start;
     } else if (this.direction === 'backward' && frame <= this.start) {
@@ -66446,10 +66473,10 @@ TrajectoryPlayer.prototype.play = function play () {
   }
 };
 
-  /**
-   * pause the animation
-   * @return {undefined}
-   */
+/**
+ * pause the animation
+ * @return {undefined}
+ */
 TrajectoryPlayer.prototype.pause = function pause () {
   if (this._running) {
     this._stopFlag = true;
@@ -66457,10 +66484,10 @@ TrajectoryPlayer.prototype.pause = function pause () {
   }
 };
 
-  /**
-   * stop the animation (pause and return to start-frame)
-   * @return {undefined}
-   */
+/**
+ * stop the animation (pause and return to start-frame)
+ * @return {undefined}
+ */
 TrajectoryPlayer.prototype.stop = function stop () {
   this.traj.setFrame(this.start);
   this.pause();
@@ -66477,7 +66504,6 @@ function centerPbc (coords, mean, box) {
     return
   }
 
-  var i;
   var n = coords.length;
 
   var bx = box[ 0 ];
@@ -66491,7 +66517,7 @@ function centerPbc (coords, mean, box) {
   var fy = -my + by + by / 2;
   var fz = -mz + bz + bz / 2;
 
-  for (i = 0; i < n; i += 3) {
+  for (var i = 0; i < n; i += 3) {
     coords[ i + 0 ] = (coords[ i + 0 ] + fx) % bx;
     coords[ i + 1 ] = (coords[ i + 1 ] + fy) % by;
     coords[ i + 2 ] = (coords[ i + 2 ] + fz) % bz;
@@ -66503,8 +66529,8 @@ function removePbc (x, box) {
     return
   }
 
-    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
-    // in-place
+  // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
+  // in-place
 
   var i, j, d, dist;
   var n = x.length;
@@ -66567,17 +66593,17 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
 
   this.name = trajPath.replace(/^.*[\\/]/, '');
 
-      // selection to restrict atoms used for superposition
+  // selection to restrict atoms used for superposition
   this.selection = new Selection(
-          defaults(p.sele, 'backbone and not hydrogen')
-      );
+    defaults(p.sele, 'backbone and not hydrogen')
+  );
 
   this.selection.signals.stringChanged.add(function () {
     this.makeIndices();
     this.resetCache();
   }, this);
 
-      // should come after this.selection is set
+  // should come after this.selection is set
   this.setStructure(structure);
   this.setPlayer(new TrajectoryPlayer(this));
 
@@ -66596,8 +66622,8 @@ Trajectory.prototype.setStructure = function setStructure (structure) {
   this.saveInitialStructure();
 
   this.backboneIndices = this.getIndices(
-          new Selection('backbone and not hydrogen')
-      );
+    new Selection('backbone and not hydrogen')
+  );
   this.makeIndices();
 
   this.frameCache = [];
@@ -66652,10 +66678,9 @@ Trajectory.prototype.getIndices = function getIndices (selection) {
 Trajectory.prototype.makeIndices = function makeIndices () {
     var this$1 = this;
 
-      // indices to restrict atoms used for superposition
+  // indices to restrict atoms used for superposition
   this.indices = this.getIndices(this.selection);
 
-  var i, j;
   var n = this.indices.length * 3;
 
   this.coords1 = new Float32Array(n);
@@ -66664,8 +66689,8 @@ Trajectory.prototype.makeIndices = function makeIndices () {
   var y = this.initialStructure;
   var coords2 = this.coords2;
 
-  for (i = 0; i < n; i += 3) {
-    j = this$1.indices[ i / 3 ] * 3;
+  for (var i = 0; i < n; i += 3) {
+    var j = this$1.indices[ i / 3 ] * 3;
 
     coords2[ i + 0 ] = y[ j + 0 ];
     coords2[ i + 1 ] = y[ j + 1 ];
@@ -66722,6 +66747,8 @@ Trajectory.prototype.setParameters = function setParameters (params) {
 };
 
 Trajectory.prototype.setFrame = function setFrame (i, callback) {
+    var this$1 = this;
+
   if (i === undefined) { return this }
 
   this.inProgress = true;
@@ -66732,8 +66759,8 @@ Trajectory.prototype.setFrame = function setFrame (i, callback) {
     this.updateStructure(i, callback);
   } else {
     this.loadFrame(i, function () {
-      this.updateStructure(i, callback);
-    }.bind(this));
+      this$1.updateStructure(i, callback);
+    });
   }
 
   return this
@@ -66747,27 +66774,26 @@ Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, ty
   var cpp = fc[ ipp ];
   var cppp = fc[ ippp ];
 
-  var j;
   var m = c.length;
   var coords = new Float32Array(m);
 
   if (type === 'spline') {
-    for (j = 0; j < m; j += 3) {
+    for (var j = 0; j < m; j += 3) {
       coords[ j + 0 ] = spline(
-                  cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-              );
+        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
+      );
       coords[ j + 1 ] = spline(
-                  cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-              );
+        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
+      );
       coords[ j + 2 ] = spline(
-                  cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-              );
+        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
+      );
     }
   } else {
-    for (j = 0; j < m; j += 3) {
-      coords[ j + 0 ] = lerp(cp[ j + 0 ], c[ j + 0 ], t);
-      coords[ j + 1 ] = lerp(cp[ j + 1 ], c[ j + 1 ], t);
-      coords[ j + 2 ] = lerp(cp[ j + 2 ], c[ j + 2 ], t);
+    for (var j$1 = 0; j$1 < m; j$1 += 3) {
+      coords[ j$1 + 0 ] = lerp(cp[ j$1 + 0 ], c[ j$1 + 0 ], t);
+      coords[ j$1 + 1 ] = lerp(cp[ j$1 + 1 ], c[ j$1 + 1 ], t);
+      coords[ j$1 + 2 ] = lerp(cp[ j$1 + 2 ], c[ j$1 + 2 ], t);
     }
   }
 
@@ -66781,6 +66807,8 @@ Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, ty
 };
 
 Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
+    var this$1 = this;
+
   if (i === undefined) { return this }
 
   var fc = this.frameCache;
@@ -66794,8 +66822,8 @@ Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip
 
   if (iList.length) {
     this.loadFrame(iList, function () {
-      this.interpolate(i, ip, ipp, ippp, t, type, callback);
-    }.bind(this));
+      this$1.interpolate(i, ip, ipp, ippp, t, type, callback);
+    });
   } else {
     this.interpolate(i, ip, ipp, ippp, t, type, callback);
   }
@@ -66804,12 +66832,14 @@ Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip
 };
 
 Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
+    var this$1 = this;
+
   if (Array.isArray(i)) {
     var queue;
     var fn = function (j, wcallback) {
-      this._loadFrame(j, wcallback);
+      this$1._loadFrame(j, wcallback);
       if (queue.length() === 0 && typeof callback === 'function') { callback(); }
-    }.bind(this);
+    };
     queue = new Queue(fn, i);
   } else {
     this._loadFrame(i, callback);
@@ -66854,21 +66884,20 @@ Trajectory.prototype.getCircularMean = function getCircularMean (indices, coords
 Trajectory.prototype.doSuperpose = function doSuperpose (x) {
     var this$1 = this;
 
-  var i, j;
   var n = this.indices.length * 3;
 
   var coords1 = this.coords1;
   var coords2 = this.coords2;
 
-  for (i = 0; i < n; i += 3) {
-    j = this$1.indices[ i / 3 ] * 3;
+  for (var i = 0; i < n; i += 3) {
+    var j = this$1.indices[ i / 3 ] * 3;
 
     coords1[ i + 0 ] = x[ j + 0 ];
     coords1[ i + 1 ] = x[ j + 1 ];
     coords1[ i + 2 ] = x[ j + 2 ];
   }
 
-      // TODO re-use superposition object
+  // TODO re-use superposition object
   var sp = new Superposition(coords1, coords2);
   sp.transform(x);
 };
@@ -66880,8 +66909,8 @@ Trajectory.prototype.process = function process (i, box, coords, numframes) {
     if (this.backboneIndices.length > 0 && this.centerPbc) {
       var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
       var mean = this.getCircularMean(
-                  this.backboneIndices, coords, box2
-              );
+        this.backboneIndices, coords, box2
+      );
       centerPbc(coords, mean, box2);
     }
 
@@ -74060,8 +74089,8 @@ Stage.prototype.setParameters = function setParameters (params) {
   viewer.setSampling(p.sampleLevel);
   viewer.setBackground(p.backgroundColor);
   viewer.setLight(
-          p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
-      );
+    p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
+  );
 
   this.signals.parametersChanged.dispatch(
     this.getParameters()
@@ -74546,8 +74575,8 @@ Stage.prototype.getZoomForBox = function getZoomForBox (boundingBox) {
   var aspectFactor = (height < width ? 1 : aspect);
 
   distance = Math.abs(
-          ((distance * 0.5) / aspectFactor) / Math.sin(fov / 2)
-      );
+    ((distance * 0.5) / aspectFactor) / Math.sin(fov / 2)
+  );
   distance += this.parameters.clipDist.value;
   return -distance
 };
@@ -74571,10 +74600,10 @@ Stage.prototype.getCenter = function getCenter (optionalTarget) {
  */
 Stage.prototype.autoView = function autoView (duration) {
   this.animationControls.zoomMove(
-          this.getCenter(),
-          this.getZoom(),
-          defaults(duration, 0)
-      );
+    this.getCenter(),
+    this.getZoom(),
+    defaults(duration, 0)
+  );
 };
 
 /**
@@ -76986,7 +77015,11 @@ var TrajectoryComponent = (function (Component$$1) {
 
 var FramesTrajectory = (function (Trajectory$$1) {
   function FramesTrajectory (frames, structure, params) {
-    Trajectory$$1.call(this, '', structure, params);
+    var p = params || {};
+    p.timeOffset = defaults(p.timeOffset, frames.timeOffset);
+    p.deltaTime = defaults(p.deltaTime, frames.deltaTime);
+
+    Trajectory$$1.call(this, '', structure, p);
 
     this.name = frames.name;
     this.path = frames.path;
@@ -77599,20 +77632,20 @@ var StructureComponent = (function (Component$$1) {
 
     Component$$1.call(this, stage, p);
 
-        /**
-         * Events emitted by the component
-         * @type {StructureComponentSignals}
-         */
+    /**
+     * Events emitted by the component
+     * @type {StructureComponentSignals}
+     */
     this.signals = Object.assign(this.signals, {
       trajectoryAdded: new Signal(),
       trajectoryRemoved: new Signal(),
       defaultAssemblyChanged: new Signal()
     });
 
-        /**
-         * The wrapped structure
-         * @type {Structure}
-         */
+    /**
+     * The wrapped structure
+     * @type {Structure}
+     */
     this.structure = structure;
 
     this.trajList = [];
@@ -77626,36 +77659,36 @@ var StructureComponent = (function (Component$$1) {
 
   var prototypeAccessors = { type: {} };
 
-    /**
-     * Component type
-     * @type {String}
-     */
+  /**
+   * Component type
+   * @type {String}
+   */
   prototypeAccessors.type.get = function () { return 'structure' };
 
-    /**
-     * Initialize selection
-     * @private
-     * @param {String} sele - selection string
-     * @return {undefined}
-     */
+  /**
+   * Initialize selection
+   * @private
+   * @param {String} sele - selection string
+   * @return {undefined}
+   */
   StructureComponent.prototype.initSelection = function initSelection (sele) {
     var this$1 = this;
 
-        /**
-         * Selection for {@link StructureComponent#structureView}
-         * @private
-         * @type {Selection}
-         */
+    /**
+     * Selection for {@link StructureComponent#structureView}
+     * @private
+     * @type {Selection}
+     */
     this.selection = new Selection(sele);
 
-        /**
-         * View on {@link StructureComponent#structure}.
-         * Change its selection via {@link StructureComponent#setSelection}.
-         * @type {StructureView}
-         */
+    /**
+     * View on {@link StructureComponent#structure}.
+     * Change its selection via {@link StructureComponent#setSelection}.
+     * @type {StructureView}
+     */
     this.structureView = new StructureView(
-            this.structure, this.selection
-        );
+      this.structure, this.selection
+    );
 
     this.selection.signals.stringChanged.add(function () {
       this$1.structureView.setSelection(this$1.selection);
@@ -77665,22 +77698,22 @@ var StructureComponent = (function (Component$$1) {
     });
   };
 
-    /**
-     * Set selection of {@link StructureComponent#structureView}
-     * @param {String} string - selection string
-     * @return {StructureComponent} this object
-     */
+  /**
+   * Set selection of {@link StructureComponent#structureView}
+   * @param {String} string - selection string
+   * @return {StructureComponent} this object
+   */
   StructureComponent.prototype.setSelection = function setSelection (string) {
     this.selection.setString(string);
 
     return this
   };
 
-    /**
-     * Set the default assembly
-     * @param {String} value - assembly name
-     * @return {undefined}
-     */
+  /**
+   * Set the default assembly
+   * @param {String} value - assembly name
+   * @return {undefined}
+   */
   StructureComponent.prototype.setDefaultAssembly = function setDefaultAssembly (value) {
     var this$1 = this;
 
@@ -77691,20 +77724,20 @@ var StructureComponent = (function (Component$$1) {
     this.signals.defaultAssemblyChanged.dispatch(value);
   };
 
-    /**
-     * Rebuild all representations
-     * @return {undefined}
-     */
+  /**
+   * Rebuild all representations
+   * @return {undefined}
+   */
   StructureComponent.prototype.rebuildRepresentations = function rebuildRepresentations () {
     this.reprList.forEach(function (repr) {
       repr.build();
     });
   };
 
-    /**
-     * Rebuild all trajectories
-     * @return {undefined}
-     */
+  /**
+   * Rebuild all trajectories
+   * @return {undefined}
+   */
   StructureComponent.prototype.rebuildTrajectories = function rebuildTrajectories () {
     var this$1 = this;
 
@@ -77713,17 +77746,17 @@ var StructureComponent = (function (Component$$1) {
     });
   };
 
-    /**
-     * Add a new structure representation to the component
-     * @param {String} type - the name of the representation, one of:
-     *                        axes, backbone, ball+stick, base, cartoon, contact,
-     *                        distance, helixorient, hyperball, label, licorice, line
-     *                        surface, ribbon, rocket, rope, spacefill, trace, tube,
-     *                        unitcell.
-     * @param {StructureRepresentationParameters} params - representation parameters
-     * @return {RepresentationComponent} the created representation wrapped into
-     *                                   a representation component object
-     */
+  /**
+   * Add a new structure representation to the component
+   * @param {String} type - the name of the representation, one of:
+   *                        axes, backbone, ball+stick, base, cartoon, contact,
+   *                        distance, helixorient, hyperball, label, licorice, line
+   *                        surface, ribbon, rocket, rope, spacefill, trace, tube,
+   *                        unitcell.
+   * @param {StructureRepresentationParameters} params - representation parameters
+   * @return {RepresentationComponent} the created representation wrapped into
+   *                                   a representation component object
+   */
   StructureComponent.prototype.addRepresentation = function addRepresentation (type, params) {
     var p = params || {};
     p.defaultAssembly = this.defaultAssembly;
@@ -77731,12 +77764,12 @@ var StructureComponent = (function (Component$$1) {
     return Component$$1.prototype.addRepresentation.call(this, type, this.structureView, p)
   };
 
-    /**
-     * Add a new trajectory component to the structure
-     * @param {String|Frames} trajPath - path or frames object
-     * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
-     * @return {TrajectoryComponent} the created trajectory component object
-     */
+  /**
+   * Add a new trajectory component to the structure
+   * @param {String|Frames} trajPath - path or frames object
+   * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
+   * @return {TrajectoryComponent} the created trajectory component object
+   */
   StructureComponent.prototype.addTrajectory = function addTrajectory (trajPath, params) {
     var this$1 = this;
 
@@ -77765,7 +77798,7 @@ var StructureComponent = (function (Component$$1) {
   };
 
   StructureComponent.prototype.dispose = function dispose () {
-        // copy via .slice because side effects may change trajList
+    // copy via .slice because side effects may change trajList
     this.trajList.slice().forEach(function (traj) {
       traj.dispose();
     });
@@ -77776,12 +77809,12 @@ var StructureComponent = (function (Component$$1) {
     Component$$1.prototype.dispose.call(this);
   };
 
-    /**
-     * Automatically center and zoom the component
-     * @param  {String|Integer} [sele] - selection string or duration if integer
-     * @param  {Integer} [duration] - duration of the animation, defaults to 0
-     * @return {undefined}
-     */
+  /**
+   * Automatically center and zoom the component
+   * @param  {String|Integer} [sele] - selection string or duration if integer
+   * @param  {Integer} [duration] - duration of the animation, defaults to 0
+   * @return {undefined}
+   */
   StructureComponent.prototype.autoView = function autoView (sele, duration) {
     if (Number.isInteger(sele)) {
       duration = sele;
@@ -77789,10 +77822,10 @@ var StructureComponent = (function (Component$$1) {
     }
 
     this.stage.animationControls.zoomMove(
-            this.getCenter(sele),
-            this.getZoom(sele),
-            defaults(duration, 0)
-        );
+      this.getCenter(sele),
+      this.getZoom(sele),
+      defaults(duration, 0)
+    );
   };
 
   StructureComponent.prototype.getBoxUntransformed = function getBoxUntransformed (sele) {
@@ -77817,8 +77850,8 @@ var StructureComponent = (function (Component$$1) {
 
   StructureComponent.prototype.superpose = function superpose$1 (component, align, sele1, sele2) {
     superpose(
-            this.structureView, component.structureView, align, sele1, sele2
-        );
+      this.structureView, component.structureView, align, sele1, sele2
+    );
 
     this.updateRepresentations({ 'position': true });
 
@@ -77829,7 +77862,7 @@ var StructureComponent = (function (Component$$1) {
     Component$$1.prototype.setVisibility.call(this, value);
 
     this.trajList.forEach(function (traj) {
-            // FIXME ???
+      // FIXME ???
       traj.setVisibility(value);
     });
 
@@ -89171,6 +89204,10 @@ var Frames = function Frames (name, path) {
 
   this.coordinates = [];
   this.boxes = [];
+  this.times = [];
+
+  this.timeOffset = 0;
+  this.deltaTime = 1;
 };
 
 var prototypeAccessors$30 = { type: {} };
@@ -89257,11 +89294,11 @@ var DcdParser = (function (TrajectoryParser$$1) {
     }
     var dv = new DataView(bin);
 
-    var i, n;
     var f = this.frames;
     var coordinates = f.coordinates;
     var boxes = f.boxes;
     var header = {};
+
     var nextPos = 0;
 
     // header block
@@ -89270,8 +89307,8 @@ var DcdParser = (function (TrajectoryParser$$1) {
     var ef = intView[ 0 ] !== dv.getInt32(0);  // endianess flag
     // swap byte order when big endian (84 indicates little endian)
     if (intView[ 0 ] !== 84) {
-      n = bin.byteLength;
-      for (i = 0; i < n; i += 4) {
+      var n = bin.byteLength;
+      for (var i = 0; i < n; i += 4) {
         dv.setFloat32(i, dv.getFloat32(i), true);
       }
     }
@@ -89280,9 +89317,9 @@ var DcdParser = (function (TrajectoryParser$$1) {
     }
     // format indicator, should read 'CORD'
     var formatString = String.fromCharCode(
-        dv.getUint8(4), dv.getUint8(5),
-        dv.getUint8(6), dv.getUint8(7)
-      );
+      dv.getUint8(4), dv.getUint8(5),
+      dv.getUint8(6), dv.getUint8(7)
+    );
     if (formatString !== 'CORD') {
       Log.error('dcd bad format, format string');
     }
@@ -89348,10 +89385,10 @@ var DcdParser = (function (TrajectoryParser$$1) {
     var natom = header.NATOM;
     var natom4 = natom * 4;
 
-    for (i = 0, n = header.NSET; i < n; ++i) {
+    for (var i$1 = 0, n$1 = header.NSET; i$1 < n$1; ++i$1) {
       if (extraBlock) {
         nextPos += 4;  // block start
-                // unitcell: A, alpha, B, beta, gamma, C (doubles)
+        // unitcell: A, alpha, B, beta, gamma, C (doubles)
         var box = new Float32Array(9);
         box[ 0 ] = dv.getFloat64(nextPos, ef);
         box[ 4 ] = dv.getFloat64(nextPos + 2 * 8, ef);
@@ -89365,7 +89402,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
       var coord = new Float32Array(natom * 3);
       for (var j = 0; j < 3; ++j) {
         if (dv.getInt32(nextPos, ef) !== natom4) {
-          Log.error('dcd bad format, coord block start', i, j);
+          Log.error('dcd bad format, coord block start', i$1, j);
         }
         nextPos += 4;  // block start
         var c = new Float32Array(bin, nextPos, natom);
@@ -89374,7 +89411,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
         }
         nextPos += natom4;
         if (dv.getInt32(nextPos, ef) !== natom4) {
-          Log.error('dcd bad format, coord block end', i, j);
+          Log.error('dcd bad format, coord block end', i$1, j);
         }
         nextPos += 4;  // block end
       }
@@ -89386,9 +89423,16 @@ var DcdParser = (function (TrajectoryParser$$1) {
       }
     }
 
-    // console.log( header );
-    // console.log( header.TITLE );
-    // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+    if (header.DELTA) {
+      f.deltaTime = header.DELTA * 20.45482949774598;
+    }
+    if (header.ISTART >= 1) {
+      f.timeOffset = (header.ISTART - 1) * f.deltaTime;
+    }
+
+    // console.log(header)
+    // console.log(header.TITLE)
+    // console.log('isCharmm', isCharmm, 'extraBlock', extraBlock, 'fourDims, fourDims)
 
     if (Debug) { Log.timeEnd('DcdParser._parse ' + this.name); }
   };
@@ -90550,6 +90594,7 @@ var NctrajParser = (function (TrajectoryParser$$1) {
     var f = this.frames;
     var coordinates = f.coordinates;
     var boxes = f.boxes;
+    var times = f.times;
     // const header = {}
 
     netcdfReader.getDataVariable('coordinates').forEach(function (c) {
@@ -90560,6 +90605,19 @@ var NctrajParser = (function (TrajectoryParser$$1) {
       netcdfReader.getDataVariable('cell_lengths').forEach(function (b) {
         boxes.push(new Float32Array(b));
       });
+    }
+
+    if (netcdfReader.hasDataVariable('time')) {
+      netcdfReader.getDataVariable('time').forEach(function (t) {
+        times.push(t);
+      });
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0];
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0];
     }
 
     if (Debug) { Log.timeEnd('NctrajParser._parse ' + this.name); }
@@ -90874,7 +90932,8 @@ var XtcParser = (function (TrajectoryParser$$1) {
     var f = this.frames;
     var coordinates = f.coordinates;
     var boxes = f.boxes;
-    // var header = {}
+    var times = f.times;
+    // const header = {}
 
     var minMaxInt = new Int32Array(6);
     var sizeint = new Int32Array(3);
@@ -90897,8 +90956,9 @@ var XtcParser = (function (TrajectoryParser$$1) {
 
       var natoms3 = natoms * 3;
 
-      // frame.time = dv.getFloat32(offset)
+      times.push(dv.getFloat32(offset));
       offset += 4;
+
       var box = new Float32Array(9);
       for (var i = 0; i < 9; ++i) {
         box[i] = dv.getFloat32(offset) * 10;
@@ -91091,6 +91151,13 @@ var XtcParser = (function (TrajectoryParser$$1) {
       coordinates.push(frameCoords);
 
       if (offset >= bin.byteLength) { break }
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0];
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0];
     }
 
     if (Debug) { Log.timeEnd('XtcParser._parse ' + this.name); }
@@ -96792,7 +96859,7 @@ function StaticDatasource (baseUrl) {
   };
 }
 
-var version$1 = "0.10.5-3";
+var version$1 = "0.10.5-4";
 
 /**
  * @file Version
