@@ -175,7 +175,7 @@ class Structure {
     }
   }
 
-    //
+  //
 
   getBondProxy (index) {
     return new BondProxy(this, index)
@@ -270,6 +270,15 @@ class Structure {
     return rungBondSet
   }
 
+  /**
+   * Get a set of atoms
+   * @param  {Boolean|Selection|BitArray} selection - object defining how to
+   *                                      initialize the atom set.
+   *                                      Boolean: init with value;
+   *                                      Selection: init with selection;
+   *                                      BitArray: return bit array
+   * @return {BitArray} set of atoms
+   */
   getAtomSet (selection) {
     let atomSet
     const n = this.atomStore.count
@@ -277,7 +286,7 @@ class Structure {
     if (selection instanceof BitArray) {
       atomSet = selection
     } else if (selection && selection.test) {
-      var seleString = selection.string
+      const seleString = selection.string
 
       if (seleString in this.atomSetCache) {
         atomSet = this.atomSetCache[ seleString ]
@@ -298,7 +307,7 @@ class Structure {
   }
 
   /**
-   * Get set of atom around a set of atoms from a selection
+   * Get set of atoms around a set of atoms from a selection
    * @param  {Selection} selection - the selection object
    * @param  {Number} radius - radius to select within
    * @return {BitArray} set of atoms
@@ -318,6 +327,12 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of atoms around a point
+   * @param  {Vector3|AtomProxy} point - the point
+   * @param  {Number} radius - radius to select within
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinPoint (point, radius) {
     const p = point
     var atomSet = this.getAtomSet(false)
@@ -329,6 +344,15 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of atoms within a volume
+   * @param  {Volume} volume - the volume
+   * @param  {Number} radius - radius to select within
+   * @param  {[type]} minValue - minimum value to be considered as within the volume
+   * @param  {[type]} maxValue - maximum value to be considered as within the volume
+   * @param  {[type]} outside - use only values falling outside of the min/max values
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinVolume (volume, radius, minValue, maxValue, outside) {
     const fv = new FilteredVolume(volume, minValue, maxValue, outside)
 
@@ -346,6 +370,11 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of all atoms within the groups of a selection
+   * @param  {Selection} selection - the selection object
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinGroup (selection) {
     const atomResidueIndex = this.atomStore.residueIndex
     const atomSet = this.getAtomSet(false)
