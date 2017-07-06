@@ -53,6 +53,8 @@ class Dsn6Parser extends VolumeParser {
 
       divisor = parseFloat(brixStr.substr(138, 12)) / 100
       summand = parseInt(brixStr.substr(155, 8))
+
+      header.sigma = parseFloat(brixStr.substr(170, 12)) * 100
     } else {
       // swap byte order when big endian
       if (intView[ 18 ] !== 100) {
@@ -87,11 +89,12 @@ class Dsn6Parser extends VolumeParser {
 
       divisor = intView[ 15 ] / 100
       summand = intView[ 16 ]
+      header.gamma = intView[ 14 ] * factor
     }
 
     v.header = header
 
-    Log.log(header, divisor, summand)
+    if (Debug) Log.log(header, divisor, summand)
 
     const data = new Float32Array(
       header.xExtent * header.yExtent * header.zExtent
@@ -131,6 +134,9 @@ class Dsn6Parser extends VolumeParser {
     }
 
     v.setData(data, header.zExtent, header.yExtent, header.xExtent)
+    if (header.sigma) {
+      v.setStats(undefined, undefined, undefined, header.sigma)
+    }
 
     if (Debug) Log.timeEnd('Dsn6Parser._parse ' + this.name)
   }

@@ -128,6 +128,13 @@ class Volume {
     if (this.worker) this.worker.terminate()
   }
 
+  setStats (min, max, mean, rms) {
+    this._min = min
+    this._max = max
+    this._mean = mean
+    this._rms = rms
+  }
+
   /**
    * set transformation matrix
    * @param {Matrix4} matrix - 4x4 transformation matrix

@@ -171,6 +171,9 @@ class MrcParser extends VolumeParser {
     }
 
     v.setData(data, header.NX, header.NY, header.NZ)
+    if (header.ARMS !== 0) {
+      v.setStats(header.DMIN, header.DMAX, header.DMEAN, header.ARMS)
+    }
 
     if (Debug) Log.timeEnd('MrcParser._parse ' + this.name)
   }

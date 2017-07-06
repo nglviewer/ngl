@@ -74,6 +74,13 @@ class XplorParser extends VolumeParser {
             data[ count ] = parseFloat(line.substr(12 * j, 12))
             ++count
           }
+        } else if (count === n) {
+          const lt = line.trim()
+          if (lt && lt !== '-9999') {
+            const ls = parseNumberLine(line)
+            header.RAVE = ls[0]
+            header.RSIGMA = ls[1]
+          }
         }
 
         ++lineNo
@@ -86,6 +93,9 @@ class XplorParser extends VolumeParser {
 
     v.header = header
     v.setData(data, na, nb, nc)
+    if (header.RAVE !== 0 && header.RSIGMA !== 1) {
+      v.setStats(undefined, undefined, header.RAVE, header.RSIGMA)
+    }
 
     if (Debug) Log.timeEnd('XplorParser._parse ' + this.name)
   }
