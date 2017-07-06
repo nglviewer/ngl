@@ -33,13 +33,12 @@ class Store {
     this.count = 0
 
     for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      const name = this.__fields[ i ][ 0 ]
-      const itemSize = this.__fields[ i ][ 1 ]
-      const arrayType = this.__fields[ i ][ 2 ]
-      const arraySize = this.length * itemSize
-
-      this[ name ] = getTypedArray(arrayType, arraySize)
+      this._initField(...this.__fields[ i ])
     }
+  }
+
+  _initField (name, size, type) {
+    this[ name ] = getTypedArray(type, this.length * size)
   }
 
   /**
