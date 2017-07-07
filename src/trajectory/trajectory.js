@@ -346,8 +346,12 @@ class Trajectory {
     if (Array.isArray(i)) {
       let queue
       const fn = (j, wcallback) => {
-        this._loadFrame(j, wcallback)
-        if (queue.length() === 0 && typeof callback === 'function') callback()
+        this._loadFrame(j, function () {
+          wcallback()
+          if (queue.length() === 0 && typeof callback === 'function'){
+            callback()
+          }
+        })
       }
       queue = new Queue(fn, i)
     } else {
