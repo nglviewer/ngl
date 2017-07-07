@@ -138,6 +138,11 @@ class PdbParser extends StructureParser {
     var atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
 
+    if (isPqr) {
+      atomStore.addField('partialCharge', 1, 'float32')
+      atomStore.addField('radius', 1, 'float32')
+    }
+
     var ap1 = s.getAtomProxy()
     var ap2 = s.getAtomProxy()
 
@@ -219,10 +224,8 @@ class PdbParser extends StructureParser {
             resno = parseInt(ls[ 5 - dd ])
             inscode = ''
             resname = ls[ 3 ]
-            bfactor = parseFloat(ls[ 9 - dd ])  // charge FIXME should be its own field
             altloc = ''
             occupancy = 0.0
-            // FIXME radius field not supported
           } else {
             serial = parseInt(line.substr(6, 5), serialRadix)
             if (hex && serial === 99999) {
@@ -255,9 +258,15 @@ class PdbParser extends StructureParser {
           atomStore.y[ idx ] = y
           atomStore.z[ idx ] = z
           atomStore.serial[ idx ] = serial
-          atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
           atomStore.altloc[ idx ] = altloc.charCodeAt(0)
           atomStore.occupancy[ idx ] = isNaN(occupancy) ? 0 : occupancy
+
+          if (isPqr) {
+            atomStore.partialCharge[ idx ] = parseFloat(ls[ 9 - dd ])
+            atomStore.radius[ idx ] = parseFloat(ls[ 10 - dd ])
+          } else {
+            atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
+          }
 
           if (hetero) {
             if (currentChainname !== chainname || currentResname !== resname ||
