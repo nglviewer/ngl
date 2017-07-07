@@ -33,6 +33,8 @@ const HelixTypes = {
   '': 'h'
 }
 
+const reWhitespace = /\s+/
+
 class PdbParser extends StructureParser {
     /**
      * Create a pdb parser
@@ -67,7 +69,6 @@ class PdbParser extends StructureParser {
     }
 
     var isPqr = this.type === 'pqr'
-    var reWhitespace = /\s+/
 
     var s = this.structure
     var sb = this.structureBuilder
@@ -91,8 +92,8 @@ class PdbParser extends StructureParser {
     var currentMatrix
 
     var line, recordName
-    var serial, chainname, resno, resname, occupancy,
-      inscode, atomname, hetero, bfactor, altloc
+    var serial, chainname, resno, resname, occupancy
+    var inscode, atomname, hetero, bfactor, altloc
 
     var startChain, startResi, startIcode
     var endChain, endResi, endIcode
@@ -260,9 +261,9 @@ class PdbParser extends StructureParser {
 
           if (hetero) {
             if (currentChainname !== chainname || currentResname !== resname ||
-                            (!WaterNames.includes(resname) &&
-                                (currentResno !== resno || currentInscode !== inscode))
-                        ) {
+                (!WaterNames.includes(resname) &&
+                  (currentResno !== resno || currentInscode !== inscode))
+            ) {
               chainIdx += 1
               chainid = chainIdx.toString()
 
@@ -411,9 +412,9 @@ class PdbParser extends StructureParser {
             biomtElms[ 4 * 2 + row ] = parseFloat(biomt[ 6 ])
             biomtElms[ 4 * 3 + row ] = parseFloat(biomt[ 7 ])
           } else if (
-                line.substr(11, 30) === 'APPLY THE FOLLOWING TO CHAINS:' ||
-                line.substr(11, 30) === '                   AND CHAINS:'
-            ) {
+            line.substr(11, 30) === 'APPLY THE FOLLOWING TO CHAINS:' ||
+            line.substr(11, 30) === '                   AND CHAINS:'
+          ) {
             if (line.substr(11, 5) === 'APPLY') {
               currentPart = currentBiomol.addPart()
             }
@@ -513,7 +514,7 @@ class PdbParser extends StructureParser {
           const gamma = parseFloat(line.substr(47, 7))
 
           const sGroup = line.substr(55, 11).trim()
-            // var zValue = parseInt( line.substr( 66, 4 ) );
+          // var zValue = parseInt( line.substr( 66, 4 ) );
 
           const box = new Float32Array(9)
           box[ 0 ] = aLength
@@ -552,8 +553,8 @@ class PdbParser extends StructureParser {
           return chainDict[ chainname ]
         })
         s.entityList.push(new Entity(
-                    s, i, e.name, 'polymer', chainIndexList
-                ))
+          s, i, e.name, 'polymer', chainIndexList
+        ))
       })
 
       var ei = entityDataList.length
@@ -579,8 +580,8 @@ class PdbParser extends StructureParser {
           type = 'water'
         }
         s.entityList.push(new Entity(
-                    s, ei, name, type, chainList
-                ))
+          s, ei, name, type, chainList
+        ))
         ei += 1
       })
     }
