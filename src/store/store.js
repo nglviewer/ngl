@@ -8,7 +8,7 @@ import { Log } from '../globals.js'
 import { getTypedArray } from '../utils.js'
 
 /**
- * Store class
+ * Store base class
  * @interface
  */
 class Store {

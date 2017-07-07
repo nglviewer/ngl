@@ -250,13 +250,8 @@ class Trajectory {
       resetCache = true
     }
 
-    if (p.deltaTime !== undefined && p.deltaTime !== this.deltaTime) {
-      this.deltaTime = p.deltaTime
-    }
-
-    if (p.timeOffset !== undefined && p.timeOffset !== this.timeOffset) {
-      this.timeOffset = p.timeOffset
-    }
+    this.deltaTime = defaults(p.deltaTime, this.deltaTime)
+    this.timeOffset = defaults(p.timeOffset, this.timeOffset)
 
     if (resetCache) this.resetCache()
   }
@@ -323,7 +318,6 @@ class Trajectory {
     if (i === undefined) return this
 
     const fc = this.frameCache
-
     const iList = []
 
     if (!fc[ ippp ]) iList.push(ippp)
@@ -348,7 +342,7 @@ class Trajectory {
       const fn = (j, wcallback) => {
         this._loadFrame(j, function () {
           wcallback()
-          if (queue.length() === 0 && typeof callback === 'function'){
+          if (queue.length() === 0 && typeof callback === 'function') {
             callback()
           }
         })
