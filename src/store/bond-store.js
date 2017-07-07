@@ -10,7 +10,7 @@ import Store from './store.js'
  * Bond store
  */
 class BondStore extends Store {
-  get __fields () {
+  get _fields () {
     return [
       [ 'atomIndex1', 1, 'int32' ],
       [ 'atomIndex2', 1, 'int32' ],

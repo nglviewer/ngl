@@ -10,7 +10,7 @@ import Store from './store.js'
  * Model store
  */
 class ModelStore extends Store {
-  get __fields () {
+  get _fields () {
     return [
       [ 'chainOffset', 1, 'uint32' ],
       [ 'chainCount', 1, 'uint32' ]

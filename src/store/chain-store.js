@@ -10,7 +10,7 @@ import Store from './store.js'
  * Chain store
  */
 class ChainStore extends Store {
-  get __fields () {
+  get _fields () {
     return [
       [ 'entityIndex', 1, 'uint16' ],
       [ 'modelIndex', 1, 'uint16' ],

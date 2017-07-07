@@ -32,13 +32,34 @@ class Store {
     this.length = size
     this.count = 0
 
-    for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      this._initField(...this.__fields[ i ])
+    for (let i = 0, il = this._fields.length; i < il; ++i) {
+      this._initField(...this._fields[ i ])
     }
   }
 
+  /**
+   * Initialize a field
+   * @param  {String} name - field name
+   * @param  {Integer} size - element size
+   * @param  {String} type - data type, one of int8, int16, int32,
+   *                         uint8, uint16, uint32, float32
+   * @return {undefined}
+   */
   _initField (name, size, type) {
     this[ name ] = getTypedArray(type, this.length * size)
+  }
+
+  /**
+   * Add a field
+   * @param  {String} name - field name
+   * @param  {Integer} size - element size
+   * @param  {String} type - data type, one of int8, int16, int32,
+   *                         uint8, uint16, uint32, float32
+   * @return {undefined}
+   */
+  addField (name, size, type) {
+    this._fields.push([name, size, type])
+    this._initField(name, size, type)
   }
 
   /**
@@ -52,9 +73,9 @@ class Store {
     this.length = Math.round(size || 0)
     this.count = Math.min(this.count, this.length)
 
-    for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      const name = this.__fields[ i ][ 0 ]
-      const itemSize = this.__fields[ i ][ 1 ]
+    for (let i = 0, il = this._fields.length; i < il; ++i) {
+      const name = this._fields[ i ][ 0 ]
+      const itemSize = this._fields[ i ][ 1 ]
       const arraySize = this.length * itemSize
       const tmpArray = new this[ name ].constructor(arraySize)
 
@@ -89,9 +110,9 @@ class Store {
    * @return {undefined}
    */
   copyFrom (other, thisOffset, otherOffset, length) {
-    for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      const name = this.__fields[ i ][ 0 ]
-      const itemSize = this.__fields[ i ][ 1 ]
+    for (let i = 0, il = this._fields.length; i < il; ++i) {
+      const name = this._fields[ i ][ 0 ]
+      const itemSize = this._fields[ i ][ 1 ]
       const thisField = this[ name ]
       const otherField = other[ name ]
 
@@ -113,9 +134,9 @@ class Store {
    * @return {undefined}
    */
   copyWithin (offsetTarget, offsetSource, length) {
-    for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      const name = this.__fields[ i ][ 0 ]
-      const itemSize = this.__fields[ i ][ 1 ]
+    for (let i = 0, il = this._fields.length; i < il; ++i) {
+      const name = this._fields[ i ][ 0 ]
+      const itemSize = this._fields[ i ][ 1 ]
       const thisField = this[ name ]
 
       for (let j = 0; j < length; ++j) {
@@ -195,8 +216,8 @@ class Store {
     delete this.length
     delete this.count
 
-    for (let i = 0, il = this.__fields.length; i < il; ++i) {
-      const name = this.__fields[ i ][ 0 ]
+    for (let i = 0, il = this._fields.length; i < il; ++i) {
+      const name = this._fields[ i ][ 0 ]
       delete this[ name ]
     }
   }
