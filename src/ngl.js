@@ -160,6 +160,7 @@ import './datasource/rcsb-datasource.js'
 import './datasource/pubchem-datasource.js'
 import './datasource/passthrough-datasource.js'
 import StaticDatasource from './datasource/static-datasource.js'
+import MdsrvDatasource from './datasource/mdsrv-datasource.js'
 
 //
 
@@ -189,6 +190,7 @@ export {
   setDebug,
   DatasourceRegistry,
   StaticDatasource,
+  MdsrvDatasource,
   ParserRegistry,
   autoLoad,
   RepresentationRegistry,
