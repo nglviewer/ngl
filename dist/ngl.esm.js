@@ -42929,7 +42929,7 @@ function getAbsolutePath (relativePath) {
 }
 
 function download (data, downloadName) {
-    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+  // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
 
   if (!data) { return }
 
@@ -42952,11 +42952,11 @@ function download (data, downloadName) {
   }
 
   if (typeof navigator !== 'undefined' && navigator.msSaveOrOpenBlob) {
-        // native saveAs in IE 10+
+    // native saveAs in IE 10+
     navigator.msSaveOrOpenBlob(data, downloadName);
   } else if ((isSafari || isChromeIos) && window.FileReader) {
     if (data instanceof window.Blob) {
-            // no downloading of blob urls in Safari
+      // no downloading of blob urls in Safari
       var reader = new window.FileReader();
       reader.onloadend = function () {
         open(reader.result);
@@ -42971,7 +42971,7 @@ function download (data, downloadName) {
     }
 
     if ('download' in a) {
-            // download link available
+      // download link available
       a.style.display = 'hidden';
       document.body.appendChild(a);
       a.href = data;
@@ -42995,8 +42995,8 @@ function getFileInfo (file) {
   var path, compressed, protocol;
 
   if ((typeof window !== 'undefined' && file instanceof window.File) ||
-        (typeof window !== 'undefined' && file instanceof window.Blob)
-    ) {
+      (typeof window !== 'undefined' && file instanceof window.Blob)
+  ) {
     path = file.name || '';
   } else {
     path = file;
@@ -43041,7 +43041,7 @@ function getFileInfo (file) {
 }
 
 function throttle (func, wait, options) {
-    // from http://underscorejs.org/docs/underscore.html
+  // from http://underscorejs.org/docs/underscore.html
 
   var context, args, result;
   var timeout = null;
@@ -43172,8 +43172,8 @@ function uint8ToString (u8a) {
 
     for (var i = 0; i < u8a.length; i += chunkSize) {
       c.push(String.fromCharCode.apply(
-          null, u8a.subarray(i, i + chunkSize)
-        ));
+        null, u8a.subarray(i, i + chunkSize)
+      ));
     }
 
     return c.join('')
@@ -43242,6 +43242,10 @@ function getUintArray (sizeOrArray, maxUnit) {
 
 function ensureArray (value) {
   return Array.isArray(value) ? value : [value]
+}
+
+function ensureBuffer (a) {
+  return (a.buffer && a.buffer instanceof ArrayBuffer) ? a.buffer : a
 }
 
 function _ensureClassFromArg (arg, constructor) {
@@ -46781,14 +46785,14 @@ var CyclicResname = [ 'HIS', 'PHE', 'PRO', 'TRP', 'TYR' ];
 var AliphaticResname = [ 'ALA', 'GLY', 'ILE', 'LEU', 'VAL' ];
 
 function atomTestFn (a, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.atomname === undefined && s.element === undefined &&
-            s.altloc === undefined && s.atomindex === undefined &&
-            s.keyword === undefined && s.inscode === undefined &&
-            s.resname === undefined && s.sstruc === undefined &&
-            s.resno === undefined && s.chainname === undefined &&
-            s.model === undefined
-    ) { return -1 }
+    s.altloc === undefined && s.atomindex === undefined &&
+    s.keyword === undefined && s.inscode === undefined &&
+    s.resname === undefined && s.sstruc === undefined &&
+    s.resno === undefined && s.chainname === undefined &&
+    s.model === undefined
+  ) { return -1 }
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.BACKBONE && !a.isBackbone()) { return false }
@@ -46815,8 +46819,8 @@ function atomTestFn (a, s) {
   if (s.altloc !== undefined && s.altloc !== a.altloc) { return false }
 
   if (s.atomindex !== undefined &&
-            binarySearchIndexOf(s.atomindex, a.index) < 0
-    ) { return false }
+      binarySearchIndexOf(s.atomindex, a.index) < 0
+  ) { return false }
 
   if (s.resname !== undefined) {
     if (Array.isArray(s.resname)) {
@@ -46842,12 +46846,12 @@ function atomTestFn (a, s) {
 }
 
 function residueTestFn (r, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.resname === undefined && s.resno === undefined && s.inscode === undefined &&
-            s.sstruc === undefined && s.model === undefined && s.chainname === undefined &&
-            s.atomindex === undefined &&
-            (s.keyword === undefined || AtomOnlyKeywords.includes(s.keyword))
-    ) { return -1 }
+      s.sstruc === undefined && s.model === undefined && s.chainname === undefined &&
+      s.atomindex === undefined &&
+      (s.keyword === undefined || AtomOnlyKeywords.includes(s.keyword))
+  ) { return -1 }
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.HETERO && !r.isHetero()) { return false }
@@ -46865,8 +46869,8 @@ function residueTestFn (r, s) {
   }
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, r.atomOffset, r.atomEnd) === 0
-    ) { return false }
+      rangeInSortedArray(s.atomindex, r.atomOffset, r.atomEnd) === 0
+  ) { return false }
 
   if (s.resname !== undefined) {
     if (Array.isArray(s.resname)) {
@@ -46892,10 +46896,10 @@ function residueTestFn (r, s) {
 }
 
 function chainTestFn (c, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.chainname === undefined && s.model === undefined && s.atomindex === undefined &&
-            (s.keyword === undefined || !ChainKeywords.includes(s.keyword) || !c.entity)
-    ) { return -1 }
+      (s.keyword === undefined || !ChainKeywords.includes(s.keyword) || !c.entity)
+  ) { return -1 }
 
   if (s.keyword !== undefined) {
     if (s.keyword === kwd.POLYMER && !c.entity.isPolymer()) { return false }
@@ -46903,8 +46907,8 @@ function chainTestFn (c, s) {
   }
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, c.atomOffset, c.atomEnd) === 0
-    ) { return false }
+      rangeInSortedArray(s.atomindex, c.atomOffset, c.atomEnd) === 0
+  ) { return false }
 
   if (s.chainname !== undefined && s.chainname !== c.chainname) { return false }
 
@@ -46914,12 +46918,12 @@ function chainTestFn (c, s) {
 }
 
 function modelTestFn (m, s) {
-    // returning -1 means the rule is not applicable
+  // returning -1 means the rule is not applicable
   if (s.model === undefined && s.atomindex === undefined) { return -1 }
 
   if (s.atomindex !== undefined &&
-            rangeInSortedArray(s.atomindex, m.atomOffset, m.atomEnd) === 0
-    ) { return false }
+      rangeInSortedArray(s.atomindex, m.atomOffset, m.atomEnd) === 0
+  ) { return false }
 
   if (s.model !== undefined && s.model !== m.index) { return false }
 
@@ -46945,12 +46949,12 @@ Selection.prototype.setString = function setString (string, silent) {
   if (string === undefined) { string = this.string || ''; }
   if (string === this.string) { return }
 
-      //
+    //
 
   try {
     this.parse(string);
   } catch (e) {
-          // Log.error( e.stack );
+    // Log.error( e.stack );
     this.selection = { 'error': e.message };
   }
 
@@ -46991,7 +46995,7 @@ Selection.prototype.parse = function parse (string) {
   }
   var chunks = string.split(/\s+/);
 
-      // Log.log( string, chunks )
+  // Log.log( string, chunks )
 
   var createNewContext = function (operator) {
     newSelection = {
@@ -47027,16 +47031,16 @@ Selection.prototype.parse = function parse (string) {
     var c = chunks[ i ];
     var cu = c.toUpperCase();
 
-          // handle parens
+    // handle parens
 
     if (c === '(') {
-              // Log.log( "(" );
+      // Log.log( "(" );
 
       not = false;
       createNewContext();
       continue
     } else if (c === ')') {
-              // Log.log( ")" );
+      // Log.log( ")" );
 
       getPrevContext();
       if (selection.negate) {
@@ -47045,7 +47049,7 @@ Selection.prototype.parse = function parse (string) {
       continue
     }
 
-          // leave 'not' context
+    // leave 'not' context
 
     if (not > 0) {
       if (cu === 'NOT') {
@@ -47060,10 +47064,10 @@ Selection.prototype.parse = function parse (string) {
       }
     }
 
-          // handle logic operators
+    // handle logic operators
 
     if (cu === 'AND') {
-              // Log.log( "AND" );
+      // Log.log( "AND" );
 
       if (selection.operator === 'OR') {
         var lastRule = selection.rules.pop();
@@ -47074,7 +47078,7 @@ Selection.prototype.parse = function parse (string) {
       }
       continue
     } else if (cu === 'OR') {
-              // Log.log( "OR" );
+      // Log.log( "OR" );
 
       if (selection.operator === 'AND') {
         getPrevContext('OR');
@@ -47083,7 +47087,7 @@ Selection.prototype.parse = function parse (string) {
       }
       continue
     } else if (c.toUpperCase() === 'NOT') {
-              // Log.log( "NOT", j );
+      // Log.log( "NOT", j );
 
       not = 1;
       createNewContext();
@@ -47091,11 +47095,11 @@ Selection.prototype.parse = function parse (string) {
       continue
     } else {
 
-              // Log.log( "chunk", c, j, selection );
+      // Log.log( "chunk", c, j, selection );
 
     }
 
-          // handle keyword attributes
+    // handle keyword attributes
 
     var keyword = kwd[ cu ];
     if (keyword !== undefined) {
@@ -47172,18 +47176,18 @@ Selection.prototype.parse = function parse (string) {
       pushRule({
         operator: 'OR',
         rules: [
-                      { keyword: kwd.SIDECHAIN },
+          { keyword: kwd.SIDECHAIN },
           {
             operator: 'AND',
             negate: false,
             rules: [
-                              { keyword: kwd.PROTEIN },
+              { keyword: kwd.PROTEIN },
               {
                 operator: 'OR',
                 negate: false,
                 rules: [
-                                      { atomname: 'CA' },
-                                      { atomname: 'BB' }
+                  { atomname: 'CA' },
+                  { atomname: 'BB' }
                 ]
               }
             ]
@@ -47192,28 +47196,28 @@ Selection.prototype.parse = function parse (string) {
             operator: 'AND',
             negate: false,
             rules: [
-                              { resname: 'PRO' },
-                              { atomname: 'N' }
+              { resname: 'PRO' },
+              { atomname: 'N' }
             ]
           },
           {
             operator: 'AND',
             negate: false,
             rules: [
-                              { keyword: kwd.NUCLEIC },
+              { keyword: kwd.NUCLEIC },
               {
                 operator: 'OR',
                 negate: true,
                 rules: [
-                                      { atomname: 'P' },
-                                      { atomname: 'OP1' },
-                                      { atomname: 'OP2' },
-                                      { atomname: "O3'" },
-                                      { atomname: 'O3*' },
-                                      { atomname: "O5'" },
-                                      { atomname: 'O5*' },
-                                      { atomname: "C5'" },
-                                      { atomname: 'C5*' }
+                  { atomname: 'P' },
+                  { atomname: 'OP1' },
+                  { atomname: 'OP2' },
+                  { atomname: "O3'" },
+                  { atomname: 'O3*' },
+                  { atomname: "O5'" },
+                  { atomname: 'O5*' },
+                  { atomname: "C5'" },
+                  { atomname: 'C5*' }
                 ]
               }
             ]
@@ -47230,12 +47234,12 @@ Selection.prototype.parse = function parse (string) {
           {
             operator: 'OR',
             rules: [
-                              { keyword: kwd.HETERO },
+              { keyword: kwd.HETERO },
               {
                 negate: true,
                 operator: undefined,
                 rules: [
-                                      { keyword: kwd.POLYMER }
+                  { keyword: kwd.POLYMER }
                 ]
               }
             ]
@@ -47247,8 +47251,8 @@ Selection.prototype.parse = function parse (string) {
               {
                 operator: 'OR',
                 rules: [
-                                      { keyword: kwd.WATER },
-                                      { keyword: kwd.ION }
+                  { keyword: kwd.WATER },
+                  { keyword: kwd.ION }
                 ]
               }
             ]
@@ -47263,7 +47267,7 @@ Selection.prototype.parse = function parse (string) {
       continue
     }
 
-          // handle atom expressions
+    // handle atom expressions
 
     if (c.charAt(0) === '@') {
       var indexList = c.substr(1).split(',');
@@ -47291,17 +47295,17 @@ Selection.prototype.parse = function parse (string) {
       pushRule({ resname: resname });
       continue
     } else if (
-              (c.length >= 1 && c.length <= 4) &&
-              c[0] !== '^' && c[0] !== ':' && c[0] !== '.' && c[0] !== '%' && c[0] !== '/' &&
-              isNaN(parseInt(c))
-          ) {
+      (c.length >= 1 && c.length <= 4) &&
+      c[0] !== '^' && c[0] !== ':' && c[0] !== '.' && c[0] !== '%' && c[0] !== '/' &&
+      isNaN(parseInt(c))
+    ) {
       pushRule({ resname: cu });
       continue
     }
 
-          // there must be only one constraint per rule
-          // otherwise a test quickly becomes not applicable
-          // e.g. chainTest for chainname when resno is present too
+    // there must be only one constraint per rule
+    // otherwise a test quickly becomes not applicable
+    // e.g. chainTest for chainname when resno is present too
 
     var sele = {
       operator: 'AND',
@@ -47380,7 +47384,7 @@ Selection.prototype.parse = function parse (string) {
       }
     }
 
-          // round up
+    // round up
 
     if (sele.rules.length === 1) {
       pushRule(sele.rules[ 0 ]);
@@ -47391,13 +47395,13 @@ Selection.prototype.parse = function parse (string) {
     }
   }
 
-      // cleanup
+  // cleanup
 
   if (
-          this.selection.operator === undefined &&
-          this.selection.rules.length === 1 &&
-          this.selection.rules[ 0 ].hasOwnProperty('operator')
-      ) {
+    this.selection.operator === undefined &&
+    this.selection.rules.length === 1 &&
+    this.selection.rules[ 0 ].hasOwnProperty('operator')
+  ) {
     this.selection = this.selection.rules[ 0 ];
   }
 };
@@ -47423,9 +47427,9 @@ Selection.prototype._makeTest = function _makeTest (fn, selection) {
     }
   }
 
-      // ( x and y ) can short circuit on false
-      // ( x or y ) can short circuit on true
-      // not ( x and y )
+  // ( x and y ) can short circuit on false
+  // ( x or y ) can short circuit on true
+  // not ( x and y )
 
   return function test (entity) {
     var and = selection.operator === 'AND';
@@ -47457,7 +47461,7 @@ Selection.prototype._makeTest = function _makeTest (fn, selection) {
 
         ret = fn(entity, s);
 
-                  // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
+        // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
 
         if (ret === -1) {
           na = true;
@@ -47506,12 +47510,12 @@ Selection.prototype._filter = function _filter (fn, selection) {
   }
 
   if (filtered.rules.length > 0) {
-          // TODO maybe the filtered rules could be returned
-          // in some case, but the way how tests are applied
-          // e.g. when traversing a structure would also need
-          // to change
+    // TODO maybe the filtered rules could be returned
+    // in some case, but the way how tests are applied
+    // e.g. when traversing a structure would also need
+    // to change
     return selection
-          // return filtered;
+    // return filtered;
   } else {
     return null
   }
@@ -47521,7 +47525,7 @@ Selection.prototype.makeAtomTest = function makeAtomTest (atomOnly) {
   var selection;
 
   if (atomOnly) {
-          // console.log( this.selection )
+    // console.log( this.selection )
 
     selection = this._filter(function (s) {
       if (s.keyword !== undefined && !AtomOnlyKeywords.includes(s.keyword)) { return true }
@@ -47543,7 +47547,7 @@ Selection.prototype.makeResidueTest = function makeResidueTest (residueOnly) {
   var selection;
 
   if (residueOnly) {
-          // console.log( this.selection )
+    // console.log( this.selection )
 
     selection = this._filter(function (s) {
       if (s.keyword !== undefined && AtomOnlyKeywords.includes(s.keyword)) { return true }
@@ -47565,11 +47569,11 @@ Selection.prototype.makeChainTest = function makeChainTest (chainOnly) {
   var selection;
 
   if (chainOnly) {
-          // console.log( this.selection )
+    // console.log( this.selection )
 
     selection = this._filter(function (s) {
       if (s.keyword !== undefined && !ChainKeywords.includes(s.keyword)) { return true }
-              // if( s.model!==undefined ) return true;
+      // if( s.model!==undefined ) return true;
       if (s.resname !== undefined) { return true }
       if (s.resno !== undefined) { return true }
       if (s.atomname !== undefined) { return true }
@@ -47590,7 +47594,7 @@ Selection.prototype.makeModelTest = function makeModelTest (modelOnly) {
   var selection;
 
   if (modelOnly) {
-          // console.log( this.selection )
+    // console.log( this.selection )
 
     selection = this._filter(function (s) {
       if (s.keyword !== undefined) { return true }
@@ -49195,7 +49199,7 @@ var PdbWriter = (function (Writer$$1) {
 
   PdbWriter.prototype._writeTitle = function _writeTitle () {
     // FIXME multiline if title line longer than 80 chars
-    this._records.push(sprintf('TITEL %-74s', this.structure.name));
+    this._records.push(sprintf('TITLE %-74s', this.structure.name));
   };
 
   PdbWriter.prototype._writeRemarks = function _writeRemarks () {
@@ -49284,83 +49288,96 @@ var PdbWriter = (function (Writer$$1) {
  * @private
  */
 
-function StlWriter (surface) {
-  var records;
+// https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
 
-  function writeRecords () {
-    records = [];
+/**
+ * Create an STL File from a surface Object (e.g. for 3D printing)
+ *
+ * @example
+ * molsurf = new NGL.MolecularSurface(structure)
+ * surf = molsurf.getSurface({type: ‘av’, probeRadius: 1.4})
+ * stl = new NGL.StlWriter(surf)
+ * stl.download(‘my_file_name’)
+ * @class StlWriter
+ */
+var StlWriter = (function (Writer$$1) {
+  function StlWriter (surface) {
+    Writer$$1.call(this);
 
-    writeHeader();
-    writeFacets();
-    writeFooter();
+    this.surface = surface;
+    this._records = [];
   }
 
-  // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
+  if ( Writer$$1 ) StlWriter.__proto__ = Writer$$1;
+  StlWriter.prototype = Object.create( Writer$$1 && Writer$$1.prototype );
+  StlWriter.prototype.constructor = StlWriter;
 
-  function avgNormal (normals, vertIndices) {
+  var prototypeAccessors = { mimeType: {},defaultName: {},defaultExt: {} };
+
+  prototypeAccessors.mimeType.get = function () { return 'text/plain' };
+  prototypeAccessors.defaultName.get = function () { return 'surface' };
+  prototypeAccessors.defaultExt.get = function () { return 'stl' };
+
+  StlWriter.prototype._writeRecords = function _writeRecords () {
+    this._records.length = 0;
+
+    this._writeHeader();
+    this._writeFacets();
+    this._writeFooter();
+  };
+
+  StlWriter.prototype._avgNormal = function _avgNormal (normals, vertIndices) {
     var v = [];
     for (var i = 0; i < 3; i++) {
-      v[i] = (normals[vertIndices[0] + i] + normals[vertIndices[1] + i] + normals[vertIndices[2] + i]) / 3;
+      v[i] = (normals[vertIndices[0] * 3 + i] + normals[vertIndices[1] * 3 + i] + normals[vertIndices[2] * 3 + i]) / 3;
     }
     return v
-  }
+  };
 
-  function writeHeader () {
-    records.push('solid surface');
-  }
+  StlWriter.prototype._writeHeader = function _writeHeader () {
+    this._records.push('solid surface');
+  };
 
-  function writeFooter () {
-    records.push('endsolid surface');
-  }
+  StlWriter.prototype._writeFooter = function _writeFooter () {
+    this._records.push('endsolid surface');
+  };
 
-  function writeLoop (vertices) {
-    records.push('outer loop');
+  StlWriter.prototype._writeLoop = function _writeLoop (vertices) {
+    var this$1 = this;
+
+    this._records.push('outer loop');
     for (var i = 0; i < 3; i++) {
-      records.push(("    vertex " + (surface.position[vertices[i] * 3]) + " " + (surface.position[vertices[i] * 3 + 1]) + " " + (surface.position[vertices[i] * 3 + 2])));
+      this$1._records.push(("    vertex " + (this$1.surface.position[vertices[i] * 3]) + " " + (this$1.surface.position[vertices[i] * 3 + 1]) + " " + (this$1.surface.position[vertices[i] * 3 + 2])));
     }
-    records.push('outer loop');
-  }
+    this._records.push('outer loop');
+  };
 
-  function writeFacets () {
-    for (var i = 0; i < surface.index.length / 3; i++) {
-      var vert1Index = surface.index[i * 3];
-      var vert2Index = surface.index[i * 3 + 1];
-      var vert3Index = surface.index[i * 3 + 2];
+  StlWriter.prototype._writeFacets = function _writeFacets () {
+    var this$1 = this;
 
-      var facetNormal = avgNormal(surface.normal, [vert1Index, vert2Index, vert3Index]);
-      records.push(("facet normal " + (facetNormal[0]) + " " + (facetNormal[1]) + " " + (facetNormal[2])));
+    for (var i = 0; i < this.surface.index.length / 3; i++) {
+      var vert1Index = this$1.surface.index[i * 3];
+      var vert2Index = this$1.surface.index[i * 3 + 1];
+      var vert3Index = this$1.surface.index[i * 3 + 2];
 
-      writeLoop([vert1Index, vert2Index, vert3Index]);
+      var facetNormal = this$1._avgNormal(this$1.surface.normal, [vert1Index, vert2Index, vert3Index]);
+      this$1._records.push(("facet normal " + (facetNormal[0]) + " " + (facetNormal[1]) + " " + (facetNormal[2])));
 
-      records.push('endfacet');
+      this$1._writeLoop([vert1Index, vert2Index, vert3Index]);
+
+      this$1._records.push('endfacet');
     }
-  }
+  };
 
-  function getString () {
-    writeRecords();
-    return records.join('\n')
-  }
+  StlWriter.prototype.getData = function getData () {
+    this._writeRecords();
+    return this._records.join('\n')
+  };
 
-  function getBlob () {
-    return new window.Blob([ getString() ], { type: 'text/plain' })
-  }
+  Object.defineProperties( StlWriter.prototype, prototypeAccessors );
 
-  function _download (name, ext) {
-    name = name || 'surface';
-    ext = ext || 'stl';
-
-    var file = name + '.' + ext;
-    var blob = getBlob();
-
-    download(blob, file);
-  }
-
-  // API
-
-  this.getString = getString;
-  this.getBlob = getBlob;
-  this.download = _download;
-}
+  return StlWriter;
+}(Writer));
 
 /**
  * @file Counter
@@ -58853,6 +58870,21 @@ Volume.prototype.setData = function setData (data, nx, ny, nz, atomindex) {
 };
 
 /**
+ * Set statistics, which can be different from the data in this volume,
+ * if this volume is a slice of a bigger volume
+ * @param {Number|undefined} min - minimum value of the whole data set
+ * @param {Number|undefined} max - maximum value of the whole data set
+ * @param {Number|undefined} mean - average value of the whole data set
+ * @param {Number|undefined} rms - sigma value of the whole data set
+ */
+Volume.prototype.setStats = function setStats (min, max, mean, rms) {
+  this._min = min;
+  this._max = max;
+  this._mean = mean;
+  this._rms = rms;
+};
+
+/**
  * set transformation matrix
  * @param {Matrix4} matrix - 4x4 transformation matrix
  * @return {undefined}
@@ -59390,13 +59422,13 @@ Store.prototype._init = function _init (size) {
   this.count = 0;
 
   for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    var name = this$1.__fields[ i ][ 0 ];
-    var itemSize = this$1.__fields[ i ][ 1 ];
-    var arrayType = this$1.__fields[ i ][ 2 ];
-    var arraySize = this$1.length * itemSize;
-
-    this$1[ name ] = getTypedArray(arrayType, arraySize);
+    (ref = this$1)._initField.apply(ref, this$1.__fields[ i ]);
   }
+    var ref;
+};
+
+Store.prototype._initField = function _initField (name, size, type) {
+  this[ name ] = getTypedArray(type, this.length * size);
 };
 
 /**
@@ -61212,9 +61244,9 @@ function getSymmetryOperations (spacegroup) {
 
   if (encodedSymopList === undefined) {
     console.warn(
-            "getSymmetryOperations: spacegroup '" +
-            spacegroup + "' not found in symop library"
-        );
+      "getSymmetryOperations: spacegroup '" +
+      spacegroup + "' not found in symop library"
+    );
     return matrixDict
   }
 
@@ -61231,7 +61263,7 @@ function getSymmetryOperations (spacegroup) {
   var reInteger = /^[1-9]$/;
 
   symopList.forEach(function (symop) {
-        // console.log( "symop", symop );
+    // console.log( "symop", symop );
 
     var row = 0;
     var matrix = new Matrix4().set(
@@ -61313,19 +61345,19 @@ var prototypeAccessors$17 = { type: {} };
 
 prototypeAccessors$17.type.get = function () { return 'Assembly' };
 
-  /**
-   * Add transformed parts to the assembly
-   * @example
-   * var m1 = new NGL.Matrix4().set( ... );
-   * var m2 = new NGL.Matrix4().set( ... );
-   * var assembly = new NGL.Assembly( "myAssembly" );
-   * // add part that transforms chain 'A' and 'B' using matrices `m1` and `m2`
-   * assembly.addPart( [ m1, m2 ], [ "A", "B" ] )
-   *
-   * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
-   * @param {String[]} chainList - array of chain names
-   * @return {AssemblyPart} the added assembly part
-   */
+/**
+ * Add transformed parts to the assembly
+ * @example
+ * var m1 = new NGL.Matrix4().set( ... );
+ * var m2 = new NGL.Matrix4().set( ... );
+ * var assembly = new NGL.Assembly( "myAssembly" );
+ * // add part that transforms chain 'A' and 'B' using matrices `m1` and `m2`
+ * assembly.addPart( [ m1, m2 ], [ "A", "B" ] )
+ *
+ * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
+ * @param {String[]} chainList - array of chain names
+ * @return {AssemblyPart} the added assembly part
+ */
 Assembly.prototype.addPart = function addPart (matrixList, chainList) {
   var part = new AssemblyPart(matrixList, chainList);
   this.partList.push(part);
@@ -61342,29 +61374,29 @@ Assembly.prototype._getCount = function _getCount (structure, methodName) {
   return count
 };
 
-  /**
-   * Get the number of atom for a given structure
-   * @param{Structure} structure - the given structure
-   * @return {Integer} number of atoms in the assembly
-   */
+/**
+ * Get the number of atom for a given structure
+ * @param{Structure} structure - the given structure
+ * @return {Integer} number of atoms in the assembly
+ */
 Assembly.prototype.getAtomCount = function getAtomCount (structure) {
   return this._getCount(structure, 'getAtomCount')
 };
 
-  /**
-   * Get the number of residues for a given structure
-   * @param{Structure} structure - the given structure
-   * @return {Integer} number of residues in the assembly
-   */
+/**
+ * Get the number of residues for a given structure
+ * @param{Structure} structure - the given structure
+ * @return {Integer} number of residues in the assembly
+ */
 Assembly.prototype.getResidueCount = function getResidueCount (structure) {
   return this._getCount(structure, 'getResidueCount')
 };
 
-  /**
-   * Get number of instances the assembly will produce, i.e.
-   * the number of transformations performed by the assembly
-   * @return {Integer} number of instances
-   */
+/**
+ * Get number of instances the assembly will produce, i.e.
+ * the number of transformations performed by the assembly
+ * @return {Integer} number of instances
+ */
 Assembly.prototype.getInstanceCount = function getInstanceCount () {
   var instanceCount = 0;
 
@@ -61375,11 +61407,11 @@ Assembly.prototype.getInstanceCount = function getInstanceCount () {
   return instanceCount
 };
 
-  /**
-   * Determine if the assembly is the full and untransformed structure
-   * @param{Structure}structure - the given structure
-   * @return {Boolean} whether the assembly is identical to the structure
-   */
+/**
+ * Determine if the assembly is the full and untransformed structure
+ * @param{Structure}structure - the given structure
+ * @return {Boolean} whether the assembly is identical to the structure
+ */
 Assembly.prototype.isIdentity = function isIdentity (structure) {
   if (this.partList.length !== 1) { return false }
 
@@ -84960,46 +84992,46 @@ Object.defineProperties( Entity.prototype, prototypeAccessors$29 );
 var Unitcell = function Unitcell (params) {
   var p = params || {};
 
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.a = p.a || 1;
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.b = p.b || 1;
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.c = p.c || 1;
 
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.alpha = p.alpha || 90;
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.beta = p.beta || 90;
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.gamma = p.gamma || 90;
 
-      /**
-       * @type {String}
-       */
+  /**
+   * @type {String}
+   */
   this.spacegroup = p.spacegroup || 'P 1';
-      /**
-       * @type {Matrix4}
-       */
+  /**
+   * @type {Matrix4}
+   */
   this.cartToFrac = p.cartToFrac || p.scale;
-      /**
-       * @type {Matrix4}
-       */
+  /**
+   * @type {Matrix4}
+   */
   this.fracToCart = new Matrix4();
 
-      //
+  //
 
   var alphaRad = degToRad(this.alpha);
   var betaRad = degToRad(this.beta);
@@ -85010,34 +85042,33 @@ var Unitcell = function Unitcell (params) {
   var sinBeta = Math.sin(betaRad);
   var sinGamma = Math.sin(gammaRad);
 
-      /**
-       * @type {Number}
-       */
+  /**
+   * @type {Number}
+   */
   this.volume = (
-          this.a * this.b * this.c *
-          Math.sqrt(
-              1 - cosAlpha * cosAlpha - cosBeta * cosBeta - cosGamma * cosGamma +
-              2.0 * cosAlpha * cosBeta * cosGamma
-          )
-      );
+    this.a * this.b * this.c *
+    Math.sqrt(
+      1 - cosAlpha * cosAlpha - cosBeta * cosBeta - cosGamma * cosGamma +
+      2.0 * cosAlpha * cosBeta * cosGamma
+    )
+  );
 
-      //
+  //
 
   if (this.cartToFrac === undefined) {
-          // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
+    // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
 
     var cStar = (this.a * this.b * sinGamma) / this.volume;
     var cosAlphaStar = (
-              (cosBeta * cosGamma - cosAlpha) /
-              (sinBeta * sinGamma)
-          );
+      (cosBeta * cosGamma - cosAlpha) / (sinBeta * sinGamma)
+    );
 
     this.fracToCart.set(
-              this.a, 0, 0, 0,
-              this.b * cosGamma, this.b * sinGamma, 0, 0,
-              this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
-              0, 0, 0, 1
-          ).transpose();
+      this.a, 0, 0, 0,
+      this.b * cosGamma, this.b * sinGamma, 0, 0,
+      this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
+      0, 0, 0, 1
+    ).transpose();
     this.cartToFrac = new Matrix4().getInverse(this.fracToCart);
   } else {
     this.fracToCart.getInverse(this.cartToFrac);
@@ -85056,9 +85087,9 @@ Unitcell.prototype.getPosition = function getPosition (structure) {
   var cornerOffset = 0;
   function addCorner (x, y, z) {
     v.set(x, y, z)
-              .multiply(centerFrac)
-              .applyMatrix4(uc.fracToCart)
-              .toArray(vertexPosition, cornerOffset);
+      .multiply(centerFrac)
+      .applyMatrix4(uc.fracToCart)
+      .toArray(vertexPosition, cornerOffset);
     cornerOffset += 3;
   }
   addCorner(0, 0, 0);
@@ -85097,9 +85128,9 @@ Unitcell.prototype.getData = function getData (structure, params) {
   var edgeOffset = 0;
   function addEdge (a, b) {
     v.fromArray(vertexPosition, a * 3)
-              .toArray(edgePosition1, edgeOffset);
+      .toArray(edgePosition1, edgeOffset);
     v.fromArray(vertexPosition, b * 3)
-              .toArray(edgePosition2, edgeOffset);
+      .toArray(edgePosition2, edgeOffset);
     edgeOffset += 3;
   }
   addEdge(0, 1);
@@ -86819,19 +86850,34 @@ var CifParser = (function (StructureParser$$1) {
       }
 
       // structure header (mimicking biojava)
-      if (cif.database_PDB_rev) {
+      if (cif.pdbx_audit_revision_history) {
+        if (cif.pdbx_audit_revision_history.revision_date) {
+          ensureArray$1(cif.pdbx_audit_revision_history, 'revision_date');
+          var dates = cif.pdbx_audit_revision_history.revision_date.filter(hasValue);
+          if (dates.length) {
+            s.header.releaseDate = dates[ 0 ];
+          }
+        }
+        if (cif.pdbx_database_status.recvd_initial_deposition_date) {
+          ensureArray$1(cif.pdbx_database_status, 'recvd_initial_deposition_date');
+          var depDates = cif.pdbx_database_status.recvd_initial_deposition_date.filter(hasValue);
+          if (depDates.length) {
+            s.header.depositionDate = depDates[ 0 ];
+          }
+        }
+      } else if (cif.database_PDB_rev) {
         if (cif.database_PDB_rev.date) {
           ensureArray$1(cif.database_PDB_rev, 'date');
-          var dates = cif.database_PDB_rev.date.filter(hasValue);
-          if (dates.length) {
-            s.header.releaseDate = dates[ dates.length - 1 ];
+          var dates$1 = cif.database_PDB_rev.date.filter(hasValue);
+          if (dates$1.length) {
+            s.header.releaseDate = dates$1[ 0 ];
           }
         }
         if (cif.database_PDB_rev.date_original) {
           ensureArray$1(cif.database_PDB_rev, 'date_original');
-          var depDates = cif.database_PDB_rev.date_original.filter(hasValue);
-          if (depDates.length) {
-            s.header.depositionDate = depDates[ depDates.length - 1 ];
+          var depDates$1 = cif.database_PDB_rev.date_original.filter(hasValue);
+          if (depDates$1.length) {
+            s.header.depositionDate = depDates$1[ 0 ];
           }
         }
       }
@@ -89288,10 +89334,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
 
     if (Debug) { Log.time('DcdParser._parse ' + this.name); }
 
-    var bin = this.streamer.data;
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
+    var bin = ensureBuffer(this.streamer.data);
     var dv = new DataView(bin);
 
     var f = this.frames;
@@ -90595,7 +90638,6 @@ var NctrajParser = (function (TrajectoryParser$$1) {
     var coordinates = f.coordinates;
     var boxes = f.boxes;
     var times = f.times;
-    // const header = {}
 
     netcdfReader.getDataVariable('coordinates').forEach(function (c) {
       coordinates.push(new Float32Array(c));
@@ -90657,23 +90699,17 @@ var TrrParser = (function (TrajectoryParser$$1) {
 
     if (Debug) { Log.time('TrrParser._parse ' + this.name); }
 
-    var bin = this.streamer.data;
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
+    var bin = ensureBuffer(this.streamer.data);
     var dv = new DataView(bin);
 
     var f = this.frames;
     var coordinates = f.coordinates;
     var boxes = f.boxes;
-    // var header = {}
+    var times = f.times;
 
     var offset = 0;
-    // const frameInfo = []
 
     while (true) {
-      // const frame = {}
-
       // const magicnum = dv.getInt32(offset)
       // const i1 = dv.getFloat32(offset + 4)
       offset += 8;
@@ -90693,22 +90729,21 @@ var TrrParser = (function (TrajectoryParser$$1) {
       var velocitySize = dv.getInt32(offset + 32);
       var forceSize = dv.getInt32(offset + 36);
       var natoms = dv.getInt32(offset + 40);
-      // frame.natoms = natoms
-      // frame.step = dv.getInt32(offset + 44)
+      // const step = dv.getInt32(offset + 44)
       // const nre = dv.getInt32(offset + 48)
       offset += 52;
 
       var floatSize = boxSize / 9;
       var natoms3 = natoms * 3;
 
-      // TODO
-      // if (floatSize === 8) {
-      //   frame.time = dv.getFloat64(offset)
-      //   frame.lambda = dv.getFloat64(offset + 8)
-      // } else {
-      //   frame.time = dv.getFloat32(offset)
-      //   frame.lambda = dv.getFloat32(offset + 4)
-      // }
+      // let lambda
+      if (floatSize === 8) {
+        times.push(dv.getFloat64(offset));
+        // lambda = dv.getFloat64(offset + 8)
+      } else {
+        times.push(dv.getFloat32(offset));
+        // lambda = dv.getFloat32(offset + 4)
+      }
       offset += 2 * floatSize;
 
       if (boxSize) {
@@ -90765,9 +90800,14 @@ var TrrParser = (function (TrajectoryParser$$1) {
       // ignore, unused
       offset += forceSize;
 
-      // frameInfo.push(frame)
-
       if (offset >= bin.byteLength) { break }
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0];
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0];
     }
 
     if (Debug) { Log.timeEnd('TrrParser._parse ' + this.name); }
@@ -90923,17 +90963,13 @@ var XtcParser = (function (TrajectoryParser$$1) {
 
     if (Debug) { Log.time('XtcParser._parse ' + this.name); }
 
-    var bin = this.streamer.data;
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
+    var bin = ensureBuffer(this.streamer.data);
     var dv = new DataView(bin);
 
     var f = this.frames;
     var coordinates = f.coordinates;
     var boxes = f.boxes;
     var times = f.times;
-    // const header = {}
 
     var minMaxInt = new Int32Array(6);
     var sizeint = new Int32Array(3);
@@ -91197,6 +91233,7 @@ var VolumeParser = (function (Parser$$1) {
 
   VolumeParser.prototype._afterParse = function _afterParse () {
     this.volume.setMatrix(this.getMatrix());
+    Parser$$1.prototype._afterParse.call(this);
   };
 
   VolumeParser.prototype.getMatrix = function getMatrix () {
@@ -91217,6 +91254,10 @@ var VolumeParser = (function (Parser$$1) {
 // @author Johanna Tiemann <johanna.tiemann@googlemail.com>
 // @author Alexander Rose <alexander.rose@weirdbyte.de>
 
+var reWhitespace$4 = /\s+/;
+var reScientificNotation = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g;
+var bohrToAngstromFactor = 0.529177210859;
+
 var CubeParser = (function (VolumeParser$$1) {
   function CubeParser () {
     VolumeParser$$1.apply(this, arguments);
@@ -91231,19 +91272,18 @@ var CubeParser = (function (VolumeParser$$1) {
   prototypeAccessors.type.get = function () { return 'cube' };
 
   CubeParser.prototype._parse = function _parse () {
-        // http://paulbourke.net/dataformats/cube/
+    // http://paulbourke.net/dataformats/cube/
 
     if (Debug) { Log.time('CubeParser._parse ' + this.name); }
 
     var v = this.volume;
     var headerLines = this.streamer.peekLines(6);
     var header = {};
-    var reWhitespace = /\s+/;
-    var bohrToAngstromFactor = 0.529177210859;
+
     var scaleFactor = bohrToAngstromFactor * this.voxelSize;
 
     function h (k, l) {
-      var field = headerLines[ k ].trim().split(reWhitespace)[ l ];
+      var field = headerLines[ k ].trim().split(reWhitespace$4)[ l ];
       return parseFloat(field)
     }
 
@@ -91255,12 +91295,12 @@ var CubeParser = (function (VolumeParser$$1) {
     header.NVY = h(4, 0);
     header.NVZ = h(5, 0);
 
-    header.basisX = new Vector3(
-            h(3, 1), h(3, 2), h(3, 3)).multiplyScalar(scaleFactor);
-    header.basisY = new Vector3(
-            h(4, 1), h(4, 2), h(4, 3)).multiplyScalar(scaleFactor);
-    header.basisZ = new Vector3(
-            h(5, 1), h(5, 2), h(5, 3)).multiplyScalar(scaleFactor);
+    header.basisX = new Vector3(h(3, 1), h(3, 2), h(3, 3))
+      .multiplyScalar(scaleFactor);
+    header.basisY = new Vector3(h(4, 1), h(4, 2), h(4, 3))
+      .multiplyScalar(scaleFactor);
+    header.basisZ = new Vector3(h(5, 1), h(5, 2), h(5, 3))
+      .multiplyScalar(scaleFactor);
 
     var data = new Float32Array(header.NVX * header.NVY * header.NVZ);
     var count = 0;
@@ -91272,12 +91312,10 @@ var CubeParser = (function (VolumeParser$$1) {
         var line = lines[ i ].trim();
 
         if (line !== '' && lineNo >= header.atomCount + 6 + oribitalFlag) {
-          line = line.split(reWhitespace);
-          for (var j = 0, lj = line.length; j < lj; ++j) {
-            if (line.length !== 1) {
-              data[ count ] = parseFloat(line[ j ]);
-              ++count;
-            }
+          var m = line.match(reScientificNotation);
+          for (var j = 0, lj = m.length; j < lj; ++j) {
+            data[ count ] = parseFloat(m[ j ]);
+            ++count;
           }
         }
 
@@ -91300,18 +91338,16 @@ var CubeParser = (function (VolumeParser$$1) {
     var matrix = new Matrix4();
 
     matrix.multiply(
-            new Matrix4().makeTranslation(
-                h.originX, h.originY, h.originZ
-            )
-        );
+      new Matrix4().makeTranslation(
+        h.originX, h.originY, h.originZ
+      )
+    );
 
     matrix.multiply(
-            new Matrix4().makeBasis(
-                h.basisZ,
-                h.basisY,
-                h.basisX
-            )
-        );
+      new Matrix4().makeBasis(
+        h.basisZ, h.basisY, h.basisX
+      )
+    );
 
     return matrix
   };
@@ -91345,21 +91381,16 @@ var Dsn6Parser = (function (VolumeParser$$1) {
   prototypeAccessors.isBinary.get = function () { return true };
 
   Dsn6Parser.prototype._parse = function _parse () {
-        // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
-        // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
+    // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
+    // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
 
     if (Debug) { Log.time('Dsn6Parser._parse ' + this.name); }
-
-    var bin = this.streamer.data;
-
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
 
     var v = this.volume;
     var header = {};
     var divisor, summand;
 
+    var bin = ensureBuffer(this.streamer.data);
     var intView = new Int16Array(bin);
     var byteView = new Uint8Array(bin);
     var brixStr = String.fromCharCode.apply(null, byteView.subarray(0, 512));
@@ -91387,8 +91418,10 @@ var Dsn6Parser = (function (VolumeParser$$1) {
 
       divisor = parseFloat(brixStr.substr(138, 12)) / 100;
       summand = parseInt(brixStr.substr(155, 8));
+
+      header.sigma = parseFloat(brixStr.substr(170, 12)) * 100;
     } else {
-            // swap byte order when big endian
+      // swap byte order when big endian
       if (intView[ 18 ] !== 100) {
         for (var i$1 = 0, n = intView.length; i$1 < n; ++i$1) {
           var val = intView[ i$1 ];
@@ -91421,26 +91454,27 @@ var Dsn6Parser = (function (VolumeParser$$1) {
 
       divisor = intView[ 15 ] / 100;
       summand = intView[ 16 ];
+      header.gamma = intView[ 14 ] * factor;
     }
 
     v.header = header;
 
-    Log.log(header, divisor, summand);
+    if (Debug) { Log.log(header, divisor, summand); }
 
     var data = new Float32Array(
-            header.xExtent * header.yExtent * header.zExtent
-        );
+      header.xExtent * header.yExtent * header.zExtent
+    );
 
     var offset = 512;
     var xBlocks = Math.ceil(header.xExtent / 8);
     var yBlocks = Math.ceil(header.yExtent / 8);
     var zBlocks = Math.ceil(header.zExtent / 8);
 
-        // loop over blocks
+    // loop over blocks
     for (var zz = 0; zz < zBlocks; ++zz) {
       for (var yy = 0; yy < yBlocks; ++yy) {
         for (var xx = 0; xx < xBlocks; ++xx) {
-                    // loop inside block
+          // loop inside block
           for (var k = 0; k < 8; ++k) {
             var z = 8 * zz + k;
             for (var j = 0; j < 8; ++j) {
@@ -91448,7 +91482,7 @@ var Dsn6Parser = (function (VolumeParser$$1) {
               for (var i = 0; i < 8; ++i) {
                 var x = 8 * xx + i;
 
-                                // check if remaining slice-part contains data
+                // check if remaining slice-part contains data
                 if (x < header.xExtent && y < header.yExtent && z < header.zExtent) {
                   var idx = ((((x * header.yExtent) + y) * header.zExtent) + z);
                   data[ idx ] = (byteView[ offset ] - summand) / divisor;
@@ -91465,6 +91499,9 @@ var Dsn6Parser = (function (VolumeParser$$1) {
     }
 
     v.setData(data, header.zExtent, header.yExtent, header.xExtent);
+    if (header.sigma) {
+      v.setStats(undefined, undefined, undefined, header.sigma);
+    }
 
     if (Debug) { Log.timeEnd('Dsn6Parser._parse ' + this.name); }
   };
@@ -91487,16 +91524,16 @@ var Dsn6Parser = (function (VolumeParser$$1) {
     var basisZ = [
       h.zlen * Math.cos(Math.PI / 180.0 * h.beta),
       h.zlen * (
-                    Math.cos(Math.PI / 180.0 * h.alpha) -
-                    Math.cos(Math.PI / 180.0 * h.gamma) *
-                    Math.cos(Math.PI / 180.0 * h.beta)
-                ) / Math.sin(Math.PI / 180.0 * h.gamma),
+        Math.cos(Math.PI / 180.0 * h.alpha) -
+        Math.cos(Math.PI / 180.0 * h.gamma) *
+        Math.cos(Math.PI / 180.0 * h.beta)
+      ) / Math.sin(Math.PI / 180.0 * h.gamma),
       0
     ];
     basisZ[ 2 ] = Math.sqrt(
-            h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
-            Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
-        );
+      h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
+      Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
+    );
 
     var basis = [ 0, basisX, basisY, basisZ ];
     var nxyz = [ 0, h.xRate, h.yRate, h.zRate ];
@@ -91505,37 +91542,32 @@ var Dsn6Parser = (function (VolumeParser$$1) {
     var matrix = new Matrix4();
 
     matrix.set(
-
-            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
-            0,
-
-            0, 0, 0, 1
-
-        );
+      basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+      0,
+      0, 0, 0, 1
+    );
 
     matrix.multiply(
-            new Matrix4().makeRotationY(degToRad(90))
-        );
+      new Matrix4().makeRotationY(degToRad(90))
+    );
 
     matrix.multiply(new Matrix4().makeTranslation(
-            -h.zStart, h.yStart, h.xStart
-        ));
+      -h.zStart, h.yStart, h.xStart
+    ));
 
     matrix.multiply(new Matrix4().makeScale(
-            -1, 1, 1
-        ));
+      -1, 1, 1
+    ));
 
     return matrix
   };
@@ -91554,6 +91586,8 @@ ParserRegistry.add('brix', Dsn6Parser);
  * @private
  */
 
+var reWhitespace$5 = /\s+/;
+
 var DxParser = (function (VolumeParser$$1) {
   function DxParser () {
     VolumeParser$$1.apply(this, arguments);
@@ -91568,7 +91602,7 @@ var DxParser = (function (VolumeParser$$1) {
   prototypeAccessors.type.get = function () { return 'dx' };
 
   DxParser.prototype._parse = function _parse () {
-        // http://www.poissonboltzmann.org/docs/file-format-info/
+    // http://apbs-pdb2pqr.readthedocs.io/en/latest/formats/opendx.html
 
     if (Debug) { Log.time('DxParser._parse ' + this.name); }
 
@@ -91578,7 +91612,6 @@ var DxParser = (function (VolumeParser$$1) {
     var header = this.volume.header;
     var dataLineStart = headerInfo.dataLineStart;
 
-    var reWhitespace = /\s+/;
     var size = header.nx * header.ny * header.nz;
     var data = new Float32Array(size);
     var count = 0;
@@ -91590,7 +91623,7 @@ var DxParser = (function (VolumeParser$$1) {
           var line = lines[ i ].trim();
 
           if (line !== '') {
-            var ls = line.split(reWhitespace);
+            var ls = line.split(reWhitespace$5);
 
             for (var j = 0, lj = ls.length; j < lj; ++j) {
               data[ count ] = parseFloat(ls[ j ]);
@@ -91616,7 +91649,6 @@ var DxParser = (function (VolumeParser$$1) {
     var this$1 = this;
 
     var header = {};
-    var reWhitespace = /\s+/;
     var n = headerLines.length;
 
     var dataLineStart = 0;
@@ -91624,23 +91656,23 @@ var DxParser = (function (VolumeParser$$1) {
     var deltaLineCount = 0;
 
     for (var i = 0; i < n; ++i) {
-      var ls;
+      var ls = (void 0);
       var line = headerLines[ i ];
 
       if (line.startsWith('object 1')) {
-        ls = line.split(reWhitespace);
+        ls = line.split(reWhitespace$5);
 
         header.nx = parseInt(ls[ 5 ]);
         header.ny = parseInt(ls[ 6 ]);
         header.nz = parseInt(ls[ 7 ]);
       } else if (line.startsWith('origin')) {
-        ls = line.split(reWhitespace);
+        ls = line.split(reWhitespace$5);
 
         header.xmin = parseFloat(ls[ 1 ]);
         header.ymin = parseFloat(ls[ 2 ]);
         header.zmin = parseFloat(ls[ 3 ]);
       } else if (line.startsWith('delta')) {
-        ls = line.split(reWhitespace);
+        ls = line.split(reWhitespace$5);
 
         if (deltaLineCount === 0) {
           header.hx = parseFloat(ls[ 1 ]) * this$1.voxelSize;
@@ -91673,20 +91705,20 @@ var DxParser = (function (VolumeParser$$1) {
     var matrix = new Matrix4();
 
     matrix.multiply(
-            new Matrix4().makeRotationY(degToRad(90))
-        );
+      new Matrix4().makeRotationY(degToRad(90))
+    );
 
     matrix.multiply(
-            new Matrix4().makeTranslation(
-                -h.zmin, h.ymin, h.xmin
-            )
-        );
+      new Matrix4().makeTranslation(
+        -h.zmin, h.ymin, h.xmin
+      )
+    );
 
     matrix.multiply(
-            new Matrix4().makeScale(
-                -h.hz, h.hy, h.hx
-            )
-        );
+      new Matrix4().makeScale(
+        -h.hz, h.hy, h.hx
+      )
+    );
 
     return matrix
   };
@@ -91719,15 +91751,11 @@ var DxbinParser = (function (DxParser$$1) {
   prototypeAccessors.isBinary.get = function () { return true };
 
   DxbinParser.prototype._parse = function _parse () {
-        // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
+    // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
     if (Debug) { Log.time('DxbinParser._parse ' + this.name); }
 
-    var bin = this.streamer.data;
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
-
+    var bin = ensureBuffer(this.streamer.data);
     var headerLines = uint8ToLines(new Uint8Array(bin, 0, 1000));
     var headerInfo = this.parseHeaderLines(headerLines);
     var header = this.volume.header;
@@ -91774,44 +91802,38 @@ var MrcParser = (function (VolumeParser$$1) {
   prototypeAccessors.isBinary.get = function () { return true };
 
   MrcParser.prototype._parse = function _parse () {
-        // MRC
-        // http://ami.scripps.edu/software/mrctools/mrc_specification.php
-        // http://www2.mrc-lmb.cam.ac.uk/research/locally-developed-software/image-processing-software/#image
-        // http://bio3d.colorado.edu/imod/doc/mrc_format.txt
+    // MRC
+    // http://ami.scripps.edu/software/mrctools/mrc_specification.php
+    // http://www2.mrc-lmb.cam.ac.uk/research/locally-developed-software/image-processing-software/#image
+    // http://bio3d.colorado.edu/imod/doc/mrc_format.txt
 
-        // CCP4 (MAP)
-        // http://www.ccp4.ac.uk/html/maplib.html
+    // CCP4 (MAP)
+    // http://www.ccp4.ac.uk/html/maplib.html
 
-        // MRC format does not use the skew transformation header records (words 25-37)
-        // CCP4 format does not use the ORIGIN header records (words 50-52)
+    // MRC format does not use the skew transformation header records (words 25-37)
+    // CCP4 format does not use the ORIGIN header records (words 50-52)
 
     if (Debug) { Log.time('MrcParser._parse ' + this.name); }
-
-    var bin = this.streamer.data;
-
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer;
-    }
 
     var v = this.volume;
     var header = {};
 
+    var bin = ensureBuffer(this.streamer.data);
     var intView = new Int32Array(bin, 0, 56);
     var floatView = new Float32Array(bin, 0, 56);
-
     var dv = new DataView(bin);
 
-        // 53  MAP         Character string 'MAP ' to identify file type
+    // 53  MAP         Character string 'MAP ' to identify file type
     header.MAP = String.fromCharCode(
-            dv.getUint8(52 * 4), dv.getUint8(52 * 4 + 1),
-            dv.getUint8(52 * 4 + 2), dv.getUint8(52 * 4 + 3)
-        );
+      dv.getUint8(52 * 4), dv.getUint8(52 * 4 + 1),
+      dv.getUint8(52 * 4 + 2), dv.getUint8(52 * 4 + 3)
+    );
 
-        // 54  MACHST      Machine stamp indicating machine type which wrote file
-        //                 17 and 17 for big-endian or 68 and 65 for little-endian
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    //                 17 and 17 for big-endian or 68 and 65 for little-endian
     header.MACHST = [ dv.getUint8(53 * 4), dv.getUint8(53 * 4 + 1) ];
 
-        // swap byte order when big endian
+    // swap byte order when big endian
     if (header.MACHST[ 0 ] === 17 && header.MACHST[ 1 ] === 17) {
       var n = bin.byteLength;
       for (var i = 0; i < n; i += 4) {
@@ -91823,108 +91845,108 @@ var MrcParser = (function (VolumeParser$$1) {
     header.NY = intView[ 1 ];  // NR - rows
     header.NZ = intView[ 2 ];  // NS - sections (slowest changing)
 
-        // mode
-        //  0 image : signed 8-bit bytes range -128 to 127
-        //  1 image : 16-bit halfwords
-        //  2 image : 32-bit reals
-        //  3 transform : complex 16-bit integers
-        //  4 transform : complex 32-bit reals
-        //  6 image : unsigned 16-bit range 0 to 65535
-        // 16 image: unsigned char * 3 (for rgb data, non-standard)
-        //
-        // Note: Mode 2 is the normal mode used in the CCP4 programs.
-        //       Other modes than 2 and 0 may NOT WORK
+    // mode
+    //  0 image : signed 8-bit bytes range -128 to 127
+    //  1 image : 16-bit halfwords
+    //  2 image : 32-bit reals
+    //  3 transform : complex 16-bit integers
+    //  4 transform : complex 32-bit reals
+    //  6 image : unsigned 16-bit range 0 to 65535
+    // 16 image: unsigned char * 3 (for rgb data, non-standard)
+    //
+    // Note: Mode 2 is the normal mode used in the CCP4 programs.
+    //       Other modes than 2 and 0 may NOT WORK
     header.MODE = intView[ 3 ];
 
-        // start
+    // start
     header.NXSTART = intView[ 4 ];  // NCSTART - first column
     header.NYSTART = intView[ 5 ];  // NRSTART - first row
     header.NZSTART = intView[ 6 ];  // NSSTART - first section
 
-        // intervals
+    // intervals
     header.MX = intView[ 7 ];  // intervals along x
     header.MY = intView[ 8 ];  // intervals along y
     header.MZ = intView[ 9 ];  // intervals along z
 
-        // cell length (Angstroms in CCP4)
+    // cell length (Angstroms in CCP4)
     header.xlen = floatView[ 10 ] * this.voxelSize;
     header.ylen = floatView[ 11 ] * this.voxelSize;
     header.zlen = floatView[ 12 ] * this.voxelSize;
 
-        // cell angle (Degrees)
+    // cell angle (Degrees)
     header.alpha = floatView[ 13 ];
     header.beta = floatView[ 14 ];
     header.gamma = floatView[ 15 ];
 
-        // axis correspondence (1,2,3 for X,Y,Z)
+    // axis correspondence (1,2,3 for X,Y,Z)
     header.MAPC = intView[ 16 ];  // column
     header.MAPR = intView[ 17 ];  // row
     header.MAPS = intView[ 18 ];  // section
 
-        // density statistics
+    // density statistics
     header.DMIN = floatView[ 19 ];
     header.DMAX = floatView[ 20 ];
     header.DMEAN = floatView[ 21 ];
 
-        // space group number 0 or 1 (default=0)
+    // space group number 0 or 1 (default=0)
     header.ISPG = intView[ 22 ];
 
-        // number of bytes used for symmetry data (0 or 80)
+    // number of bytes used for symmetry data (0 or 80)
     header.NSYMBT = intView[ 23 ];
 
-        // Flag for skew transformation, =0 none, =1 if foll
+    // Flag for skew transformation, =0 none, =1 if foll
     header.LSKFLG = intView[ 24 ];
 
-        // 26-34  SKWMAT  Skew matrix S (in order S11, S12, S13, S21 etc) if
-        //                LSKFLG .ne. 0.
-        // 35-37  SKWTRN  Skew translation t if LSKFLG != 0.
-        //                Skew transformation is from standard orthogonal
-        //                coordinate frame (as used for atoms) to orthogonal
-        //                map frame, as Xo(map) = S * (Xo(atoms) - t)
+    // 26-34  SKWMAT  Skew matrix S (in order S11, S12, S13, S21 etc) if
+    //                LSKFLG .ne. 0.
+    // 35-37  SKWTRN  Skew translation t if LSKFLG != 0.
+    //                Skew transformation is from standard orthogonal
+    //                coordinate frame (as used for atoms) to orthogonal
+    //                map frame, as Xo(map) = S * (Xo(atoms) - t)
 
-        // 38      future use       (some of these are used by the MSUBSX routines
-        //  .          "              in MAPBRICK, MAPCONT and FRODO)
-        //  .          "   (all set to zero by default)
-        //  .          "
-        // 52          "
+    // 38      future use       (some of these are used by the MSUBSX routines
+    //  .          "              in MAPBRICK, MAPCONT and FRODO)
+    //  .          "   (all set to zero by default)
+    //  .          "
+    // 52          "
 
-        // 50-52 origin in X,Y,Z used for transforms
+    // 50-52 origin in X,Y,Z used for transforms
     header.originX = floatView[ 49 ];
     header.originY = floatView[ 50 ];
     header.originZ = floatView[ 51 ];
 
-        // 53  MAP         Character string 'MAP ' to identify file type
-        // => see top of this parser
+    // 53  MAP         Character string 'MAP ' to identify file type
+    // => see top of this parser
 
-        // 54  MACHST      Machine stamp indicating machine type which wrote file
-        // => see top of this parser
+    // 54  MACHST      Machine stamp indicating machine type which wrote file
+    // => see top of this parser
 
-        // Rms deviation of map from mean density
+    // Rms deviation of map from mean density
     header.ARMS = floatView[ 54 ];
 
-        // 56      NLABL           Number of labels being used
-        // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
+    // 56      NLABL           Number of labels being used
+    // 57-256  LABEL(20,10)    10  80 character text labels (ie. A4 format)
 
     v.header = header;
 
-        // Log.log( header );
+    // Log.log( header );
 
     var data;
     if (header.MODE === 2) {
       data = new Float32Array(
-                bin, 256 * 4 + header.NSYMBT,
-                header.NX * header.NY * header.NZ
-            );
+        bin, 256 * 4 + header.NSYMBT,
+        header.NX * header.NY * header.NZ
+      );
     } else if (header.MODE === 0) {
       data = new Float32Array(new Int8Array(
-                bin, 256 * 4 + header.NSYMBT,
-                header.NX * header.NY * header.NZ
-            ));
+        bin, 256 * 4 + header.NSYMBT,
+        header.NX * header.NY * header.NZ
+      ));
 
-            // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
-            // if the file was converted by mapmode2to0 - scale the data
+      // based on uglymol (https://github.com/uglymol/uglymol) by Marcin Wojdyr (wojdyr)
+      // if the file was converted by mapmode2to0 - scale the data
       if (intView[ 39 ] === -128 && intView[ 40 ] === 127) {
-                // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
+        // scaling f(x)=b1*x+b0 such that f(-128)=min and f(127)=max
         var b1 = (header.DMAX - header.DMIN) / 255.0;
         var b0 = 0.5 * (header.DMIN + header.DMAX + b1);
         for (var j = 0, jl = data.length; j < jl; ++j) {
@@ -91936,6 +91958,9 @@ var MrcParser = (function (VolumeParser$$1) {
     }
 
     v.setData(data, header.NX, header.NY, header.NZ);
+    if (header.ARMS !== 0) {
+      v.setStats(header.DMIN, header.DMAX, header.DMEAN, header.ARMS);
+    }
 
     if (Debug) { Log.timeEnd('MrcParser._parse ' + this.name); }
   };
@@ -91958,16 +91983,16 @@ var MrcParser = (function (VolumeParser$$1) {
     var basisZ = [
       h.zlen * Math.cos(Math.PI / 180.0 * h.beta),
       h.zlen * (
-                    Math.cos(Math.PI / 180.0 * h.alpha) -
-                    Math.cos(Math.PI / 180.0 * h.gamma) *
-                    Math.cos(Math.PI / 180.0 * h.beta)
-                ) / Math.sin(Math.PI / 180.0 * h.gamma),
+        Math.cos(Math.PI / 180.0 * h.alpha) -
+        Math.cos(Math.PI / 180.0 * h.gamma) *
+        Math.cos(Math.PI / 180.0 * h.beta)
+      ) / Math.sin(Math.PI / 180.0 * h.gamma),
       0
     ];
     basisZ[ 2 ] = Math.sqrt(
-            h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
-            Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
-        );
+      h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
+      Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
+    );
 
     var basis = [ 0, basisX, basisY, basisZ ];
     var nxyz = [ 0, h.MX, h.MY, h.MZ ];
@@ -91976,33 +92001,28 @@ var MrcParser = (function (VolumeParser$$1) {
     var matrix = new Matrix4();
 
     matrix.set(
-
-            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
-            0,
-
-            0, 0, 0, 1
-
-        );
+      basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+      0,
+      0, 0, 0, 1
+    );
 
     matrix.setPosition(new Vector3(
-            h.originX, h.originY, h.originZ
-        ));
+      h.originX, h.originY, h.originZ
+    ));
 
     matrix.multiply(new Matrix4().makeTranslation(
-            h.NXSTART, h.NYSTART, h.NZSTART
-        ));
+      h.NXSTART, h.NYSTART, h.NZSTART
+    ));
 
     return matrix
   };
@@ -92022,6 +92042,12 @@ ParserRegistry.add('map', MrcParser);
  * @private
  */
 
+var reWhitespace$6 = /\s+/;
+
+function parseNumberLine (line) {
+  return line.trim().split(reWhitespace$6).map(parseFloat)
+}
+
 var XplorParser = (function (VolumeParser$$1) {
   function XplorParser () {
     VolumeParser$$1.apply(this, arguments);
@@ -92036,19 +92062,14 @@ var XplorParser = (function (VolumeParser$$1) {
   prototypeAccessors.type.get = function () { return 'xplor' };
 
   XplorParser.prototype._parse = function _parse () {
-        // http://hincklab.uthscsa.edu/html/soft_packs/msi_docs/insight980/xplor/formats.html
-        // http://www.mrc-lmb.cam.ac.uk/public/xtal/doc/cns/cns_1.3/tutorial/formats/maps/text.html
+    // http://hincklab.uthscsa.edu/html/soft_packs/msi_docs/insight980/xplor/formats.html
+    // http://www.mrc-lmb.cam.ac.uk/public/xtal/doc/cns/cns_1.3/tutorial/formats/maps/text.html
 
     if (Debug) { Log.time('XplorParser._parse ' + this.name); }
 
     var v = this.volume;
     var headerLines = this.streamer.peekLines(8);
     var header = {};
-    var reWhitespace = /\s+/;
-
-    function parseNumberLine (line) {
-      return line.trim().split(reWhitespace).map(parseFloat)
-    }
 
     var infoStart;
     if (headerLines[ 2 ].startsWith('REMARKS')) {
@@ -92083,9 +92104,9 @@ var XplorParser = (function (VolumeParser$$1) {
     var n = na * nb * nc;
 
     var data = new Float32Array(n);
+    var lineSection = 1 + (na * nb) / 6;
     var count = 0;
     var lineNo = 0;
-    var lineSection = 1 + (na * nb) / 6;
 
     function _parseChunkOfLines (_i, _n, lines) {
       for (var i = _i; i < _n; ++i) {
@@ -92095,6 +92116,13 @@ var XplorParser = (function (VolumeParser$$1) {
           for (var j = 0, lj = 6; j < lj; ++j) {
             data[ count ] = parseFloat(line.substr(12 * j, 12));
             ++count;
+          }
+        } else if (count === n) {
+          var lt = line.trim();
+          if (lt && lt !== '-9999') {
+            var ls = parseNumberLine(line);
+            header.RAVE = ls[0];
+            header.RSIGMA = ls[1];
           }
         }
 
@@ -92108,6 +92136,9 @@ var XplorParser = (function (VolumeParser$$1) {
 
     v.header = header;
     v.setData(data, na, nb, nc);
+    if (header.RAVE !== 0 && header.RSIGMA !== 1) {
+      v.setStats(undefined, undefined, header.RAVE, header.RSIGMA);
+    }
 
     if (Debug) { Log.timeEnd('XplorParser._parse ' + this.name); }
   };
@@ -92130,16 +92161,16 @@ var XplorParser = (function (VolumeParser$$1) {
     var basisZ = [
       h.c * Math.cos(Math.PI / 180.0 * h.beta),
       h.c * (
-                    Math.cos(Math.PI / 180.0 * h.alpha) -
-                    Math.cos(Math.PI / 180.0 * h.gamma) *
-                    Math.cos(Math.PI / 180.0 * h.beta)
-                ) / Math.sin(Math.PI / 180.0 * h.gamma),
+        Math.cos(Math.PI / 180.0 * h.alpha) -
+        Math.cos(Math.PI / 180.0 * h.gamma) *
+        Math.cos(Math.PI / 180.0 * h.beta)
+      ) / Math.sin(Math.PI / 180.0 * h.gamma),
       0
     ];
     basisZ[ 2 ] = Math.sqrt(
-            h.c * h.c * Math.sin(Math.PI / 180.0 * h.beta) *
-            Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
-        );
+      h.c * h.c * Math.sin(Math.PI / 180.0 * h.beta) *
+      Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
+    );
 
     var basis = [ 0, basisX, basisY, basisZ ];
     var nxyz = [ 0, h.NA, h.NB, h.NC ];
@@ -92148,29 +92179,24 @@ var XplorParser = (function (VolumeParser$$1) {
     var matrix = new Matrix4();
 
     matrix.set(
-
-            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
-            0,
-
-            0, 0, 0, 1
-
-        );
+      basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+      0,
+      0, 0, 0, 1
+    );
 
     matrix.multiply(new Matrix4().makeTranslation(
-            h.AMIN, h.BMIN, h.CMIN
-        ));
+      h.AMIN, h.BMIN, h.CMIN
+    ));
 
     return matrix
   };
@@ -96859,7 +96885,7 @@ function StaticDatasource (baseUrl) {
   };
 }
 
-var version$1 = "0.10.5-4";
+var version$1 = "0.10.5-5";
 
 /**
  * @file Version
