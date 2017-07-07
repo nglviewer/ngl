@@ -13,6 +13,7 @@ import VolumeParser from './volume-parser.js'
 // @author Alexander Rose <alexander.rose@weirdbyte.de>
 
 const reWhitespace = /\s+/
+const reScientificNotation = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g
 const bohrToAngstromFactor = 0.529177210859
 
 class CubeParser extends VolumeParser {
@@ -59,12 +60,10 @@ class CubeParser extends VolumeParser {
         const line = lines[ i ].trim()
 
         if (line !== '' && lineNo >= header.atomCount + 6 + oribitalFlag) {
-          const ls = line.split(reWhitespace)
-          for (let j = 0, lj = ls.length; j < lj; ++j) {
-            if (ls.length !== 1) {
-              data[ count ] = parseFloat(ls[ j ])
-              ++count
-            }
+          const m = line.match(reScientificNotation)
+          for (let j = 0, lj = m.length; j < lj; ++j) {
+            data[ count ] = parseFloat(m[ j ])
+            ++count
           }
         }
 
