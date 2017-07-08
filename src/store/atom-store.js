@@ -10,7 +10,7 @@ import Store from './store.js'
  * Atom store
  */
 class AtomStore extends Store {
-  get __fields () {
+  get _defaultFields () {
     return [
       [ 'residueIndex', 1, 'uint32' ],
       [ 'atomTypeId', 1, 'uint16' ],

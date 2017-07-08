@@ -6,23 +6,24 @@
 
 import { Log, DatasourceRegistry } from '../globals.js'
 import { getFileInfo, getProtocol } from '../utils.js'
+import Datasource from './datasource.js'
 
-var baseUrl = '//files.rcsb.org/download/'
-var mmtfBaseUrl = '//mmtf.rcsb.org/v1.0/'
-var mmtfFullUrl = mmtfBaseUrl + 'full/'
-var mmtfReducedUrl = mmtfBaseUrl + 'reduced/'
+const baseUrl = '//files.rcsb.org/download/'
+const mmtfBaseUrl = '//mmtf.rcsb.org/v1.0/'
+const mmtfFullUrl = mmtfBaseUrl + 'full/'
+const mmtfReducedUrl = mmtfBaseUrl + 'reduced/'
 
-function RcsbDatasource () {
-  this.getUrl = function (src) {
-        // valid path are
-        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
-        // XXXX defaults to XXXX.cif
-    var info = getFileInfo(src)
-    var pdbid = info.name.substr(0, 4)
-    var url
+class RcsbDatasource extends Datasource {
+  getUrl (src) {
+    // valid path are
+    // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
+    // XXXX defaults to XXXX.cif
+    const info = getFileInfo(src)
+    const pdbid = info.name.substr(0, 4)
+    let url
     if ([ 'pdb', 'cif' ].includes(info.ext) &&
-            (info.compressed === false || info.compressed === 'gz')
-        ) {
+        (info.compressed === false || info.compressed === 'gz')
+    ) {
       url = baseUrl + info.path
     } else if (info.ext === 'mmtf') {
       if (info.base.endsWith('.bb')) {
@@ -39,8 +40,8 @@ function RcsbDatasource () {
     return getProtocol() + url
   }
 
-  this.getExt = function (src) {
-    var info = getFileInfo(src)
+  getExt (src) {
+    const info = getFileInfo(src)
     if (info.ext === 'mmtf' || !info.ext) {
       return 'mmtf'
     }

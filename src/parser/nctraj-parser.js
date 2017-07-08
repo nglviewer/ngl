@@ -22,7 +22,7 @@ class NctrajParser extends TrajectoryParser {
     const f = this.frames
     const coordinates = f.coordinates
     const boxes = f.boxes
-    // const header = {}
+    const times = f.times
 
     netcdfReader.getDataVariable('coordinates').forEach(function (c) {
       coordinates.push(new Float32Array(c))
@@ -32,6 +32,19 @@ class NctrajParser extends TrajectoryParser {
       netcdfReader.getDataVariable('cell_lengths').forEach(function (b) {
         boxes.push(new Float32Array(b))
       })
+    }
+
+    if (netcdfReader.hasDataVariable('time')) {
+      netcdfReader.getDataVariable('time').forEach(function (t) {
+        times.push(t)
+      })
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0]
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0]
     }
 
     if (Debug) Log.timeEnd('NctrajParser._parse ' + this.name)

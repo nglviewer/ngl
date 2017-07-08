@@ -5,8 +5,10 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { uint8ToString, ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
-import { uint8ToString } from '../utils.js'
+
+const charmmTimeUnitFactor = 20.45482949774598
 
 class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
@@ -37,27 +39,24 @@ class DcdParser extends TrajectoryParser {
 
     if (Debug) Log.time('DcdParser._parse ' + this.name)
 
-    var bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-    var dv = new DataView(bin)
+    const bin = ensureBuffer(this.streamer.data)
+    const dv = new DataView(bin)
 
-    var i, n
-    var f = this.frames
-    var coordinates = f.coordinates
-    var boxes = f.boxes
-    var header = {}
-    var nextPos = 0
+    const f = this.frames
+    const coordinates = f.coordinates
+    const boxes = f.boxes
+    const header = {}
+
+    let nextPos = 0
 
     // header block
 
-    var intView = new Int32Array(bin, 0, 23)
-    var ef = intView[ 0 ] !== dv.getInt32(0)  // endianess flag
+    const intView = new Int32Array(bin, 0, 23)
+    const ef = intView[ 0 ] !== dv.getInt32(0)  // endianess flag
     // swap byte order when big endian (84 indicates little endian)
     if (intView[ 0 ] !== 84) {
-      n = bin.byteLength
-      for (i = 0; i < n; i += 4) {
+      const n = bin.byteLength
+      for (let i = 0; i < n; i += 4) {
         dv.setFloat32(i, dv.getFloat32(i), true)
       }
     }
@@ -65,16 +64,16 @@ class DcdParser extends TrajectoryParser {
       Log.error('dcd bad format, header block start')
     }
     // format indicator, should read 'CORD'
-    var formatString = String.fromCharCode(
-        dv.getUint8(4), dv.getUint8(5),
-        dv.getUint8(6), dv.getUint8(7)
-      )
+    const formatString = String.fromCharCode(
+      dv.getUint8(4), dv.getUint8(5),
+      dv.getUint8(6), dv.getUint8(7)
+    )
     if (formatString !== 'CORD') {
       Log.error('dcd bad format, format string')
     }
-    var isCharmm = false
-    var extraBlock = false
-    var fourDims = false
+    let isCharmm = false
+    let extraBlock = false
+    let fourDims = false
     // version field in charmm, unused in X-PLOR
     if (intView[ 22 ] !== 0) {
       isCharmm = true
@@ -97,8 +96,8 @@ class DcdParser extends TrajectoryParser {
 
     // title block
 
-    var titleLength = dv.getInt32(nextPos, ef)
-    var titlePos = nextPos + 1
+    const titleLength = dv.getInt32(nextPos, ef)
+    const titlePos = nextPos + 1
     if ((titleLength - 4) % 80 !== 0) {
       Log.error('dcd bad format, title block start')
     }
@@ -131,14 +130,14 @@ class DcdParser extends TrajectoryParser {
 
     // frames
 
-    var natom = header.NATOM
-    var natom4 = natom * 4
+    const natom = header.NATOM
+    const natom4 = natom * 4
 
-    for (i = 0, n = header.NSET; i < n; ++i) {
+    for (let i = 0, n = header.NSET; i < n; ++i) {
       if (extraBlock) {
         nextPos += 4  // block start
-                // unitcell: A, alpha, B, beta, gamma, C (doubles)
-        var box = new Float32Array(9)
+        // unitcell: A, alpha, B, beta, gamma, C (doubles)
+        const box = new Float32Array(9)
         box[ 0 ] = dv.getFloat64(nextPos, ef)
         box[ 4 ] = dv.getFloat64(nextPos + 2 * 8, ef)
         box[ 8 ] = dv.getFloat64(nextPos + 5 * 8, ef)
@@ -148,14 +147,14 @@ class DcdParser extends TrajectoryParser {
       }
 
       // xyz coordinates
-      var coord = new Float32Array(natom * 3)
-      for (var j = 0; j < 3; ++j) {
+      const coord = new Float32Array(natom * 3)
+      for (let j = 0; j < 3; ++j) {
         if (dv.getInt32(nextPos, ef) !== natom4) {
           Log.error('dcd bad format, coord block start', i, j)
         }
         nextPos += 4  // block start
-        var c = new Float32Array(bin, nextPos, natom)
-        for (var k = 0; k < natom; ++k) {
+        const c = new Float32Array(bin, nextPos, natom)
+        for (let k = 0; k < natom; ++k) {
           coord[ 3 * k + j ] = c[ k ]
         }
         nextPos += natom4
@@ -167,14 +166,21 @@ class DcdParser extends TrajectoryParser {
       coordinates.push(coord)
 
       if (fourDims) {
-        var bytes = dv.getInt32(nextPos, ef)
+        const bytes = dv.getInt32(nextPos, ef)
         nextPos += 4 + bytes + 4  // block start + skip + block end
       }
     }
 
-    // console.log( header );
-    // console.log( header.TITLE );
-    // console.log( "isCharmm", isCharmm, "extraBlock", extraBlock, "fourDims", fourDims );
+    if (header.DELTA) {
+      f.deltaTime = header.DELTA * charmmTimeUnitFactor
+    }
+    if (header.ISTART >= 1) {
+      f.timeOffset = (header.ISTART - 1) * f.deltaTime
+    }
+
+    // console.log(header)
+    // console.log(header.TITLE)
+    // console.log('isCharmm', isCharmm, 'extraBlock', extraBlock, 'fourDims, fourDims)
 
     if (Debug) Log.timeEnd('DcdParser._parse ' + this.name)
   }

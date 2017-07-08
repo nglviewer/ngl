@@ -5,9 +5,10 @@
  */
 
 import { DatasourceRegistry } from '../globals.js'
+import Datasource from './datasource.js'
 
-function PassThroughDatasource () {
-  this.getUrl = function (path) {
+class PassThroughDatasource extends Datasource {
+  getUrl (path) {
     return path
   }
 }

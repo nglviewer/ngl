@@ -54,6 +54,7 @@ import './color/hydrophobicity-colormaker.js'
 import './color/modelindex-colormaker.js'
 import './color/moleculetype-colormaker.js'
 import './color/occupancy-colormaker.js'
+import './color/partialcharge-colormaker.js'
 import './color/random-colormaker.js'
 import './color/residueindex-colormaker.js'
 import './color/resname-colormaker.js'
@@ -160,6 +161,7 @@ import './datasource/rcsb-datasource.js'
 import './datasource/pubchem-datasource.js'
 import './datasource/passthrough-datasource.js'
 import StaticDatasource from './datasource/static-datasource.js'
+import MdsrvDatasource from './datasource/mdsrv-datasource.js'
 
 //
 
@@ -189,6 +191,7 @@ export {
   setDebug,
   DatasourceRegistry,
   StaticDatasource,
+  MdsrvDatasource,
   ParserRegistry,
   autoLoad,
   RepresentationRegistry,

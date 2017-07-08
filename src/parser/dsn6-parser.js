@@ -7,6 +7,7 @@
 import { Matrix4 } from '../../lib/three.es6.js'
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import { degToRad } from '../math/math-utils.js'
 import VolumeParser from './volume-parser.js'
 
@@ -15,24 +16,19 @@ class Dsn6Parser extends VolumeParser {
   get isBinary () { return true }
 
   _parse () {
-        // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
-        // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
+    // DSN6 http://www.uoxray.uoregon.edu/tnt/manual/node104.html
+    // BRIX http://svn.cgl.ucsf.edu/svn/chimera/trunk/libs/VolumeData/dsn6/brix-1.html
 
     if (Debug) Log.time('Dsn6Parser._parse ' + this.name)
 
-    var bin = this.streamer.data
+    const v = this.volume
+    const header = {}
+    let divisor, summand
 
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-
-    var v = this.volume
-    var header = {}
-    var divisor, summand
-
-    var intView = new Int16Array(bin)
-    var byteView = new Uint8Array(bin)
-    var brixStr = String.fromCharCode.apply(null, byteView.subarray(0, 512))
+    const bin = ensureBuffer(this.streamer.data)
+    const intView = new Int16Array(bin)
+    const byteView = new Uint8Array(bin)
+    const brixStr = String.fromCharCode.apply(null, byteView.subarray(0, 512))
 
     if (brixStr.startsWith(':-)')) {
       header.xStart = parseInt(brixStr.substr(10, 5))  // NXSTART
@@ -57,8 +53,10 @@ class Dsn6Parser extends VolumeParser {
 
       divisor = parseFloat(brixStr.substr(138, 12)) / 100
       summand = parseInt(brixStr.substr(155, 8))
+
+      header.sigma = parseFloat(brixStr.substr(170, 12)) * 100
     } else {
-            // swap byte order when big endian
+      // swap byte order when big endian
       if (intView[ 18 ] !== 100) {
         for (let i = 0, n = intView.length; i < n; ++i) {
           const val = intView[ i ]
@@ -78,8 +76,8 @@ class Dsn6Parser extends VolumeParser {
       header.yRate = intView[ 7 ]
       header.zRate = intView[ 8 ]
 
-      var factor = 1 / intView[ 17 ]
-      var scalingFactor = factor * this.voxelSize
+      const factor = 1 / intView[ 17 ]
+      const scalingFactor = factor * this.voxelSize
 
       header.xlen = intView[ 9 ] * scalingFactor
       header.ylen = intView[ 10 ] * scalingFactor
@@ -91,26 +89,27 @@ class Dsn6Parser extends VolumeParser {
 
       divisor = intView[ 15 ] / 100
       summand = intView[ 16 ]
+      header.gamma = intView[ 14 ] * factor
     }
 
     v.header = header
 
-    Log.log(header, divisor, summand)
+    if (Debug) Log.log(header, divisor, summand)
 
-    var data = new Float32Array(
-            header.xExtent * header.yExtent * header.zExtent
-        )
+    const data = new Float32Array(
+      header.xExtent * header.yExtent * header.zExtent
+    )
 
-    var offset = 512
-    var xBlocks = Math.ceil(header.xExtent / 8)
-    var yBlocks = Math.ceil(header.yExtent / 8)
-    var zBlocks = Math.ceil(header.zExtent / 8)
+    let offset = 512
+    const xBlocks = Math.ceil(header.xExtent / 8)
+    const yBlocks = Math.ceil(header.yExtent / 8)
+    const zBlocks = Math.ceil(header.zExtent / 8)
 
-        // loop over blocks
+    // loop over blocks
     for (var zz = 0; zz < zBlocks; ++zz) {
       for (var yy = 0; yy < yBlocks; ++yy) {
         for (var xx = 0; xx < xBlocks; ++xx) {
-                    // loop inside block
+          // loop inside block
           for (var k = 0; k < 8; ++k) {
             var z = 8 * zz + k
             for (var j = 0; j < 8; ++j) {
@@ -118,7 +117,7 @@ class Dsn6Parser extends VolumeParser {
               for (var i = 0; i < 8; ++i) {
                 var x = 8 * xx + i
 
-                                // check if remaining slice-part contains data
+                // check if remaining slice-part contains data
                 if (x < header.xExtent && y < header.yExtent && z < header.zExtent) {
                   var idx = ((((x * header.yExtent) + y) * header.zExtent) + z)
                   data[ idx ] = (byteView[ offset ] - summand) / divisor
@@ -135,77 +134,75 @@ class Dsn6Parser extends VolumeParser {
     }
 
     v.setData(data, header.zExtent, header.yExtent, header.xExtent)
+    if (header.sigma) {
+      v.setStats(undefined, undefined, undefined, header.sigma)
+    }
 
     if (Debug) Log.timeEnd('Dsn6Parser._parse ' + this.name)
   }
 
   getMatrix () {
-    var h = this.volume.header
+    const h = this.volume.header
 
-    var basisX = [
+    const basisX = [
       h.xlen,
       0,
       0
     ]
 
-    var basisY = [
+    const basisY = [
       h.ylen * Math.cos(Math.PI / 180.0 * h.gamma),
       h.ylen * Math.sin(Math.PI / 180.0 * h.gamma),
       0
     ]
 
-    var basisZ = [
+    const basisZ = [
       h.zlen * Math.cos(Math.PI / 180.0 * h.beta),
       h.zlen * (
-                    Math.cos(Math.PI / 180.0 * h.alpha) -
-                    Math.cos(Math.PI / 180.0 * h.gamma) *
-                    Math.cos(Math.PI / 180.0 * h.beta)
-                ) / Math.sin(Math.PI / 180.0 * h.gamma),
+        Math.cos(Math.PI / 180.0 * h.alpha) -
+        Math.cos(Math.PI / 180.0 * h.gamma) *
+        Math.cos(Math.PI / 180.0 * h.beta)
+      ) / Math.sin(Math.PI / 180.0 * h.gamma),
       0
     ]
     basisZ[ 2 ] = Math.sqrt(
-            h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
-            Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
-        )
+      h.zlen * h.zlen * Math.sin(Math.PI / 180.0 * h.beta) *
+      Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
+    )
 
-    var basis = [ 0, basisX, basisY, basisZ ]
-    var nxyz = [ 0, h.xRate, h.yRate, h.zRate ]
-    var mapcrs = [ 0, 1, 2, 3 ]
+    const basis = [ 0, basisX, basisY, basisZ ]
+    const nxyz = [ 0, h.xRate, h.yRate, h.zRate ]
+    const mapcrs = [ 0, 1, 2, 3 ]
 
-    var matrix = new Matrix4()
+    const matrix = new Matrix4()
 
     matrix.set(
-
-            basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
-            0,
-
-            basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
-            basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
-            basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
-            0,
-
-            0, 0, 0, 1
-
-        )
+      basis[ mapcrs[1] ][0] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][0] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][0] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][1] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][1] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][1] / nxyz[ mapcrs[3] ],
+      0,
+      basis[ mapcrs[1] ][2] / nxyz[ mapcrs[1] ],
+      basis[ mapcrs[2] ][2] / nxyz[ mapcrs[2] ],
+      basis[ mapcrs[3] ][2] / nxyz[ mapcrs[3] ],
+      0,
+      0, 0, 0, 1
+    )
 
     matrix.multiply(
-            new Matrix4().makeRotationY(degToRad(90))
-        )
+      new Matrix4().makeRotationY(degToRad(90))
+    )
 
     matrix.multiply(new Matrix4().makeTranslation(
-            -h.zStart, h.yStart, h.xStart
-        ))
+      -h.zStart, h.yStart, h.xStart
+    ))
 
     matrix.multiply(new Matrix4().makeScale(
-            -1, 1, 1
-        ))
+      -1, 1, 1
+    ))
 
     return matrix
   }

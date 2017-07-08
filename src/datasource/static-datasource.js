@@ -5,16 +5,20 @@
  */
 
 import { getFileInfo, getAbsolutePath } from '../utils.js'
+import Datasource from './datasource.js'
 
 const reProtocol = /^((http|https|ftp):)*\/\//
 
-function StaticDatasource (baseUrl) {
-  baseUrl = baseUrl || ''
+class StaticDatasource extends Datasource {
+  constructor (baseUrl) {
+    super()
+    this.baseUrl = baseUrl || ''
+  }
 
-  this.getUrl = function (src) {
+  getUrl (src) {
     const info = getFileInfo(src)
-    let url = baseUrl + info.path
-    if (!reProtocol.test(baseUrl)) {
+    let url = this.baseUrl + info.path
+    if (!reProtocol.test(this.baseUrl)) {
       url = getAbsolutePath(url)
     }
     return url

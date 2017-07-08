@@ -85,7 +85,7 @@ class ColormakerRegistry {
 
   getScheme (params) {
     const p = params || {}
-    const id = p.scheme || ''
+    const id = (p.scheme || '').toLowerCase()
 
     let SchemeClass
 
@@ -139,6 +139,7 @@ class ColormakerRegistry {
    * @return {undefined}
    */
   add (id, scheme) {
+    id = id.toLowerCase()
     this.schemes[ id ] = scheme
   }
 
@@ -170,7 +171,7 @@ class ColormakerRegistry {
    */
   addScheme (scheme, label) {
     if (!(scheme instanceof Colormaker)) {
-      scheme = this._createScheme(scheme, label)
+      scheme = this._createScheme(scheme)
     }
 
     return this._addUserScheme(scheme, label)
@@ -184,7 +185,7 @@ class ColormakerRegistry {
    */
   _addUserScheme (scheme, label) {
     label = label || ''
-    const id = '' + generateUUID() + '|' + label
+    const id = `${generateUUID()}|${label}`.toLowerCase()
     this.userSchemes[ id ] = scheme
 
     return id
@@ -196,13 +197,13 @@ class ColormakerRegistry {
    * @return {undefined}
    */
   removeScheme (id) {
+    id = id.toLowerCase()
     delete this.userSchemes[ id ]
   }
 
-  _createScheme (constructor, label) {
+  _createScheme (constructor) {
     const _Colormaker = function (params) {
       Colormaker.call(this, params)
-      this.label = label || ''
       constructor.call(this, params)
     }
 
@@ -240,7 +241,7 @@ class ColormakerRegistry {
       constructor (params) {
         super(Object.assign({ dataList: dataList }, params))
       }
-        }
+    }
 
     return this._addUserScheme(MySelectionColormaker, label)
   }
@@ -251,6 +252,7 @@ class ColormakerRegistry {
    * @return {Boolean} flag indicating if the scheme exists
    */
   hasScheme (id) {
+    id = id.toLowerCase()
     return id in this.schemes || id in this.userSchemes
   }
 }

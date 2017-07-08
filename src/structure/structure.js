@@ -57,14 +57,14 @@ import ModelProxy from '../proxy/model-proxy.js'
  * Structure
  */
 class Structure {
-    /**
-     * @param {String} name - structure name
-     * @param {String} path - source path
-     */
+  /**
+   * @param {String} name - structure name
+   * @param {String} path - source path
+   */
   constructor (name, path) {
-        /**
-         * @type {{refreshed: Signal}}
-         */
+    /**
+     * @type {{refreshed: Signal}}
+     */
     this.signals = {
       refreshed: new Signal()
     }
@@ -77,33 +77,33 @@ class Structure {
     this.path = path
     this.title = ''
     this.id = ''
-        /**
-         * @type {StructureHeader}
-         */
+    /**
+     * @type {StructureHeader}
+     */
     this.header = {}
-        /**
-         * @type {StructureExtraData}
-         */
+    /**
+     * @type {StructureExtraData}
+     */
     this.extraData = {}
 
     this.atomSetCache = undefined
     this.atomSetDict = {}
     this.biomolDict = {}
-        /**
-         * @type {Entity[]}
-         */
+    /**
+     * @type {Entity[]}
+     */
     this.entityList = []
-        /**
-         * @type {Unitcell}
-         */
+    /**
+     * @type {Unitcell}
+     */
     this.unitcell = undefined
 
     this.frames = []
     this.boxes = []
 
-        /**
-         * @type {Validation}
-         */
+    /**
+     * @type {Validation}
+     */
     this.validation = undefined
 
     this.bondStore = new BondStore(0)
@@ -114,34 +114,34 @@ class Structure {
     this.chainStore = new ChainStore(0)
     this.modelStore = new ModelStore(0)
 
-        /**
-         * @type {AtomMap}
-         */
+    /**
+     * @type {AtomMap}
+     */
     this.atomMap = new AtomMap(this)
-        /**
-         * @type {ResidueMap}
-         */
+    /**
+     * @type {ResidueMap}
+     */
     this.residueMap = new ResidueMap(this)
 
-        /**
-         * @type {BondHash}
-         */
+    /**
+     * @type {BondHash}
+     */
     this.bondHash = undefined
-        /**
-         * @type {SpatialHash}
-         */
+    /**
+     * @type {SpatialHash}
+     */
     this.spatialHash = undefined
 
     this.atomSet = undefined
     this.bondSet = undefined
 
-        /**
-         * @type {Vector3}
-         */
+    /**
+     * @type {Vector3}
+     */
     this.center = undefined
-        /**
-         * @type {Box3}
-         */
+    /**
+     * @type {Box3}
+     */
     this.boundingBox = undefined
 
     this._bp = this.getBondProxy()
@@ -175,7 +175,7 @@ class Structure {
     }
   }
 
-    //
+  //
 
   getBondProxy (index) {
     return new BondProxy(this, index)
@@ -197,10 +197,10 @@ class Structure {
     return new ModelProxy(this, index)
   }
 
-    //
+  //
 
   getBondSet (/* selection */) {
-        // TODO implement selection parameter
+    // TODO implement selection parameter
 
     const n = this.bondStore.count
     const bondSet = new BitArray(n)
@@ -223,7 +223,7 @@ class Structure {
   }
 
   getBackboneBondSet (/* selection */) {
-        // TODO implement selection parameter
+    // TODO implement selection parameter
 
     const n = this.backboneBondStore.count
     const backboneBondSet = new BitArray(n)
@@ -247,7 +247,7 @@ class Structure {
   }
 
   getRungBondSet (/* selection */) {
-        // TODO implement selection parameter
+    // TODO implement selection parameter
 
     const n = this.rungBondStore.count
     const rungBondSet = new BitArray(n)
@@ -270,6 +270,15 @@ class Structure {
     return rungBondSet
   }
 
+  /**
+   * Get a set of atoms
+   * @param  {Boolean|Selection|BitArray} selection - object defining how to
+   *                                      initialize the atom set.
+   *                                      Boolean: init with value;
+   *                                      Selection: init with selection;
+   *                                      BitArray: return bit array
+   * @return {BitArray} set of atoms
+   */
   getAtomSet (selection) {
     let atomSet
     const n = this.atomStore.count
@@ -277,7 +286,7 @@ class Structure {
     if (selection instanceof BitArray) {
       atomSet = selection
     } else if (selection && selection.test) {
-      var seleString = selection.string
+      const seleString = selection.string
 
       if (seleString in this.atomSetCache) {
         atomSet = this.atomSetCache[ seleString ]
@@ -297,12 +306,12 @@ class Structure {
     return atomSet
   }
 
-    /**
-     * Get set of atom around a set of atoms from a selection
-     * @param  {Selection} selection - the selection object
-     * @param  {Number} radius - radius to select within
-     * @return {BitArray} set of atoms
-     */
+  /**
+   * Get set of atoms around a set of atoms from a selection
+   * @param  {Selection} selection - the selection object
+   * @param  {Number} radius - radius to select within
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinSelection (selection, radius) {
     const spatialHash = this.spatialHash
     const atomSet = this.getAtomSet(false)
@@ -318,6 +327,12 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of atoms around a point
+   * @param  {Vector3|AtomProxy} point - the point
+   * @param  {Number} radius - radius to select within
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinPoint (point, radius) {
     const p = point
     var atomSet = this.getAtomSet(false)
@@ -329,6 +344,15 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of atoms within a volume
+   * @param  {Volume} volume - the volume
+   * @param  {Number} radius - radius to select within
+   * @param  {[type]} minValue - minimum value to be considered as within the volume
+   * @param  {[type]} maxValue - maximum value to be considered as within the volume
+   * @param  {[type]} outside - use only values falling outside of the min/max values
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinVolume (volume, radius, minValue, maxValue, outside) {
     const fv = new FilteredVolume(volume, minValue, maxValue, outside)
 
@@ -346,6 +370,11 @@ class Structure {
     return atomSet
   }
 
+  /**
+   * Get set of all atoms within the groups of a selection
+   * @param  {Selection} selection - the selection object
+   * @return {BitArray} set of atoms
+   */
   getAtomSetWithinGroup (selection) {
     const atomResidueIndex = this.atomStore.residueIndex
     const atomSet = this.getAtomSet(false)
@@ -361,7 +390,7 @@ class Structure {
     return atomSet
   }
 
-    //
+  //
 
   getSelection () {
     return false
@@ -371,12 +400,12 @@ class Structure {
     return this
   }
 
-    /**
-     * Entity iterator
-     * @param  {function(entity: Entity)} callback - the callback
-     * @param  {EntityType} type - entity type
-     * @return {undefined}
-     */
+  /**
+   * Entity iterator
+   * @param  {function(entity: Entity)} callback - the callback
+   * @param  {EntityType} type - entity type
+   * @return {undefined}
+   */
   eachEntity (callback, type) {
     this.entityList.forEach(function (entity) {
       if (type === undefined || entity.getEntityType() === type) {
@@ -385,12 +414,12 @@ class Structure {
     })
   }
 
-    /**
-     * Bond iterator
-     * @param  {function(bond: BondProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Bond iterator
+   * @param  {function(bond: BondProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachBond (callback, selection) {
     const bp = this.getBondProxy()
     let bondSet
@@ -416,12 +445,12 @@ class Structure {
     }
   }
 
-    /**
-     * Atom iterator
-     * @param  {function(atom: AtomProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Atom iterator
+   * @param  {function(atom: AtomProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachAtom (callback, selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
@@ -437,12 +466,12 @@ class Structure {
     }
   }
 
-    /**
-     * Residue iterator
-     * @param  {function(residue: ResidueProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Residue iterator
+   * @param  {function(residue: ResidueProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachResidue (callback, selection) {
     var i
     if (selection && selection.test) {
@@ -472,12 +501,12 @@ class Structure {
     }
   }
 
-    /**
-     * Multi-residue iterator
-     * @param {Integer} n - window size
-     * @param  {function(residueList: ResidueProxy[])} callback - the callback
-     * @return {undefined}
-     */
+  /**
+   * Multi-residue iterator
+   * @param {Integer} n - window size
+   * @param  {function(residueList: ResidueProxy[])} callback - the callback
+   * @return {undefined}
+   */
   eachResidueN (n, callback) {
     var i, j
     var rn = this.residueStore.count
@@ -497,12 +526,12 @@ class Structure {
     }
   }
 
-    /**
-     * Polymer iterator
-     * @param  {function(polymer: Polymer)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Polymer iterator
+   * @param  {function(polymer: Polymer)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachPolymer (callback, selection) {
     if (selection && selection.modelOnlyTest) {
       var modelOnlyTest = selection.modelOnlyTest
@@ -519,12 +548,12 @@ class Structure {
     }
   }
 
-    /**
-     * Chain iterator
-     * @param  {function(chain: ChainProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Chain iterator
+   * @param  {function(chain: ChainProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachChain (callback, selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
@@ -540,12 +569,12 @@ class Structure {
     }
   }
 
-    /**
-     * Model iterator
-     * @param  {function(model: ModelProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Model iterator
+   * @param  {function(model: ModelProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachModel (callback, selection) {
     var i
     var n = this.modelStore.count
@@ -574,7 +603,7 @@ class Structure {
     }
   }
 
-    //
+  //
 
   getAtomData (params) {
     var p = Object.assign({}, params)
@@ -721,13 +750,13 @@ class Structure {
             vShift.multiplyScalar(absOffset)
             vShift.negate()
 
-                        // Shortening is calculated so that neighbouring double
-                        // bonds on tetrahedral geometry (e.g. sulphonamide)
-                        // are not quite touching (arccos(1.9 / 2) ~ 109deg)
-                        // but don't shorten beyond 10% each end or it looks odd
+            // Shortening is calculated so that neighbouring double
+            // bonds on tetrahedral geometry (e.g. sulphonamide)
+            // are not quite touching (arccos(1.9 / 2) ~ 109deg)
+            // but don't shorten beyond 10% each end or it looks odd
             vShortening.subVectors(ap2, ap1).multiplyScalar(
-                            Math.max(0.1, absOffset / 1.88)
-                        )
+              Math.max(0.1, absOffset / 1.88)
+            )
             ap1.positionToArray(position1, i3)
             ap2.positionToArray(position2, i3)
 
@@ -757,7 +786,7 @@ class Structure {
               vt.addVectors(ap2, vShift).toArray(position2, i3 + 3)
               vt.subVectors(ap2, vShift).toArray(position2, i3 + 6)
             } else {
-                          // todo, better fallback
+              // todo, better fallback
               ap1.positionToArray(position1, i3)
               ap2.positionToArray(position2, i3)
             }
@@ -844,14 +873,14 @@ class Structure {
     return this.getBondData(params)
   }
 
-    //
+  //
 
-    /**
-     * Gets the bounding box of the (selected) structure atoms
-     * @param  {Selection} [selection] - the selection
-     * @param  {Box3} [box] - optional target
-     * @return {Vector3} the box
-     */
+  /**
+   * Gets the bounding box of the (selected) structure atoms
+   * @param  {Selection} [selection] - the selection
+   * @param  {Box3} [box] - optional target
+   * @return {Vector3} the box
+   */
   getBoundingBox (selection, box) {
     if (Debug) Log.time('getBoundingBox')
 
@@ -887,11 +916,11 @@ class Structure {
     return box
   }
 
-    /**
-     * Gets the principal axes of the (selected) structure atoms
-     * @param  {Selection} [selection] - the selection
-     * @return {PrincipalAxes} the principal axes
-     */
+  /**
+   * Gets the principal axes of the (selected) structure atoms
+   * @param  {Selection} [selection] - the selection
+   * @return {PrincipalAxes} the principal axes
+   */
   getPrincipalAxes (selection) {
     if (Debug) Log.time('getPrincipalAxes')
 
@@ -911,11 +940,11 @@ class Structure {
     return new PrincipalAxes(coords)
   }
 
-    /**
-     * Gets the center of the (selected) structure atoms
-     * @param  {Selection} [selection] - the selection
-     * @return {Vector3} the center
-     */
+  /**
+   * Gets the center of the (selected) structure atoms
+   * @param  {Selection} [selection] - the selection
+   * @return {Vector3} the center
+   */
   atomCenter (selection) {
     if (selection) {
       return this.getBoundingBox(selection).getCenter()
@@ -954,11 +983,11 @@ class Structure {
     return indices
   }
 
-    /**
-     * Get number of unique chainnames
-     * @param  {Selection} selection - limit count to selection
-     * @return {Integer} count
-     */
+  /**
+   * Get number of unique chainnames
+   * @param  {Selection} selection - limit count to selection
+   * @return {Integer} count
+   */
   getChainnameCount (selection) {
     var chainnames = new Set()
     this.eachChain(function (cp) {
@@ -970,7 +999,7 @@ class Structure {
     return chainnames.size
   }
 
-    //
+  //
 
   updatePosition (position) {
     var i = 0
@@ -987,11 +1016,11 @@ class Structure {
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
   }
 
-    /**
-     * Calls dispose() method of property objects.
-     * Unsets properties to help garbage collection.
-     * @return {undefined}
-     */
+  /**
+   * Calls dispose() method of property objects.
+   * Unsets properties to help garbage collection.
+   * @return {undefined}
+   */
   dispose () {
     if (this.frames) this.frames.length = 0
     if (this.boxes) this.boxes.length = 0

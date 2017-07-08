@@ -21,9 +21,9 @@ function selectionFromChains (chainList) {
  * Assembly of transformed parts of a {@link Structure}
  */
 class Assembly {
-    /**
-     * @param {String} name - assembly name
-     */
+  /**
+   * @param {String} name - assembly name
+   */
   constructor (name) {
     this.name = name || ''
     this.partList = []
@@ -31,27 +31,27 @@ class Assembly {
 
   get type () { return 'Assembly' }
 
-    /**
-     * Add transformed parts to the assembly
-     * @example
-     * var m1 = new NGL.Matrix4().set( ... );
-     * var m2 = new NGL.Matrix4().set( ... );
-     * var assembly = new NGL.Assembly( "myAssembly" );
-     * // add part that transforms chain 'A' and 'B' using matrices `m1` and `m2`
-     * assembly.addPart( [ m1, m2 ], [ "A", "B" ] )
-     *
-     * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
-     * @param {String[]} chainList - array of chain names
-     * @return {AssemblyPart} the added assembly part
-     */
+  /**
+   * Add transformed parts to the assembly
+   * @example
+   * var m1 = new NGL.Matrix4().set( ... );
+   * var m2 = new NGL.Matrix4().set( ... );
+   * var assembly = new NGL.Assembly( "myAssembly" );
+   * // add part that transforms chain 'A' and 'B' using matrices `m1` and `m2`
+   * assembly.addPart( [ m1, m2 ], [ "A", "B" ] )
+   *
+   * @param {Matrix4[]} matrixList - array of 4x4 transformation matrices
+   * @param {String[]} chainList - array of chain names
+   * @return {AssemblyPart} the added assembly part
+   */
   addPart (matrixList, chainList) {
-    var part = new AssemblyPart(matrixList, chainList)
+    const part = new AssemblyPart(matrixList, chainList)
     this.partList.push(part)
     return part
   }
 
   _getCount (structure, methodName) {
-    var count = 0
+    let count = 0
 
     this.partList.forEach(function (part) {
       count += part[ methodName ](structure)
@@ -60,31 +60,31 @@ class Assembly {
     return count
   }
 
-    /**
-     * Get the number of atom for a given structure
-     * @param  {Structure} structure - the given structure
-     * @return {Integer} number of atoms in the assembly
-     */
+  /**
+   * Get the number of atom for a given structure
+   * @param  {Structure} structure - the given structure
+   * @return {Integer} number of atoms in the assembly
+   */
   getAtomCount (structure) {
     return this._getCount(structure, 'getAtomCount')
   }
 
-    /**
-     * Get the number of residues for a given structure
-     * @param  {Structure} structure - the given structure
-     * @return {Integer} number of residues in the assembly
-     */
+  /**
+   * Get the number of residues for a given structure
+   * @param  {Structure} structure - the given structure
+   * @return {Integer} number of residues in the assembly
+   */
   getResidueCount (structure) {
     return this._getCount(structure, 'getResidueCount')
   }
 
-    /**
-     * Get number of instances the assembly will produce, i.e.
-     * the number of transformations performed by the assembly
-     * @return {Integer} number of instances
-     */
+  /**
+   * Get number of instances the assembly will produce, i.e.
+   * the number of transformations performed by the assembly
+   * @return {Integer} number of instances
+   */
   getInstanceCount () {
-    var instanceCount = 0
+    let instanceCount = 0
 
     this.partList.forEach(function (part) {
       instanceCount += part.matrixList.length
@@ -93,21 +93,21 @@ class Assembly {
     return instanceCount
   }
 
-    /**
-     * Determine if the assembly is the full and untransformed structure
-     * @param  {Structure}  structure - the given structure
-     * @return {Boolean} whether the assembly is identical to the structure
-     */
+  /**
+   * Determine if the assembly is the full and untransformed structure
+   * @param  {Structure}  structure - the given structure
+   * @return {Boolean} whether the assembly is identical to the structure
+   */
   isIdentity (structure) {
     if (this.partList.length !== 1) return false
 
-    var part = this.partList[ 0 ]
+    const part = this.partList[ 0 ]
     if (part.matrixList.length !== 1) return false
 
-    var identityMatrix = new Matrix4()
+    const identityMatrix = new Matrix4()
     if (!identityMatrix.equals(part.matrixList[ 0 ])) return false
 
-    var structureChainList = []
+    let structureChainList = []
     structure.eachChain(function (cp) {
       structureChainList.push(cp.chainname)
     })
@@ -118,10 +118,10 @@ class Assembly {
   }
 
   getBoundingBox (structure) {
-    var boundingBox = new Box3()
+    const boundingBox = new Box3()
 
     this.partList.forEach(function (part) {
-      var partBox = part.getBoundingBox(structure)
+      const partBox = part.getBoundingBox(structure)
       boundingBox.expandByPoint(partBox.min)
       boundingBox.expandByPoint(partBox.max)
     })
@@ -134,7 +134,7 @@ class Assembly {
   }
 
   getSelection () {
-    var chainList = []
+    let chainList = []
     this.partList.forEach(function (part) {
       chainList = chainList.concat(part.chainList)
     })
@@ -151,8 +151,8 @@ class AssemblyPart {
   get type () { return 'AssemblyPart' }
 
   _getCount (structure, propertyName) {
-    var count = 0
-    var chainList = this.chainList
+    let count = 0
+    const chainList = this.chainList
 
     structure.eachChain(function (cp) {
       if (chainList.length === 0 || chainList.includes(cp.chainname)) {
@@ -172,11 +172,11 @@ class AssemblyPart {
   }
 
   getBoundingBox (structure) {
-    var partBox = new Box3()
-    var instanceBox = new Box3()
+    const partBox = new Box3()
+    const instanceBox = new Box3()
 
-    var selection = this.getSelection()
-    var structureBox = structure.getBoundingBox(selection)
+    const selection = this.getSelection()
+    const structureBox = structure.getBoundingBox(selection)
 
     this.matrixList.forEach(function (matrix) {
       instanceBox.copy(structureBox).applyMatrix4(matrix)
@@ -192,7 +192,7 @@ class AssemblyPart {
   }
 
   getView (structure) {
-    var selection = this.getSelection()
+    const selection = this.getSelection()
     if (selection) {
       return structure.getView(selection)
     } else {
@@ -201,8 +201,8 @@ class AssemblyPart {
   }
 
   getInstanceList () {
-    var instanceList = []
-    for (var j = 0, jl = this.matrixList.length; j < jl; ++j) {
+    const instanceList = []
+    for (let j = 0, jl = this.matrixList.length; j < jl; ++j) {
       instanceList.push({
         id: j + 1,
         name: j,

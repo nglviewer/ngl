@@ -10,35 +10,36 @@ import { Debug, Log, ParserRegistry } from '../globals.js'
 import { degToRad } from '../math/math-utils.js'
 import VolumeParser from './volume-parser.js'
 
+const reWhitespace = /\s+/
+
 class DxParser extends VolumeParser {
   get type () { return 'dx' }
 
   _parse () {
-        // http://www.poissonboltzmann.org/docs/file-format-info/
+    // http://apbs-pdb2pqr.readthedocs.io/en/latest/formats/opendx.html
 
     if (Debug) Log.time('DxParser._parse ' + this.name)
 
-    var v = this.volume
-    var headerLines = this.streamer.peekLines(30)
-    var headerInfo = this.parseHeaderLines(headerLines)
-    var header = this.volume.header
-    var dataLineStart = headerInfo.dataLineStart
+    const v = this.volume
+    const headerLines = this.streamer.peekLines(30)
+    const headerInfo = this.parseHeaderLines(headerLines)
+    const header = this.volume.header
+    const dataLineStart = headerInfo.dataLineStart
 
-    var reWhitespace = /\s+/
-    var size = header.nx * header.ny * header.nz
-    var data = new Float32Array(size)
-    var count = 0
-    var lineNo = 0
+    const size = header.nx * header.ny * header.nz
+    const data = new Float32Array(size)
+    let count = 0
+    let lineNo = 0
 
     function _parseChunkOfLines (_i, _n, lines) {
-      for (var i = _i; i < _n; ++i) {
+      for (let i = _i; i < _n; ++i) {
         if (count < size && lineNo > dataLineStart) {
-          var line = lines[ i ].trim()
+          const line = lines[ i ].trim()
 
           if (line !== '') {
-            var ls = line.split(reWhitespace)
+            const ls = line.split(reWhitespace)
 
-            for (var j = 0, lj = ls.length; j < lj; ++j) {
+            for (let j = 0, lj = ls.length; j < lj; ++j) {
               data[ count ] = parseFloat(ls[ j ])
               ++count
             }
@@ -59,17 +60,16 @@ class DxParser extends VolumeParser {
   }
 
   parseHeaderLines (headerLines) {
-    var header = {}
-    var reWhitespace = /\s+/
-    var n = headerLines.length
+    const header = {}
+    const n = headerLines.length
 
-    var dataLineStart = 0
-    var headerByteCount = 0
-    var deltaLineCount = 0
+    let dataLineStart = 0
+    let headerByteCount = 0
+    let deltaLineCount = 0
 
-    for (var i = 0; i < n; ++i) {
-      var ls
-      var line = headerLines[ i ]
+    for (let i = 0; i < n; ++i) {
+      let ls
+      const line = headerLines[ i ]
 
       if (line.startsWith('object 1')) {
         ls = line.split(reWhitespace)
@@ -113,24 +113,24 @@ class DxParser extends VolumeParser {
   }
 
   getMatrix () {
-    var h = this.volume.header
-    var matrix = new Matrix4()
+    const h = this.volume.header
+    const matrix = new Matrix4()
 
     matrix.multiply(
-            new Matrix4().makeRotationY(degToRad(90))
-        )
+      new Matrix4().makeRotationY(degToRad(90))
+    )
 
     matrix.multiply(
-            new Matrix4().makeTranslation(
-                -h.zmin, h.ymin, h.xmin
-            )
-        )
+      new Matrix4().makeTranslation(
+        -h.zmin, h.ymin, h.xmin
+      )
+    )
 
     matrix.multiply(
-            new Matrix4().makeScale(
-                -h.hz, h.hy, h.hx
-            )
-        )
+      new Matrix4().makeScale(
+        -h.hz, h.hy, h.hx
+      )
+    )
 
     return matrix
   }

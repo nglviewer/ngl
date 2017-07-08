@@ -15,9 +15,9 @@ function getSymmetryOperations (spacegroup) {
 
   if (encodedSymopList === undefined) {
     console.warn(
-            "getSymmetryOperations: spacegroup '" +
-            spacegroup + "' not found in symop library"
-        )
+      "getSymmetryOperations: spacegroup '" +
+      spacegroup + "' not found in symop library"
+    )
     return matrixDict
   }
 
@@ -34,7 +34,7 @@ function getSymmetryOperations (spacegroup) {
   var reInteger = /^[1-9]$/
 
   symopList.forEach(function (symop) {
-        // console.log( "symop", symop );
+    // console.log( "symop", symop );
 
     var row = 0
     var matrix = new Matrix4().set(

@@ -54,7 +54,7 @@ class PdbWriter extends Writer {
 
   _writeTitle () {
     // FIXME multiline if title line longer than 80 chars
-    this._records.push(sprintf('TITEL %-74s', this.structure.name))
+    this._records.push(sprintf('TITLE %-74s', this.structure.name))
   }
 
   _writeRemarks () {

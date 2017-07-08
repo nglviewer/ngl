@@ -1079,19 +1079,34 @@ class CifParser extends StructureParser {
       }
 
       // structure header (mimicking biojava)
-      if (cif.database_PDB_rev) {
+      if (cif.pdbx_audit_revision_history) {
+        if (cif.pdbx_audit_revision_history.revision_date) {
+          ensureArray(cif.pdbx_audit_revision_history, 'revision_date')
+          const dates = cif.pdbx_audit_revision_history.revision_date.filter(hasValue)
+          if (dates.length) {
+            s.header.releaseDate = dates[ 0 ]
+          }
+        }
+        if (cif.pdbx_database_status.recvd_initial_deposition_date) {
+          ensureArray(cif.pdbx_database_status, 'recvd_initial_deposition_date')
+          const depDates = cif.pdbx_database_status.recvd_initial_deposition_date.filter(hasValue)
+          if (depDates.length) {
+            s.header.depositionDate = depDates[ 0 ]
+          }
+        }
+      } else if (cif.database_PDB_rev) {
         if (cif.database_PDB_rev.date) {
           ensureArray(cif.database_PDB_rev, 'date')
-          var dates = cif.database_PDB_rev.date.filter(hasValue)
+          const dates = cif.database_PDB_rev.date.filter(hasValue)
           if (dates.length) {
-            s.header.releaseDate = dates[ dates.length - 1 ]
+            s.header.releaseDate = dates[ 0 ]
           }
         }
         if (cif.database_PDB_rev.date_original) {
           ensureArray(cif.database_PDB_rev, 'date_original')
-          var depDates = cif.database_PDB_rev.date_original.filter(hasValue)
+          const depDates = cif.database_PDB_rev.date_original.filter(hasValue)
           if (depDates.length) {
-            s.header.depositionDate = depDates[ depDates.length - 1 ]
+            s.header.depositionDate = depDates[ 0 ]
           }
         }
       }

@@ -25,6 +25,7 @@ class VolumeParser extends Parser {
 
   _afterParse () {
     this.volume.setMatrix(this.getMatrix())
+    super._afterParse()
   }
 
   getMatrix () {

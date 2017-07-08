@@ -31,10 +31,10 @@ import chroma from '../../lib/chroma.es6.js'
  * @interface
  */
 class Colormaker {
-    /**
-     * Create a colormaker instance
-     * @param  {ColormakerParameters} params - colormaker parameter
-     */
+  /**
+   * Create a colormaker instance
+   * @param  {ColormakerParameters} params - colormaker parameter
+   */
   constructor (params) {
     const p = params || {}
 
@@ -75,13 +75,13 @@ class Colormaker {
             .out('num')
   }
 
-    /**
-     * safe a color to an array
-     * @param  {Integer} color - hex color value
-     * @param  {Array|TypedArray} array - destination
-     * @param  {Integer} offset - index into the array
-     * @return {Array} the destination array
-     */
+  /**
+   * safe a color to an array
+   * @param  {Integer} color - hex color value
+   * @param  {Array|TypedArray} array - destination
+   * @param  {Integer} offset - index into the array
+   * @return {Array} the destination array
+   */
   colorToArray (color, array, offset) {
     if (array === undefined) array = []
     if (offset === undefined) offset = 0
@@ -93,68 +93,68 @@ class Colormaker {
     return array
   }
 
-    /**
-     * safe a atom color to an array
-     * @param  {AtomProxy} atom - atom to get color for
-     * @param  {Array|TypedArray} array - destination
-     * @param  {Integer} offset - index into the array
-     * @return {Array} the destination array
-     */
+  /**
+   * safe a atom color to an array
+   * @param  {AtomProxy} atom - atom to get color for
+   * @param  {Array|TypedArray} array - destination
+   * @param  {Integer} offset - index into the array
+   * @return {Array} the destination array
+   */
   atomColorToArray (atom, array, offset) {
     return this.colorToArray(
-            this.atomColor(atom), array, offset
-        )
+      this.atomColor(atom), array, offset
+    )
   }
 
-    /**
-     * return the color for an bond
-     * @param  {BondProxy} bond - bond to get color for
-     * @param  {Boolean} fromTo - whether to use the first or second atom of the bond
-     * @return {Integer} hex bond color
-     */
+  /**
+   * return the color for an bond
+   * @param  {BondProxy} bond - bond to get color for
+   * @param  {Boolean} fromTo - whether to use the first or second atom of the bond
+   * @return {Integer} hex bond color
+   */
   bondColor (bond, fromTo) {
     this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2
     return this.atomColor(this.atomProxy)
   }
 
-    /**
-     * safe a bond color to an array
-     * @param  {BondProxy} bond - bond to get color for
-     * @param  {Boolean} fromTo - whether to use the first or second atom of the bond
-     * @param  {Array|TypedArray} array - destination
-     * @param  {Integer} offset - index into the array
-     * @return {Array} the destination array
-     */
+  /**
+   * safe a bond color to an array
+   * @param  {BondProxy} bond - bond to get color for
+   * @param  {Boolean} fromTo - whether to use the first or second atom of the bond
+   * @param  {Array|TypedArray} array - destination
+   * @param  {Integer} offset - index into the array
+   * @return {Array} the destination array
+   */
   bondColorToArray (bond, fromTo, array, offset) {
     return this.colorToArray(
-            this.bondColor(bond, fromTo), array, offset
-        )
+      this.bondColor(bond, fromTo), array, offset
+    )
   }
 
-    /**
-     * safe a volume cell color to an array
-     * @param  {Integer} index - volume cell index
-     * @param  {Array|TypedArray} array - destination
-     * @param  {Integer} offset - index into the array
-     * @return {Array} the destination array
-     */
+  /**
+   * safe a volume cell color to an array
+   * @param  {Integer} index - volume cell index
+   * @param  {Array|TypedArray} array - destination
+   * @param  {Integer} offset - index into the array
+   * @return {Array} the destination array
+   */
   volumeColorToArray (index, array, offset) {
     return this.colorToArray(
-            this.volumeColor(index), array, offset
-        )
+      this.volumeColor(index), array, offset
+    )
   }
 
-    /**
-     * safe a color for coordinates in space to an array
-     * @param  {Vector3} coords - xyz coordinates
-     * @param  {Array|TypedArray} array - destination
-     * @param  {Integer} offset - index into the array
-     * @return {Array} the destination array
-     */
+  /**
+   * safe a color for coordinates in space to an array
+   * @param  {Vector3} coords - xyz coordinates
+   * @param  {Array|TypedArray} array - destination
+   * @param  {Integer} offset - index into the array
+   * @return {Array} the destination array
+   */
   positionColorToArray (coords, array, offset) {
     return this.colorToArray(
-            this.positionColor(coords), array, offset
-        )
+      this.positionColor(coords), array, offset
+    )
   }
 }
 

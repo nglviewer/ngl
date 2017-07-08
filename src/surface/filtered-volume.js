@@ -44,7 +44,7 @@ class FilteredVolume {
     const filterHash = this._getFilterHash(minValue, maxValue, outside)
 
     if (filterHash === this._filterHash) {
-            // already filtered
+      // already filtered
       return
     } else if (minValue === -Infinity && maxValue === Infinity) {
       this.data = data
@@ -54,7 +54,7 @@ class FilteredVolume {
       const n = data.length
 
       if (!this._dataBuffer) {
-                // ArrayBuffer for re-use as Float32Array backend
+        // ArrayBuffer for re-use as Float32Array backend
 
         this._dataBuffer = new ArrayBuffer(n * 4)
         this._positionBuffer = new ArrayBuffer(n * 3 * 4)
@@ -73,8 +73,8 @@ class FilteredVolume {
         const v = data[ i ]
 
         if ((!outside && v >= minValue && v <= maxValue) ||
-                    (outside && (v < minValue || v > maxValue))
-                ) {
+            (outside && (v < minValue || v > maxValue))
+        ) {
           const j3 = j * 3
 
           filteredData[ j ] = v
@@ -89,7 +89,7 @@ class FilteredVolume {
         }
       }
 
-            // set views
+      // set views
 
       this.data = new Float32Array(this._dataBuffer, 0, j)
       this.position = new Float32Array(this._positionBuffer, 0, j * 3)

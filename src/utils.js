@@ -105,7 +105,7 @@ function deepCopy (src) {
 }
 
 function download (data, downloadName) {
-    // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
+  // using ideas from https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.js
 
   if (!data) return
 
@@ -128,11 +128,11 @@ function download (data, downloadName) {
   }
 
   if (typeof navigator !== 'undefined' && navigator.msSaveOrOpenBlob) {
-        // native saveAs in IE 10+
+    // native saveAs in IE 10+
     navigator.msSaveOrOpenBlob(data, downloadName)
   } else if ((isSafari || isChromeIos) && window.FileReader) {
     if (data instanceof window.Blob) {
-            // no downloading of blob urls in Safari
+      // no downloading of blob urls in Safari
       var reader = new window.FileReader()
       reader.onloadend = function () {
         open(reader.result)
@@ -147,7 +147,7 @@ function download (data, downloadName) {
     }
 
     if ('download' in a) {
-            // download link available
+      // download link available
       a.style.display = 'hidden'
       document.body.appendChild(a)
       a.href = data
@@ -208,8 +208,8 @@ function getFileInfo (file) {
   var path, compressed, protocol
 
   if ((typeof window !== 'undefined' && file instanceof window.File) ||
-        (typeof window !== 'undefined' && file instanceof window.Blob)
-    ) {
+      (typeof window !== 'undefined' && file instanceof window.Blob)
+  ) {
     path = file.name || ''
   } else {
     path = file
@@ -254,7 +254,7 @@ function getFileInfo (file) {
 }
 
 function throttle (func, wait, options) {
-    // from http://underscorejs.org/docs/underscore.html
+  // from http://underscorejs.org/docs/underscore.html
 
   var context, args, result
   var timeout = null
@@ -391,8 +391,8 @@ function uint8ToString (u8a) {
 
     for (var i = 0; i < u8a.length; i += chunkSize) {
       c.push(String.fromCharCode.apply(
-          null, u8a.subarray(i, i + chunkSize)
-        ))
+        null, u8a.subarray(i, i + chunkSize)
+      ))
     }
 
     return c.join('')
@@ -463,6 +463,10 @@ function ensureArray (value) {
   return Array.isArray(value) ? value : [value]
 }
 
+function ensureBuffer (a) {
+  return (a.buffer && a.buffer instanceof ArrayBuffer) ? a.buffer : a
+}
+
 function _ensureClassFromArg (arg, constructor) {
   return arg instanceof constructor ? arg : new constructor(arg)
 }
@@ -497,32 +501,33 @@ function ensureFloat32Array (a) {
 }
 
 export {
-    getQuery,
-    boolean,
-    defaults,
-    pick,
-    flatten,
-    getProtocol,
-    getBrowser,
-    getAbsolutePath,
-    deepCopy,
-    download,
-    submit,
-    open,
-    getFileInfo,
-    throttle,
-    binarySearchIndexOf,
-    rangeInSortedArray,
-    dataURItoImage,
-    uniqueArray,
-    uint8ToString,
-    uint8ToLines,
-    getTypedArray,
-    getUintArray,
-    ensureArray,
-    ensureVector2,
-    ensureVector3,
-    ensureMatrix4,
-    ensureQuaternion,
-    ensureFloat32Array
+  getQuery,
+  boolean,
+  defaults,
+  pick,
+  flatten,
+  getProtocol,
+  getBrowser,
+  getAbsolutePath,
+  deepCopy,
+  download,
+  submit,
+  open,
+  getFileInfo,
+  throttle,
+  binarySearchIndexOf,
+  rangeInSortedArray,
+  dataURItoImage,
+  uniqueArray,
+  uint8ToString,
+  uint8ToLines,
+  getTypedArray,
+  getUintArray,
+  ensureArray,
+  ensureBuffer,
+  ensureVector2,
+  ensureVector3,
+  ensureMatrix4,
+  ensureQuaternion,
+  ensureFloat32Array
 }

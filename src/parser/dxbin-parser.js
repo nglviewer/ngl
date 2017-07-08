@@ -5,7 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
-import { uint8ToLines } from '../utils.js'
+import { uint8ToLines, ensureBuffer } from '../utils.js'
 import DxParser from './dx-parser.js'
 
 class DxbinParser extends DxParser {
@@ -13,25 +13,21 @@ class DxbinParser extends DxParser {
   get isBinary () { return true }
 
   _parse () {
-        // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
+    // https://github.com/Electrostatics/apbs-pdb2pqr/issues/216
 
     if (Debug) Log.time('DxbinParser._parse ' + this.name)
 
-    var bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
+    const bin = ensureBuffer(this.streamer.data)
+    const headerLines = uint8ToLines(new Uint8Array(bin, 0, 1000))
+    const headerInfo = this.parseHeaderLines(headerLines)
+    const header = this.volume.header
+    const headerByteCount = headerInfo.headerByteCount
 
-    var headerLines = uint8ToLines(new Uint8Array(bin, 0, 1000))
-    var headerInfo = this.parseHeaderLines(headerLines)
-    var header = this.volume.header
-    var headerByteCount = headerInfo.headerByteCount
+    const size = header.nx * header.ny * header.nz
+    const dv = new DataView(bin)
+    const data = new Float32Array(size)
 
-    var size = header.nx * header.ny * header.nz
-    var dv = new DataView(bin)
-    var data = new Float32Array(size)
-
-    for (var i = 0; i < size; ++i) {
+    for (let i = 0; i < size; ++i) {
       data[ i ] = dv.getFloat64(i * 8 + headerByteCount, true)
     }
 

@@ -275,6 +275,19 @@ class AtomProxy {
     this.atomStore.setAltloc(this.index, value)
   }
 
+  /**
+   * Partial charge
+   * @type {Float|null}
+   */
+  get partialCharge () {
+    return this.atomStore.partialCharge ? this.atomStore.partialCharge[ this.index ] : null
+  }
+  set partialCharge (value) {
+    if (this.atomStore.partialCharge) {
+      this.atomStore.partialCharge[ this.index ] = value
+    }
+  }
+
   //
 
   /**
@@ -315,6 +328,20 @@ class AtomProxy {
       }
       callback(ap)
     })
+  }
+
+  /**
+   * Check if this atom is bonded to the given atom,
+   * assumes both atoms are from the same structure
+   * @param  {AtomProxy} ap - the given atom
+   * @return {Boolean} whether a bond exists or not
+   */
+  hasBondTo (ap) {
+    let hasBond = false
+    this.eachBondedAtom(function (bap) {
+      if (ap.index === bap.index) hasBond = true
+    })
+    return hasBond
   }
 
   //

@@ -4,11 +4,16 @@
  * @private
  */
 
+import { defaults } from '../utils.js'
 import Trajectory from './trajectory.js'
 
 class FramesTrajectory extends Trajectory {
   constructor (frames, structure, params) {
-    super('', structure, params)
+    const p = params || {}
+    p.timeOffset = defaults(p.timeOffset, frames.timeOffset)
+    p.deltaTime = defaults(p.deltaTime, frames.deltaTime)
+
+    super('', structure, p)
 
     this.name = frames.name
     this.path = frames.path

@@ -5,6 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
+import { ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
 
 const MagicInts = new Uint32Array([
@@ -134,16 +135,13 @@ class XtcParser extends TrajectoryParser {
 
     if (Debug) Log.time('XtcParser._parse ' + this.name)
 
-    var bin = this.streamer.data
-    if (bin instanceof Uint8Array) {
-      bin = bin.buffer
-    }
-    var dv = new DataView(bin)
+    const bin = ensureBuffer(this.streamer.data)
+    const dv = new DataView(bin)
 
-    var f = this.frames
-    var coordinates = f.coordinates
-    var boxes = f.boxes
-    // var header = {}
+    const f = this.frames
+    const coordinates = f.coordinates
+    const boxes = f.boxes
+    const times = f.times
 
     const minMaxInt = new Int32Array(6)
     const sizeint = new Int32Array(3)
@@ -166,8 +164,9 @@ class XtcParser extends TrajectoryParser {
 
       const natoms3 = natoms * 3
 
-      // frame.time = dv.getFloat32(offset)
+      times.push(dv.getFloat32(offset))
       offset += 4
+
       const box = new Float32Array(9)
       for (let i = 0; i < 9; ++i) {
         box[i] = dv.getFloat32(offset) * 10
@@ -221,10 +220,10 @@ class XtcParser extends TrajectoryParser {
         offset += 4
         // if (smallidx == 0) {alert("Undocumented error 1"); return;}
 
-        let tmpIdx = smallidx + 8
+        // let tmpIdx = smallidx + 8
         // const maxidx = (LastIdx < tmpIdx) ? LastIdx : tmpIdx
         // const minidx = maxidx - 8  // often this equal smallidx
-        tmpIdx = smallidx - 1
+        let tmpIdx = smallidx - 1
         tmpIdx = (FirstIdx > tmpIdx) ? FirstIdx : tmpIdx
         let smaller = (MagicInts[tmpIdx] / 2) | 0
         let smallnum = (MagicInts[smallidx] / 2) | 0
@@ -360,6 +359,13 @@ class XtcParser extends TrajectoryParser {
       coordinates.push(frameCoords)
 
       if (offset >= bin.byteLength) break
+    }
+
+    if (times.length >= 1) {
+      f.timeOffset = times[0]
+    }
+    if (times.length >= 2) {
+      f.deltaTime = times[1] - times[0]
     }
 
     if (Debug) Log.timeEnd('XtcParser._parse ' + this.name)

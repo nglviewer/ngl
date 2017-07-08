@@ -6,15 +6,16 @@
 
 import { Log, DatasourceRegistry } from '../globals.js'
 import { getFileInfo, getProtocol } from '../utils.js'
+import Datasource from './datasource.js'
 
-var baseUrl = '//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/'
-var suffixUrl = '/SDF?record_type=3d'
+const baseUrl = '//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/'
+const suffixUrl = '/SDF?record_type=3d'
 
-function PubchemDatasource () {
-  this.getUrl = function (src) {
-    var info = getFileInfo(src)
-    var cid = info.name
-    var url
+class PubchemDatasource extends Datasource {
+  getUrl (src) {
+    const info = getFileInfo(src)
+    const cid = info.name
+    let url
     if (!info.ext || info.ext === 'sdf') {
       url = baseUrl + cid + suffixUrl
     } else {
@@ -24,8 +25,8 @@ function PubchemDatasource () {
     return getProtocol() + url
   }
 
-  this.getExt = function (src) {
-    var info = getFileInfo(src)
+  getExt (src) {
+    const info = getFileInfo(src)
     if (!info.ext || info.ext === 'sdf') {
       return 'sdf'
     }
