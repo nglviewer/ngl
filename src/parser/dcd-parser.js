@@ -8,6 +8,8 @@ import { Debug, Log, ParserRegistry } from '../globals.js'
 import { uint8ToString, ensureBuffer } from '../utils.js'
 import TrajectoryParser from './trajectory-parser.js'
 
+const charmmTimeUnitFactor = 20.45482949774598
+
 class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
   get isBinary () { return true }
@@ -170,7 +172,7 @@ class DcdParser extends TrajectoryParser {
     }
 
     if (header.DELTA) {
-      f.deltaTime = header.DELTA * 20.45482949774598
+      f.deltaTime = header.DELTA * charmmTimeUnitFactor
     }
     if (header.ISTART >= 1) {
       f.timeOffset = (header.ISTART - 1) * f.deltaTime
