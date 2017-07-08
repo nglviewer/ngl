@@ -184,8 +184,8 @@ class ColormakerRegistry {
    * @return {String} id to refer to the registered scheme
    */
   _addUserScheme (scheme, label) {
-    label = (label || '').toLowerCase()
-    const id = '' + generateUUID() + '|' + label
+    label = label || ''
+    const id = `${generateUUID()}|${label}`.toLowerCase()
     this.userSchemes[ id ] = scheme
 
     return id
