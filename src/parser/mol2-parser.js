@@ -35,6 +35,7 @@ class Mol2Parser extends StructureParser {
     var atomMap = s.atomMap
     var atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 60))
+    atomStore.addField('partialCharge', 1, 'float32')
 
     var idx = 0
     var moleculeLineNo = 0
@@ -149,7 +150,7 @@ class Mol2Parser extends StructureParser {
           var element = ls[ 5 ].split('.')[ 0 ]
           var resno = ls[ 6 ] ? parseInt(ls[ 6 ]) : 1
           var resname = ls[ 7 ] ? ls[ 7 ] : ''
-          var bfactor = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0
+          var partialCharge = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0
 
           atomStore.growIfFull()
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname, element)
@@ -158,7 +159,7 @@ class Mol2Parser extends StructureParser {
           atomStore.y[ idx ] = y
           atomStore.z[ idx ] = z
           atomStore.serial[ idx ] = serial
-          atomStore.bfactor[ idx ] = bfactor
+          atomStore.partialCharge[ idx ] = partialCharge
 
           sb.addAtom(modelIdx, '', '', resname, resno, 1)
 
