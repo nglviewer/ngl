@@ -46234,13 +46234,13 @@ Colormaker.prototype.getScale = function getScale (params) {
           .out('num')
 };
 
-  /**
-   * safe a color to an array
-   * @param{Integer} color - hex color value
-   * @param{Array|TypedArray} array - destination
-   * @param{Integer} offset - index into the array
-   * @return {Array} the destination array
-   */
+/**
+ * safe a color to an array
+ * @param{Integer} color - hex color value
+ * @param{Array|TypedArray} array - destination
+ * @param{Integer} offset - index into the array
+ * @return {Array} the destination array
+ */
 Colormaker.prototype.colorToArray = function colorToArray (color, array, offset) {
   if (array === undefined) { array = []; }
   if (offset === undefined) { offset = 0; }
@@ -46252,68 +46252,68 @@ Colormaker.prototype.colorToArray = function colorToArray (color, array, offset)
   return array
 };
 
-  /**
-   * safe a atom color to an array
-   * @param{AtomProxy} atom - atom to get color for
-   * @param{Array|TypedArray} array - destination
-   * @param{Integer} offset - index into the array
-   * @return {Array} the destination array
-   */
+/**
+ * safe a atom color to an array
+ * @param{AtomProxy} atom - atom to get color for
+ * @param{Array|TypedArray} array - destination
+ * @param{Integer} offset - index into the array
+ * @return {Array} the destination array
+ */
 Colormaker.prototype.atomColorToArray = function atomColorToArray (atom, array, offset) {
   return this.colorToArray(
-          this.atomColor(atom), array, offset
-      )
+    this.atomColor(atom), array, offset
+  )
 };
 
-  /**
-   * return the color for an bond
-   * @param{BondProxy} bond - bond to get color for
-   * @param{Boolean} fromTo - whether to use the first or second atom of the bond
-   * @return {Integer} hex bond color
-   */
+/**
+ * return the color for an bond
+ * @param{BondProxy} bond - bond to get color for
+ * @param{Boolean} fromTo - whether to use the first or second atom of the bond
+ * @return {Integer} hex bond color
+ */
 Colormaker.prototype.bondColor = function bondColor (bond, fromTo) {
   this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2;
   return this.atomColor(this.atomProxy)
 };
 
-  /**
-   * safe a bond color to an array
-   * @param{BondProxy} bond - bond to get color for
-   * @param{Boolean} fromTo - whether to use the first or second atom of the bond
-   * @param{Array|TypedArray} array - destination
-   * @param{Integer} offset - index into the array
-   * @return {Array} the destination array
-   */
+/**
+ * safe a bond color to an array
+ * @param{BondProxy} bond - bond to get color for
+ * @param{Boolean} fromTo - whether to use the first or second atom of the bond
+ * @param{Array|TypedArray} array - destination
+ * @param{Integer} offset - index into the array
+ * @return {Array} the destination array
+ */
 Colormaker.prototype.bondColorToArray = function bondColorToArray (bond, fromTo, array, offset) {
   return this.colorToArray(
-          this.bondColor(bond, fromTo), array, offset
-      )
+    this.bondColor(bond, fromTo), array, offset
+  )
 };
 
-  /**
-   * safe a volume cell color to an array
-   * @param{Integer} index - volume cell index
-   * @param{Array|TypedArray} array - destination
-   * @param{Integer} offset - index into the array
-   * @return {Array} the destination array
-   */
+/**
+ * safe a volume cell color to an array
+ * @param{Integer} index - volume cell index
+ * @param{Array|TypedArray} array - destination
+ * @param{Integer} offset - index into the array
+ * @return {Array} the destination array
+ */
 Colormaker.prototype.volumeColorToArray = function volumeColorToArray (index, array, offset) {
   return this.colorToArray(
-          this.volumeColor(index), array, offset
-      )
+    this.volumeColor(index), array, offset
+  )
 };
 
-  /**
-   * safe a color for coordinates in space to an array
-   * @param{Vector3} coords - xyz coordinates
-   * @param{Array|TypedArray} array - destination
-   * @param{Integer} offset - index into the array
-   * @return {Array} the destination array
-   */
+/**
+ * safe a color for coordinates in space to an array
+ * @param{Vector3} coords - xyz coordinates
+ * @param{Array|TypedArray} array - destination
+ * @param{Integer} offset - index into the array
+ * @return {Array} the destination array
+ */
 Colormaker.prototype.positionColorToArray = function positionColorToArray (coords, array, offset) {
   return this.colorToArray(
-          this.positionColor(coords), array, offset
-      )
+    this.positionColor(coords), array, offset
+  )
 };
 
 // changed to be usable as an es6 module, ASR
@@ -59399,7 +59399,7 @@ var BondHash = function BondHash (bondStore, atomCount) {
  */
 
 /**
- * Store class
+ * Store base class
  * @interface
  */
 var Store = function Store (size) {
@@ -59421,14 +59421,35 @@ Store.prototype._init = function _init (size) {
   this.length = size;
   this.count = 0;
 
-  for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    (ref = this$1)._initField.apply(ref, this$1.__fields[ i ]);
+  for (var i = 0, il = this._fields.length; i < il; ++i) {
+    (ref = this$1)._initField.apply(ref, this$1._fields[ i ]);
   }
     var ref;
 };
 
+/**
+ * Initialize a field
+ * @param{String} name - field name
+ * @param{Integer} size - element size
+ * @param{String} type - data type, one of int8, int16, int32,
+ *                       uint8, uint16, uint32, float32
+ * @return {undefined}
+ */
 Store.prototype._initField = function _initField (name, size, type) {
   this[ name ] = getTypedArray(type, this.length * size);
+};
+
+/**
+ * Add a field
+ * @param{String} name - field name
+ * @param{Integer} size - element size
+ * @param{String} type - data type, one of int8, int16, int32,
+ *                       uint8, uint16, uint32, float32
+ * @return {undefined}
+ */
+Store.prototype.addField = function addField (name, size, type) {
+  this._fields.push([name, size, type]);
+  this._initField(name, size, type);
 };
 
 /**
@@ -59444,9 +59465,9 @@ Store.prototype.resize = function resize (size) {
   this.length = Math.round(size || 0);
   this.count = Math.min(this.count, this.length);
 
-  for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    var name = this$1.__fields[ i ][ 0 ];
-    var itemSize = this$1.__fields[ i ][ 1 ];
+  for (var i = 0, il = this._fields.length; i < il; ++i) {
+    var name = this$1._fields[ i ][ 0 ];
+    var itemSize = this$1._fields[ i ][ 1 ];
     var arraySize = this$1.length * itemSize;
     var tmpArray = new this$1[ name ].constructor(arraySize);
 
@@ -59483,9 +59504,9 @@ Store.prototype.growIfFull = function growIfFull () {
 Store.prototype.copyFrom = function copyFrom (other, thisOffset, otherOffset, length) {
     var this$1 = this;
 
-  for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    var name = this$1.__fields[ i ][ 0 ];
-    var itemSize = this$1.__fields[ i ][ 1 ];
+  for (var i = 0, il = this._fields.length; i < il; ++i) {
+    var name = this$1._fields[ i ][ 0 ];
+    var itemSize = this$1._fields[ i ][ 1 ];
     var thisField = this$1[ name ];
     var otherField = other[ name ];
 
@@ -59509,9 +59530,9 @@ Store.prototype.copyFrom = function copyFrom (other, thisOffset, otherOffset, le
 Store.prototype.copyWithin = function copyWithin (offsetTarget, offsetSource, length) {
     var this$1 = this;
 
-  for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    var name = this$1.__fields[ i ][ 0 ];
-    var itemSize = this$1.__fields[ i ][ 1 ];
+  for (var i = 0, il = this._fields.length; i < il; ++i) {
+    var name = this$1._fields[ i ][ 0 ];
+    var itemSize = this$1._fields[ i ][ 1 ];
     var thisField = this$1[ name ];
 
     for (var j = 0; j < length; ++j) {
@@ -59593,8 +59614,8 @@ Store.prototype.dispose = function dispose () {
   delete this.length;
   delete this.count;
 
-  for (var i = 0, il = this.__fields.length; i < il; ++i) {
-    var name = this$1.__fields[ i ][ 0 ];
+  for (var i = 0, il = this._fields.length; i < il; ++i) {
+    var name = this$1._fields[ i ][ 0 ];
     delete this$1[ name ];
   }
 };
@@ -59617,9 +59638,9 @@ var BondStore = (function (Store$$1) {
   BondStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   BondStore.prototype.constructor = BondStore;
 
-  var prototypeAccessors = { __fields: {} };
+  var prototypeAccessors = { _fields: {} };
 
-  prototypeAccessors.__fields.get = function () {
+  prototypeAccessors._fields.get = function () {
     return [
       [ 'atomIndex1', 1, 'int32' ],
       [ 'atomIndex2', 1, 'int32' ],
@@ -59678,9 +59699,9 @@ var AtomStore = (function (Store$$1) {
   AtomStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   AtomStore.prototype.constructor = AtomStore;
 
-  var prototypeAccessors = { __fields: {} };
+  var prototypeAccessors = { _fields: {} };
 
-  prototypeAccessors.__fields.get = function () {
+  prototypeAccessors._fields.get = function () {
     return [
       [ 'residueIndex', 1, 'uint32' ],
       [ 'atomTypeId', 1, 'uint16' ],
@@ -59727,9 +59748,9 @@ var ResidueStore = (function (Store$$1) {
   ResidueStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ResidueStore.prototype.constructor = ResidueStore;
 
-  var prototypeAccessors = { __fields: {} };
+  var prototypeAccessors = { _fields: {} };
 
-  prototypeAccessors.__fields.get = function () {
+  prototypeAccessors._fields.get = function () {
     return [
       [ 'chainIndex', 1, 'uint32' ],
       [ 'atomOffset', 1, 'uint32' ],
@@ -59783,9 +59804,9 @@ var ChainStore = (function (Store$$1) {
   ChainStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ChainStore.prototype.constructor = ChainStore;
 
-  var prototypeAccessors = { __fields: {} };
+  var prototypeAccessors = { _fields: {} };
 
-  prototypeAccessors.__fields.get = function () {
+  prototypeAccessors._fields.get = function () {
     return [
       [ 'entityIndex', 1, 'uint16' ],
       [ 'modelIndex', 1, 'uint16' ],
@@ -59866,9 +59887,9 @@ var ModelStore = (function (Store$$1) {
   ModelStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ModelStore.prototype.constructor = ModelStore;
 
-  var prototypeAccessors = { __fields: {} };
+  var prototypeAccessors = { _fields: {} };
 
-  prototypeAccessors.__fields.get = function () {
+  prototypeAccessors._fields.get = function () {
     return [
       [ 'chainOffset', 1, 'uint32' ],
       [ 'chainCount', 1, 'uint32' ]
@@ -66767,13 +66788,8 @@ Trajectory.prototype.setParameters = function setParameters (params) {
     resetCache = true;
   }
 
-  if (p.deltaTime !== undefined && p.deltaTime !== this.deltaTime) {
-    this.deltaTime = p.deltaTime;
-  }
-
-  if (p.timeOffset !== undefined && p.timeOffset !== this.timeOffset) {
-    this.timeOffset = p.timeOffset;
-  }
+  this.deltaTime = defaults(p.deltaTime, this.deltaTime);
+  this.timeOffset = defaults(p.timeOffset, this.timeOffset);
 
   if (resetCache) { this.resetCache(); }
 };
@@ -66844,7 +66860,6 @@ Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip
   if (i === undefined) { return this }
 
   var fc = this.frameCache;
-
   var iList = [];
 
   if (!fc[ ippp ]) { iList.push(ippp); }
@@ -66869,8 +66884,12 @@ Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
   if (Array.isArray(i)) {
     var queue;
     var fn = function (j, wcallback) {
-      this$1._loadFrame(j, wcallback);
-      if (queue.length() === 0 && typeof callback === 'function') { callback(); }
+      this$1._loadFrame(j, function () {
+        wcallback();
+        if (queue.length() === 0 && typeof callback === 'function') {
+          callback();
+        }
+      });
     };
     queue = new Queue(fn, i);
   } else {
@@ -85187,6 +85206,8 @@ var HelixTypes = {
   '': 'h'
 };
 
+var reWhitespace$1 = /\s+/;
+
 var PdbParser = (function (StructureParser$$1) {
   function PdbParser (streamer, params) {
     var p = params || {};
@@ -85218,7 +85239,6 @@ var PdbParser = (function (StructureParser$$1) {
     }
 
     var isPqr = this.type === 'pqr';
-    var reWhitespace = /\s+/;
 
     var s = this.structure;
     var sb = this.structureBuilder;
@@ -85242,8 +85262,8 @@ var PdbParser = (function (StructureParser$$1) {
     var currentMatrix;
 
     var line, recordName;
-    var serial, chainname, resno, resname, occupancy,
-      inscode, atomname, hetero, bfactor, altloc;
+    var serial, chainname, resno, resname, occupancy;
+    var inscode, atomname, hetero, bfactor, altloc;
 
     var startChain, startResi, startIcode;
     var endChain, endResi, endIcode;
@@ -85329,7 +85349,7 @@ var PdbParser = (function (StructureParser$$1) {
           var x = (void 0), y = (void 0), z = (void 0), ls = (void 0), dd = (void 0);
 
           if (isPqr) {
-            ls = line.split(reWhitespace);
+            ls = line.split(reWhitespace$1);
             dd = ls.length === 10 ? 1 : 0;
 
             atomname = ls[ 2 ];
@@ -85411,9 +85431,9 @@ var PdbParser = (function (StructureParser$$1) {
 
           if (hetero) {
             if (currentChainname !== chainname || currentResname !== resname ||
-                            (!WaterNames.includes(resname) &&
-                                (currentResno !== resno || currentInscode !== inscode))
-                        ) {
+                (!WaterNames.includes(resname) &&
+                  (currentResno !== resno || currentInscode !== inscode))
+            ) {
               chainIdx += 1;
               chainid = chainIdx.toString();
 
@@ -85562,9 +85582,9 @@ var PdbParser = (function (StructureParser$$1) {
             biomtElms[ 4 * 2 + row ] = parseFloat(biomt[ 6 ]);
             biomtElms[ 4 * 3 + row ] = parseFloat(biomt[ 7 ]);
           } else if (
-                line.substr(11, 30) === 'APPLY THE FOLLOWING TO CHAINS:' ||
-                line.substr(11, 30) === '                   AND CHAINS:'
-            ) {
+            line.substr(11, 30) === 'APPLY THE FOLLOWING TO CHAINS:' ||
+            line.substr(11, 30) === '                   AND CHAINS:'
+          ) {
             if (line.substr(11, 5) === 'APPLY') {
               currentPart = currentBiomol.addPart();
             }
@@ -85664,7 +85684,7 @@ var PdbParser = (function (StructureParser$$1) {
           var gamma = parseFloat(line.substr(47, 7));
 
           var sGroup = line.substr(55, 11).trim();
-            // var zValue = parseInt( line.substr( 66, 4 ) );
+          // var zValue = parseInt( line.substr( 66, 4 ) );
 
           var box = new Float32Array(9);
           box[ 0 ] = aLength;
@@ -85703,8 +85723,8 @@ var PdbParser = (function (StructureParser$$1) {
           return chainDict[ chainname ]
         });
         s.entityList.push(new Entity(
-                    s, i, e.name, 'polymer', chainIndexList
-                ));
+          s, i, e.name, 'polymer', chainIndexList
+        ));
       });
 
       var ei = entityDataList.length;
@@ -85730,8 +85750,8 @@ var PdbParser = (function (StructureParser$$1) {
           type = 'water';
         }
         s.entityList.push(new Entity(
-                    s, ei, name, type, chainList
-                ));
+          s, ei, name, type, chainList
+        ));
         ei += 1;
       });
     }
@@ -88260,7 +88280,7 @@ ParserRegistry.add('mmtf', MmtfParser);
  * @private
  */
 
-var reWhitespace$1 = /\s+/;
+var reWhitespace$2 = /\s+/;
 
 var Mol2Parser = (function (StructureParser$$1) {
   function Mol2Parser () {
@@ -88354,7 +88374,7 @@ var Mol2Parser = (function (StructureParser$$1) {
             s.title = line;
             s.id = line;
           } else if (moleculeLineNo === 1) {
-            ls = line.split(reWhitespace$1);
+            ls = line.split(reWhitespace$2);
             numAtoms = parseInt(ls[ 0 ]);
             // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
           } else if (moleculeLineNo === 2) {
@@ -88382,7 +88402,7 @@ var Mol2Parser = (function (StructureParser$$1) {
 
           ++moleculeLineNo;
         } else if (currentRecordType === atomRecordType) {
-          ls = line.split(reWhitespace$1);
+          ls = line.split(reWhitespace$2);
 
           if (firstModelOnly && modelIdx > 0) { continue }
 
@@ -88425,7 +88445,7 @@ var Mol2Parser = (function (StructureParser$$1) {
           if (firstModelOnly && modelIdx > 0) { continue }
           if (asTrajectory && modelIdx > 0) { continue }
 
-          ls = line.split(reWhitespace$1);
+          ls = line.split(reWhitespace$2);
 
           // ls[ 0 ] is bond id
           ap1.index = parseInt(ls[ 1 ]) - 1 + modelAtomIdxStart;
@@ -88897,7 +88917,7 @@ var AngleMode = 4;
 var DihedralMode = 5;
 var ImproperMode = 6;
 
-var reWhitespace$2 = /\s+/;
+var reWhitespace$3 = /\s+/;
 var reTitle = /(^\*|REMARK)*/;
 
 var PsfParser = (function (StructureParser$$1) {
@@ -88946,7 +88966,7 @@ var PsfParser = (function (StructureParser$$1) {
         }
 
         if (mode === AtomMode) {
-          var ls = line.split(reWhitespace$2);
+          var ls = line.split(reWhitespace$3);
 
           var serial = parseInt(ls[ 0 ]);
           var segid = ls[ 1 ];
@@ -88969,7 +88989,7 @@ var PsfParser = (function (StructureParser$$1) {
           idx += 1;
           lastSegid = segid;
         } else if (mode === BondMode) {
-          var ls$1 = line.split(reWhitespace$2);
+          var ls$1 = line.split(reWhitespace$3);
 
           for (var j = 0, m = ls$1.length; j < m; j += 2) {
             bAtomIndex1[ bondIdx ] = parseInt(ls$1[ j ]) - 1;
@@ -88994,12 +89014,12 @@ var PsfParser = (function (StructureParser$$1) {
         } else if (line.includes('!NATOM')) {
           mode = AtomMode;
 
-          var numAtoms = parseInt(line.split(reWhitespace$2)[ 0 ]);
+          var numAtoms = parseInt(line.split(reWhitespace$3)[ 0 ]);
           atomStore.resize(numAtoms);
         } else if (line.includes('!NBOND')) {
           mode = BondMode;
 
-          var numBonds = parseInt(line.split(reWhitespace$2)[ 0 ]);
+          var numBonds = parseInt(line.split(reWhitespace$3)[ 0 ]);
           bAtomIndex1 = new Uint32Array(numBonds);
           bAtomIndex2 = new Uint32Array(numBonds);
           bBondOrder = new Uint8Array(numBonds);
@@ -89057,7 +89077,7 @@ var AtomsMode = 4;
 var BondsMode = 5;
 
 var reField = /\[ (.+) \]/;
-var reWhitespace$3 = /\s+/;
+var reWhitespace$4 = /\s+/;
 
 var TopParser = (function (StructureParser$$1) {
   function TopParser () {
@@ -89133,17 +89153,17 @@ var TopParser = (function (StructureParser$$1) {
           lt = lt.substring(0, cIdx).trim();
         }
         if (mode === MoleculetypeMode) {
-          var molName = lt.split(reWhitespace$3)[0];
+          var molName = lt.split(reWhitespace$4)[0];
           moleculetypeDict[molName] = currentMoleculetype;
         } else if (mode === AtomsMode) {
-          var ls = lt.split(reWhitespace$3);
+          var ls = lt.split(reWhitespace$4);
           currentMoleculetype.atoms.push([
             parseInt(ls[2]),  // resnr
             ls[3],            // residue
             ls[4]             // atom
           ]);
         } else if (mode === BondsMode) {
-          var ls$1 = lt.split(reWhitespace$3);
+          var ls$1 = lt.split(reWhitespace$4);
           currentMoleculetype.bonds.push([
             parseInt(ls$1[0]),  // ai
             parseInt(ls$1[1])   // aj
@@ -89151,7 +89171,7 @@ var TopParser = (function (StructureParser$$1) {
         } else if (mode === SystemMode) {
           s.title = lt;
         } else if (mode === MoleculesMode) {
-          var ls$2 = lt.split(reWhitespace$3);
+          var ls$2 = lt.split(reWhitespace$4);
           molecules.push([
             ls$2[0],           // name
             parseInt(ls$2[1])  // count
@@ -91254,7 +91274,7 @@ var VolumeParser = (function (Parser$$1) {
 // @author Johanna Tiemann <johanna.tiemann@googlemail.com>
 // @author Alexander Rose <alexander.rose@weirdbyte.de>
 
-var reWhitespace$4 = /\s+/;
+var reWhitespace$5 = /\s+/;
 var reScientificNotation = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g;
 var bohrToAngstromFactor = 0.529177210859;
 
@@ -91283,7 +91303,7 @@ var CubeParser = (function (VolumeParser$$1) {
     var scaleFactor = bohrToAngstromFactor * this.voxelSize;
 
     function h (k, l) {
-      var field = headerLines[ k ].trim().split(reWhitespace$4)[ l ];
+      var field = headerLines[ k ].trim().split(reWhitespace$5)[ l ];
       return parseFloat(field)
     }
 
@@ -91586,7 +91606,7 @@ ParserRegistry.add('brix', Dsn6Parser);
  * @private
  */
 
-var reWhitespace$5 = /\s+/;
+var reWhitespace$6 = /\s+/;
 
 var DxParser = (function (VolumeParser$$1) {
   function DxParser () {
@@ -91623,7 +91643,7 @@ var DxParser = (function (VolumeParser$$1) {
           var line = lines[ i ].trim();
 
           if (line !== '') {
-            var ls = line.split(reWhitespace$5);
+            var ls = line.split(reWhitespace$6);
 
             for (var j = 0, lj = ls.length; j < lj; ++j) {
               data[ count ] = parseFloat(ls[ j ]);
@@ -91660,19 +91680,19 @@ var DxParser = (function (VolumeParser$$1) {
       var line = headerLines[ i ];
 
       if (line.startsWith('object 1')) {
-        ls = line.split(reWhitespace$5);
+        ls = line.split(reWhitespace$6);
 
         header.nx = parseInt(ls[ 5 ]);
         header.ny = parseInt(ls[ 6 ]);
         header.nz = parseInt(ls[ 7 ]);
       } else if (line.startsWith('origin')) {
-        ls = line.split(reWhitespace$5);
+        ls = line.split(reWhitespace$6);
 
         header.xmin = parseFloat(ls[ 1 ]);
         header.ymin = parseFloat(ls[ 2 ]);
         header.zmin = parseFloat(ls[ 3 ]);
       } else if (line.startsWith('delta')) {
-        ls = line.split(reWhitespace$5);
+        ls = line.split(reWhitespace$6);
 
         if (deltaLineCount === 0) {
           header.hx = parseFloat(ls[ 1 ]) * this$1.voxelSize;
@@ -92042,10 +92062,10 @@ ParserRegistry.add('map', MrcParser);
  * @private
  */
 
-var reWhitespace$6 = /\s+/;
+var reWhitespace$7 = /\s+/;
 
 function parseNumberLine (line) {
-  return line.trim().split(reWhitespace$6).map(parseFloat)
+  return line.trim().split(reWhitespace$7).map(parseFloat)
 }
 
 var XplorParser = (function (VolumeParser$$1) {
@@ -96768,6 +96788,28 @@ function gzipDecompress (data) {
 DecompressorRegistry.add('gz', gzipDecompress);
 
 /**
+ * @file Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+/**
+ * Datasource base class
+ * @interface
+ */
+var Datasource = function Datasource () {};
+
+Datasource.prototype.getUrl = function getUrl (path) {};
+
+/**
+ * Get file extension
+ * @abstract
+ * @param{String} path - datasource string
+ * @return {String} - extension
+ */
+Datasource.prototype.getExt = function getExt (path) {};
+
+/**
  * @file RCSB Datasource
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -96778,17 +96820,25 @@ var mmtfBaseUrl = '//mmtf.rcsb.org/v1.0/';
 var mmtfFullUrl = mmtfBaseUrl + 'full/';
 var mmtfReducedUrl = mmtfBaseUrl + 'reduced/';
 
-function RcsbDatasource () {
-  this.getUrl = function (src) {
-        // valid path are
-        // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
-        // XXXX defaults to XXXX.cif
+var RcsbDatasource = (function (Datasource$$1) {
+  function RcsbDatasource () {
+    Datasource$$1.apply(this, arguments);
+  }
+
+  if ( Datasource$$1 ) RcsbDatasource.__proto__ = Datasource$$1;
+  RcsbDatasource.prototype = Object.create( Datasource$$1 && Datasource$$1.prototype );
+  RcsbDatasource.prototype.constructor = RcsbDatasource;
+
+  RcsbDatasource.prototype.getUrl = function getUrl (src) {
+    // valid path are
+    // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
+    // XXXX defaults to XXXX.cif
     var info = getFileInfo(src);
     var pdbid = info.name.substr(0, 4);
     var url;
     if ([ 'pdb', 'cif' ].includes(info.ext) &&
-            (info.compressed === false || info.compressed === 'gz')
-        ) {
+        (info.compressed === false || info.compressed === 'gz')
+    ) {
       url = baseUrl$1 + info.path;
     } else if (info.ext === 'mmtf') {
       if (info.base.endsWith('.bb')) {
@@ -96805,13 +96855,15 @@ function RcsbDatasource () {
     return getProtocol() + url
   };
 
-  this.getExt = function (src) {
+  RcsbDatasource.prototype.getExt = function getExt (src) {
     var info = getFileInfo(src);
     if (info.ext === 'mmtf' || !info.ext) {
       return 'mmtf'
     }
   };
-}
+
+  return RcsbDatasource;
+}(Datasource));
 
 DatasourceRegistry.add('rcsb', new RcsbDatasource());
 
@@ -96824,8 +96876,16 @@ DatasourceRegistry.add('rcsb', new RcsbDatasource());
 var baseUrl$2 = '//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/';
 var suffixUrl = '/SDF?record_type=3d';
 
-function PubchemDatasource () {
-  this.getUrl = function (src) {
+var PubchemDatasource = (function (Datasource$$1) {
+  function PubchemDatasource () {
+    Datasource$$1.apply(this, arguments);
+  }
+
+  if ( Datasource$$1 ) PubchemDatasource.__proto__ = Datasource$$1;
+  PubchemDatasource.prototype = Object.create( Datasource$$1 && Datasource$$1.prototype );
+  PubchemDatasource.prototype.constructor = PubchemDatasource;
+
+  PubchemDatasource.prototype.getUrl = function getUrl (src) {
     var info = getFileInfo(src);
     var cid = info.name;
     var url;
@@ -96838,13 +96898,15 @@ function PubchemDatasource () {
     return getProtocol() + url
   };
 
-  this.getExt = function (src) {
+  PubchemDatasource.prototype.getExt = function getExt (src) {
     var info = getFileInfo(src);
     if (!info.ext || info.ext === 'sdf') {
       return 'sdf'
     }
   };
-}
+
+  return PubchemDatasource;
+}(Datasource));
 
 DatasourceRegistry.add('pubchem', new PubchemDatasource());
 
@@ -96854,11 +96916,21 @@ DatasourceRegistry.add('pubchem', new PubchemDatasource());
  * @private
  */
 
-function PassThroughDatasource () {
-  this.getUrl = function (path) {
+var PassThroughDatasource = (function (Datasource$$1) {
+  function PassThroughDatasource () {
+    Datasource$$1.apply(this, arguments);
+  }
+
+  if ( Datasource$$1 ) PassThroughDatasource.__proto__ = Datasource$$1;
+  PassThroughDatasource.prototype = Object.create( Datasource$$1 && Datasource$$1.prototype );
+  PassThroughDatasource.prototype.constructor = PassThroughDatasource;
+
+  PassThroughDatasource.prototype.getUrl = function getUrl (path) {
     return path
   };
-}
+
+  return PassThroughDatasource;
+}(Datasource));
 
 DatasourceRegistry.add('ftp', new PassThroughDatasource());
 DatasourceRegistry.add('http', new PassThroughDatasource());
@@ -96872,20 +96944,86 @@ DatasourceRegistry.add('https', new PassThroughDatasource());
 
 var reProtocol = /^((http|https|ftp):)*\/\//;
 
-function StaticDatasource (baseUrl) {
-  baseUrl = baseUrl || '';
+var StaticDatasource = (function (Datasource$$1) {
+  function StaticDatasource (baseUrl) {
+    Datasource$$1.call(this);
+    this.baseUrl = baseUrl || '';
+  }
 
-  this.getUrl = function (src) {
+  if ( Datasource$$1 ) StaticDatasource.__proto__ = Datasource$$1;
+  StaticDatasource.prototype = Object.create( Datasource$$1 && Datasource$$1.prototype );
+  StaticDatasource.prototype.constructor = StaticDatasource;
+
+  StaticDatasource.prototype.getUrl = function getUrl (src) {
     var info = getFileInfo(src);
-    var url = baseUrl + info.path;
-    if (!reProtocol.test(baseUrl)) {
+    var url = this.baseUrl + info.path;
+    if (!reProtocol.test(this.baseUrl)) {
       url = getAbsolutePath(url);
     }
     return url
   };
-}
 
-var version$1 = "0.10.5-5";
+  return StaticDatasource;
+}(Datasource));
+
+/**
+ * @file MDsrv Datasource
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var MdsrvDatasource = (function (Datasource$$1) {
+  function MdsrvDatasource (baseUrl) {
+    Datasource$$1.call(this);
+    this.baseUrl = baseUrl || '';
+  }
+
+  if ( Datasource$$1 ) MdsrvDatasource.__proto__ = Datasource$$1;
+  MdsrvDatasource.prototype = Object.create( Datasource$$1 && Datasource$$1.prototype );
+  MdsrvDatasource.prototype.constructor = MdsrvDatasource;
+
+  MdsrvDatasource.prototype.getListing = function getListing (path) {
+    path = path || '';
+    var url = this.baseUrl + 'dir/' + path;
+    if (url[url.length - 1] !== '/') { url += '/'; }
+    return autoLoad(url, {
+      ext: 'json'
+    }).then(function (jsonData) {
+      return {
+        path: path,
+        data: jsonData.data
+      }
+    })
+  };
+
+  MdsrvDatasource.prototype.getUrl = function getUrl (src) {
+    var info = getFileInfo(src);
+    return this.baseUrl + 'file/' + info.path
+  };
+
+  MdsrvDatasource.prototype.getNumframesUrl = function getNumframesUrl (src) {
+    var info = getFileInfo(src);
+    return this.baseUrl + 'traj/numframes/' + info.path
+  };
+
+  MdsrvDatasource.prototype.getFrameUrl = function getFrameUrl (src, frameIndex) {
+    var info = getFileInfo(src);
+    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path
+  };
+
+  MdsrvDatasource.prototype.getFrameParams = function getFrameParams (src, atomIndices) {
+    return 'atomIndices=' + atomIndices.join(';')
+  };
+
+  MdsrvDatasource.prototype.getPathUrl = function getPathUrl (src, atomIndex) {
+    var info = getFileInfo(src);
+    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path
+  };
+
+  return MdsrvDatasource;
+}(Datasource));
+
+var version$1 = "0.10.5-6";
 
 /**
  * @file Version
@@ -96934,5 +97072,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
