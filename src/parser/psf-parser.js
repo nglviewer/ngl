@@ -36,6 +36,7 @@ class PsfParser extends StructureParser {
 
     const atomMap = s.atomMap
     const atomStore = s.atomStore
+    atomStore.addField('partialCharge', 1, 'float32')
 
     const title = []
 
@@ -64,6 +65,7 @@ class PsfParser extends StructureParser {
           const resno = parseInt(ls[ 2 ])
           const resname = ls[ 3 ]
           const atomname = ls[ 4 ]
+          const charge = parseFloat(ls[ 6 ])
 
           if (segid !== lastSegid) {
             chainid = getChainname(chainIdx)
@@ -74,6 +76,7 @@ class PsfParser extends StructureParser {
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname)
 
           atomStore.serial[ idx ] = serial
+          atomStore.partialCharge[ idx ] = charge
 
           sb.addAtom(0, chainid, chainid, resname, resno)
 
