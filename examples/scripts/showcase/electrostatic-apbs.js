@@ -1,14 +1,12 @@
 
 stage.loadFile('data://1crn_apbs.pqr').then(function (o) {
   o.addRepresentation('cartoon', {
-    colorScheme: 'bfactor',
-    colorScale: 'rwb',
-    colorDomain: [ -1, 0, 1 ]
+    colorScheme: 'partialCharge',
+    colorScale: 'rwb'
   })
   o.addRepresentation('licorice', {
-    colorScheme: 'bfactor',
-    colorScale: 'rwb',
-    colorDomain: [ -1, 0, 1 ]
+    colorScheme: 'partialCharge',
+    colorScale: 'rwb'
   })
 
   o.autoView()
