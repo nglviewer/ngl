@@ -6,9 +6,9 @@
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
 import {
-    assignResidueTypeBonds,
-    calculateChainnames, calculateSecondaryStructure,
-    calculateBondsBetween, calculateBondsWithin
+  assignResidueTypeBonds,
+  calculateChainnames, calculateSecondaryStructure,
+  calculateBondsBetween, calculateBondsWithin
 } from '../structure/structure-utils.js'
 import StructureParser from './structure-parser.js'
 
@@ -18,7 +18,7 @@ class Mol2Parser extends StructureParser {
   get type () { return 'mol2' }
 
   _parse () {
-        // http://www.tripos.com/data/support/mol2.pdf
+    // http://paulbourke.net/dataformats/mol2/
 
     if (Debug) Log.time('Mol2Parser._parse ' + this.name)
 

@@ -137,7 +137,6 @@ class PdbParser extends StructureParser {
     var atomMap = s.atomMap
     var atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
-
     if (isPqr) {
       atomStore.addField('partialCharge', 1, 'float32')
       atomStore.addField('radius', 1, 'float32')
