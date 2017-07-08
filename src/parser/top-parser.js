@@ -35,8 +35,10 @@ class TopParser extends StructureParser {
     //
 
     const atomMap = s.atomMap
-    const atomStore = s.atomStore
     const bondStore = s.bondStore
+
+    const atomStore = s.atomStore
+    atomStore.addField('partialCharge', 1, 'float32')
 
     const molecules = []
     const moleculetypeDict = {}
@@ -90,9 +92,10 @@ class TopParser extends StructureParser {
         } else if (mode === AtomsMode) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.atoms.push([
-            parseInt(ls[2]),  // resnr
-            ls[3],            // residue
-            ls[4]             // atom
+            parseInt(ls[2]),   // resnr
+            ls[3],             // residue
+            ls[4],             // atom
+            parseFloat(ls[6])  // charge
           ])
         } else if (mode === BondsMode) {
           const ls = lt.split(reWhitespace)
@@ -144,12 +147,13 @@ class TopParser extends StructureParser {
         lastResno = -1
         const chainid = WaterNames.includes(name) ? chainname : getChainname(chainidIdx)
         molType.atoms.forEach(function (atomData) {
-          const [resno, resname, atomname] = atomData
+          const [resno, resname, atomname, charge] = atomData
           if (resno !== lastResno) {
             ++resIdx
           }
           atomStore.atomTypeId[atomIdx] = atomMap.add(atomname)
           atomStore.serial[atomIdx] = atomIdx + 1
+          atomStore.partialCharge[atomIdx] = charge
           sb.addAtom(0, chainname, chainid, resname, resIdx + 1)
           ++atomIdx
           lastResno = resno

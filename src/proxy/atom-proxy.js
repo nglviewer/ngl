@@ -275,6 +275,19 @@ class AtomProxy {
     this.atomStore.setAltloc(this.index, value)
   }
 
+  /**
+   * Partial charge
+   * @type {Float|null}
+   */
+  get partialCharge () {
+    return this.atomStore.partialCharge ? this.atomStore.partialCharge[ this.index ] : null
+  }
+  set partialCharge (value) {
+    if (this.atomStore.partialCharge) {
+      this.atomStore.partialCharge[ this.index ] = value
+    }
+  }
+
   //
 
   /**

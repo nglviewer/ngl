@@ -11,6 +11,8 @@ import {
     calculateBondsWithin, calculateChainnames
 } from '../structure/structure-utils.js'
 
+const amberChargeUnitFactor = 18.2223
+
 const TitleMode = 1
 const PointersMode = 2
 const AtomNameMode = 3
@@ -42,6 +44,8 @@ class PrmtopParser extends StructureParser {
 
     const atomMap = s.atomMap
     const atomStore = s.atomStore
+    atomStore.addField('partialCharge', 1, 'float32')
+    atomStore.addField('radius', 1, 'float32')
 
     const title = []
     const pointersDict = {}
@@ -56,6 +60,8 @@ class PrmtopParser extends StructureParser {
     pointers.forEach(name => { pointersDict[ name ] = 0 })
 
     let atomNames
+    let charges
+    let radii
     let bAtomIndex1
     let bAtomIndex2
     let bBondOrder
@@ -115,6 +121,8 @@ class PrmtopParser extends StructureParser {
             )
           }
           atomNames = new Array(pointersDict.NATOM)
+          charges = new Float32Array(pointersDict.NATOM)
+          radii = new Float32Array(pointersDict.NATOM)
           atomStore.resize(pointersDict.NATOM)
           const bondCount = pointersDict.NBONH + pointersDict.MBONA
           bAtomIndex1 = new Uint32Array(bondCount)
@@ -128,9 +136,10 @@ class PrmtopParser extends StructureParser {
             atomNames[curIdx] = line.substr(i * 4, 4).trim()
           }
         } else if (mode === ChargeMode) {
-
-          // not currently used
-
+          const n = Math.min(curIdx + 5, pointersDict.NATOM)
+          for (let i = 0; curIdx < n; ++i, ++curIdx) {
+            charges[curIdx] = parseFloat(line.substr(i * 16, 16)) / amberChargeUnitFactor
+          }
         } else if (mode === MassMode) {
 
           // not currently used
@@ -170,9 +179,10 @@ class PrmtopParser extends StructureParser {
             }
           }
         } else if (mode === RadiiMode) {
-
-          // not currently used
-
+          const n = Math.min(curIdx + 5, pointersDict.NATOM)
+          for (let i = 0; curIdx < n; ++i, ++curIdx) {
+            radii[curIdx] = parseFloat(line.substr(i * 16, 16))
+          }
         }
       }
     }
@@ -197,6 +207,9 @@ class PrmtopParser extends StructureParser {
       atomStore.serial[i] = i + 1
       sb.addAtom(0, '', '', curResname, curResno)
     }
+
+    atomStore.partialCharge.set(charges)
+    atomStore.radius.set(radii)
 
     s.bondStore.length = bBondOrder.length
     s.bondStore.count = bBondOrder.length

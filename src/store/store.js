@@ -16,6 +16,7 @@ class Store {
    * @param {Integer} [size] - initial size
    */
   constructor (size) {
+    this._fields = this._defaultFields
     if (Number.isInteger(size)) {
       this._init(size)
     } else {
