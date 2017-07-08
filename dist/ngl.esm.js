@@ -47760,7 +47760,7 @@ var ColormakerRegistry$1 = function ColormakerRegistry () {
 
 ColormakerRegistry$1.prototype.getScheme = function getScheme (params) {
   var p = params || {};
-  var id = p.scheme || '';
+  var id = (p.scheme || '').toLowerCase();
 
   var SchemeClass;
 
@@ -47814,6 +47814,7 @@ ColormakerRegistry$1.prototype.getModes = function getModes () {
  * @return {undefined}
  */
 ColormakerRegistry$1.prototype.add = function add (id, scheme) {
+  id = id.toLowerCase();
   this.schemes[ id ] = scheme;
 };
 
@@ -47845,7 +47846,7 @@ ColormakerRegistry$1.prototype.add = function add (id, scheme) {
  */
 ColormakerRegistry$1.prototype.addScheme = function addScheme (scheme, label) {
   if (!(scheme instanceof Colormaker)) {
-    scheme = this._createScheme(scheme, label);
+    scheme = this._createScheme(scheme);
   }
 
   return this._addUserScheme(scheme, label)
@@ -47858,7 +47859,7 @@ ColormakerRegistry$1.prototype.addScheme = function addScheme (scheme, label) {
  * @return {String} id to refer to the registered scheme
  */
 ColormakerRegistry$1.prototype._addUserScheme = function _addUserScheme (scheme, label) {
-  label = label || '';
+  label = (label || '').toLowerCase();
   var id = '' + generateUUID() + '|' + label;
   this.userSchemes[ id ] = scheme;
 
@@ -47871,13 +47872,13 @@ ColormakerRegistry$1.prototype._addUserScheme = function _addUserScheme (scheme,
  * @return {undefined}
  */
 ColormakerRegistry$1.prototype.removeScheme = function removeScheme (id) {
+  id = id.toLowerCase();
   delete this.userSchemes[ id ];
 };
 
-ColormakerRegistry$1.prototype._createScheme = function _createScheme (constructor, label) {
+ColormakerRegistry$1.prototype._createScheme = function _createScheme (constructor) {
   var _Colormaker = function (params) {
     Colormaker.call(this, params);
-    this.label = label || '';
     constructor.call(this, params);
   };
 
@@ -47932,6 +47933,7 @@ ColormakerRegistry$1.prototype.addSelectionScheme = function addSelectionScheme 
  * @return {Boolean} flag indicating if the scheme exists
  */
 ColormakerRegistry$1.prototype.hasScheme = function hasScheme (id) {
+  id = id.toLowerCase();
   return id in this.schemes || id in this.userSchemes
 };
 
@@ -59403,6 +59405,7 @@ var BondHash = function BondHash (bondStore, atomCount) {
  * @interface
  */
 var Store = function Store (size) {
+  this._fields = this._defaultFields;
   if (Number.isInteger(size)) {
     this._init(size);
   } else {
@@ -59638,9 +59641,9 @@ var BondStore = (function (Store$$1) {
   BondStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   BondStore.prototype.constructor = BondStore;
 
-  var prototypeAccessors = { _fields: {} };
+  var prototypeAccessors = { _defaultFields: {} };
 
-  prototypeAccessors._fields.get = function () {
+  prototypeAccessors._defaultFields.get = function () {
     return [
       [ 'atomIndex1', 1, 'int32' ],
       [ 'atomIndex2', 1, 'int32' ],
@@ -59699,9 +59702,9 @@ var AtomStore = (function (Store$$1) {
   AtomStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   AtomStore.prototype.constructor = AtomStore;
 
-  var prototypeAccessors = { _fields: {} };
+  var prototypeAccessors = { _defaultFields: {} };
 
-  prototypeAccessors._fields.get = function () {
+  prototypeAccessors._defaultFields.get = function () {
     return [
       [ 'residueIndex', 1, 'uint32' ],
       [ 'atomTypeId', 1, 'uint16' ],
@@ -59748,9 +59751,9 @@ var ResidueStore = (function (Store$$1) {
   ResidueStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ResidueStore.prototype.constructor = ResidueStore;
 
-  var prototypeAccessors = { _fields: {} };
+  var prototypeAccessors = { _defaultFields: {} };
 
-  prototypeAccessors._fields.get = function () {
+  prototypeAccessors._defaultFields.get = function () {
     return [
       [ 'chainIndex', 1, 'uint32' ],
       [ 'atomOffset', 1, 'uint32' ],
@@ -59804,9 +59807,9 @@ var ChainStore = (function (Store$$1) {
   ChainStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ChainStore.prototype.constructor = ChainStore;
 
-  var prototypeAccessors = { _fields: {} };
+  var prototypeAccessors = { _defaultFields: {} };
 
-  prototypeAccessors._fields.get = function () {
+  prototypeAccessors._defaultFields.get = function () {
     return [
       [ 'entityIndex', 1, 'uint16' ],
       [ 'modelIndex', 1, 'uint16' ],
@@ -59887,9 +59890,9 @@ var ModelStore = (function (Store$$1) {
   ModelStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ModelStore.prototype.constructor = ModelStore;
 
-  var prototypeAccessors = { _fields: {} };
+  var prototypeAccessors = { _defaultFields: {} };
 
-  prototypeAccessors._fields.get = function () {
+  prototypeAccessors._defaultFields.get = function () {
     return [
       [ 'chainOffset', 1, 'uint32' ],
       [ 'chainCount', 1, 'uint32' ]
@@ -63258,7 +63261,7 @@ var AtomProxy = function AtomProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$19 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {} };
+var prototypeAccessors$19 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {},partialCharge: {} };
 
 /**
  * @type {BondHash}
@@ -63477,6 +63480,19 @@ prototypeAccessors$19.altloc.get = function () {
 };
 prototypeAccessors$19.altloc.set = function (value) {
   this.atomStore.setAltloc(this.index, value);
+};
+
+/**
+ * Partial charge
+ * @type {Float|null}
+ */
+prototypeAccessors$19.partialCharge.get = function () {
+  return this.atomStore.partialCharge ? this.atomStore.partialCharge[ this.index ] : null
+};
+prototypeAccessors$19.partialCharge.set = function (value) {
+  if (this.atomStore.partialCharge) {
+    this.atomStore.partialCharge[ this.index ] = value;
+  }
 };
 
 //
@@ -76374,6 +76390,52 @@ var OccupancyColormaker = (function (Colormaker$$1) {
 ColormakerRegistry.add('occupancy', OccupancyColormaker);
 
 /**
+ * @file Partialcharge Colormaker
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+/**
+ * Color by partial charge. The {@link AtomProxy.partialCharge} property is used for coloring.
+ * The default domain is [-1, 1].
+ *
+ * __Name:__ _partialCharge_
+ *
+ * @example
+ * stage.loadFile("rcsb://1crn").then(function (o) {
+ *   o.addRepresentation("ball+stick", {colorScheme: "partialCharge"});
+ *   o.autoView();
+ * });
+ */
+var PartialchargeColormaker = (function (Colormaker$$1) {
+  function PartialchargeColormaker (params) {
+    Colormaker$$1.call(this, params);
+
+    if (!params.scale) {
+      this.scale = 'rwb';
+    }
+
+    if (!params.domain) {
+      this.domain = [-1, 1];
+    }
+
+    this.partialchargeScale = this.getScale();
+  }
+
+  if ( Colormaker$$1 ) PartialchargeColormaker.__proto__ = Colormaker$$1;
+  PartialchargeColormaker.prototype = Object.create( Colormaker$$1 && Colormaker$$1.prototype );
+  PartialchargeColormaker.prototype.constructor = PartialchargeColormaker;
+
+  PartialchargeColormaker.prototype.atomColor = function atomColor (a) {
+    return this.partialchargeScale(a.partialCharge)
+  };
+
+  return PartialchargeColormaker;
+}(Colormaker));
+
+ColormakerRegistry.add('partialcharge', PartialchargeColormaker);
+
+/**
  * @file Random Colormaker
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -85307,6 +85369,10 @@ var PdbParser = (function (StructureParser$$1) {
     var atomMap = s.atomMap;
     var atomStore = s.atomStore;
     atomStore.resize(Math.round(this.streamer.data.length / 80));
+    if (isPqr) {
+      atomStore.addField('partialCharge', 1, 'float32');
+      atomStore.addField('radius', 1, 'float32');
+    }
 
     var ap1 = s.getAtomProxy();
     var ap2 = s.getAtomProxy();
@@ -85389,10 +85455,8 @@ var PdbParser = (function (StructureParser$$1) {
             resno = parseInt(ls[ 5 - dd ]);
             inscode = '';
             resname = ls[ 3 ];
-            bfactor = parseFloat(ls[ 9 - dd ]);  // charge FIXME should be its own field
             altloc = '';
             occupancy = 0.0;
-            // FIXME radius field not supported
           } else {
             serial = parseInt(line.substr(6, 5), serialRadix);
             if (hex && serial === 99999) {
@@ -85425,9 +85489,15 @@ var PdbParser = (function (StructureParser$$1) {
           atomStore.y[ idx ] = y;
           atomStore.z[ idx ] = z;
           atomStore.serial[ idx ] = serial;
-          atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor;
           atomStore.altloc[ idx ] = altloc.charCodeAt(0);
           atomStore.occupancy[ idx ] = isNaN(occupancy) ? 0 : occupancy;
+
+          if (isPqr) {
+            atomStore.partialCharge[ idx ] = parseFloat(ls[ 9 - dd ]);
+            atomStore.radius[ idx ] = parseFloat(ls[ 10 - dd ]);
+          } else {
+            atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor;
+          }
 
           if (hetero) {
             if (currentChainname !== chainname || currentResname !== resname ||
@@ -88296,7 +88366,7 @@ var Mol2Parser = (function (StructureParser$$1) {
   prototypeAccessors.type.get = function () { return 'mol2' };
 
   Mol2Parser.prototype._parse = function _parse () {
-        // http://www.tripos.com/data/support/mol2.pdf
+    // http://paulbourke.net/dataformats/mol2/
 
     if (Debug) { Log.time('Mol2Parser._parse ' + this.name); }
 
@@ -88313,6 +88383,7 @@ var Mol2Parser = (function (StructureParser$$1) {
     var atomMap = s.atomMap;
     var atomStore = s.atomStore;
     atomStore.resize(Math.round(this.streamer.data.length / 60));
+    atomStore.addField('partialCharge', 1, 'float32');
 
     var idx = 0;
     var moleculeLineNo = 0;
@@ -88427,7 +88498,7 @@ var Mol2Parser = (function (StructureParser$$1) {
           var element = ls[ 5 ].split('.')[ 0 ];
           var resno = ls[ 6 ] ? parseInt(ls[ 6 ]) : 1;
           var resname = ls[ 7 ] ? ls[ 7 ] : '';
-          var bfactor = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0;
+          var partialCharge = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0;
 
           atomStore.growIfFull();
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname, element);
@@ -88436,7 +88507,7 @@ var Mol2Parser = (function (StructureParser$$1) {
           atomStore.y[ idx ] = y;
           atomStore.z[ idx ] = z;
           atomStore.serial[ idx ] = serial;
-          atomStore.bfactor[ idx ] = bfactor;
+          atomStore.partialCharge[ idx ] = partialCharge;
 
           sb.addAtom(modelIdx, '', '', resname, resno, 1);
 
@@ -88682,6 +88753,8 @@ ParserRegistry.add('sd', SdfParser);
  * @private
  */
 
+var amberChargeUnitFactor = 18.2223;
+
 var TitleMode = 1;
 var PointersMode = 2;
 var AtomNameMode = 3;
@@ -88723,6 +88796,8 @@ var PrmtopParser = (function (StructureParser$$1) {
 
     var atomMap = s.atomMap;
     var atomStore = s.atomStore;
+    atomStore.addField('partialCharge', 1, 'float32');
+    atomStore.addField('radius', 1, 'float32');
 
     var title = [];
     var pointersDict = {};
@@ -88737,6 +88812,8 @@ var PrmtopParser = (function (StructureParser$$1) {
     pointers.forEach(function (name) { pointersDict[ name ] = 0; });
 
     var atomNames;
+    var charges;
+    var radii;
     var bAtomIndex1;
     var bAtomIndex2;
     var bBondOrder;
@@ -88796,6 +88873,8 @@ var PrmtopParser = (function (StructureParser$$1) {
             );
           }
           atomNames = new Array(pointersDict.NATOM);
+          charges = new Float32Array(pointersDict.NATOM);
+          radii = new Float32Array(pointersDict.NATOM);
           atomStore.resize(pointersDict.NATOM);
           var bondCount = pointersDict.NBONH + pointersDict.MBONA;
           bAtomIndex1 = new Uint32Array(bondCount);
@@ -88809,51 +88888,53 @@ var PrmtopParser = (function (StructureParser$$1) {
             atomNames[curIdx] = line.substr(i$2 * 4, 4).trim();
           }
         } else if (mode === ChargeMode) {
-
-          // not currently used
-
+          var n$2 = Math.min(curIdx + 5, pointersDict.NATOM);
+          for (var i$3 = 0; curIdx < n$2; ++i$3, ++curIdx) {
+            charges[curIdx] = parseFloat(line.substr(i$3 * 16, 16)) / amberChargeUnitFactor;
+          }
         } else if (mode === MassMode) {
 
           // not currently used
 
         } else if (mode === ResidueLabelMode) {
-          var n$2 = Math.min(curIdx + 20, pointersDict.NRES);
-          for (var i$3 = 0; curIdx < n$2; ++i$3, ++curIdx) {
-            residueLabels[curIdx] = line.substr(i$3 * 4, 4).trim();
+          var n$3 = Math.min(curIdx + 20, pointersDict.NRES);
+          for (var i$4 = 0; curIdx < n$3; ++i$4, ++curIdx) {
+            residueLabels[curIdx] = line.substr(i$4 * 4, 4).trim();
           }
         } else if (mode === ResiduePointerMode) {
-          var n$3 = Math.min(curIdx + 10, pointersDict.NRES);
-          for (var i$4 = 0; curIdx < n$3; ++i$4, ++curIdx) {
-            residuePointers[curIdx] = parseIntSubstr(line, i$4 * 8, 8);
+          var n$4 = Math.min(curIdx + 10, pointersDict.NRES);
+          for (var i$5 = 0; curIdx < n$4; ++i$5, ++curIdx) {
+            residuePointers[curIdx] = parseIntSubstr(line, i$5 * 8, 8);
           }
         } else if (mode === BondsIncHydrogenMode) {
-          var n$4 = Math.min(curIdx + 10, pointersDict.NBONH * 3);
-          for (var i$5 = 0; curIdx < n$4; ++i$5, ++curIdx) {
+          var n$5 = Math.min(curIdx + 10, pointersDict.NBONH * 3);
+          for (var i$6 = 0; curIdx < n$5; ++i$6, ++curIdx) {
             var r = curIdx % 3;
             if (r === 0) {
-              bAtomIndex1[bondIdx] = parseIntSubstr(line, i$5 * 8, 8) / 3;
-            } if (r === 1) {
-              bAtomIndex2[bondIdx] = parseIntSubstr(line, i$5 * 8, 8) / 3;
-              bBondOrder[bondIdx] = 1;
-              ++bondIdx;
-            }
-          }
-        } else if (mode === BondsWithoutHydrogenMode) {
-          var n$5 = Math.min(curIdx + 10, pointersDict.MBONA * 3);
-          for (var i$6 = 0; curIdx < n$5; ++i$6, ++curIdx) {
-            var r$1 = curIdx % 3;
-            if (r$1 === 0) {
               bAtomIndex1[bondIdx] = parseIntSubstr(line, i$6 * 8, 8) / 3;
-            } if (r$1 === 1) {
+            } if (r === 1) {
               bAtomIndex2[bondIdx] = parseIntSubstr(line, i$6 * 8, 8) / 3;
               bBondOrder[bondIdx] = 1;
               ++bondIdx;
             }
           }
+        } else if (mode === BondsWithoutHydrogenMode) {
+          var n$6 = Math.min(curIdx + 10, pointersDict.MBONA * 3);
+          for (var i$7 = 0; curIdx < n$6; ++i$7, ++curIdx) {
+            var r$1 = curIdx % 3;
+            if (r$1 === 0) {
+              bAtomIndex1[bondIdx] = parseIntSubstr(line, i$7 * 8, 8) / 3;
+            } if (r$1 === 1) {
+              bAtomIndex2[bondIdx] = parseIntSubstr(line, i$7 * 8, 8) / 3;
+              bBondOrder[bondIdx] = 1;
+              ++bondIdx;
+            }
+          }
         } else if (mode === RadiiMode) {
-
-          // not currently used
-
+          var n$7 = Math.min(curIdx + 5, pointersDict.NATOM);
+          for (var i$8 = 0; curIdx < n$7; ++i$8, ++curIdx) {
+            radii[curIdx] = parseFloat(line.substr(i$8 * 16, 16));
+          }
         }
       }
     }
@@ -88878,6 +88959,9 @@ var PrmtopParser = (function (StructureParser$$1) {
       atomStore.serial[i] = i + 1;
       sb.addAtom(0, '', '', curResname, curResno);
     }
+
+    atomStore.partialCharge.set(charges);
+    atomStore.radius.set(radii);
 
     s.bondStore.length = bBondOrder.length;
     s.bondStore.count = bBondOrder.length;
@@ -88945,6 +89029,7 @@ var PsfParser = (function (StructureParser$$1) {
 
     var atomMap = s.atomMap;
     var atomStore = s.atomStore;
+    atomStore.addField('partialCharge', 1, 'float32');
 
     var title = [];
 
@@ -88973,6 +89058,7 @@ var PsfParser = (function (StructureParser$$1) {
           var resno = parseInt(ls[ 2 ]);
           var resname = ls[ 3 ];
           var atomname = ls[ 4 ];
+          var charge = parseFloat(ls[ 6 ]);
 
           if (segid !== lastSegid) {
             chainid = getChainname(chainIdx);
@@ -88983,6 +89069,7 @@ var PsfParser = (function (StructureParser$$1) {
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname);
 
           atomStore.serial[ idx ] = serial;
+          atomStore.partialCharge[ idx ] = charge;
 
           sb.addAtom(0, chainid, chainid, resname, resno);
 
@@ -89103,8 +89190,10 @@ var TopParser = (function (StructureParser$$1) {
     //
 
     var atomMap = s.atomMap;
-    var atomStore = s.atomStore;
     var bondStore = s.bondStore;
+
+    var atomStore = s.atomStore;
+    atomStore.addField('partialCharge', 1, 'float32');
 
     var molecules = [];
     var moleculetypeDict = {};
@@ -89158,9 +89247,10 @@ var TopParser = (function (StructureParser$$1) {
         } else if (mode === AtomsMode) {
           var ls = lt.split(reWhitespace$4);
           currentMoleculetype.atoms.push([
-            parseInt(ls[2]),  // resnr
-            ls[3],            // residue
-            ls[4]             // atom
+            parseInt(ls[2]),   // resnr
+            ls[3],             // residue
+            ls[4],             // atom
+            parseFloat(ls[6])  // charge
           ]);
         } else if (mode === BondsMode) {
           var ls$1 = lt.split(reWhitespace$4);
@@ -89217,11 +89307,13 @@ var TopParser = (function (StructureParser$$1) {
           var resno = atomData[0];
           var resname = atomData[1];
           var atomname = atomData[2];
+          var charge = atomData[3];
           if (resno !== lastResno) {
             ++resIdx;
           }
           atomStore.atomTypeId[atomIdx] = atomMap.add(atomname);
           atomStore.serial[atomIdx] = atomIdx + 1;
+          atomStore.partialCharge[atomIdx] = charge;
           sb.addAtom(0, chainname, chainid, resname, resIdx + 1);
           ++atomIdx;
           lastResno = resno;
@@ -89314,6 +89406,8 @@ var TrajectoryParser = (function (Parser$$1) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+
+var charmmTimeUnitFactor = 20.45482949774598;
 
 var DcdParser = (function (TrajectoryParser$$1) {
   function DcdParser () {
@@ -89487,7 +89581,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
     }
 
     if (header.DELTA) {
-      f.deltaTime = header.DELTA * 20.45482949774598;
+      f.deltaTime = header.DELTA * charmmTimeUnitFactor;
     }
     if (header.ISTART >= 1) {
       f.timeOffset = (header.ISTART - 1) * f.deltaTime;
@@ -97023,7 +97117,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-6";
+var version$1 = "0.10.5-7";
 
 /**
  * @file Version
