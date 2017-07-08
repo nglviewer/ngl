@@ -10,7 +10,7 @@ import Store from './store.js'
  * Residue store
  */
 class ResidueStore extends Store {
-  get _fields () {
+  get _defaultFields () {
     return [
       [ 'chainIndex', 1, 'uint32' ],
       [ 'atomOffset', 1, 'uint32' ],
