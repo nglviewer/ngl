@@ -220,10 +220,10 @@ class XtcParser extends TrajectoryParser {
         offset += 4
         // if (smallidx == 0) {alert("Undocumented error 1"); return;}
 
-        let tmpIdx = smallidx + 8
+        // let tmpIdx = smallidx + 8
         // const maxidx = (LastIdx < tmpIdx) ? LastIdx : tmpIdx
         // const minidx = maxidx - 8  // often this equal smallidx
-        tmpIdx = smallidx - 1
+        let tmpIdx = smallidx - 1
         tmpIdx = (FirstIdx > tmpIdx) ? FirstIdx : tmpIdx
         let smaller = (MagicInts[tmpIdx] / 2) | 0
         let smallnum = (MagicInts[smallidx] / 2) | 0
