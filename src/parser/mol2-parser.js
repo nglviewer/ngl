@@ -13,6 +13,16 @@ import {
 import StructureParser from './structure-parser.js'
 
 const reWhitespace = /\s+/
+const bondTypes = {
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  'am': 1,  // amide
+  'ar': 1,  // aromatic
+  'du': 1,  // dummy
+  'un': 1,  // unknown
+  'nc': 0   // not connected
+}
 
 class Mol2Parser extends StructureParser {
   get type () { return 'mol2' }
@@ -22,51 +32,38 @@ class Mol2Parser extends StructureParser {
 
     if (Debug) Log.time('Mol2Parser._parse ' + this.name)
 
-    var s = this.structure
-    var sb = this.structureBuilder
+    const s = this.structure
+    const sb = this.structureBuilder
 
-    var firstModelOnly = this.firstModelOnly
-    var asTrajectory = this.asTrajectory
+    const firstModelOnly = this.firstModelOnly
+    const asTrajectory = this.asTrajectory
 
-    var frames = s.frames
-    var doFrames = false
-    var currentFrame, currentCoord
+    const frames = s.frames
+    let doFrames = false
+    let currentFrame, currentCoord
 
-    var atomMap = s.atomMap
-    var atomStore = s.atomStore
+    const atomMap = s.atomMap
+    const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 60))
     atomStore.addField('partialCharge', 1, 'float32')
 
-    var idx = 0
-    var moleculeLineNo = 0
-    var modelAtomIdxStart = 0
-    var modelIdx = -1
-    var numAtoms = 0
+    let idx = 0
+    let moleculeLineNo = 0
+    let modelAtomIdxStart = 0
+    let modelIdx = -1
+    let numAtoms = 0
 
-    var currentRecordType = 0
-    var moleculeRecordType = 1
-    var atomRecordType = 2
-    var bondRecordType = 3
+    let currentRecordType = 0
+    let moleculeRecordType = 1
+    let atomRecordType = 2
+    let bondRecordType = 3
 
-    var ap1 = s.getAtomProxy()
-    var ap2 = s.getAtomProxy()
-
-    var bondTypes = {
-      '1': 1,
-      '2': 2,
-      '3': 3,
-      'am': 1,  // amide
-      'ar': 1,  // aromatic
-      'du': 1,  // dummy
-      'un': 1,  // unknown
-      'nc': 0   // not connected
-    }
+    const ap1 = s.getAtomProxy()
+    const ap2 = s.getAtomProxy()
 
     function _parseChunkOfLines (_i, _n, lines) {
-      var ls
-
-      for (var i = _i; i < _n; ++i) {
-        var line = lines[ i ].trim()
+      for (let i = _i; i < _n; ++i) {
+        const line = lines[ i ].trim()
 
         if (line === '' || line[ 0 ] === '#') continue
 
@@ -97,17 +94,17 @@ class Mol2Parser extends StructureParser {
             s.title = line
             s.id = line
           } else if (moleculeLineNo === 1) {
-            ls = line.split(reWhitespace)
+            const ls = line.split(reWhitespace)
             numAtoms = parseInt(ls[ 0 ])
             // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
           } else if (moleculeLineNo === 2) {
 
-            // var molType = line;
+            // const molType = line;
             // SMALL, BIOPOLYMER, PROTEIN, NUCLEIC_ACID, SACCHARIDE
 
           } else if (moleculeLineNo === 3) {
 
-            // var chargeType = line;
+            // const chargeType = line;
             // NO_CHARGES, DEL_RE, GASTEIGER, GAST_HUCK, HUCKEL,
             // PULLMAN, GAUSS80_CHARGES, AMPAC_CHARGES,
             // MULLIKEN_CHARGES, DICT_ CHARGES, MMFF94_CHARGES,
@@ -115,26 +112,26 @@ class Mol2Parser extends StructureParser {
 
           } else if (moleculeLineNo === 4) {
 
-            // var statusBits = line;
+            // const statusBits = line;
 
           } else if (moleculeLineNo === 5) {
 
-            // var molComment = line;
+            // const molComment = line;
 
           }
 
           ++moleculeLineNo
         } else if (currentRecordType === atomRecordType) {
-          ls = line.split(reWhitespace)
+          const ls = line.split(reWhitespace)
 
           if (firstModelOnly && modelIdx > 0) continue
 
-          var x = parseFloat(ls[ 2 ])
-          var y = parseFloat(ls[ 3 ])
-          var z = parseFloat(ls[ 4 ])
+          const x = parseFloat(ls[ 2 ])
+          const y = parseFloat(ls[ 3 ])
+          const z = parseFloat(ls[ 4 ])
 
           if (asTrajectory) {
-            var j = currentCoord * 3
+            const j = currentCoord * 3
 
             currentFrame[ j + 0 ] = x
             currentFrame[ j + 1 ] = y
@@ -145,12 +142,12 @@ class Mol2Parser extends StructureParser {
             if (doFrames) continue
           }
 
-          var serial = ls[ 0 ]
-          var atomname = ls[ 1 ]
-          var element = ls[ 5 ].split('.')[ 0 ]
-          var resno = ls[ 6 ] ? parseInt(ls[ 6 ]) : 1
-          var resname = ls[ 7 ] ? ls[ 7 ] : ''
-          var partialCharge = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0
+          const serial = ls[ 0 ]
+          const atomname = ls[ 1 ]
+          const element = ls[ 5 ].split('.')[ 0 ]
+          const resno = ls[ 6 ] ? parseInt(ls[ 6 ]) : 1
+          const resname = ls[ 7 ] ? ls[ 7 ] : ''
+          const partialCharge = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0
 
           atomStore.growIfFull()
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname, element)
@@ -168,12 +165,12 @@ class Mol2Parser extends StructureParser {
           if (firstModelOnly && modelIdx > 0) continue
           if (asTrajectory && modelIdx > 0) continue
 
-          ls = line.split(reWhitespace)
+          const ls = line.split(reWhitespace)
 
           // ls[ 0 ] is bond id
           ap1.index = parseInt(ls[ 1 ]) - 1 + modelAtomIdxStart
           ap2.index = parseInt(ls[ 2 ]) - 1 + modelAtomIdxStart
-          var order = bondTypes[ ls[ 3 ] ]
+          const order = bondTypes[ ls[ 3 ] ]
 
           s.bondStore.addBond(ap1, ap2, order)
         }
