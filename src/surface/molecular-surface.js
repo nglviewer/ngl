@@ -48,11 +48,15 @@ class MolecularSurface {
     this.structure = structure
   }
 
-  _getAtomData () {
-    return this.structure.getAtomData({
+  _getAtomData (p) {
+    let atomDataParam = {
       what: { position: true, radius: true, index: true },
       radiusParams: { radius: 'vdw', scale: 1 }
-    })
+    }
+    if (p.atomSet) {
+      Object.assign(atomDataParam, { atomSet: p.atomSet })
+    }
+    return this.structure.getAtomData(atomDataParam)
   }
 
   _makeSurface (sd, p) {
@@ -75,7 +79,7 @@ class MolecularSurface {
   getSurface (params) {
     const p = params || {}
 
-    const atomData = this._getAtomData()
+    const atomData = this._getAtomData(p)
     const coordList = atomData.position
     const radiusList = atomData.radius
     const indexList = atomData.index
