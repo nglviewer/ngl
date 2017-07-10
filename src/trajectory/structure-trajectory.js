@@ -22,19 +22,19 @@ class StructureTrajectory extends Trajectory {
   }
 
   _loadFrame (i, callback) {
-    var coords
-    var structure = this.structure
-    var frame = structure.frames[ i ]
+    let coords
+    const structure = this.structure
+    const frame = structure.frames[ i ]
 
     if (this.atomIndices) {
-      var indices = this.atomIndices
-      var m = indices.length
+      const indices = this.atomIndices
+      const m = indices.length
 
       coords = new Float32Array(m * 3)
 
-      for (var j = 0; j < m; ++j) {
-        var j3 = j * 3
-        var idx3 = indices[ j ] * 3
+      for (let j = 0; j < m; ++j) {
+        const j3 = j * 3
+        const idx3 = indices[ j ] * 3
 
         coords[ j3 + 0 ] = frame[ idx3 + 0 ]
         coords[ j3 + 1 ] = frame[ idx3 + 1 ]
@@ -44,8 +44,8 @@ class StructureTrajectory extends Trajectory {
       coords = new Float32Array(frame)
     }
 
-    var box = structure.boxes[ i ]
-    var numframes = structure.frames.length
+    const box = structure.boxes[ i ]
+    const numframes = structure.frames.length
 
     this.process(i, box, coords, numframes)
 
@@ -59,15 +59,14 @@ class StructureTrajectory extends Trajectory {
   }
 
   getPath (index, callback) {
-    var i, j, f
-    var n = this.numframes
-    var k = index * 3
+    const n = this.numframes
+    const k = index * 3
 
-    var path = new Float32Array(n * 3)
+    const path = new Float32Array(n * 3)
 
-    for (i = 0; i < n; ++i) {
-      j = 3 * i
-      f = this.structure.frames[ i ]
+    for (let i = 0; i < n; ++i) {
+      const j = 3 * i
+      const f = this.structure.frames[ i ]
 
       path[ j + 0 ] = f[ k + 0 ]
       path[ j + 1 ] = f[ k + 1 ]

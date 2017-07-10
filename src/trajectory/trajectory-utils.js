@@ -9,7 +9,7 @@ import StructureTrajectory from './structure-trajectory.js'
 import RemoteTrajectory from './remote-trajectory.js'
 
 function makeTrajectory (trajSrc, structure, params) {
-  var traj
+  let traj
 
   if (trajSrc && trajSrc.type === 'Frames') {
     traj = new FramesTrajectory(trajSrc, structure, params)
