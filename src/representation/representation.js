@@ -299,7 +299,7 @@ class Representation {
   setColor (value, p) {
     const types = Object.keys(ColormakerRegistry.getSchemes())
 
-    if (types.includes(value)) {
+    if (typeof value === 'string' && types.includes(value.toLowerCase())) {
       if (p) {
         p.colorScheme = value
       } else {

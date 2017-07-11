@@ -47859,8 +47859,8 @@ ColormakerRegistry$1.prototype.addScheme = function addScheme (scheme, label) {
  * @return {String} id to refer to the registered scheme
  */
 ColormakerRegistry$1.prototype._addUserScheme = function _addUserScheme (scheme, label) {
-  label = (label || '').toLowerCase();
-  var id = '' + generateUUID() + '|' + label;
+  label = label || '';
+  var id = ((generateUUID()) + "|" + label).toLowerCase();
   this.userSchemes[ id ] = scheme;
 
   return id
@@ -65604,29 +65604,28 @@ Structure.prototype.eachAtom = function eachAtom (callback, selection) {
  * @return {undefined}
  */
 Structure.prototype.eachResidue = function eachResidue (callback, selection) {
-  var i;
   if (selection && selection.test) {
     var mn = this.modelStore.count;
     var mp = this.getModelProxy();
     var modelOnlyTest = selection.modelOnlyTest;
     if (modelOnlyTest) {
-      for (i = 0; i < mn; ++i) {
+      for (var i = 0; i < mn; ++i) {
         mp.index = i;
         if (modelOnlyTest(mp)) {
           mp.eachResidue(callback, selection);
         }
       }
     } else {
-      for (i = 0; i < mn; ++i) {
-        mp.index = i;
+      for (var i$1 = 0; i$1 < mn; ++i$1) {
+        mp.index = i$1;
         mp.eachResidue(callback, selection);
       }
     }
   } else {
     var rn = this.residueStore.count;
     var rp = this.getResidueProxy();
-    for (i = 0; i < rn; ++i) {
-      rp.index = i;
+    for (var i$2 = 0; i$2 < rn; ++i$2) {
+      rp.index = i$2;
       callback(rp);
     }
   }
@@ -65641,19 +65640,18 @@ Structure.prototype.eachResidue = function eachResidue (callback, selection) {
 Structure.prototype.eachResidueN = function eachResidueN (n, callback) {
     var this$1 = this;
 
-  var i, j;
   var rn = this.residueStore.count;
   if (rn < n) { return }
   var array = new Array(n);
 
-  for (i = 0; i < n; ++i) {
+  for (var i = 0; i < n; ++i) {
     array[ i ] = this$1.getResidueProxy(i);
   }
   callback.apply(this, array);
 
-  for (j = n; j < rn; ++j) {
-    for (i = 0; i < n; ++i) {
-      array[ i ].index += 1;
+  for (var j = n; j < rn; ++j) {
+    for (var i$1 = 0; i$1 < n; ++i$1) {
+      array[ i$1 ].index += 1;
     }
     callback.apply(this$1, array);
   }
@@ -65709,28 +65707,27 @@ Structure.prototype.eachChain = function eachChain (callback, selection) {
  * @return {undefined}
  */
 Structure.prototype.eachModel = function eachModel (callback, selection) {
-  var i;
   var n = this.modelStore.count;
   var mp = this.getModelProxy();
 
   if (selection && selection.test) {
     var modelOnlyTest = selection.modelOnlyTest;
     if (modelOnlyTest) {
-      for (i = 0; i < n; ++i) {
+      for (var i = 0; i < n; ++i) {
         mp.index = i;
         if (modelOnlyTest(mp)) {
           callback(mp, selection);
         }
       }
     } else {
-      for (i = 0; i < n; ++i) {
-        mp.index = i;
+      for (var i$1 = 0; i$1 < n; ++i$1) {
+        mp.index = i$1;
         callback(mp, selection);
       }
     }
   } else {
-    for (i = 0; i < n; ++i) {
-      mp.index = i;
+    for (var i$2 = 0; i$2 < n; ++i$2) {
+      mp.index = i$2;
       callback(mp);
     }
   }
@@ -65817,6 +65814,7 @@ Structure.prototype.getBondData = function getBondData (params) {
   if (p.bondStore) { bp.bondStore = p.bondStore; }
   var ap1 = this.getAtomProxy();
   var ap2 = this.getAtomProxy();
+
   var bondCount;
   if (isMulti) {
     var storeBondOrder = bp.bondStore.bondOrder;
@@ -65858,7 +65856,6 @@ Structure.prototype.getBondData = function getBondData (params) {
   }
 
   var i = 0;
-
   var j, i3, k, bondOrder, radius, multiRadius, absOffset;
 
   var vt = new Vector3();
@@ -70516,7 +70513,7 @@ Representation.prototype.getBufferParams = function getBufferParams (p) {
 Representation.prototype.setColor = function setColor (value, p) {
   var types = Object.keys(ColormakerRegistry.getSchemes());
 
-  if (types.includes(value)) {
+  if (typeof value === 'string' && types.includes(value.toLowerCase())) {
     if (p) {
       p.colorScheme = value;
     } else {
@@ -88351,6 +88348,16 @@ ParserRegistry.add('mmtf', MmtfParser);
  */
 
 var reWhitespace$2 = /\s+/;
+var bondTypes = {
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  'am': 1,  // amide
+  'ar': 1,  // aromatic
+  'du': 1,  // dummy
+  'un': 1,  // unknown
+  'nc': 0   // not connected
+};
 
 var Mol2Parser = (function (StructureParser$$1) {
   function Mol2Parser () {
@@ -88399,20 +88406,7 @@ var Mol2Parser = (function (StructureParser$$1) {
     var ap1 = s.getAtomProxy();
     var ap2 = s.getAtomProxy();
 
-    var bondTypes = {
-      '1': 1,
-      '2': 2,
-      '3': 3,
-      'am': 1,  // amide
-      'ar': 1,  // aromatic
-      'du': 1,  // dummy
-      'un': 1,  // unknown
-      'nc': 0   // not connected
-    };
-
     function _parseChunkOfLines (_i, _n, lines) {
-      var ls;
-
       for (var i = _i; i < _n; ++i) {
         var line = lines[ i ].trim();
 
@@ -88445,17 +88439,17 @@ var Mol2Parser = (function (StructureParser$$1) {
             s.title = line;
             s.id = line;
           } else if (moleculeLineNo === 1) {
-            ls = line.split(reWhitespace$2);
+            var ls = line.split(reWhitespace$2);
             numAtoms = parseInt(ls[ 0 ]);
             // num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
           } else if (moleculeLineNo === 2) {
 
-            // var molType = line;
+            // const molType = line;
             // SMALL, BIOPOLYMER, PROTEIN, NUCLEIC_ACID, SACCHARIDE
 
           } else if (moleculeLineNo === 3) {
 
-            // var chargeType = line;
+            // const chargeType = line;
             // NO_CHARGES, DEL_RE, GASTEIGER, GAST_HUCK, HUCKEL,
             // PULLMAN, GAUSS80_CHARGES, AMPAC_CHARGES,
             // MULLIKEN_CHARGES, DICT_ CHARGES, MMFF94_CHARGES,
@@ -88463,23 +88457,23 @@ var Mol2Parser = (function (StructureParser$$1) {
 
           } else if (moleculeLineNo === 4) {
 
-            // var statusBits = line;
+            // const statusBits = line;
 
           } else if (moleculeLineNo === 5) {
 
-            // var molComment = line;
+            // const molComment = line;
 
           }
 
           ++moleculeLineNo;
         } else if (currentRecordType === atomRecordType) {
-          ls = line.split(reWhitespace$2);
+          var ls$1 = line.split(reWhitespace$2);
 
           if (firstModelOnly && modelIdx > 0) { continue }
 
-          var x = parseFloat(ls[ 2 ]);
-          var y = parseFloat(ls[ 3 ]);
-          var z = parseFloat(ls[ 4 ]);
+          var x = parseFloat(ls$1[ 2 ]);
+          var y = parseFloat(ls$1[ 3 ]);
+          var z = parseFloat(ls$1[ 4 ]);
 
           if (asTrajectory) {
             var j = currentCoord * 3;
@@ -88493,12 +88487,12 @@ var Mol2Parser = (function (StructureParser$$1) {
             if (doFrames) { continue }
           }
 
-          var serial = ls[ 0 ];
-          var atomname = ls[ 1 ];
-          var element = ls[ 5 ].split('.')[ 0 ];
-          var resno = ls[ 6 ] ? parseInt(ls[ 6 ]) : 1;
-          var resname = ls[ 7 ] ? ls[ 7 ] : '';
-          var partialCharge = ls[ 8 ] ? parseFloat(ls[ 8 ]) : 0.0;
+          var serial = ls$1[ 0 ];
+          var atomname = ls$1[ 1 ];
+          var element = ls$1[ 5 ].split('.')[ 0 ];
+          var resno = ls$1[ 6 ] ? parseInt(ls$1[ 6 ]) : 1;
+          var resname = ls$1[ 7 ] ? ls$1[ 7 ] : '';
+          var partialCharge = ls$1[ 8 ] ? parseFloat(ls$1[ 8 ]) : 0.0;
 
           atomStore.growIfFull();
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname, element);
@@ -88516,12 +88510,12 @@ var Mol2Parser = (function (StructureParser$$1) {
           if (firstModelOnly && modelIdx > 0) { continue }
           if (asTrajectory && modelIdx > 0) { continue }
 
-          ls = line.split(reWhitespace$2);
+          var ls$2 = line.split(reWhitespace$2);
 
           // ls[ 0 ] is bond id
-          ap1.index = parseInt(ls[ 1 ]) - 1 + modelAtomIdxStart;
-          ap2.index = parseInt(ls[ 2 ]) - 1 + modelAtomIdxStart;
-          var order = bondTypes[ ls[ 3 ] ];
+          ap1.index = parseInt(ls$2[ 1 ]) - 1 + modelAtomIdxStart;
+          ap2.index = parseInt(ls$2[ 2 ]) - 1 + modelAtomIdxStart;
+          var order = bondTypes[ ls$2[ 3 ] ];
 
           s.bondStore.addBond(ap1, ap2, order);
         }
@@ -91162,10 +91156,10 @@ var XtcParser = (function (TrajectoryParser$$1) {
         offset += 4;
         // if (smallidx == 0) {alert("Undocumented error 1"); return;}
 
-        var tmpIdx = smallidx + 8;
+        // let tmpIdx = smallidx + 8
         // const maxidx = (LastIdx < tmpIdx) ? LastIdx : tmpIdx
         // const minidx = maxidx - 8  // often this equal smallidx
-        tmpIdx = smallidx - 1;
+        var tmpIdx = smallidx - 1;
         tmpIdx = (FirstIdx > tmpIdx) ? FirstIdx : tmpIdx;
         var smaller = (MagicInts[tmpIdx] / 2) | 0;
         var smallnum = (MagicInts[smallidx] / 2) | 0;
@@ -97117,7 +97111,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-7";
+var version$1 = "0.10.5-8";
 
 /**
  * @file Version
