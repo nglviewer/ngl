@@ -11,18 +11,17 @@ class RemoteTrajectory extends Trajectory {
   get type () { return 'remote' }
 
   makeAtomIndices () {
-    var atomIndices = []
+    const atomIndices = []
 
     if (this.structure.type === 'StructureView') {
-      var indices = this.structure.getAtomIndices()
+      const indices = this.structure.getAtomIndices()
+      const n = indices.length
 
-      var i, r
-      var p = indices[ 0 ]
-      var q = indices[ 0 ]
-      var n = indices.length
+      let p = indices[ 0 ]
+      let q = indices[ 0 ]
 
-      for (i = 1; i < n; ++i) {
-        r = indices[ i ]
+      for (let i = 1; i < n; ++i) {
+        const r = indices[ i ]
 
         if (q + 1 < r) {
           atomIndices.push([ p, q + 1 ])
@@ -41,51 +40,51 @@ class RemoteTrajectory extends Trajectory {
   }
 
   _loadFrame (i, callback) {
-        // TODO implement max frameCache size, re-use arrays
+    // TODO implement max frameCache size, re-use arrays
 
-    var request = new window.XMLHttpRequest()
+    const request = new window.XMLHttpRequest()
 
-    var ds = DatasourceRegistry.trajectory
-    var url = ds.getFrameUrl(this.trajPath, i)
-    var params = ds.getFrameParams(this.trajPath, this.atomIndices)
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getFrameUrl(this.trajPath, i)
+    const params = ds.getFrameParams(this.trajPath, this.atomIndices)
 
     request.open('POST', url, true)
     request.responseType = 'arraybuffer'
     request.setRequestHeader(
-            'Content-type', 'application/x-www-form-urlencoded'
-        )
+      'Content-type', 'application/x-www-form-urlencoded'
+    )
 
-    request.addEventListener('load', function () {
-      var arrayBuffer = request.response
+    request.addEventListener('load', () => {
+      const arrayBuffer = request.response
       if (!arrayBuffer) {
-        Log.error("empty arrayBuffer for '" + url + "'")
+        Log.error(`empty arrayBuffer for '${url}'`)
         return
       }
 
-      var numframes = new Int32Array(arrayBuffer, 0, 1)[ 0 ]
-            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
-      var box = new Float32Array(arrayBuffer, 2 * 4, 9)
-      var coords = new Float32Array(arrayBuffer, 11 * 4)
+      const numframes = new Int32Array(arrayBuffer, 0, 1)[ 0 ]
+      // const time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+      const box = new Float32Array(arrayBuffer, 2 * 4, 9)
+      const coords = new Float32Array(arrayBuffer, 11 * 4)
 
       this.process(i, box, coords, numframes)
       if (typeof callback === 'function') {
         callback()
       }
-    }.bind(this), false)
+    }, false)
 
     request.send(params)
   }
 
   getNumframes () {
-    var request = new window.XMLHttpRequest()
+    const request = new window.XMLHttpRequest()
 
-    var ds = DatasourceRegistry.trajectory
-    var url = ds.getNumframesUrl(this.trajPath)
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getNumframesUrl(this.trajPath)
 
     request.open('GET', url, true)
-    request.addEventListener('load', function () {
+    request.addEventListener('load', () => {
       this.setNumframes(parseInt(request.response))
-    }.bind(this), false)
+    }, false)
     request.send(null)
   }
 
@@ -97,32 +96,32 @@ class RemoteTrajectory extends Trajectory {
 
     Log.time('loadPath')
 
-    var request = new window.XMLHttpRequest()
+    const request = new window.XMLHttpRequest()
 
-    var ds = DatasourceRegistry.trajectory
-    var url = ds.getPathUrl(this.trajPath, index)
-    var params = ''
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getPathUrl(this.trajPath, index)
+    const params = ''
 
     request.open('POST', url, true)
     request.responseType = 'arraybuffer'
     request.setRequestHeader(
-            'Content-type', 'application/x-www-form-urlencoded'
-        )
+      'Content-type', 'application/x-www-form-urlencoded'
+    )
 
-    request.addEventListener('load', function () {
+    request.addEventListener('load', () => {
       Log.timeEnd('loadPath')
 
-      var arrayBuffer = request.response
+      const arrayBuffer = request.response
       if (!arrayBuffer) {
         Log.error("empty arrayBuffer for '" + url + "'")
         return
       }
 
-      var path = new Float32Array(arrayBuffer)
-            // Log.log( path )
+      const path = new Float32Array(arrayBuffer)
+      // Log.log( path )
       this.pathCache[ index ] = path
       callback(path)
-    }.bind(this), false)
+    }, false)
 
     request.send(params)
   }

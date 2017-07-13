@@ -100,7 +100,7 @@ class Trajectory {
       playerChanged: new Signal()
     }
 
-    var p = params || {}
+    const p = params || {}
     p.deltaTime = defaults(p.deltaTime, 0)
     p.timeOffset = defaults(p.timeOffset, 0)
     p.centerPbc = defaults(p.centerPbc, false)
@@ -151,8 +151,8 @@ class Trajectory {
   }
 
   saveInitialStructure () {
-    var i = 0
-    var initialStructure = new Float32Array(3 * this.atomCount)
+    const initialStructure = new Float32Array(3 * this.atomCount)
+    let i = 0
 
     this.structure.eachAtom(function (a) {
       initialStructure[ i + 0 ] = a.x

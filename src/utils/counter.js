@@ -23,7 +23,7 @@ class Counter {
   constructor () {
         /**
          * The `count`
-         * @member {Integer}
+         * @type {Integer}
          */
     this.count = 0
 

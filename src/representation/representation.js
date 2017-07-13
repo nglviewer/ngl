@@ -139,25 +139,25 @@ class Representation {
     }
 
     /**
-     * @member {Viewer}
+     * @type {Viewer}
      */
     this.viewer = viewer
 
     /**
      * Counter that keeps track of tasks related to the creation of
      * the representation, including surface calculations.
-     * @member {Counter}
+     * @type {Counter}
      */
     this.tasks = new Counter()
 
     /**
-     * @member {Queue}
+     * @type {Queue}
      * @private
      */
     this.queue = new Queue(this.make.bind(this))
 
     /**
-     * @member {Array}
+     * @type {Array}
      * @private
      */
     this.bufferList = []
