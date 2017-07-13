@@ -33,60 +33,60 @@ class PickingProxy {
     this.picker = pickingData.picker
 
     /**
-     * @member {Object}
+     * @type {Object}
      */
     this.instance = pickingData.instance
 
     /**
-     * @member {Stage}
+     * @type {Stage}
      */
     this.stage = stage
     /**
-     * @member {ViewerControls}
+     * @type {ViewerControls}
      */
     this.controls = stage.viewerControls
     /**
-     * @member {MouseObserver}
+     * @type {MouseObserver}
      */
     this.mouse = stage.mouseObserver
   }
 
   /**
    * Kind of the picked data
-   * @member {String}
+   * @type {String}
    */
   get type () { return this.picker.type }
 
   /**
    * If the `alt` key was pressed
-   * @member {Boolean}
+   * @type {Boolean}
    */
   get altKey () { return this.mouse.altKey }
   /**
    * If the `ctrl` key was pressed
-   * @member {Boolean}
+   * @type {Boolean}
    */
   get ctrlKey () { return this.mouse.ctrlKey }
   /**
    * If the `meta` key was pressed
-   * @member {Boolean}
+   * @type {Boolean}
    */
   get metaKey () { return this.mouse.metaKey }
   /**
    * If the `shift` key was pressed
-   * @member {Boolean}
+   * @type {Boolean}
    */
   get shiftKey () { return this.mouse.shiftKey }
 
   /**
    * Position of the mouse on the canvas
-   * @member {Vector2}
+   * @type {Vector2}
    */
   get canvasPosition () { return this.mouse.canvasPosition }
 
   /**
    * The component the picked data is part of
-   * @member {Component}
+   * @type {Component}
    */
   get component () {
     return this.stage.getComponentsByObject(this.picker.data).list[ 0 ]
@@ -94,7 +94,7 @@ class PickingProxy {
 
   /**
    * The picked object data
-   * @member {Object}
+   * @type {Object}
    */
   get object () {
     return this.picker.getObject(this.pid)
@@ -102,7 +102,7 @@ class PickingProxy {
 
   /**
    * The 3d position in the scene of the picked object
-   * @member {Vector3}
+   * @type {Vector3}
    */
   get position () {
     return this.picker.getPosition(this.pid, this.instance, this.component)
@@ -110,7 +110,7 @@ class PickingProxy {
 
   /**
    * The atom of a picked bond that is closest to the mouse
-   * @member {AtomProxy}
+   * @type {AtomProxy}
    */
   get closestBondAtom () {
     if (this.type !== 'bond') return undefined
@@ -126,71 +126,71 @@ class PickingProxy {
   }
 
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get arrow () { return this._objectIfType('arrow') }
   /**
-   * @member {AtomProxy}
+   * @type {AtomProxy}
    */
   get atom () { return this._objectIfType('atom') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get axes () { return this._objectIfType('axes') }
   /**
-   * @member {BondProxy}
+   * @type {BondProxy}
    */
   get bond () { return this._objectIfType('bond') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get cone () { return this._objectIfType('cone') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get clash () { return this._objectIfType('clash') }
   /**
-   * @member {BondProxy}
+   * @type {BondProxy}
    */
   get contact () { return this._objectIfType('contact') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get cylinder () { return this._objectIfType('cylinder') }
   /**
-   * @member {BondProxy}
+   * @type {BondProxy}
    */
   get distance () { return this._objectIfType('distance') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get ellipsoid () { return this._objectIfType('ellipsoid') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get mesh () { return this._objectIfType('mesh') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get slice () { return this._objectIfType('slice') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get sphere () { return this._objectIfType('sphere') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get surface () { return this._objectIfType('surface') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get unitcell () { return this._objectIfType('unitcell') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get unknown () { return this._objectIfType('unknown') }
   /**
-   * @member {Object}
+   * @type {Object}
    */
   get volume () { return this._objectIfType('volume') }
 

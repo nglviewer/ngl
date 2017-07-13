@@ -58,24 +58,24 @@ class StructureRepresentation extends Representation {
     }, this.parameters)
 
         /**
-         * @member {Selection}
+         * @type {Selection}
          * @private
          */
     this.selection = new Selection(p.sele)
 
         /**
-         * @member {Array}
+         * @type {Array}
          * @private
          */
     this.dataList = []
 
         /**
-         * @member {Structure}
+         * @type {Structure}
          */
     this.structure = structure
 
         /**
-         * @member {StructureView}
+         * @type {StructureView}
          */
     this.structureView = this.structure.getView(this.selection)
 
