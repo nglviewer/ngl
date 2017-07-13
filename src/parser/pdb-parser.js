@@ -33,6 +33,11 @@ const HelixTypes = {
   '': 'h'
 }
 
+const entityKeyList = [
+  'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
+  'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
+]
+
 const reWhitespace = /\s+/
 
 class PdbParser extends StructureParser {
@@ -56,55 +61,55 @@ class PdbParser extends StructureParser {
   get type () { return 'pdb' }
 
   _parse () {
-        // http://www.wwpdb.org/documentation/file-format.php
+    // http://www.wwpdb.org/documentation/file-format.php
 
     if (Debug) Log.time('PdbParser._parse ' + this.name)
 
-    var isLegacy = false
-    var headerLine = this.streamer.peekLines(1)[ 0 ]
-    var headerId = headerLine.substr(62, 4)
-    var legacyId = headerLine.substr(72, 4)
+    let isLegacy = false
+    const headerLine = this.streamer.peekLines(1)[ 0 ]
+    const headerId = headerLine.substr(62, 4)
+    const legacyId = headerLine.substr(72, 4)
     if (headerId === legacyId && legacyId.trim()) {
       isLegacy = true
     }
 
-    var isPqr = this.type === 'pqr'
+    const isPqr = this.type === 'pqr'
 
-    var s = this.structure
-    var sb = this.structureBuilder
+    const s = this.structure
+    const sb = this.structureBuilder
 
-    var hex = this.hex
-    var serialRadix = 10
-    var resnoRadix = 10
+    const hex = this.hex
+    let serialRadix = 10
+    let resnoRadix = 10
 
-    var firstModelOnly = this.firstModelOnly
-    var asTrajectory = this.asTrajectory
-    var cAlphaOnly = this.cAlphaOnly
+    const firstModelOnly = this.firstModelOnly
+    const asTrajectory = this.asTrajectory
+    const cAlphaOnly = this.cAlphaOnly
 
-    var frames = s.frames
-    var boxes = s.boxes
-    var doFrames = false
-    var currentFrame, currentCoord
+    const frames = s.frames
+    const boxes = s.boxes
+    let doFrames = false
+    let currentFrame, currentCoord
 
-    var biomolDict = s.biomolDict
-    var currentBiomol
-    var currentPart
-    var currentMatrix
+    const biomolDict = s.biomolDict
+    let currentBiomol
+    let currentPart
+    let currentMatrix
 
-    var line, recordName
-    var serial, chainname, resno, resname, occupancy
-    var inscode, atomname, hetero, bfactor, altloc
+    let line, recordName
+    let serial, chainname, resno, resname, occupancy
+    let inscode, atomname, hetero, bfactor, altloc
 
-    var startChain, startResi, startIcode
-    var endChain, endResi, endIcode
+    let startChain, startResi, startIcode
+    let endChain, endResi, endIcode
 
-    var serialDict = {}
-    var unitcellDict = {}
-    var bondDict = {}
+    let serialDict = {}
+    const unitcellDict = {}
+    const bondDict = {}
 
-    var entityDataList = []
-    var currentEntityData
-    var currentEntityKey
+    const entityDataList = []
+    let currentEntityData
+    let currentEntityKey
     // MOL_ID                 Numbers each component; also used in  SOURCE to associate
     //                        the information.
     // MOLECULE               Name of the macromolecule.
@@ -118,36 +123,33 @@ class PdbParser extends StructureParser {
     //                        recombinant technology or by purely  chemical synthesis.
     // MUTATION               Indicates if there is a mutation.
     // OTHER_DETAILS          Additional comments.
-    var entityKeyList = [
-      'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
-      'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
-    ]
-    var chainDict = {}
-    var hetnameDict = {}
-    var chainIdx, chainid, newChain
-    var currentChainname, currentResno, currentResname, currentInscode
 
-    var secStruct = {
+    const chainDict = {}
+    const hetnameDict = {}
+    let chainIdx, chainid, newChain
+    let currentChainname, currentResno, currentResname, currentInscode
+
+    const secStruct = {
       helices: [],
       sheets: []
     }
-    var helices = secStruct.helices
-    var sheets = secStruct.sheets
+    const helices = secStruct.helices
+    const sheets = secStruct.sheets
 
-    var atomMap = s.atomMap
-    var atomStore = s.atomStore
+    const atomMap = s.atomMap
+    const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
     if (isPqr) {
       atomStore.addField('partialCharge', 1, 'float32')
       atomStore.addField('radius', 1, 'float32')
     }
 
-    var ap1 = s.getAtomProxy()
-    var ap2 = s.getAtomProxy()
+    const ap1 = s.getAtomProxy()
+    const ap2 = s.getAtomProxy()
 
-    var idx = 0
-    var modelIdx = 0
-    var pendingStart = true
+    let idx = 0
+    let modelIdx = 0
+    let pendingStart = true
 
     function _parseChunkOfLines (_i, _n, lines) {
       for (let i = _i; i < _n; ++i) {
@@ -301,7 +303,7 @@ class PdbParser extends StructureParser {
           }
 
           for (let j = 0; j < 4; ++j) {
-            var toIdx = parseInt(line.substr(pos[ j ], 5))
+            let toIdx = parseInt(line.substr(pos[ j ], 5))
             if (Number.isNaN(toIdx)) continue
             toIdx = serialDict[ toIdx ]
             if (toIdx === undefined) {
@@ -327,7 +329,7 @@ class PdbParser extends StructureParser {
             if (bondIndex[ toIdx ] !== undefined) {
               s.bondStore.bondOrder[ bondIndex[ toIdx ] ] += 1
             } else {
-              var hash = ap1.index + '|' + ap2.index
+              const hash = ap1.index + '|' + ap2.index
               if (bondDict[ hash ] === undefined) {
                 bondDict[ hash ] = true
                 bondIndex[ toIdx ] = s.bondStore.count
@@ -522,7 +524,7 @@ class PdbParser extends StructureParser {
           const gamma = parseFloat(line.substr(47, 7))
 
           const sGroup = line.substr(55, 11).trim()
-          // var zValue = parseInt( line.substr( 66, 4 ) );
+          // const zValue = parseInt( line.substr( 66, 4 ) );
 
           const box = new Float32Array(9)
           box[ 0 ] = aLength
@@ -549,15 +551,15 @@ class PdbParser extends StructureParser {
 
     //
 
-    var en = entityDataList.length
+    const en = entityDataList.length
 
-    if (entityDataList.length) {
+    if (en) {
       s.eachChain(function (cp) {
         cp.entityIndex = en
       })
 
       entityDataList.forEach(function (e, i) {
-        var chainIndexList = e.chainList.map(function (chainname) {
+        const chainIndexList = e.chainList.map(function (chainname) {
           return chainDict[ chainname ]
         })
         s.entityList.push(new Entity(
@@ -565,9 +567,9 @@ class PdbParser extends StructureParser {
         ))
       })
 
-      var ei = entityDataList.length
-      var rp = s.getResidueProxy()
-      var residueDict = {}
+      let ei = entityDataList.length
+      const rp = s.getResidueProxy()
+      const residueDict = {}
 
       s.eachChain(function (cp) {
         if (cp.entityIndex === en) {
@@ -580,9 +582,9 @@ class PdbParser extends StructureParser {
       })
 
       Object.keys(residueDict).forEach(function (resname) {
-        var chainList = residueDict[ resname ]
-        var type = 'non-polymer'
-        var name = hetnameDict[ resname ] || resname
+        const chainList = residueDict[ resname ]
+        let type = 'non-polymer'
+        let name = hetnameDict[ resname ] || resname
         if (WaterNames.includes(resname)) {
           name = 'water'
           type = 'water'
