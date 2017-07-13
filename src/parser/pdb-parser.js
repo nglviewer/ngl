@@ -33,12 +33,45 @@ const HelixTypes = {
   '': 'h'
 }
 
+const dAminoAcids = [
+  'DAL',  // D-ALANINE
+  'DAR',  // D-ARGININE
+  'DSG',  // D-ASPARAGINE
+  'DAS',  // D-ASPARTIC ACID
+  'DCY',  // D-CYSTEINE
+  'DGL',  // D-GLUTAMIC ACID
+  'DGN',  // D-GLUTAMINE
+  'DHI',  // D-HISTIDINE
+  'DIL',  // D-ISOLEUCINE
+  'DLE',  // D-LEUCINE
+  'DLY',  // D-LYSINE
+  'MED',  // D-METHIONINE
+  'DPN',  // D-PHENYLALANINE
+  'DPR',  // D-PROLINE
+  'DSN',  // D-SERINE
+  'DTH',  // D-THREONINE
+  'DTR',  // D-TRYPTOPHAN
+  'DTY',  // D-TYROSINE
+  'DVA',  // D-VALINE
+
+  'DNE'  // D-NORLEUCINE
+
+  // ???  // D-SELENOCYSTEINE
+]
+
 const entityKeyList = [
   'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
   'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
 ]
 
 const reWhitespace = /\s+/
+
+function getModresId (resno, chainname, inscode) {
+  let id = `${resno}`
+  if (chainname) id += `:${chainname}`
+  if (inscode) id += `^${inscode}`
+  return id
+}
 
 class PdbParser extends StructureParser {
     /**
@@ -124,8 +157,10 @@ class PdbParser extends StructureParser {
     // MUTATION               Indicates if there is a mutation.
     // OTHER_DETAILS          Additional comments.
 
-    const chainDict = {}
     const hetnameDict = {}
+    const modresDict = {}
+
+    const chainDict = {}
     let chainIdx, chainid, newChain
     let currentChainname, currentResno, currentResname, currentInscode
 
@@ -272,7 +307,11 @@ class PdbParser extends StructureParser {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
           }
 
-          if (hetero) {
+          const modresId = getModresId(resno, chainname, inscode)
+
+          // TODO instead of looking at MODRES look at SEQRES and
+          //      missing residues in REMARK 465
+          if (hetero && !modresDict[modresId] && !dAminoAcids.includes(resname)) {
             if (currentChainname !== chainname || currentResname !== resname ||
                 (!WaterNames.includes(resname) &&
                   (currentResno !== resno || currentInscode !== inscode))
@@ -376,6 +415,14 @@ class PdbParser extends StructureParser {
           seqresDict[ seqresChainname ].push(
             ...line.substr(19).trim().split(reWhitespace)
           )
+        } else if (recordName === 'MODRES') {
+          // MODRES 2SRC PTR A  527  TYR  O-PHOSPHOTYROSINE
+          const resname = line.substr(12, 3).trim()
+          const chainname = line[16].trim()
+          const inscode = line[22].trim()
+          const resno = parseInt(line.substr(18, 4).trim())
+          const id = getModresId(resno, chainname, inscode)
+          modresDict[ id ] = { resname, chainname, inscode, resno }
         } else if (recordName === 'COMPND') {
           const comp = line.substr(10, 70).trim()
           const keyEnd = comp.indexOf(':')
