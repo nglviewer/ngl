@@ -47234,7 +47234,19 @@ Selection.prototype.parse = function parse (string) {
           {
             operator: 'OR',
             rules: [
-              { keyword: kwd.HETERO },
+              {
+                operator: 'AND',
+                rules: [
+                  { keyword: kwd.HETERO },
+                  {
+                    negate: true,
+                    operator: undefined,
+                    rules: [
+                      { keyword: kwd.POLYMER }
+                    ]
+                  }
+                ]
+              },
               {
                 negate: true,
                 operator: undefined,
@@ -49401,7 +49413,7 @@ var StlWriter = (function (Writer$$1) {
 var Counter = function Counter () {
       /**
        * The `count`
-       * @member {Integer}
+       * @type {Integer}
        */
   this.count = 0;
 
@@ -52229,20 +52241,20 @@ var PickingProxy = function PickingProxy (pickingData, stage) {
   this.picker = pickingData.picker;
 
   /**
-   * @member {Object}
+   * @type {Object}
    */
   this.instance = pickingData.instance;
 
   /**
-   * @member {Stage}
+   * @type {Stage}
    */
   this.stage = stage;
   /**
-   * @member {ViewerControls}
+   * @type {ViewerControls}
    */
   this.controls = stage.viewerControls;
   /**
-   * @member {MouseObserver}
+   * @type {MouseObserver}
    */
   this.mouse = stage.mouseObserver;
 };
@@ -52251,40 +52263,40 @@ var prototypeAccessors$7 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKe
 
 /**
  * Kind of the picked data
- * @member {String}
+ * @type {String}
  */
 prototypeAccessors$7.type.get = function () { return this.picker.type };
 
 /**
  * If the `alt` key was pressed
- * @member {Boolean}
+ * @type {Boolean}
  */
 prototypeAccessors$7.altKey.get = function () { return this.mouse.altKey };
 /**
  * If the `ctrl` key was pressed
- * @member {Boolean}
+ * @type {Boolean}
  */
 prototypeAccessors$7.ctrlKey.get = function () { return this.mouse.ctrlKey };
 /**
  * If the `meta` key was pressed
- * @member {Boolean}
+ * @type {Boolean}
  */
 prototypeAccessors$7.metaKey.get = function () { return this.mouse.metaKey };
 /**
  * If the `shift` key was pressed
- * @member {Boolean}
+ * @type {Boolean}
  */
 prototypeAccessors$7.shiftKey.get = function () { return this.mouse.shiftKey };
 
 /**
  * Position of the mouse on the canvas
- * @member {Vector2}
+ * @type {Vector2}
  */
 prototypeAccessors$7.canvasPosition.get = function () { return this.mouse.canvasPosition };
 
 /**
  * The component the picked data is part of
- * @member {Component}
+ * @type {Component}
  */
 prototypeAccessors$7.component.get = function () {
   return this.stage.getComponentsByObject(this.picker.data).list[ 0 ]
@@ -52292,7 +52304,7 @@ prototypeAccessors$7.component.get = function () {
 
 /**
  * The picked object data
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.object.get = function () {
   return this.picker.getObject(this.pid)
@@ -52300,7 +52312,7 @@ prototypeAccessors$7.object.get = function () {
 
 /**
  * The 3d position in the scene of the picked object
- * @member {Vector3}
+ * @type {Vector3}
  */
 prototypeAccessors$7.position.get = function () {
   return this.picker.getPosition(this.pid, this.instance, this.component)
@@ -52308,7 +52320,7 @@ prototypeAccessors$7.position.get = function () {
 
 /**
  * The atom of a picked bond that is closest to the mouse
- * @member {AtomProxy}
+ * @type {AtomProxy}
  */
 prototypeAccessors$7.closestBondAtom.get = function () {
   if (this.type !== 'bond') { return undefined }
@@ -52324,71 +52336,71 @@ prototypeAccessors$7.closestBondAtom.get = function () {
 };
 
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.arrow.get = function () { return this._objectIfType('arrow') };
 /**
- * @member {AtomProxy}
+ * @type {AtomProxy}
  */
 prototypeAccessors$7.atom.get = function () { return this._objectIfType('atom') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.axes.get = function () { return this._objectIfType('axes') };
 /**
- * @member {BondProxy}
+ * @type {BondProxy}
  */
 prototypeAccessors$7.bond.get = function () { return this._objectIfType('bond') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.cone.get = function () { return this._objectIfType('cone') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.clash.get = function () { return this._objectIfType('clash') };
 /**
- * @member {BondProxy}
+ * @type {BondProxy}
  */
 prototypeAccessors$7.contact.get = function () { return this._objectIfType('contact') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.cylinder.get = function () { return this._objectIfType('cylinder') };
 /**
- * @member {BondProxy}
+ * @type {BondProxy}
  */
 prototypeAccessors$7.distance.get = function () { return this._objectIfType('distance') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.ellipsoid.get = function () { return this._objectIfType('ellipsoid') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.mesh.get = function () { return this._objectIfType('mesh') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.slice.get = function () { return this._objectIfType('slice') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.sphere.get = function () { return this._objectIfType('sphere') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.surface.get = function () { return this._objectIfType('surface') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.unitcell.get = function () { return this._objectIfType('unitcell') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.unknown.get = function () { return this._objectIfType('unknown') };
 /**
- * @member {Object}
+ * @type {Object}
  */
 prototypeAccessors$7.volume.get = function () { return this._objectIfType('volume') };
 
@@ -66700,8 +66712,8 @@ Trajectory.prototype.setStructure = function setStructure (structure) {
 };
 
 Trajectory.prototype.saveInitialStructure = function saveInitialStructure () {
-  var i = 0;
   var initialStructure = new Float32Array(3 * this.atomCount);
+  var i = 0;
 
   this.structure.eachAtom(function (a) {
     initialStructure[ i + 0 ] = a.x;
@@ -70353,25 +70365,25 @@ var Representation = function Representation (object, viewer, params) {
   };
 
   /**
-   * @member {Viewer}
+   * @type {Viewer}
    */
   this.viewer = viewer;
 
   /**
    * Counter that keeps track of tasks related to the creation of
    * the representation, including surface calculations.
-   * @member {Counter}
+   * @type {Counter}
    */
   this.tasks = new Counter();
 
   /**
-   * @member {Queue}
+   * @type {Queue}
    * @private
    */
   this.queue = new Queue(this.make.bind(this));
 
   /**
-   * @member {Array}
+   * @type {Array}
    * @private
    */
   this.bufferList = [];
@@ -72483,24 +72495,24 @@ var StructureRepresentation = (function (Representation$$1) {
     }, this.parameters);
 
         /**
-         * @member {Selection}
+         * @type {Selection}
          * @private
          */
     this.selection = new Selection(p.sele);
 
         /**
-         * @member {Array}
+         * @type {Array}
          * @private
          */
     this.dataList = [];
 
         /**
-         * @member {Structure}
+         * @type {Structure}
          */
     this.structure = structure;
 
         /**
-         * @member {StructureView}
+         * @type {StructureView}
          */
     this.structureView = this.structure.getView(this.selection);
 
@@ -77197,15 +77209,14 @@ var FramesTrajectory = (function (Trajectory$$1) {
   FramesTrajectory.prototype.getPath = function getPath (index, callback) {
     var this$1 = this;
 
-    var i, j, f;
     var n = this.numframes;
     var k = index * 3;
 
     var path = new Float32Array(n * 3);
 
-    for (i = 0; i < n; ++i) {
-      j = 3 * i;
-      f = this$1.frames[ i ];
+    for (var i = 0; i < n; ++i) {
+      var j = 3 * i;
+      var f = this$1.frames[ i ];
 
       path[ j + 0 ] = f[ k + 0 ];
       path[ j + 1 ] = f[ k + 1 ];
@@ -77287,15 +77298,14 @@ var StructureTrajectory = (function (Trajectory$$1) {
   StructureTrajectory.prototype.getPath = function getPath (index, callback) {
     var this$1 = this;
 
-    var i, j, f;
     var n = this.numframes;
     var k = index * 3;
 
     var path = new Float32Array(n * 3);
 
-    for (i = 0; i < n; ++i) {
-      j = 3 * i;
-      f = this$1.structure.frames[ i ];
+    for (var i = 0; i < n; ++i) {
+      var j = 3 * i;
+      var f = this$1.structure.frames[ i ];
 
       path[ j + 0 ] = f[ k + 0 ];
       path[ j + 1 ] = f[ k + 1 ];
@@ -77334,14 +77344,13 @@ var RemoteTrajectory = (function (Trajectory$$1) {
 
     if (this.structure.type === 'StructureView') {
       var indices = this.structure.getAtomIndices();
-
-      var i, r;
-      var p = indices[ 0 ];
-      var q = indices[ 0 ];
       var n = indices.length;
 
-      for (i = 1; i < n; ++i) {
-        r = indices[ i ];
+      var p = indices[ 0 ];
+      var q = indices[ 0 ];
+
+      for (var i = 1; i < n; ++i) {
+        var r = indices[ i ];
 
         if (q + 1 < r) {
           atomIndices.push([ p, q + 1 ]);
@@ -77360,7 +77369,9 @@ var RemoteTrajectory = (function (Trajectory$$1) {
   };
 
   RemoteTrajectory.prototype._loadFrame = function _loadFrame (i, callback) {
-        // TODO implement max frameCache size, re-use arrays
+    var this$1 = this;
+
+    // TODO implement max frameCache size, re-use arrays
 
     var request = new window.XMLHttpRequest();
 
@@ -77371,31 +77382,33 @@ var RemoteTrajectory = (function (Trajectory$$1) {
     request.open('POST', url, true);
     request.responseType = 'arraybuffer';
     request.setRequestHeader(
-            'Content-type', 'application/x-www-form-urlencoded'
-        );
+      'Content-type', 'application/x-www-form-urlencoded'
+    );
 
     request.addEventListener('load', function () {
       var arrayBuffer = request.response;
       if (!arrayBuffer) {
-        Log.error("empty arrayBuffer for '" + url + "'");
+        Log.error(("empty arrayBuffer for '" + url + "'"));
         return
       }
 
       var numframes = new Int32Array(arrayBuffer, 0, 1)[ 0 ];
-            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+      // const time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
       var box = new Float32Array(arrayBuffer, 2 * 4, 9);
       var coords = new Float32Array(arrayBuffer, 11 * 4);
 
-      this.process(i, box, coords, numframes);
+      this$1.process(i, box, coords, numframes);
       if (typeof callback === 'function') {
         callback();
       }
-    }.bind(this), false);
+    }, false);
 
     request.send(params);
   };
 
   RemoteTrajectory.prototype.getNumframes = function getNumframes () {
+    var this$1 = this;
+
     var request = new window.XMLHttpRequest();
 
     var ds = DatasourceRegistry.trajectory;
@@ -77403,12 +77416,14 @@ var RemoteTrajectory = (function (Trajectory$$1) {
 
     request.open('GET', url, true);
     request.addEventListener('load', function () {
-      this.setNumframes(parseInt(request.response));
-    }.bind(this), false);
+      this$1.setNumframes(parseInt(request.response));
+    }, false);
     request.send(null);
   };
 
   RemoteTrajectory.prototype.getPath = function getPath (index, callback) {
+    var this$1 = this;
+
     if (this.pathCache[ index ]) {
       callback(this.pathCache[ index ]);
       return
@@ -77425,8 +77440,8 @@ var RemoteTrajectory = (function (Trajectory$$1) {
     request.open('POST', url, true);
     request.responseType = 'arraybuffer';
     request.setRequestHeader(
-            'Content-type', 'application/x-www-form-urlencoded'
-        );
+      'Content-type', 'application/x-www-form-urlencoded'
+    );
 
     request.addEventListener('load', function () {
       Log.timeEnd('loadPath');
@@ -77438,10 +77453,10 @@ var RemoteTrajectory = (function (Trajectory$$1) {
       }
 
       var path = new Float32Array(arrayBuffer);
-            // Log.log( path )
-      this.pathCache[ index ] = path;
+      // Log.log( path )
+      this$1.pathCache[ index ] = path;
       callback(path);
-    }.bind(this), false);
+    }, false);
 
     request.send(params);
   };
@@ -85265,7 +85280,45 @@ var HelixTypes = {
   '': 'h'
 };
 
+var dAminoAcids = [
+  'DAL',  // D-ALANINE
+  'DAR',  // D-ARGININE
+  'DSG',  // D-ASPARAGINE
+  'DAS',  // D-ASPARTIC ACID
+  'DCY',  // D-CYSTEINE
+  'DGL',  // D-GLUTAMIC ACID
+  'DGN',  // D-GLUTAMINE
+  'DHI',  // D-HISTIDINE
+  'DIL',  // D-ISOLEUCINE
+  'DLE',  // D-LEUCINE
+  'DLY',  // D-LYSINE
+  'MED',  // D-METHIONINE
+  'DPN',  // D-PHENYLALANINE
+  'DPR',  // D-PROLINE
+  'DSN',  // D-SERINE
+  'DTH',  // D-THREONINE
+  'DTR',  // D-TRYPTOPHAN
+  'DTY',  // D-TYROSINE
+  'DVA',  // D-VALINE
+
+  'DNE'  // D-NORLEUCINE
+
+  // ???  // D-SELENOCYSTEINE
+];
+
+var entityKeyList = [
+  'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
+  'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
+];
+
 var reWhitespace$1 = /\s+/;
+
+function getModresId (resno, chainname, inscode) {
+  var id = "" + resno;
+  if (chainname) { id += ":" + chainname; }
+  if (inscode) { id += "^" + inscode; }
+  return id
+}
 
 var PdbParser = (function (StructureParser$$1) {
   function PdbParser (streamer, params) {
@@ -85285,7 +85338,7 @@ var PdbParser = (function (StructureParser$$1) {
   prototypeAccessors.type.get = function () { return 'pdb' };
 
   PdbParser.prototype._parse = function _parse () {
-        // http://www.wwpdb.org/documentation/file-format.php
+    // http://www.wwpdb.org/documentation/file-format.php
 
     if (Debug) { Log.time('PdbParser._parse ' + this.name); }
 
@@ -85347,14 +85400,16 @@ var PdbParser = (function (StructureParser$$1) {
     //                        recombinant technology or by purely  chemical synthesis.
     // MUTATION               Indicates if there is a mutation.
     // OTHER_DETAILS          Additional comments.
-    var entityKeyList = [
-      'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
-      'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
-    ];
-    var chainDict = {};
+
     var hetnameDict = {};
+    var modresDict = {};
+
+    var chainDict = {};
     var chainIdx, chainid, newChain;
     var currentChainname, currentResno, currentResname, currentInscode;
+
+    var seqresDict = {};
+    var currentSeqresChainname;
 
     var secStruct = {
       helices: [],
@@ -85496,7 +85551,11 @@ var PdbParser = (function (StructureParser$$1) {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor;
           }
 
-          if (hetero) {
+          var modresId = getModresId(resno, chainname, inscode);
+
+          // TODO instead of looking at MODRES look at SEQRES and
+          //      missing residues in REMARK 465
+          if (hetero && !modresDict[modresId] && !dAminoAcids.includes(resname)) {
             if (currentChainname !== chainname || currentResname !== resname ||
                 (!WaterNames.includes(resname) &&
                   (currentResno !== resno || currentInscode !== inscode))
@@ -85591,6 +85650,23 @@ var PdbParser = (function (StructureParser$$1) {
           ]);
         } else if (recordName === 'HETNAM') {
           hetnameDict[ line.substr(11, 3) ] = line.substr(15).trim();
+        } else if (recordName === 'SEQRES') {
+          var seqresChainname = line[11].trim();
+          if (seqresChainname !== currentSeqresChainname) {
+            seqresDict[ seqresChainname ] = [];
+            currentSeqresChainname = seqresChainname;
+          }
+          (ref = seqresDict[ seqresChainname ]).push.apply(
+            ref, line.substr(19).trim().split(reWhitespace$1)
+          );
+        } else if (recordName === 'MODRES') {
+          // MODRES 2SRC PTR A  527  TYR  O-PHOSPHOTYROSINE
+          var resname$1 = line.substr(12, 3).trim();
+          var chainname$1 = line[16].trim();
+          var inscode$1 = line[22].trim();
+          var resno$1 = parseInt(line.substr(18, 4).trim());
+          var id = getModresId(resno$1, chainname$1, inscode$1);
+          modresDict[ id ] = { resname: resname$1, chainname: chainname$1, inscode: inscode$1, resno: resno$1 };
         } else if (recordName === 'COMPND') {
           var comp = line.substr(10, 70).trim();
           var keyEnd = comp.indexOf(':');
@@ -85751,7 +85827,7 @@ var PdbParser = (function (StructureParser$$1) {
           var gamma = parseFloat(line.substr(47, 7));
 
           var sGroup = line.substr(55, 11).trim();
-          // var zValue = parseInt( line.substr( 66, 4 ) );
+          // const zValue = parseInt( line.substr( 66, 4 ) );
 
           var box = new Float32Array(9);
           box[ 0 ] = aLength;
@@ -85770,6 +85846,7 @@ var PdbParser = (function (StructureParser$$1) {
           }
         }
       }
+      var ref;
     }
 
     this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
@@ -85780,7 +85857,7 @@ var PdbParser = (function (StructureParser$$1) {
 
     var en = entityDataList.length;
 
-    if (entityDataList.length) {
+    if (en) {
       s.eachChain(function (cp) {
         cp.entityIndex = en;
       });
@@ -97111,7 +97188,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-8";
+var version$1 = "0.10.5-9";
 
 /**
  * @file Version
