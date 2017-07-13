@@ -62,72 +62,91 @@ class TrajectoryPlayer {
 
     this._stopFlag = false
     this._running = false
+    this._previousTime = 0
+    this._currentTime = 0
+    this._currentStep = 0
 
     traj.signals.gotNumframes.add(function (n) {
       this.end = Math.min(defaults(p.end, n - 1), n - 1)
+      this._animate()
     }, this)
 
     this._animate = this._animate.bind(this)
   }
 
   _animate () {
+    this._currentTime = window.performance.now()
+    const dt = this._currentTime - this._previousTime
+    const traj = this.traj
+
+    if (traj && traj.numframes && dt >= this.timeout && !traj.inProgress && !this._stopFlag) {
+      const i = this._next()
+      if (traj.hasFrame(i)) {
+        traj.setFrame(i)
+        this._previousTime = this._currentTime
+      } else {
+        traj.loadFrame(i)
+      }
+    }
+
+    window.requestAnimationFrame(this._animate)
+  }
+
+  _next () {
     let i
     this._running = true
 
-    if (!this.traj.inProgress && !this._stopFlag) {
-      if (this.direction === 'forward') {
-        i = this.traj.currentFrame + this.step
-      } else {
-        i = this.traj.currentFrame - this.step
-      }
-
-      if (i >= this.end || i < this.start) {
-        if (this.mode === 'once') {
-          this.pause()
-
-          if (this.direction === 'forward') {
-            i = this.end
-          } else {
-            i = this.start
-          }
-        } else {
-          if (this.direction === 'forward') {
-            i = this.start
-          } else {
-            i = this.end
-          }
-        }
-      }
-
-      if (!this.interpolateType) {
-        this.traj.setFrame(i)
-      }
+    if (this.direction === 'forward') {
+      i = this.traj.currentFrame + this.step
+    } else {
+      i = this.traj.currentFrame - this.step
     }
 
-    if (!this._stopFlag) {
-      if (!this.traj.inProgress && this.interpolateType) {
-        let ip, ipp, ippp
+    if (i >= this.end || i < this.start) {
+      if (this.mode === 'once') {
+        this.pause()
 
         if (this.direction === 'forward') {
-          ip = Math.max(this.start, i - this.step)
-          ipp = Math.max(this.start, i - 2 * this.step)
-          ippp = Math.max(this.start, i - 3 * this.step)
+          i = this.end
         } else {
-          ip = Math.min(this.end, i + this.step)
-          ipp = Math.min(this.end, i + 2 * this.step)
-          ippp = Math.min(this.end, i + 3 * this.step)
+          i = this.start
         }
-
-        this._interpolate(
-          i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-        )
       } else {
-        setTimeout(this._animate, this.timeout)
+        if (this.direction === 'forward') {
+          i = this.start
+        } else {
+          i = this.end
+        }
       }
-    } else {
-      this._running = false
     }
+
+    return i
   }
+
+    // if (!this._stopFlag) {
+    //   if (!this.traj.inProgress && this.interpolateType) {
+    //     let ip, ipp, ippp
+
+    //     if (this.direction === 'forward') {
+    //       ip = Math.max(this.start, i - this.step)
+    //       ipp = Math.max(this.start, i - 2 * this.step)
+    //       ippp = Math.max(this.start, i - 3 * this.step)
+    //     } else {
+    //       ip = Math.min(this.end, i + this.step)
+    //       ipp = Math.min(this.end, i + 2 * this.step)
+    //       ippp = Math.min(this.end, i + 3 * this.step)
+    //     }
+
+    //     this._interpolate(
+    //       i, ip, ipp, ippp, 1 / this.interpolateStep, 0
+    //     )
+    //   } else {
+    //     return
+    //     setTimeout(this._animate, this.timeout)
+    //   }
+    // } else {
+    //   this._running = false
+    // }
 
   _interpolate (i, ip, ipp, ippp, d, t) {
     t += d

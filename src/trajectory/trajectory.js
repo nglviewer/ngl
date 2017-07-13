@@ -143,9 +143,9 @@ class Trajectory {
     )
     this.makeIndices()
 
-    this.frameCache = []
-    this.boxCache = []
-    this.pathCache = []
+    this.frameCache = {}
+    this.boxCache = {}
+    this.pathCache = {}
     this.frameCacheSize = 0
     this.currentFrame = -1
   }
@@ -222,9 +222,9 @@ class Trajectory {
   }
 
   resetCache () {
-    this.frameCache = []
-    this.boxCache = []
-    this.pathCache = []
+    this.frameCache = {}
+    this.boxCache = {}
+    this.pathCache = {}
     this.frameCacheSize = 0
     this.setFrame(this.currentFrame)
 
@@ -256,6 +256,14 @@ class Trajectory {
     if (resetCache) this.resetCache()
   }
 
+  hasFrame (i) {
+    if (Array.isArray(i)) {
+      return i.every(j => !!this.frameCache[j])
+    } else {
+      return !!this.frameCache[i]
+    }
+  }
+
   setFrame (i, callback) {
     if (i === undefined) return this
 
@@ -264,17 +272,19 @@ class Trajectory {
     i = parseInt(i)
 
     if (i === -1 || this.frameCache[ i ]) {
-      this.updateStructure(i, callback)
+      this.updateStructure(i)
+      if (callback) callback()
     } else {
       this.loadFrame(i, () => {
-        this.updateStructure(i, callback)
+        this.updateStructure(i)
+        if (callback) callback()
       })
     }
 
     return this
   }
 
-  interpolate (i, ip, ipp, ippp, t, type, callback) {
+  interpolate (i, ip, ipp, ippp, t, type) {
     const fc = this.frameCache
 
     const c = fc[ i ]
@@ -308,10 +318,6 @@ class Trajectory {
     this.structure.updatePosition(coords)
     this.currentFrame = i
     this.signals.frameChanged.dispatch(i)
-
-    if (typeof callback === 'function') {
-      callback()
-    }
   }
 
   setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
@@ -327,22 +333,25 @@ class Trajectory {
 
     if (iList.length) {
       this.loadFrame(iList, () => {
-        this.interpolate(i, ip, ipp, ippp, t, type, callback)
+        this.interpolate(i, ip, ipp, ippp, t, type)
+        if (callback) callback()
       })
     } else {
-      this.interpolate(i, ip, ipp, ippp, t, type, callback)
+      this.interpolate(i, ip, ipp, ippp, t, type)
+      if (callback) callback()
     }
 
     return this
   }
 
   loadFrame (i, callback) {
+    // TODO allow parallel loading
     if (Array.isArray(i)) {
       let queue
       const fn = (j, wcallback) => {
         this._loadFrame(j, function () {
           wcallback()
-          if (queue.length() === 0 && typeof callback === 'function') {
+          if (queue.length() === 0 && callback) {
             callback()
           }
         })
@@ -357,7 +366,7 @@ class Trajectory {
     Log.error('Trajectory._loadFrame not implemented', i, callback)
   }
 
-  updateStructure (i, callback) {
+  updateStructure (i) {
     if (this._disposed) return
 
     if (i === -1) {
@@ -369,10 +378,6 @@ class Trajectory {
     this.structure.trajectory = {
       name: this.trajPath,
       frame: i
-    }
-
-    if (typeof callback === 'function') {
-      callback()
     }
 
     this.currentFrame = i
@@ -441,7 +446,7 @@ class Trajectory {
   }
 
   dispose () {
-    this.frameCache = []  // aid GC
+    this.resetCache()  // aid GC
     this._disposed = true
     if (this.player) this.player.stop()
   }
