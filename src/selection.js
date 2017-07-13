@@ -503,7 +503,19 @@ class Selection {
             {
               operator: 'OR',
               rules: [
-                { keyword: kwd.HETERO },
+                {
+                  operator: 'AND',
+                  rules: [
+                    { keyword: kwd.HETERO },
+                    {
+                      negate: true,
+                      operator: undefined,
+                      rules: [
+                        { keyword: kwd.POLYMER }
+                      ]
+                    }
+                  ]
+                },
                 {
                   negate: true,
                   operator: undefined,
