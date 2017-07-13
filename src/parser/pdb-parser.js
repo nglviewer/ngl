@@ -129,6 +129,9 @@ class PdbParser extends StructureParser {
     let chainIdx, chainid, newChain
     let currentChainname, currentResno, currentResname, currentInscode
 
+    const seqresDict = {}
+    let currentSeqresChainname
+
     const secStruct = {
       helices: [],
       sheets: []
@@ -364,6 +367,15 @@ class PdbParser extends StructureParser {
           ])
         } else if (recordName === 'HETNAM') {
           hetnameDict[ line.substr(11, 3) ] = line.substr(15).trim()
+        } else if (recordName === 'SEQRES') {
+          const seqresChainname = line[11].trim()
+          if (seqresChainname !== currentSeqresChainname) {
+            seqresDict[ seqresChainname ] = []
+            currentSeqresChainname = seqresChainname
+          }
+          seqresDict[ seqresChainname ].push(
+            ...line.substr(19).trim().split(reWhitespace)
+          )
         } else if (recordName === 'COMPND') {
           const comp = line.substr(10, 70).trim()
           const keyEnd = comp.indexOf(':')
