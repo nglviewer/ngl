@@ -2125,8 +2125,8 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       step.setValue(Math.ceil((value + 1) / 100))
     }
 
-    player.step = step.getValue()
-    player.end = value - 1
+    player.setParameters({step: step.getValue()})
+    player.setParameters({end: value - 1})
   }
 
   signals.gotNumframes.add(init)
@@ -2164,7 +2164,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setWidth('50px')
     .setRange(1, 10000)
     .onChange(function () {
-      player.step = step.getValue()
+      player.setParameters({step: step.getValue()})
     })
 
   var frameRow = new UI.Panel()
@@ -2181,7 +2181,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
         return
       }
 
-      if (traj.player && traj.player._running) {
+      if (traj.player && traj.player.isRunning) {
         traj.setPlayer()
         traj.setFrame(value)
       } else if (!traj.inProgress) {
@@ -2198,25 +2198,26 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     })
     .setValue(component.defaultInterpolateType)
     .onChange(function () {
-      player.interpolateType = interpolateType.getValue()
+      player.setParameters({interpolateType: interpolateType.getValue()})
     })
 
   var interpolateStep = new UI.Integer(component.defaultInterpolateStep)
     .setWidth('30px')
     .setRange(1, 50)
     .onChange(function () {
-      player.interpolateStep = interpolateStep.getValue()
+      player.setParameters({interpolateStep: interpolateStep.getValue()})
     })
 
   var playDirection = new UI.Select()
     .setColor('#444')
     .setOptions({
       'forward': 'forward',
-      'backward': 'backward'
+      'backward': 'backward',
+      'bounce': 'bounce'
     })
     .setValue(component.defaultDirection)
     .onChange(function () {
-      player.direction = playDirection.getValue()
+      player.setParameters({direction: playDirection.getValue()})
     })
 
   var playMode = new UI.Select()
@@ -2227,7 +2228,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     })
     .setValue(component.defaultMode)
     .onChange(function () {
-      player.mode = playMode.getValue()
+      player.setParameters({mode: playMode.getValue()})
     })
 
   // player
@@ -2236,7 +2237,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setWidth('30px')
     .setRange(10, 1000)
     .onChange(function () {
-      player.timeout = timeout.getValue()
+      player.setParameters({timeout: timeout.getValue()})
     })
 
   var player = new NGL.TrajectoryPlayer(traj, {

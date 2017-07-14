@@ -8,7 +8,6 @@ import Signal from '../../lib/signals.es6.js'
 
 import { Log } from '../globals.js'
 import { defaults } from '../utils.js'
-import Queue from '../utils/queue.js'
 import { circularMean } from '../math/array-utils.js'
 import { lerp, spline } from '../math/math-utils.js'
 import Selection from '../selection.js'
@@ -109,6 +108,7 @@ class Trajectory {
     this.setParameters(p)
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
+    this.trajPath = trajPath
 
     // selection to restrict atoms used for superposition
     this.selection = new Selection(
@@ -124,8 +124,6 @@ class Trajectory {
     this.setStructure(structure)
     this.setPlayer(new TrajectoryPlayer(this))
 
-    this.trajPath = trajPath
-
     this.numframes = undefined
     this.getNumframes()
   }
@@ -134,35 +132,27 @@ class Trajectory {
     this.structure = structure
     this.atomCount = structure.atomCount
 
-    this.makeAtomIndices()
-
-    this.saveInitialStructure()
-
     this.backboneIndices = this.getIndices(
       new Selection('backbone and not hydrogen')
     )
     this.makeIndices()
+    this.makeAtomIndices()
 
-    this.frameCache = []
-    this.boxCache = []
-    this.pathCache = []
+    this.frameCache = {}
+    this.loadQueue = {}
+    this.boxCache = {}
+    this.pathCache = {}
     this.frameCacheSize = 0
     this.currentFrame = -1
   }
 
-  saveInitialStructure () {
-    const initialStructure = new Float32Array(3 * this.atomCount)
-    let i = 0
-
-    this.structure.eachAtom(function (a) {
-      initialStructure[ i + 0 ] = a.x
-      initialStructure[ i + 1 ] = a.y
-      initialStructure[ i + 2 ] = a.z
-
-      i += 3
-    })
-
-    this.initialStructure = initialStructure
+  saveInitialCoords () {
+    if (this.frameCache[0]) {
+      this.initialCoords = new Float32Array(this.frameCache[0])
+      this.makeSuperposeCoords()
+    } else {
+      this.loadFrame(0, () => this.saveInitialCoords())
+    }
   }
 
   setSelection (string) {
@@ -195,13 +185,15 @@ class Trajectory {
   makeIndices () {
     // indices to restrict atoms used for superposition
     this.indices = this.getIndices(this.selection)
+  }
 
+  makeSuperposeCoords () {
     const n = this.indices.length * 3
 
     this.coords1 = new Float32Array(n)
     this.coords2 = new Float32Array(n)
 
-    const y = this.initialStructure
+    const y = this.initialCoords
     const coords2 = this.coords2
 
     for (let i = 0; i < n; i += 3) {
@@ -222,9 +214,10 @@ class Trajectory {
   }
 
   resetCache () {
-    this.frameCache = []
-    this.boxCache = []
-    this.pathCache = []
+    this.frameCache = {}
+    this.loadQueue = {}
+    this.boxCache = {}
+    this.pathCache = {}
     this.frameCacheSize = 0
     this.setFrame(this.currentFrame)
 
@@ -256,6 +249,14 @@ class Trajectory {
     if (resetCache) this.resetCache()
   }
 
+  hasFrame (i) {
+    if (Array.isArray(i)) {
+      return i.every(j => !!this.frameCache[j])
+    } else {
+      return !!this.frameCache[i]
+    }
+  }
+
   setFrame (i, callback) {
     if (i === undefined) return this
 
@@ -264,17 +265,19 @@ class Trajectory {
     i = parseInt(i)
 
     if (i === -1 || this.frameCache[ i ]) {
-      this.updateStructure(i, callback)
+      this.updateStructure(i)
+      if (callback) callback()
     } else {
       this.loadFrame(i, () => {
-        this.updateStructure(i, callback)
+        this.updateStructure(i)
+        if (callback) callback()
       })
     }
 
     return this
   }
 
-  interpolate (i, ip, ipp, ippp, t, type, callback) {
+  interpolate (i, ip, ipp, ippp, t, type) {
     const fc = this.frameCache
 
     const c = fc[ i ]
@@ -308,10 +311,6 @@ class Trajectory {
     this.structure.updatePosition(coords)
     this.currentFrame = i
     this.signals.frameChanged.dispatch(i)
-
-    if (typeof callback === 'function') {
-      callback()
-    }
   }
 
   setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
@@ -327,10 +326,12 @@ class Trajectory {
 
     if (iList.length) {
       this.loadFrame(iList, () => {
-        this.interpolate(i, ip, ipp, ippp, t, type, callback)
+        this.interpolate(i, ip, ipp, ippp, t, type)
+        if (callback) callback()
       })
     } else {
-      this.interpolate(i, ip, ipp, ippp, t, type, callback)
+      this.interpolate(i, ip, ipp, ippp, t, type)
+      if (callback) callback()
     }
 
     return this
@@ -338,18 +339,22 @@ class Trajectory {
 
   loadFrame (i, callback) {
     if (Array.isArray(i)) {
-      let queue
-      const fn = (j, wcallback) => {
-        this._loadFrame(j, function () {
-          wcallback()
-          if (queue.length() === 0 && typeof callback === 'function') {
-            callback()
-          }
+      i.forEach(j => {
+        if (!this.loadQueue[j] && !this.frameCache[j]) {
+          this.loadQueue[j] = true
+          this._loadFrame(j, () => {
+            delete this.loadQueue[j]
+          })
+        }
+      })
+    } else {
+      if (!this.loadQueue[i] && !this.frameCache[i]) {
+        this.loadQueue[i] = true
+        this._loadFrame(i, () => {
+          delete this.loadQueue[i]
+          if (callback) callback()
         })
       }
-      queue = new Queue(fn, i)
-    } else {
-      this._loadFrame(i, callback)
     }
   }
 
@@ -357,7 +362,7 @@ class Trajectory {
     Log.error('Trajectory._loadFrame not implemented', i, callback)
   }
 
-  updateStructure (i, callback) {
+  updateStructure (i) {
     if (this._disposed) return
 
     if (i === -1) {
@@ -369,10 +374,6 @@ class Trajectory {
     this.structure.trajectory = {
       name: this.trajPath,
       frame: i
-    }
-
-    if (typeof callback === 'function') {
-      callback()
     }
 
     this.currentFrame = i
@@ -424,7 +425,7 @@ class Trajectory {
       }
     }
 
-    if (this.indices.length > 0 && this.superpose) {
+    if (this.indices.length > 0 && this.coords1 && this.superpose) {
       this.doSuperpose(coords)
     }
 
@@ -441,7 +442,7 @@ class Trajectory {
   }
 
   dispose () {
-    this.frameCache = []  // aid GC
+    this.resetCache()  // aid GC
     this._disposed = true
     if (this.player) this.player.stop()
   }

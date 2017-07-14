@@ -9,6 +9,7 @@ import Trajectory from './trajectory.js'
 class StructureTrajectory extends Trajectory {
   constructor (trajPath, structure, params) {
     super('', structure, params)
+    this.saveInitialCoords()
   }
 
   get type () { return 'structure' }
