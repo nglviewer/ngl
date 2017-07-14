@@ -63,7 +63,8 @@ class TrajectoryPlayer {
     this._run = false
     this._previousTime = 0
     this._currentTime = 0
-    this._currentStep = 0
+    this._currentStep = 1
+    this._currentFrame
     this._direction = this.direction === 'bounce' ? 'forward' : this.direction
 
     traj.signals.gotNumframes.add(function (n) {
@@ -104,15 +105,36 @@ class TrajectoryPlayer {
 
     this._currentTime = window.performance.now()
     const dt = this._currentTime - this._previousTime
+    const step = this.interpolateType ? this.interpolateStep : 1
+    const timeout = this.timeout / step
     const traj = this.traj
 
-    if (traj && traj.numframes && !traj.inProgress && dt >= this.timeout) {
-      const i = this._next()
-      if (traj.hasFrame(i)) {
-        traj.setFrame(i)
-        this._previousTime = this._currentTime
+    if (traj && traj.numframes && !traj.inProgress && dt >= timeout) {
+      if (this.interpolateType) {
+        if( this._currentStep > this.interpolateStep ) {
+          this._currentStep = 1
+        }
+        if (this._currentStep === 1) {
+          this._currentFrame = this._nextInterpolated()
+        }
+        if (traj.hasFrame(this._currentFrame)) {
+          this._currentStep += 1
+          const t = this._currentStep / this.interpolateStep
+          traj.setFrameInterpolated(
+            ...this._currentFrame, t, this.interpolateType
+          )
+          this._previousTime = this._currentTime
+        } else {
+          traj.loadFrame(this._currentFrame)
+        }
       } else {
-        traj.loadFrame(i)
+        const i = this._next()
+        if (traj.hasFrame(i)) {
+          traj.setFrame(i)
+          this._previousTime = this._currentTime
+        } else {
+          traj.loadFrame(i)
+        }
       }
     }
 
@@ -163,48 +185,21 @@ class TrajectoryPlayer {
     return i
   }
 
-    // if (!this._stopFlag) {
-    //   if (!this.traj.inProgress && this.interpolateType) {
-    //     let ip, ipp, ippp
+  _nextInterpolated () {
+    const i = this._next()
+    let ip, ipp, ippp
 
-    //     if (this.direction === 'forward') {
-    //       ip = Math.max(this.start, i - this.step)
-    //       ipp = Math.max(this.start, i - 2 * this.step)
-    //       ippp = Math.max(this.start, i - 3 * this.step)
-    //     } else {
-    //       ip = Math.min(this.end, i + this.step)
-    //       ipp = Math.min(this.end, i + 2 * this.step)
-    //       ippp = Math.min(this.end, i + 3 * this.step)
-    //     }
-
-    //     this._interpolate(
-    //       i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-    //     )
-    //   } else {
-    //     return
-    //     setTimeout(this._animate, this.timeout)
-    //   }
-    // } else {
-    //   this._running = false
-    // }
-
-  _interpolate (i, ip, ipp, ippp, d, t) {
-    t += d
-
-    if (t <= 1) {
-      const deltaTime = Math.round(this.timeout * d)
-
-      this.traj.setFrameInterpolated(
-        i, ip, ipp, ippp, t, this.interpolateType,
-        () => {
-          setTimeout(() => {
-            this._interpolate(i, ip, ipp, ippp, d, t)
-          }, deltaTime)
-        }
-      )
+    if (this._direction === 'forward') {
+      ip = Math.max(this.start, i - this.step)
+      ipp = Math.max(this.start, i - 2 * this.step)
+      ippp = Math.max(this.start, i - 3 * this.step)
     } else {
-      setTimeout(this._animate, 0)
+      ip = Math.min(this.end, i + this.step)
+      ipp = Math.min(this.end, i + 2 * this.step)
+      ippp = Math.min(this.end, i + 3 * this.step)
     }
+
+    return [i, ip, ipp, ippp]
   }
 
   /**
@@ -228,6 +223,7 @@ class TrajectoryPlayer {
       if (this.traj.player !== this) {
         this.traj.setPlayer(this)
       }
+      this._currentStep = 1
 
       const frame = this.traj.currentFrame
 

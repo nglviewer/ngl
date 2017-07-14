@@ -144,6 +144,7 @@ class Trajectory {
     this.makeIndices()
 
     this.frameCache = {}
+    this.loadQueue = {}
     this.boxCache = {}
     this.pathCache = {}
     this.frameCacheSize = 0
@@ -223,6 +224,7 @@ class Trajectory {
 
   resetCache () {
     this.frameCache = {}
+    this.loadQueue = {}
     this.boxCache = {}
     this.pathCache = {}
     this.frameCacheSize = 0
@@ -345,20 +347,23 @@ class Trajectory {
   }
 
   loadFrame (i, callback) {
-    // TODO allow parallel loading
     if (Array.isArray(i)) {
-      let queue
-      const fn = (j, wcallback) => {
-        this._loadFrame(j, function () {
-          wcallback()
-          if (queue.length() === 0 && callback) {
-            callback()
-          }
+      i.forEach(j => {
+        if (!this.loadQueue[j] && !this.frameCache[j]) {
+          this.loadQueue[j] = true
+          this._loadFrame(j, () => {
+            delete this.loadQueue[j]
+          })
+        }
+      })
+    } else {
+      if (!this.loadQueue[i] && !this.frameCache[i]) {
+        this.loadQueue[i] = true
+        this._loadFrame(i, () => {
+          delete this.loadQueue[i]
+          if (callback) callback()
         })
       }
-      queue = new Queue(fn, i)
-    } else {
-      this._loadFrame(i, callback)
     }
   }
 
