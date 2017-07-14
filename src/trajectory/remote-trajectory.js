@@ -8,6 +8,11 @@ import { Log, DatasourceRegistry } from '../globals.js'
 import Trajectory from './trajectory.js'
 
 class RemoteTrajectory extends Trajectory {
+  constructor (trajPath, structure, params) {
+    super(trajPath, structure, params)
+    this.saveInitialCoords()
+  }
+
   get type () { return 'remote' }
 
   makeAtomIndices () {

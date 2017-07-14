@@ -108,6 +108,7 @@ class Trajectory {
     this.setParameters(p)
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
+    this.trajPath = trajPath
 
     // selection to restrict atoms used for superposition
     this.selection = new Selection(
@@ -123,8 +124,6 @@ class Trajectory {
     this.setStructure(structure)
     this.setPlayer(new TrajectoryPlayer(this))
 
-    this.trajPath = trajPath
-
     this.numframes = undefined
     this.getNumframes()
   }
@@ -133,14 +132,11 @@ class Trajectory {
     this.structure = structure
     this.atomCount = structure.atomCount
 
-    this.makeAtomIndices()
-
-    this.saveInitialStructure()
-
     this.backboneIndices = this.getIndices(
       new Selection('backbone and not hydrogen')
     )
     this.makeIndices()
+    this.makeAtomIndices()
 
     this.frameCache = {}
     this.loadQueue = {}
@@ -150,19 +146,13 @@ class Trajectory {
     this.currentFrame = -1
   }
 
-  saveInitialStructure () {
-    const initialStructure = new Float32Array(3 * this.atomCount)
-    let i = 0
-
-    this.structure.eachAtom(function (a) {
-      initialStructure[ i + 0 ] = a.x
-      initialStructure[ i + 1 ] = a.y
-      initialStructure[ i + 2 ] = a.z
-
-      i += 3
-    })
-
-    this.initialStructure = initialStructure
+  saveInitialCoords () {
+    if (this.frameCache[0]) {
+      this.initialCoords = new Float32Array(this.frameCache[0])
+      this.makeSuperposeCoords()
+    } else {
+      this.loadFrame(0, () => this.saveInitialCoords())
+    }
   }
 
   setSelection (string) {
@@ -195,13 +185,15 @@ class Trajectory {
   makeIndices () {
     // indices to restrict atoms used for superposition
     this.indices = this.getIndices(this.selection)
+  }
 
+  makeSuperposeCoords () {
     const n = this.indices.length * 3
 
     this.coords1 = new Float32Array(n)
     this.coords2 = new Float32Array(n)
 
-    const y = this.initialStructure
+    const y = this.initialCoords
     const coords2 = this.coords2
 
     for (let i = 0; i < n; i += 3) {
@@ -433,7 +425,7 @@ class Trajectory {
       }
     }
 
-    if (this.indices.length > 0 && this.superpose) {
+    if (this.indices.length > 0 && this.coords1 && this.superpose) {
       this.doSuperpose(coords)
     }
 

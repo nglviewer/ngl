@@ -22,6 +22,7 @@ class FramesTrajectory extends Trajectory {
     this.boxes = frames.boxes
 
     this.getNumframes()
+    this.saveInitialCoords()
   }
 
   get type () { return 'frames' }
