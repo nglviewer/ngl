@@ -25,7 +25,7 @@ import { defaults } from '../utils.js'
 /**
  * Trajectory player for animating coordinate frames
  * @example
- * var player = new NGL.TrajectoryPlayer( trajComp.trajectory, { step: 1, timeout: 50 } );
+ * var player = new TrajectoryPlayer(trajectory, {step: 1, timeout: 50});
  * player.play();
  */
 class TrajectoryPlayer {
@@ -40,14 +40,13 @@ class TrajectoryPlayer {
       haltedRunning: new Signal()
     }
 
-    const p = Object.assign({}, params)
-
     traj.signals.playerChanged.add(function (player) {
       if (player !== this) {
         this.pause()
       }
     }, this)
 
+    const p = Object.assign({}, params)
     const n = defaults(traj.numframes, 1)
     this.traj = traj
     this.start = defaults(p.start, 0)
