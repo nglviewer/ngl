@@ -19,7 +19,7 @@ import { defaults } from '../utils.js'
  * @property {String} interpolateType - one of "" (empty string), "linear" or "spline"
  * @property {Integer} interpolateStep - window size used for interpolation
  * @property {String} mode - either "loop" or "once"
- * @property {String} direction - either "forward" or "backward"
+ * @property {String} direction - either "forward", "backward" or "bounce"
  */
 
 /**
@@ -48,6 +48,7 @@ class TrajectoryPlayer {
 
     const p = Object.assign({}, params)
     const n = defaults(traj.numframes, 1)
+
     this.traj = traj
     this.start = defaults(p.start, 0)
     this.end = Math.min(defaults(p.end, n - 1), n - 1)
@@ -73,6 +74,30 @@ class TrajectoryPlayer {
   }
 
   get isRunning () { return this._run }
+
+  /**
+   * set player parameters
+   * @param {TrajectoryPlayerParameters} [params] - parameter object
+   */
+  setParameters (params) {
+    const p = Object.assign({}, params)
+
+    if (p.start !== undefined) this.start = p.start
+    if (p.end !== undefined) this.end = p.end
+
+    if (p.step !== undefined) this.step = p.step
+    if (p.timeout !== undefined) this.timeout = p.timeout
+    if (p.interpolateType !== undefined) this.interpolateType = p.interpolateType
+    if (p.interpolateStep !== undefined) this.interpolateStep = p.interpolateStep
+    if (p.mode !== undefined) this.mode = p.mode
+
+    if (p.direction !== undefined) {
+      this.direction = p.direction
+      if (this.direction !== 'bounce') {
+        this._direction = this.direction
+      }
+    }
+  }
 
   _animate () {
     if (!this._run) return
