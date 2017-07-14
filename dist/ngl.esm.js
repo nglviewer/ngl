@@ -50176,7 +50176,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (x = 0; x < canvasWidth; x++) {
       off = (y * canvasWidth + x) * 4;
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true;
         break
       }
@@ -50192,7 +50193,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (y = 0; y < canvasHeight; y++) {
       off = (y * canvasWidth + x) * 4;
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true;
         break
       }
@@ -50208,7 +50210,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (x = canvasWidth - 1; x >= 0; x--) {
       off = (y * canvasWidth + x) * 4;
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true;
         break
       }
@@ -50224,7 +50227,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (y = canvasHeight - 1; y >= 0; y--) {
       off = (y * canvasWidth + x) * 4;
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true;
         break
       }
@@ -50241,12 +50245,12 @@ function _trimCanvas (canvas, r, g, b, a) {
 
   var trimedCtx = trimedCanvas.getContext('2d');
   trimedCtx.drawImage(
-        canvas,
-        topX, topY,
-        trimedCanvas.width, trimedCanvas.height,
-        0, 0,
-        trimedCanvas.width, trimedCanvas.height
-    );
+    canvas,
+    topX, topY,
+    trimedCanvas.width, trimedCanvas.height,
+    0, 0,
+    trimedCanvas.width, trimedCanvas.height
+  );
 
   return trimedCanvas
 }
@@ -50325,14 +50329,14 @@ function makeImage (viewer, params) {
 
   return new Promise(function (resolve) {
     var tiledRenderer = new TiledRenderer(
-            renderer, camera, viewer,
+      renderer, camera, viewer,
       {
         factor: factor,
         antialias: antialias,
         onProgress: onProgress,
         onFinish: onFinish
       }
-        );
+    );
 
     renderer.setClearAlpha(transparent ? 0 : 1);
     setLineWidthAndPixelSize();
@@ -50341,15 +50345,15 @@ function makeImage (viewer, params) {
     function onFinish (i, n) {
       var canvas = trimCanvas(tiledRenderer.canvas);
       canvas.toBlob(
-                function (blob) {
-                  renderer.setClearAlpha(originalClearAlpha);
-                  setLineWidthAndPixelSize(true);
-                  viewer.requestRender();
-                  onProgress(n, n, true);
-                  resolve(blob);
-                },
-                'image/png'
-            );
+        function (blob) {
+          renderer.setClearAlpha(originalClearAlpha);
+          setLineWidthAndPixelSize(true);
+          viewer.requestRender();
+          onProgress(n, n, true);
+          resolve(blob);
+        },
+        'image/png'
+      );
     }
   })
 }
@@ -50359,7 +50363,7 @@ var matrix = new Matrix4();
 var modelViewProjectionMatrix = new Matrix4();
 
 function sortProjectedPosition (scene, camera) {
-    // console.time( "sort" );
+  // console.time( "sort" );
 
   scene.traverseVisible(function (o) {
     if (!(o instanceof Points) || !o.sortParticles) {
@@ -50372,11 +50376,11 @@ function sortProjectedPosition (scene, camera) {
     if (n === 0) { return }
 
     matrix.multiplyMatrices(
-            camera.matrixWorldInverse, o.matrixWorld
-        );
+      camera.matrixWorldInverse, o.matrixWorld
+    );
     modelViewProjectionMatrix.multiplyMatrices(
-            camera.projectionMatrix, matrix
-        );
+      camera.projectionMatrix, matrix
+    );
 
     var sortData, sortArray, zArray, cmpFn;
 
@@ -50409,7 +50413,7 @@ function sortProjectedPosition (scene, camera) {
       vertex.fromArray(attributes.position.array, i * 3);
       vertex.applyMatrix4(modelViewProjectionMatrix);
 
-            // negate, so that sorting order is reversed
+      // negate, so that sorting order is reversed
       zArray[ i ] = -vertex.z;
       sortArray[ i ] = i;
     }
@@ -50424,9 +50428,7 @@ function sortProjectedPosition (scene, camera) {
       var itemSize = attr.itemSize;
 
       if (!sortData[ name ]) {
-        sortData[ name ] = new Float32Array(
-                    itemSize * n
-                );
+        sortData[ name ] = new Float32Array(itemSize * n);
       }
 
       tmpTab = sortData[ name ];
@@ -50484,14 +50486,14 @@ function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
 
     if (u.projectionMatrixInverse) {
       u.projectionMatrixInverse.value.copy(
-                projectionMatrixInverse
-            );
+        projectionMatrixInverse
+      );
     }
 
     if (u.projectionMatrixTranspose) {
       u.projectionMatrixTranspose.value.copy(
-                projectionMatrixTranspose
-            );
+        projectionMatrixTranspose
+      );
     }
 
     if (u.ortho) {
@@ -50521,8 +50523,8 @@ function onBeforeRender (renderer, scene, camera, geometry, material/*, group */
   }
 
   if (u.modelViewMatrixInverse || u.modelViewMatrixInverseTranspose ||
-        u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
-    ) {
+      u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
+  ) {
     this.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this.matrixWorld);
   }
 
@@ -50534,12 +50536,12 @@ function onBeforeRender (renderer, scene, camera, geometry, material/*, group */
   if (u.modelViewMatrixInverseTranspose) {
     if (u.modelViewMatrixInverse) {
       u.modelViewMatrixInverseTranspose.value.copy(
-                u.modelViewMatrixInverse.value
-            ).transpose();
+        u.modelViewMatrixInverse.value
+      ).transpose();
     } else {
       u.modelViewMatrixInverseTranspose.value
-                .getInverse(this.modelViewMatrix)
-                .transpose();
+        .getInverse(this.modelViewMatrix)
+        .transpose();
     }
     updateList.push('modelViewMatrixInverseTranspose');
   }
@@ -50547,27 +50549,27 @@ function onBeforeRender (renderer, scene, camera, geometry, material/*, group */
   if (u.modelViewProjectionMatrix) {
     camera.updateProjectionMatrix();
     u.modelViewProjectionMatrix.value.multiplyMatrices(
-            camera.projectionMatrix, this.modelViewMatrix
-        );
+      camera.projectionMatrix, this.modelViewMatrix
+    );
     updateList.push('modelViewProjectionMatrix');
   }
 
   if (u.modelViewProjectionMatrixInverse) {
     if (u.modelViewProjectionMatrix) {
       tmpMatrix.copy(
-                u.modelViewProjectionMatrix.value
-            );
+        u.modelViewProjectionMatrix.value
+      );
       u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
+        tmpMatrix
+      );
     } else {
       camera.updateProjectionMatrix();
       tmpMatrix.multiplyMatrices(
-                camera.projectionMatrix, this.modelViewMatrix
-            );
+        camera.projectionMatrix, this.modelViewMatrix
+      );
       u.modelViewProjectionMatrixInverse.value.getInverse(
-                tmpMatrix
-            );
+        tmpMatrix
+      );
     }
     updateList.push('modelViewProjectionMatrixInverse');
   }
@@ -50699,15 +50701,14 @@ function Viewer (idOrElement) {
     var lookAt = new Vector3(0, 0, 0);
 
     perspectiveCamera = new PerspectiveCamera(
-            parameters.cameraFov, width / height
-        );
+      parameters.cameraFov, width / height
+    );
     perspectiveCamera.position.z = parameters.cameraZ;
     perspectiveCamera.lookAt(lookAt);
 
     orthographicCamera = new OrthographicCamera(
-            width / -2, width / 2,
-            height / 2, height / -2
-        );
+      width / -2, width / 2, height / 2, height / -2
+    );
     orthographicCamera.position.z = parameters.cameraZ;
     orthographicCamera.lookAt(lookAt);
 
@@ -50737,33 +50738,33 @@ function Viewer (idOrElement) {
     renderer.autoClear = false;
     renderer.sortObjects = true;
 
-        // var gl = renderer.getContext();
-        // console.log( gl.getContextAttributes().antialias );
-        // console.log( gl.getParameter(gl.SAMPLES) );
+    // var gl = renderer.getContext();
+    // console.log( gl.getContextAttributes().antialias );
+    // console.log( gl.getParameter(gl.SAMPLES) );
 
     setExtensionFragDepth(renderer.extensions.get('EXT_frag_depth'));
     renderer.extensions.get('OES_element_index_uint');
 
     setSupportsReadPixelsFloat(
-            (renderer.extensions.get('OES_texture_float') &&
-                renderer.extensions.get('WEBGL_color_buffer_float')) ||
-            (Browser === 'Chrome' &&
-                renderer.extensions.get('OES_texture_float'))
-        );
+      (renderer.extensions.get('OES_texture_float') &&
+        renderer.extensions.get('WEBGL_color_buffer_float')) ||
+      (Browser === 'Chrome' &&
+        renderer.extensions.get('OES_texture_float'))
+    );
 
     container.appendChild(renderer.domElement);
 
     var dprWidth = width * dpr;
     var dprHeight = height * dpr;
 
-        // picking texture
+    // picking texture
 
     renderer.extensions.get('OES_texture_float');
     supportsHalfFloat = renderer.extensions.get('OES_texture_half_float');
     renderer.extensions.get('WEBGL_color_buffer_float');
 
     pickingTarget = new WebGLRenderTarget(
-            dprWidth, dprHeight,
+      dprWidth, dprHeight,
       {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
@@ -50771,35 +50772,34 @@ function Viewer (idOrElement) {
         format: RGBAFormat,
         type: SupportsReadPixelsFloat ? FloatType : UnsignedByteType
       }
-        );
+    );
     pickingTarget.texture.generateMipmaps = false;
 
-        // ssaa textures
+    // ssaa textures
 
     sampleTarget = new WebGLRenderTarget(
-            dprWidth, dprHeight,
+      dprWidth, dprHeight,
       {
         minFilter: LinearFilter,
         magFilter: LinearFilter,
         format: RGBAFormat
       }
-        );
+    );
 
     holdTarget = new WebGLRenderTarget(
-            dprWidth, dprHeight,
+      dprWidth, dprHeight,
       {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-                // problems on mobile so use UnsignedByteType there
-                // see https://github.com/arose/ngl/issues/191
+        // problems on mobile so use UnsignedByteType there
+        // see https://github.com/arose/ngl/issues/191
         type: Mobile ? UnsignedByteType : (
-                    supportsHalfFloat ? HalfFloatType
-                        : (SupportsReadPixelsFloat ? FloatType : UnsignedByteType)
-                )
-
+          supportsHalfFloat ? HalfFloatType
+            : (SupportsReadPixelsFloat ? FloatType : UnsignedByteType)
+        )
       }
-        );
+    );
 
     compositeUniforms = {
       'tForeground': { type: 't', value: null },
@@ -50819,8 +50819,8 @@ function Viewer (idOrElement) {
 
     compositeCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     compositeScene = new Scene().add(new Mesh(
-            new PlaneGeometry(2, 2), compositeMaterial
-        ));
+      new PlaneGeometry(2, 2), compositeMaterial
+    ));
   }
 
   function initScene () {
@@ -50859,13 +50859,13 @@ function Viewer (idOrElement) {
         // light
 
     pointLight = new SpotLight(
-            parameters.lightColor, parameters.lightIntensity
-        );
+      parameters.lightColor, parameters.lightIntensity
+    );
     scene.add(pointLight);
 
     ambientLight = new AmbientLight(
-            parameters.ambientLight, parameters.ambientIntensity
-        );
+      parameters.ambientLight, parameters.ambientIntensity
+    );
     scene.add(ambientLight);
   }
 
@@ -50918,7 +50918,7 @@ function Viewer (idOrElement) {
   }
 
   function add (buffer, instanceList) {
-        // Log.time( "Viewer.add" );
+    // Log.time( "Viewer.add" );
 
     if (instanceList) {
       instanceList.forEach(function (instance) {
@@ -50942,11 +50942,11 @@ function Viewer (idOrElement) {
 
     if (Debug) { updateHelper(); }
 
-        // Log.timeEnd( "Viewer.add" );
+    // Log.timeEnd( "Viewer.add" );
   }
 
   function addBuffer (buffer, instance) {
-        // Log.time( "Viewer.addBuffer" );
+    // Log.time( "Viewer.addBuffer" );
 
     function setUserData (object) {
       if (object instanceof Group) {
@@ -50967,7 +50967,7 @@ function Viewer (idOrElement) {
 
     var wireframeMesh = buffer.getWireframeMesh();
     if (instance) {
-            // wireframeMesh.applyMatrix( instance.matrix );
+      // wireframeMesh.applyMatrix( instance.matrix );
       wireframeMesh.matrix.copy(mesh.matrix);
       wireframeMesh.position.copy(mesh.position);
       wireframeMesh.quaternion.copy(mesh.quaternion);
@@ -50979,7 +50979,7 @@ function Viewer (idOrElement) {
     if (buffer.pickable) {
       var pickingMesh = buffer.getPickingMesh();
       if (instance) {
-                // pickingMesh.applyMatrix( instance.matrix );
+        // pickingMesh.applyMatrix( instance.matrix );
         pickingMesh.matrix.copy(mesh.matrix);
         pickingMesh.position.copy(mesh.position);
         pickingMesh.quaternion.copy(mesh.quaternion);
@@ -50995,7 +50995,7 @@ function Viewer (idOrElement) {
       updateBoundingBox(buffer.geometry, buffer.matrix);
     }
 
-        // Log.timeEnd( "Viewer.addBuffer" );
+    // Log.timeEnd( "Viewer.addBuffer" );
   }
 
   function remove (buffer) {
@@ -51011,7 +51011,7 @@ function Viewer (idOrElement) {
     updateBoundingBox();
     if (Debug) { updateHelper(); }
 
-        // requestRender();
+    // requestRender();
   }
 
   function updateBoundingBox (geometry, matrix, instanceMatrix) {
@@ -51030,8 +51030,8 @@ function Viewer (idOrElement) {
       }
 
       if (geoBoundingBox.min.equals(geoBoundingBox.max)) {
-                // mainly to give a single impostor geometry some volume
-                // as it is only expanded in the shader on the GPU
+        // mainly to give a single impostor geometry some volume
+        // as it is only expanded in the shader on the GPU
         geoBoundingBox.expandByScalar(5);
       }
 
@@ -51069,8 +51069,8 @@ function Viewer (idOrElement) {
 
     render(true);
     renderer.readRenderTargetPixels(
-            pickingTarget, 0, 0, width, height, imgBuffer
-        );
+      pickingTarget, 0, 0, width, height, imgBuffer
+    );
 
     return imgBuffer
   }
@@ -51276,19 +51276,19 @@ function Viewer (idOrElement) {
 
     render(true);
     renderer.readRenderTargetPixels(
-            pickingTarget, x, y, 1, 1, pixelBuffer
-        );
+      pickingTarget, x, y, 1, 1, pixelBuffer
+    );
 
     if (SupportsReadPixelsFloat) {
       pid =
-                ((Math.round(pixelBuffer[0] * 255) << 16) & 0xFF0000) |
-                ((Math.round(pixelBuffer[1] * 255) << 8) & 0x00FF00) |
-                ((Math.round(pixelBuffer[2] * 255)) & 0x0000FF);
+        ((Math.round(pixelBuffer[0] * 255) << 16) & 0xFF0000) |
+        ((Math.round(pixelBuffer[1] * 255) << 8) & 0x00FF00) |
+        ((Math.round(pixelBuffer[2] * 255)) & 0x0000FF);
     } else {
       pid =
-                (pixelBuffer[0] << 16) |
-                (pixelBuffer[1] << 8) |
-                (pixelBuffer[2]);
+        (pixelBuffer[0] << 16) |
+        (pixelBuffer[1] << 8) |
+        (pixelBuffer[2]);
     }
 
     var oid = Math.round(pixelBuffer[ 3 ]);
@@ -51298,20 +51298,20 @@ function Viewer (idOrElement) {
       picker = object.userData.buffer.picking;
     }
 
-        // if( Debug ){
-        //     const rgba = Array.apply( [], pixelBuffer );
-        //     Log.log( pixelBuffer );
-        //     Log.log(
-        //         "picked color",
-        //         rgba.map( c => { return c.toPrecision( 2 ) } )
-        //     );
-        //     Log.log( "picked pid", pid );
-        //     Log.log( "picked oid", oid );
-        //     Log.log( "picked object", object );
-        //     Log.log( "picked instance", instance );
-        //     Log.log( "picked position", x, y );
-        //     Log.log( "devicePixelRatio", window.devicePixelRatio );
-        // }
+    // if( Debug ){
+    //   const rgba = Array.apply( [], pixelBuffer );
+    //   Log.log( pixelBuffer );
+    //   Log.log(
+    //     "picked color",
+    //     rgba.map( c => { return c.toPrecision( 2 ) } )
+    //   );
+    //   Log.log( "picked pid", pid );
+    //   Log.log( "picked oid", oid );
+    //   Log.log( "picked object", object );
+    //   Log.log( "picked instance", instance );
+    //   Log.log( "picked position", x, y );
+    //   Log.log( "devicePixelRatio", window.devicePixelRatio );
+    // }
 
     return {
       'pid': pid,
@@ -51322,11 +51322,11 @@ function Viewer (idOrElement) {
 
   function requestRender () {
     if (renderPending) {
-            // Log.info( "there is still a 'render' call pending" );
+      // Log.info( "there is still a 'render' call pending" );
       return
     }
 
-        // start gathering stats anew after inactivity
+    // start gathering stats anew after inactivity
     if (window.performance.now() - stats.startTime > 22) {
       stats.begin();
       isStill = false;
@@ -51349,23 +51349,23 @@ function Viewer (idOrElement) {
   function __updateClipping () {
     var p = parameters;
 
-        // clipping
+    // clipping
 
-        // cDist = distVector.copy( camera.position )
-        //             .sub( controls.target ).length();
+    // cDist = distVector.copy( camera.position )
+    //           .sub( controls.target ).length();
     cDist = distVector.copy(camera.position).length();
-        // console.log( "cDist", cDist )
+    // console.log( "cDist", cDist )
     if (!cDist) {
-            // recover from a broken (NaN) camera position
+      // recover from a broken (NaN) camera position
       camera.position.set(0, 0, p.cameraZ);
       cDist = Math.abs(p.cameraZ);
     }
 
     bRadius = Math.max(10, boundingBoxLength * 0.5);
     bRadius += boundingBox.getCenter(distVector).length();
-        // console.log( "bRadius", bRadius )
+    // console.log( "bRadius", bRadius )
     if (bRadius === Infinity || bRadius === -Infinity || isNaN(bRadius)) {
-            // console.warn( "something wrong with bRadius" );
+      // console.warn( "something wrong with bRadius" );
       bRadius = 50;
     }
 
@@ -51374,7 +51374,7 @@ function Viewer (idOrElement) {
     camera.near = cDist - (bRadius * nearFactor);
     camera.far = cDist + (bRadius * farFactor);
 
-        // fog
+    // fog
 
     var fogNearFactor = (50 - p.fogNear) / 50;
     var fogFarFactor = -(50 - p.fogFar) / 50;
@@ -51413,8 +51413,8 @@ function Viewer (idOrElement) {
   }
 
   function __updateLights () {
-        // distVector.copy( camera.position ).sub( controls.target )
-        //     .setLength( boundingBoxLength * 100 );
+    // distVector.copy( camera.position ).sub( controls.target )
+    //   .setLength( boundingBoxLength * 100 );
     distVector.copy(camera.position).setLength(boundingBoxLength * 100);
 
     pointLight.position.copy(camera.position).add(distVector);
@@ -51432,12 +51432,12 @@ function Viewer (idOrElement) {
     updateInfo();
     renderer.setRenderTarget(null);  // back to standard render target
 
-        // if( Debug ){
-        //     __setVisibility( false, true, false, true );
+    // if( Debug ){
+    //   __setVisibility( false, true, false, true );
 
-        //     renderer.clear();
-        //     renderer.render( scene, camera );
-        // }
+    //   renderer.clear();
+    //   renderer.render( scene, camera );
+    // }
   }
 
   function __renderModelGroup (renderTarget) {
@@ -51462,12 +51462,12 @@ function Viewer (idOrElement) {
   }
 
   function __renderSuperSample () {
-        // based on the Supersample Anti-Aliasing Render Pass
-        // contributed to three.js by bhouston / http://clara.io/
-        //
-        // This manual approach to SSAA re-renders the scene ones for
-        // each sample with camera jitter and accumulates the results.
-        // References: https://en.wikipedia.org/wiki/Supersampling
+    // based on the Supersample Anti-Aliasing Render Pass
+    // contributed to three.js by bhouston / http://clara.io/
+    //
+    // This manual approach to SSAA re-renders the scene ones for
+    // each sample with camera jitter and accumulates the results.
+    // References: https://en.wikipedia.org/wiki/Supersampling
 
     var offsetList = JitterVectors[ Math.max(0, Math.min(sampleLevel, 5)) ];
 
@@ -51479,29 +51479,29 @@ function Viewer (idOrElement) {
     var _width = sampleTarget.width;
     var _height = sampleTarget.height;
 
-        // render the scene multiple times, each slightly jitter offset
-        // from the last and accumulate the results.
+    // render the scene multiple times, each slightly jitter offset
+    // from the last and accumulate the results.
     for (var i = 0; i < offsetList.length; ++i) {
       var offset = offsetList[ i ];
       camera.setViewOffset(
-                _width, _height, offset[ 0 ], offset[ 1 ], _width, _height
-            );
+        _width, _height, offset[ 0 ], offset[ 1 ], _width, _height
+      );
       __updateCamera();
 
       var sampleWeight = baseSampleWeight;
-            // the theory is that equal weights for each sample lead to an
-            // accumulation of rounding errors.
-            // The following equation varies the sampleWeight per sample
-            // so that it is uniformly distributed across a range of values
-            // whose rounding errors cancel each other out.
+      // the theory is that equal weights for each sample lead to an
+      // accumulation of rounding errors.
+      // The following equation varies the sampleWeight per sample
+      // so that it is uniformly distributed across a range of values
+      // whose rounding errors cancel each other out.
       var uniformCenteredDistribution = (-0.5 + (i + 0.5) / offsetList.length);
       sampleWeight += roundingRange * uniformCenteredDistribution;
       compositeUniforms.scale.value = sampleWeight;
 
       __renderModelGroup(sampleTarget);
       renderer.render(
-                compositeScene, compositeCamera, holdTarget, (i === 0)
-            );
+        compositeScene, compositeCamera, holdTarget, (i === 0)
+      );
     }
 
     compositeUniforms.scale.value = 1.0;
@@ -51518,7 +51518,7 @@ function Viewer (idOrElement) {
       return
     }
 
-        // Log.time( "Viewer.render" );
+    // Log.time( "Viewer.render" );
 
     rendering = true;
 
@@ -51526,7 +51526,7 @@ function Viewer (idOrElement) {
     __updateCamera();
     __updateLights();
 
-        // render
+    // render
 
     updateInfo(true);
 
@@ -51542,8 +51542,8 @@ function Viewer (idOrElement) {
     rendering = false;
     renderPending = false;
 
-        // Log.timeEnd( "Viewer.render" );
-        // Log.log( info.memory, info.render );
+    // Log.timeEnd( "Viewer.render" );
+    // Log.log( info.memory, info.render );
   }
 
   function clear () {
@@ -51553,7 +51553,7 @@ function Viewer (idOrElement) {
     renderer.clear();
   }
 
-    // API
+  // API
 
   this.container = container;
   this.stats = stats;
@@ -66192,53 +66192,6 @@ Structure.prototype.dispose = function dispose () {
 Object.defineProperties( Structure.prototype, prototypeAccessors$13 );
 
 /**
- * @file Queue
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-function Queue (fn, argList) {
-  var queue = [];
-  var pending = false;
-
-  if (argList) {
-    for (var i = 0, il = argList.length; i < il; ++i) {
-      queue.push(argList[ i ]);
-    }
-    next();
-  }
-
-  function run (arg) {
-    fn(arg, next);
-  }
-
-  function next () {
-    var arg = queue.shift();
-    if (arg !== undefined) {
-      pending = true;
-      setTimeout(function () { run(arg); });
-    } else {
-      pending = false;
-    }
-  }
-
-    // API
-
-  this.push = function (arg) {
-    queue.push(arg);
-    if (!pending) { next(); }
-  };
-
-  this.kill = function () {
-    queue.length = 0;
-  };
-
-  this.length = function () {
-    return queue.length
-  };
-}
-
-/**
  * @file Superposition
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -66384,13 +66337,13 @@ Superposition.prototype.transform = function transform (atoms) {
  * @property {String} interpolateType - one of "" (empty string), "linear" or "spline"
  * @property {Integer} interpolateStep - window size used for interpolation
  * @property {String} mode - either "loop" or "once"
- * @property {String} direction - either "forward" or "backward"
+ * @property {String} direction - either "forward", "backward" or "bounce"
  */
 
 /**
  * Trajectory player for animating coordinate frames
  * @example
- * var player = new NGL.TrajectoryPlayer( trajComp.trajectory, { step: 1, timeout: 50 } );
+ * var player = new TrajectoryPlayer(trajectory, {step: 1, timeout: 50});
  * player.play();
  */
 var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
@@ -66399,15 +66352,15 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
     haltedRunning: new Signal()
   };
 
-  var p = Object.assign({}, params);
-
   traj.signals.playerChanged.add(function (player) {
     if (player !== this) {
       this.pause();
     }
   }, this);
 
+  var p = Object.assign({}, params);
   var n = defaults(traj.numframes, 1);
+
   this.traj = traj;
   this.start = defaults(p.start, 0);
   this.end = Math.min(defaults(p.end, n - 1), n - 1);
@@ -66417,96 +66370,150 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
   this.interpolateType = defaults(p.interpolateType, '');
   this.interpolateStep = defaults(p.interpolateStep, 5);
   this.mode = defaults(p.mode, 'loop');// loop, once
-  this.direction = defaults(p.direction, 'forward');// forward, backward
+  this.direction = defaults(p.direction, 'forward');// forward, backward, bounce
 
-  this._stopFlag = false;
-  this._running = false;
+  this._run = false;
+  this._previousTime = 0;
+  this._currentTime = 0;
+  this._currentStep = 1;
+  this._currentFrame = this.start;
+  this._direction = this.direction === 'bounce' ? 'forward' : this.direction;
 
   traj.signals.gotNumframes.add(function (n) {
-    this.end = Math.min(defaults(p.end, n - 1), n - 1);
+    this.end = Math.min(defaults(this.end, n - 1), n - 1);
   }, this);
 
   this._animate = this._animate.bind(this);
 };
 
-TrajectoryPlayer.prototype._animate = function _animate () {
-  var i;
-  this._running = true;
+var prototypeAccessors$24 = { isRunning: {} };
 
-  if (!this.traj.inProgress && !this._stopFlag) {
-    if (this.direction === 'forward') {
-      i = this.traj.currentFrame + this.step;
-    } else {
-      i = this.traj.currentFrame - this.step;
+prototypeAccessors$24.isRunning.get = function () { return this._run };
+
+/**
+ * set player parameters
+ * @param {TrajectoryPlayerParameters} [params] - parameter object
+ */
+TrajectoryPlayer.prototype.setParameters = function setParameters (params) {
+  var p = Object.assign({}, params);
+
+  if (p.start !== undefined) { this.start = p.start; }
+  if (p.end !== undefined) { this.end = p.end; }
+
+  if (p.step !== undefined) { this.step = p.step; }
+  if (p.timeout !== undefined) { this.timeout = p.timeout; }
+  if (p.interpolateType !== undefined) { this.interpolateType = p.interpolateType; }
+  if (p.interpolateStep !== undefined) { this.interpolateStep = p.interpolateStep; }
+  if (p.mode !== undefined) { this.mode = p.mode; }
+
+  if (p.direction !== undefined) {
+    this.direction = p.direction;
+    if (this.direction !== 'bounce') {
+      this._direction = this.direction;
     }
-
-    if (i >= this.end || i < this.start) {
-      if (this.mode === 'once') {
-        this.pause();
-
-        if (this.direction === 'forward') {
-          i = this.end;
-        } else {
-          i = this.start;
-        }
-      } else {
-        if (this.direction === 'forward') {
-          i = this.start;
-        } else {
-          i = this.end;
-        }
-      }
-    }
-
-    if (!this.interpolateType) {
-      this.traj.setFrame(i);
-    }
-  }
-
-  if (!this._stopFlag) {
-    if (!this.traj.inProgress && this.interpolateType) {
-      var ip, ipp, ippp;
-
-      if (this.direction === 'forward') {
-        ip = Math.max(this.start, i - this.step);
-        ipp = Math.max(this.start, i - 2 * this.step);
-        ippp = Math.max(this.start, i - 3 * this.step);
-      } else {
-        ip = Math.min(this.end, i + this.step);
-        ipp = Math.min(this.end, i + 2 * this.step);
-        ippp = Math.min(this.end, i + 3 * this.step);
-      }
-
-      this._interpolate(
-        i, ip, ipp, ippp, 1 / this.interpolateStep, 0
-      );
-    } else {
-      setTimeout(this._animate, this.timeout);
-    }
-  } else {
-    this._running = false;
   }
 };
 
-TrajectoryPlayer.prototype._interpolate = function _interpolate (i, ip, ipp, ippp, d, t) {
-    var this$1 = this;
+TrajectoryPlayer.prototype._animate = function _animate () {
+  if (!this._run) { return }
 
-  t += d;
+  this._currentTime = window.performance.now();
+  var dt = this._currentTime - this._previousTime;
+  var step = this.interpolateType ? this.interpolateStep : 1;
+  var timeout = this.timeout / step;
+  var traj = this.traj;
 
-  if (t <= 1) {
-    var deltaTime = Math.round(this.timeout * d);
-
-    this.traj.setFrameInterpolated(
-      i, ip, ipp, ippp, t, this.interpolateType,
-      function () {
-        setTimeout(function () {
-          this$1._interpolate(i, ip, ipp, ippp, d, t);
-        }, deltaTime);
+  if (traj && traj.numframes && !traj.inProgress && dt >= timeout) {
+    if (this.interpolateType) {
+      if (this._currentStep > this.interpolateStep) {
+        this._currentStep = 1;
       }
-    );
-  } else {
-    setTimeout(this._animate, 0);
+      if (this._currentStep === 1) {
+        this._currentFrame = this._nextInterpolated();
+      }
+      if (traj.hasFrame(this._currentFrame)) {
+        this._currentStep += 1;
+        var t = this._currentStep / this.interpolateStep;
+        traj.setFrameInterpolated.apply(
+          traj, this._currentFrame.concat( [t], [this.interpolateType] )
+        );
+        this._previousTime = this._currentTime;
+      } else {
+        traj.loadFrame(this._currentFrame);
+      }
+    } else {
+      var i = this._next();
+      if (traj.hasFrame(i)) {
+        traj.setFrame(i);
+        this._previousTime = this._currentTime;
+      } else {
+        traj.loadFrame(i);
+      }
+    }
   }
+
+  window.requestAnimationFrame(this._animate);
+};
+
+TrajectoryPlayer.prototype._next = function _next () {
+  var i;
+
+  if (this._direction === 'forward') {
+    i = this.traj.currentFrame + this.step;
+  } else {
+    i = this.traj.currentFrame - this.step;
+  }
+
+  if (i >= this.end || i < this.start) {
+    if (this.direction === 'bounce') {
+      if (this._direction === 'forward') {
+        this._direction = 'backward';
+      } else {
+        this._direction = 'forward';
+      }
+    }
+
+    if (this.mode === 'once') {
+      this.pause();
+
+      if (this.direction === 'forward') {
+        i = this.end;
+      } else if (this.direction === 'backward') {
+        i = this.start;
+      } else {
+        if (this._direction === 'forward') {
+          i = this.start;
+        } else {
+          i = this.end;
+        }
+      }
+    } else {
+      if (this._direction === 'forward') {
+        i = this.start;
+      } else {
+        i = this.end;
+      }
+    }
+  }
+
+  return i
+};
+
+TrajectoryPlayer.prototype._nextInterpolated = function _nextInterpolated () {
+  var i = this._next();
+  var ip, ipp, ippp;
+
+  if (this._direction === 'forward') {
+    ip = Math.max(this.start, i - this.step);
+    ipp = Math.max(this.start, i - 2 * this.step);
+    ippp = Math.max(this.start, i - 3 * this.step);
+  } else {
+    ip = Math.min(this.end, i + this.step);
+    ipp = Math.min(this.end, i + 2 * this.step);
+    ippp = Math.min(this.end, i + 3 * this.step);
+  }
+
+  return [i, ip, ipp, ippp]
 };
 
 /**
@@ -66514,7 +66521,7 @@ TrajectoryPlayer.prototype._interpolate = function _interpolate (i, ip, ipp, ipp
  * @return {undefined}
  */
 TrajectoryPlayer.prototype.toggle = function toggle () {
-  if (this._running) {
+  if (this._run) {
     this.pause();
   } else {
     this.play();
@@ -66526,10 +66533,11 @@ TrajectoryPlayer.prototype.toggle = function toggle () {
  * @return {undefined}
  */
 TrajectoryPlayer.prototype.play = function play () {
-  if (!this._running) {
+  if (!this._run) {
     if (this.traj.player !== this) {
       this.traj.setPlayer(this);
     }
+    this._currentStep = 1;
 
     var frame = this.traj.currentFrame;
 
@@ -66545,7 +66553,7 @@ TrajectoryPlayer.prototype.play = function play () {
 
     this.traj.setFrame(i);
 
-    this._stopFlag = false;
+    this._run = true;
     this._animate();
     this.signals.startedRunning.dispatch();
   }
@@ -66556,20 +66564,20 @@ TrajectoryPlayer.prototype.play = function play () {
  * @return {undefined}
  */
 TrajectoryPlayer.prototype.pause = function pause () {
-  if (this._running) {
-    this._stopFlag = true;
-    this.signals.haltedRunning.dispatch();
-  }
+  this._run = false;
+  this.signals.haltedRunning.dispatch();
 };
 
 /**
- * stop the animation (pause and return to start-frame)
+ * stop the animation (pause and go to start-frame)
  * @return {undefined}
  */
 TrajectoryPlayer.prototype.stop = function stop () {
-  this.traj.setFrame(this.start);
   this.pause();
+  this.traj.setFrame(this.start);
 };
+
+Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$24 );
 
 /**
  * @file Trajectory
@@ -66670,6 +66678,7 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
   this.setParameters(p);
 
   this.name = trajPath.replace(/^.*[\\/]/, '');
+  this.trajPath = trajPath;
 
   // selection to restrict atoms used for superposition
   this.selection = new Selection(
@@ -66685,8 +66694,6 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
   this.setStructure(structure);
   this.setPlayer(new TrajectoryPlayer(this));
 
-  this.trajPath = trajPath;
-
   this.numframes = undefined;
   this.getNumframes();
 };
@@ -66695,35 +66702,29 @@ Trajectory.prototype.setStructure = function setStructure (structure) {
   this.structure = structure;
   this.atomCount = structure.atomCount;
 
-  this.makeAtomIndices();
-
-  this.saveInitialStructure();
-
   this.backboneIndices = this.getIndices(
     new Selection('backbone and not hydrogen')
   );
   this.makeIndices();
+  this.makeAtomIndices();
 
-  this.frameCache = [];
-  this.boxCache = [];
-  this.pathCache = [];
+  this.frameCache = {};
+  this.loadQueue = {};
+  this.boxCache = {};
+  this.pathCache = {};
   this.frameCacheSize = 0;
   this.currentFrame = -1;
 };
 
-Trajectory.prototype.saveInitialStructure = function saveInitialStructure () {
-  var initialStructure = new Float32Array(3 * this.atomCount);
-  var i = 0;
+Trajectory.prototype.saveInitialCoords = function saveInitialCoords () {
+    var this$1 = this;
 
-  this.structure.eachAtom(function (a) {
-    initialStructure[ i + 0 ] = a.x;
-    initialStructure[ i + 1 ] = a.y;
-    initialStructure[ i + 2 ] = a.z;
-
-    i += 3;
-  });
-
-  this.initialStructure = initialStructure;
+  if (this.frameCache[0]) {
+    this.initialCoords = new Float32Array(this.frameCache[0]);
+    this.makeSuperposeCoords();
+  } else {
+    this.loadFrame(0, function () { return this$1.saveInitialCoords(); });
+  }
 };
 
 Trajectory.prototype.setSelection = function setSelection (string) {
@@ -66754,17 +66755,19 @@ Trajectory.prototype.getIndices = function getIndices (selection) {
 };
 
 Trajectory.prototype.makeIndices = function makeIndices () {
-    var this$1 = this;
-
   // indices to restrict atoms used for superposition
   this.indices = this.getIndices(this.selection);
+};
+
+Trajectory.prototype.makeSuperposeCoords = function makeSuperposeCoords () {
+    var this$1 = this;
 
   var n = this.indices.length * 3;
 
   this.coords1 = new Float32Array(n);
   this.coords2 = new Float32Array(n);
 
-  var y = this.initialStructure;
+  var y = this.initialCoords;
   var coords2 = this.coords2;
 
   for (var i = 0; i < n; i += 3) {
@@ -66785,9 +66788,10 @@ Trajectory.prototype.getNumframes = function getNumframes () {
 };
 
 Trajectory.prototype.resetCache = function resetCache () {
-  this.frameCache = [];
-  this.boxCache = [];
-  this.pathCache = [];
+  this.frameCache = {};
+  this.loadQueue = {};
+  this.boxCache = {};
+  this.pathCache = {};
   this.frameCacheSize = 0;
   this.setFrame(this.currentFrame);
 
@@ -66819,6 +66823,16 @@ Trajectory.prototype.setParameters = function setParameters (params) {
   if (resetCache) { this.resetCache(); }
 };
 
+Trajectory.prototype.hasFrame = function hasFrame (i) {
+    var this$1 = this;
+
+  if (Array.isArray(i)) {
+    return i.every(function (j) { return !!this$1.frameCache[j]; })
+  } else {
+    return !!this.frameCache[i]
+  }
+};
+
 Trajectory.prototype.setFrame = function setFrame (i, callback) {
     var this$1 = this;
 
@@ -66829,17 +66843,19 @@ Trajectory.prototype.setFrame = function setFrame (i, callback) {
   i = parseInt(i);
 
   if (i === -1 || this.frameCache[ i ]) {
-    this.updateStructure(i, callback);
+    this.updateStructure(i);
+    if (callback) { callback(); }
   } else {
     this.loadFrame(i, function () {
-      this$1.updateStructure(i, callback);
+      this$1.updateStructure(i);
+      if (callback) { callback(); }
     });
   }
 
   return this
 };
 
-Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, type, callback) {
+Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, type) {
   var fc = this.frameCache;
 
   var c = fc[ i ];
@@ -66873,10 +66889,6 @@ Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, ty
   this.structure.updatePosition(coords);
   this.currentFrame = i;
   this.signals.frameChanged.dispatch(i);
-
-  if (typeof callback === 'function') {
-    callback();
-  }
 };
 
 Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
@@ -66894,10 +66906,12 @@ Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip
 
   if (iList.length) {
     this.loadFrame(iList, function () {
-      this$1.interpolate(i, ip, ipp, ippp, t, type, callback);
+      this$1.interpolate(i, ip, ipp, ippp, t, type);
+      if (callback) { callback(); }
     });
   } else {
-    this.interpolate(i, ip, ipp, ippp, t, type, callback);
+    this.interpolate(i, ip, ipp, ippp, t, type);
+    if (callback) { callback(); }
   }
 
   return this
@@ -66907,18 +66921,22 @@ Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
     var this$1 = this;
 
   if (Array.isArray(i)) {
-    var queue;
-    var fn = function (j, wcallback) {
-      this$1._loadFrame(j, function () {
-        wcallback();
-        if (queue.length() === 0 && typeof callback === 'function') {
-          callback();
-        }
-      });
-    };
-    queue = new Queue(fn, i);
+    i.forEach(function (j) {
+      if (!this$1.loadQueue[j] && !this$1.frameCache[j]) {
+        this$1.loadQueue[j] = true;
+        this$1._loadFrame(j, function () {
+          delete this$1.loadQueue[j];
+        });
+      }
+    });
   } else {
-    this._loadFrame(i, callback);
+    if (!this.loadQueue[i] && !this.frameCache[i]) {
+      this.loadQueue[i] = true;
+      this._loadFrame(i, function () {
+        delete this$1.loadQueue[i];
+        if (callback) { callback(); }
+      });
+    }
   }
 };
 
@@ -66926,7 +66944,7 @@ Trajectory.prototype._loadFrame = function _loadFrame (i, callback) {
   Log.error('Trajectory._loadFrame not implemented', i, callback);
 };
 
-Trajectory.prototype.updateStructure = function updateStructure (i, callback) {
+Trajectory.prototype.updateStructure = function updateStructure (i) {
   if (this._disposed) { return }
 
   if (i === -1) {
@@ -66939,10 +66957,6 @@ Trajectory.prototype.updateStructure = function updateStructure (i, callback) {
     name: this.trajPath,
     frame: i
   };
-
-  if (typeof callback === 'function') {
-    callback();
-  }
 
   this.currentFrame = i;
   this.inProgress = false;
@@ -66995,7 +67009,7 @@ Trajectory.prototype.process = function process (i, box, coords, numframes) {
     }
   }
 
-  if (this.indices.length > 0 && this.superpose) {
+  if (this.indices.length > 0 && this.coords1 && this.superpose) {
     this.doSuperpose(coords);
   }
 
@@ -67012,7 +67026,7 @@ Trajectory.prototype.setNumframes = function setNumframes (n) {
 };
 
 Trajectory.prototype.dispose = function dispose () {
-  this.frameCache = [];// aid GC
+  this.resetCache();// aid GC
   this._disposed = true;
   if (this.player) { this.player.stop(); }
 };
@@ -67176,9 +67190,9 @@ var Buffer$1 = function Buffer (data, params) {
   this.makeWireframeGeometry();
 };
 
-var prototypeAccessors$25 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$26 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
 
-prototypeAccessors$25.parameters.get = function () {
+prototypeAccessors$26.parameters.get = function () {
   return {
     opaqueBack: { updateShader: true },
     dullInterior: { updateShader: true },
@@ -67199,40 +67213,40 @@ prototypeAccessors$25.parameters.get = function () {
   }
 };
 
-prototypeAccessors$25.matrix.set = function (m) {
+prototypeAccessors$26.matrix.set = function (m) {
   this.setMatrix(m);
 };
-prototypeAccessors$25.matrix.get = function () {
+prototypeAccessors$26.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$25.transparent.get = function () {
+prototypeAccessors$26.transparent.get = function () {
   return this.opacity < 1 || this.forceTransparent
 };
 
-prototypeAccessors$25.size.get = function () {
+prototypeAccessors$26.size.get = function () {
   return this._positionDataSize
 };
 
-prototypeAccessors$25.attributeSize.get = function () {
+prototypeAccessors$26.attributeSize.get = function () {
   return this.size
 };
 
-prototypeAccessors$25.pickable.get = function () {
+prototypeAccessors$26.pickable.get = function () {
   return !!this.picking && !this.disablePicking
 };
 
-prototypeAccessors$25.dynamic.get = function () { return true };
+prototypeAccessors$26.dynamic.get = function () { return true };
 
   /**
    * @abstract
    */
-prototypeAccessors$25.vertexShader.get = function () {};
+prototypeAccessors$26.vertexShader.get = function () {};
 
   /**
    * @abstract
    */
-prototypeAccessors$25.fragmentShader.get = function () {};
+prototypeAccessors$26.fragmentShader.get = function () {};
 
 Buffer$1.prototype.setMatrix = function setMatrix (m) {
   setObjectMatrix(this.group, m);
@@ -67871,7 +67885,7 @@ Buffer$1.prototype.dispose = function dispose () {
   if (this.wireframeGeometry) { this.wireframeGeometry.dispose(); }
 };
 
-Object.defineProperties( Buffer$1.prototype, prototypeAccessors$25 );
+Object.defineProperties( Buffer$1.prototype, prototypeAccessors$26 );
 
 /**
  * @file Mesh Buffer
@@ -69035,16 +69049,16 @@ var ArrowBuffer = function ArrowBuffer (data, params) {
   this.picking = d.picking;
 };
 
-var prototypeAccessors$26 = { matrix: {},pickable: {} };
+var prototypeAccessors$27 = { matrix: {},pickable: {} };
 
-prototypeAccessors$26.matrix.set = function (m) {
+prototypeAccessors$27.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$26.matrix.get = function () {
+prototypeAccessors$27.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$26.pickable.get = function () {
+prototypeAccessors$27.pickable.get = function () {
   return !!this.picking
 };
 
@@ -69159,7 +69173,7 @@ ArrowBuffer.prototype.dispose = function dispose () {
   this.coneBuffer.dispose();
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$26 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$27 );
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
@@ -69865,7 +69879,7 @@ var Shape$1 = function Shape$$1 (name, params) {
   this.labelText = [];
 };
 
-var prototypeAccessors$24 = { center: {},type: {} };
+var prototypeAccessors$25 = { center: {},type: {} };
 
   /**
    * Add a buffer
@@ -70221,16 +70235,63 @@ Shape$1.prototype.dispose = function dispose () {
   this.labelText.length = 0;
 };
 
-prototypeAccessors$24.center.get = function () {
+prototypeAccessors$25.center.get = function () {
   if (!this._center) {
     this._center = this.boundingBox.getCenter();
   }
   return this._center
 };
 
-prototypeAccessors$24.type.get = function () { return 'Shape' };
+prototypeAccessors$25.type.get = function () { return 'Shape' };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$24 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$25 );
+
+/**
+ * @file Queue
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+function Queue (fn, argList) {
+  var queue = [];
+  var pending = false;
+
+  if (argList) {
+    for (var i = 0, il = argList.length; i < il; ++i) {
+      queue.push(argList[ i ]);
+    }
+    next();
+  }
+
+  function run (arg) {
+    fn(arg, next);
+  }
+
+  function next () {
+    var arg = queue.shift();
+    if (arg !== undefined) {
+      pending = true;
+      setTimeout(function () { run(arg); });
+    } else {
+      pending = false;
+    }
+  }
+
+    // API
+
+  this.push = function (arg) {
+    queue.push(arg);
+    if (!pending) { next(); }
+  };
+
+  this.kill = function () {
+    queue.length = 0;
+  };
+
+  this.length = function () {
+    return queue.length
+  };
+}
 
 /**
  * @file Representation
@@ -70975,16 +71036,16 @@ var DoubleSidedBuffer = function DoubleSidedBuffer (buffer) {
   this.backBuffer = backBuffer;
 };
 
-var prototypeAccessors$27 = { matrix: {},pickable: {} };
+var prototypeAccessors$28 = { matrix: {},pickable: {} };
 
-prototypeAccessors$27.matrix.set = function (m) {
+prototypeAccessors$28.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$27.matrix.get = function () {
+prototypeAccessors$28.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$27.pickable.get = function () {
+prototypeAccessors$28.pickable.get = function () {
   return !!this.picking && !this.disablePicking
 };
 
@@ -71059,7 +71120,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose () {
   this.backBuffer.dispose();
 };
 
-Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$27 );
+Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$28 );
 
 DoubleSidedBuffer.prototype.setVisibility = Buffer$1.prototype.setVisibility;
 
@@ -77150,6 +77211,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
     this.boxes = frames.boxes;
 
     this.getNumframes();
+    this.saveInitialCoords();
   }
 
   if ( Trajectory$$1 ) FramesTrajectory.__proto__ = Trajectory$$1;
@@ -77240,6 +77302,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
 var StructureTrajectory = (function (Trajectory$$1) {
   function StructureTrajectory (trajPath, structure, params) {
     Trajectory$$1.call(this, '', structure, params);
+    this.saveInitialCoords();
   }
 
   if ( Trajectory$$1 ) StructureTrajectory.__proto__ = Trajectory$$1;
@@ -77327,8 +77390,9 @@ var StructureTrajectory = (function (Trajectory$$1) {
  */
 
 var RemoteTrajectory = (function (Trajectory$$1) {
-  function RemoteTrajectory () {
-    Trajectory$$1.apply(this, arguments);
+  function RemoteTrajectory (trajPath, structure, params) {
+    Trajectory$$1.call(this, trajPath, structure, params);
+    this.saveInitialCoords();
   }
 
   if ( Trajectory$$1 ) RemoteTrajectory.__proto__ = Trajectory$$1;
@@ -84816,13 +84880,13 @@ var Parser = function Parser (streamer, params) {
   this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$28 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
+var prototypeAccessors$29 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
 
-prototypeAccessors$28.type.get = function () { return '' };
-prototypeAccessors$28.__objName.get = function () { return '' };
-prototypeAccessors$28.isBinary.get = function () { return false };
-prototypeAccessors$28.isJson.get = function () { return false };
-prototypeAccessors$28.isXml.get = function () { return false };
+prototypeAccessors$29.type.get = function () { return '' };
+prototypeAccessors$29.__objName.get = function () { return '' };
+prototypeAccessors$29.isBinary.get = function () { return false };
+prototypeAccessors$29.isJson.get = function () { return false };
+prototypeAccessors$29.isXml.get = function () { return false };
 
 Parser.prototype.parse = function parse () {
     var this$1 = this;
@@ -84843,7 +84907,7 @@ Parser.prototype._afterParse = function _afterParse () {
   if (Debug) { Log.log(this[ this.__objName ]); }
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$28 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$29 );
 
 /**
  * @file Structure Builder
@@ -85038,9 +85102,9 @@ var Entity = function Entity (structure, index, description, type, chainIndexLis
   });
 };
 
-var prototypeAccessors$29 = { type: {} };
+var prototypeAccessors$30 = { type: {} };
 
-prototypeAccessors$29.type.get = function () { return 'Entity' };
+prototypeAccessors$30.type.get = function () { return 'Entity' };
 
 Entity.prototype.getEntityType = function getEntityType () {
   return this.entityType
@@ -85071,7 +85135,7 @@ Entity.prototype.eachChain = function eachChain (callback) {
   });
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$29 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$30 );
 
 /**
  * @file Unitcell
@@ -89439,11 +89503,11 @@ var Frames = function Frames (name, path) {
   this.deltaTime = 1;
 };
 
-var prototypeAccessors$30 = { type: {} };
+var prototypeAccessors$31 = { type: {} };
 
-prototypeAccessors$30.type.get = function () { return 'Frames' };
+prototypeAccessors$31.type.get = function () { return 'Frames' };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$30 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$31 );
 
 /**
  * @file Trajectory Parser
@@ -90691,12 +90755,12 @@ var NetcdfReader = function NetcdfReader (data) {
   this.buffer = buffer;
 };
 
-var prototypeAccessors$31 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
+var prototypeAccessors$32 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
 
 /**
  * @return {string} - Version for the NetCDF format
  */
-prototypeAccessors$31.version.get = function () {
+prototypeAccessors$32.version.get = function () {
   if (this.header.version === 1) {
     return 'classic format'
   } else {
@@ -90711,7 +90775,7 @@ prototypeAccessors$31.version.get = function () {
  ** `name`: String with the name of the record dimension
  ** `recordStep`: Number with the record variables step size
  */
-prototypeAccessors$31.recordDimension.get = function () {
+prototypeAccessors$32.recordDimension.get = function () {
   return this.header.recordDimension
 };
 
@@ -90720,7 +90784,7 @@ prototypeAccessors$31.recordDimension.get = function () {
  ** `name`: String with the name of the dimension
  ** `size`: Number with the size of the dimension
  */
-prototypeAccessors$31.dimensions.get = function () {
+prototypeAccessors$32.dimensions.get = function () {
   return this.header.dimensions
 };
 
@@ -90730,7 +90794,7 @@ prototypeAccessors$31.dimensions.get = function () {
  ** `type`: String with the type of the attribute
  ** `value`: A number or string with the value of the attribute
  */
-prototypeAccessors$31.globalAttributes.get = function () {
+prototypeAccessors$32.globalAttributes.get = function () {
   return this.header.globalAttributes
 };
 
@@ -90744,7 +90808,7 @@ prototypeAccessors$31.globalAttributes.get = function () {
  ** `offset`: Number with the offset where of the variable begins
  ** `record`: True if is a record variable, false otherwise
  */
-prototypeAccessors$31.variables.get = function () {
+prototypeAccessors$32.variables.get = function () {
   return this.header.variables
 };
 
@@ -90790,7 +90854,7 @@ NetcdfReader.prototype.getDataVariable = function getDataVariable (variableName)
   }
 };
 
-Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$31 );
+Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$32 );
 
 /**
  * @file Nctraj Parser
@@ -93718,9 +93782,9 @@ var Validation = function Validation (name, path) {
   this.clashSele = 'NONE';
 };
 
-var prototypeAccessors$32 = { type: {} };
+var prototypeAccessors$33 = { type: {} };
 
-prototypeAccessors$32.type.get = function () { return 'validation' };
+prototypeAccessors$33.type.get = function () { return 'validation' };
 
 Validation.prototype.fromXml = function fromXml (xml) {
   if (Debug) { Log.time('Validation.fromXml'); }
@@ -93911,7 +93975,7 @@ Validation.prototype.getClashData = function getClashData (params) {
   }
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$32 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$33 );
 
 /**
  * @file Validation Parser
@@ -97188,7 +97252,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-9";
+var version$1 = "0.10.5-10";
 
 /**
  * @file Version
