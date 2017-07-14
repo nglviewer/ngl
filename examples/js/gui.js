@@ -2181,7 +2181,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
         return
       }
 
-      if (traj.player && traj.player._running) {
+      if (traj.player && traj.player.isRunning) {
         traj.setPlayer()
         traj.setFrame(value)
       } else if (!traj.inProgress) {

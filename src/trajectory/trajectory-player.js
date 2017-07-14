@@ -59,26 +59,28 @@ class TrajectoryPlayer {
     this.mode = defaults(p.mode, 'loop')  // loop, once
     this.direction = defaults(p.direction, 'forward')  // forward, backward
 
-    this._stopFlag = false
-    this._running = false
+    this._run = false
     this._previousTime = 0
     this._currentTime = 0
     this._currentStep = 0
 
     traj.signals.gotNumframes.add(function (n) {
-      this.end = Math.min(defaults(p.end, n - 1), n - 1)
-      this._animate()
+      this.end = Math.min(defaults(this.end, n - 1), n - 1)
     }, this)
 
     this._animate = this._animate.bind(this)
   }
 
+  get isRunning () { return this._run }
+
   _animate () {
+    if (!this._run) return
+
     this._currentTime = window.performance.now()
     const dt = this._currentTime - this._previousTime
     const traj = this.traj
 
-    if (traj && traj.numframes && dt >= this.timeout && !traj.inProgress && !this._stopFlag) {
+    if (traj && traj.numframes && !traj.inProgress && dt >= this.timeout) {
       const i = this._next()
       if (traj.hasFrame(i)) {
         traj.setFrame(i)
@@ -93,7 +95,6 @@ class TrajectoryPlayer {
 
   _next () {
     let i
-    this._running = true
 
     if (this.direction === 'forward') {
       i = this.traj.currentFrame + this.step
@@ -171,7 +172,7 @@ class TrajectoryPlayer {
    * @return {undefined}
    */
   toggle () {
-    if (this._running) {
+    if (this._run) {
       this.pause()
     } else {
       this.play()
@@ -183,7 +184,7 @@ class TrajectoryPlayer {
    * @return {undefined}
    */
   play () {
-    if (!this._running) {
+    if (!this._run) {
       if (this.traj.player !== this) {
         this.traj.setPlayer(this)
       }
@@ -202,7 +203,7 @@ class TrajectoryPlayer {
 
       this.traj.setFrame(i)
 
-      this._stopFlag = false
+      this._run = true
       this._animate()
       this.signals.startedRunning.dispatch()
     }
@@ -213,19 +214,17 @@ class TrajectoryPlayer {
    * @return {undefined}
    */
   pause () {
-    if (this._running) {
-      this._stopFlag = true
-      this.signals.haltedRunning.dispatch()
-    }
+    this._run = false
+    this.signals.haltedRunning.dispatch()
   }
 
   /**
-   * stop the animation (pause and return to start-frame)
+   * stop the animation (pause and go to start-frame)
    * @return {undefined}
    */
   stop () {
-    this.traj.setFrame(this.start)
     this.pause()
+    this.traj.setFrame(this.start)
   }
 }
 
