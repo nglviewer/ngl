@@ -64,7 +64,7 @@ class TrajectoryPlayer {
     this._previousTime = 0
     this._currentTime = 0
     this._currentStep = 1
-    this._currentFrame
+    this._currentFrame = this.start
     this._direction = this.direction === 'bounce' ? 'forward' : this.direction
 
     traj.signals.gotNumframes.add(function (n) {
@@ -111,7 +111,7 @@ class TrajectoryPlayer {
 
     if (traj && traj.numframes && !traj.inProgress && dt >= timeout) {
       if (this.interpolateType) {
-        if( this._currentStep > this.interpolateStep ) {
+        if (this._currentStep > this.interpolateStep) {
           this._currentStep = 1
         }
         if (this._currentStep === 1) {

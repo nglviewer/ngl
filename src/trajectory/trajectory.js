@@ -8,7 +8,6 @@ import Signal from '../../lib/signals.es6.js'
 
 import { Log } from '../globals.js'
 import { defaults } from '../utils.js'
-import Queue from '../utils/queue.js'
 import { circularMean } from '../math/array-utils.js'
 import { lerp, spline } from '../math/math-utils.js'
 import Selection from '../selection.js'
