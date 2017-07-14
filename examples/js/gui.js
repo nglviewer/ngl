@@ -2212,7 +2212,8 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setColor('#444')
     .setOptions({
       'forward': 'forward',
-      'backward': 'backward'
+      'backward': 'backward',
+      'bounce': 'bounce'
     })
     .setValue(component.defaultDirection)
     .onChange(function () {

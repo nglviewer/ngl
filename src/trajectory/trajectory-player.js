@@ -57,12 +57,13 @@ class TrajectoryPlayer {
     this.interpolateType = defaults(p.interpolateType, '')
     this.interpolateStep = defaults(p.interpolateStep, 5)
     this.mode = defaults(p.mode, 'loop')  // loop, once
-    this.direction = defaults(p.direction, 'forward')  // forward, backward
+    this.direction = defaults(p.direction, 'forward')  // forward, backward, bounce
 
     this._run = false
     this._previousTime = 0
     this._currentTime = 0
     this._currentStep = 0
+    this._direction = this.direction === 'bounce' ? 'forward' : this.direction
 
     traj.signals.gotNumframes.add(function (n) {
       this.end = Math.min(defaults(this.end, n - 1), n - 1)
@@ -96,23 +97,37 @@ class TrajectoryPlayer {
   _next () {
     let i
 
-    if (this.direction === 'forward') {
+    if (this._direction === 'forward') {
       i = this.traj.currentFrame + this.step
     } else {
       i = this.traj.currentFrame - this.step
     }
 
     if (i >= this.end || i < this.start) {
+      if (this.direction === 'bounce') {
+        if (this._direction === 'forward') {
+          this._direction = 'backward'
+        } else {
+          this._direction = 'forward'
+        }
+      }
+
       if (this.mode === 'once') {
         this.pause()
 
         if (this.direction === 'forward') {
           i = this.end
-        } else {
+        } else if (this.direction === 'backward') {
           i = this.start
+        } else {
+          if (this._direction === 'forward') {
+            i = this.start
+          } else {
+            i = this.end
+          }
         }
       } else {
-        if (this.direction === 'forward') {
+        if (this._direction === 'forward') {
           i = this.start
         } else {
           i = this.end
