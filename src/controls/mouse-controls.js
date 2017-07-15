@@ -68,11 +68,11 @@ function triggerFromString (str) {
  * Mouse controls
  */
 class MouseControls {
-    /**
-     * @param {Stage} stage - the stage object
-     * @param {Object} [params] - the parameters
-     * @param {String} params.preset - one of "default", "pymol", "coot"
-     */
+  /**
+   * @param {Stage} stage - the stage object
+   * @param {Object} [params] - the parameters
+   * @param {String} params.preset - one of "default", "pymol", "coot"
+   */
   constructor (stage, params) {
     const p = params || {}
 
@@ -95,78 +95,78 @@ class MouseControls {
     })
   }
 
-    /**
-     * Add a new mouse action triggered by an event, key and button combination.
-     * The {@link MouseActions} class provides a number of static methods for
-     * use as callback functions.
-     *
-     * @example
-     * // change ambient light intensity on mouse scroll
-     * // while the ctrl and shift keys are pressed
-     * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
-     *     var ai = stage.getParameters().ambientIntensity;
-     *     stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
-     * } );
-     *
-     * @example
-     * // Call the MouseActions.zoomDrag method on mouse drag events
-     * // with left and right mouse buttons simultaneous
-     * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
-     *
-     * @param {TriggerString} triggerStr - the trigger for the action
-     * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
-     * @return {undefined}
-     */
+  /**
+   * Add a new mouse action triggered by an event, key and button combination.
+   * The {@link MouseActions} class provides a number of static methods for
+   * use as callback functions.
+   *
+   * @example
+   * // change ambient light intensity on mouse scroll
+   * // while the ctrl and shift keys are pressed
+   * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
+   *     var ai = stage.getParameters().ambientIntensity;
+   *     stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
+   * } );
+   *
+   * @example
+   * // Call the MouseActions.zoomDrag method on mouse drag events
+   * // with left and right mouse buttons simultaneous
+   * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
+   *
+   * @param {TriggerString} triggerStr - the trigger for the action
+   * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
+   * @return {undefined}
+   */
   add (triggerStr, callback) {
     const [ type, key, button ] = triggerFromString(triggerStr)
 
     this.actionList.push({ type, key, button, callback })
   }
 
-    /**
-     * Remove a mouse action. The trigger string can contain an asterix (*)
-     * as a wildcard for any key or mouse button. When the callback function
-     * is given, only actions that call that function are removed.
-     *
-     * @example
-     * // remove actions triggered solely by a scroll event
-     * stage.mouseControls.remove( "scroll" );
-     *
-     * @example
-     * // remove actions triggered by a scroll event, including
-     * // those requiring a key pressed or mouse button used
-     * stage.mouseControls.remove( "scroll-*" );
-     *
-     * @example
-     * // remove actions triggered by a scroll event
-     * // while the shift key is pressed
-     * stage.mouseControls.remove( "scroll-shift" );
-     *
-     * @param {TriggerString} triggerStr - the trigger for the action
-     * @param {Function} [callback] - the callback function for the action
-     * @return {undefined}
-     */
+  /**
+   * Remove a mouse action. The trigger string can contain an asterix (*)
+   * as a wildcard for any key or mouse button. When the callback function
+   * is given, only actions that call that function are removed.
+   *
+   * @example
+   * // remove actions triggered solely by a scroll event
+   * stage.mouseControls.remove( "scroll" );
+   *
+   * @example
+   * // remove actions triggered by a scroll event, including
+   * // those requiring a key pressed or mouse button used
+   * stage.mouseControls.remove( "scroll-*" );
+   *
+   * @example
+   * // remove actions triggered by a scroll event
+   * // while the shift key is pressed
+   * stage.mouseControls.remove( "scroll-shift" );
+   *
+   * @param {TriggerString} triggerStr - the trigger for the action
+   * @param {Function} [callback] - the callback function for the action
+   * @return {undefined}
+   */
   remove (triggerStr, callback) {
     const wildcard = triggerStr.includes('*')
     const [ type, key, button ] = triggerFromString(triggerStr)
 
     const actionList = this.actionList.filter(function (a) {
       return !(
-                (a.type === type || (wildcard && type === '')) &&
-                (a.key === key || (wildcard && key === 0)) &&
-                (a.button === button || (wildcard && button === 0)) &&
-                (a.callback === callback || callback === undefined)
-            )
+        (a.type === type || (wildcard && type === '')) &&
+        (a.key === key || (wildcard && key === 0)) &&
+        (a.button === button || (wildcard && button === 0)) &&
+        (a.callback === callback || callback === undefined)
+      )
     })
 
     this.actionList = actionList
   }
 
-    /**
-     * Set mouse action preset
-     * @param  {String} name - one of "default", "pymol", "coot"
-     * @return {undefined}
-     */
+  /**
+   * Set mouse action preset
+   * @param  {String} name - one of "default", "pymol", "coot"
+   * @return {undefined}
+   */
   preset (name) {
     this.clear()
 
@@ -177,10 +177,10 @@ class MouseControls {
     })
   }
 
-    /**
-     * Remove all mouse actions
-     * @return {undefined}
-     */
+  /**
+   * Remove all mouse actions
+   * @return {undefined}
+   */
   clear () {
     this.actionList.length = 0
   }

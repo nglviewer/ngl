@@ -11,7 +11,7 @@ import { DecompressorRegistry } from './globals.js'
 function getQuery (id) {
   if (typeof window === 'undefined') return undefined
 
-  var a = new RegExp(id + '=([^&#=]*)')
+  var a = new RegExp(`${id}=([^&#=]*)`)
   var m = a.exec(window.location.search)
 
   if (m) {
