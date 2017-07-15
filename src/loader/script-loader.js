@@ -12,15 +12,15 @@ import Script from '../script.js'
  * @extends Loader
  */
 class ScriptLoader extends Loader {
-    /**
-     * Load script
-     * @return {Promise} resolves to the loaded {@link Script}
-     */
+  /**
+   * Load script
+   * @return {Promise} resolves to the loaded {@link Script}
+   */
   load () {
     return this.streamer.read().then(() => {
       return new Script(
-                this.streamer.asText(), this.name, this.path
-            )
+        this.streamer.asText(), this.name, this.path
+      )
     })
   }
 }

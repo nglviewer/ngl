@@ -13,10 +13,10 @@ import Script from '../script.js'
  * @extends Loader
  */
 class PluginLoader extends Loader {
-    /**
-     * Load plugin
-     * @return {Promise} resolves to the loaded plugin {@link Script}
-     */
+  /**
+   * Load plugin
+   * @return {Promise} resolves to the loaded plugin {@link Script}
+   */
   load () {
     var basePath
     if (this.protocol) {
@@ -31,10 +31,10 @@ class PluginLoader extends Loader {
 
       manifest.files.map(function (name) {
         promiseList.push(
-                    autoLoad(basePath + name, {
-                      ext: 'text', useWorker: false
-                    })
-                )
+          autoLoad(basePath + name, {
+            ext: 'text', useWorker: false
+          })
+        )
       })
 
       return Promise.all(promiseList).then(dataList => {
