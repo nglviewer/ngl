@@ -172,9 +172,7 @@ class MouseControls {
 
     const list = ActionPresets[ name ] || []
 
-    list.forEach(action => {
-      this.add(...action)
-    })
+    list.forEach(action => this.add(...action))
   }
 
   /**
