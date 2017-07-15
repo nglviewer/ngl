@@ -14,7 +14,9 @@ import _Promise from '../lib/promise.es6.js'
 
 import {
   Debug, setDebug,
-  ColormakerRegistry, DatasourceRegistry, ParserRegistry, RepresentationRegistry
+  ScriptExtensions, ColormakerRegistry,
+  DatasourceRegistry, DecompressorRegistry,
+  ParserRegistry, RepresentationRegistry
 } from './globals.js'
 import { autoLoad, getDataInfo } from './loader/loader-utils.js'
 import Selection from './selection.js'
@@ -189,7 +191,9 @@ export {
   Version,
   Debug,
   setDebug,
+  ScriptExtensions,
   DatasourceRegistry,
+  DecompressorRegistry,
   StaticDatasource,
   MdsrvDatasource,
   ParserRegistry,

@@ -33,7 +33,45 @@ const HelixTypes = {
   '': 'h'
 }
 
+const dAminoAcids = [
+  'DAL',  // D-ALANINE
+  'DAR',  // D-ARGININE
+  'DSG',  // D-ASPARAGINE
+  'DAS',  // D-ASPARTIC ACID
+  'DCY',  // D-CYSTEINE
+  'DGL',  // D-GLUTAMIC ACID
+  'DGN',  // D-GLUTAMINE
+  'DHI',  // D-HISTIDINE
+  'DIL',  // D-ISOLEUCINE
+  'DLE',  // D-LEUCINE
+  'DLY',  // D-LYSINE
+  'MED',  // D-METHIONINE
+  'DPN',  // D-PHENYLALANINE
+  'DPR',  // D-PROLINE
+  'DSN',  // D-SERINE
+  'DTH',  // D-THREONINE
+  'DTR',  // D-TRYPTOPHAN
+  'DTY',  // D-TYROSINE
+  'DVA',  // D-VALINE
+
+  'DNE'  // D-NORLEUCINE
+
+  // ???  // D-SELENOCYSTEINE
+]
+
+const entityKeyList = [
+  'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
+  'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
+]
+
 const reWhitespace = /\s+/
+
+function getModresId (resno, chainname, inscode) {
+  let id = `${resno}`
+  if (chainname) id += `:${chainname}`
+  if (inscode) id += `^${inscode}`
+  return id
+}
 
 class PdbParser extends StructureParser {
     /**
@@ -56,55 +94,55 @@ class PdbParser extends StructureParser {
   get type () { return 'pdb' }
 
   _parse () {
-        // http://www.wwpdb.org/documentation/file-format.php
+    // http://www.wwpdb.org/documentation/file-format.php
 
     if (Debug) Log.time('PdbParser._parse ' + this.name)
 
-    var isLegacy = false
-    var headerLine = this.streamer.peekLines(1)[ 0 ]
-    var headerId = headerLine.substr(62, 4)
-    var legacyId = headerLine.substr(72, 4)
+    let isLegacy = false
+    const headerLine = this.streamer.peekLines(1)[ 0 ]
+    const headerId = headerLine.substr(62, 4)
+    const legacyId = headerLine.substr(72, 4)
     if (headerId === legacyId && legacyId.trim()) {
       isLegacy = true
     }
 
-    var isPqr = this.type === 'pqr'
+    const isPqr = this.type === 'pqr'
 
-    var s = this.structure
-    var sb = this.structureBuilder
+    const s = this.structure
+    const sb = this.structureBuilder
 
-    var hex = this.hex
-    var serialRadix = 10
-    var resnoRadix = 10
+    const hex = this.hex
+    let serialRadix = 10
+    let resnoRadix = 10
 
-    var firstModelOnly = this.firstModelOnly
-    var asTrajectory = this.asTrajectory
-    var cAlphaOnly = this.cAlphaOnly
+    const firstModelOnly = this.firstModelOnly
+    const asTrajectory = this.asTrajectory
+    const cAlphaOnly = this.cAlphaOnly
 
-    var frames = s.frames
-    var boxes = s.boxes
-    var doFrames = false
-    var currentFrame, currentCoord
+    const frames = s.frames
+    const boxes = s.boxes
+    let doFrames = false
+    let currentFrame, currentCoord
 
-    var biomolDict = s.biomolDict
-    var currentBiomol
-    var currentPart
-    var currentMatrix
+    const biomolDict = s.biomolDict
+    let currentBiomol
+    let currentPart
+    let currentMatrix
 
-    var line, recordName
-    var serial, chainname, resno, resname, occupancy
-    var inscode, atomname, hetero, bfactor, altloc
+    let line, recordName
+    let serial, chainname, resno, resname, occupancy
+    let inscode, atomname, hetero, bfactor, altloc
 
-    var startChain, startResi, startIcode
-    var endChain, endResi, endIcode
+    let startChain, startResi, startIcode
+    let endChain, endResi, endIcode
 
-    var serialDict = {}
-    var unitcellDict = {}
-    var bondDict = {}
+    let serialDict = {}
+    const unitcellDict = {}
+    const bondDict = {}
 
-    var entityDataList = []
-    var currentEntityData
-    var currentEntityKey
+    const entityDataList = []
+    let currentEntityData
+    let currentEntityKey
     // MOL_ID                 Numbers each component; also used in  SOURCE to associate
     //                        the information.
     // MOLECULE               Name of the macromolecule.
@@ -118,36 +156,38 @@ class PdbParser extends StructureParser {
     //                        recombinant technology or by purely  chemical synthesis.
     // MUTATION               Indicates if there is a mutation.
     // OTHER_DETAILS          Additional comments.
-    var entityKeyList = [
-      'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
-      'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
-    ]
-    var chainDict = {}
-    var hetnameDict = {}
-    var chainIdx, chainid, newChain
-    var currentChainname, currentResno, currentResname, currentInscode
 
-    var secStruct = {
+    const hetnameDict = {}
+    const modresDict = {}
+
+    const chainDict = {}
+    let chainIdx, chainid, newChain
+    let currentChainname, currentResno, currentResname, currentInscode
+
+    const seqresDict = {}
+    let currentSeqresChainname
+
+    const secStruct = {
       helices: [],
       sheets: []
     }
-    var helices = secStruct.helices
-    var sheets = secStruct.sheets
+    const helices = secStruct.helices
+    const sheets = secStruct.sheets
 
-    var atomMap = s.atomMap
-    var atomStore = s.atomStore
+    const atomMap = s.atomMap
+    const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
     if (isPqr) {
       atomStore.addField('partialCharge', 1, 'float32')
       atomStore.addField('radius', 1, 'float32')
     }
 
-    var ap1 = s.getAtomProxy()
-    var ap2 = s.getAtomProxy()
+    const ap1 = s.getAtomProxy()
+    const ap2 = s.getAtomProxy()
 
-    var idx = 0
-    var modelIdx = 0
-    var pendingStart = true
+    let idx = 0
+    let modelIdx = 0
+    let pendingStart = true
 
     function _parseChunkOfLines (_i, _n, lines) {
       for (let i = _i; i < _n; ++i) {
@@ -267,7 +307,11 @@ class PdbParser extends StructureParser {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
           }
 
-          if (hetero) {
+          const modresId = getModresId(resno, chainname, inscode)
+
+          // TODO instead of looking at MODRES look at SEQRES and
+          //      missing residues in REMARK 465
+          if (hetero && !modresDict[modresId] && !dAminoAcids.includes(resname)) {
             if (currentChainname !== chainname || currentResname !== resname ||
                 (!WaterNames.includes(resname) &&
                   (currentResno !== resno || currentInscode !== inscode))
@@ -301,7 +345,7 @@ class PdbParser extends StructureParser {
           }
 
           for (let j = 0; j < 4; ++j) {
-            var toIdx = parseInt(line.substr(pos[ j ], 5))
+            let toIdx = parseInt(line.substr(pos[ j ], 5))
             if (Number.isNaN(toIdx)) continue
             toIdx = serialDict[ toIdx ]
             if (toIdx === undefined) {
@@ -327,7 +371,7 @@ class PdbParser extends StructureParser {
             if (bondIndex[ toIdx ] !== undefined) {
               s.bondStore.bondOrder[ bondIndex[ toIdx ] ] += 1
             } else {
-              var hash = ap1.index + '|' + ap2.index
+              const hash = ap1.index + '|' + ap2.index
               if (bondDict[ hash ] === undefined) {
                 bondDict[ hash ] = true
                 bondIndex[ toIdx ] = s.bondStore.count
@@ -362,6 +406,23 @@ class PdbParser extends StructureParser {
           ])
         } else if (recordName === 'HETNAM') {
           hetnameDict[ line.substr(11, 3) ] = line.substr(15).trim()
+        } else if (recordName === 'SEQRES') {
+          const seqresChainname = line[11].trim()
+          if (seqresChainname !== currentSeqresChainname) {
+            seqresDict[ seqresChainname ] = []
+            currentSeqresChainname = seqresChainname
+          }
+          seqresDict[ seqresChainname ].push(
+            ...line.substr(19).trim().split(reWhitespace)
+          )
+        } else if (recordName === 'MODRES') {
+          // MODRES 2SRC PTR A  527  TYR  O-PHOSPHOTYROSINE
+          const resname = line.substr(12, 3).trim()
+          const chainname = line[16].trim()
+          const inscode = line[22].trim()
+          const resno = parseInt(line.substr(18, 4).trim())
+          const id = getModresId(resno, chainname, inscode)
+          modresDict[ id ] = { resname, chainname, inscode, resno }
         } else if (recordName === 'COMPND') {
           const comp = line.substr(10, 70).trim()
           const keyEnd = comp.indexOf(':')
@@ -522,7 +583,7 @@ class PdbParser extends StructureParser {
           const gamma = parseFloat(line.substr(47, 7))
 
           const sGroup = line.substr(55, 11).trim()
-          // var zValue = parseInt( line.substr( 66, 4 ) );
+          // const zValue = parseInt( line.substr( 66, 4 ) );
 
           const box = new Float32Array(9)
           box[ 0 ] = aLength
@@ -549,15 +610,15 @@ class PdbParser extends StructureParser {
 
     //
 
-    var en = entityDataList.length
+    const en = entityDataList.length
 
-    if (entityDataList.length) {
+    if (en) {
       s.eachChain(function (cp) {
         cp.entityIndex = en
       })
 
       entityDataList.forEach(function (e, i) {
-        var chainIndexList = e.chainList.map(function (chainname) {
+        const chainIndexList = e.chainList.map(function (chainname) {
           return chainDict[ chainname ]
         })
         s.entityList.push(new Entity(
@@ -565,9 +626,9 @@ class PdbParser extends StructureParser {
         ))
       })
 
-      var ei = entityDataList.length
-      var rp = s.getResidueProxy()
-      var residueDict = {}
+      let ei = entityDataList.length
+      const rp = s.getResidueProxy()
+      const residueDict = {}
 
       s.eachChain(function (cp) {
         if (cp.entityIndex === en) {
@@ -580,9 +641,9 @@ class PdbParser extends StructureParser {
       })
 
       Object.keys(residueDict).forEach(function (resname) {
-        var chainList = residueDict[ resname ]
-        var type = 'non-polymer'
-        var name = hetnameDict[ resname ] || resname
+        const chainList = residueDict[ resname ]
+        let type = 'non-polymer'
+        let name = hetnameDict[ resname ] || resname
         if (WaterNames.includes(resname)) {
           name = 'water'
           type = 'water'

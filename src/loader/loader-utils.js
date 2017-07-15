@@ -4,7 +4,9 @@
  * @private
  */
 
-import { DatasourceRegistry, ParserRegistry } from '../globals.js'
+import {
+  DatasourceRegistry, ParserRegistry, ScriptExtensions
+} from '../globals.js'
 import { getFileInfo } from '../utils.js'
 import ParserLoader from './parser-loader.js'
 import ScriptLoader from './script-loader.js'
@@ -53,7 +55,7 @@ function autoLoad (file, params) {
   var LoaderClass
   if (ParserRegistry.names.includes(p.ext)) {
     LoaderClass = ParserLoader
-  } else if ([ 'ngl', 'js' ].includes(p.ext)) {
+  } else if (ScriptExtensions.includes(p.ext)) {
     LoaderClass = ScriptLoader
   } else if (p.ext === 'plugin') {
     LoaderClass = PluginLoader

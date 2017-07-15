@@ -24,7 +24,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (x = 0; x < canvasWidth; x++) {
       off = (y * canvasWidth + x) * 4
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true
         break
       }
@@ -40,7 +41,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (y = 0; y < canvasHeight; y++) {
       off = (y * canvasWidth + x) * 4
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true
         break
       }
@@ -56,7 +58,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (x = canvasWidth - 1; x >= 0; x--) {
       off = (y * canvasWidth + x) * 4
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true
         break
       }
@@ -72,7 +75,8 @@ function _trimCanvas (canvas, r, g, b, a) {
     for (y = canvasHeight - 1; y >= 0; y--) {
       off = (y * canvasWidth + x) * 4
       if (pixels[ off ] !== r || pixels[ off + 1 ] !== g ||
-                    pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a) {
+          pixels[ off + 2 ] !== b || pixels[ off + 3 ] !== a
+      ) {
         doBreak = true
         break
       }
@@ -89,12 +93,12 @@ function _trimCanvas (canvas, r, g, b, a) {
 
   const trimedCtx = trimedCanvas.getContext('2d')
   trimedCtx.drawImage(
-        canvas,
-        topX, topY,
-        trimedCanvas.width, trimedCanvas.height,
-        0, 0,
-        trimedCanvas.width, trimedCanvas.height
-    )
+    canvas,
+    topX, topY,
+    trimedCanvas.width, trimedCanvas.height,
+    0, 0,
+    trimedCanvas.width, trimedCanvas.height
+  )
 
   return trimedCanvas
 }
@@ -173,14 +177,14 @@ function makeImage (viewer, params) {
 
   return new Promise(function (resolve) {
     const tiledRenderer = new TiledRenderer(
-            renderer, camera, viewer,
+      renderer, camera, viewer,
       {
         factor: factor,
         antialias: antialias,
         onProgress: onProgress,
         onFinish: onFinish
       }
-        )
+    )
 
     renderer.setClearAlpha(transparent ? 0 : 1)
     setLineWidthAndPixelSize()
@@ -189,15 +193,15 @@ function makeImage (viewer, params) {
     function onFinish (i, n) {
       const canvas = trimCanvas(tiledRenderer.canvas)
       canvas.toBlob(
-                function (blob) {
-                  renderer.setClearAlpha(originalClearAlpha)
-                  setLineWidthAndPixelSize(true)
-                  viewer.requestRender()
-                  onProgress(n, n, true)
-                  resolve(blob)
-                },
-                'image/png'
-            )
+        function (blob) {
+          renderer.setClearAlpha(originalClearAlpha)
+          setLineWidthAndPixelSize(true)
+          viewer.requestRender()
+          onProgress(n, n, true)
+          resolve(blob)
+        },
+        'image/png'
+      )
     }
   })
 }
@@ -207,7 +211,7 @@ const matrix = new Matrix4()
 const modelViewProjectionMatrix = new Matrix4()
 
 function sortProjectedPosition (scene, camera) {
-    // console.time( "sort" );
+  // console.time( "sort" );
 
   scene.traverseVisible(function (o) {
     if (!(o instanceof Points) || !o.sortParticles) {
@@ -220,11 +224,11 @@ function sortProjectedPosition (scene, camera) {
     if (n === 0) return
 
     matrix.multiplyMatrices(
-            camera.matrixWorldInverse, o.matrixWorld
-        )
+      camera.matrixWorldInverse, o.matrixWorld
+    )
     modelViewProjectionMatrix.multiplyMatrices(
-            camera.projectionMatrix, matrix
-        )
+      camera.projectionMatrix, matrix
+    )
 
     let sortData, sortArray, zArray, cmpFn
 
@@ -257,7 +261,7 @@ function sortProjectedPosition (scene, camera) {
       vertex.fromArray(attributes.position.array, i * 3)
       vertex.applyMatrix4(modelViewProjectionMatrix)
 
-            // negate, so that sorting order is reversed
+      // negate, so that sorting order is reversed
       zArray[ i ] = -vertex.z
       sortArray[ i ] = i
     }
@@ -272,9 +276,7 @@ function sortProjectedPosition (scene, camera) {
       const itemSize = attr.itemSize
 
       if (!sortData[ name ]) {
-        sortData[ name ] = new Float32Array(
-                    itemSize * n
-                )
+        sortData[ name ] = new Float32Array(itemSize * n)
       }
 
       tmpTab = sortData[ name ]
@@ -332,14 +334,14 @@ function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
 
     if (u.projectionMatrixInverse) {
       u.projectionMatrixInverse.value.copy(
-                projectionMatrixInverse
-            )
+        projectionMatrixInverse
+      )
     }
 
     if (u.projectionMatrixTranspose) {
       u.projectionMatrixTranspose.value.copy(
-                projectionMatrixTranspose
-            )
+        projectionMatrixTranspose
+      )
     }
 
     if (u.ortho) {
@@ -349,7 +351,7 @@ function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
 }
 
 export {
-    makeImage,
-    sortProjectedPosition,
-    updateMaterialUniforms
+  makeImage,
+  sortProjectedPosition,
+  updateMaterialUniforms
 }

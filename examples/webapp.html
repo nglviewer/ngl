@@ -32,10 +32,10 @@
     NGL.examplesScriptUrl = "./scripts/"
 
     // Datasources
-    NGL.DatasourceRegistry.add( "data", new NGL.StaticDatasource("../data/"))
+    NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("../data/"))
     var mdsrv = NGL.getQuery("mdsrv")
     if (mdsrv) {
-      NGL.DatasourceRegistry.add( "file", new NGL.MdsrvDatasource(mdsrv))
+      NGL.DatasourceRegistry.add("file", new NGL.MdsrvDatasource(mdsrv))
       NGL.DatasourceRegistry.listing = NGL.DatasourceRegistry.get("file")
       NGL.DatasourceRegistry.trajectory = NGL.DatasourceRegistry.get("file")
     }
@@ -56,12 +56,12 @@
       var plugin = NGL.getQuery("plugin")
       if (plugin) NGL.PluginRegistry.load(plugin, stage)
 
-      var struc = NGL.getQuery( "struc" )
-      var traj = NGL.getQuery( "traj" )
+      var struc = NGL.getQuery("struc")
+      var traj = NGL.getQuery("traj")
       if (struc) {
         stage.loadFile(struc, {
           defaultRepresentation: true
-        }).then( function(o) {
+        }).then(function(o) {
           if (traj) o.addTrajectory(traj)
         })
       }
