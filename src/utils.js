@@ -6,6 +6,8 @@
 
 import { Vector2, Vector3, Matrix4, Quaternion } from '../lib/three.es6.js'
 
+import { DecompressorRegistry } from './globals.js'
+
 function getQuery (id) {
   if (typeof window === 'undefined') return undefined
 
@@ -203,7 +205,7 @@ function open (callback, extensionList) {
 }
 
 function getFileInfo (file) {
-  var compressedExtList = [ 'gz' ]
+  var compressedExtList = DecompressorRegistry.names
 
   var path, compressed, protocol
 
