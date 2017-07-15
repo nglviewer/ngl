@@ -42855,7 +42855,7 @@ AudioAnalyser.prototype.getData = function () {
 function getQuery (id) {
   if (typeof window === 'undefined') { return undefined }
 
-  var a = new RegExp(id + '=([^&#=]*)');
+  var a = new RegExp((id + "=([^&#=]*)"));
   var m = a.exec(window.location.search);
 
   if (m) {
@@ -42990,7 +42990,7 @@ function download (data, downloadName) {
 }
 
 function getFileInfo (file) {
-  var compressedExtList = [ 'gz' ];
+  var compressedExtList = DecompressorRegistry.names;
 
   var path, compressed, protocol;
 
@@ -48161,6 +48161,12 @@ function setDebug (value) {
 
 var WebglErrorMessage = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="padding:15px;text-align:center;">Your browser/graphics card does not seem to support <a target="_blank" href="https://en.wikipedia.org/wiki/WebGL">WebGL</a>.<br/><br/>Find out how to get it <a target="_blank" href="http://get.webgl.org/">here</a>.</p></div>';
 
+/**
+ * List of file extensions to be recognized as scripts
+ * @type {String[]}
+ */
+var ScriptExtensions = [ 'ngl', 'js' ];
+
 var WorkerRegistry = new WorkerRegistry$1();
 /**
  * Global instance of {@link src/color/colormaker-registry.js~ColormakerRegistry}
@@ -48775,8 +48781,8 @@ var ScriptLoader = (function (Loader) {
 
     return this.streamer.read().then(function () {
       return new Script(
-                this$1.streamer.asText(), this$1.name, this$1.path
-            )
+        this$1.streamer.asText(), this$1.name, this$1.path
+      )
     })
   };
 
@@ -48818,10 +48824,10 @@ var PluginLoader = (function (Loader) {
 
       manifest.files.map(function (name) {
         promiseList.push(
-                    autoLoad(basePath + name, {
-                      ext: 'text', useWorker: false
-                    })
-                );
+          autoLoad(basePath + name, {
+            ext: 'text', useWorker: false
+          })
+        );
       });
 
       return Promise.all(promiseList).then(function (dataList) {
@@ -48887,7 +48893,7 @@ function autoLoad (file, params) {
   var LoaderClass;
   if (ParserRegistry.names.includes(p.ext)) {
     LoaderClass = ParserLoader;
-  } else if ([ 'ngl', 'js' ].includes(p.ext)) {
+  } else if (ScriptExtensions.includes(p.ext)) {
     LoaderClass = ScriptLoader;
   } else if (p.ext === 'plugin') {
     LoaderClass = PluginLoader;
@@ -51691,10 +51697,10 @@ function getMouseButtons (event) {
  * mouseObserver.signals.hovered.add( function(){ ... } );
  */
 var MouseObserver = function MouseObserver (domElement, params) {
-      /**
-       * Events emitted by the mouse observer
-       * @type {MouseSignals}
-       */
+  /**
+   * Events emitted by the mouse observer
+   * @type {MouseSignals}
+   */
   this.signals = {
     moved: new Signal(),
     scrolled: new Signal(),
@@ -51711,83 +51717,83 @@ var MouseObserver = function MouseObserver (domElement, params) {
 
   this.domElement = domElement;
 
-      /**
-       * Position on page
-       * @type {Vector2}
-       */
+  /**
+   * Position on page
+   * @type {Vector2}
+   */
   this.position = new Vector2();
-      /**
-       * Previous position on page
-       * @type {Vector2}
-       */
+  /**
+   * Previous position on page
+   * @type {Vector2}
+   */
   this.prevPosition = new Vector2();
-      /**
-       * Position on page when clicked
-       * @type {Vector2}
-       */
+  /**
+   * Position on page when clicked
+   * @type {Vector2}
+   */
   this.down = new Vector2();
-      /**
-       * Position on dom element
-       * @type {Vector2}
-       */
+  /**
+   * Position on dom element
+   * @type {Vector2}
+   */
   this.canvasPosition = new Vector2();
-      /**
-       * Flag indicating if the mouse is moving
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the mouse is moving
+   * @type {Boolean}
+   */
   this.moving = false;
-      /**
-       * Flag indicating if the mouse is hovering
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the mouse is hovering
+   * @type {Boolean}
+   */
   this.hovering = true;
-      /**
-       * Flag indicating if there was a scolling event
-       * since the last mouse move
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if there was a scolling event
+   * since the last mouse move
+   * @type {Boolean}
+   */
   this.scrolled = false;
-      /**
-       * Timestamp of last mouse move
-       * @type {Number}
-       */
+  /**
+   * Timestamp of last mouse move
+   * @type {Number}
+   */
   this.lastMoved = Infinity;
-      /**
-       * Indicates which mouse button was pressed:
-       * 0: No button; 1: Left button; 2: Middle button; 3: Right button
-       * @type {Integer}
-       */
+  /**
+   * Indicates which mouse button was pressed:
+   * 0: No button; 1: Left button; 2: Middle button; 3: Right button
+   * @type {Integer}
+   */
   this.which = undefined;
-      /**
-       * Indicates which mouse buttons were pressed:
-       * 0: No button; 1: Left button; 2: Right button; 4: Middle button
-       * @type {Integer}
-       */
+  /**
+   * Indicates which mouse buttons were pressed:
+   * 0: No button; 1: Left button; 2: Right button; 4: Middle button
+   * @type {Integer}
+   */
   this.buttons = undefined;
-      /**
-       * Flag indicating if the mouse is pressed down
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the mouse is pressed down
+   * @type {Boolean}
+   */
   this.pressed = undefined;
-      /**
-       * Flag indicating if the alt key is pressed
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the alt key is pressed
+   * @type {Boolean}
+   */
   this.altKey = undefined;
-      /**
-       * Flag indicating if the ctrl key is pressed
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the ctrl key is pressed
+   * @type {Boolean}
+   */
   this.ctrlKey = undefined;
-      /**
-       * Flag indicating if the meta key is pressed
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the meta key is pressed
+   * @type {Boolean}
+   */
   this.metaKey = undefined;
-      /**
-       * Flag indicating if the shift key is pressed
-       * @type {Boolean}
-       */
+  /**
+   * Flag indicating if the shift key is pressed
+   * @type {Boolean}
+   */
   this.shiftKey = undefined;
 
   this._listen = this._listen.bind(this);
@@ -51830,11 +51836,11 @@ MouseObserver.prototype.setParameters = function setParameters (params) {
   this.hoverTimeout = defaults(p.hoverTimeout, this.hoverTimeout);
 };
 
-  /**
-   * listen to mouse actions
-   * @emits {MouseSignals.hovered} when hovered
-   * @return {undefined}
-   */
+/**
+ * listen to mouse actions
+ * @emits {MouseSignals.hovered} when hovered
+ * @return {undefined}
+ */
 MouseObserver.prototype._listen = function _listen () {
   if (window.performance.now() - this.lastMoved > this.hoverTimeout) {
     this.moving = false;
@@ -51850,12 +51856,12 @@ MouseObserver.prototype._listen = function _listen () {
   window.requestAnimationFrame(this._listen);
 };
 
-  /**
-   * handle mouse scroll
-   * @emits {MouseSignals.scrolled} when scrolled
-   * @param{Event} event - mouse event
-   * @return {undefined}
-   */
+/**
+ * handle mouse scroll
+ * @emits {MouseSignals.scrolled} when scrolled
+ * @param{Event} event - mouse event
+ * @return {undefined}
+ */
 MouseObserver.prototype._onMousewheel = function _onMousewheel (event) {
     var this$1 = this;
 
@@ -51867,13 +51873,13 @@ MouseObserver.prototype._onMousewheel = function _onMousewheel (event) {
 
   var delta = 0;
   if (event.wheelDelta) {
-          // WebKit / Opera / Explorer 9
+    // WebKit / Opera / Explorer 9
     delta = event.wheelDelta / 40;
   } else if (event.detail) {
-          // Firefox
+    // Firefox
     delta = -event.detail / 3;
   } else {
-          // Firefox or IE 11
+    // Firefox or IE 11
     delta = -event.deltaY / (event.deltaMode ? 0.33 : 30);
   }
   this.signals.scrolled.dispatch(delta);
@@ -51883,13 +51889,13 @@ MouseObserver.prototype._onMousewheel = function _onMousewheel (event) {
   }, this.hoverTimeout);
 };
 
-  /**
-   * handle mouse move
-   * @emits {MouseSignals.moved} when moved
-   * @emits {MouseSignals.dragged} when dragged
-   * @param{Event} event - mouse event
-   * @return {undefined}
-   */
+/**
+ * handle mouse move
+ * @emits {MouseSignals.moved} when moved
+ * @emits {MouseSignals.dragged} when dragged
+ * @param{Event} event - mouse event
+ * @return {undefined}
+ */
 MouseObserver.prototype._onMousemove = function _onMousemove (event) {
   if (event.target === this.domElement) {
     event.preventDefault();
@@ -51928,23 +51934,25 @@ MouseObserver.prototype._onMousedown = function _onMousedown (event) {
   this._setCanvasPosition(event);
 };
 
-  /**
-   * handle mouse up
-   * @emits {MouseSignals.clicked} when clicked
-   * @emits {MouseSignals.dropped} when dropped
-   * @param{Event} event - mouse event
-   * @return {undefined}
-   */
+/**
+ * handle mouse up
+ * @emits {MouseSignals.clicked} when clicked
+ * @emits {MouseSignals.dropped} when dropped
+ * @param{Event} event - mouse event
+ * @return {undefined}
+ */
 MouseObserver.prototype._onMouseup = function _onMouseup (event) {
   if (event.target === this.domElement) {
     event.preventDefault();
   }
   this._setKeys(event);
   var cp = this.canvasPosition;
-  this.signals.clicked.dispatch(cp.x, cp.y);
-      // if( this.distance() > 3 || event.which === RightMouseButton ){
-      //   this.signals.dropped.dispatch();
-      // }
+  if (this._distance() < 4) {
+    this.signals.clicked.dispatch(cp.x, cp.y);
+  }
+  // if (this._distance() > 3 || event.which === RightMouseButton) {
+  // this.signals.dropped.dispatch();
+  // }
   this.which = undefined;
   this.buttons = undefined;
   this.pressed = undefined;
@@ -51967,26 +51975,26 @@ MouseObserver.prototype._onTouchstart = function _onTouchstart (event) {
       this.moving = false;
       this.hovering = false;
       this.down.set(
-                  event.touches[ 0 ].pageX,
-                  event.touches[ 0 ].pageY
-              );
+        event.touches[ 0 ].pageX,
+        event.touches[ 0 ].pageY
+      );
       this.position.set(
-                  event.touches[ 0 ].pageX,
-                  event.touches[ 0 ].pageY
-              );
+        event.touches[ 0 ].pageX,
+        event.touches[ 0 ].pageY
+      );
       this._setCanvasPosition(event.touches[ 0 ]);
       break
     }
 
     case 2: {
       this.down.set(
-                  (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-                  (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
-              );
+        (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
+        (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+      );
       this.position.set(
-                  (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-                  (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
-              );
+        (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
+        (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+      );
       this.lastTouchDistance = getTouchDistance(event);
     }
   }
@@ -51996,7 +52004,9 @@ MouseObserver.prototype._onTouchend = function _onTouchend (event) {
   if (event.target === this.domElement) {
     event.preventDefault();
   }
-  this.pressed = false;
+  this.which = undefined;
+  this.buttons = undefined;
+  this.pressed = undefined;
 };
 
 MouseObserver.prototype._onTouchmove = function _onTouchmove (event) {
@@ -52009,16 +52019,16 @@ MouseObserver.prototype._onTouchmove = function _onTouchmove (event) {
   switch (event.touches.length) {
     case 1: {
       this._setKeys(event);
-      this.which = undefined;
-      this.buttons = undefined;
+      this.which = LeftMouseButton;
+      this.buttons = 1;
       this.moving = true;
       this.hovering = false;
       this.lastMoved = window.performance.now();
       this.prevPosition.copy(this.position);
       this.position.set(
-                  event.touches[ 0 ].pageX,
-                  event.touches[ 0 ].pageY
-              );
+        event.touches[ 0 ].pageX,
+        event.touches[ 0 ].pageY
+      );
       this._setCanvasPosition(event.touches[ 0 ]);
       var dx = this.prevPosition.x - this.position.x;
       var dy = this.prevPosition.y - this.position.y;
@@ -52030,19 +52040,23 @@ MouseObserver.prototype._onTouchmove = function _onTouchmove (event) {
     }
 
     case 2: {
-      this.which = RightMouseButton;
-      this.buttons = 2;
       var touchDistance = getTouchDistance(event);
       var delta = touchDistance - this.lastTouchDistance;
       this.lastTouchDistance = touchDistance;
-      if (Math.abs(delta) > 1) {
+      this.prevPosition.copy(this.position);
+      this.position.set(
+        (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
+        (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+      );
+      if (Math.abs(delta) > 2 && this.handleScroll &&
+          this.position.distanceTo(this.prevPosition) < 2
+      ) {
+        this.which = 0;
+        this.buttons = 0;
         this.signals.scrolled.dispatch(delta / 2);
       } else {
-        this.prevPosition.copy(this.position);
-        this.position.set(
-                      (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-                      (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
-                  );
+        this.which = RightMouseButton;
+        this.buttons = 2;
         var dx$1 = this.prevPosition.x - this.position.x;
         var dy$1 = this.prevPosition.y - this.position.y;
         this.signals.moved.dispatch(dx$1, dy$1);
@@ -53432,23 +53446,23 @@ MouseActions.zoomScroll = function zoomScroll (stage, delta) {
   stage.trackballControls.zoom(delta);
 };
 
-  /**
-   * Move near clipping plane based on scroll-delta
-   * @param {Stage} stage - the stage
-   * @param {Number} delta - amount to move clipping plane
-   * @return {undefined}
-   */
+/**
+ * Move near clipping plane based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move clipping plane
+ * @return {undefined}
+ */
 MouseActions.clipNearScroll = function clipNearScroll (stage, delta) {
   var sp = stage.getParameters();
   stage.setParameters({ clipNear: sp.clipNear + delta / 10 });
 };
 
-  /**
-   * Move focus planes based on scroll-delta
-   * @param {Stage} stage - the stage
-   * @param {Number} delta - amount to move focus planes
-   * @return {undefined}
-   */
+/**
+ * Move focus planes based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to move focus planes
+ * @return {undefined}
+ */
 MouseActions.focusScroll = function focusScroll (stage, delta) {
   var sp = stage.getParameters();
   var focus = sp.clipNear * 2;
@@ -53457,12 +53471,12 @@ MouseActions.focusScroll = function focusScroll (stage, delta) {
   stage.setFocus(focus + step);
 };
 
-  /**
-   * Change isolevel of volume surfaces based on scroll-delta
-   * @param {Stage} stage - the stage
-   * @param {Number} delta - amount to change isolevel
-   * @return {undefined}
-   */
+/**
+ * Change isolevel of volume surfaces based on scroll-delta
+ * @param {Stage} stage - the stage
+ * @param {Number} delta - amount to change isolevel
+ * @return {undefined}
+ */
 MouseActions.isolevelScroll = function isolevelScroll (stage, delta) {
   var d = Math.sign(delta) / 5;
   stage.eachRepresentation(function (reprComp) {
@@ -53472,101 +53486,101 @@ MouseActions.isolevelScroll = function isolevelScroll (stage, delta) {
   }, 'volume');
 };
 
-  /**
-   * Pan scene based on mouse coordinate changes
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to pan in x direction
-   * @param {Number} dy - amount to pan in y direction
-   * @return {undefined}
-   */
+/**
+ * Pan scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
 MouseActions.panDrag = function panDrag (stage, dx, dy) {
   stage.trackballControls.pan(dx, dy);
 };
 
-  /**
-   * Rotate scene based on mouse coordinate changes
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to rotate in x direction
-   * @param {Number} dy - amount to rotate in y direction
-   * @return {undefined}
-   */
+/**
+ * Rotate scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
 MouseActions.rotateDrag = function rotateDrag (stage, dx, dy) {
   stage.trackballControls.rotate(dx, dy);
 };
 
-  /**
-   * Zoom scene based on mouse coordinate changes
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to zoom
-   * @param {Number} dy - amount to zoom
-   * @return {undefined}
-   */
+/**
+ * Zoom scene based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom
+ * @param {Number} dy - amount to zoom
+ * @return {undefined}
+ */
 MouseActions.zoomDrag = function zoomDrag (stage, dx, dy) {
   stage.trackballControls.zoom((dx + dy) / -2);
 };
 
-  /**
-   * Zoom scene based on mouse coordinate changes and
-   * move focus planes based on camera position (zoom)
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to zoom
-   * @param {Number} dy - amount to zoom
-   * @return {undefined}
-   */
+/**
+ * Zoom scene based on mouse coordinate changes and
+ * move focus planes based on camera position (zoom)
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to zoom
+ * @param {Number} dy - amount to zoom
+ * @return {undefined}
+ */
 MouseActions.zoomFocusDrag = function zoomFocusDrag (stage, dx, dy) {
   stage.trackballControls.zoom((dx + dy) / -2);
   var z = stage.viewer.camera.position.z;
   stage.setFocus(100 - Math.abs(z / 8));
 };
 
-  /**
-   * Pan picked component based on mouse coordinate changes
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to pan in x direction
-   * @param {Number} dy - amount to pan in y direction
-   * @return {undefined}
-   */
+/**
+ * Pan picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to pan in x direction
+ * @param {Number} dy - amount to pan in y direction
+ * @return {undefined}
+ */
 MouseActions.panComponentDrag = function panComponentDrag (stage, dx, dy) {
   stage.trackballControls.panComponent(dx, dy);
 };
 
-  /**
-   * Rotate picked component based on mouse coordinate changes
-   * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to rotate in x direction
-   * @param {Number} dy - amount to rotate in y direction
-   * @return {undefined}
-   */
+/**
+ * Rotate picked component based on mouse coordinate changes
+ * @param {Stage} stage - the stage
+ * @param {Number} dx - amount to rotate in x direction
+ * @param {Number} dy - amount to rotate in y direction
+ * @return {undefined}
+ */
 MouseActions.rotateComponentDrag = function rotateComponentDrag (stage, dx, dy) {
   stage.trackballControls.rotateComponent(dx, dy);
 };
 
-  /**
-   * Move picked element to the center of the screen
-   * @param {Stage} stage - the stage
-   * @param {PickingProxy} pickingProxy - the picking data object
-   * @return {undefined}
-   */
+/**
+ * Move picked element to the center of the screen
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
 MouseActions.movePick = function movePick (stage, pickingProxy) {
   if (pickingProxy) {
     stage.animationControls.move(pickingProxy.position.clone());
   }
 };
 
-  /**
-   * Show tooltip with information of picked element
-   * @param {Stage} stage - the stage
-   * @param {PickingProxy} pickingProxy - the picking data object
-   * @return {undefined}
-   */
+/**
+ * Show tooltip with information of picked element
+ * @param {Stage} stage - the stage
+ * @param {PickingProxy} pickingProxy - the picking data object
+ * @return {undefined}
+ */
 MouseActions.tooltipPick = function tooltipPick (stage, pickingProxy) {
   var tt = stage.tooltip;
   var sp = stage.getParameters();
   if (sp.tooltip && pickingProxy) {
     var mp = pickingProxy.mouse.position;
     tt.innerText = pickingProxy.getLabel();
-    tt.style.bottom = window.innerHeight - mp.y + 3 + 'px';
-    tt.style.left = mp.x + 3 + 'px';
+    tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px';
+    tt.style.left = (mp.x + 3) + 'px';
     tt.style.display = 'block';
   } else {
     tt.style.display = 'none';
@@ -53575,42 +53589,42 @@ MouseActions.tooltipPick = function tooltipPick (stage, pickingProxy) {
 
 var ActionPresets = {
   default: [
-        [ 'scroll', MouseActions.zoomScroll ],
-        [ 'scroll-ctrl', MouseActions.clipNearScroll ],
-        [ 'scroll-shift', MouseActions.focusScroll ],
-        [ 'scroll-alt', MouseActions.isolevelScroll ],
+    [ 'scroll', MouseActions.zoomScroll ],
+    [ 'scroll-ctrl', MouseActions.clipNearScroll ],
+    [ 'scroll-shift', MouseActions.focusScroll ],
+    [ 'scroll-alt', MouseActions.isolevelScroll ],
 
-        [ 'drag-right', MouseActions.panDrag ],
-        [ 'drag-left', MouseActions.rotateDrag ],
-        [ 'drag-middle', MouseActions.zoomDrag ],
-        [ 'drag-shift-right', MouseActions.zoomDrag ],
-        [ 'drag-left+right', MouseActions.zoomDrag ],
-        [ 'drag-ctrl-right', MouseActions.panComponentDrag ],
-        [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
+    [ 'drag-right', MouseActions.panDrag ],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-middle', MouseActions.zoomDrag ],
+    [ 'drag-shift-right', MouseActions.zoomDrag ],
+    [ 'drag-left+right', MouseActions.zoomDrag ],
+    [ 'drag-ctrl-right', MouseActions.panComponentDrag ],
+    [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
 
-        [ 'clickPick-middle', MouseActions.movePick ],
-        [ 'hoverPick', MouseActions.tooltipPick ]
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ],
   pymol: [
-        [ 'drag-left', MouseActions.rotateDrag ],
-        [ 'drag-middle', MouseActions.panDrag ],
-        [ 'drag-right', MouseActions.zoomDrag ],
-        [ 'drag-shift-right', MouseActions.focusScroll ],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-middle', MouseActions.panDrag ],
+    [ 'drag-right', MouseActions.zoomDrag ],
+    [ 'drag-shift-right', MouseActions.focusScroll ],
 
-        [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
-        [ 'hoverPick', MouseActions.tooltipPick ]
+    [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ],
   coot: [
-        [ 'scroll', MouseActions.isolevelScroll ],
+    [ 'scroll', MouseActions.isolevelScroll ],
 
-        [ 'drag-left', MouseActions.rotateDrag ],
-        [ 'drag-middle', MouseActions.panDrag ],
-        [ 'drag-ctrl-left', MouseActions.panDrag ],
-        [ 'drag-right', MouseActions.zoomFocusDrag ],
-        [ 'drag-ctrl-right', MouseActions.focusScroll ],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-middle', MouseActions.panDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-right', MouseActions.zoomFocusDrag ],
+    [ 'drag-ctrl-right', MouseActions.focusScroll ],
 
-        [ 'clickPick-middle', MouseActions.movePick ],
-        [ 'hoverPick', MouseActions.tooltipPick ]
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ]
 };
 
@@ -53707,28 +53721,28 @@ MouseControls.prototype.run = function run (type) {
   });
 };
 
-  /**
-   * Add a new mouse action triggered by an event, key and button combination.
-   * The {@link MouseActions} class provides a number of static methods for
-   * use as callback functions.
-   *
-   * @example
-   * // change ambient light intensity on mouse scroll
-   * // while the ctrl and shift keys are pressed
-   * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
-   *   var ai = stage.getParameters().ambientIntensity;
-   *   stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
-   * } );
-   *
-   * @example
-   * // Call the MouseActions.zoomDrag method on mouse drag events
-   * // with left and right mouse buttons simultaneous
-   * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
-   *
-   * @param {TriggerString} triggerStr - the trigger for the action
-   * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
-   * @return {undefined}
-   */
+/**
+ * Add a new mouse action triggered by an event, key and button combination.
+ * The {@link MouseActions} class provides a number of static methods for
+ * use as callback functions.
+ *
+ * @example
+ * // change ambient light intensity on mouse scroll
+ * // while the ctrl and shift keys are pressed
+ * stage.mouseControls.add( "scroll-ctrl+shift", function( stage, delta ){
+ *   var ai = stage.getParameters().ambientIntensity;
+ *   stage.setParameters( { ambientIntensity: Math.max( 0, ai + delta / 50 ) } );
+ * } );
+ *
+ * @example
+ * // Call the MouseActions.zoomDrag method on mouse drag events
+ * // with left and right mouse buttons simultaneous
+ * stage.mouseControls.add( "drag-left+right", MouseActions.zoomDrag );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
+ * @param {function(stage: Stage, ...args: Any)} callback - the callback function for the action
+ * @return {undefined}
+ */
 MouseControls.prototype.add = function add (triggerStr, callback) {
   var ref = triggerFromString(triggerStr);
     var type = ref[0];
@@ -53738,29 +53752,29 @@ MouseControls.prototype.add = function add (triggerStr, callback) {
   this.actionList.push({ type: type, key: key, button: button, callback: callback });
 };
 
-  /**
-   * Remove a mouse action. The trigger string can contain an asterix (*)
-   * as a wildcard for any key or mouse button. When the callback function
-   * is given, only actions that call that function are removed.
-   *
-   * @example
-   * // remove actions triggered solely by a scroll event
-   * stage.mouseControls.remove( "scroll" );
-   *
-   * @example
-   * // remove actions triggered by a scroll event, including
-   * // those requiring a key pressed or mouse button used
-   * stage.mouseControls.remove( "scroll-*" );
-   *
-   * @example
-   * // remove actions triggered by a scroll event
-   * // while the shift key is pressed
-   * stage.mouseControls.remove( "scroll-shift" );
-   *
-   * @param {TriggerString} triggerStr - the trigger for the action
-   * @param {Function} [callback] - the callback function for the action
-   * @return {undefined}
-   */
+/**
+ * Remove a mouse action. The trigger string can contain an asterix (*)
+ * as a wildcard for any key or mouse button. When the callback function
+ * is given, only actions that call that function are removed.
+ *
+ * @example
+ * // remove actions triggered solely by a scroll event
+ * stage.mouseControls.remove( "scroll" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event, including
+ * // those requiring a key pressed or mouse button used
+ * stage.mouseControls.remove( "scroll-*" );
+ *
+ * @example
+ * // remove actions triggered by a scroll event
+ * // while the shift key is pressed
+ * stage.mouseControls.remove( "scroll-shift" );
+ *
+ * @param {TriggerString} triggerStr - the trigger for the action
+ * @param {Function} [callback] - the callback function for the action
+ * @return {undefined}
+ */
 MouseControls.prototype.remove = function remove (triggerStr, callback) {
   var wildcard = triggerStr.includes('*');
   var ref = triggerFromString(triggerStr);
@@ -53770,21 +53784,21 @@ MouseControls.prototype.remove = function remove (triggerStr, callback) {
 
   var actionList = this.actionList.filter(function (a) {
     return !(
-              (a.type === type || (wildcard && type === '')) &&
-              (a.key === key || (wildcard && key === 0)) &&
-              (a.button === button || (wildcard && button === 0)) &&
-              (a.callback === callback || callback === undefined)
-          )
+      (a.type === type || (wildcard && type === '')) &&
+      (a.key === key || (wildcard && key === 0)) &&
+      (a.button === button || (wildcard && button === 0)) &&
+      (a.callback === callback || callback === undefined)
+    )
   });
 
   this.actionList = actionList;
 };
 
-  /**
-   * Set mouse action preset
-   * @param{String} name - one of "default", "pymol", "coot"
-   * @return {undefined}
-   */
+/**
+ * Set mouse action preset
+ * @param{String} name - one of "default", "pymol", "coot"
+ * @return {undefined}
+ */
 MouseControls.prototype.preset = function preset (name) {
     var this$1 = this;
 
@@ -53792,16 +53806,14 @@ MouseControls.prototype.preset = function preset (name) {
 
   var list = ActionPresets[ name ] || [];
 
-  list.forEach(function (action) {
-    (ref = this$1).add.apply(ref, action);
-      var ref;
-  });
+  list.forEach(function (action) { return (ref = this$1).add.apply(ref, action)
+      var ref; });
 };
 
-  /**
-   * Remove all mouse actions
-   * @return {undefined}
-   */
+/**
+ * Remove all mouse actions
+ * @return {undefined}
+ */
 MouseControls.prototype.clear = function clear () {
   this.actionList.length = 0;
 };
@@ -97252,7 +97264,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-10";
+var version$1 = "0.10.5-11";
 
 /**
  * @file Version
@@ -97301,5 +97313,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, DatasourceRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, SphereBuffer, EllipsoidBuffer, CylinderBuffer, ConeBuffer, ArrowBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
