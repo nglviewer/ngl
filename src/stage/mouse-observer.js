@@ -333,7 +333,9 @@ class MouseObserver {
     }
     this._setKeys(event)
     const cp = this.canvasPosition
-    this.signals.clicked.dispatch(cp.x, cp.y)
+    if (this._distance() < 4) {
+      this.signals.clicked.dispatch(cp.x, cp.y)
+    }
     // if (this._distance() > 3 || event.which === RightMouseButton) {
     //   this.signals.dropped.dispatch();
     // }
