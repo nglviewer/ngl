@@ -7,7 +7,7 @@
 import { Vector2 } from '../../lib/three.es6.js'
 import Signal from '../../lib/signals.es6.js'
 
-import { RightMouseButton } from '../constants.js'
+import { LeftMouseButton, RightMouseButton } from '../constants.js'
 import { defaults } from '../utils.js'
 
 /**
@@ -390,7 +390,9 @@ class MouseObserver {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
-    this.pressed = false
+    this.which = undefined
+    this.buttons = undefined
+    this.pressed = undefined
   }
 
   _onTouchmove (event) {
@@ -403,8 +405,8 @@ class MouseObserver {
     switch (event.touches.length) {
       case 1: {
         this._setKeys(event)
-        this.which = undefined
-        this.buttons = undefined
+        this.which = LeftMouseButton
+        this.buttons = 1
         this.moving = true
         this.hovering = false
         this.lastMoved = window.performance.now()
@@ -424,19 +426,23 @@ class MouseObserver {
       }
 
       case 2: {
-        this.which = RightMouseButton
-        this.buttons = 2
         const touchDistance = getTouchDistance(event)
         const delta = touchDistance - this.lastTouchDistance
         this.lastTouchDistance = touchDistance
-        if (Math.abs(delta) > 1) {
+        this.prevPosition.copy(this.position)
+        this.position.set(
+          (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
+          (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+        )
+        if (Math.abs(delta) > 2 && this.handleScroll &&
+            this.position.distanceTo(this.prevPosition) < 2
+        ) {
+          this.which = 0
+          this.buttons = 0
           this.signals.scrolled.dispatch(delta / 2)
         } else {
-          this.prevPosition.copy(this.position)
-          this.position.set(
-            (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-            (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
-          )
+          this.which = RightMouseButton
+          this.buttons = 2
           const dx = this.prevPosition.x - this.position.x
           const dy = this.prevPosition.y - this.position.y
           this.signals.moved.dispatch(dx, dy)
