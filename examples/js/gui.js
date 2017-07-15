@@ -428,8 +428,9 @@ NGL.MenubarFileWidget = function (stage) {
     NGL.ParserRegistry.getStructureExtensions(),
     NGL.ParserRegistry.getVolumeExtensions(),
     NGL.ParserRegistry.getSurfaceExtensions(),
-    NGL.DecompressorRegistry.names
-  ]).concat([ 'ngl', 'js' ])
+    NGL.DecompressorRegistry.names,
+    NGL.ScriptExtensions
+  ])
 
   function fileInputOnChange (e) {
     var fn = function (file, callback) {

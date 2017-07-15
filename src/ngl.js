@@ -14,7 +14,7 @@ import _Promise from '../lib/promise.es6.js'
 
 import {
   Debug, setDebug,
-  ColormakerRegistry,
+  ScriptExtensions, ColormakerRegistry,
   DatasourceRegistry, DecompressorRegistry,
   ParserRegistry, RepresentationRegistry
 } from './globals.js'
@@ -191,6 +191,7 @@ export {
   Version,
   Debug,
   setDebug,
+  ScriptExtensions,
   DatasourceRegistry,
   DecompressorRegistry,
   StaticDatasource,
