@@ -11,13 +11,11 @@ describe('writer/stl-writer', function () {
         position: [0, 0, 0, 0, 1, 0, 0, 0, 1]
       }
       var stl = new StlWriter(surf)
-      var string = stl.getData()
-      assert.strictEqual(string.indexOf('solid surface'), 0, 'stl 1st line')
-      var lines = string.split('\n')
-      assert.strictEqual(lines.length, 9)
-      assert.strictEqual(lines[1], 'facet normal 0 0 1', 'facet declaration')
-      assert.strictEqual(lines[2], 'outer loop', 'loop declaration')
-      assert.strictEqual(lines[3], '    vertex 0 0 0', 'vertex declaration')
+      var dataView = stl.getData()
+      assert.strictEqual(dataView.byteLength, 80 + 4 + 12 + 36 + 2, 'byte length')
+      assert.strictEqual(dataView.getUint32(80, true), 1, 'triangles count')
+      assert.strictEqual(dataView.getFloat32(80 + 4 + 12, true), 0, '1st vertex x')
+      assert.strictEqual(dataView.getUint16(80 + 4 + 48, true), 0, 'attribute byte count')
     })
   })
 })
