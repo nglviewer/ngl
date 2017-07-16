@@ -12,14 +12,16 @@ import Writer from './writer.js'
  * Create an STL File from a surface Object (e.g. for 3D printing)
  *
  * @example
- * molsurf = new NGL.MolecularSurface(structure)
- * surf = molsurf.getSurface({type: ‘av’, probeRadius: 1.4})
- * stl = new NGL.StlWriter(surf)
- * stl.download(‘my_file_name’)
- * @class StlWriter
+ * molsurf = new MolecularSurface(structure)
+ * surf = molsurf.getSurface({type: 'av', probeRadius: 1.4})
+ * stl = new StlWriter(surf)
+ * stl.download('myFileName')
  */
 class StlWriter extends Writer {
-  constructor (surface, isBinary) {
+  /**
+   * @param {Surface} surface - the surface to write out
+   */
+  constructor (surface) {
     super()
 
     this.surface = surface
@@ -31,9 +33,12 @@ class StlWriter extends Writer {
   get defaultExt () { return 'stl' }
 
   /*
-   * STL Binary
+   * Get STL Binary data
+   *
    * Adapted from: https://github.com/mrdoob/three.js/blob/master/examples/js/exporters/STLBinaryExporter.js
    * see https://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL for the file format description
+   *
+   * @return {DataView} the data
    */
   getData () {
     let offset = 80 // skip header

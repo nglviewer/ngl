@@ -11,27 +11,23 @@ const defaultByteLength = 1024 * 8
 const charArray = []
 
 /**
- * IOBuffer
- * @constructor
- * @param {undefined|number|ArrayBuffer|TypedArray|IOBuffer|Buffer} data - The data to construct the IOBuffer with.
- *
- * If it's a number, it will initialize the buffer with the number as
- * the buffer's length. If it's undefined, it will initialize the buffer
- * with a default length of 8 Kb. If its an ArrayBuffer, a TypedArray,
- * an IOBuffer instance, or a Node.js Buffer, it will create a view over
- * the underlying ArrayBuffer.
- * @param {object} [options]
- * @param {number} [options.offset=0] - Ignore the first n bytes of the ArrayBuffer
- * @property {ArrayBuffer} buffer - Reference to the internal ArrayBuffer object
- * @property {number} length - Byte length of the internal ArrayBuffer
- * @property {number} offset - The current offset of the buffer's pointer
- * @property {number} byteLength - Byte length of the internal ArrayBuffer
- * @property {number} byteOffset - Byte offset of the internal ArrayBuffer
+ * Class for writing and reading binary data
  */
 class IOBuffer {
-  constructor (data, options) {
-    options = options || {}
-    var dataIsGiven = false
+  /**
+   * @param {undefined|number|ArrayBuffer|TypedArray|IOBuffer|Buffer} data - The data to construct the IOBuffer with.
+   *
+   * If it's a number, it will initialize the buffer with the number as
+   * the buffer's length. If it's undefined, it will initialize the buffer
+   * with a default length of 8 Kb. If its an ArrayBuffer, a TypedArray,
+   * an IOBuffer instance, or a Node.js Buffer, it will create a view over
+   * the underlying ArrayBuffer.
+   * @param {object} [params]
+   * @param {number} [params.offset=0] - Ignore the first n bytes of the ArrayBuffer
+   */
+  constructor (data, params) {
+    const p = params || {}
+    let dataIsGiven = false
     if (data === undefined) {
       data = defaultByteLength
     }
@@ -42,7 +38,7 @@ class IOBuffer {
       this._lastWrittenByte = data.byteLength
     }
 
-    const offset = options.offset ? options.offset >>> 0 : 0
+    const offset = p.offset ? p.offset >>> 0 : 0
     let byteLength = data.byteLength - offset
     let dvOffset = offset
     if (data.buffer) {
@@ -56,11 +52,33 @@ class IOBuffer {
     } else {
       this._lastWrittenByte = 0
     }
+
+    /**
+     * Reference to the internal ArrayBuffer object
+     * @type {ArrayBuffer}
+     */
     this.buffer = data
+    /**
+     * Byte length of the internal ArrayBuffer
+     * @type {Number}
+     */
     this.length = byteLength
+    /**
+     * Byte length of the internal ArrayBuffer
+     * @type {Number}
+     */
     this.byteLength = byteLength
+    /**
+     * Byte offset of the internal ArrayBuffer
+     * @type {Number}
+     */
     this.byteOffset = dvOffset
+    /**
+     * The current offset of the buffer's pointer
+     * @type {Number}
+     */
     this.offset = 0
+
     this.littleEndian = true
     this._data = new DataView(this.buffer, dvOffset, byteLength)
     this._mark = 0
