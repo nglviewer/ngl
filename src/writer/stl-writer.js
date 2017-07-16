@@ -3,8 +3,11 @@
  * @author Paul Pillot <paul.pillot@cimf.ca>
  * @private
  */
+
 import { Vector3 } from '../../lib/three.es6.js'
+
 import Writer from './writer.js'
+import IOBuffer from '../utils/io-buffer.js'
 
 // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
 
@@ -41,22 +44,21 @@ class StlWriter extends Writer {
    * @return {DataView} the data
    */
   getData () {
-    let offset = 80 // skip header
     const triangles = this.surface.index.length / 3
     const bufferLength = triangles * 2 + triangles * 3 * 4 * 4 + 80 + 4
-    let arrayBuffer = new ArrayBuffer(bufferLength)
-    let output = new DataView(arrayBuffer)
-    output.setUint32(offset, triangles, true)
-    offset += 4
+    const output = new IOBuffer(bufferLength)
 
-    let vector = new Vector3()
-    let vectorNorm1 = new Vector3()
-    let vectorNorm2 = new Vector3()
-    let vectorNorm3 = new Vector3()
+    output.skip(80)  // skip header
+    output.writeUint32(triangles)
+
+    const vector = new Vector3()
+    const vectorNorm1 = new Vector3()
+    const vectorNorm2 = new Vector3()
+    const vectorNorm3 = new Vector3()
 
     // traversing vertices
     for (let i = 0; i < triangles; i++) {
-      let indices = [
+      const indices = [
         this.surface.index[i * 3],
         this.surface.index[i * 3 + 1],
         this.surface.index[i * 3 + 2]
@@ -68,29 +70,22 @@ class StlWriter extends Writer {
 
       vector.addVectors(vectorNorm1, vectorNorm2).add(vectorNorm3).normalize()
 
-      output.setFloat32(offset, vector.x, true)
-      offset += 4
-      output.setFloat32(offset, vector.y, true)
-      offset += 4
-      output.setFloat32(offset, vector.z, true)
-      offset += 4
+      output.writeFloat32(vector.x)
+      output.writeFloat32(vector.y)
+      output.writeFloat32(vector.z)
 
       for (let j = 0; j < 3; j++) {
         vector.fromArray(this.surface.position, indices[j] * 3)
 
-        output.setFloat32(offset, vector.x, true) // vertices
-        offset += 4
-        output.setFloat32(offset, vector.y, true)
-        offset += 4
-        output.setFloat32(offset, vector.z, true)
-        offset += 4
+        output.writeFloat32(vector.x)  // vertices
+        output.writeFloat32(vector.y)
+        output.writeFloat32(vector.z)
       }
 
-      output.setUint16(offset, 0, true) // attribute byte count
-      offset += 2
+      output.writeUint16(0)  // attribute byte count
     }
 
-    return output
+    return new DataView(output.buffer)
   }
 }
 
