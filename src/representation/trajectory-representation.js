@@ -34,18 +34,17 @@ import LineBuffer from '../buffer/line-buffer.js'
  * Trajectory representation
  */
 class TrajectoryRepresentation extends StructureRepresentation {
-    /**
-     * @param  {Trajectory} trajectory - the trajectory
-     * @param  {Viewer} viewer - viewer object
-     * @param  {TrajectoryRepresentationParameters} params - parameters
-     */
+  /**
+   * @param  {Trajectory} trajectory - the trajectory
+   * @param  {Viewer} viewer - viewer object
+   * @param  {TrajectoryRepresentationParameters} params - parameters
+   */
   constructor (trajectory, viewer, params) {
     super(trajectory.structure, viewer, params)
 
     this.type = 'trajectory'
 
     this.parameters = Object.assign({
-
       drawLine: {
         type: 'boolean', rebuild: true
       },
@@ -71,11 +70,9 @@ class TrajectoryRepresentation extends StructureRepresentation {
       sort: {
         type: 'boolean', rebuild: true
       }
-
     }, this.parameters)
 
     this.manualAttach = true
-
     this.trajectory = trajectory
 
     this.init(params)
@@ -98,52 +95,47 @@ class TrajectoryRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  attach (callback) {
-    this.bufferList.forEach(buffer => {
-      this.viewer.add(buffer)
-    })
+  attach () {
+    this.bufferList.forEach(buffer => this.viewer.add(buffer))
     this.setVisibility(this.visible)
-
-    callback()
+    this.tasks.decrement()
   }
 
-  prepare (callback) {
-        // TODO
-    callback()
-  }
+  // prepare (callback) {
+  //   // TODO
+  //   // - move loading of path here
+  //   // - get rid of manualAttach
+  //   callback()
+  // }
 
   create () {
-        // Log.log( this.selection )
-        // Log.log( this.atomSet )
+    console.log('create', this.structureView.atomCount)
+    if (this.structureView.atomCount === 0) return
 
-    if (this.atomSet.atomCount === 0) return
+    var index = this.structureView.getAtomIndices()[ 0 ]
 
-    var scope = this
-
-    var index = this.atomSet.atoms[ 0 ].index
-
-    this.trajectory.getPath(index, function (path) {
+    this.trajectory.getPath(index, path => {
       var n = path.length / 3
-      var tc = new Color(scope.colorValue)
+      var tc = new Color(this.colorValue)
 
-      if (scope.drawSphere) {
+      if (this.drawSphere) {
         var sphereBuffer = new SphereBuffer(
           {
             position: path,
             color: uniformArray3(n, tc.r, tc.g, tc.b),
             radius: uniformArray(n, 0.2)
           },
-                    scope.getBufferParams({
-                      sphereDetail: scope.sphereDetail,
-                      dullInterior: true,
-                      disableImpostor: scope.disableImpostor
-                    })
-                )
+          this.getBufferParams({
+            sphereDetail: this.sphereDetail,
+            dullInterior: true,
+            disableImpostor: this.disableImpostor
+          })
+        )
 
-        scope.bufferList.push(sphereBuffer)
+        this.bufferList.push(sphereBuffer)
       }
 
-      if (scope.drawCylinder) {
+      if (this.drawCylinder) {
         var cylinderBuffer = new CylinderBuffer(
           {
             position1: path.subarray(0, -3),
@@ -152,35 +144,34 @@ class TrajectoryRepresentation extends StructureRepresentation {
             color2: uniformArray3(n - 1, tc.r, tc.g, tc.b),
             radius: uniformArray(n, 0.05)
           },
-                    scope.getBufferParams({
-                      openEnded: false,
-                      radialSegments: scope.radialSegments,
-                      disableImpostor: scope.disableImpostor,
-                      dullInterior: true
-                    })
+          this.getBufferParams({
+            openEnded: false,
+            radialSegments: this.radialSegments,
+            disableImpostor: this.disableImpostor,
+            dullInterior: true
+          })
+        )
 
-                )
-
-        scope.bufferList.push(cylinderBuffer)
+        this.bufferList.push(cylinderBuffer)
       }
 
-      if (scope.drawPoint) {
+      if (this.drawPoint) {
         var pointBuffer = new PointBuffer(
           {
             position: path,
             color: uniformArray3(n, tc.r, tc.g, tc.b)
           },
-                    scope.getBufferParams({
-                      pointSize: scope.pointSize,
-                      sizeAttenuation: scope.sizeAttenuation,
-                      sort: scope.sort
-                    })
-                )
+          this.getBufferParams({
+            pointSize: this.pointSize,
+            sizeAttenuation: this.sizeAttenuation,
+            sort: this.sort
+          })
+        )
 
-        scope.bufferList.push(pointBuffer)
+        this.bufferList.push(pointBuffer)
       }
 
-      if (scope.drawLine) {
+      if (this.drawLine) {
         var lineBuffer = new LineBuffer(
           {
             position1: path.subarray(0, -3),
@@ -188,13 +179,13 @@ class TrajectoryRepresentation extends StructureRepresentation {
             color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
             color2: uniformArray3(n - 1, tc.r, tc.g, tc.b)
           },
-                    scope.getBufferParams()
-                )
+          this.getBufferParams()
+        )
 
-        scope.bufferList.push(lineBuffer)
+        this.bufferList.push(lineBuffer)
       }
 
-      scope.attach()
+      this.attach()
     })
   }
 }

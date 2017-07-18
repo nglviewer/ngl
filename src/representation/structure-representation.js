@@ -26,12 +26,12 @@ import RadiusFactory from '../utils/radius-factory.js'
  * @interface
  */
 class StructureRepresentation extends Representation {
-    /**
-     * Create Structure representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {StructureRepresentationParameters} params - structure representation parameters
-     */
+  /**
+   * Create Structure representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {StructureRepresentationParameters} params - structure representation parameters
+   */
   constructor (structure, viewer, params) {
     const p = params || {}
 
@@ -40,7 +40,6 @@ class StructureRepresentation extends Representation {
     this.type = 'structure'
 
     this.parameters = Object.assign({
-
       radiusType: {
         type: 'select', options: RadiusFactory.types
       },
@@ -54,29 +53,28 @@ class StructureRepresentation extends Representation {
       defaultAssembly: {
         type: 'hidden'
       }
-
     }, this.parameters)
 
-        /**
-         * @type {Selection}
-         * @private
-         */
+    /**
+     * @type {Selection}
+     * @private
+     */
     this.selection = new Selection(p.sele)
 
-        /**
-         * @type {Array}
-         * @private
-         */
+    /**
+     * @type {Array}
+     * @private
+     */
     this.dataList = []
 
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure
 
-        /**
-         * @type {StructureView}
-         */
+    /**
+     * @type {StructureView}
+     */
     this.structureView = this.structure.getView(this.selection)
 
     if (structure.biomolDict) {
@@ -228,33 +226,33 @@ class StructureRepresentation extends Representation {
     }, params)
   }
 
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setSelection
-     * @param {String} string - selection string, see {@tutorial selection-language}
-     * @param {Boolean} [silent] - don't trigger a change event in the selection
-     * @return {StructureRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias StructureRepresentation#setSelection
+   * @param {String} string - selection string, see {@tutorial selection-language}
+   * @param {Boolean} [silent] - don't trigger a change event in the selection
+   * @return {StructureRepresentation} this object
+   */
   setSelection (string, silent) {
     this.selection.setString(string, silent)
 
     return this
   }
 
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setParameters
-     * @param {StructureRepresentationParameters} params - structure parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {StructureRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias StructureRepresentation#setParameters
+   * @param {StructureRepresentationParameters} params - structure parameter object
+   * @param {Object} [what] - buffer data attributes to be updated,
+   *                        note that this needs to be implemented in the
+   *                        derived classes. Generally it allows more
+   *                        fine-grained control over updating than
+   *                        forcing a rebuild.
+   * @param {Boolean} what.position - update position data
+   * @param {Boolean} what.color - update color data
+   * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+   * @return {StructureRepresentation} this object
+   */
   setParameters (params, what, rebuild) {
     what = what || {}
 
@@ -296,12 +294,12 @@ class StructureRepresentation extends Representation {
 
   getParameters () {
     const params = Object.assign(
-            super.getParameters(),
+      super.getParameters(),
       {
         sele: this.selection ? this.selection.string : undefined,
         defaultAssembly: this.defaultAssembly
       }
-        )
+    )
 
     return params
   }
