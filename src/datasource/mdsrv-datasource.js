@@ -33,7 +33,7 @@ class MdsrvDatasource extends Datasource {
     return this.baseUrl + 'file/' + info.path
   }
 
-  getNumframesUrl (src) {
+  getCountUrl (src) {
     const info = getFileInfo(src)
     return this.baseUrl + 'traj/numframes/' + info.path
   }

@@ -29,7 +29,7 @@ const _v = new Vector3()
 
 /**
  * @example
- * component.signals.representationAdded.add( function( representationComponent ){ ... } );
+ * component.signals.representationAdded.add(function (representationComponent) { ... });
  *
  * @typedef {Object} ComponentSignals
  * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added

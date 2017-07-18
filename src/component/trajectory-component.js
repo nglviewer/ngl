@@ -32,8 +32,8 @@ import Component from './component.js'
  * @typedef {Object} TrajectoryComponentSignals
  * @property {Signal<RepresentationComponent>} frameChanged - on frame change
  * @property {Signal<RepresentationComponent>} playerChanged - on player change
- * @property {Signal<String>} gotNumframes - when frame count is available
- * @property {Signal<String>} parametersChanged - on parameters change
+ * @property {Signal<Integer>} countChanged - when frame count is available
+ * @property {Signal<TrajectoryComponentParameters>} parametersChanged - on parameters change
  */
 
 /**
@@ -59,7 +59,7 @@ class TrajectoryComponent extends Component {
     this.signals = Object.assign(this.signals, {
       frameChanged: new Signal(),
       playerChanged: new Signal(),
-      gotNumframes: new Signal(),
+      countChanged: new Signal(),
       parametersChanged: new Signal()
     })
 
@@ -84,8 +84,8 @@ class TrajectoryComponent extends Component {
       this.signals.playerChanged.dispatch(player)
     })
 
-    trajectory.signals.gotNumframes.add(n => {
-      this.signals.gotNumframes.dispatch(n)
+    trajectory.signals.countChanged.add(n => {
+      this.signals.countChanged.dispatch(n)
     })
 
         //

@@ -6,15 +6,18 @@
 
 import Trajectory from './trajectory.js'
 
+/**
+ * Structure trajectory class. Gets data from a structure object.
+ */
 class StructureTrajectory extends Trajectory {
   constructor (trajPath, structure, params) {
     super('', structure, params)
-    this.saveInitialCoords()
+    this._init()
   }
 
   get type () { return 'structure' }
 
-  makeAtomIndices () {
+  _makeAtomIndices () {
     if (this.structure.atomSet.getSize() < this.structure.atomStore.count) {
       this.atomIndices = this.structure.getAtomIndices()
     } else {
@@ -46,21 +49,21 @@ class StructureTrajectory extends Trajectory {
     }
 
     const box = structure.boxes[ i ]
-    const numframes = structure.frames.length
+    const frameCount = structure.frames.length
 
-    this.process(i, box, coords, numframes)
+    this._process(i, box, coords, frameCount)
 
     if (typeof callback === 'function') {
       callback()
     }
   }
 
-  getNumframes () {
-    this.setNumframes(this.structure.frames.length)
+  _loadFrameCount () {
+    this._setFrameCount(this.structure.frames.length)
   }
 
   getPath (index, callback) {
-    const n = this.numframes
+    const n = this.frameCount
     const k = index * 3
 
     const path = new Float32Array(n * 3)

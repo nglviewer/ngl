@@ -7,6 +7,9 @@
 import { defaults } from '../utils.js'
 import Trajectory from './trajectory.js'
 
+/**
+ * Frames trajectory class. Gets data from a frames object.
+ */
 class FramesTrajectory extends Trajectory {
   constructor (frames, structure, params) {
     const p = params || {}
@@ -21,13 +24,12 @@ class FramesTrajectory extends Trajectory {
     this.frames = frames.coordinates
     this.boxes = frames.boxes
 
-    this.getNumframes()
-    this.saveInitialCoords()
+    this._init()
   }
 
   get type () { return 'frames' }
 
-  makeAtomIndices () {
+  _makeAtomIndices () {
     if (this.structure.type === 'StructureView') {
       this.atomIndices = this.structure.getAtomIndices()
     } else {
@@ -58,23 +60,23 @@ class FramesTrajectory extends Trajectory {
     }
 
     const box = this.boxes[ i ]
-    const numframes = this.frames.length
+    const frameCount = this.frames.length
 
-    this.process(i, box, coords, numframes)
+    this._process(i, box, coords, frameCount)
 
     if (typeof callback === 'function') {
       callback()
     }
   }
 
-  getNumframes () {
+  _loadFrameCount () {
     if (this.frames) {
-      this.setNumframes(this.frames.length)
+      this.setFrameCount(this.frames.length)
     }
   }
 
   getPath (index, callback) {
-    const n = this.numframes
+    const n = this.frameCount
     const k = index * 3
 
     const path = new Float32Array(n * 3)

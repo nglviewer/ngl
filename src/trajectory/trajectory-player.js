@@ -47,7 +47,7 @@ class TrajectoryPlayer {
     }, this)
 
     const p = Object.assign({}, params)
-    const n = defaults(traj.numframes, 1)
+    const n = defaults(traj.frameCount, 1)
 
     this.traj = traj
     this.start = defaults(p.start, 0)
@@ -67,7 +67,7 @@ class TrajectoryPlayer {
     this._currentFrame = this.start
     this._direction = this.direction === 'bounce' ? 'forward' : this.direction
 
-    traj.signals.gotNumframes.add(function (n) {
+    traj.signals.countChanged.add(function (n) {
       this.end = Math.min(defaults(this.end, n - 1), n - 1)
     }, this)
 
@@ -109,7 +109,7 @@ class TrajectoryPlayer {
     const timeout = this.timeout / step
     const traj = this.traj
 
-    if (traj && traj.numframes && !traj.inProgress && dt >= timeout) {
+    if (traj && traj.frameCount && dt >= timeout) {
       if (this.interpolateType) {
         if (this._currentStep > this.interpolateStep) {
           this._currentStep = 1

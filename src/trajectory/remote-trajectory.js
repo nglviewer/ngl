@@ -7,15 +7,18 @@
 import { Log, DatasourceRegistry } from '../globals.js'
 import Trajectory from './trajectory.js'
 
+/**
+ * Remote trajectory class. Gets data from an MDsrv instance.
+ */
 class RemoteTrajectory extends Trajectory {
   constructor (trajPath, structure, params) {
     super(trajPath, structure, params)
-    this.saveInitialCoords()
+    this._init()
   }
 
   get type () { return 'remote' }
 
-  makeAtomIndices () {
+  _makeAtomIndices () {
     const atomIndices = []
 
     if (this.structure.type === 'StructureView') {
@@ -66,12 +69,12 @@ class RemoteTrajectory extends Trajectory {
         return
       }
 
-      const numframes = new Int32Array(arrayBuffer, 0, 1)[ 0 ]
+      const frameCount = new Int32Array(arrayBuffer, 0, 1)[ 0 ]
       // const time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
       const box = new Float32Array(arrayBuffer, 2 * 4, 9)
       const coords = new Float32Array(arrayBuffer, 11 * 4)
 
-      this.process(i, box, coords, numframes)
+      this._process(i, box, coords, frameCount)
       if (typeof callback === 'function') {
         callback()
       }
@@ -80,15 +83,15 @@ class RemoteTrajectory extends Trajectory {
     request.send(params)
   }
 
-  getNumframes () {
+  _loadFrameCount () {
     const request = new window.XMLHttpRequest()
 
     const ds = DatasourceRegistry.trajectory
-    const url = ds.getNumframesUrl(this.trajPath)
+    const url = ds.getCountUrl(this.trajPath)
 
     request.open('GET', url, true)
     request.addEventListener('load', () => {
-      this.setNumframes(parseInt(request.response))
+      this._setFrameCount(parseInt(request.response))
     }, false)
     request.send(null)
   }
