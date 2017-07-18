@@ -2185,8 +2185,10 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
       if (traj.player && traj.player.isRunning) {
         traj.setPlayer()
+        traj.setFrame(value)
+      } else if (!traj.inProgress) {
+        traj.setFrame(value)
       }
-      traj.setFrame(value)
     })
 
   var interpolateType = new UI.Select()

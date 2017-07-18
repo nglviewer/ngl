@@ -24,7 +24,7 @@ class FramesTrajectory extends Trajectory {
     this.frames = frames.coordinates
     this.boxes = frames.boxes
 
-    this._init()
+    this._init(structure)
   }
 
   get type () { return 'frames' }
@@ -71,7 +71,7 @@ class FramesTrajectory extends Trajectory {
 
   _loadFrameCount () {
     if (this.frames) {
-      this.setFrameCount(this.frames.length)
+      this._setFrameCount(this.frames.length)
     }
   }
 

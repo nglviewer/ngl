@@ -181,10 +181,6 @@ class Trajectory {
       this.setFrame(this._currentFrame)
     }, this)
 
-    // must come after this.selection is set
-    this.setStructure(structure)
-    this.setPlayer(new TrajectoryPlayer(this))
-
     this._frameCount = 0
     this._currentFrame = -1
   }
@@ -205,9 +201,10 @@ class Trajectory {
     return this._currentFrame
   }
 
-  _init () {
+  _init (structure) {
     this._loadFrameCount()
-    this._saveInitialCoords()
+    this.setStructure(structure)
+    this.setPlayer(new TrajectoryPlayer(this))
   }
 
   setStructure (structure) {
@@ -324,6 +321,8 @@ class Trajectory {
    */
   setFrame (i, callback) {
     if (i === undefined) return this
+
+    this.inProgress = true
 
     i = parseInt(i)
 
@@ -445,6 +444,7 @@ class Trajectory {
     }
 
     this._currentFrame = i
+    this.inProgress = false
     this.signals.frameChanged.dispatch(i)
   }
 

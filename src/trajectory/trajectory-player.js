@@ -109,7 +109,7 @@ class TrajectoryPlayer {
     const timeout = this.timeout / step
     const traj = this.traj
 
-    if (traj && traj.frameCount && dt >= timeout) {
+    if (traj && traj.frameCount && !traj.inProgress && dt >= timeout) {
       if (this.interpolateType) {
         if (this._currentStep > this.interpolateStep) {
           this._currentStep = 1

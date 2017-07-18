@@ -13,7 +13,7 @@ import Trajectory from './trajectory.js'
 class RemoteTrajectory extends Trajectory {
   constructor (trajPath, structure, params) {
     super(trajPath, structure, params)
-    this._init()
+    this._init(structure)
   }
 
   get type () { return 'remote' }

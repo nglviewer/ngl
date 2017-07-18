@@ -12,7 +12,7 @@ import Trajectory from './trajectory.js'
 class StructureTrajectory extends Trajectory {
   constructor (trajPath, structure, params) {
     super('', structure, params)
-    this._init()
+    this._init(structure)
   }
 
   get type () { return 'structure' }
