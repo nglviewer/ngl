@@ -49303,6 +49303,543 @@ var PdbWriter = (function (Writer$$1) {
 }(Writer));
 
 /**
+ * @file IO Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ *
+ * Adapted from https://github.com/image-js/iobuffer
+ * MIT License, Copyright (c) 2015 Michaël Zasso
+ */
+
+var defaultByteLength = 1024 * 8;
+var charArray = [];
+
+/**
+ * Class for writing and reading binary data
+ */
+var IOBuffer = function IOBuffer (data, params) {
+  var p = params || {};
+  var dataIsGiven = false;
+  if (data === undefined) {
+    data = defaultByteLength;
+  }
+  if (typeof data === 'number') {
+    data = new ArrayBuffer(data);
+  } else {
+    dataIsGiven = true;
+    this._lastWrittenByte = data.byteLength;
+  }
+
+  var offset = p.offset ? p.offset >>> 0 : 0;
+  var byteLength = data.byteLength - offset;
+  var dvOffset = offset;
+  if (data.buffer) {
+    if (data.byteLength !== data.buffer.byteLength) {
+      dvOffset = data.byteOffset + offset;
+    }
+    data = data.buffer;
+  }
+  if (dataIsGiven) {
+    this._lastWrittenByte = byteLength;
+  } else {
+    this._lastWrittenByte = 0;
+  }
+
+  /**
+   * Reference to the internal ArrayBuffer object
+   * @type {ArrayBuffer}
+   */
+  this.buffer = data;
+  /**
+   * Byte length of the internal ArrayBuffer
+   * @type {Number}
+   */
+  this.length = byteLength;
+  /**
+   * Byte length of the internal ArrayBuffer
+   * @type {Number}
+   */
+  this.byteLength = byteLength;
+  /**
+   * Byte offset of the internal ArrayBuffer
+   * @type {Number}
+   */
+  this.byteOffset = dvOffset;
+  /**
+   * The current offset of the buffer's pointer
+   * @type {Number}
+   */
+  this.offset = 0;
+
+  this.littleEndian = true;
+  this._data = new DataView(this.buffer, dvOffset, byteLength);
+  this._mark = 0;
+  this._marks = [];
+};
+
+/**
+ * Checks if the memory allocated to the buffer is sufficient to store more bytes after the offset
+ * @param {number} [byteLength=1] The needed memory in bytes
+ * @return {boolean} Returns true if there is sufficient space and false otherwise
+ */
+IOBuffer.prototype.available = function available (byteLength) {
+  if (byteLength === undefined) { byteLength = 1; }
+  return (this.offset + byteLength) <= this.length
+};
+
+/**
+ * Check if little-endian mode is used for reading and writing multi-byte values
+ * @return {boolean} Returns true if little-endian mode is used, false otherwise
+ */
+IOBuffer.prototype.isLittleEndian = function isLittleEndian () {
+  return this.littleEndian
+};
+
+/**
+ * Set little-endian mode for reading and writing multi-byte values
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.setLittleEndian = function setLittleEndian () {
+  this.littleEndian = true;
+  return this
+};
+
+/**
+ * Check if big-endian mode is used for reading and writing multi-byte values
+ * @return {boolean} Returns true if big-endian mode is used, false otherwise
+ */
+IOBuffer.prototype.isBigEndian = function isBigEndian () {
+  return !this.littleEndian
+};
+
+/**
+ * Switches to big-endian mode for reading and writing multi-byte values
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.setBigEndian = function setBigEndian () {
+  this.littleEndian = false;
+  return this
+};
+
+/**
+ * Move the pointer n bytes forward
+ * @param {number} n
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.skip = function skip (n) {
+  if (n === undefined) { n = 1; }
+  this.offset += n;
+  return this
+};
+
+/**
+ * Move the pointer to the given offset
+ * @param {number} offset
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.seek = function seek (offset) {
+  this.offset = offset;
+  return this
+};
+
+/**
+ * Store the current pointer offset.
+ * @see {@link IOBuffer#reset}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.mark = function mark () {
+  this._mark = this.offset;
+  return this
+};
+
+/**
+ * Move the pointer back to the last pointer offset set by mark
+ * @see {@link IOBuffer#mark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.reset = function reset () {
+  this.offset = this._mark;
+  return this
+};
+
+/**
+ * Push the current pointer offset to the mark stack
+ * @see {@link IOBuffer#popMark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.pushMark = function pushMark () {
+  this._marks.push(this.offset);
+  return this
+};
+
+/**
+ * Pop the last pointer offset from the mark stack, and set the current pointer offset to the popped value
+ * @see {@link IOBuffer#pushMark}
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.popMark = function popMark () {
+  var offset = this._marks.pop();
+  if (offset === undefined) { throw new Error('Mark stack empty') }
+  this.seek(offset);
+  return this
+};
+
+/**
+ * Move the pointer offset back to 0
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.rewind = function rewind () {
+  this.offset = 0;
+  return this
+};
+
+/**
+ * Make sure the buffer has sufficient memory to write a given byteLength at the current pointer offset
+ * If the buffer's memory is insufficient, this method will create a new buffer (a copy) with a length
+ * that is twice (byteLength + current offset)
+ * @param {number} [byteLength = 1]
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.ensureAvailable = function ensureAvailable (byteLength) {
+  if (byteLength === undefined) { byteLength = 1; }
+  if (!this.available(byteLength)) {
+    var lengthNeeded = this.offset + byteLength;
+    var newLength = lengthNeeded * 2;
+    var newArray = new Uint8Array(newLength);
+    newArray.set(new Uint8Array(this.buffer));
+    this.buffer = newArray.buffer;
+    this.length = this.byteLength = newLength;
+    this._data = new DataView(this.buffer);
+  }
+  return this
+};
+
+/**
+ * Read a byte and return false if the byte's value is 0, or true otherwise
+ * Moves pointer forward
+ * @return {boolean}
+ */
+IOBuffer.prototype.readBoolean = function readBoolean () {
+  return this.readUint8() !== 0
+};
+
+/**
+ * Read a signed 8-bit integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt8 = function readInt8 () {
+  return this._data.getInt8(this.offset++)
+};
+
+/**
+ * Read an unsigned 8-bit integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint8 = function readUint8 () {
+  return this._data.getUint8(this.offset++)
+};
+
+/**
+ * Alias for {@link IOBuffer#readUint8}
+ * @return {number}
+ */
+IOBuffer.prototype.readByte = function readByte () {
+  return this.readUint8()
+};
+
+/**
+ * Read n bytes and move pointer forward.
+ * @param {number} n
+ * @return {Uint8Array}
+ */
+IOBuffer.prototype.readBytes = function readBytes (n) {
+    var this$1 = this;
+
+  if (n === undefined) { n = 1; }
+  var bytes = new Uint8Array(n);
+  for (var i = 0; i < n; i++) {
+    bytes[i] = this$1.readByte();
+  }
+  return bytes
+};
+
+/**
+ * Read a 16-bit signed integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt16 = function readInt16 () {
+  var value = this._data.getInt16(this.offset, this.littleEndian);
+  this.offset += 2;
+  return value
+};
+
+/**
+ * Read a 16-bit unsigned integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint16 = function readUint16 () {
+  var value = this._data.getUint16(this.offset, this.littleEndian);
+  this.offset += 2;
+  return value
+};
+
+/**
+ * Read a 32-bit signed integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readInt32 = function readInt32 () {
+  var value = this._data.getInt32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 32-bit unsigned integer and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readUint32 = function readUint32 () {
+  var value = this._data.getUint32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 32-bit floating number and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readFloat32 = function readFloat32 () {
+  var value = this._data.getFloat32(this.offset, this.littleEndian);
+  this.offset += 4;
+  return value
+};
+
+/**
+ * Read a 64-bit floating number and move pointer forward
+ * @return {number}
+ */
+IOBuffer.prototype.readFloat64 = function readFloat64 () {
+  var value = this._data.getFloat64(this.offset, this.littleEndian);
+  this.offset += 8;
+  return value
+};
+
+/**
+ * Read 1-byte ascii character and move pointer forward
+ * @return {string}
+ */
+IOBuffer.prototype.readChar = function readChar () {
+  return String.fromCharCode(this.readInt8())
+};
+
+/**
+ * Read n 1-byte ascii characters and move pointer forward
+ * @param {number} n
+ * @return {string}
+ */
+IOBuffer.prototype.readChars = function readChars (n) {
+    var this$1 = this;
+
+  if (n === undefined) { n = 1; }
+  charArray.length = n;
+  for (var i = 0; i < n; i++) {
+    charArray[i] = this$1.readChar();
+  }
+  return charArray.join('')
+};
+
+/**
+ * Write 0xff if the passed value is truthy, 0x00 otherwise
+ * @param {any} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeBoolean = function writeBoolean (value) {
+  this.writeUint8(value ? 0xff : 0x00);
+  return this
+};
+
+/**
+ * Write value as an 8-bit signed integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt8 = function writeInt8 (value) {
+  this.ensureAvailable(1);
+  this._data.setInt8(this.offset++, value);
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as a 8-bit unsigned integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint8 = function writeUint8 (value) {
+  this.ensureAvailable(1);
+  this._data.setUint8(this.offset++, value);
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * An alias for {@link IOBuffer#writeUint8}
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeByte = function writeByte (value) {
+  return this.writeUint8(value)
+};
+
+/**
+ * Write bytes
+ * @param {Array|Uint8Array} bytes
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeBytes = function writeBytes (bytes) {
+    var this$1 = this;
+
+  this.ensureAvailable(bytes.length);
+  for (var i = 0; i < bytes.length; i++) {
+    this$1._data.setUint8(this$1.offset++, bytes[i]);
+  }
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as an 16-bit signed integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt16 = function writeInt16 (value) {
+  this.ensureAvailable(2);
+  this._data.setInt16(this.offset, value, this.littleEndian);
+  this.offset += 2;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write value as a 16-bit unsigned integer
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint16 = function writeUint16 (value) {
+  this.ensureAvailable(2);
+  this._data.setUint16(this.offset, value, this.littleEndian);
+  this.offset += 2;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit signed integer at the current pointer offset
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeInt32 = function writeInt32 (value) {
+  this.ensureAvailable(4);
+  this._data.setInt32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit unsigned integer at the current pointer offset
+ * @param {number} value - The value to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeUint32 = function writeUint32 (value) {
+  this.ensureAvailable(4);
+  this._data.setUint32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 32-bit floating number at the current pointer offset
+ * @param {number} value - The value to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeFloat32 = function writeFloat32 (value) {
+  this.ensureAvailable(4);
+  this._data.setFloat32(this.offset, value, this.littleEndian);
+  this.offset += 4;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write a 64-bit floating number at the current pointer offset
+ * @param {number} value
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeFloat64 = function writeFloat64 (value) {
+  this.ensureAvailable(8);
+  this._data.setFloat64(this.offset, value, this.littleEndian);
+  this.offset += 8;
+  this._updateLastWrittenByte();
+  return this
+};
+
+/**
+ * Write the charCode of the passed string's first character to the current pointer offset
+ * @param {string} str - The character to set
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeChar = function writeChar (str) {
+  return this.writeUint8(str.charCodeAt(0))
+};
+
+/**
+ * Write the charCodes of the passed string's characters to the current pointer offset
+ * @param {string} str
+ * @return {IOBuffer}
+ */
+IOBuffer.prototype.writeChars = function writeChars (str) {
+    var this$1 = this;
+
+  for (var i = 0; i < str.length; i++) {
+    this$1.writeUint8(str.charCodeAt(i));
+  }
+  return this
+};
+
+/**
+ * Export a Uint8Array view of the internal buffer.
+ * The view starts at the byte offset and its length
+ * is calculated to stop at the last written byte or the original length.
+ * @return {Uint8Array}
+ */
+IOBuffer.prototype.toArray = function toArray () {
+  return new Uint8Array(this.buffer, this.byteOffset, this._lastWrittenByte)
+};
+
+/**
+ * Same as {@link IOBuffer#toArray} but returns a Buffer if possible. Otherwise returns a Uint8Array.
+ * @return {Buffer|Uint8Array}
+ */
+IOBuffer.prototype.getBuffer = function getBuffer () {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(this.toArray())
+  } else {
+    return this.toArray()
+  }
+};
+
+/**
+ * Update the last written byte offset
+ * @private
+ */
+IOBuffer.prototype._updateLastWrittenByte = function _updateLastWrittenByte () {
+  if (this.offset > this._lastWrittenByte) {
+    this._lastWrittenByte = this.offset;
+  }
+};
+
+/**
  * @file STL Writer
  * @author Paul Pillot <paul.pillot@cimf.ca>
  * @private
@@ -49314,11 +49851,10 @@ var PdbWriter = (function (Writer$$1) {
  * Create an STL File from a surface Object (e.g. for 3D printing)
  *
  * @example
- * molsurf = new NGL.MolecularSurface(structure)
- * surf = molsurf.getSurface({type: ‘av’, probeRadius: 1.4})
- * stl = new NGL.StlWriter(surf)
- * stl.download(‘my_file_name’)
- * @class StlWriter
+ * molsurf = new MolecularSurface(structure)
+ * surf = molsurf.getSurface({type: 'av', probeRadius: 1.4})
+ * stl = new StlWriter(surf)
+ * stl.download('myFileName')
  */
 var StlWriter = (function (Writer$$1) {
   function StlWriter (surface) {
@@ -49334,64 +49870,63 @@ var StlWriter = (function (Writer$$1) {
 
   var prototypeAccessors = { mimeType: {},defaultName: {},defaultExt: {} };
 
-  prototypeAccessors.mimeType.get = function () { return 'text/plain' };
+  prototypeAccessors.mimeType.get = function () { return 'application/vnd.ms-pki.stl' };
   prototypeAccessors.defaultName.get = function () { return 'surface' };
   prototypeAccessors.defaultExt.get = function () { return 'stl' };
 
-  StlWriter.prototype._writeRecords = function _writeRecords () {
-    this._records.length = 0;
-
-    this._writeHeader();
-    this._writeFacets();
-    this._writeFooter();
-  };
-
-  StlWriter.prototype._avgNormal = function _avgNormal (normals, vertIndices) {
-    var v = [];
-    for (var i = 0; i < 3; i++) {
-      v[i] = (normals[vertIndices[0] * 3 + i] + normals[vertIndices[1] * 3 + i] + normals[vertIndices[2] * 3 + i]) / 3;
-    }
-    return v
-  };
-
-  StlWriter.prototype._writeHeader = function _writeHeader () {
-    this._records.push('solid surface');
-  };
-
-  StlWriter.prototype._writeFooter = function _writeFooter () {
-    this._records.push('endsolid surface');
-  };
-
-  StlWriter.prototype._writeLoop = function _writeLoop (vertices) {
-    var this$1 = this;
-
-    this._records.push('outer loop');
-    for (var i = 0; i < 3; i++) {
-      this$1._records.push(("    vertex " + (this$1.surface.position[vertices[i] * 3]) + " " + (this$1.surface.position[vertices[i] * 3 + 1]) + " " + (this$1.surface.position[vertices[i] * 3 + 2])));
-    }
-    this._records.push('outer loop');
-  };
-
-  StlWriter.prototype._writeFacets = function _writeFacets () {
-    var this$1 = this;
-
-    for (var i = 0; i < this.surface.index.length / 3; i++) {
-      var vert1Index = this$1.surface.index[i * 3];
-      var vert2Index = this$1.surface.index[i * 3 + 1];
-      var vert3Index = this$1.surface.index[i * 3 + 2];
-
-      var facetNormal = this$1._avgNormal(this$1.surface.normal, [vert1Index, vert2Index, vert3Index]);
-      this$1._records.push(("facet normal " + (facetNormal[0]) + " " + (facetNormal[1]) + " " + (facetNormal[2])));
-
-      this$1._writeLoop([vert1Index, vert2Index, vert3Index]);
-
-      this$1._records.push('endfacet');
-    }
-  };
-
+  /*
+   * Get STL Binary data
+   *
+   * Adapted from: https://github.com/mrdoob/three.js/blob/master/examples/js/exporters/STLBinaryExporter.js
+   * see https://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL for the file format description
+   *
+   * @return {DataView} the data
+   */
   StlWriter.prototype.getData = function getData () {
-    this._writeRecords();
-    return this._records.join('\n')
+    var this$1 = this;
+
+    var triangles = this.surface.index.length / 3;
+    var bufferLength = triangles * 2 + triangles * 3 * 4 * 4 + 80 + 4;
+    var output = new IOBuffer(bufferLength);
+
+    output.skip(80);  // skip header
+    output.writeUint32(triangles);
+
+    var vector = new Vector3();
+    var vectorNorm1 = new Vector3();
+    var vectorNorm2 = new Vector3();
+    var vectorNorm3 = new Vector3();
+
+    // traversing vertices
+    for (var i = 0; i < triangles; i++) {
+      var indices = [
+        this$1.surface.index[i * 3],
+        this$1.surface.index[i * 3 + 1],
+        this$1.surface.index[i * 3 + 2]
+      ];
+
+      vectorNorm1.fromArray(this$1.surface.normal, indices[0] * 3);
+      vectorNorm2.fromArray(this$1.surface.normal, indices[1] * 3);
+      vectorNorm3.fromArray(this$1.surface.normal, indices[2] * 3);
+
+      vector.addVectors(vectorNorm1, vectorNorm2).add(vectorNorm3).normalize();
+
+      output.writeFloat32(vector.x);
+      output.writeFloat32(vector.y);
+      output.writeFloat32(vector.z);
+
+      for (var j = 0; j < 3; j++) {
+        vector.fromArray(this$1.surface.position, indices[j] * 3);
+
+        output.writeFloat32(vector.x);  // vertices
+        output.writeFloat32(vector.y);
+        output.writeFloat32(vector.z);
+      }
+
+      output.writeUint16(0);  // attribute byte count
+    }
+
+    return new DataView(output.buffer)
   };
 
   Object.defineProperties( StlWriter.prototype, prototypeAccessors );
@@ -66371,7 +66906,7 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
   }, this);
 
   var p = Object.assign({}, params);
-  var n = defaults(traj.numframes, 1);
+  var n = defaults(traj.frameCount, 1);
 
   this.traj = traj;
   this.start = defaults(p.start, 0);
@@ -66391,16 +66926,16 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
   this._currentFrame = this.start;
   this._direction = this.direction === 'bounce' ? 'forward' : this.direction;
 
-  traj.signals.gotNumframes.add(function (n) {
+  traj.signals.countChanged.add(function (n) {
     this.end = Math.min(defaults(this.end, n - 1), n - 1);
   }, this);
 
   this._animate = this._animate.bind(this);
 };
 
-var prototypeAccessors$24 = { isRunning: {} };
+var prototypeAccessors$25 = { isRunning: {} };
 
-prototypeAccessors$24.isRunning.get = function () { return this._run };
+prototypeAccessors$25.isRunning.get = function () { return this._run };
 
 /**
  * set player parameters
@@ -66435,7 +66970,7 @@ TrajectoryPlayer.prototype._animate = function _animate () {
   var timeout = this.timeout / step;
   var traj = this.traj;
 
-  if (traj && traj.numframes && !traj.inProgress && dt >= timeout) {
+  if (traj && traj.frameCount && !traj.inProgress && dt >= timeout) {
     if (this.interpolateType) {
       if (this._currentStep > this.interpolateStep) {
         this._currentStep = 1;
@@ -66589,7 +67124,7 @@ TrajectoryPlayer.prototype.stop = function stop () {
   this.traj.setFrame(this.start);
 };
 
-Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$24 );
+Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$25 );
 
 /**
  * @file Trajectory
@@ -66654,6 +67189,44 @@ function removePbc (x, box) {
   return x
 }
 
+function circularMean3 (indices, coords, box) {
+  return [
+    circularMean(coords, box[ 0 ], 3, 0, indices),
+    circularMean(coords, box[ 1 ], 3, 1, indices),
+    circularMean(coords, box[ 2 ], 3, 2, indices)
+  ]
+}
+
+function interpolateSpline (c, cp, cpp, cppp, t) {
+  var m = c.length;
+  var coords = new Float32Array(m);
+
+  for (var j0 = 0; j0 < m; j0 += 3) {
+    var j1 = j0 + 1;
+    var j2 = j0 + 2;
+    coords[ j0 ] = spline(cppp[ j0 ], cpp[ j0 ], cp[ j0 ], c[ j0 ], t, 1);
+    coords[ j1 ] = spline(cppp[ j1 ], cpp[ j1 ], cp[ j1 ], c[ j1 ], t, 1);
+    coords[ j2 ] = spline(cppp[ j2 ], cpp[ j2 ], cp[ j2 ], c[ j2 ], t, 1);
+  }
+
+  return coords
+}
+
+function interpolateLerp (c, cp, t) {
+  var m = c.length;
+  var coords = new Float32Array(m);
+
+  for (var j0 = 0; j0 < m; j0 += 3) {
+    var j1 = j0 + 1;
+    var j2 = j0 + 2;
+    coords[ j0 ] = lerp(cp[ j0 ], c[ j0 ], t);
+    coords[ j1 ] = lerp(cp[ j1 ], c[ j1 ], t);
+    coords[ j2 ] = lerp(cp[ j2 ], c[ j2 ], t);
+  }
+
+  return coords
+}
+
 /**
  * Trajectory parameter object.
  * @typedef {Object} TrajectoryParameters - parameters
@@ -66667,114 +67240,141 @@ function removePbc (x, box) {
  */
 
 /**
- * Trajectory object for tying frames and structure together
- * @class
- * @param {String|Frames} trajPath - trajectory source
- * @param {Structure} structure - the structure object
- * @param {TrajectoryParameters} params - trajectory parameters
+ * @example
+ * trajectory.signals.frameChanged.add( function(i){ ... } );
+ *
+ * @typedef {Object} TrajectorySignals
+ * @property {Signal<Integer>} countChanged - when the frame count is changed
+ * @property {Signal<Integer>} frameChanged - when the set frame is changed
+ * @property {Signal<TrajectoryPlayer>} playerChanged - when the player is changed
+ */
+
+/**
+ * Base class for trajectories, tying structures and coordinates together
+ * @interface
  */
 var Trajectory = function Trajectory (trajPath, structure, params) {
+  /**
+   * Events emitted by the trajectory
+   * @type {TrajectorySignals}
+   */
   this.signals = {
-    gotNumframes: new Signal(),
+    countChanged: new Signal(),
     frameChanged: new Signal(),
-    selectionChanged: new Signal(),
     playerChanged: new Signal()
   };
 
   var p = params || {};
-  p.deltaTime = defaults(p.deltaTime, 0);
-  p.timeOffset = defaults(p.timeOffset, 0);
-  p.centerPbc = defaults(p.centerPbc, false);
-  p.removePbc = defaults(p.removePbc, false);
-  p.superpose = defaults(p.superpose, false);
-  this.setParameters(p);
+
+  this.deltaTime = defaults(p.deltaTime, 0);
+  this.timeOffset = defaults(p.timeOffset, 0);
+  this.centerPbc = defaults(p.centerPbc, false);
+  this.removePbc = defaults(p.removePbc, false);
+  this.superpose = defaults(p.superpose, false);
 
   this.name = trajPath.replace(/^.*[\\/]/, '');
   this.trajPath = trajPath;
 
-  // selection to restrict atoms used for superposition
+  this.initialCoords = null;
+  this.structureCoords = null;
+
+  /**
+   * selection to restrict atoms used for superposition
+   * @type {Selection}
+   */
   this.selection = new Selection(
     defaults(p.sele, 'backbone and not hydrogen')
   );
 
   this.selection.signals.stringChanged.add(function () {
-    this.makeIndices();
-    this.resetCache();
+    this.selectionIndices = this.structure.getAtomIndices(this.selection);
+    this._resetCache();
+    this._saveInitialCoords();
+    this.setFrame(this._currentFrame);
   }, this);
 
-  // should come after this.selection is set
-  this.setStructure(structure);
-  this.setPlayer(new TrajectoryPlayer(this));
+  this._frameCount = 0;
+  this._currentFrame = -1;
+};
 
-  this.numframes = undefined;
-  this.getNumframes();
+var prototypeAccessors$24 = { frameCount: {},currentFrame: {} };
+
+/**
+ * Number of frames in the trajectory
+ * @return {Number} count
+ */
+prototypeAccessors$24.frameCount.get = function () {
+  return this._frameCount
+};
+
+/**
+ * Currently set frame of the trajectory
+ * @return {Number} frame
+ */
+prototypeAccessors$24.currentFrame.get = function () {
+  return this._currentFrame
+};
+
+Trajectory.prototype._init = function _init (structure) {
+  this.setStructure(structure);
+  this._loadFrameCount();
+  this.setPlayer(new TrajectoryPlayer(this));
 };
 
 Trajectory.prototype.setStructure = function setStructure (structure) {
   this.structure = structure;
   this.atomCount = structure.atomCount;
 
-  this.backboneIndices = this.getIndices(
+  this.backboneIndices = this._getIndices(
     new Selection('backbone and not hydrogen')
   );
-  this.makeIndices();
-  this.makeAtomIndices();
+  this._makeAtomIndices();
+  this._saveStructureCoords();
 
-  this.frameCache = {};
-  this.loadQueue = {};
-  this.boxCache = {};
-  this.pathCache = {};
-  this.frameCacheSize = 0;
-  this.currentFrame = -1;
+  this.selectionIndices = this._getIndices(this.selection);
+  this._resetCache();
+  this._saveInitialCoords();
+  this.setFrame(this._currentFrame);
 };
 
-Trajectory.prototype.saveInitialCoords = function saveInitialCoords () {
+Trajectory.prototype._saveInitialCoords = function _saveInitialCoords () {
     var this$1 = this;
 
   if (this.frameCache[0]) {
     this.initialCoords = new Float32Array(this.frameCache[0]);
-    this.makeSuperposeCoords();
+    this._makeSuperposeCoords();
   } else {
-    this.loadFrame(0, function () { return this$1.saveInitialCoords(); });
+    this.loadFrame(0, function () { return this$1._saveInitialCoords(); });
   }
+};
+
+Trajectory.prototype._saveStructureCoords = function _saveStructureCoords () {
+  var p = { what: { position: true } };
+  this.structureCoords = this.structure.getAtomData(p).position;
 };
 
 Trajectory.prototype.setSelection = function setSelection (string) {
   this.selection.setString(string);
-
   return this
 };
 
-Trajectory.prototype.getIndices = function getIndices (selection) {
-  var indices;
+Trajectory.prototype._getIndices = function _getIndices (selection) {
+  var i = 0;
+  var test = selection.test;
+  var indices = [];
 
-  if (selection && selection.test) {
-    var i = 0;
-    var test = selection.test;
-    indices = [];
-
-    this.structure.eachAtom(function (ap) {
-      if (test(ap)) {
-        indices.push(i);
-      }
-      i += 1;
-    });
-  } else {
-    indices = this.structure.getAtomIndices(this.selection);
-  }
+  this.structure.eachAtom(function (ap) {
+    if (test(ap)) { indices.push(i); }
+    i += 1;
+  });
 
   return indices
 };
 
-Trajectory.prototype.makeIndices = function makeIndices () {
-  // indices to restrict atoms used for superposition
-  this.indices = this.getIndices(this.selection);
-};
-
-Trajectory.prototype.makeSuperposeCoords = function makeSuperposeCoords () {
+Trajectory.prototype._makeSuperposeCoords = function _makeSuperposeCoords () {
     var this$1 = this;
 
-  var n = this.indices.length * 3;
+  var n = this.selectionIndices.length * 3;
 
   this.coords1 = new Float32Array(n);
   this.coords2 = new Float32Array(n);
@@ -66783,7 +67383,7 @@ Trajectory.prototype.makeSuperposeCoords = function makeSuperposeCoords () {
   var coords2 = this.coords2;
 
   for (var i = 0; i < n; i += 3) {
-    var j = this$1.indices[ i / 3 ] * 3;
+    var j = this$1.selectionIndices[ i / 3 ] * 3;
 
     coords2[ i + 0 ] = y[ j + 0 ];
     coords2[ i + 1 ] = y[ j + 1 ];
@@ -66791,27 +67391,21 @@ Trajectory.prototype.makeSuperposeCoords = function makeSuperposeCoords () {
   }
 };
 
-Trajectory.prototype.makeAtomIndices = function makeAtomIndices () {
-  Log.error('Trajectory.makeAtomIndices not implemented');
+Trajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
+  Log.error('Trajectory._makeAtomIndices not implemented');
 };
 
-Trajectory.prototype.getNumframes = function getNumframes () {
-  Log.error('Trajectory.loadFrame not implemented');
-};
-
-Trajectory.prototype.resetCache = function resetCache () {
+Trajectory.prototype._resetCache = function _resetCache () {
   this.frameCache = {};
   this.loadQueue = {};
   this.boxCache = {};
   this.pathCache = {};
   this.frameCacheSize = 0;
-  this.setFrame(this.currentFrame);
-
-  return this
+  this.initialCoords = null;
 };
 
 Trajectory.prototype.setParameters = function setParameters (params) {
-  var p = params;
+  var p = params || {};
   var resetCache = false;
 
   if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
@@ -66832,9 +67426,17 @@ Trajectory.prototype.setParameters = function setParameters (params) {
   this.deltaTime = defaults(p.deltaTime, this.deltaTime);
   this.timeOffset = defaults(p.timeOffset, this.timeOffset);
 
-  if (resetCache) { this.resetCache(); }
+  if (resetCache) {
+    this._resetCache();
+    this.setFrame(this._currentFrame);
+  }
 };
 
+/**
+ * Check if a frame is available
+ * @param{Integer|Integer[]} i - the frame index
+ * @return {Boolean} frame availability
+ */
 Trajectory.prototype.hasFrame = function hasFrame (i) {
     var this$1 = this;
 
@@ -66845,6 +67447,11 @@ Trajectory.prototype.hasFrame = function hasFrame (i) {
   }
 };
 
+/**
+ * Set trajectory to a frame index
+ * @param {Integer} i - the frame index
+ * @param {Function} callback - fired when the frame has been set
+ */
 Trajectory.prototype.setFrame = function setFrame (i, callback) {
     var this$1 = this;
 
@@ -66855,11 +67462,11 @@ Trajectory.prototype.setFrame = function setFrame (i, callback) {
   i = parseInt(i);
 
   if (i === -1 || this.frameCache[ i ]) {
-    this.updateStructure(i);
+    this._updateStructure(i);
     if (callback) { callback(); }
   } else {
     this.loadFrame(i, function () {
-      this$1.updateStructure(i);
+      this$1._updateStructure(i);
       if (callback) { callback(); }
     });
   }
@@ -66867,42 +67474,31 @@ Trajectory.prototype.setFrame = function setFrame (i, callback) {
   return this
 };
 
-Trajectory.prototype.interpolate = function interpolate (i, ip, ipp, ippp, t, type) {
+Trajectory.prototype._interpolate = function _interpolate (i, ip, ipp, ippp, t, type) {
   var fc = this.frameCache;
 
-  var c = fc[ i ];
-  var cp = fc[ ip ];
-  var cpp = fc[ ipp ];
-  var cppp = fc[ ippp ];
-
-  var m = c.length;
-  var coords = new Float32Array(m);
-
+  var coords;
   if (type === 'spline') {
-    for (var j = 0; j < m; j += 3) {
-      coords[ j + 0 ] = spline(
-        cppp[ j + 0 ], cpp[ j + 0 ], cp[ j + 0 ], c[ j + 0 ], t, 1
-      );
-      coords[ j + 1 ] = spline(
-        cppp[ j + 1 ], cpp[ j + 1 ], cp[ j + 1 ], c[ j + 1 ], t, 1
-      );
-      coords[ j + 2 ] = spline(
-        cppp[ j + 2 ], cpp[ j + 2 ], cp[ j + 2 ], c[ j + 2 ], t, 1
-      );
-    }
+    coords = interpolateSpline(fc[ i ], fc[ ip ], fc[ ipp ], fc[ ippp ], t);
   } else {
-    for (var j$1 = 0; j$1 < m; j$1 += 3) {
-      coords[ j$1 + 0 ] = lerp(cp[ j$1 + 0 ], c[ j$1 + 0 ], t);
-      coords[ j$1 + 1 ] = lerp(cp[ j$1 + 1 ], c[ j$1 + 1 ], t);
-      coords[ j$1 + 2 ] = lerp(cp[ j$1 + 2 ], c[ j$1 + 2 ], t);
-    }
+    coords = interpolateLerp(fc[ i ], fc[ ip ], t);
   }
 
   this.structure.updatePosition(coords);
-  this.currentFrame = i;
+  this._currentFrame = i;
   this.signals.frameChanged.dispatch(i);
 };
 
+/**
+ * Interpolated and set trajectory to frame indices
+ * @param {Integer} i - the frame index
+ * @param {Integer} ip - one before frame index
+ * @param {Integer} ipp - two before frame index
+ * @param {Integer} ippp - three before frame index
+ * @param {Number} t - interpolation step [0,1]
+ * @param {String} type - interpolation type, '', 'spline' or 'linear'
+ * @param {Function} callback - fired when the frame has been set
+ */
 Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
     var this$1 = this;
 
@@ -66918,17 +67514,22 @@ Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip
 
   if (iList.length) {
     this.loadFrame(iList, function () {
-      this$1.interpolate(i, ip, ipp, ippp, t, type);
+      this$1._interpolate(i, ip, ipp, ippp, t, type);
       if (callback) { callback(); }
     });
   } else {
-    this.interpolate(i, ip, ipp, ippp, t, type);
+    this._interpolate(i, ip, ipp, ippp, t, type);
     if (callback) { callback(); }
   }
 
   return this
 };
 
+/**
+ * Load frame index
+ * @param {Integer|Integer[]} i - the frame index
+ * @param {Function} callback - fired when the frame has been loaded
+ */
 Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
     var this$1 = this;
 
@@ -66952,15 +67553,26 @@ Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
   }
 };
 
+/**
+ * Load frame index
+ * @abstract
+ * @param {Integer} i - the frame index
+ * @param {Function} callback - fired when the frame has been loaded
+ */
 Trajectory.prototype._loadFrame = function _loadFrame (i, callback) {
   Log.error('Trajectory._loadFrame not implemented', i, callback);
 };
 
-Trajectory.prototype.updateStructure = function updateStructure (i) {
-  if (this._disposed) { return }
+Trajectory.prototype._updateStructure = function _updateStructure (i) {
+  if (this._disposed) {
+    console.error('updateStructure: traj disposed');
+    return
+  }
 
   if (i === -1) {
-    this.structure.updatePosition(this.initialStructure);
+    if (this.structureCoords) {
+      this.structure.updatePosition(this.structureCoords);
+    }
   } else {
     this.structure.updatePosition(this.frameCache[ i ]);
   }
@@ -66970,29 +67582,21 @@ Trajectory.prototype.updateStructure = function updateStructure (i) {
     frame: i
   };
 
-  this.currentFrame = i;
+  this._currentFrame = i;
   this.inProgress = false;
   this.signals.frameChanged.dispatch(i);
 };
 
-Trajectory.prototype.getCircularMean = function getCircularMean (indices, coords, box) {
-  return [
-    circularMean(coords, box[ 0 ], 3, 0, indices),
-    circularMean(coords, box[ 1 ], 3, 1, indices),
-    circularMean(coords, box[ 2 ], 3, 2, indices)
-  ]
-};
-
-Trajectory.prototype.doSuperpose = function doSuperpose (x) {
+Trajectory.prototype._doSuperpose = function _doSuperpose (x) {
     var this$1 = this;
 
-  var n = this.indices.length * 3;
+  var n = this.selectionIndices.length * 3;
 
   var coords1 = this.coords1;
   var coords2 = this.coords2;
 
   for (var i = 0; i < n; i += 3) {
-    var j = this$1.indices[ i / 3 ] * 3;
+    var j = this$1.selectionIndices[ i / 3 ] * 3;
 
     coords1[ i + 0 ] = x[ j + 0 ];
     coords1[ i + 1 ] = x[ j + 1 ];
@@ -67004,15 +67608,13 @@ Trajectory.prototype.doSuperpose = function doSuperpose (x) {
   sp.transform(x);
 };
 
-Trajectory.prototype.process = function process (i, box, coords, numframes) {
-  this.setNumframes(numframes);
+Trajectory.prototype._process = function _process (i, box, coords, frameCount) {
+  this._setFrameCount(frameCount);
 
   if (box) {
     if (this.backboneIndices.length > 0 && this.centerPbc) {
       var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-      var mean = this.getCircularMean(
-        this.backboneIndices, coords, box2
-      );
+      var mean = circularMean3(this.backboneIndices, coords, box2);
       centerPbc(coords, mean, box2);
     }
 
@@ -67021,8 +67623,8 @@ Trajectory.prototype.process = function process (i, box, coords, numframes) {
     }
   }
 
-  if (this.indices.length > 0 && this.coords1 && this.superpose) {
-    this.doSuperpose(coords);
+  if (this.selectionIndices.length > 0 && this.coords1 && this.superpose) {
+    this._doSuperpose(coords);
   }
 
   this.frameCache[ i ] = coords;
@@ -67030,24 +67632,39 @@ Trajectory.prototype.process = function process (i, box, coords, numframes) {
   this.frameCacheSize += 1;
 };
 
-Trajectory.prototype.setNumframes = function setNumframes (n) {
-  if (n !== this.numframes) {
-    this.numframes = n;
-    this.signals.gotNumframes.dispatch(n);
+Trajectory.prototype._setFrameCount = function _setFrameCount (n) {
+  if (n !== this._frameCount) {
+    this._frameCount = n;
+    this.signals.countChanged.dispatch(n);
   }
 };
 
+/**
+ * Dispose of the trajectory object
+ * @return {undefined}
+ */
 Trajectory.prototype.dispose = function dispose () {
-  this.resetCache();// aid GC
+  this._resetCache();// aid GC
   this._disposed = true;
   if (this.player) { this.player.stop(); }
 };
 
+/**
+ * Set player for this trajectory
+ * @param {TrajectoryPlayer} player - the player
+ */
 Trajectory.prototype.setPlayer = function setPlayer (player) {
   this.player = player;
   this.signals.playerChanged.dispatch(player);
 };
 
+/**
+ * Get path of atom
+ * abstract
+ * @param{Integer} index - atom index
+ * @param{Function} callback - fired when the path is available
+ * @return {undefined}
+ */
 Trajectory.prototype.getPath = function getPath (index, callback) {
   Log.error('Trajectory.getPath not implemented', index, callback);
 };
@@ -67060,6 +67677,8 @@ Trajectory.prototype.getPath = function getPath (index, callback) {
 Trajectory.prototype.getFrameTime = function getFrameTime (i) {
   return this.timeOffset + i * this.deltaTime
 };
+
+Object.defineProperties( Trajectory.prototype, prototypeAccessors$24 );
 
 ShaderRegistry.add('shader/Mesh.vert', "#define STANDARD\nuniform float nearClip;\nuniform vec3 clipCenter;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#include color_pars_vertex\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#endif\n#include common\nvoid main(){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#elif defined( NOLIGHT )\nvColor = color;\n#else\n#include color_vertex\n#include beginnormal_vertex\n#include defaultnormal_vertex\n#ifndef FLAT_SHADED\nvNormal = normalize( transformedNormal );\n#endif\n#endif\n#include begin_vertex\n#include project_vertex\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
@@ -67202,9 +67821,9 @@ var Buffer$1 = function Buffer (data, params) {
   this.makeWireframeGeometry();
 };
 
-var prototypeAccessors$26 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$27 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
 
-prototypeAccessors$26.parameters.get = function () {
+prototypeAccessors$27.parameters.get = function () {
   return {
     opaqueBack: { updateShader: true },
     dullInterior: { updateShader: true },
@@ -67225,40 +67844,40 @@ prototypeAccessors$26.parameters.get = function () {
   }
 };
 
-prototypeAccessors$26.matrix.set = function (m) {
+prototypeAccessors$27.matrix.set = function (m) {
   this.setMatrix(m);
 };
-prototypeAccessors$26.matrix.get = function () {
+prototypeAccessors$27.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$26.transparent.get = function () {
+prototypeAccessors$27.transparent.get = function () {
   return this.opacity < 1 || this.forceTransparent
 };
 
-prototypeAccessors$26.size.get = function () {
+prototypeAccessors$27.size.get = function () {
   return this._positionDataSize
 };
 
-prototypeAccessors$26.attributeSize.get = function () {
+prototypeAccessors$27.attributeSize.get = function () {
   return this.size
 };
 
-prototypeAccessors$26.pickable.get = function () {
+prototypeAccessors$27.pickable.get = function () {
   return !!this.picking && !this.disablePicking
 };
 
-prototypeAccessors$26.dynamic.get = function () { return true };
+prototypeAccessors$27.dynamic.get = function () { return true };
 
   /**
    * @abstract
    */
-prototypeAccessors$26.vertexShader.get = function () {};
+prototypeAccessors$27.vertexShader.get = function () {};
 
   /**
    * @abstract
    */
-prototypeAccessors$26.fragmentShader.get = function () {};
+prototypeAccessors$27.fragmentShader.get = function () {};
 
 Buffer$1.prototype.setMatrix = function setMatrix (m) {
   setObjectMatrix(this.group, m);
@@ -67897,7 +68516,7 @@ Buffer$1.prototype.dispose = function dispose () {
   if (this.wireframeGeometry) { this.wireframeGeometry.dispose(); }
 };
 
-Object.defineProperties( Buffer$1.prototype, prototypeAccessors$26 );
+Object.defineProperties( Buffer$1.prototype, prototypeAccessors$27 );
 
 /**
  * @file Mesh Buffer
@@ -69061,16 +69680,16 @@ var ArrowBuffer = function ArrowBuffer (data, params) {
   this.picking = d.picking;
 };
 
-var prototypeAccessors$27 = { matrix: {},pickable: {} };
+var prototypeAccessors$28 = { matrix: {},pickable: {} };
 
-prototypeAccessors$27.matrix.set = function (m) {
+prototypeAccessors$28.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$27.matrix.get = function () {
+prototypeAccessors$28.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$27.pickable.get = function () {
+prototypeAccessors$28.pickable.get = function () {
   return !!this.picking
 };
 
@@ -69185,7 +69804,7 @@ ArrowBuffer.prototype.dispose = function dispose () {
   this.coneBuffer.dispose();
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$27 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$28 );
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
@@ -69891,7 +70510,7 @@ var Shape$1 = function Shape$$1 (name, params) {
   this.labelText = [];
 };
 
-var prototypeAccessors$25 = { center: {},type: {} };
+var prototypeAccessors$26 = { center: {},type: {} };
 
   /**
    * Add a buffer
@@ -70247,16 +70866,16 @@ Shape$1.prototype.dispose = function dispose () {
   this.labelText.length = 0;
 };
 
-prototypeAccessors$25.center.get = function () {
+prototypeAccessors$26.center.get = function () {
   if (!this._center) {
     this._center = this.boundingBox.getCenter();
   }
   return this._center
 };
 
-prototypeAccessors$25.type.get = function () { return 'Shape' };
+prototypeAccessors$26.type.get = function () { return 'Shape' };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$25 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$26 );
 
 /**
  * @file Queue
@@ -71048,16 +71667,16 @@ var DoubleSidedBuffer = function DoubleSidedBuffer (buffer) {
   this.backBuffer = backBuffer;
 };
 
-var prototypeAccessors$28 = { matrix: {},pickable: {} };
+var prototypeAccessors$29 = { matrix: {},pickable: {} };
 
-prototypeAccessors$28.matrix.set = function (m) {
+prototypeAccessors$29.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$28.matrix.get = function () {
+prototypeAccessors$29.matrix.get = function () {
   return this.group.matrix.clone()
 };
 
-prototypeAccessors$28.pickable.get = function () {
+prototypeAccessors$29.pickable.get = function () {
   return !!this.picking && !this.disablePicking
 };
 
@@ -71132,7 +71751,7 @@ DoubleSidedBuffer.prototype.dispose = function dispose () {
   this.backBuffer.dispose();
 };
 
-Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$28 );
+Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$29 );
 
 DoubleSidedBuffer.prototype.setVisibility = Buffer$1.prototype.setVisibility;
 
@@ -72550,7 +73169,6 @@ var StructureRepresentation = (function (Representation$$1) {
     this.type = 'structure';
 
     this.parameters = Object.assign({
-
       radiusType: {
         type: 'select', options: RadiusFactory.types
       },
@@ -72564,29 +73182,28 @@ var StructureRepresentation = (function (Representation$$1) {
       defaultAssembly: {
         type: 'hidden'
       }
-
     }, this.parameters);
 
-        /**
-         * @type {Selection}
-         * @private
-         */
+    /**
+     * @type {Selection}
+     * @private
+     */
     this.selection = new Selection(p.sele);
 
-        /**
-         * @type {Array}
-         * @private
-         */
+    /**
+     * @type {Array}
+     * @private
+     */
     this.dataList = [];
 
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure;
 
-        /**
-         * @type {StructureView}
-         */
+    /**
+     * @type {StructureView}
+     */
     this.structureView = this.structure.getView(this.selection);
 
     if (structure.biomolDict) {
@@ -72744,33 +73361,33 @@ var StructureRepresentation = (function (Representation$$1) {
     }, params)
   };
 
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setSelection
-     * @param {String} string - selection string, see {@tutorial selection-language}
-     * @param {Boolean} [silent] - don't trigger a change event in the selection
-     * @return {StructureRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias StructureRepresentation#setSelection
+   * @param {String} string - selection string, see {@tutorial selection-language}
+   * @param {Boolean} [silent] - don't trigger a change event in the selection
+   * @return {StructureRepresentation} this object
+   */
   StructureRepresentation.prototype.setSelection = function setSelection (string, silent) {
     this.selection.setString(string, silent);
 
     return this
   };
 
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setParameters
-     * @param {StructureRepresentationParameters} params - structure parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {StructureRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias StructureRepresentation#setParameters
+   * @param {StructureRepresentationParameters} params - structure parameter object
+   * @param {Object} [what] - buffer data attributes to be updated,
+   *                        note that this needs to be implemented in the
+   *                        derived classes. Generally it allows more
+   *                        fine-grained control over updating than
+   *                        forcing a rebuild.
+   * @param {Boolean} what.position - update position data
+   * @param {Boolean} what.color - update color data
+   * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+   * @return {StructureRepresentation} this object
+   */
   StructureRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
     what = what || {};
 
@@ -72812,12 +73429,12 @@ var StructureRepresentation = (function (Representation$$1) {
 
   StructureRepresentation.prototype.getParameters = function getParameters () {
     var params = Object.assign(
-            Representation$$1.prototype.getParameters.call(this),
+      Representation$$1.prototype.getParameters.call(this),
       {
         sele: this.selection ? this.selection.string : undefined,
         defaultAssembly: this.defaultAssembly
       }
-        );
+    );
 
     return params
   };
@@ -73001,7 +73618,6 @@ var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
     this.type = 'trajectory';
 
     this.parameters = Object.assign({
-
       drawLine: {
         type: 'boolean', rebuild: true
       },
@@ -73027,11 +73643,9 @@ var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
       sort: {
         type: 'boolean', rebuild: true
       }
-
     }, this.parameters);
 
     this.manualAttach = true;
-
     this.trajectory = trajectory;
 
     this.init(params);
@@ -73058,54 +73672,51 @@ var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
     StructureRepresentation$$1.prototype.init.call(this, p);
   };
 
-  TrajectoryRepresentation.prototype.attach = function attach (callback) {
+  TrajectoryRepresentation.prototype.attach = function attach () {
     var this$1 = this;
 
-    this.bufferList.forEach(function (buffer) {
-      this$1.viewer.add(buffer);
-    });
+    this.bufferList.forEach(function (buffer) { return this$1.viewer.add(buffer); });
     this.setVisibility(this.visible);
-
-    callback();
+    this.tasks.decrement();
   };
 
-  TrajectoryRepresentation.prototype.prepare = function prepare (callback) {
-        // TODO
-    callback();
-  };
+  // prepare (callback) {
+  //   // TODO
+  //   // - move loading of path here
+  //   // - get rid of manualAttach
+  //   callback()
+  // }
 
   TrajectoryRepresentation.prototype.create = function create () {
-        // Log.log( this.selection )
-        // Log.log( this.atomSet )
+    var this$1 = this;
 
-    if (this.atomSet.atomCount === 0) { return }
+    console.log('create', this.structureView.atomCount);
+    if (this.structureView.atomCount === 0) { return }
 
-    var scope = this;
-
-    var index = this.atomSet.atoms[ 0 ].index;
+    var index = this.structureView.getAtomIndices()[ 0 ];
 
     this.trajectory.getPath(index, function (path) {
       var n = path.length / 3;
-      var tc = new Color(scope.colorValue);
+      var tc = new Color(this$1.colorValue);
 
-      if (scope.drawSphere) {
+      if (this$1.drawSphere) {
         var sphereBuffer = new SphereBuffer(
           {
             position: path,
             color: uniformArray3(n, tc.r, tc.g, tc.b),
             radius: uniformArray(n, 0.2)
           },
-                    scope.getBufferParams({
-                      sphereDetail: scope.sphereDetail,
-                      dullInterior: true,
-                      disableImpostor: scope.disableImpostor
-                    })
-                );
+          this$1.getBufferParams({
+            sphereDetail: this$1.sphereDetail,
+            dullInterior: true,
+            disableImpostor: this$1.disableImpostor
+          })
+        );
 
-        scope.bufferList.push(sphereBuffer);
+        this$1.bufferList.push(sphereBuffer);
       }
 
-      if (scope.drawCylinder) {
+      if (this$1.drawCylinder) {
         var cylinderBuffer = new CylinderBuffer(
           {
             position1: path.subarray(0, -3),
@@ -73114,35 +73725,34 @@ var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
             color2: uniformArray3(n - 1, tc.r, tc.g, tc.b),
             radius: uniformArray(n, 0.05)
           },
-                    scope.getBufferParams({
-                      openEnded: false,
-                      radialSegments: scope.radialSegments,
-                      disableImpostor: scope.disableImpostor,
-                      dullInterior: true
-                    })
+          this$1.getBufferParams({
+            openEnded: false,
+            radialSegments: this$1.radialSegments,
+            disableImpostor: this$1.disableImpostor,
+            dullInterior: true
+          })
+        );
 
-                );
-
-        scope.bufferList.push(cylinderBuffer);
+        this$1.bufferList.push(cylinderBuffer);
       }
 
-      if (scope.drawPoint) {
+      if (this$1.drawPoint) {
         var pointBuffer = new PointBuffer(
           {
             position: path,
             color: uniformArray3(n, tc.r, tc.g, tc.b)
           },
-                    scope.getBufferParams({
-                      pointSize: scope.pointSize,
-                      sizeAttenuation: scope.sizeAttenuation,
-                      sort: scope.sort
-                    })
-                );
+          this$1.getBufferParams({
+            pointSize: this$1.pointSize,
+            sizeAttenuation: this$1.sizeAttenuation,
+            sort: this$1.sort
+          })
+        );
 
-        scope.bufferList.push(pointBuffer);
+        this$1.bufferList.push(pointBuffer);
       }
 
-      if (scope.drawLine) {
+      if (this$1.drawLine) {
         var lineBuffer = new LineBuffer(
           {
             position1: path.subarray(0, -3),
@@ -73150,13 +73760,13 @@ var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
             color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
             color2: uniformArray3(n - 1, tc.r, tc.g, tc.b)
           },
-                    scope.getBufferParams()
-                );
+          this$1.getBufferParams()
+        );
 
-        scope.bufferList.push(lineBuffer);
+        this$1.bufferList.push(lineBuffer);
       }
 
-      scope.attach();
+      this$1.attach();
     });
   };
 
@@ -73246,7 +73856,7 @@ var _v = new Vector3();
 
 /**
  * @example
- * component.signals.representationAdded.add( function( representationComponent ){ ... } );
+ * component.signals.representationAdded.add(function (representationComponent) { ... });
  *
  * @typedef {Object} ComponentSignals
  * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added
@@ -77090,8 +77700,8 @@ ComponentRegistry.add('shape', ShapeComponent);
  * @typedef {Object} TrajectoryComponentSignals
  * @property {Signal<RepresentationComponent>} frameChanged - on frame change
  * @property {Signal<RepresentationComponent>} playerChanged - on player change
- * @property {Signal<String>} gotNumframes - when frame count is available
- * @property {Signal<String>} parametersChanged - on parameters change
+ * @property {Signal<Integer>} countChanged - when frame count is available
+ * @property {Signal<TrajectoryComponentParameters>} parametersChanged - on parameters change
  */
 
 /**
@@ -77113,7 +77723,7 @@ var TrajectoryComponent = (function (Component$$1) {
     this.signals = Object.assign(this.signals, {
       frameChanged: new Signal(),
       playerChanged: new Signal(),
-      gotNumframes: new Signal(),
+      countChanged: new Signal(),
       parametersChanged: new Signal()
     });
 
@@ -77138,8 +77748,8 @@ var TrajectoryComponent = (function (Component$$1) {
       this$1.signals.playerChanged.dispatch(player);
     });
 
-    trajectory.signals.gotNumframes.add(function (n) {
-      this$1.signals.gotNumframes.dispatch(n);
+    trajectory.signals.countChanged.add(function (n) {
+      this$1.signals.countChanged.dispatch(n);
     });
 
         //
@@ -77208,6 +77818,9 @@ var TrajectoryComponent = (function (Component$$1) {
  * @private
  */
 
+/**
+ * Frames trajectory class. Gets data from a frames object.
+ */
 var FramesTrajectory = (function (Trajectory$$1) {
   function FramesTrajectory (frames, structure, params) {
     var p = params || {};
@@ -77222,8 +77835,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
     this.frames = frames.coordinates;
     this.boxes = frames.boxes;
 
-    this.getNumframes();
-    this.saveInitialCoords();
+    this._init(structure);
   }
 
   if ( Trajectory$$1 ) FramesTrajectory.__proto__ = Trajectory$$1;
@@ -77234,7 +77846,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
 
   prototypeAccessors.type.get = function () { return 'frames' };
 
-  FramesTrajectory.prototype.makeAtomIndices = function makeAtomIndices () {
+  FramesTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
     if (this.structure.type === 'StructureView') {
       this.atomIndices = this.structure.getAtomIndices();
     } else {
@@ -77265,25 +77877,25 @@ var FramesTrajectory = (function (Trajectory$$1) {
     }
 
     var box = this.boxes[ i ];
-    var numframes = this.frames.length;
+    var frameCount = this.frames.length;
 
-    this.process(i, box, coords, numframes);
+    this._process(i, box, coords, frameCount);
 
     if (typeof callback === 'function') {
       callback();
     }
   };
 
-  FramesTrajectory.prototype.getNumframes = function getNumframes () {
+  FramesTrajectory.prototype._loadFrameCount = function _loadFrameCount () {
     if (this.frames) {
-      this.setNumframes(this.frames.length);
+      this._setFrameCount(this.frames.length);
     }
   };
 
   FramesTrajectory.prototype.getPath = function getPath (index, callback) {
     var this$1 = this;
 
-    var n = this.numframes;
+    var n = this.frameCount;
     var k = index * 3;
 
     var path = new Float32Array(n * 3);
@@ -77311,10 +77923,13 @@ var FramesTrajectory = (function (Trajectory$$1) {
  * @private
  */
 
+/**
+ * Structure trajectory class. Gets data from a structure object.
+ */
 var StructureTrajectory = (function (Trajectory$$1) {
   function StructureTrajectory (trajPath, structure, params) {
     Trajectory$$1.call(this, '', structure, params);
-    this.saveInitialCoords();
+    this._init(structure);
   }
 
   if ( Trajectory$$1 ) StructureTrajectory.__proto__ = Trajectory$$1;
@@ -77325,7 +77940,7 @@ var StructureTrajectory = (function (Trajectory$$1) {
 
   prototypeAccessors.type.get = function () { return 'structure' };
 
-  StructureTrajectory.prototype.makeAtomIndices = function makeAtomIndices () {
+  StructureTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
     if (this.structure.atomSet.getSize() < this.structure.atomStore.count) {
       this.atomIndices = this.structure.getAtomIndices();
     } else {
@@ -77357,23 +77972,23 @@ var StructureTrajectory = (function (Trajectory$$1) {
     }
 
     var box = structure.boxes[ i ];
-    var numframes = structure.frames.length;
+    var frameCount = structure.frames.length;
 
-    this.process(i, box, coords, numframes);
+    this._process(i, box, coords, frameCount);
 
     if (typeof callback === 'function') {
       callback();
     }
   };
 
-  StructureTrajectory.prototype.getNumframes = function getNumframes () {
-    this.setNumframes(this.structure.frames.length);
+  StructureTrajectory.prototype._loadFrameCount = function _loadFrameCount () {
+    this._setFrameCount(this.structure.frames.length);
   };
 
   StructureTrajectory.prototype.getPath = function getPath (index, callback) {
     var this$1 = this;
 
-    var n = this.numframes;
+    var n = this.frameCount;
     var k = index * 3;
 
     var path = new Float32Array(n * 3);
@@ -77401,10 +78016,13 @@ var StructureTrajectory = (function (Trajectory$$1) {
  * @private
  */
 
+/**
+ * Remote trajectory class. Gets data from an MDsrv instance.
+ */
 var RemoteTrajectory = (function (Trajectory$$1) {
   function RemoteTrajectory (trajPath, structure, params) {
     Trajectory$$1.call(this, trajPath, structure, params);
-    this.saveInitialCoords();
+    this._init(structure);
   }
 
   if ( Trajectory$$1 ) RemoteTrajectory.__proto__ = Trajectory$$1;
@@ -77415,7 +78033,7 @@ var RemoteTrajectory = (function (Trajectory$$1) {
 
   prototypeAccessors.type.get = function () { return 'remote' };
 
-  RemoteTrajectory.prototype.makeAtomIndices = function makeAtomIndices () {
+  RemoteTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
     var atomIndices = [];
 
     if (this.structure.type === 'StructureView') {
@@ -77468,12 +78086,12 @@ var RemoteTrajectory = (function (Trajectory$$1) {
         return
       }
 
-      var numframes = new Int32Array(arrayBuffer, 0, 1)[ 0 ];
+      var frameCount = new Int32Array(arrayBuffer, 0, 1)[ 0 ];
       // const time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
       var box = new Float32Array(arrayBuffer, 2 * 4, 9);
       var coords = new Float32Array(arrayBuffer, 11 * 4);
 
-      this$1.process(i, box, coords, numframes);
+      this$1._process(i, box, coords, frameCount);
       if (typeof callback === 'function') {
         callback();
       }
@@ -77482,17 +78100,17 @@ var RemoteTrajectory = (function (Trajectory$$1) {
     request.send(params);
   };
 
-  RemoteTrajectory.prototype.getNumframes = function getNumframes () {
+  RemoteTrajectory.prototype._loadFrameCount = function _loadFrameCount () {
     var this$1 = this;
 
     var request = new window.XMLHttpRequest();
 
     var ds = DatasourceRegistry.trajectory;
-    var url = ds.getNumframesUrl(this.trajPath);
+    var url = ds.getCountUrl(this.trajPath);
 
     request.open('GET', url, true);
     request.addEventListener('load', function () {
-      this$1.setNumframes(parseInt(request.response));
+      this$1._setFrameCount(parseInt(request.response));
     }, false);
     request.send(null);
   };
@@ -84892,13 +85510,13 @@ var Parser = function Parser (streamer, params) {
   this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$29 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
+var prototypeAccessors$30 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
 
-prototypeAccessors$29.type.get = function () { return '' };
-prototypeAccessors$29.__objName.get = function () { return '' };
-prototypeAccessors$29.isBinary.get = function () { return false };
-prototypeAccessors$29.isJson.get = function () { return false };
-prototypeAccessors$29.isXml.get = function () { return false };
+prototypeAccessors$30.type.get = function () { return '' };
+prototypeAccessors$30.__objName.get = function () { return '' };
+prototypeAccessors$30.isBinary.get = function () { return false };
+prototypeAccessors$30.isJson.get = function () { return false };
+prototypeAccessors$30.isXml.get = function () { return false };
 
 Parser.prototype.parse = function parse () {
     var this$1 = this;
@@ -84919,7 +85537,7 @@ Parser.prototype._afterParse = function _afterParse () {
   if (Debug) { Log.log(this[ this.__objName ]); }
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$29 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$30 );
 
 /**
  * @file Structure Builder
@@ -85114,9 +85732,9 @@ var Entity = function Entity (structure, index, description, type, chainIndexLis
   });
 };
 
-var prototypeAccessors$30 = { type: {} };
+var prototypeAccessors$31 = { type: {} };
 
-prototypeAccessors$30.type.get = function () { return 'Entity' };
+prototypeAccessors$31.type.get = function () { return 'Entity' };
 
 Entity.prototype.getEntityType = function getEntityType () {
   return this.entityType
@@ -85147,7 +85765,7 @@ Entity.prototype.eachChain = function eachChain (callback) {
   });
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$30 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$31 );
 
 /**
  * @file Unitcell
@@ -89515,11 +90133,11 @@ var Frames = function Frames (name, path) {
   this.deltaTime = 1;
 };
 
-var prototypeAccessors$31 = { type: {} };
+var prototypeAccessors$32 = { type: {} };
 
-prototypeAccessors$31.type.get = function () { return 'Frames' };
+prototypeAccessors$32.type.get = function () { return 'Frames' };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$31 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$32 );
 
 /**
  * @file Trajectory Parser
@@ -89747,536 +90365,6 @@ var DcdParser = (function (TrajectoryParser$$1) {
 }(TrajectoryParser));
 
 ParserRegistry.add('dcd', DcdParser);
-
-/**
- * @file IO Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- *
- * Adapted from https://github.com/image-js/iobuffer
- * MIT License, Copyright (c) 2015 Michaël Zasso
- */
-
-var defaultByteLength = 1024 * 8;
-var charArray = [];
-
-/**
- * IOBuffer
- * @constructor
- * @param {undefined|number|ArrayBuffer|TypedArray|IOBuffer|Buffer} data - The data to construct the IOBuffer with.
- *
- * If it's a number, it will initialize the buffer with the number as
- * the buffer's length. If it's undefined, it will initialize the buffer
- * with a default length of 8 Kb. If its an ArrayBuffer, a TypedArray,
- * an IOBuffer instance, or a Node.js Buffer, it will create a view over
- * the underlying ArrayBuffer.
- * @param {object} [options]
- * @param {number} [options.offset=0] - Ignore the first n bytes of the ArrayBuffer
- * @property {ArrayBuffer} buffer - Reference to the internal ArrayBuffer object
- * @property {number} length - Byte length of the internal ArrayBuffer
- * @property {number} offset - The current offset of the buffer's pointer
- * @property {number} byteLength - Byte length of the internal ArrayBuffer
- * @property {number} byteOffset - Byte offset of the internal ArrayBuffer
- */
-var IOBuffer = function IOBuffer (data, options) {
-  options = options || {};
-  var dataIsGiven = false;
-  if (data === undefined) {
-    data = defaultByteLength;
-  }
-  if (typeof data === 'number') {
-    data = new ArrayBuffer(data);
-  } else {
-    dataIsGiven = true;
-    this._lastWrittenByte = data.byteLength;
-  }
-
-  var offset = options.offset ? options.offset >>> 0 : 0;
-  var byteLength = data.byteLength - offset;
-  var dvOffset = offset;
-  if (data.buffer) {
-    if (data.byteLength !== data.buffer.byteLength) {
-      dvOffset = data.byteOffset + offset;
-    }
-    data = data.buffer;
-  }
-  if (dataIsGiven) {
-    this._lastWrittenByte = byteLength;
-  } else {
-    this._lastWrittenByte = 0;
-  }
-  this.buffer = data;
-  this.length = byteLength;
-  this.byteLength = byteLength;
-  this.byteOffset = dvOffset;
-  this.offset = 0;
-  this.littleEndian = true;
-  this._data = new DataView(this.buffer, dvOffset, byteLength);
-  this._mark = 0;
-  this._marks = [];
-};
-
-/**
- * Checks if the memory allocated to the buffer is sufficient to store more bytes after the offset
- * @param {number} [byteLength=1] The needed memory in bytes
- * @return {boolean} Returns true if there is sufficient space and false otherwise
- */
-IOBuffer.prototype.available = function available (byteLength) {
-  if (byteLength === undefined) { byteLength = 1; }
-  return (this.offset + byteLength) <= this.length
-};
-
-/**
- * Check if little-endian mode is used for reading and writing multi-byte values
- * @return {boolean} Returns true if little-endian mode is used, false otherwise
- */
-IOBuffer.prototype.isLittleEndian = function isLittleEndian () {
-  return this.littleEndian
-};
-
-/**
- * Set little-endian mode for reading and writing multi-byte values
- * @return {IOBuffer}
- */
-IOBuffer.prototype.setLittleEndian = function setLittleEndian () {
-  this.littleEndian = true;
-  return this
-};
-
-/**
- * Check if big-endian mode is used for reading and writing multi-byte values
- * @return {boolean} Returns true if big-endian mode is used, false otherwise
- */
-IOBuffer.prototype.isBigEndian = function isBigEndian () {
-  return !this.littleEndian
-};
-
-/**
- * Switches to big-endian mode for reading and writing multi-byte values
- * @return {IOBuffer}
- */
-IOBuffer.prototype.setBigEndian = function setBigEndian () {
-  this.littleEndian = false;
-  return this
-};
-
-/**
- * Move the pointer n bytes forward
- * @param {number} n
- * @return {IOBuffer}
- */
-IOBuffer.prototype.skip = function skip (n) {
-  if (n === undefined) { n = 1; }
-  this.offset += n;
-  return this
-};
-
-/**
- * Move the pointer to the given offset
- * @param {number} offset
- * @return {IOBuffer}
- */
-IOBuffer.prototype.seek = function seek (offset) {
-  this.offset = offset;
-  return this
-};
-
-/**
- * Store the current pointer offset.
- * @see {@link IOBuffer#reset}
- * @return {IOBuffer}
- */
-IOBuffer.prototype.mark = function mark () {
-  this._mark = this.offset;
-  return this
-};
-
-/**
- * Move the pointer back to the last pointer offset set by mark
- * @see {@link IOBuffer#mark}
- * @return {IOBuffer}
- */
-IOBuffer.prototype.reset = function reset () {
-  this.offset = this._mark;
-  return this
-};
-
-/**
- * Push the current pointer offset to the mark stack
- * @see {@link IOBuffer#popMark}
- * @return {IOBuffer}
- */
-IOBuffer.prototype.pushMark = function pushMark () {
-  this._marks.push(this.offset);
-  return this
-};
-
-/**
- * Pop the last pointer offset from the mark stack, and set the current pointer offset to the popped value
- * @see {@link IOBuffer#pushMark}
- * @return {IOBuffer}
- */
-IOBuffer.prototype.popMark = function popMark () {
-  var offset = this._marks.pop();
-  if (offset === undefined) { throw new Error('Mark stack empty') }
-  this.seek(offset);
-  return this
-};
-
-/**
- * Move the pointer offset back to 0
- * @return {IOBuffer}
- */
-IOBuffer.prototype.rewind = function rewind () {
-  this.offset = 0;
-  return this
-};
-
-/**
- * Make sure the buffer has sufficient memory to write a given byteLength at the current pointer offset
- * If the buffer's memory is insufficient, this method will create a new buffer (a copy) with a length
- * that is twice (byteLength + current offset)
- * @param {number} [byteLength = 1]
- * @return {IOBuffer}
- */
-IOBuffer.prototype.ensureAvailable = function ensureAvailable (byteLength) {
-  if (byteLength === undefined) { byteLength = 1; }
-  if (!this.available(byteLength)) {
-    var lengthNeeded = this.offset + byteLength;
-    var newLength = lengthNeeded * 2;
-    var newArray = new Uint8Array(newLength);
-    newArray.set(new Uint8Array(this.buffer));
-    this.buffer = newArray.buffer;
-    this.length = this.byteLength = newLength;
-    this._data = new DataView(this.buffer);
-  }
-  return this
-};
-
-/**
- * Read a byte and return false if the byte's value is 0, or true otherwise
- * Moves pointer forward
- * @return {boolean}
- */
-IOBuffer.prototype.readBoolean = function readBoolean () {
-  return this.readUint8() !== 0
-};
-
-/**
- * Read a signed 8-bit integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readInt8 = function readInt8 () {
-  return this._data.getInt8(this.offset++)
-};
-
-/**
- * Read an unsigned 8-bit integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readUint8 = function readUint8 () {
-  return this._data.getUint8(this.offset++)
-};
-
-/**
- * Alias for {@link IOBuffer#readUint8}
- * @return {number}
- */
-IOBuffer.prototype.readByte = function readByte () {
-  return this.readUint8()
-};
-
-/**
- * Read n bytes and move pointer forward.
- * @param {number} n
- * @return {Uint8Array}
- */
-IOBuffer.prototype.readBytes = function readBytes (n) {
-    var this$1 = this;
-
-  if (n === undefined) { n = 1; }
-  var bytes = new Uint8Array(n);
-  for (var i = 0; i < n; i++) {
-    bytes[i] = this$1.readByte();
-  }
-  return bytes
-};
-
-/**
- * Read a 16-bit signed integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readInt16 = function readInt16 () {
-  var value = this._data.getInt16(this.offset, this.littleEndian);
-  this.offset += 2;
-  return value
-};
-
-/**
- * Read a 16-bit unsigned integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readUint16 = function readUint16 () {
-  var value = this._data.getUint16(this.offset, this.littleEndian);
-  this.offset += 2;
-  return value
-};
-
-/**
- * Read a 32-bit signed integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readInt32 = function readInt32 () {
-  var value = this._data.getInt32(this.offset, this.littleEndian);
-  this.offset += 4;
-  return value
-};
-
-/**
- * Read a 32-bit unsigned integer and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readUint32 = function readUint32 () {
-  var value = this._data.getUint32(this.offset, this.littleEndian);
-  this.offset += 4;
-  return value
-};
-
-/**
- * Read a 32-bit floating number and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readFloat32 = function readFloat32 () {
-  var value = this._data.getFloat32(this.offset, this.littleEndian);
-  this.offset += 4;
-  return value
-};
-
-/**
- * Read a 64-bit floating number and move pointer forward
- * @return {number}
- */
-IOBuffer.prototype.readFloat64 = function readFloat64 () {
-  var value = this._data.getFloat64(this.offset, this.littleEndian);
-  this.offset += 8;
-  return value
-};
-
-/**
- * Read 1-byte ascii character and move pointer forward
- * @return {string}
- */
-IOBuffer.prototype.readChar = function readChar () {
-  return String.fromCharCode(this.readInt8())
-};
-
-/**
- * Read n 1-byte ascii characters and move pointer forward
- * @param {number} n
- * @return {string}
- */
-IOBuffer.prototype.readChars = function readChars (n) {
-    var this$1 = this;
-
-  if (n === undefined) { n = 1; }
-  charArray.length = n;
-  for (var i = 0; i < n; i++) {
-    charArray[i] = this$1.readChar();
-  }
-  return charArray.join('')
-};
-
-/**
- * Write 0xff if the passed value is truthy, 0x00 otherwise
- * @param {any} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeBoolean = function writeBoolean (value) {
-  this.writeUint8(value ? 0xff : 0x00);
-  return this
-};
-
-/**
- * Write value as an 8-bit signed integer
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeInt8 = function writeInt8 (value) {
-  this.ensureAvailable(1);
-  this._data.setInt8(this.offset++, value);
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write value as a 8-bit unsigned integer
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeUint8 = function writeUint8 (value) {
-  this.ensureAvailable(1);
-  this._data.setUint8(this.offset++, value);
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * An alias for {@link IOBuffer#writeUint8}
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeByte = function writeByte (value) {
-  return this.writeUint8(value)
-};
-
-/**
- * Write bytes
- * @param {Array|Uint8Array} bytes
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeBytes = function writeBytes (bytes) {
-    var this$1 = this;
-
-  this.ensureAvailable(bytes.length);
-  for (var i = 0; i < bytes.length; i++) {
-    this$1._data.setUint8(this$1.offset++, bytes[i]);
-  }
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write value as an 16-bit signed integer
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeInt16 = function writeInt16 (value) {
-  this.ensureAvailable(2);
-  this._data.setInt16(this.offset, value, this.littleEndian);
-  this.offset += 2;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write value as a 16-bit unsigned integer
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeUint16 = function writeUint16 (value) {
-  this.ensureAvailable(2);
-  this._data.setUint16(this.offset, value, this.littleEndian);
-  this.offset += 2;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write a 32-bit signed integer at the current pointer offset
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeInt32 = function writeInt32 (value) {
-  this.ensureAvailable(4);
-  this._data.setInt32(this.offset, value, this.littleEndian);
-  this.offset += 4;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write a 32-bit unsigned integer at the current pointer offset
- * @param {number} value - The value to set
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeUint32 = function writeUint32 (value) {
-  this.ensureAvailable(4);
-  this._data.setUint32(this.offset, value, this.littleEndian);
-  this.offset += 4;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write a 32-bit floating number at the current pointer offset
- * @param {number} value - The value to set
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeFloat32 = function writeFloat32 (value) {
-  this.ensureAvailable(4);
-  this._data.setFloat32(this.offset, value, this.littleEndian);
-  this.offset += 4;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write a 64-bit floating number at the current pointer offset
- * @param {number} value
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeFloat64 = function writeFloat64 (value) {
-  this.ensureAvailable(8);
-  this._data.setFloat64(this.offset, value, this.littleEndian);
-  this.offset += 8;
-  this._updateLastWrittenByte();
-  return this
-};
-
-/**
- * Write the charCode of the passed string's first character to the current pointer offset
- * @param {string} str - The character to set
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeChar = function writeChar (str) {
-  return this.writeUint8(str.charCodeAt(0))
-};
-
-/**
- * Write the charCodes of the passed string's characters to the current pointer offset
- * @param {string} str
- * @return {IOBuffer}
- */
-IOBuffer.prototype.writeChars = function writeChars (str) {
-    var this$1 = this;
-
-  for (var i = 0; i < str.length; i++) {
-    this$1.writeUint8(str.charCodeAt(i));
-  }
-  return this
-};
-
-/**
- * Export a Uint8Array view of the internal buffer.
- * The view starts at the byte offset and its length
- * is calculated to stop at the last written byte or the original length.
- * @return {Uint8Array}
- */
-IOBuffer.prototype.toArray = function toArray () {
-  return new Uint8Array(this.buffer, this.byteOffset, this._lastWrittenByte)
-};
-
-/**
- * Same as {@link IOBuffer#toArray} but returns a Buffer if possible. Otherwise returns a Uint8Array.
- * @return {Buffer|Uint8Array}
- */
-IOBuffer.prototype.getBuffer = function getBuffer () {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(this.toArray())
-  } else {
-    return this.toArray()
-  }
-};
-
-/**
- * Update the last written byte offset
- * @private
- */
-IOBuffer.prototype._updateLastWrittenByte = function _updateLastWrittenByte () {
-  if (this.offset > this._lastWrittenByte) {
-    this._lastWrittenByte = this.offset;
-  }
-};
 
 /**
  * @file Netcdf Reader
@@ -90767,12 +90855,12 @@ var NetcdfReader = function NetcdfReader (data) {
   this.buffer = buffer;
 };
 
-var prototypeAccessors$32 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
+var prototypeAccessors$33 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
 
 /**
  * @return {string} - Version for the NetCDF format
  */
-prototypeAccessors$32.version.get = function () {
+prototypeAccessors$33.version.get = function () {
   if (this.header.version === 1) {
     return 'classic format'
   } else {
@@ -90787,7 +90875,7 @@ prototypeAccessors$32.version.get = function () {
  ** `name`: String with the name of the record dimension
  ** `recordStep`: Number with the record variables step size
  */
-prototypeAccessors$32.recordDimension.get = function () {
+prototypeAccessors$33.recordDimension.get = function () {
   return this.header.recordDimension
 };
 
@@ -90796,7 +90884,7 @@ prototypeAccessors$32.recordDimension.get = function () {
  ** `name`: String with the name of the dimension
  ** `size`: Number with the size of the dimension
  */
-prototypeAccessors$32.dimensions.get = function () {
+prototypeAccessors$33.dimensions.get = function () {
   return this.header.dimensions
 };
 
@@ -90806,7 +90894,7 @@ prototypeAccessors$32.dimensions.get = function () {
  ** `type`: String with the type of the attribute
  ** `value`: A number or string with the value of the attribute
  */
-prototypeAccessors$32.globalAttributes.get = function () {
+prototypeAccessors$33.globalAttributes.get = function () {
   return this.header.globalAttributes
 };
 
@@ -90820,7 +90908,7 @@ prototypeAccessors$32.globalAttributes.get = function () {
  ** `offset`: Number with the offset where of the variable begins
  ** `record`: True if is a record variable, false otherwise
  */
-prototypeAccessors$32.variables.get = function () {
+prototypeAccessors$33.variables.get = function () {
   return this.header.variables
 };
 
@@ -90866,7 +90954,7 @@ NetcdfReader.prototype.getDataVariable = function getDataVariable (variableName)
   }
 };
 
-Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$32 );
+Object.defineProperties( NetcdfReader.prototype, prototypeAccessors$33 );
 
 /**
  * @file Nctraj Parser
@@ -93794,9 +93882,9 @@ var Validation = function Validation (name, path) {
   this.clashSele = 'NONE';
 };
 
-var prototypeAccessors$33 = { type: {} };
+var prototypeAccessors$34 = { type: {} };
 
-prototypeAccessors$33.type.get = function () { return 'validation' };
+prototypeAccessors$34.type.get = function () { return 'validation' };
 
 Validation.prototype.fromXml = function fromXml (xml) {
   if (Debug) { Log.time('Validation.fromXml'); }
@@ -93987,7 +94075,7 @@ Validation.prototype.getClashData = function getClashData (params) {
   }
 };
 
-Object.defineProperties( Validation.prototype, prototypeAccessors$33 );
+Object.defineProperties( Validation.prototype, prototypeAccessors$34 );
 
 /**
  * @file Validation Parser
@@ -97242,7 +97330,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
     return this.baseUrl + 'file/' + info.path
   };
 
-  MdsrvDatasource.prototype.getNumframesUrl = function getNumframesUrl (src) {
+  MdsrvDatasource.prototype.getCountUrl = function getCountUrl (src) {
     var info = getFileInfo(src);
     return this.baseUrl + 'traj/numframes/' + info.path
   };
@@ -97264,7 +97352,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-11";
+var version$1 = "0.10.5-12";
 
 /**
  * @file Version
