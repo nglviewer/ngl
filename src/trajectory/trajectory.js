@@ -202,8 +202,8 @@ class Trajectory {
   }
 
   _init (structure) {
-    this._loadFrameCount()
     this.setStructure(structure)
+    this._loadFrameCount()
     this.setPlayer(new TrajectoryPlayer(this))
   }
 
@@ -211,13 +211,13 @@ class Trajectory {
     this.structure = structure
     this.atomCount = structure.atomCount
 
-    this.backboneIndices = this.structure.getAtomIndices(
+    this.backboneIndices = this._getIndices(
       new Selection('backbone and not hydrogen')
     )
     this._makeAtomIndices()
     this._saveStructureCoords()
 
-    this.selectionIndices = this.structure.getAtomIndices(this.selection)
+    this.selectionIndices = this._getIndices(this.selection)
     this._resetCache()
     this._saveInitialCoords()
     this.setFrame(this._currentFrame)
@@ -240,6 +240,19 @@ class Trajectory {
   setSelection (string) {
     this.selection.setString(string)
     return this
+  }
+
+  _getIndices (selection) {
+    let i = 0
+    const test = selection.test
+    const indices = []
+
+    this.structure.eachAtom(function (ap) {
+      if (test(ap)) indices.push(i)
+      i += 1
+    })
+
+    return indices
   }
 
   _makeSuperposeCoords () {
