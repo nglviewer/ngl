@@ -12,7 +12,7 @@ import { HelixTypes } from './pdb-parser.js'
 import Entity from '../structure/entity.js'
 import Unitcell from '../symmetry/unitcell.js'
 import Assembly from '../symmetry/assembly.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 import {
     assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
     calculateBonds, calculateSecondaryStructure

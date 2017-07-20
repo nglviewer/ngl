@@ -11,7 +11,7 @@ import { defaults } from '../utils.js'
 import Component from './component.js'
 import TrajectoryComponent from './trajectory-component.js'
 import { makeTrajectory } from '../trajectory/trajectory-utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 import StructureView from '../structure/structure-view.js'
 import { superpose } from '../align/align-utils.js'
 

@@ -10,7 +10,7 @@ import { Debug, Log, ColormakerRegistry } from '../globals.js'
 import { getUintArray } from '../utils.js'
 import { AtomPicker, SurfacePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3, serialArray } from '../math/array-utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 /**
  * Surface

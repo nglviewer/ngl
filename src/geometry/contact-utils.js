@@ -8,7 +8,7 @@ import { Vector3 } from '../../lib/three.es6.js'
 
 import { radToDeg } from '../math/math-utils.js'
 import Contact from './contact.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 function polarContacts (structure, maxDistance, maxAngle) {
   maxDistance = maxDistance || 3.5

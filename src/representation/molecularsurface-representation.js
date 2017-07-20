@@ -11,7 +11,7 @@ import MolecularSurface from '../surface/molecular-surface.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
 import ContourBuffer from '../buffer/contour-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 /**
  * Molecular Surface Representation

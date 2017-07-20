@@ -5,7 +5,7 @@ import StringStreamer from '../../src/streamer/string-streamer.js'
 import PdbParser from '../../src/parser/pdb-parser.js'
 import GroParser from '../../src/parser/gro-parser.js'
 import CifParser from '../../src/parser/cif-parser.js'
-import Selection from '../../src/selection.js'
+import Selection from '../../src/selection/selection.js'
 
 import { assert } from 'chai'
 import path from 'path'

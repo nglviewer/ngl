@@ -7,7 +7,7 @@
 import { Matrix4, Box3 } from '../../lib/three.es6.js'
 
 import { uniqueArray } from '../utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 function selectionFromChains (chainList) {
   let sele = ''

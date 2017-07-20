@@ -7,7 +7,7 @@
 import { Color, Vector3 } from '../../lib/three.es6.js'
 
 import { calculateMeanVector3 } from '../math/vector-utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 /**
  * Picker class

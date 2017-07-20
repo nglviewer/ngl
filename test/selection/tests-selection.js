@@ -1,16 +1,17 @@
 
-import StringStreamer from '../src/streamer/string-streamer.js'
-import PdbParser from '../src/parser/pdb-parser.js'
-import CifParser from '../src/parser/cif-parser.js'
+import StringStreamer from '../../src/streamer/string-streamer.js'
+import PdbParser from '../../src/parser/pdb-parser.js'
+import CifParser from '../../src/parser/cif-parser.js'
 // eslint-disable-next-line no-unused-vars
-import StructureView from '../src/structure/structure-view.js'
-import Selection, { kwd } from '../src/selection.js'
+import StructureView from '../../src/structure/structure-view.js'
+import Selection from '../../src/selection/selection.js'
+import { kwd } from '../../src/selection/selection-constants.js'
 
 import { assert } from 'chai'
 import path from 'path'
 import fs from 'fs'
 
-describe('selection', function () {
+describe('selection/selection', function () {
   describe('parsing', function () {
     it('chain', function () {
       var sele = ':A'
@@ -18,7 +19,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'chainname': 'A' }
+          { 'chainname': 'A' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -30,8 +31,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'AND',
         'rules': [
-                { 'chainname': 'A' },
-                { 'resno': [ 1, 100 ] }
+          { 'chainname': 'A' },
+          { 'resno': [ 1, 100 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -43,8 +44,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'HOH' },
-                { 'atomname': 'OH' }
+          { 'resname': 'HOH' },
+          { 'atomname': 'OH' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -56,7 +57,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'model': 1 }
+          { 'model': 1 }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -68,7 +69,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'altloc': 'A' }
+          { 'altloc': 'A' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -80,7 +81,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'inscode': 'C' }
+          { 'inscode': 'C' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -92,16 +93,16 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resno': [ 10, 15 ] },
+          { 'resno': [ 10, 15 ] },
           {
             'operator': 'AND',
             'rules': [
-                        { 'keyword': kwd.BACKBONE },
+              { 'keyword': kwd.BACKBONE },
               {
                 'operator': 'OR',
                 'rules': [
-                                { 'resno': [ 30, 35 ] },
-                                { 'resno': [ 40, 45 ] }
+                  { 'resno': [ 30, 35 ] },
+                  { 'resno': [ 40, 45 ] }
                 ]
               }
             ]
@@ -117,15 +118,15 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resno': [ 10, 15 ] },
+          { 'resno': [ 10, 15 ] },
           {
             'operator': 'AND',
             'rules': [
-                        { 'keyword': kwd.BACKBONE },
-                        { 'resno': [ 30, 35 ] }
+              { 'keyword': kwd.BACKBONE },
+              { 'resno': [ 30, 35 ] }
             ]
           },
-                { 'resno': [ 40, 45 ] }
+          { 'resno': [ 40, 45 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -137,8 +138,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resno': [ 10, 15 ] },
-                { 'keyword': kwd.BACKBONE }
+          { 'resno': [ 10, 15 ] },
+          { 'keyword': kwd.BACKBONE }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -168,8 +169,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'AND',
         'rules': [
-                { 'model': 0 },
-                { 'chainname': 'ABJ' }
+          { 'model': 0 },
+          { 'chainname': 'ABJ' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -200,7 +201,7 @@ describe('selection', function () {
         'operator': undefined,
         'negate': true,
         'rules': [
-                { 'resno': [ 10, 15 ] }
+          { 'resno': [ 10, 15 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -212,12 +213,12 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': undefined,
             'negate': true,
             'rules': [
-                        { 'resno': [ 10, 15 ] }
+              { 'resno': [ 10, 15 ] }
             ]
           }
         ]
@@ -231,7 +232,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': undefined,
             'negate': true,
@@ -239,7 +240,7 @@ describe('selection', function () {
               {
                 'operator': undefined,
                 'rules': [
-                                { 'resno': [ 10, 15 ] }
+                  { 'resno': [ 10, 15 ] }
                 ]
               }
             ]
@@ -255,7 +256,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': undefined,
             'negate': true,
@@ -263,8 +264,8 @@ describe('selection', function () {
               {
                 'operator': 'AND',
                 'rules': [
-                                { 'resno': [ 10, 15 ] },
-                                { 'resno': [ 15, 20 ] }
+                  { 'resno': [ 10, 15 ] },
+                  { 'resno': [ 15, 20 ] }
                 ]
               }
             ]
@@ -280,7 +281,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': undefined,
             'negate': true,
@@ -288,13 +289,13 @@ describe('selection', function () {
               {
                 'operator': 'AND',
                 'rules': [
-                                { 'resno': [ 10, 15 ] },
-                                { 'resno': [ 15, 20 ] }
+                  { 'resno': [ 10, 15 ] },
+                  { 'resno': [ 15, 20 ] }
                 ]
               }
             ]
           },
-                { 'resname': 'GLU' }
+          { 'resname': 'GLU' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -306,7 +307,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': 'AND',
             'rules': [
@@ -317,13 +318,13 @@ describe('selection', function () {
                   {
                     'operator': 'AND',
                     'rules': [
-                                        { 'resno': [ 10, 15 ] },
-                                        { 'resno': [ 15, 20 ] }
+                      { 'resno': [ 10, 15 ] },
+                      { 'resno': [ 15, 20 ] }
                     ]
                   }
                 ]
               },
-                        { 'resname': 'GLU' }
+              { 'resname': 'GLU' }
             ]
           }
         ]
@@ -340,7 +341,7 @@ describe('selection', function () {
           {
             'operator': 'AND',
             'rules': [
-                        { 'resno': [ 1, 100 ] },
+              { 'resno': [ 1, 100 ] },
               {
                 'operator': undefined,
                 'negate': true,
@@ -348,15 +349,15 @@ describe('selection', function () {
                   {
                     'operator': 'OR',
                     'rules': [
-                                        { 'resname': 'MET' },
-                                        { 'resname': 'GLU' }
+                      { 'resname': 'MET' },
+                      { 'resname': 'GLU' }
                     ]
                   }
                 ]
               }
             ]
           },
-                { 'resno': [ 300, 330 ] }
+          { 'resno': [ 300, 330 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -372,10 +373,10 @@ describe('selection', function () {
             'operator': undefined,
             'negate': true,
             'rules': [
-                        { 'keyword': kwd.BACKBONE }
+              { 'keyword': kwd.BACKBONE }
             ]
           },
-                { 'atomname': 'CA' }
+          { 'atomname': 'CA' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -387,12 +388,12 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'atomname': 'CA' },
+          { 'atomname': 'CA' },
           {
             'operator': undefined,
             'negate': true,
             'rules': [
-                        { 'keyword': kwd.BACKBONE }
+              { 'keyword': kwd.BACKBONE }
             ]
           }
         ]
@@ -406,8 +407,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
-                { 'resname': 'GLY' }
+          { 'resname': 'MET' },
+          { 'resname': 'GLY' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -426,12 +427,12 @@ describe('selection', function () {
               {
                 'operator': undefined,
                 'rules': [
-                                { 'resname': 'MET' }
+                  { 'resname': 'MET' }
                 ]
               }
             ]
           },
-                { 'resname': 'GLY' }
+          { 'resname': 'GLY' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -447,8 +448,8 @@ describe('selection', function () {
           {
             'operator': 'OR',
             'rules': [
-                        { 'resname': 'MET' },
-                        { 'resname': 'GLY' }
+              { 'resname': 'MET' },
+              { 'resname': 'GLY' }
             ]
           }
         ]
@@ -466,7 +467,7 @@ describe('selection', function () {
           {
             'operator': undefined,
             'rules': [
-                        { 'resname': 'MET' }
+              { 'resname': 'MET' }
             ]
           }
         ]
@@ -485,7 +486,7 @@ describe('selection', function () {
             'operator': undefined,
             'negate': true,
             'rules': [
-                        { 'resname': 'MET' }
+              { 'resname': 'MET' }
             ]
           }
         ]
@@ -508,7 +509,7 @@ describe('selection', function () {
                 'operator': undefined,
                 'negate': true,
                 'rules': [
-                                { 'resname': 'MET' }
+                  { 'resname': 'MET' }
                 ]
               }
             ]
@@ -524,8 +525,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
-                { 'keyword': kwd.SIDECHAIN }
+          { 'resname': 'MET' },
+          { 'keyword': kwd.SIDECHAIN }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -537,12 +538,12 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-                { 'resname': 'MET' },
+          { 'resname': 'MET' },
           {
             'operator': undefined,
             'negate': true,
             'rules': [
-                        { 'keyword': kwd.SIDECHAIN }
+              { 'keyword': kwd.SIDECHAIN }
             ]
           }
         ]
@@ -556,7 +557,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'element': 'H' }
+          { 'element': 'H' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -571,15 +572,15 @@ describe('selection', function () {
           {
             'operator': 'AND',
             'rules': [
-                        { 'resname': 'CYS' },
-                        { 'atomname': 'CA' }
+              { 'resname': 'CYS' },
+              { 'atomname': 'CA' }
             ]
           },
           {
             'operator': 'AND',
             'rules': [
-                        { 'resname': 'CYS' },
-                        { 'element': 'H' }
+              { 'resname': 'CYS' },
+              { 'element': 'H' }
             ]
           }
         ]
@@ -593,9 +594,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-          {
-            'atomindex': [ 1, 2, 3 ]
-          }
+          { 'atomindex': [ 1, 2, 3 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -607,10 +606,8 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'OR',
         'rules': [
-          {
-            'atomindex': [ 1, 2, 13 ]
-          },
-                { 'keyword': kwd.PROTEIN }
+          { 'atomindex': [ 1, 2, 13 ] },
+          { 'keyword': kwd.PROTEIN }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -622,9 +619,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-          {
-            'atomindex': [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ]
-          }
+          { 'atomindex': [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -636,7 +631,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'resname': '123' }
+          { 'resname': '123' }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -648,12 +643,12 @@ describe('selection', function () {
       var selectionObj = {
         'operator': 'AND',
         'rules': [
-                { 'model': 0 },
-                { 'altloc': 'A' },
-                { 'atomname': 'N' },
-                { 'chainname': 'A' },
-                { 'inscode': 'C' },
-                { 'resno': 15 }
+          { 'model': 0 },
+          { 'altloc': 'A' },
+          { 'atomname': 'N' },
+          { 'chainname': 'A' },
+          { 'inscode': 'C' },
+          { 'resno': 15 }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -665,7 +660,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'resno': -143 }
+          { 'resno': -143 }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -677,7 +672,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'resno': [ -12, 14 ] }
+          { 'resno': [ -12, 14 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -689,7 +684,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'resno': [ -12, -8 ] }
+          { 'resno': [ -12, -8 ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -701,7 +696,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'keyword': kwd.BONDED }
+          { 'keyword': kwd.BONDED }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -713,7 +708,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'keyword': kwd.RING }
+          { 'keyword': kwd.RING }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -725,7 +720,7 @@ describe('selection', function () {
       var selectionObj = {
         'operator': undefined,
         'rules': [
-                { 'resname': [ 'ALA', 'MET', 'GLU' ] }
+          { 'resname': [ 'ALA', 'MET', 'GLU' ] }
         ]
       }
       assert.deepEqual(selection.selection, selectionObj)
@@ -746,7 +741,7 @@ describe('selection', function () {
     var _1crnPdb
 
     before(function () {
-      _1crnPdb = fs.readFileSync(path.join(__dirname, '/data/1crn.pdb'), 'utf-8')
+      _1crnPdb = fs.readFileSync(path.join(__dirname, '../data/1crn.pdb'), 'utf-8')
     })
 
     it('backbone', function () {
@@ -854,7 +849,7 @@ describe('selection', function () {
     it('/1 PDB', function () {
       var sele = '/1'
       var selection = new Selection(sele)
-      var file = path.join(__dirname, '/data/1LVZ.pdb')
+      var file = path.join(__dirname, '../data/1LVZ.pdb')
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
@@ -870,7 +865,7 @@ describe('selection', function () {
     it('/1 CIF', function () {
       var sele = '/1'
       var selection = new Selection(sele)
-      var file = path.join(__dirname, '/data/1LVZ.cif')
+      var file = path.join(__dirname, '../data/1LVZ.cif')
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cifParser = new CifParser(streamer)
@@ -903,7 +898,7 @@ describe('selection', function () {
     it('lowercase resname', function () {
       var sele = 'phe'
       var selection = new Selection(sele)
-      var file = path.join(__dirname, '/data/lowerCaseResname.pdb')
+      var file = path.join(__dirname, '../data/lowerCaseResname.pdb')
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)

@@ -10,7 +10,7 @@ import { Log } from '../globals.js'
 import { defaults } from '../utils.js'
 import { circularMean } from '../math/array-utils.js'
 import { lerp, spline } from '../math/math-utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 import Superposition from '../align/superposition.js'
 import TrajectoryPlayer from './trajectory-player.js'
 

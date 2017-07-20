@@ -19,7 +19,7 @@ import {
   ParserRegistry, RepresentationRegistry
 } from './globals.js'
 import { autoLoad, getDataInfo } from './loader/loader-utils.js'
-import Selection from './selection.js'
+import Selection from './selection/selection.js'
 import PdbWriter from './writer/pdb-writer.js'
 import StlWriter from './writer/stl-writer.js'
 import Stage from './stage/stage.js'

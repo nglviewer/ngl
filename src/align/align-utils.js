@@ -5,7 +5,7 @@
  */
 
 import { defaults } from '../utils.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 import Alignment from './alignment.js'
 import Superposition from './superposition.js'
 

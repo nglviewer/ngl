@@ -8,7 +8,7 @@ import { Vector3, Box3 } from '../../lib/three.es6.js'
 
 import { Debug, Log } from '../globals.js'
 import Structure from './structure.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 
 /**
  * Get view on structure restricted to the selection

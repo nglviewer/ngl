@@ -7,7 +7,7 @@
 import { ExtensionFragDepth, Mobile } from '../globals.js'
 import { defaults } from '../utils.js'
 import Representation from './representation.js'
-import Selection from '../selection.js'
+import Selection from '../selection/selection.js'
 import RadiusFactory from '../utils/radius-factory.js'
 
 /**

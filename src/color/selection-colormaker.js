@@ -6,9 +6,9 @@
 
 import { Color } from '../../lib/three.es6.js'
 
-import Selection from '../selection.js'
-import Colormaker from './colormaker.js'
 import { ColormakerRegistry } from '../globals.js'
+import Selection from '../selection/selection.js'
+import Colormaker from './colormaker.js'
 
 /**
  * Color based on {@link Selection}
