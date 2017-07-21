@@ -150,7 +150,7 @@ class TrajectoryPlayer {
       i = this.traj.currentFrame - this.step
     }
 
-    if (i >= this.end || i < this.start) {
+    if (i > this.end || i < this.start) {
       if (this.direction === 'bounce') {
         if (this._direction === 'forward') {
           this._direction = 'backward'
@@ -176,8 +176,14 @@ class TrajectoryPlayer {
       } else {
         if (this._direction === 'forward') {
           i = this.start
+          if (this.interpolateType) {
+            i = Math.min(this.end, i + this.step)
+          }
         } else {
           i = this.end
+          if (this.interpolateType) {
+            i = Math.max(this.start, i - this.step)
+          }
         }
       }
     }
