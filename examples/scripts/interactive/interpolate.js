@@ -1,7 +1,7 @@
 
-stage.loadFile("data://lig0FG.2models.pdb", {
+stage.loadFile('data://lig0FG.2models.pdb', {
   asTrajectory: true
-}).then(function(o) {
+}).then(function (o) {
   var traj = o.addTrajectory().trajectory
   var player = new NGL.TrajectoryPlayer(traj, {
     step: 1,
@@ -9,12 +9,12 @@ stage.loadFile("data://lig0FG.2models.pdb", {
     interpolateStep: 100,
     start: 0,
     end: traj.numframes,
-    interpolateType: "linear",
-    mode: "loop",
-    direction: "bounce"
-  });
-  player.play();
+    interpolateType: 'linear',
+    mode: 'loop',
+    direction: 'bounce'
+  })
+  player.play()
 
-  o.addRepresentation("licorice");
-  o.autoView();
-});
+  o.addRepresentation('licorice')
+  o.autoView()
+})
