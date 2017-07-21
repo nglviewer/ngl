@@ -72,8 +72,12 @@ function getMouseButtons (event) {
  * mouseObserver.signals.dragged.add( function( deltaX, deltaY ){ ... } );
  *
  * @example
- * // listen to clicking (and touch-clicking) events
+ * // listen to clicking (and tapping) events
  * mouseObserver.signals.clicked.add( function(){ ... } );
+ *
+ * @example
+ * // listen to double clicking (and double tapping) events
+ * mouseObserver.signals.doubleClicked.add( function(){ ... } );
  *
  * @example
  * // listen to hovering events
@@ -97,7 +101,8 @@ class MouseObserver {
       dragged: new Signal(),
       dropped: new Signal(),
       clicked: new Signal(),
-      hovered: new Signal()
+      hovered: new Signal(),
+      doubleClicked: new Signal()
     }
 
     var p = Object.assign({}, params)
@@ -208,6 +213,8 @@ class MouseObserver {
     document.addEventListener('touchstart', this._onTouchstart)
     document.addEventListener('touchend', this._onTouchend)
     document.addEventListener('touchmove', this._onTouchmove)
+
+    this.prevClickCP = new Vector2()
   }
 
   get key () {
@@ -226,18 +233,24 @@ class MouseObserver {
 
   /**
    * listen to mouse actions
+   * @emits {MouseSignals.clicked} when clicked
    * @emits {MouseSignals.hovered} when hovered
    * @return {undefined}
    */
   _listen () {
-    if (window.performance.now() - this.lastMoved > this.hoverTimeout) {
+    const now = window.performance.now()
+    const cp = this.canvasPosition
+    if (this.clickPending && now - this.lastClicked > 200) {
+      this.signals.clicked.dispatch(cp.x, cp.y)
+      this.clickPending = false
+    }
+    if (now - this.lastMoved > this.hoverTimeout) {
       this.moving = false
     }
     if (this.scrolled || (!this.moving && !this.hovering)) {
       this.scrolled = false
       if (this.hoverTimeout !== -1 && this.overElement) {
         this.hovering = true
-        const cp = this.canvasPosition
         this.signals.hovered.dispatch(cp.x, cp.y)
       }
     }
@@ -322,7 +335,7 @@ class MouseObserver {
 
   /**
    * handle mouse up
-   * @emits {MouseSignals.clicked} when clicked
+   * @emits {MouseSignals.doubleClicked} when double clicked
    * @emits {MouseSignals.dropped} when dropped
    * @param  {Event} event - mouse event
    * @return {undefined}
@@ -334,7 +347,14 @@ class MouseObserver {
     this._setKeys(event)
     const cp = this.canvasPosition
     if (this._distance() < 4) {
-      this.signals.clicked.dispatch(cp.x, cp.y)
+      this.lastClicked = window.performance.now()
+      if (this.clickPending && this.prevClickCP.distanceTo(cp) < 4) {
+        this.signals.doubleClicked.dispatch(cp.x, cp.y)
+        this.clickPending = false
+      } else {
+        this.clickPending = true
+      }
+      this.prevClickCP.copy(cp)
     }
     // if (this._distance() > 3 || event.which === RightMouseButton) {
     //   this.signals.dropped.dispatch();

@@ -8,11 +8,12 @@ import { ActionPresets } from './mouse-actions.js'
 
 /**
  * Strings to describe mouse events (including optional keyboard modifiers).
- * Must contain an event type: "scroll", "drag", "click", "hover", "clickPick"
- * or "hoverPick". Optionally contain one or more (seperated by plus signs)
- * keyboard modifiers: "alt", "ctrl", "meta" or "shift". Can contain the mouse
- * button performing the event: "left", "middle" or "right". The type, key and
- * button parts must be seperated by dashes.
+ * Must contain an event type: "scroll", "drag", "click", "doubleClick",
+ * "hover", "clickPick" or "hoverPick". Optionally contain one or more
+ * (seperated by plus signs) keyboard modifiers: "alt", "ctrl", "meta" or
+ * "shift". Can contain the mouse button performing the event: "left",
+ * "middle" or "right". The type, key and button parts must be seperated by
+ * dashes.
  *
  * @example
  * // triggered on scroll event (no key or button)
@@ -46,6 +47,7 @@ function triggerFromString (str) {
   if (tokens.includes('scroll')) type = 'scroll'
   if (tokens.includes('drag')) type = 'drag'
   if (tokens.includes('click')) type = 'click'
+  if (tokens.includes('doubleClick')) type = 'doubleClick'
   if (tokens.includes('hover')) type = 'hover'
   if (tokens.includes('clickPick')) type = 'clickPick'
   if (tokens.includes('hoverPick')) type = 'hoverPick'
