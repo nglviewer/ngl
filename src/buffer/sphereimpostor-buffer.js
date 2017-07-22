@@ -9,7 +9,7 @@ import { Matrix4 } from '../../lib/three.es6.js'
 import '../shader/SphereImpostor.vert'
 import '../shader/SphereImpostor.frag'
 
-import QuadBuffer from './quad-buffer.js'
+import MappedQuadBuffer from './mappedquad-buffer.js'
 
 /**
  * Sphere impostor buffer.
@@ -21,7 +21,7 @@ import QuadBuffer from './quad-buffer.js'
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class SphereImpostorBuffer extends QuadBuffer {
+class SphereImpostorBuffer extends MappedQuadBuffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions

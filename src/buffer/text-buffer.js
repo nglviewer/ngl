@@ -11,7 +11,7 @@ import '../shader/SDFFont.frag'
 
 import { Browser } from '../globals.js'
 import { defaults } from '../utils.js'
-import QuadBuffer from './quad-buffer.js'
+import MappedQuadBuffer from './mappedquad-buffer.js'
 import { IgnorePicker } from '../utils/picker.js'
 
 const TextAtlasCache = {}
@@ -291,7 +291,7 @@ class TextAtlas {
  *     text: [ "Hello" ]
  * } );
  */
-class TextBuffer extends QuadBuffer {
+class TextBuffer extends MappedQuadBuffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions

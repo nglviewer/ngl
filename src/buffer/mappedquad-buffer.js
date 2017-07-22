@@ -1,5 +1,5 @@
 /**
- * @file Quad Buffer
+ * @file Mapped Quad Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
@@ -19,10 +19,10 @@ const mappingIndices = new Uint16Array([
 ])
 
 /**
- * Quad buffer. Draws screen-aligned quads. Used to render impostors.
+ * Mapped Quad buffer. Draws screen-aligned quads. Used to render impostors.
  * @interface
  */
-class QuadBuffer extends MappedBuffer {
+class MappedQuadBuffer extends MappedBuffer {
   get mapping () { return mapping }
   get mappingIndices () { return mappingIndices }
   get mappingIndicesSize () { return 6 }
@@ -31,4 +31,4 @@ class QuadBuffer extends MappedBuffer {
   get mappingItemSize () { return 2 }
 }
 
-export default QuadBuffer
+export default MappedQuadBuffer

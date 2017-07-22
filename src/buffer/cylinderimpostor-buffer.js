@@ -10,7 +10,7 @@ import '../shader/CylinderImpostor.vert'
 import '../shader/CylinderImpostor.frag'
 
 import { defaults } from '../utils.js'
-import AlignedBoxBuffer from './alignedbox-buffer.js'
+import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
 
 /**
  * Cylinder impostor buffer.
@@ -24,7 +24,7 @@ import AlignedBoxBuffer from './alignedbox-buffer.js'
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class CylinderImpostorBuffer extends AlignedBoxBuffer {
+class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
     /**
      * make cylinder impostor buffer
      * @param  {Object} data - attribute object
@@ -68,7 +68,7 @@ class CylinderImpostorBuffer extends AlignedBoxBuffer {
   }
 
   getDefines (type) {
-    var defines = AlignedBoxBuffer.prototype.getDefines.call(this, type)
+    var defines = MappedAlignedBoxBuffer.prototype.getDefines.call(this, type)
 
     if (!this.openEnded) {
       defines.CAP = 1

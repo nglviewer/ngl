@@ -10,7 +10,7 @@ import '../shader/HyperballStickImpostor.vert'
 import '../shader/HyperballStickImpostor.frag'
 
 import { defaults } from '../utils.js'
-import BoxBuffer from './box-buffer.js'
+import MappedBoxBuffer from './mappedbox-buffer.js'
 
 /**
  * Hyperball stick impostor buffer.
@@ -25,7 +25,7 @@ import BoxBuffer from './box-buffer.js'
  *     radius2: new Float32Array( [ 2 ] )
  * } );
  */
-class HyperballStickImpostorBuffer extends BoxBuffer {
+class HyperballStickImpostorBuffer extends MappedBoxBuffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position1 - from positions
