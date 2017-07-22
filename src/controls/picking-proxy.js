@@ -144,6 +144,10 @@ class PickingProxy {
   /**
    * @type {Object}
    */
+  get box () { return this._objectIfType('box') }
+  /**
+   * @type {Object}
+   */
   get cone () { return this._objectIfType('cone') }
   /**
    * @type {Object}
@@ -212,6 +216,8 @@ class PickingProxy {
       msg = 'bond: ' +
               this.bond.atom1.qualifiedName() + ' - ' + this.bond.atom2.qualifiedName() +
               ' (' + this.bond.structure.name + ')'
+    } else if (this.box) {
+      msg = 'box: ' + (this.box.name || this.pid) + ' (' + this.box.shape.name + ')'
     } else if (this.cone) {
       msg = 'cone: ' + (this.cone.name || this.pid) + ' (' + this.cone.shape.name + ')'
     } else if (this.clash) {

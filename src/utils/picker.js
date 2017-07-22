@@ -14,28 +14,28 @@ import Selection from '../selection/selection.js'
  * @interface
  */
 class Picker {
-    /**
-     * @param  {Array|TypedArray} [array] - mapping
-     */
+  /**
+   * @param  {Array|TypedArray} [array] - mapping
+   */
   constructor (array) {
     this.array = array
   }
 
-    /**
-     * Get the index for the given picking id
-     * @param  {Integer} pid - the picking id
-     * @return {Integer} the index
-     */
+  /**
+   * Get the index for the given picking id
+   * @param  {Integer} pid - the picking id
+   * @return {Integer} the index
+   */
   getIndex (pid) {
     return this.array ? this.array[ pid ] : pid
   }
 
-    /**
-     * Get object data
-     * @abstract
-     * @param  {Integer} pid - the picking id
-     * @return {Object} the object data
-     */
+  /**
+   * Get object data
+   * @abstract
+   * @param  {Integer} pid - the picking id
+   * @return {Object} the object data
+   */
   getObject (/* pid */) {
     return {}
   }
@@ -50,27 +50,27 @@ class Picker {
     return vector
   }
 
-    /**
-     * Get object position
-     * @abstract
-     * @param  {Integer} pid - the picking id
-     * @return {Vector3} the object position
-     */
+  /**
+   * Get object position
+   * @abstract
+   * @param  {Integer} pid - the picking id
+   * @return {Vector3} the object position
+   */
   _getPosition (/* pid */) {
     return new Vector3()
   }
 
-    /**
-     * Get position for the given picking id
-     * @param  {Integer} pid - the picking id
-     * @param  {Object} instance - the instance that should be applied
-     * @param  {Component} component - the component of the picked object
-     * @return {Vector3} the position
-     */
+  /**
+   * Get position for the given picking id
+   * @param  {Integer} pid - the picking id
+   * @param  {Object} instance - the instance that should be applied
+   * @param  {Component} component - the component of the picked object
+   * @return {Vector3} the position
+   */
   getPosition (pid, instance, component) {
     return this._applyTransformations(
-            this._getPosition(pid), instance, component
-        )
+      this._getPosition(pid), instance, component
+    )
   }
 }
 
@@ -79,9 +79,9 @@ class Picker {
  * @interface
  */
 class ShapePicker extends Picker {
-    /**
-     * @param  {Shape} shape - shape object
-     */
+  /**
+   * @param  {Shape} shape - shape object
+   */
   constructor (shape) {
     super()
     this.shape = shape
@@ -289,6 +289,27 @@ class EllipsoidPicker extends ShapePicker {
   }
 }
 
+class BoxPicker extends ShapePicker {
+  get type () { return 'box' }
+
+  getObject (pid) {
+    const s = this.shape
+    return {
+      shape: s,
+      position: this._getPosition(pid),
+      color: new Color().fromArray(s.boxColor, 3 * pid),
+      size: s.boxSize[ pid ],
+      heightAxis: new Vector3().fromArray(s.boxHeightAxis, 3 * pid),
+      depthAxis: new Vector3().fromArray(s.boxDepthAxis, 3 * pid),
+      name: s.boxName[ pid ]
+    }
+  }
+
+  _getPosition (pid) {
+    return new Vector3().fromArray(this.shape.boxPosition, 3 * pid)
+  }
+}
+
 class IgnorePicker extends Picker {
   get type () { return 'ignore' }
 }
@@ -407,10 +428,10 @@ class VolumePicker extends Picker {
     const dp = this.volume.position
     const idx = this.getIndex(pid)
     return new Vector3(
-            dp[ idx * 3 ],
-            dp[ idx * 3 + 1 ],
-            dp[ idx * 3 + 2 ]
-        )
+      dp[ idx * 3 ],
+      dp[ idx * 3 + 1 ],
+      dp[ idx * 3 + 2 ]
+    )
   }
 }
 
@@ -419,24 +440,25 @@ class SlicePicker extends VolumePicker {
 }
 
 export {
-    Picker,
-    ShapePicker,
-    ArrowPicker,
-    AtomPicker,
-    AxesPicker,
-    BondPicker,
-    ConePicker,
-    ContactPicker,
-    CylinderPicker,
-    ClashPicker,
-    DistancePicker,
-    EllipsoidPicker,
-    IgnorePicker,
-    MeshPicker,
-    SlicePicker,
-    SpherePicker,
-    SurfacePicker,
-    UnitcellPicker,
-    UnknownPicker,
-    VolumePicker
+  Picker,
+  ShapePicker,
+  ArrowPicker,
+  AtomPicker,
+  AxesPicker,
+  BondPicker,
+  ConePicker,
+  ContactPicker,
+  CylinderPicker,
+  ClashPicker,
+  DistancePicker,
+  EllipsoidPicker,
+  BoxPicker,
+  IgnorePicker,
+  MeshPicker,
+  SlicePicker,
+  SpherePicker,
+  SurfacePicker,
+  UnitcellPicker,
+  UnknownPicker,
+  VolumePicker
 }

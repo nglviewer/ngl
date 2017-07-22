@@ -100,6 +100,7 @@ import './representation/validation-representation.js'
 
 import BufferRepresentation from './representation/buffer-representation.js'
 import ArrowBuffer from './buffer/arrow-buffer.js'
+import BoxBuffer from './buffer/box-buffer.js'
 import ConeBuffer from './buffer/cone-buffer.js'
 import CylinderBuffer from './buffer/cylinder-buffer.js'
 import EllipsoidBuffer from './buffer/ellipsoid-buffer.js'
@@ -227,11 +228,12 @@ export {
   uniqueArray,
 
   BufferRepresentation,
-  SphereBuffer,
-  EllipsoidBuffer,
-  CylinderBuffer,
-  ConeBuffer,
   ArrowBuffer,
+  BoxBuffer,
+  ConeBuffer,
+  CylinderBuffer,
+  EllipsoidBuffer,
+  SphereBuffer,
   TextBuffer,
 
   Shape,
