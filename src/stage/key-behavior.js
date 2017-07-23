@@ -10,6 +10,7 @@ class KeyBehavior {
      */
   constructor (stage) {
     this.stage = stage
+    this.controls = stage.keyControls
     this.domElement = stage.viewer.renderer.domElement
 
     // ensure the domElement is focusable
@@ -36,9 +37,7 @@ class KeyBehavior {
    * @return {undefined}
    */
   _onKeydown (/* event */) {
-
     // console.log( "down", event.keyCode, String.fromCharCode( event.keyCode ) );
-
   }
 
   /**
@@ -47,9 +46,7 @@ class KeyBehavior {
    * @return {undefined}
    */
   _onKeyup (/* event */) {
-
     // console.log( "up", event.keyCode, String.fromCharCode( event.keyCode ) );
-
   }
 
   /**
@@ -59,18 +56,7 @@ class KeyBehavior {
    */
   _onKeypress (event) {
     // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
-
-    switch (event.keyCode) {
-      case 73: case 105:  // I i
-        this.stage.toggleSpin()
-        break
-      case 75: case 107:  // K k
-        this.stage.toggleRock()
-        break
-      case 80: case 112:  // P p
-        this.stage.animationControls.toggle()
-        break
-    }
+    this.controls.run(event.keyCode)
   }
 
   _focusDomElement () {

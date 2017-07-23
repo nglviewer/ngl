@@ -172,6 +172,7 @@ import {
   LeftMouseButton, MiddleMouseButton, RightMouseButton
 } from './constants.js'
 import MouseActions from './controls/mouse-actions.js'
+import KeyActions from './controls/key-actions.js'
 
 //
 
@@ -248,6 +249,7 @@ export {
   MiddleMouseButton,
   RightMouseButton,
   MouseActions,
+  KeyActions,
 
   Signal,
 

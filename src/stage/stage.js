@@ -21,6 +21,7 @@ import PickingControls from '../controls/picking-controls.js'
 import ViewerControls from '../controls/viewer-controls.js'
 import AnimationControls from '../controls/animation-controls.js'
 import MouseControls from '../controls/mouse-controls.js'
+import KeyControls from '../controls/key-controls.js'
 
 import PickingBehavior from './picking-behavior.js'
 import MouseBehavior from './mouse-behavior.js'
@@ -166,6 +167,10 @@ class Stage {
      * @type {MouseControls}
      */
     this.mouseControls = new MouseControls(this)
+    /**
+     * @type {KeyControls}
+     */
+    this.keyControls = new KeyControls(this)
 
     this.pickingBehavior = new PickingBehavior(this)
     this.mouseBehavior = new MouseBehavior(this)
