@@ -162,7 +162,7 @@ class MouseActions {
   }
 }
 
-const ActionPresets = {
+const MouseActionPresets = {
   default: [
     [ 'scroll', MouseActions.zoomScroll ],
     [ 'scroll-ctrl', MouseActions.clipNearScroll ],
@@ -206,5 +206,5 @@ const ActionPresets = {
 export default MouseActions
 
 export {
-  ActionPresets
+  MouseActionPresets
 }

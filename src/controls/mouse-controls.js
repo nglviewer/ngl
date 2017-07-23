@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ActionPresets } from './mouse-actions.js'
+import { MouseActionPresets } from './mouse-actions.js'
 
 /**
  * Strings to describe mouse events (including optional keyboard modifiers).
@@ -74,19 +74,27 @@ class MouseControls {
    * @param {Stage} stage - the stage object
    * @param {Object} [params] - the parameters
    * @param {String} params.preset - one of "default", "pymol", "coot"
+   * @param {String} params.disabled - flag to disable all actions
    */
   constructor (stage, params) {
     const p = params || {}
 
     this.stage = stage
     this.mouse = stage.mouseObserver
-
     this.actionList = []
+
+    /**
+     * Flag to disable all actions
+     * @type {Boolean}
+     */
+    this.disabled = p.disabled || false
 
     this.preset(p.preset || 'default')
   }
 
   run (type, ...args) {
+    if (this.disabled) return
+
     const key = this.mouse.key || 0
     const button = this.mouse.buttons || 0
 
@@ -172,7 +180,7 @@ class MouseControls {
   preset (name) {
     this.clear()
 
-    const list = ActionPresets[ name ] || []
+    const list = MouseActionPresets[ name ] || []
 
     list.forEach(action => this.add(...action))
   }
