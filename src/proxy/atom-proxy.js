@@ -16,10 +16,10 @@ import {
  * Atom proxy
  */
 class AtomProxy {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Integer} index - the index
-     */
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Integer} index - the index
+   */
   constructor (structure, index) {
     /**
      * The structure the atom belongs to.
@@ -618,6 +618,18 @@ class AtomProxy {
     this.z = v.z
 
     return this
+  }
+
+  positionAdd (v) {
+    this.x += v.x
+    this.y += v.y
+    this.z += v.z
+  }
+
+  positionSub (v) {
+    this.x -= v.x
+    this.y -= v.y
+    this.z -= v.z
   }
 
   /**
