@@ -4,11 +4,12 @@
  * @private
  */
 
-import { Vector3, Box3 } from '../../lib/three.es6.js'
+import { Box3 } from '../../lib/three.es6.js'
 
 import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
 import {
-  BoxPrimitive, CylinderPrimitive, SpherePrimitive
+  ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
+  EllipsoidPrimitive, LabelPrimitive, SpherePrimitive
 } from '../geometry/primitive.js'
 import {
     ArrowPicker, BoxPicker, ConePicker, CylinderPicker,
@@ -23,19 +24,12 @@ import MeshBuffer from '../buffer/mesh-buffer.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import TextBuffer from '../buffer/text-buffer.js'
 
-function addElement (elm, array) {
-  if (elm.toArray !== undefined) {
-    elm = elm.toArray()
-  } else if (elm.x !== undefined) {
-    elm = [ elm.x, elm.y, elm.z ]
-  } else if (elm.r !== undefined) {
-    elm = [ elm.r, elm.g, elm.b ]
-  }
-  array.push.apply(array, elm)
-}
-
-const tmpVec = new Vector3()
 const tmpBox = new Box3()
+
+const Primitives = [
+  ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
+  EllipsoidPrimitive, LabelPrimitive, SpherePrimitive
+]
 
 /**
  * Class for building custom shapes.
@@ -79,47 +73,12 @@ class Shape {
     this.bufferList = []
     this.meshCount = 0
 
-    this.spherePosition = []
-    this.sphereColor = []
-    this.sphereRadius = []
-    this.sphereName = []
-
-    this.ellipsoidPosition = []
-    this.ellipsoidColor = []
-    this.ellipsoidRadius = []
-    this.ellipsoidMajorAxis = []
-    this.ellipsoidMinorAxis = []
-    this.ellipsoidName = []
-
-    this.cylinderPosition1 = []
-    this.cylinderPosition2 = []
-    this.cylinderColor = []
-    this.cylinderRadius = []
-    this.cylinderName = []
-
-    this.conePosition1 = []
-    this.conePosition2 = []
-    this.coneColor = []
-    this.coneRadius = []
-    this.coneName = []
-
-    this.arrowPosition1 = []
-    this.arrowPosition2 = []
-    this.arrowColor = []
-    this.arrowRadius = []
-    this.arrowName = []
-
-    this.boxPosition = []
-    this.boxColor = []
-    this.boxSize = []
-    this.boxHeightAxis = []
-    this.boxDepthAxis = []
-    this.boxName = []
-
-    this.labelPosition = []
-    this.labelColor = []
-    this.labelSize = []
-    this.labelText = []
+    Primitives.forEach(p => {
+      Object.keys(p.fields).forEach(name => {
+        this[ p.getShapeKey(name) ] = []
+      })
+      this[ p.getShapeKey('name') ] = []
+    })
   }
 
   /**
@@ -212,15 +171,9 @@ class Shape {
    * @return {Shape} this object
    */
   addEllipsoid (position, color, radius, majorAxis, minorAxis, name) {
-    addElement(position, this.ellipsoidPosition)
-    addElement(color, this.ellipsoidColor)
-    this.ellipsoidRadius.push(radius)
-    addElement(majorAxis, this.ellipsoidMajorAxis)
-    addElement(minorAxis, this.ellipsoidMinorAxis)
-    this.ellipsoidName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position))
-
+    EllipsoidPrimitive.objectToShape(
+      this, { position, color, radius, majorAxis, minorAxis, name }
+    )
     return this
   }
 
@@ -256,15 +209,9 @@ class Shape {
    * @return {Shape} this object
    */
   addCone (position1, position2, color, radius, name) {
-    addElement(position1, this.conePosition1)
-    addElement(position2, this.conePosition2)
-    addElement(color, this.coneColor)
-    this.coneRadius.push(radius)
-    this.coneName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position1))
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position2))
-
+    ConePrimitive.objectToShape(
+      this, { position1, position2, color, radius, name }
+    )
     return this
   }
 
@@ -281,15 +228,9 @@ class Shape {
    * @return {Shape} this object
    */
   addArrow (position1, position2, color, radius, name) {
-    addElement(position1, this.arrowPosition1)
-    addElement(position2, this.arrowPosition2)
-    addElement(color, this.arrowColor)
-    this.arrowRadius.push(radius)
-    this.arrowName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position1))
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position2))
-
+    ArrowPrimitive.objectToShape(
+      this, { position1, position2, color, radius, name }
+    )
     return this
   }
 
@@ -325,13 +266,9 @@ class Shape {
    * @return {Shape} this object
    */
   addLabel (position, color, size, text) {
-    addElement(position, this.labelPosition)
-    addElement(color, this.labelColor)
-    this.labelSize.push(size)
-    this.labelText.push(text)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position))
-
+    LabelPrimitive.objectToShape(
+      this, { position, color, size, text }
+    )
     return this
   }
 
@@ -464,47 +401,12 @@ class Shape {
     })
     this.bufferList.length = 0
 
-    this.spherePosition.length = 0
-    this.sphereColor.length = 0
-    this.sphereRadius.length = 0
-    this.sphereName.length = 0
-
-    this.ellipsoidPosition.length = 0
-    this.ellipsoidColor.length = 0
-    this.ellipsoidRadius.length = 0
-    this.ellipsoidMajorAxis.length = 0
-    this.ellipsoidMinorAxis.length = 0
-    this.ellipsoidName.length = 0
-
-    this.cylinderPosition1.length = 0
-    this.cylinderPosition2.length = 0
-    this.cylinderColor.length = 0
-    this.cylinderRadius.length = 0
-    this.cylinderName.length = 0
-
-    this.conePosition1.length = 0
-    this.conePosition2.length = 0
-    this.coneColor.length = 0
-    this.coneRadius.length = 0
-    this.coneName.length = 0
-
-    this.arrowPosition1.length = 0
-    this.arrowPosition2.length = 0
-    this.arrowColor.length = 0
-    this.arrowRadius.length = 0
-    this.arrowName.length = 0
-
-    this.boxPosition.length = 0
-    this.boxColor.length = 0
-    this.boxSize.length = 0
-    this.boxHeightAxis.length = 0
-    this.boxDepthAxis.length = 0
-    this.boxName.length = 0
-
-    this.labelPosition.length = 0
-    this.labelColor.length = 0
-    this.labelSize.length = 0
-    this.labelText.length = 0
+    Primitives.forEach(p => {
+      Object.keys(p.fields).forEach(name => {
+        this[ p.getShapeKey(name) ].length = 0
+      })
+      this[ p.getShapeKey('name') ].length = 0
+    })
   }
 
   get center () {

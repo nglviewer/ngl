@@ -145,8 +145,59 @@ class CylinderPrimitive extends Primitive {
   }
 }
 
+/**
+ * Arrow geometry primitive
+ */
+class ArrowPrimitive extends CylinderPrimitive {
+  static get type () { return 'arrow' }
+}
+
+/**
+ * Cone geometry primitive
+ */
+class ConePrimitive extends CylinderPrimitive {
+  static get type () { return 'cone' }
+}
+
+/**
+ * Ellipsoid geometry primitive
+ */
+class EllipsoidPrimitive extends SpherePrimitive {
+  static get type () { return 'ellipsoid' }
+
+  static get fields () {
+    return {
+      position: 'v3',
+      color: 'c',
+      radius: 'f',
+      majorAxis: 'v3',
+      minorAxis: 'v3'
+    }
+  }
+}
+
+/**
+ * Label geometry primitive
+ */
+class LabelPrimitive extends SpherePrimitive {
+  static get type () { return 'label' }
+
+  static get fields () {
+    return {
+      position: 'v3',
+      color: 'c',
+      size: 'f',
+      text: 's'
+    }
+  }
+}
+
 export {
+  ArrowPrimitive,
   BoxPrimitive,
+  ConePrimitive,
   CylinderPrimitive,
+  EllipsoidPrimitive,
+  LabelPrimitive,
   SpherePrimitive
 }

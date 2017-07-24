@@ -4,11 +4,14 @@
  * @private
  */
 
-import { Color, Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from '../../lib/three.es6.js'
 
 import { calculateMeanVector3 } from '../math/vector-utils.js'
 import Selection from '../selection/selection.js'
-import { SpherePrimitive } from '../geometry/primitive.js'
+import {
+  ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
+  EllipsoidPrimitive, SpherePrimitive
+} from '../geometry/primitive.js'
 
 /**
  * Picker class
@@ -88,56 +91,28 @@ class ShapePicker extends Picker {
     this.shape = shape
   }
 
+  get primitive () {}
+
   get data () { return this.shape }
+  get type () { return this.primitive.type }
+
+  getObject (pid) {
+    return this.primitive.objectFromShape(this.shape, pid)
+  }
+
+  _getPosition (pid) {
+    return this.primitive.positionFromShape(this.shape, pid)
+  }
 }
 
 //
 
 class CylinderPicker extends ShapePicker {
-  get type () { return 'cylinder' }
-
-  getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      color: new Color().fromArray(s.cylinderColor, 3 * pid),
-      radius: s.cylinderRadius[ pid ],
-      position1: new Vector3().fromArray(s.cylinderPosition1, 3 * pid),
-      position2: new Vector3().fromArray(s.cylinderPosition2, 3 * pid),
-      name: s.cylinderName[ pid ]
-    }
-  }
-
-  _getPosition (pid) {
-    const s = this.shape
-    const p1 = new Vector3().fromArray(s.cylinderPosition1, 3 * pid)
-    const p2 = new Vector3().fromArray(s.cylinderPosition2, 3 * pid)
-    return p1.add(p2).multiplyScalar(0.5)
-  }
+  get primitive () { return CylinderPrimitive }
 }
 
 class ArrowPicker extends ShapePicker {
-  get type () { return 'arrow' }
-
-  getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      position: this._getPosition(pid),
-      position1: new Vector3().fromArray(s.arrowPosition1, 3 * pid),
-      position2: new Vector3().fromArray(s.arrowPosition2, 3 * pid),
-      color: new Color().fromArray(s.arrowColor, 3 * pid),
-      radius: s.arrowRadius[ pid ],
-      name: s.arrowName[ pid ]
-    }
-  }
-
-  _getPosition (pid) {
-    const s = this.shape
-    const p1 = new Vector3().fromArray(s.arrowPosition1, 3 * pid)
-    const p2 = new Vector3().fromArray(s.arrowPosition2, 3 * pid)
-    return p1.add(p2).multiplyScalar(0.5)
-  }
+  get primitive () { return ArrowPrimitive }
 }
 
 class AtomPicker extends Picker {
@@ -208,27 +183,7 @@ class ContactPicker extends BondPicker {
 }
 
 class ConePicker extends ShapePicker {
-  get type () { return 'cone' }
-
-  getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      position: this._getPosition(pid),
-      position1: new Vector3().fromArray(s.conePosition1, 3 * pid),
-      position2: new Vector3().fromArray(s.conePosition2, 3 * pid),
-      color: new Color().fromArray(s.coneColor, 3 * pid),
-      radius: s.coneRadius[ pid ],
-      name: s.coneName[ pid ]
-    }
-  }
-
-  _getPosition (pid) {
-    const s = this.shape
-    const p1 = new Vector3().fromArray(s.conePosition1, 3 * pid)
-    const p2 = new Vector3().fromArray(s.conePosition2, 3 * pid)
-    return p1.add(p2).multiplyScalar(0.5)
-  }
+  get primitive () { return ConePrimitive }
 }
 
 class ClashPicker extends Picker {
@@ -270,45 +225,11 @@ class DistancePicker extends BondPicker {
 }
 
 class EllipsoidPicker extends ShapePicker {
-  get type () { return 'ellipsoid' }
-
-  getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      position: this._getPosition(pid),
-      color: new Color().fromArray(s.ellipsoidColor, 3 * pid),
-      radius: s.ellipsoidRadius[ pid ],
-      majorAxis: new Vector3().fromArray(s.ellipsoidMajorAxis, 3 * pid),
-      minorAxis: new Vector3().fromArray(s.ellipsoidMinorAxis, 3 * pid),
-      name: s.ellipsoidName[ pid ]
-    }
-  }
-
-  _getPosition (pid) {
-    return new Vector3().fromArray(this.shape.ellipsoidPosition, 3 * pid)
-  }
+  get primitive () { return EllipsoidPrimitive }
 }
 
 class BoxPicker extends ShapePicker {
-  get type () { return 'box' }
-
-  getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      position: this._getPosition(pid),
-      color: new Color().fromArray(s.boxColor, 3 * pid),
-      size: s.boxSize[ pid ],
-      heightAxis: new Vector3().fromArray(s.boxHeightAxis, 3 * pid),
-      depthAxis: new Vector3().fromArray(s.boxDepthAxis, 3 * pid),
-      name: s.boxName[ pid ]
-    }
-  }
-
-  _getPosition (pid) {
-    return new Vector3().fromArray(this.shape.boxPosition, 3 * pid)
-  }
+  get primitive () { return BoxPrimitive }
 }
 
 class IgnorePicker extends Picker {
@@ -341,15 +262,7 @@ class MeshPicker extends ShapePicker {
 }
 
 class SpherePicker extends ShapePicker {
-  get type () { return 'sphere' }
-
-  getObject (pid) {
-    return SpherePrimitive.objectFromShape(this.shape, pid)
-  }
-
-  _getPosition (pid) {
-    return SpherePrimitive.positionFromShape(this.shape, pid)
-  }
+  get primitive () { return SpherePrimitive }
 }
 
 class SurfacePicker extends Picker {
