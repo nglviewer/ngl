@@ -42,15 +42,18 @@ class TrackballControls {
     return this.stage.transformAtom
   }
 
-  _setPanVector (x, y) {
+  _setPanVector (x, y, z) {
     let scaleFactor
     const camera = this.viewer.camera
+
+    z = -z || 0
+    z += camera.position.z
 
     if (camera.type === 'OrthographicCamera') {
       scaleFactor = 1 / camera.zoom
     } else {
       const fov = degToRad(camera.fov)
-      const unitHeight = -2.0 * camera.position.z * Math.tan(fov / 2)
+      const unitHeight = -2.0 * z * Math.tan(fov / 2)
       scaleFactor = unitHeight / this.viewer.height
     }
 
@@ -97,7 +100,12 @@ class TrackballControls {
   panAtom (x, y) {
     if (!this.atom || !this.component) return
 
-    this._setPanVector(x, y)
+    // var v = this.atom.positionToVector3()
+    // tmpPanMatrix.getInverse(this.viewer.rotationGroup.matrix)
+    // v.applyMatrix4(this.viewer.rotationGroup.matrix)
+    // v.add(this.viewer.translationGroup.position)
+
+    this._setPanVector(x, y/*, v.z*/)
     this._transformPanVector()
 
     this.atom.positionAdd(tmpPanVector)
