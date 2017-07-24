@@ -17,59 +17,59 @@ const tmpRotateQuaternion = new Quaternion()
  * Component controls
  */
 class ComponentControls {
-    /**
-     * @param  {Component} component - the component object
-     */
+  /**
+   * @param  {Component} component - the component object
+   */
   constructor (component) {
     this.component = component
     this.stage = component.stage
     this.viewer = component.stage.viewer
 
-        /**
-         * @type {{changed: Signal}}
-         */
+    /**
+     * @type {{changed: Signal}}
+     */
     this.signals = {
       changed: new Signal()
     }
   }
 
-    /**
-     * component center position
-     * @type {Vector3}
-     */
+  /**
+   * component center position
+   * @type {Vector3}
+   */
   get position () {
     return this.component.position
   }
 
-    /**
-     * component rotation
-     * @type {Quaternion}
-     */
+  /**
+   * component rotation
+   * @type {Quaternion}
+   */
   get rotation () {
     return this.component.quaternion
   }
 
-    /**
-     * Trigger render and emit changed event
-     * @emits {ComponentControls.signals.changed}
-     * @return {undefined}
-     */
+  /**
+   * Trigger render and emit changed event
+   * @emits {ComponentControls.signals.changed}
+   * @return {undefined}
+   */
   changed () {
     this.component.updateMatrix()
     this.viewer.requestRender()
     this.signals.changed.dispatch()
   }
 
-    /**
-     * spin component on axis
-     * @param  {Vector3|Array} axis - rotation axis
-     * @param  {Number} angle - amount to spin
-     * @return {undefined}
-     */
+  /**
+   * spin component on axis
+   * @param  {Vector3|Array} axis - rotation axis
+   * @param  {Number} angle - amount to spin
+   * @return {undefined}
+   */
   spin (axis, angle) {
     tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
     tmpRotateVector
-            .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
+      .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
 
     tmpRotateMatrix.extractRotation(this.component.transform)
     tmpRotateMatrix.premultiply(this.viewer.rotationGroup.matrix)
