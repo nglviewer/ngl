@@ -105,7 +105,7 @@ class TrackballControls {
     // v.applyMatrix4(this.viewer.rotationGroup.matrix)
     // v.add(this.viewer.translationGroup.position)
 
-    this._setPanVector(x, y/*, v.z*/)
+    this._setPanVector(x, y/*, v.z */)
     this._transformPanVector()
 
     this.atom.positionAdd(tmpPanVector)

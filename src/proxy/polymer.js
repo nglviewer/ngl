@@ -10,40 +10,40 @@ import { Log } from '../globals.js'
  * Polymer
  */
 class Polymer {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Integer} residueIndexStart - the index of the first residue
-     * @param {Integer} residueIndexEnd - the index of the last residue
-     */
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Integer} residueIndexStart - the index of the first residue
+   * @param {Integer} residueIndexEnd - the index of the last residue
+   */
   constructor (structure, residueIndexStart, residueIndexEnd) {
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure
-        /**
-         * @type {ChainStore}
-         */
+    /**
+     * @type {ChainStore}
+     */
     this.chainStore = structure.chainStore
-        /**
-         * @type {ResidueStore}
-         */
+    /**
+     * @type {ResidueStore}
+     */
     this.residueStore = structure.residueStore
-        /**
-         * @type {AtomStore}
-         */
+    /**
+     * @type {AtomStore}
+     */
     this.atomStore = structure.atomStore
 
-        /**
-         * @type {Integer}
-         */
+    /**
+     * @type {Integer}
+     */
     this.residueIndexStart = residueIndexStart
-        /**
-         * @type {Integer}
-         */
+    /**
+     * @type {Integer}
+     */
     this.residueIndexEnd = residueIndexEnd
-        /**
-         * @type {Integer}
-         */
+    /**
+     * @type {Integer}
+     */
     this.residueCount = residueIndexEnd - residueIndexStart + 1
 
     var rpStart = this.structure.getResidueProxy(this.residueIndexStart)
@@ -56,7 +56,7 @@ class Polymer {
 
     this.__residueProxy = this.structure.getResidueProxy()
 
-        // console.log( this.qualifiedName(), this );
+    // console.log( this.qualifiedName(), this );
   }
 
   get chainIndex () {
@@ -66,37 +66,37 @@ class Polymer {
     return this.chainStore.modelIndex[ this.chainIndex ]
   }
 
-    /**
-     * @type {String}
-     */
+  /**
+   * @type {String}
+   */
   get chainname () {
     return this.chainStore.getChainname(this.chainIndex)
   }
 
-    //
+  //
 
-    /**
-     * If first residue is from aprotein
-     * @return {Boolean} flag
-     */
+  /**
+   * If first residue is from aprotein
+   * @return {Boolean} flag
+   */
   isProtein () {
     this.__residueProxy.index = this.residueIndexStart
     return this.__residueProxy.isProtein()
   }
 
-    /**
-     * If atom is part of a coarse-grain group
-     * @return {Boolean} flag
-     */
+  /**
+   * If atom is part of a coarse-grain group
+   * @return {Boolean} flag
+   */
   isCg () {
     this.__residueProxy.index = this.residueIndexStart
     return this.__residueProxy.isCg()
   }
 
-    /**
-     * If atom is part of a nucleic molecule
-     * @return {Boolean} flag
-     */
+  /**
+   * If atom is part of a nucleic molecule
+   * @return {Boolean} flag
+   */
   isNucleic () {
     this.__residueProxy.index = this.residueIndexStart
     return this.__residueProxy.isNucleic()
@@ -113,7 +113,7 @@ class Polymer {
   }
 
   getAtomIndexByType (index, type) {
-        // TODO pre-calculate, add to residueStore???
+    // TODO pre-calculate, add to residueStore???
 
     if (this.isCyclic) {
       if (index === -1) {
@@ -124,7 +124,7 @@ class Polymer {
     } else {
       if (index === -1 && !this.isPrevConnected) index += 1
       if (index === this.residueCount && !this.isNextNextConnected) index -= 1
-            // if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
+      // if( index === this.residueCount - 1 && !this.isNextConnected ) index -= 1;
     }
 
     var rp = this.__residueProxy
@@ -146,24 +146,24 @@ class Polymer {
         aIndex = ap ? ap.index : undefined
     }
 
-        // if( !ap ){
-        //     console.log( this, type, rp.residueType )
-        //     // console.log( rp.qualifiedName(), rp.index, index, this.residueCount - 1 )
-        //     // rp.index = this.residueIndexStart;
-        //     // console.log( rp.qualifiedName(), this.residueIndexStart )
-        //     // rp.index = this.residueIndexEnd;
-        //     // console.log( rp.qualifiedName(), this.residueIndexEnd )
-        // }
+    // if( !ap ){
+    //     console.log( this, type, rp.residueType )
+    //     // console.log( rp.qualifiedName(), rp.index, index, this.residueCount - 1 )
+    //     // rp.index = this.residueIndexStart;
+    //     // console.log( rp.qualifiedName(), this.residueIndexStart )
+    //     // rp.index = this.residueIndexEnd;
+    //     // console.log( rp.qualifiedName(), this.residueIndexEnd )
+    // }
 
     return aIndex
   }
 
-    /**
-     * Atom iterator
-     * @param  {function(atom: AtomProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Atom iterator
+   * @param  {function(atom: AtomProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachAtom (callback, selection) {
     this.eachResidue(function (rp) {
       rp.eachAtom(callback, selection)
@@ -190,7 +190,7 @@ class Polymer {
   }
 
   eachAtomN2 (n, callback, type) {
-        // console.log(this.residueOffset,this.residueCount)
+    // console.log(this.residueOffset,this.residueCount)
 
     var offset = this.atomOffset
     var count = this.atomCount
@@ -201,7 +201,7 @@ class Polymer {
     for (var i = 0; i < n; ++i) {
       array[ i ] = this.structure.getAtomProxy()
     }
-        // console.log( array, offset, end, count )
+    // console.log( array, offset, end, count )
 
     let atomSet = this.structure.atomSetCache[ '__' + type ]
     if (atomSet === undefined) {
@@ -228,11 +228,11 @@ class Polymer {
     })
   }
 
-    /**
-     * Residue iterator
-     * @param  {function(residue: ResidueProxy)} callback - the callback
-     * @return {undefined}
-     */
+  /**
+   * Residue iterator
+   * @param  {function(residue: ResidueProxy)} callback - the callback
+   * @return {undefined}
+   */
   eachResidue (callback) {
     var rp = this.structure.getResidueProxy()
     var n = this.residueCount

@@ -8,30 +8,30 @@
  * Model proxy
  */
 class ModelProxy {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Integer} index - the index
-     */
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Integer} index - the index
+   */
   constructor (structure, index) {
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure
-        /**
-         * @type {ModelStore}
-         */
+    /**
+     * @type {ModelStore}
+     */
     this.modelStore = structure.modelStore
-        /**
-         * @type {ChainStore}
-         */
+    /**
+     * @type {ChainStore}
+     */
     this.chainStore = structure.chainStore
-        /**
-         * @type {ResidueStore}
-         */
+    /**
+     * @type {ResidueStore}
+     */
     this.residueStore = structure.residueStore
-        /**
-         * @type {Number}
-         */
+    /**
+     * @type {Number}
+     */
     this.index = index
   }
 
@@ -61,21 +61,21 @@ class ModelProxy {
   }
   get residueEnd () {
     return (
-            this.chainStore.residueOffset[ this.chainEnd ] +
-            this.chainStore.residueCount[ this.chainEnd ] - 1
+      this.chainStore.residueOffset[ this.chainEnd ] +
+      this.chainStore.residueCount[ this.chainEnd ] - 1
     )
   }
   get atomEnd () {
     return (
-            this.residueStore.atomOffset[ this.residueEnd ] +
-            this.residueStore.atomCount[ this.residueEnd ] - 1
+      this.residueStore.atomOffset[ this.residueEnd ] +
+      this.residueStore.atomCount[ this.residueEnd ] - 1
     )
   }
 
-    /**
-     * Residue count
-     * @type {Integer}
-     */
+  /**
+   * Residue count
+   * @type {Integer}
+   */
   get residueCount () {
     if (this.chainCount === 0) {
       return 0
@@ -84,10 +84,10 @@ class ModelProxy {
     }
   }
 
-    /**
-     * Atom count
-     * @type {Integer}
-     */
+  /**
+   * Atom count
+   * @type {Integer}
+   */
   get atomCount () {
     if (this.residueCount === 0) {
       return 0
@@ -96,38 +96,38 @@ class ModelProxy {
     }
   }
 
-    //
+  //
 
-    /**
-     * Atom iterator
-     * @param  {function(atom: AtomProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Atom iterator
+   * @param  {function(atom: AtomProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachAtom (callback, selection) {
     this.eachChain(function (cp) {
       cp.eachAtom(callback, selection)
     }, selection)
   }
 
-    /**
-     * Residue iterator
-     * @param  {function(residue: ResidueProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Residue iterator
+   * @param  {function(residue: ResidueProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachResidue (callback, selection) {
     this.eachChain(function (cp) {
       cp.eachResidue(callback, selection)
     }, selection)
   }
 
-    /**
-     * Polymer iterator
-     * @param  {function(polymer: Polymer)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Polymer iterator
+   * @param  {function(polymer: Polymer)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachPolymer (callback, selection) {
     if (selection && selection.chainOnlyTest) {
       var chainOnlyTest = selection.chainOnlyTest
@@ -144,12 +144,12 @@ class ModelProxy {
     }
   }
 
-    /**
-     * Chain iterator
-     * @param  {function(chain: ChainProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Chain iterator
+   * @param  {function(chain: ChainProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachChain (callback, selection) {
     var i
     var count = this.chainCount
@@ -180,17 +180,17 @@ class ModelProxy {
     }
   }
 
-    //
+  //
 
   qualifiedName () {
     var name = '/' + this.index
     return name
   }
 
-    /**
-     * Clone object
-     * @return {ModelProxy} cloned model
-     */
+  /**
+   * Clone object
+   * @return {ModelProxy} cloned model
+   */
   clone () {
     return new this.constructor(this.structure, this.index)
   }

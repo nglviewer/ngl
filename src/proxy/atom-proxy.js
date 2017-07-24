@@ -620,16 +620,30 @@ class AtomProxy {
     return this
   }
 
+  /**
+   * Add vector to atom position
+   * @param  {Vector3} v - input vector
+   * @return {AtomProxy} this object
+   */
   positionAdd (v) {
     this.x += v.x
     this.y += v.y
     this.z += v.z
+
+    return this
   }
 
+  /**
+   * Subtract vector from atom position
+   * @param  {Vector3} v - input vector
+   * @return {AtomProxy} this object
+   */
   positionSub (v) {
     this.x -= v.x
     this.y -= v.y
     this.z -= v.z
+
+    return this
   }
 
   /**

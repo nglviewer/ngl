@@ -11,40 +11,40 @@ import Polymer from './polymer.js'
  * Chain proxy
  */
 class ChainProxy {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Integer} index - the index
-     */
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Integer} index - the index
+   */
   constructor (structure, index) {
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure
-        /**
-         * @type {ChainStore}
-         */
+    /**
+     * @type {ChainStore}
+     */
     this.chainStore = structure.chainStore
-        /**
-         * @type {ResidueStore}
-         */
+    /**
+     * @type {ResidueStore}
+     */
     this.residueStore = structure.residueStore
-        /**
-         * @type {Integer}
-         */
+    /**
+     * @type {Integer}
+     */
     this.index = index
   }
 
-    /**
-     * Entity
-     * @type {Entity}
-     */
+  /**
+   * Entity
+   * @type {Entity}
+   */
   get entity () {
     return this.structure.entityList[ this.entityIndex ]
   }
-    /**
-     * Model
-     * @type {ModelProxy}
-     */
+  /**
+   * Model
+   * @type {ModelProxy}
+   */
   get model () {
     return this.structure.getModelProxy(this.modelIndex)
   }
@@ -70,10 +70,10 @@ class ChainProxy {
     this.chainStore.residueOffset[ this.index ] = value
   }
 
-    /**
-     * Residue count
-     * @type {Integer}
-     */
+  /**
+   * Residue count
+   * @type {Integer}
+   */
   get residueCount () {
     return this.chainStore.residueCount[ this.index ]
   }
@@ -90,14 +90,14 @@ class ChainProxy {
   }
   get atomEnd () {
     return (
-            this.residueStore.atomOffset[ this.residueEnd ] +
-            this.residueStore.atomCount[ this.residueEnd ] - 1
+      this.residueStore.atomOffset[ this.residueEnd ] +
+      this.residueStore.atomCount[ this.residueEnd ] - 1
     )
   }
-    /**
-     * Atom count
-     * @type {Integer}
-     */
+  /**
+   * Atom count
+   * @type {Integer}
+   */
   get atomCount () {
     if (this.residueCount === 0) {
       return 0
@@ -106,12 +106,12 @@ class ChainProxy {
     }
   }
 
-    //
+  //
 
-    /**
-     * Chain name
-     * @type {String}
-     */
+  /**
+   * Chain name
+   * @type {String}
+   */
   get chainname () {
     return this.chainStore.getChainname(this.index)
   }
@@ -119,10 +119,10 @@ class ChainProxy {
     this.chainStore.setChainname(this.index, value)
   }
 
-    /**
-     * Chain id
-     * @type {String}
-     */
+  /**
+   * Chain id
+   * @type {String}
+   */
   get chainid () {
     return this.chainStore.getChainid(this.index)
   }
@@ -130,26 +130,26 @@ class ChainProxy {
     this.chainStore.setChainid(this.index, value)
   }
 
-    //
+  //
 
-    /**
-     * Atom iterator
-     * @param  {function(atom: AtomProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Atom iterator
+   * @param  {function(atom: AtomProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachAtom (callback, selection) {
     this.eachResidue(function (rp) {
       rp.eachAtom(callback, selection)
     }, selection)
   }
 
-    /**
-     * Residue iterator
-     * @param  {function(residue: ResidueProxy)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Residue iterator
+   * @param  {function(residue: ResidueProxy)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachResidue (callback, selection) {
     var i
     var count = this.residueCount
@@ -180,12 +180,12 @@ class ChainProxy {
     }
   }
 
-    /**
-     * Multi-residue iterator
-     * @param {Integer} n - window size
-     * @param  {function(residueList: ResidueProxy[])} callback - the callback
-     * @return {undefined}
-     */
+  /**
+   * Multi-residue iterator
+   * @param {Integer} n - window size
+   * @param  {function(residueList: ResidueProxy[])} callback - the callback
+   * @return {undefined}
+   */
   eachResidueN (n, callback) {
     var i
     var count = this.residueCount
@@ -207,12 +207,12 @@ class ChainProxy {
     }
   }
 
-    /**
-     * Polymer iterator
-     * @param  {function(polymer: Polymer)} callback - the callback
-     * @param  {Selection} [selection] - the selection
-     * @return {undefined}
-     */
+  /**
+   * Polymer iterator
+   * @param  {function(polymer: Polymer)} callback - the callback
+   * @param  {Selection} [selection] - the selection
+   * @return {undefined}
+   */
   eachPolymer (callback, selection) {
     var rStartIndex, rNextIndex
     var test = selection ? selection.residueOnlyTest : undefined
@@ -249,7 +249,7 @@ class ChainProxy {
       } else {
         if (bbType1 !== UnknownBackboneType) {
           if (rp1.index - rStartIndex > 1) {
-                        // console.log("FOO1",rStartIndex, rp1.index)
+            // console.log("FOO1",rStartIndex, rp1.index)
             callback(new Polymer(structure, rStartIndex, rp1.index))
           }
         }
@@ -262,7 +262,7 @@ class ChainProxy {
                 (test && (!test(rp1) || !test(rp2)))
             ) {
         if (rp1.index - rStartIndex > 1) {
-                    // console.log("FOO2",rStartIndex, rp1.index)
+          // console.log("FOO2",rStartIndex, rp1.index)
           callback(new Polymer(structure, rStartIndex, rp1.index))
         }
         rStartIndex = rNextIndex
@@ -271,7 +271,7 @@ class ChainProxy {
 
     if (rNextIndex - rStartIndex > 1) {
       if (this.structure.getResidueProxy(rStartIndex).backboneStartType) {
-                // console.log("FOO3",rStartIndex, rNextIndex)
+        // console.log("FOO3",rStartIndex, rNextIndex)
         callback(new Polymer(structure, rStartIndex, rNextIndex))
       }
     }
@@ -284,10 +284,10 @@ class ChainProxy {
     return name
   }
 
-    /**
-     * Clone object
-     * @return {ChainProxy} cloned chain
-     */
+  /**
+   * Clone object
+   * @return {ChainProxy} cloned chain
+   */
   clone () {
     return new this.constructor(this.structure, this.index)
   }

@@ -10,22 +10,22 @@ import { Vector3 } from '../../lib/three.es6.js'
  * Bond proxy
  */
 class BondProxy {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Integer} index - the index
-     */
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Integer} index - the index
+   */
   constructor (structure, index) {
-        /**
-         * @type {Structure}
-         */
+    /**
+     * @type {Structure}
+     */
     this.structure = structure
-        /**
-         * @type {BondStore}
-         */
+    /**
+     * @type {BondStore}
+     */
     this.bondStore = structure.bondStore
-        /**
-         * @type {Integer}
-         */
+    /**
+     * @type {Integer}
+     */
     this.index = index
 
     this._v12 = new Vector3()
@@ -35,23 +35,23 @@ class BondProxy {
     this._ap3 = this.structure.getAtomProxy()
   }
 
-    /**
-     * @type {AtomProxy}
-     */
+  /**
+   * @type {AtomProxy}
+   */
   get atom1 () {
     return this.structure.getAtomProxy(this.atomIndex1)
   }
 
-    /**
-     * @type {AtomProxy}
-     */
+  /**
+   * @type {AtomProxy}
+   */
   get atom2 () {
     return this.structure.getAtomProxy(this.atomIndex2)
   }
 
-    /**
-     * @type {Integer}
-     */
+  /**
+   * @type {Integer}
+   */
   get atomIndex1 () {
     return this.bondStore.atomIndex1[ this.index ]
   }
@@ -59,9 +59,9 @@ class BondProxy {
     this.bondStore.atomIndex1[ this.index ] = value
   }
 
-    /**
-     * @type {Integer}
-     */
+  /**
+   * @type {Integer}
+   */
   get atomIndex2 () {
     return this.bondStore.atomIndex2[ this.index ]
   }
@@ -69,9 +69,9 @@ class BondProxy {
     this.bondStore.atomIndex2[ this.index ] = value
   }
 
-    /**
-     * @type {Integer}
-     */
+  /**
+   * @type {Integer}
+   */
   get bondOrder () {
     return this.bondStore.bondOrder[ this.index ]
   }
@@ -79,10 +79,10 @@ class BondProxy {
     this.bondStore.bondOrder[ this.index ] = value
   }
 
-    /**
-     * Get reference atom index for the bond
-     * @return {Integer|undefined} atom index, or `undefined` if unavailable
-     */
+  /**
+   * Get reference atom index for the bond
+   * @return {Integer|undefined} atom index, or `undefined` if unavailable
+   */
   getReferenceAtomIndex () {
     var ap1 = this._ap1
     var ap2 = this._ap2
@@ -102,11 +102,11 @@ class BondProxy {
     }
   }
 
-    /**
-     * calculate shift direction for displaying double/triple bonds
-     * @param  {Vector3} [v] pre-allocated output vector
-     * @return {Vector3} the shift direction vector
-     */
+  /**
+   * calculate shift direction for displaying double/triple bonds
+   * @param  {Vector3} [v] pre-allocated output vector
+   * @return {Vector3} the shift direction vector
+   */
   calculateShiftDir (v) {
     if (!v) v = new Vector3()
 
@@ -129,7 +129,7 @@ class BondProxy {
     }
     v13.normalize()
 
-        // make sure v13 and v12 are not colinear
+    // make sure v13 and v12 are not colinear
     var dp = v12.dot(v13)
     if (1 - Math.abs(dp) < 1e-5) {
       v13.set(1, 0, 0)
@@ -147,10 +147,10 @@ class BondProxy {
     return this.atomIndex1 + '=' + this.atomIndex2
   }
 
-    /**
-     * Clone object
-     * @return {BondProxy} cloned bond
-     */
+  /**
+   * Clone object
+   * @return {BondProxy} cloned bond
+   */
   clone () {
     return new this.constructor(this.structure, this.index)
   }
