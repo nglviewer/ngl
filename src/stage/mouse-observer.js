@@ -87,8 +87,10 @@ class MouseObserver {
   /**
    * @param  {Element} domElement - the dom element to observe mouse events in
    * @param  {Object} params - parameters object
-   * @param  {Integer} params.hoverTimeout - timeout until the {@link MouseSignals.hovered}
+   * @param  {Integer} params.hoverTimeout - timeout in ms until the {@link MouseSignals.hovered}
    *                                         signal is fired, set to -1 to ignore hovering
+   * @param  {Boolean} params.handleScroll - whether or not to handle scroll events
+   * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
    */
   constructor (domElement, params) {
     /**
@@ -109,6 +111,7 @@ class MouseObserver {
 
     this.hoverTimeout = defaults(p.hoverTimeout, 50)
     this.handleScroll = defaults(p.handleScroll, true)
+    this.doubleClickSpeed = defaults(p.doubleClickSpeed, 200)
 
     this.domElement = domElement
 
@@ -240,7 +243,7 @@ class MouseObserver {
   _listen () {
     const now = window.performance.now()
     const cp = this.canvasPosition
-    if (this.clickPending && now - this.lastClicked > 200) {
+    if (this.clickPending && now - this.lastClicked > this.doubleClickSpeed) {
       this.signals.clicked.dispatch(cp.x, cp.y)
       this.clickPending = false
     }
