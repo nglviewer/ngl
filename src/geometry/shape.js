@@ -8,6 +8,9 @@ import { Vector3, Box3 } from '../../lib/three.es6.js'
 
 import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
 import {
+  BoxPrimitive, CylinderPrimitive, SpherePrimitive
+} from '../geometry/primitive.js'
+import {
     ArrowPicker, BoxPicker, ConePicker, CylinderPicker,
     EllipsoidPicker, MeshPicker, SpherePicker
 } from '../utils/picker.js'
@@ -189,13 +192,9 @@ class Shape {
    * @return {Shape} this object
    */
   addSphere (position, color, radius, name) {
-    addElement(position, this.spherePosition)
-    addElement(color, this.sphereColor)
-    this.sphereRadius.push(radius)
-    this.sphereName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position))
-
+    SpherePrimitive.objectToShape(
+      this, { position, color, radius, name }
+    )
     return this
   }
 
@@ -238,15 +237,9 @@ class Shape {
    * @return {Shape} this object
    */
   addCylinder (position1, position2, color, radius, name) {
-    addElement(position1, this.cylinderPosition1)
-    addElement(position2, this.cylinderPosition2)
-    addElement(color, this.cylinderColor)
-    this.cylinderRadius.push(radius)
-    this.cylinderName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position1))
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position2))
-
+    CylinderPrimitive.objectToShape(
+      this, { position1, position2, color, radius, name }
+    )
     return this
   }
 
@@ -314,15 +307,9 @@ class Shape {
    * @return {Shape} this object
    */
   addBox (position, color, size, heightAxis, depthAxis, name) {
-    addElement(position, this.boxPosition)
-    addElement(color, this.boxColor)
-    this.boxSize.push(size)
-    addElement(heightAxis, this.boxHeightAxis)
-    addElement(depthAxis, this.boxDepthAxis)
-    this.boxName.push(name)
-
-    this.boundingBox.expandByPoint(tmpVec.fromArray(position))
-
+    BoxPrimitive.objectToShape(
+      this, { position, color, size, heightAxis, depthAxis, name }
+    )
     return this
   }
 

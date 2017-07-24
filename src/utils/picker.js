@@ -8,6 +8,7 @@ import { Color, Vector3 } from '../../lib/three.es6.js'
 
 import { calculateMeanVector3 } from '../math/vector-utils.js'
 import Selection from '../selection/selection.js'
+import { SpherePrimitive } from '../geometry/primitive.js'
 
 /**
  * Picker class
@@ -343,18 +344,11 @@ class SpherePicker extends ShapePicker {
   get type () { return 'sphere' }
 
   getObject (pid) {
-    const s = this.shape
-    return {
-      shape: s,
-      position: this._getPosition(pid),
-      color: new Color().fromArray(s.sphereColor, 3 * pid),
-      radius: s.sphereRadius[ pid ],
-      name: s.sphereName[ pid ]
-    }
+    return SpherePrimitive.objectFromShape(this.shape, pid)
   }
 
   _getPosition (pid) {
-    return new Vector3().fromArray(this.shape.spherePosition, 3 * pid)
+    return SpherePrimitive.positionFromShape(this.shape, pid)
   }
 }
 
