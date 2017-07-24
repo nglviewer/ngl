@@ -119,6 +119,17 @@ class MouseActions {
   }
 
   /**
+   * Pan picked atom based on mouse coordinate changes
+   * @param {Stage} stage - the stage
+   * @param {Number} dx - amount to pan in x direction
+   * @param {Number} dy - amount to pan in y direction
+   * @return {undefined}
+   */
+  static panAtomDrag (stage, dx, dy) {
+    stage.trackballControls.panAtom(dx, dy)
+  }
+
+  /**
    * Rotate picked component based on mouse coordinate changes
    * @param {Stage} stage - the stage
    * @param {Number} dx - amount to rotate in x direction

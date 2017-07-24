@@ -38,6 +38,10 @@ class TrackballControls {
     return this.stage.transformComponent
   }
 
+  get atom () {
+    return this.stage.transformAtom
+  }
+
   _setPanVector (x, y) {
     let scaleFactor
     const camera = this.viewer.camera
@@ -61,6 +65,13 @@ class TrackballControls {
     ]
   }
 
+  _transformPanVector () {
+    tmpPanMatrix.extractRotation(this.component.transform)
+    tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
+    tmpPanMatrix.getInverse(tmpPanMatrix)
+    tmpPanVector.applyMatrix4(tmpPanMatrix)
+  }
+
   zoom (delta) {
     this.controls.zoom(this.zoomSpeed * delta * 0.02)
   }
@@ -77,13 +88,20 @@ class TrackballControls {
     if (!this.component) return
 
     this._setPanVector(x, y)
+    this._transformPanVector()
 
-    tmpPanMatrix.extractRotation(this.component.transform)
-    tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
-    tmpPanMatrix.getInverse(tmpPanMatrix)
-    tmpPanVector.applyMatrix4(tmpPanMatrix)
     this.component.position.add(tmpPanVector)
     this.component.updateMatrix()
+  }
+
+  panAtom (x, y) {
+    if (!this.atom || !this.component) return
+
+    this._setPanVector(x, y)
+    this._transformPanVector()
+
+    this.atom.positionAdd(tmpPanVector)
+    this.component.updateRepresentations({ 'position': true })
   }
 
   rotate (x, y) {

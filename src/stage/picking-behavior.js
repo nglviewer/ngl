@@ -24,6 +24,7 @@ class PickingBehavior {
     const pickingProxy = this.stage.pickingControls.pick(x, y)
     if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
       this.stage.transformComponent = pickingProxy.component
+      this.stage.transformAtom = pickingProxy.atom
     }
     this.stage.signals.hovered.dispatch(pickingProxy)
     this.controls.run('hoverPick', pickingProxy)
