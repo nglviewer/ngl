@@ -16,6 +16,7 @@ const tmpRotateVector = new Vector3()
 const tmpRotateQuaternion = new Quaternion()
 const tmpPanMatrix = new Matrix4()
 const tmpPanVector = new Vector3()
+const tmpAtomVector = new Vector3()
 
 /**
  * Trackball controls
@@ -100,12 +101,11 @@ class TrackballControls {
   panAtom (x, y) {
     if (!this.atom || !this.component) return
 
-    // var v = this.atom.positionToVector3()
-    // tmpPanMatrix.getInverse(this.viewer.rotationGroup.matrix)
-    // v.applyMatrix4(this.viewer.rotationGroup.matrix)
-    // v.add(this.viewer.translationGroup.position)
+    this.atom.positionToVector3(tmpAtomVector)
+    tmpAtomVector.add(this.viewer.translationGroup.position)
+    tmpAtomVector.applyMatrix4(this.viewer.rotationGroup.matrix)
 
-    this._setPanVector(x, y/*, v.z */)
+    this._setPanVector(x, y, tmpAtomVector.z)
     this._transformPanVector()
 
     this.atom.positionAdd(tmpPanVector)
