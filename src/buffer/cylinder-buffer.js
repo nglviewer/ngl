@@ -24,18 +24,22 @@ import CylinderImpostorBuffer from './cylinderimpostor-buffer.js'
  * } );
  */
 class CylinderBuffer {
-    /**
-     * @param {Object} data - buffer data
-     * @param {Float32Array} data.position1 - from positions
-     * @param {Float32Array} data.position2 - to positions
-     * @param {Float32Array} data.color - from colors
-     * @param {Float32Array} data.color2 - to colors
-     * @param {Float32Array} data.radius - radii
-     * @param {Picker} [data.picking] - picking ids
-     * @param {BufferParameters} [params] - parameters object
-     * @return {CylinderGeometryBuffer|CylinderImpostorBuffer} the buffer object
-     */
+  /**
+   * @param {Object} data - buffer data
+   * @param {Float32Array} data.position1 - from positions
+   * @param {Float32Array} data.position2 - to positions
+   * @param {Float32Array} data.color - from colors
+   * @param {Float32Array} [data.color2] - to colors
+   * @param {Float32Array} data.radius - radii
+   * @param {Picker} [data.picking] - picking ids
+   * @param {BufferParameters} [params] - parameters object
+   * @return {CylinderGeometryBuffer|CylinderImpostorBuffer} the buffer object
+   */
   constructor (data, params) {
+    if (!data.color2) {
+      data.color2 = data.color
+    }
+
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
       return new CylinderGeometryBuffer(data, params)
     } else {
