@@ -20,15 +20,15 @@ const normalMatrix = new Matrix3()
  * @interface
  */
 class GeometryBuffer extends MeshBuffer {
-    /**
-     * @param {Object} data - buffer data
-     * @param {Float32Array} data.position - positions
-     * @param {Float32Array} data.color - colors
-     * @param {Float32Array} data.radius - radii
-     * @param {Picker} [data.picking] - picking ids
-     * @param {BufferParameters} [params] - parameters object
-     * @param {BufferGeometry} geo - geometry object
-     */
+  /**
+   * @param {Object} data - buffer data
+   * @param {Float32Array} data.position - positions
+   * @param {Float32Array} data.color - colors
+   * @param {Float32Array} data.radius - radii
+   * @param {Picker} [data.picking] - picking ids
+   * @param {BufferParameters} [params] - parameters object
+   * @param {BufferGeometry} geo - geometry object
+   */
   constructor (data, params, geo) {
     const d = data || {}
     const p = params || {}
@@ -124,8 +124,8 @@ class GeometryBuffer extends MeshBuffer {
       if (position) {
         transformedGeoPosition.set(geoPosition)
         matrix.makeTranslation(
-                    position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
-                )
+          position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
+        )
         this.applyPositionTransform(matrix, i, i3)
         applyMatrix4toVector3array(matrix.elements, transformedGeoPosition)
 

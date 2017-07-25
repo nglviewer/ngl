@@ -46,17 +46,9 @@ class BoxBuffer extends GeometryBuffer {
   }
 
   setAttributes (data, initNormals) {
-    if (data.size) {
-      this._size = data.size
-    }
-
-    if (data.heightAxis) {
-      this._heightAxis = data.heightAxis
-    }
-
-    if (data.depthAxis) {
-      this._depthAxis = data.depthAxis
-    }
+    if (data.size) this._size = data.size
+    if (data.heightAxis) this._heightAxis = data.heightAxis
+    if (data.depthAxis) this._depthAxis = data.depthAxis
 
     super.setAttributes(data, initNormals)
   }
