@@ -13,7 +13,7 @@ shape.addCone([ 0, 2, 7 ], [ 0, 3, 3 ], [ 1, 1, 0 ], 1.5)
 shape.addArrow([ 1, 2, 7 ], [ 30, 3, 3 ], [ 1, 0, 1 ], 1.0)
 shape.addArrow([ 2, 2, 7 ], [ 30, -3, -3 ], [ 1, 0.5, 1 ], 1.0)
 shape.addBox([ 23, 1, 2 ], [ 0, 1, 0 ], 2, [ 0, 1, 1 ], [ 1, 0, 1 ])
-shape.addLabel([ 15, -4, 4 ], [ 0.2, 0.5, 0.8 ], 2.5, 'Hello')
+shape.addText([ 15, -4, 4 ], [ 0.2, 0.5, 0.8 ], 2.5, 'Hello')
 
 var shapeComp = stage.addComponentFromObject(shape)
 shapeComp.addRepresentation('buffer')

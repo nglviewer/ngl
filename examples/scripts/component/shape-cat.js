@@ -21,7 +21,7 @@ shape.addCylinder([ -1, -1, -1 ], [ -4.2, -2.2, -1.2 ], darkgrey, 0.1, 'Whisker'
 shape.addCylinder([ 1, -1, -1 ], [ 4.3, -0.2, -1.2 ], darkgrey, 0.1, 'Whisker')
 shape.addCylinder([ 1, -1, -1 ], [ 4.5, -1.2, -1.2 ], darkgrey, 0.1, 'Whisker')
 shape.addCylinder([ 1, -1, -1 ], [ 4.2, -2.2, -1.2 ], darkgrey, 0.1, 'Whisker')
-shape.addLabel([ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, 'Meow')
+shape.addText([ 0, 4, -1 ], [ 0.2, 0.5, 0.8 ], 2.5, 'Meow')
 
 var shapeComp = stage.addComponentFromObject(shape)
 shapeComp.addRepresentation('buffer')

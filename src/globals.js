@@ -71,6 +71,8 @@ const ParserRegistry = new _ParserRegistry()
 const ShaderRegistry = new Registry('shader')
 const DecompressorRegistry = new Registry('decompressor')
 const ComponentRegistry = new Registry('component')
+const BufferRegistry = new Registry('buffer')
+const PickerRegistry = new Registry('picker')
 
 export {
     Browser,
@@ -91,5 +93,7 @@ export {
     ParserRegistry,
     ShaderRegistry,
     DecompressorRegistry,
-    ComponentRegistry
+    ComponentRegistry,
+    BufferRegistry,
+    PickerRegistry
 }

@@ -6,6 +6,7 @@
 
 import { Matrix4, Vector3, Group } from '../../lib/three.es6.js'
 
+import { BufferRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import Buffer from './buffer.js'
 import CylinderBuffer from './cylinder-buffer.js'
@@ -195,5 +196,7 @@ class ArrowBuffer {
     this.coneBuffer.dispose()
   }
 }
+
+BufferRegistry.add('arrow', ArrowBuffer)
 
 export default ArrowBuffer

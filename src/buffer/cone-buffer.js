@@ -1,9 +1,10 @@
-    /**
+/**
  * @file Cone Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
+import { BufferRegistry } from '../globals.js'
 import ConeGeometryBuffer from './conegeometry-buffer.js'
 
 /**
@@ -33,5 +34,7 @@ class ConeBuffer {
     return new ConeGeometryBuffer(data, params)
   }
 }
+
+BufferRegistry.add('cone', ConeBuffer)
 
 export default ConeBuffer

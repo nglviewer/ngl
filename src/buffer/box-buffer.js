@@ -6,6 +6,7 @@
 
 import { BoxBufferGeometry, Vector3 } from '../../lib/three.es6.js'
 
+import { BufferRegistry } from '../globals.js'
 import GeometryBuffer from './geometry-buffer.js'
 
 const scale = new Vector3()
@@ -62,5 +63,7 @@ class BoxBuffer extends GeometryBuffer {
 
   get updateNormals () { return true }
 }
+
+BufferRegistry.add('box', BoxBuffer)
 
 export default BoxBuffer

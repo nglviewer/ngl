@@ -6,6 +6,8 @@
 
 import { Vector3, Color } from '../../lib/three.es6.js'
 
+import { BufferRegistry, PickerRegistry } from '../globals.js'
+
 function addElement (elm, array) {
   if (elm.toArray !== undefined) {
     elm = elm.toArray()
@@ -24,6 +26,9 @@ const tmpVec = new Vector3()
  * @interface
  */
 class Primitive {
+  static get Picker () { return PickerRegistry.get(this.type) }
+  static get Buffer () { return BufferRegistry.get(this.type) }
+
   static getShapeKey (name) {
     return this.type + name[0].toUpperCase() + name.substr(1)
   }
@@ -75,6 +80,36 @@ class Primitive {
     })
 
     return o
+  }
+
+  static arrayFromShape (shape, name) {
+    const data = shape[this.getShapeKey(name)]
+    const type = this.fields[name]
+
+    switch (type) {
+      case 's':
+        return data
+      default:
+        return new Float32Array(data)
+    }
+  }
+
+  static dataFromShape (shape) {
+    const data = {}
+
+    if (this.Picker) {
+      data.picking = new this.Picker(shape)
+    }
+
+    Object.keys(this.fields).forEach(name => {
+      data[name] = this.arrayFromShape(shape, name)
+    })
+
+    return data
+  }
+
+  static bufferFromShape (shape, params) {
+    return new this.Buffer(this.dataFromShape(shape), params)
   }
 }
 
@@ -177,10 +212,10 @@ class EllipsoidPrimitive extends SpherePrimitive {
 }
 
 /**
- * Label geometry primitive
+ * Text geometry primitive
  */
-class LabelPrimitive extends SpherePrimitive {
-  static get type () { return 'label' }
+class TextPrimitive extends SpherePrimitive {
+  static get type () { return 'text' }
 
   static get fields () {
     return {
@@ -198,6 +233,6 @@ export {
   ConePrimitive,
   CylinderPrimitive,
   EllipsoidPrimitive,
-  LabelPrimitive,
+  TextPrimitive,
   SpherePrimitive
 }

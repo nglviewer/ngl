@@ -6,6 +6,7 @@
 
 import { Vector3 } from '../../lib/three.es6.js'
 
+import { PickerRegistry } from '../globals.js'
 import { calculateMeanVector3 } from '../math/vector-utils.js'
 import Selection from '../selection/selection.js'
 import {
@@ -346,6 +347,13 @@ class SlicePicker extends VolumePicker {
   get type () { return 'slice' }
 }
 
+PickerRegistry.add('arrow', ArrowPicker)
+PickerRegistry.add('box', BoxPicker)
+PickerRegistry.add('cone', ConePicker)
+PickerRegistry.add('cylinder', CylinderPicker)
+PickerRegistry.add('ellipsoid', EllipsoidPicker)
+PickerRegistry.add('sphere', SpherePicker)
+
 export {
   Picker,
   ShapePicker,
@@ -353,13 +361,13 @@ export {
   AtomPicker,
   AxesPicker,
   BondPicker,
+  BoxPicker,
   ConePicker,
   ContactPicker,
   CylinderPicker,
   ClashPicker,
   DistancePicker,
   EllipsoidPicker,
-  BoxPicker,
   IgnorePicker,
   MeshPicker,
   SlicePicker,

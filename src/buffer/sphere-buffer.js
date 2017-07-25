@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ExtensionFragDepth } from '../globals.js'
+import { BufferRegistry, ExtensionFragDepth } from '../globals.js'
 import SphereGeometryBuffer from './spheregeometry-buffer.js'
 import SphereImpostorBuffer from './sphereimpostor-buffer.js'
 
@@ -39,5 +39,7 @@ class SphereBuffer {
     }
   }
 }
+
+BufferRegistry.add('sphere', SphereBuffer)
 
 export default SphereBuffer

@@ -9,26 +9,16 @@ import { Box3 } from '../../lib/three.es6.js'
 import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, LabelPrimitive, SpherePrimitive
+  EllipsoidPrimitive, TextPrimitive, SpherePrimitive
 } from '../geometry/primitive.js'
-import {
-    ArrowPicker, BoxPicker, ConePicker, CylinderPicker,
-    EllipsoidPicker, MeshPicker, SpherePicker
-} from '../utils/picker.js'
-import ArrowBuffer from '../buffer/arrow-buffer.js'
-import BoxBuffer from '../buffer/box-buffer.js'
-import ConeBuffer from '../buffer/cone-buffer.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
-import EllipsoidBuffer from '../buffer/ellipsoid-buffer.js'
+import { MeshPicker } from '../utils/picker.js'
 import MeshBuffer from '../buffer/mesh-buffer.js'
-import SphereBuffer from '../buffer/sphere-buffer.js'
-import TextBuffer from '../buffer/text-buffer.js'
 
 const tmpBox = new Box3()
 
 const Primitives = [
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, LabelPrimitive, SpherePrimitive
+  EllipsoidPrimitive, TextPrimitive, SpherePrimitive
 ]
 
 /**
@@ -73,11 +63,11 @@ class Shape {
     this.bufferList = []
     this.meshCount = 0
 
-    Primitives.forEach(p => {
-      Object.keys(p.fields).forEach(name => {
-        this[ p.getShapeKey(name) ] = []
+    Primitives.forEach(P => {
+      Object.keys(P.fields).forEach(name => {
+        this[ P.getShapeKey(name) ] = []
       })
-      this[ p.getShapeKey('name') ] = []
+      this[ P.getShapeKey('name') ] = []
     })
   }
 
@@ -255,9 +245,9 @@ class Shape {
   }
 
   /**
-   * Add a label
+   * Add text
    * @example
-   * shape.addLabel([ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello");
+   * shape.addText([ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello");
    *
    * @param {Vector3|Array} position - from position vector or array
    * @param {Color|Array} color - color object or array
@@ -265,132 +255,29 @@ class Shape {
    * @param {String} text - text value
    * @return {Shape} this object
    */
-  addLabel (position, color, size, text) {
-    LabelPrimitive.objectToShape(
+  addText (position, color, size, text) {
+    TextPrimitive.objectToShape(
       this, { position, color, size, text }
     )
     return this
   }
 
+  /**
+   * Deprecated, use `.addText`
+   */
+  addLabel (position, color, size, text) {
+    console.warn('Shape.addLabel is deprecated, use .addText instead')
+    return this.addText(position, color, size, text)
+  }
+
   getBufferList () {
     const buffers = []
 
-    if (this.spherePosition.length) {
-      const sphereBuffer = new SphereBuffer(
-        {
-          position: new Float32Array(this.spherePosition),
-          color: new Float32Array(this.sphereColor),
-          radius: new Float32Array(this.sphereRadius),
-          picking: new SpherePicker(this)
-        },
-        {
-          sphereDetail: this.sphereDetail,
-          disableImpostor: this.disableImpostor
-        }
-      )
-      buffers.push(sphereBuffer)
-    }
-
-    if (this.ellipsoidPosition.length) {
-      const ellipsoidBuffer = new EllipsoidBuffer(
-        {
-          position: new Float32Array(this.ellipsoidPosition),
-          color: new Float32Array(this.ellipsoidColor),
-          radius: new Float32Array(this.ellipsoidRadius),
-          majorAxis: new Float32Array(this.ellipsoidMajorAxis),
-          minorAxis: new Float32Array(this.ellipsoidMinorAxis),
-          picking: new EllipsoidPicker(this)
-        },
-        {
-          sphereDetail: this.sphereDetail,
-          disableImpostor: this.disableImpostor
-        }
-      )
-      buffers.push(ellipsoidBuffer)
-    }
-
-    if (this.cylinderPosition1.length) {
-      const cylinderBuffer = new CylinderBuffer(
-        {
-          position1: new Float32Array(this.cylinderPosition1),
-          position2: new Float32Array(this.cylinderPosition2),
-          color: new Float32Array(this.cylinderColor),
-          color2: new Float32Array(this.cylinderColor),
-          radius: new Float32Array(this.cylinderRadius),
-          picking: new CylinderPicker(this)
-        },
-        {
-          radialSegments: this.radialSegments,
-          disableImpostor: this.disableImpostor,
-          openEnded: this.openEnded
-        }
-      )
-      buffers.push(cylinderBuffer)
-    }
-
-    if (this.conePosition1.length) {
-      const coneBuffer = new ConeBuffer(
-        {
-          position1: new Float32Array(this.conePosition1),
-          position2: new Float32Array(this.conePosition2),
-          color: new Float32Array(this.coneColor),
-          radius: new Float32Array(this.coneRadius),
-          picking: new ConePicker(this)
-        },
-        {
-          radialSegments: this.radialSegments,
-          disableImpostor: this.disableImpostor,
-          openEnded: this.openEnded
-        }
-      )
-      buffers.push(coneBuffer)
-    }
-
-    if (this.arrowPosition1.length) {
-      const arrowBuffer = new ArrowBuffer(
-        {
-          position1: new Float32Array(this.arrowPosition1),
-          position2: new Float32Array(this.arrowPosition2),
-          color: new Float32Array(this.arrowColor),
-          radius: new Float32Array(this.arrowRadius),
-          picking: new ArrowPicker(this)
-        },
-        {
-          aspectRatio: this.aspectRatio,
-          radialSegments: this.radialSegments,
-          disableImpostor: this.disableImpostor,
-          openEnded: this.openEnded
-        }
-      )
-      buffers.push(arrowBuffer)
-    }
-
-    if (this.boxPosition.length) {
-      const boxBuffer = new BoxBuffer(
-        {
-          position: new Float32Array(this.boxPosition),
-          color: new Float32Array(this.boxColor),
-          size: new Float32Array(this.boxSize),
-          heightAxis: new Float32Array(this.boxHeightAxis),
-          depthAxis: new Float32Array(this.boxDepthAxis),
-          picking: new BoxPicker(this)
-        }
-      )
-      buffers.push(boxBuffer)
-    }
-
-    if (this.labelPosition.length) {
-      const labelBuffer = new TextBuffer(
-        {
-          position: new Float32Array(this.labelPosition),
-          color: new Float32Array(this.labelColor),
-          size: new Float32Array(this.labelSize),
-          text: this.labelText
-        },
-        this.labelParams
-      )
-      buffers.push(labelBuffer)
-    }
+    Primitives.forEach(P => {
+      if (this[ P.getShapeKey('color') ].length) {
+        buffers.push(P.bufferFromShape(this))
+      }
+    })
 
     return this.bufferList.concat(buffers)
   }
@@ -401,11 +288,11 @@ class Shape {
     })
     this.bufferList.length = 0
 
-    Primitives.forEach(p => {
-      Object.keys(p.fields).forEach(name => {
-        this[ p.getShapeKey(name) ].length = 0
+    Primitives.forEach(P => {
+      Object.keys(P.fields).forEach(name => {
+        this[ P.getShapeKey(name) ].length = 0
       })
-      this[ p.getShapeKey('name') ].length = 0
+      this[ P.getShapeKey('name') ].length = 0
     })
   }
 

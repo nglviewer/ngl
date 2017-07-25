@@ -4,6 +4,7 @@
  * @private
  */
 
+import { BufferRegistry } from '../globals.js'
 import EllipsoidGeometryBuffer from './ellipsoidgeometry-buffer.js'
 
 /**
@@ -33,5 +34,7 @@ class EllipsoidBuffer {
     return new EllipsoidGeometryBuffer(data, params)
   }
 }
+
+BufferRegistry.add('ellipsoid', EllipsoidBuffer)
 
 export default EllipsoidBuffer
