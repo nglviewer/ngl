@@ -246,6 +246,9 @@ class MouseObserver {
     if (this.clickPending && now - this.lastClicked > this.doubleClickSpeed) {
       this.signals.clicked.dispatch(cp.x, cp.y)
       this.clickPending = false
+      this.which = undefined
+      this.buttons = undefined
+      this.pressed = undefined
     }
     if (now - this.lastMoved > this.hoverTimeout) {
       this.moving = false
@@ -354,17 +357,21 @@ class MouseObserver {
       if (this.clickPending && this.prevClickCP.distanceTo(cp) < 4) {
         this.signals.doubleClicked.dispatch(cp.x, cp.y)
         this.clickPending = false
+        this.which = undefined
+        this.buttons = undefined
+        this.pressed = undefined
       } else {
         this.clickPending = true
       }
       this.prevClickCP.copy(cp)
+    } else {
+      this.which = undefined
+      this.buttons = undefined
+      this.pressed = undefined
     }
     // if (this._distance() > 3 || event.which === RightMouseButton) {
     //   this.signals.dropped.dispatch();
     // }
-    this.which = undefined
-    this.buttons = undefined
-    this.pressed = undefined
   }
 
   _onContextmenu (event) {
