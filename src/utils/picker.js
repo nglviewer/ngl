@@ -11,7 +11,8 @@ import { calculateMeanVector3 } from '../math/vector-utils.js'
 import Selection from '../selection/selection.js'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, SpherePrimitive
+  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
+  TetrahedronPrimitive, TorusPrimitive
 } from '../geometry/primitive.js'
 
 /**
@@ -229,6 +230,10 @@ class EllipsoidPicker extends ShapePicker {
   get primitive () { return EllipsoidPrimitive }
 }
 
+class OctahedronPicker extends ShapePicker {
+  get primitive () { return OctahedronPrimitive }
+}
+
 class BoxPicker extends ShapePicker {
   get primitive () { return BoxPrimitive }
 }
@@ -285,6 +290,14 @@ class SurfacePicker extends Picker {
   _getPosition (/* pid */) {
     return this.surface.center.clone()
   }
+}
+
+class TetrahedronPicker extends ShapePicker {
+  get primitive () { return TetrahedronPrimitive }
+}
+
+class TorusPicker extends ShapePicker {
+  get primitive () { return TorusPrimitive }
 }
 
 class UnitcellPicker extends Picker {
@@ -352,7 +365,10 @@ PickerRegistry.add('box', BoxPicker)
 PickerRegistry.add('cone', ConePicker)
 PickerRegistry.add('cylinder', CylinderPicker)
 PickerRegistry.add('ellipsoid', EllipsoidPicker)
+PickerRegistry.add('octahedron', OctahedronPicker)
 PickerRegistry.add('sphere', SpherePicker)
+PickerRegistry.add('tetrahedron', TetrahedronPicker)
+PickerRegistry.add('torus', TorusPicker)
 
 export {
   Picker,
@@ -369,10 +385,13 @@ export {
   DistancePicker,
   EllipsoidPicker,
   IgnorePicker,
+  OctahedronPicker,
   MeshPicker,
   SlicePicker,
   SpherePicker,
   SurfacePicker,
+  TetrahedronPicker,
+  TorusPicker,
   UnitcellPicker,
   UnknownPicker,
   VolumePicker

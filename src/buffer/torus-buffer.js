@@ -1,11 +1,12 @@
 /**
- * @file Ellipsoid Geometry Buffer
+ * @file Tetrahedron Geometry Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
-import { IcosahedronBufferGeometry, Vector3 } from '../../lib/three.es6.js'
+import { TorusBufferGeometry, Vector3 } from '../../lib/three.es6.js'
 
+import { BufferRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import GeometryBuffer from './geometry-buffer.js'
 
@@ -15,10 +16,10 @@ const up = new Vector3()
 const eye = new Vector3(0, 0, 0)
 
 /**
- * Ellipsoid geometry buffer. Draws ellipsoids.
+ * Torus geometry buffer. Draws torii.
  *
  * @example
- * var ellipsoidGeometryBuffer = new EllipsoidGeometryBuffer({
+ * var torusBuffer = new TorusBuffer({
  *   position: new Float32Array([ 0, 0, 0 ]),
  *   color: new Float32Array([ 1, 0, 0 ]),
  *   radius: new Float32Array([ 1 ]),
@@ -26,13 +27,17 @@ const eye = new Vector3(0, 0, 0)
  *   minorAxis: new Float32Array([ 0.5, 0, 0.5 ]),
  * });
  */
-class EllipsoidGeometryBuffer extends GeometryBuffer {
+class TorusBuffer extends GeometryBuffer {
   constructor (data, params) {
     const p = params || {}
-    const detail = defaults(p.sphereDetail, 2)
-    const geo = new IcosahedronBufferGeometry(1, detail)
+    const radiusRatio = defaults(p.radiusRatio, 0.2)
+    const radialSegments = defaults(p.radialSegments, 16)
+    const tubularSegments = defaults(p.tubularSegments, 32)
+    const geo = new TorusBufferGeometry(
+      1, radiusRatio, radialSegments, tubularSegments
+    )
 
-    super(data, p, geo)
+    super(data, params, geo)
 
     this.setAttributes(data, true)
   }
@@ -42,7 +47,8 @@ class EllipsoidGeometryBuffer extends GeometryBuffer {
     up.fromArray(this._minorAxis, i3)
     matrix.lookAt(eye, target, up)
 
-    scale.set(this._radius[ i ], up.length(), target.length())
+    const r = this._radius[ i ]
+    scale.set(r, r, r)
     matrix.scale(scale)
   }
 
@@ -57,4 +63,6 @@ class EllipsoidGeometryBuffer extends GeometryBuffer {
   get updateNormals () { return true }
 }
 
-export default EllipsoidGeometryBuffer
+BufferRegistry.add('torus', TorusBuffer)
+
+export default TorusBuffer

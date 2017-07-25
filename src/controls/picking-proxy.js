@@ -172,6 +172,10 @@ class PickingProxy {
   /**
    * @type {Object}
    */
+  get octahedron () { return this._objectIfType('octahedron') }
+  /**
+   * @type {Object}
+   */
   get mesh () { return this._objectIfType('mesh') }
   /**
    * @type {Object}
@@ -181,6 +185,14 @@ class PickingProxy {
    * @type {Object}
    */
   get sphere () { return this._objectIfType('sphere') }
+  /**
+   * @type {Object}
+   */
+  get tetrahedron () { return this._objectIfType('tetrahedron') }
+  /**
+   * @type {Object}
+   */
+  get torus () { return this._objectIfType('torus') }
   /**
    * @type {Object}
    */
@@ -234,6 +246,8 @@ class PickingProxy {
               ' (' + this.distance.structure.name + ')'
     } else if (this.ellipsoid) {
       msg = 'ellipsoid: ' + (this.ellipsoid.name || this.pid) + ' (' + this.ellipsoid.shape.name + ')'
+    } else if (this.octahedron) {
+      msg = 'octahedron: ' + (this.octahedron.name || this.pid) + ' (' + this.octahedron.shape.name + ')'
     } else if (this.mesh) {
       msg = 'mesh: ' + (this.mesh.name || this.mesh.serial) + ' (' + this.mesh.shape.name + ')'
     } else if (this.slice) {
@@ -244,6 +258,10 @@ class PickingProxy {
       msg = 'sphere: ' + (this.sphere.name || this.pid) + ' (' + this.sphere.shape.name + ')'
     } else if (this.surface) {
       msg = 'surface: ' + this.surface.surface.name
+    } else if (this.tetrahedron) {
+      msg = 'tetrahedron: ' + (this.tetrahedron.name || this.pid) + ' (' + this.tetrahedron.shape.name + ')'
+    } else if (this.torus) {
+      msg = 'torus: ' + (this.torus.name || this.pid) + ' (' + this.torus.shape.name + ')'
     } else if (this.unitcell) {
       msg = 'unitcell: ' +
               this.unitcell.unitcell.spacegroup +

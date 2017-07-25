@@ -104,8 +104,11 @@ import BoxBuffer from './buffer/box-buffer.js'
 import ConeBuffer from './buffer/cone-buffer.js'
 import CylinderBuffer from './buffer/cylinder-buffer.js'
 import EllipsoidBuffer from './buffer/ellipsoid-buffer.js'
+import OctahedronBuffer from './buffer/octahedron-buffer.js'
 import SphereBuffer from './buffer/sphere-buffer.js'
+import TetrahedronBuffer from './buffer/tetrahedron-buffer.js'
 import TextBuffer from './buffer/text-buffer.js'
+import TorusBuffer from './buffer/torus-buffer.js'
 
 //
 
@@ -234,8 +237,11 @@ export {
   ConeBuffer,
   CylinderBuffer,
   EllipsoidBuffer,
+  OctahedronBuffer,
   SphereBuffer,
+  TetrahedronBuffer,
   TextBuffer,
+  TorusBuffer,
 
   Shape,
 

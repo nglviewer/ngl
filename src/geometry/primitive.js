@@ -154,6 +154,20 @@ class BoxPrimitive extends SpherePrimitive {
 }
 
 /**
+ * Octahedron geometry primitive
+ */
+class OctahedronPrimitive extends BoxPrimitive {
+  static get type () { return 'octahedron' }
+}
+
+/**
+ * Tetrahedron geometry primitive
+ */
+class TetrahedronPrimitive extends BoxPrimitive {
+  static get type () { return 'tetrahedron' }
+}
+
+/**
  * Cylinder geometry primitive
  */
 class CylinderPrimitive extends Primitive {
@@ -212,6 +226,13 @@ class EllipsoidPrimitive extends SpherePrimitive {
 }
 
 /**
+ * Torus geometry primitive
+ */
+class TorusPrimitive extends EllipsoidPrimitive {
+  static get type () { return 'torus' }
+}
+
+/**
  * Text geometry primitive
  */
 class TextPrimitive extends SpherePrimitive {
@@ -233,6 +254,9 @@ export {
   ConePrimitive,
   CylinderPrimitive,
   EllipsoidPrimitive,
+  OctahedronPrimitive,
+  SpherePrimitive,
+  TetrahedronPrimitive,
   TextPrimitive,
-  SpherePrimitive
+  TorusPrimitive
 }

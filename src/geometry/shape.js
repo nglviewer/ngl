@@ -9,7 +9,8 @@ import { Box3 } from '../../lib/three.es6.js'
 import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, TextPrimitive, SpherePrimitive
+  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
+  TetrahedronPrimitive, TextPrimitive, TorusPrimitive
 } from '../geometry/primitive.js'
 import { MeshPicker } from '../utils/picker.js'
 import MeshBuffer from '../buffer/mesh-buffer.js'
@@ -18,7 +19,8 @@ const tmpBox = new Box3()
 
 const Primitives = [
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, TextPrimitive, SpherePrimitive
+  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
+  TetrahedronPrimitive, TextPrimitive, TorusPrimitive
 ]
 
 /**
@@ -168,6 +170,26 @@ class Shape {
   }
 
   /**
+   * Add a torus
+   * @example
+   * shape.addTorus([ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ]);
+   *
+   * @param {Vector3|Array} position - position vector or array
+   * @param {Color|Array} color - color object or array
+   * @param {Float} radius - radius value
+   * @param {Vector3|Array} majorAxis - major axis vector or array
+   * @param {Vector3|Array} minorAxis - minor axis vector or array
+   * @param {String} [name] - text
+   * @return {Shape} this object
+   */
+  addTorus (position, color, radius, majorAxis, minorAxis, name) {
+    TorusPrimitive.objectToShape(
+      this, { position, color, radius, majorAxis, minorAxis, name }
+    )
+    return this
+  }
+
+  /**
    * Add a cylinder
    * @example
    * shape.addCylinder([ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5);
@@ -239,6 +261,46 @@ class Shape {
    */
   addBox (position, color, size, heightAxis, depthAxis, name) {
     BoxPrimitive.objectToShape(
+      this, { position, color, size, heightAxis, depthAxis, name }
+    )
+    return this
+  }
+
+  /**
+   * Add an octahedron
+   * @example
+   * shape.addOctahedron([ 0, 3, 0 ], [ 1, 0, 1 ], 2, [ 0, 1, 1 ], [ 1, 0, 1 ]);
+   *
+   * @param {Vector3|Array} position - position vector or array
+   * @param {Color|Array} color - color object or array
+   * @param {Float} size - size value
+   * @param {Vector3|Array} heightAxis - height axis vector or array
+   * @param {Vector3|Array} depthAxis - depth axis vector or array
+   * @param {String} [name] - text
+   * @return {Shape} this object
+   */
+  addOctahedron (position, color, size, heightAxis, depthAxis, name) {
+    OctahedronPrimitive.objectToShape(
+      this, { position, color, size, heightAxis, depthAxis, name }
+    )
+    return this
+  }
+
+  /**
+   * Add a tetrahedron
+   * @example
+   * shape.addTetrahedron([ 0, 3, 0 ], [ 1, 0, 1 ], 2, [ 0, 1, 1 ], [ 1, 0, 1 ]);
+   *
+   * @param {Vector3|Array} position - position vector or array
+   * @param {Color|Array} color - color object or array
+   * @param {Float} size - size value
+   * @param {Vector3|Array} heightAxis - height axis vector or array
+   * @param {Vector3|Array} depthAxis - depth axis vector or array
+   * @param {String} [name] - text
+   * @return {Shape} this object
+   */
+  addTetrahedron (position, color, size, heightAxis, depthAxis, name) {
+    TetrahedronPrimitive.objectToShape(
       this, { position, color, size, heightAxis, depthAxis, name }
     )
     return this
