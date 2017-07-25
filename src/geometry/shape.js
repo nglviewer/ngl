@@ -273,9 +273,18 @@ class Shape {
   getBufferList () {
     const buffers = []
 
+    const params = {
+      aspectRatio: this.aspectRatio,
+      sphereDetail: this.sphereDetail,
+      radialSegments: this.radialSegments,
+      disableImpostor: this.disableImpostor,
+      openEnded: this.openEnded,
+      labelParams: this.labelParams
+    }
+
     Primitives.forEach(P => {
       if (this[ P.getShapeKey('color') ].length) {
-        buffers.push(P.bufferFromShape(this))
+        buffers.push(P.bufferFromShape(this, params))
       }
     })
 
