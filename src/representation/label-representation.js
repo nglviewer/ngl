@@ -11,7 +11,9 @@ import StructureRepresentation from './structure-representation.js'
 import TextBuffer from '../buffer/text-buffer.js'
 
 /**
- * Label representation parameter object.
+ * Label representation parameter object. Extends {@link RepresentationParameters} and
+ * {@link StructureRepresentationParameters}.
+ *
  * @typedef {Object} LabelRepresentationParameters - label representation parameters
  *
  * @property {Integer} clipNear - position of camera near/front clipping plane
