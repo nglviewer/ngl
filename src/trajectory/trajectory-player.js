@@ -119,7 +119,7 @@ class TrajectoryPlayer {
         }
         if (traj.hasFrame(this._currentFrame)) {
           this._currentStep += 1
-          const t = this._currentStep / this.interpolateStep
+          const t = this._currentStep / (this.interpolateStep + 1)
           traj.setFrameInterpolated(
             ...this._currentFrame, t, this.interpolateType
           )
