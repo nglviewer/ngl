@@ -52849,7 +52849,7 @@ var PickingProxy = function PickingProxy (pickingData, stage) {
   this.mouse = stage.mouseObserver;
 };
 
-var prototypeAccessors$7 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},axes: {},bond: {},box: {},cone: {},clash: {},contact: {},cylinder: {},distance: {},ellipsoid: {},mesh: {},slice: {},sphere: {},surface: {},unitcell: {},unknown: {},volume: {} };
+var prototypeAccessors$7 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},axes: {},bond: {},box: {},cone: {},clash: {},contact: {},cylinder: {},distance: {},ellipsoid: {},octahedron: {},mesh: {},slice: {},sphere: {},tetrahedron: {},torus: {},surface: {},unitcell: {},unknown: {},volume: {} };
 
 /**
  * Kind of the picked data
@@ -52972,6 +52972,10 @@ prototypeAccessors$7.ellipsoid.get = function () { return this._objectIfType('el
 /**
  * @type {Object}
  */
+prototypeAccessors$7.octahedron.get = function () { return this._objectIfType('octahedron') };
+/**
+ * @type {Object}
+ */
 prototypeAccessors$7.mesh.get = function () { return this._objectIfType('mesh') };
 /**
  * @type {Object}
@@ -52981,6 +52985,14 @@ prototypeAccessors$7.slice.get = function () { return this._objectIfType('slice'
  * @type {Object}
  */
 prototypeAccessors$7.sphere.get = function () { return this._objectIfType('sphere') };
+/**
+ * @type {Object}
+ */
+prototypeAccessors$7.tetrahedron.get = function () { return this._objectIfType('tetrahedron') };
+/**
+ * @type {Object}
+ */
+prototypeAccessors$7.torus.get = function () { return this._objectIfType('torus') };
 /**
  * @type {Object}
  */
@@ -53034,6 +53046,8 @@ PickingProxy.prototype.getLabel = function getLabel () {
             ' (' + this.distance.structure.name + ')';
   } else if (this.ellipsoid) {
     msg = 'ellipsoid: ' + (this.ellipsoid.name || this.pid) + ' (' + this.ellipsoid.shape.name + ')';
+  } else if (this.octahedron) {
+    msg = 'octahedron: ' + (this.octahedron.name || this.pid) + ' (' + this.octahedron.shape.name + ')';
   } else if (this.mesh) {
     msg = 'mesh: ' + (this.mesh.name || this.mesh.serial) + ' (' + this.mesh.shape.name + ')';
   } else if (this.slice) {
@@ -53044,6 +53058,10 @@ PickingProxy.prototype.getLabel = function getLabel () {
     msg = 'sphere: ' + (this.sphere.name || this.pid) + ' (' + this.sphere.shape.name + ')';
   } else if (this.surface) {
     msg = 'surface: ' + this.surface.surface.name;
+  } else if (this.tetrahedron) {
+    msg = 'tetrahedron: ' + (this.tetrahedron.name || this.pid) + ' (' + this.tetrahedron.shape.name + ')';
+  } else if (this.torus) {
+    msg = 'torus: ' + (this.torus.name || this.pid) + ' (' + this.torus.shape.name + ')';
   } else if (this.unitcell) {
     msg = 'unitcell: ' +
             this.unitcell.unitcell.spacegroup +
@@ -55325,6 +55343,48 @@ var BoxPrimitive = (function (SpherePrimitive) {
 }(SpherePrimitive));
 
 /**
+ * Octahedron geometry primitive
+ */
+var OctahedronPrimitive = (function (BoxPrimitive) {
+  function OctahedronPrimitive () {
+    BoxPrimitive.apply(this, arguments);
+  }
+
+  if ( BoxPrimitive ) OctahedronPrimitive.__proto__ = BoxPrimitive;
+  OctahedronPrimitive.prototype = Object.create( BoxPrimitive && BoxPrimitive.prototype );
+  OctahedronPrimitive.prototype.constructor = OctahedronPrimitive;
+
+  var staticAccessors$3 = { type: {} };
+
+  staticAccessors$3.type.get = function () { return 'octahedron' };
+
+  Object.defineProperties( OctahedronPrimitive, staticAccessors$3 );
+
+  return OctahedronPrimitive;
+}(BoxPrimitive));
+
+/**
+ * Tetrahedron geometry primitive
+ */
+var TetrahedronPrimitive = (function (BoxPrimitive) {
+  function TetrahedronPrimitive () {
+    BoxPrimitive.apply(this, arguments);
+  }
+
+  if ( BoxPrimitive ) TetrahedronPrimitive.__proto__ = BoxPrimitive;
+  TetrahedronPrimitive.prototype = Object.create( BoxPrimitive && BoxPrimitive.prototype );
+  TetrahedronPrimitive.prototype.constructor = TetrahedronPrimitive;
+
+  var staticAccessors$4 = { type: {} };
+
+  staticAccessors$4.type.get = function () { return 'tetrahedron' };
+
+  Object.defineProperties( TetrahedronPrimitive, staticAccessors$4 );
+
+  return TetrahedronPrimitive;
+}(BoxPrimitive));
+
+/**
  * Cylinder geometry primitive
  */
 var CylinderPrimitive = (function (Primitive) {
@@ -55336,11 +55396,11 @@ var CylinderPrimitive = (function (Primitive) {
   CylinderPrimitive.prototype = Object.create( Primitive && Primitive.prototype );
   CylinderPrimitive.prototype.constructor = CylinderPrimitive;
 
-  var staticAccessors$3 = { type: {},fields: {} };
+  var staticAccessors$5 = { type: {},fields: {} };
 
-  staticAccessors$3.type.get = function () { return 'cylinder' };
+  staticAccessors$5.type.get = function () { return 'cylinder' };
 
-  staticAccessors$3.fields.get = function () {
+  staticAccessors$5.fields.get = function () {
     return {
       position1: 'v3',
       position2: 'v3',
@@ -55360,7 +55420,7 @@ var CylinderPrimitive = (function (Primitive) {
     box.expandByPoint(tmpVec.fromArray(data.position2));
   };
 
-  Object.defineProperties( CylinderPrimitive, staticAccessors$3 );
+  Object.defineProperties( CylinderPrimitive, staticAccessors$5 );
 
   return CylinderPrimitive;
 }(Primitive));
@@ -55377,11 +55437,11 @@ var ArrowPrimitive = (function (CylinderPrimitive) {
   ArrowPrimitive.prototype = Object.create( CylinderPrimitive && CylinderPrimitive.prototype );
   ArrowPrimitive.prototype.constructor = ArrowPrimitive;
 
-  var staticAccessors$4 = { type: {} };
+  var staticAccessors$6 = { type: {} };
 
-  staticAccessors$4.type.get = function () { return 'arrow' };
+  staticAccessors$6.type.get = function () { return 'arrow' };
 
-  Object.defineProperties( ArrowPrimitive, staticAccessors$4 );
+  Object.defineProperties( ArrowPrimitive, staticAccessors$6 );
 
   return ArrowPrimitive;
 }(CylinderPrimitive));
@@ -55398,11 +55458,11 @@ var ConePrimitive = (function (CylinderPrimitive) {
   ConePrimitive.prototype = Object.create( CylinderPrimitive && CylinderPrimitive.prototype );
   ConePrimitive.prototype.constructor = ConePrimitive;
 
-  var staticAccessors$5 = { type: {} };
+  var staticAccessors$7 = { type: {} };
 
-  staticAccessors$5.type.get = function () { return 'cone' };
+  staticAccessors$7.type.get = function () { return 'cone' };
 
-  Object.defineProperties( ConePrimitive, staticAccessors$5 );
+  Object.defineProperties( ConePrimitive, staticAccessors$7 );
 
   return ConePrimitive;
 }(CylinderPrimitive));
@@ -55419,11 +55479,11 @@ var EllipsoidPrimitive = (function (SpherePrimitive) {
   EllipsoidPrimitive.prototype = Object.create( SpherePrimitive && SpherePrimitive.prototype );
   EllipsoidPrimitive.prototype.constructor = EllipsoidPrimitive;
 
-  var staticAccessors$6 = { type: {},fields: {} };
+  var staticAccessors$8 = { type: {},fields: {} };
 
-  staticAccessors$6.type.get = function () { return 'ellipsoid' };
+  staticAccessors$8.type.get = function () { return 'ellipsoid' };
 
-  staticAccessors$6.fields.get = function () {
+  staticAccessors$8.fields.get = function () {
     return {
       position: 'v3',
       color: 'c',
@@ -55433,10 +55493,31 @@ var EllipsoidPrimitive = (function (SpherePrimitive) {
     }
   };
 
-  Object.defineProperties( EllipsoidPrimitive, staticAccessors$6 );
+  Object.defineProperties( EllipsoidPrimitive, staticAccessors$8 );
 
   return EllipsoidPrimitive;
 }(SpherePrimitive));
+
+/**
+ * Torus geometry primitive
+ */
+var TorusPrimitive = (function (EllipsoidPrimitive) {
+  function TorusPrimitive () {
+    EllipsoidPrimitive.apply(this, arguments);
+  }
+
+  if ( EllipsoidPrimitive ) TorusPrimitive.__proto__ = EllipsoidPrimitive;
+  TorusPrimitive.prototype = Object.create( EllipsoidPrimitive && EllipsoidPrimitive.prototype );
+  TorusPrimitive.prototype.constructor = TorusPrimitive;
+
+  var staticAccessors$9 = { type: {} };
+
+  staticAccessors$9.type.get = function () { return 'torus' };
+
+  Object.defineProperties( TorusPrimitive, staticAccessors$9 );
+
+  return TorusPrimitive;
+}(EllipsoidPrimitive));
 
 /**
  * Text geometry primitive
@@ -55450,11 +55531,11 @@ var TextPrimitive = (function (SpherePrimitive) {
   TextPrimitive.prototype = Object.create( SpherePrimitive && SpherePrimitive.prototype );
   TextPrimitive.prototype.constructor = TextPrimitive;
 
-  var staticAccessors$7 = { type: {},fields: {} };
+  var staticAccessors$10 = { type: {},fields: {} };
 
-  staticAccessors$7.type.get = function () { return 'text' };
+  staticAccessors$10.type.get = function () { return 'text' };
 
-  staticAccessors$7.fields.get = function () {
+  staticAccessors$10.fields.get = function () {
     return {
       position: 'v3',
       color: 'c',
@@ -55463,7 +55544,7 @@ var TextPrimitive = (function (SpherePrimitive) {
     }
   };
 
-  Object.defineProperties( TextPrimitive, staticAccessors$7 );
+  Object.defineProperties( TextPrimitive, staticAccessors$10 );
 
   return TextPrimitive;
 }(SpherePrimitive));
@@ -55815,6 +55896,24 @@ var EllipsoidPicker = (function (ShapePicker) {
   return EllipsoidPicker;
 }(ShapePicker));
 
+var OctahedronPicker = (function (ShapePicker) {
+  function OctahedronPicker () {
+    ShapePicker.apply(this, arguments);
+  }
+
+  if ( ShapePicker ) OctahedronPicker.__proto__ = ShapePicker;
+  OctahedronPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
+  OctahedronPicker.prototype.constructor = OctahedronPicker;
+
+  var prototypeAccessors$11 = { primitive: {} };
+
+  prototypeAccessors$11.primitive.get = function () { return OctahedronPrimitive };
+
+  Object.defineProperties( OctahedronPicker.prototype, prototypeAccessors$11 );
+
+  return OctahedronPicker;
+}(ShapePicker));
+
 var BoxPicker = (function (ShapePicker) {
   function BoxPicker () {
     ShapePicker.apply(this, arguments);
@@ -55824,11 +55923,11 @@ var BoxPicker = (function (ShapePicker) {
   BoxPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   BoxPicker.prototype.constructor = BoxPicker;
 
-  var prototypeAccessors$11 = { primitive: {} };
+  var prototypeAccessors$12 = { primitive: {} };
 
-  prototypeAccessors$11.primitive.get = function () { return BoxPrimitive };
+  prototypeAccessors$12.primitive.get = function () { return BoxPrimitive };
 
-  Object.defineProperties( BoxPicker.prototype, prototypeAccessors$11 );
+  Object.defineProperties( BoxPicker.prototype, prototypeAccessors$12 );
 
   return BoxPicker;
 }(ShapePicker));
@@ -55842,11 +55941,11 @@ var IgnorePicker = (function (Picker) {
   IgnorePicker.prototype = Object.create( Picker && Picker.prototype );
   IgnorePicker.prototype.constructor = IgnorePicker;
 
-  var prototypeAccessors$12 = { type: {} };
+  var prototypeAccessors$13 = { type: {} };
 
-  prototypeAccessors$12.type.get = function () { return 'ignore' };
+  prototypeAccessors$13.type.get = function () { return 'ignore' };
 
-  Object.defineProperties( IgnorePicker.prototype, prototypeAccessors$12 );
+  Object.defineProperties( IgnorePicker.prototype, prototypeAccessors$13 );
 
   return IgnorePicker;
 }(Picker));
@@ -55861,9 +55960,9 @@ var MeshPicker = (function (ShapePicker) {
   MeshPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   MeshPicker.prototype.constructor = MeshPicker;
 
-  var prototypeAccessors$13 = { type: {} };
+  var prototypeAccessors$14 = { type: {} };
 
-  prototypeAccessors$13.type.get = function () { return 'mesh' };
+  prototypeAccessors$14.type.get = function () { return 'mesh' };
 
   MeshPicker.prototype.getObject = function getObject (/* pid */) {
     var m = this.mesh;
@@ -55881,7 +55980,7 @@ var MeshPicker = (function (ShapePicker) {
     return this.__position
   };
 
-  Object.defineProperties( MeshPicker.prototype, prototypeAccessors$13 );
+  Object.defineProperties( MeshPicker.prototype, prototypeAccessors$14 );
 
   return MeshPicker;
 }(ShapePicker));
@@ -55895,11 +55994,11 @@ var SpherePicker = (function (ShapePicker) {
   SpherePicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   SpherePicker.prototype.constructor = SpherePicker;
 
-  var prototypeAccessors$14 = { primitive: {} };
+  var prototypeAccessors$15 = { primitive: {} };
 
-  prototypeAccessors$14.primitive.get = function () { return SpherePrimitive };
+  prototypeAccessors$15.primitive.get = function () { return SpherePrimitive };
 
-  Object.defineProperties( SpherePicker.prototype, prototypeAccessors$14 );
+  Object.defineProperties( SpherePicker.prototype, prototypeAccessors$15 );
 
   return SpherePicker;
 }(ShapePicker));
@@ -55914,10 +56013,10 @@ var SurfacePicker = (function (Picker) {
   SurfacePicker.prototype = Object.create( Picker && Picker.prototype );
   SurfacePicker.prototype.constructor = SurfacePicker;
 
-  var prototypeAccessors$15 = { type: {},data: {} };
+  var prototypeAccessors$16 = { type: {},data: {} };
 
-  prototypeAccessors$15.type.get = function () { return 'surface' };
-  prototypeAccessors$15.data.get = function () { return this.surface };
+  prototypeAccessors$16.type.get = function () { return 'surface' };
+  prototypeAccessors$16.data.get = function () { return this.surface };
 
   SurfacePicker.prototype.getObject = function getObject (pid) {
     return {
@@ -55930,10 +56029,46 @@ var SurfacePicker = (function (Picker) {
     return this.surface.center.clone()
   };
 
-  Object.defineProperties( SurfacePicker.prototype, prototypeAccessors$15 );
+  Object.defineProperties( SurfacePicker.prototype, prototypeAccessors$16 );
 
   return SurfacePicker;
 }(Picker));
+
+var TetrahedronPicker = (function (ShapePicker) {
+  function TetrahedronPicker () {
+    ShapePicker.apply(this, arguments);
+  }
+
+  if ( ShapePicker ) TetrahedronPicker.__proto__ = ShapePicker;
+  TetrahedronPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
+  TetrahedronPicker.prototype.constructor = TetrahedronPicker;
+
+  var prototypeAccessors$17 = { primitive: {} };
+
+  prototypeAccessors$17.primitive.get = function () { return TetrahedronPrimitive };
+
+  Object.defineProperties( TetrahedronPicker.prototype, prototypeAccessors$17 );
+
+  return TetrahedronPicker;
+}(ShapePicker));
+
+var TorusPicker = (function (ShapePicker) {
+  function TorusPicker () {
+    ShapePicker.apply(this, arguments);
+  }
+
+  if ( ShapePicker ) TorusPicker.__proto__ = ShapePicker;
+  TorusPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
+  TorusPicker.prototype.constructor = TorusPicker;
+
+  var prototypeAccessors$18 = { primitive: {} };
+
+  prototypeAccessors$18.primitive.get = function () { return TorusPrimitive };
+
+  Object.defineProperties( TorusPicker.prototype, prototypeAccessors$18 );
+
+  return TorusPicker;
+}(ShapePicker));
 
 var UnitcellPicker = (function (Picker) {
   function UnitcellPicker (unitcell, structure) {
@@ -55946,10 +56081,10 @@ var UnitcellPicker = (function (Picker) {
   UnitcellPicker.prototype = Object.create( Picker && Picker.prototype );
   UnitcellPicker.prototype.constructor = UnitcellPicker;
 
-  var prototypeAccessors$16 = { type: {},data: {} };
+  var prototypeAccessors$19 = { type: {},data: {} };
 
-  prototypeAccessors$16.type.get = function () { return 'unitcell' };
-  prototypeAccessors$16.data.get = function () { return this.unitcell };
+  prototypeAccessors$19.type.get = function () { return 'unitcell' };
+  prototypeAccessors$19.data.get = function () { return this.unitcell };
 
   UnitcellPicker.prototype.getObject = function getObject (/* pid */) {
     return {
@@ -55962,7 +56097,7 @@ var UnitcellPicker = (function (Picker) {
     return this.unitcell.getCenter(this.structure)
   };
 
-  Object.defineProperties( UnitcellPicker.prototype, prototypeAccessors$16 );
+  Object.defineProperties( UnitcellPicker.prototype, prototypeAccessors$19 );
 
   return UnitcellPicker;
 }(Picker));
@@ -55976,11 +56111,11 @@ var UnknownPicker = (function (Picker) {
   UnknownPicker.prototype = Object.create( Picker && Picker.prototype );
   UnknownPicker.prototype.constructor = UnknownPicker;
 
-  var prototypeAccessors$17 = { type: {} };
+  var prototypeAccessors$20 = { type: {} };
 
-  prototypeAccessors$17.type.get = function () { return 'unknown' };
+  prototypeAccessors$20.type.get = function () { return 'unknown' };
 
-  Object.defineProperties( UnknownPicker.prototype, prototypeAccessors$17 );
+  Object.defineProperties( UnknownPicker.prototype, prototypeAccessors$20 );
 
   return UnknownPicker;
 }(Picker));
@@ -55995,10 +56130,10 @@ var VolumePicker = (function (Picker) {
   VolumePicker.prototype = Object.create( Picker && Picker.prototype );
   VolumePicker.prototype.constructor = VolumePicker;
 
-  var prototypeAccessors$18 = { type: {},data: {} };
+  var prototypeAccessors$21 = { type: {},data: {} };
 
-  prototypeAccessors$18.type.get = function () { return 'volume' };
-  prototypeAccessors$18.data.get = function () { return this.volume };
+  prototypeAccessors$21.type.get = function () { return 'volume' };
+  prototypeAccessors$21.data.get = function () { return this.volume };
 
   VolumePicker.prototype.getObject = function getObject (pid) {
     var vol = this.volume;
@@ -56020,7 +56155,7 @@ var VolumePicker = (function (Picker) {
     )
   };
 
-  Object.defineProperties( VolumePicker.prototype, prototypeAccessors$18 );
+  Object.defineProperties( VolumePicker.prototype, prototypeAccessors$21 );
 
   return VolumePicker;
 }(Picker));
@@ -56034,11 +56169,11 @@ var SlicePicker = (function (VolumePicker) {
   SlicePicker.prototype = Object.create( VolumePicker && VolumePicker.prototype );
   SlicePicker.prototype.constructor = SlicePicker;
 
-  var prototypeAccessors$19 = { type: {} };
+  var prototypeAccessors$22 = { type: {} };
 
-  prototypeAccessors$19.type.get = function () { return 'slice' };
+  prototypeAccessors$22.type.get = function () { return 'slice' };
 
-  Object.defineProperties( SlicePicker.prototype, prototypeAccessors$19 );
+  Object.defineProperties( SlicePicker.prototype, prototypeAccessors$22 );
 
   return SlicePicker;
 }(VolumePicker));
@@ -56048,7 +56183,10 @@ PickerRegistry.add('box', BoxPicker);
 PickerRegistry.add('cone', ConePicker);
 PickerRegistry.add('cylinder', CylinderPicker);
 PickerRegistry.add('ellipsoid', EllipsoidPicker);
+PickerRegistry.add('octahedron', OctahedronPicker);
 PickerRegistry.add('sphere', SpherePicker);
+PickerRegistry.add('tetrahedron', TetrahedronPicker);
+PickerRegistry.add('torus', TorusPicker);
 
 /**
  * @file Bit array
@@ -67492,7 +67630,7 @@ TrajectoryPlayer.prototype._animate = function _animate () {
       }
       if (traj.hasFrame(this._currentFrame)) {
         this._currentStep += 1;
-        var t = this._currentStep / this.interpolateStep;
+        var t = this._currentStep / (this.interpolateStep + 1);
         traj.setFrameInterpolated.apply(
           traj, this._currentFrame.concat( [t], [this.interpolateType] )
         );
@@ -69098,7 +69236,8 @@ var tmpBox = new Box3();
 
 var Primitives = [
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, TextPrimitive, SpherePrimitive
+  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
+  TetrahedronPrimitive, TextPrimitive, TorusPrimitive
 ];
 
 /**
@@ -69241,6 +69380,26 @@ Shape$1.prototype.addEllipsoid = function addEllipsoid (position, color, radius,
 };
 
 /**
+ * Add a torus
+ * @example
+ * shape.addTorus([ 6, 0, 0 ], [ 1, 0, 0 ], 1.5, [ 3, 0, 0 ], [ 0, 2, 0 ]);
+ *
+ * @param {Vector3|Array} position - position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} radius - radius value
+ * @param {Vector3|Array} majorAxis - major axis vector or array
+ * @param {Vector3|Array} minorAxis - minor axis vector or array
+ * @param {String} [name] - text
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addTorus = function addTorus (position, color, radius, majorAxis, minorAxis, name) {
+  TorusPrimitive.objectToShape(
+    this, { position: position, color: color, radius: radius, majorAxis: majorAxis, minorAxis: minorAxis, name: name }
+  );
+  return this
+};
+
+/**
  * Add a cylinder
  * @example
  * shape.addCylinder([ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ], 0.5);
@@ -69312,6 +69471,46 @@ Shape$1.prototype.addArrow = function addArrow (position1, position2, color, rad
  */
 Shape$1.prototype.addBox = function addBox (position, color, size, heightAxis, depthAxis, name) {
   BoxPrimitive.objectToShape(
+    this, { position: position, color: color, size: size, heightAxis: heightAxis, depthAxis: depthAxis, name: name }
+  );
+  return this
+};
+
+/**
+ * Add an octahedron
+ * @example
+ * shape.addOctahedron([ 0, 3, 0 ], [ 1, 0, 1 ], 2, [ 0, 1, 1 ], [ 1, 0, 1 ]);
+ *
+ * @param {Vector3|Array} position - position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} size - size value
+ * @param {Vector3|Array} heightAxis - height axis vector or array
+ * @param {Vector3|Array} depthAxis - depth axis vector or array
+ * @param {String} [name] - text
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addOctahedron = function addOctahedron (position, color, size, heightAxis, depthAxis, name) {
+  OctahedronPrimitive.objectToShape(
+    this, { position: position, color: color, size: size, heightAxis: heightAxis, depthAxis: depthAxis, name: name }
+  );
+  return this
+};
+
+/**
+ * Add a tetrahedron
+ * @example
+ * shape.addTetrahedron([ 0, 3, 0 ], [ 1, 0, 1 ], 2, [ 0, 1, 1 ], [ 1, 0, 1 ]);
+ *
+ * @param {Vector3|Array} position - position vector or array
+ * @param {Color|Array} color - color object or array
+ * @param {Float} size - size value
+ * @param {Vector3|Array} heightAxis - height axis vector or array
+ * @param {Vector3|Array} depthAxis - depth axis vector or array
+ * @param {String} [name] - text
+ * @return {Shape} this object
+ */
+Shape$1.prototype.addTetrahedron = function addTetrahedron (position, color, size, heightAxis, depthAxis, name) {
+  TetrahedronPrimitive.objectToShape(
     this, { position: position, color: color, size: size, heightAxis: heightAxis, depthAxis: depthAxis, name: name }
   );
   return this
@@ -70766,8 +70965,8 @@ var GeometryBuffer = (function (MeshBuffer$$1) {
       if (position) {
         transformedGeoPosition.set(geoPosition);
         matrix$1.makeTranslation(
-                    position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
-                );
+          position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
+        );
         this$1.applyPositionTransform(matrix$1, i, i3);
         applyMatrix4toVector3array(matrix$1.elements, transformedGeoPosition);
 
@@ -70836,11 +71035,11 @@ var scale = new Vector3();
  * Sphere geometry buffer.
  *
  * @example
- * var sphereGeometryBuffer = new SphereGeometryBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var sphereGeometryBuffer = new SphereGeometryBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 var SphereGeometryBuffer = (function (GeometryBuffer$$1) {
   function SphereGeometryBuffer (data, params) {
@@ -70864,9 +71063,7 @@ var SphereGeometryBuffer = (function (GeometryBuffer$$1) {
   };
 
   SphereGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-    if (data.radius) {
-      this._radius = data.radius;
-    }
+    if (data.radius) { this._radius = data.radius; }
 
     GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
   };
@@ -72520,13 +72717,13 @@ var up = new Vector3(0, 1, 0);
  * Cylinder geometry buffer.
  *
  * @example
- * var cylinderGeometryBuffer = new CylinderGeometryBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 1, 1, 1 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     color2: new Float32Array( [ 0, 1, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var cylinderGeometryBuffer = new CylinderGeometryBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
   function CylinderGeometryBuffer (data, params) {
@@ -72538,19 +72735,19 @@ var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
     var matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
     var geo = new CylinderBufferGeometry(
-            1,  // radiusTop,
-            1,  // radiusBottom,
-            1,  // height,
-            radialSegments,  // radialSegments,
-            1,  // heightSegments,
-            openEnded  // openEnded
-        );
+      1,  // radiusTop,
+      1,  // radiusBottom,
+      1,  // height,
+      radialSegments,  // radialSegments,
+      1,  // heightSegments,
+      openEnded  // openEnded
+    );
     geo.applyMatrix(matrix);
 
     var n = d.position1.length;
     var m = d.radius.length;
 
-        //
+    //
 
     var geoLength = geo.attributes.position.array.length / 3;
     var count = n / 3;
@@ -72558,7 +72755,7 @@ var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
     serialBlockArray(count, geoLength, 0, primitiveId);
     serialBlockArray(count, geoLength, count * geoLength, primitiveId);
 
-        //
+    //
 
     var position = new Float32Array(n * 2);
     var color = new Float32Array(n * 2);
@@ -72602,14 +72799,14 @@ var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
 
     if (data.position1 && data.position2) {
       calculateCenterArray(
-                data.position1, data.position2, this.__center
-            );
+        data.position1, data.position2, this.__center
+      );
       calculateCenterArray(
-                data.position1, this.__center, this._position
-            );
+        data.position1, this.__center, this._position
+      );
       calculateCenterArray(
-                this.__center, data.position2, this._position, data.position1.length
-            );
+        this.__center, data.position2, this._position, data.position1.length
+      );
       this._from.set(data.position1);
       this._from.set(this.__center, data.position1.length);
       this._to.set(this.__center);
@@ -81921,7 +82118,9 @@ LabelFactory.types = {
  */
 
 /**
- * Label representation parameter object.
+ * Label representation parameter object. Extends {@link RepresentationParameters} and
+ * {@link StructureRepresentationParameters}.
+ *
  * @typedef {Object} LabelRepresentationParameters - label representation parameters
  *
  * @property {Integer} clipNear - position of camera near/front clipping plane
@@ -85463,13 +85662,13 @@ var up$1 = new Vector3(0, 1, 0);
  * Cone geometry buffer.
  *
  * @example
- * var coneGeometryBuffer = new ConeGeometryBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 1, 1, 1 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     color2: new Float32Array( [ 0, 1, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var coneGeometryBuffer = new ConeGeometryBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
   function ConeGeometryBuffer (data, params) {
@@ -85480,18 +85679,15 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
     var matrix = new Matrix4().makeRotationX(-Math.PI / 2);
 
     var geo = new ConeBufferGeometry(
-            1,  // radius
-            1,  // height
-            radialSegments,  // radialSegments
-            1,  // heightSegments
-            openEnded  // openEnded
-        );
+      1,  // radius
+      1,  // height
+      radialSegments,  // radialSegments
+      1,  // heightSegments
+      openEnded  // openEnded
+    );
     geo.applyMatrix(matrix);
 
-    var n = data.position1.length;
-    var m = data.radius.length;
-
-    var position = new Float32Array(n);
+    var position = new Float32Array(data.position1.length);
 
     GeometryBuffer$$1.call(this, {
       position: position,
@@ -85500,9 +85696,6 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
     }, p, geo);
 
     this._position = position;
-    this._from = new Float32Array(n);
-    this._to = new Float32Array(n);
-    this._radius = new Float32Array(m);
 
     this.setAttributes(data, true);
   }
@@ -85514,8 +85707,8 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
   var prototypeAccessors = { updateNormals: {} };
 
   ConeGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
-    eye$1.fromArray(this._from, i3);
-    target$1.fromArray(this._to, i3);
+    eye$1.fromArray(this._position1, i3);
+    target$1.fromArray(this._position2, i3);
     matrix.lookAt(eye$1, target$1, up$1);
 
     var r = this._radius[ i ];
@@ -85524,26 +85717,15 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
   };
 
   ConeGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-    var meshData = {};
-
     if (data.position1 && data.position2) {
-      calculateCenterArray(
-                data.position1, data.position2, this._position
-            );
-      this._from.set(data.position1);
-      this._to.set(data.position2);
-      meshData.position = this._position;
+      calculateCenterArray(data.position1, data.position2, this._position);
+      this._position1 = data.position1;
+      this._position2 = data.position2;
+      data.position = this._position;
     }
+    if (data.radius) { this._radius = data.radius; }
 
-    if (data.color) {
-      meshData.color = data.color;
-    }
-
-    if (data.radius) {
-      this._radius.set(data.radius);
-    }
-
-    GeometryBuffer$$1.prototype.setAttributes.call(this, meshData, initNormals);
+    GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
   };
 
   prototypeAccessors.updateNormals.get = function () { return true };
@@ -85564,13 +85746,13 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
  * @implements {Buffer}
  *
  * @example
- * var coneBuffer = new ConeBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 1, 1, 1 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     color2: new Float32Array( [ 0, 1, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var coneBuffer = new ConeBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 var ConeBuffer = function ConeBuffer (data, params) {
   return new ConeGeometryBuffer(data, params)
@@ -85838,17 +86020,9 @@ var BoxBuffer = (function (GeometryBuffer$$1) {
   };
 
   BoxBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-    if (data.size) {
-      this._size = data.size;
-    }
-
-    if (data.heightAxis) {
-      this._heightAxis = data.heightAxis;
-    }
-
-    if (data.depthAxis) {
-      this._depthAxis = data.depthAxis;
-    }
+    if (data.size) { this._size = data.size; }
+    if (data.heightAxis) { this._heightAxis = data.heightAxis; }
+    if (data.depthAxis) { this._depthAxis = data.depthAxis; }
 
     GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
   };
@@ -85877,13 +86051,13 @@ var eye$3 = new Vector3(0, 0, 0);
  * Ellipsoid geometry buffer. Draws ellipsoids.
  *
  * @example
- * var ellipsoidGeometryBuffer = new EllipsoidGeometryBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] ),
- *     majorAxis: new Float32Array( [ 1, 1, 0 ] ),
- *     minorAxis: new Float32Array( [ 0.5, 0, 0.5 ] ),
- * } );
+ * var ellipsoidGeometryBuffer = new EllipsoidGeometryBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ]),
+ *   majorAxis: new Float32Array([ 1, 1, 0 ]),
+ *   minorAxis: new Float32Array([ 0.5, 0, 0.5 ]),
+ * });
  */
 var EllipsoidGeometryBuffer = (function (GeometryBuffer$$1) {
   function EllipsoidGeometryBuffer (data, params) {
@@ -85912,17 +86086,9 @@ var EllipsoidGeometryBuffer = (function (GeometryBuffer$$1) {
   };
 
   EllipsoidGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-    if (data.radius) {
-      this._radius = data.radius;
-    }
-
-    if (data.majorAxis) {
-      this._majorAxis = data.majorAxis;
-    }
-
-    if (data.minorAxis) {
-      this._minorAxis = data.minorAxis;
-    }
+    if (data.radius) { this._radius = data.radius; }
+    if (data.majorAxis) { this._majorAxis = data.majorAxis; }
+    if (data.minorAxis) { this._minorAxis = data.minorAxis; }
 
     GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
   };
@@ -85957,6 +86123,207 @@ var EllipsoidBuffer = function EllipsoidBuffer (data, params) {
 };
 
 BufferRegistry.add('ellipsoid', EllipsoidBuffer);
+
+/**
+ * @file Octahedron Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var scale$5 = new Vector3();
+var target$4 = new Vector3();
+var up$4 = new Vector3();
+var eye$4 = new Vector3(0, 0, 0);
+
+/**
+ * Octahedron buffer. Draws octahedrons.
+ *
+ * @example
+ * var octahedronBuffer = new OctahedronBuffer({
+ *   position: new Float32Array([ 0, 3, 0, -2, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 1, 0, 1, 0 ]),
+ *   size: new Float32Array([ 2, 1.5 ]),
+ *   heightAxis: new Float32Array([ 0, 1, 1, 0, 2, 0 ]),
+ *   depthAxis: new Float32Array([ 1, 0, 1, 0, 0, 2 ])
+ * })
+ */
+var OctahedronBuffer = (function (GeometryBuffer$$1) {
+  function OctahedronBuffer (data, params) {
+    var p = params || {};
+    var geo = new OctahedronBufferGeometry(1, 0);
+
+    GeometryBuffer$$1.call(this, data, p, geo);
+
+    this.setAttributes(data, true);
+  }
+
+  if ( GeometryBuffer$$1 ) OctahedronBuffer.__proto__ = GeometryBuffer$$1;
+  OctahedronBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
+  OctahedronBuffer.prototype.constructor = OctahedronBuffer;
+
+  var prototypeAccessors = { updateNormals: {} };
+
+  OctahedronBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
+    target$4.fromArray(this._heightAxis, i3);
+    up$4.fromArray(this._depthAxis, i3);
+    matrix.lookAt(eye$4, target$4, up$4);
+
+    scale$5.set(this._size[ i ], up$4.length(), target$4.length());
+    matrix.scale(scale$5);
+  };
+
+  OctahedronBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
+    if (data.size) { this._size = data.size; }
+    if (data.heightAxis) { this._heightAxis = data.heightAxis; }
+    if (data.depthAxis) { this._depthAxis = data.depthAxis; }
+
+    GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
+  };
+
+  prototypeAccessors.updateNormals.get = function () { return true };
+
+  Object.defineProperties( OctahedronBuffer.prototype, prototypeAccessors );
+
+  return OctahedronBuffer;
+}(GeometryBuffer));
+
+BufferRegistry.add('octahedron', OctahedronBuffer);
+
+/**
+ * @file Tetrahedron Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var scale$6 = new Vector3();
+var target$5 = new Vector3();
+var up$5 = new Vector3();
+var eye$5 = new Vector3(0, 0, 0);
+
+/**
+ * Tetrahedron buffer. Draws tetrahedrons.
+ *
+ * @example
+ * var tetrahedronBuffer = new TetrahedronBuffer({
+ *   position: new Float32Array([ 0, 3, 0, -2, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 1, 0, 1, 0 ]),
+ *   size: new Float32Array([ 2, 1.5 ]),
+ *   heightAxis: new Float32Array([ 0, 1, 1, 0, 2, 0 ]),
+ *   depthAxis: new Float32Array([ 1, 0, 1, 0, 0, 2 ])
+ * })
+ */
+var TetrahedronBuffer = (function (GeometryBuffer$$1) {
+  function TetrahedronBuffer (data, params) {
+    var p = params || {};
+    var geo = new TetrahedronBufferGeometry(1, 0);
+
+    GeometryBuffer$$1.call(this, data, p, geo);
+
+    this.setAttributes(data, true);
+  }
+
+  if ( GeometryBuffer$$1 ) TetrahedronBuffer.__proto__ = GeometryBuffer$$1;
+  TetrahedronBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
+  TetrahedronBuffer.prototype.constructor = TetrahedronBuffer;
+
+  var prototypeAccessors = { updateNormals: {} };
+
+  TetrahedronBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
+    target$5.fromArray(this._heightAxis, i3);
+    up$5.fromArray(this._depthAxis, i3);
+    matrix.lookAt(eye$5, target$5, up$5);
+
+    scale$6.set(this._size[ i ], up$5.length(), target$5.length());
+    matrix.scale(scale$6);
+  };
+
+  TetrahedronBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
+    if (data.size) { this._size = data.size; }
+    if (data.heightAxis) { this._heightAxis = data.heightAxis; }
+    if (data.depthAxis) { this._depthAxis = data.depthAxis; }
+
+    GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
+  };
+
+  prototypeAccessors.updateNormals.get = function () { return true };
+
+  Object.defineProperties( TetrahedronBuffer.prototype, prototypeAccessors );
+
+  return TetrahedronBuffer;
+}(GeometryBuffer));
+
+BufferRegistry.add('tetrahedron', TetrahedronBuffer);
+
+/**
+ * @file Tetrahedron Geometry Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var scale$7 = new Vector3();
+var target$6 = new Vector3();
+var up$6 = new Vector3();
+var eye$6 = new Vector3(0, 0, 0);
+
+/**
+ * Torus geometry buffer. Draws torii.
+ *
+ * @example
+ * var torusBuffer = new TorusBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ]),
+ *   majorAxis: new Float32Array([ 1, 1, 0 ]),
+ *   minorAxis: new Float32Array([ 0.5, 0, 0.5 ]),
+ * });
+ */
+var TorusBuffer = (function (GeometryBuffer$$1) {
+  function TorusBuffer (data, params) {
+    var p = params || {};
+    var radiusRatio = defaults(p.radiusRatio, 0.2);
+    var radialSegments = defaults(p.radialSegments, 16);
+    var tubularSegments = defaults(p.tubularSegments, 32);
+    var geo = new TorusBufferGeometry(
+      1, radiusRatio, radialSegments, tubularSegments
+    );
+
+    GeometryBuffer$$1.call(this, data, params, geo);
+
+    this.setAttributes(data, true);
+  }
+
+  if ( GeometryBuffer$$1 ) TorusBuffer.__proto__ = GeometryBuffer$$1;
+  TorusBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
+  TorusBuffer.prototype.constructor = TorusBuffer;
+
+  var prototypeAccessors = { updateNormals: {} };
+
+  TorusBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
+    target$6.fromArray(this._majorAxis, i3);
+    up$6.fromArray(this._minorAxis, i3);
+    matrix.lookAt(eye$6, target$6, up$6);
+
+    var r = this._radius[ i ];
+    scale$7.set(r, r, r);
+    matrix.scale(scale$7);
+  };
+
+  TorusBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
+    if (data.radius) { this._radius = data.radius; }
+    if (data.majorAxis) { this._majorAxis = data.majorAxis; }
+    if (data.minorAxis) { this._minorAxis = data.minorAxis; }
+
+    GeometryBuffer$$1.prototype.setAttributes.call(this, data, initNormals);
+  };
+
+  prototypeAccessors.updateNormals.get = function () { return true };
+
+  Object.defineProperties( TorusBuffer.prototype, prototypeAccessors );
+
+  return TorusBuffer;
+}(GeometryBuffer));
+
+BufferRegistry.add('torus', TorusBuffer);
 
 /**
  * @file Parser
@@ -97815,7 +98182,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-14";
+var version$1 = "0.10.5-15";
 
 /**
  * @file Version
@@ -97864,5 +98231,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, SphereBuffer, TextBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
