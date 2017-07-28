@@ -288,6 +288,19 @@ class AtomProxy {
     }
   }
 
+  /**
+   * Formal charge
+   * @type {Integer|null}
+   */
+  get formalCharge () {
+    return this.atomStore.formalCharge ? this.atomStore.formalCharge[ this.index ] : null
+  }
+  set formalCharge (value) {
+    if (this.atomStore.formalCharge) {
+      this.atomStore.formalCharge[ this.index ] = value
+    }
+  }
+
   //
 
   /**
