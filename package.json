@@ -54,7 +54,7 @@
     "babelrc-rollup": "^3.0.0",
     "chai": "^4.0.0",
     "cheerio": "^1.0.0-rc.1",
-    "esdoc": "^0.5.2",
+    "esdoc": "^1.0.1",
     "mocha": "^3.2.0",
     "rollup": "^0.45.2",
     "rollup-plugin-babel": "^2.7.1",
