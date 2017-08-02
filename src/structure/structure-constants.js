@@ -1107,7 +1107,7 @@ const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
 const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
 
 const WaterNames = [
-  'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4'
+  'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4', 'SPC'
 ]
 
 // all chemical components with the word "ion" in their name, Sep 2016
