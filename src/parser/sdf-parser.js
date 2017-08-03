@@ -37,6 +37,7 @@ class SdfParser extends StructureParser {
     const atomMap = s.atomMap
     const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 50))
+    atomStore.addField('formalCharge', 1, 'int8')
 
     const ap1 = s.getAtomProxy()
     const ap2 = s.getAtomProxy()
@@ -110,6 +111,7 @@ class SdfParser extends StructureParser {
           atomStore.y[ idx ] = y
           atomStore.z[ idx ] = z
           atomStore.serial[ idx ] = idx
+          atomStore.formalCharge[ idx ] = 0
 
           sb.addAtom(modelIdx, '', '', 'HET', 1, 1)
 
@@ -123,7 +125,14 @@ class SdfParser extends StructureParser {
           const order = parseInt(line.substr(6, 3))
 
           s.bondStore.addBond(ap1, ap2, order)
-
+        } else if (line.match(/M {2}CHG/)) {
+          const chargeCount = parseInt(line.substr(6, 3))
+          for (let ci = 0, coffset = 10; ci < chargeCount; ++ci, coffset += 8) {
+            const aToken = parseInt(line.substr(coffset, 3))
+            const atomIdx = aToken - 1 + modelAtomIdxStart
+            const cToken = parseInt(line.substr(coffset + 4, 3))
+            atomStore.formalCharge[ atomIdx ] = cToken
+          }
         // eslint-disable-next-line no-cond-assign
         } else if (mItem = line.match(reItem)) {
           currentItem = mItem[ 1 ]
