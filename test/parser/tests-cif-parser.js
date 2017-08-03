@@ -65,7 +65,6 @@ describe('parser/cif-parser', function () {
         assert.strictEqual(structure.residueMap.list.length, 16)
         assert.strictEqual(structure.entityList.length, 1)
         assert.ok(structure.spatialHash !== undefined)
-        assert.strictEqual(1, 0)
       })
     })
 
