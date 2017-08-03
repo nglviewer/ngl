@@ -24,7 +24,7 @@ describe('structure/structure-view', function () {
     it('basic selection', function () {
       var streamer = new StringStreamer(_BaceCgProteinAtomistic)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var selection = new Selection('10-30')
         var sview = structure.getView(selection)
         assert.strictEqual(structure.atomStore.count, 774, 'Passed!')
@@ -35,7 +35,7 @@ describe('structure/structure-view', function () {
     it('selection with not', function () {
       var streamer = new StringStreamer(_BaceCgProteinAtomistic)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var selection = new Selection('not 10-30')
         var sview = structure.getView(selection)
         assert.strictEqual(structure.atomStore.count, 774, 'Passed!')
@@ -48,7 +48,7 @@ describe('structure/structure-view', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var groParser = new GroParser(streamer)
-      groParser.parse(function (structure) {
+      groParser.parse().then(function (structure) {
         var selection = new Selection(':A')
         var sview = structure.getView(selection)
         assert.strictEqual(structure.atomStore.count, 52661, 'Passed!')
@@ -61,7 +61,7 @@ describe('structure/structure-view', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cifParser = new CifParser(streamer)
-      cifParser.parse(function (structure) {
+      cifParser.parse().then(function (structure) {
         var selection = new Selection('30-341:R or 384-394:A')
         var sview = structure.getView(selection)
         assert.strictEqual(structure.atomStore.count, 10274, 'Passed!')

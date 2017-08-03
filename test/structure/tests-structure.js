@@ -13,7 +13,7 @@ describe('structure/structure', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var i = 0
         structure.eachPolymer(function () {
           i += 1

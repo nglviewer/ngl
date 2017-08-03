@@ -14,7 +14,7 @@ describe('writer/pdb-writer', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var pdbWriter = new PdbWriter(structure)
         var string = pdbWriter.getData()
         assert.strictEqual(string.length, 26156)
@@ -29,7 +29,7 @@ describe('writer/pdb-writer', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var pdbWriter = new PdbWriter(structure)
         var blob = pdbWriter.getBlob()
         assert.strictEqual(blob.type, 'text/plain')

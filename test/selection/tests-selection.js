@@ -749,7 +749,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap = getNthSelectedAtom(sview, 0)
         assert.strictEqual(sview.atomCount, 185, 'Passed!')
@@ -762,7 +762,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap = getNthSelectedAtom(sview, 30)
         assert.strictEqual(sview.atomCount, 46, 'Passed!')
@@ -775,7 +775,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         assert.strictEqual(sview.atomCount, 22 + 46 - 2, 'Passed!')
       })
@@ -786,7 +786,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap = getNthSelectedAtom(sview, 0)
         assert.strictEqual(sview.atomCount, 142, 'Passed!')
@@ -799,7 +799,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap = getNthSelectedAtom(sview, 0)
         assert.strictEqual(sview.atomCount, 142, 'Passed!')
@@ -812,7 +812,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap1 = getNthSelectedAtom(sview, 0)
         var ap2 = getNthSelectedAtom(sview, 1)
@@ -827,7 +827,7 @@ describe('selection/selection', function () {
       var selection2 = new Selection('not not TYR')
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview1 = structure.getView(selection1)
         var sview2 = structure.getView(selection2)
         assert.strictEqual(sview1.atomCount, sview2.atomCount, 'Passed!')
@@ -839,7 +839,7 @@ describe('selection/selection', function () {
       var selection2 = new Selection('not ( 12.CA )')
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview1 = structure.getView(selection1)
         var sview2 = structure.getView(selection2)
         assert.strictEqual(sview1.atomCount, sview2.atomCount, 'Passed!')
@@ -853,7 +853,7 @@ describe('selection/selection', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap1 = getNthSelectedAtom(sview, 0)
         var ap2 = getNthSelectedAtom(sview, sview.atomCount - 1)
@@ -869,7 +869,7 @@ describe('selection/selection', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cifParser = new CifParser(streamer)
-      cifParser.parse(function (structure) {
+      cifParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap1 = getNthSelectedAtom(sview, 0)
         var ap2 = getNthSelectedAtom(sview, sview.atomCount - 1)
@@ -883,7 +883,7 @@ describe('selection/selection', function () {
       var selection = new Selection(sele)
       var streamer = new StringStreamer(_1crnPdb)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         var ap1 = getNthSelectedAtom(sview, 0)
         var ap2 = getNthSelectedAtom(sview, 1)
@@ -902,7 +902,7 @@ describe('selection/selection', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      pdbParser.parse().then(function (structure) {
         var sview = structure.getView(selection)
         assert.strictEqual(sview.atomCount, 13, 'Passed!')
       })
