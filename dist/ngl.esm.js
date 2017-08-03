@@ -47521,7 +47521,7 @@ function makeResidueTest (selection, residueOnly) {
       if (s.element !== undefined) { return true }
       if (s.altloc !== undefined) { return true }
       return false
-    }, selection);
+    });
   }
   return makeTest(selection, residueTestFn)
 }
@@ -49287,6 +49287,133 @@ var PdbWriter = (function (Writer$$1) {
   Object.defineProperties( PdbWriter.prototype, prototypeAccessors );
 
   return PdbWriter;
+}(Writer));
+
+/**
+ * Writer class for sdf/mol files.
+ */
+
+var CountFormat =
+  '%3i%3i  0  0  0  0  0  0  0  0999 V2000';
+  // Hard-coded chiral as false as we don't specify it any atoms
+
+var AtomLine =
+  '%10.4f%10.4f%10.4f %-3s 0%3i  0  0  0';
+  //
+
+var BondFormat =
+  '%3i%3i%3i  0  0  0';
+
+var SdfWriter = (function (Writer$$1) {
+  function SdfWriter (structure) {
+    Writer$$1.call(this);
+
+    this.structure = structure;
+    // Follow the pdb-writer example:
+    this._records = [];
+  }
+
+  if ( Writer$$1 ) SdfWriter.__proto__ = Writer$$1;
+  SdfWriter.prototype = Object.create( Writer$$1 && Writer$$1.prototype );
+  SdfWriter.prototype.constructor = SdfWriter;
+
+  var prototypeAccessors = { idString: {},titleString: {},countsString: {},chargeLines: {} };
+
+  prototypeAccessors.idString.get = function () {
+    return this.structure.id
+  };
+
+  prototypeAccessors.titleString.get = function () {
+    return '  ' + this.structure.title
+  };
+
+  prototypeAccessors.countsString.get = function () {
+    return sprintf(
+      CountFormat,
+      this.structure.atomCount,
+      this.structure.bondCount
+      )
+  };
+
+  prototypeAccessors.chargeLines.get = function () {
+    var pairs = [];
+    this.structure.eachAtom(function (ap) {
+      if (ap.formalCharge != null && ap.formalCharge !== 0) {
+        pairs.push([ap.index, ap.formalCharge]);
+      }
+    });
+    var lines = [];
+    for (var i = 0; i < pairs.length; i += 8) {
+      var nCharges = Math.min(8, pairs.length - i);
+      var s = sprintf('M  CHG%3i', nCharges);
+      for (var j = i; j < i + nCharges; j++) {
+        s += sprintf(' %3i %3i', pairs[j][0] + 1, pairs[j][1]);
+      }
+      lines.push(s);
+    }
+    return lines
+  };
+
+  SdfWriter.prototype.formatAtom = function formatAtom (ap) {
+    var charge = 0;
+    if (ap.formalCharge != null && ap.formalCharge !== 0) {
+      charge = 4 - ap.formalCharge;
+    }
+    var line = sprintf(
+      AtomLine, ap.x, ap.y, ap.z, ap.element, charge
+    );
+    if (line.length !== 48) { throw new Error('Incompatible atom for sdf format') }
+
+    return line
+  };
+
+  SdfWriter.prototype.formatBond = function formatBond (bp) {
+    return sprintf(
+      BondFormat,
+      bp.atomIndex1 + 1,
+      bp.atomIndex2 + 1,
+      bp.bondOrder)
+  };
+
+  SdfWriter.prototype._writeRecords = function _writeRecords () {
+    this._records.length = 0;
+    this._writeHeader();
+    this._writeCTab();
+    this._writeFooter();
+  };
+
+  SdfWriter.prototype._writeHeader = function _writeHeader () {
+    this._records.push(this.idString, this.titleString, '');
+  };
+
+  SdfWriter.prototype._writeCTab = function _writeCTab () {
+    var this$1 = this;
+
+    this._records.push(this.countsString);
+    this.structure.eachAtom(function (ap) {
+      this$1._records.push(this$1.formatAtom(ap));
+    });
+    this.structure.eachBond(function (bp) {
+      this$1._records.push(this$1.formatBond(bp));
+    });
+    this.chargeLines.forEach(function (line) {
+      this$1._records.push(line);
+    });
+    this._records.push('M  END');
+  };
+
+  SdfWriter.prototype._writeFooter = function _writeFooter () {
+    this._records.push('$$$$');
+  };
+
+  SdfWriter.prototype.getData = function getData () {
+    this._writeRecords();
+    return this._records.join('\n')
+  };
+
+  Object.defineProperties( SdfWriter.prototype, prototypeAccessors );
+
+  return SdfWriter;
 }(Writer));
 
 /**
@@ -52241,7 +52368,7 @@ var MouseObserver = function MouseObserver (domElement, params) {
 
   this.hoverTimeout = defaults(p.hoverTimeout, 50);
   this.handleScroll = defaults(p.handleScroll, true);
-  this.doubleClickSpeed = defaults(p.doubleClickSpeed, 200);
+  this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500);
 
   this.domElement = domElement;
 
@@ -52375,12 +52502,8 @@ MouseObserver.prototype.setParameters = function setParameters (params) {
 MouseObserver.prototype._listen = function _listen () {
   var now = window.performance.now();
   var cp = this.canvasPosition;
-  if (this.clickPending && now - this.lastClicked > this.doubleClickSpeed) {
-    this.signals.clicked.dispatch(cp.x, cp.y);
-    this.clickPending = false;
-    this.which = undefined;
-    this.buttons = undefined;
-    this.pressed = undefined;
+  if (this.doubleClickPending && now - this.lastClicked > this.doubleClickSpeed) {
+    this.doubleClickPending = false;
   }
   if (now - this.lastMoved > this.hoverTimeout) {
     this.moving = false;
@@ -52488,21 +52611,18 @@ MouseObserver.prototype._onMouseup = function _onMouseup (event) {
   var cp = this.canvasPosition;
   if (this._distance() < 4) {
     this.lastClicked = window.performance.now();
-    if (this.clickPending && this.prevClickCP.distanceTo(cp) < 4) {
+    if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {
       this.signals.doubleClicked.dispatch(cp.x, cp.y);
-      this.clickPending = false;
-      this.which = undefined;
-      this.buttons = undefined;
-      this.pressed = undefined;
+      this.doubleClickPending = false;
     } else {
-      this.clickPending = true;
+      this.signals.clicked.dispatch(cp.x, cp.y);
+      this.doubleClickPending = true;
     }
     this.prevClickCP.copy(cp);
-  } else {
-    this.which = undefined;
-    this.buttons = undefined;
-    this.pressed = undefined;
   }
+  this.which = undefined;
+  this.buttons = undefined;
+  this.pressed = undefined;
   // if (this._distance() > 3 || event.which === RightMouseButton) {
   // this.signals.dropped.dispatch();
   // }
@@ -57057,7 +57177,7 @@ var DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ];
 var PurinBases = [ 'A', 'G', 'DA', 'DG' ];
 
 var WaterNames = [
-  'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4'
+  'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4', 'SPC'
 ];
 
 // all chemical components with the word "ion" in their name, Sep 2016
@@ -64444,7 +64564,7 @@ var AtomProxy = function AtomProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$19 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {},partialCharge: {} };
+var prototypeAccessors$19 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {},partialCharge: {},formalCharge: {} };
 
 /**
  * @type {BondHash}
@@ -64675,6 +64795,19 @@ prototypeAccessors$19.partialCharge.get = function () {
 prototypeAccessors$19.partialCharge.set = function (value) {
   if (this.atomStore.partialCharge) {
     this.atomStore.partialCharge[ this.index ] = value;
+  }
+};
+
+/**
+ * Formal charge
+ * @type {Integer|null}
+ */
+prototypeAccessors$19.formalCharge.get = function () {
+  return this.atomStore.formalCharge ? this.atomStore.formalCharge[ this.index ] : null
+};
+prototypeAccessors$19.formalCharge.set = function (value) {
+  if (this.atomStore.formalCharge) {
+    this.atomStore.formalCharge[ this.index ] = value;
   }
 };
 
@@ -66092,14 +66225,14 @@ ChainProxy.prototype.eachPolymer = function eachPolymer (callback, selection) {
     rp1.index = rp2.index;
     rp2.index = i;
 
+    var bbType1 = first ? rp1.backboneEndType : rp1.backboneType;
+    var bbType2 = rp2.backboneType;
+
     if (first) {
       rStartIndex = rp1.index;
       first = false;
     }
     rNextIndex = rp2.index;
-
-    var bbType1 = first ? rp1.backboneEndType : rp1.backboneType;
-    var bbType2 = rp2.backboneType;
 
     if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
       ap1.index = rp1.backboneEndAtomIndex;
@@ -66117,8 +66250,8 @@ ChainProxy.prototype.eachPolymer = function eachPolymer (callback, selection) {
     }
 
     if (!ap1 || !ap2 || !ap1.connectedTo(ap2) ||
-              (test && (!test(rp1) || !test(rp2)))
-          ) {
+      (test && (!test(rp1) || !test(rp2)))
+    ) {
       if (rp1.index - rStartIndex > 1) {
         // console.log("FOO2",rStartIndex, rp1.index)
         callback(new Polymer(structure, rStartIndex, rp1.index));
@@ -66135,7 +66268,7 @@ ChainProxy.prototype.eachPolymer = function eachPolymer (callback, selection) {
   }
 };
 
-  //
+//
 
 ChainProxy.prototype.qualifiedName = function qualifiedName () {
   var name = ':' + this.chainname + '/' + this.modelIndex;
@@ -90219,6 +90352,7 @@ var SdfParser = (function (StructureParser$$1) {
     var atomMap = s.atomMap;
     var atomStore = s.atomStore;
     atomStore.resize(Math.round(this.streamer.data.length / 50));
+    atomStore.addField('formalCharge', 1, 'int8');
 
     var ap1 = s.getAtomProxy();
     var ap2 = s.getAtomProxy();
@@ -90292,6 +90426,7 @@ var SdfParser = (function (StructureParser$$1) {
           atomStore.y[ idx ] = y;
           atomStore.z[ idx ] = z;
           atomStore.serial[ idx ] = idx;
+          atomStore.formalCharge[ idx ] = 0;
 
           sb.addAtom(modelIdx, '', '', 'HET', 1, 1);
 
@@ -90305,7 +90440,14 @@ var SdfParser = (function (StructureParser$$1) {
           var order = parseInt(line.substr(6, 3));
 
           s.bondStore.addBond(ap1, ap2, order);
-
+        } else if (line.match(/M {2}CHG/)) {
+          var chargeCount = parseInt(line.substr(6, 3));
+          for (var ci = 0, coffset = 10; ci < chargeCount; ++ci, coffset += 8) {
+            var aToken = parseInt(line.substr(coffset, 3));
+            var atomIdx = aToken - 1 + modelAtomIdxStart;
+            var cToken = parseInt(line.substr(coffset + 4, 3));
+            atomStore.formalCharge[ atomIdx ] = cToken;
+          }
         // eslint-disable-next-line no-cond-assign
         } else if (mItem = line.match(reItem)) {
           currentItem = mItem[ 1 ];
@@ -98182,7 +98324,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-15";
+var version$1 = "0.10.5-16";
 
 /**
  * @file Version
@@ -98231,5 +98373,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
