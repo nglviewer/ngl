@@ -234,14 +234,14 @@ class ChainProxy {
       rp1.index = rp2.index
       rp2.index = i
 
+      var bbType1 = first ? rp1.backboneEndType : rp1.backboneType
+      var bbType2 = rp2.backboneType
+
       if (first) {
         rStartIndex = rp1.index
         first = false
       }
       rNextIndex = rp2.index
-
-      var bbType1 = first ? rp1.backboneEndType : rp1.backboneType
-      var bbType2 = rp2.backboneType
 
       if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
         ap1.index = rp1.backboneEndAtomIndex
@@ -259,8 +259,8 @@ class ChainProxy {
       }
 
       if (!ap1 || !ap2 || !ap1.connectedTo(ap2) ||
-                (test && (!test(rp1) || !test(rp2)))
-            ) {
+        (test && (!test(rp1) || !test(rp2)))
+      ) {
         if (rp1.index - rStartIndex > 1) {
           // console.log("FOO2",rStartIndex, rp1.index)
           callback(new Polymer(structure, rStartIndex, rp1.index))
@@ -277,7 +277,7 @@ class ChainProxy {
     }
   }
 
-    //
+  //
 
   qualifiedName () {
     var name = ':' + this.chainname + '/' + this.modelIndex

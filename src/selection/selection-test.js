@@ -287,7 +287,7 @@ function makeResidueTest (selection, residueOnly) {
       if (s.element !== undefined) return true
       if (s.altloc !== undefined) return true
       return false
-    }, selection)
+    })
   }
   return makeTest(selection, residueTestFn)
 }
