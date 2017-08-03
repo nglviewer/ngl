@@ -1459,7 +1459,11 @@ NGL.StructureComponentWidget = function (component, stage) {
     componentPanel.setMenuDisplay('none')
 
     // TODO factor list of extensions out
-    var remoteTrajExt = [ 'xtc', 'trr', 'dcd', 'ncdf', 'nc' ]
+    var remoteTrajExt = [
+        'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
+        'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
+        'arc', 'tng', 'trj', 'trz'
+        ]
     var datasource = NGL.DatasourceRegistry.listing
     var dirWidget
 
