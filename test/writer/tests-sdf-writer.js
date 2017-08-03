@@ -11,15 +11,14 @@ function rtrim (s) { return s.replace(/\s+$/, '') }
 describe('writer/sdf-writer', function () {
   let lines, structure
 
-  before(function (done) {
+  before(function () {
     const file = path.join(__dirname, '/../data/01W_ideal.sdf')
     const str = fs.readFileSync(file, 'utf-8')
     lines = str.split('\n')
     const streamer = new StringStreamer(str)
     const sdfParser = new SdfParser(streamer)
-    sdfParser.parse().then(function (s) {
+    return sdfParser.parse().then(function (s) {
       structure = s
-      done()
     })
   })
 
