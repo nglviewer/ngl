@@ -13,7 +13,7 @@ describe('parser/cube-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cubeParser = new CubeParser(streamer)
-      cubeParser.parse(function (volume) {
+      return cubeParser.parse().then(function (volume) {
         assert.strictEqual(volume.nx, 40)
         assert.strictEqual(volume.ny, 40)
         assert.strictEqual(volume.nz, 40)

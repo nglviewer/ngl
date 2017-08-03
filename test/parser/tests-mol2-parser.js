@@ -13,7 +13,7 @@ describe('parser/mol2-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var mol2Parser = new Mol2Parser(streamer)
-      mol2Parser.parse(function (structure) {
+      return mol2Parser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 26)
         assert.strictEqual(structure.bondCount, 26)
       })

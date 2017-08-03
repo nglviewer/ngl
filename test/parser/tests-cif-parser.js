@@ -13,7 +13,7 @@ describe('parser/cif-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cifParser = new CifParser(streamer)
-      cifParser.parse(function (structure) {
+      return cifParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 327)
         assert.strictEqual(structure.bondCount, 337)
         assert.strictEqual(structure.residueStore.count, 46)
@@ -65,6 +65,7 @@ describe('parser/cif-parser', function () {
         assert.strictEqual(structure.residueMap.list.length, 16)
         assert.strictEqual(structure.entityList.length, 1)
         assert.ok(structure.spatialHash !== undefined)
+        assert.strictEqual(1, 0)
       })
     })
 
@@ -73,7 +74,7 @@ describe('parser/cif-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var cifParser = new CifParser(streamer)
-      cifParser.parse(function (structure) {
+      return cifParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 352)
         assert.strictEqual(structure.bondCount, 364)
       })

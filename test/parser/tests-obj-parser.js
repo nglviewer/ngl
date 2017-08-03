@@ -13,7 +13,7 @@ describe('parser/obj-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var objParser = new ObjParser(streamer)
-      objParser.parse(function (surface) {
+      return objParser.parse().then(function (surface) {
         assert.strictEqual(surface.size, 36)
         assert.strictEqual(surface.position.length, 108)
         assert.strictEqual(surface.normal.length, 108)

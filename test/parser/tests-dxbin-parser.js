@@ -13,7 +13,7 @@ describe('parser/dxbin-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var dxbinParser = new DxbinParser(streamer)
-      dxbinParser.parse(function (volume) {
+      return dxbinParser.parse().then(function (volume) {
         assert.strictEqual(volume.nx, 40)
         assert.strictEqual(volume.ny, 40)
         assert.strictEqual(volume.nz, 40)

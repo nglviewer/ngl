@@ -13,7 +13,7 @@ describe('parser/ply-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var plyParser = new PlyParser(streamer)
-      plyParser.parse(function (surface) {
+      return plyParser.parse().then(function (surface) {
         assert.strictEqual(surface.size, 36)
         assert.strictEqual(surface.position.length, 108)
         assert.strictEqual(surface.normal.length, 108)

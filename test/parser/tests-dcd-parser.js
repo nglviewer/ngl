@@ -13,7 +13,7 @@ describe('parser/dcd-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var dcdParser = new DcdParser(streamer)
-      dcdParser.parse(function (frames) {
+      return dcdParser.parse().then(function (frames) {
         assert.strictEqual(frames.coordinates.length, 256)
         assert.strictEqual(frames.coordinates[ 0 ].length, 126)
         assert.strictEqual(frames.boxes.length, 0)

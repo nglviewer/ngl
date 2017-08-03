@@ -14,7 +14,7 @@ describe('parser/text-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var textParser = new TextParser(streamer)
-      textParser.parse(function (text) {
+      return textParser.parse().then(function (text) {
         assert.strictEqual(sampleText, text.data, 'Passed!')
       })
     })

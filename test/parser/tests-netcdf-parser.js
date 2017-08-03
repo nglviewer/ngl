@@ -13,7 +13,7 @@ describe('parser/netcdf-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var netcdfParser = new NetcdfParser(streamer)
-      netcdfParser.parse(function (netcdf) {
+      return netcdfParser.parse().then(function (netcdf) {
         var h = netcdf.data.header
         assert.strictEqual(2, h.version, 'Passed!')
         assert.deepEqual([

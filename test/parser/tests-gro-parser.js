@@ -13,7 +13,7 @@ describe('parser/gro-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var groParser = new GroParser(streamer)
-      groParser.parse(function (structure) {
+      return groParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 327)
         assert.strictEqual(structure.bondCount, 334)
       })
