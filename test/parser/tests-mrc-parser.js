@@ -13,7 +13,7 @@ describe('parser/mrc-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var mrcParser = new MrcParser(streamer)
-      mrcParser.parse(function (volume) {
+      return mrcParser.parse().then(function (volume) {
         assert.strictEqual(volume.nx, 69)
         assert.strictEqual(volume.ny, 100)
         assert.strictEqual(volume.nz, 59)
@@ -27,7 +27,7 @@ describe('parser/mrc-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var mrcParser = new MrcParser(streamer)
-      mrcParser.parse(function (volume) {
+      return mrcParser.parse().then(function (volume) {
         assert.strictEqual(volume.nx, 69)
         assert.strictEqual(volume.ny, 100)
         assert.strictEqual(volume.nz, 59)

@@ -13,7 +13,7 @@ describe('parser/csv-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var csvParser = new CsvParser(streamer)
-      csvParser.parse(function (csv) {
+      return csvParser.parse().then(function (csv) {
         assert.strictEqual('col1row1Value', csv.data[ 0 ][ 0 ], 'Passed!')
         assert.strictEqual('col2row3Value', csv.data[ 2 ][ 1 ], 'Passed!')
       })

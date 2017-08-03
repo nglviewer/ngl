@@ -13,7 +13,7 @@ describe('parser/mmtf-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var mmtfParser = new MmtfParser(streamer)
-      mmtfParser.parse(function (structure) {
+      return mmtfParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 327)
         assert.strictEqual(structure.bondCount, 337)
         assert.strictEqual(structure.residueStore.count, 46)

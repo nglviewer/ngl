@@ -23,7 +23,7 @@ describe('parser/pdb-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      return pdbParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 327)
         assert.strictEqual(structure.bondCount, 337)
         assert.strictEqual(structure.residueStore.count, 46)
@@ -85,7 +85,7 @@ describe('parser/pdb-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      return pdbParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 2904)
         assert.strictEqual(structure.bondCount, 2968)
         assert.strictEqual(structure.residueStore.count, 373)
@@ -119,7 +119,7 @@ describe('parser/pdb-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
-      pdbParser.parse(function (structure) {
+      return pdbParser.parse().then(function (structure) {
         var bs = structure.bondStore
         assert.strictEqual(bs.atomIndex1[ 0 ], 0)
         assert.strictEqual(bs.atomIndex2[ 0 ], 1)

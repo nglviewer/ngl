@@ -13,7 +13,7 @@ describe('parser/xml-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var xmlParser = new XmlParser(streamer)
-      xmlParser.parse(function (xml) {
+      return xmlParser.parse().then(function (xml) {
         var descr = xml.data.root
         var pdb = descr.children[ 0 ]
         var id = pdb.attributes.structureId

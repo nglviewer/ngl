@@ -13,7 +13,7 @@ describe('parser/msgpack-parser', function () {
       var bin = fs.readFileSync(file)
       var streamer = new BinaryStreamer(bin)
       var msgpackParser = new MsgpackParser(streamer)
-      msgpackParser.parse(function (msgpack) {
+      return msgpackParser.parse().then(function (msgpack) {
         var d = msgpack.data
         assert.strictEqual(1.5, d.resolution, 'Passed!')
         assert.deepEqual(['X-RAY DIFFRACTION'], d.experimentalMethods)

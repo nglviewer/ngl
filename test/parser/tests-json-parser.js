@@ -13,7 +13,7 @@ describe('parser/json-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var jsonParser = new JsonParser(streamer, { string: true })
-      return jsonParser.parse(function (json) {
+      return jsonParser.parse().then(function (json) {
         assert.strictEqual(42, json.data.foo, 'Passed!')
       })
     })

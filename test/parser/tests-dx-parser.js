@@ -13,7 +13,7 @@ describe('parser/dx-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var dxParser = new DxParser(streamer)
-      dxParser.parse(function (volume) {
+      return dxParser.parse().then(function (volume) {
         assert.strictEqual(volume.nx, 40)
         assert.strictEqual(volume.ny, 40)
         assert.strictEqual(volume.nz, 40)

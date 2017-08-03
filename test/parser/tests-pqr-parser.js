@@ -13,7 +13,7 @@ describe('parser/pqr-parser', function () {
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pqrParser = new PqrParser(streamer)
-      pqrParser.parse(function (structure) {
+      return pqrParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 346)
         assert.strictEqual(structure.bondCount, 330)
       })
