@@ -111,7 +111,7 @@ class MouseObserver {
 
     this.hoverTimeout = defaults(p.hoverTimeout, 50)
     this.handleScroll = defaults(p.handleScroll, true)
-    this.doubleClickSpeed = defaults(p.doubleClickSpeed, 200)
+    this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500)
 
     this.domElement = domElement
 
@@ -243,12 +243,8 @@ class MouseObserver {
   _listen () {
     const now = window.performance.now()
     const cp = this.canvasPosition
-    if (this.clickPending && now - this.lastClicked > this.doubleClickSpeed) {
-      this.signals.clicked.dispatch(cp.x, cp.y)
-      this.clickPending = false
-      this.which = undefined
-      this.buttons = undefined
-      this.pressed = undefined
+    if (this.doubleClickPending && now - this.lastClicked > this.doubleClickSpeed) {
+      this.doubleClickPending = false
     }
     if (now - this.lastMoved > this.hoverTimeout) {
       this.moving = false
@@ -354,21 +350,18 @@ class MouseObserver {
     const cp = this.canvasPosition
     if (this._distance() < 4) {
       this.lastClicked = window.performance.now()
-      if (this.clickPending && this.prevClickCP.distanceTo(cp) < 4) {
+      if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {
         this.signals.doubleClicked.dispatch(cp.x, cp.y)
-        this.clickPending = false
-        this.which = undefined
-        this.buttons = undefined
-        this.pressed = undefined
+        this.doubleClickPending = false
       } else {
-        this.clickPending = true
+        this.signals.clicked.dispatch(cp.x, cp.y)
+        this.doubleClickPending = true
       }
       this.prevClickCP.copy(cp)
-    } else {
-      this.which = undefined
-      this.buttons = undefined
-      this.pressed = undefined
     }
+    this.which = undefined
+    this.buttons = undefined
+    this.pressed = undefined
     // if (this._distance() > 3 || event.which === RightMouseButton) {
     //   this.signals.dropped.dispatch();
     // }
