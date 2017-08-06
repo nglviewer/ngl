@@ -136,6 +136,22 @@ For convenience, there is a [MouseControls](../class/src/controls/mouse-controls
 stage.mouseControls.add("drag-left+right", NGL.MouseActions.zoomDrag);
 ```
 
+The default controls are as follows:
+
+- `scroll` zoom scene
+- `scroll-ctrl` move near clipping plane
+- `scroll-shift` move near clipping plane and far fog
+- `scroll-alt` change isolevel of isosurfaces
+- `drag-right` pan scene
+- `drag-left` rotate scene
+- `drag-middle` zoom scene
+- `drag-shift-right` zoom scene
+- `drag-left+right` zoom scene
+- `drag-ctrl-right` pan hovered component
+- `drag-ctrl-left` rotate hovered component
+- `clickPick-middle` auto view picked component element
+- `hoverPick` show tooltip for hovered component element
+
 
 ### Observer
 
