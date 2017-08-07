@@ -189,6 +189,7 @@ const MouseActionPresets = {
     [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
 
     [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'clickPick-shift-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
   ],
   pymol: [

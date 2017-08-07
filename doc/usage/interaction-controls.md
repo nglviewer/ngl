@@ -142,12 +142,12 @@ The default controls are as follows:
 - `scroll-ctrl` move near clipping plane
 - `scroll-shift` move near clipping plane and far fog
 - `scroll-alt` change isolevel of isosurfaces
-- `drag-right` pan scene
+- `drag-right` pan/translate scene
 - `drag-left` rotate scene
 - `drag-middle` zoom scene
 - `drag-shift-right` zoom scene
 - `drag-left+right` zoom scene
-- `drag-ctrl-right` pan hovered component
+- `drag-ctrl-right` pan/translate hovered component
 - `drag-ctrl-left` rotate hovered component
 - `clickPick-middle` auto view picked component element
 - `hoverPick` show tooltip for hovered component element
