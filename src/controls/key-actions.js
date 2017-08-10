@@ -9,12 +9,21 @@
  */
 class KeyActions {
   /**
-   * Toggle stage spinning
+   * Stage auto view
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static toggleSpin (stage) {
-    stage.toggleSpin()
+  static autoView (stage) {
+    stage.autoView(1000)
+  }
+
+  /**
+   * Toggle stage animations
+   * @param {Stage} stage - the stage
+   * @return {undefined}
+   */
+  static toggleAnimations (stage) {
+    stage.animationControls.toggle()
   }
 
   /**
@@ -27,12 +36,12 @@ class KeyActions {
   }
 
   /**
-   * Toggle stage animations
+   * Toggle stage spinning
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static toggleAnimations (stage) {
-    stage.animationControls.toggle()
+  static toggleSpin (stage) {
+    stage.toggleSpin()
   }
 }
 
@@ -40,7 +49,8 @@ const KeyActionPresets = {
   default: [
     [ 'i', KeyActions.toggleSpin ],
     [ 'k', KeyActions.toggleRock ],
-    [ 'p', KeyActions.toggleAnimations ]
+    [ 'p', KeyActions.toggleAnimations ],
+    [ 'r', KeyActions.autoView ]
   ]
 }
 

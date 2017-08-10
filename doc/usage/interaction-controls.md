@@ -162,6 +162,24 @@ stage.mouseObserver.signals.scroll.add(function (delta) {...});
 ```
 
 
+## Keyboard
+
+### Controls
+
+For convenience, there is a [KeyControls](../class/src/controls/key-controls.js~KeyControls.html) class which is available as a property of the stage: [Stage.keyControls](../class/src/stage/stage.js~Stage.html#instance-member-keyControls) and can be used to bind actions (any user-defined function or predefined methods from the [KeyActions](../class/src/controls/key-actions.js~KeyActions.html) class) to key events.
+
+```
+stage.keyControls.add("r", NGL.KeyActions.autoView);
+```
+
+The default controls are as follows:
+
+- `i` toggle stage spinning
+- `k` toggle stage rocking
+- `p` pause all stage animations
+- `r` reset stage auto view
+
+
 ## Component
 
 Each [Component](../class/src/component/component.js~Component.html) (wrapping a `Structure`, `Surface`, `Volume` or `Shape` object) can be moved independently from the camera using the `.setPosition`, `.setRotation`, `.setScale` methods.
