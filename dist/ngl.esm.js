@@ -54334,6 +54334,7 @@ var MouseActionPresets = {
     [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
 
     [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'clickPick-shift-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
   ],
   pymol: [
@@ -54569,8 +54570,17 @@ MouseControls.prototype.clear = function clear () {
  */
 var KeyActions = function KeyActions () {};
 
-KeyActions.toggleSpin = function toggleSpin (stage) {
-  stage.toggleSpin();
+KeyActions.autoView = function autoView (stage) {
+  stage.autoView(1000);
+};
+
+/**
+ * Toggle stage animations
+ * @param {Stage} stage - the stage
+ * @return {undefined}
+ */
+KeyActions.toggleAnimations = function toggleAnimations (stage) {
+  stage.animationControls.toggle();
 };
 
 /**
@@ -54583,19 +54593,20 @@ KeyActions.toggleRock = function toggleRock (stage) {
 };
 
 /**
- * Toggle stage animations
+ * Toggle stage spinning
  * @param {Stage} stage - the stage
  * @return {undefined}
  */
-KeyActions.toggleAnimations = function toggleAnimations (stage) {
-  stage.animationControls.toggle();
+KeyActions.toggleSpin = function toggleSpin (stage) {
+  stage.toggleSpin();
 };
 
 var KeyActionPresets = {
   default: [
     [ 'i', KeyActions.toggleSpin ],
     [ 'k', KeyActions.toggleRock ],
-    [ 'p', KeyActions.toggleAnimations ]
+    [ 'p', KeyActions.toggleAnimations ],
+    [ 'r', KeyActions.autoView ]
   ]
 };
 
@@ -68129,7 +68140,10 @@ Trajectory.prototype.setStructure = function setStructure (structure) {
 Trajectory.prototype._saveInitialCoords = function _saveInitialCoords () {
     var this$1 = this;
 
-  if (this.frameCache[0]) {
+  if (arrayMin(this.structureCoords) !== 0 || arrayMax$1(this.structureCoords) !== 0) {
+    this.initialCoords = new Float32Array(this.structureCoords);
+    this._makeSuperposeCoords();
+  } else if (this.frameCache[0]) {
     this.initialCoords = new Float32Array(this.frameCache[0]);
     this._makeSuperposeCoords();
   } else {
@@ -98324,7 +98338,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-16";
+var version$1 = "0.10.5-17";
 
 /**
  * @file Version
