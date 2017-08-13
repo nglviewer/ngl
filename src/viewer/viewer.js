@@ -24,7 +24,7 @@ import '../shader/Quad.vert'
 import '../shader/Quad.frag'
 
 import {
-  Debug, Log, Browser, Mobile, WebglErrorMessage,
+  Debug, Log, WebglErrorMessage,
   setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from '../globals.js'
 import { degToRad } from '../math/math-utils.js'
@@ -32,7 +32,8 @@ import Stats from './stats.js'
 import { getShader } from '../shader/shader-utils.js'
 import { JitterVectors } from './viewer-constants.js'
 import {
-  makeImage as _makeImage, sortProjectedPosition, updateMaterialUniforms
+  makeImage as _makeImage, testTextureSupport,
+  sortProjectedPosition, updateMaterialUniforms
 } from './viewer-utils'
 
 import Signal from '../../lib/signals.es6.js'
@@ -125,11 +126,11 @@ function onBeforeRender (renderer, scene, camera, geometry, material/*, group */
  * @param {String|Element} [idOrElement] - dom id or element
  */
 function Viewer (idOrElement) {
-  var signals = {
+  const signals = {
     ticked: new Signal()
   }
 
-  var container
+  let container
   if (typeof idOrElement === 'string') {
     container = document.getElementById(idOrElement)
   } else if (idOrElement instanceof window.Element) {
@@ -138,7 +139,7 @@ function Viewer (idOrElement) {
     container = document.createElement('div')
   }
 
-  var width, height
+  let width, height
   if (container === document.body) {
     width = window.innerWidth || 1
     height = window.innerHeight || 1
@@ -148,44 +149,44 @@ function Viewer (idOrElement) {
     height = box.height || 1
   }
 
-  var rendering, renderPending, lastRenderedPicking, isStill
-  var sampleLevel, cDist, bRadius
+  let rendering, renderPending, lastRenderedPicking, isStill
+  let sampleLevel, cDist, bRadius
 
-  var parameters
+  let parameters
   initParams()
 
-  var stats
+  let stats
   initStats()
 
-  var perspectiveCamera, orthographicCamera, camera
+  let perspectiveCamera, orthographicCamera, camera
   initCamera()
 
-  var scene, pointLight, ambientLight
-  var rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup
+  let scene, pointLight, ambientLight
+  let rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup
   initScene()
 
-  var renderer, supportsHalfFloat
-  var pickingTarget, sampleTarget, holdTarget
-  var compositeUniforms, compositeMaterial, compositeCamera, compositeScene
+  let renderer, supportsHalfFloat
+  let pickingTarget, sampleTarget, holdTarget
+  let compositeUniforms, compositeMaterial, compositeCamera, compositeScene
   if (initRenderer() === false) {
     this.container = container
     Log.error('Viewer: could not initialize renderer')
     return
   }
 
-  var boundingBoxMesh
-  var boundingBox = new Box3()
-  var boundingBoxSize = new Vector3()
-  var boundingBoxLength = 0
+  let boundingBoxMesh
+  const boundingBox = new Box3()
+  const boundingBoxSize = new Vector3()
+  let boundingBoxLength = 0
   initHelper()
 
     // fog & background
   setBackground()
   setFog()
 
-  var distVector = new Vector3()
+  const distVector = new Vector3()
 
-  var info = {
+  const info = {
     memory: {
       programs: 0,
       geometries: 0,
@@ -250,7 +251,7 @@ function Viewer (idOrElement) {
   }
 
   function initRenderer () {
-    var dpr = window.devicePixelRatio
+    const dpr = window.devicePixelRatio
 
     try {
       renderer = new WebGLRenderer({
@@ -267,9 +268,9 @@ function Viewer (idOrElement) {
     renderer.autoClear = false
     renderer.sortObjects = true
 
-    // var gl = renderer.getContext();
-    // console.log( gl.getContextAttributes().antialias );
-    // console.log( gl.getParameter(gl.SAMPLES) );
+    const gl = renderer.getContext()
+    // console.log(gl.getContextAttributes().antialias)
+    // console.log(gl.getParameter(gl.SAMPLES))
 
     setExtensionFragDepth(renderer.extensions.get('EXT_frag_depth'))
     renderer.extensions.get('OES_element_index_uint')
@@ -277,19 +278,22 @@ function Viewer (idOrElement) {
     setSupportsReadPixelsFloat(
       (renderer.extensions.get('OES_texture_float') &&
         renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (Browser === 'Chrome' &&
-        renderer.extensions.get('OES_texture_float'))
+      (renderer.extensions.get('OES_texture_float') &&
+        testTextureSupport(gl, gl.FLOAT))
     )
 
     container.appendChild(renderer.domElement)
 
-    var dprWidth = width * dpr
-    var dprHeight = height * dpr
+    const dprWidth = width * dpr
+    const dprHeight = height * dpr
 
     // picking texture
 
     renderer.extensions.get('OES_texture_float')
-    supportsHalfFloat = renderer.extensions.get('OES_texture_half_float')
+    supportsHalfFloat = (
+      renderer.extensions.get('OES_texture_half_float') &&
+      testTextureSupport(gl, 0x8D61)
+    )
     renderer.extensions.get('WEBGL_color_buffer_float')
 
     pickingTarget = new WebGLRenderTarget(
@@ -321,11 +325,8 @@ function Viewer (idOrElement) {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        // problems on mobile so use UnsignedByteType there
-        // see https://github.com/arose/ngl/issues/191
-        type: Mobile ? UnsignedByteType : (
-          supportsHalfFloat ? HalfFloatType
-            : (SupportsReadPixelsFloat ? FloatType : UnsignedByteType)
+        type: supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
         )
       }
     )
