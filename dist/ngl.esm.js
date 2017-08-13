@@ -51157,6 +51157,21 @@ function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
   });
 }
 
+function testTextureSupport (gl, type) {
+  // https://stackoverflow.com/questions/28827511/webgl-ios-render-to-floating-point-texture
+  var tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, type, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  var fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  return status === gl.FRAMEBUFFER_COMPLETE
+}
+
 /**
  * @file Viewer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
@@ -51393,9 +51408,9 @@ function Viewer (idOrElement) {
     renderer.autoClear = false;
     renderer.sortObjects = true;
 
-    // var gl = renderer.getContext();
-    // console.log( gl.getContextAttributes().antialias );
-    // console.log( gl.getParameter(gl.SAMPLES) );
+    var gl = renderer.getContext();
+    // console.log(gl.getContextAttributes().antialias)
+    // console.log(gl.getParameter(gl.SAMPLES))
 
     setExtensionFragDepth(renderer.extensions.get('EXT_frag_depth'));
     renderer.extensions.get('OES_element_index_uint');
@@ -51403,8 +51418,8 @@ function Viewer (idOrElement) {
     setSupportsReadPixelsFloat(
       (renderer.extensions.get('OES_texture_float') &&
         renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (Browser === 'Chrome' &&
-        renderer.extensions.get('OES_texture_float'))
+      (renderer.extensions.get('OES_texture_float') &&
+        testTextureSupport(gl, gl.FLOAT))
     );
 
     container.appendChild(renderer.domElement);
@@ -51415,7 +51430,10 @@ function Viewer (idOrElement) {
     // picking texture
 
     renderer.extensions.get('OES_texture_float');
-    supportsHalfFloat = renderer.extensions.get('OES_texture_half_float');
+    supportsHalfFloat = (
+      renderer.extensions.get('OES_texture_half_float') &&
+      testTextureSupport(gl, 0x8D61)
+    );
     renderer.extensions.get('WEBGL_color_buffer_float');
 
     pickingTarget = new WebGLRenderTarget(
@@ -51447,11 +51465,8 @@ function Viewer (idOrElement) {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        // problems on mobile so use UnsignedByteType there
-        // see https://github.com/arose/ngl/issues/191
-        type: Mobile ? UnsignedByteType : (
-          supportsHalfFloat ? HalfFloatType
-            : (SupportsReadPixelsFloat ? FloatType : UnsignedByteType)
+        type: supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
         )
       }
     );
@@ -98338,7 +98353,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-17";
+var version$1 = "0.10.5-18";
 
 /**
  * @file Version
