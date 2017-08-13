@@ -662,7 +662,12 @@ NGL.MenubarExamplesWidget = function (stage) {
   xhr.open('GET', NGL.examplesListUrl)
   xhr.responseType = 'json'
   xhr.onload = function (e) {
-    this.response.sort().forEach(function (name) {
+    var response = this.response
+    if (typeof response === 'string') {
+      // for ie11
+      response = JSON.parse(response)
+    }
+    response.sort().forEach(function (name) {
       var option = createOption(name, function () {
         stage.loadFile(NGL.examplesScriptUrl + name + '.js')
       })
