@@ -214,6 +214,15 @@ class Component {
   }
 
   /**
+   * Iterator over each annotation and executing the callback
+   * @param  {Function} callback - function to execute
+   * @return {undefined}
+   */
+  eachAnnotation (callback) {
+    this.annotationList.slice().forEach(callback)
+  }
+
+  /**
    * Remove the give annotation from the component
    * @param {Annotation} annotation - the annotation to remove
    * @return {undefined}
@@ -231,9 +240,7 @@ class Component {
    * @return {undefined}
    */
   removeAllAnnotations () {
-    this.annotationList.forEach(function (annotation) {
-      annotation.dispose()
-    })
+    this.eachAnnotation(annotation => annotation.dispose())
     this.annotationList.length = 0
   }
 
@@ -276,6 +283,15 @@ class Component {
   }
 
   /**
+   * Iterator over each representation and executing the callback
+   * @param  {Function} callback - function to execute
+   * @return {undefined}
+   */
+  eachRepresentation (callback) {
+    this.reprList.slice().forEach(callback)
+  }
+
+  /**
    * Removes a representation component
    * @param {RepresentationComponent} repr - the representation component
    * @return {undefined}
@@ -290,10 +306,7 @@ class Component {
   }
 
   updateRepresentations (what) {
-    this.reprList.forEach(function (repr) {
-      repr.update(what)
-    })
-
+    this.reprList.forEach(repr => repr.update(what))
     this.stage.viewer.requestRender()
   }
 
@@ -302,9 +315,7 @@ class Component {
    * @return {undefined}
    */
   removeAllRepresentations () {
-    this.reprList.slice(0).forEach(function (repr) {
-      repr.dispose()
-    })
+    this.eachRepresentation(repr => repr.dispose())
   }
 
   dispose () {
@@ -325,13 +336,8 @@ class Component {
   setVisibility (value) {
     this.visible = value
 
-    this.eachRepresentation(function (repr) {
-      repr.updateVisibility()
-    })
-
-    this.annotationList.forEach(function (annotation) {
-      annotation.updateVisibility()
-    })
+    this.eachRepresentation(repr => repr.updateVisibility())
+    this.eachAnnotation(annotation => annotation.updateVisibility())
 
     this.signals.visibilityChanged.dispatch(value)
 
@@ -393,10 +399,6 @@ class Component {
       this.getZoom(),
       defaults(duration, 0)
     )
-  }
-
-  eachRepresentation (callback) {
-    this.reprList.forEach(callback)
   }
 }
 
