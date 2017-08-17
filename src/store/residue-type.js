@@ -19,15 +19,15 @@ import {
  * Residue type
  */
 class ResidueType {
-    /**
-     * @param {Structure} structure - the structure object
-     * @param {String} resname - name of the residue
-     * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
-     *                                 to the atoms of the residue
-     * @param {Boolean} hetero - hetero flag
-     * @param {String} chemCompType - chemical component type
-     * @param {Object} [bonds] - TODO
-     */
+  /**
+   * @param {Structure} structure - the structure object
+   * @param {String} resname - name of the residue
+   * @param {Array} atomTypeIdList - list of IDs of {@link AtomType}s corresponding
+   *                                 to the atoms of the residue
+   * @param {Boolean} hetero - hetero flag
+   * @param {String} chemCompType - chemical component type
+   * @param {Object} [bonds] - TODO
+   */
   constructor (structure, resname, atomTypeIdList, hetero, chemCompType, bonds) {
     this.structure = structure
 
@@ -72,7 +72,7 @@ class ResidueType {
     }
     this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1
 
-        // Sparse array containing the reference atom index for each bond.
+    // Sparse array containing the reference atom index for each bond.
     this.bondReferenceAtomIndices = []
   }
 
@@ -142,8 +142,8 @@ class ResidueType {
       return ChemCompProtein.includes(this.chemCompType)
     } else {
       return (
-                this.hasAtomWithName('CA', 'C', 'N') ||
-                AA3.includes(this.resname)
+        this.hasAtomWithName('CA', 'C', 'N') ||
+        AA3.includes(this.resname)
       )
     }
   }
@@ -151,9 +151,9 @@ class ResidueType {
   isCg () {
     const backboneType = this.backboneType
     return (
-            backboneType === CgProteinBackboneType ||
-            backboneType === CgRnaBackboneType ||
-            backboneType === CgDnaBackboneType
+      backboneType === CgProteinBackboneType ||
+      backboneType === CgRnaBackboneType ||
+      backboneType === CgDnaBackboneType
     )
   }
 
@@ -166,11 +166,11 @@ class ResidueType {
       return ChemCompRna.includes(this.chemCompType)
     } else {
       return (
-                this.hasAtomWithName(
-                    [ 'P', "O3'", 'O3*' ], [ "C4'", 'C4*' ], [ "O2'", 'O2*', "F2'", 'F2*' ]
-                ) ||
-                (RnaBases.includes(this.resname) &&
-                    (this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])))
+        this.hasAtomWithName(
+          [ 'P', "O3'", 'O3*' ], [ "C4'", 'C4*' ], [ "O2'", 'O2*', "F2'", 'F2*' ]
+        ) ||
+        (RnaBases.includes(this.resname) &&
+          (this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])))
       )
     }
   }
@@ -180,9 +180,9 @@ class ResidueType {
       return ChemCompDna.includes(this.chemCompType)
     } else {
       return (
-                (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
-                    !this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])) ||
-                DnaBases.includes(this.resname)
+        (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
+          !this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])) ||
+        DnaBases.includes(this.resname)
       )
     }
   }
@@ -211,85 +211,85 @@ class ResidueType {
     const atomnames = ResidueTypeAtoms[ type ]
     if (position === -1) {
       return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneEnd,
-                atomnames.direction1,
-                atomnames.direction2
-            )
+        atomnames.trace,
+        atomnames.backboneEnd,
+        atomnames.direction1,
+        atomnames.direction2
+      )
     } else if (position === 0) {
       return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.direction1,
-                atomnames.direction2
-            )
+        atomnames.trace,
+        atomnames.direction1,
+        atomnames.direction2
+      )
     } else if (position === 1) {
       return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneStart,
-                atomnames.direction1,
-                atomnames.direction2
-            )
+        atomnames.trace,
+        atomnames.backboneStart,
+        atomnames.direction1,
+        atomnames.direction2
+      )
     } else {
       return this.hasAtomWithName(
-                atomnames.trace,
-                atomnames.backboneStart,
-                atomnames.backboneEnd,
-                atomnames.direction1,
-                atomnames.direction2
-            )
+        atomnames.trace,
+        atomnames.backboneStart,
+        atomnames.backboneEnd,
+        atomnames.direction1,
+        atomnames.direction2
+      )
     }
   }
 
   hasProteinBackbone (position) {
     return (
-            this.isProtein() &&
-            this.hasBackboneAtoms(position, ProteinBackboneType)
+      this.isProtein() &&
+      this.hasBackboneAtoms(position, ProteinBackboneType)
     )
   }
 
   hasRnaBackbone (position) {
     return (
-            this.isRna() &&
-            this.hasBackboneAtoms(position, RnaBackboneType)
+      this.isRna() &&
+      this.hasBackboneAtoms(position, RnaBackboneType)
     )
   }
 
   hasDnaBackbone (position) {
     return (
-            this.isDna() &&
-            this.hasBackboneAtoms(position, DnaBackboneType)
+      this.isDna() &&
+      this.hasBackboneAtoms(position, DnaBackboneType)
     )
   }
 
   hasCgProteinBackbone (position) {
     return (
-            this.isProtein() &&
-            this.hasBackboneAtoms(position, CgProteinBackboneType)
+      this.isProtein() &&
+      this.hasBackboneAtoms(position, CgProteinBackboneType)
     )
   }
 
   hasCgRnaBackbone (position) {
     return (
-            this.isRna() &&
-            this.hasBackboneAtoms(position, CgRnaBackboneType)
+      this.isRna() &&
+      this.hasBackboneAtoms(position, CgRnaBackboneType)
     )
   }
 
   hasCgDnaBackbone (position) {
     return (
-            this.isDna() &&
-            this.hasBackboneAtoms(position, CgDnaBackboneType)
+      this.isDna() &&
+      this.hasBackboneAtoms(position, CgDnaBackboneType)
     )
   }
 
   hasBackbone (position) {
     return (
-            this.hasProteinBackbone(position) ||
-            this.hasRnaBackbone(position) ||
-            this.hasDnaBackbone(position) ||
-            this.hasCgProteinBackbone(position) ||
-            this.hasCgRnaBackbone(position) ||
-            this.hasCgDnaBackbone(position)
+      this.hasProteinBackbone(position) ||
+      this.hasRnaBackbone(position) ||
+      this.hasDnaBackbone(position) ||
+      this.hasCgProteinBackbone(position) ||
+      this.hasCgRnaBackbone(position) ||
+      this.hasCgDnaBackbone(position)
     )
   }
 
@@ -347,10 +347,10 @@ class ResidueType {
     return this.bondGraph
   }
 
-    /**
-     * @return {Object} bondGraph - represents the bonding in this
-     *   residue: { ai1: [ ai2, ai3, ...], ...}
-     */
+  /**
+   * @return {Object} bondGraph - represents the bonding in this
+   *   residue: { ai1: [ ai2, ai3, ...], ...}
+   */
   calculateBondGraph () {
     const bondGraph = this.bondGraph = {}
     const bonds = this.getBonds()
@@ -370,22 +370,22 @@ class ResidueType {
     }
   }
 
-    /**
-     * Calculates ring atoms within a residue
-     * Adaptation of RDKit's fastFindRings method by G. Landrum:
-     * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
-     *
-     * @param {ResidueProxy} r   - The residue for which we are to find rings
-     * @return {Object} ringData - contains ringFlags (1/0) and rings
-     *                             (nested array)
-     *
-     * Note this method finds all ring atoms, but in cases of fused or
-     * connected rings will not detect all rings.
-     * The resulting rings object will provide 'a ring' for each ring atom
-     * but which ring depends on atom order and connectivity
-     *
-     * @return {undefined}
-     */
+  /**
+   * Calculates ring atoms within a residue
+   * Adaptation of RDKit's fastFindRings method by G. Landrum:
+   * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+   *
+   * @param {ResidueProxy} r   - The residue for which we are to find rings
+   * @return {Object} ringData - contains ringFlags (1/0) and rings
+   *                             (nested array)
+   *
+   * Note this method finds all ring atoms, but in cases of fused or
+   * connected rings will not detect all rings.
+   * The resulting rings object will provide 'a ring' for each ring atom
+   * but which ring depends on atom order and connectivity
+   *
+   * @return {undefined}
+   */
   calculateRings () {
     const bondGraph = this.getBondGraph()
 
@@ -395,28 +395,28 @@ class ResidueType {
     const visited = []
 
     function DFS (i, connected, from) {
-            // Sanity check
+      // Sanity check
       if (state[ i ]) { throw new Error('DFS revisited atom') }
       state[ i ] = 1
       visited.push(i)
       var nc = connected.length
 
-            // For each neighbour
+      // For each neighbour
       for (var ci = 0; ci < nc; ++ci) {
         var j = connected[ci]
 
-                // If unvisited:
+        // If unvisited:
         if (state[ j ] === 0) {
-                    // And has >= 2 neighbours:
+          // And has >= 2 neighbours:
           if (bondGraph[ j ] && bondGraph[ j ].length >= 2) {
-                        // Recurse
+            // Recurse
             DFS(j, bondGraph[ j ], i)
           } else {
-                        // Not interesting
+            // Not interesting
             state[ j ] = 2
           }
 
-                // Else unclosed ring:
+        // Else unclosed ring:
         } else if (state[ j ] === 1) {
           if (from && from !== j) {
             var ring = [ j ]
@@ -443,7 +443,7 @@ class ResidueType {
 
       const connected = bondGraph[ i ]
       if (!connected || connected.length < 2) {
-                // Finished
+        // Finished
         state[ i ] = 2
         continue
       }
@@ -455,10 +455,10 @@ class ResidueType {
     this.rings = { flags, rings }
   }
 
-    /**
-     * For bonds with order > 1, pick a reference atom
-     * @return {undefined}
-     */
+  /**
+   * For bonds with order > 1, pick a reference atom
+   * @return {undefined}
+   */
   assignBondReferenceAtomIndices () {
     const bondGraph = this.getBondGraph()
     const rings = this.getRings()
@@ -475,25 +475,25 @@ class ResidueType {
     bondReferenceAtomIndices.length = 0  // reset array
 
     for (let i = 0; i < nb; ++i) {
-            // Not required for single bonds
+      // Not required for single bonds
       if (bondOrders[i] <= 1) continue
 
       const ai1 = atomIndices1[i]
       const ai2 = atomIndices2[i]
 
-            // Are both atoms in a ring?
+      // Are both atoms in a ring?
       if (ringFlags[ ai1 ] && ringFlags[ ai2 ]) {
-                // Select another ring atom
-                // I *think* we can simply take the first ring atom
-                // we find in a ring that contains either ai1 or ai2
-                // where the ring atom is not ai1 or ai2
+        // Select another ring atom
+        // I *think* we can simply take the first ring atom
+        // we find in a ring that contains either ai1 or ai2
+        // where the ring atom is not ai1 or ai2
         for (let ri = 0; ri < ringData.length; ++ri) {
-                    // Have we already found it?
+          // Have we already found it?
           if (bondReferenceAtomIndices[i] !== undefined) { break }
 
           const ring = ringData[ ri ]
-                    // Try to find this atom and reference atom in no more than 1 full
-                    // iteration through loop
+          // Try to find this atom and reference atom in no more than 1 full
+          // iteration through loop
           let refAtom = null
           let found = false
           for (let rai = 0; rai < ring.length; ++rai) {
@@ -501,7 +501,7 @@ class ResidueType {
             if (ai3 === ai1 || ai3 === ai2) {
               found = true
             } else {
-                            // refAtom is any other atom
+              // refAtom is any other atom
               refAtom = ai3
             }
             if (found && refAtom !== null) {
@@ -513,8 +513,8 @@ class ResidueType {
         if (bondReferenceAtomIndices[i] !== undefined) { continue }
       }
 
-            // Not a ring (or not one we can process), simply take the first
-            // neighbouring atom
+      // Not a ring (or not one we can process), simply take the first
+      // neighbouring atom
 
       if (bondGraph[ ai1 ].length > 1) {
         for (let j = 0; j < bondGraph[ ai1 ].length; ++j) {
@@ -553,7 +553,7 @@ class ResidueType {
       idx1 = atomIndices1.indexOf(atomIndex1, idx1 + 1)
       idx2 = _idx2
     }
-        // returns undefined when no bond is found
+    // returns undefined when no bond is found
   }
 
   getBondReferenceAtomIndex (atomIndex1, atomIndex2) {

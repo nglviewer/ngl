@@ -8,10 +8,10 @@ import ResidueType from './residue-type.js'
 
 function getHash (resname, atomTypeIdList, hetero, chemCompType) {
   return (
-        resname + '|' +
-        atomTypeIdList.join(',') + '|' +
-        (hetero ? 1 : 0) + '|' +
-        (chemCompType || '')
+    resname + '|' +
+    atomTypeIdList.join(',') + '|' +
+    (hetero ? 1 : 0) + '|' +
+    (chemCompType || '')
   )
 }
 
@@ -29,8 +29,8 @@ class ResidueMap {
     let id = this.dict[ hash ]
     if (id === undefined) {
       const residueType = new ResidueType(
-                this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
-            )
+        this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
+      )
       id = this.list.length
       this.dict[ hash ] = id
       this.list.push(residueType)
