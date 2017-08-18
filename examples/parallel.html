@@ -15,7 +15,7 @@
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
     xhr.addEventListener('load', function (event) {
-      blob = new Blob([xhr.response], {type: 'application/octet-binary'});
+      blob = new Blob([new Uint8Array(xhr.response)], {type: 'application/octet-binary'});
       if(stage) load();
     });
     xhr.responseType = "arraybuffer";
