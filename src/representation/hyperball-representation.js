@@ -69,6 +69,7 @@ class HyperballRepresentation extends LicoriceRepresentation {
             this.getBufferParams({
               shrink: this.shrink,
               radialSegments: this.radialSegments,
+              disableImpostor: this.disableImpostor,
               dullInterior: true
             })
         )

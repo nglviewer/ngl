@@ -32,14 +32,14 @@ class HyperballStickBuffer {
    * @param  {Float32Array} data.position2 - to positions
    * @param  {Float32Array} data.color - from colors
    * @param  {Float32Array} data.color2 - to colors
-   * @param  {Float32Array} data.radius1 - from radii
+   * @param  {Float32Array} data.radius - from radii
    * @param  {Float32Array} data.radius2 - to radii
    * @param  {Float32Array} data.picking - picking ids
    * @param  {BufferParameters} params - parameter object
    */
   constructor (data, params) {
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
-      data.radius = calculateMinArray(data.radius1, data.radius2)
+      data.radius = calculateMinArray(data.radius, data.radius2)
       return new CylinderGeometryBuffer(data, params)
     } else {
       return new HyperballStickImpostorBuffer(data, params)
