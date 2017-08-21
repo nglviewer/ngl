@@ -63846,7 +63846,7 @@ var ResidueType = function ResidueType (structure, resname, atomTypeIdList, hete
   }
   this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1;
 
-      // Sparse array containing the reference atom index for each bond.
+  // Sparse array containing the reference atom index for each bond.
   this.bondReferenceAtomIndices = [];
 };
 
@@ -63916,8 +63916,8 @@ ResidueType.prototype.isProtein = function isProtein () {
     return ChemCompProtein.includes(this.chemCompType)
   } else {
     return (
-              this.hasAtomWithName('CA', 'C', 'N') ||
-              AA3.includes(this.resname)
+      this.hasAtomWithName('CA', 'C', 'N') ||
+      AA3.includes(this.resname)
     )
   }
 };
@@ -63925,9 +63925,9 @@ ResidueType.prototype.isProtein = function isProtein () {
 ResidueType.prototype.isCg = function isCg () {
   var backboneType = this.backboneType;
   return (
-          backboneType === CgProteinBackboneType ||
-          backboneType === CgRnaBackboneType ||
-          backboneType === CgDnaBackboneType
+    backboneType === CgProteinBackboneType ||
+    backboneType === CgRnaBackboneType ||
+    backboneType === CgDnaBackboneType
   )
 };
 
@@ -63940,11 +63940,11 @@ ResidueType.prototype.isRna = function isRna () {
     return ChemCompRna.includes(this.chemCompType)
   } else {
     return (
-              this.hasAtomWithName(
-                  [ 'P', "O3'", 'O3*' ], [ "C4'", 'C4*' ], [ "O2'", 'O2*', "F2'", 'F2*' ]
-              ) ||
-              (RnaBases.includes(this.resname) &&
-                  (this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])))
+      this.hasAtomWithName(
+        [ 'P', "O3'", 'O3*' ], [ "C4'", 'C4*' ], [ "O2'", 'O2*', "F2'", 'F2*' ]
+      ) ||
+      (RnaBases.includes(this.resname) &&
+        (this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])))
     )
   }
 };
@@ -63954,9 +63954,9 @@ ResidueType.prototype.isDna = function isDna () {
     return ChemCompDna.includes(this.chemCompType)
   } else {
     return (
-              (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
-                  !this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])) ||
-              DnaBases.includes(this.resname)
+      (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
+        !this.hasAtomWithName([ "O2'", 'O2*', "F2'", 'F2*' ])) ||
+      DnaBases.includes(this.resname)
     )
   }
 };
@@ -63985,85 +63985,88 @@ ResidueType.prototype.hasBackboneAtoms = function hasBackboneAtoms (position, ty
   var atomnames = ResidueTypeAtoms[ type ];
   if (position === -1) {
     return this.hasAtomWithName(
-              atomnames.trace,
-              atomnames.backboneEnd,
-              atomnames.direction1,
-              atomnames.direction2
-          )
+      atomnames.trace,
+      atomnames.backboneEnd,
+      atomnames.direction1,
+      atomnames.direction2
+    )
   } else if (position === 0) {
     return this.hasAtomWithName(
-              atomnames.trace,
-              atomnames.direction1,
-              atomnames.direction2
-          )
+      atomnames.trace,
+      atomnames.direction1,
+      atomnames.direction2
+    )
   } else if (position === 1) {
     return this.hasAtomWithName(
-              atomnames.trace,
-              atomnames.backboneStart,
-              atomnames.direction1,
-              atomnames.direction2
-          )
+      atomnames.trace,
+      atomnames.backboneStart,
+      atomnames.direction1,
+      atomnames.direction2
+    )
   } else {
     return this.hasAtomWithName(
-              atomnames.trace,
-              atomnames.backboneStart,
-              atomnames.backboneEnd,
-              atomnames.direction1,
-              atomnames.direction2
-          )
+      atomnames.trace,
+      atomnames.backboneStart,
+      atomnames.backboneEnd,
+      atomnames.direction1,
+      atomnames.direction2
+    )
   }
 };
 
 ResidueType.prototype.hasProteinBackbone = function hasProteinBackbone (position) {
   return (
-          this.isProtein() &&
-          this.hasBackboneAtoms(position, ProteinBackboneType)
+    this.isProtein() &&
+    this.hasBackboneAtoms(position, ProteinBackboneType)
   )
 };
 
 ResidueType.prototype.hasRnaBackbone = function hasRnaBackbone (position) {
   return (
-          this.isRna() &&
-          this.hasBackboneAtoms(position, RnaBackboneType)
+    this.isRna() &&
+    this.hasBackboneAtoms(position, RnaBackboneType)
   )
 };
 
 ResidueType.prototype.hasDnaBackbone = function hasDnaBackbone (position) {
   return (
-          this.isDna() &&
-          this.hasBackboneAtoms(position, DnaBackboneType)
+    this.isDna() &&
+    this.hasBackboneAtoms(position, DnaBackboneType)
   )
 };
 
 ResidueType.prototype.hasCgProteinBackbone = function hasCgProteinBackbone (position) {
   return (
-          this.isProtein() &&
-          this.hasBackboneAtoms(position, CgProteinBackboneType)
+    this.atomCount < 7 &&
+    this.isProtein() &&
+    this.hasBackboneAtoms(position, CgProteinBackboneType)
   )
 };
 
 ResidueType.prototype.hasCgRnaBackbone = function hasCgRnaBackbone (position) {
   return (
-          this.isRna() &&
-          this.hasBackboneAtoms(position, CgRnaBackboneType)
+    this.atomCount < 11 &&
+    this.isRna() &&
+    this.hasBackboneAtoms(position, CgRnaBackboneType)
   )
 };
 
 ResidueType.prototype.hasCgDnaBackbone = function hasCgDnaBackbone (position) {
   return (
-          this.isDna() &&
-          this.hasBackboneAtoms(position, CgDnaBackboneType)
+    this.atomCount < 11 &&
+    this.isDna() &&
+    this.hasBackboneAtoms(position, CgDnaBackboneType)
   )
 };
 
 ResidueType.prototype.hasBackbone = function hasBackbone (position) {
   return (
-          this.hasProteinBackbone(position) ||
-          this.hasRnaBackbone(position) ||
-          this.hasDnaBackbone(position) ||
-          this.hasCgProteinBackbone(position) ||
-          this.hasCgRnaBackbone(position) ||
-          this.hasCgDnaBackbone(position)
+    this.hasProteinBackbone(position) ||
+    this.hasRnaBackbone(position) ||
+    this.hasDnaBackbone(position) ||
+    this.hasCgProteinBackbone(position) ||
+    this.hasCgRnaBackbone(position) ||
+    this.hasCgDnaBackbone(position)
   )
 };
 
@@ -64124,10 +64127,10 @@ ResidueType.prototype.getBondGraph = function getBondGraph () {
   return this.bondGraph
 };
 
-  /**
-   * @return {Object} bondGraph - represents the bonding in this
-   * residue: { ai1: [ ai2, ai3, ...], ...}
-   */
+/**
+ * @return {Object} bondGraph - represents the bonding in this
+ * residue: { ai1: [ ai2, ai3, ...], ...}
+ */
 ResidueType.prototype.calculateBondGraph = function calculateBondGraph () {
   var bondGraph = this.bondGraph = {};
   var bonds = this.getBonds();
@@ -64147,22 +64150,22 @@ ResidueType.prototype.calculateBondGraph = function calculateBondGraph () {
   }
 };
 
-  /**
-   * Calculates ring atoms within a residue
-   * Adaptation of RDKit's fastFindRings method by G. Landrum:
-   * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
-   *
-   * @param {ResidueProxy} r - The residue for which we are to find rings
-   * @return {Object} ringData - contains ringFlags (1/0) and rings
-   *                           (nested array)
-   *
-   * Note this method finds all ring atoms, but in cases of fused or
-   * connected rings will not detect all rings.
-   * The resulting rings object will provide 'a ring' for each ring atom
-   * but which ring depends on atom order and connectivity
-   *
-   * @return {undefined}
-   */
+/**
+ * Calculates ring atoms within a residue
+ * Adaptation of RDKit's fastFindRings method by G. Landrum:
+ * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
+ *
+ * @param {ResidueProxy} r - The residue for which we are to find rings
+ * @return {Object} ringData - contains ringFlags (1/0) and rings
+ *                           (nested array)
+ *
+ * Note this method finds all ring atoms, but in cases of fused or
+ * connected rings will not detect all rings.
+ * The resulting rings object will provide 'a ring' for each ring atom
+ * but which ring depends on atom order and connectivity
+ *
+ * @return {undefined}
+ */
 ResidueType.prototype.calculateRings = function calculateRings () {
   var bondGraph = this.getBondGraph();
 
@@ -64172,28 +64175,28 @@ ResidueType.prototype.calculateRings = function calculateRings () {
   var visited = [];
 
   function DFS (i, connected, from) {
-          // Sanity check
+    // Sanity check
     if (state[ i ]) { throw new Error('DFS revisited atom') }
     state[ i ] = 1;
     visited.push(i);
     var nc = connected.length;
 
-          // For each neighbour
+    // For each neighbour
     for (var ci = 0; ci < nc; ++ci) {
       var j = connected[ci];
 
-              // If unvisited:
+      // If unvisited:
       if (state[ j ] === 0) {
-                  // And has >= 2 neighbours:
+        // And has >= 2 neighbours:
         if (bondGraph[ j ] && bondGraph[ j ].length >= 2) {
-                      // Recurse
+          // Recurse
           DFS(j, bondGraph[ j ], i);
         } else {
-                      // Not interesting
+          // Not interesting
           state[ j ] = 2;
         }
 
-              // Else unclosed ring:
+      // Else unclosed ring:
       } else if (state[ j ] === 1) {
         if (from && from !== j) {
           var ring = [ j ];
@@ -64220,7 +64223,7 @@ ResidueType.prototype.calculateRings = function calculateRings () {
 
     var connected = bondGraph[ i ];
     if (!connected || connected.length < 2) {
-              // Finished
+      // Finished
       state[ i ] = 2;
       continue
     }
@@ -64232,10 +64235,10 @@ ResidueType.prototype.calculateRings = function calculateRings () {
   this.rings = { flags: flags, rings: rings };
 };
 
-  /**
-   * For bonds with order > 1, pick a reference atom
-   * @return {undefined}
-   */
+/**
+ * For bonds with order > 1, pick a reference atom
+ * @return {undefined}
+ */
 ResidueType.prototype.assignBondReferenceAtomIndices = function assignBondReferenceAtomIndices () {
   var bondGraph = this.getBondGraph();
   var rings = this.getRings();
@@ -64252,25 +64255,25 @@ ResidueType.prototype.assignBondReferenceAtomIndices = function assignBondRefere
   bondReferenceAtomIndices.length = 0;// reset array
 
   for (var i = 0; i < nb; ++i) {
-          // Not required for single bonds
+    // Not required for single bonds
     if (bondOrders[i] <= 1) { continue }
 
     var ai1 = atomIndices1[i];
     var ai2 = atomIndices2[i];
 
-          // Are both atoms in a ring?
+    // Are both atoms in a ring?
     if (ringFlags[ ai1 ] && ringFlags[ ai2 ]) {
-              // Select another ring atom
-              // I *think* we can simply take the first ring atom
-              // we find in a ring that contains either ai1 or ai2
-              // where the ring atom is not ai1 or ai2
+      // Select another ring atom
+      // I *think* we can simply take the first ring atom
+      // we find in a ring that contains either ai1 or ai2
+      // where the ring atom is not ai1 or ai2
       for (var ri = 0; ri < ringData.length; ++ri) {
-                  // Have we already found it?
+        // Have we already found it?
         if (bondReferenceAtomIndices[i] !== undefined) { break }
 
         var ring = ringData[ ri ];
-                  // Try to find this atom and reference atom in no more than 1 full
-                  // iteration through loop
+        // Try to find this atom and reference atom in no more than 1 full
+        // iteration through loop
         var refAtom = null;
         var found = false;
         for (var rai = 0; rai < ring.length; ++rai) {
@@ -64278,7 +64281,7 @@ ResidueType.prototype.assignBondReferenceAtomIndices = function assignBondRefere
           if (ai3 === ai1 || ai3 === ai2) {
             found = true;
           } else {
-                          // refAtom is any other atom
+            // refAtom is any other atom
             refAtom = ai3;
           }
           if (found && refAtom !== null) {
@@ -64290,8 +64293,8 @@ ResidueType.prototype.assignBondReferenceAtomIndices = function assignBondRefere
       if (bondReferenceAtomIndices[i] !== undefined) { continue }
     }
 
-          // Not a ring (or not one we can process), simply take the first
-          // neighbouring atom
+    // Not a ring (or not one we can process), simply take the first
+    // neighbouring atom
 
     if (bondGraph[ ai1 ].length > 1) {
       for (var j = 0; j < bondGraph[ ai1 ].length; ++j) {
@@ -64330,7 +64333,7 @@ ResidueType.prototype.getBondIndex = function getBondIndex (atomIndex1, atomInde
     idx1 = atomIndices1.indexOf(atomIndex1, idx1 + 1);
     idx2 = _idx2;
   }
-      // returns undefined when no bond is found
+  // returns undefined when no bond is found
 };
 
 ResidueType.prototype.getBondReferenceAtomIndex = function getBondReferenceAtomIndex (atomIndex1, atomIndex2) {
@@ -64350,10 +64353,10 @@ ResidueType.prototype.getBondReferenceAtomIndex = function getBondReferenceAtomI
 
 function getHash$1 (resname, atomTypeIdList, hetero, chemCompType) {
   return (
-        resname + '|' +
-        atomTypeIdList.join(',') + '|' +
-        (hetero ? 1 : 0) + '|' +
-        (chemCompType || '')
+    resname + '|' +
+    atomTypeIdList.join(',') + '|' +
+    (hetero ? 1 : 0) + '|' +
+    (chemCompType || '')
   )
 }
 
@@ -64370,8 +64373,8 @@ ResidueMap.prototype.add = function add (resname, atomTypeIdList, hetero, chemCo
   var id = this.dict[ hash ];
   if (id === undefined) {
     var residueType = new ResidueType(
-              this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
-          );
+      this.structure, resname, atomTypeIdList, hetero, chemCompType, bonds
+    );
     id = this.list.length;
     this.dict[ hash ] = id;
     this.list.push(residueType);
@@ -73728,6 +73731,15 @@ Component.prototype.addAnnotation = function addAnnotation (position, content, p
 };
 
 /**
+ * Iterator over each annotation and executing the callback
+ * @param{Function} callback - function to execute
+ * @return {undefined}
+ */
+Component.prototype.eachAnnotation = function eachAnnotation (callback) {
+  this.annotationList.slice().forEach(callback);
+};
+
+/**
  * Remove the give annotation from the component
  * @param {Annotation} annotation - the annotation to remove
  * @return {undefined}
@@ -73745,9 +73757,7 @@ Component.prototype.removeAnnotation = function removeAnnotation (annotation) {
  * @return {undefined}
  */
 Component.prototype.removeAllAnnotations = function removeAllAnnotations () {
-  this.annotationList.forEach(function (annotation) {
-    annotation.dispose();
-  });
+  this.eachAnnotation(function (annotation) { return annotation.dispose(); });
   this.annotationList.length = 0;
 };
 
@@ -73790,6 +73800,15 @@ Component.prototype.hasRepresentation = function hasRepresentation (repr) {
 };
 
 /**
+ * Iterator over each representation and executing the callback
+ * @param{Function} callback - function to execute
+ * @return {undefined}
+ */
+Component.prototype.eachRepresentation = function eachRepresentation (callback) {
+  this.reprList.slice().forEach(callback);
+};
+
+/**
  * Removes a representation component
  * @param {RepresentationComponent} repr - the representation component
  * @return {undefined}
@@ -73804,10 +73823,7 @@ Component.prototype.removeRepresentation = function removeRepresentation (repr) 
 };
 
 Component.prototype.updateRepresentations = function updateRepresentations (what) {
-  this.reprList.forEach(function (repr) {
-    repr.update(what);
-  });
-
+  this.reprList.forEach(function (repr) { return repr.update(what); });
   this.stage.viewer.requestRender();
 };
 
@@ -73816,9 +73832,7 @@ Component.prototype.updateRepresentations = function updateRepresentations (what
  * @return {undefined}
  */
 Component.prototype.removeAllRepresentations = function removeAllRepresentations () {
-  this.reprList.slice(0).forEach(function (repr) {
-    repr.dispose();
-  });
+  this.eachRepresentation(function (repr) { return repr.dispose(); });
 };
 
 Component.prototype.dispose = function dispose () {
@@ -73839,13 +73853,8 @@ Component.prototype.dispose = function dispose () {
 Component.prototype.setVisibility = function setVisibility (value) {
   this.visible = value;
 
-  this.eachRepresentation(function (repr) {
-    repr.updateVisibility();
-  });
-
-  this.annotationList.forEach(function (annotation) {
-    annotation.updateVisibility();
-  });
+  this.eachRepresentation(function (repr) { return repr.updateVisibility(); });
+  this.eachAnnotation(function (annotation) { return annotation.updateVisibility(); });
 
   this.signals.visibilityChanged.dispatch(value);
 
@@ -73910,10 +73919,6 @@ Component.prototype.autoView = function autoView (duration) {
     this.getZoom(),
     defaults(duration, 0)
   );
-};
-
-Component.prototype.eachRepresentation = function eachRepresentation (callback) {
-  this.reprList.forEach(callback);
 };
 
 Object.defineProperties( Component.prototype, prototypeAccessors$11 );
@@ -82058,7 +82063,7 @@ var HyperballStickImpostorBuffer = (function (MappedBoxBuffer$$1) {
  */
 var HyperballStickBuffer = function HyperballStickBuffer (data, params) {
   if (!ExtensionFragDepth || (params && params.disableImpostor)) {
-    data.radius = calculateMinArray(data.radius1, data.radius2);
+    data.radius = calculateMinArray(data.radius, data.radius2);
     return new CylinderGeometryBuffer(data, params)
   } else {
     return new HyperballStickImpostorBuffer(data, params)
@@ -82133,6 +82138,7 @@ var HyperballRepresentation = (function (LicoriceRepresentation$$1) {
             this.getBufferParams({
               shrink: this.shrink,
               radialSegments: this.radialSegments,
+              disableImpostor: this.disableImpostor,
               dullInterior: true
             })
         );
@@ -98353,7 +98359,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-18";
+var version$1 = "0.10.5-19";
 
 /**
  * @file Version
