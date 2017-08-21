@@ -263,6 +263,7 @@ class ResidueType {
 
   hasCgProteinBackbone (position) {
     return (
+      this.atomCount < 7 &&
       this.isProtein() &&
       this.hasBackboneAtoms(position, CgProteinBackboneType)
     )
@@ -270,6 +271,7 @@ class ResidueType {
 
   hasCgRnaBackbone (position) {
     return (
+      this.atomCount < 11 &&
       this.isRna() &&
       this.hasBackboneAtoms(position, CgRnaBackboneType)
     )
@@ -277,6 +279,7 @@ class ResidueType {
 
   hasCgDnaBackbone (position) {
     return (
+      this.atomCount < 11 &&
       this.isDna() &&
       this.hasBackboneAtoms(position, CgDnaBackboneType)
     )
