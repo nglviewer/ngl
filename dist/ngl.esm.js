@@ -67454,6 +67454,15 @@ Structure.prototype.atomCenter = function atomCenter (selection) {
   }
 };
 
+Structure.prototype.hasCoords = function hasCoords () {
+  var atomStore = this.atomStore;
+  return (
+    arrayMin(atomStore.x) !== 0 || arrayMax$1(atomStore.x) !== 0 ||
+    arrayMin(atomStore.y) !== 0 || arrayMax$1(atomStore.y) !== 0 ||
+    arrayMin(atomStore.z) !== 0 || arrayMax$1(atomStore.z) !== 0
+  )
+};
+
 Structure.prototype.getSequence = function getSequence (selection) {
   var seq = [];
   var rp = this.getResidueProxy();
@@ -67988,6 +67997,7 @@ function removePbc (x, box) {
 
   for (i = 3; i < n; i += 3) {
     for (j = 0; j < 3; ++j) {
+      x[ i + j ] -= box[ j * 3 + j ] * Math.round(x[ i + j ] / box[ j * 3 + j ]);
       dist = x[ i + j ] - x[ i - 3 + j ];
 
       if (Math.abs(dist) > 0.9 * box[ j * 3 + j ]) {
@@ -68158,7 +68168,7 @@ Trajectory.prototype.setStructure = function setStructure (structure) {
 Trajectory.prototype._saveInitialCoords = function _saveInitialCoords () {
     var this$1 = this;
 
-  if (arrayMin(this.structureCoords) !== 0 || arrayMax$1(this.structureCoords) !== 0) {
+  if (this.structure.hasCoords()) {
     this.initialCoords = new Float32Array(this.structureCoords);
     this._makeSuperposeCoords();
   } else if (this.frameCache[0]) {
@@ -70245,6 +70255,8 @@ Representation.prototype.setParameters = function setParameters (params, what, r
   var p = params || {};
   var tp = this.parameters;
 
+  this.setColor(p.color, p);
+
   what = what || {};
   rebuild = rebuild || false;
 
@@ -70922,20 +70934,20 @@ var SurfaceRepresentation = (function (Representation$$1) {
     });
   };
 
-    /**
-     * Set representation parameters
-     * @alias SurfaceRepresentation#setParameters
-     * @param {SurfaceRepresentationParameters} params - surface parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {SurfaceRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias SurfaceRepresentation#setParameters
+   * @param {SurfaceRepresentationParameters} params - surface parameter object
+   * @param {Object} [what] - buffer data attributes to be updated,
+   *                        note that this needs to be implemented in the
+   *                        derived classes. Generally it allows more
+   *                        fine-grained control over updating than
+   *                        forcing a rebuild.
+   * @param {Boolean} what.position - update position data
+   * @param {Boolean} what.color - update color data
+   * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+   * @return {SurfaceRepresentation} this object
+   */
   SurfaceRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
     if (params && params.isolevelType !== undefined &&
       this.volume
@@ -70958,7 +70970,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
       delete params.boxCenter;
     }
 
-        // Forbid wireframe && contour as in molsurface
+    // Forbid wireframe && contour as in molsurface
     if (params && params.wireframe && (
       params.contour || (params.contour === undefined && this.contour)
     )) {
@@ -71893,26 +71905,26 @@ var DotRepresentation = (function (Representation$$1) {
 
     if (this.dotType === 'sphere') {
       this.dotBuffer = new SphereBuffer(
-                dotData,
-                this.getBufferParams({
-                  sphereDetail: this.sphereDetail,
-                  disableImpostor: this.disableImpostor,
-                  dullInterior: false
-                })
-            );
+        dotData,
+        this.getBufferParams({
+          sphereDetail: this.sphereDetail,
+          disableImpostor: this.disableImpostor,
+          dullInterior: false
+        })
+      );
     } else {
       this.dotBuffer = new PointBuffer(
-                dotData,
-                this.getBufferParams({
-                  pointSize: this.pointSize,
-                  sizeAttenuation: this.sizeAttenuation,
-                  sortParticles: this.sortParticles,
-                  useTexture: this.useTexture,
-                  alphaTest: this.alphaTest,
-                  forceTransparent: this.forceTransparent,
-                  edgeBleach: this.edgeBleach
-                })
-            );
+        dotData,
+        this.getBufferParams({
+          pointSize: this.pointSize,
+          sizeAttenuation: this.sizeAttenuation,
+          sortParticles: this.sortParticles,
+          useTexture: this.useTexture,
+          alphaTest: this.alphaTest,
+          forceTransparent: this.forceTransparent,
+          edgeBleach: this.edgeBleach
+        })
+      );
     }
 
     this.bufferList.push(this.dotBuffer);
@@ -71928,24 +71940,24 @@ var DotRepresentation = (function (Representation$$1) {
     if (what.color) {
       if (this.volume) {
         dotData.color = this.volume.getDataColor(
-                    this.getColorParams()
-                );
+          this.getColorParams()
+        );
       } else {
         dotData.color = this.surface.getColor(
-                    this.getColorParams()
-                );
+          this.getColorParams()
+        );
       }
     }
 
     if (this.dotType === 'sphere' && (what.radius || what.scale)) {
       if (this.volume) {
         dotData.radius = this.volume.getDataSize(
-                    this.radius, this.scale
-                );
+          this.radius, this.scale
+        );
       } else {
         dotData.radius = this.surface.getSize(
-                    this.radius, this.scale
-                );
+          this.radius, this.scale
+        );
       }
     }
 
@@ -71956,26 +71968,26 @@ var DotRepresentation = (function (Representation$$1) {
     what = what || {};
 
     if (params && params.thresholdType !== undefined &&
-            this.volume instanceof Volume
-        ) {
+        this.volume instanceof Volume
+    ) {
       if (this.thresholdType === 'value' &&
-                params.thresholdType === 'sigma'
-            ) {
+          params.thresholdType === 'sigma'
+      ) {
         this.thresholdMin = this.volume.getSigmaForValue(
-                    this.thresholdMin
-                );
+          this.thresholdMin
+        );
         this.thresholdMax = this.volume.getSigmaForValue(
-                    this.thresholdMax
-                );
+          this.thresholdMax
+        );
       } else if (this.thresholdType === 'sigma' &&
-                params.thresholdType === 'value'
-            ) {
+                 params.thresholdType === 'value'
+      ) {
         this.thresholdMin = this.volume.getValueForSigma(
-                    this.thresholdMin
-                );
+          this.thresholdMin
+        );
         this.thresholdMax = this.volume.getValueForSigma(
-                    this.thresholdMax
-                );
+          this.thresholdMax
+        );
       }
 
       this.thresholdType = params.thresholdType;
@@ -71989,8 +72001,8 @@ var DotRepresentation = (function (Representation$$1) {
       }
       what.radius = true;
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true;
       }
     }
@@ -71998,8 +72010,8 @@ var DotRepresentation = (function (Representation$$1) {
     if (params && params.radius !== undefined) {
       what.radius = true;
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true;
       }
     }
@@ -72007,8 +72019,8 @@ var DotRepresentation = (function (Representation$$1) {
     if (params && params.scale !== undefined) {
       what.scale = true;
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true;
       }
     }
@@ -72520,11 +72532,11 @@ var SliceRepresentation = (function (Representation$$1) {
     });
 
     var sliceBuffer = new ImageBuffer(
-            volumeSlice.getData({ colorParams: this.getColorParams() }),
-            this.getBufferParams({
-              filter: this.filter
-            })
-        );
+      volumeSlice.getData({ colorParams: this.getColorParams() }),
+      this.getBufferParams({
+        filter: this.filter
+      })
+    );
 
     this.bufferList.push(sliceBuffer);
   };
@@ -72688,6 +72700,13 @@ var StructureRepresentation = (function (Representation$$1) {
   StructureRepresentation.prototype.create = function create () {
     if (this.structureView.atomCount === 0) { return }
 
+    if (!this.structureView.hasCoords()) {
+      this.needsBuild = true;
+      return
+    } else {
+      this.needsBuild = false;
+    }
+
     var assembly = this.getAssembly();
 
     if (assembly) {
@@ -72717,6 +72736,11 @@ var StructureRepresentation = (function (Representation$$1) {
   StructureRepresentation.prototype.update = function update (what) {
     if (this.lazy && !this.visible) {
       Object.assign(this.lazyProps.what, what);
+      return
+    }
+
+    if (this.needsBuild) {
+      this.build();
       return
     }
 
@@ -78675,9 +78699,9 @@ var AxesRepresentation = (function (StructureRepresentation$$1) {
       var offset2 = offset * 2;
       var addCorner = function (d1, d2, d3) {
         v.copy(pa.center)
-                    .addScaledVector(pa.normVecA, d1)
-                    .addScaledVector(pa.normVecB, d2)
-                    .addScaledVector(pa.normVecC, d3);
+          .addScaledVector(pa.normVecA, d1)
+          .addScaledVector(pa.normVecB, d2)
+          .addScaledVector(pa.normVecC, d3);
         v.toArray(vertexPosition, offset2);
         offset2 += 3;
       };
@@ -78693,9 +78717,9 @@ var AxesRepresentation = (function (StructureRepresentation$$1) {
       var edgeOffset = offset;
       var addEdge = function (a, b) {
         v.fromArray(vertexPosition, offset * 2 + a * 3)
-                    .toArray(edgePosition1, edgeOffset);
+          .toArray(edgePosition1, edgeOffset);
         v.fromArray(vertexPosition, offset * 2 + b * 3)
-                    .toArray(edgePosition2, edgeOffset);
+          .toArray(edgePosition2, edgeOffset);
         edgeOffset += 3;
       };
       addEdge(0, 1);
@@ -78736,23 +78760,23 @@ var AxesRepresentation = (function (StructureRepresentation$$1) {
     var axesData = this.getAxesData(this.structureView);
 
     this.sphereBuffer = new SphereBuffer(
-            axesData.vertex,
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      axesData.vertex,
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.cylinderBuffer = new CylinderBuffer(
-            axesData.edge,
-            this.getBufferParams({
-              openEnded: true,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      axesData.edge,
+      this.getBufferParams({
+        openEnded: true,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.dataList.push({
       sview: this.structureView,
@@ -78918,33 +78942,33 @@ var BallAndStickRepresentation = (function (StructureRepresentation$$1) {
 
     if (this.lineOnly) {
       this.lineBuffer = new LineBuffer(
-                bondData,
-                this.getBufferParams()
-            );
+        bondData,
+        this.getBufferParams()
+      );
 
       bufferList.push(this.lineBuffer);
     } else {
       var cylinderBuffer = new CylinderBuffer(
-                bondData,
-                this.getBufferParams({
-                  openEnded: this.openEnded,
-                  radialSegments: this.radialSegments,
-                  disableImpostor: this.disableImpostor,
-                  dullInterior: true
-                })
-            );
+        bondData,
+        this.getBufferParams({
+          openEnded: this.openEnded,
+          radialSegments: this.radialSegments,
+          disableImpostor: this.disableImpostor,
+          dullInterior: true
+        })
+      );
 
       bufferList.push(cylinderBuffer);
 
       if (!this.cylinderOnly) {
         var sphereBuffer = new SphereBuffer(
-                    this.getAtomData(sview),
-                    this.getBufferParams({
-                      sphereDetail: this.sphereDetail,
-                      disableImpostor: this.disableImpostor,
-                      dullInterior: true
-                    })
-                );
+          this.getAtomData(sview),
+          this.getBufferParams({
+            sphereDetail: this.sphereDetail,
+            disableImpostor: this.disableImpostor,
+            dullInterior: true
+          })
+        );
 
         bufferList.push(sphereBuffer);
       }
@@ -80244,16 +80268,16 @@ var CartoonRepresentation = (function (StructureRepresentation$$1) {
       var subSize = spline.getSubdividedSize(this$1.radius, this$1.getScale(polymer));
 
       bufferList.push(
-                new TubeMeshBuffer(
-                    Object.assign({}, subPos, subOri, subCol, subPick, subSize),
-                    this$1.getBufferParams({
-                      radialSegments: this$1.radialSegments,
-                      aspectRatio: this$1.getAspectRatio(polymer),
-                      capped: this$1.capped,
-                      dullInterior: true
-                    })
-                )
-            );
+        new TubeMeshBuffer(
+          Object.assign({}, subPos, subOri, subCol, subPick, subSize),
+          this$1.getBufferParams({
+            radialSegments: this$1.radialSegments,
+            aspectRatio: this$1.getAspectRatio(polymer),
+            capped: this$1.capped,
+            dullInterior: true
+          })
+        )
+      );
     }, sview.getSelection());
 
     return {
@@ -80643,8 +80667,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
     };
 
     var contactData = contactsFnDict[ this.contactType ](
-            sview, this.maxDistance, this.maxAngle
-        );
+      sview, this.maxDistance, this.maxAngle
+    );
 
     return contactData
   };
@@ -80653,10 +80677,10 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
     var bondData = sview.getBondData(this.getBondParams(what, params));
     if (bondData.picking) {
       bondData.picking = new ContactPicker(
-                bondData.picking.array,
-                bondData.picking.structure,
-                params.bondStore
-            );
+        bondData.picking.array,
+        bondData.picking.structure,
+        params.bondStore
+      );
     }
     return bondData
   };
@@ -80665,17 +80689,17 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
     var contactData = this.getContactData(sview);
 
     var cylinderBuffer = new CylinderBuffer(
-            this.getBondData(sview, undefined, {
-              bondSet: contactData.bondSet,
-              bondStore: contactData.bondStore
-            }),
-            this.getBufferParams({
-              openEnded: false,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      this.getBondData(sview, undefined, {
+        bondSet: contactData.bondSet,
+        bondStore: contactData.bondStore
+      }),
+      this.getBufferParams({
+        openEnded: false,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     return {
       bufferList: [ cylinderBuffer ],
@@ -80701,8 +80725,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
 
     if (!what || what.position) {
       cylinderData.position = calculateCenterArray(
-                bondData.position1, bondData.position2
-            );
+        bondData.position1, bondData.position2
+      );
       cylinderData.position1 = bondData.position1;
       cylinderData.position2 = bondData.position2;
     }
@@ -81514,10 +81538,10 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
     var bondData = sview.getBondData(this.getBondParams(what, params));
     if (bondData.picking) {
       bondData.picking = new DistancePicker(
-                bondData.picking.array,
-                bondData.picking.structure,
-                params.bondStore
-            );
+        bondData.picking.array,
+        bondData.picking.structure,
+        params.bondStore
+      );
     }
     return bondData
   };
@@ -81539,16 +81563,16 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
         color: uniformArray3(n, c.r, c.g, c.b),
         text: distanceData.text
       },
-            this.getBufferParams({
-              fontFamily: this.fontFamily,
-              fontStyle: this.fontStyle,
-              fontWeight: this.fontWeight,
-              sdf: this.sdf,
-              zOffset: this.labelZOffset,
-              opacity: 1.0,
-              visible: this.labelVisible
-            })
-        );
+      this.getBufferParams({
+        fontFamily: this.fontFamily,
+        fontStyle: this.fontStyle,
+        fontWeight: this.fontWeight,
+        sdf: this.sdf,
+        zOffset: this.labelZOffset,
+        opacity: 1.0,
+        visible: this.labelVisible
+      })
+    );
 
     var bondParams = {
       bondSet: distanceData.bondSet,
@@ -81558,14 +81582,14 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
     var bondData = this.getBondData(this.structureView, undefined, bondParams);
 
     this.cylinderBuffer = new CylinderBuffer(
-            bondData,
-            this.getBufferParams({
-              openEnded: false,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      bondData,
+      this.getBufferParams({
+        openEnded: false,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.dataList.push({
       sview: this.structureView,
@@ -81622,8 +81646,8 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
 
     if (this.textBuffer) {
       this.textBuffer.setVisibility(
-                this.labelVisible && this.visible
-            );
+        this.labelVisible && this.visible
+      );
     }
 
     if (!noRenderRequest) { this.viewer.requestRender(); }
@@ -81885,8 +81909,8 @@ var LicoriceRepresentation = (function (BallAndStickRepresentation$$1) {
     this.type = 'licorice';
 
     this.parameters = Object.assign(
-            {}, this.parameters, { aspectRatio: null }
-        );
+      {}, this.parameters, { aspectRatio: null }
+    );
   }
 
   if ( BallAndStickRepresentation$$1 ) LicoriceRepresentation.__proto__ = BallAndStickRepresentation$$1;
@@ -82123,25 +82147,25 @@ var HyperballRepresentation = (function (LicoriceRepresentation$$1) {
 
   HyperballRepresentation.prototype.createData = function createData (sview) {
     var sphereBuffer = new SphereBuffer(
-            sview.getAtomData(this.getAtomParams()),
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      sview.getAtomData(this.getAtomParams()),
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.__center = new Float32Array(sview.bondCount * 3);
 
     var stickBuffer = new HyperballStickBuffer(
-            sview.getBondData(this.getBondParams()),
-            this.getBufferParams({
-              shrink: this.shrink,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      sview.getBondData(this.getBondParams()),
+      this.getBufferParams({
+        shrink: this.shrink,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     return {
       bufferList: [ sphereBuffer, stickBuffer ]
@@ -82462,8 +82486,8 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
 
     var text = [];
     var labelFactory = new LabelFactory(
-            this.labelType, this.labelText
-        );
+      this.labelType, this.labelText
+    );
     sview.eachAtom(function (ap) {
       text.push(labelFactory.atomLabel(ap));
     });
@@ -82475,24 +82499,24 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
         color: atomData.color,
         text: text
       },
-            this.getBufferParams({
-              fontFamily: this.fontFamily,
-              fontStyle: this.fontStyle,
-              fontWeight: this.fontWeight,
-              sdf: this.sdf,
-              xOffset: this.xOffset,
-              yOffset: this.yOffset,
-              zOffset: this.zOffset,
-              attachment: this.attachment,
-              showBorder: this.showBorder,
-              borderColor: this.borderColor,
-              borderWidth: this.borderWidth,
-              showBackground: this.showBackground,
-              backgroundColor: this.backgroundColor,
-              backgroundMargin: this.backgroundMargin,
-              backgroundOpacity: this.backgroundOpacity
-            })
-        );
+      this.getBufferParams({
+        fontFamily: this.fontFamily,
+        fontStyle: this.fontStyle,
+        fontWeight: this.fontWeight,
+        sdf: this.sdf,
+        xOffset: this.xOffset,
+        yOffset: this.yOffset,
+        zOffset: this.zOffset,
+        attachment: this.attachment,
+        showBorder: this.showBorder,
+        borderColor: this.borderColor,
+        borderWidth: this.borderWidth,
+        showBackground: this.showBackground,
+        backgroundColor: this.backgroundColor,
+        backgroundMargin: this.backgroundMargin,
+        backgroundOpacity: this.backgroundOpacity
+      })
+    );
 
     return {
       bufferList: [ textBuffer ]
@@ -82596,8 +82620,8 @@ var LineRepresentation = (function (StructureRepresentation$$1) {
     var bondData = sview.getBondData(this.getBondParams(what));
 
     var lineBuffer = new LineBuffer(
-            bondData, this.getBufferParams()
-        );
+      bondData, this.getBufferParams()
+    );
 
     return {
       bufferList: [ lineBuffer ]
@@ -84334,7 +84358,7 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
 
     this.__infoList = [];
 
-        // TODO find a more direct way
+    // TODO find a more direct way
     this.structure.signals.refreshed.add(function () {
       this.__forceNewMolsurf = true;
     }, this);
@@ -84456,11 +84480,11 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
 
     if (surface.contour) {
       var contourBuffer = new ContourBuffer(
-                surfaceData,
-                this.getBufferParams({
-                  wireframe: false
-                })
-            );
+        surfaceData,
+        this.getBufferParams({
+          wireframe: false
+        })
+      );
 
       bufferList.push(contourBuffer);
     } else {
@@ -84468,13 +84492,13 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
       surfaceData.picking = surface.getPicking(sview.getStructure());
 
       var surfaceBuffer = new SurfaceBuffer(
-                surfaceData,
-                this.getBufferParams({
-                  background: this.background,
-                  opaqueBack: this.opaqueBack,
-                  dullInterior: false
-                })
-            );
+        surfaceData,
+        this.getBufferParams({
+          background: this.background,
+          opaqueBack: this.opaqueBack,
+          dullInterior: false
+        })
+      );
 
       var doubleSidedBuffer = new DoubleSidedBuffer(surfaceBuffer);
 
@@ -84515,11 +84539,11 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
       what.color = true;
     }
 
-        // forbid setting wireframe to true when contour is true
+    // forbid setting wireframe to true when contour is true
     if (params && params.wireframe && (
-                params.contour || (params.contour === undefined && this.contour)
-            )
-        ) {
+          params.contour || (params.contour === undefined && this.contour)
+        )
+    ) {
       params.wireframe = false;
     }
 
@@ -84644,17 +84668,17 @@ var PointRepresentation = (function (StructureRepresentation$$1) {
     var atomData = sview.getAtomData(this.getAtomParams(what));
 
     var pointBuffer = new PointBuffer(
-            atomData,
-            this.getBufferParams({
-              pointSize: this.pointSize,
-              sizeAttenuation: this.sizeAttenuation,
-              sortParticles: this.sortParticles,
-              useTexture: this.useTexture,
-              alphaTest: this.alphaTest,
-              forceTransparent: this.forceTransparent,
-              edgeBleach: this.edgeBleach
-            })
-        );
+      atomData,
+      this.getBufferParams({
+        pointSize: this.pointSize,
+        sizeAttenuation: this.sizeAttenuation,
+        sortParticles: this.sortParticles,
+        useTexture: this.useTexture,
+        alphaTest: this.alphaTest,
+        forceTransparent: this.forceTransparent,
+        edgeBleach: this.edgeBleach
+      })
+    );
 
     return {
       bufferList: [ pointBuffer ]
@@ -84980,18 +85004,18 @@ var RibbonRepresentation = (function (StructureRepresentation$$1) {
       var subSize = spline.getSubdividedSize(this$1.radius, this$1.scale);
 
       bufferList.push(
-                new RibbonBuffer(
-                  {
-                    position: subPos.position,
-                    normal: subOri.binormal,
-                    dir: subOri.normal,
-                    color: subCol.color,
-                    size: subSize.size,
-                    picking: subPick.picking
-                  },
-                    this$1.getBufferParams()
-                )
-            );
+        new RibbonBuffer(
+          {
+            position: subPos.position,
+            normal: subOri.binormal,
+            dir: subOri.normal,
+            color: subCol.color,
+            size: subSize.size,
+            picking: subPick.picking
+          },
+            this$1.getBufferParams()
+        )
+      );
     }, sview.getSelection());
 
     return {
@@ -85119,9 +85143,9 @@ var RocketRepresentation = (function (StructureRepresentation$$1) {
 
       var helixbundle = new Helixbundle(polymer);
       var axis = helixbundle.getAxis(
-                this$1.localAngle, this$1.centerDist, this$1.ssBorder,
-                this$1.getColorParams(), this$1.radius, this$1.scale
-            );
+        this$1.localAngle, this$1.centerDist, this$1.ssBorder,
+        this$1.getColorParams(), this$1.radius, this$1.scale
+      );
 
       length += axis.size.length;
       axisList.push(axis);
@@ -85149,8 +85173,8 @@ var RocketRepresentation = (function (StructureRepresentation$$1) {
 
     if (length) {
       axisData.picking = new AtomPicker(
-                axisData.picking, sview.getStructure()
-            );
+        axisData.picking, sview.getStructure()
+      );
     }
 
     var cylinderBuffer = new CylinderBuffer(
@@ -85162,13 +85186,13 @@ var RocketRepresentation = (function (StructureRepresentation$$1) {
         radius: axisData.size,
         picking: axisData.picking
       },
-            this.getBufferParams({
-              openEnded: this.openEnded,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      this.getBufferParams({
+        openEnded: this.openEnded,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     return {
       bufferList: [ cylinderBuffer ],
@@ -85195,9 +85219,9 @@ var RocketRepresentation = (function (StructureRepresentation$$1) {
 
       data.helixbundleList.forEach(function (helixbundle) {
         var axis = helixbundle.getAxis(
-                    this$1.localAngle, this$1.centerDist, this$1.ssBorder,
-                    this$1.getColorParams(), this$1.radius, this$1.scale
-                );
+          this$1.localAngle, this$1.centerDist, this$1.ssBorder,
+          this$1.getColorParams(), this$1.radius, this$1.scale
+        );
         if (what.color) {
           data.axisData.color.set(axis.color, offset * 3);
         }
@@ -85317,13 +85341,13 @@ var SpacefillRepresentation = (function (StructureRepresentation$$1) {
 
   SpacefillRepresentation.prototype.createData = function createData (sview) {
     var sphereBuffer = new SphereBuffer(
-            sview.getAtomData(this.getAtomParams()),
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              dullInterior: true,
-              disableImpostor: this.disableImpostor
-            })
-        );
+      sview.getAtomData(this.getAtomParams()),
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        dullInterior: true,
+        disableImpostor: this.disableImpostor
+      })
+    );
 
     return {
       bufferList: [ sphereBuffer ]
@@ -85537,11 +85561,11 @@ var TraceRepresentation = (function (StructureRepresentation$$1) {
       var subCol = spline.getSubdividedColor(this$1.getColorParams());
 
       bufferList.push(
-                new TraceBuffer(
-                    Object.assign({}, subPos, subCol),
-                    this$1.getBufferParams()
-                )
-            );
+        new TraceBuffer(
+          Object.assign({}, subPos, subCol),
+          this$1.getBufferParams()
+        )
+      );
     }, sview.getSelection());
 
     return {
@@ -85610,8 +85634,8 @@ var TubeRepresentation = (function (CartoonRepresentation$$1) {
     this.type = 'tube';
 
     this.parameters = Object.assign(
-            {}, this.parameters, { aspectRatio: null }
-        );
+      {}, this.parameters, { aspectRatio: null }
+    );
   }
 
   if ( CartoonRepresentation$$1 ) TubeRepresentation.__proto__ = CartoonRepresentation$$1;
@@ -85700,23 +85724,23 @@ var UnitcellRepresentation = (function (StructureRepresentation$$1) {
     var unitcellData = this.getUnitcellData(structure);
 
     this.sphereBuffer = new SphereBuffer(
-            unitcellData.vertex,
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      unitcellData.vertex,
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.cylinderBuffer = new CylinderBuffer(
-            unitcellData.edge,
-            this.getBufferParams({
-              openEnded: true,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        );
+      unitcellData.edge,
+      this.getBufferParams({
+        openEnded: true,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    );
 
     this.dataList.push({
       sview: this.structureView,
@@ -85802,8 +85826,8 @@ var ValidationRepresentation = (function (StructureRepresentation$$1) {
     });
 
     var cylinderBuffer = new CylinderBuffer(
-            clashData, this.getBufferParams({ openEnded: false })
-        );
+      clashData, this.getBufferParams({ openEnded: false })
+    );
 
     return {
       bufferList: [ cylinderBuffer ]
@@ -88350,7 +88374,7 @@ var CifParser = (function (StructureParser$$1) {
 
     var rawline, line;
 
-        //
+    //
 
     var cif = {};
     var asymIdDict = {};
@@ -98359,7 +98383,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-19";
+var version$1 = "0.10.5-20";
 
 /**
  * @file Version
