@@ -49,7 +49,7 @@ function text () {
 }
 
 export default {
-  entry: 'src/ngl.js',
+  input: 'src/ngl.js',
   plugins: [
     resolve({
       jsnext: true,
@@ -61,19 +61,20 @@ export default {
     json(),
     buble()
   ],
-  external: external,
-  targets: [
+  output: [
     {
-      dest: "build/js/ngl.dev.js",
+      file: "build/js/ngl.dev.js",
       format: 'umd',
-      moduleName: 'NGL',
-      sourceMap: true
+      name: 'NGL',
+      sourcemap: true
     },
     {
-      dest: "build/js/ngl.esm.js",
+      file: "build/js/ngl.esm.js",
       format: 'es',
-      moduleName: 'NGL',
-      sourceMap: true
+      name: 'NGL',
+      sourcemap: true
     }
-  ]
+  ],
+  external: external,
+  sourcemap: true
 };
