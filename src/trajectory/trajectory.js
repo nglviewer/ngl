@@ -52,6 +52,7 @@ function removePbc (x, box) {
 
   for (i = 3; i < n; i += 3) {
     for (j = 0; j < 3; ++j) {
+      x[ i + j ] -= box[ j * 3 + j ] * Math.round(x[ i + j ] / box[ j * 3 + j ])
       dist = x[ i + j ] - x[ i - 3 + j ]
 
       if (Math.abs(dist) > 0.9 * box[ j * 3 + j ]) {
