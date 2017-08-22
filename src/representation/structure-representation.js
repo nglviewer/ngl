@@ -160,6 +160,13 @@ class StructureRepresentation extends Representation {
   create () {
     if (this.structureView.atomCount === 0) return
 
+    if (!this.structureView.hasCoords()) {
+      this.needsBuild = true
+      return
+    } else {
+      this.needsBuild = false
+    }
+
     const assembly = this.getAssembly()
 
     if (assembly) {
@@ -189,6 +196,11 @@ class StructureRepresentation extends Representation {
   update (what) {
     if (this.lazy && !this.visible) {
       Object.assign(this.lazyProps.what, what)
+      return
+    }
+
+    if (this.needsBuild) {
+      this.build()
       return
     }
 
