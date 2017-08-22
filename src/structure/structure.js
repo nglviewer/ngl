@@ -10,7 +10,7 @@ import Signal from '../../lib/signals.es6.js'
 import { Debug, Log, ColormakerRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import { AtomPicker, BondPicker } from '../utils/picker.js'
-import { copyWithin } from '../math/array-utils.js'
+import { copyWithin, arrayMin, arrayMax } from '../math/array-utils.js'
 import BitArray from '../utils/bitarray.js'
 import RadiusFactory from '../utils/radius-factory.js'
 import { Matrix } from '../math/matrix-utils.js'
@@ -948,6 +948,15 @@ class Structure {
     } else {
       return this.center.clone()
     }
+  }
+
+  hasCoords () {
+    var atomStore = this.atomStore
+    return (
+      arrayMin(atomStore.x) !== 0 || arrayMax(atomStore.x) !== 0 ||
+      arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
+      arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
+    )
   }
 
   getSequence (selection) {

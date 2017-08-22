@@ -8,7 +8,7 @@ import Signal from '../../lib/signals.es6.js'
 
 import { Log } from '../globals.js'
 import { defaults } from '../utils.js'
-import { circularMean, arrayMin, arrayMax } from '../math/array-utils.js'
+import { circularMean } from '../math/array-utils.js'
 import { lerp, spline } from '../math/math-utils.js'
 import Selection from '../selection/selection.js'
 import Superposition from '../align/superposition.js'
@@ -224,7 +224,7 @@ class Trajectory {
   }
 
   _saveInitialCoords () {
-    if (arrayMin(this.structureCoords) !== 0 || arrayMax(this.structureCoords) !== 0) {
+    if (this.structure.hasCoords()) {
       this.initialCoords = new Float32Array(this.structureCoords)
       this._makeSuperposeCoords()
     } else if (this.frameCache[0]) {
