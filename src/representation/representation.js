@@ -445,6 +445,8 @@ class Representation {
     const p = params || {}
     const tp = this.parameters
 
+    this.setColor(p.color, p)
+
     what = what || {}
     rebuild = rebuild || false
 
