@@ -59,23 +59,23 @@ class UnitcellRepresentation extends StructureRepresentation {
     const unitcellData = this.getUnitcellData(structure)
 
     this.sphereBuffer = new SphereBuffer(
-            unitcellData.vertex,
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      unitcellData.vertex,
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.cylinderBuffer = new CylinderBuffer(
-            unitcellData.edge,
-            this.getBufferParams({
-              openEnded: true,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      unitcellData.edge,
+      this.getBufferParams({
+        openEnded: true,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.dataList.push({
       sview: this.structureView,

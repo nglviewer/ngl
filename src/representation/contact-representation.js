@@ -63,8 +63,8 @@ class ContactRepresentation extends StructureRepresentation {
     }
 
     var contactData = contactsFnDict[ this.contactType ](
-            sview, this.maxDistance, this.maxAngle
-        )
+      sview, this.maxDistance, this.maxAngle
+    )
 
     return contactData
   }
@@ -73,10 +73,10 @@ class ContactRepresentation extends StructureRepresentation {
     var bondData = sview.getBondData(this.getBondParams(what, params))
     if (bondData.picking) {
       bondData.picking = new ContactPicker(
-                bondData.picking.array,
-                bondData.picking.structure,
-                params.bondStore
-            )
+        bondData.picking.array,
+        bondData.picking.structure,
+        params.bondStore
+      )
     }
     return bondData
   }
@@ -85,17 +85,17 @@ class ContactRepresentation extends StructureRepresentation {
     var contactData = this.getContactData(sview)
 
     var cylinderBuffer = new CylinderBuffer(
-            this.getBondData(sview, undefined, {
-              bondSet: contactData.bondSet,
-              bondStore: contactData.bondStore
-            }),
-            this.getBufferParams({
-              openEnded: false,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      this.getBondData(sview, undefined, {
+        bondSet: contactData.bondSet,
+        bondStore: contactData.bondStore
+      }),
+      this.getBufferParams({
+        openEnded: false,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     return {
       bufferList: [ cylinderBuffer ],
@@ -121,8 +121,8 @@ class ContactRepresentation extends StructureRepresentation {
 
     if (!what || what.position) {
       cylinderData.position = calculateCenterArray(
-                bondData.position1, bondData.position2
-            )
+        bondData.position1, bondData.position2
+      )
       cylinderData.position1 = bondData.position1
       cylinderData.position2 = bondData.position2
     }

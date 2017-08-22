@@ -18,8 +18,8 @@ class TubeRepresentation extends CartoonRepresentation {
     this.type = 'tube'
 
     this.parameters = Object.assign(
-            {}, this.parameters, { aspectRatio: null }
-        )
+      {}, this.parameters, { aspectRatio: null }
+    )
   }
 
   init (params) {

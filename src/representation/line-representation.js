@@ -86,8 +86,8 @@ class LineRepresentation extends StructureRepresentation {
     var bondData = sview.getBondData(this.getBondParams(what))
 
     var lineBuffer = new LineBuffer(
-            bondData, this.getBufferParams()
-        )
+      bondData, this.getBufferParams()
+    )
 
     return {
       bufferList: [ lineBuffer ]

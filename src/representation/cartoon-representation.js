@@ -23,12 +23,12 @@ import TubeMeshBuffer from '../buffer/tubemesh-buffer.js'
  * } );
  */
 class CartoonRepresentation extends StructureRepresentation {
-    /**
-     * Create Cartoon representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {StructureRepresentationParameters} params - representation parameters
-     */
+  /**
+   * Create Cartoon representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {StructureRepresentationParameters} params - representation parameters
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
@@ -124,16 +124,16 @@ class CartoonRepresentation extends StructureRepresentation {
       var subSize = spline.getSubdividedSize(this.radius, this.getScale(polymer))
 
       bufferList.push(
-                new TubeMeshBuffer(
-                    Object.assign({}, subPos, subOri, subCol, subPick, subSize),
-                    this.getBufferParams({
-                      radialSegments: this.radialSegments,
-                      aspectRatio: this.getAspectRatio(polymer),
-                      capped: this.capped,
-                      dullInterior: true
-                    })
-                )
-            )
+        new TubeMeshBuffer(
+          Object.assign({}, subPos, subOri, subCol, subPick, subSize),
+          this.getBufferParams({
+            radialSegments: this.radialSegments,
+            aspectRatio: this.getAspectRatio(polymer),
+            capped: this.capped,
+            dullInterior: true
+          })
+        )
+      )
     }, sview.getSelection())
 
     return {

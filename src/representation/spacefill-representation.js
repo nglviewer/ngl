@@ -33,13 +33,13 @@ class SpacefillRepresentation extends StructureRepresentation {
 
   createData (sview) {
     var sphereBuffer = new SphereBuffer(
-            sview.getAtomData(this.getAtomParams()),
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              dullInterior: true,
-              disableImpostor: this.disableImpostor
-            })
-        )
+      sview.getAtomData(this.getAtomParams()),
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        dullInterior: true,
+        disableImpostor: this.disableImpostor
+      })
+    )
 
     return {
       bufferList: [ sphereBuffer ]

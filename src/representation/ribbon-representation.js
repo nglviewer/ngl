@@ -90,18 +90,18 @@ class RibbonRepresentation extends StructureRepresentation {
       var subSize = spline.getSubdividedSize(this.radius, this.scale)
 
       bufferList.push(
-                new RibbonBuffer(
-                  {
-                    position: subPos.position,
-                    normal: subOri.binormal,
-                    dir: subOri.normal,
-                    color: subCol.color,
-                    size: subSize.size,
-                    picking: subPick.picking
-                  },
-                    this.getBufferParams()
-                )
-            )
+        new RibbonBuffer(
+          {
+            position: subPos.position,
+            normal: subOri.binormal,
+            dir: subOri.normal,
+            color: subCol.color,
+            size: subSize.size,
+            picking: subPick.picking
+          },
+            this.getBufferParams()
+        )
+      )
     }, sview.getSelection())
 
     return {

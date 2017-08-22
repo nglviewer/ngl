@@ -45,8 +45,8 @@ class ValidationRepresentation extends StructureRepresentation {
     })
 
     const cylinderBuffer = new CylinderBuffer(
-            clashData, this.getBufferParams({ openEnded: false })
-        )
+      clashData, this.getBufferParams({ openEnded: false })
+    )
 
     return {
       bufferList: [ cylinderBuffer ]

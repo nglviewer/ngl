@@ -50,12 +50,12 @@ import TextBuffer from '../buffer/text-buffer.js'
  * Label representation
  */
 class LabelRepresentation extends StructureRepresentation {
-    /**
-     * Create Label representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {LabelRepresentationParameters} params - label representation parameters
-     */
+  /**
+   * Create Label representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {LabelRepresentationParameters} params - label representation parameters
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
@@ -189,8 +189,8 @@ class LabelRepresentation extends StructureRepresentation {
 
     var text = []
     var labelFactory = new LabelFactory(
-            this.labelType, this.labelText
-        )
+      this.labelType, this.labelText
+    )
     sview.eachAtom(function (ap) {
       text.push(labelFactory.atomLabel(ap))
     })
@@ -202,24 +202,24 @@ class LabelRepresentation extends StructureRepresentation {
         color: atomData.color,
         text
       },
-            this.getBufferParams({
-              fontFamily: this.fontFamily,
-              fontStyle: this.fontStyle,
-              fontWeight: this.fontWeight,
-              sdf: this.sdf,
-              xOffset: this.xOffset,
-              yOffset: this.yOffset,
-              zOffset: this.zOffset,
-              attachment: this.attachment,
-              showBorder: this.showBorder,
-              borderColor: this.borderColor,
-              borderWidth: this.borderWidth,
-              showBackground: this.showBackground,
-              backgroundColor: this.backgroundColor,
-              backgroundMargin: this.backgroundMargin,
-              backgroundOpacity: this.backgroundOpacity
-            })
-        )
+      this.getBufferParams({
+        fontFamily: this.fontFamily,
+        fontStyle: this.fontStyle,
+        fontWeight: this.fontWeight,
+        sdf: this.sdf,
+        xOffset: this.xOffset,
+        yOffset: this.yOffset,
+        zOffset: this.zOffset,
+        attachment: this.attachment,
+        showBorder: this.showBorder,
+        borderColor: this.borderColor,
+        borderWidth: this.borderWidth,
+        showBackground: this.showBackground,
+        backgroundColor: this.backgroundColor,
+        backgroundMargin: this.backgroundMargin,
+        backgroundOpacity: this.backgroundOpacity
+      })
+    )
 
     return {
       bufferList: [ textBuffer ]

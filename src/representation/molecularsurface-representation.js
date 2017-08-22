@@ -92,7 +92,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
     this.__infoList = []
 
-        // TODO find a more direct way
+    // TODO find a more direct way
     this.structure.signals.refreshed.add(function () {
       this.__forceNewMolsurf = true
     }, this)
@@ -208,11 +208,11 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
     if (surface.contour) {
       const contourBuffer = new ContourBuffer(
-                surfaceData,
-                this.getBufferParams({
-                  wireframe: false
-                })
-            )
+        surfaceData,
+        this.getBufferParams({
+          wireframe: false
+        })
+      )
 
       bufferList.push(contourBuffer)
     } else {
@@ -220,13 +220,13 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       surfaceData.picking = surface.getPicking(sview.getStructure())
 
       const surfaceBuffer = new SurfaceBuffer(
-                surfaceData,
-                this.getBufferParams({
-                  background: this.background,
-                  opaqueBack: this.opaqueBack,
-                  dullInterior: false
-                })
-            )
+        surfaceData,
+        this.getBufferParams({
+          background: this.background,
+          opaqueBack: this.opaqueBack,
+          dullInterior: false
+        })
+      )
 
       const doubleSidedBuffer = new DoubleSidedBuffer(surfaceBuffer)
 
@@ -267,11 +267,11 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       what.color = true
     }
 
-        // forbid setting wireframe to true when contour is true
+    // forbid setting wireframe to true when contour is true
     if (params && params.wireframe && (
-                params.contour || (params.contour === undefined && this.contour)
-            )
-        ) {
+          params.contour || (params.contour === undefined && this.contour)
+        )
+    ) {
       params.wireframe = false
     }
 

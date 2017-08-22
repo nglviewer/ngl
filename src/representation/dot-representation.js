@@ -202,26 +202,26 @@ class DotRepresentation extends Representation {
 
     if (this.dotType === 'sphere') {
       this.dotBuffer = new SphereBuffer(
-                dotData,
-                this.getBufferParams({
-                  sphereDetail: this.sphereDetail,
-                  disableImpostor: this.disableImpostor,
-                  dullInterior: false
-                })
-            )
+        dotData,
+        this.getBufferParams({
+          sphereDetail: this.sphereDetail,
+          disableImpostor: this.disableImpostor,
+          dullInterior: false
+        })
+      )
     } else {
       this.dotBuffer = new PointBuffer(
-                dotData,
-                this.getBufferParams({
-                  pointSize: this.pointSize,
-                  sizeAttenuation: this.sizeAttenuation,
-                  sortParticles: this.sortParticles,
-                  useTexture: this.useTexture,
-                  alphaTest: this.alphaTest,
-                  forceTransparent: this.forceTransparent,
-                  edgeBleach: this.edgeBleach
-                })
-            )
+        dotData,
+        this.getBufferParams({
+          pointSize: this.pointSize,
+          sizeAttenuation: this.sizeAttenuation,
+          sortParticles: this.sortParticles,
+          useTexture: this.useTexture,
+          alphaTest: this.alphaTest,
+          forceTransparent: this.forceTransparent,
+          edgeBleach: this.edgeBleach
+        })
+      )
     }
 
     this.bufferList.push(this.dotBuffer)
@@ -237,24 +237,24 @@ class DotRepresentation extends Representation {
     if (what.color) {
       if (this.volume) {
         dotData.color = this.volume.getDataColor(
-                    this.getColorParams()
-                )
+          this.getColorParams()
+        )
       } else {
         dotData.color = this.surface.getColor(
-                    this.getColorParams()
-                )
+          this.getColorParams()
+        )
       }
     }
 
     if (this.dotType === 'sphere' && (what.radius || what.scale)) {
       if (this.volume) {
         dotData.radius = this.volume.getDataSize(
-                    this.radius, this.scale
-                )
+          this.radius, this.scale
+        )
       } else {
         dotData.radius = this.surface.getSize(
-                    this.radius, this.scale
-                )
+          this.radius, this.scale
+        )
       }
     }
 
@@ -265,26 +265,26 @@ class DotRepresentation extends Representation {
     what = what || {}
 
     if (params && params.thresholdType !== undefined &&
-            this.volume instanceof Volume
-        ) {
+        this.volume instanceof Volume
+    ) {
       if (this.thresholdType === 'value' &&
-                params.thresholdType === 'sigma'
-            ) {
+          params.thresholdType === 'sigma'
+      ) {
         this.thresholdMin = this.volume.getSigmaForValue(
-                    this.thresholdMin
-                )
+          this.thresholdMin
+        )
         this.thresholdMax = this.volume.getSigmaForValue(
-                    this.thresholdMax
-                )
+          this.thresholdMax
+        )
       } else if (this.thresholdType === 'sigma' &&
-                params.thresholdType === 'value'
-            ) {
+                 params.thresholdType === 'value'
+      ) {
         this.thresholdMin = this.volume.getValueForSigma(
-                    this.thresholdMin
-                )
+          this.thresholdMin
+        )
         this.thresholdMax = this.volume.getValueForSigma(
-                    this.thresholdMax
-                )
+          this.thresholdMax
+        )
       }
 
       this.thresholdType = params.thresholdType
@@ -298,8 +298,8 @@ class DotRepresentation extends Representation {
       }
       what.radius = true
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true
       }
     }
@@ -307,8 +307,8 @@ class DotRepresentation extends Representation {
     if (params && params.radius !== undefined) {
       what.radius = true
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true
       }
     }
@@ -316,8 +316,8 @@ class DotRepresentation extends Representation {
     if (params && params.scale !== undefined) {
       what.scale = true
       if (this.dotType === 'sphere' &&
-                (!ExtensionFragDepth || this.disableImpostor)
-            ) {
+          (!ExtensionFragDepth || this.disableImpostor)
+      ) {
         rebuild = true
       }
     }

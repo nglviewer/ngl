@@ -259,20 +259,20 @@ class SurfaceRepresentation extends Representation {
     })
   }
 
-    /**
-     * Set representation parameters
-     * @alias SurfaceRepresentation#setParameters
-     * @param {SurfaceRepresentationParameters} params - surface parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {SurfaceRepresentation} this object
-     */
+  /**
+   * Set representation parameters
+   * @alias SurfaceRepresentation#setParameters
+   * @param {SurfaceRepresentationParameters} params - surface parameter object
+   * @param {Object} [what] - buffer data attributes to be updated,
+   *                        note that this needs to be implemented in the
+   *                        derived classes. Generally it allows more
+   *                        fine-grained control over updating than
+   *                        forcing a rebuild.
+   * @param {Boolean} what.position - update position data
+   * @param {Boolean} what.color - update color data
+   * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+   * @return {SurfaceRepresentation} this object
+   */
   setParameters (params, what, rebuild) {
     if (params && params.isolevelType !== undefined &&
       this.volume
@@ -295,7 +295,7 @@ class SurfaceRepresentation extends Representation {
       delete params.boxCenter
     }
 
-        // Forbid wireframe && contour as in molsurface
+    // Forbid wireframe && contour as in molsurface
     if (params && params.wireframe && (
       params.contour || (params.contour === undefined && this.contour)
     )) {

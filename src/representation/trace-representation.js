@@ -85,11 +85,11 @@ class TraceRepresentation extends StructureRepresentation {
       var subCol = spline.getSubdividedColor(this.getColorParams())
 
       bufferList.push(
-                new TraceBuffer(
-                    Object.assign({}, subPos, subCol),
-                    this.getBufferParams()
-                )
-            )
+        new TraceBuffer(
+          Object.assign({}, subPos, subCol),
+          this.getBufferParams()
+        )
+      )
     }, sview.getSelection())
 
     return {

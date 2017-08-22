@@ -41,12 +41,12 @@ import LineBuffer from '../buffer/line-buffer.js'
  * } );
  */
 class BallAndStickRepresentation extends StructureRepresentation {
-    /**
-     * Create Ball And Stick representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
-     */
+  /**
+   * Create Ball And Stick representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
@@ -134,33 +134,33 @@ class BallAndStickRepresentation extends StructureRepresentation {
 
     if (this.lineOnly) {
       this.lineBuffer = new LineBuffer(
-                bondData,
-                this.getBufferParams()
-            )
+        bondData,
+        this.getBufferParams()
+      )
 
       bufferList.push(this.lineBuffer)
     } else {
       var cylinderBuffer = new CylinderBuffer(
-                bondData,
-                this.getBufferParams({
-                  openEnded: this.openEnded,
-                  radialSegments: this.radialSegments,
-                  disableImpostor: this.disableImpostor,
-                  dullInterior: true
-                })
-            )
+        bondData,
+        this.getBufferParams({
+          openEnded: this.openEnded,
+          radialSegments: this.radialSegments,
+          disableImpostor: this.disableImpostor,
+          dullInterior: true
+        })
+      )
 
       bufferList.push(cylinderBuffer)
 
       if (!this.cylinderOnly) {
         var sphereBuffer = new SphereBuffer(
-                    this.getAtomData(sview),
-                    this.getBufferParams({
-                      sphereDetail: this.sphereDetail,
-                      disableImpostor: this.disableImpostor,
-                      dullInterior: true
-                    })
-                )
+          this.getAtomData(sview),
+          this.getBufferParams({
+            sphereDetail: this.sphereDetail,
+            disableImpostor: this.disableImpostor,
+            dullInterior: true
+          })
+        )
 
         bufferList.push(sphereBuffer)
       }

@@ -152,11 +152,11 @@ class SliceRepresentation extends Representation {
     })
 
     const sliceBuffer = new ImageBuffer(
-            volumeSlice.getData({ colorParams: this.getColorParams() }),
-            this.getBufferParams({
-              filter: this.filter
-            })
-        )
+      volumeSlice.getData({ colorParams: this.getColorParams() }),
+      this.getBufferParams({
+        filter: this.filter
+      })
+    )
 
     this.bufferList.push(sliceBuffer)
   }

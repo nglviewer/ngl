@@ -14,8 +14,8 @@ import Unitcell from '../symmetry/unitcell.js'
 import Assembly from '../symmetry/assembly.js'
 import Selection from '../selection/selection.js'
 import {
-    assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
-    calculateBonds, calculateSecondaryStructure
+  assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
+  calculateBonds, calculateSecondaryStructure
 } from '../structure/structure-utils.js'
 
 const reWhitespace = /\s+/
@@ -723,7 +723,7 @@ class CifParser extends StructureParser {
 
     var rawline, line
 
-        //
+    //
 
     var cif = {}
     var asymIdDict = {}

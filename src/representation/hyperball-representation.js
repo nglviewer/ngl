@@ -54,25 +54,25 @@ class HyperballRepresentation extends LicoriceRepresentation {
 
   createData (sview) {
     var sphereBuffer = new SphereBuffer(
-            sview.getAtomData(this.getAtomParams()),
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      sview.getAtomData(this.getAtomParams()),
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.__center = new Float32Array(sview.bondCount * 3)
 
     var stickBuffer = new HyperballStickBuffer(
-            sview.getBondData(this.getBondParams()),
-            this.getBufferParams({
-              shrink: this.shrink,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      sview.getBondData(this.getBondParams()),
+      this.getBufferParams({
+        shrink: this.shrink,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     return {
       bufferList: [ sphereBuffer, stickBuffer ]

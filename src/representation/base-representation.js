@@ -21,11 +21,11 @@ import BallAndStickRepresentation from './ballandstick-representation.js'
  * } );
  */
 class BaseRepresentation extends BallAndStickRepresentation {
-    /**
-     * @param  {Structure} structure - the structure object
-     * @param  {Viewer} viewer - the viewer object
-     * @param  {BallAndStickRepresentationParameters} params - parameters object
-     */
+  /**
+   * @param  {Structure} structure - the structure object
+   * @param  {Viewer} viewer - the viewer object
+   * @param  {BallAndStickRepresentationParameters} params - parameters object
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 

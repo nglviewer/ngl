@@ -66,9 +66,9 @@ class RocketRepresentation extends StructureRepresentation {
 
       var helixbundle = new Helixbundle(polymer)
       var axis = helixbundle.getAxis(
-                this.localAngle, this.centerDist, this.ssBorder,
-                this.getColorParams(), this.radius, this.scale
-            )
+        this.localAngle, this.centerDist, this.ssBorder,
+        this.getColorParams(), this.radius, this.scale
+      )
 
       length += axis.size.length
       axisList.push(axis)
@@ -96,8 +96,8 @@ class RocketRepresentation extends StructureRepresentation {
 
     if (length) {
       axisData.picking = new AtomPicker(
-                axisData.picking, sview.getStructure()
-            )
+        axisData.picking, sview.getStructure()
+      )
     }
 
     var cylinderBuffer = new CylinderBuffer(
@@ -109,13 +109,13 @@ class RocketRepresentation extends StructureRepresentation {
         radius: axisData.size,
         picking: axisData.picking
       },
-            this.getBufferParams({
-              openEnded: this.openEnded,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      this.getBufferParams({
+        openEnded: this.openEnded,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     return {
       bufferList: [ cylinderBuffer ],
@@ -140,9 +140,9 @@ class RocketRepresentation extends StructureRepresentation {
 
       data.helixbundleList.forEach(helixbundle => {
         var axis = helixbundle.getAxis(
-                    this.localAngle, this.centerDist, this.ssBorder,
-                    this.getColorParams(), this.radius, this.scale
-                )
+          this.localAngle, this.centerDist, this.ssBorder,
+          this.getColorParams(), this.radius, this.scale
+        )
         if (what.color) {
           data.axisData.color.set(axis.color, offset * 3)
         }

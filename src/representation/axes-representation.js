@@ -38,11 +38,11 @@ import CylinderBuffer from '../buffer/cylinder-buffer.js'
  * } );
  */
 class AxesRepresentation extends StructureRepresentation {
-    /**
-     * @param  {Structure} structure - the structure object
-     * @param  {Viewer} viewer - the viewer object
-     * @param  {StructureRepresentationParameters} params - parameters object
-     */
+  /**
+   * @param  {Structure} structure - the structure object
+   * @param  {Viewer} viewer - the viewer object
+   * @param  {StructureRepresentationParameters} params - parameters object
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
@@ -144,9 +144,9 @@ class AxesRepresentation extends StructureRepresentation {
       var offset2 = offset * 2
       var addCorner = function (d1, d2, d3) {
         v.copy(pa.center)
-                    .addScaledVector(pa.normVecA, d1)
-                    .addScaledVector(pa.normVecB, d2)
-                    .addScaledVector(pa.normVecC, d3)
+          .addScaledVector(pa.normVecA, d1)
+          .addScaledVector(pa.normVecB, d2)
+          .addScaledVector(pa.normVecC, d3)
         v.toArray(vertexPosition, offset2)
         offset2 += 3
       }
@@ -162,9 +162,9 @@ class AxesRepresentation extends StructureRepresentation {
       var edgeOffset = offset
       var addEdge = function (a, b) {
         v.fromArray(vertexPosition, offset * 2 + a * 3)
-                    .toArray(edgePosition1, edgeOffset)
+          .toArray(edgePosition1, edgeOffset)
         v.fromArray(vertexPosition, offset * 2 + b * 3)
-                    .toArray(edgePosition2, edgeOffset)
+          .toArray(edgePosition2, edgeOffset)
         edgeOffset += 3
       }
       addEdge(0, 1)
@@ -205,23 +205,23 @@ class AxesRepresentation extends StructureRepresentation {
     var axesData = this.getAxesData(this.structureView)
 
     this.sphereBuffer = new SphereBuffer(
-            axesData.vertex,
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      axesData.vertex,
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.cylinderBuffer = new CylinderBuffer(
-            axesData.edge,
-            this.getBufferParams({
-              openEnded: true,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      axesData.edge,
+      this.getBufferParams({
+        openEnded: true,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.dataList.push({
       sview: this.structureView,

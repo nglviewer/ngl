@@ -75,17 +75,17 @@ class PointRepresentation extends StructureRepresentation {
     var atomData = sview.getAtomData(this.getAtomParams(what))
 
     var pointBuffer = new PointBuffer(
-            atomData,
-            this.getBufferParams({
-              pointSize: this.pointSize,
-              sizeAttenuation: this.sizeAttenuation,
-              sortParticles: this.sortParticles,
-              useTexture: this.useTexture,
-              alphaTest: this.alphaTest,
-              forceTransparent: this.forceTransparent,
-              edgeBleach: this.edgeBleach
-            })
-        )
+      atomData,
+      this.getBufferParams({
+        pointSize: this.pointSize,
+        sizeAttenuation: this.sizeAttenuation,
+        sortParticles: this.sortParticles,
+        useTexture: this.useTexture,
+        alphaTest: this.alphaTest,
+        forceTransparent: this.forceTransparent,
+        edgeBleach: this.edgeBleach
+      })
+    )
 
     return {
       bufferList: [ pointBuffer ]

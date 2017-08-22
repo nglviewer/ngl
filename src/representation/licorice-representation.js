@@ -23,8 +23,8 @@ class LicoriceRepresentation extends BallAndStickRepresentation {
     this.type = 'licorice'
 
     this.parameters = Object.assign(
-            {}, this.parameters, { aspectRatio: null }
-        )
+      {}, this.parameters, { aspectRatio: null }
+    )
   }
 
   init (params) {

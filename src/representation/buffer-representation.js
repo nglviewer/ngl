@@ -38,12 +38,12 @@ import Representation from './representation.js'
  * } );
  */
 class BufferRepresentation extends Representation {
-    /**
-     * Create Buffer representation
-     * @param {Buffer} buffer - a buffer object
-     * @param {Viewer} viewer - a viewer object
-     * @param {RepresentationParameters} params - representation parameters
-     */
+  /**
+   * Create Buffer representation
+   * @param {Buffer} buffer - a buffer object
+   * @param {Viewer} viewer - a viewer object
+   * @param {RepresentationParameters} params - representation parameters
+   */
   constructor (buffer, viewer, params) {
     if (!Array.isArray(buffer)) {
       buffer = [ buffer ]

@@ -43,22 +43,22 @@ import CylinderBuffer from '../buffer/cylinder-buffer.js'
  * Distance representation
  */
 class DistanceRepresentation extends StructureRepresentation {
-    /**
-     * Create Distance representation object
-     * @example
-     * stage.loadFile( "rcsb://1crn" ).then( function( o ){
-     *     o.addRepresentation( "cartoon" );
-     *     // either give selections (uses first selected atom) ...
-     *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
-     *     // or atom indices
-     *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
-     *     o.addRepresentation( "distance", { atomPair: atomPair } );
-     *     stage.autoView();
-     * } );
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {DistanceRepresentationParameters} params - distance representation parameters
-     */
+  /**
+   * Create Distance representation object
+   * @example
+   * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+   *     o.addRepresentation( "cartoon" );
+   *     // either give selections (uses first selected atom) ...
+   *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
+   *     // or atom indices
+   *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
+   *     o.addRepresentation( "distance", { atomPair: atomPair } );
+   *     stage.autoView();
+   * } );
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {DistanceRepresentationParameters} params - distance representation parameters
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
@@ -193,10 +193,10 @@ class DistanceRepresentation extends StructureRepresentation {
     var bondData = sview.getBondData(this.getBondParams(what, params))
     if (bondData.picking) {
       bondData.picking = new DistancePicker(
-                bondData.picking.array,
-                bondData.picking.structure,
-                params.bondStore
-            )
+        bondData.picking.array,
+        bondData.picking.structure,
+        params.bondStore
+      )
     }
     return bondData
   }
@@ -218,16 +218,16 @@ class DistanceRepresentation extends StructureRepresentation {
         color: uniformArray3(n, c.r, c.g, c.b),
         text: distanceData.text
       },
-            this.getBufferParams({
-              fontFamily: this.fontFamily,
-              fontStyle: this.fontStyle,
-              fontWeight: this.fontWeight,
-              sdf: this.sdf,
-              zOffset: this.labelZOffset,
-              opacity: 1.0,
-              visible: this.labelVisible
-            })
-        )
+      this.getBufferParams({
+        fontFamily: this.fontFamily,
+        fontStyle: this.fontStyle,
+        fontWeight: this.fontWeight,
+        sdf: this.sdf,
+        zOffset: this.labelZOffset,
+        opacity: 1.0,
+        visible: this.labelVisible
+      })
+    )
 
     var bondParams = {
       bondSet: distanceData.bondSet,
@@ -237,14 +237,14 @@ class DistanceRepresentation extends StructureRepresentation {
     var bondData = this.getBondData(this.structureView, undefined, bondParams)
 
     this.cylinderBuffer = new CylinderBuffer(
-            bondData,
-            this.getBufferParams({
-              openEnded: false,
-              radialSegments: this.radialSegments,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
-        )
+      bondData,
+      this.getBufferParams({
+        openEnded: false,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
     this.dataList.push({
       sview: this.structureView,
@@ -301,8 +301,8 @@ class DistanceRepresentation extends StructureRepresentation {
 
     if (this.textBuffer) {
       this.textBuffer.setVisibility(
-                this.labelVisible && this.visible
-            )
+        this.labelVisible && this.visible
+      )
     }
 
     if (!noRenderRequest) this.viewer.requestRender()
