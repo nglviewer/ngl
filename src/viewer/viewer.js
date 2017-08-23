@@ -308,6 +308,12 @@ function Viewer (idOrElement) {
     )
     pickingTarget.texture.generateMipmaps = false
 
+    // workaround to reset the gl state after using testTextureSupport
+    // fixes some bug where nothing is rendered to the canvas
+    // when animations are started on page load
+    renderer.clearTarget(pickingTarget)
+    renderer.setRenderTarget(null)
+
     // ssaa textures
 
     sampleTarget = new WebGLRenderTarget(
@@ -852,7 +858,7 @@ function Viewer (idOrElement) {
 
   function requestRender () {
     if (renderPending) {
-      // Log.info( "there is still a 'render' call pending" );
+      // Log.info("there is still a 'render' call pending")
       return
     }
 
@@ -1044,11 +1050,11 @@ function Viewer (idOrElement) {
 
   function render (picking) {
     if (rendering) {
-      Log.warn("tried to call 'render' from within 'render'")
+      Log.warn("'tried to call 'render' from within 'render'")
       return
     }
 
-    // Log.time( "Viewer.render" );
+    // Log.time('Viewer.render')
 
     rendering = true
 
@@ -1072,8 +1078,8 @@ function Viewer (idOrElement) {
     rendering = false
     renderPending = false
 
-    // Log.timeEnd( "Viewer.render" );
-    // Log.log( info.memory, info.render );
+    // Log.timeEnd('Viewer.render')
+    // Log.log(info.memory, info.render)
   }
 
   function clear () {
