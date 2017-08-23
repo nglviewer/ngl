@@ -50788,17 +50788,20 @@ function arrayMin (array) {
   return min
 }
 
-function arraySum (array) {
+function arraySum (array, stride, offset) {
+  stride = stride || 1;
+  offset = offset || 0;
+
   var n = array.length;
   var sum = 0;
-  for (var i = 0; i < n; ++i) {
+  for (var i = offset; i < n; i += stride) {
     sum += array[ i ];
   }
   return sum
 }
 
-function arrayMean (array) {
-  return arraySum(array) / array.length
+function arrayMean (array, stride, offset) {
+  return arraySum(array, stride, offset) / (array.length / (stride || 1))
 }
 
 function arrayRms (array) {
@@ -51448,6 +51451,12 @@ function Viewer (idOrElement) {
     );
     pickingTarget.texture.generateMipmaps = false;
 
+    // workaround to reset the gl state after using testTextureSupport
+    // fixes some bug where nothing is rendered to the canvas
+    // when animations are started on page load
+    renderer.clearTarget(pickingTarget);
+    renderer.setRenderTarget(null);
+
     // ssaa textures
 
     sampleTarget = new WebGLRenderTarget(
@@ -51992,7 +52001,7 @@ function Viewer (idOrElement) {
 
   function requestRender () {
     if (renderPending) {
-      // Log.info( "there is still a 'render' call pending" );
+      // Log.info("there is still a 'render' call pending")
       return
     }
 
@@ -52184,11 +52193,11 @@ function Viewer (idOrElement) {
 
   function render (picking) {
     if (rendering) {
-      Log.warn("tried to call 'render' from within 'render'");
+      Log.warn("'tried to call 'render' from within 'render'");
       return
     }
 
-    // Log.time( "Viewer.render" );
+    // Log.time('Viewer.render')
 
     rendering = true;
 
@@ -52212,8 +52221,8 @@ function Viewer (idOrElement) {
     rendering = false;
     renderPending = false;
 
-    // Log.timeEnd( "Viewer.render" );
-    // Log.log( info.memory, info.render );
+    // Log.timeEnd('Viewer.render')
+    // Log.log(info.memory, info.render)
   }
 
   function clear () {
@@ -67992,24 +68001,40 @@ function removePbc (x, box) {
   // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
   // in-place
 
-  var i, j, d, dist;
   var n = x.length;
 
-  for (i = 3; i < n; i += 3) {
-    for (j = 0; j < 3; ++j) {
-      x[ i + j ] -= box[ j * 3 + j ] * Math.round(x[ i + j ] / box[ j * 3 + j ]);
-      dist = x[ i + j ] - x[ i - 3 + j ];
+  for (var i = 3; i < n; i += 3) {
+    for (var j = 0; j < 3; ++j) {
+      var dist = x[ i + j ] - x[ i - 3 + j ];
 
       if (Math.abs(dist) > 0.9 * box[ j * 3 + j ]) {
         if (dist > 0) {
-          for (d = 0; d < 3; ++d) {
+          for (var d = 0; d < 3; ++d) {
             x[ i + d ] -= box[ j * 3 + d ];
           }
         } else {
-          for (d = 0; d < 3; ++d) {
-            x[ i + d ] += box[ j * 3 + d ];
+          for (var d$1 = 0; d$1 < 3; ++d$1) {
+            x[ i + d$1 ] += box[ j * 3 + d$1 ];
           }
         }
+      }
+    }
+  }
+
+  return x
+}
+
+function removePeriodicity (x, box, mean) {
+  if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
+    return
+  }
+
+  var n = x.length;
+  for (var i = 3; i < n; i += 3) {
+    for (var j = 0; j < 3; ++j) {
+      var f = (x[ i + j ] - mean[ j ]) / box[ j * 3 + j ];
+      if (Math.abs(f) > 0.5) {
+        x[ i + j ] -= box[ j * 3 + j ] * Math.round(f);
       }
     }
   }
@@ -68022,6 +68047,14 @@ function circularMean3 (indices, coords, box) {
     circularMean(coords, box[ 0 ], 3, 0, indices),
     circularMean(coords, box[ 1 ], 3, 1, indices),
     circularMean(coords, box[ 2 ], 3, 2, indices)
+  ]
+}
+
+function arrayMean3 (coords) {
+  return [
+    arrayMean(coords, 3, 0),
+    arrayMean(coords, 3, 1),
+    arrayMean(coords, 3, 2)
   ]
 }
 
@@ -68063,7 +68096,8 @@ function interpolateLerp (c, cp, t) {
  * @property {Number} timeOffset - starting time of frames in picoseconds
  * @property {String} sele - to restrict atoms used for superposition
  * @property {Boolean} centerPbc - center on initial frame
- * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
+ * @property {Boolean} removePeriodicity - move atoms into the origin box
+ * @property {Boolean} remo - try fixing periodic boundary discontinuities
  * @property {Boolean} superpose - superpose on initial frame
  */
 
@@ -68098,6 +68132,7 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
   this.timeOffset = defaults(p.timeOffset, 0);
   this.centerPbc = defaults(p.centerPbc, false);
   this.removePbc = defaults(p.removePbc, false);
+  this.removePeriodicity = defaults(p.removePeriodicity, false);
   this.superpose = defaults(p.superpose, false);
 
   this.name = trajPath.replace(/^.*[\\/]/, '');
@@ -68241,6 +68276,11 @@ Trajectory.prototype.setParameters = function setParameters (params) {
 
   if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
     this.centerPbc = p.centerPbc;
+    resetCache = true;
+  }
+
+  if (p.removePeriodicity !== undefined && p.removePeriodicity !== this.removePeriodicity) {
+    this.removePeriodicity = p.removePeriodicity;
     resetCache = true;
   }
 
@@ -68445,8 +68485,13 @@ Trajectory.prototype._process = function _process (i, box, coords, frameCount) {
   if (box) {
     if (this.backboneIndices.length > 0 && this.centerPbc) {
       var box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ];
-      var mean = circularMean3(this.backboneIndices, coords, box2);
-      centerPbc(coords, mean, box2);
+      var circMean = circularMean3(this.backboneIndices, coords, box2);
+      centerPbc(coords, circMean, box2);
+    }
+
+    if (this.removePeriodicity) {
+      var mean = arrayMean3(coords);
+      removePeriodicity(coords, box, mean);
     }
 
     if (this.removePbc) {
@@ -98383,7 +98428,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-20";
+var version$1 = "0.10.5-21";
 
 /**
  * @file Version
