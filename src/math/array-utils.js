@@ -491,17 +491,20 @@ function arrayMin (array) {
   return min
 }
 
-function arraySum (array) {
+function arraySum (array, stride, offset) {
+  stride = stride || 1
+  offset = offset || 0
+
   const n = array.length
   let sum = 0
-  for (let i = 0; i < n; ++i) {
+  for (let i = offset; i < n; i += stride) {
     sum += array[ i ]
   }
   return sum
 }
 
-function arrayMean (array) {
-  return arraySum(array) / array.length
+function arrayMean (array, stride, offset) {
+  return arraySum(array, stride, offset) / (array.length / (stride || 1))
 }
 
 function arrayRms (array) {

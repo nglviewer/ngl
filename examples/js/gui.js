@@ -2305,6 +2305,13 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       })
     })
 
+  var setRemovePeriodicity = new UI.Checkbox(traj.removePeriodicity)
+    .onChange(function () {
+      component.setParameters({
+        'removePeriodicity': setRemovePeriodicity.getValue()
+      })
+    })
+
   var setRemovePbc = new UI.Checkbox(traj.removePbc)
     .onChange(function () {
       component.setParameters({
@@ -2339,6 +2346,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   signals.parametersChanged.add(function (params) {
     setCenterPbc.setValue(traj.centerPbc)
+    setRemovePeriodicity.setValue(traj.removePeriodicity)
     setRemovePbc.setValue(traj.removePbc)
     setSuperpose.setValue(traj.superpose)
     setDeltaTime.setValue(traj.deltaTime)
@@ -2373,6 +2381,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setEntryLabelWidth('130px')
     .addEntry('Path', repr)
     .addEntry('Center', setCenterPbc)
+    .addEntry('Remove Periodicity', setRemovePeriodicity)
     .addEntry('Remove PBC', setRemovePbc)
     .addEntry('Superpose', setSuperpose)
     .addEntry('Step size', step)

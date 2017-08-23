@@ -8,7 +8,7 @@ import Signal from '../../lib/signals.es6.js'
 
 import { Log } from '../globals.js'
 import { defaults } from '../utils.js'
-import { circularMean } from '../math/array-utils.js'
+import { circularMean, arrayMean } from '../math/array-utils.js'
 import { lerp, spline } from '../math/math-utils.js'
 import Selection from '../selection/selection.js'
 import Superposition from '../align/superposition.js'
@@ -47,24 +47,40 @@ function removePbc (x, box) {
   // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
   // in-place
 
-  let i, j, d, dist
   const n = x.length
 
-  for (i = 3; i < n; i += 3) {
-    for (j = 0; j < 3; ++j) {
-      x[ i + j ] -= box[ j * 3 + j ] * Math.round(x[ i + j ] / box[ j * 3 + j ])
-      dist = x[ i + j ] - x[ i - 3 + j ]
+  for (let i = 3; i < n; i += 3) {
+    for (let j = 0; j < 3; ++j) {
+      const dist = x[ i + j ] - x[ i - 3 + j ]
 
       if (Math.abs(dist) > 0.9 * box[ j * 3 + j ]) {
         if (dist > 0) {
-          for (d = 0; d < 3; ++d) {
+          for (let d = 0; d < 3; ++d) {
             x[ i + d ] -= box[ j * 3 + d ]
           }
         } else {
-          for (d = 0; d < 3; ++d) {
+          for (let d = 0; d < 3; ++d) {
             x[ i + d ] += box[ j * 3 + d ]
           }
         }
+      }
+    }
+  }
+
+  return x
+}
+
+function removePeriodicity (x, box, mean) {
+  if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
+    return
+  }
+
+  const n = x.length
+  for (let i = 3; i < n; i += 3) {
+    for (let j = 0; j < 3; ++j) {
+      const f = (x[ i + j ] - mean[ j ]) / box[ j * 3 + j ]
+      if (Math.abs(f) > 0.5) {
+        x[ i + j ] -= box[ j * 3 + j ] * Math.round(f)
       }
     }
   }
@@ -77,6 +93,14 @@ function circularMean3 (indices, coords, box) {
     circularMean(coords, box[ 0 ], 3, 0, indices),
     circularMean(coords, box[ 1 ], 3, 1, indices),
     circularMean(coords, box[ 2 ], 3, 2, indices)
+  ]
+}
+
+function arrayMean3 (coords) {
+  return [
+    arrayMean(coords, 3, 0),
+    arrayMean(coords, 3, 1),
+    arrayMean(coords, 3, 2)
   ]
 }
 
@@ -118,7 +142,8 @@ function interpolateLerp (c, cp, t) {
  * @property {Number} timeOffset - starting time of frames in picoseconds
  * @property {String} sele - to restrict atoms used for superposition
  * @property {Boolean} centerPbc - center on initial frame
- * @property {Boolean} removePbc - try fixing periodic boundary discontinuities
+ * @property {Boolean} removePeriodicity - move atoms into the origin box
+ * @property {Boolean} remo - try fixing periodic boundary discontinuities
  * @property {Boolean} superpose - superpose on initial frame
  */
 
@@ -159,6 +184,7 @@ class Trajectory {
     this.timeOffset = defaults(p.timeOffset, 0)
     this.centerPbc = defaults(p.centerPbc, false)
     this.removePbc = defaults(p.removePbc, false)
+    this.removePeriodicity = defaults(p.removePeriodicity, false)
     this.superpose = defaults(p.superpose, false)
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
@@ -296,6 +322,11 @@ class Trajectory {
 
     if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
       this.centerPbc = p.centerPbc
+      resetCache = true
+    }
+
+    if (p.removePeriodicity !== undefined && p.removePeriodicity !== this.removePeriodicity) {
+      this.removePeriodicity = p.removePeriodicity
       resetCache = true
     }
 
@@ -490,8 +521,13 @@ class Trajectory {
     if (box) {
       if (this.backboneIndices.length > 0 && this.centerPbc) {
         const box2 = [ box[ 0 ], box[ 4 ], box[ 8 ] ]
-        const mean = circularMean3(this.backboneIndices, coords, box2)
-        centerPbc(coords, mean, box2)
+        const circMean = circularMean3(this.backboneIndices, coords, box2)
+        centerPbc(coords, circMean, box2)
+      }
+
+      if (this.removePeriodicity) {
+        const mean = arrayMean3(coords)
+        removePeriodicity(coords, box, mean)
       }
 
       if (this.removePbc) {
