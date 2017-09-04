@@ -7,7 +7,7 @@
 import { defaults } from '../utils.js'
 import { RepresentationRegistry } from '../globals.js'
 import StructureRepresentation from './structure-representation.js'
-import LineBuffer from '../buffer/line-buffer.js'
+import WideLineBuffer from '../buffer/wideline-buffer.js'
 
 /**
  * Line representation
@@ -46,6 +46,9 @@ class LineRepresentation extends StructureRepresentation {
       },
       bondSpacing: {
         type: 'number', precision: 2, max: 2.0, min: 0.5
+      },
+      linewidth: {
+        type: 'integer', max: 50, min: 1, buffer: true
       }
 
     }, this.parameters, {
@@ -55,8 +58,7 @@ class LineRepresentation extends StructureRepresentation {
       wireframe: null,
 
       roughness: null,
-      metalness: null,
-      diffuse: null
+      metalness: null
 
     })
 
@@ -68,6 +70,7 @@ class LineRepresentation extends StructureRepresentation {
 
     this.multipleBond = defaults(p.multipleBond, 'off')
     this.bondSpacing = defaults(p.bondSpacing, 1.0)
+    this.linewidth = defaults(p.linewidth, 2)
 
     super.init(p)
   }
@@ -83,11 +86,11 @@ class LineRepresentation extends StructureRepresentation {
   }
 
   createData (sview) {
-    var what = { position: true, color: true }
+    var what = { position: true, color: true, picking: true }
     var bondData = sview.getBondData(this.getBondParams(what))
 
-    var lineBuffer = new LineBuffer(
-      bondData, this.getBufferParams()
+    var lineBuffer = new WideLineBuffer(
+      bondData, this.getBufferParams({ linewidth: this.linewidth })
     )
 
     return {

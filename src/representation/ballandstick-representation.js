@@ -9,7 +9,7 @@ import { ExtensionFragDepth, RepresentationRegistry } from '../globals.js'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
-import LineBuffer from '../buffer/line-buffer.js'
+import WideLineBuffer from '../buffer/wideline-buffer.js'
 
 /**
  * Ball And Stick representation parameter object. Extends {@link RepresentationParameters} and
@@ -23,6 +23,7 @@ import LineBuffer from '../buffer/line-buffer.js'
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  * @property {Float} aspectRatio - size difference between atom and bond radii
  * @property {Boolean} lineOnly - render only bonds, and only as lines
+ * @property {Integer} linewidth - width of lines
  * @property {Boolean} cylinderOnly - render only bonds (no atoms)
  * @property {String} multipleBond - one off "off", "symmetric", "offset"
  * @property {Float} bondSpacing - spacing for multiple bond rendering
@@ -81,6 +82,9 @@ class BallAndStickRepresentation extends StructureRepresentation {
       },
       bondSpacing: {
         type: 'number', precision: 2, max: 2.0, min: 0.5
+      },
+      linewidth: {
+        type: 'integer', max: 50, min: 1, buffer: true
       }
 
     }, this.parameters)
@@ -98,6 +102,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
     this.multipleBond = defaults(p.multipleBond, 'off')
     this.bondSpacing = defaults(p.bondSpacing, 1.0)
     this.bondScale = defaults(p.bondScale, 0.4)
+    this.linewidth = defaults(p.linewidth, 2)
 
     super.init(p)
   }
@@ -129,19 +134,18 @@ class BallAndStickRepresentation extends StructureRepresentation {
   }
 
   createData (sview) {
-    var bondData = this.getBondData(sview)
     var bufferList = []
 
     if (this.lineOnly) {
-      this.lineBuffer = new LineBuffer(
-        bondData,
-        this.getBufferParams()
+      this.lineBuffer = new WideLineBuffer(
+        this.getBondData(sview, { position: true, color: true, picking: true }),
+        this.getBufferParams({ linewidth: this.linewidth })
       )
 
       bufferList.push(this.lineBuffer)
     } else {
       var cylinderBuffer = new CylinderBuffer(
-        bondData,
+        this.getBondData(sview),
         this.getBufferParams({
           openEnded: this.openEnded,
           radialSegments: this.radialSegments,

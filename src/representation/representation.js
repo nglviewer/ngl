@@ -26,7 +26,6 @@ import Counter from '../utils/counter.js'
  * @property {String} [side] - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Boolean} [wireframe] - render as wireframe
- * @property {Integer} [linewidth] - width of lines (when applicable)
  * @property {String} [colorScheme] - color scheme
  * @property {String} [colorScale] - color scale, either a string for a
  *                                 predefined scale or an array of
@@ -88,9 +87,6 @@ class Representation {
       },
       wireframe: {
         type: 'boolean', buffer: true
-      },
-      linewidth: {
-        type: 'integer', max: 50, min: 1, buffer: true
       },
 
       colorScheme: {
@@ -178,7 +174,6 @@ class Representation {
     this.opacity = defaults(p.opacity, 1.0)
     this.depthWrite = defaults(p.depthWrite, true)
     this.wireframe = defaults(p.wireframe, false)
-    this.linewidth = defaults(p.linewidth, 2)
 
     this.setColor(p.color, p)
 
@@ -283,7 +278,6 @@ class Representation {
       depthWrite: this.depthWrite,
       side: this.side,
       wireframe: this.wireframe,
-      linewidth: this.linewidth,
 
       roughness: this.roughness,
       metalness: this.metalness,

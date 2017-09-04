@@ -29,9 +29,7 @@ import { getShader } from '../shader/shader-utils.js'
  * @property {Integer} clipNear - position of camera near/front clipping plane
  *                                in percent of scene bounding box
  * @property {Boolean} flatShaded - render flat shaded
- * @property {Integer} linewidth - width of lines (when applicable)
  * @property {Boolean} wireframe - render as wireframe
- * @property {Integer} wireframeLinewidth - width of wireframe lines
  * @property {Float} roughness - how rough the material is, between 0 and 1
  * @property {Float} metalness - how metallic the material is, between 0 and 1
  * @property {Color} diffuse - diffuse color for lighting
@@ -89,9 +87,7 @@ class Buffer {
     this.clipCenter = defaults(p.clipCenter, new Vector3())
     this.flatShaded = defaults(p.flatShaded, false)
     this.background = defaults(p.background, false)
-    this.linewidth = defaults(p.linewidth, 1)
     this.wireframe = defaults(p.wireframe, false)
-    this.wireframeLinewidth = defaults(p.wireframeLinewidth, 1)
     this.roughness = defaults(p.roughness, 0.4)
     this.metalness = defaults(p.metalness, 0.0)
     this.diffuse = defaults(p.diffuse, 0xffffff)
@@ -169,7 +165,6 @@ class Buffer {
       clipCenter: { uniform: true },
       flatShaded: { updateShader: true },
       background: { updateShader: true },
-      linewidth: { property: true },
       wireframe: { updateVisibility: true },
       roughness: { uniform: true },
       metalness: { uniform: true },
@@ -238,8 +233,7 @@ class Buffer {
       depthWrite: this.depthWrite,
       lights: true,
       fog: true,
-      side: side,
-      linewidth: this.linewidth
+      side: side
     })
     m.vertexColors = VertexColors
     m.extensions.derivatives = this.flatShaded
@@ -255,8 +249,7 @@ class Buffer {
       depthWrite: this.depthWrite,
       lights: false,
       fog: true,
-      side: side,
-      linewidth: this.linewidth
+      side: side
     })
     wm.vertexColors = VertexColors
     wm.clipNear = this.clipNear
@@ -271,7 +264,6 @@ class Buffer {
       lights: false,
       fog: false,
       side: side,
-      linewidth: this.linewidth,
       blending: NoBlending
     })
     pm.vertexColors = VertexColors
