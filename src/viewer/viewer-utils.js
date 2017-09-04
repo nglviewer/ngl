@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Matrix4, Points } from '../../lib/three.es6.js'
+import { Vector2, Vector3, Matrix4, Points } from '../../lib/three.es6.js'
 
 import { defaults } from '../utils.js'
 import TiledRenderer from './tiled-renderer.js'
@@ -147,11 +147,20 @@ function makeImage (viewer, params) {
           m.uniforms.size.__seen = true
         }
       }
+      if (m && m.uniforms && m.uniforms.linewidth) {
+        if (m.uniforms.linewidth.__seen === undefined) {
+          m.uniforms.linewidth.value *= _factor
+          m.uniforms.linewidth.__seen = true
+        }
+      }
     })
     viewer.scene.traverse(function (o) {
       const m = o.material
       if (m && m.uniforms && m.uniforms.size) {
         delete m.uniforms.size.__seen
+      }
+      if (m && m.uniforms && m.uniforms.linewidth) {
+        delete m.uniforms.linewidth.__seen
       }
     })
   }
@@ -300,14 +309,17 @@ function sortProjectedPosition (scene, camera) {
     // console.timeEnd( "sort" );
 }
 
+const resolution = new Vector2()
 const projectionMatrixInverse = new Matrix4()
 const projectionMatrixTranspose = new Matrix4()
 
 function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
-  const canvasHeight = renderer.getSize().height
+  const {width, height} = renderer.getSize()
+  const canvasHeight = height
   const pixelRatio = renderer.getPixelRatio()
   const ortho = camera.type === 'OrthographicCamera'
 
+  resolution.set(width, height)
   projectionMatrixInverse.getInverse(camera.projectionMatrix)
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
@@ -328,20 +340,20 @@ function updateMaterialUniforms (group, camera, renderer, cDist, bRadius) {
       u.canvasHeight.value = canvasHeight
     }
 
+    if (u.resolution) {
+      u.resolution.value.copy(resolution)
+    }
+
     if (u.pixelRatio) {
       u.pixelRatio.value = pixelRatio
     }
 
     if (u.projectionMatrixInverse) {
-      u.projectionMatrixInverse.value.copy(
-        projectionMatrixInverse
-      )
+      u.projectionMatrixInverse.value.copy(projectionMatrixInverse)
     }
 
     if (u.projectionMatrixTranspose) {
-      u.projectionMatrixTranspose.value.copy(
-        projectionMatrixTranspose
-      )
+      u.projectionMatrixTranspose.value.copy(projectionMatrixTranspose)
     }
 
     if (u.ortho) {
