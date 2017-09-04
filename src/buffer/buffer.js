@@ -67,14 +67,14 @@ function setObjectMatrix (object, matrix) {
  * @interface
  */
 class Buffer {
-    /**
-     * @param {Object} data - attribute object
-     * @param {Float32Array} data.position - positions
-     * @param {Float32Array} data.color - colors
-     * @param {Float32Array} data.index - triangle indices
-     * @param {Picker} [data.picking] - picking ids
-     * @param {BufferParameters} params - parameters object
-     */
+  /**
+   * @param {Object} data - attribute object
+   * @param {Float32Array} data.position - positions
+   * @param {Float32Array} data.color - colors
+   * @param {Float32Array} data.index - triangle indices
+   * @param {Picker} [data.picking] - picking ids
+   * @param {BufferParameters} params - parameters object
+   */
   constructor (data, params) {
     const d = data || {}
     const p = params || {}
@@ -135,10 +135,10 @@ class Buffer {
     this.wireframeGroup = new Group()
     this.pickingGroup = new Group()
 
-        // requires Group objects to be present
+    // requires Group objects to be present
     this.matrix = defaults(p.matrix, new Matrix4())
 
-        //
+    //
 
     const position = d.position || d.position1
     this._positionDataSize = position ? position.length / 3 : 0
@@ -203,14 +203,14 @@ class Buffer {
 
   get dynamic () { return true }
 
-    /**
-     * @abstract
-     */
+  /**
+   * @abstract
+   */
   get vertexShader () {}
 
-    /**
-     * @abstract
-     */
+  /**
+   * @abstract
+   */
   get fragmentShader () {}
 
   setMatrix (m) {
@@ -282,7 +282,7 @@ class Buffer {
     this.wireframeMaterial = wm
     this.pickingMaterial = pm
 
-        // also sets vertexShader/fragmentShader
+    // also sets vertexShader/fragmentShader
     this.updateShader()
   }
 
@@ -409,9 +409,8 @@ class Buffer {
 
     if (this.wireframeIndex.length > this.wireframeGeometry.index.array.length) {
       this.wireframeGeometry.setIndex(
-                new BufferAttribute(this.wireframeIndex, 1)
-                    .setDynamic(this.dynamic)
-            )
+        new BufferAttribute(this.wireframeIndex, 1).setDynamic(this.dynamic)
+      )
     } else {
       const index = this.wireframeGeometry.getIndex()
       index.set(this.wireframeIndex)
@@ -472,8 +471,8 @@ class Buffer {
     if (!this.wireframeGeometry) this.makeWireframeGeometry()
 
     mesh = new LineSegments(
-            this.wireframeGeometry, this.wireframeMaterial
-        )
+      this.wireframeGeometry, this.wireframeMaterial
+    )
 
     mesh.frustumCulled = false
     mesh.renderOrder = this.getRenderOrder()
@@ -540,12 +539,12 @@ class Buffer {
 
   addUniforms (uniforms) {
     this.uniforms = UniformsUtils.merge(
-            [ this.uniforms, uniforms ]
-        )
+      [ this.uniforms, uniforms ]
+    )
 
     this.pickingUniforms = UniformsUtils.merge(
-            [ this.pickingUniforms, uniforms ]
-        )
+      [ this.pickingUniforms, uniforms ]
+    )
   }
 
   addAttributes (attributes) {
@@ -565,10 +564,9 @@ class Buffer {
       }
 
       this.geometry.addAttribute(
-                name,
-                new BufferAttribute(buf, itemSize[ a.type ])
-                    .setDynamic(this.dynamic)
-            )
+        name,
+        new BufferAttribute(buf, itemSize[ a.type ]).setDynamic(this.dynamic)
+      )
     }
   }
 
@@ -602,11 +600,11 @@ class Buffer {
     pm.needsUpdate = true
   }
 
-    /**
-     * Set buffer parameters
-     * @param {BufferParameters} params - buffer parameters object
-     * @return {undefined}
-     */
+  /**
+   * Set buffer parameters
+   * @param {BufferParameters} params - buffer parameters object
+   * @return {undefined}
+   */
   setParameters (params) {
     if (!params) return
 
@@ -669,16 +667,15 @@ class Buffer {
     if (doVisibilityUpdate) this.setVisibility(this.visible)
   }
 
+  /**
+   * Sets buffer attributes
+   * @param {Object} data - An object where the keys are the attribute names
+   *      and the values are the attribute data.
+   * @example
+   * var buffer = new Buffer();
+   * buffer.setAttributes({ attrName: attrData });
+   */
   setAttributes (data) {
-        /**
-         * Sets buffer attributes
-         * @param {Object} data - An object where the keys are the attribute names
-         *      and the values are the attribute data.
-         * @example
-         * var buffer = new Buffer();
-         * buffer.setAttributes({ attrName: attrData });
-         */
-
     const geometry = this.geometry
     const attributes = geometry.attributes
 
@@ -694,9 +691,8 @@ class Buffer {
 
         if (length > index.array.length) {
           geometry.setIndex(
-                        new BufferAttribute(array, 1)
-                            .setDynamic(this.dynamic)
-                    )
+            new BufferAttribute(array, 1).setDynamic(this.dynamic)
+          )
         } else {
           index.set(array)
           index.needsUpdate = length > 0
@@ -711,10 +707,10 @@ class Buffer {
 
         if (length > attribute.array.length) {
           geometry.addAttribute(
-                        name,
-                        new BufferAttribute(array, attribute.itemSize)
-                            .setDynamic(this.dynamic)
-                    )
+            name,
+            new BufferAttribute(array, attribute.itemSize)
+              .setDynamic(this.dynamic)
+          )
         } else {
           attributes[ name ].set(array)
           attributes[ name ].needsUpdate = length > 0
@@ -802,11 +798,11 @@ class Buffer {
     pm.needsUpdate = true
   }
 
-    /**
-     * Set buffer visibility
-     * @param {Boolean} value - visibility value
-     * @return {undefined}
-     */
+  /**
+   * Set buffer visibility
+   * @param {Boolean} value - visibility value
+   * @return {undefined}
+   */
   setVisibility (value) {
     this.visible = value
 
@@ -825,10 +821,10 @@ class Buffer {
     }
   }
 
-    /**
-     * Free buffer resources
-     * @return {undefined}
-     */
+  /**
+   * Free buffer resources
+   * @return {undefined}
+   */
   dispose () {
     if (this.material) this.material.dispose()
     if (this.wireframeMaterial) this.wireframeMaterial.dispose()

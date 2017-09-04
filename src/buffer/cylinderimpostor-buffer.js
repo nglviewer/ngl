@@ -16,26 +16,26 @@ import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
  * Cylinder impostor buffer.
  *
  * @example
- * var cylinderimpostorBuffer = new CylinderImpostorBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 1, 1, 1 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     color2: new Float32Array( [ 0, 1, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var cylinderimpostorBuffer = new CylinderImpostorBuffer({
+ *     position1: new Float32Array([ 0, 0, 0 ]),
+ *     position2: new Float32Array([ 1, 1, 1 ]),
+ *     color: new Float32Array([ 1, 0, 0 ]),
+ *     color2: new Float32Array([ 0, 1, 0 ]),
+ *     radius: new Float32Array([ 1 ])
+ * });
  */
 class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
-    /**
-     * make cylinder impostor buffer
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position1 - from positions
-     * @param  {Float32Array} data.position2 - to positions
-     * @param  {Float32Array} data.color - from colors
-     * @param  {Float32Array} data.color2 - to colors
-     * @param  {Float32Array} data.radius - radii
-     * @param  {Picker} data.picking - picking ids
-     * @param  {BufferParameters} params - parameter object
-     */
+  /**
+   * make cylinder impostor buffer
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position1 - from positions
+   * @param  {Float32Array} data.position2 - to positions
+   * @param  {Float32Array} data.color - from colors
+   * @param  {Float32Array} data.color2 - to colors
+   * @param  {Float32Array} data.radius - radii
+   * @param  {Picker} data.picking - picking ids
+   * @param  {BufferParameters} params - parameter object
+   */
   constructor (data, params) {
     super(data, params)
 

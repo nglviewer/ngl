@@ -15,21 +15,21 @@ import MappedQuadBuffer from './mappedquad-buffer.js'
  * Sphere impostor buffer.
  *
  * @example
- * var sphereImpostorBuffer = new SphereImpostorBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var sphereImpostorBuffer = new SphereImpostorBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 class SphereImpostorBuffer extends MappedQuadBuffer {
-    /**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.color - colors
-     * @param  {Float32Array} data.radius - radii
-     * @param {Picker} [data.picking] - picking ids
-     * @param  {BufferParameters} params - parameter object
-     */
+  /**
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position - positions
+   * @param  {Float32Array} data.color - colors
+   * @param  {Float32Array} data.radius - radii
+   * @param {Picker} [data.picking] - picking ids
+   * @param  {BufferParameters} params - parameter object
+   */
   constructor (data, params) {
     super(data, params)
 

@@ -13,20 +13,21 @@ import LineBuffer from '../buffer/line-buffer.js'
  * Line representation
  */
 class LineRepresentation extends StructureRepresentation {
-    /**
-     * Create Line representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
-     * @property {String} multipleBond - one off "off", "symmetric", "offset"
-     * @param {Float} params.bondSpacing - spacing for multiple bond rendering
-     * @param {null} params.flatShaded - not available
-     * @param {null} params.side - not available
-     * @param {null} params.wireframe - not available
-     * @param {null} params.roughness - not available
-     * @param {null} params.metalness - not available
-     * @param {null} params.diffuse - not available
-     */
+  /**
+   * Create Line representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {RepresentationParameters} params - representation parameters, plus the properties listed below
+   * @property {String} multipleBond - one off "off", "symmetric", "offset"
+   * @param {Float} params.bondSpacing - spacing for multiple bond rendering
+   * @param {Integer} params.linewidth - width of lines
+   * @param {null} params.flatShaded - not available
+   * @param {null} params.side - not available
+   * @param {null} params.wireframe - not available
+   * @param {null} params.roughness - not available
+   * @param {null} params.metalness - not available
+   * @param {null} params.diffuse - not available
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 

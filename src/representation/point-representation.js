@@ -47,6 +47,7 @@ class PointRepresentation extends StructureRepresentation {
       flatShaded: null,
       wireframe: null,
       linewidth: null,
+      side: null,
 
       roughness: null,
       metalness: null
