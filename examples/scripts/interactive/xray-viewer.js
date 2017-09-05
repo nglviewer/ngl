@@ -1,9 +1,7 @@
 
 stage.setParameters({
   cameraType: 'orthographic',
-  mousePreset: 'coot',
-  lightIntensity: 0.4,
-  ambientIntensity: 0.9
+  mousePreset: 'coot'
 })
 
 function addElement (el) {
@@ -62,9 +60,16 @@ function loadStructure (input) {
     fileStructureText.innerText = 'structure file: ' + o.name
     struc = o
     o.autoView()
-    o.addRepresentation('licorice', {
+    o.addRepresentation('line', {
       colorValue: 'yellow',
-      roughness: 1.0
+      linewidth: 7
+    })
+    o.addRepresentation('point', {
+      colorValue: 'yellow',
+      sizeAttenuation: false,
+      pointSize: 7,
+      alphaTest: 1,
+      useTexture: true
     })
   })
 }
