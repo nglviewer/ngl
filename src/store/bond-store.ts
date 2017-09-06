@@ -4,21 +4,26 @@
  * @private
  */
 
-import Store from './store.js'
+import Store, { StoreField } from './store'
+import AtomProxy from '../proxy/atom-proxy'
 
 /**
  * Bond store
  */
-class BondStore extends Store {
+export default class BondStore extends Store {
+  atomIndex1: Uint32Array
+  atomIndex2: Uint32Array
+  bondOrder: Uint8Array
+
   get _defaultFields () {
     return [
       [ 'atomIndex1', 1, 'int32' ],
       [ 'atomIndex2', 1, 'int32' ],
       [ 'bondOrder', 1, 'int8' ]
-    ]
+    ] as StoreField[]
   }
 
-  addBond (atom1, atom2, bondOrder) {
+  addBond (atom1: AtomProxy, atom2: AtomProxy, bondOrder?: number) {
     this.growIfFull()
 
     const i = this.count
@@ -37,7 +42,7 @@ class BondStore extends Store {
     this.count += 1
   }
 
-  addBondIfConnected (atom1, atom2, bondOrder) {
+  addBondIfConnected (atom1: AtomProxy, atom2: AtomProxy, bondOrder?: number) {
     if (atom1.connectedTo(atom2)) {
       this.addBond(atom1, atom2, bondOrder)
       return true
@@ -46,5 +51,3 @@ class BondStore extends Store {
     return false
   }
 }
-
-export default BondStore

@@ -4,12 +4,23 @@
  * @private
  */
 
-import Store from './store.js'
+import Store, { StoreField } from './store'
 
 /**
  * Atom store
  */
-class AtomStore extends Store {
+export default class AtomStore extends Store {
+  residueIndex: Uint32Array
+  atomTypeId: Uint16Array
+
+  x: Float32Array
+  y: Float32Array
+  z: Float32Array
+  serial: Int32Array
+  bfactor: Float32Array
+  altloc: Uint8Array
+  occupancy: Float32Array
+
   get _defaultFields () {
     return [
       [ 'residueIndex', 1, 'uint32' ],
@@ -22,17 +33,15 @@ class AtomStore extends Store {
       [ 'bfactor', 1, 'float32' ],
       [ 'altloc', 1, 'uint8' ],
       [ 'occupancy', 1, 'float32' ]
-    ]
+    ] as StoreField[]
   }
 
-  setAltloc (i, str) {
+  setAltloc (i: number, str: string) {
     this.altloc[ i ] = str.charCodeAt(0)
   }
 
-  getAltloc (i) {
+  getAltloc (i: number) {
     const code = this.altloc[ i ]
     return code ? String.fromCharCode(code) : ''
   }
 }
-
-export default AtomStore

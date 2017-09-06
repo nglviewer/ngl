@@ -4,11 +4,13 @@
  * @private
  */
 
+import Structure from './structure'
 import {
     UnknownEntity, PolymerEntity, NonPolymerEntity, MacrolideEntity, WaterEntity
 } from './structure-constants.js'
+import ChainProxy from '../proxy/chain-proxy'
 
-function entityTypeFromString (string) {
+function entityTypeFromString (string: string) {
   string = string.toLowerCase()
   switch (string) {
     case 'polymer':
@@ -24,25 +26,39 @@ function entityTypeFromString (string) {
   }
 }
 
+const EntityTypeString = {
+  'polymer': PolymerEntity,
+  'non-polymer': NonPolymerEntity,
+  'macrolide': MacrolideEntity,
+  'water': WaterEntity,
+}
+type EntityTypeString = keyof typeof EntityTypeString
+
 /**
  * Entity of a {@link Structure}
  */
-class Entity {
-    /**
-     * @param {Structure} structure - structure the entity belongs to
-     * @param {Integer} index - index within structure.entityList
-     * @param {String} description - entity description
-     * @param {String} type - entity type
-     * @param {Array} chainIndexList - entity chainIndexList
-     */
-  constructor (structure, index, description, type, chainIndexList) {
+export default class Entity {
+  structure: Structure
+  index: number
+  description: string
+  entityType: number
+  chainIndexList: number[]
+
+  /**
+   * @param {Structure} structure - structure the entity belongs to
+   * @param {Integer} index - index within structure.entityList
+   * @param {String} description - entity description
+   * @param {String} type - entity type
+   * @param {Array} chainIndexList - entity chainIndexList
+   */
+  constructor (structure: Structure, index: number, description = '', type?: EntityTypeString, chainIndexList = []) {
     this.structure = structure
     this.index = index
-    this.description = description || ''
+    this.description = description
     this.entityType = entityTypeFromString(type || '')
-    this.chainIndexList = chainIndexList || []
+    this.chainIndexList = chainIndexList
 
-    chainIndexList.forEach(function (ci) {
+    chainIndexList.forEach(function (ci: number) {
       structure.chainStore.entityIndex[ ci ] = index
     })
   }
@@ -69,7 +85,7 @@ class Entity {
     return this.entityType === WaterEntity
   }
 
-  eachChain (callback) {
+  eachChain (callback: (cp: ChainProxy) => any) {
     const cp = this.structure.getChainProxy()
 
     this.chainIndexList.forEach(function (index) {
@@ -78,5 +94,3 @@ class Entity {
     })
   }
 }
-
-export default Entity

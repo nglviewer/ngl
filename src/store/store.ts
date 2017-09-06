@@ -7,15 +7,31 @@
 import { Log } from '../globals.js'
 import { getTypedArray } from '../utils.js'
 
+// type TypedArray = (
+//   Int8Array|Int16Array|Int32Array|
+//   Uint8Array|Uint8ClampedArray|Uint16Array|Uint32Array|
+//   Float32Array|Float64Array
+// )
+
+export type StoreField = [string, number, string]
+
 /**
  * Store base class
  * @interface
  */
-class Store {
+export default class Store {
+  [k: string]: any
+
+  length: number
+  count: number
+
+  _fields: StoreField[]
+  _defaultFields: StoreField[]
+
   /**
    * @param {Integer} [size] - initial size
    */
-  constructor (size) {
+  constructor (size: number) {
     this._fields = this._defaultFields
     if (Number.isInteger(size)) {
       this._init(size)
@@ -29,12 +45,13 @@ class Store {
    * @param  {Integer} size - size to initialize
    * @return {undefined}
    */
-  _init (size) {
+  _init (size: number) {
     this.length = size
     this.count = 0
 
     for (let i = 0, il = this._fields.length; i < il; ++i) {
-      this._initField(...this._fields[ i ])
+      const [name, size, type]: StoreField = this._fields[ i ]
+      this._initField(name, size, type)
     }
   }
 
@@ -46,7 +63,7 @@ class Store {
    *                         uint8, uint16, uint32, float32
    * @return {undefined}
    */
-  _initField (name, size, type) {
+  _initField (name: string, size: number, type: string) {
     this[ name ] = getTypedArray(type, this.length * size)
   }
 
@@ -58,7 +75,7 @@ class Store {
    *                         uint8, uint16, uint32, float32
    * @return {undefined}
    */
-  addField (name, size, type) {
+  addField (name: string, size: number, type: string) {
     this._fields.push([name, size, type])
     this._initField(name, size, type)
   }
@@ -68,7 +85,7 @@ class Store {
    * @param  {Integer} size - new size
    * @return {undefined}
    */
-  resize (size) {
+  resize (size?: number) {
     // Log.time( "Store.resize" );
 
     this.length = Math.round(size || 0)
@@ -110,7 +127,7 @@ class Store {
    * @param  {Integer} length - number of entries to copy
    * @return {undefined}
    */
-  copyFrom (other, thisOffset, otherOffset, length) {
+  copyFrom (other: Store, thisOffset: number, otherOffset: number, length: number) {
     for (let i = 0, il = this._fields.length; i < il; ++i) {
       const name = this._fields[ i ][ 0 ]
       const itemSize = this._fields[ i ][ 1 ]
@@ -134,7 +151,7 @@ class Store {
    * @param  {Integer} length - number of entries to copy
    * @return {undefined}
    */
-  copyWithin (offsetTarget, offsetSource, length) {
+  copyWithin (offsetTarget: number, offsetSource: number, length: number) {
     for (let i = 0, il = this._fields.length; i < il; ++i) {
       const name = this._fields[ i ][ 0 ]
       const itemSize = this._fields[ i ][ 1 ]
@@ -155,20 +172,20 @@ class Store {
    * @param  {[type]} compareFunction - function to sort by
    * @return {undefined}
    */
-  sort (compareFunction) {
+  sort (compareFunction: (a: any, b: any) => number) {
     Log.time('Store.sort')
 
     const thisStore = this
-    const tmpStore = new this.constructor(1)
+    const tmpStore = new (this.constructor as any)(1)
 
-    function swap (index1, index2) {
+    function swap (index1: number, index2: number) {
       if (index1 === index2) return
       tmpStore.copyFrom(thisStore, 0, index1, 1)
       thisStore.copyWithin(index1, index2, 1)
       thisStore.copyFrom(tmpStore, index2, 0, 1)
     }
 
-    function quicksort (left, right) {
+    function quicksort (left: number, right: number) {
       if (left < right) {
         let pivot = Math.floor((left + right) / 2)
         let leftNew = left
@@ -223,5 +240,3 @@ class Store {
     }
   }
 }
-
-export default Store

@@ -4,22 +4,43 @@
  * @private
  */
 
-import Signal from '../../lib/signals.es6.js'
+import { Signal } from 'signals'
 
-import { parseSele } from './selection-parser.js'
+import { parseSele } from './selection-parser'
 import {
   makeAtomTest, makeResidueTest, makeChainTest, makeModelTest
 } from './selection-test.js'
+
+type SelectionSignals = {
+  stringChanged: Signal
+}
+
+type SelectionTest = false|((ap: any) => boolean|-1)
+type SelectionError = { error: string }
 
 /**
  * Selection
  */
 class Selection {
+  signals: SelectionSignals
+  string: string
+  selection: object|SelectionError
+
+  test: SelectionTest
+  residueTest: SelectionTest
+  chainTest: SelectionTest
+  modelTest: SelectionTest
+
+  atomOnlyTest: SelectionTest
+  residueOnlyTest: SelectionTest
+  chainOnlyTest: SelectionTest
+  modelOnlyTest: SelectionTest
+
   /**
    * Create Selection
    * @param {String} string - selection string, see {@tutorial selection-language}
    */
-  constructor (string) {
+  constructor (string: string) {
     this.signals = {
       stringChanged: new Signal()
     }
@@ -29,7 +50,7 @@ class Selection {
 
   get type () { return 'selection' }
 
-  setString (string, silent) {
+  setString (string: string, silent?: boolean) {
     if (string === undefined) string = this.string || ''
     if (string === this.string) return
 

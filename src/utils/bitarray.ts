@@ -10,8 +10,8 @@
  * @param  {Integer} v - a 32-bit unsigned integer
  * @return {Integer} the Hamming weight
  */
-function hammingWeight (v) {
-    // works with signed or unsigned shifts
+function hammingWeight (v: number) {
+  // works with signed or unsigned shifts
   v -= ((v >>> 1) & 0x55555555)
   v = (v & 0x33333333) + ((v >>> 2) & 0x33333333)
   return ((v + (v >>> 4) & 0xF0F0F0F) * 0x1010101) >>> 24
@@ -23,12 +23,15 @@ function hammingWeight (v) {
  * Based heavily on https://github.com/lemire/FastBitSet.js
  * which is licensed under the Apache License, Version 2.0.
  */
-class BitArray {
-    /**
-     * @param  {Integer} length - array length
-     * @param  {Boolean} [setAll] - initialize with true
-     */
-  constructor (length, setAll) {
+export default class BitArray {
+  private _words: Uint32Array
+  public length: number
+
+  /**
+   * @param  {Integer} length - array length
+   * @param  {Boolean} [setAll] - initialize with true
+   */
+  constructor (length: number, setAll?: boolean) {
     this.length = length
     this._words = new Uint32Array((length + 32) >>> 5)
     if (setAll === true) {
@@ -36,43 +39,43 @@ class BitArray {
     }
   }
 
-    /**
-     * Get value at index
-     * @param  {Integer} index - the index
-     * @return {Boolean} value
-     */
-  get (index) {
+  /**
+   * Get value at index
+   * @param  {Integer} index - the index
+   * @return {Boolean} value
+   */
+  get (index: number) {
     return (this._words[ index >>> 5 ] & (1 << index)) !== 0
   }
 
-    /**
-     * Set value at index to true
-     * @param  {Integer} index - the index
-     * @return {undefined}
-     */
-  set (index) {
+  /**
+   * Set value at index to true
+   * @param  {Integer} index - the index
+   * @return {undefined}
+   */
+  set (index: number) {
     this._words[ index >>> 5 ] |= 1 << index
   }
 
-    /**
-     * Set value at index to false
-     * @param  {Integer} index - the index
-     * @return {undefined}
-     */
-  clear (index) {
+  /**
+   * Set value at index to false
+   * @param  {Integer} index - the index
+   * @return {undefined}
+   */
+  clear (index: number) {
     this._words[ index >>> 5 ] &= ~(1 << index)
   }
 
-    /**
-     * Flip value at index
-     * @param  {Integer} index - the index
-     * @return {undefined}
-     */
-  flip (index) {
+  /**
+   * Flip value at index
+   * @param  {Integer} index - the index
+   * @return {undefined}
+   */
+  flip (index: number) {
     this._words[ index >>> 5 ] ^= 1 << index
   }
 
-  _assignRange (start, end, value) {
+  _assignRange (start: number, end: number, value: boolean) {
     const words = this._words
     const wordValue = value === true ? 0xFFFFFFFF : 0
     const wordStart = start >>> 5
@@ -114,76 +117,76 @@ class BitArray {
     return this
   }
 
-    /**
-     * Set bits of the given range
-     * @param {Integer} start - start index
-     * @param {Integer} end - end index
-     * @return {BitArray} this object
-     */
-  setRange (start, end) {
+  /**
+   * Set bits of the given range
+   * @param {Integer} start - start index
+   * @param {Integer} end - end index
+   * @return {BitArray} this object
+   */
+  setRange (start: number, end: number) {
     return this._assignRange(start, end, true)
   }
 
-    /**
-     * Clear bits of the given range
-     * @param {Integer} start - start index
-     * @param {Integer} end - end index
-     * @return {BitArray} this object
-     */
-  clearRange (start, end) {
+  /**
+   * Clear bits of the given range
+   * @param {Integer} start - start index
+   * @param {Integer} end - end index
+   * @return {BitArray} this object
+   */
+  clearRange (start: number, end: number) {
     return this._assignRange(start, end, false)
   }
 
-    /**
-     * Set bits at all given indices
-     * @param {...Integer} arguments - indices
-     * @return {Boolean} this object
-     */
-  setBits () {
+  /**
+   * Set bits at all given indices
+   * @param {...Integer} arguments - indices
+   * @return {Boolean} this object
+   */
+  setBits (...indices: number[]) {
     const words = this._words
-    const n = arguments.length
+    const n = indices.length
     for (let i = 0; i < n; ++i) {
-      const index = arguments[ i ]
+      const index = indices[ i ]
       words[ index >>> 5 ] |= 1 << index
     }
     return this
   }
 
-    /**
-     * Clear bits at all given indices
-     * @param {...Integer} arguments - indices
-     * @return {Boolean} this object
-     */
-  clearBits () {
+  /**
+   * Clear bits at all given indices
+   * @param {...Integer} arguments - indices
+   * @return {Boolean} this object
+   */
+  clearBits (...indices: number[]) {
     const words = this._words
-    const n = arguments.length
+    const n = indices.length
     for (let i = 0; i < n; ++i) {
-      const index = arguments[ i ]
+      const index = indices[ i ]
       words[ index >>> 5 ] &= ~(1 << index)
     }
     return this
   }
 
-    /**
-     * Set all bits of the array
-     * @return {BitArray} this object
-     */
+  /**
+   * Set all bits of the array
+   * @return {BitArray} this object
+   */
   setAll () {
     return this._assignRange(0, this.length - 1, true)
   }
 
-    /**
-     * Clear all bits of the array
-     * @return {BitArray} this object
-     */
+  /**
+   * Clear all bits of the array
+   * @return {BitArray} this object
+   */
   clearAll () {
     return this._assignRange(0, this.length - 1, false)
   }
 
-    /**
-     * Flip all the values in the array
-     * @return {BitArray} this object
-     */
+  /**
+   * Flip all the values in the array
+   * @return {BitArray} this object
+   */
   flipAll () {
     const count = this._words.length
     const words = this._words
@@ -195,7 +198,7 @@ class BitArray {
     return this
   }
 
-  _isRangeValue (start, end, value) {
+  _isRangeValue (start: number, end: number, value: boolean) {
     const words = this._words
     const wordValue = value === true ? 0xFFFFFFFF : 0
     const wordStart = start >>> 5
@@ -222,78 +225,78 @@ class BitArray {
     return true
   }
 
-    /**
-     * Test if bits in given range are set
-     * @param {Integer} start - start index
-     * @param {Integer} end - end index
-     * @return {BitArray} this object
-     */
-  isRangeSet (start, end) {
+  /**
+   * Test if bits in given range are set
+   * @param {Integer} start - start index
+   * @param {Integer} end - end index
+   * @return {BitArray} this object
+   */
+  isRangeSet (start: number, end: number) {
     return this._isRangeValue(start, end, true)
   }
 
-    /**
-     * Test if bits in given range are clear
-     * @param {Integer} start - start index
-     * @param {Integer} end - end index
-     * @return {BitArray} this object
-     */
-  isRangeClear (start, end) {
+  /**
+   * Test if bits in given range are clear
+   * @param {Integer} start - start index
+   * @param {Integer} end - end index
+   * @return {BitArray} this object
+   */
+  isRangeClear (start: number, end: number) {
     return this._isRangeValue(start, end, false)
   }
 
-    /**
-     * Test if all bits in the array are set
-     * @return {Boolean} test result
-     */
+  /**
+   * Test if all bits in the array are set
+   * @return {Boolean} test result
+   */
   isAllSet () {
     return this._isRangeValue(0, this.length - 1, true)
   }
 
-    /**
-     * Test if all bits in the array are clear
-     * @return {Boolean} test result
-     */
+  /**
+   * Test if all bits in the array are clear
+   * @return {Boolean} test result
+   */
   isAllClear () {
     return this._isRangeValue(0, this.length - 1, false)
   }
 
-    /**
-     * Test if bits at all given indices are set
-     * @param {...Integer} arguments - indices
-     * @return {Boolean} test result
-     */
-  isSet () {
+  /**
+   * Test if bits at all given indices are set
+   * @param {...Integer} arguments - indices
+   * @return {Boolean} test result
+   */
+  isSet (...indices: number[]) {
     const words = this._words
-    const n = arguments.length
+    const n = indices.length
     for (let i = 0; i < n; ++i) {
-      const index = arguments[ i ]
+      const index = indices[ i ]
       if ((words[ index >>> 5 ] & (1 << index)) === 0) return false
     }
     return true
   }
 
-    /**
-     * Test if bits at all given indices are clear
-     * @param {...Integer} arguments - indices
-     * @return {Boolean} test result
-     */
-  isClear () {
+  /**
+   * Test if bits at all given indices are clear
+   * @param {...Integer} arguments - indices
+   * @return {Boolean} test result
+   */
+  isClear (...indices: number[]) {
     const words = this._words
-    const n = arguments.length
+    const n = indices.length
     for (let i = 0; i < n; ++i) {
-      const index = arguments[ i ]
+      const index = indices[ i ]
       if ((words[ index >>> 5 ] & (1 << index)) !== 0) return false
     }
     return true
   }
 
-    /**
-     * Test if two BitArrays are identical in all their values
-     * @param {BitArray} otherBitarray - the other BitArray
-     * @return {Boolean} test result
-     */
-  isEqualTo (otherBitarray) {
+  /**
+   * Test if two BitArrays are identical in all their values
+   * @param {BitArray} otherBitarray - the other BitArray
+   * @return {Boolean} test result
+   */
+  isEqualTo (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -305,10 +308,10 @@ class BitArray {
     return true
   }
 
-    /**
-     * How many set bits?
-     * @return {Integer} number of set bits
-     */
+  /**
+   * How many set bits?
+   * @return {Integer} number of set bits
+   */
   getSize () {
     const count = this._words.length
     const words = this._words
@@ -319,13 +322,13 @@ class BitArray {
     return size
   }
 
-    /**
-     * Calculate difference betwen this and another bit array.
-     * Store result in this object.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {BitArray} this object
-     */
-  difference (otherBitarray) {
+  /**
+   * Calculate difference betwen this and another bit array.
+   * Store result in this object.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {BitArray} this object
+   */
+  difference (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -338,13 +341,13 @@ class BitArray {
     return this
   }
 
-    /**
-     * Calculate union betwen this and another bit array.
-     * Store result in this object.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {BitArray} this object
-     */
-  union (otherBitarray) {
+  /**
+   * Calculate union betwen this and another bit array.
+   * Store result in this object.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {BitArray} this object
+   */
+  union (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -357,13 +360,13 @@ class BitArray {
     return this
   }
 
-    /**
-     * Calculate intersection betwen this and another bit array.
-     * Store result in this object.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {BitArray} this object
-     */
-  intersection (otherBitarray) {
+  /**
+   * Calculate intersection betwen this and another bit array.
+   * Store result in this object.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {BitArray} this object
+   */
+  intersection (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -376,12 +379,12 @@ class BitArray {
     return this
   }
 
-    /**
-     * Test if there is any intersection betwen this and another bit array.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {Boolean} test result
-     */
-  intersects (otherBitarray) {
+  /**
+   * Test if there is any intersection betwen this and another bit array.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {Boolean} test result
+   */
+  intersects (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -393,12 +396,12 @@ class BitArray {
     return false
   }
 
-    /**
-     * Calculate the number of bits in common betwen this and another bit array.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {Integer} size
-     */
-  getIntersectionSize (otherBitarray) {
+  /**
+   * Calculate the number of bits in common betwen this and another bit array.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {Integer} size
+   */
+  getIntersectionSize (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -409,13 +412,13 @@ class BitArray {
     return size
   }
 
-    /**
-     * Calculate intersection betwen this and another bit array.
-     * Store result in a new bit array.
-     * @param  {BitArray} otherBitarray - the other bit array
-     * @return {BitArray} the new bit array
-     */
-  makeIntersection (otherBitarray) {
+  /**
+   * Calculate intersection betwen this and another bit array.
+   * Store result in a new bit array.
+   * @param  {BitArray} otherBitarray - the other bit array
+   * @return {BitArray} the new bit array
+   */
+  makeIntersection (otherBitarray: BitArray) {
     const words1 = this._words
     const words2 = otherBitarray._words
     const count = Math.min(words1.length, words2.length)
@@ -429,12 +432,12 @@ class BitArray {
     return intersection
   }
 
-    /**
-     * Iterate over all set bits in the array
-     * @param  {function( index: Integer, i: Integer )} callback - the callback
-     * @return {undefined}
-     */
-  forEach (callback) {
+  /**
+   * Iterate over all set bits in the array
+   * @param  {function( index: Integer, i: Integer )} callback - the callback
+   * @return {undefined}
+   */
+  forEach (callback: (index: number, i: number) => any) {
     const count = this._words.length
     const words = this._words
     let i = 0
@@ -450,10 +453,10 @@ class BitArray {
     }
   }
 
-    /**
-     * Get an array with the set bits
-     * @return {Array} bit indices
-     */
+  /**
+   * Get an array with the set bits
+   * @return {Array} bit indices
+   */
   toArray () {
     const words = this._words
     const answer = new Array(this.getSize())
@@ -479,10 +482,10 @@ class BitArray {
     return sele ? '@' + sele : 'NONE'
   }
 
-    /**
-     * Clone this object
-     * @return {BitArray} the cloned object
-     */
+  /**
+   * Clone this object
+   * @return {BitArray} the cloned object
+   */
   clone () {
     const clone = Object.create(BitArray.prototype)
     clone.length = this.length
@@ -490,5 +493,3 @@ class BitArray {
     return clone
   }
 }
-
-export default BitArray

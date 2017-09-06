@@ -49,13 +49,17 @@ function text () {
 }
 
 export default {
-  input: 'src/ngl.js',
+  input: 'build/js/src/ngl.js',
   plugins: [
     resolve({
       jsnext: true,
       main: true
     }),
-    commonjs(),
+    commonjs({
+      namedExports: {
+        'node_modules/signals/dist/signals.js': [ 'Signal' ]
+      }
+    }),
     glsl(),
     text(),
     json(),
