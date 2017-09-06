@@ -10,7 +10,16 @@ import StructureRepresentation from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'
 
-function getIsolatedAtomSet (structure) {
+/**
+ * Determine which atoms in  a Structure[View] form no bonds to any other atoms
+ * in that Structure.
+ *
+ * This differs from setting the selection to "nonbonded" as it finds atoms
+ * that have no bonds within the current selection.
+ * @param  {Structure} structure - The Structure or StructureView object
+ * @return {AtomSet} AtomSet of lone atoms
+ */
+function getLoneAtomSet (structure) {
   const atomSet = structure.getAtomSet()
   const bondSet = structure.getBondSet()
   const bp = structure.getBondProxy()
@@ -34,6 +43,9 @@ class LineRepresentation extends StructureRepresentation {
    * @property {String} multipleBond - one off "off", "symmetric", "offset"
    * @param {Float} params.bondSpacing - spacing for multiple bond rendering
    * @param {Integer} params.linewidth - width of lines
+   * @param {Boolean} params.lines - render bonds as lines
+   * @param {String} params.crosses - render atoms as crosses: "off", "all" or "lone" (default)
+   * @param {Float} params.crossSize - size of cross
    * @param {null} params.flatShaded - not available
    * @param {null} params.side - not available
    * @param {null} params.wireframe - not available
@@ -71,12 +83,12 @@ class LineRepresentation extends StructureRepresentation {
         rebuild: true,
         options: {
           'off': 'off',
-          'isolated': 'isolated',
+          'lone': 'lone',
           'all': 'all'
         }
       },
       crossSize: {
-        type: 'number', precision: 2, max: 1.0, min: 0.05, rebuild: true
+        type: 'number', precision: 2, max: 2.0, min: 0.1
       }
 
     }, this.parameters, {
@@ -100,8 +112,8 @@ class LineRepresentation extends StructureRepresentation {
     this.bondSpacing = defaults(p.bondSpacing, 1.0)
     this.linewidth = defaults(p.linewidth, 2)
     this.lines = defaults(p.lines, true)
-    this.crosses = defaults(p.crosses, 'isolated')
-    this.crossSize = defaults(p.crossSize, 0.2)
+    this.crosses = defaults(p.crosses, 'lone')
+    this.crossSize = defaults(p.crossSize, 0.4)
 
     super.init(p)
   }
@@ -122,8 +134,8 @@ class LineRepresentation extends StructureRepresentation {
     }
 
     const p = {}
-    if (this.crosses === 'isolated') {
-      p.atomSet = getIsolatedAtomSet(sview)
+    if (this.crosses === 'lone') {
+      p.atomSet = getLoneAtomSet(sview)
     }
 
     const atomData = sview.getAtomData(this.getAtomParams(what, p))
@@ -139,14 +151,14 @@ class LineRepresentation extends StructureRepresentation {
     let cPosition2
     let cColor
     let cColor2
-    let cSize
+    let cOffset
 
     let pickingArray
 
     if (!what || what.position) {
       cPosition1 = crossData.position1 = new Float32Array(attrSize)
       cPosition2 = crossData.position2 = new Float32Array(attrSize)
-      cSize = this.crossSize
+      cOffset = this.crossSize / 2
     }
     if (!what || what.color) {
       cColor = crossData.color = new Float32Array(attrSize)
@@ -165,26 +177,26 @@ class LineRepresentation extends StructureRepresentation {
         const y = position[ j + 1 ]
         const z = position[ j + 2 ]
 
-        cPosition1[ i ] = x - cSize
+        cPosition1[ i ] = x - cOffset
         cPosition1[ i + 1 ] = y
         cPosition1[ i + 2 ] = z
-        cPosition2[ i ] = x + cSize
+        cPosition2[ i ] = x + cOffset
         cPosition2[ i + 1 ] = y
         cPosition2[ i + 2 ] = z
 
         cPosition1[ i + 3 ] = x
-        cPosition1[ i + 4 ] = y - cSize
+        cPosition1[ i + 4 ] = y - cOffset
         cPosition1[ i + 5 ] = z
         cPosition2[ i + 3 ] = x
-        cPosition2[ i + 4 ] = y + cSize
+        cPosition2[ i + 4 ] = y + cOffset
         cPosition2[ i + 5 ] = z
 
         cPosition1[ i + 6 ] = x
         cPosition1[ i + 7 ] = y
-        cPosition1[ i + 8 ] = z - cSize
+        cPosition1[ i + 8 ] = z - cOffset
         cPosition2[ i + 6 ] = x
         cPosition2[ i + 7 ] = y
-        cPosition2[ i + 8 ] = z + cSize
+        cPosition2[ i + 8 ] = z + cOffset
       }
 
       if (!what || what.color) {
@@ -213,14 +225,14 @@ class LineRepresentation extends StructureRepresentation {
   }
 
   createData (sview) {
-    var what = { position: true, color: true, picking: true }
+    const what = { position: true, color: true, picking: true }
 
-    var bufferList = []
+    const bufferList = []
 
     if (this.lines) {
-      var bondData = sview.getBondData(this.getBondParams(what))
+      const bondData = sview.getBondData(this.getBondParams(what))
 
-      var lineBuffer = new WideLineBuffer(
+      const lineBuffer = new WideLineBuffer(
         bondData, this.getBufferParams({ linewidth: this.linewidth })
       )
 
@@ -228,7 +240,7 @@ class LineRepresentation extends StructureRepresentation {
     }
 
     if (this.crosses !== 'off') {
-      var crossBuffer = new WideLineBuffer(
+      const crossBuffer = new WideLineBuffer(
         this._crossData(what, sview),
         this.getBufferParams({linewidth: this.linewidth})
       )
@@ -241,39 +253,39 @@ class LineRepresentation extends StructureRepresentation {
   }
 
   updateData (what, data) {
-    var bufferIdx = 0
+    let bufferIdx = 0
 
     if (this.lines) {
-      var bondData = data.sview.getBondData(this.getBondParams(what))
-      var lineData = {}
+      const bondData = data.sview.getBondData(this.getBondParams(what))
+      const lineAttributes = {}
 
       if (!what || what.position) {
-        lineData.position1 = bondData.position1
-        lineData.position2 = bondData.position2
+        lineAttributes.position1 = bondData.position1
+        lineAttributes.position2 = bondData.position2
       }
 
       if (!what || what.color) {
-        lineData.color = bondData.color
-        lineData.color2 = bondData.color2
+        lineAttributes.color = bondData.color
+        lineAttributes.color2 = bondData.color2
       }
 
-      data.bufferList[ bufferIdx++ ].setAttributes(lineData)
+      data.bufferList[ bufferIdx++ ].setAttributes(lineAttributes)
     }
 
     if (this.crosses !== 'off') {
-      var crossAtomData = this._crossData(what, data.sview)
-      var crossData = {}
+      const crossData = this._crossData(what, data.sview)
+      const crossAttributes = {}
 
       if (!what || what.position) {
-        crossData.position1 = crossAtomData.position1
-        crossData.position2 = crossAtomData.position2
+        crossAttributes.position1 = crossData.position1
+        crossAttributes.position2 = crossData.position2
       }
       if (!what || what.color) {
-        crossData.color = crossAtomData.color
-        crossData.color2 = crossAtomData.color2
+        crossAttributes.color = crossData.color
+        crossAttributes.color2 = crossData.color2
       }
 
-      data.bufferList[ bufferIdx++ ].setAttributes(crossData)
+      data.bufferList[ bufferIdx++ ].setAttributes(crossAttributes)
     }
   }
 
@@ -281,7 +293,7 @@ class LineRepresentation extends StructureRepresentation {
     var rebuild = false
     var what = {}
 
-    if (params && params.bondSpacing) {
+    if (params && (params.bondSpacing || params.crossSize)) {
       what.position = true
     }
 
