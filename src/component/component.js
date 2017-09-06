@@ -13,9 +13,7 @@ import { generateUUID } from '../math/math-utils.js'
 import Annotation from '../component/annotation.js'
 import ComponentControls from '../controls/component-controls.js'
 import { makeRepresentation } from '../representation/representation-utils.js'
-// import RepresentationComponent from "./representation-component.js";
-
-let nextComponentId = 0
+import RepresentationElement from './representation-element.js'
 
 const _m = new Matrix4()
 const _v = new Vector3()
@@ -29,11 +27,11 @@ const _v = new Vector3()
 
 /**
  * @example
- * component.signals.representationAdded.add(function (representationComponent) { ... });
+ * component.signals.representationAdded.add(function (representationElement) { ... });
  *
  * @typedef {Object} ComponentSignals
- * @property {Signal<RepresentationComponent>} representationAdded - when a representation is added
- * @property {Signal<RepresentationComponent>} representationRemoved - when a representation is removed
+ * @property {Signal<RepresentationElement>} representationAdded - when a representation is added
+ * @property {Signal<RepresentationElement>} representationRemoved - when a representation is removed
  * @property {Signal<Matrix4>} matrixChanged - on matrix change
  * @property {Signal<Boolean>} visibilityChanged - on visibility change
  * @property {Signal<String>} statusChanged - on status change
@@ -51,13 +49,11 @@ class Component {
    * @param {ComponentParameters} params - parameter object
    */
   constructor (stage, params) {
-    Object.defineProperty(this, 'id', { value: nextComponentId++ })
-
     const p = params || {}
 
-    this.name = p.name
+    this.name = defaults(p.name, '')
     this.uuid = generateUUID()
-    this.visible = p.visible !== undefined ? p.visible : true
+    this.visible = defaults(p.visible, true)
 
     /**
      * Events emitted by the component
@@ -249,8 +245,8 @@ class Component {
    * @param {String} type - the name of the representation
    * @param {Object} object - the object on which the representation should be based
    * @param {RepresentationParameters} [params] - representation parameters
-   * @return {RepresentationComponent} the created representation wrapped into
-   *                                   a representation component object
+   * @return {RepresentationElement} the created representation wrapped into
+   *                                   a representation element object
    */
   addRepresentation (type, object, params) {
     const p = params || {}
@@ -263,12 +259,12 @@ class Component {
 
     const p2 = Object.assign({}, p, { visible: this.visible && p.visible })
     const repr = makeRepresentation(type, object, this.viewer, p2)
-    const reprComp = this.__getRepresentationComponent(repr, p)
+    const reprElem = new RepresentationElement(this.stage, repr, p, this)
 
-    this.reprList.push(reprComp)
-    this.signals.representationAdded.dispatch(reprComp)
+    this.reprList.push(reprElem)
+    this.signals.representationAdded.dispatch(reprElem)
 
-    return reprComp
+    return reprElem
   }
 
   addBufferRepresentation (buffer, params) {
@@ -293,7 +289,7 @@ class Component {
 
   /**
    * Removes a representation component
-   * @param {RepresentationComponent} repr - the representation component
+   * @param {RepresentationElement} repr - the representation element
    * @return {undefined}
    */
   removeRepresentation (repr) {

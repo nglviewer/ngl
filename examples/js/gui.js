@@ -1361,7 +1361,7 @@ NGL.StructureComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1656,7 +1656,7 @@ NGL.SurfaceComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1744,7 +1744,7 @@ NGL.VolumeComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1833,7 +1833,7 @@ NGL.ShapeComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1968,7 +1968,7 @@ NGL.ScriptComponentWidget = function (component, stage) {
 
 // Representation
 
-NGL.RepresentationComponentWidget = function (component, stage) {
+NGL.RepresentationElementWidget = function (component, stage) {
   var signals = component.signals
 
   var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
@@ -2090,7 +2090,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
