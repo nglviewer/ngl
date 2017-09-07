@@ -2,9 +2,9 @@
  * Writer class for sdf/mol files.
  */
 
-import Writer from './writer.js'
+import { sprintf } from 'sprintf-js'
 
-import { sprintf } from '../../lib/sprintf.es6.js'
+import Writer from './writer.js'
 
 const CountFormat =
   '%3i%3i  0  0  0  0  0  0  0  0999 V2000'

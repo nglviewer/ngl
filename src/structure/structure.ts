@@ -27,6 +27,7 @@ import Selection from '../selection/selection'
 import Assembly from '../symmetry/assembly'
 import Volume from '../surface/volume'
 import Polymer from '../proxy/polymer'
+import Trajectory from '../trajectory/trajectory'
 
 import BondHash from '../store/bond-hash'
 import BondStore from '../store/bond-store'
@@ -90,6 +91,7 @@ interface Structure {
   center: Vector3
   boundingBox: Box3
 
+  trajectory?: Trajectory
 
   _bp: BondProxy
   _ap: AtomProxy

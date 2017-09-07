@@ -4,30 +4,16 @@
  * @private
  */
 
-import { defaults, download } from '../utils.js'
+import { defaults, download } from '../utils'
 
 /**
  * Base class for writers
  * @interface
  */
 class Writer {
-  /**
-   * @abstract
-   * @return {String} the default mime type
-   */
-  get mimeType () {}
-
-  /**
-   * @abstract
-   * @return {String} the default file name
-   */
-  get defaultName () {}
-
-  /**
-   * @abstract
-   * @return {String} the default file extension
-   */
-  get defaultExt () {}
+  readonly mimeType: string
+  readonly defaultName: string
+  readonly defaultExt: string
 
   /**
    * @abstract
@@ -49,7 +35,7 @@ class Writer {
    * @param  {[type]} ext  [description]
    * @return {[type]}      [description]
    */
-  download (name, ext) {
+  download (name?: string, ext?: string) {
     name = defaults(name, this.defaultName)
     ext = defaults(ext, this.defaultExt)
 

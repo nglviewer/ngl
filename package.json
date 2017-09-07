@@ -51,6 +51,7 @@
     "@types/jest": "^20.0.8",
     "@types/node": "^8.0.25",
     "@types/signals": "0.0.17",
+    "@types/sprintf-js": "^1.1.0",
     "@types/three": "^0.84.20",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-external-helpers": "^6.22.0",
@@ -70,11 +71,11 @@
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-watch": "^4.3.1",
     "signals": "^1.0.0",
+    "sprintf-js": "^1.1.1",
     "standard": "^10.0.3",
     "three": "^0.87.1",
     "typescript": "^2.5.1",
     "uglify-js": "^3.0.28"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

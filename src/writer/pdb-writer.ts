@@ -4,10 +4,11 @@
  * @private
  */
 
-import { defaults, ensureArray } from '../utils.js'
-import Writer from './writer.js'
+import { sprintf } from 'sprintf-js'
 
-import { sprintf } from '../../lib/sprintf.es6.js'
+import Writer from './writer'
+import { defaults, ensureArray } from '../utils'
+import Structure from '../structure/structure'
 
 // http://www.wwpdb.org/documentation/file-format
 
@@ -20,18 +21,33 @@ const AtomFormat =
 const HetatmFormat =
   'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
+interface PdbWriterParams {
+  renumberSerial: boolean
+  remarks: string[]
+}
+
 /**
  * Create a PDB file from a Structure object
  */
-class PdbWriter extends Writer {
+export default class PdbWriter extends Writer {
+  readonly mimeType = 'text/plain'
+  readonly defaultName = 'structure'
+  readonly defaultExt = 'pdb'
+
+  renumberSerial: boolean
+  remarks: string[]
+
+  structure: Structure
+  private _records: string[]
+
   /**
    * @param  {Structure} structure - the structure object
    * @param  {Object} params - parameters]
    */
-  constructor (structure, params) {
-    const p = Object.assign({}, params)
-
+  constructor (structure: Structure, params: PdbWriterParams) {
     super()
+
+    const p = Object.assign({}, params)
 
     this.renumberSerial = defaults(p.renumberSerial, true)
     this.remarks = ensureArray(defaults(p.remarks, []))
@@ -39,10 +55,6 @@ class PdbWriter extends Writer {
     this.structure = structure
     this._records = []
   }
-
-  get mimeType () { return 'text/plain' }
-  get defaultName () { return 'structure' }
-  get defaultExt () { return 'pdb' }
 
   _writeRecords () {
     this._records.length = 0
@@ -69,7 +81,7 @@ class PdbWriter extends Writer {
       ))
       this._records.push(sprintf(
         'REMARK %-73s',
-        'Frame ' + this.structure.trajectory.frame + ''
+        `Frame ${(this.structure.trajectory as any).frame}`  // TODO
       ))
     }
   }
@@ -128,5 +140,3 @@ class PdbWriter extends Writer {
     return this._records.join('\n')
   }
 }
-
-export default PdbWriter
