@@ -271,8 +271,6 @@ export default class Viewer {
     this.setFog()
 
     this.animate = this.animate.bind(this)
-
-    console.log('VIEWER READY')
   }
 
   private _initParams () {
