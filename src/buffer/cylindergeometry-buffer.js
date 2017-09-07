@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Vector3, CylinderBufferGeometry } from '../../lib/three.es6.js'
+import { Matrix4, Vector3, CylinderBufferGeometry } from 'three'
 
 import { defaults } from '../utils.js'
 import { calculateCenterArray, serialBlockArray } from '../math/array-utils.js'

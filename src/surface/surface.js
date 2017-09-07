@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from '../../lib/three.es6.js'
+import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from 'three'
 
 import { Debug, Log, ColormakerRegistry } from '../globals.js'
 import { getUintArray } from '../utils.js'

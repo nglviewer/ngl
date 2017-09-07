@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Matrix3 } from '../../lib/three.es6.js'
+import { Matrix4, Matrix3 } from 'three'
 
 import { getUintArray } from '../utils.js'
 import { serialBlockArray } from '../math/array-utils.js'

@@ -6,7 +6,7 @@
 
 import { Log } from '../globals.js'
 
-import Signal from '../../lib/signals.es6.js'
+import { Signal } from 'signals'
 
 /**
  * {@link Signal}, dispatched when the `count` changes

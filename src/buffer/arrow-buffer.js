@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Vector3, Group } from '../../lib/three.es6.js'
+import { Matrix4, Vector3, Group } from 'three'
 
 import { BufferRegistry } from '../globals.js'
 import { defaults } from '../utils.js'

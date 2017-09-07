@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Box3 } from '../../lib/three.es6.js'
+import { Matrix4, Box3 } from 'three'
 
 import { uniqueArray } from '../utils.js'
 import Selection from '../selection/selection.js'

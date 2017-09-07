@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3, Matrix3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Box3, Matrix3, Matrix4 } from 'three'
 
 import { WorkerRegistry, ColormakerRegistry } from '../globals.js'
 import { defaults } from '../utils.js'

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3 } from '../../lib/three.es6.js'
+import { Vector3, Box3 } from 'three'
 
 import { defaults } from '../utils.js'
 import Representation from './representation.js'

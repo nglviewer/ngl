@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals.js'
 import Colormaker from './colormaker.js'

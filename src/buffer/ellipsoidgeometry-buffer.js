@@ -4,7 +4,7 @@
  * @private
  */
 
-import { IcosahedronBufferGeometry, Vector3 } from '../../lib/three.es6.js'
+import { IcosahedronBufferGeometry, Vector3 } from 'three'
 
 import { defaults } from '../utils.js'
 import GeometryBuffer from './geometry-buffer.js'

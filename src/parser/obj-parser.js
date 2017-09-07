@@ -4,9 +4,7 @@
  * @private
  */
 
-import {
-  BufferGeometry, BufferAttribute
-} from '../../lib/three.es6.js'
+import { BufferGeometry, BufferAttribute } from 'three'
 
 import { ParserRegistry } from '../globals.js'
 import SurfaceParser from './surface-parser.js'

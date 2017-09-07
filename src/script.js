@@ -4,7 +4,7 @@
  * @private
  */
 
-import Signal from '../lib/signals.es6.js'
+import { Signal } from 'signals'
 
 import { Log } from './globals.js'
 

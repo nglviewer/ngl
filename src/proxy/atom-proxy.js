@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
 import {
     SecStrucHelix, SecStrucSheet, SecStrucTurn,

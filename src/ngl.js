@@ -180,10 +180,10 @@ import KeyActions from './controls/key-actions.js'
 
 //
 
-import Signal from '../lib/signals.es6.js'
+import { Signal } from 'signals'
 import {
   Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
-} from '../lib/three.es6.js'
+} from 'three'
 
 //
 

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color, Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Color, Vector3, Matrix4 } from 'three'
 
 import { defaults } from '../utils.js'
 import { degToRad } from '../math/math-utils.js'

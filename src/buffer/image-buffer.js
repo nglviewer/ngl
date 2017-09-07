@@ -7,7 +7,7 @@
 import {
     Vector2, BufferAttribute, DataTexture,
     NormalBlending, NearestFilter, LinearFilter
-} from '../../lib/three.es6.js'
+} from 'three'
 
 import '../shader/Image.vert'
 import '../shader/Image.frag'

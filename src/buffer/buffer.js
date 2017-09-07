@@ -11,7 +11,7 @@ import {
     UniformsUtils, UniformsLib,
     Group, LineSegments, Points, Mesh,
     ShaderMaterial
-} from '../../lib/three.es6.js'
+} from 'three'
 
 import { Log } from '../globals.js'
 import { defaults, getTypedArray, getUintArray } from '../utils.js'

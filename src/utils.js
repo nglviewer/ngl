@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector2, Vector3, Matrix4, Quaternion } from '../lib/three.es6.js'
+import { Vector2, Vector3, Matrix4, Quaternion } from 'three'
 
 import { DecompressorRegistry } from './globals.js'
 

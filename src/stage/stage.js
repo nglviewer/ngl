@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
-import Signal from '../../lib/signals.es6.js'
+import { Vector3 } from 'three'
+import { Signal } from 'signals'
 
 import {
   Debug, Log, Mobile, ComponentRegistry, ParserRegistry

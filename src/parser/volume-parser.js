@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4 } from '../../lib/three.es6.js'
+import { Matrix4 } from 'three'
 
 import { defaults } from '../utils.js'
 import Parser from './parser.js'

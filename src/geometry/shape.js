@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Box3 } from '../../lib/three.es6.js'
+import { Box3 } from 'three'
 
 import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
 import {

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector2, Vector3, Matrix4, Points } from '../../lib/three.es6.js'
+import { Vector2, Vector3, Matrix4, Points } from 'three'
 
 import { defaults } from '../utils.js'
 import TiledRenderer from './tiled-renderer.js'

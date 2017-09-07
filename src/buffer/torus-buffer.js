@@ -4,7 +4,7 @@
  * @private
  */
 
-import { TorusBufferGeometry, Vector3 } from '../../lib/three.es6.js'
+import { TorusBufferGeometry, Vector3 } from 'three'
 
 import { BufferRegistry } from '../globals.js'
 import { defaults } from '../utils.js'

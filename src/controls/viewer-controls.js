@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Vector3, Matrix4, Quaternion } from '../../lib/three.es6.js'
-import Signal from '../../lib/signals.es6.js'
+import { Vector3, Matrix4, Quaternion } from 'three'
+import { Signal } from 'signals'
 
 import {
   ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Matrix4, Quaternion } from '../../lib/three.es6.js'
+import { Vector3, Matrix4, Quaternion } from 'three'
 
 import {
     Matrix, meanRows, subRows, transpose, multiplyABt, svd

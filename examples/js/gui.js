@@ -1968,8 +1968,8 @@ NGL.ScriptComponentWidget = function (component, stage) {
 
 // Representation
 
-NGL.RepresentationElementWidget = function (component, stage) {
-  var signals = component.signals
+NGL.RepresentationElementWidget = function (element, stage) {
+  var signals = element.signals
 
   var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
     .setMarginLeft('20px')
@@ -1989,23 +1989,23 @@ NGL.RepresentationElementWidget = function (component, stage) {
 
     // Name
 
-  var name = new UI.EllipsisText(component.name)
+  var name = new UI.EllipsisText(element.name)
     .setWidth('103px')
 
     // Actions
 
-  var toggle = new UI.ToggleIcon(component.visible, 'eye', 'eye-slash')
+  var toggle = new UI.ToggleIcon(element.visible, 'eye', 'eye-slash')
     .setTitle('hide/show')
     .setCursor('pointer')
     .setMarginLeft('25px')
     .onClick(function () {
-      component.setVisibility(!component.visible)
+      element.setVisibility(!element.visible)
     })
 
   var disposeIcon = new UI.DisposeIcon()
     .setMarginLeft('10px')
     .setDisposeFunction(function () {
-      component.dispose()
+      element.dispose()
     })
 
   container
@@ -2015,12 +2015,12 @@ NGL.RepresentationElementWidget = function (component, stage) {
 
   // Selection
 
-  if ((component.parent.type === 'structure' ||
-          component.parent.type === 'trajectory') &&
-        component.repr.selection && component.repr.selection.type === 'selection'
+  if ((element.parent.type === 'structure' ||
+          element.parent.type === 'trajectory') &&
+        element.repr.selection && element.repr.selection.type === 'selection'
     ) {
     container.add(
-      new UI.SelectionPanel(component.repr.selection)
+      new UI.SelectionPanel(element.repr.selection)
         .setMarginLeft('20px')
         .setInputWidth('194px')
     )
@@ -2032,11 +2032,11 @@ NGL.RepresentationElementWidget = function (component, stage) {
     .setMarginLeft('45px')
     .setEntryLabelWidth('130px')
 
-  menu.addEntry('type', new UI.Text(component.repr.type))
+  menu.addEntry('type', new UI.Text(element.repr.type))
 
     // Parameters
 
-  var repr = component.repr
+  var repr = element.repr
   var rp = repr.getParameters()
 
   Object.keys(repr.parameters).forEach(function (name) {
@@ -2057,8 +2057,8 @@ NGL.RepresentationElementWidget = function (component, stage) {
     function setParam () {
       var po = {}
       po[ name ] = input.getValue()
-      component.setParameters(po)
-      component.viewer.requestRender()
+      element.setParameters(po)
+      stage.viewer.requestRender()
     }
 
     var ua = navigator.userAgent

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Quaternion } from '../../lib/three.es6.js'
+import { Vector3, Quaternion } from 'three'
 
 import { defaults, ensureVector3, ensureQuaternion } from '../utils.js'
 import { lerp, smoothstep } from '../math/math-utils.js'

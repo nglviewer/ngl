@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector2, Matrix4 } from '../../lib/three.es6.js'
+import { Vector2, Matrix4 } from 'three'
 
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'

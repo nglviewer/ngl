@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color } from '../../lib/three.es6.js'
+import { Color } from 'three'
 
 import { Browser, RepresentationRegistry } from '../globals.js'
 import { defaults } from '../utils.js'

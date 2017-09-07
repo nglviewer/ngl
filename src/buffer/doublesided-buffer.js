@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Group } from '../../lib/three.es6.js'
+import { Group } from 'three'
 
 import Buffer from './buffer.js'
 

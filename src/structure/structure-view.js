@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3 } from '../../lib/three.es6.js'
+import { Vector3, Box3 } from 'three'
 
 import { Debug, Log } from '../globals.js'
 import Structure from './structure.js'

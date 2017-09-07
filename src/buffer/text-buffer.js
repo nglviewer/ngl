@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color, CanvasTexture } from '../../lib/three.es6.js'
+import { Color, CanvasTexture } from 'three'
 
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'

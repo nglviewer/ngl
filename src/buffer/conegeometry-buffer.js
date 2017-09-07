@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Vector3, ConeBufferGeometry } from '../../lib/three.es6.js'
+import { Matrix4, Vector3, ConeBufferGeometry } from 'three'
 
 import { defaults } from '../utils.js'
 import { calculateCenterArray } from '../math/array-utils.js'

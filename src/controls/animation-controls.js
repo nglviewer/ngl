@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Quaternion } from '../../lib/three.es6.js'
+import { Vector3, Quaternion } from 'three'
 
 import { ensureMatrix4 } from '../utils.js'
 import {

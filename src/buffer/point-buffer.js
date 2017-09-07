@@ -4,7 +4,7 @@
  * @private
  */
 
-import { DataTexture } from '../../lib/three.es6.js'
+import { DataTexture } from 'three'
 
 import '../shader/Point.vert'
 import '../shader/Point.frag'

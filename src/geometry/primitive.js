@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Color } from '../../lib/three.es6.js'
+import { Vector3, Color } from 'three'
 
 import { BufferRegistry, PickerRegistry } from '../globals.js'
 

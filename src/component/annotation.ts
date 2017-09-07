@@ -4,25 +4,49 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
-import { defaults } from '../utils.js'
-import { smoothstep } from '../math/math-utils.js'
+import { defaults } from '../utils'
+import { smoothstep } from '../math/math-utils'
+import Stage from '../stage/stage'
+// import Viewer from '../viewer/viewer'
+import Component from './component'
+
+export interface AnnotationParams {
+  offsetX: number
+  offsetY: number
+  visible: boolean
+}
 
 /**
  * Annotation HTML element floating on top of a position rendered in 3d
  */
-class Annotation {
-    /**
-     * @param {Component} component - the associated component
-     * @param {Vector3} position - position in 3d
-     * @param {String|Element} content - HTML content
-     * @param {Object} [params] - parameters
-     * @param {Integer} params.offsetX - 2d offset in x direction
-     * @param {Integer} params.offsetY - 2d offset in y direction
-     * @param {Boolean} params.visible - visibility flag
-     */
-  constructor (component, position, content, params) {
+export default class Annotation {
+  offsetX: number
+  offsetY: number
+  visible: boolean
+
+  component: Component
+  stage: Stage
+  viewer: any//Viewer
+  position: Vector3
+  element: HTMLElement
+
+  private _viewerPosition: Vector3
+  private _canvasPosition: Vector3
+  private _cameraPosition: Vector3
+  private _clientRect: ClientRect
+
+  /**
+   * @param {Component} component - the associated component
+   * @param {Vector3} position - position in 3d
+   * @param {String|Element} content - HTML content
+   * @param {Object} [params] - parameters
+   * @param {Integer} params.offsetX - 2d offset in x direction
+   * @param {Integer} params.offsetY - 2d offset in y direction
+   * @param {Boolean} params.visible - visibility flag
+   */
+  constructor (component: Component, position: Vector3, content: string|HTMLElement, params: AnnotationParams) {
     const p = params || {}
 
     this.offsetX = defaults(p.offsetX, 0)
@@ -43,7 +67,7 @@ class Annotation {
     Object.assign(this.element.style, {
       display: 'block',
       position: 'fixed',
-      zIndex: 1 + (parseInt(this.viewer.container.style.zIndex) || 0),
+      zIndex: 1 + (parseInt(this.viewer.container.style.zIndex || '0') || 0),
       pointerEvents: 'none',
       backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
       color: 'lightgrey',
@@ -59,19 +83,19 @@ class Annotation {
     this.component.signals.matrixChanged.add(this._updateViewerPosition, this)
   }
 
-    /**
-     * Set HTML content of the annotation
-     * @param {String|Element} value - HTML content
-     * @return {undefined}
-     */
-  setContent (value) {
+  /**
+   * Set HTML content of the annotation
+   * @param {String|Element} value - HTML content
+   * @return {undefined}
+   */
+  setContent (value: string|HTMLElement) {
     const displayValue = this.element.style.display
     if (displayValue === 'none') {
       this.element.style.left = '-10000px'
       this.element.style.display = 'block'
     }
 
-    if (value instanceof window.Element) {
+    if (value instanceof HTMLElement) {
       this.element.innerHTML = ''
       this.element.appendChild(value)
     } else {
@@ -85,12 +109,12 @@ class Annotation {
     }
   }
 
-    /**
-     * Set visibility of the annotation
-     * @param {Boolean} value - visibility flag
-     * @return {undefined}
-     */
-  setVisibility (value) {
+  /**
+   * Set visibility of the annotation
+   * @param {Boolean} value - visibility flag
+   * @return {undefined}
+   */
+  setVisibility (value: boolean) {
     this.visible = value
     this.updateVisibility()
   }
@@ -105,8 +129,8 @@ class Annotation {
 
   _updateViewerPosition () {
     this._viewerPosition
-            .copy(this.position)
-            .applyMatrix4(this.component.matrix)
+      .copy(this.position)
+      .applyMatrix4(this.component.matrix)
   }
 
   _update () {
@@ -118,9 +142,9 @@ class Annotation {
     const cr = this._clientRect
 
     this._cameraPosition.copy(vp)
-            .add(this.viewer.translationGroup.position)
-            .applyMatrix4(this.viewer.rotationGroup.matrix)
-            .sub(this.viewer.camera.position)
+      .add(this.viewer.translationGroup.position)
+      .applyMatrix4(this.viewer.rotationGroup.matrix)
+      .sub(this.viewer.camera.position)
 
     if (this._cameraPosition.z < 0) {
       s.display = 'none'
@@ -129,11 +153,11 @@ class Annotation {
       s.display = 'block'
     }
 
-    s.opacity = 1 - smoothstep(
-            this.viewer.scene.fog.near,
-            this.viewer.scene.fog.far,
-            this._cameraPosition.length()
-        )
+    const fog = this.viewer.scene.fog as any  // TODO
+
+    s.opacity = (1 - smoothstep(
+      fog.near, fog.far, this._cameraPosition.length()
+    )).toString()
 
     this.stage.viewerControls.getPositionOnCanvas(vp, cp)
 
@@ -141,15 +165,13 @@ class Annotation {
     s.left = (this.offsetY + cp.x - cr.width / 2) + 'px'
   }
 
-    /**
-     * Safely remove the annotation
-     * @return {undefined}
-     */
+  /**
+   * Safely remove the annotation
+   * @return {undefined}
+   */
   dispose () {
     this.viewer.container.removeChild(this.element)
     this.viewer.signals.ticked.remove(this._update, this)
     this.component.signals.matrixChanged.remove(this._updateViewerPosition, this)
   }
 }
-
-export default Annotation

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Matrix4 } from 'three'
 
 import { Debug, Log, ParserRegistry } from '../globals.js'
 import { ensureBuffer } from '../utils.js'

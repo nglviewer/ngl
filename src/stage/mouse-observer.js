@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Vector2 } from '../../lib/three.es6.js'
-import Signal from '../../lib/signals.es6.js'
+import { Vector2 } from 'three'
+import { Signal } from 'signals'
 
 import { LeftMouseButton, RightMouseButton } from '../constants.js'
 import { defaults } from '../utils.js'

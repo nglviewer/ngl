@@ -4,7 +4,7 @@
  * @private
  */
 
-import Signal from '../../lib/signals.es6.js'
+import { Signal } from 'signals'
 
 import { defaults } from '../utils.js'
 import { generateUUID } from '../math/math-utils.js'

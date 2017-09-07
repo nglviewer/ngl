@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ShaderChunk } from '../../lib/three.es6.js'
+import { ShaderChunk } from 'three'
 
 import './chunk/dull_interior_fragment.glsl'
 import './chunk/fog_fragment.glsl'

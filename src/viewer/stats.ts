@@ -4,41 +4,43 @@
  * @private
  */
 
-import Signal from '../../lib/signals.es6.js'
+import { Signal } from 'signals'
 
-function Stats () {
-  this.signals = {
+export default class Stats {
+  signals = {
     updated: new Signal()
   }
 
-  this.begin()
+  maxDuration = -Infinity
+  minDuration = Infinity
+  avgDuration = 14
+  lastDuration = Infinity
 
-  this.maxDuration = -Infinity
-  this.minDuration = Infinity
-  this.avgDuration = 14
-  this.lastDuration = Infinity
+  prevFpsTime = 0
+  lastFps = Infinity
+  lastFrames = 1
+  frames = 0
+  count = 0
 
-  this.prevFpsTime = 0
-  this.lastFps = Infinity
-  this.lastFrames = 1
-  this.frames = 0
-  this.count = 0
-}
+  startTime: number
+  currentTime: number
 
-Stats.prototype = {
+  constructor () {
+    this.begin()
+  }
 
-  update: function () {
+  update () {
     this.startTime = this.end()
     this.currentTime = this.startTime
     this.signals.updated.dispatch()
-  },
+  }
 
-  begin: function () {
+  begin () {
     this.startTime = window.performance.now()
     this.lastFrames = this.frames
-  },
+  }
 
-  end: function () {
+  end () {
     var time = window.performance.now()
 
     this.count += 1
@@ -58,7 +60,4 @@ Stats.prototype = {
 
     return time
   }
-
 }
-
-export default Stats

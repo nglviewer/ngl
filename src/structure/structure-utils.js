@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Matrix4 } from 'three'
 
 import { Debug, Log } from '../globals.js'
 import { binarySearchIndexOf } from '../utils.js'
