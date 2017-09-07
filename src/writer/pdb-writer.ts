@@ -56,7 +56,7 @@ export default class PdbWriter extends Writer {
     this._records = []
   }
 
-  _writeRecords () {
+  private _writeRecords () {
     this._records.length = 0
 
     this._writeTitle()
@@ -64,12 +64,12 @@ export default class PdbWriter extends Writer {
     this._writeAtoms()
   }
 
-  _writeTitle () {
+  private _writeTitle () {
     // FIXME multiline if title line longer than 80 chars
     this._records.push(sprintf('TITLE %-74s', this.structure.name))
   }
 
-  _writeRemarks () {
+  private _writeRemarks () {
     this.remarks.forEach(str => {
       this._records.push(sprintf('REMARK %-73s', str))
     })
@@ -86,7 +86,7 @@ export default class PdbWriter extends Writer {
     }
   }
 
-  _writeAtoms () {
+  private _writeAtoms () {
     let ia = 1
     let im = 1
 

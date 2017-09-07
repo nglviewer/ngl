@@ -10,7 +10,7 @@ import { defaults, download } from '../utils'
  * Base class for writers
  * @interface
  */
-class Writer {
+abstract class Writer {
   readonly mimeType: string
   readonly defaultName: string
   readonly defaultExt: string
@@ -19,7 +19,7 @@ class Writer {
    * @abstract
    * @return {Anything} the data to be written
    */
-  getData () {}
+  abstract getData (): any
 
   /**
    * Get a blob with the written data

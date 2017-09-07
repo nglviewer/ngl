@@ -5,24 +5,28 @@
 import { sprintf } from 'sprintf-js'
 
 import Writer from './writer.js'
+import Structure from '../structure/structure'
+import AtomProxy from '../proxy/atom-proxy'
+import BondProxy from '../proxy/bond-proxy'
 
-const CountFormat =
-  '%3i%3i  0  0  0  0  0  0  0  0999 V2000'
-  // Hard-coded chiral as false as we don't specify it any atoms
-
-const AtomLine =
-  '%10.4f%10.4f%10.4f %-3s 0%3i  0  0  0'
-  //
-
-const BondFormat =
-  '%3i%3i%3i  0  0  0'
+// Hard-coded chiral as false as we don't specify it any atoms
+const CountFormat = '%3i%3i  0  0  0  0  0  0  0  0999 V2000'
+const AtomLine = '%10.4f%10.4f%10.4f %-3s 0%3i  0  0  0'
+const BondFormat = '%3i%3i%3i  0  0  0'
 
 class SdfWriter extends Writer {
+  readonly mimeType = 'text/plain'
+  readonly defaultName = 'structure'
+  readonly defaultExt = 'sdf'
+
+  structure: Structure
+  private _records: string[]
+
   /**
    * @param {Structure} structure - structure to write
    * @param {Object} params - parameters
    */
-  constructor (structure) {
+  constructor (structure: Structure) {
     super()
 
     this.structure = structure
@@ -47,7 +51,7 @@ class SdfWriter extends Writer {
   }
 
   get chargeLines () {
-    const pairs = []
+    const pairs: [number, number][] = []
     this.structure.eachAtom(ap => {
       if (ap.formalCharge != null && ap.formalCharge !== 0) {
         pairs.push([ap.index, ap.formalCharge])
@@ -65,7 +69,7 @@ class SdfWriter extends Writer {
     return lines
   }
 
-  formatAtom (ap) {
+  formatAtom (ap: AtomProxy) {
     let charge = 0
     if (ap.formalCharge != null && ap.formalCharge !== 0) {
       charge = 4 - ap.formalCharge
@@ -78,7 +82,7 @@ class SdfWriter extends Writer {
     return line
   }
 
-  formatBond (bp) {
+  formatBond (bp: BondProxy) {
     return sprintf(
       BondFormat,
       bp.atomIndex1 + 1,

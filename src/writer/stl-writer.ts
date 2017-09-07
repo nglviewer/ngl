@@ -8,6 +8,7 @@ import { Vector3 } from 'three'
 
 import Writer from './writer.js'
 import IOBuffer from '../utils/io-buffer.js'
+import Surface from '../surface/surface'
 
 // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
 
@@ -20,20 +21,21 @@ import IOBuffer from '../utils/io-buffer.js'
  * stl = new StlWriter(surf)
  * stl.download('myFileName')
  */
-class StlWriter extends Writer {
+export default class StlWriter extends Writer {
+  readonly mimeType = 'application/vnd.ms-pki.stl'
+  readonly defaultName = 'surface'
+  readonly defaultExt = 'stl'
+
+  surface: any  // TODO
+
   /**
    * @param {Surface} surface - the surface to write out
    */
-  constructor (surface) {
+  constructor (surface: Surface) {
     super()
 
     this.surface = surface
-    this._records = []
   }
-
-  get mimeType () { return 'application/vnd.ms-pki.stl' }
-  get defaultName () { return 'surface' }
-  get defaultExt () { return 'stl' }
 
   /*
    * Get STL Binary data
@@ -88,5 +90,3 @@ class StlWriter extends Writer {
     return new DataView(output.buffer)
   }
 }
-
-export default StlWriter
