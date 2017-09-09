@@ -18,13 +18,15 @@ import './chunk/unpack_color.glsl'
 
 import { ShaderRegistry } from '../globals'
 
-function getDefines (defines) {
+type ShaderDefines = { [k: string]: string|number|boolean }
+
+function getDefines (defines: ShaderDefines) {
   if (defines === undefined) return ''
 
-  var lines = []
+  const lines = []
 
-  for (var name in defines) {
-    var value = defines[ name ]
+  for (const name in defines) {
+    const value = defines[ name ]
 
     if (value === false) continue
 
@@ -34,27 +36,25 @@ function getDefines (defines) {
   return lines.join('\n') + '\n'
 }
 
-var reInclude = /^(?!\/\/)\s*#include\s+(\S+)/gmi
-var shaderCache = {}
+const reInclude = /^(?!\/\/)\s*#include\s+(\S+)/gmi
+const shaderCache: { [k: string]: string } = {}
 
-function getShader (name, defines) {
-  defines = defines || {}
-
-  var hash = name + '|'
-  for (var key in defines) {
+export function getShader (name: string, defines: ShaderDefines = {}) {
+  let hash = name + '|'
+  for (const key in defines) {
     hash += key + ':' + defines[ key ]
   }
 
   if (!shaderCache[ hash ]) {
-    var definesText = getDefines(defines)
+    const definesText = getDefines(defines)
 
-    var shaderText = ShaderRegistry.get('shader/' + name)
+    let shaderText = ShaderRegistry.get('shader/' + name) as string
     if (!shaderText) {
       throw new Error("empty shader, '" + name + "'")
     }
     shaderText = shaderText.replace(reInclude, function (match, p1) {
-      var path = 'shader/chunk/' + p1 + '.glsl'
-      var chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
+      const path = 'shader/chunk/' + p1 + '.glsl'
+      const chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
 
       return chunk || ''
     })
@@ -63,8 +63,4 @@ function getShader (name, defines) {
   }
 
   return shaderCache[ hash ]
-}
-
-export {
-  getShader
 }
