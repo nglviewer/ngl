@@ -4,7 +4,7 @@
  * @private
  */
 
-import { BufferRegistry, ExtensionFragDepth } from '../globals.js'
+import { BufferRegistry, ExtensionFragDepth } from '../globals'
 import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
 import CylinderImpostorBuffer from './cylinderimpostor-buffer.js'
 

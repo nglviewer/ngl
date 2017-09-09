@@ -6,7 +6,7 @@
 
 import { Vector3 } from 'three'
 
-import { PickerRegistry } from '../globals.js'
+import { PickerRegistry } from '../globals'
 import { calculateMeanVector3 } from '../math/vector-utils.js'
 import Selection from '../selection/selection.js'
 import {

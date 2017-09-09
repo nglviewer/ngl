@@ -4,7 +4,7 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Selection from '../selection/selection.js'
 import Alignment from './alignment.js'
 import Superposition from './superposition.js'

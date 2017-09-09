@@ -57,6 +57,7 @@ export default {
     }),
     commonjs({
       namedExports: {
+        'node_modules/chroma-js/chroma.js': [ 'scale' ],
         'node_modules/signals/dist/signals.js': [ 'Signal' ],
         'node_modules/sprintf-js/src/sprintf.js': [ 'sprintf' ]
       }

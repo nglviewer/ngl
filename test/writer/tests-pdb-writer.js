@@ -1,7 +1,7 @@
 
-import StringStreamer from '../../src/streamer/string-streamer.js'
-import PdbParser from '../../src/parser/pdb-parser.js'
-import PdbWriter from '../../src/writer/pdb-writer.js'
+import StringStreamer from '../../src/streamer/string-streamer'
+import PdbParser from '../../src/parser/pdb-parser'
+import PdbWriter from '../../src/writer/pdb-writer'
 
 import { assert } from 'chai'
 import path from 'path'

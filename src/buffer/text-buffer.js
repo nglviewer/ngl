@@ -9,8 +9,8 @@ import { Color, CanvasTexture } from 'three'
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
 
-import { Browser, BufferRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Browser, BufferRegistry } from '../globals'
+import { defaults } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer.js'
 import { IgnorePicker } from '../utils/picker.js'
 

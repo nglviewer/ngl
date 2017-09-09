@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import CartoonRepresentation from './cartoon-representation.js'
 
 /**

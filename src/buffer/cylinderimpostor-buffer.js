@@ -9,7 +9,7 @@ import { Matrix4 } from 'three'
 import '../shader/CylinderImpostor.vert'
 import '../shader/CylinderImpostor.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
 
 /**

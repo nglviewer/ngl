@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log, RepresentationRegistry } from '../globals.js'
+import { Debug, Log, RepresentationRegistry } from '../globals'
 
 import Structure from '../structure/structure.js'
 import Surface from '../surface/surface.js'

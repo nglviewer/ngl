@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import Colormaker from './colormaker.js'
 
 function randomColor () {

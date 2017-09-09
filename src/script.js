@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 
-import { Log } from './globals.js'
+import { Log } from './globals'
 
 /**
  * Script class

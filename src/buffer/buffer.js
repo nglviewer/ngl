@@ -13,8 +13,8 @@ import {
     ShaderMaterial
 } from 'three'
 
-import { Log } from '../globals.js'
-import { defaults, getTypedArray, getUintArray } from '../utils.js'
+import { Log } from '../globals'
+import { defaults, getTypedArray, getUintArray } from '../utils'
 import { getShader } from '../shader/shader-utils.js'
 
 /**

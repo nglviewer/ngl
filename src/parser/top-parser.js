@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser.js'
 import { WaterNames } from '../structure/structure-constants.js'
 import {

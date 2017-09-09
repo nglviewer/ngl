@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'

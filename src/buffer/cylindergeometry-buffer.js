@@ -6,7 +6,7 @@
 
 import { Matrix4, Vector3, CylinderBufferGeometry } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import { calculateCenterArray, serialBlockArray } from '../math/array-utils.js'
 import GeometryBuffer from './geometry-buffer.js'
 

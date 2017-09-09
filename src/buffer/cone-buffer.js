@@ -4,7 +4,7 @@
  * @private
  */
 
-import { BufferRegistry } from '../globals.js'
+import { BufferRegistry } from '../globals'
 import ConeGeometryBuffer from './conegeometry-buffer.js'
 
 /**

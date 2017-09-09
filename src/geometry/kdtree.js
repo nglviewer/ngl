@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log } from '../globals.js'
+import { Debug, Log } from '../globals'
 import _Kdtree from '../utils/kdtree.js'
 
 function Kdtree (entity, useSquaredDist) {

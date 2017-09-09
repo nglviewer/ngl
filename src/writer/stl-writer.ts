@@ -6,8 +6,8 @@
 
 import { Vector3 } from 'three'
 
-import Writer from './writer.js'
-import IOBuffer from '../utils/io-buffer.js'
+import Writer from './writer'
+import IOBuffer from '../utils/io-buffer'
 import Surface from '../surface/surface'
 
 // https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL

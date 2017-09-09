@@ -6,8 +6,8 @@
 
 import { TorusBufferGeometry, Vector3 } from 'three'
 
-import { BufferRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { BufferRegistry } from '../globals'
+import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer.js'
 
 const scale = new Vector3()

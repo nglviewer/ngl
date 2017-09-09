@@ -4,15 +4,16 @@
  * @private
  */
 
+import { SelectionRule, SelectionOperator } from './selection-test'
 import {
   kwd, SelectAllKeyword,
   SmallResname, NucleophilicResname, HydrophobicResname, AromaticResname,
   AmideResname, AcidicResname, BasicResname, ChargedResname,
   PolarResname, NonpolarResname, CyclicResname, AliphaticResname
-} from './selection-constants.js'
+} from './selection-constants'
 
-function parseSele (string) {
-  let retSelection = {
+function parseSele (string: string) {
+  let retSelection: SelectionRule = {
     operator: undefined,
     rules: []
   }
@@ -22,8 +23,9 @@ function parseSele (string) {
   }
 
   let selection = retSelection
-  let newSelection, oldSelection
-  const selectionStack = []
+  let newSelection: SelectionRule
+  let oldSelection: SelectionRule
+  const selectionStack: SelectionRule[] = []
 
   string = string.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim()
   if (string.charAt(0) === '(' && string.substr(-1) === ')') {
@@ -33,35 +35,35 @@ function parseSele (string) {
 
   // Log.log( string, chunks )
 
-  const createNewContext = operator => {
+  const createNewContext = (operator?: SelectionOperator) => {
     newSelection = {
-      operator: operator,
+      operator,
       rules: []
     }
     if (selection === undefined) {
       selection = newSelection
       retSelection = newSelection
     } else {
-      selection.rules.push(newSelection)
+      selection.rules!.push(newSelection)
       selectionStack.push(selection)
       selection = newSelection
     }
   }
 
-  const getPrevContext = function (operator) {
+  const getPrevContext = function (operator?: SelectionOperator) {
     oldSelection = selection
-    selection = selectionStack.pop()
+    selection = selectionStack.pop()!
     if (selection === undefined) {
       createNewContext(operator)
       pushRule(oldSelection)
     }
   }
 
-  const pushRule = function (rule) {
-    selection.rules.push(rule)
+  const pushRule = function (rule: SelectionRule) {
+    selection.rules!.push(rule)
   }
 
-  let not
+  let not: false|0|1|2 = false
 
   for (let i = 0; i < chunks.length; ++i) {
     const c = chunks[ i ]
@@ -106,7 +108,7 @@ function parseSele (string) {
       // Log.log( "AND" );
 
       if (selection.operator === 'OR') {
-        const lastRule = selection.rules.pop()
+        const lastRule = selection.rules!.pop()!
         createNewContext('AND')
         pushRule(lastRule)
       } else {
@@ -318,10 +320,7 @@ function parseSele (string) {
     // handle atom expressions
 
     if (c.charAt(0) === '@') {
-      const indexList = c.substr(1).split(',')
-      for (let k = 0, kl = indexList.length; k < kl; ++k) {
-        indexList[ k ] = parseInt(indexList[ k ])
-      }
+      const indexList = c.substr(1).split(',').map(x => parseInt(x))
       indexList.sort(function (a, b) { return a - b })
       pushRule({ atomindex: indexList })
       continue
@@ -355,7 +354,7 @@ function parseSele (string) {
     // otherwise a test quickly becomes not applicable
     // e.g. chainTest for chainname when resno is present too
 
-    const sele = {
+    const sele: SelectionRule = {
       operator: 'AND',
       rules: []
     }
@@ -365,14 +364,14 @@ function parseSele (string) {
       if (isNaN(parseInt(model[1]))) {
         throw new Error('model must be an integer')
       }
-      sele.rules.push({
+      sele.rules!.push({
         model: parseInt(model[1])
       })
     }
 
     const altloc = model[0].split('%')
     if (altloc.length > 1) {
-      sele.rules.push({
+      sele.rules!.push({
         altloc: altloc[1]
       })
     }
@@ -382,21 +381,21 @@ function parseSele (string) {
       if (atomname[1].length > 4) {
         throw new Error('atomname must be one to four characters')
       }
-      sele.rules.push({
+      sele.rules!.push({
         atomname: atomname[1].substring(0, 4).toUpperCase()
       })
     }
 
     const chain = atomname[0].split(':')
     if (chain.length > 1 && chain[1]) {
-      sele.rules.push({
+      sele.rules!.push({
         chainname: chain[1]
       })
     }
 
     const inscode = chain[0].split('^')
     if (inscode.length > 1) {
-      sele.rules.push({
+      sele.rules!.push({
         inscode: inscode[1]
       })
     }
@@ -413,19 +412,20 @@ function parseSele (string) {
       }
       let resi = inscode[0].split('-')
       if (resi.length === 1) {
-        resi = parseInt(resi[0])
-        if (isNaN(resi)) {
+        let resiSingle = parseInt(resi[0])
+        if (isNaN(resiSingle)) {
           throw new Error('resi must be an integer')
         }
-        if (negate) resi *= -1
-        sele.rules.push({
-          resno: resi
+        if (negate) resiSingle *= -1
+        sele.rules!.push({
+          resno: resiSingle
         })
       } else if (resi.length === 2) {
-        if (negate) resi[0] *= -1
-        if (negate2) resi[1] *= -1
-        sele.rules.push({
-          resno: [ parseInt(resi[0]), parseInt(resi[1]) ]
+        const resiRange = resi.map(x => parseInt(x))
+        if (negate) resiRange[0] *= -1
+        if (negate2) resiRange[1] *= -1
+        sele.rules!.push({
+          resno: [resiRange[0], resiRange[1]]
         })
       } else {
         throw new Error("resi range must contain one '-'")
@@ -434,9 +434,9 @@ function parseSele (string) {
 
     // round up
 
-    if (sele.rules.length === 1) {
-      pushRule(sele.rules[ 0 ])
-    } else if (sele.rules.length > 1) {
+    if (sele.rules!.length === 1) {
+      pushRule(sele.rules![ 0 ])
+    } else if (sele.rules!.length > 1) {
       pushRule(sele)
     } else {
       throw new Error('empty selection chunk')
@@ -447,10 +447,10 @@ function parseSele (string) {
 
   if (
     retSelection.operator === undefined &&
-    retSelection.rules.length === 1 &&
-    retSelection.rules[ 0 ].hasOwnProperty('operator')
+    retSelection.rules!.length === 1 &&
+    retSelection.rules![ 0 ].hasOwnProperty('operator')
   ) {
-    retSelection = retSelection.rules[ 0 ]
+    retSelection = retSelection.rules![ 0 ]
   }
 
   return retSelection

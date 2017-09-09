@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ColormakerRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ColormakerRegistry } from '../globals'
+import { defaults } from '../utils'
 import Colormaker from './colormaker.js'
 
 /**

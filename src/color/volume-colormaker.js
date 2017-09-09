@@ -5,9 +5,9 @@
  */
 
 import { Vector3 } from 'three'
-import { lerp } from '../math/math-utils.js'
+import { lerp } from '../math/math-utils'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import Colormaker from './colormaker.js'
 
 /**

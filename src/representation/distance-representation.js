@@ -6,8 +6,8 @@
 
 import { Color } from 'three'
 
-import { Browser, RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Browser, RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import { DistancePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 import BitArray from '../utils/bitarray.js'

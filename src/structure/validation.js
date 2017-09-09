@@ -6,8 +6,8 @@
 
 import { Vector3, Color } from 'three'
 
-import { Debug, Log } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log } from '../globals'
+import { defaults } from '../utils'
 import { ClashPicker } from '../utils/picker.js'
 import { uniformArray3 } from '../math/array-utils.js'
 import { guessElement } from '../structure/structure-utils.js'

@@ -6,8 +6,8 @@
 
 import { Color, Vector3 } from 'three'
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import { AxesPicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 import StructureRepresentation from './structure-representation.js'

@@ -6,8 +6,8 @@
 
 import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from 'three'
 
-import { Debug, Log, ColormakerRegistry } from '../globals.js'
-import { getUintArray } from '../utils.js'
+import { Debug, Log, ColormakerRegistry } from '../globals'
+import { getUintArray } from '../utils'
 import { AtomPicker, SurfacePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3, serialArray } from '../math/array-utils.js'
 import Selection from '../selection/selection.js'

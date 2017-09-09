@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ParserRegistry } from '../globals.js'
+import { ParserRegistry } from '../globals'
 import PdbParser from './pdb-parser.js'
 
 // http://www.poissonboltzmann.org/docs/file-format-info/

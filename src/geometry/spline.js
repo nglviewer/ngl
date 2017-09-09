@@ -6,11 +6,11 @@
 
 import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import { AtomPicker } from '../utils/picker.js'
 import RadiusFactory from '../utils/radius-factory.js'
 import { copyArray } from '../math/array-utils.js'
-import { spline } from '../math/math-utils.js'
+import { spline } from '../math/math-utils'
 
 function Interpolator (m, tension) {
   var dt = 1.0 / m

@@ -18,22 +18,20 @@ class PluginLoader extends Loader {
    * @return {Promise} resolves to the loaded plugin {@link Script}
    */
   load () {
-    var basePath
-    if (this.protocol) {
-      basePath = this.protocol + '://' + this.dir
+    let basePath: string
+    if (this.parameters.protocol) {
+      basePath = this.parameters.protocol + '://' + this.parameters.dir
     } else {
-      basePath = this.dir
+      basePath = this.parameters.dir
     }
 
     return this.streamer.read().then(() => {
-      var manifest = JSON.parse(this.streamer.asText())
-      var promiseList = []
+      const manifest = JSON.parse(this.streamer.asText())
+      const promiseList: Promise<any>[] = []
 
-      manifest.files.map(function (name) {
+      manifest.files.map(function (name: string) {
         promiseList.push(
-          autoLoad(basePath + name, {
-            ext: 'text', useWorker: false
-          })
+          autoLoad(basePath + name, { ext: 'text' })
         )
       })
 
@@ -43,7 +41,7 @@ class PluginLoader extends Loader {
         }, '')
         text += manifest.source || ''
 
-        return new Script(text, this.name, this.path)
+        return new Script(text, this.parameters.name, this.parameters.path)
       })
     })
   }

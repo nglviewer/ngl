@@ -6,7 +6,7 @@
 
 import { Color } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 
 import StructureRepresentation from './structure-representation.js'

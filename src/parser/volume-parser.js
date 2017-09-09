@@ -6,7 +6,7 @@
 
 import { Matrix4 } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Parser from './parser.js'
 import Volume from '../surface/volume.js'
 

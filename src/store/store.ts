@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Log } from '../globals.js'
-import { getTypedArray } from '../utils.js'
+import { Log } from '../globals'
+import { getTypedArray, TypedArrayString } from '../utils'
 
 // type TypedArray = (
 //   Int8Array|Int16Array|Int32Array|
@@ -13,7 +13,7 @@ import { getTypedArray } from '../utils.js'
 //   Float32Array|Float64Array
 // )
 
-export type StoreField = [string, number, string]
+export type StoreField = [string, number, TypedArrayString]
 
 /**
  * Store base class
@@ -63,7 +63,7 @@ export default class Store {
    *                         uint8, uint16, uint32, float32
    * @return {undefined}
    */
-  _initField (name: string, size: number, type: string) {
+  _initField (name: string, size: number, type: TypedArrayString) {
     this[ name ] = getTypedArray(type, this.length * size)
   }
 
@@ -75,7 +75,7 @@ export default class Store {
    *                         uint8, uint16, uint32, float32
    * @return {undefined}
    */
-  addField (name: string, size: number, type: string) {
+  addField (name: string, size: number, type: TypedArrayString) {
     this._fields.push([name, size, type])
     this._initField(name, size, type)
   }

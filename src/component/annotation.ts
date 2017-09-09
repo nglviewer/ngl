@@ -9,7 +9,7 @@ import { Vector3 } from 'three'
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Stage from '../stage/stage'
-// import Viewer from '../viewer/viewer'
+import Viewer from '../viewer/viewer'
 import Component from './component'
 
 export interface AnnotationParams {
@@ -28,7 +28,7 @@ export default class Annotation {
 
   component: Component
   stage: Stage
-  viewer: any//Viewer
+  viewer: Viewer
   position: Vector3
   element: HTMLElement
 

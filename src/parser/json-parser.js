@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ParserRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ParserRegistry } from '../globals'
+import { defaults } from '../utils'
 import Parser from './parser.js'
 
 class JsonParser extends Parser {

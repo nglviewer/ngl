@@ -1,12 +1,8 @@
 
 import BitArray from '../utils/bitarray'
 import { AtomPicker } from '../utils/picker'
-import Structure from '../structure/structure'
 import BondStore from '../store/bond-store'
-
-export interface ColorParams {
-    structure: Structure
-}
+import { ColormakerParameters } from '../color/colormaker'
 
 export interface RadiusParams {
     scale: number
@@ -33,7 +29,7 @@ export interface AtomData {
 
 export interface AtomDataParams {
     what?: AtomDataFields
-    colorParams?: ColorParams
+    colorParams?: { scheme: string } & ColormakerParameters
     radiusParams?: RadiusParams
     atomSet?: BitArray
 }
@@ -60,7 +56,7 @@ export interface BondData {
 
 export interface BondDataParams {
     what?: BondDataFields
-    colorParams?: ColorParams
+    colorParams?: { scheme: string } & ColormakerParameters
     radiusParams?: RadiusParams
     bondStore?: BondStore
     bondSet?: BitArray,

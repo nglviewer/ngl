@@ -6,7 +6,7 @@
 
 import { Matrix4, Vector3, ConeBufferGeometry } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import { calculateCenterArray } from '../math/array-utils.js'
 import GeometryBuffer from './geometry-buffer.js'
 

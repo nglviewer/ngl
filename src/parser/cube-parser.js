@@ -6,7 +6,7 @@
 
 import { Matrix4, Vector3 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import VolumeParser from './volume-parser.js'
 
 // @author Johanna Tiemann <johanna.tiemann@googlemail.com>

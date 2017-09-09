@@ -8,15 +8,13 @@ import { Signal } from 'signals'
 
 import { parseSele } from './selection-parser'
 import {
+  SelectionTest, SelectionRule,
   makeAtomTest, makeResidueTest, makeChainTest, makeModelTest
-} from './selection-test.js'
+} from './selection-test'
 
 type SelectionSignals = {
   stringChanged: Signal
 }
-
-type SelectionTest = false|((ap: any) => boolean|-1)
-type SelectionError = { error: string }
 
 /**
  * Selection
@@ -24,7 +22,7 @@ type SelectionError = { error: string }
 class Selection {
   signals: SelectionSignals
   string: string
-  selection: object|SelectionError
+  selection: SelectionRule
 
   test: SelectionTest
   residueTest: SelectionTest

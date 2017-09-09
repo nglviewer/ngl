@@ -9,7 +9,7 @@ import { Signal } from 'signals'
 
 import {
   ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
-} from '../utils.js'
+} from '../utils'
 
 /**
  * Orientation matrix, a 4x4 transformation matrix with rotation part

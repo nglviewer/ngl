@@ -4,8 +4,7 @@
  * @private
  */
 
-import { getFileInfo } from '../utils.js'
-import { autoLoad } from '../loader/loader-utils.js'
+import { autoLoad, getFileInfo } from '../loader/loader-utils.js'
 import Datasource from './datasource.js'
 
 class MdsrvDatasource extends Datasource {

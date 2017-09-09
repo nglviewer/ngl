@@ -7,7 +7,7 @@
 import '../shader/Line.vert'
 import '../shader/Line.frag'
 
-import { Log } from '../globals.js'
+import { Log } from '../globals'
 import Buffer from './buffer.js'
 
 /**

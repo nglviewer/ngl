@@ -6,7 +6,7 @@
 
 import { Vector3, Color } from 'three'
 
-import { BufferRegistry, PickerRegistry } from '../globals.js'
+import { BufferRegistry, PickerRegistry } from '../globals'
 
 function addElement (elm, array) {
   if (elm.toArray !== undefined) {

@@ -6,8 +6,8 @@
 
 import { Color, Vector3, Matrix4 } from 'three'
 
-import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals'
+import { defaults } from '../utils'
 import Queue from '../utils/queue.js'
 import Counter from '../utils/counter.js'
 

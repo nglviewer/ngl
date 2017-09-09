@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Log, DatasourceRegistry } from '../globals.js'
+import { Log, DatasourceRegistry } from '../globals'
 import Trajectory from './trajectory.js'
 
 /**

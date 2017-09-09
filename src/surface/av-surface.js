@@ -10,7 +10,7 @@ import { uniformArray } from '../math/array-utils.js'
 import {
     computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
 } from '../math/vector-utils.js'
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 
 /**
  * Modifed from SpatialHash

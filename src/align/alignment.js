@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log } from '../globals.js'
+import { Debug, Log } from '../globals'
 
 // const nucleotides = 'ACTG';
 const aminoacidsX = 'ACDEFGHIKLMNPQRSTVWY'

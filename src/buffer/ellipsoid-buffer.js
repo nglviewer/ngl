@@ -4,7 +4,7 @@
  * @private
  */
 
-import { BufferRegistry } from '../globals.js'
+import { BufferRegistry } from '../globals'
 import EllipsoidGeometryBuffer from './ellipsoidgeometry-buffer.js'
 
 /**

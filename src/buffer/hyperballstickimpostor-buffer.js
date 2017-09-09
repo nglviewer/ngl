@@ -9,7 +9,7 @@ import { Matrix4 } from 'three'
 import '../shader/HyperballStickImpostor.vert'
 import '../shader/HyperballStickImpostor.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import MappedBoxBuffer from './mappedbox-buffer.js'
 
 /**

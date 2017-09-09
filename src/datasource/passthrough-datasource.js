@@ -4,7 +4,7 @@
  * @private
  */
 
-import { DatasourceRegistry } from '../globals.js'
+import { DatasourceRegistry } from '../globals'
 import Datasource from './datasource.js'
 
 class PassThroughDatasource extends Datasource {

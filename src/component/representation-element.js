@@ -6,8 +6,8 @@
 
 import { Signal } from 'signals'
 
-import { defaults } from '../utils.js'
-import { generateUUID } from '../math/math-utils.js'
+import { defaults } from '../utils'
+import { generateUUID } from '../math/math-utils'
 
 /**
  * Extends {@link ComponentSignals}

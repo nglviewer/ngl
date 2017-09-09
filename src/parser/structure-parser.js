@@ -4,7 +4,7 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Parser from './parser.js'
 import Structure from '../structure/structure.js'
 import StructureBuilder from '../structure/structure-builder.js'

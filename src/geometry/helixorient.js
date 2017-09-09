@@ -6,7 +6,7 @@
 
 import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import { AtomPicker } from '../utils/picker.js'
 import RadiusFactory from '../utils/radius-factory.js'
 import { copyArray } from '../math/array-utils.js'

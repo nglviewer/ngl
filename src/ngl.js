@@ -2,6 +2,8 @@
  * @file ngl
  * @private
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ *
+ * [[include:coloring.md]]
  */
 
 import './polyfills'
@@ -17,54 +19,54 @@ import {
   ScriptExtensions, ColormakerRegistry,
   DatasourceRegistry, DecompressorRegistry,
   ParserRegistry, RepresentationRegistry
-} from './globals.js'
-import { autoLoad, getDataInfo } from './loader/loader-utils.js'
-import Selection from './selection/selection.js'
-import PdbWriter from './writer/pdb-writer.js'
-import SdfWriter from './writer/sdf-writer.js'
-import StlWriter from './writer/stl-writer.js'
-import Stage from './stage/stage.js'
-import Collection from './component/collection.js'
-import ComponentCollection from './component/component-collection.js'
-import RepresentationCollection from './component/representation-collection.js'
-import Assembly from './symmetry/assembly.js'
-import TrajectoryPlayer from './trajectory/trajectory-player.js'
-import { superpose } from './align/align-utils.js'
-import { guessElement } from './structure/structure-utils.js'
+} from './globals'
+import { autoLoad, getDataInfo, getFileInfo } from './loader/loader-utils'
+import Selection from './selection/selection'
+import PdbWriter from './writer/pdb-writer'
+import SdfWriter from './writer/sdf-writer'
+import StlWriter from './writer/stl-writer'
+import Stage from './stage/stage'
+import Collection from './component/collection'
+import ComponentCollection from './component/component-collection'
+import RepresentationCollection from './component/representation-collection'
+import Assembly from './symmetry/assembly'
+import TrajectoryPlayer from './trajectory/trajectory-player'
+import { superpose } from './align/align-utils'
+import { guessElement } from './structure/structure-utils'
 
 import {
-  flatten, throttle, download, getQuery, uniqueArray, getFileInfo
-} from './utils.js'
-import Queue from './utils/queue.js'
-import Counter from './utils/counter.js'
+  flatten, throttle, download, getQuery, uniqueArray
+} from './utils'
+import Queue from './utils/queue'
+import Counter from './utils/counter'
 
 //
 
-import Colormaker from './color/colormaker.js'
+import Colormaker from './color/colormaker'
 
-import './color/atomindex-colormaker.js'
-import './color/bfactor-colormaker.js'
-import './color/chainid-colormaker.js'
-import './color/chainindex-colormaker.js'
-import './color/chainname-colormaker.js'
-import './color/densityfit-colormaker.js'
-import './color/electrostatic-colormaker.js'
-import './color/element-colormaker.js'
-import './color/entityindex-colormaker.js'
-import './color/entitytype-colormaker.js'
-import './color/geoquality-colormaker.js'
-import './color/hydrophobicity-colormaker.js'
-import './color/modelindex-colormaker.js'
-import './color/moleculetype-colormaker.js'
-import './color/occupancy-colormaker.js'
-import './color/partialcharge-colormaker.js'
-import './color/random-colormaker.js'
-import './color/residueindex-colormaker.js'
-import './color/resname-colormaker.js'
-import './color/sstruc-colormaker.js'
-import './color/uniform-colormaker.js'
-import './color/value-colormaker.js'
-import './color/volume-colormaker.js'
+import './color/atomindex-colormaker'
+import './color/bfactor-colormaker'
+import './color/chainid-colormaker'
+import './color/chainindex-colormaker'
+import './color/chainname-colormaker'
+import './color/densityfit-colormaker'
+import './color/electrostatic-colormaker'
+import './color/element-colormaker'
+import './color/entityindex-colormaker'
+import './color/entitytype-colormaker'
+import './color/geoquality-colormaker'
+import './color/hydrophobicity-colormaker'
+import './color/modelindex-colormaker'
+import './color/moleculetype-colormaker'
+import './color/occupancy-colormaker'
+import './color/partialcharge-colormaker'
+import './color/random-colormaker'
+import './color/residueindex-colormaker'
+import './color/resname-colormaker'
+import './color/sstruc-colormaker'
+import './color/uniform-colormaker'
+import './color/value-colormaker'
+import './color/volume-colormaker'
 
 //
 

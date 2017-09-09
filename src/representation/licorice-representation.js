@@ -4,7 +4,7 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
+import { RepresentationRegistry } from '../globals'
 import BallAndStickRepresentation from './ballandstick-representation.js'
 
 /**

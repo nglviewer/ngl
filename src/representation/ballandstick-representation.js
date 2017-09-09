@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { ExtensionFragDepth, RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { ExtensionFragDepth, RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'

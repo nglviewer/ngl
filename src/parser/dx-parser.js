@@ -6,8 +6,8 @@
 
 import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { degToRad } from '../math/math-utils.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { degToRad } from '../math/math-utils'
 import VolumeParser from './volume-parser.js'
 
 const reWhitespace = /\s+/

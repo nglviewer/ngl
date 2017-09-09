@@ -6,10 +6,10 @@
 
 import { Signal } from 'signals'
 
-import { Log } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Log } from '../globals'
+import { defaults } from '../utils'
 import { circularMean, arrayMean } from '../math/array-utils.js'
-import { lerp, spline } from '../math/math-utils.js'
+import { lerp, spline } from '../math/math-utils'
 import Selection from '../selection/selection.js'
 import Superposition from '../align/superposition.js'
 import TrajectoryPlayer from './trajectory-player.js'

@@ -6,8 +6,8 @@
 
 import { Vector3, Matrix4 } from 'three'
 
-import { Debug, Log } from '../globals.js'
-import { binarySearchIndexOf } from '../utils.js'
+import { Debug, Log } from '../globals'
+import { binarySearchIndexOf } from '../utils'
 import Helixbundle from '../geometry/helixbundle.js'
 import Kdtree from '../geometry/kdtree.js'
 import { getSymmetryOperations } from '../symmetry/symmetry-utils.js'

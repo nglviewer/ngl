@@ -6,9 +6,9 @@
 
 import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import { degToRad } from '../math/math-utils.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import { degToRad } from '../math/math-utils'
 import VolumeParser from './volume-parser.js'
 
 class Dsn6Parser extends VolumeParser {

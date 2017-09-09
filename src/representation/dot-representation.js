@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ExtensionFragDepth } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ExtensionFragDepth } from '../globals'
+import { defaults } from '../utils'
 import Representation from './representation.js'
 import Volume from '../surface/volume.js'
 import FilteredVolume from '../surface/filtered-volume.js'

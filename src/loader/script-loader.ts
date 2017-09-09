@@ -4,8 +4,8 @@
  * @private
  */
 
-import Loader from './loader.js'
-import Script from '../script.js'
+import Loader from './loader'
+import Script from '../script'
 
 /**
  * Script loader class
@@ -19,7 +19,7 @@ class ScriptLoader extends Loader {
   load () {
     return this.streamer.read().then(() => {
       return new Script(
-        this.streamer.asText(), this.name, this.path
+        this.streamer.asText(), this.parameters.name, this.parameters.path
       )
     })
   }

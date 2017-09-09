@@ -4,9 +4,9 @@
  * @private
  */
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import Colormaker from './colormaker.js'
-import { countSetBits } from '../math/math-utils.js'
+import { countSetBits } from '../math/math-utils'
 
 /**
  * Color by validation gometry quality

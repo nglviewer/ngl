@@ -6,7 +6,7 @@
 
 import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import Colormaker from './colormaker.js'
 import SpatialHash from '../geometry/spatial-hash.js'
 

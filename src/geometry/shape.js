@@ -6,7 +6,7 @@
 
 import { Box3 } from 'three'
 
-import { defaults, ensureFloat32Array, getUintArray } from '../utils.js'
+import { defaults, ensureFloat32Array, getUintArray } from '../utils'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,

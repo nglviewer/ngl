@@ -6,7 +6,7 @@
 
 import '../shader/Ribbon.vert'
 
-import { getUintArray } from '../utils.js'
+import { getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils.js'
 import MeshBuffer from './mesh-buffer.js'
 

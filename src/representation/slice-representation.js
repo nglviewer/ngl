@@ -4,7 +4,7 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Representation from './representation.js'
 import ImageBuffer from '../buffer/image-buffer.js'
 import VolumeSlice from '../surface/volume-slice.js'

@@ -6,7 +6,7 @@
 
 import Buffer from './buffer.js'
 
-import { getUintArray } from '../utils.js'
+import { getUintArray } from '../utils'
 import { calculateCenterArray, serialArray } from '../math/array-utils.js'
 
 /**

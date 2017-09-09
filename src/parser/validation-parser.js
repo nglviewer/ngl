@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import XmlParser from './xml-parser.js'
 import Validation from '../structure/validation.js'
 

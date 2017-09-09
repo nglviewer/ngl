@@ -9,6 +9,7 @@ import { sprintf } from 'sprintf-js'
 import Writer from './writer'
 import { defaults, ensureArray } from '../utils'
 import Structure from '../structure/structure'
+import AtomProxy from '../proxy/atom-proxy'
 
 // http://www.wwpdb.org/documentation/file-format
 
@@ -93,7 +94,7 @@ export default class PdbWriter extends Writer {
     this.structure.eachModel(m => {
       this._records.push(sprintf('MODEL %-74d', im++))
 
-      m.eachAtom(a => {
+      m.eachAtom((a: AtomProxy) => {
         const formatString = a.hetero ? HetatmFormat : AtomFormat
         const serial = this.renumberSerial ? ia : a.serial
 
@@ -111,9 +112,9 @@ export default class PdbWriter extends Writer {
           defaults(a.chainname, ' '),
           a.resno,
           a.x, a.y, a.z,
-          defaults(a.occurence, 1.0),
+          defaults(a.occupancy, 1.0),
           defaults(a.bfactor, 0.0),
-          defaults(a.segid, ''),
+          '',  // segid
           defaults(a.element, '')
         ))
         ia += 1

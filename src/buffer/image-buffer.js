@@ -12,7 +12,7 @@ import {
 import '../shader/Image.vert'
 import '../shader/Image.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Buffer from './buffer.js'
 
 const quadIndices = new Uint16Array([

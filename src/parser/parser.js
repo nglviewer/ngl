@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Debug, Log } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log } from '../globals'
+import { defaults } from '../utils'
 
 class Parser {
   constructor (streamer, params) {

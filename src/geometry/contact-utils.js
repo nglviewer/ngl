@@ -6,7 +6,7 @@
 
 import { Vector3 } from 'three'
 
-import { radToDeg } from '../math/math-utils.js'
+import { radToDeg } from '../math/math-utils'
 import Contact from './contact.js'
 import Selection from '../selection/selection.js'
 

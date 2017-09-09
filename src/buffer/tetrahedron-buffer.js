@@ -6,7 +6,7 @@
 
 import { TetrahedronBufferGeometry, Vector3 } from 'three'
 
-import { BufferRegistry } from '../globals.js'
+import { BufferRegistry } from '../globals'
 import GeometryBuffer from './geometry-buffer.js'
 
 const scale = new Vector3()

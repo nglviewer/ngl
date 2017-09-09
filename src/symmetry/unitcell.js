@@ -6,8 +6,8 @@
 
 import { Color, Vector3, Matrix4 } from 'three'
 
-import { defaults } from '../utils.js'
-import { degToRad } from '../math/math-utils.js'
+import { defaults } from '../utils'
+import { degToRad } from '../math/math-utils'
 import {
   uniformArray, uniformArray3, centerArray3
 } from '../math/array-utils.js'

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Trajectory from './trajectory.js'
 
 /**

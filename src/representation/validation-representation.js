@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import StructureRepresentation from './structure-representation.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 

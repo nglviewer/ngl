@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Browser, RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Browser, RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import LabelFactory from '../utils/label-factory.js'
 import StructureRepresentation from './structure-representation.js'
 import TextBuffer from '../buffer/text-buffer.js'

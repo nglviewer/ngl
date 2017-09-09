@@ -4,7 +4,7 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
+import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 

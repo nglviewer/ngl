@@ -6,8 +6,8 @@
 
 import { Vector3, Matrix4, Quaternion } from 'three'
 
-import { defaults } from '../utils.js'
-import { degToRad } from '../math/math-utils.js'
+import { defaults } from '../utils'
+import { degToRad } from '../math/math-utils'
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()

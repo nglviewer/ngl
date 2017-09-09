@@ -4,7 +4,7 @@
  * @private
  */
 
-import { degToRad } from '../math/math-utils.js'
+import { degToRad } from '../math/math-utils'
 import {
     m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 } from '../math/matrix-utils.js'

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug } from '../globals.js'
+import { Debug } from '../globals'
 
 if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
   const wrcp = window.WebGLRenderingContext.prototype

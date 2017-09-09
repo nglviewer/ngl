@@ -8,7 +8,7 @@ import { Vector2 } from 'three'
 import { Signal } from 'signals'
 
 import { LeftMouseButton, RightMouseButton } from '../constants.js'
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 
 /**
  * @example

@@ -6,8 +6,8 @@
 
 import { Vector3, Quaternion } from 'three'
 
-import { defaults, ensureVector3, ensureQuaternion } from '../utils.js'
-import { lerp, smoothstep } from '../math/math-utils.js'
+import { defaults, ensureVector3, ensureQuaternion } from '../utils'
+import { lerp, smoothstep } from '../math/math-utils'
 
 /**
  * Animation. Base animation class.

@@ -26,7 +26,7 @@ abstract class Writer {
    * @return {Blob} the blob
    */
   getBlob () {
-    return new window.Blob([ this.getData() ], { type: this.mimeType })
+    return new Blob([ this.getData() ], { type: this.mimeType })
   }
 
   /**

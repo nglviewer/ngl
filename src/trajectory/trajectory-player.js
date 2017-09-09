@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 
 /**
  * Trajectory player parameter object.

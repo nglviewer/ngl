@@ -6,7 +6,7 @@
 
 import { Matrix4, Matrix3 } from 'three'
 
-import { getUintArray } from '../utils.js'
+import { getUintArray } from '../utils'
 import { serialBlockArray } from '../math/array-utils.js'
 import { applyMatrix3toVector3array, applyMatrix4toVector3array } from '../math/vector-utils.js'
 import MeshBuffer from './mesh-buffer.js'

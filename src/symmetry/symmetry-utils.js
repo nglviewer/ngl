@@ -6,7 +6,7 @@
 
 import { Matrix4 } from 'three'
 
-import { Log } from '../globals.js'
+import { Log } from '../globals'
 import { EncodedSymOp, SymOpCode } from './symmetry-constants.js'
 
 function getSymmetryOperations (spacegroup) {

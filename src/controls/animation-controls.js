@@ -6,7 +6,7 @@
 
 import { Vector3, Quaternion } from 'three'
 
-import { ensureMatrix4 } from '../utils.js'
+import { ensureMatrix4 } from '../utils'
 import {
     SpinAnimation, RockAnimation, MoveAnimation, ZoomAnimation,
     RotateAnimation, ValueAnimation, TimeoutAnimation, AnimationList

@@ -4,23 +4,26 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 
-function toLowerCaseString (value) {
+function toLowerCaseString (value: string) {
   return defaults(value, '').toString().toLowerCase()
 }
 
-class Registry {
-  constructor (name) {
+export default class Registry {
+  name: string
+  private _dict: {[k: string]: any}
+
+  constructor (name: string) {
     this.name = name
     this._dict = {}
   }
 
-  add (key, value) {
+  add (key: string, value: any) {
     this._dict[ toLowerCaseString(key) ] = value
   }
 
-  get (key) {
+  get (key: string) {
     return this._dict[ toLowerCaseString(key) ]
   }
 
@@ -28,5 +31,3 @@ class Registry {
     return Object.keys(this._dict)
   }
 }
-
-export default Registry

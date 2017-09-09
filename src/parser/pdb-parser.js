@@ -6,8 +6,8 @@
 
 import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { defaults } from '../utils'
 import StructureParser from './structure-parser.js'
 import Entity from '../structure/entity.js'
 import Unitcell from '../symmetry/unitcell.js'

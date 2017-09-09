@@ -13,19 +13,28 @@
     "prebuild": "npm run-script lint",
     "build": "rollup -c",
     "postbuild": "node ./scripts/makeScriptsList.js",
-    "pretest": "npm run build",
-    "test": "mocha",
+    "test": "./node_modules/.bin/jest",
     "preversion": "npm test",
     "version": "npm run-script build-min && git add -A dist",
     "postversion": "git push && git push --tags",
     "prepublish": "npm test",
     "devpublish": "npm publish --tag next",
-    "doc": "esdoc",
+    "doc": "./node_modules/.bin/typedoc --mode file --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh prerelease",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
     "build-min": "rollup -c && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "\\.ts$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "\\.spec\\.ts$"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {
@@ -48,6 +57,7 @@
     "science"
   ],
   "devDependencies": {
+    "@types/chroma-js": "^1.3.1",
     "@types/jest": "^20.0.8",
     "@types/node": "^8.0.25",
     "@types/signals": "0.0.17",
@@ -59,9 +69,8 @@
     "babel-register": "^6.26.0",
     "babelrc-rollup": "^3.0.0",
     "chai": "^4.1.1",
-    "cheerio": "^1.0.0-rc.1",
-    "esdoc": "^1.0.2",
-    "esdoc-standard-plugin": "^1.0.0",
+    "chroma-js": "^1.3.4",
+    "jest": "^21.0.1",
     "mocha": "^3.5.0",
     "promise-polyfill": "^6.0.2",
     "rollup": "^0.49.2",
@@ -75,6 +84,8 @@
     "sprintf-js": "^1.1.1",
     "standard": "^10.0.3",
     "three": "^0.87.1",
+    "ts-jest": "^21.0.0",
+    "typedoc": "^0.8.0",
     "typescript": "^2.5.1",
     "uglify-js": "^3.0.28"
   },

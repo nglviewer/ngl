@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import {
   assignResidueTypeBonds,
   calculateChainnames, calculateSecondaryStructure,

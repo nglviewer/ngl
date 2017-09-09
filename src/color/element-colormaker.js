@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ColormakerRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ColormakerRegistry } from '../globals'
+import { defaults } from '../utils'
 import Colormaker from './colormaker.js'
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -148,7 +148,7 @@ class ElementColormaker extends Colormaker {
     var element = a.element
 
     if (element === 'C') {
-      return this.value
+      return this.parameters.value
     } else {
       return ElementColors[ element ] || DefaultElementColor
     }

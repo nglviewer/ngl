@@ -4,11 +4,11 @@
  * @private
  */
 
-import { getBrowser, getQuery, boolean } from './utils.js'
-import Registry from './utils/registry.js'
-import _ColormakerRegistry from './color/colormaker-registry.js'
-import _ParserRegistry from './parser/parser-registry.js'
-import _WorkerRegistry from './worker/worker-registry.js'
+import { getBrowser, getQuery, boolean } from './utils'
+import Registry from './utils/registry'
+import _ColormakerRegistry from './color/colormaker-registry'
+import _ParserRegistry from './parser/parser-registry'
+import _WorkerRegistry from './worker/worker-registry'
 
 /**
  * The browser name: "Opera", "Chrome", "Firefox", "Mobile Safari",
@@ -24,7 +24,7 @@ const Browser = getBrowser()
 const Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false
 
 let SupportsReadPixelsFloat = false
-function setSupportsReadPixelsFloat (value) {
+function setSupportsReadPixelsFloat (value: boolean) {
   SupportsReadPixelsFloat = value
 }
 
@@ -33,7 +33,7 @@ function setSupportsReadPixelsFloat (value) {
  * @type {Boolean}
  */
 let ExtensionFragDepth = false
-function setExtensionFragDepth (value) {
+function setExtensionFragDepth (value: boolean) {
   ExtensionFragDepth = value
 }
 
@@ -47,7 +47,7 @@ const Log = {
 }
 
 let Debug = boolean(getQuery('debug'))
-function setDebug (value) {
+function setDebug (value: boolean) {
   Debug = value
 }
 

@@ -4,7 +4,8 @@
  * @private
  */
 
-import { getFileInfo, getAbsolutePath } from '../utils.js'
+import { getAbsolutePath } from '../utils'
+import { getFileInfo } from '../loader/loader-utils'
 import Datasource from './datasource.js'
 
 const reProtocol = /^((http|https|ftp):)*\/\//

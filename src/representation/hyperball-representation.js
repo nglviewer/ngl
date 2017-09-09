@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import { calculateCenterArray } from '../math/array-utils.js'
 import LicoriceRepresentation from './licorice-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'

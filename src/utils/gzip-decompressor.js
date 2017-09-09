@@ -6,7 +6,7 @@
 
 import { ungzip } from '../../lib/pako_inflate.es6.js'
 
-import { DecompressorRegistry } from '../globals.js'
+import { DecompressorRegistry } from '../globals'
 
 function gzipDecompress (data) {
   var decompressedData

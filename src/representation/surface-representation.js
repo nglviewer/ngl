@@ -6,7 +6,7 @@
 
 import { Vector3, Box3 } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Representation from './representation.js'
 import Volume from '../surface/volume.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { RepresentationRegistry } from '../globals'
 import { ContactPicker } from '../utils/picker.js'
 import { calculateCenterArray } from '../math/array-utils.js'
 import StructureRepresentation from './structure-representation.js'

@@ -7,7 +7,7 @@
 import { Vector3, Matrix4, Quaternion } from 'three'
 import { Signal } from 'signals'
 
-import { ensureVector3 } from '../utils.js'
+import { ensureVector3 } from '../utils'
 
 const tmpRotateMatrix = new Matrix4()
 const tmpRotateVector = new Vector3()

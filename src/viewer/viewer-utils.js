@@ -6,7 +6,7 @@
 
 import { Vector2, Vector3, Matrix4, Points } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import TiledRenderer from './tiled-renderer.js'
 import { quicksortCmp } from '../math/array-utils.js'
 

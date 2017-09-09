@@ -6,7 +6,7 @@
 
 import { Matrix4, Box3 } from 'three'
 
-import { uniqueArray } from '../utils.js'
+import { uniqueArray } from '../utils'
 import Selection from '../selection/selection.js'
 
 function selectionFromChains (chainList) {

@@ -6,7 +6,7 @@
 
 import { Vector3, Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser.js'
 import { HelixTypes } from './pdb-parser.js'
 import Entity from '../structure/entity.js'

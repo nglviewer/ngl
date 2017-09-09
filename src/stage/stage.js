@@ -9,9 +9,9 @@ import { Signal } from 'signals'
 
 import {
   Debug, Log, Mobile, ComponentRegistry, ParserRegistry
-} from '../globals.js'
-import { defaults, getFileInfo } from '../utils.js'
-import { degToRad, clamp, pclamp } from '../math/math-utils.js'
+} from '../globals'
+import { defaults } from '../utils'
+import { degToRad, clamp, pclamp } from '../math/math-utils'
 import Counter from '../utils/counter.js'
 import Viewer from '../viewer/viewer.js'
 import MouseObserver from './mouse-observer.js'
@@ -34,7 +34,7 @@ import RepresentationComponent from '../component/representation-component.js'
 import Collection from '../component/collection.js'
 import ComponentCollection from '../component/component-collection.js'
 import RepresentationCollection from '../component/representation-collection.js'
-import { autoLoad } from '../loader/loader-utils'
+import { autoLoad, getFileInfo } from '../loader/loader-utils'
 
 function matchName (name, comp) {
   if (name instanceof RegExp) {

@@ -493,7 +493,7 @@ class Structure implements Structure{
   eachAtom (callback: (entity: AtomProxy) => any, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
-        mp.eachAtom(callback, selection as any)  // TOD
+        mp.eachAtom(callback, selection as any)  // TODO
       }, selection)
     } else {
       const an = this.atomStore.count
@@ -520,13 +520,13 @@ class Structure implements Structure{
         for (let i = 0; i < mn; ++i) {
           mp.index = i
           if (modelOnlyTest(mp)) {
-            mp.eachResidue(callback, selection as any)  // TOD
+            mp.eachResidue(callback, selection as any)  // TODO
           }
         }
       } else {
         for (let i = 0; i < mn; ++i) {
           mp.index = i
-          mp.eachResidue(callback, selection as any)  // TOD
+          mp.eachResidue(callback, selection as any)  // TODO
         }
       }
     } else {
@@ -575,12 +575,12 @@ class Structure implements Structure{
 
       this.eachModel(function (mp) {
         if (modelOnlyTest(mp)) {
-          mp.eachPolymer(callback, selection as any)  // TOD
+          mp.eachPolymer(callback, selection as any)  // TODO
         }
       })
     } else {
       this.eachModel(function (mp) {
-        mp.eachPolymer(callback, selection as any)  // TOD
+        mp.eachPolymer(callback, selection as any)  // TODO
       })
     }
   }
@@ -594,7 +594,7 @@ class Structure implements Structure{
   eachChain (callback: (entity: ChainProxy) => any, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
-        mp.eachChain(callback, selection as any)  // TOD
+        mp.eachChain(callback, selection as any)  // TODO
       })
     } else {
       const cn = this.chainStore.count
@@ -658,7 +658,7 @@ class Structure implements Structure{
     if (!what || what.position) {
       atomData.position = new Float32Array(atomCount * 3)
     }
-    if (!what || what.color) {
+    if ((!what || what.color) && p.colorParams) {
       atomData.color = new Float32Array(atomCount * 3)
       colormaker = ColormakerRegistry.getScheme(p.colorParams)
     }
@@ -737,7 +737,7 @@ class Structure implements Structure{
       bondData.position1 = new Float32Array(bondCount * 3)
       bondData.position2 = new Float32Array(bondCount * 3)
     }
-    if (!what || what.color) {
+    if ((!what || what.color) && p.colorParams) {
       bondData.color = new Float32Array(bondCount * 3)
       bondData.color2 = new Float32Array(bondCount * 3)
       colormaker = ColormakerRegistry.getScheme(p.colorParams)

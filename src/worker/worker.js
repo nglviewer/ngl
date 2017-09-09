@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Log, Debug, WorkerRegistry } from '../globals.js'
+import { Log, Debug, WorkerRegistry } from '../globals'
 
 function Worker (name) {
   var pending = 0

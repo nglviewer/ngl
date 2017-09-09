@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Log } from '../globals.js'
+import { Log } from '../globals'
 
 /**
  * Polymer

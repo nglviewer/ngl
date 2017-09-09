@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import Parser from './parser.js'
 
 import { decodeMsgpack } from '../../lib/mmtf.es6.js'

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ExtensionFragDepth, Mobile } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ExtensionFragDepth, Mobile } from '../globals'
+import { defaults } from '../utils'
 import Representation from './representation.js'
 import Selection from '../selection/selection.js'
 import RadiusFactory from '../utils/radius-factory.js'

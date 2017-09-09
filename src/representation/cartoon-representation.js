@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { Debug, Log, RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { Debug, Log, RepresentationRegistry } from '../globals'
 import Spline from '../geometry/spline.js'
 import StructureRepresentation from './structure-representation.js'
 import TubeMeshBuffer from '../buffer/tubemesh-buffer.js'

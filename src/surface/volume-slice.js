@@ -6,8 +6,8 @@
 
 import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ColormakerRegistry } from '../globals'
+import { defaults } from '../utils'
 import { SlicePicker } from '../utils/picker.js'
 
 class VolumeSlice {

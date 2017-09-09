@@ -15,7 +15,7 @@ import ComponentControls from '../controls/component-controls'
 import { makeRepresentation } from '../representation/representation-utils'
 import RepresentationElement from './representation-element'
 import Stage from '../stage/stage'
-// import Viewer from '../viewer/viewer'
+import Viewer from '../viewer/viewer'
 
 const _m = new Matrix4()
 const _v = new Vector3()
@@ -56,70 +56,10 @@ interface ComponentSignals {
   disposed: Signal
 }
 
-// interface Component {
-//   signals: ComponentSignals
-
-//   name: string
-//   uuid: string
-//   visible: boolean
-//   status: string
-//   stage: Stage
-//   viewer: Viewer
-
-//   reprList: RepresentationElement[]
-//   annotationList: Annotation[]
-
-//   matrix: Matrix4
-//   position: Vector3
-//   quaternion: Quaternion
-//   scale: Vector3
-//   transform: Matrix4
-
-//   controls: ComponentControls
-
-//   type: string
-
-//   setPosition (p: [number, number, number]|Vector3): this
-//   setRotation (r: [number, number, number]|Euler|Quaternion): this
-//   setScale (s: number): this
-//   setTransform (m: Matrix4): this
-
-//   updateMatrix (): void
-
-//   addAnnotation (position: Vector3, content: string|HTMLElement, params: AnnotationParams): Annotation
-//   eachAnnotation (callback: (a: Annotation) => void): void
-//   removeAnnotation (annotation: Annotation): void
-//   removeAllAnnotations (): void
-
-//   addRepresentation (type: string, object: any, params: any): RepresentationElement  // TODO
-//   addBufferRepresentation (buffer: any, params: any): RepresentationElement  // any
-//   hasRepresentation (repr: any): boolean  // TODO
-//   eachRepresentation (callback: (a: RepresentationElement) => void): void
-//   removeRepresentation (repr: RepresentationElement): void
-//   updateRepresentations (what: any): void  // TODO
-//   removeAllRepresentations (): void
-
-//   dispose (): void
-
-//   setVisibility (value: boolean): this
-//   setStatus (value: any): this  // TODO
-//   setName (value: string): this
-
-//   getBox (): Box3
-//   getCenter (): Vector3
-//   getZoom (): number
-
-//   getBoxUntransformed (): Box3
-//   getCenterUntransformed (v?: Vector3): Vector3
-
-//   autoView (duration?: number): void
-// }
-
 /**
  * Base class for components
- * @interface
  */
-export default class Component {
+abstract class Component {
   signals: ComponentSignals
 
   name: string
@@ -127,7 +67,7 @@ export default class Component {
   visible: boolean
   status: string
   stage: Stage
-  viewer: any//Viewer
+  viewer: Viewer
 
   reprList: RepresentationElement[]
   annotationList: Annotation[]
@@ -495,3 +435,5 @@ export default class Component {
     )
   }
 }
+
+export default Component

@@ -9,7 +9,7 @@ import { Color } from 'three'
 import '../shader/Line.vert'
 import '../shader/Line.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import { uniformArray3 } from '../math/array-utils.js'
 import Buffer from './buffer.js'
 

@@ -4,10 +4,40 @@
  * @private
  */
 
-import { binarySearchIndexOf, rangeInSortedArray } from '../utils.js'
-import { kwd, AtomOnlyKeywords, ChainKeywords } from './selection-constants.js'
+import { binarySearchIndexOf, rangeInSortedArray } from '../utils'
+import { kwd, AtomOnlyKeywords, ChainKeywords } from './selection-constants'
 
-function atomTestFn (a, s) {
+import AtomProxy from '../proxy/atom-proxy'
+import ResidueProxy from '../proxy/residue-proxy'
+import ChainProxy from '../proxy/chain-proxy'
+import ModelProxy from '../proxy/model-proxy'
+
+type ProxyEntity = AtomProxy|ResidueProxy|ChainProxy|ModelProxy
+type TestEntityFn = (e: ProxyEntity, s: SelectionRule) => boolean|-1
+type FilterFn = (s: SelectionRule) => boolean
+export type SelectionTest = false|((e: ProxyEntity) => boolean|-1)
+
+export type SelectionOperator = 'AND'|'OR'
+export interface SelectionRule {
+  keyword?: any
+  atomname?: string
+  element?: string
+  atomindex?: number[]
+  altloc?: string
+  inscode?: string
+  resname?: string|string[]
+  sstruc?: string
+  resno?: number|[number, number]
+  chainname?: string
+  model?: number
+
+  error?: string
+  rules?: SelectionRule[]
+  negate?: boolean
+  operator?: SelectionOperator
+}
+
+function atomTestFn (a: AtomProxy, s: SelectionRule) {
   // returning -1 means the rule is not applicable
   if (s.atomname === undefined && s.element === undefined &&
     s.altloc === undefined && s.atomindex === undefined &&
@@ -68,7 +98,7 @@ function atomTestFn (a, s) {
   return true
 }
 
-function residueTestFn (r, s) {
+function residueTestFn (r: ResidueProxy, s: SelectionRule) {
   // returning -1 means the rule is not applicable
   if (s.resname === undefined && s.resno === undefined && s.inscode === undefined &&
       s.sstruc === undefined && s.model === undefined && s.chainname === undefined &&
@@ -118,7 +148,7 @@ function residueTestFn (r, s) {
   return true
 }
 
-function chainTestFn (c, s) {
+function chainTestFn (c: ChainProxy, s: SelectionRule) {
   // returning -1 means the rule is not applicable
   if (s.chainname === undefined && s.model === undefined && s.atomindex === undefined &&
       (s.keyword === undefined || !ChainKeywords.includes(s.keyword) || !c.entity)
@@ -140,7 +170,7 @@ function chainTestFn (c, s) {
   return true
 }
 
-function modelTestFn (m, s) {
+function modelTestFn (m: ModelProxy, s: SelectionRule) {
   // returning -1 means the rule is not applicable
   if (s.model === undefined && s.atomindex === undefined) return -1
 
@@ -153,21 +183,21 @@ function modelTestFn (m, s) {
   return true
 }
 
-function makeTest (selection, fn) {
+function makeTest (selection: SelectionRule|null, fn: TestEntityFn) {
   if (selection === null) return false
   if (selection.error) return false
+  if (!selection.rules || selection.rules.length === 0) return false
 
   const n = selection.rules.length
-  if (n === 0) return false
 
   const t = !selection.negate
   const f = !!selection.negate
 
-  const subTests = []
+  const subTests: SelectionTest[] = []
   for (let i = 0; i < n; ++i) {
     const s = selection.rules[ i ]
     if (s.hasOwnProperty('operator')) {
-      subTests[ i ] = makeTest(s, fn)
+      subTests[ i ] = makeTest(s, fn) as SelectionTest  // TODO
     }
   }
 
@@ -175,17 +205,18 @@ function makeTest (selection, fn) {
   // ( x or y ) can short circuit on true
   // not ( x and y )
 
-  return function test (entity) {
+  return function test (entity: ProxyEntity) {
     const and = selection.operator === 'AND'
     let na = false
 
     for (let i = 0; i < n; ++i) {
-      const s = selection.rules[ i ]
+      const s = selection.rules![ i ]  // TODO
       let ret
 
       if (s.hasOwnProperty('operator')) {
-        if (subTests[ i ]) {
-          ret = subTests[ i ](entity)
+        const test = subTests[ i ]
+        if (test !== false) {
+          ret = test(entity)
         } else {
           ret = -1
         }
@@ -223,16 +254,16 @@ function makeTest (selection, fn) {
     } else {
       if (and) { return t } else { return f }
     }
-  }
+  } as SelectionTest
 }
 
-function filter (selection, fn) {
+function filter (selection: SelectionRule, fn: FilterFn) {
   if (selection.error) return selection
+    if (!selection.rules || selection.rules.length === 0) return selection
 
   const n = selection.rules.length
-  if (n === 0) return selection
 
-  const filtered = {
+  const filtered: SelectionRule = {
     operator: selection.operator,
     rules: []
   }
@@ -244,13 +275,13 @@ function filter (selection, fn) {
     const s = selection.rules[ i ]
     if (s.hasOwnProperty('operator')) {
       const fs = filter(s, fn)
-      if (fs !== null) filtered.rules.push(fs)
+      if (fs !== null) filtered.rules!.push(fs)  // TODO
     } else if (!fn(s)) {
-      filtered.rules.push(s)
+      filtered.rules!.push(s)  // TODO
     }
   }
 
-  if (filtered.rules.length > 0) {
+  if (filtered.rules!.length > 0) {  // TODO
     // TODO maybe the filtered rules could be returned
     // in some case, but the way how tests are applied
     // e.g. when traversing a structure would also need
@@ -262,9 +293,10 @@ function filter (selection, fn) {
   }
 }
 
-function makeAtomTest (selection, atomOnly) {
+function makeAtomTest (selection: SelectionRule, atomOnly = false) {
+  let filteredSelection: SelectionRule|null = selection
   if (atomOnly) {
-    selection = filter(selection, function (s) {
+    filteredSelection = filter(selection, function (s) {
       if (s.keyword !== undefined && !AtomOnlyKeywords.includes(s.keyword)) return true
       if (s.model !== undefined) return true
       if (s.chainname !== undefined) return true
@@ -274,12 +306,13 @@ function makeAtomTest (selection, atomOnly) {
       return false
     })
   }
-  return makeTest(selection, atomTestFn)
+  return makeTest(filteredSelection, atomTestFn)
 }
 
-function makeResidueTest (selection, residueOnly) {
+function makeResidueTest (selection: SelectionRule, residueOnly = false) {
+  let filteredSelection: SelectionRule|null = selection
   if (residueOnly) {
-    selection = filter(selection, function (s) {
+    filteredSelection = filter(selection, function (s) {
       if (s.keyword !== undefined && AtomOnlyKeywords.includes(s.keyword)) return true
       if (s.model !== undefined) return true
       if (s.chainname !== undefined) return true
@@ -289,12 +322,13 @@ function makeResidueTest (selection, residueOnly) {
       return false
     })
   }
-  return makeTest(selection, residueTestFn)
+  return makeTest(filteredSelection, residueTestFn)
 }
 
-function makeChainTest (selection, chainOnly) {
+function makeChainTest (selection: SelectionRule, chainOnly = false) {
+  let filteredSelection: SelectionRule|null = selection
   if (chainOnly) {
-    selection = filter(selection, function (s) {
+    filteredSelection = filter(selection, function (s) {
       if (s.keyword !== undefined && !ChainKeywords.includes(s.keyword)) return true
       // if( s.model!==undefined ) return true;
       if (s.resname !== undefined) return true
@@ -307,12 +341,13 @@ function makeChainTest (selection, chainOnly) {
       return false
     })
   }
-  return makeTest(selection, chainTestFn)
+  return makeTest(filteredSelection, chainTestFn)
 }
 
-function makeModelTest (selection, modelOnly) {
+function makeModelTest (selection: SelectionRule, modelOnly = false) {
+  let filteredSelection: SelectionRule|null = selection
   if (modelOnly) {
-    selection = filter(selection, function (s) {
+    filteredSelection = filter(selection, function (s) {
       if (s.keyword !== undefined) return true
       if (s.chainname !== undefined) return true
       if (s.resname !== undefined) return true
@@ -325,7 +360,7 @@ function makeModelTest (selection, modelOnly) {
       return false
     })
   }
-  return makeTest(selection, modelTestFn)
+  return makeTest(filteredSelection, modelTestFn)
 }
 
 export {

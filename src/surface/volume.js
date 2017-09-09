@@ -6,8 +6,8 @@
 
 import { Vector3, Box3, Matrix3, Matrix4 } from 'three'
 
-import { WorkerRegistry, ColormakerRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { WorkerRegistry, ColormakerRegistry } from '../globals'
+import { defaults } from '../utils'
 import WorkerPool from '../worker/worker-pool.js'
 import { VolumePicker } from '../utils/picker.js'
 import {

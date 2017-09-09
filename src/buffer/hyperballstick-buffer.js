@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ExtensionFragDepth } from '../globals.js'
+import { ExtensionFragDepth } from '../globals'
 import { calculateMinArray } from '../math/array-utils.js'
 import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
 import HyperballStickImpostorBuffer from './hyperballstickimpostor-buffer.js'

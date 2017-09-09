@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { ParserRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { ParserRegistry } from '../globals'
 import Parser from './parser.js'
 
 /**

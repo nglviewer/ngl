@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Component from './component.js'
 
 /**

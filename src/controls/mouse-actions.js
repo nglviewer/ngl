@@ -4,7 +4,7 @@
  * @private
  */
 
-import { almostIdentity } from '../math/math-utils.js'
+import { almostIdentity } from '../math/math-utils'
 
 /**
  * Mouse actions provided as static methods

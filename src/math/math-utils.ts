@@ -4,11 +4,11 @@
  * @private
  */
 
-function degToRad (deg) {
+export function degToRad (deg: number) {
   return deg * 0.01745  // deg * Math.PI / 180
 }
 
-function radToDeg (rad) {
+export function radToDeg (rad: number) {
   return rad * 57.29578  // rad * 180 / Math.PI
 }
 
@@ -16,7 +16,7 @@ function radToDeg (rad) {
 const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
 const uuid = new Array(36)
 
-function generateUUID () {
+export function generateUUID () {
   let rnd = 0
   var r
 
@@ -36,33 +36,33 @@ function generateUUID () {
   return uuid.join('')
 }
 
-function countSetBits (i) {
+export function countSetBits (i: number) {
   i = i - ((i >> 1) & 0x55555555)
   i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
   return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
 }
 
-function normalize (value, min, max) {
+export function normalize (value: number, min: number, max: number) {
   return (value - min) / (max - min)
 }
 
-function clamp (value, min, max) {
+export function clamp (value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
 }
 
-function pclamp (value) {
+export function pclamp (value: number) {
   return clamp(value, 0, 100)
 }
 
-function saturate (value) {
+export function saturate (value: number) {
   return clamp(value, 0, 1)
 }
 
-function lerp (start, stop, alpha) {
+export function lerp (start: number, stop: number, alpha: number) {
   return start + (stop - start) * alpha
 }
 
-function spline (p0, p1, p2, p3, t, tension) {
+export function spline (p0: number, p1: number, p2: number, p3: number, t: number, tension: number) {
   var v0 = (p2 - p0) * tension
   var v1 = (p3 - p1) * tension
   var t2 = t * t
@@ -72,17 +72,17 @@ function spline (p0, p1, p2, p3, t, tension) {
          v0 * t + p1
 }
 
-function smoothstep (min, max, x) {
+export function smoothstep (min: number, max: number, x: number) {
   x = saturate(normalize(x, min, max))
   return x * x * (3 - 2 * x)
 }
 
-function smootherstep (min, max, x) {
+export function smootherstep (min: number, max: number, x: number) {
   x = saturate(normalize(x, min, max))
   return x * x * x * (x * (x * 6 - 15) + 10)
 }
 
-function smootheststep (min, max, x) {
+export function smootheststep (min: number, max: number, x: number) {
   x = saturate(normalize(x, min, max))
   return (
     -20 * Math.pow(x, 7) +
@@ -92,27 +92,10 @@ function smootheststep (min, max, x) {
   )
 }
 
-function almostIdentity (value, start, stop) {
+export function almostIdentity (value: number, start: number, stop: number) {
   if (value > start) return value
   const a = 2 * stop - start
   const b = 2 * start - 3 * stop
   const t = value / start
   return (a * t + b) * t * t + stop
-}
-
-export {
-  degToRad,
-  radToDeg,
-  generateUUID,
-  countSetBits,
-  normalize,
-  clamp,
-  pclamp,
-  saturate,
-  lerp,
-  spline,
-  smoothstep,
-  smootherstep,
-  smootheststep,
-  almostIdentity
 }

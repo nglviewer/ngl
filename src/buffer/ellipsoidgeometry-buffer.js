@@ -6,7 +6,7 @@
 
 import { IcosahedronBufferGeometry, Vector3 } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer.js'
 
 const scale = new Vector3()

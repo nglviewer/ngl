@@ -6,8 +6,8 @@
 
 import { Matrix4, Vector3, Group } from 'three'
 
-import { BufferRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { BufferRegistry } from '../globals'
+import { defaults } from '../utils'
 import Buffer from './buffer.js'
 import CylinderBuffer from './cylinder-buffer.js'
 import ConeBuffer from './cone-buffer.js'

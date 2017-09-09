@@ -27,8 +27,8 @@ import '../shader/Quad.frag'
 import {
   Debug, Log, WebglErrorMessage,
   setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
-} from '../globals.js'
-import { degToRad } from '../math/math-utils.js'
+} from '../globals'
+import { degToRad } from '../math/math-utils'
 import Stats from './stats.js'
 import { getShader } from '../shader/shader-utils.js'
 import { JitterVectors } from './viewer-constants.js'

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ParserRegistry } from '../globals.js'
-import Loader from './loader.js'
+import { ParserRegistry } from '../globals'
+import Loader from './loader'
 
 /**
  * Parser loader class
@@ -18,8 +18,8 @@ class ParserLoader extends Loader {
    *                   {@link Volume}, {@link Surface} or data object
    */
   load () {
-    var ParserClass = ParserRegistry.get(this.ext)
-    var parser = new ParserClass(this.streamer, this.params)
+    var ParserClass = ParserRegistry.get(this.parameters.ext)
+    var parser = new ParserClass(this.streamer, this.parameters.parserParams)
 
     return parser.parse()
   }

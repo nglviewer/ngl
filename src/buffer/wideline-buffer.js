@@ -9,7 +9,7 @@ import { Vector2, Matrix4 } from 'three'
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer.js'
 
 /**

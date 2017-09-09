@@ -6,7 +6,7 @@
 
 import { Vector3 } from 'three'
 
-import { defaults, getUintArray } from '../utils.js'
+import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils.js'
 import MeshBuffer from './mesh-buffer.js'
 

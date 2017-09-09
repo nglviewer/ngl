@@ -4,8 +4,9 @@
  * @private
  */
 
-import { Log, DatasourceRegistry } from '../globals.js'
-import { getFileInfo, getProtocol } from '../utils.js'
+import { Log, DatasourceRegistry } from '../globals'
+import { getProtocol } from '../utils'
+import { getFileInfo } from '../loader/loader-utils'
 import Datasource from './datasource.js'
 
 const baseUrl = '//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/'

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ComponentRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { ComponentRegistry } from '../globals'
+import { defaults } from '../utils'
 import Component from './component.js'
 
 /**

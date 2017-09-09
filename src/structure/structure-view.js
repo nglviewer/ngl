@@ -6,7 +6,7 @@
 
 import { Vector3, Box3 } from 'three'
 
-import { Debug, Log } from '../globals.js'
+import { Debug, Log } from '../globals'
 import Structure from './structure.js'
 import Selection from '../selection/selection.js'
 

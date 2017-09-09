@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Log } from '../globals.js'
+import { Log } from '../globals'
 import BitArray from '../utils/bitarray.js'
 import Kdtree from './kdtree.js'
 import BondStore from '../store/bond-store.js'

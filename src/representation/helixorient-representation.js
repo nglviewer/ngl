@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Debug, Log, RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log, RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import Helixorient from '../geometry/helixorient.js'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'

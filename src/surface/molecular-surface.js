@@ -4,7 +4,7 @@
  * @private
  */
 
-import { WorkerRegistry } from '../globals.js'
+import { WorkerRegistry } from '../globals'
 import Worker from '../worker/worker.js'
 import EDTSurface from './edt-surface.js'
 import { AVSurface } from './av-surface.js'

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Debug, Log } from '../globals.js'
+import { Debug, Log } from '../globals'
 import {
     Matrix, svd, meanRows, subRows, addRows, transpose,
     multiplyABt, invert3x3, multiply3x3, mat3x3determinant

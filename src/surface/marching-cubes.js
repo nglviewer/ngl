@@ -4,7 +4,7 @@
  * @private
  */
 
-import { getUintArray } from '../utils.js'
+import { getUintArray } from '../utils'
 
 function getEdgeTable () {
   return new Uint32Array([

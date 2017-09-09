@@ -4,8 +4,8 @@
  * @private
  */
 
-import { DecompressorRegistry } from '../globals.js'
-import { uint8ToString, defaults } from '../utils.js'
+import { DecompressorRegistry } from '../globals'
+import { uint8ToString, defaults } from '../utils'
 
 class Streamer {
   constructor (src, params) {

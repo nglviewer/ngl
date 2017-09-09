@@ -9,9 +9,9 @@ import { DataTexture } from 'three'
 import '../shader/Point.vert'
 import '../shader/Point.frag'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import { serialArray } from '../math/array-utils.js'
-import { smoothstep } from '../math/math-utils.js'
+import { smoothstep } from '../math/math-utils'
 import Buffer from './buffer.js'
 
 function distance (x0, y0, x1, y1) {
