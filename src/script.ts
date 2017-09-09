@@ -7,24 +7,39 @@
 import { Signal } from 'signals'
 
 import { Log } from './globals'
+import Stage from './stage/stage'
+
+export interface ScriptSignals {
+  elementAdded: Signal
+  elementRemoved: Signal
+  nameChanged: Signal
+}
 
 /**
  * Script class
  */
 class Script {
+  readonly signals: ScriptSignals = {
+    elementAdded: new Signal(),
+    elementRemoved: new Signal(),
+    nameChanged: new Signal()
+  }
+
+  readonly name: string
+  readonly path: string
+  readonly dir: string
+
+  readonly fn: Function
+
+  readonly type = 'Script'
+
   /**
    * Create a script instance
    * @param {String} functionBody - the function source
    * @param {String} name - name of the script
    * @param {String} path - path of the script
    */
-  constructor (functionBody, name, path) {
-    this.signals = {
-      elementAdded: new Signal(),
-      elementRemoved: new Signal(),
-      nameChanged: new Signal()
-    }
-
+  constructor (functionBody: string, name: string, path: string) {
     this.name = name
     this.path = path
     this.dir = path.substring(0, path.lastIndexOf('/') + 1)
@@ -43,33 +58,27 @@ class Script {
   }
 
   /**
-   * Object type
-   * @readonly
-   */
-  get type () { return 'Script' }
-
-  /**
    * Execute the script
    * @param  {Stage} stage - the stage context
    * @return {Promise} - resolve when script finished running
    */
-  call (stage) {
-    var panel = {
-      add: function (/* element */) {
-        this.signals.elementAdded.dispatch(arguments)
-      }.bind(this),
+  call (stage: Stage) {
+    const panel = {
+      add: (...elements: any[]) => {
+        this.signals.elementAdded.dispatch(elements)
+      },
 
-      remove: function (/* element */) {
-        this.signals.elementRemoved.dispatch(arguments)
-      }.bind(this),
+      remove: (...elements: any[]) => {
+        this.signals.elementRemoved.dispatch(elements)
+      },
 
-      setName: function (value) {
+      setName: (value: string) => {
         this.signals.nameChanged.dispatch(value)
-      }.bind(this)
+      }
     }
 
     return new Promise((resolve, reject) => {
-      var args = [
+      const args = [
         stage, panel,
         this.name, this.path, this.dir
       ]

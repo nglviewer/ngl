@@ -1,0 +1,279 @@
+/**
+ * @file ngl
+ * @private
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ *
+ * [[include:coloring.md]]
+ */
+
+import './polyfills'
+import _Promise from 'promise-polyfill'
+
+/**
+ * The NGL module. These members are available in the `NGL` namespace when using the {@link https://github.com/umdjs/umd|UMD} build in the `ngl.js` file.
+ * @module NGL
+ */
+
+import {
+  Debug, setDebug,
+  ScriptExtensions, ColormakerRegistry,
+  DatasourceRegistry, DecompressorRegistry,
+  ParserRegistry, RepresentationRegistry
+} from './globals'
+import { autoLoad, getDataInfo, getFileInfo } from './loader/loader-utils'
+import Selection from './selection/selection'
+import PdbWriter from './writer/pdb-writer'
+import SdfWriter from './writer/sdf-writer'
+import StlWriter from './writer/stl-writer'
+import Stage from './stage/stage'
+import Collection from './component/collection'
+import ComponentCollection from './component/component-collection'
+import RepresentationCollection from './component/representation-collection'
+import Assembly from './symmetry/assembly'
+import TrajectoryPlayer from './trajectory/trajectory-player'
+import { superpose } from './align/align-utils'
+import { guessElement } from './structure/structure-utils'
+
+import {
+  flatten, throttle, download, getQuery, uniqueArray
+} from './utils'
+import Queue from './utils/queue'
+import Counter from './utils/counter'
+
+//
+
+import Colormaker from './color/colormaker'
+
+import './color/atomindex-colormaker'
+import './color/bfactor-colormaker'
+import './color/chainid-colormaker'
+import './color/chainindex-colormaker'
+import './color/chainname-colormaker'
+import './color/densityfit-colormaker'
+import './color/electrostatic-colormaker'
+import './color/element-colormaker'
+import './color/entityindex-colormaker'
+import './color/entitytype-colormaker'
+import './color/geoquality-colormaker'
+import './color/hydrophobicity-colormaker'
+import './color/modelindex-colormaker'
+import './color/moleculetype-colormaker'
+import './color/occupancy-colormaker'
+import './color/partialcharge-colormaker'
+import './color/random-colormaker'
+import './color/residueindex-colormaker'
+import './color/resname-colormaker'
+import './color/sstruc-colormaker'
+import './color/uniform-colormaker'
+import './color/value-colormaker'
+import './color/volume-colormaker'
+
+//
+
+import './component/script-component'
+import './component/shape-component'
+import './component/structure-component'
+import './component/surface-component'
+import './component/volume-component'
+
+//
+
+import './representation/axes-representation'
+import './representation/backbone-representation'
+import './representation/ballandstick-representation'
+import './representation/base-representation'
+import './representation/cartoon-representation'
+import './representation/contact-representation'
+import './representation/distance-representation'
+import './representation/helixorient-representation'
+import './representation/hyperball-representation'
+import './representation/label-representation'
+import './representation/licorice-representation'
+import './representation/line-representation'
+import './representation/molecularsurface-representation'
+import './representation/point-representation'
+import './representation/ribbon-representation'
+import './representation/rocket-representation'
+import './representation/rope-representation'
+import './representation/spacefill-representation'
+import './representation/trace-representation'
+import './representation/tube-representation'
+import './representation/unitcell-representation'
+import './representation/validation-representation'
+
+import BufferRepresentation from './representation/buffer-representation'
+import ArrowBuffer from './buffer/arrow-buffer'
+import BoxBuffer from './buffer/box-buffer'
+import ConeBuffer from './buffer/cone-buffer'
+import CylinderBuffer from './buffer/cylinder-buffer'
+import EllipsoidBuffer from './buffer/ellipsoid-buffer'
+import OctahedronBuffer from './buffer/octahedron-buffer'
+import SphereBuffer from './buffer/sphere-buffer'
+import TetrahedronBuffer from './buffer/tetrahedron-buffer'
+import TextBuffer from './buffer/text-buffer'
+import TorusBuffer from './buffer/torus-buffer'
+
+//
+
+import './parser/cif-parser'
+import './parser/gro-parser'
+import './parser/mmtf-parser'
+import './parser/mol2-parser'
+import './parser/pdb-parser'
+import './parser/pqr-parser'
+import './parser/sdf-parser'
+
+import './parser/prmtop-parser'
+import './parser/psf-parser'
+import './parser/top-parser'
+
+import './parser/dcd-parser'
+import './parser/nctraj-parser'
+import './parser/trr-parser'
+import './parser/xtc-parser'
+
+import './parser/cube-parser'
+import './parser/dsn6-parser'
+import './parser/dx-parser'
+import './parser/dxbin-parser'
+import './parser/mrc-parser'
+import './parser/xplor-parser'
+
+import './parser/obj-parser'
+import './parser/ply-parser'
+
+import './parser/csv-parser'
+import './parser/json-parser'
+import './parser/msgpack-parser'
+import './parser/netcdf-parser'
+import './parser/text-parser'
+import './parser/xml-parser'
+
+import './parser/validation-parser'
+
+//
+
+import Shape from './geometry/shape'
+import Kdtree from './geometry/kdtree'
+import SpatialHash from './geometry/spatial-hash'
+import Structure from './structure/structure'
+import MolecularSurface from './surface/molecular-surface'
+import Volume from './surface/volume'
+
+//
+
+import './utils/gzip-decompressor'
+
+//
+
+import './datasource/rcsb-datasource'
+import './datasource/pubchem-datasource'
+import './datasource/passthrough-datasource'
+import StaticDatasource from './datasource/static-datasource'
+import MdsrvDatasource from './datasource/mdsrv-datasource'
+
+//
+
+import {
+  LeftMouseButton, MiddleMouseButton, RightMouseButton
+} from './constants'
+import MouseActions from './controls/mouse-actions'
+import KeyActions from './controls/key-actions'
+
+//
+
+import { Signal } from 'signals'
+import {
+  Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
+} from 'three'
+
+//
+
+import Version from './version'
+
+// interface Window {
+//     Promise: _Promise<any>
+// }
+
+if (!(window as any).Promise) {
+  (window as any).Promise = _Promise
+}
+
+export {
+  Version,
+  Debug,
+  setDebug,
+  ScriptExtensions,
+  DatasourceRegistry,
+  DecompressorRegistry,
+  StaticDatasource,
+  MdsrvDatasource,
+  ParserRegistry,
+  autoLoad,
+  RepresentationRegistry,
+  ColormakerRegistry,
+  Colormaker,
+  Selection,
+  PdbWriter,
+  SdfWriter,
+  StlWriter,
+  Stage,
+  Collection,
+  ComponentCollection,
+  RepresentationCollection,
+
+  Assembly,
+  TrajectoryPlayer,
+
+  superpose,
+  guessElement,
+
+  flatten,
+
+  Queue,
+  Counter,
+  throttle,
+  download,
+  getQuery,
+  getDataInfo,
+  getFileInfo,
+  uniqueArray,
+
+  BufferRepresentation,
+  ArrowBuffer,
+  BoxBuffer,
+  ConeBuffer,
+  CylinderBuffer,
+  EllipsoidBuffer,
+  OctahedronBuffer,
+  SphereBuffer,
+  TetrahedronBuffer,
+  TextBuffer,
+  TorusBuffer,
+
+  Shape,
+
+  Structure,
+  Kdtree,
+  SpatialHash,
+  MolecularSurface,
+  Volume,
+
+  LeftMouseButton,
+  MiddleMouseButton,
+  RightMouseButton,
+  MouseActions,
+  KeyActions,
+
+  Signal,
+
+  Matrix3,
+  Matrix4,
+  Vector2,
+  Vector3,
+  Box3,
+  Quaternion,
+  Euler,
+  Plane,
+  Color
+}
