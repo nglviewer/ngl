@@ -74,15 +74,15 @@ function getModresId (resno, chainname, inscode) {
 }
 
 class PdbParser extends StructureParser {
-    /**
-     * Create a pdb parser
-     * @param  {Streamer} streamer - streamer object
-     * @param  {Object} params - params object
-     * @param  {Boolean} params.hex - hexadecimal parsing of
-     *                                atom numbers >99.999 and
-     *                                residue numbers >9.999
-     * @return {undefined}
-     */
+  /**
+   * Create a pdb parser
+   * @param  {Streamer} streamer - streamer object
+   * @param  {Object} params - params object
+   * @param  {Boolean} params.hex - hexadecimal parsing of
+   *                                atom numbers >99.999 and
+   *                                residue numbers >9.999
+   * @return {undefined}
+   */
   constructor (streamer, params) {
     const p = params || {}
 
@@ -514,16 +514,14 @@ class PdbParser extends StructureParser {
           // ignore 'given' operators
           if (line[ 59 ] === '1') continue
 
-          const ncs = line.split(/\s+/)
-          const ncsMat = ncs[ 1 ].trim()
-
-          if (line[ 5 ] === '1' && ncsMat === '1') {
+          if (!currentBiomol || currentBiomol.name !== 'NCS') {
             const ncsName = 'NCS'
             currentBiomol = new Assembly(ncsName)
             biomolDict[ ncsName ] = currentBiomol
             currentPart = currentBiomol.addPart()
           }
 
+          const ncs = line.split(/\s+/)
           const ncsRow = parseInt(line[ 5 ]) - 1
 
           if (ncsRow === 0) {
