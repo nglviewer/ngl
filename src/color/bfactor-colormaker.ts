@@ -5,8 +5,9 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
-import Selection from '../selection/selection.js'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
+import Selection from '../selection/selection'
 
 /**
  * Color by b-factor. The {@link AtomProxy.bfactor} property is used for coloring.
@@ -21,11 +22,13 @@ import Selection from '../selection/selection.js'
  * } );
  */
 class BfactorColormaker extends Colormaker {
-  constructor (params) {
+  bfactorScale: ColormakerScale
+
+  constructor (params: { sele?: string } & StuctureColormakerParams) {
     super(params)
 
     if (!params.scale) {
-      this.scale = 'OrRd'
+      this.parameters.scale = 'OrRd'
     }
 
     if (!params.domain) {
@@ -37,23 +40,23 @@ class BfactorColormaker extends Colormaker {
         selection = new Selection(params.sele)
       }
 
-      this.structure.eachAtom(function (a) {
+      params.structure.eachAtom(function (a) {
         var bfactor = a.bfactor
         min = Math.min(min, bfactor)
         max = Math.max(max, bfactor)
       }, selection)
 
-      this.domain = [ min, max ]
+      this.parameters.domain = [ min, max ]
     }
 
     this.bfactorScale = this.getScale()
   }
 
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     return this.bfactorScale(a.bfactor)
   }
 }
 
-ColormakerRegistry.add('bfactor', BfactorColormaker)
+ColormakerRegistry.add('bfactor', BfactorColormaker as any)
 
 export default BfactorColormaker

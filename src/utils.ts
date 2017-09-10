@@ -36,7 +36,14 @@ export function defaults (value: any, defaultValue: any) {
 }
 
 export function assignDefaults<T> (params: {[k in keyof T]?}, defaultParams: T) {
-  return Object.assign({}, defaultParams, params) as T
+  const o: any = {}
+  for (const k in params) {
+    o[k] = params[k]
+  }
+  for (const k in defaultParams) {
+    o[k] = defaults(params[k], defaultParams[k])
+  }
+  return o as T
 }
 
 export function pick (object: { [index: string]: any }) {

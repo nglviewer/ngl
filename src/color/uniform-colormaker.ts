@@ -5,29 +5,29 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker from './colormaker'
 
 /**
  * Color by uniform color
  */
 class UniformColormaker extends Colormaker {
   atomColor () {
-    return this.value
+    return this.parameters.value
   }
 
   bondColor () {
-    return this.value
+    return this.parameters.value
   }
 
   valueColor () {
-    return this.value
+    return this.parameters.value
   }
 
   volumeColor () {
-    return this.value
+    return this.parameters.value
   }
 }
 
-ColormakerRegistry.add('uniform', UniformColormaker)
+ColormakerRegistry.add('uniform', UniformColormaker as any)
 
 export default UniformColormaker

@@ -5,10 +5,12 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker, { StuctureColormakerParams } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
+import ResidueProxy from '../proxy/residue-proxy'
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (shapely)
-var StructureColors = {
+const StructureColors = {
   'alphaHelix': 0xFF0080,
   'threeTenHelix': 0xA00080,
   'piHelix': 0x600080,
@@ -21,21 +23,23 @@ var StructureColors = {
 
   'carbohydrate': 0xA6A6FA
 }
-var DefaultStructureColor = 0x808080
+const DefaultStructureColor = 0x808080
 
 /**
  * Color by secondary structure
  */
 class SstrucColormaker extends Colormaker {
-  constructor (params) {
+  residueProxy: ResidueProxy
+
+  constructor (params: StuctureColormakerParams) {
     super(params)
 
-    this.rp = this.structure.getResidueProxy()
+    this.residueProxy = params.structure.getResidueProxy()
   }
 
-  atomColor (ap) {
+  atomColor (ap: AtomProxy) {
     var sstruc = ap.sstruc
-    var rp = this.rp
+    var rp = this.residueProxy
 
     if (sstruc === 'h') {
       return StructureColors.alphaHelix
@@ -64,6 +68,6 @@ class SstrucColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('sstruc', SstrucColormaker)
+ColormakerRegistry.add('sstruc', SstrucColormaker as any)
 
 export default SstrucColormaker

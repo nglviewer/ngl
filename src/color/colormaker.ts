@@ -19,7 +19,7 @@ interface ScaleParameters {
   scale: string|string[]
   mode: 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
   domain: [number, number]
-  value: string|number
+  value: number
   reverse: boolean
 }
 
@@ -28,6 +28,10 @@ export interface ColormakerParameters extends ScaleParameters {
   volume?: Volume
   surface?: Surface
 }
+
+export type StuctureColormakerParams = { structure: Structure } & Partial<ColormakerParameters>
+export type VolumeColormakerParams = { volume: Volume } & Partial<ColormakerParameters>
+export type ColormakerScale = (v: number) => number
 
 /**
  * Class for making colors.
@@ -67,7 +71,6 @@ abstract class Colormaker {
     if (p.reverse) {
       p.domain = [ p.domain[1], p.domain[0] ]
     }
-
     return chroma
       .scale(p.scale as any)  // TODO
       .mode(p.mode)

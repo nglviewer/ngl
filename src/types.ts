@@ -6,6 +6,4 @@ export type TypedArray = (
 
 export type NumberArray = number[] | TypedArray
 
-export type Dict = { [index: string]: any }
-
 export type Partial<T> = { [p in keyof T]?: T[p] }

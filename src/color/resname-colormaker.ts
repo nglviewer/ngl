@@ -5,10 +5,11 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (protein + shapely for nucleic)
-var ResidueColors = {
+const ResidueColors: { [k: string]: number } = {
   'ALA': 0x8CFF8C,
   'ARG': 0x00007C,
   'ASN': 0xFF7C70,
@@ -49,17 +50,17 @@ var ResidueColors = {
   'DT': 0xA0FFA0,
   'DU': 0xFF8080
 }
-var DefaultResidueColor = 0xFF00FF
+const DefaultResidueColor = 0xFF00FF
 
 /**
  * Color by residue name
  */
 class ResnameColormaker extends Colormaker {
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     return ResidueColors[ a.resname ] || DefaultResidueColor
   }
 }
 
-ColormakerRegistry.add('resname', ResnameColormaker)
+ColormakerRegistry.add('resname', ResnameColormaker as any)
 
 export default ResnameColormaker

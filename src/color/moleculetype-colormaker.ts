@@ -5,17 +5,18 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 import {
     WaterType, IonType, ProteinType, RnaType, DnaType, SaccharideType
-} from '../structure/structure-constants.js'
+} from '../structure/structure-constants'
 
 /**
  * Color by molecule type
  */
 class MoleculetypeColormaker extends Colormaker {
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     switch (a.residueType.moleculeType) {
       case WaterType:
         return 0x386cb0
@@ -35,6 +36,6 @@ class MoleculetypeColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('moleculetype', MoleculetypeColormaker)
+ColormakerRegistry.add('moleculetype', MoleculetypeColormaker as any)
 
 export default MoleculetypeColormaker

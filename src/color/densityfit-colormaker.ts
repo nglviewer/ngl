@@ -5,28 +5,38 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 /**
  * Color by validation density fit
  */
 class DensityfitColormaker extends Colormaker {
-  constructor (params) {
+  rsrzScale: ColormakerScale
+  rsccScale: ColormakerScale
+
+  rsrzDict: { [k: string]: number|undefined } = {}
+  rsccDict: { [k: string]: number|undefined } = {}
+
+  constructor (params: StuctureColormakerParams) {
     super(params)
 
     if (!params.scale) {
-      this.scale = 'RdYlBu'
+      this.parameters.scale = 'RdYlBu'
     }
 
     this.rsrzScale = this.getScale({ domain: [ 2, 0 ] })
     this.rsccScale = this.getScale({ domain: [ 0.678, 1.0 ] })
 
-    const val = params.structure.validation || {}
-    this.rsrzDict = val.rsrzDict || {}
-    this.rsccDict = val.rsccDict || {}
+    const val = params.structure.validation
+    if (val) {
+      this.rsrzDict = val.rsrzDict
+      this.rsccDict = val.rsccDict
+    }
+
   }
 
-  atomColor (atom) {
+  atomColor (atom: AtomProxy) {
     let sele = atom.resno
     if (atom.inscode) sele += '^' + atom.inscode
     if (atom.chainname) sele += ':' + atom.chainname
@@ -46,6 +56,6 @@ class DensityfitColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('densityfit', DensityfitColormaker)
+ColormakerRegistry.add('densityfit', DensityfitColormaker as any)
 
 export default DensityfitColormaker

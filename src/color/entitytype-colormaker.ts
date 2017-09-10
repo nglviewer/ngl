@@ -5,17 +5,18 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 import {
     PolymerEntity, NonPolymerEntity, MacrolideEntity, WaterEntity
-} from '../structure/structure-constants.js'
+} from '../structure/structure-constants'
 
 /**
  * Color by entity type
  */
 class EntitytypeColormaker extends Colormaker {
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     var e = a.entity
     var et = e ? e.entityType : undefined
     switch (et) {
@@ -33,6 +34,6 @@ class EntitytypeColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('entitytype', EntitytypeColormaker)
+ColormakerRegistry.add('entitytype', EntitytypeColormaker as any)
 
 export default EntitytypeColormaker

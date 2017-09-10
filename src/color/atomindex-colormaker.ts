@@ -6,10 +6,9 @@
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Colormaker, { ColormakerParameters } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import ModelProxy from '../proxy/model-proxy'
-import Structure from '../structure/structure'
 
 /**
  * Color by atom index. The {@link AtomProxy.index} property is used for coloring.
@@ -25,9 +24,9 @@ import Structure from '../structure/structure'
  * } );
  */
 class AtomindexColormaker extends Colormaker {
-  scalePerModel: { [k: number]: any }
+  scalePerModel: { [k: number]: ColormakerScale }
 
-  constructor (params: { structure: Structure } & Partial<ColormakerParameters>) {
+  constructor (params: StuctureColormakerParams) {
     super(params)
 
     if (!params.scale) {

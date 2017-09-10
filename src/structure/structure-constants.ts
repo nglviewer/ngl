@@ -1042,7 +1042,7 @@ const CovalentRadii = {
 const DefaultCovalentRadius = 1.6
 
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
-const ResidueHydrophobicity = {
+const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
   // AA  DGwif   DGwoct  Oct-IF
   'ALA': [ 0.17, 0.50, 0.33 ],
   'ARG': [ 0.81, 1.81, 1.00 ],
@@ -1215,7 +1215,7 @@ const NucleicBackboneAtoms = [
   'O3*', 'O5*', 'C5*', 'C4*', 'C3*'
 ]
 
-const ResidueTypeAtoms = {}
+const ResidueTypeAtoms: { [k: number]: { [k: string]: string|string[] } } = {}
 
 ResidueTypeAtoms[ ProteinBackboneType ] = {
   trace: 'CA',

@@ -1,17 +1,19 @@
 /**
  * @file Atomindex Colormaker
  * @author Fred Ludlow <Fred.Ludlow@astx.com>
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
-import SpatialHash from '../geometry/spatial-hash.js'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
+import SpatialHash from '../geometry/spatial-hash'
 
 // from CHARMM
-const partialCharges = {
+const partialCharges: { [k: string]: { [k: string]: number } } = {
   'ARG': {
     'CD': 0.1,
     'CZ': 0.5,
@@ -123,6 +125,7 @@ const partialCharges = {
 }
 
 const maxRadius = 12.0
+const maxRadius2 = maxRadius * maxRadius
 const nHBondDistance = 1.04
 const nHCharge = 0.25
 
@@ -134,29 +137,27 @@ const nHCharge = 0.25
  * @param {Vector3} [position] - optional target
  * @return {Vectors|undefined} the hydrogen atom position
  */
-function backboneNHPosition (ap, position) {
-  position = position || new Vector3()
-
+function backboneNHPosition (ap: AtomProxy, position = new Vector3()) {
   let h = false
   var ca = false
   var c = false
   position.set(2 * ap.x, 2 * ap.y, 2 * ap.z)
 
-  ap.eachBondedAtom(function (a2) {
+  ap.eachBondedAtom(function (a2: AtomProxy) {
     // Any time we detect H, reset position and skip
     // future tests
     if (h) return
     if (a2.atomname === 'H') {
-      position.set(a2)
+      position.set(a2.x, a2.y, a2.z)
       h = true
       return
     }
     if (!ca && a2.atomname === 'CA') {
-      position.sub(a2)
+      position.sub(a2 as any)  // TODO
       ca = true
     } else if (!c && a2.atomname === 'C') {
       c = true
-      position.sub(a2)
+      position.sub(a2 as any)  // TODO
     }
   })
 
@@ -165,7 +166,7 @@ function backboneNHPosition (ap, position) {
   if (ca && c) {
     position.normalize()
     position.multiplyScalar(nHBondDistance)
-    position.add(ap)
+    position.add(ap as any)
     return position
   }
 }
@@ -177,7 +178,7 @@ function backboneNHPosition (ap, position) {
  * @param {Vector3[]} positions - array of positions
  * @return {Object} AtomStore-like object
  */
-function buildStoreLike (positions) {
+function buildStoreLike (positions: Vector3[]) {
   const n = positions.length
   const x = new Float32Array(n)
   const y = new Float32Array(n)
@@ -191,6 +192,15 @@ function buildStoreLike (positions) {
   }
 
   return { x: x, y: y, z: z, count: n }
+}
+
+function chargeForAtom (a: AtomProxy) {
+  if (!a.isProtein()) { return 0.0 }
+  return (
+    (partialCharges[ a.resname ] &&
+        partialCharges[ a.resname ][ a.atomname ]) ||
+    partialCharges[ 'backbone' ][ a.atomname ] || 0.0
+  ) as number
 }
 
 /**
@@ -207,90 +217,85 @@ function buildStoreLike (positions) {
  * } );
  */
 class ElectrostaticColormaker extends Colormaker {
-  constructor (params) {
+  scale: ColormakerScale
+  hHash: SpatialHash
+  hash: SpatialHash
+  charges: Float32Array
+  hStore: { x: Float32Array, y: Float32Array, z: Float32Array, count: number }
+  atomProxy: AtomProxy
+
+  delta = new Vector3()
+  hCharges: number[] = []
+
+  constructor (params: StuctureColormakerParams) {
     super(params)
 
     if (!params.scale) {
-      this.scale = 'rwb'
+      this.parameters.scale = 'rwb'
     }
     if (!params.domain) {
-      this.domain = [ -0.5, 0, 0.5 ]
+      this.parameters.domain = [ -0.5, 0, 0.5 ]
     }
 
-    const scale = this.getScale()
+    this.scale = this.getScale()
 
-    function chargeForAtom (a) {
-      if (!a.isProtein()) { return 0.0 }
-      return (
-        (partialCharges[ a.resname ] &&
-            partialCharges[ a.resname ][ a.atomname ]) ||
-        partialCharges[ 'backbone' ][ a.atomname ] || 0.0
-      )
-    }
+    this.charges = new Float32Array(params.structure.atomCount)
+    const hPositions: Vector3[] = []
 
-    const structure = this.structure
-    const charges = new Float32Array(structure.atomCount)
-    const hPositions = []
-    const hCharges = []
-
-    structure.eachAtom(ap => {
-      charges[ ap.index ] = chargeForAtom(ap) * ap.occupancy
+    params.structure.eachAtom((ap: AtomProxy) => {
+      this.charges[ ap.index ] = chargeForAtom(ap) * ap.occupancy
       if (ap.atomname === 'N') {
         const hPos = backboneNHPosition(ap)
         if (hPos !== undefined) {
           hPositions.push(hPos)
-          hCharges.push(nHCharge * ap.occupancy)
+          this.hCharges.push(nHCharge * ap.occupancy)
         }
       }
     })
 
-    const bbox = this.structure.getBoundingBox()
+    const bbox = params.structure.getBoundingBox()
     bbox.expandByScalar(nHBondDistance) // Worst case
 
     // SpatialHash requires x,y,z and count
-    const hStore = buildStoreLike(hPositions)
-    const hHash = new SpatialHash(hStore, bbox)
-    const hash = new SpatialHash(this.structure.atomStore, bbox)
+    this.hStore = buildStoreLike(hPositions)
+    this.hHash = new SpatialHash(this.hStore as any, bbox)  // TODO
+    this.hash = new SpatialHash(params.structure.atomStore, bbox)
+  }
 
-    const ap = this.atomProxy
-    const delta = new Vector3()
-    const maxRadius2 = maxRadius * maxRadius
+  positionColor (v: Vector3) {
+    let p = 0.0
+    const neighbours = this.hash.within(v.x, v.y, v.z, maxRadius)
 
-    this.positionColor = function (v) {
-      let p = 0.0
-      const neighbours = hash.within(v.x, v.y, v.z, maxRadius)
-
-      for (let i = 0; i < neighbours.length; i++) {
-        const neighbour = neighbours[ i ]
-        const charge = charges[ neighbour ]
-        if (charge !== 0.0) {
-          ap.index = neighbour
-          delta.x = v.x - ap.x
-          delta.y = v.y - ap.y
-          delta.z = v.z - ap.z
-          const r2 = delta.lengthSq()
-          if (r2 < maxRadius2) {
-            p += charge / r2
-          }
-        }
-      }
-
-      const hNeighbours = hHash.within(v.x, v.y, v.z, maxRadius)
-      for (let i = 0; i < hNeighbours.length; i++) {
-        const neighbour = hNeighbours[ i ]
-        delta.x = v.x - hStore.x[ neighbour ]
-        delta.y = v.y - hStore.y[ neighbour ]
-        delta.z = v.z - hStore.z[ neighbour ]
-        const r2 = delta.lengthSq()
+    for (let i = 0; i < neighbours.length; i++) {
+      const neighbour = neighbours[ i ]
+      const charge = this.charges[ neighbour ]
+      if (charge !== 0.0) {
+        this.atomProxy.index = neighbour
+        this.delta.x = v.x - this.atomProxy.x
+        this.delta.y = v.y - this.atomProxy.y
+        this.delta.z = v.z - this.atomProxy.z
+        const r2 = this.delta.lengthSq()
         if (r2 < maxRadius2) {
-          p += hCharges[ neighbour ] / r2
+          p += charge / r2
         }
       }
-      return scale(p)
     }
+
+    const hNeighbours = this.hHash.within(v.x, v.y, v.z, maxRadius)
+    for (let i = 0; i < hNeighbours.length; i++) {
+      const neighbour = hNeighbours[ i ]
+      this.delta.x = v.x - this.hStore.x[ neighbour ]
+      this.delta.y = v.y - this.hStore.y[ neighbour ]
+      this.delta.z = v.z - this.hStore.z[ neighbour ]
+      const r2 = this.delta.lengthSq()
+      if (r2 < maxRadius2) {
+        p += this.hCharges[ neighbour ] / r2
+      }
+    }
+    return this.scale(p)
   }
 }
 
-ColormakerRegistry.add('electrostatic', ElectrostaticColormaker)
+ColormakerRegistry.add('electrostatic', ElectrostaticColormaker as any)
 
 export default ElectrostaticColormaker

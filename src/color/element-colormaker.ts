@@ -6,10 +6,11 @@
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Colormaker from './colormaker.js'
+import Colormaker, { ColormakerParameters } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
-var ElementColors = {
+const ElementColors: { [k: string]: number } = {
   'H': 0xFFFFFF,
   'HE': 0xD9FFFF,
   'LI': 0xCC80FF,
@@ -137,14 +138,13 @@ var DefaultElementColor = 0xFFFFFF
  * Color by element
  */
 class ElementColormaker extends Colormaker {
-  constructor (params) {
-    var p = params || {}
-    p.value = defaults(p.value, ElementColors.C)
+  constructor (params: ColormakerParameters) {
+    params.value = defaults(params.value, ElementColors.C)
 
-    super(p)
+    super(params)
   }
 
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     var element = a.element
 
     if (element === 'C') {
@@ -155,6 +155,6 @@ class ElementColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('element', ElementColormaker)
+ColormakerRegistry.add('element', ElementColormaker as any)
 
 export default ElementColormaker

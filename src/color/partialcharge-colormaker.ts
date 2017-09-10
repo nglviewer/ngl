@@ -5,7 +5,8 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker, { ColormakerParameters, ColormakerScale } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 
 /**
  * Color by partial charge. The {@link AtomProxy.partialCharge} property is used for coloring.
@@ -20,25 +21,27 @@ import Colormaker from './colormaker.js'
  * });
  */
 class PartialchargeColormaker extends Colormaker {
-  constructor (params) {
+  partialchargeScale: ColormakerScale
+
+  constructor (params: ColormakerParameters) {
     super(params)
 
     if (!params.scale) {
-      this.scale = 'rwb'
+      this.parameters.scale = 'rwb'
     }
 
     if (!params.domain) {
-      this.domain = [-1, 1]
+      this.parameters.domain = [-1, 1]
     }
 
     this.partialchargeScale = this.getScale()
   }
 
-  atomColor (a) {
+  atomColor (a: AtomProxy) {
     return this.partialchargeScale(a.partialCharge)
   }
 }
 
-ColormakerRegistry.add('partialcharge', PartialchargeColormaker)
+ColormakerRegistry.add('partialcharge', PartialchargeColormaker as any)
 
 export default PartialchargeColormaker

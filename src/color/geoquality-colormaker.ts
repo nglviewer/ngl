@@ -5,22 +5,28 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker.js'
+import Colormaker, { StuctureColormakerParams } from './colormaker'
+import AtomProxy from '../proxy/atom-proxy'
 import { countSetBits } from '../math/math-utils'
 
 /**
  * Color by validation gometry quality
  */
 class GeoqualityColormaker extends Colormaker {
-  constructor (params) {
+  geoAtomDict: { [k: string]: { [k: string]: number } } = {}
+  geoDict: { [k: string]: number|undefined } = {}
+
+  constructor (params: StuctureColormakerParams) {
     super(params)
 
-    var val = params.structure.validation || {}
-    this.geoAtomDict = val.geoAtomDict || {}
-    this.geoDict = val.geoDict || {}
+    const val = params.structure.validation
+    if (val) {
+      this.geoAtomDict = val.geoAtomDict
+      this.geoDict = val.geoDict
+    }
   }
 
-  atomColor (atom) {
+  atomColor (atom: AtomProxy) {
     let sele = atom.resno
     if (atom.inscode) sele += '^' + atom.inscode
     if (atom.chainname) sele += ':' + atom.chainname
@@ -29,7 +35,7 @@ class GeoqualityColormaker extends Colormaker {
     let geoProblemCount
     const geoAtom = this.geoAtomDict[ sele ]
     if (geoAtom !== undefined) {
-      let atomProblems = geoAtom[ atom.atomname ] || 0
+      const atomProblems: number = geoAtom[ atom.atomname ] || 0
       geoProblemCount = countSetBits(atomProblems)
     } else {
       geoProblemCount = this.geoDict[ sele ] || 0
@@ -48,6 +54,6 @@ class GeoqualityColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('geoquality', GeoqualityColormaker)
+ColormakerRegistry.add('geoquality', GeoqualityColormaker as any)
 
 export default GeoqualityColormaker
