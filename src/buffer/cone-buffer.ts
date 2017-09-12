@@ -1,11 +1,12 @@
 /**
- * @file Cone Geometry Buffer
+ * @file Cone Buffer
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 
 import { Matrix4, Vector3, ConeBufferGeometry } from 'three'
 
+import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import { calculateCenterArray } from '../math/array-utils'
 import GeometryBuffer from './geometry-buffer'
@@ -46,7 +47,7 @@ export type ConeBufferParameters = typeof ConeBufferDefaultParameters
  * Cone geometry buffer.
  *
  * @example
- * var coneGeometryBuffer = new ConeGeometryBuffer({
+ * var coneBuffer = new ConeBuffer({
  *   position1: new Float32Array([ 0, 0, 0 ]),
  *   position2: new Float32Array([ 1, 1, 1 ]),
  *   color: new Float32Array([ 1, 0, 0 ]),
@@ -54,10 +55,10 @@ export type ConeBufferParameters = typeof ConeBufferDefaultParameters
  *   radius: new Float32Array([ 1 ])
  * });
  */
-class ConeGeometryBuffer extends GeometryBuffer {
+class ConeBuffer extends GeometryBuffer {
   updateNormals = true
 
-  defaultParameters = ConeBufferDefaultParameters
+  get defaultParameters() { return ConeBufferDefaultParameters }
   parameters: ConeBufferParameters
 
   _position: Float32Array
@@ -109,4 +110,6 @@ class ConeGeometryBuffer extends GeometryBuffer {
   }
 }
 
-export default ConeGeometryBuffer
+BufferRegistry.add('cone', ConeBuffer)
+
+export default ConeBuffer

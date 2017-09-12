@@ -44,7 +44,7 @@ const HyperballStickImpostorBufferParameterTypes = Object.assign({
  */
 class HyperballStickImpostorBuffer extends MappedBoxBuffer {
   parameterTypes = HyperballStickImpostorBufferParameterTypes
-  defaultParameters = HyperballStickImpostorBufferDefaultParameters
+  get defaultParameters() { return HyperballStickImpostorBufferDefaultParameters }
   parameters: HyperballStickImpostorBufferParameters
 
   isImpostor = true

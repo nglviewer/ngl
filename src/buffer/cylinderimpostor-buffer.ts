@@ -36,7 +36,7 @@ const CylinderImpostorBufferParameterTypes = Object.assign({
  */
 class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
   parameterTypes = CylinderImpostorBufferParameterTypes
-  defaultParameters = CylinderImpostorBufferDefaultParameters
+  get defaultParameters() { return CylinderImpostorBufferDefaultParameters }
   parameters: CylinderImpostorBufferParameters
 
   isImpostor = true

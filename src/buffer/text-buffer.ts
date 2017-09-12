@@ -73,7 +73,6 @@ class TextAtlas {
 
     this.parameters = assignDefaults(params, TextAtlasDefaultParams)
 
-
     if (typeof navigator !== 'undefined') {
       const ua = navigator.userAgent
       if (ua.match(/Chrome/) && ua.match(/OS X/)) {
@@ -381,7 +380,7 @@ function getCharCount (data: TextBufferData, params: Partial<TextBufferParameter
  */
 class TextBuffer extends MappedQuadBuffer {
   parameterTypes = TextBufferParameterTypes
-  defaultParameters = TextBufferDefaultParameters
+  get defaultParameters() { return TextBufferDefaultParameters }
   parameters: TextBufferParameters
 
   alwaysTransparent = true

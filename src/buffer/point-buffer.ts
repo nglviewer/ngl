@@ -91,7 +91,7 @@ const PointBufferParameterTypes = Object.assign({
  */
 class PointBuffer extends Buffer {
   parameterTypes = PointBufferParameterTypes
-  defaultParameters = PointBufferDefaultParameters
+  get defaultParameters() { return PointBufferDefaultParameters }
   parameters: PointBufferParameters
 
   vertexShader = 'Point.vert'

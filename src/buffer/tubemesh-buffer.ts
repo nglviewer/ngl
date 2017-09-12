@@ -52,7 +52,7 @@ function getData (data: TubeMeshBufferData, params: Partial<TubeMeshBufferParame
  * Tube mesh buffer. Draws a tube.
  */
 class TubeMeshBuffer extends MeshBuffer {
-  defaultParameters = TubeMeshBufferDefaultParameters
+  get defaultParameters() { return TubeMeshBufferDefaultParameters }
   parameters: TubeMeshBufferParameters
 
   capVertices: number

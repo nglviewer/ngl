@@ -44,7 +44,7 @@ type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
  */
 class ArrowBuffer {
   parameters: ArrowBufferParameters
-  defaultParameters = ArrowBufferDefaultParameters
+  get defaultParameters() { return ArrowBufferDefaultParameters }
 
   cylinderBuffer: CylinderGeometryBuffer
   coneBuffer: ConeBuffer
@@ -215,7 +215,7 @@ class ArrowBuffer {
   }
 
   setVisibility (value: boolean) {
-    Buffer.prototype.setVisibility.apply(this, value)
+    Buffer.prototype.setVisibility.call(this, value)
   }
 
   dispose () {

@@ -34,7 +34,7 @@ type SphereGeometryBufferParameters = typeof SphereGeometryBufferDefaultParamete
  * });
  */
 class SphereGeometryBuffer extends GeometryBuffer {
-  defaultParameters = SphereGeometryBufferDefaultParameters
+  get defaultParameters() { return SphereGeometryBufferDefaultParameters }
   parameters: SphereGeometryBufferParameters
 
   private _radius: Float32Array

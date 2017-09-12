@@ -75,7 +75,7 @@ function getGeo (params: Partial<CylinderGeometryBufferParameters> = {}) {
 class CylinderGeometryBuffer extends GeometryBuffer {
   updateNormals = true
 
-  defaultParameters = CylinderGeometryBufferDefaultParameters
+  get defaultParameters() { return CylinderGeometryBufferDefaultParameters }
   parameters: CylinderGeometryBufferParameters
 
   __center: Float32Array

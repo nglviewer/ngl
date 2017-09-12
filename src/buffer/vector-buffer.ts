@@ -31,7 +31,7 @@ type VectorBufferParameters = typeof VectorBufferDefaultParameters
  * Vector buffer. Draws vectors as lines.
  */
 class VectorBuffer extends Buffer {
-  defaultParameters = VectorBufferDefaultParameters
+  get defaultParameters() { return VectorBufferDefaultParameters }
   parameters: VectorBufferParameters
 
   isLine = true

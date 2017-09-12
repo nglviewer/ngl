@@ -44,7 +44,7 @@ export type TorusBufferParameters = typeof TorusBufferDefaultParameters
 class TorusBuffer extends GeometryBuffer {
   updateNormals = true
 
-  defaultParameters = TorusBufferDefaultParameters
+  get defaultParameters() { return TorusBufferDefaultParameters }
   parameters: TorusBufferParameters
 
   _majorAxis: Float32Array

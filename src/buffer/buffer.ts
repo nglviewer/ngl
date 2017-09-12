@@ -111,7 +111,7 @@ export interface BufferData {
  */
 class Buffer {
   parameterTypes = BufferParameterTypes
-  defaultParameters = BufferDefaultParameters
+  get defaultParameters() { return BufferDefaultParameters }
   parameters: BufferParameters
   uniforms: Uniforms
   pickingUniforms: Uniforms
@@ -656,7 +656,7 @@ class Buffer {
       }
 
       if (name === 'flatShaded') {
-        this.material.extensions.derivatives = this.parameters.flatShaded
+        this.material.extensions.derivatives = this.parameters.flatShaded || this.isText
       }
 
       if (name === 'forceTransparent') {

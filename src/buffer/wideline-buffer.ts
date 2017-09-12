@@ -35,7 +35,7 @@ type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
  * });
  */
 class WideLineBuffer extends MappedQuadBuffer {
-  defaultParameters = WideLineBufferDefaultParameters
+  get defaultParameters() { return WideLineBufferDefaultParameters }
   parameters: WideLineBufferParameters
 
   vertexShader = 'WideLine.vert'

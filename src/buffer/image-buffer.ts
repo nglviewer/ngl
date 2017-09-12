@@ -53,7 +53,7 @@ const ImageBufferParameterTypes = Object.assign({
  */
 class ImageBuffer extends Buffer {
   parameterTypes = ImageBufferParameterTypes
-  defaultParameters = ImageBufferDefaultParameters
+  get defaultParameters() { return ImageBufferDefaultParameters }
   parameters: ImageBufferParameters
 
   alwaysTransparent = true

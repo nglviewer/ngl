@@ -6,6 +6,7 @@
 
 import { IcosahedronBufferGeometry, Vector3, Matrix4 } from 'three'
 
+import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer'
 import { BufferData, BufferDefaultParameters } from './buffer'
@@ -41,7 +42,7 @@ export type EllipsoidBufferParameters = typeof EllipsoidBufferDefaultParameters
 class EllipsoidBuffer extends GeometryBuffer {
   updateNormals = true
 
-  defaultParameters = EllipsoidBufferDefaultParameters
+  get defaultParameters() { return EllipsoidBufferDefaultParameters }
   parameters: EllipsoidBufferParameters
 
   _majorAxis: Float32Array
@@ -71,5 +72,7 @@ class EllipsoidBuffer extends GeometryBuffer {
     super.setAttributes(data, initNormals)
   }
 }
+
+BufferRegistry.add('ellipsoid', EllipsoidBuffer)
 
 export default EllipsoidBuffer
