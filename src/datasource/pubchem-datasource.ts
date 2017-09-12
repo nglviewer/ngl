@@ -7,13 +7,13 @@
 import { Log, DatasourceRegistry } from '../globals'
 import { getProtocol } from '../utils'
 import { getFileInfo } from '../loader/loader-utils'
-import Datasource from './datasource.js'
+import Datasource from './datasource'
 
 const baseUrl = '//pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/'
 const suffixUrl = '/SDF?record_type=3d'
 
 class PubchemDatasource extends Datasource {
-  getUrl (src) {
+  getUrl (src: string) {
     const info = getFileInfo(src)
     const cid = info.name
     let url
@@ -26,11 +26,9 @@ class PubchemDatasource extends Datasource {
     return getProtocol() + url
   }
 
-  getExt (src) {
-    const info = getFileInfo(src)
-    if (!info.ext || info.ext === 'sdf') {
-      return 'sdf'
-    }
+  getExt (src: string) {
+    const ext = getFileInfo(src).ext
+    return ext ? ext : 'sdf'
   }
 }
 

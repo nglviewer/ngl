@@ -6,23 +6,29 @@
 
 import { getAbsolutePath } from '../utils'
 import { getFileInfo } from '../loader/loader-utils'
-import Datasource from './datasource.js'
+import Datasource from './datasource'
 
 const reProtocol = /^((http|https|ftp):)*\/\//
 
 class StaticDatasource extends Datasource {
-  constructor (baseUrl) {
+  baseUrl: string
+
+  constructor (baseUrl: string = '') {
     super()
-    this.baseUrl = baseUrl || ''
+    this.baseUrl = baseUrl
   }
 
-  getUrl (src) {
+  getUrl (src: string) {
     const info = getFileInfo(src)
     let url = this.baseUrl + info.path
     if (!reProtocol.test(this.baseUrl)) {
       url = getAbsolutePath(url)
     }
     return url
+  }
+
+  getExt (src: string) {
+    return getFileInfo(src).ext
   }
 }
 

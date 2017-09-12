@@ -7,7 +7,7 @@
 import { Log, DatasourceRegistry } from '../globals'
 import { getProtocol } from '../utils'
 import { getFileInfo } from '../loader/loader-utils'
-import Datasource from './datasource.js'
+import Datasource from './datasource'
 
 const baseUrl = '//files.rcsb.org/download/'
 const mmtfBaseUrl = '//mmtf.rcsb.org/v1.0/'
@@ -15,7 +15,7 @@ const mmtfFullUrl = mmtfBaseUrl + 'full/'
 const mmtfReducedUrl = mmtfBaseUrl + 'reduced/'
 
 class RcsbDatasource extends Datasource {
-  getUrl (src) {
+  getUrl (src: string) {
     // valid path are
     // XXXX.pdb, XXXX.pdb.gz, XXXX.cif, XXXX.cif.gz, XXXX.mmtf, XXXX.bb.mmtf
     // XXXX defaults to XXXX.cif
@@ -41,11 +41,9 @@ class RcsbDatasource extends Datasource {
     return getProtocol() + url
   }
 
-  getExt (src) {
-    const info = getFileInfo(src)
-    if (info.ext === 'mmtf' || !info.ext) {
-      return 'mmtf'
-    }
+  getExt (src: string) {
+    const ext = getFileInfo(src).ext
+    return ext ? ext : 'mmtf'
   }
 }
 

@@ -5,11 +5,16 @@
  */
 
 import { DatasourceRegistry } from '../globals'
-import Datasource from './datasource.js'
+import { getFileInfo } from '../loader/loader-utils'
+import Datasource from './datasource'
 
 class PassThroughDatasource extends Datasource {
-  getUrl (path) {
+  getUrl (path: string) {
     return path
+  }
+
+  getExt (path: string) {
+    return getFileInfo(path).ext
   }
 }
 

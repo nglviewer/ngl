@@ -8,14 +8,14 @@
  * Datasource base class
  * @interface
  */
-class Datasource {
+abstract class Datasource {
   /**
    * Get full url
    * @abstract
    * @param  {String} path - datasource string
    * @return {String} - url
    */
-  getUrl (path) {}
+  abstract getUrl (path: string): string
 
   /**
    * Get file extension
@@ -23,7 +23,7 @@ class Datasource {
    * @param  {String} path - datasource string
    * @return {String} - extension
    */
-  getExt (path) {}
+  abstract getExt (path: string): string
 }
 
 export default Datasource
