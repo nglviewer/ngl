@@ -117,21 +117,19 @@ type StructureSignals = {
   refreshed: Signal
 }
 
-
-
 /**
  * Structure
  */
 class Structure implements Structure{
+  signals: StructureSignals = {
+    refreshed: new Signal()
+  }
+  
   /**
    * @param {String} name - structure name
    * @param {String} path - source path
    */
   constructor (name: string, path: string) {
-    this.signals = {
-      refreshed: new Signal()
-    }
-
     this.init(name, path)
   }
 

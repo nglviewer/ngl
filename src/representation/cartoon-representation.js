@@ -37,7 +37,7 @@ class CartoonRepresentation extends StructureRepresentation {
     this.parameters = Object.assign({
 
       aspectRatio: {
-        type: 'number', precision: 1, max: 10.0, min: 1.0
+        type: 'number', precision: 1, max: 10.0, min: 1.0, rebuild: true
       },
       subdiv: {
         type: 'integer', max: 50, min: 1, rebuild: true

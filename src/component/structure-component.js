@@ -44,11 +44,10 @@ class StructureComponent extends Component {
    * @param {Structure} structure - structure object to wrap
    * @param {ComponentParameters} params - component parameters
    */
-  constructor (stage, structure, params) {
-    var p = params || {}
-    p.name = defaults(p.name, structure.name)
-
-    super(stage, p)
+  constructor (stage, structure, params = {}) {
+    super(stage, Object.assign({
+      name: defaults(params.name, structure.name)
+    }, params))
 
     /**
      * Events emitted by the component
@@ -67,8 +66,8 @@ class StructureComponent extends Component {
     this.structure = structure
 
     this.trajList = []
-    this.initSelection(p.sele)
-    this.setDefaultAssembly(p.assembly || '')
+    this.initSelection(params.sele || '')
+    this.setDefaultAssembly(params.assembly || '')
   }
 
   /**

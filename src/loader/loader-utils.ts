@@ -75,8 +75,8 @@ export function getFileInfo (file: LoaderInput) {
 }
 
 export function getDataInfo (src: LoaderInput) {
-  var info = getFileInfo(src)
-  var datasource = DatasourceRegistry.get(info.protocol)
+  let info = getFileInfo(src)
+  const datasource = DatasourceRegistry.get(info.protocol)
   if (datasource) {
     info = getFileInfo(datasource.getUrl(info.src))
     if (!info.ext && datasource.getExt) {
@@ -112,9 +112,9 @@ export function getDataInfo (src: LoaderInput) {
  * @return {Promise} Promise resolves to the loaded data
  */
 export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters>) {
-  var p = Object.assign(getDataInfo(file), params)
+  const p = Object.assign(getDataInfo(file), params)
 
-  var LoaderClass
+  let LoaderClass
   if (ParserRegistry.names.includes(p.ext)) {
     LoaderClass = ParserLoader
   } else if (ScriptExtensions.includes(p.ext)) {
@@ -124,9 +124,9 @@ export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters>) 
   }
 
   if (LoaderClass) {
-    var loader = new LoaderClass(p.src, p)
+    const loader = new LoaderClass(p.src, p)
     return loader.load()
   } else {
-    return Promise.reject(new Error("autoLoad: ext '" + p.ext + "' unknown"))
+    return Promise.reject(new Error(`autoLoad: ext '${p.ext}' unknown`))
   }
 }

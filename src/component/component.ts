@@ -20,47 +20,34 @@ import Viewer from '../viewer/viewer'
 const _m = new Matrix4()
 const _v = new Vector3()
 
-/**
- * Component parameter object.
- * @typedef {Object} ComponentParameters - component parameters
- * @property {String} name - component name
- * @property {Boolean} visible - component visibility
- */
-
-/**
- * @example
- * component.signals.representationAdded.add(function (representationElement) { ... });
- *
- * @typedef {Object} ComponentSignals
- * @property {Signal<RepresentationElement>} representationAdded - when a representation is added
- * @property {Signal<RepresentationElement>} representationRemoved - when a representation is removed
- * @property {Signal<Matrix4>} matrixChanged - on matrix change
- * @property {Signal<Boolean>} visibilityChanged - on visibility change
- * @property {Signal<String>} statusChanged - on status change
- * @property {Signal<String>} nameChanged - on name change
- * @property {Signal} disposed - on dispose
- */
-
 interface ComponentParams {
   name: string
   visible: boolean
 }
 
 interface ComponentSignals {
-  representationAdded: Signal
-  representationRemoved: Signal
-  visibilityChanged: Signal
-  matrixChanged: Signal
-  statusChanged: Signal
-  nameChanged: Signal
-  disposed: Signal
+  representationAdded: Signal  // when a representation is added
+  representationRemoved: Signal  // when a representation is removed
+  visibilityChanged: Signal  // on matrix change
+  matrixChanged: Signal  // on visibility change
+  statusChanged: Signal  // on status change
+  nameChanged: Signal  // on name change
+  disposed: Signal  // on dispose
 }
 
 /**
  * Base class for components
  */
 abstract class Component {
-  signals: ComponentSignals
+  signals: ComponentSignals = {
+    representationAdded: new Signal(),
+    representationRemoved: new Signal(),
+    visibilityChanged: new Signal(),
+    matrixChanged: new Signal(),
+    statusChanged: new Signal(),
+    nameChanged: new Signal(),
+    disposed: new Signal()
+  }
 
   name: string
   uuid: string
@@ -69,14 +56,14 @@ abstract class Component {
   stage: Stage
   viewer: Viewer
 
-  reprList: RepresentationElement[]
-  annotationList: Annotation[]
+  reprList: RepresentationElement[] = []
+  annotationList: Annotation[] = []
 
-  matrix: Matrix4
-  position: Vector3
-  quaternion: Quaternion
-  scale: Vector3
-  transform: Matrix4
+  matrix = new Matrix4()
+  position = new Vector3()
+  quaternion = new Quaternion()
+  scale = new Vector3(1, 1, 1)
+  transform = new Matrix4()
 
   controls: ComponentControls
 
@@ -84,38 +71,13 @@ abstract class Component {
    * @param {Stage} stage - stage object the component belongs to
    * @param {ComponentParameters} params - parameter object
    */
-  constructor (stage: Stage, params: ComponentParams) {
-    const p = params || {}
-
-    this.name = defaults(p.name, '')
+  constructor (stage: Stage, params: Partial<ComponentParams> = {}) {
+    this.name = defaults(params.name, '')
     this.uuid = generateUUID()
-    this.visible = defaults(p.visible, true)
-
-    /**
-     * Events emitted by the component
-     * @type {ComponentSignals}
-     */
-    this.signals = {
-      representationAdded: new Signal(),
-      representationRemoved: new Signal(),
-      visibilityChanged: new Signal(),
-      matrixChanged: new Signal(),
-      statusChanged: new Signal(),
-      nameChanged: new Signal(),
-      disposed: new Signal()
-    }
+    this.visible = defaults(params.visible, true)
 
     this.stage = stage
     this.viewer = stage.viewer
-
-    this.reprList = []
-    this.annotationList = []
-
-    this.matrix = new Matrix4()
-    this.position = new Vector3()
-    this.quaternion = new Quaternion()
-    this.scale = new Vector3(1, 1, 1)
-    this.transform = new Matrix4()
 
     this.controls = new ComponentControls(this)
   }

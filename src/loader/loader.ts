@@ -32,7 +32,7 @@ abstract class Loader {
    * @param  {String|File|Blob} src - data source, string is interpreted as an URL
    * @param  {LoaderParameters} params - parameters object
    */
-  constructor (src: LoaderInput, params: Partial<LoaderParameters>) {
+  constructor (src: LoaderInput, params: Partial<LoaderParameters> = {}) {
     this.parameters = assignDefaults(params, {
       ext: '',
       compressed: false,
@@ -52,6 +52,11 @@ abstract class Loader {
       json: ParserRegistry.isJson(this.parameters.ext),
       xml: ParserRegistry.isXml(this.parameters.ext)
     }
+
+    Object.assign(this.parameters.parserParams, {
+      name: this.parameters.name,
+      path: this.parameters.path
+    })
 
     if ((typeof File !== 'undefined' && src instanceof File) ||
         (typeof Blob !== 'undefined' && src instanceof Blob)
