@@ -39,16 +39,11 @@ function getData (data: TubeMeshBufferData, params: Partial<TubeMeshBufferParame
   const x = n * radialSegments * 3 + 2 * capVertices * 3
   const xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3
 
-  const meshPosition = new Float32Array(x)
-  const meshColor = new Float32Array(x)
-  const meshNormal = new Float32Array(x)
-  const meshIndex = getUintArray(xi, x / 3)
-
   return {
-    position: meshPosition,
-    color: meshColor,
-    index: meshIndex,
-    normal: meshNormal,
+    position: new Float32Array(x),
+    color: new Float32Array(x),
+    index: getUintArray(xi, x / 3),
+    normal: new Float32Array(x),
     picking: data.picking
   }
 }

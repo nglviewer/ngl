@@ -4,15 +4,27 @@
  * @private
  */
 
-import { OctahedronBufferGeometry, Vector3 } from 'three'
+import { OctahedronBufferGeometry, Vector3, Matrix4, BufferGeometry } from 'three'
+declare module 'three' {
+  export class OctahedronBufferGeometry extends BufferGeometry {
+    constructor(radius: number, detail: number);
+  }
+}
 
 import { BufferRegistry } from '../globals'
 import GeometryBuffer from './geometry-buffer.js'
+import { BufferData, BufferParameters } from './buffer'
 
 const scale = new Vector3()
 const target = new Vector3()
 const up = new Vector3()
 const eye = new Vector3(0, 0, 0)
+
+export interface OctahedronBufferData extends BufferData {
+  heightAxis: Float32Array
+  depthAxis: Float32Array
+  size: Float32Array
+}
 
 /**
  * Octahedron buffer. Draws octahedrons.
@@ -27,33 +39,34 @@ const eye = new Vector3(0, 0, 0)
  * })
  */
 class OctahedronBuffer extends GeometryBuffer {
-  constructor (data, params) {
-    const p = params || {}
-    const geo = new OctahedronBufferGeometry(1, 0)
+  updateNormals = true
 
-    super(data, p, geo)
+  _heightAxis: Float32Array
+  _depthAxis: Float32Array
+  _size: Float32Array
+
+  constructor (data: OctahedronBufferData, params: Partial<BufferParameters> = {}) {
+    super(data, params, new OctahedronBufferGeometry(1, 0))
 
     this.setAttributes(data, true)
   }
 
-  applyPositionTransform (matrix, i, i3) {
-    target.fromArray(this._heightAxis, i3)
-    up.fromArray(this._depthAxis, i3)
+  applyPositionTransform (matrix: Matrix4, i: number, i3: number) {
+    target.fromArray(this._heightAxis as any, i3)
+    up.fromArray(this._depthAxis as any, i3)
     matrix.lookAt(eye, target, up)
 
     scale.set(this._size[ i ], up.length(), target.length())
     matrix.scale(scale)
   }
 
-  setAttributes (data, initNormals) {
+  setAttributes (data: Partial<OctahedronBufferData> = {}, initNormals?: boolean) {
     if (data.size) this._size = data.size
     if (data.heightAxis) this._heightAxis = data.heightAxis
     if (data.depthAxis) this._depthAxis = data.depthAxis
 
     super.setAttributes(data, initNormals)
   }
-
-  get updateNormals () { return true }
 }
 
 BufferRegistry.add('octahedron', OctahedronBuffer)

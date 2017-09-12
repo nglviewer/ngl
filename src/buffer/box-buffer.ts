@@ -4,15 +4,22 @@
  * @private
  */
 
-import { BoxBufferGeometry, Vector3 } from 'three'
+import { BoxBufferGeometry, Vector3, Matrix4 } from 'three'
 
 import { BufferRegistry } from '../globals'
-import GeometryBuffer from './geometry-buffer.js'
+import GeometryBuffer from './geometry-buffer'
+import { BufferData, BufferParameters } from './buffer'
 
 const scale = new Vector3()
 const target = new Vector3()
 const up = new Vector3()
 const eye = new Vector3(0, 0, 0)
+
+export interface BoxBufferData extends BufferData {
+  heightAxis: Float32Array
+  depthAxis: Float32Array
+  size: Float32Array
+}
 
 /**
  * Box buffer. Draws boxes.
@@ -27,33 +34,34 @@ const eye = new Vector3(0, 0, 0)
  * })
  */
 class BoxBuffer extends GeometryBuffer {
-  constructor (data, params) {
-    const p = params || {}
-    const geo = new BoxBufferGeometry(1, 1, 1)
+  updateNormals = true
 
-    super(data, p, geo)
+  _heightAxis: Float32Array
+  _depthAxis: Float32Array
+  _size: Float32Array
+
+  constructor (data: BoxBufferData, params: Partial<BufferParameters> = {}) {
+    super(data, params, new BoxBufferGeometry(1, 1, 1))
 
     this.setAttributes(data, true)
   }
 
-  applyPositionTransform (matrix, i, i3) {
-    target.fromArray(this._heightAxis, i3)
-    up.fromArray(this._depthAxis, i3)
+  applyPositionTransform (matrix: Matrix4, i: number, i3: number) {
+    target.fromArray(this._heightAxis as any, i3)
+    up.fromArray(this._depthAxis as any, i3)
     matrix.lookAt(eye, target, up)
 
     scale.set(this._size[ i ], up.length(), target.length())
     matrix.scale(scale)
   }
 
-  setAttributes (data, initNormals) {
+  setAttributes (data: Partial<BoxBufferData> = {}, initNormals?: boolean) {
     if (data.size) this._size = data.size
     if (data.heightAxis) this._heightAxis = data.heightAxis
     if (data.depthAxis) this._depthAxis = data.depthAxis
 
     super.setAttributes(data, initNormals)
   }
-
-  get updateNormals () { return true }
 }
 
 BufferRegistry.add('box', BoxBuffer)

@@ -7,13 +7,40 @@
 import { Matrix4, Vector3, ConeBufferGeometry } from 'three'
 
 import { defaults } from '../utils'
-import { calculateCenterArray } from '../math/array-utils.js'
-import GeometryBuffer from './geometry-buffer.js'
+import { calculateCenterArray } from '../math/array-utils'
+import GeometryBuffer from './geometry-buffer'
+import { BufferData, BufferDefaultParameters } from './buffer'
 
 const scale = new Vector3()
 const eye = new Vector3()
 const target = new Vector3()
 const up = new Vector3(0, 1, 0)
+
+function getGeo (params: Partial<ConeBufferParameters> = {}) {
+  const geo = new ConeBufferGeometry(
+    1,  // radius
+    1,  // height
+    defaults(params.radialSegments, 60),  // radialSegments
+    1,  // heightSegments
+    defaults(params.openEnded, false)  // openEnded
+  )
+  geo.applyMatrix(new Matrix4().makeRotationX(-Math.PI / 2))
+
+  return geo
+}
+
+export interface ConeBufferData extends BufferData {
+  position1: Float32Array
+  position2: Float32Array
+  radius: Float32Array
+}
+
+export const ConeBufferDefaultParameters = Object.assign({
+  radialSegments: 60,
+  openEnded: false
+}, BufferDefaultParameters)
+export type ConeBufferParameters = typeof ConeBufferDefaultParameters
+
 
 /**
  * Cone geometry buffer.
@@ -28,6 +55,16 @@ const up = new Vector3(0, 1, 0)
  * });
  */
 class ConeGeometryBuffer extends GeometryBuffer {
+  updateNormals = true
+
+  defaultParameters = ConeBufferDefaultParameters
+  parameters: ConeBufferParameters
+
+  _position: Float32Array
+  _position1: Float32Array
+  _position2: Float32Array
+  _radius: Float32Array
+
   /**
    * @param {Object} data - buffer data
    * @param {Float32Array} data.position1 - from positions
@@ -37,38 +74,21 @@ class ConeGeometryBuffer extends GeometryBuffer {
    * @param {Picker} [data.picking] - picking ids
    * @param {BufferParameters} [params] - parameters object
    */
-  constructor (data, params) {
-    const p = params || {}
-
-    const radialSegments = defaults(p.radialSegments, 60)
-    const openEnded = defaults(p.openEnded, false)
-    const matrix = new Matrix4().makeRotationX(-Math.PI / 2)
-
-    const geo = new ConeBufferGeometry(
-      1,  // radius
-      1,  // height
-      radialSegments,  // radialSegments
-      1,  // heightSegments
-      openEnded  // openEnded
-    )
-    geo.applyMatrix(matrix)
-
-    const position = new Float32Array(data.position1.length)
-
+  constructor (data: ConeBufferData, params: Partial<ConeBufferParameters> = {}) {
     super({
-      position: position,
+      position: new Float32Array(data.position1.length),
       color: data.color,
       picking: data.picking
-    }, p, geo)
+    }, params, getGeo(params))
 
-    this._position = position
+    this._position = new Float32Array(data.position1.length)
 
     this.setAttributes(data, true)
   }
 
-  applyPositionTransform (matrix, i, i3) {
-    eye.fromArray(this._position1, i3)
-    target.fromArray(this._position2, i3)
+  applyPositionTransform (matrix: Matrix4, i: number, i3: number) {
+    eye.fromArray(this._position1 as any, i3)
+    target.fromArray(this._position2 as any, i3)
     matrix.lookAt(eye, target, up)
 
     const r = this._radius[ i ]
@@ -76,7 +96,7 @@ class ConeGeometryBuffer extends GeometryBuffer {
     matrix.scale(scale)
   }
 
-  setAttributes (data, initNormals) {
+  setAttributes (data: Partial<ConeBufferData> = {}, initNormals?: boolean) {
     if (data.position1 && data.position2) {
       calculateCenterArray(data.position1, data.position2, this._position)
       this._position1 = data.position1
@@ -87,8 +107,6 @@ class ConeGeometryBuffer extends GeometryBuffer {
 
     super.setAttributes(data, initNormals)
   }
-
-  get updateNormals () { return true }
 }
 
 export default ConeGeometryBuffer

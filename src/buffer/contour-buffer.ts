@@ -7,15 +7,15 @@
 import '../shader/Line.vert'
 import '../shader/Line.frag'
 
-import Buffer from './buffer.js'
+import Buffer from './buffer'
 
 /**
  * Contour buffer. A buffer that draws lines (instead of triangle meshes).
  */
 class ContourBuffer extends Buffer {
-  get isLine () { return true }
-  get vertexShader () { return 'Line.vert' }
-  get fragmentShader () { return 'Line.frag' }
+  isLine = true
+  vertexShader = 'Line.vert'
+  fragmentShader = 'Line.frag'
 }
 
 export default ContourBuffer

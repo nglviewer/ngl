@@ -7,11 +7,28 @@
 import { Matrix4, Vector3, Group } from 'three'
 
 import { BufferRegistry } from '../globals'
-import { defaults } from '../utils'
+import { assignDefaults, defaults } from '../utils'
+import { Picker } from '../utils/picker'
 import Buffer from './buffer'
-import CylinderBuffer from './cylinder-buffer'
-import ConeBuffer from './cone-buffer'
+import CylinderBuffer, { CylinderBufferData } from './cylinder-buffer'
+import CylinderGeometryBuffer from './cylindergeometry-buffer'
+import ConeBuffer, { ConeBufferData } from './cone-buffer'
 import GeometryGroup from '../viewer/geometry-group'
+import { BufferData, BufferDefaultParameters } from './buffer'
+
+export interface ArrowBufferData extends BufferData {
+  position1: Float32Array
+  position2: Float32Array
+  radius: Float32Array
+}
+
+const ArrowBufferDefaultParameters = Object.assign({
+  aspectRatio: 1.5,
+  radialSegments: 50,
+  openEnded: false,
+  disableImpostor: false
+}, BufferDefaultParameters)
+type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
 
 /**
  * Arrow buffer. Draws arrows made from a cylinder and a cone.
@@ -26,6 +43,24 @@ import GeometryGroup from '../viewer/geometry-group'
  * });
  */
 class ArrowBuffer {
+  parameters: ArrowBufferParameters
+  defaultParameters = ArrowBufferDefaultParameters
+
+  cylinderBuffer: CylinderGeometryBuffer
+  coneBuffer: ConeBuffer
+
+  splitPosition: Float32Array
+  cylinderRadius: Float32Array
+
+  geometry: GeometryGroup
+  picking?: Picker
+
+  group = new Group()
+  wireframeGroup = new Group()
+  pickingGroup = new Group()
+
+  visible = true
+
   /**
    * @param {Object} data - buffer data
    * @param {Float32Array} data.position1 - from positions
@@ -35,28 +70,24 @@ class ArrowBuffer {
    * @param {Picker} [data.picking] - picking ids
    * @param {BufferParameters} [params] - parameters object
    */
-  constructor (data, params) {
-    const d = data || {}
-    const p = params || {}
+  constructor (data: ArrowBufferData, params: Partial<ArrowBufferParameters> = {}) {
+    this.parameters = assignDefaults(params, this.defaultParameters)
 
-    this.aspectRatio = defaults(p.aspectRatio, 1.5)
-    this.wireframe = defaults(p.wireframe, false)
+    this.splitPosition = new Float32Array(data.position1.length)
+    this.cylinderRadius = new Float32Array(data.radius.length)
 
-    this.splitPosition = new Float32Array(d.position1.length)
-    this.cylinderRadius = new Float32Array(d.radius.length)
-
-    var attr = this.makeAttributes(d)
+    var attr = this.makeAttributes(data)
     var bufferParams = {
-      radialSegments: defaults(p.radialSegments, 50),
-      openEnded: defaults(p.openEnded, false),
-      disableImpostor: defaults(p.disableImpostor, false)
+      radialSegments: this.parameters.radialSegments,
+      openEnded: this.parameters.openEnded,
+      disableImpostor: this.parameters.disableImpostor
     }
 
     this.cylinderBuffer = new CylinderBuffer(
-      attr.cylinder, bufferParams
-    )
+      attr.cylinder as CylinderBufferData, bufferParams
+    ) as CylinderGeometryBuffer
     this.coneBuffer = new ConeBuffer(
-      attr.cone, bufferParams
+      attr.cone as ConeBufferData, bufferParams
     )
 
     this.geometry = new GeometryGroup([
@@ -64,14 +95,10 @@ class ArrowBuffer {
       this.coneBuffer.geometry
     ])
 
-    this.group = new Group()
-    this.wireframeGroup = new Group()
-    this.pickingGroup = new Group()
-
     // requires Group objects to be present
-    this.matrix = defaults(p.matrix, new Matrix4())
+    this.matrix = defaults(params.matrix, new Matrix4())
 
-    this.picking = d.picking
+    this.picking = data.picking
   }
 
   set matrix (m) {
@@ -85,15 +112,15 @@ class ArrowBuffer {
     return !!this.picking
   }
 
-  makeAttributes (data) {
+  makeAttributes (data: Partial<ArrowBufferData> = {}) {
     const splitPosition = this.splitPosition
     const cylinderRadius = this.cylinderRadius
 
-    const aspectRatio = this.aspectRatio
+    const aspectRatio = this.parameters.aspectRatio
 
     let i, il
-    const cylinder = {}
-    const cone = {}
+    const cylinder: Partial<CylinderBufferData> = {}
+    const cone: Partial<ConeBufferData> = {}
 
     if (data.radius) {
       for (i = 0, il = cylinderRadius.length; i < il; ++i) {
@@ -109,15 +136,15 @@ class ArrowBuffer {
       var vDir = new Vector3()
       var vSplit = new Vector3()
       for (i = 0, il = splitPosition.length; i < il; i += 3) {
-        vFrom.fromArray(data.position1, i)
-        vTo.fromArray(data.position2, i)
+        vFrom.fromArray(data.position1 as any, i)
+        vTo.fromArray(data.position2 as any, i)
         vDir.subVectors(vFrom, vTo)
         var fullLength = vDir.length()
         var coneLength = cylinderRadius[ i / 3 ] * aspectRatio * 2
         var length = Math.min(fullLength, coneLength)
         vDir.setLength(length)
         vSplit.copy(vTo).add(vDir)
-        vSplit.toArray(splitPosition, i)
+        vSplit.toArray(splitPosition as any, i)
       }
       cylinder.position1 = data.position1
       cylinder.position2 = splitPosition
@@ -137,40 +164,40 @@ class ArrowBuffer {
     }
   }
 
-  getMesh (picking) {
+  getMesh () {
     return new Group().add(
-            this.cylinderBuffer.getMesh(picking),
-            this.coneBuffer.getMesh(picking)
-        )
+      this.cylinderBuffer.getMesh(),
+      this.coneBuffer.getMesh()
+    )
   }
 
   getWireframeMesh () {
     return new Group().add(
-            this.cylinderBuffer.getWireframeMesh(),
-            this.coneBuffer.getWireframeMesh()
-        )
+      this.cylinderBuffer.getWireframeMesh(),
+      this.coneBuffer.getWireframeMesh()
+    )
   }
 
   getPickingMesh () {
     return new Group().add(
-            this.cylinderBuffer.getPickingMesh(),
-            this.coneBuffer.getPickingMesh()
-        )
+      this.cylinderBuffer.getPickingMesh(),
+      this.coneBuffer.getPickingMesh()
+    )
   }
 
-  setAttributes (data) {
+  setAttributes (data: Partial<ArrowBufferData> = {}) {
     var attr = this.makeAttributes(data)
 
     this.cylinderBuffer.setAttributes(attr.cylinder)
     this.coneBuffer.setAttributes(attr.cone)
   }
 
-    /**
-     * Set buffer parameters
-     * @param {BufferParameters} params - buffer parameters object
-     * @return {undefined}
-     */
-  setParameters (params) {
+  /**
+   * Set buffer parameters
+   * @param {BufferParameters} params - buffer parameters object
+   * @return {undefined}
+   */
+  setParameters (params: Partial<ArrowBufferParameters> = {}) {
     params = Object.assign({}, params)
 
     if (params && params.matrix !== undefined) {
@@ -179,7 +206,7 @@ class ArrowBuffer {
     delete params.matrix
 
     if (params && params.wireframe !== undefined) {
-      this.wireframe = params.wireframe
+      this.parameters.wireframe = params.wireframe
       this.setVisibility(this.visible)
     }
 
@@ -187,8 +214,8 @@ class ArrowBuffer {
     this.coneBuffer.setParameters(params)
   }
 
-  setVisibility () {
-    Buffer.prototype.setVisibility.apply(this, arguments)
+  setVisibility (value: boolean) {
+    Buffer.prototype.setVisibility.apply(this, value)
   }
 
   dispose () {
