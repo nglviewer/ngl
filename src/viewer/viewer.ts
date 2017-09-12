@@ -535,7 +535,7 @@ export default class Viewer {
       this.addBuffer(buffer)
     }
 
-    if (buffer.background) {
+    if (buffer.parameters.background) {
       this.backgroundGroup.add(buffer.group)
       this.backgroundGroup.add(buffer.wireframeGroup)
     } else {

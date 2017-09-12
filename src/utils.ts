@@ -410,8 +410,8 @@ export function getTypedArray (arrayType: TypedArrayString, arraySize: number) {
   }
 }
 
-export function getUintArray (sizeOrArray: any, maxUnit: number) {  // TODO
-  const TypedArray = maxUnit > 65535 ? Uint32Array : Uint16Array
+export function getUintArray (sizeOrArray: any, maxUint: number) {  // TODO
+  const TypedArray = maxUint > 65535 ? Uint32Array : Uint16Array
   return new TypedArray(sizeOrArray)
 }
 

@@ -5,8 +5,21 @@
  */
 
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
-import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
-import CylinderImpostorBuffer from './cylinderimpostor-buffer.js'
+import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
+import CylinderImpostorBuffer, { CylinderImpostorBufferDefaultParameters } from './cylinderimpostor-buffer'
+import { BufferData } from './buffer'
+
+export interface CylinderBufferData extends BufferData {
+  position1: Float32Array
+  position2: Float32Array
+  color2: Float32Array
+  radius: Float32Array
+}
+
+const CylinderBufferDefaultParameters = Object.assign({
+  disableImpostor: false
+}, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters)
+type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
 
 /**
  * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -35,11 +48,7 @@ class CylinderBuffer {
    * @param {BufferParameters} [params] - parameters object
    * @return {CylinderGeometryBuffer|CylinderImpostorBuffer} the buffer object
    */
-  constructor (data, params) {
-    if (!data.color2) {
-      data.color2 = data.color
-    }
-
+  constructor (data: CylinderBufferData, params: Partial<CylinderBufferParameters> = {}) {
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
       return new CylinderGeometryBuffer(data, params)
     } else {

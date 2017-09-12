@@ -8,33 +8,33 @@ import { Matrix4, Vector3, Group } from 'three'
 
 import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
-import Buffer from './buffer.js'
-import CylinderBuffer from './cylinder-buffer.js'
-import ConeBuffer from './cone-buffer.js'
-import GeometryGroup from '../viewer/geometry-group.js'
+import Buffer from './buffer'
+import CylinderBuffer from './cylinder-buffer'
+import ConeBuffer from './cone-buffer'
+import GeometryGroup from '../viewer/geometry-group'
 
 /**
  * Arrow buffer. Draws arrows made from a cylinder and a cone.
  * @implements {Buffer}
  *
  * @example
- * var arrowBuffer = new ArrowBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 10, 1, 1 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var arrowBuffer = new ArrowBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 10, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
 class ArrowBuffer {
-    /**
-     * @param {Object} data - buffer data
-     * @param {Float32Array} data.position1 - from positions
-     * @param {Float32Array} data.position2 - to positions
-     * @param {Float32Array} data.color - colors
-     * @param {Float32Array} data.radius - radii
-     * @param {Picker} [data.picking] - picking ids
-     * @param {BufferParameters} [params] - parameters object
-     */
+  /**
+   * @param {Object} data - buffer data
+   * @param {Float32Array} data.position1 - from positions
+   * @param {Float32Array} data.position2 - to positions
+   * @param {Float32Array} data.color - colors
+   * @param {Float32Array} data.radius - radii
+   * @param {Picker} [data.picking] - picking ids
+   * @param {BufferParameters} [params] - parameters object
+   */
   constructor (data, params) {
     const d = data || {}
     const p = params || {}
@@ -53,11 +53,11 @@ class ArrowBuffer {
     }
 
     this.cylinderBuffer = new CylinderBuffer(
-            attr.cylinder, bufferParams
-        )
+      attr.cylinder, bufferParams
+    )
     this.coneBuffer = new ConeBuffer(
-            attr.cone, bufferParams
-        )
+      attr.cone, bufferParams
+    )
 
     this.geometry = new GeometryGroup([
       this.cylinderBuffer.geometry,
@@ -68,7 +68,7 @@ class ArrowBuffer {
     this.wireframeGroup = new Group()
     this.pickingGroup = new Group()
 
-        // requires Group objects to be present
+    // requires Group objects to be present
     this.matrix = defaults(p.matrix, new Matrix4())
 
     this.picking = d.picking

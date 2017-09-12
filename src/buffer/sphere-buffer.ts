@@ -5,8 +5,18 @@
  */
 
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
-import SphereGeometryBuffer from './spheregeometry-buffer.js'
-import SphereImpostorBuffer from './sphereimpostor-buffer.js'
+import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './spheregeometry-buffer'
+import SphereImpostorBuffer from './sphereimpostor-buffer'
+import { BufferData } from './buffer'
+
+export interface SphereBufferData extends BufferData {
+  radius: Float32Array
+}
+
+const SphereBufferDefaultParameters = Object.assign({
+  disableImpostor: false
+}, SphereGeometryBufferDefaultParameters)
+type SphereBufferParameters = typeof SphereBufferDefaultParameters
 
 /**
  * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -31,7 +41,7 @@ class SphereBuffer {
      * @param {BufferParameters} params - parameters object
      * @return {SphereGeometryBuffer|SphereImpostorBuffer} the buffer object
      */
-  constructor (data, params) {
+  constructor (data: SphereBufferData, params: SphereBufferParameters) {
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
       return new SphereGeometryBuffer(data, params)
     } else {

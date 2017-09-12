@@ -4,7 +4,7 @@
  * @private
  */
 
-import MappedBuffer from './mapped-buffer.js'
+import MappedBuffer, { MappingType } from './mapped-buffer'
 
 const mapping = new Float32Array([
   -1.0, 1.0, -1.0,
@@ -31,7 +31,7 @@ class MappedAlignedBoxBuffer extends MappedBuffer {
   get mapping () { return mapping }
   get mappingIndices () { return mappingIndices }
   get mappingIndicesSize () { return 12 }
-  get mappingType () { return 'v3' }
+  get mappingType () { return 'v3' as MappingType }
   get mappingSize () { return 6 }
   get mappingItemSize () { return 3 }
 }

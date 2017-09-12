@@ -10,13 +10,14 @@ import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
 
 import { Browser, BufferRegistry } from '../globals'
-import { defaults } from '../utils'
-import MappedQuadBuffer from './mappedquad-buffer.js'
-import { IgnorePicker } from '../utils/picker.js'
+import { assignDefaults } from '../utils'
+import MappedQuadBuffer from './mappedquad-buffer'
+import { IgnorePicker } from '../utils/picker'
+import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
-const TextAtlasCache = {}
+const TextAtlasCache: { [k: string]: TextAtlas } = {}
 
-function getTextAtlas (params) {
+function getTextAtlas (params: Partial<TextAtlasParams>) {
   const hash = JSON.stringify(params)
   if (TextAtlasCache[ hash ] === undefined) {
     TextAtlasCache[ hash ] = new TextAtlas(params)
@@ -24,35 +25,61 @@ function getTextAtlas (params) {
   return TextAtlasCache[ hash ]
 }
 
+type TextFonts = 'sans-serif'|'monospace'|'serif'
+type TextStyles = 'normal'|'italic'
+type TextVariants = 'normal'
+type TextWeights = 'normal'|'bold'
+
+const TextAtlasDefaultParams = {
+  font: 'sans-serif' as TextFonts,
+  size: 36,
+  style: 'normal' as TextStyles,
+  variant: 'normal' as TextVariants,
+  weight: 'normal' as TextWeights,
+  outline: 0,
+  width: 2048,
+  height: 2048
+}
+type TextAtlasParams = typeof TextAtlasDefaultParams
+
+type TextAtlasMap = { x: number, y: number, w: number, h: number }
+
 class TextAtlas {
-  constructor (params) {
-        // adapted from https://github.com/unconed/mathbox
-        // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+  parameters: TextAtlasParams
 
-    const p = Object.assign({}, params)
+  gamma = 1
+  mapped: { [k: string]: TextAtlasMap } = {}
+  scratchW = 0
+  scratchH = 0
+  currentX = 0
+  currentY = 0
 
-    this.font = defaults(p.font, [ 'sans-serif' ])
-    this.size = defaults(p.size, 36)
-    this.style = defaults(p.style, 'normal')
-    this.variant = defaults(p.variant, 'normal')
-    this.weight = defaults(p.weight, 'normal')
-    this.outline = defaults(p.outline, 0)
-    this.width = defaults(p.width, 2048)
-    this.height = defaults(p.height, 2048)
+  texture: CanvasTexture
+  canvas: HTMLCanvasElement
+  context: CanvasRenderingContext2D
+  lineHeight: number
+  maxWidth: number
+  colors: string[]
+  scratch: Uint8Array
+  canvas2: HTMLCanvasElement
+  context2: CanvasRenderingContext2D
+  data: Uint8Array
 
-    this.gamma = 1
+  placeholder: TextAtlasMap
+
+  constructor (params: Partial<TextAtlasParams> = {}) {
+    // adapted from https://github.com/unconed/mathbox
+    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+
+    this.parameters = assignDefaults(params, TextAtlasDefaultParams)
+
+
     if (typeof navigator !== 'undefined') {
       const ua = navigator.userAgent
       if (ua.match(/Chrome/) && ua.match(/OS X/)) {
         this.gamma = 0.5
       }
     }
-
-    this.mapped = {}
-    this.scratchW = 0
-    this.scratchH = 0
-    this.currentX = 0
-    this.currentY = 0
 
     this.build()
     this.populate()
@@ -63,27 +90,29 @@ class TextAtlas {
   }
 
   build () {
-        // Prepare line-height with room for outline and descenders/ascenders
-    const lineHeight = this.size + 2 * this.outline + Math.round(this.size / 4)
-    const maxWidth = this.width / 4
+    const p = this.parameters
 
-        // Prepare scratch canvas
+    // Prepare line-height with room for outline and descenders/ascenders
+    const lineHeight = p.size + 2 * p.outline + Math.round(p.size / 4)
+    const maxWidth = p.width / 4
+
+    // Prepare scratch canvas
     const canvas = document.createElement('canvas')
     canvas.width = maxWidth
     canvas.height = lineHeight
 
-    const ctx = canvas.getContext('2d')
-    ctx.font = this.style + ' ' + this.variant + ' ' + this.weight + ' ' + this.size + 'px ' + this.font
+    const ctx = canvas.getContext('2d')!
+    ctx.font = `${p.style} ${p.variant} ${p.weight} ${p.size}px ${p.font}`
     ctx.fillStyle = '#FF0000'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
     ctx.lineJoin = 'round'
 
     const colors = []
-    const dilate = this.outline * 3
+    const dilate = p.outline * 3
     for (let i = 0; i < dilate; ++i) {
-            // 8 rgb levels = 1 step = .5 pixel increase
-      const val = Math.max(0, -i * 8 + 128 - (!i) * 8)
+      // 8 rgb levels = 1 step = .5 pixel increase
+      const val = Math.max(0, -i * 8 + 128 - i * 8)
       const hex = ('00' + val.toString(16)).slice(-2)
       colors.push('#' + hex + hex + hex)
     }
@@ -96,23 +125,25 @@ class TextAtlas {
     this.colors = colors
     this.scratch = scratch
 
-    this.data = new Uint8Array(this.width * this.height * 4)
+    this.data = new Uint8Array(p.width * p.height * 4)
 
     this.canvas2 = document.createElement('canvas')
-    this.canvas2.width = this.width
-    this.canvas2.height = this.height
-    this.context2 = this.canvas2.getContext('2d')
+    this.canvas2.width = p.width
+    this.canvas2.height = p.height
+    this.context2 = this.canvas2.getContext('2d')!
   }
 
-  map (text) {
+  map (text: string) {
+    const p = this.parameters
+
     if (this.mapped[ text ] === undefined) {
       this.draw(text)
 
-      if (this.currentX + this.scratchW > this.width) {
+      if (this.currentX + this.scratchW > p.width) {
         this.currentX = 0
         this.currentY += this.scratchH
       }
-      if (this.currentY + this.scratchH > this.height) {
+      if (this.currentY + this.scratchH > p.height) {
         console.warn('canvas to small')
       }
 
@@ -124,12 +155,12 @@ class TextAtlas {
       }
 
       this.context2.drawImage(
-                this.canvas,
-                0, 0,
-                this.scratchW, this.scratchH,
-                this.currentX, this.currentY,
-                this.scratchW, this.scratchH
-            )
+        this.canvas,
+        0, 0,
+        this.scratchW, this.scratchH,
+        this.currentX, this.currentY,
+        this.scratchW, this.scratchH
+      )
 
       this.currentX += this.scratchW
     }
@@ -137,13 +168,15 @@ class TextAtlas {
     return this.mapped[ text ]
   }
 
-  get (text) {
+  get (text: string) {
     return this.mapped[ text ] || this.placeholder
   }
 
-  draw (text) {
+  draw (text: string) {
+    const p = this.parameters
+
     const h = this.lineHeight
-    const o = this.outline
+    const o = p.outline
     const ctx = this.context
     const dst = this.scratch
     const max = this.maxWidth
@@ -151,7 +184,7 @@ class TextAtlas {
 
         // Bottom aligned, take outline into account
     const x = o
-    const y = h - this.outline
+    const y = h - p.outline
 
         // Measure text
     const m = ctx.measureText(text)
@@ -162,7 +195,7 @@ class TextAtlas {
 
     let i, il, j, imageData, data
 
-    if (this.outline === 0) {
+    if (p.outline === 0) {
       ctx.fillText(text, x, y)
       imageData = ctx.getImageData(0, 0, w, h)
       data = imageData.data
@@ -174,11 +207,11 @@ class TextAtlas {
       }
     } else {
       ctx.globalCompositeOperation = 'source-over'
-            // Draw strokes of decreasing width to create
-            // nested outlines (absolute distance)
+      // Draw strokes of decreasing width to create
+      // nested outlines (absolute distance)
       for (i = o + 1; i > 0; --i) {
-                // Eliminate odd strokes once past > 1px,
-                // don't need the detail
+        // Eliminate odd strokes once past > 1px,
+        // don't need the detail
         j = i > 1 ? i * 2 - 2 : i
         ctx.strokeStyle = colors[ j - 1 ]
         ctx.lineWidth = j
@@ -193,7 +226,7 @@ class TextAtlas {
       j = 0
       const gamma = this.gamma
       for (i = 0, il = data.length / 4; i < il; ++i) {
-                // Get value + mask
+        // Get value + mask
         const a = data[ j ]
         let mask = a ? data[ j + 1 ] / a : 1
         if (gamma === 0.5) {
@@ -201,11 +234,11 @@ class TextAtlas {
         }
         mask = Math.min(1, Math.max(0, mask))
 
-                // Blend between positive/outside and negative/inside
+        // Blend between positive/outside and negative/inside
         const b = 256 - a
         const c = b + (a - b) * mask
 
-                // Clamp (slight expansion to hide errors around the transition)
+        // Clamp (slight expansion to hide errors around the transition)
         dst[ i ] = Math.max(0, Math.min(255, c + 2))
         data[ j + 3 ] = dst[ i ]
         j += 4
@@ -218,30 +251,30 @@ class TextAtlas {
   }
 
   populate () {
-        // Replacement Character
+    // Replacement Character
     this.placeholder = this.map(String.fromCharCode(0xFFFD))
 
-        // Basic Latin
+    // Basic Latin
     for (let i = 0x0000; i < 0x007F; ++i) {
       this.map(String.fromCharCode(i))
     }
 
-        // Latin-1 Supplement
+    // Latin-1 Supplement
     for (let i = 0x0080; i < 0x00FF; ++i) {
       this.map(String.fromCharCode(i))
     }
 
-        // Greek and Coptic
+    // Greek and Coptic
     for (let i = 0x0370; i < 0x03FF; ++i) {
       this.map(String.fromCharCode(i))
     }
 
-        // Cyrillic
+    // Cyrillic
     for (let i = 0x0400; i < 0x04FF; ++i) {
       this.map(String.fromCharCode(i))
     }
 
-        // Angstrom Sign
+    // Angstrom Sign
     this.map(String.fromCharCode(0x212B))
   }
 }
@@ -280,78 +313,117 @@ class TextAtlas {
  * @property {Float} backgroundOpacity - opacity of the background
  */
 
+interface TextBufferData extends BufferData {
+  size: Float32Array
+  text: string[]
+}
+
+type TextAttachments = 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
+
+const TextBufferDefaultParameters = Object.assign({
+  fontFamily: 'sans-serif' as TextFonts,
+  fontStyle: 'normal' as TextStyles,
+  fontWeight: 'bold' as TextWeights,
+  fontSize: 48,
+  sdf: Browser === 'Chrome',
+  xOffset: 0.0,
+  yOffset: 0.0,
+  zOffset: 0.5,
+  attachment: 'bottom-left' as TextAttachments,
+  showBorder: false,
+  borderColor: 'lightgrey' as number|string,
+  borderWidth: 0.15,
+  showBackground: false,
+  backgroundColor: 'lightgrey' as number|string,
+  backgroundMargin: 0.5,
+  backgroundOpacity: 1.0,
+  forceTransparent: true
+}, BufferDefaultParameters)
+type TextBufferParameters = typeof TextBufferDefaultParameters
+
+const TextBufferParameterTypes = Object.assign({
+  fontFamily: { uniform: true },
+  fontStyle: { uniform: true },
+  fontWeight: { uniform: true },
+  fontSize: { uniform: true },
+  sdf: { updateShader: true, uniform: true },
+  xOffset: { uniform: true },
+  yOffset: { uniform: true },
+  zOffset: { uniform: true },
+  showBorder: { uniform: true },
+  borderColor: { uniform: true },
+  borderWidth: { uniform: true },
+  backgroundColor: { uniform: true },
+  backgroundOpacity: { uniform: true }
+}, BufferParameterTypes)
+
+function getCharCount (data: TextBufferData, params: Partial<TextBufferParameters>) {
+  const n = data.position.length / 3
+  let charCount = 0
+  for (let i = 0; i < n; ++i) {
+    charCount += data.text[ i ].length
+  }
+  if (params.showBackground) charCount += n
+
+  return charCount
+}
+
 /**
  * Text buffer. Renders screen-aligned text strings.
  *
  * @example
- * var textBuffer = new TextBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     size: new Float32Array( [ 2 ] ),
- *     text: [ "Hello" ]
- * } );
+ * var textBuffer = new TextBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   size: new Float32Array([ 2 ]),
+ *   text: [ "Hello" ]
+ * });
  */
 class TextBuffer extends MappedQuadBuffer {
-    /**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.color - colors
-     * @param  {Float32Array} data.size - sizes
-     * @param  {String[]} data.text - text strings
-     * @param  {TextBufferParameters} params - parameters object
-     */
-  constructor (data, params) {
-    var d = data || {}
-    var p = params || {}
+  parameterTypes = TextBufferParameterTypes
+  defaultParameters = TextBufferDefaultParameters
+  parameters: TextBufferParameters
 
-    p.forceTransparent = true
+  alwaysTransparent = true
+  hasWireframe = false
+  isText = true
+  vertexShader = 'SDFFont.vert'
+  fragmentShader = 'SDFFont.frag'
 
-    var n = d.position.length / 3
-    var charCount = 0
-    for (var i = 0; i < n; ++i) {
-      charCount += d.text[ i ].length
-    }
+  text: string[]
+  positionCount: number
+  texture: CanvasTexture
+  textAtlas: TextAtlas
 
-    var count = charCount
-    if (p.showBackground) count += n
-
+  /**
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position - positions
+   * @param  {Float32Array} data.color - colors
+   * @param  {Float32Array} data.size - sizes
+   * @param  {String[]} data.text - text strings
+   * @param  {TextBufferParameters} params - parameters object
+   */
+  constructor (data: TextBufferData, params: Partial<TextBufferParameters> = {}) {
     super({
-      position: new Float32Array(count * 3),
-      color: new Float32Array(count * 3),
+      position: new Float32Array(getCharCount(data, params) * 3),
+      color: new Float32Array(getCharCount(data, params) * 3),
       picking: new IgnorePicker()
-    }, p)
+    }, params)
 
-    this.fontFamily = defaults(p.fontFamily, 'sans-serif')
-    this.fontStyle = defaults(p.fontStyle, 'normal')
-    this.fontWeight = defaults(p.fontWeight, 'bold')
-    this.fontSize = defaults(p.fontSize, 48)
-    this.sdf = defaults(p.sdf, Browser === 'Chrome')
-    this.xOffset = defaults(p.xOffset, 0.0)
-    this.yOffset = defaults(p.yOffset, 0.0)
-    this.zOffset = defaults(p.zOffset, 0.5)
-    this.attachment = defaults(p.attachment, 'bottom-left')
-    this.showBorder = defaults(p.showBorder, false)
-    this.borderColor = defaults(p.borderColor, 'lightgrey')
-    this.borderWidth = defaults(p.borderWidth, 0.15)
-    this.showBackground = defaults(p.showBackground, false)
-    this.backgroundColor = defaults(p.backgroundColor, 'lightgrey')
-    this.backgroundMargin = defaults(p.backgroundMargin, 0.5)
-    this.backgroundOpacity = defaults(p.backgroundOpacity, 1.0)
-
-    this.text = d.text
-    this.positionCount = n
+    this.text = data.text
+    this.positionCount = data.position.length / 3
 
     this.addUniforms({
       'fontTexture': { value: null },
-      'xOffset': { value: this.xOffset },
-      'yOffset': { value: this.yOffset },
-      'zOffset': { value: this.zOffset },
+      'xOffset': { value: this.parameters.xOffset },
+      'yOffset': { value: this.parameters.yOffset },
+      'zOffset': { value: this.parameters.zOffset },
       'ortho': { value: false },
-      'showBorder': { value: this.showBorder },
-      'borderColor': { value: new Color(this.borderColor) },
-      'borderWidth': { value: this.borderWidth },
-      'backgroundColor': { value: new Color(this.backgroundColor) },
-      'backgroundOpacity': { value: this.backgroundOpacity }
+      'showBorder': { value: this.parameters.showBorder },
+      'borderColor': { value: new Color(this.parameters.borderColor as number) },
+      'borderWidth': { value: this.parameters.borderWidth },
+      'backgroundColor': { value: new Color(this.parameters.backgroundColor as number) },
+      'backgroundOpacity': { value: this.parameters.backgroundOpacity }
     })
 
     this.addAttributes({
@@ -363,30 +435,6 @@ class TextBuffer extends MappedQuadBuffer {
 
     this.makeTexture()
     this.makeMapping()
-  }
-
-  get parameters () {
-    return Object.assign({
-
-      fontFamily: { uniform: true },
-      fontStyle: { uniform: true },
-      fontWeight: { uniform: true },
-      fontSize: { uniform: true },
-      sdf: { updateShader: true, uniform: true },
-      xOffset: { uniform: true },
-      yOffset: { uniform: true },
-      zOffset: { uniform: true },
-      showBorder: { uniform: true },
-      borderColor: { uniform: true },
-      borderWidth: { uniform: true },
-      backgroundColor: { uniform: true },
-      backgroundOpacity: { uniform: true }
-
-    }, super.parameters, {
-
-      flatShaded: undefined
-
-    })
   }
 
   makeMaterial () {
@@ -413,12 +461,12 @@ class TextBuffer extends MappedQuadBuffer {
     pm.needsUpdate = true
   }
 
-  setAttributes (data) {
+  setAttributes (data: Partial<TextBufferData> = {}) {
     let position, size, color
     let aPosition, inputSize, aColor
 
     const text = this.text
-    const attributes = this.geometry.attributes
+    const attributes = this.geometry.attributes as any  // TODO
 
     if (data.position) {
       position = data.position
@@ -448,7 +496,7 @@ class TextBuffer extends MappedQuadBuffer {
       o = 3 * v
       txt = text[ v ]
       nChar = txt.length
-      if (this.showBackground) nChar += 1
+      if (this.parameters.showBackground) nChar += 1
 
       for (iChar = 0; iChar < nChar; ++iChar, ++iCharAll) {
         for (let m = 0; m < 4; m++) {
@@ -476,11 +524,11 @@ class TextBuffer extends MappedQuadBuffer {
 
   makeTexture () {
     this.textAtlas = getTextAtlas({
-      font: [ this.fontFamily ],
-      style: this.fontStyle,
-      weight: this.fontWeight,
-      size: this.fontSize,
-      outline: this.sdf ? 5 : 0
+      font: this.parameters.fontFamily,
+      style: this.parameters.fontStyle,
+      weight: this.parameters.fontWeight,
+      size: this.parameters.fontSize,
+      outline: this.parameters.sdf ? 5 : 0
     })
 
     this.texture = this.textAtlas.texture
@@ -489,11 +537,12 @@ class TextBuffer extends MappedQuadBuffer {
   makeMapping () {
     const ta = this.textAtlas
     const text = this.text
-    const attachment = this.attachment
-    const margin = (ta.lineHeight * this.backgroundMargin * 0.1) - 10
+    const attachment = this.parameters.attachment
+    const margin = (ta.lineHeight * this.parameters.backgroundMargin * 0.1) - 10
 
-    const inputTexCoord = this.geometry.attributes.inputTexCoord.array
-    const inputMapping = this.geometry.attributes.mapping.array
+    const attribs = this.geometry.attributes as any  // TODO
+    const inputTexCoord = attribs.inputTexCoord.array
+    const inputMapping = attribs.mapping.array
 
     const n = this.positionCount
     let iCharAll = 0
@@ -504,13 +553,13 @@ class TextBuffer extends MappedQuadBuffer {
       xadvance = 0
       nChar = txt.length
 
-            // calculate width
+      // calculate width
       for (iChar = 0; iChar < nChar; ++iChar) {
         c = ta.get(txt[ iChar ])
-        xadvance += c.w - 2 * ta.outline
+        xadvance += c.w - 2 * ta.parameters.outline
       }
 
-            // attachment
+      // attachment
       if (attachment.startsWith('top')) {
         yShift = ta.lineHeight / 1.25
       } else if (attachment.startsWith('middle')) {
@@ -525,19 +574,19 @@ class TextBuffer extends MappedQuadBuffer {
       } else {
         xShift = 0  // "left"
       }
-      xShift += ta.outline
-      yShift += ta.outline
+      xShift += ta.parameters.outline
+      yShift += ta.parameters.outline
 
-            // background
-      if (this.showBackground) {
+      // background
+      if (this.parameters.showBackground) {
         i = iCharAll * 2 * 4
         inputMapping[ i + 0 ] = -ta.lineHeight / 6 - xShift - margin  // top left
         inputMapping[ i + 1 ] = ta.lineHeight - yShift + margin
         inputMapping[ i + 2 ] = -ta.lineHeight / 6 - xShift - margin  // bottom left
         inputMapping[ i + 3 ] = 0 - yShift - margin
-        inputMapping[ i + 4 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin  // top right
+        inputMapping[ i + 4 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.parameters.outline + margin  // top right
         inputMapping[ i + 5 ] = ta.lineHeight - yShift + margin
-        inputMapping[ i + 6 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin  // bottom right
+        inputMapping[ i + 6 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.parameters.outline + margin  // bottom right
         inputMapping[ i + 7 ] = 0 - yShift - margin
         inputTexCoord[ i + 0 ] = 10
         inputTexCoord[ i + 2 ] = 10
@@ -561,8 +610,8 @@ class TextBuffer extends MappedQuadBuffer {
         inputMapping[ i + 6 ] = xadvance + c.w - xShift  // bottom right
         inputMapping[ i + 7 ] = 0 - yShift
 
-        const texWidth = ta.width
-        const texHeight = ta.height
+        const texWidth = ta.parameters.width
+        const texHeight = ta.parameters.height
 
         const texCoords = [
           c.x / texWidth, c.y / texHeight,             // top left
@@ -572,33 +621,32 @@ class TextBuffer extends MappedQuadBuffer {
         ]
         inputTexCoord.set(texCoords, i)
 
-        xadvance += c.w - 2 * ta.outline
+        xadvance += c.w - 2 * ta.parameters.outline
       }
     }
 
-    this.geometry.attributes.inputTexCoord.needsUpdate = true
-    this.geometry.attributes.mapping.needsUpdate = true
+    attribs.inputTexCoord.needsUpdate = true
+    attribs.mapping.needsUpdate = true
   }
 
-  getDefines (type) {
+  getDefines (type: BufferTypes) {
     const defines = super.getDefines(type)
 
-    if (this.sdf) {
+    if (this.parameters.sdf) {
       defines.SDF = 1
     }
 
     return defines
   }
 
-  setUniforms (data) {
+  setUniforms (data: any) {  // TODO
     if (data && (
-                data.fontFamily !== undefined ||
-                data.fontStyle !== undefined ||
-                data.fontWeight !== undefined ||
-                data.fontSize !== undefined ||
-                data.sdf !== undefined
-            )
-        ) {
+      data.fontFamily !== undefined ||
+      data.fontStyle !== undefined ||
+      data.fontWeight !== undefined ||
+      data.fontSize !== undefined ||
+      data.sdf !== undefined
+    )) {
       this.makeTexture()
       this.makeMapping()
       this.texture.needsUpdate = true
@@ -607,13 +655,6 @@ class TextBuffer extends MappedQuadBuffer {
 
     super.setUniforms(data)
   }
-
-  set wireframe (value) {}
-  get wireframe () { return false }
-
-  get isText () { return true }
-  get vertexShader () { return 'SDFFont.vert' }
-  get fragmentShader () { return 'SDFFont.frag' }
 }
 
 BufferRegistry.add('text', TextBuffer)

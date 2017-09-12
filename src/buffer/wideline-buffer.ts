@@ -9,8 +9,19 @@ import { Vector2, Matrix4 } from 'three'
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
 
-import { defaults } from '../utils'
-import MappedQuadBuffer from './mappedquad-buffer.js'
+import MappedQuadBuffer from './mappedquad-buffer'
+import { BufferDefaultParameters, BufferData } from './buffer'
+
+interface WideLineBufferData extends BufferData {
+  position1: Float32Array
+  position2: Float32Array
+  color2: Float32Array
+}
+
+const WideLineBufferDefaultParameters = Object.assign({
+  linewidth: 2
+}, BufferDefaultParameters)
+type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
 
 /**
  * Wide Line buffer. Draws lines with a fixed width in pixels.
@@ -24,6 +35,12 @@ import MappedQuadBuffer from './mappedquad-buffer.js'
  * });
  */
 class WideLineBuffer extends MappedQuadBuffer {
+  defaultParameters = WideLineBufferDefaultParameters
+  parameters: WideLineBufferParameters
+
+  vertexShader = 'WideLine.vert'
+  fragmentShader ='WideLine.frag'
+
   /**
    * @param  {Object} data - attribute object
    * @param  {Float32Array} data.position1 - from positions
@@ -32,15 +49,11 @@ class WideLineBuffer extends MappedQuadBuffer {
    * @param  {Float32Array} data.color2 - to colors
    * @param  {BufferParameters} params - parameter object
    */
-  constructor (data, params) {
+  constructor (data: WideLineBufferData, params: Partial<WideLineBufferParameters> = {}) {
     super(data, params)
 
-    var p = params || {}
-
-    this.linewidth = defaults(p.linewidth, 2)
-
     this.addUniforms({
-      'linewidth': { value: this.linewidth },
+      'linewidth': { value: this.parameters.linewidth },
       'resolution': { value: new Vector2() },
       'projectionMatrixInverse': { value: new Matrix4() }
     })
@@ -54,17 +67,6 @@ class WideLineBuffer extends MappedQuadBuffer {
     this.setAttributes(data)
     this.makeMapping()
   }
-
-  get parameters () {
-    return Object.assign({
-
-      linewidth: { uniform: true }
-
-    }, super.parameters)
-  }
-
-  get vertexShader () { return 'WideLine.vert' }
-  get fragmentShader () { return 'WideLine.frag' }
 }
 
 export default WideLineBuffer

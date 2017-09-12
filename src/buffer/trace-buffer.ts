@@ -8,41 +8,42 @@ import '../shader/Line.vert'
 import '../shader/Line.frag'
 
 import { Log } from '../globals'
-import Buffer from './buffer.js'
+import Buffer, { BufferParameters, BufferData } from './buffer'
+
+function getSize(data: BufferData){
+  const n = data.position.length / 3
+  const n1 = n - 1
+  return n1 * 3 * 2
+}
 
 /**
  * Trace buffer. Draws a series of lines.
  */
 class TraceBuffer extends Buffer {
-    /**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.color - colors
-     * @param  {BufferParameters} params - parameter object
-     */
-  constructor (data, params) {
-    var d = data || {}
-    var p = params || {}
+  isLine = true
+  vertexShader = 'Line.vert'
+  fragmentShader = 'Line.frag'
 
-    var n = d.position.length / 3
-    var n1 = n - 1
-
-    var linePosition = new Float32Array(n1 * 3 * 2)
-    var lineColor = new Float32Array(n1 * 3 * 2)
-
+  /**
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position - positions
+   * @param  {Float32Array} data.color - colors
+   * @param  {BufferParameters} params - parameter object
+   */
+  constructor (data: BufferData, params: Partial<BufferParameters> = {}) {
     super({
-      position: linePosition,
-      color: lineColor
-    }, p)
+      position: new Float32Array(getSize(data)),
+      color: new Float32Array(getSize(data))
+    }, params)
 
     this.setAttributes(data)
   }
 
-  setAttributes (data) {
-    var position, color
-    var linePosition, lineColor
+  setAttributes (data: Partial<BufferData>) {
+    let position, color
+    let linePosition, lineColor
 
-    var attributes = this.geometry.attributes
+    const attributes = this.geometry.attributes as any  // TODO
 
     if (data.position) {
       position = data.position
@@ -61,11 +62,11 @@ class TraceBuffer extends Buffer {
       return
     }
 
-    var v, v2
-    var n = this.size
-    var n1 = n - 1
+    let v, v2
+    const n = this.size
+    const n1 = n - 1
 
-    for (var i = 0; i < n1; ++i) {
+    for (let i = 0; i < n1; ++i) {
       v = 3 * i
       v2 = 3 * i * 2
 
@@ -90,10 +91,6 @@ class TraceBuffer extends Buffer {
       }
     }
   }
-
-  get isLine () { return true }
-  get vertexShader () { return 'Line.vert' }
-  get fragmentShader () { return 'Line.frag' }
 }
 
 export default TraceBuffer

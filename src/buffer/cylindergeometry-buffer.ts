@@ -9,11 +9,56 @@ import { Matrix4, Vector3, CylinderBufferGeometry } from 'three'
 import { defaults } from '../utils'
 import { calculateCenterArray, serialBlockArray } from '../math/array-utils.js'
 import GeometryBuffer from './geometry-buffer.js'
+import { CylinderBufferData } from './cylinder-buffer'
+import { BufferDefaultParameters } from './buffer'
 
 const scale = new Vector3()
 const eye = new Vector3()
 const target = new Vector3()
 const up = new Vector3(0, 1, 0)
+
+export const CylinderGeometryBufferDefaultParameters = Object.assign({
+  radialSegments: 1,
+  openEnded: true
+}, BufferDefaultParameters)
+export type CylinderGeometryBufferParameters = typeof CylinderGeometryBufferDefaultParameters
+
+function getData (data: CylinderBufferData, params: Partial<CylinderGeometryBufferParameters> = {}) {
+  const geo = getGeo(params)
+
+  const n = data.position1.length
+
+  const geoLength = (geo.attributes as any).position.array.length / 3
+  const count = n / 3
+  const primitiveId = new Float32Array(count * 2 * geoLength)
+  serialBlockArray(count, geoLength, 0, primitiveId)
+  serialBlockArray(count, geoLength, count * geoLength, primitiveId)
+
+  const position = new Float32Array(n * 2)
+  const color = new Float32Array(n * 2)
+
+  return {
+    position, color, primitiveId, picking: data.picking
+  }
+}
+
+function getGeo (params: Partial<CylinderGeometryBufferParameters> = {}) {
+  const radialSegments = defaults(params.radialSegments, 10)
+  const openEnded = defaults(params.openEnded, true)
+  const matrix = new Matrix4().makeRotationX(Math.PI / 2)
+
+  const geo = new CylinderBufferGeometry(
+    1,  // radiusTop,
+    1,  // radiusBottom,
+    1,  // height,
+    radialSegments,  // radialSegments,
+    1,  // heightSegments,
+    openEnded  // openEnded
+  )
+  geo.applyMatrix(matrix)
+
+  return geo
+}
 
 /**
  * Cylinder geometry buffer.
@@ -28,6 +73,18 @@ const up = new Vector3(0, 1, 0)
  * });
  */
 class CylinderGeometryBuffer extends GeometryBuffer {
+  updateNormals = true
+
+  defaultParameters = CylinderGeometryBufferDefaultParameters
+  parameters: CylinderGeometryBufferParameters
+
+  __center: Float32Array
+  _position: Float32Array
+  _color: Float32Array
+  _from: Float32Array
+  _to: Float32Array
+  _radius: Float32Array
+
   /**
    * @param {Object} data - buffer data
    * @param {Float32Array} data.position1 - from positions
@@ -38,61 +95,25 @@ class CylinderGeometryBuffer extends GeometryBuffer {
    * @param {Picker} [data.picking] - picking ids
    * @param {BufferParameters} [params] - parameters object
    */
-  constructor (data, params) {
-    const d = data || {}
-    const p = params || {}
+  constructor (data: CylinderBufferData, params: Partial<CylinderGeometryBufferParameters> = {}) {
+    super(getData(data, params), params, getGeo(params))
 
-    const radialSegments = defaults(p.radialSegments, 10)
-    const openEnded = defaults(p.openEnded, true)
-    const matrix = new Matrix4().makeRotationX(Math.PI / 2)
-
-    const geo = new CylinderBufferGeometry(
-      1,  // radiusTop,
-      1,  // radiusBottom,
-      1,  // height,
-      radialSegments,  // radialSegments,
-      1,  // heightSegments,
-      openEnded  // openEnded
-    )
-    geo.applyMatrix(matrix)
-
-    const n = d.position1.length
-    const m = d.radius.length
-
-    //
-
-    const geoLength = geo.attributes.position.array.length / 3
-    const count = n / 3
-    const primitiveId = new Float32Array(count * 2 * geoLength)
-    serialBlockArray(count, geoLength, 0, primitiveId)
-    serialBlockArray(count, geoLength, count * geoLength, primitiveId)
-
-    //
-
-    const position = new Float32Array(n * 2)
-    const color = new Float32Array(n * 2)
-
-    super({
-      position: position,
-      color: color,
-      primitiveId: primitiveId,
-      picking: d.picking
-    }, p, geo)
+    const n = data.position1.length
+    const m = data.radius.length
 
     this.__center = new Float32Array(n)
-
-    this._position = position
-    this._color = color
+    this._position = new Float32Array(n * 2)
+    this._color = new Float32Array(n * 2)
     this._from = new Float32Array(n * 2)
     this._to = new Float32Array(n * 2)
     this._radius = new Float32Array(m * 2)
 
-    this.setAttributes(d, true)
+    this.setAttributes(data, true)
   }
 
-  applyPositionTransform (matrix, i, i3) {
-    eye.fromArray(this._from, i3)
-    target.fromArray(this._to, i3)
+  applyPositionTransform (matrix: Matrix4, i: number, i3: number) {
+    eye.fromArray(this._from as any, i3)
+    target.fromArray(this._to as any, i3)
     matrix.lookAt(eye, target, up)
 
     const r = this._radius[ i ]
@@ -100,8 +121,8 @@ class CylinderGeometryBuffer extends GeometryBuffer {
     matrix.scale(scale)
   }
 
-  setAttributes (data, initNormals) {
-    const meshData = {}
+  setAttributes (data: Partial<CylinderBufferData> = {}, initNormals?: boolean) {
+    const meshData: Partial<CylinderBufferData> = {}
 
     if (data.position1 && data.position2) {
       calculateCenterArray(
@@ -134,8 +155,6 @@ class CylinderGeometryBuffer extends GeometryBuffer {
 
     super.setAttributes(meshData, initNormals)
   }
-
-  get updateNormals () { return true }
 }
 
 export default CylinderGeometryBuffer

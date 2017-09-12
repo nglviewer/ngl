@@ -5,9 +5,23 @@
  */
 
 import { ExtensionFragDepth } from '../globals'
-import { calculateMinArray } from '../math/array-utils.js'
-import CylinderGeometryBuffer from './cylindergeometry-buffer.js'
-import HyperballStickImpostorBuffer from './hyperballstickimpostor-buffer.js'
+import { calculateMinArray } from '../math/array-utils'
+import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
+import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters } from './hyperballstickimpostor-buffer'
+import { BufferData } from './buffer'
+
+export interface HyperballStickBufferData extends BufferData {
+  position1: Float32Array
+  position2: Float32Array
+  color2: Float32Array
+  radius: Float32Array
+  radius2: Float32Array
+}
+
+const HyperballStickBufferDefaultParameters = Object.assign({
+  disableImpostor: false
+}, CylinderGeometryBufferDefaultParameters, HyperballStickImpostorBufferDefaultParameters)
+type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultParameters
 
 /**
  * Hyperball stick buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -16,14 +30,14 @@ import HyperballStickImpostorBuffer from './hyperballstickimpostor-buffer.js'
  * @implements {Buffer}
  *
  * @example
- * var hyperballStickBuffer = new HyperballStickBuffer( {
- *     position1: new Float32Array( [ 0, 0, 0 ] ),
- *     position2: new Float32Array( [ 2, 2, 2 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     color2: new Float32Array( [ 0, 1, 0 ] ),
- *     radius1: new Float32Array( [ 1 ] ),
- *     radius2: new Float32Array( [ 2 ] )
- * } );
+ * var hyperballStickBuffer = new HyperballStickBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 2, 2, 2 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ]),
+ *   radius2: new Float32Array([ 2 ])
+ * });
  */
 class HyperballStickBuffer {
   /**
@@ -37,7 +51,7 @@ class HyperballStickBuffer {
    * @param  {Float32Array} data.picking - picking ids
    * @param  {BufferParameters} params - parameter object
    */
-  constructor (data, params) {
+  constructor (data: HyperballStickBufferData, params: Partial<HyperballStickBufferParameters> = {}) {
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
       data.radius = calculateMinArray(data.radius, data.radius2)
       return new CylinderGeometryBuffer(data, params)

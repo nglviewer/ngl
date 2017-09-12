@@ -7,47 +7,56 @@
 import '../shader/Ribbon.vert'
 
 import { getUintArray } from '../utils'
-import { serialArray } from '../math/array-utils.js'
-import MeshBuffer from './mesh-buffer.js'
+import { serialArray } from '../math/array-utils'
+import MeshBuffer from './mesh-buffer'
+import { BufferParameters, BufferData } from './buffer'
 
 const quadIndices = new Uint16Array([
   0, 1, 2,
   1, 3, 2
 ])
 
+interface RibbonBufferData extends BufferData {
+  normal: Float32Array
+  dir: Float32Array
+  size: Float32Array
+}
+
+function getSize(data: RibbonBufferData){
+  var n = (data.position.length / 3) - 1
+  var n4 = n * 4
+  var x = n4 * 3
+  return x
+}
+
 /**
  * Ribbon buffer. Draws a thin ribbon.
  */
 class RibbonBuffer extends MeshBuffer {
-    /**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.normal - normals
-     * @param  {Float32Array} data.dir - binormals
-     * @param  {Float32Array} data.color - colors
-     * @param  {Float32Array} data.size - sizes
-     * @param  {Picker} data.picking - picking ids
-     * @param  {BufferParameters} params - parameter object
-     */
-  constructor (data, params) {
-    var d = data || {}
+  vertexShader = 'Ribbon.vert'
 
-    var n = (d.position.length / 3) - 1
-    var n4 = n * 4
-    var x = n4 * 3
-
-    var meshPosition = new Float32Array(x)
-    var meshColor = new Float32Array(x)
-    var meshNormal = new Float32Array(x)
-    var meshIndex = getUintArray(x, x / 3)
-
+  /**
+   * @param  {Object} data - attribute object
+   * @param  {Float32Array} data.position - positions
+   * @param  {Float32Array} data.normal - normals
+   * @param  {Float32Array} data.dir - binormals
+   * @param  {Float32Array} data.color - colors
+   * @param  {Float32Array} data.size - sizes
+   * @param  {Picker} data.picking - picking ids
+   * @param  {BufferParameters} params - parameter object
+   */
+  constructor (data: RibbonBufferData, params: Partial<BufferParameters> = {}) {
     super({
-      position: meshPosition,
-      color: meshColor,
-      index: meshIndex,
-      normal: meshNormal,
-      picking: d.picking
+      position: new Float32Array(getSize(data)),
+      color: new Float32Array(getSize(data)),
+      index: getUintArray(getSize(data), getSize(data) / 3),
+      normal: new Float32Array(getSize(data)),
+      picking: data.picking
     }, params)
+
+    const n = (data.position.length / 3) - 1
+    const n4 = n * 4
+    const x = n4 * 3
 
     this.addAttributes({
       'dir': { type: 'v3', value: new Float32Array(x) }
@@ -56,21 +65,20 @@ class RibbonBuffer extends MeshBuffer {
       'size': { type: 'f', value: new Float32Array(n4) }
     })
 
-    d.primitiveId = serialArray(n)
-    this.setAttributes(d)
+    data.primitiveId = serialArray(n)
+    this.setAttributes(data)
 
-    this.meshIndex = meshIndex
     this.makeIndex()
   }
 
-  setAttributes (data) {
-    var n4 = this.size
-    var n = n4 / 4
+  setAttributes (data: Partial<RibbonBufferData> = {}) {
+    const n4 = this.size
+    const n = n4 / 4
 
-    var attributes = this.geometry.attributes
+    const attributes = this.geometry.attributes as any  // TODO
 
-    var position, normal, size, dir, color, primitiveId
-    var aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId
+    let position, normal, size, dir, color, primitiveId
+    let aPosition, aNormal, aSize, aDir, aColor, aPrimitiveId
 
     if (data.position) {
       position = data.position
@@ -190,23 +198,19 @@ class RibbonBuffer extends MeshBuffer {
   }
 
   makeIndex () {
-    var meshIndex = this.meshIndex
-    var n = meshIndex.length / 4 / 3
+    const meshIndex = this.geometry.getIndex().array as Uint32Array|Uint16Array
+    const n = meshIndex.length / 4 / 3
 
-    var s, v, ix, it
-
-    for (v = 0; v < n; ++v) {
-      ix = v * 6
-      it = v * 4
+    for (let v = 0; v < n; ++v) {
+      const ix = v * 6
+      const it = v * 4
 
       meshIndex.set(quadIndices, ix)
-      for (s = 0; s < 6; ++s) {
+      for (let s = 0; s < 6; ++s) {
         meshIndex[ ix + s ] += it
       }
     }
   }
-
-  get vertexShader () { return 'Ribbon.vert' }
 }
 
 export default RibbonBuffer

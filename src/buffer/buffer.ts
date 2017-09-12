@@ -5,40 +5,24 @@
  */
 
 import {
-    Color, Vector3, Matrix4,
-    FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
-    BufferGeometry, BufferAttribute,
-    UniformsUtils, UniformsLib,
-    Group, LineSegments, Points, Mesh,
-    ShaderMaterial
+  Color, Vector3, Matrix4,
+  FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
+  BufferGeometry, BufferAttribute,
+  UniformsUtils, UniformsLib, Uniform,
+  Group, LineSegments, Points, Mesh, Object3D,
+  ShaderMaterial
 } from 'three'
 
 import { Log } from '../globals'
-import { defaults, getTypedArray, getUintArray } from '../utils'
-import { getShader } from '../shader/shader-utils.js'
+import { assignDefaults, getTypedArray, getUintArray } from '../utils'
+import { NumberArray } from '../types'
+import { getShader, ShaderDefines } from '../shader/shader-utils.js'
+import { serialArray } from '../math/array-utils'
+import { Picker } from '../utils/picker'
 
-/**
- * Buffer parameter object.
- * @typedef {Object} BufferParameters - buffer parameters
- * @property {Boolean} opaqueBack - render back-side opaque
- * @property {Boolean} dullInterior - render back-side with dull lighting
- * @property {String} side - which triangle sides to render, "front" front-side,
- *                            "back" back-side, "double" front- and back-side
- * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
- * @property {Boolean} depthWrite - depth write
- * @property {Integer} clipNear - position of camera near/front clipping plane
- *                                in percent of scene bounding box
- * @property {Boolean} flatShaded - render flat shaded
- * @property {Boolean} wireframe - render as wireframe
- * @property {Float} roughness - how rough the material is, between 0 and 1
- * @property {Float} metalness - how metallic the material is, between 0 and 1
- * @property {Color} diffuse - diffuse color for lighting
- * @property {Boolean} forceTransparent - force the material to allow transparency
- * @property {Matrix4} matrix - additional transformation matrix
- * @property {Boolean} disablePicking - disable picking
- */
+type BufferSide = 'front'|'back'|'double'
 
-function getThreeSide (side) {
+function getThreeSide (side: BufferSide) {
   if (side === 'front') {
     return FrontSide
   } else if (side === 'back') {
@@ -54,10 +38,71 @@ const itemSize = {
   'f': 1, 'v2': 2, 'v3': 3, 'c': 3
 }
 
-function setObjectMatrix (object, matrix) {
+function setObjectMatrix (object: Object3D, matrix: Matrix4) {
   object.matrix.copy(matrix)
   object.matrix.decompose(object.position, object.quaternion, object.scale)
   object.matrixWorldNeedsUpdate = true
+}
+
+export type BufferTypes = 'picking'|'background'
+export type BufferMaterials = 'material'|'wireframeMaterial'|'pickingMaterial'
+
+interface _BufferAttribute {
+  type: 'f'|'v2'|'v3'|'c'
+  value?: NumberArray
+}
+
+type Uniforms = { [k: string]: Uniform|{ value: any } }
+
+export const BufferDefaultParameters = {
+  opaqueBack: false,
+  dullInterior: false,  // render back-side opaque
+  side: 'double' as BufferSide,  // which triangle sides to render
+  opacity: 1.0,  // translucency: 1 is fully opaque, 0 is fully transparent
+  depthWrite: true,
+  clipNear: 0, // position of camera near/front clipping plane in percent of scene bounding box
+  clipRadius: 0,
+  clipCenter: new Vector3(),
+  flatShaded: false,  // render flat shaded
+  wireframe: false,  // render as wireframe
+  roughness: 0.4,  // how rough the material is, between 0 and 1
+  metalness: 0.0,  // how metallic the material is, between 0 and 1
+  diffuse: 0xffffff,  // diffuse color for lighting
+  forceTransparent: false,  // force the material to allow transparency
+  matrix: new Matrix4(),  // additional transformation matrix
+  disablePicking: false,  // disable picking
+  sortParticles: false,
+  background: false
+}
+export type BufferParameters = typeof BufferDefaultParameters
+
+export const BufferParameterTypes = {
+  opaqueBack: { updateShader: true },
+  dullInterior: { updateShader: true },
+  side: { updateShader: true, property: true },
+  opacity: { uniform: true },
+  depthWrite: { property: true },
+  clipNear: { updateShader: true },
+  clipRadius: { updateShader: true, uniform: true },
+  clipCenter: { uniform: true },
+  flatShaded: { updateShader: true },
+  background: { updateShader: true },
+  wireframe: { updateVisibility: true },
+  roughness: { uniform: true },
+  metalness: { uniform: true },
+  diffuse: { uniform: true },
+  matrix: {}
+}
+
+export interface BufferData {
+  position: Float32Array
+  position1?: Float32Array  // TODO
+  color?: Float32Array
+  index?: Uint32Array|Uint16Array
+  normal?: Float32Array
+
+  picking?: Picker
+  primitiveId?: Float32Array
 }
 
 /**
@@ -65,39 +110,51 @@ function setObjectMatrix (object, matrix) {
  * @interface
  */
 class Buffer {
+  parameterTypes = BufferParameterTypes
+  defaultParameters = BufferDefaultParameters
+  parameters: BufferParameters
+  uniforms: Uniforms
+  pickingUniforms: Uniforms
+
+  private _positionDataSize: number
+
+  geometry = new BufferGeometry()
+  indexVersion = 0
+  wireframeIndexVersion = -1
+  group = new Group()
+  wireframeGroup = new Group()
+  pickingGroup = new Group()
+
+  vertexShader = ''
+  fragmentShader = ''
+  isImpostor = false
+  isText = false
+  isSurface = false
+  isPoint = false
+  isLine = false
+  dynamic = true
+  visible = true
+
+  picking?: Picker
+
+  material: ShaderMaterial
+  wireframeMaterial: ShaderMaterial
+  pickingMaterial: ShaderMaterial
+
+  wireframeIndex?: Uint32Array|Uint16Array
+  wireframeIndexCount = 0
+  wireframeGeometry?: BufferGeometry
+
   /**
    * @param {Object} data - attribute object
    * @param {Float32Array} data.position - positions
    * @param {Float32Array} data.color - colors
-   * @param {Float32Array} data.index - triangle indices
+   * @param {Uint32Array|Uint16Array} data.index - triangle indices
    * @param {Picker} [data.picking] - picking ids
    * @param {BufferParameters} params - parameters object
    */
-  constructor (data, params) {
-    const d = data || {}
-    const p = params || {}
-
-    this.opaqueBack = defaults(p.opaqueBack, false)
-    this.dullInterior = defaults(p.dullInterior, false)
-    this.side = defaults(p.side, 'double')
-    this.opacity = defaults(p.opacity, 1.0)
-    this.depthWrite = defaults(p.depthWrite, true)
-    this.clipNear = defaults(p.clipNear, 0)
-    this.clipRadius = defaults(p.clipRadius, 0)
-    this.clipCenter = defaults(p.clipCenter, new Vector3())
-    this.flatShaded = defaults(p.flatShaded, false)
-    this.background = defaults(p.background, false)
-    this.wireframe = defaults(p.wireframe, false)
-    this.roughness = defaults(p.roughness, 0.4)
-    this.metalness = defaults(p.metalness, 0.0)
-    this.diffuse = defaults(p.diffuse, 0xffffff)
-    this.forceTransparent = defaults(p.forceTransparent, false)
-    this.disablePicking = defaults(p.disablePicking, false)
-
-    this.geometry = new BufferGeometry()
-
-    this.indexVersion = 0
-    this.wireframeIndexVersion = -1
+  constructor (data: BufferData, params: Partial<BufferParameters> = {}) {
+    this.parameters = assignDefaults(params, this.defaultParameters)
 
     this.uniforms = UniformsUtils.merge([
       UniformsLib.common,
@@ -105,72 +162,48 @@ class Buffer {
         fogColor: { value: null },
         fogNear: { value: 0.0 },
         fogFar: { value: 0.0 },
-        opacity: { value: this.opacity },
+        opacity: { value: this.parameters.opacity },
         nearClip: { value: 0.0 },
-        clipRadius: { value: this.clipRadius },
-        clipCenter: { value: this.clipCenter }
+        clipRadius: { value: this.parameters.clipRadius },
+        clipCenter: { value: this.parameters.clipCenter }
       },
       {
         emissive: { value: new Color(0x000000) },
-        roughness: { value: this.roughness },
-        metalness: { value: this.metalness }
+        roughness: { value: this.parameters.roughness },
+        metalness: { value: this.parameters.metalness }
       },
-      UniformsLib.ambient,
       UniformsLib.lights
     ])
 
-    this.uniforms.diffuse.value.set(this.diffuse)
+    this.uniforms.diffuse.value.set(this.parameters.diffuse)
 
     this.pickingUniforms = {
       nearClip: { value: 0.0 },
       objectId: { value: 0 },
-      opacity: { value: this.opacity }
+      opacity: { value: this.parameters.opacity }
     }
-
-    this.group = new Group()
-    this.wireframeGroup = new Group()
-    this.pickingGroup = new Group()
-
-    // requires Group objects to be present
-    this.matrix = defaults(p.matrix, new Matrix4())
 
     //
 
-    const position = d.position || d.position1
+    const position = data.position || data.position1
     this._positionDataSize = position ? position.length / 3 : 0
 
+    if (!data.primitiveId) {
+      data.primitiveId = serialArray(this._positionDataSize)
+    }
+
     this.addAttributes({
-      position: { type: 'v3', value: d.position },
-      color: { type: 'c', value: d.color },
-      primitiveId: { type: 'f', value: d.primitiveId }
+      position: { type: 'v3', value: data.position },
+      color: { type: 'c', value: data.color },
+      primitiveId: { type: 'f', value: data.primitiveId }
     })
 
-    if (d.index) {
-      this.initIndex(d.index)
+    if (data.index) {
+      this.initIndex(data.index)
     }
-    this.picking = d.picking
+    this.picking = data.picking
 
     this.makeWireframeGeometry()
-  }
-
-  get parameters () {
-    return {
-      opaqueBack: { updateShader: true },
-      dullInterior: { updateShader: true },
-      side: { updateShader: true, property: true },
-      opacity: { uniform: true },
-      depthWrite: { property: true },
-      clipNear: { updateShader: true, property: true },
-      clipRadius: { updateShader: true, property: true, uniform: true },
-      clipCenter: { uniform: true },
-      flatShaded: { updateShader: true },
-      background: { updateShader: true },
-      wireframe: { updateVisibility: true },
-      roughness: { uniform: true },
-      metalness: { uniform: true },
-      diffuse: { uniform: true },
-      matrix: {}
-    }
   }
 
   set matrix (m) {
@@ -181,7 +214,7 @@ class Buffer {
   }
 
   get transparent () {
-    return this.opacity < 1 || this.forceTransparent
+    return this.parameters.opacity < 1 || this.parameters.forceTransparent
   }
 
   get size () {
@@ -193,36 +226,24 @@ class Buffer {
   }
 
   get pickable () {
-    return !!this.picking && !this.disablePicking
+    return !!this.picking && !this.parameters.disablePicking
   }
 
-  get dynamic () { return true }
-
-  /**
-   * @abstract
-   */
-  get vertexShader () {}
-
-  /**
-   * @abstract
-   */
-  get fragmentShader () {}
-
-  setMatrix (m) {
+  setMatrix (m: Matrix4) {
     setObjectMatrix(this.group, m)
     setObjectMatrix(this.wireframeGroup, m)
     setObjectMatrix(this.pickingGroup, m)
   }
 
-  initIndex (index) {
+  initIndex (index: Uint32Array|Uint16Array) {
     this.geometry.setIndex(
-            new BufferAttribute(index, 1)
-        )
+      new BufferAttribute(index, 1)
+    )
     this.geometry.getIndex().setDynamic(this.dynamic)
   }
 
   makeMaterial () {
-    const side = getThreeSide(this.side)
+    const side = getThreeSide(this.parameters.side)
 
     const m = new ShaderMaterial({
       uniforms: this.uniforms,
@@ -230,15 +251,14 @@ class Buffer {
       fragmentShader: '',
       depthTest: true,
       transparent: this.transparent,
-      depthWrite: this.depthWrite,
+      depthWrite: this.parameters.depthWrite,
       lights: true,
       fog: true,
       side: side
     })
     m.vertexColors = VertexColors
-    m.extensions.derivatives = this.flatShaded
+    m.extensions.derivatives = this.parameters.flatShaded
     m.extensions.fragDepth = this.isImpostor
-    m.clipNear = this.clipNear
 
     const wm = new ShaderMaterial({
       uniforms: this.uniforms,
@@ -246,13 +266,12 @@ class Buffer {
       fragmentShader: '',
       depthTest: true,
       transparent: this.transparent,
-      depthWrite: this.depthWrite,
+      depthWrite: this.parameters.depthWrite,
       lights: false,
       fog: true,
       side: side
     })
     wm.vertexColors = VertexColors
-    wm.clipNear = this.clipNear
 
     const pm = new ShaderMaterial({
       uniforms: this.pickingUniforms,
@@ -260,7 +279,7 @@ class Buffer {
       fragmentShader: '',
       depthTest: true,
       transparent: false,
-      depthWrite: this.depthWrite,
+      depthWrite: this.parameters.depthWrite,
       lights: false,
       fog: false,
       side: side,
@@ -268,7 +287,6 @@ class Buffer {
     })
     pm.vertexColors = VertexColors
     pm.extensions.fragDepth = this.isImpostor
-    pm.clipNear = this.clipNear
 
     this.material = m
     this.wireframeMaterial = wm
@@ -288,9 +306,8 @@ class Buffer {
     wireframeGeometry.attributes = geometry.attributes
     if (wireframeIndex) {
       wireframeGeometry.setIndex(
-                new BufferAttribute(wireframeIndex, 1)
-                    .setDynamic(this.dynamic)
-            )
+        new BufferAttribute(wireframeIndex, 1).setDynamic(this.dynamic)
+      )
       wireframeGeometry.setDrawRange(0, this.wireframeIndexCount)
     }
 
@@ -298,9 +315,9 @@ class Buffer {
   }
 
   makeWireframeIndex () {
-    const edges = []
+    const edges: number[][] = []
 
-    function checkEdge (a, b) {
+    function checkEdge (a: number, b: number) {
       if (a > b) {
         const tmp = a
         a = b
@@ -323,7 +340,7 @@ class Buffer {
     const geometry = this.geometry
     const index = geometry.index
 
-    if (!this.wireframe) {
+    if (!this.parameters.wireframe) {
       this.wireframeIndex = new Uint16Array(0)
       this.wireframeIndexCount = 0
     } else if (index) {
@@ -336,7 +353,7 @@ class Buffer {
       if (this.wireframeIndex && this.wireframeIndex.length > n * 2) {
         wireframeIndex = this.wireframeIndex
       } else {
-        const count = geometry.attributes.position.count
+        const count = (geometry.attributes as any).position.count  // TODO
         wireframeIndex = getUintArray(n * 2, count)
       }
 
@@ -369,7 +386,7 @@ class Buffer {
       this.wireframeIndexCount = j
       this.wireframeIndexVersion = this.indexVersion
     } else {
-      const n = geometry.attributes.position.count
+      const n = (geometry.attributes as any).position.count  // TODO
 
       let wireframeIndex
       if (this.wireframeIndex && this.wireframeIndex.length > n * 2) {
@@ -396,6 +413,8 @@ class Buffer {
   }
 
   updateWireframeIndex () {
+    if (!this.wireframeGeometry || !this.wireframeIndex) return
+
     this.wireframeGeometry.setDrawRange(0, Infinity)
     if (this.wireframeIndexVersion < this.indexVersion) this.makeWireframeIndex()
 
@@ -429,7 +448,7 @@ class Buffer {
     return renderOrder
   }
 
-  _getMesh (materialName) {
+  _getMesh (materialName: BufferMaterials) {
     if (!this.material) this.makeMaterial()
 
     const g = this.geometry
@@ -441,7 +460,7 @@ class Buffer {
       mesh = new LineSegments(g, m)
     } else if (this.isPoint) {
       mesh = new Points(g, m)
-      if (this.sortParticles) mesh.sortParticles = true
+      if (this.parameters.sortParticles) (mesh as any).sortParticles = true  // TODO
     } else {
       mesh = new Mesh(g, m)
     }
@@ -476,42 +495,42 @@ class Buffer {
     return this._getMesh('pickingMaterial')
   }
 
-  getShader (name, type) {
+  getShader (name: string, type?: BufferTypes) {
     return getShader(name, this.getDefines(type))
   }
 
-  getVertexShader (type) {
+  getVertexShader (type?: BufferTypes) {
     return this.getShader(this.vertexShader, type)
   }
 
-  getFragmentShader (type) {
+  getFragmentShader (type?: BufferTypes) {
     return this.getShader(this.fragmentShader, type)
   }
 
-  getDefines (type) {
-    const defines = {}
+  getDefines (type?: BufferTypes) {
+    const defines: ShaderDefines = {}
 
-    if (this.clipNear) {
+    if (this.parameters.clipNear) {
       defines.NEAR_CLIP = 1
     }
 
-    if (this.clipRadius) {
+    if (this.parameters.clipRadius) {
       defines.RADIUS_CLIP = 1
     }
 
     if (type === 'picking') {
       defines.PICKING = 1
     } else {
-      if (type === 'background' || this.background) {
+      if (type === 'background' || this.parameters.background) {
         defines.NOLIGHT = 1
       }
-      if (this.flatShaded) {
+      if (this.parameters.flatShaded) {
         defines.FLAT_SHADED = 1
       }
-      if (this.opaqueBack) {
+      if (this.parameters.opaqueBack) {
         defines.OPAQUE_BACK = 1
       }
-      if (this.dullInterior) {
+      if (this.parameters.dullInterior) {
         defines.DULL_INTERIOR = 1
       }
     }
@@ -520,16 +539,10 @@ class Buffer {
   }
 
   getParameters () {
-    const params = {}
-
-    for (let name in this.parameters) {
-      params[ name ] = this[ name ]
-    }
-
-    return params
+    return this.parameters
   }
 
-  addUniforms (uniforms) {
+  addUniforms (uniforms: Uniforms) {
     this.uniforms = UniformsUtils.merge(
       [ this.uniforms, uniforms ]
     )
@@ -539,7 +552,7 @@ class Buffer {
     )
   }
 
-  addAttributes (attributes) {
+  addAttributes (attributes: { [k: string]: _BufferAttribute }) {
     for (let name in attributes) {
       let buf
       const a = attributes[ name ]
@@ -549,7 +562,6 @@ class Buffer {
         if (arraySize !== a.value.length) {
           Log.error('attribute value has wrong length', name)
         }
-
         buf = a.value
       } else {
         buf = getTypedArray('float32', arraySize)
@@ -564,7 +576,7 @@ class Buffer {
 
   updateRenderOrder () {
     const renderOrder = this.getRenderOrder()
-    function setRenderOrder (mesh) {
+    function setRenderOrder (mesh: Object3D) {
       mesh.renderOrder = renderOrder
     }
 
@@ -597,46 +609,45 @@ class Buffer {
    * @param {BufferParameters} params - buffer parameters object
    * @return {undefined}
    */
-  setParameters (params) {
-    if (!params) return
+  setParameters (params: Partial<BufferParameters>) {
+    const p = params as any
+    const pt = this.parameterTypes as any
+    const pv = this.parameters as any
 
-    const p = params
-    const tp = this.parameters
-
-    const propertyData = {}
-    const uniformData = {}
+    const propertyData: { [k: string]: any } = {}
+    const uniformData: { [k: string]: any } = {}
     let doShaderUpdate = false
     let doVisibilityUpdate = false
 
-    for (let name in p) {
+    for (const name in p) {
       const value = p[ name ]
 
       if (value === undefined) continue
-      if (tp[ name ] === undefined) continue
+      pv[ name ] = value
 
-      this[ name ] = value
+      if (pt[ name ] === undefined) continue
 
-      if (tp[ name ].property) {
-        if (tp[ name ].property !== true) {
-          propertyData[ tp[ name ].property ] = value
+      if (pt[ name ].property) {
+        if (pt[ name ].property !== true) {
+          propertyData[ pt[ name ].property as any ] = value
         } else {
           propertyData[ name ] = value
         }
       }
 
-      if (tp[ name ].uniform) {
-        if (tp[ name ].uniform !== true) {
-          uniformData[ tp[ name ].uniform ] = value
+      if (pt[ name ].uniform) {
+        if (pt[ name ].uniform !== true) {
+          uniformData[ pt[ name ].uniform as any ] = value
         } else {
           uniformData[ name ] = value
         }
       }
 
-      if (tp[ name ].updateShader) {
+      if (pt[ name ].updateShader) {
         doShaderUpdate = true
       }
 
-      if (tp[ name ].updateVisibility) {
+      if (pt[ name ].updateVisibility) {
         doVisibilityUpdate = true
       }
 
@@ -645,7 +656,7 @@ class Buffer {
       }
 
       if (name === 'flatShaded') {
-        this.material.extensions.derivatives = this.flatShaded
+        this.material.extensions.derivatives = this.parameters.flatShaded
       }
 
       if (name === 'forceTransparent') {
@@ -667,11 +678,11 @@ class Buffer {
    * var buffer = new Buffer();
    * buffer.setAttributes({ attrName: attrData });
    */
-  setAttributes (data) {
+  setAttributes (data: any) {  // TODO
     const geometry = this.geometry
-    const attributes = geometry.attributes
+    const attributes = geometry.attributes as any  // TODO
 
-    for (let name in data) {
+    for (const name in data) {
       if (name === 'picking') continue
 
       const array = data[ name ]
@@ -693,7 +704,7 @@ class Buffer {
         }
 
         this.indexVersion++
-        if (this.wireframe) this.updateWireframeIndex()
+        if (this.parameters.wireframe) this.updateWireframeIndex()
       } else {
         const attribute = attributes[ name ]
 
@@ -712,7 +723,7 @@ class Buffer {
     }
   }
 
-  setUniforms (data) {
+  setUniforms (data: any) {  // TODO
     if (!data) return
 
     const u = this.material.uniforms
@@ -756,14 +767,16 @@ class Buffer {
     }
   }
 
-  setProperties (data) {
+  setProperties (data: any) {  // TODO
     if (!data) return
 
     const m = this.material
     const wm = this.wireframeMaterial
     const pm = this.pickingMaterial
 
-    for (let name in data) {
+    for (const _name in data) {
+      const name = _name as 'side'|'transparent'  // TODO
+
       let value = data[ name ]
 
       if (name === 'transparent') {
@@ -795,10 +808,10 @@ class Buffer {
    * @param {Boolean} value - visibility value
    * @return {undefined}
    */
-  setVisibility (value) {
+  setVisibility (value: boolean) {
     this.visible = value
 
-    if (this.wireframe) {
+    if (this.parameters.wireframe) {
       this.group.visible = false
       this.wireframeGroup.visible = value
       if (this.pickable) {

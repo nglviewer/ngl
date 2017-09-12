@@ -18,7 +18,14 @@ import './chunk/unpack_color.glsl'
 
 import { ShaderRegistry } from '../globals'
 
-type ShaderDefines = { [k: string]: string|number|boolean }
+type ShaderDefine = (
+  'NEAR_CLIP'|'RADIUS_CLIP'|'PICKING'|'NOLIGHT'|'FLAT_SHADED'|'OPAQUE_BACK'|
+  'DULL_INTERIOR'|'USE_SIZEATTENUATION'|'USE_MAP'|'ALPHATEST'|'SDF'|
+  'CUBIC_INTERPOLATION'|'BSPLINE_FILTER'|'CATMULROM_FILTER'|'MITCHELL_FILTER'
+)
+export type ShaderDefines = {
+  [k in ShaderDefine]?: number|string
+}
 
 function getDefines (defines: ShaderDefines) {
   if (defines === undefined) return ''
@@ -26,11 +33,11 @@ function getDefines (defines: ShaderDefines) {
   const lines = []
 
   for (const name in defines) {
-    const value = defines[ name ]
+    const value = defines[ name as keyof ShaderDefines ]
 
-    if (value === false) continue
+    if (!value) continue
 
-    lines.push('#define ' + name + ' ' + value)
+    lines.push(`#define ${name} ${value}`)
   }
 
   return lines.join('\n') + '\n'
@@ -42,18 +49,18 @@ const shaderCache: { [k: string]: string } = {}
 export function getShader (name: string, defines: ShaderDefines = {}) {
   let hash = name + '|'
   for (const key in defines) {
-    hash += key + ':' + defines[ key ]
+    hash += key + ':' + defines[ key as keyof ShaderDefines ]
   }
 
   if (!shaderCache[ hash ]) {
     const definesText = getDefines(defines)
 
-    let shaderText = ShaderRegistry.get('shader/' + name) as string
+    let shaderText = ShaderRegistry.get(`shader/${name}`) as string
     if (!shaderText) {
-      throw new Error("empty shader, '" + name + "'")
+      throw new Error(`empty shader, '${name}'`)
     }
     shaderText = shaderText.replace(reInclude, function (match, p1) {
-      const path = 'shader/chunk/' + p1 + '.glsl'
+      const path = `shader/chunk/${p1}.glsl`
       const chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
 
       return chunk || ''

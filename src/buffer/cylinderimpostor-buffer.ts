@@ -9,8 +9,18 @@ import { Matrix4 } from 'three'
 import '../shader/CylinderImpostor.vert'
 import '../shader/CylinderImpostor.frag'
 
-import { defaults } from '../utils'
 import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
+import { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
+import { CylinderBufferData } from './cylinder-buffer'
+
+export const CylinderImpostorBufferDefaultParameters = Object.assign({
+  openEnded: false
+}, BufferDefaultParameters)
+export type CylinderImpostorBufferParameters = typeof CylinderImpostorBufferDefaultParameters
+
+const CylinderImpostorBufferParameterTypes = Object.assign({
+  openEnded: { updateShader: true }
+}, BufferParameterTypes)
 
 /**
  * Cylinder impostor buffer.
@@ -25,6 +35,14 @@ import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
  * });
  */
 class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
+  parameterTypes = CylinderImpostorBufferParameterTypes
+  defaultParameters = CylinderImpostorBufferDefaultParameters
+  parameters: CylinderImpostorBufferParameters
+
+  isImpostor = true
+  vertexShader = 'CylinderImpostor.vert'
+  fragmentShader = 'CylinderImpostor.frag'
+
   /**
    * make cylinder impostor buffer
    * @param  {Object} data - attribute object
@@ -36,12 +54,8 @@ class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
    * @param  {Picker} data.picking - picking ids
    * @param  {BufferParameters} params - parameter object
    */
-  constructor (data, params) {
+  constructor (data: CylinderBufferData, params: Partial<CylinderImpostorBufferParameters> = {}) {
     super(data, params)
-
-    var p = params || {}
-
-    this.openEnded = defaults(p.openEnded, false)
 
     this.addUniforms({
       'modelViewMatrixInverse': { value: new Matrix4() },
@@ -59,27 +73,15 @@ class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
     this.makeMapping()
   }
 
-  get parameters () {
-    return Object.assign({
-
-      openEnded: { updateShader: true }
-
-    }, super.parameters)
-  }
-
-  getDefines (type) {
+  getDefines (type?: BufferTypes) {
     var defines = MappedAlignedBoxBuffer.prototype.getDefines.call(this, type)
 
-    if (!this.openEnded) {
+    if (!this.parameters.openEnded) {
       defines.CAP = 1
     }
 
     return defines
   }
-
-  get isImpostor () { return true }
-  get vertexShader () { return 'CylinderImpostor.vert' }
-  get fragmentShader () { return 'CylinderImpostor.frag' }
 }
 
 export default CylinderImpostorBuffer

@@ -10,17 +10,22 @@ import '../shader/Point.vert'
 import '../shader/Point.frag'
 
 import { defaults } from '../utils'
-import { serialArray } from '../math/array-utils.js'
 import { smoothstep } from '../math/math-utils'
-import Buffer from './buffer.js'
+import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
-function distance (x0, y0, x1, y1) {
+function distance (x0: number, y0: number, x1: number, y1: number) {
   var dx = x1 - x0
   var dy = y1 - y0
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-function makePointTexture (params) {
+interface PointTextureParams {
+  width?: number
+  height?: number
+  delta?: number
+}
+
+function makePointTexture (params: PointTextureParams) {
   const p = params || {}
 
   const width = defaults(p.width, 256)
@@ -54,6 +59,27 @@ function makePointTexture (params) {
   return tex
 }
 
+const PointBufferDefaultParameters = Object.assign({
+  pointSize: 1,
+  sizeAttenuation: true,
+  sortParticles: false,
+  alphaTest: 0.5,
+  useTexture: false,
+  forceTransparent: false,
+  edgeBleach: 0.0
+}, BufferDefaultParameters)
+type PointBufferParameters = typeof PointBufferDefaultParameters
+
+const PointBufferParameterTypes = Object.assign({
+  pointSize: { uniform: 'size' },
+  sizeAttenuation: { updateShader: true },
+  sortParticles: {},
+  alphaTest: { updateShader: true },
+  useTexture: { updateShader: true },
+  forceTransparent: {},
+  edgeBleach: { uniform: true }
+}, BufferParameterTypes)
+
 /**
  * Point buffer. Draws points. Optionally textured.
  *
@@ -64,50 +90,31 @@ function makePointTexture (params) {
  * } );
  */
 class PointBuffer extends Buffer {
+  parameterTypes = PointBufferParameterTypes
+  defaultParameters = PointBufferDefaultParameters
+  parameters: PointBufferParameters
+
+  vertexShader = 'Point.vert'
+  fragmentShader ='Point.frag'
+
+  isPoint = true
+  tex: DataTexture
+
   /**
    * @param  {Object} data - attribute object
    * @param  {Float32Array} data.position - positions
    * @param  {Float32Array} data.color - colors
    * @param  {BufferParameters} params - parameter object
    */
-  constructor (data, params) {
-    const d = data || {}
-    const p = params || {}
-
-    if (!d.primitiveId) {
-      d.primitiveId = serialArray(d.position.length / 3)
-    }
-
-    super(d, p)
-
-    this.pointSize = defaults(p.pointSize, 1)
-    this.sizeAttenuation = defaults(p.sizeAttenuation, true)
-    this.sortParticles = defaults(p.sortParticles, false)
-    this.alphaTest = defaults(p.alphaTest, 0.5)
-    this.useTexture = defaults(p.useTexture, false)
-    this.forceTransparent = defaults(p.forceTransparent, false)
-    this.edgeBleach = defaults(p.edgeBleach, 0.0)
+  constructor (data: BufferData, params: Partial<PointBufferParameters> = {}) {
+    super(data, params)
 
     this.addUniforms({
-      'size': { value: this.pointSize },
+      'size': { value: this.parameters.pointSize },
       'canvasHeight': { value: 1.0 },
       'pixelRatio': { value: 1.0 },
       'map': { value: null }
     })
-  }
-
-  get parameters () {
-    return Object.assign({
-
-      pointSize: { uniform: 'size' },
-      sizeAttenuation: { updateShader: true },
-      sortParticles: {},
-      alphaTest: { updateShader: true },
-      useTexture: { updateShader: true },
-      forceTransparent: {},
-      edgeBleach: { uniform: true }
-
-    }, super.parameters)
   }
 
   makeMaterial () {
@@ -131,28 +138,28 @@ class PointBuffer extends Buffer {
 
   makeTexture () {
     if (this.tex) this.tex.dispose()
-    this.tex = makePointTexture({ delta: this.edgeBleach })
+    this.tex = makePointTexture({ delta: this.parameters.edgeBleach })
   }
 
-  getDefines (type) {
+  getDefines (type?: BufferTypes) {
     const defines = super.getDefines(type)
 
-    if (this.sizeAttenuation) {
+    if (this.parameters.sizeAttenuation) {
       defines.USE_SIZEATTENUATION = 1
     }
 
-    if (this.useTexture) {
+    if (this.parameters.useTexture) {
       defines.USE_MAP = 1
     }
 
-    if (this.alphaTest > 0 && this.alphaTest <= 1) {
-      defines.ALPHATEST = this.alphaTest.toPrecision(2)
+    if (this.parameters.alphaTest > 0 && this.parameters.alphaTest <= 1) {
+      defines.ALPHATEST = this.parameters.alphaTest.toPrecision(2)
     }
 
     return defines
   }
 
-  setUniforms (data) {
+  setUniforms (data: any) {
     if (data && data.edgeBleach !== undefined) {
       this.makeTexture()
       data.map = this.tex
@@ -166,10 +173,6 @@ class PointBuffer extends Buffer {
 
     if (this.tex) this.tex.dispose()
   }
-
-  get isPoint () { return true }
-  get vertexShader () { return 'Point.vert' }
-  get fragmentShader () { return 'Point.frag' }
 }
 
 export default PointBuffer

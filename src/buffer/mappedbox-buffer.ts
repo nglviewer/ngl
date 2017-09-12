@@ -4,7 +4,7 @@
  * @private
  */
 
-import MappedBuffer from './mapped-buffer.js'
+import MappedBuffer, { MappingType } from './mapped-buffer'
 
 const mapping = new Float32Array([
   -1.0, -1.0, -1.0,
@@ -40,7 +40,7 @@ class MappedBoxBuffer extends MappedBuffer {
   get mapping () { return mapping }
   get mappingIndices () { return mappingIndices }
   get mappingIndicesSize () { return 36 }
-  get mappingType () { return 'v3' }
+  get mappingType () { return 'v3' as MappingType }
   get mappingSize () { return 8 }
   get mappingItemSize () { return 3 }
 }

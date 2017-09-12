@@ -9,7 +9,9 @@ import { Matrix4 } from 'three'
 import '../shader/SphereImpostor.vert'
 import '../shader/SphereImpostor.frag'
 
-import MappedQuadBuffer from './mappedquad-buffer.js'
+import MappedQuadBuffer from './mappedquad-buffer'
+import { SphereBufferData } from './sphere-buffer'
+import { BufferParameters } from './buffer'
 
 /**
  * Sphere impostor buffer.
@@ -22,6 +24,10 @@ import MappedQuadBuffer from './mappedquad-buffer.js'
  * });
  */
 class SphereImpostorBuffer extends MappedQuadBuffer {
+  isImpostor = true
+  vertexShader = 'SphereImpostor.vert'
+  fragmentShader = 'SphereImpostor.frag'
+
   /**
    * @param  {Object} data - attribute object
    * @param  {Float32Array} data.position - positions
@@ -30,7 +36,7 @@ class SphereImpostorBuffer extends MappedQuadBuffer {
    * @param {Picker} [data.picking] - picking ids
    * @param  {BufferParameters} params - parameter object
    */
-  constructor (data, params) {
+  constructor (data: SphereBufferData, params: Partial<BufferParameters> = {}) {
     super(data, params)
 
     this.addUniforms({
@@ -45,10 +51,6 @@ class SphereImpostorBuffer extends MappedQuadBuffer {
     this.setAttributes(data)
     this.makeMapping()
   }
-
-  get isImpostor () { return true }
-  get vertexShader () { return 'SphereImpostor.vert' }
-  get fragmentShader () { return 'SphereImpostor.frag' }
 }
 
 export default SphereImpostorBuffer

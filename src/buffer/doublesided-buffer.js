@@ -19,40 +19,45 @@ function setVisibilityFalse (m) { m.visible = false }
  * @implements {Buffer}
  *
  * @example
- * var sphereGeometryBuffer = new SphereGeometryBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
- * var doubleSidedBuffer = new DoubleSidedBuffer( sphereGeometryBuffer );
+ * var sphereGeometryBuffer = new SphereGeometryBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
+ * var doubleSidedBuffer = new DoubleSidedBuffer(sphereGeometryBuffer);
  */
 class DoubleSidedBuffer {
-    /**
-     * Create a double sided buffer
-     * @param  {Buffer} buffer - the buffer to be rendered double-sided
-     */
+  /**
+   * Create a double sided buffer
+   * @param  {Buffer} buffer - the buffer to be rendered double-sided
+   */
   constructor (buffer) {
+    this.parameters = {
+      background: buffer.background,
+      disablePicking: buffer.disablePicking
+    }
+
     this.size = buffer.size
     this.side = buffer.side
     this.wireframe = buffer.wireframe
     this.visible = buffer.visible
     this.geometry = buffer.geometry
     this.picking = buffer.picking
-    this.background = buffer.background
-    this.disablePicking = buffer.disablePicking
 
     this.group = new Group()
     this.wireframeGroup = new Group()
     this.pickingGroup = new Group()
 
-        // requires Group objects to be present
+    // requires Group objects to be present
     this.matrix = buffer.matrix
 
     this.frontMeshes = []
     this.backMeshes = []
 
     var frontBuffer = buffer
-    var backBuffer = new buffer.constructor()
+    var backBuffer = new buffer.constructor({
+      position: new Float32Array(0)
+    })
 
     frontBuffer.makeMaterial()
     backBuffer.makeMaterial()
@@ -84,7 +89,7 @@ class DoubleSidedBuffer {
   }
 
   get pickable () {
-    return !!this.picking && !this.disablePicking
+    return !!this.picking && !this.parameters.disablePicking
   }
 
   getMesh (picking) {
