@@ -8,59 +8,63 @@ import { Vector3, Quaternion } from 'three'
 
 import { defaults, ensureVector3, ensureQuaternion } from '../utils'
 import { lerp, smoothstep } from '../math/math-utils'
+import ViewerControls from '../controls/viewer-controls'
+import Stats from '../viewer/stats'
 
 /**
  * Animation. Base animation class.
  * @interface
  */
-class Animation {
-  constructor (duration, controls, ...args) {
+abstract class Animation {
+  duration: number
+  controls: ViewerControls
+
+  alpha: number
+  startTime: number
+
+  pausedTime = -1
+  elapsedDuration = 0
+  pausedDuration = 0
+  ignoreGlobalToggle = false
+
+  private _paused = false
+  private _resolveList: Function[] = []
+  private _hold: boolean
+
+  constructor (duration: number|undefined, controls: ViewerControls, ...args: any[]) {
     this.duration = defaults(duration, 1000)
     this.controls = controls
 
     this.startTime = window.performance.now()
-    this.pausedTime = -1
-    this.elapsedDuration = 0
-    this.pausedDuration = 0
-    this.ignoreGlobalToggle = false
 
-    this._paused = false
-    this._resolveList = []
-
-    ;this._init(...args)
+    this._init(...args)
   }
 
-    /**
-     * True when animation has finished
-     * @type {Boolean}
-     */
+  /**
+   * True when animation has finished
+   */
   get done () {
     return this.alpha === 1
   }
 
-    /**
-     * True when animation is paused
-     * @type {Boolean}
-     */
+  /**
+   * True when animation is paused
+   */
   get paused () {
     return this._paused
   }
 
-    /**
-     * init animation
-     * @abstract
-     * @return {undefined}
-     */
-  _init () {}
+  /**
+   * init animation
+   */
+  abstract _init (...args: any[]): void
 
-    /**
-     * called on every tick
-     * @abstract
-     * @return {undefined}
-     */
-  _tick () {}
+  /**
+   * called on every tick
+   */
+  abstract _tick (stats?: Stats): void
 
-  tick (stats) {
+  tick (stats: Stats) {
     if (this._paused) return
 
     this.elapsedDuration = stats.currentTime - this.startTime - this.pausedDuration
@@ -80,13 +84,12 @@ class Animation {
     return this.done
   }
 
-    /**
-     * Pause animation
-     * @param {Boolean} [hold] - put animation on a hold which
-     *                           must be release before it can be resumed
-     * @return {undefined}
-     */
-  pause (hold) {
+  /**
+   * Pause animation
+   * @param {boolean} [hold] - put animation on a hold which
+   *                           must be release before it can be resumed
+   */
+  pause (hold?: boolean) {
     if (hold) this._hold = true
 
     if (this.pausedTime === -1) {
@@ -95,12 +98,11 @@ class Animation {
     this._paused = true
   }
 
-    /**
-     * Resume animation
-     * @param {Boolean} [releaseHold] - release a hold on the animation
-     * @return {undefined}
-     */
-  resume (releaseHold) {
+  /**
+   * Resume animation
+   * @param {Boolean} [releaseHold] - release a hold on the animation
+   */
+  resume (releaseHold?: boolean) {
     if (!releaseHold && this._hold) return
 
     this.pausedDuration += window.performance.now() - this.pausedTime
@@ -109,10 +111,9 @@ class Animation {
     this.pausedTime = -1
   }
 
-    /**
-     * Toggle animation
-     * @return {undefined}
-     */
+  /**
+   * Toggle animation
+   */
   toggle () {
     if (this._paused) {
       this.resume()
@@ -121,13 +122,11 @@ class Animation {
     }
   }
 
-    /**
-     * Promise-like interface
-     * @param  {Function} callback - a callback
-     * @return {Promise} a promise
-     */
-  then (callback) {
-    let p
+  /**
+   * Promise-like interface
+   */
+  then (callback: Function) {
+    let p: Promise<any>
 
     if (this.done) {
       p = Promise.resolve()
@@ -135,19 +134,24 @@ class Animation {
       p = new Promise(resolve => this._resolveList.push(resolve))
     }
 
-    return p.then(callback)
+    return p.then(callback as any)
   }
 }
+
+export default Animation
 
 /**
  * Spin animation. Spin around an axis.
  */
-class SpinAnimation extends Animation {
-  constructor (duration, ...args) {
-    super(defaults(duration, Infinity), ...args)
+export class SpinAnimation extends Animation {
+  axis: Vector3
+  angle: number
+
+  constructor (duration: number|undefined, controls: ViewerControls, ...args: any[]) {
+    super(defaults(duration, Infinity), controls, ...args)
   }
 
-  _init (axis, angle) {
+  _init (axis: number[]|Vector3, angle: number) {
     if (Array.isArray(axis)) {
       this.axis = new Vector3().fromArray(axis)
     } else {
@@ -156,7 +160,7 @@ class SpinAnimation extends Animation {
     this.angle = defaults(angle, 0.01)
   }
 
-  _tick (stats) {
+  _tick (stats: Stats) {
     if (!this.axis || !this.angle) return
 
     this.controls.spin(
@@ -168,12 +172,18 @@ class SpinAnimation extends Animation {
 /**
  * Rock animation. Rock around an axis.
  */
-class RockAnimation extends Animation {
-  constructor (duration, ...args) {
-    super(defaults(duration, Infinity), ...args)
+export class RockAnimation extends Animation {
+  axis: Vector3
+  angleStep: number
+  angleEnd: number
+  angleSum = 0
+  direction = 1
+
+  constructor (duration: number|undefined, controls: ViewerControls, ...args: any[]) {
+    super(defaults(duration, Infinity), controls, ...args)
   }
 
-  _init (axis, angleStep, angleEnd) {
+  _init (axis: number[]|Vector3, angleStep: number, angleEnd: number) {
     if (Array.isArray(axis)) {
       this.axis = new Vector3().fromArray(axis)
     } else {
@@ -181,12 +191,9 @@ class RockAnimation extends Animation {
     }
     this.angleStep = defaults(angleStep, 0.01)
     this.angleEnd = defaults(angleEnd, 0.2)
-
-    this.angleSum = 0
-    this.direction = 1
   }
 
-  _tick (stats) {
+  _tick (stats: Stats) {
     if (!this.axis || !this.angleStep || !this.angleEnd) return
 
     const alpha = smoothstep(
@@ -210,8 +217,11 @@ class RockAnimation extends Animation {
 /**
  * Move animation. Move from one position to another.
  */
-class MoveAnimation extends Animation {
-  _init (moveFrom, moveTo) {
+export class MoveAnimation extends Animation {
+  moveFrom: Vector3
+  moveTo: Vector3
+
+  _init (moveFrom: number[]|Vector3, moveTo: number[]|Vector3) {
     this.moveFrom = ensureVector3(defaults(moveFrom, new Vector3()))
     this.moveTo = ensureVector3(defaults(moveTo, new Vector3()))
   }
@@ -227,13 +237,16 @@ class MoveAnimation extends Animation {
 /**
  * Zoom animation. Gradually change the zoom level.
  */
-class ZoomAnimation extends Animation {
-  _init (zoomFrom, zoomTo) {
+export class ZoomAnimation extends Animation {
+  zoomFrom: number
+  zoomTo: number
+
+  _init (zoomFrom: number, zoomTo: number) {
     this.zoomFrom = zoomFrom
     this.zoomTo = zoomTo
   }
 
-  _tick (/* stats */) {
+  _tick () {
     this.controls.distance(lerp(this.zoomFrom, this.zoomTo, this.alpha))
   }
 }
@@ -241,18 +254,23 @@ class ZoomAnimation extends Animation {
 /**
  * Rotate animation. Rotate from one orientation to another.
  */
-class RotateAnimation extends Animation {
-  _init (rotateFrom, rotateTo) {
+export class RotateAnimation extends Animation {
+  rotateFrom: Quaternion
+  rotateTo: Quaternion
+
+  private _currentRotation = new Quaternion()
+
+  _init (rotateFrom: number[]|Quaternion, rotateTo: number[]|Quaternion) {
     this.rotateFrom = ensureQuaternion(rotateFrom)
     this.rotateTo = ensureQuaternion(rotateTo)
 
     this._currentRotation = new Quaternion()
   }
 
-  _tick (/* stats */) {
+  _tick () {
     this._currentRotation
-        .copy(this.rotateFrom)
-        .slerp(this.rotateTo, this.alpha)
+      .copy(this.rotateFrom)
+      .slerp(this.rotateTo, this.alpha)
 
     this.controls.rotate(this._currentRotation)
   }
@@ -261,8 +279,12 @@ class RotateAnimation extends Animation {
 /**
  * Value animation. Call callback with interpolated value.
  */
-class ValueAnimation extends Animation {
-  _init (valueFrom, valueTo, callback) {
+export class ValueAnimation extends Animation {
+  valueFrom: number
+  valueTo: number
+  callback: Function
+
+  _init (valueFrom: number, valueTo: number, callback: Function) {
     this.valueFrom = valueFrom
     this.valueTo = valueTo
 
@@ -277,12 +299,14 @@ class ValueAnimation extends Animation {
 /**
  * Timeout animation. Call callback after duration.
  */
-class TimeoutAnimation extends Animation {
-  _init (callback) {
+export class TimeoutAnimation extends Animation {
+  callback: Function
+
+  _init (callback: Function) {
     this.callback = callback
   }
 
-  _tick (/* stats */) {
+  _tick () {
     if (this.alpha === 1) this.callback()
   }
 }
@@ -290,29 +314,28 @@ class TimeoutAnimation extends Animation {
 /**
  * Animation list.
  */
-class AnimationList {
-  constructor (list) {
-    this._list = list || []
-    this._resolveList = []
+export class AnimationList {
+  _list: Animation[]
+  _resolveList: Function[] = []
+
+  constructor (list: Animation[] = []) {
+    this._list = list
   }
 
-    /**
-     * True when all animations have finished
-     * @type {Boolean}
-     */
+  /**
+   * True when all animations have finished
+   */
   get done () {
     return this._list.every(animation => {
       return animation.done
     })
   }
 
-    /**
-     * Promise-like interface
-     * @param  {Function} callback - a callback
-     * @return {Promise} a promise
-     */
-  then (callback) {
-    let p
+  /**
+   * Promise-like interface
+   */
+  then (callback: Function) {
+    let p: Promise<any>
 
     if (this.done) {
       p = Promise.resolve()
@@ -330,18 +353,6 @@ class AnimationList {
       })
     }
 
-    return p.then(callback)
+    return p.then(callback as any)
   }
-}
-
-export {
-  Animation,
-  SpinAnimation,
-  RockAnimation,
-  MoveAnimation,
-  ZoomAnimation,
-  RotateAnimation,
-  ValueAnimation,
-  TimeoutAnimation,
-  AnimationList
 }
