@@ -7,16 +7,23 @@
 import { Vector3, Box3 } from 'three'
 
 import { Debug, Log } from '../globals'
-import Structure from './structure.js'
-import Selection from '../selection/selection.js'
+import Structure from './structure'
+import Selection from '../selection/selection'
+import BitArray from '../utils/bitarray'
+
+import BondProxy from '../proxy/bond-proxy'
+import AtomProxy from '../proxy/atom-proxy'
+import ResidueProxy from '../proxy/residue-proxy'
+import ChainProxy from '../proxy/chain-proxy'
+import ModelProxy from '../proxy/model-proxy'
 
 /**
  * Get view on structure restricted to the selection
  * @param  {Selection} selection - the selection
  * @return {StructureView} the view on the structure
  */
-Structure.prototype.getView = function (selection) {
-    // added here to avoid cyclic import dependency
+Structure.prototype.getView = function (this: Structure, selection: Selection) {
+  // added here to avoid cyclic import dependency
   return new StructureView(this, selection)
 }
 
@@ -24,11 +31,14 @@ Structure.prototype.getView = function (selection) {
  * View on the structure, restricted to the selection
  */
 class StructureView extends Structure {
-    /**
-     * @param {Structure} structure - the structure
-     * @param {Selection} selection - the selection
-     */
-  constructor (structure, selection) {
+  structure: Structure
+  selection: Selection
+
+  /**
+   * @param {Structure} structure - the structure
+   * @param {Selection} selection - the selection
+   */
+  constructor (structure: Structure, selection: Selection) {
     super()
 
     this.structure = structure
@@ -78,11 +88,11 @@ class StructureView extends Structure {
   get bondHash () { return this.structure.bondHash }
   get spatialHash () { return this.structure.spatialHash }
 
-    /**
-     * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
-     * @emits {Structure.signals.refreshed} when refreshed
-     * @return {undefined}
-     */
+  /**
+   * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
+   * @emits {Structure.signals.refreshed} when refreshed
+   * @return {undefined}
+   */
   refresh () {
     if (Debug) Log.time('StructureView.refresh')
 
@@ -111,16 +121,16 @@ class StructureView extends Structure {
     this.signals.refreshed.dispatch()
   }
 
-    //
+  //
 
-  setSelection (selection) {
+  setSelection (selection: Selection) {
     this.selection = selection
 
     this.refresh()
   }
 
-  getSelection (selection) {
-    const seleList = []
+  getSelection (selection?: Selection) {
+    const seleList: string[] = []
 
     if (selection && selection.string) {
       seleList.push(selection.string)
@@ -137,7 +147,7 @@ class StructureView extends Structure {
 
     let sele = ''
     if (seleList.length > 0) {
-      sele = '( ' + seleList.join(' ) AND ( ') + ' )'
+      sele = `( ${seleList.join(' ) AND ( ')} )`
     }
 
     return new Selection(sele)
@@ -147,13 +157,13 @@ class StructureView extends Structure {
     return this.structure.getStructure()
   }
 
-    //
+  //
 
-  eachBond (callback, selection) {
+  eachBond (callback: (entity: BondProxy) => any, selection?: Selection) {
     this.structure.eachBond(callback, this.getSelection(selection))
   }
 
-  eachAtom (callback, selection) {
+  eachAtom (callback: (entity: AtomProxy) => any, selection?: Selection) {
     const ap = this.getAtomProxy()
     const atomSet = this.getAtomSet(selection)
     const n = this.atomStore.count
@@ -171,30 +181,30 @@ class StructureView extends Structure {
     }
   }
 
-  eachResidue (callback, selection) {
+  eachResidue (callback: (entity: ResidueProxy) => any, selection?: Selection) {
     this.structure.eachResidue(callback, this.getSelection(selection))
   }
 
-    /**
-     * Not implemented
-     * @alias StructureView#eachResidueN
-     * @return {undefined}
-     */
-  eachResidueN (/* n, callback */) {
+  /**
+   * Not implemented
+   * @alias StructureView#eachResidueN
+   * @return {undefined}
+   */
+  eachResidueN (n: number, callback: (entity: ResidueProxy) => any) {
     console.error('StructureView.eachResidueN() not implemented')
   }
 
-  eachChain (callback, selection) {
+  eachChain (callback: (entity: ChainProxy) => any, selection?: Selection) {
     this.structure.eachChain(callback, this.getSelection(selection))
   }
 
-  eachModel (callback, selection) {
+  eachModel (callback: (entity: ModelProxy) => any, selection?: Selection) {
     this.structure.eachModel(callback, this.getSelection(selection))
   }
 
     //
 
-  getAtomSet (selection, ignoreView) {
+  getAtomSet (selection?: boolean|Selection|BitArray, ignoreView = false) {
     let atomSet = this.structure.getAtomSet(selection)
     if (!ignoreView && this.atomSet) {
       atomSet = atomSet.makeIntersection(this.atomSet)
@@ -203,9 +213,9 @@ class StructureView extends Structure {
     return atomSet
   }
 
-    //
+  //
 
-  getAtomIndices (selection) {
+  getAtomIndices (selection?: Selection) {
     return this.structure.getAtomIndices(this.getSelection(selection))
   }
 
@@ -213,7 +223,7 @@ class StructureView extends Structure {
     return this.structure.refreshPosition()
   }
 
-    //
+  //
 
   dispose () {
     if (this.selection) {

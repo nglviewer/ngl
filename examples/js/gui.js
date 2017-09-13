@@ -27,9 +27,7 @@ NGL.Widget = function () {
 }
 
 NGL.Widget.prototype = {
-
   constructor: NGL.Widget
-
 }
 
 NGL.createParameterInput = function (p) {
@@ -2207,12 +2205,12 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'linear': 'linear',
       'spline': 'spline'
     })
-    .setValue(component.defaultInterpolateType)
+    .setValue(component.parameters.defaultInterpolateType)
     .onChange(function () {
       player.setParameters({interpolateType: interpolateType.getValue()})
     })
 
-  var interpolateStep = new UI.Integer(component.defaultInterpolateStep)
+  var interpolateStep = new UI.Integer(component.parameters.defaultInterpolateStep)
     .setWidth('30px')
     .setRange(1, 50)
     .onChange(function () {
@@ -2226,7 +2224,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'backward': 'backward',
       'bounce': 'bounce'
     })
-    .setValue(component.defaultDirection)
+    .setValue(component.parameters.defaultDirection)
     .onChange(function () {
       player.setParameters({direction: playDirection.getValue()})
     })
@@ -2237,14 +2235,14 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'loop': 'loop',
       'once': 'once'
     })
-    .setValue(component.defaultMode)
+    .setValue(component.parameters.defaultMode)
     .onChange(function () {
       player.setParameters({mode: playMode.getValue()})
     })
 
   // player
 
-  var timeout = new UI.Integer(component.defaultTimeout)
+  var timeout = new UI.Integer(component.parameters.defaultTimeout)
     .setWidth('30px')
     .setRange(10, 1000)
     .onChange(function () {

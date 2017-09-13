@@ -14,7 +14,7 @@ import {
 } from 'three'
 
 import { Log } from '../globals'
-import { assignDefaults, getTypedArray, getUintArray } from '../utils'
+import { createParams, getTypedArray, getUintArray } from '../utils'
 import { NumberArray } from '../types'
 import { getShader, ShaderDefines } from '../shader/shader-utils.js'
 import { serialArray } from '../math/array-utils'
@@ -154,7 +154,7 @@ class Buffer {
    * @param {BufferParameters} params - parameters object
    */
   constructor (data: BufferData, params: Partial<BufferParameters> = {}) {
-    this.parameters = assignDefaults(params, this.defaultParameters)
+    this.parameters = createParams(params, this.defaultParameters)
 
     this.uniforms = UniformsUtils.merge([
       UniformsLib.common,

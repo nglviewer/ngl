@@ -120,7 +120,7 @@ export default class Annotation {
   }
 
   getVisibility () {
-    return this.visible && this.component.visible
+    return this.visible && this.component.parameters.visible
   }
 
   updateVisibility () {

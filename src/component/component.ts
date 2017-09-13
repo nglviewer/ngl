@@ -8,7 +8,7 @@
 import { Vector3, Quaternion, Matrix4, Euler, Box3 } from 'three'
 import { Signal } from 'signals'
 
-import { defaults } from '../utils'
+import { defaults, createParams } from '../utils'
 import { generateUUID } from '../math/math-utils'
 import Annotation, { AnnotationParams } from '../component/annotation'
 import ComponentControls from '../controls/component-controls'
@@ -20,12 +20,14 @@ import Viewer from '../viewer/viewer'
 const _m = new Matrix4()
 const _v = new Vector3()
 
-interface ComponentParams {
-  name: string
-  visible: boolean
+export const ComponentDefaultParameters = {
+  name: '',
+  visible: true
 }
+export type ComponentParameters = typeof ComponentDefaultParameters
 
-interface ComponentSignals {
+
+export interface ComponentSignals {
   representationAdded: Signal  // when a representation is added
   representationRemoved: Signal  // when a representation is removed
   visibilityChanged: Signal  // on matrix change
@@ -49,9 +51,10 @@ abstract class Component {
     disposed: new Signal()
   }
 
-  name: string
+  parameters: ComponentParameters
+  get defaultParameters () { return ComponentDefaultParameters }
+
   uuid: string
-  visible: boolean
   status: string
   stage: Stage
   viewer: Viewer
@@ -71,10 +74,9 @@ abstract class Component {
    * @param {Stage} stage - stage object the component belongs to
    * @param {ComponentParameters} params - parameter object
    */
-  constructor (stage: Stage, params: Partial<ComponentParams> = {}) {
-    this.name = defaults(params.name, '')
+  constructor (stage: Stage, params: Partial<ComponentParameters> = {}) {
+    this.parameters = createParams(params, this.defaultParameters)
     this.uuid = generateUUID()
-    this.visible = defaults(params.visible, true)
 
     this.stage = stage
     this.viewer = stage.viewer
@@ -83,6 +85,8 @@ abstract class Component {
   }
 
   get type () { return 'component' }
+  get name () { return this.parameters.name }
+  get visible () { return this.parameters.visible }
 
   /**
    * Set position transform
@@ -255,7 +259,7 @@ abstract class Component {
     p.useWorker = defaults(p.useWorker, sp.workerDefault)
     p.visible = defaults(p.visible, true)
 
-    const p2 = Object.assign({}, p, { visible: this.visible && p.visible })
+    const p2 = Object.assign({}, p, { visible: this.parameters.visible && p.visible })
     const repr = makeRepresentation(type, object, this.viewer, p2)
     const reprElem = new RepresentationElement(this.stage, repr, p, this)
 
@@ -328,7 +332,7 @@ abstract class Component {
    * @return {Component} this object
    */
   setVisibility (value: boolean) {
-    this.visible = value
+    this.parameters.visible = value
 
     this.eachRepresentation((repr: RepresentationElement) => repr.updateVisibility())
     this.eachAnnotation((annotation: Annotation) => annotation.updateVisibility())
@@ -346,7 +350,7 @@ abstract class Component {
   }
 
   setName (value: string) {
-    this.name = value
+    this.parameters.name = value
     this.signals.nameChanged.dispatch(value)
 
     return this

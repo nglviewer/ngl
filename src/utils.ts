@@ -35,15 +35,21 @@ export function defaults (value: any, defaultValue: any) {
   return value !== undefined ? value : defaultValue
 }
 
-export function assignDefaults<T> (params: {[k in keyof T]?}, defaultParams: T) {
-  const o: any = {}
-  for (const k in params) {
-    o[k] = params[k]
-  }
+export function createParams<T> (params: {[k in keyof T]?}, defaultParams: T) {
+  const o: any = Object.assign({}, params)
   for (const k in defaultParams) {
-    o[k] = defaults(params[k], defaultParams[k])
+    const value = params[k]
+    if (value === undefined) o[k] = defaultParams[k]
   }
   return o as T
+}
+
+export function updateParams<T> (params: T, newParams: {[k in keyof T]?}) {
+  for (const k in newParams) {
+    const value = newParams[k]
+    if (value !== undefined) params[k] = value
+  }
+  return params as T
 }
 
 export function pick (object: { [index: string]: any }) {

@@ -8,24 +8,32 @@ import { Signal } from 'signals'
 
 import { ComponentRegistry } from '../globals'
 import { defaults } from '../utils'
-import Component from './component.js'
-import TrajectoryComponent from './trajectory-component.js'
-import { makeTrajectory } from '../trajectory/trajectory-utils.js'
-import Selection from '../selection/selection.js'
-import StructureView from '../structure/structure-view.js'
-import { superpose } from '../align/align-utils.js'
+import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
+import TrajectoryComponent from './trajectory-component'
+import { makeTrajectory } from '../trajectory/trajectory-utils'
+import Selection from '../selection/selection'
+import Structure from '../structure/structure'
+import StructureView from '../structure/structure-view'
+import { superpose } from '../align/align-utils'
+import Stage from '../stage/stage'
 
-/**
- * Extends {@link ComponentSignals}
- *
- * @example
- * component.signals.representationAdded.add( function( representationComponent ){ ... } );
- *
- * @typedef {Object} StructureComponentSignals
- * @property {Signal<RepresentationComponent>} trajectoryAdded - when a trajectory is added
- * @property {Signal<RepresentationComponent>} trajectoryRemoved - when a trajectory is removed
- * @property {Signal<String>} defaultAssemblyChanged - on default assembly change
- */
+type StructureRepresentationType = (
+  'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'distance'|
+  'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|'ribbon'|
+  'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
+)
+
+export const StructureComponentDefaultParameters = Object.assign({
+  sele: '',
+  defaultAssembly: ''
+}, ComponentDefaultParameters)
+export type StructureComponentParameters = typeof StructureComponentDefaultParameters
+
+interface StructureComponentSignals extends ComponentSignals {
+  trajectoryAdded: Signal  // when a trajectory is added
+  trajectoryRemoved: Signal  // when a trajectory is removed
+  defaultAssemblyChanged: Signal  // on default assembly change
+}
 
 /**
  * Component wrapping a {@link Structure} object
@@ -38,13 +46,22 @@ import { superpose } from '../align/align-utils.js'
  * } );
  */
 class StructureComponent extends Component {
+  signals: StructureComponentSignals
+  parameters: StructureComponentParameters
+  get defaultParameters () { return StructureComponentDefaultParameters }
+
+  structure: Structure
+  structureView: StructureView
+  trajList: TrajectoryComponent[] = []
+  selection: Selection
+
   /**
    * Create structure component
    * @param {Stage} stage - stage object the component belongs to
    * @param {Structure} structure - structure object to wrap
    * @param {ComponentParameters} params - component parameters
    */
-  constructor (stage, structure, params = {}) {
+  constructor (stage: Stage, structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, Object.assign({
       name: defaults(params.name, structure.name)
     }, params))
@@ -65,9 +82,8 @@ class StructureComponent extends Component {
      */
     this.structure = structure
 
-    this.trajList = []
-    this.initSelection(params.sele || '')
-    this.setDefaultAssembly(params.assembly || '')
+    this.initSelection(this.parameters.sele)
+    this.setDefaultAssembly(this.parameters.defaultAssembly)
   }
 
   /**
@@ -82,7 +98,7 @@ class StructureComponent extends Component {
    * @param {String} sele - selection string
    * @return {undefined}
    */
-  initSelection (sele) {
+  initSelection (sele: string) {
     /**
      * Selection for {@link StructureComponent#structureView}
      * @private
@@ -112,7 +128,8 @@ class StructureComponent extends Component {
    * @param {String} string - selection string
    * @return {StructureComponent} this object
    */
-  setSelection (string) {
+  setSelection (string: string) {
+    this.parameters.sele = string
     this.selection.setString(string)
 
     return this
@@ -123,10 +140,10 @@ class StructureComponent extends Component {
    * @param {String} value - assembly name
    * @return {undefined}
    */
-  setDefaultAssembly (value) {
-    this.defaultAssembly = value
+  setDefaultAssembly (value:string) {
+    this.parameters.defaultAssembly = value
     this.reprList.forEach(repr => {
-      repr.setParameters({ defaultAssembly: this.defaultAssembly })
+      repr.setParameters({ defaultAssembly: this.parameters.defaultAssembly })
     })
     this.signals.defaultAssemblyChanged.dispatch(value)
   }
@@ -151,22 +168,10 @@ class StructureComponent extends Component {
     })
   }
 
-  /**
-   * Add a new structure representation to the component
-   * @param {String} type - the name of the representation, one of:
-   *                        axes, backbone, ball+stick, base, cartoon, contact,
-   *                        distance, helixorient, hyperball, label, licorice, line
-   *                        surface, ribbon, rocket, rope, spacefill, trace, tube,
-   *                        unitcell.
-   * @param {StructureRepresentationParameters} params - representation parameters
-   * @return {RepresentationComponent} the created representation wrapped into
-   *                                   a representation component object
-   */
-  addRepresentation (type, params) {
-    var p = params || {}
-    p.defaultAssembly = this.defaultAssembly
+  addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}) {
+    params.defaultAssembly = this.parameters.defaultAssembly
 
-    return super.addRepresentation(type, this.structureView, p)
+    return super.addRepresentation(type, this.structureView, params)
   }
 
   /**
@@ -175,21 +180,21 @@ class StructureComponent extends Component {
    * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
    * @return {TrajectoryComponent} the created trajectory component object
    */
-  addTrajectory (trajPath, params) {
+  addTrajectory (trajPath: string, params: { [k: string]: any } = {}) {
     var traj = makeTrajectory(trajPath, this.structureView, params)
 
     traj.signals.frameChanged.add(() => {
       this.updateRepresentations({ 'position': true })
     })
 
-    var trajComp = new TrajectoryComponent(this.stage, traj, params, this)
+    var trajComp = new TrajectoryComponent(this.stage, traj, params)
     this.trajList.push(trajComp)
     this.signals.trajectoryAdded.dispatch(trajComp)
 
     return trajComp
   }
 
-  removeTrajectory (traj) {
+  removeTrajectory (traj: TrajectoryComponent) {
     var idx = this.trajList.indexOf(traj)
     if (idx !== -1) {
       this.trajList.splice(idx, 1)
@@ -218,10 +223,11 @@ class StructureComponent extends Component {
    * @param  {Integer} [duration] - duration of the animation, defaults to 0
    * @return {undefined}
    */
-  autoView (sele, duration) {
-    if (Number.isInteger(sele)) {
+  autoView (duration?: number): any
+  autoView (sele?: string|number, duration?: number) {
+    if (typeof sele === 'number') {
       duration = sele
-      sele = undefined
+      sele = ''
     }
 
     this.stage.animationControls.zoomMove(
@@ -231,8 +237,8 @@ class StructureComponent extends Component {
     )
   }
 
-  getBoxUntransformed (sele) {
-    var bb
+  getBoxUntransformed (sele: string) {
+    let bb
 
     if (sele) {
       bb = this.structureView.getBoundingBox(new Selection(sele))
@@ -243,7 +249,7 @@ class StructureComponent extends Component {
     return bb
   }
 
-  getCenterUntransformed (sele) {
+  getCenterUntransformed (sele: string) {
     if (sele && typeof sele === 'string') {
       return this.structure.atomCenter(new Selection(sele))
     } else {
@@ -251,7 +257,7 @@ class StructureComponent extends Component {
     }
   }
 
-  superpose (component, align, sele1, sele2) {
+  superpose (component: StructureComponent, align: boolean, sele1: string, sele2: string) {
     superpose(
       this.structureView, component.structureView, align, sele1, sele2
     )
@@ -261,7 +267,7 @@ class StructureComponent extends Component {
     return this
   }
 
-  setVisibility (value) {
+  setVisibility (value: boolean) {
     super.setVisibility(value)
 
     this.trajList.forEach(traj => {

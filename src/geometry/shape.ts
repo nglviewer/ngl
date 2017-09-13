@@ -6,7 +6,7 @@
 
 import { Box3, Vector3, Color } from 'three'
 
-import { assignDefaults, ensureFloat32Array, getUintArray } from '../utils'
+import { createParams, ensureFloat32Array, getUintArray } from '../utils'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
@@ -15,6 +15,7 @@ import {
 import { MeshPicker } from '../utils/picker'
 import Buffer from '../buffer/buffer'
 import MeshBuffer from '../buffer/mesh-buffer'
+import { TextBufferParameters } from '../buffer/text-buffer'
 
 const tmpBox = new Box3()
 
@@ -24,18 +25,15 @@ const Primitives = [
   TetrahedronPrimitive, TextPrimitive, TorusPrimitive
 ]
 
-interface TextBufferParameters {
-  [k: string]: any
+const ShapeDefaultParameters = {
+  aspectRatio: 1.5,
+  sphereDetail: 2,
+  radialSegments: 50,
+  disableImpostor: false,
+  openEnded: false,
+  labelParams: {} as Partial<TextBufferParameters>
 }
-
-interface ShapeParameters {
-  aspectRatio: number
-  sphereDetail: number
-  radialSegments: number
-  disableImpostor: boolean
-  openEnded: boolean
-  labelParams: TextBufferParameters
-}
+type ShapeParameters = typeof ShapeDefaultParameters
 
 /**
  * Class for building custom shapes.
@@ -75,14 +73,7 @@ class Shape {
   constructor (name = 'shape', params: Partial<ShapeParameters> = {}) {
     this.name = name
 
-    this.parameters = assignDefaults(params, {
-      aspectRatio: 1.5,
-      sphereDetail: 2,
-      radialSegments: 50,
-      disableImpostor: false,
-      openEnded: false,
-      labelParams: {}
-    } as ShapeParameters)
+    this.parameters = createParams(params, ShapeDefaultParameters)
 
     Primitives.forEach(P => {
       Object.keys(P.fields).forEach(name => {

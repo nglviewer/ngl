@@ -10,7 +10,7 @@ import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
 
 import { Browser, BufferRegistry } from '../globals'
-import { assignDefaults } from '../utils'
+import { createParams } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
@@ -71,7 +71,7 @@ class TextAtlas {
     // adapted from https://github.com/unconed/mathbox
     // MIT License Copyright (C) 2013+ Steven Wittens and contributors
 
-    this.parameters = assignDefaults(params, TextAtlasDefaultParams)
+    this.parameters = createParams(params, TextAtlasDefaultParams)
 
     if (typeof navigator !== 'undefined') {
       const ua = navigator.userAgent
@@ -338,7 +338,7 @@ const TextBufferDefaultParameters = Object.assign({
   backgroundOpacity: 1.0,
   forceTransparent: true
 }, BufferDefaultParameters)
-type TextBufferParameters = typeof TextBufferDefaultParameters
+export type TextBufferParameters = typeof TextBufferDefaultParameters
 
 const TextBufferParameterTypes = Object.assign({
   fontFamily: { uniform: true },

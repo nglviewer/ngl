@@ -7,7 +7,7 @@
 import { Matrix4, Vector3, Group } from 'three'
 
 import { BufferRegistry } from '../globals'
-import { assignDefaults, defaults } from '../utils'
+import { createParams, defaults } from '../utils'
 import { Picker } from '../utils/picker'
 import Buffer from './buffer'
 import CylinderBuffer, { CylinderBufferData } from './cylinder-buffer'
@@ -71,7 +71,7 @@ class ArrowBuffer {
    * @param {BufferParameters} [params] - parameters object
    */
   constructor (data: ArrowBufferData, params: Partial<ArrowBufferParameters> = {}) {
-    this.parameters = assignDefaults(params, this.defaultParameters)
+    this.parameters = createParams(params, this.defaultParameters)
 
     this.splitPosition = new Float32Array(data.position1.length)
     this.cylinderRadius = new Float32Array(data.radius.length)

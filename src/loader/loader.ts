@@ -5,7 +5,7 @@
  */
 
 import { ParserRegistry } from '../globals'
-import { assignDefaults } from '../utils'
+import { createParams } from '../utils'
 import { Partial } from '../types'
 import FileStreamer from '../streamer/file-streamer'
 import NetworkStreamer from '../streamer/network-streamer'
@@ -33,7 +33,7 @@ abstract class Loader {
    * @param  {LoaderParameters} params - parameters object
    */
   constructor (src: LoaderInput, params: Partial<LoaderParameters> = {}) {
-    this.parameters = assignDefaults(params, {
+    this.parameters = createParams(params, {
       ext: '',
       compressed: false,
       binary: ParserRegistry.isBinary(params.ext || ''),

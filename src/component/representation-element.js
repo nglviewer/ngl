@@ -103,7 +103,7 @@ class RepresentationElement {
 
   getVisibility () {
     if (this.parent) {
-      return this.parent.visible && this.visible
+      return this.parent.parameters.visible && this.visible
     } else {
       return this.visible
     }

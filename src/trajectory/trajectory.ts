@@ -8,13 +8,17 @@ import { Signal } from 'signals'
 
 import { Log } from '../globals'
 import { defaults } from '../utils'
-import { circularMean, arrayMean } from '../math/array-utils.js'
+import { NumberArray } from '../types'
+import { circularMean, arrayMean } from '../math/array-utils'
 import { lerp, spline } from '../math/math-utils'
-import Selection from '../selection/selection.js'
-import Superposition from '../align/superposition.js'
-import TrajectoryPlayer from './trajectory-player.js'
+import Selection from '../selection/selection'
+import Superposition from '../align/superposition'
+import Structure from '../structure/structure'
+import AtomProxy from '../proxy/atom-proxy'
+import TrajectoryPlayer, { TrajectoryPlayerInterpolateType } from './trajectory-player'
 
-function centerPbc (coords, mean, box) {
+
+function centerPbc (coords: NumberArray, mean: number[], box: number[]) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -39,7 +43,7 @@ function centerPbc (coords, mean, box) {
   }
 }
 
-function removePbc (x, box) {
+function removePbc (x: NumberArray, box: number[]) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -70,7 +74,7 @@ function removePbc (x, box) {
   return x
 }
 
-function removePeriodicity (x, box, mean) {
+function removePeriodicity (x: NumberArray, box: number[], mean: number[]) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -88,7 +92,7 @@ function removePeriodicity (x, box, mean) {
   return x
 }
 
-function circularMean3 (indices, coords, box) {
+function circularMean3 (indices: NumberArray, coords: NumberArray, box: number[]) {
   return [
     circularMean(coords, box[ 0 ], 3, 0, indices),
     circularMean(coords, box[ 1 ], 3, 1, indices),
@@ -96,7 +100,7 @@ function circularMean3 (indices, coords, box) {
   ]
 }
 
-function arrayMean3 (coords) {
+function arrayMean3 (coords: NumberArray) {
   return [
     arrayMean(coords, 3, 0),
     arrayMean(coords, 3, 1),
@@ -104,7 +108,7 @@ function arrayMean3 (coords) {
   ]
 }
 
-function interpolateSpline (c, cp, cpp, cppp, t) {
+function interpolateSpline (c: NumberArray, cp: NumberArray, cpp: NumberArray, cppp: NumberArray, t: number) {
   const m = c.length
   const coords = new Float32Array(m)
 
@@ -119,7 +123,7 @@ function interpolateSpline (c, cp, cpp, cppp, t) {
   return coords
 }
 
-function interpolateLerp (c, cp, t) {
+function interpolateLerp (c: NumberArray, cp: NumberArray, t: number) {
   const m = c.length
   const coords = new Float32Array(m)
 
@@ -157,64 +161,100 @@ function interpolateLerp (c, cp, t) {
  * @property {Signal<TrajectoryPlayer>} playerChanged - when the player is changed
  */
 
+export interface TrajectoryParameters {
+  deltaTime: number  // timestep between frames in picoseconds
+  timeOffset: number  // starting time of frames in picoseconds
+  sele: string  // to restrict atoms used for superposition
+  centerPbc: boolean  // center on initial frame
+  removePbc: boolean  // move atoms into the origin box
+  removePeriodicity: boolean  // try fixing periodic boundary discontinuities
+  superpose: boolean  // superpose on initial frame
+}
+
+interface TrajectorySignals {
+  countChanged: Signal
+  frameChanged: Signal
+  playerChanged: Signal
+}
+
 /**
  * Base class for trajectories, tying structures and coordinates together
  * @interface
  */
 class Trajectory {
+  signals: TrajectorySignals = {
+    countChanged: new Signal(),
+    frameChanged: new Signal(),
+    playerChanged: new Signal()
+  }
+
+  deltaTime: number
+  timeOffset: number
+  sele: string
+  centerPbc: boolean
+  removePbc: boolean
+  removePeriodicity: boolean
+  superpose: boolean
+
+  name: string
+  frame: number
+  trajPath: string
+
+  initialCoords: Float32Array
+  structureCoords: Float32Array
+  selectionIndices: NumberArray
+  backboneIndices: NumberArray
+
+  coords1: Float32Array
+  coords2: Float32Array
+
+  frameCache: { [k: number]: Float32Array } = {}
+  loadQueue: { [k: number]: boolean } = {}
+  boxCache: { [k: number]: number[] } = {}
+  pathCache = {}
+  frameCacheSize = 0
+
+  atomCount: number
+  inProgress: boolean
+
+  selection: Selection  // selection to restrict atoms used for superposition
+  structure: Structure
+  player: TrajectoryPlayer
+
+  private _frameCount = 0
+  private _currentFrame = -1
+  private _disposed = false
+
   /**
-   * @param {String|Frames} trajPath - trajectory source
+   * @param {String} trajPath - trajectory source
    * @param {Structure} structure - the structure object
    * @param {TrajectoryParameters} params - trajectory parameters
    */
-  constructor (trajPath, structure, params) {
-    /**
-     * Events emitted by the trajectory
-     * @type {TrajectorySignals}
-     */
-    this.signals = {
-      countChanged: new Signal(),
-      frameChanged: new Signal(),
-      playerChanged: new Signal()
-    }
-
-    const p = params || {}
-
-    this.deltaTime = defaults(p.deltaTime, 0)
-    this.timeOffset = defaults(p.timeOffset, 0)
-    this.centerPbc = defaults(p.centerPbc, false)
-    this.removePbc = defaults(p.removePbc, false)
-    this.removePeriodicity = defaults(p.removePeriodicity, false)
-    this.superpose = defaults(p.superpose, false)
+  constructor (trajPath: string, structure: Structure, params: Partial<TrajectoryParameters> = {}) {
+    this.deltaTime = defaults(params.deltaTime, 0)
+    this.timeOffset = defaults(params.timeOffset, 0)
+    this.centerPbc = defaults(params.centerPbc, false)
+    this.removePbc = defaults(params.removePbc, false)
+    this.removePeriodicity = defaults(params.removePeriodicity, false)
+    this.superpose = defaults(params.superpose, false)
 
     this.name = trajPath.replace(/^.*[\\/]/, '')
     this.trajPath = trajPath
 
-    this.initialCoords = null
-    this.structureCoords = null
-
-    /**
-     * selection to restrict atoms used for superposition
-     * @type {Selection}
-     */
     this.selection = new Selection(
-      defaults(p.sele, 'backbone and not hydrogen')
+      defaults(params.sele, 'backbone and not hydrogen')
     )
 
-    this.selection.signals.stringChanged.add(function () {
-      this.selectionIndices = this.structure.getAtomIndices(this.selection)
+    this.selection.signals.stringChanged.add(() => {
+      this.selectionIndices = this.structure.getAtomIndices(this.selection)!
       this._resetCache()
       this._saveInitialCoords()
       this.setFrame(this._currentFrame)
-    }, this)
-
-    this._frameCount = 0
-    this._currentFrame = -1
+    })
   }
 
   /**
    * Number of frames in the trajectory
-   * @return {Number} count
    */
   get frameCount () {
     return this._frameCount
@@ -222,19 +262,20 @@ class Trajectory {
 
   /**
    * Currently set frame of the trajectory
-   * @return {Number} frame
    */
   get currentFrame () {
     return this._currentFrame
   }
 
-  _init (structure) {
+  _init (structure: Structure) {
     this.setStructure(structure)
     this._loadFrameCount()
     this.setPlayer(new TrajectoryPlayer(this))
   }
 
-  setStructure (structure) {
+  _loadFrameCount () {}
+
+  setStructure (structure: Structure) {
     this.structure = structure
     this.atomCount = structure.atomCount
 
@@ -264,23 +305,25 @@ class Trajectory {
 
   _saveStructureCoords () {
     const p = { what: { position: true } }
-    this.structureCoords = this.structure.getAtomData(p).position
+    this.structureCoords = this.structure.getAtomData(p).position!
   }
 
-  setSelection (string) {
+  setSelection (string: string) {
     this.selection.setString(string)
     return this
   }
 
-  _getIndices (selection) {
+  _getIndices (selection: Selection) {
     let i = 0
     const test = selection.test
-    const indices = []
+    const indices: number[] = []
 
-    this.structure.eachAtom(function (ap) {
-      if (test(ap)) indices.push(i)
-      i += 1
-    })
+    if (test) {
+      this.structure.eachAtom((ap: AtomProxy) => {
+        if (test(ap)) indices.push(i)
+        i += 1
+      })
+    }
 
     return indices
   }
@@ -313,35 +356,34 @@ class Trajectory {
     this.boxCache = {}
     this.pathCache = {}
     this.frameCacheSize = 0
-    this.initialCoords = null
+    this.initialCoords = new Float32Array(0)
   }
 
-  setParameters (params) {
-    const p = params || {}
+  setParameters (params: Partial<TrajectoryParameters> = {}) {
     let resetCache = false
 
-    if (p.centerPbc !== undefined && p.centerPbc !== this.centerPbc) {
-      this.centerPbc = p.centerPbc
+    if (params.centerPbc !== undefined && params.centerPbc !== this.centerPbc) {
+      this.centerPbc = params.centerPbc
       resetCache = true
     }
 
-    if (p.removePeriodicity !== undefined && p.removePeriodicity !== this.removePeriodicity) {
-      this.removePeriodicity = p.removePeriodicity
+    if (params.removePeriodicity !== undefined && params.removePeriodicity !== this.removePeriodicity) {
+      this.removePeriodicity = params.removePeriodicity
       resetCache = true
     }
 
-    if (p.removePbc !== undefined && p.removePbc !== this.removePbc) {
-      this.removePbc = p.removePbc
+    if (params.removePbc !== undefined && params.removePbc !== this.removePbc) {
+      this.removePbc = params.removePbc
       resetCache = true
     }
 
-    if (p.superpose !== undefined && p.superpose !== this.superpose) {
-      this.superpose = p.superpose
+    if (params.superpose !== undefined && params.superpose !== this.superpose) {
+      this.superpose = params.superpose
       resetCache = true
     }
 
-    this.deltaTime = defaults(p.deltaTime, this.deltaTime)
-    this.timeOffset = defaults(p.timeOffset, this.timeOffset)
+    this.deltaTime = defaults(params.deltaTime, this.deltaTime)
+    this.timeOffset = defaults(params.timeOffset, this.timeOffset)
 
     if (resetCache) {
       this._resetCache()
@@ -354,7 +396,7 @@ class Trajectory {
    * @param  {Integer|Integer[]} i - the frame index
    * @return {Boolean} frame availability
    */
-  hasFrame (i) {
+  hasFrame (i: number|number[]) {
     if (Array.isArray(i)) {
       return i.every(j => !!this.frameCache[j])
     } else {
@@ -365,14 +407,14 @@ class Trajectory {
   /**
    * Set trajectory to a frame index
    * @param {Integer} i - the frame index
-   * @param {Function} callback - fired when the frame has been set
+   * @param {Function} [callback] - fired when the frame has been set
    */
-  setFrame (i, callback) {
+  setFrame (i: number, callback?: Function) {
     if (i === undefined) return this
 
     this.inProgress = true
 
-    i = parseInt(i)
+    // i = parseInt(i)  // TODO
 
     if (i === -1 || this.frameCache[ i ]) {
       this._updateStructure(i)
@@ -387,7 +429,7 @@ class Trajectory {
     return this
   }
 
-  _interpolate (i, ip, ipp, ippp, t, type) {
+  _interpolate (i: number, ip: number, ipp: number, ippp: number, t: number, type: TrajectoryPlayerInterpolateType) {
     const fc = this.frameCache
 
     let coords
@@ -412,11 +454,11 @@ class Trajectory {
    * @param {String} type - interpolation type, '', 'spline' or 'linear'
    * @param {Function} callback - fired when the frame has been set
    */
-  setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
+  setFrameInterpolated (i: number, ip: number, ipp: number, ippp: number, t: number, type: TrajectoryPlayerInterpolateType, callback?: Function) {
     if (i === undefined) return this
 
     const fc = this.frameCache
-    const iList = []
+    const iList: number[] = []
 
     if (!fc[ ippp ]) iList.push(ippp)
     if (!fc[ ipp ]) iList.push(ipp)
@@ -441,7 +483,7 @@ class Trajectory {
    * @param {Integer|Integer[]} i - the frame index
    * @param {Function} callback - fired when the frame has been loaded
    */
-  loadFrame (i, callback) {
+  loadFrame (i: number|number[], callback?: Function) {
     if (Array.isArray(i)) {
       i.forEach(j => {
         if (!this.loadQueue[j] && !this.frameCache[j]) {
@@ -468,11 +510,11 @@ class Trajectory {
    * @param {Integer} i - the frame index
    * @param {Function} callback - fired when the frame has been loaded
    */
-  _loadFrame (i, callback) {
+  _loadFrame (i: number, callback?: Function) {
     Log.error('Trajectory._loadFrame not implemented', i, callback)
   }
 
-  _updateStructure (i) {
+  _updateStructure (i: number) {
     if (this._disposed) {
       console.error('updateStructure: traj disposed')
       return
@@ -496,7 +538,7 @@ class Trajectory {
     this.signals.frameChanged.dispatch(i)
   }
 
-  _doSuperpose (x) {
+  _doSuperpose (x: NumberArray) {
     const n = this.selectionIndices.length * 3
 
     const coords1 = this.coords1
@@ -515,7 +557,7 @@ class Trajectory {
     sp.transform(x)
   }
 
-  _process (i, box, coords, frameCount) {
+  _process (i: number, box: number[], coords: Float32Array, frameCount: number) {
     this._setFrameCount(frameCount)
 
     if (box) {
@@ -544,7 +586,7 @@ class Trajectory {
     this.frameCacheSize += 1
   }
 
-  _setFrameCount (n) {
+  _setFrameCount (n: number) {
     if (n !== this._frameCount) {
       this._frameCount = n
       this.signals.countChanged.dispatch(n)
@@ -565,7 +607,7 @@ class Trajectory {
    * Set player for this trajectory
    * @param {TrajectoryPlayer} player - the player
    */
-  setPlayer (player) {
+  setPlayer (player: TrajectoryPlayer) {
     this.player = player
     this.signals.playerChanged.dispatch(player)
   }
@@ -577,7 +619,7 @@ class Trajectory {
    * @param  {Function} callback - fired when the path is available
    * @return {undefined}
    */
-  getPath (index, callback) {
+  getPath (index: number, callback?: Function) {
     Log.error('Trajectory.getPath not implemented', index, callback)
   }
 
@@ -586,7 +628,7 @@ class Trajectory {
    * @param  {Integer} i - frame index
    * @return {Number} time in picoseconds
    */
-  getFrameTime (i) {
+  getFrameTime (i: number) {
     return this.timeOffset + i * this.deltaTime
   }
 }

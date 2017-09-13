@@ -7,7 +7,7 @@
 import { Vector3 } from 'three'
 import * as chroma from 'chroma-js'
 
-import { assignDefaults } from '../utils'
+import { createParams } from '../utils'
 import { NumberArray, Partial } from '../types'
 import Structure from '../structure/structure'
 import Surface from '../surface/surface'
@@ -15,13 +15,14 @@ import Volume from '../surface/volume'
 import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
-interface ScaleParameters {
-  scale: string|string[]
-  mode: 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
-  domain: [number, number]
-  value: number
-  reverse: boolean
+const ScaleDefaultParameters = {
+  scale: 'uniform' as string|string[],
+  mode: 'hcl' as 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl',
+  domain: [ 0, 1 ] as [number, number],
+  value: 0xFFFFFF,
+  reverse: false
 }
+type ScaleParameters = typeof ScaleDefaultParameters
 
 export interface ColormakerParameters extends ScaleParameters {
   structure?: Structure
@@ -46,13 +47,7 @@ abstract class Colormaker {
    * @param  {ColormakerParameters} params - colormaker parameter
    */
   constructor (params: Partial<ColormakerParameters> = {}) {
-    this.parameters = assignDefaults(params, {
-      scale: 'uniform',
-      mode: 'hcl',
-      domain: [ 0, 1 ],
-      value: 0xFFFFFF,
-      reverse: false
-    } as ColormakerParameters)
+    this.parameters = createParams(params, ScaleDefaultParameters)
 
     if (this.parameters.structure) {
       this.atomProxy = this.parameters.structure.getAtomProxy()
@@ -60,7 +55,7 @@ abstract class Colormaker {
   }
 
   getScale (params: Partial<ScaleParameters> = {}) {
-    const p = assignDefaults(params, this.parameters)
+    const p = createParams(params, this.parameters)
 
     if (p.scale === 'rainbow') {
       p.scale = [ 'red', 'orange', 'yellow', 'green', 'blue' ]

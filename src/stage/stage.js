@@ -525,7 +525,7 @@ class Stage {
 
     // placeholder component
     let component = new Component(this, p)
-    component.name = getFileInfo(path).name
+    component.setName(getFileInfo(path).name)
     this.addComponent(component)
 
     // tasks
