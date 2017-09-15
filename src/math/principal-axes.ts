@@ -9,7 +9,9 @@ import { Vector3, Matrix4, Quaternion } from 'three'
 import {
     Matrix, meanRows, subRows, transpose, multiplyABt, svd
 } from './matrix-utils.js'
-import { projectPointOnVector } from './vector-utils.js'
+import { projectPointOnVector } from './vector-utils'
+import Structure from '../structure/structure'
+import AtomProxy from '../proxy/atom-proxy'
 
 const negateVector = new Vector3(-1, -1, -1)
 const tmpMatrix = new Matrix4()
@@ -18,10 +20,27 @@ const tmpMatrix = new Matrix4()
  * Principal axes
  */
 class PrincipalAxes {
+  begA: Vector3
+  endA: Vector3
+  begB: Vector3
+  endB: Vector3
+  begC: Vector3
+  endC: Vector3
+
+  center: Vector3
+
+  vecA: Vector3
+  vecB: Vector3
+  vecC: Vector3
+
+  normVecA: Vector3
+  normVecB: Vector3
+  normVecC: Vector3
+
   /**
    * @param  {Matrix} points - 3 by N matrix
    */
-  constructor (points) {
+  constructor (points: Matrix) {
     // console.time( "PrincipalAxes" );
 
     const n = points.rows
@@ -83,8 +102,8 @@ class PrincipalAxes {
    * @param  {Matrix4} [optionalTarget] - target object
    * @return {Matrix4} the basis
    */
-  getBasisMatrix (optionalTarget) {
-    const basis = optionalTarget || new Matrix4()
+  getBasisMatrix (optionalTarget = new Matrix4()) {
+    const basis = optionalTarget
 
     basis.makeBasis(this.normVecB, this.normVecA, this.normVecC)
     if (basis.determinant() < 0) {
@@ -99,8 +118,8 @@ class PrincipalAxes {
    * @param  {Quaternion} [optionalTarget] - target object
    * @return {Quaternion} the rotation
    */
-  getRotationQuaternion (optionalTarget) {
-    const q = optionalTarget || new Quaternion()
+  getRotationQuaternion (optionalTarget = new Quaternion()) {
+    const q = optionalTarget
     q.setFromRotationMatrix(this.getBasisMatrix(tmpMatrix))
 
     return q.inverse()
@@ -112,7 +131,7 @@ class PrincipalAxes {
    * @param  {Structure|StructureView} structure - the structure
    * @return {{d1a: Number, d2a: Number, d3a: Number, d1b: Number, d2b: Number, d3b: Number}} scale
    */
-  getProjectedScaleForAtoms (structure) {
+  getProjectedScaleForAtoms (structure: Structure) {
     let d1a = -Infinity
     let d1b = -Infinity
     let d2a = -Infinity
@@ -128,8 +147,8 @@ class PrincipalAxes {
     const ax2 = this.normVecB
     const ax3 = this.normVecC
 
-    structure.eachAtom(function (ap) {
-      projectPointOnVector(p.copy(ap), ax1, center)
+    structure.eachAtom(function (ap: AtomProxy) {
+      projectPointOnVector(p.copy(ap as any), ax1, center)  // TODO
       const dp1 = t.subVectors(p, center).normalize().dot(ax1)
       const dt1 = p.distanceTo(center)
       if (dp1 > 0) {
@@ -138,7 +157,7 @@ class PrincipalAxes {
         if (dt1 > d1b) d1b = dt1
       }
 
-      projectPointOnVector(p.copy(ap), ax2, center)
+      projectPointOnVector(p.copy(ap as any), ax2, center)
       const dp2 = t.subVectors(p, center).normalize().dot(ax2)
       const dt2 = p.distanceTo(center)
       if (dp2 > 0) {
@@ -147,7 +166,7 @@ class PrincipalAxes {
         if (dt2 > d2b) d2b = dt2
       }
 
-      projectPointOnVector(p.copy(ap), ax3, center)
+      projectPointOnVector(p.copy(ap as any), ax3, center)
       const dp3 = t.subVectors(p, center).normalize().dot(ax3)
       const dt3 = p.distanceTo(center)
       if (dp3 > 0) {

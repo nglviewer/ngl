@@ -9,33 +9,43 @@ import {
     Matrix, svd, meanRows, subRows, addRows, transpose,
     multiplyABt, invert3x3, multiply3x3, mat3x3determinant
 } from '../math/matrix-utils.js'
+import Structure from '../structure/structure'
 
 class Superposition {
-  constructor (atoms1, atoms2) {
+  coords1t: Matrix
+  coords2t: Matrix
+
+  mean1: number[]
+  mean2: number[]
+
+  A = new Matrix(3, 3)
+  W = new Matrix(1, 3)
+  U = new Matrix(3, 3)
+  V = new Matrix(3, 3)
+  VH = new Matrix(3, 3)
+  R = new Matrix(3, 3)
+
+  private tmp = new Matrix(3, 3)
+  private c = new Matrix(3, 3)
+
+  constructor (atoms1: Structure|Float32Array, atoms2: Structure|Float32Array) {
     // allocate & init data structures
 
-    var n
-    if (typeof atoms1.eachAtom === 'function') {
+    let n
+    if (atoms1 instanceof Structure) {
       n = atoms1.atomCount
     } else if (atoms1 instanceof Float32Array) {
       n = atoms1.length / 3
+    } else {
+      return
     }
 
-    var coords1 = new Matrix(3, n)
-    var coords2 = new Matrix(3, n)
+    const coords1 = new Matrix(3, n)
+    const coords2 = new Matrix(3, n)
 
     this.coords1t = new Matrix(n, 3)
     this.coords2t = new Matrix(n, 3)
 
-    this.A = new Matrix(3, 3)
-    this.W = new Matrix(1, 3)
-    this.U = new Matrix(3, 3)
-    this.V = new Matrix(3, 3)
-    this.VH = new Matrix(3, 3)
-    this.R = new Matrix(3, 3)
-
-    this.tmp = new Matrix(3, 3)
-    this.c = new Matrix(3, 3)
     this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ])
 
     // prep coords
@@ -48,7 +58,7 @@ class Superposition {
     this._superpose(coords1, coords2)
   }
 
-  _superpose (coords1, coords2) {
+  _superpose (coords1: Matrix, coords2: Matrix) {
     this.mean1 = meanRows(coords1)
     this.mean2 = meanRows(coords2)
 
@@ -73,11 +83,11 @@ class Superposition {
     }
   }
 
-  prepCoords (atoms, coords) {
+  prepCoords (atoms: Structure|Float32Array, coords: Matrix) {
     var i = 0
     var cd = coords.data
 
-    if (typeof atoms.eachAtom === 'function') {
+    if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {
         cd[ i + 0 ] = a.x
         cd[ i + 1 ] = a.y
@@ -92,14 +102,16 @@ class Superposition {
     }
   }
 
-  transform (atoms) {
+  transform (atoms: Structure|Float32Array) {
     // allocate data structures
 
-    var n
-    if (typeof atoms.eachAtom === 'function') {
+    let n
+    if (atoms instanceof Structure) {
       n = atoms.atomCount
     } else if (atoms instanceof Float32Array) {
       n = atoms.length / 3
+    } else {
+      return
     }
 
     var coords = new Matrix(3, n)
@@ -119,7 +131,7 @@ class Superposition {
     var i = 0
     var cd = coords.data
 
-    if (typeof atoms.eachAtom === 'function') {
+    if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {
         a.x = cd[ i + 0 ]
         a.y = cd[ i + 1 ]

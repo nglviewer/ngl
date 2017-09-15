@@ -38,7 +38,7 @@ function getData(data: BufferData, geo: BufferGeometry){
     color: meshColor,
     index: meshIndex,
     normal: meshNormal,
-    primitiveId: data.primitiveId || serialBlockArray(n, m),
+    primitiveId: data.primitiveId || serialBlockArray(n, m) as Float32Array,
     picking: data.picking
   }
 }

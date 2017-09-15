@@ -538,7 +538,7 @@ class Trajectory {
     this.signals.frameChanged.dispatch(i)
   }
 
-  _doSuperpose (x: NumberArray) {
+  _doSuperpose (x: Float32Array) {
     const n = this.selectionIndices.length * 3
 
     const coords1 = this.coords1

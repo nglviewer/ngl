@@ -6,38 +6,33 @@
 
 import { Vector3 } from 'three'
 
+import { NumberArray } from '../types'
 import { TwoPI } from './math-constants.js'
 
-function circularMean (array, max, stride, offset, indices) {
+export function circularMean (array: NumberArray, max: number, stride = 1, offset = 0, indices?: NumberArray) {
   // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 
   // Bai, Linge; Breen, David (2008). Calculating Center of Mass in an Unbounded 2D Environment. Journal of Graphics, GPU, and Game Tools 13 (4): 53–60.
 
   // http://stackoverflow.com/questions/18166507/using-fft-to-find-the-center-of-mass-under-periodic-boundary-conditions
 
-  stride = stride || 1
-  offset = offset || 0
+  const n = indices ? indices.length : array.length / stride
 
-  var n = indices ? indices.length : array.length / stride
-  var angle, i, c
-
-  var cosMean = 0
-  var sinMean = 0
+  let cosMean = 0
+  let sinMean = 0
 
   if (indices) {
-    for (i = 0; i < n; ++i) {
-      c = (array[ indices[ i ] * stride + offset ] + max) % max
-
-      angle = (c / max) * TwoPI - Math.PI
+    for (let i = 0; i < n; ++i) {
+      const c = (array[ indices[ i ] * stride + offset ] + max) % max
+      const angle = (c / max) * TwoPI - Math.PI
 
       cosMean += Math.cos(angle)
       sinMean += Math.sin(angle)
     }
   } else {
-    for (i = offset; i < n; i += stride) {
-      c = (array[ i ] + max) % max
-
-      angle = (c / max) * TwoPI - Math.PI
+    for (let i = offset; i < n; i += stride) {
+      const c = (array[ i ] + max) % max
+      const angle = (c / max) * TwoPI - Math.PI
 
       cosMean += Math.cos(angle)
       sinMean += Math.sin(angle)
@@ -47,19 +42,17 @@ function circularMean (array, max, stride, offset, indices) {
   cosMean /= n
   sinMean /= n
 
-  var meanAngle = Math.atan2(sinMean, cosMean)
-
-  var mean = (meanAngle + Math.PI) / TwoPI * max
+  const meanAngle = Math.atan2(sinMean, cosMean)
+  const mean = (meanAngle + Math.PI) / TwoPI * max
 
   return mean
 }
 
-function calculateCenterArray (array1, array2, center, offset) {
-  var n = array1.length
+export function calculateCenterArray (array1: NumberArray, array2: NumberArray, center?: NumberArray, offset = 0) {
+  const n = array1.length
   center = center || new Float32Array(n)
-  offset = offset || 0
 
-  for (var i = 0; i < n; i += 3) {
+  for (let i = 0; i < n; i += 3) {
     center[ offset + i + 0 ] = (array1[ i + 0 ] + array2[ i + 0 ]) / 2.0
     center[ offset + i + 1 ] = (array1[ i + 1 ] + array2[ i + 1 ]) / 2.0
     center[ offset + i + 2 ] = (array1[ i + 2 ] + array2[ i + 2 ]) / 2.0
@@ -68,11 +61,11 @@ function calculateCenterArray (array1, array2, center, offset) {
   return center
 }
 
-function calculateDirectionArray (array1, array2) {
-  var n = array1.length
-  var direction = new Float32Array(n)
+export function calculateDirectionArray (array1: NumberArray, array2: NumberArray) {
+  const n = array1.length
+  const direction = new Float32Array(n)
 
-  for (var i = 0; i < n; i += 3) {
+  for (let i = 0; i < n; i += 3) {
     direction[ i + 0 ] = array2[ i + 0 ] - array1[ i + 0 ]
     direction[ i + 1 ] = array2[ i + 1 ] - array1[ i + 1 ]
     direction[ i + 2 ] = array2[ i + 2 ] - array1[ i + 2 ]
@@ -81,23 +74,21 @@ function calculateDirectionArray (array1, array2) {
   return direction
 }
 
-function uniformArray (n, a, optionalTarget) {
-  var array = optionalTarget || new Float32Array(n)
+export function uniformArray (n: number, a: number, optionalTarget?: NumberArray) {
+  const array = optionalTarget || new Float32Array(n)
 
-  for (var i = 0; i < n; ++i) {
+  for (let i = 0; i < n; ++i) {
     array[ i ] = a
   }
 
   return array
 }
 
-function uniformArray3 (n, a, b, c, optionalTarget) {
-  var array = optionalTarget || new Float32Array(n * 3)
+export function uniformArray3 (n: number, a: number, b: number, c: number, optionalTarget?: NumberArray) {
+  const array = optionalTarget || new Float32Array(n * 3)
 
-  var j
-
-  for (var i = 0; i < n; ++i) {
-    j = i * 3
+  for (let i = 0; i < n; ++i) {
+    const j = i * 3
 
     array[ j + 0 ] = a
     array[ j + 1 ] = b
@@ -107,9 +98,8 @@ function uniformArray3 (n, a, b, c, optionalTarget) {
   return array
 }
 
-function centerArray3 (array, center) {
+export function centerArray3 (array: NumberArray, center = new Vector3()) {
   const n = array.length
-  center = center || new Vector3()
 
   for (let i = 0; i < n; i += 3) {
     center.x += array[ i ]
@@ -122,17 +112,17 @@ function centerArray3 (array, center) {
   return center
 }
 
-function serialArray (n) {
-  var array = new Float32Array(n)
+export function serialArray (n: number) {
+  const array = new Float32Array(n)
 
-  for (var i = 0; i < n; ++i) {
+  for (let i = 0; i < n; ++i) {
     array[ i ] = i
   }
 
   return array
 }
 
-function serialBlockArray (n, b, offset = 0, optionalTarget) {
+export function serialBlockArray (n: number, b: number, offset = 0, optionalTarget?: NumberArray) {
   const array = optionalTarget || new Float32Array(n * b)
 
   for (let i = 0; i < n; ++i) {
@@ -146,13 +136,11 @@ function serialBlockArray (n, b, offset = 0, optionalTarget) {
   return array
 }
 
-function randomColorArray (n) {
-  var array = new Float32Array(n * 3)
+export function randomColorArray (n: number) {
+  const array = new Float32Array(n * 3)
 
-  var j
-
-  for (var i = 0; i < n; ++i) {
-    j = i * 3
+  for (let i = 0; i < n; ++i) {
+    const j = i * 3
 
     array[ j + 0 ] = Math.random()
     array[ j + 1 ] = Math.random()
@@ -162,19 +150,19 @@ function randomColorArray (n) {
   return array
 }
 
-function replicateArray3Entries (array, m) {
-  var n = array.length / 3
-  var repArr = new Float32Array(n * m * 3)
+export function replicateArray3Entries (array: NumberArray, m: number) {
+  const n = array.length / 3
+  const repArr = new Float32Array(n * m * 3)
 
-  for (var i = 0; i < n; ++i) {
-    var v = i * 3
-    var k = i * m * 3
+  for (let i = 0; i < n; ++i) {
+    const v = i * 3
+    const k = i * m * 3
 
-    var a = array[ v + 0 ]
-    var b = array[ v + 1 ]
-    var c = array[ v + 2 ]
+    const a = array[ v + 0 ]
+    const b = array[ v + 1 ]
+    const c = array[ v + 2 ]
 
-    for (var j = 0; j < m; ++j) {
+    for (let j = 0; j < m; ++j) {
       var l = k + j * 3
 
       repArr[ l + 0 ] = a
@@ -186,40 +174,40 @@ function replicateArray3Entries (array, m) {
   return repArr
 }
 
-function calculateMeanArray (array1, array2) {
-  var n = array1.length
-  var mean = new Float32Array(n)
+export function calculateMeanArray (array1: NumberArray, array2: NumberArray) {
+  const n = array1.length
+  const mean = new Float32Array(n)
 
-  for (var i = 0; i < n; i++) {
+  for (let i = 0; i < n; i++) {
     mean[ i ] = (array1[ i ] + array2[ i ]) / 2.0
   }
 
   return mean
 }
 
-function calculateMinArray (array1, array2) {
-  var n = array1.length
-  var min = new Float32Array(n)
+export function calculateMinArray (array1: NumberArray, array2: NumberArray) {
+  const n = array1.length
+  const min = new Float32Array(n)
 
-  for (var i = 0; i < n; i++) {
+  for (let i = 0; i < n; i++) {
     min[ i ] = Math.min(array1[ i ], array2[ i ])
   }
 
   return min
 }
 
-function copyArray (src, dst, srcOffset, dstOffset, length) {
-  for (var i = 0; i < length; ++i) {
+export function copyArray<T extends any[]|NumberArray> (src: T, dst: T, srcOffset: number, dstOffset: number, length: number) {
+  for (let i = 0; i < length; ++i) {
     dst[ dstOffset + i ] = src[ srcOffset + i ]
   }
 }
 
-function copyWithin (array, srcOffset, dstOffset, length) {
+export function copyWithin (array: NumberArray|any[], srcOffset: number, dstOffset: number, length: number) {
   copyArray(array, array, srcOffset, dstOffset, length)
 }
 
-var swap = new Float32Array(4)
-var temp = new Float32Array(4)
+const swap = new Float32Array(4)
+const temp = new Float32Array(4)
 /**
  * quicksortIP
  * @function
@@ -244,19 +232,18 @@ var temp = new Float32Array(4)
  * @param {Integer} [end] - end index for range to be sorted
  * @return {TypedArray} the input array
  */
-function quicksortIP (arr, eleSize, orderElement, begin, end) {
-  begin = begin || 0
+export function quicksortIP (arr: NumberArray, eleSize: number, orderElement: number, begin = 0, end?: number) {
   end = (end || (arr.length / eleSize)) - 1
 
-  var stack = []
-  var sp = -1
-  var left = begin
-  var right = end
-  var tmp = 0.0
-  var x = 0
-  var y = 0
+  const stack = []
+  let sp = -1
+  let left = begin
+  let right = end
+  let tmp = 0.0
+  let x = 0
+  let y = 0
 
-  var swapF = function (a, b) {
+  const swapF = function (a: number, b: number) {
     a *= eleSize; b *= eleSize
     for (y = 0; y < eleSize; y++) {
       tmp = arr[ a + y ]
@@ -265,7 +252,7 @@ function quicksortIP (arr, eleSize, orderElement, begin, end) {
     }
   }
 
-  var i, j
+  let i, j
 
   while (true) {
     if (right - left <= 25) {
@@ -343,24 +330,22 @@ function quicksortIP (arr, eleSize, orderElement, begin, end) {
   return arr
 }
 
-function quicksortCmp (arr, cmp, begin, end) {
+export function quicksortCmp<T> (arr: T[], cmp?: (a: T, b: T) => number, begin = 0, end?: number) {
   cmp = cmp || function cmp (a, b) {
     if (a > b) return 1
     if (a < b) return -1
     return 0
   }
-  begin = begin || 0
   end = (end || arr.length) - 1
 
-  var stack = []
-  var sp = -1
-  var left = begin
-  var right = end
-  var tmp = 0.0
-  var tmp2 = 0.0
+  const stack = []
+  let sp = -1
+  let left = begin
+  let right = end
+  let tmp: T
 
-  function swap (a, b) {
-    tmp2 = arr[ a ]
+  function swap (a: number, b: number) {
+    const tmp2 = arr[ a ]
     arr[ a ] = arr[ b ]
     arr[ b ] = tmp2
   }
@@ -386,7 +371,7 @@ function quicksortCmp (arr, cmp, begin, end) {
       right = stack[ sp-- ] // ?
       left = stack[ sp-- ]
     } else {
-      var median = (left + right) >> 1
+      const median = (left + right) >> 1
 
       i = left + 1
       j = right
@@ -432,19 +417,18 @@ function quicksortCmp (arr, cmp, begin, end) {
   return arr
 }
 
-function quickselectCmp (arr, n, cmp, left, right) {
+export function quickselectCmp<T> (arr: T[], n: number, cmp?: (a: T, b: T) => number, left = 0, right?: number) {
   cmp = cmp || function cmp (a, b) {
     if (a > b) return 1
     if (a < b) return -1
     return 0
   }
-  left = left || 0
   right = (right || arr.length) - 1
 
-  var tmp, i, pivotIndex, pivotValue, storeIndex
+  let pivotIndex, pivotValue, storeIndex
 
-  function swap (a, b) {
-    tmp = arr[ a ]
+  function swap (a: number, b: number) {
+    const tmp = arr[ a ]
     arr[ a ] = arr[ b ]
     arr[ b ] = tmp
   }
@@ -457,7 +441,7 @@ function quickselectCmp (arr, n, cmp, left, right) {
     pivotValue = arr[ pivotIndex ]
     swap(pivotIndex, right)
     storeIndex = left
-    for (i = left; i < right; ++i) {
+    for (let i = left; i < right; ++i) {
       if (cmp(arr[ i ], pivotValue) < 0) {
         swap(storeIndex, i)
         ++storeIndex
@@ -475,7 +459,7 @@ function quickselectCmp (arr, n, cmp, left, right) {
   }
 }
 
-function arrayMax (array) {
+export function arrayMax (array: NumberArray) {
   let max = -Infinity
   for (let i = 0, il = array.length; i < il; ++i) {
     if (array[ i ] > max) max = array[ i ]
@@ -483,7 +467,7 @@ function arrayMax (array) {
   return max
 }
 
-function arrayMin (array) {
+export function arrayMin (array: NumberArray) {
   let min = Infinity
   for (let i = 0, il = array.length; i < il; ++i) {
     if (array[ i ] < min) min = array[ i ]
@@ -491,10 +475,7 @@ function arrayMin (array) {
   return min
 }
 
-function arraySum (array, stride, offset) {
-  stride = stride || 1
-  offset = offset || 0
-
+export function arraySum (array: NumberArray, stride = 1, offset = 0) {
   const n = array.length
   let sum = 0
   for (let i = offset; i < n; i += stride) {
@@ -503,11 +484,11 @@ function arraySum (array, stride, offset) {
   return sum
 }
 
-function arrayMean (array, stride, offset) {
-  return arraySum(array, stride, offset) / (array.length / (stride || 1))
+export function arrayMean (array: NumberArray, stride = 1, offset = 0) {
+  return arraySum(array, stride, offset) / (array.length / stride)
 }
 
-function arrayRms (array) {
+export function arrayRms (array: NumberArray) {
   const n = array.length
   let sumSq = 0
   for (let i = 0; i < n; ++i) {
@@ -517,43 +498,16 @@ function arrayRms (array) {
   return Math.sqrt(sumSq / n)
 }
 
-function arraySorted (array) {
-  for (var i = 1, il = array.length; i < il; ++i) {
+export function arraySorted (array: NumberArray) {
+  for (let i = 1, il = array.length; i < il; ++i) {
     if (array[ i - 1 ] > array[ i ]) return false
   }
   return true
 }
 
-function arraySortedCmp (array, cmp) {
-  for (var i = 1, il = array.length; i < il; ++i) {
+export function arraySortedCmp<T> (array: T[], cmp: (a: T, b: T) => number) {
+  for (let i = 1, il = array.length; i < il; ++i) {
     if (cmp(array[ i - 1 ], array[ i ]) > 0) return false
   }
   return true
-}
-
-export {
-  circularMean,
-  calculateCenterArray,
-  calculateDirectionArray,
-  uniformArray,
-  uniformArray3,
-  centerArray3,
-  serialArray,
-  serialBlockArray,
-  randomColorArray,
-  replicateArray3Entries,
-  calculateMeanArray,
-  calculateMinArray,
-  copyArray,
-  copyWithin,
-  quicksortIP,
-  quicksortCmp,
-  quickselectCmp,
-  arrayMax,
-  arrayMin,
-  arraySum,
-  arrayMean,
-  arrayRms,
-  arraySorted,
-  arraySortedCmp
 }

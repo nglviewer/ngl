@@ -835,7 +835,7 @@ class Structure implements Structure{
           ap2.positionToArray(position2, i3)
         }
       }
-      if (color) {
+      if (color && color2) {
         colormaker.bondColorToArray(bp, 1, color, i3)
         colormaker.bondColorToArray(bp, 0, color2, i3)
         if (isMulti && bondOrder > 1) {

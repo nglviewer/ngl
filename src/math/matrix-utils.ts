@@ -6,34 +6,33 @@
  * svd methods from Eugene Zatepyakin / http://inspirit.github.io/jsfeat/
  */
 
-import { v3new, v3cross } from './vector-utils.js'
+import { NumberArray } from '../types'
+import { v3new, v3cross } from './vector-utils'
 
-function Matrix (columns, rows) {
-  this.cols = columns
-  this.rows = rows
-  this.size = this.cols * this.rows
+export class Matrix {
+  size: number
+  data: Float32Array
 
-  this.data = new Float32Array(this.size)
-}
-
-Matrix.prototype = {
-
-  copyTo: function (matrix) {
-    matrix.data.set(this.data)
+  constructor (readonly cols: number, readonly rows: number) {
+    this.size = this.cols * this.rows
+    this.data = new Float32Array(this.size)
   }
 
+  copyTo (matrix: Matrix) {
+    matrix.data.set(this.data)
+  }
 }
 
-function transpose (At, A) {
-  var i = 0
-  var j = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ai = 0
-  var Ati = 0
-  var pAt = 0
-  var ad = A.data
-  var atd = At.data
+export function transpose (At: Matrix, A: Matrix) {
+  let i = 0
+  let j = 0
+  const nrows = A.rows
+  const ncols = A.cols
+  let Ai = 0
+  let Ati = 0
+  let pAt = 0
+  const ad = A.data
+  const atd = At.data
 
   for (; i < nrows; Ati += 1, Ai += ncols, i++) {
     pAt = Ati
@@ -42,22 +41,22 @@ function transpose (At, A) {
 }
 
 // C = A * B
-function multiply (C, A, B) {
-  var i = 0
-  var j = 0
-  var k = 0
-  var Ap = 0
-  var pA = 0
-  var pB = 0
-  var _pB = 0
-  var Cp = 0
-  var ncols = A.cols
-  var nrows = A.rows
-  var mcols = B.cols
-  var ad = A.data
-  var bd = B.data
-  var cd = C.data
-  var sum = 0.0
+export function multiply (C: Matrix, A: Matrix, B: Matrix) {
+  let i = 0
+  let j = 0
+  let k = 0
+  let Ap = 0
+  let pA = 0
+  let pB = 0
+  let _pB = 0
+  let Cp = 0
+  const ncols = A.cols
+  const nrows = A.rows
+  const mcols = B.cols
+  const ad = A.data
+  const bd = B.data
+  const cd = C.data
+  let sum = 0.0
 
   for (; i < nrows; Ap += ncols, i++) {
     for (_pB = 0, j = 0; j < mcols; Cp++, _pB++, j++) {
@@ -73,21 +72,21 @@ function multiply (C, A, B) {
 }
 
 // C = A * B'
-function multiplyABt (C, A, B) {
-  var i = 0
-  var j = 0
-  var k = 0
-  var Ap = 0
-  var pA = 0
-  var pB = 0
-  var Cp = 0
-  var ncols = A.cols
-  var nrows = A.rows
-  var mrows = B.rows
-  var ad = A.data
-  var bd = B.data
-  var cd = C.data
-  var sum = 0.0
+export function multiplyABt (C: Matrix, A: Matrix, B: Matrix) {
+  let i = 0
+  let j = 0
+  let k = 0
+  let Ap = 0
+  let pA = 0
+  let pB = 0
+  let Cp = 0
+  const ncols = A.cols
+  const nrows = A.rows
+  const mrows = B.rows
+  const ad = A.data
+  const bd = B.data
+  const cd = C.data
+  let sum = 0.0
 
   for (; i < nrows; Ap += ncols, i++) {
     for (pB = 0, j = 0; j < mrows; Cp++, j++) {
@@ -102,22 +101,22 @@ function multiplyABt (C, A, B) {
 }
 
 // C = A' * B
-function multiplyAtB (C, A, B) {
-  var i = 0
-  var j = 0
-  var k = 0
-  var Ap = 0
-  var pA = 0
-  var pB = 0
-  var _pB = 0
-  var Cp = 0
-  var ncols = A.cols
-  var nrows = A.rows
-  var mcols = B.cols
-  var ad = A.data
-  var bd = B.data
-  var cd = C.data
-  var sum = 0.0
+export function multiplyAtB (C: Matrix, A: Matrix, B: Matrix) {
+  let i = 0
+  let j = 0
+  let k = 0
+  let Ap = 0
+  let pA = 0
+  let pB = 0
+  let _pB = 0
+  let Cp = 0
+  const ncols = A.cols
+  const nrows = A.rows
+  const mcols = B.cols
+  const ad = A.data
+  const bd = B.data
+  const cd = C.data
+  let sum = 0.0
 
   for (; i < ncols; Ap++, i++) {
     for (_pB = 0, j = 0; j < mcols; Cp++, _pB++, j++) {
@@ -132,26 +131,26 @@ function multiplyAtB (C, A, B) {
   }
 }
 
-function invert3x3 (from, to) {
-  var A = from.data
-  var invA = to.data
-  var t1 = A[4]
-  var t2 = A[8]
-  var t4 = A[5]
-  var t5 = A[7]
-  var t8 = A[0]
+export function invert3x3 (from: Matrix, to: Matrix) {
+  const A = from.data
+  const invA = to.data
+  const t1 = A[4]
+  const t2 = A[8]
+  const t4 = A[5]
+  const t5 = A[7]
+  const t8 = A[0]
 
-  var t9 = t8 * t1
-  var t11 = t8 * t4
-  var t13 = A[3]
-  var t14 = A[1]
-  var t15 = t13 * t14
-  var t17 = A[2]
-  var t18 = t13 * t17
-  var t20 = A[6]
-  var t21 = t20 * t14
-  var t23 = t20 * t17
-  var t26 = 1.0 / (t9 * t2 - t11 * t5 - t15 * t2 + t18 * t5 + t21 * t4 - t23 * t1)
+  const t9 = t8 * t1
+  const t11 = t8 * t4
+  const t13 = A[3]
+  const t14 = A[1]
+  const t15 = t13 * t14
+  const t17 = A[2]
+  const t18 = t13 * t17
+  const t20 = A[6]
+  const t21 = t20 * t14
+  const t23 = t20 * t17
+  const t26 = 1.0 / (t9 * t2 - t11 * t5 - t15 * t2 + t18 * t5 + t21 * t4 - t23 * t1)
   invA[0] = (t1 * t2 - t4 * t5) * t26
   invA[1] = -(t14 * t2 - t17 * t5) * t26
   invA[2] = -(-t14 * t4 + t17 * t1) * t26
@@ -163,8 +162,8 @@ function invert3x3 (from, to) {
   invA[8] = (t9 - t15) * t26
 }
 
-function mat3x3determinant (M) {
-  var md = M.data
+export function mat3x3determinant (M: Matrix) {
+  const md = M.data
   return md[0] * md[4] * md[8] -
     md[0] * md[5] * md[7] -
     md[3] * md[1] * md[8] +
@@ -174,29 +173,29 @@ function mat3x3determinant (M) {
 }
 
 // C = A * B
-function multiply3x3 (C, A, B) {
-  var Cd = C.data
-  var Ad = A.data
-  var Bd = B.data
-  var m10 = Ad[0]
-  var m11 = Ad[1]
-  var m12 = Ad[2]
-  var m13 = Ad[3]
-  var m14 = Ad[4]
-  var m15 = Ad[5]
-  var m16 = Ad[6]
-  var m17 = Ad[7]
-  var m18 = Ad[8]
+export function multiply3x3 (C: Matrix, A: Matrix, B: Matrix) {
+  const Cd = C.data
+  const Ad = A.data
+  const Bd = B.data
+  const m10 = Ad[0]
+  const m11 = Ad[1]
+  const m12 = Ad[2]
+  const m13 = Ad[3]
+  const m14 = Ad[4]
+  const m15 = Ad[5]
+  const m16 = Ad[6]
+  const m17 = Ad[7]
+  const m18 = Ad[8]
 
-  var m20 = Bd[0]
-  var m21 = Bd[1]
-  var m22 = Bd[2]
-  var m23 = Bd[3]
-  var m24 = Bd[4]
-  var m25 = Bd[5]
-  var m26 = Bd[6]
-  var m27 = Bd[7]
-  var m28 = Bd[8]
+  const m20 = Bd[0]
+  const m21 = Bd[1]
+  const m22 = Bd[2]
+  const m23 = Bd[3]
+  const m24 = Bd[4]
+  const m25 = Bd[5]
+  const m26 = Bd[6]
+  const m27 = Bd[7]
+  const m28 = Bd[8]
 
   Cd[0] = m10 * m20 + m11 * m23 + m12 * m26
   Cd[1] = m10 * m21 + m11 * m24 + m12 * m27
@@ -209,119 +208,107 @@ function multiply3x3 (C, A, B) {
   Cd[8] = m16 * m22 + m17 * m25 + m18 * m28
 }
 
-function meanRows (A) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
-  var mean = new Array(ncols)
+export function meanRows (A: Matrix) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
+  const mean = new Array(ncols)
 
-  for (j = 0; j < ncols; ++j) {
+  for (let j = 0; j < ncols; ++j) {
     mean[ j ] = 0.0
   }
 
-  for (i = 0; i < nrows; ++i) {
-    for (j = 0; j < ncols; ++j, ++p) {
+  for (let i = 0, p = 0; i < nrows; ++i) {
+    for (let j = 0; j < ncols; ++j, ++p) {
       mean[ j ] += Ad[ p ]
     }
   }
 
-  for (j = 0; j < ncols; ++j) {
+  for (let j = 0; j < ncols; ++j) {
     mean[ j ] /= nrows
   }
 
   return mean
 }
 
-function meanCols (A) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
-  var mean = new Array(nrows)
+export function meanCols (A: Matrix) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
+  const mean = new Array(nrows)
 
-  for (j = 0; j < nrows; ++j) {
+  for (let j = 0; j < nrows; ++j) {
     mean[ j ] = 0.0
   }
 
-  for (i = 0; i < ncols; ++i) {
-    for (j = 0; j < nrows; ++j, ++p) {
+  for (let i = 0, p = 0; i < ncols; ++i) {
+    for (let j = 0; j < nrows; ++j, ++p) {
       mean[ j ] += Ad[ p ]
     }
   }
 
-  for (j = 0; j < nrows; ++j) {
+  for (let j = 0; j < nrows; ++j) {
     mean[ j ] /= ncols
   }
 
   return mean
 }
 
-function subRows (A, row) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
+export function subRows (A: Matrix, row: number[]) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
 
-  for (i = 0; i < nrows; ++i) {
-    for (j = 0; j < ncols; ++j, ++p) {
+  for (let i = 0, p = 0; i < nrows; ++i) {
+    for (let j = 0; j < ncols; ++j, ++p) {
       Ad[ p ] -= row[ j ]
     }
   }
 }
 
-function subCols (A, col) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
+export function subCols (A: Matrix, col: number[]) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
 
-  for (i = 0; i < ncols; ++i) {
-    for (j = 0; j < nrows; ++j, ++p) {
+  for (let i = 0, p = 0; i < ncols; ++i) {
+    for (let j = 0; j < nrows; ++j, ++p) {
       Ad[ p ] -= col[ j ]
     }
   }
 }
 
-function addRows (A, row) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
+export function addRows (A: Matrix, row: number[]) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
 
-  for (i = 0; i < nrows; ++i) {
-    for (j = 0; j < ncols; ++j, ++p) {
+  for (let i = 0, p = 0; i < nrows; ++i) {
+    for (let j = 0; j < ncols; ++j, ++p) {
       Ad[ p ] += row[ j ]
     }
   }
 }
 
-function addCols (A, col) {
-  var i, j
-  var p = 0
-  var nrows = A.rows
-  var ncols = A.cols
-  var Ad = A.data
+export function addCols (A: Matrix, col: number[]) {
+  const nrows = A.rows
+  const ncols = A.cols
+  const Ad = A.data
 
-  for (i = 0; i < ncols; ++i) {
-    for (j = 0; j < nrows; ++j, ++p) {
+  for (let i = 0, p = 0; i < ncols; ++i) {
+    for (let j = 0; j < nrows; ++j, ++p) {
       Ad[ p ] += col[ j ]
     }
   }
 }
 
-function swap (A, i0, i1, t) {
+export function swap (A: NumberArray, i0: number, i1: number, t: number) {
   t = A[i0]
   A[i0] = A[i1]
   A[i1] = t
 }
 
-function hypot (a, b) {
+export function hypot (a: number, b: number) {
   a = Math.abs(a)
   b = Math.abs(b)
   if (a > b) {
@@ -335,40 +322,40 @@ function hypot (a, b) {
   return 0.0
 }
 
-var EPSILON = 0.0000001192092896
-var FLT_MIN = 1E-37
+const EPSILON = 0.0000001192092896
+const FLT_MIN = 1E-37
 
-function JacobiSVDImpl (At, astep, _W, Vt, vstep, m, n, n1) {
-  var eps = EPSILON * 2.0
-  var minval = FLT_MIN
-  var i = 0
-  var j = 0
-  var k = 0
-  var iter = 0
-  var maxIter = Math.max(m, 30)
-  var Ai = 0
-  var Aj = 0
-  var Vi = 0
-  var Vj = 0
-  var changed = 0
-  var c = 0.0
-  var s = 0.0
-  var t = 0.0
-  var t0 = 0.0
-  var t1 = 0.0
-  var sd = 0.0
-  var beta = 0.0
-  var gamma = 0.0
-  var delta = 0.0
-  var a = 0.0
-  var p = 0.0
-  var b = 0.0
-  var seed = 0x1234
-  var val = 0.0
-  var val0 = 0.0
-  var asum = 0.0
+export function JacobiSVDImpl (At: NumberArray, astep: number, _W: NumberArray, Vt: NumberArray, vstep: number, m: number, n: number, n1: number) {
+  const eps = EPSILON * 2.0
+  const minval = FLT_MIN
+  let i = 0
+  let j = 0
+  let k = 0
+  let iter = 0
+  const maxIter = Math.max(m, 30)
+  let Ai = 0
+  let Aj = 0
+  let Vi = 0
+  let Vj = 0
+  let changed = 0
+  let c = 0.0
+  let s = 0.0
+  let t = 0.0
+  let t0 = 0.0
+  let t1 = 0.0
+  let sd = 0.0
+  let beta = 0.0
+  let gamma = 0.0
+  let delta = 0.0
+  let a = 0.0
+  let p = 0.0
+  let b = 0.0
+  let seed = 0x1234
+  let val = 0.0
+  let val0 = 0.0
+  let asum = 0.0
 
-  var W = new Float64Array(n << 3)
+  const W = new Float64Array(n << 3)
 
   for (; i < n; i++) {
     for (k = 0, sd = 0; k < m; k++) {
@@ -548,13 +535,13 @@ function JacobiSVDImpl (At, astep, _W, Vt, vstep, m, n, n1) {
   }
 }
 
-function svd (A, W, U, V) {
-  var at = 0
-  var i = 0
-  var _m = A.rows
-  var _n = A.cols
-  var m = _m
-  var n = _n
+export function svd (A: Matrix, W: Matrix, U: Matrix, V: Matrix) {
+  let at = 0
+  let i = 0
+  const _m = A.rows
+  const _n = A.cols
+  let m = _m
+  let n = _n
 
   if (m < n) {
     at = 1
@@ -563,9 +550,9 @@ function svd (A, W, U, V) {
     n = i
   }
 
-  var amt = new Matrix(m, m)
-  var wmt = new Matrix(1, n)
-  var vmt = new Matrix(n, n)
+  const amt = new Matrix(m, m)
+  const wmt = new Matrix(1, n)
+  const vmt = new Matrix(n, n)
 
   if (at === 0) {
     transpose(amt, A)
@@ -600,7 +587,7 @@ function svd (A, W, U, V) {
 
 //
 
-function m4new () {
+export function m4new () {
   return new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -609,57 +596,57 @@ function m4new () {
   ])
 }
 
-function m4set (out, n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
+export function m4set (out: Float32Array, n11: number, n12: number, n13: number, n14: number, n21: number, n22: number, n23: number, n24: number, n31: number, n32: number, n33: number, n34: number, n41: number, n42: number, n43: number, n44: number) {
   out[ 0 ] = n11; out[ 4 ] = n12; out[ 8 ] = n13; out[ 12 ] = n14
   out[ 1 ] = n21; out[ 5 ] = n22; out[ 9 ] = n23; out[ 13 ] = n24
   out[ 2 ] = n31; out[ 6 ] = n32; out[ 10 ] = n33; out[ 14 ] = n34
   out[ 3 ] = n41; out[ 7 ] = n42; out[ 11 ] = n43; out[ 15 ] = n44
 }
 
-function m4identity (out) {
+export function m4identity (out: Float32Array) {
   m4set(out,
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    )
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  )
 }
-m4identity.__deps = [ m4set ]
+(m4identity as any).__deps = [ m4set ]
 
-function m4multiply (out, a, b) {
-  var a11 = a[ 0 ]
-  var a12 = a[ 4 ]
-  var a13 = a[ 8 ]
-  var a14 = a[ 12 ]
-  var a21 = a[ 1 ]
-  var a22 = a[ 5 ]
-  var a23 = a[ 9 ]
-  var a24 = a[ 13 ]
-  var a31 = a[ 2 ]
-  var a32 = a[ 6 ]
-  var a33 = a[ 10 ]
-  var a34 = a[ 14 ]
-  var a41 = a[ 3 ]
-  var a42 = a[ 7 ]
-  var a43 = a[ 11 ]
-  var a44 = a[ 15 ]
+export function m4multiply (out: Float32Array, a: Float32Array, b: Float32Array) {
+  const a11 = a[ 0 ]
+  const a12 = a[ 4 ]
+  const a13 = a[ 8 ]
+  const a14 = a[ 12 ]
+  const a21 = a[ 1 ]
+  const a22 = a[ 5 ]
+  const a23 = a[ 9 ]
+  const a24 = a[ 13 ]
+  const a31 = a[ 2 ]
+  const a32 = a[ 6 ]
+  const a33 = a[ 10 ]
+  const a34 = a[ 14 ]
+  const a41 = a[ 3 ]
+  const a42 = a[ 7 ]
+  const a43 = a[ 11 ]
+  const a44 = a[ 15 ]
 
-  var b11 = b[ 0 ]
-  var b12 = b[ 4 ]
-  var b13 = b[ 8 ]
-  var b14 = b[ 12 ]
-  var b21 = b[ 1 ]
-  var b22 = b[ 5 ]
-  var b23 = b[ 9 ]
-  var b24 = b[ 13 ]
-  var b31 = b[ 2 ]
-  var b32 = b[ 6 ]
-  var b33 = b[ 10 ]
-  var b34 = b[ 14 ]
-  var b41 = b[ 3 ]
-  var b42 = b[ 7 ]
-  var b43 = b[ 11 ]
-  var b44 = b[ 15 ]
+  const b11 = b[ 0 ]
+  const b12 = b[ 4 ]
+  const b13 = b[ 8 ]
+  const b14 = b[ 12 ]
+  const b21 = b[ 1 ]
+  const b22 = b[ 5 ]
+  const b23 = b[ 9 ]
+  const b24 = b[ 13 ]
+  const b31 = b[ 2 ]
+  const b32 = b[ 6 ]
+  const b33 = b[ 10 ]
+  const b34 = b[ 14 ]
+  const b41 = b[ 3 ]
+  const b42 = b[ 7 ]
+  const b43 = b[ 11 ]
+  const b44 = b[ 15 ]
 
   out[ 0 ] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41
   out[ 4 ] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42
@@ -682,7 +669,7 @@ function m4multiply (out, a, b) {
   out[ 15 ] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44
 }
 
-function m4makeScale (out, x, y, z) {
+export function m4makeScale (out: Float32Array, x: number, y: number, z: number) {
   m4set(out,
     x, 0, 0, 0,
     0, y, 0, 0,
@@ -690,9 +677,9 @@ function m4makeScale (out, x, y, z) {
     0, 0, 0, 1
   )
 }
-m4makeScale.__deps = [ m4set ]
+(m4makeScale as any).__deps = [ m4set ]
 
-function m4makeTranslation (out, x, y, z) {
+export function m4makeTranslation (out: Float32Array, x: number, y: number, z: number) {
   m4set(out,
     1, 0, 0, x,
     0, 1, 0, y,
@@ -700,11 +687,11 @@ function m4makeTranslation (out, x, y, z) {
     0, 0, 0, 1
   )
 }
-m4makeTranslation.__deps = [ m4set ]
+(m4makeTranslation as any).__deps = [ m4set ]
 
-function m4makeRotationY (out, theta) {
-  var c = Math.cos(theta)
-  var s = Math.sin(theta)
+export function m4makeRotationY (out: Float32Array, theta: number) {
+  const c = Math.cos(theta)
+  const s = Math.sin(theta)
   m4set(out,
     c, 0, s, 0,
     0, 1, 0, 0,
@@ -712,11 +699,11 @@ function m4makeRotationY (out, theta) {
     0, 0, 0, 1
   )
 }
-m4makeRotationY.__deps = [ m4set ]
+(m4makeRotationY as any).__deps = [ m4set ]
 
 //
 
-function m3new () {
+export function m3new () {
   return new Float32Array([
     1, 0, 0,
     0, 1, 0,
@@ -724,11 +711,11 @@ function m3new () {
   ])
 }
 
-function m3makeNormal (out, m4) {
-  var r0 = v3new([ m4[0], m4[1], m4[2] ])
-  var r1 = v3new([ m4[4], m4[5], m4[6] ])
-  var r2 = v3new([ m4[8], m4[9], m4[10] ])
-  var cp = v3new()
+export function m3makeNormal (out: Float32Array, m4: Float32Array) {
+  const r0 = v3new([ m4[0], m4[1], m4[2] ])
+  const r1 = v3new([ m4[4], m4[5], m4[6] ])
+  const r2 = v3new([ m4[8], m4[9], m4[10] ])
+  const cp = v3new()
   //        [ r0 ]       [ r1 x r2 ]
   // M3x3 = [ r1 ]   N = [ r2 x r0 ]
   //        [ r2 ]       [ r0 x r1 ]
@@ -745,32 +732,4 @@ function m3makeNormal (out, m4) {
   out[ 7 ] = cp[ 1 ]
   out[ 8 ] = cp[ 2 ]
 }
-m3makeNormal.__deps = [ v3new, v3cross ]
-
-export {
-  Matrix,
-  svd,
-  meanRows,
-  meanCols,
-  subRows,
-  subCols,
-  addRows,
-  addCols,
-  transpose,
-  multiply,
-  multiplyABt,
-  multiplyAtB,
-  invert3x3,
-  multiply3x3,
-  mat3x3determinant,
-
-  m4new,
-  m4identity,
-  m4multiply,
-  m4makeScale,
-  m4makeTranslation,
-  m4makeRotationY,
-
-  m3new,
-  m3makeNormal
-}
+(m3makeNormal as any).__deps = [ v3new, v3cross ]
