@@ -4,10 +4,10 @@
  * @private
  */
 
-import { defaults } from '../utils'
-import Selection from '../selection/selection.js'
-import Alignment from './alignment.js'
-import Superposition from './superposition.js'
+import Structure from '../structure/structure'
+import Selection from '../selection/selection'
+import Alignment from './alignment'
+import Superposition from './superposition'
 
 /**
  * Perform structural superposition of two structures,
@@ -19,29 +19,29 @@ import Superposition from './superposition.js'
  * @param  {String} [sele2] - selection string for structure 2
  * @return {undefined}
  */
-function superpose (s1, s2, align, sele1, sele2) {
-  align = defaults(align, false)
-  sele1 = defaults(sele1, '')
-  sele2 = defaults(sele2, '')
-
-  var i, j, n, atoms1, atoms2
+function superpose (s1: Structure, s2: Structure, align = false, sele1 = '', sele2 = '') {
+  let i: number
+  let j: number
+  let n: number
+  let atoms1
+  let atoms2
 
   if (align) {
-    var _s1 = s1
-    var _s2 = s2
+    let _s1 = s1
+    let _s2 = s2
 
     if (sele1 && sele2) {
       _s1 = s1.getView(new Selection(sele1))
       _s2 = s2.getView(new Selection(sele2))
     }
 
-    var seq1 = _s1.getSequence()
-    var seq2 = _s2.getSequence()
+    const seq1 = _s1.getSequence()
+    const seq2 = _s2.getSequence()
 
     // Log.log( seq1.join("") );
     // Log.log( seq2.join("") );
 
-    var ali = new Alignment(seq1.join(''), seq2.join(''))
+    const ali = new Alignment(seq1.join(''), seq2.join(''))
 
     ali.calc()
     ali.trace()
@@ -51,16 +51,16 @@ function superpose (s1, s2, align, sele1, sele2) {
     // Log.log( ali.ali1 );
     // Log.log( ali.ali2 );
 
-    var l, _i, _j, x, y
+    let _i, _j
     i = 0
     j = 0
     n = ali.ali1.length
-    var aliIdx1 = []
-    var aliIdx2 = []
+    const aliIdx1: boolean[] = []
+    const aliIdx2: boolean[] = []
 
-    for (l = 0; l < n; ++l) {
-      x = ali.ali1[ l ]
-      y = ali.ali2[ l ]
+    for (let l = 0; l < n; ++l) {
+      const x = ali.ali1[ l ]
+      const y = ali.ali2[ l ]
 
       _i = 0
       _j = 0
@@ -88,10 +88,10 @@ function superpose (s1, s2, align, sele1, sele2) {
     // Log.log( aliIdx1 );
     // Log.log( aliIdx2 );
 
-    var _atoms1 = []
-    var _atoms2 = []
-    var ap1 = _s1.getAtomProxy()
-    var ap2 = _s2.getAtomProxy()
+    const _atoms1: number[] = []
+    const _atoms2: number[] = []
+    const ap1 = _s1.getAtomProxy()
+    const ap2 = _s2.getAtomProxy()
 
     i = 0
     _s1.eachResidue(function (r) {
@@ -120,14 +120,14 @@ function superpose (s1, s2, align, sele1, sele2) {
     atoms1 = new Float32Array(_atoms1)
     atoms2 = new Float32Array(_atoms2)
   } else {
-    var sviewCa1 = s1.getView(new Selection(sele1 + ' and .CA'))
-    var sviewCa2 = s2.getView(new Selection(sele2 + ' and .CA'))
+    const sviewCa1 = s1.getView(new Selection(`${sele1} and .CA`))
+    const sviewCa2 = s2.getView(new Selection(`${sele2} and .CA`))
 
     atoms1 = sviewCa1
     atoms2 = sviewCa2
   }
 
-  var superpose = new Superposition(atoms1, atoms2)
+  const superpose = new Superposition(atoms1, atoms2)
   superpose.transform(s1)
   s1.refreshPosition()
 }

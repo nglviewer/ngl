@@ -60,13 +60,13 @@ const blosum62 = [
   [0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2, 0, 0, -2, -1, -1, -1, -1, -1]  // X
 ]
 
-function prepareMatrix (cellNames, mat) {
-  let j
+function prepareMatrix (cellNames: string, mat: number[][]) {
+  let j: number
   let i = 0
-  const matDict = {}
+  const matDict: { [k: string]: { [k: string]: number } } = {}
   mat.forEach(function (row) {
     j = 0
-    const rowDict = {}
+    const rowDict: { [k: string]: number } = {}
     row.forEach(function (elm) {
       rowDict[ cellNames[ j++ ] ] = elm
     })
@@ -81,20 +81,28 @@ const SubstitutionMatrices = (function () {
     blosum62x: prepareMatrix(aminoacidsX, blosum62x)
   }
 }())
+type SubstitutionMatrix = ''|'blosum62'|'blosum62x'
 
 class Alignment {
-  constructor (seq1, seq2, gapPenalty, gapExtensionPenalty, substMatrix) {
+  substMatrix: { [k: string]: { [k: string]: number } }
+
+  n: number
+  m: number
+  score?: number
+  ali: string
+
+  S: number[][]
+  V: number[][]
+  H: number[][]
+
+  ali1: string
+  ali2: string
+
+  constructor (readonly seq1: string, readonly seq2: string, readonly gapPenalty = -10, readonly gapExtensionPenalty = -1, substMatrix: SubstitutionMatrix = 'blosum62') {
     // TODO try encoding seqs as integers and use array subst matrix, maybe faster
 
-    this.seq1 = seq1
-    this.seq2 = seq2
-
-    this.gapPenalty = gapPenalty || -10
-    this.gapExtensionPenalty = gapExtensionPenalty || -1
-    this.substMatrix = substMatrix || 'blosum62'
-
-    if (this.substMatrix) {
-      this.substMatrix = SubstitutionMatrices[ this.substMatrix ]
+    if (substMatrix) {
+      this.substMatrix = SubstitutionMatrices[ substMatrix ]
     }
   }
 
@@ -140,22 +148,20 @@ class Alignment {
     // Log.log(this.S, this.V, this.H);
   }
 
-  gap (len) {
+  gap (len: number) {
     return this.gapPenalty + len * this.gapExtensionPenalty
   }
 
   makeScoreFn () {
-    var seq1 = this.seq1
-    var seq2 = this.seq2
+    const seq1 = this.seq1
+    const seq2 = this.seq2
 
-    var substMatrix = this.substMatrix
-
-    var c1, c2
+    const substMatrix = this.substMatrix
 
     if (substMatrix) {
-      return function score (i, j) {
-        c1 = seq1[ i ]
-        c2 = seq2[ j ]
+      return function score (i: number, j: number) {
+        const c1 = seq1[ i ]
+        const c2 = seq2[ j ]
 
         try {
           return substMatrix[ c1 ][ c2 ]
@@ -166,9 +172,9 @@ class Alignment {
     } else {
       Log.warn('Alignment: no subst matrix')
 
-      return function scoreNoSubstMat (i, j) {
-        c1 = seq1[ i ]
-        c2 = seq2[ j ]
+      return function scoreNoSubstMat (i: number, j: number) {
+        const c1 = seq1[ i ]
+        const c2 = seq2[ j ]
 
         return c1 === c2 ? 5 : -3
       }
