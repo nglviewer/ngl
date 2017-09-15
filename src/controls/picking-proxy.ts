@@ -4,7 +4,26 @@
  * @private
  */
 
-function closer (x, a, b) {
+import { Vector3, Matrix4 } from 'three'
+
+import Stage from '../stage/stage'
+import MouseObserver from '../stage/mouse-observer'
+import { Picker } from '../utils/picker'
+import ViewerControls from './viewer-controls'
+import Shape from '../geometry/shape'
+import Structure from '../structure/structure'
+import BondProxy from '../proxy/bond-proxy'
+import AtomProxy from '../proxy/atom-proxy'
+import Surface from '../surface/surface'
+import Volume from '../surface/volume'
+import Unitcell from '../symmetry/unitcell'
+
+interface ShapePrimitive {
+  name: string
+  shape: Shape
+}
+
+function closer (x: Vector3, a: Vector3, b: Vector3) {
   return x.distanceTo(a) < x.distanceTo(b)
 }
 
@@ -19,16 +38,34 @@ function closer (x, a, b) {
  * @property {Picker} [picker] - picker object
  */
 
+interface InstanceData {
+  id: number
+  name: number|string
+  matrix: Matrix4
+}
+
+interface PickingData {
+  pid: number
+  instance: InstanceData
+  picker: Picker
+}
+
 /**
  * Picking proxy class.
  */
 class PickingProxy {
+  pid: number
+  picker: Picker
+  instance: InstanceData
+  controls: ViewerControls
+  mouse: MouseObserver
+
   /**
    * Create picking proxy object
    * @param  {PickingData} pickingData - picking data
    * @param  {Stage} stage - stage object
    */
-  constructor (pickingData, stage) {
+  constructor (pickingData: PickingData, readonly stage: Stage) {
     this.pid = pickingData.pid
     this.picker = pickingData.picker
 
@@ -113,7 +150,7 @@ class PickingProxy {
    * @type {AtomProxy}
    */
   get closestBondAtom () {
-    if (this.type !== 'bond') return undefined
+    if (this.type !== 'bond' || !this.bond) return undefined
 
     const bond = this.bond
     const controls = this.controls
@@ -122,17 +159,17 @@ class PickingProxy {
     const acp1 = controls.getPositionOnCanvas(bond.atom1)
     const acp2 = controls.getPositionOnCanvas(bond.atom2)
 
-    return closer(cp, acp1, acp2) ? bond.atom1 : bond.atom2
+    return closer(cp as any, acp1, acp2) ? bond.atom1 : bond.atom2
   }
 
   /**
    * @type {Object}
    */
-  get arrow () { return this._objectIfType('arrow') }
+  get arrow () { return this._objectIfType('arrow') as ShapePrimitive }
   /**
    * @type {AtomProxy}
    */
-  get atom () { return this._objectIfType('atom') }
+  get atom () { return this._objectIfType('atom') as AtomProxy }
   /**
    * @type {Object}
    */
@@ -140,67 +177,67 @@ class PickingProxy {
   /**
    * @type {BondProxy}
    */
-  get bond () { return this._objectIfType('bond') }
+  get bond () { return this._objectIfType('bond') as BondProxy }
   /**
    * @type {Object}
    */
-  get box () { return this._objectIfType('box') }
+  get box () { return this._objectIfType('box') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get cone () { return this._objectIfType('cone') }
+  get cone () { return this._objectIfType('cone') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get clash () { return this._objectIfType('clash') }
+  get clash () { return this._objectIfType('clash') as { clash: { sele1: string, sele2: string } } }
   /**
    * @type {BondProxy}
    */
-  get contact () { return this._objectIfType('contact') }
+  get contact () { return this._objectIfType('contact') as BondProxy }
   /**
    * @type {Object}
    */
-  get cylinder () { return this._objectIfType('cylinder') }
+  get cylinder () { return this._objectIfType('cylinder') as ShapePrimitive }
   /**
    * @type {BondProxy}
    */
-  get distance () { return this._objectIfType('distance') }
+  get distance () { return this._objectIfType('distance') as BondProxy }
   /**
    * @type {Object}
    */
-  get ellipsoid () { return this._objectIfType('ellipsoid') }
+  get ellipsoid () { return this._objectIfType('ellipsoid') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get octahedron () { return this._objectIfType('octahedron') }
+  get octahedron () { return this._objectIfType('octahedron') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get mesh () { return this._objectIfType('mesh') }
+  get mesh () { return this._objectIfType('mesh') as { name: string, shape: Shape, serial: number } }
   /**
    * @type {Object}
    */
-  get slice () { return this._objectIfType('slice') }
+  get slice () { return this._objectIfType('slice') as { volume: Volume, value: number } }
   /**
    * @type {Object}
    */
-  get sphere () { return this._objectIfType('sphere') }
+  get sphere () { return this._objectIfType('sphere') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get tetrahedron () { return this._objectIfType('tetrahedron') }
+  get tetrahedron () { return this._objectIfType('tetrahedron') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get torus () { return this._objectIfType('torus') }
+  get torus () { return this._objectIfType('torus') as ShapePrimitive }
   /**
    * @type {Object}
    */
-  get surface () { return this._objectIfType('surface') }
+  get surface () { return this._objectIfType('surface') as { surface: Surface, index: number } }
   /**
    * @type {Object}
    */
-  get unitcell () { return this._objectIfType('unitcell') }
+  get unitcell () { return this._objectIfType('unitcell') as { unitcell: Unitcell, structure: Structure } }
   /**
    * @type {Object}
    */
@@ -208,9 +245,9 @@ class PickingProxy {
   /**
    * @type {Object}
    */
-  get volume () { return this._objectIfType('volume') }
+  get volume () { return this._objectIfType('volume') as { volume: Volume, value: number } }
 
-  _objectIfType (type) {
+  _objectIfType (type: string) {
     return this.type === type ? this.object : undefined
   }
 

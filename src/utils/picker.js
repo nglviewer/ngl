@@ -27,6 +27,9 @@ class Picker {
     this.array = array
   }
 
+  get type () { return '' }
+  get data () { return {} }
+
   /**
    * Get the index for the given picking id
    * @param  {Integer} pid - the picking id
@@ -42,7 +45,7 @@ class Picker {
    * @param  {Integer} pid - the picking id
    * @return {Object} the object data
    */
-  getObject (/* pid */) {
+  getObject (pid) {
     return {}
   }
 

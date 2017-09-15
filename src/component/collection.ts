@@ -8,14 +8,12 @@ import Component from './component'
 import Element from './element'
 
 class Collection<T extends (Component|Element)> {
-  list: T[]
-
-  constructor (list: T[] = []) {
+  constructor (readonly list: T[] = []) {
     // remove elements from list when they get disposed
-    const n = this.list.length
+    const n = list.length
 
     for (let i = 0; i < n; ++i) {
-      const elm = this.list[ i ]
+      const elm = list[ i ]
       elm.signals.disposed.add(this._remove, this)
     }
   }
