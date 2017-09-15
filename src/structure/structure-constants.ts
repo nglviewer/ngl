@@ -63,7 +63,7 @@ const SecStrucSheet = [ 'e', 'b' ]
 const SecStrucTurn = [ 's', 't', 'l', '' ]
 
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
-const VdwRadii = {
+const VdwRadii: { [k: string]: number } = {
   'H': 1.1,
   'HE': 1.4,
   'LI': 1.81,
@@ -185,7 +185,7 @@ const VdwRadii = {
 const DefaultVdwRadius = 2.0
 
 // Peter Rose (peter.rose@rcsb.org), private communication, average accross PDB
-const ResidueRadii = {
+const ResidueRadii: { [k: string]: number } = {
   '2QY': 6.58,
   'CY0': 11.98,
   '2QZ': 2.52,
@@ -920,7 +920,7 @@ const ResidueRadii = {
 const DefaultResidueRadius = 5.0
 
 // http://dx.doi.org/10.1039/b801115j (or 1.6)
-const CovalentRadii = {
+const CovalentRadii: { [k: string]: number } = {
   'H': 0.31,
   'HE': 0.28,
   'LI': 1.28,
@@ -1070,7 +1070,7 @@ const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
 }
 const DefaultResidueHydrophobicity = [ 0.00, 0.00, 0.00 ]
 
-const AA1 = {
+const AA1: { [k: string]: string } = {
   'HIS': 'H',
   'ARG': 'R',
   'LYS': 'K',

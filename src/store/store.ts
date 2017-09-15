@@ -31,13 +31,9 @@ export default class Store {
   /**
    * @param {Integer} [size] - initial size
    */
-  constructor (size: number) {
+  constructor (size = 0) {
     this._fields = this._defaultFields
-    if (Number.isInteger(size)) {
-      this._init(size)
-    } else {
-      this._init(0)
-    }
+    this._init(0)
   }
 
   /**

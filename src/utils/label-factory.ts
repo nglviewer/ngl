@@ -4,21 +4,36 @@
  * @private
  */
 
-import { AA1 } from '../structure/structure-constants.js'
+import { AA1 } from '../structure/structure-constants'
+import AtomProxy from '../proxy/atom-proxy'
 
-function LabelFactory (type, text) {
-  this.type = type
-  this.text = text || {}
+const LabelFactoryTypes = {
+  '': '',
+  'atomname': 'atom name',
+  'atomindex': 'atom index',
+  'occupancy': 'occupancy',
+  'bfactor': 'b-factor',
+  'serial': 'serial',
+  'element': 'element',
+  'atom': 'atom name + index',
+  'resname': 'residue name',
+  'resno': 'residue no',
+  'res': 'residue name + no',
+  'text': 'text',
+  'qualified': 'qualified name'
 }
+type LabelType = keyof typeof LabelFactoryTypes
 
-LabelFactory.prototype = {
+class LabelFactory {
 
-  constructor: LabelFactory,
+  static types = LabelFactoryTypes
 
-  atomLabel: function (a) {
-    var type = this.type
+  constructor(readonly type: LabelType, readonly text: { [k: number]: string } = {}) {}
 
-    var l
+  atomLabel (a: AtomProxy) {
+    const type = this.type
+
+    let l
 
     switch (type) {
       case 'atomname':
@@ -58,7 +73,7 @@ LabelFactory.prototype = {
         break
 
       case 'res':
-        var resname = a.resname.toUpperCase()
+        const resname = a.resname.toUpperCase()
         l = (AA1[ resname ] || resname) + a.resno
         break
 
@@ -74,25 +89,6 @@ LabelFactory.prototype = {
 
     return l === undefined ? '' : l
   }
-
-}
-
-LabelFactory.types = {
-
-  '': '',
-  'atomname': 'atom name',
-  'atomindex': 'atom index',
-  'occupancy': 'occupancy',
-  'bfactor': 'b-factor',
-  'serial': 'serial',
-  'element': 'element',
-  'atom': 'atom name + index',
-  'resname': 'residue name',
-  'resno': 'residue no',
-  'res': 'residue name + no',
-  'text': 'text',
-  'qualified': 'qualified name'
-
 }
 
 export default LabelFactory

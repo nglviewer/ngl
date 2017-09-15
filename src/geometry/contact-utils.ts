@@ -7,14 +7,14 @@
 import { Vector3 } from 'three'
 
 import { radToDeg } from '../math/math-utils'
-import Contact from './contact.js'
-import Selection from '../selection/selection.js'
+import Contact from './contact'
+import Selection from '../selection/selection'
+import Structure from '../structure/structure'
+import AtomProxy from '../proxy/atom-proxy'
 
-function polarContacts (structure, maxDistance, maxAngle) {
-  maxDistance = maxDistance || 3.5
-  maxAngle = maxAngle || 40
+function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
 
-  var donorSelection = new Selection(
+  const donorSelection = new Selection(
     '( ARG and ( .NE or .NH1 or .NH2 ) ) or ' +
     '( ASP and .ND2 ) or ' +
     '( GLN and .NE2 ) or ' +
@@ -27,7 +27,7 @@ function polarContacts (structure, maxDistance, maxAngle) {
     '( PROTEIN and .N )'
   )
 
-  var acceptorSelection = new Selection(
+  const acceptorSelection = new Selection(
     '( ASN and .OD1 ) or ' +
     '( ASP and ( OD1 or .OD2 ) ) or ' +
     '( GLN and .OE1 ) or ' +
@@ -39,24 +39,24 @@ function polarContacts (structure, maxDistance, maxAngle) {
     '( PROTEIN and .O )'
   )
 
-  var donorView = structure.getView(donorSelection)
-  var acceptorView = structure.getView(acceptorSelection)
+  const donorView = structure.getView(donorSelection)
+  const acceptorView = structure.getView(acceptorSelection)
 
-  var contact = new Contact(donorView, acceptorView)
-  var data = contact.within(maxDistance)
-  var bondStore = data.bondStore
+  const contact = new Contact(donorView, acceptorView)
+  const data = contact.within(maxDistance)
+  const bondStore = data.bondStore
 
-  var ap1 = structure.getAtomProxy()
-  var ap2 = structure.getAtomProxy()
-  var atomCA = structure.getAtomProxy()
-  var atomC = structure.getAtomProxy()
-  var rp = structure.getResidueProxy()
-  var rpPrev = structure.getResidueProxy()
-  var v1 = new Vector3()
-  var v2 = new Vector3()
+  const ap1 = structure.getAtomProxy()
+  const ap2 = structure.getAtomProxy()
+  const atomCA = structure.getAtomProxy()
+  const atomC = structure.getAtomProxy()
+  const rp = structure.getResidueProxy()
+  const rpPrev = structure.getResidueProxy()
+  const v1 = new Vector3()
+  const v2 = new Vector3()
 
-  var checkAngle = function (atom1, atom2, oName, cName) {
-    var atomO, atomN
+  const checkAngle = function (atom1: AtomProxy, atom2: AtomProxy, oName: string, cName: string) {
+    let atomO, atomN
 
     if (atom1.atomname === oName) {
       atomO = atom1
@@ -67,15 +67,15 @@ function polarContacts (structure, maxDistance, maxAngle) {
     }
 
     rp.index = atomO.residueIndex
-    var atomC = rp.getAtomIndexByName(cName)
+    const atomC = rp.getAtomIndexByName(cName)
 
-    v1.subVectors(atomC, atomO)
-    v2.subVectors(atomC, atomN)
+    v1.subVectors(atomC, atomO as any)
+    v2.subVectors(atomC, atomN as any)
 
     return radToDeg(v1.angleTo(v2)) < maxAngle
   }
 
-  for (var i = 0, il = bondStore.count; i < il; ++i) {
+  for (let i = 0, il = bondStore.count; i < il; ++i) {
     ap1.index = bondStore.atomIndex1[ i ]
     ap2.index = bondStore.atomIndex2[ i ]
 
@@ -86,7 +86,7 @@ function polarContacts (structure, maxDistance, maxAngle) {
       data.bondSet.clear(i)
       continue
     } else if (ap1.atomname === 'N' || ap2.atomname === 'N') {
-      var atomN, atomX
+      let atomN, atomX
 
       if (ap1.atomname === 'N') {
         atomN = ap1
@@ -106,10 +106,10 @@ function polarContacts (structure, maxDistance, maxAngle) {
       atomC.index = prevRes.getAtomIndexByName('C')
       if (atomC.index === undefined) continue
 
-      v1.subVectors(atomN, atomC)
-      v2.subVectors(atomN, atomCA)
+      v1.subVectors(atomN as any, atomC as any)
+      v2.subVectors(atomN as any, atomCA as any)
       v1.add(v2).multiplyScalar(0.5)
-      v2.subVectors(atomX, atomN)
+      v2.subVectors(atomX as any, atomN as any)
 
       if (radToDeg(v1.angleTo(v2)) > maxAngle) {
         data.bondSet.clear(i)
@@ -131,39 +131,36 @@ function polarContacts (structure, maxDistance, maxAngle) {
   }
 }
 
-function polarBackboneContacts (structure, maxDistance, maxAngle) {
-  maxDistance = maxDistance || 3.5
-  maxAngle = maxAngle || 40
-
-  var donorSelection = new Selection(
+function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
+  const donorSelection = new Selection(
     '( PROTEIN and .N )'
   )
 
-  var acceptorSelection = new Selection(
+  const acceptorSelection = new Selection(
     '( PROTEIN and .O )'
   )
 
-  var donorView = structure.getView(donorSelection)
-  var acceptorView = structure.getView(acceptorSelection)
+  const donorView = structure.getView(donorSelection)
+  const acceptorView = structure.getView(acceptorSelection)
 
-  var contact = new Contact(donorView, acceptorView)
-  var data = contact.within(maxDistance)
-  var bondStore = data.bondStore
+  const contact = new Contact(donorView, acceptorView)
+  const data = contact.within(maxDistance)
+  const bondStore = data.bondStore
 
-  var ap1 = structure.getAtomProxy()
-  var ap2 = structure.getAtomProxy()
-  var atomCA = structure.getAtomProxy()
-  var atomC = structure.getAtomProxy()
-  var rp = structure.getResidueProxy()
-  var rpPrev = structure.getResidueProxy()
-  var v1 = new Vector3()
-  var v2 = new Vector3()
+  const ap1 = structure.getAtomProxy()
+  const ap2 = structure.getAtomProxy()
+  const atomCA = structure.getAtomProxy()
+  const atomC = structure.getAtomProxy()
+  const rp = structure.getResidueProxy()
+  const rpPrev = structure.getResidueProxy()
+  const v1 = new Vector3()
+  const v2 = new Vector3()
 
-  for (var i = 0, il = bondStore.count; i < il; ++i) {
+  for (let i = 0, il = bondStore.count; i < il; ++i) {
     ap1.index = bondStore.atomIndex1[ i ]
     ap2.index = bondStore.atomIndex2[ i ]
 
-    var atomN, atomO
+    let atomN, atomO
 
     if (ap1.atomname === 'N') {
       atomN = ap1
@@ -184,10 +181,10 @@ function polarBackboneContacts (structure, maxDistance, maxAngle) {
     atomC.index = prevRes.getAtomIndexByName('C')
     if (atomC.index === undefined) continue
 
-    v1.subVectors(atomN, atomC)
-    v2.subVectors(atomN, atomCA)
+    v1.subVectors(atomN as any, atomC as any)
+    v2.subVectors(atomN as any, atomCA as any)
     v1.add(v2).multiplyScalar(0.5)
-    v2.subVectors(atomO, atomN)
+    v2.subVectors(atomO as any, atomN as any)
 
     // Log.log( radToDeg( v1.angleTo( v2 ) ) );
 

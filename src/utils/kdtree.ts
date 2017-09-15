@@ -4,7 +4,8 @@
  * @private
  */
 
-import BinaryHeap from './binary-heap.js'
+import { NumberArray } from '../types'
+import BinaryHeap from './binary-heap'
 
 /**
  * Kdtree
@@ -32,29 +33,38 @@ import BinaryHeap from './binary-heap.js'
  * @param {Float32Array} points - points
  * @param {Function} metric - metric
  */
-function Kdtree (points, metric) {
-  var n = points.length / 3
-  var maxDepth = 0
+class Kdtree {
+  indices: Uint32Array
+  nodes: Int32Array
+  rootIndex: number
 
-  var indices = new Uint32Array(n)
-  for (var i = 0; i < n; ++i) {
-    indices[ i ] = i
+  maxDepth = 0
+  currentNode = 0
+
+  constructor(readonly points: Float32Array, readonly metric: (a: NumberArray, b: NumberArray) => number) {
+    const n = points.length / 3
+
+    const indices = new Uint32Array(n)
+    for (let i = 0; i < n; ++i) {
+      indices[ i ] = i
+    }
+    this.indices = indices
+    this.nodes = new Int32Array(n * 4)
+    this.rootIndex = this.buildTree(0, -1, 0, n)
   }
-  var nodes = new Int32Array(n * 4)
-  // pos, left, right, parent
 
-  var currentNode = 0
-  var currentDim = 0
+  buildTree (depth: number, parent: number, arrBegin: number, arrEnd: number) {
+    if (depth > this.maxDepth) this.maxDepth = depth
 
-  function buildTree (depth, parent, arrBegin, arrEnd) {
-    if (depth > maxDepth) maxDepth = depth
-
-    var plength = arrEnd - arrBegin
+    const plength = arrEnd - arrBegin
     if (plength === 0) {
       return -1
     }
-    var nodeIndex = currentNode * 4
-    currentNode += 1
+
+    const nodeIndex = this.currentNode * 4
+    const nodes = this.nodes
+
+    this.currentNode += 1
     if (plength === 1) {
       nodes[ nodeIndex ] = arrBegin
       nodes[ nodeIndex + 1 ] = -1
@@ -62,17 +72,20 @@ function Kdtree (points, metric) {
       nodes[ nodeIndex + 3 ] = parent
       return nodeIndex
     }
-    // if( plength <= 32 ){
-    //     return nodeIndex;
+    // if(plength <= 32){
+    //   return nodeIndex;
     // }
 
-    var arrMedian = arrBegin + Math.floor(plength / 2)
-    currentDim = depth % 3
+    const indices = this.indices
+    const points = this.points
+
+    const arrMedian = arrBegin + Math.floor(plength / 2)
+    const currentDim = depth % 3
 
     // inlined quickselect function
-    var j, tmp, pivotIndex, pivotValue, storeIndex
-    var left = arrBegin
-    var right = arrEnd - 1
+    let j, tmp, pivotIndex, pivotValue, storeIndex
+    let left = arrBegin
+    let right = arrEnd - 1
     while (right > left) {
       pivotIndex = (left + right) >> 1
       pivotValue = points[ indices[ pivotIndex ] * 3 + currentDim ]
@@ -105,25 +118,20 @@ function Kdtree (points, metric) {
     }
 
     nodes[ nodeIndex ] = arrMedian
-    nodes[ nodeIndex + 1 ] = buildTree(depth + 1, nodeIndex, arrBegin, arrMedian)
-    nodes[ nodeIndex + 2 ] = buildTree(depth + 1, nodeIndex, arrMedian + 1, arrEnd)
+    nodes[ nodeIndex + 1 ] = this.buildTree(depth + 1, nodeIndex, arrBegin, arrMedian)
+    nodes[ nodeIndex + 2 ] = this.buildTree(depth + 1, nodeIndex, arrMedian + 1, arrEnd)
     nodes[ nodeIndex + 3 ] = parent
+
     return nodeIndex
   }
 
-  function getNodeDepth (nodeIndex) {
-    var parentIndex = nodes[ nodeIndex + 3 ]
-    if (parentIndex === -1) {
-      return 0
-    } else {
-      return getNodeDepth(parentIndex) + 1
-    }
+  getNodeDepth (nodeIndex: number): number {
+    const parentIndex = this.nodes[ nodeIndex + 3 ]
+    return (parentIndex === -1) ? 0 : this.getNodeDepth(parentIndex) + 1
   }
 
   // TODO
-  // function getNodePos( node ){}
-
-  var rootIndex = buildTree(0, -1, 0, n)
+  // function getNodePos (node) {}
 
   /**
    * find nearest points
@@ -132,33 +140,35 @@ function Kdtree (points, metric) {
    * @param {Float} maxDistance - maximum distance of point to result nodes
    * @return {Array} array of point, distance pairs
    */
-  function nearest (point, maxNodes, maxDistance) {
-    var bestNodes = new BinaryHeap(
-      function (e) { return -e[ 1 ] }
-    )
+  nearest (point: NumberArray, maxNodes: number, maxDistance: number) {
+    const bestNodes = new BinaryHeap<[number, number]>(e => -e[ 1 ])
 
-    function nearestSearch (nodeIndex) {
-      var bestChild, otherChild
-      var dimension = getNodeDepth(nodeIndex) % 3
-      var pointIndex = indices[ nodes[ nodeIndex ] ] * 3
-      var ownPoint = [
+    const nodes = this.nodes
+    const points = this.points
+    const indices = this.indices
+
+    const nearestSearch = (nodeIndex: number) => {
+      let bestChild, otherChild
+      const dimension = this.getNodeDepth(nodeIndex) % 3
+      const pointIndex = indices[ nodes[ nodeIndex ] ] * 3
+      const ownPoint = [
         points[ pointIndex + 0 ],
         points[ pointIndex + 1 ],
         points[ pointIndex + 2 ]
       ]
-      var ownDistance = metric(point, ownPoint)
+      var ownDistance = this.metric(point, ownPoint)
 
-      function saveNode (nodeIndex, distance) {
+      function saveNode (nodeIndex: number, distance: number) {
         bestNodes.push([ nodeIndex, distance ])
         if (bestNodes.size() > maxNodes) {
           bestNodes.pop()
         }
       }
 
-      var leftIndex = nodes[ nodeIndex + 1 ]
-      var rightIndex = nodes[ nodeIndex + 2 ]
+      const leftIndex = nodes[ nodeIndex + 1 ]
+      const rightIndex = nodes[ nodeIndex + 2 ]
 
-            // if it's a leaf
+      // if it's a leaf
       if (rightIndex === -1 && leftIndex === -1) {
         if ((bestNodes.size() < maxNodes || ownDistance < bestNodes.peek()[ 1 ]) &&
           ownDistance <= maxDistance
@@ -190,16 +200,15 @@ function Kdtree (points, metric) {
       }
 
       // if there's still room or the current distance is nearer than the best distance
-
-      var linearPoint = []
-      for (var i = 0; i < 3; i += 1) {
+      const linearPoint = []
+      for (let i = 0; i < 3; i += 1) {
         if (i === dimension) {
           linearPoint[ i ] = point[ i ]
         } else {
           linearPoint[ i ] = points[ pointIndex + i ]
         }
       }
-      var linearDistance = metric(linearPoint, ownPoint)
+      const linearDistance = this.metric(linearPoint, ownPoint)
 
       if ((bestNodes.size() < maxNodes || Math.abs(linearDistance) < bestNodes.peek()[ 1 ]) &&
         Math.abs(linearDistance) <= maxDistance
@@ -215,32 +224,34 @@ function Kdtree (points, metric) {
       }
     }
 
-    nearestSearch(rootIndex)
+    nearestSearch(this.rootIndex)
 
-    var result = []
-    for (var i = 0, il = Math.min(bestNodes.size(), maxNodes); i < il; i += 1) {
+    const result = []
+    for (let i = 0, il = Math.min(bestNodes.size(), maxNodes); i < il; i += 1) {
       result.push(bestNodes.content[ i ])
     }
 
     return result
   }
 
-  function verify (nodeIndex, depth) {
-    var count = 1
+  verify (nodeIndex?: number, depth = 0) {
+    let count = 1
 
     if (nodeIndex === undefined) {
-      nodeIndex = rootIndex
-      depth = 0
+      nodeIndex = this.rootIndex
     }
 
     if (nodeIndex === -1) {
       throw new Error('node is null')
     }
 
-    var dim = depth % 3
+    const dim = depth % 3
+    const nodes = this.nodes
+    const points = this.points
+    const indices = this.indices
 
-    var leftIndex = nodes[ nodeIndex + 1 ]
-    var rightIndex = nodes[ nodeIndex + 2 ]
+    const leftIndex = nodes[ nodeIndex + 1 ]
+    const rightIndex = nodes[ nodeIndex + 2 ]
 
     if (leftIndex !== -1) {
       if (points[ indices[ nodes[ leftIndex ] ] * 3 + dim ] >
@@ -248,7 +259,7 @@ function Kdtree (points, metric) {
       ) {
         throw new Error('left child is > parent!')
       }
-      count += verify(leftIndex, depth + 1)
+      count += this.verify(leftIndex, depth + 1)
     }
 
     if (rightIndex !== -1) {
@@ -257,20 +268,11 @@ function Kdtree (points, metric) {
       ) {
         throw new Error('right child is < parent!')
       }
-      count += verify(rightIndex, depth + 1)
+      count += this.verify(rightIndex, depth + 1)
     }
 
     return count
   }
-
-  // API
-
-  this.rootIndex = rootIndex
-  this.maxDepth = maxDepth
-  this.nearest = nearest
-  this.indices = indices
-  this.nodes = nodes
-  this.verify = verify
 }
 
 export default Kdtree

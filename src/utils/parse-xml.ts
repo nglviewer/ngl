@@ -7,17 +7,25 @@
 // https://github.com/segmentio/xml-parser
 // MIT license
 
+type Attributes = { [k: string]: any }
+interface Node {
+  name?: string
+  content?: string
+  attributes: Attributes
+  children?: Node[]
+}
+
 const reStrip = /^['"]|['"]$/g
 const reTag = /^<([\w-:.]+)\s*/
 const reContent = /^([^<]*)/
 const reAttr = /([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|\w+)\s*/
 
-function strip (val) {
+function strip (val: string) {
   return val.replace(reStrip, '')
 }
 
-function parseXml (xml) {
-    // trim and strip comments
+export function parseXml (xml: string) {
+  // trim and strip comments
   xml = xml.trim().replace(/<!--[\s\S]*?-->/g, '')
 
   return document()
@@ -32,11 +40,13 @@ function parseXml (xml) {
   function declaration () {
     const m = match(/^<\?xml\s*/)
     if (!m) return
-        // tag
-    const node = {
+
+    // tag
+    const node: Node = {
       attributes: {}
     }
-        // attributes
+
+    // attributes
     while (!(eos() || is('?>'))) {
       const attr = attribute()
       if (!attr) return node
@@ -49,31 +59,37 @@ function parseXml (xml) {
   function tag () {
     const m = match(reTag)
     if (!m) return
-        // name
-    const node = {
+
+    // name
+    const node: Node = {
       name: m[1],
       attributes: {},
       children: []
     }
-        // attributes
+
+    // attributes
     while (!(eos() || is('>') || is('?>') || is('/>'))) {
       var attr = attribute()
       if (!attr) return node
       node.attributes[attr.name] = attr.value
     }
-        // self closing tag
+
+    // self closing tag
     if (match(/^\s*\/>\s*/)) {
       return node
     }
     match(/\??>\s*/)
-        // content
+
+    // content
     node.content = content()
-        // children
+
+    // children
     let child
     while ((child = tag())) {
-      node.children.push(child)
+      node.children!.push(child)
     }
-        // closing
+
+    // closing
     match(/^<\/[\w-:.]+>\s*/)
     return node
   }
@@ -90,7 +106,7 @@ function parseXml (xml) {
     return { name: m[1], value: strip(m[2]) }
   }
 
-  function match (re) {
+  function match (re: RegExp) {
     const m = xml.match(re)
     if (!m) return
     xml = xml.slice(m[0].length)
@@ -101,11 +117,7 @@ function parseXml (xml) {
     return xml.length === 0
   }
 
-  function is (prefix) {
+  function is (prefix: string) {
     return xml.indexOf(prefix) === 0
   }
-}
-
-export {
-    parseXml
 }

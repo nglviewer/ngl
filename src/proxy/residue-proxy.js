@@ -4,6 +4,7 @@
  * @private
  */
 
+import { defaults } from '../utils'
 import {
     SecStrucHelix, SecStrucSheet, SecStrucTurn,
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
@@ -437,17 +438,19 @@ class ResidueProxy {
     return undefined
   }
 
-  getPreviousConnectedResidue () {
-    var rOffset = this.chainStore.residueOffset[ this.chainIndex ]
-    var prevIndex = this.index - 1
+  getPreviousConnectedResidue (residueProxy) {
+    const rOffset = this.chainStore.residueOffset[ this.chainIndex ]
+    const prevIndex = this.index - 1
     if (prevIndex >= rOffset) {
-      var rpPrev = this.structure.getResidueProxy(prevIndex)
+      const rpPrev = defaults(residueProxy, this.structure.getResidueProxy())
+      rpPrev.index = prevIndex
       if (rpPrev.connectedTo(this)) {
         return rpPrev
       }
     } else if (prevIndex === rOffset - 1) {  // cyclic
-      var rCount = this.chainStore.residueCount[ this.chainIndex ]
-      var rpLast = this.structure.getResidueProxy(rOffset + rCount - 1)
+      const rCount = this.chainStore.residueCount[ this.chainIndex ]
+      const rpLast = defaults(residueProxy, this.structure.getResidueProxy())
+      rpLast.index = rOffset + rCount - 1
       if (rpLast.connectedTo(this)) {
         return rpLast
       }

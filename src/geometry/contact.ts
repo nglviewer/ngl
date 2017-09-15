@@ -5,23 +5,24 @@
  */
 
 import { Log } from '../globals'
-import BitArray from '../utils/bitarray.js'
-import Kdtree from './kdtree.js'
-import BondStore from '../store/bond-store.js'
+import BitArray from '../utils/bitarray'
+import Kdtree from './kdtree'
+import BondStore from '../store/bond-store'
+import Structure from '../structure/structure'
 
 class Contact {
-  constructor (sview1, sview2) {
-    this.sview1 = sview1
-    this.sview2 = sview2
+  // kdtree1: Kdtree
+  kdtree2: Kdtree
 
-        // this.kdtree1 = new Kdtree( sview1 );
+  constructor (readonly sview1: Structure, readonly sview2: Structure) {
+    // this.kdtree1 = new Kdtree(sview1)
     this.kdtree2 = new Kdtree(sview2)
   }
 
-  within (maxDistance, minDistance) {
+  within (maxDistance: number, minDistance?: number) {
     Log.time('Contact within')
 
-        // var kdtree1 = this.kdtree1;
+    // const kdtree1 = this.kdtree1
     const kdtree2 = this.kdtree2
 
     const ap2 = this.sview1.getAtomProxy()
@@ -30,15 +31,15 @@ class Contact {
 
     this.sview1.eachAtom(function (ap1) {
       let found = false
-      const contacts = kdtree2.nearest(ap1, Infinity, maxDistance)
+      const contacts = kdtree2.nearest(ap1 as any, Infinity, maxDistance)
 
       for (let j = 0, m = contacts.length; j < m; ++j) {
         const d = contacts[ j ]
         ap2.index = d.index
 
         if (ap1.residueIndex !== ap2.residueIndex &&
-                    (!minDistance || d.distance > minDistance)
-                ) {
+            (!minDistance || d.distance > minDistance)
+        ) {
           found = true
           atomSet.set(ap2.index)
           bondStore.addBond(ap1, ap2, 1)

@@ -8,43 +8,47 @@ import {
     VdwRadii, DefaultVdwRadius, CovalentRadii, DefaultCovalentRadius,
     NucleicBackboneAtoms
 } from '../structure/structure-constants'
+import AtomProxy from '../proxy/atom-proxy'
 
-function RadiusFactory (type, scale) {
-  this.type = type
-  this.scale = scale || 1.0
 
-  this.max = 10
+const RadiusFactoryTypes = {
+  '': '',
+  'vdw': 'by vdW radius',
+  'covalent': 'by covalent radius',
+  'sstruc': 'by secondary structure',
+  'bfactor': 'by bfactor',
+  'size': 'size'
 }
+type RadiusType = keyof typeof RadiusFactoryTypes
 
-RadiusFactory.prototype = {
+class RadiusFactory {
+  max = 10
 
-  constructor: RadiusFactory,
+  static types = RadiusFactoryTypes
 
-  atomRadius: function (a) {
-    var type = this.type
-    var scale = this.scale
+  constructor (readonly type: RadiusType, readonly scale = 1.0) {}
 
-    var r
+  atomRadius (a: AtomProxy) {
+    const type = this.type
+    const scale = this.scale
+
+    let r
 
     switch (type) {
       case 'vdw':
-
         r = VdwRadii[ a.element ] || DefaultVdwRadius
         break
 
       case 'covalent':
-
         r = CovalentRadii[ a.element ] || DefaultCovalentRadius
         break
 
       case 'bfactor':
-
         r = a.bfactor || 1.0
         break
 
       case 'sstruc':
-
-        var sstruc = a.sstruc
+        const sstruc = a.sstruc
         if (sstruc === 'h') {
           r = 0.25
         } else if (sstruc === 'g') {
@@ -63,24 +67,12 @@ RadiusFactory.prototype = {
         break
 
       default:
-
         r = type || 1.0
         break
     }
 
     return Math.min(r * scale, this.max)
   }
-
-}
-
-RadiusFactory.types = {
-
-  '': '',
-  'vdw': 'by vdW radius',
-  'covalent': 'by covalent radius',
-  'sstruc': 'by secondary structure',
-  'bfactor': 'by bfactor',
-  'size': 'size'
 
 }
 
