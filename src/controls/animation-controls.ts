@@ -21,7 +21,6 @@ import ViewerControls from './viewer-controls'
  * Animation controls
  */
 class AnimationControls {
-  stage: Stage
   viewer: Viewer
   controls: ViewerControls
 
@@ -32,8 +31,7 @@ class AnimationControls {
    * Create animation controls
    * @param  {Stage} stage - the stage object
    */
-  constructor (stage: Stage) {
-    this.stage = stage
+  constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
     this.controls = stage.viewerControls
   }

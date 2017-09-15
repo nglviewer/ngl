@@ -28,7 +28,7 @@
       var load = NGL.getQuery("load")
       if (load) stage.loadFile(load, {defaultRepresentation: true})
       var script = NGL.getQuery("script")
-      if (script) stage.loadFile("./scripts/" + script + ".js")
+      if (script) stage.loadScript("./scripts/" + script + ".js")
     })
   </script>
   <div id="viewport" style="width:100%; height:100%;"></div>

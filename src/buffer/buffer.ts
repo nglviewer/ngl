@@ -460,7 +460,6 @@ class Buffer {
       mesh = new LineSegments(g, m)
     } else if (this.isPoint) {
       mesh = new Points(g, m)
-      if (this.parameters.sortParticles) (mesh as any).sortParticles = true  // TODO
     } else {
       mesh = new Mesh(g, m)
     }

@@ -9,7 +9,7 @@ import { Signal } from 'signals'
 import { ComponentRegistry } from '../globals'
 import { defaults } from '../utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
-import TrajectoryComponent from './trajectory-component'
+import TrajectoryElement from './trajectory-element'
 import { makeTrajectory } from '../trajectory/trajectory-utils'
 import Selection from '../selection/selection'
 import Structure from '../structure/structure'
@@ -46,41 +46,22 @@ interface StructureComponentSignals extends ComponentSignals {
  * } );
  */
 class StructureComponent extends Component {
-  signals: StructureComponentSignals
-  parameters: StructureComponentParameters
+  readonly signals: StructureComponentSignals
+  readonly parameters: StructureComponentParameters
   get defaultParameters () { return StructureComponentDefaultParameters }
 
-  structure: Structure
-  structureView: StructureView
-  trajList: TrajectoryComponent[] = []
   selection: Selection
+  structureView: StructureView
+  readonly trajList: TrajectoryElement[] = []
 
-  /**
-   * Create structure component
-   * @param {Stage} stage - stage object the component belongs to
-   * @param {Structure} structure - structure object to wrap
-   * @param {ComponentParameters} params - component parameters
-   */
-  constructor (stage: Stage, structure: Structure, params: Partial<StructureComponentParameters> = {}) {
-    super(stage, Object.assign({
-      name: defaults(params.name, structure.name)
-    }, params))
+  constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
+    super(stage, Object.assign({ name: structure.name }, params))
 
-    /**
-     * Events emitted by the component
-     * @type {StructureComponentSignals}
-     */
     this.signals = Object.assign(this.signals, {
       trajectoryAdded: new Signal(),
       trajectoryRemoved: new Signal(),
       defaultAssemblyChanged: new Signal()
     })
-
-    /**
-     * The wrapped structure
-     * @type {Structure}
-     */
-    this.structure = structure
 
     this.initSelection(this.parameters.sele)
     this.setDefaultAssembly(this.parameters.defaultAssembly)
@@ -153,7 +134,7 @@ class StructureComponent extends Component {
    * @return {undefined}
    */
   rebuildRepresentations () {
-    this.reprList.forEach(repr => {
+    this.reprList.forEach((repr: any) => {  // TODO
       repr.build()
     })
   }
@@ -171,14 +152,11 @@ class StructureComponent extends Component {
   addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
-    return super.addRepresentation(type, this.structureView, params)
+    return this._addRepresentation(type, this.structureView, params)
   }
 
   /**
    * Add a new trajectory component to the structure
-   * @param {String|Frames} trajPath - path or frames object
-   * @param {TrajectoryComponentParameters|TrajectoryParameters} params - parameters
-   * @return {TrajectoryComponent} the created trajectory component object
    */
   addTrajectory (trajPath: string, params: { [k: string]: any } = {}) {
     var traj = makeTrajectory(trajPath, this.structureView, params)
@@ -187,14 +165,14 @@ class StructureComponent extends Component {
       this.updateRepresentations({ 'position': true })
     })
 
-    var trajComp = new TrajectoryComponent(this.stage, traj, params)
+    var trajComp = new TrajectoryElement(this.stage, traj, params)
     this.trajList.push(trajComp)
     this.signals.trajectoryAdded.dispatch(trajComp)
 
     return trajComp
   }
 
-  removeTrajectory (traj: TrajectoryComponent) {
+  removeTrajectory (traj: TrajectoryElement) {
     var idx = this.trajList.indexOf(traj)
     if (idx !== -1) {
       this.trajList.splice(idx, 1)
@@ -263,17 +241,6 @@ class StructureComponent extends Component {
     )
 
     this.updateRepresentations({ 'position': true })
-
-    return this
-  }
-
-  setVisibility (value: boolean) {
-    super.setVisibility(value)
-
-    this.trajList.forEach(traj => {
-      // FIXME ???
-      traj.setVisibility(value)
-    })
 
     return this
   }

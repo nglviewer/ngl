@@ -4,12 +4,14 @@
  * @private
  */
 
-import { Box3 } from 'three'
+import { Box3, BufferGeometry } from 'three'
 
 class GeometryGroup {
-  constructor (geometryList) {
+  geometryList: BufferGeometry[]
+  boundingBox: Box3
+
+  constructor (geometryList: BufferGeometry[] = []) {
     this.geometryList = geometryList
-    this.boundingBox = null
   }
 
   computeBoundingBox () {

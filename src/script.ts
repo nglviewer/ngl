@@ -25,10 +25,7 @@ class Script {
     nameChanged: new Signal()
   }
 
-  readonly name: string
-  readonly path: string
   readonly dir: string
-
   readonly fn: Function
 
   readonly type = 'Script'
@@ -39,18 +36,12 @@ class Script {
    * @param {String} name - name of the script
    * @param {String} path - path of the script
    */
-  constructor (functionBody: string, name: string, path: string) {
-    this.name = name
-    this.path = path
+  constructor (functionBody: string, readonly name: string, readonly path: string) {
     this.dir = path.substring(0, path.lastIndexOf('/') + 1)
 
     try {
       /* eslint-disable no-new-func */
-      this.fn = new Function(
-        'stage', 'panel',
-        '__name__', '__path__', '__dir__',
-        functionBody
-      )
+      this.fn = new Function('stage', '__name', '__path', '__dir', functionBody)
     } catch (e) {
       Log.error('Script compilation failed', e)
       this.fn = function () {}
@@ -62,29 +53,10 @@ class Script {
    * @param  {Stage} stage - the stage context
    * @return {Promise} - resolve when script finished running
    */
-  call (stage: Stage) {
-    const panel = {
-      add: (...elements: any[]) => {
-        this.signals.elementAdded.dispatch(elements)
-      },
-
-      remove: (...elements: any[]) => {
-        this.signals.elementRemoved.dispatch(elements)
-      },
-
-      setName: (value: string) => {
-        this.signals.nameChanged.dispatch(value)
-      }
-    }
-
+  run (stage: Stage) {
     return new Promise((resolve, reject) => {
-      const args = [
-        stage, panel,
-        this.name, this.path, this.dir
-      ]
-
       try {
-        this.fn.apply(null, args)
+        this.fn.apply(null, [ stage, this.name, this.path, this.dir ])
         resolve()
       } catch (e) {
         Log.error('Script.fn', e)

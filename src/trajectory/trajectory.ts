@@ -613,17 +613,6 @@ class Trajectory {
   }
 
   /**
-   * Get path of atom
-   * abstract
-   * @param  {Integer} index - atom index
-   * @param  {Function} callback - fired when the path is available
-   * @return {undefined}
-   */
-  getPath (index: number, callback?: Function) {
-    Log.error('Trajectory.getPath not implemented', index, callback)
-  }
-
-  /**
    * Get time for frame
    * @param  {Integer} i - frame index
    * @return {Number} time in picoseconds

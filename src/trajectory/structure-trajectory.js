@@ -61,24 +61,6 @@ class StructureTrajectory extends Trajectory {
   _loadFrameCount () {
     this._setFrameCount(this.structure.frames.length)
   }
-
-  getPath (index, callback) {
-    const n = this.frameCount
-    const k = index * 3
-
-    const path = new Float32Array(n * 3)
-
-    for (let i = 0; i < n; ++i) {
-      const j = 3 * i
-      const f = this.structure.frames[ i ]
-
-      path[ j + 0 ] = f[ k + 0 ]
-      path[ j + 1 ] = f[ k + 1 ]
-      path[ j + 2 ] = f[ k + 2 ]
-    }
-
-    callback(path)
-  }
 }
 
 export default StructureTrajectory

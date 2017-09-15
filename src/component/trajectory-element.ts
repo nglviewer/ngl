@@ -4,20 +4,14 @@
  * @private
  */
 
-import { Vector3 } from 'three'
 import { Signal } from 'signals'
 
-import { defaults } from '../utils'
-import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
+import Element, { ElementSignals, ElementDefaultParameters } from './element'
 import Stage from '../stage/stage'
 import Trajectory, { TrajectoryParameters } from '../trajectory/trajectory'
 import TrajectoryPlayer, {
   TrajectoryPlayerDirection, TrajectoryPlayerMode, TrajectoryPlayerInterpolateType
 } from '../trajectory/trajectory-player'
-
-type TrajectoryRepresentationType = (
-  'trajectory'
-)
 
 /**
  * Trajectory component parameter object.
@@ -33,7 +27,7 @@ type TrajectoryRepresentationType = (
  * @property {String} defaultDirection - either "forward" or "backward"
  */
 
-export const TrajectoryComponentDefaultParameters = Object.assign({
+export const TrajectoryElementDefaultParameters = Object.assign({
   defaultStep: 1,
   defaultTimeout: 50,
   defaultInterpolateType: '' as TrajectoryPlayerInterpolateType,
@@ -41,10 +35,10 @@ export const TrajectoryComponentDefaultParameters = Object.assign({
   defaultMode: 'loop' as TrajectoryPlayerMode,
   defaultDirection: 'forward' as TrajectoryPlayerDirection,
   initialFrame: 0
-}, ComponentDefaultParameters)
-export type TrajectoryComponentParameters = typeof TrajectoryComponentDefaultParameters
+}, ElementDefaultParameters)
+export type TrajectoryElementParameters = typeof TrajectoryElementDefaultParameters
 
-interface TrajectoryComponentSignals extends ComponentSignals {
+interface TrajectoryElementSignals extends ElementSignals {
   frameChanged: Signal  // on frame change
   playerChanged: Signal  // on player change
   countChanged: Signal  // when frame count is available
@@ -54,12 +48,10 @@ interface TrajectoryComponentSignals extends ComponentSignals {
 /**
  * Component wrapping a {@link Trajectory} object
  */
-class TrajectoryComponent extends Component {
-  signals: TrajectoryComponentSignals
-  parameters: TrajectoryComponentParameters
-  get defaultParameters () { return TrajectoryComponentDefaultParameters }
-
-  trajectory: Trajectory
+class TrajectoryElement extends Element {
+  signals: TrajectoryElementSignals
+  parameters: TrajectoryElementParameters
+  get defaultParameters () { return TrajectoryElementDefaultParameters }
 
   /**
    * @param {Stage} stage - stage object the component belongs to
@@ -67,10 +59,8 @@ class TrajectoryComponent extends Component {
    * @param {TrajectoryComponentParameters} params - component parameters
    * @param {StructureComponent} parent - the parent structure
    */
-  constructor (stage: Stage, trajectory: Trajectory, params: Partial<TrajectoryComponentParameters> = {}) {
-    super(stage, Object.assign({
-      name: defaults(params.name, trajectory.name)
-    }, params))
+  constructor (stage: Stage, readonly trajectory: Trajectory, params: Partial<TrajectoryElementParameters> = {}) {
+    super(stage, Object.assign({ name: trajectory.name }, params))
 
     this.signals = Object.assign(this.signals, {
       frameChanged: new Signal(),
@@ -78,9 +68,6 @@ class TrajectoryComponent extends Component {
       countChanged: new Signal(),
       parametersChanged: new Signal()
     })
-
-    this.trajectory = trajectory
-    this.status = 'loaded'
 
     // signals
 
@@ -110,16 +97,6 @@ class TrajectoryComponent extends Component {
   get type () { return 'trajectory' }
 
   /**
-   * Add trajectory representation
-   * @param {String} type - representation type, currently only: "trajectory"
-   * @param {RepresentationParameters} params - parameters
-   * @return {RepresentationComponent} the added representation component
-   */
-  addRepresentation (type: TrajectoryRepresentationType, params: { [k: string]: any } = {}) {
-    return super.addRepresentation(type, this.trajectory, params)
-  }
-
-  /**
    * Set the frame of the trajectory
    * @param {Integer} i - frame number
    * @return {undefined}
@@ -142,10 +119,6 @@ class TrajectoryComponent extends Component {
     this.trajectory.dispose()
     super.dispose()
   }
-
-  getCenter () {
-    return new Vector3()
-  }
 }
 
-export default TrajectoryComponent
+export default TrajectoryElement

@@ -5,24 +5,33 @@
  */
 
 import { Signal } from 'signals'
+import { Color } from 'three'
 
-import { defaults } from '../utils'
-import { generateUUID } from '../math/math-utils'
+import Stage from '../stage/stage'
+import Representation from '../representation/representation'
+import Component from './component'
+import Element, { ElementDefaultParameters, ElementSignals } from './element'
 
-/**
- * Extends {@link ComponentSignals}
- *
- * @typedef {Object} RepresentationElementSignals
- * @property {Signal<String>} parametersChanged - on parameters change
- * @property {Signal<Boolean>} visibilityChanged - on visibility change
- * @property {Signal<String>} nameChanged - on name change
- * @property {Signal} disposed - on dispose
- */
+export const RepresentationElementDefaultParameters = Object.assign({
+  visible: true
+}, ElementDefaultParameters)
+export type RepresentationElementParameters = typeof RepresentationElementDefaultParameters
+
+export interface RepresentationElementSignals extends ElementSignals {
+  visibilityChanged: Signal  // on visibility change
+  parametersChanged: Signal  // on parameters change
+}
 
 /**
  * Element wrapping a {@link Representation} object
  */
-class RepresentationElement {
+class RepresentationElement extends Element {
+  signals: RepresentationElementSignals
+  parameters: RepresentationElementParameters
+  get defaultParameters() { return RepresentationElementDefaultParameters }
+
+  repr: Representation
+
   /**
    * Create representation component
    * @param {Stage} stage - stage object the component belongs to
@@ -30,29 +39,18 @@ class RepresentationElement {
    * @param {RepresentationParameters} [params] - component parameters
    * @param {Component} [parent] - parent component
    */
-  constructor (stage, repr, params, parent) {
-    const p = params || {}
+  constructor (stage: Stage, repr: Representation, params: Partial<RepresentationElementParameters> = {}, readonly parent: Component) {
+    super(stage, Object.assign({ name: repr.type }, params))
 
-    this.name = defaults(p.name, repr.type)
-    this.uuid = generateUUID()
-    this.visible = p.visible !== undefined ? p.visible : true
-
-    /**
-     * Events emitted by the component
-     * @type {RepresentationElementSignals}
-     */
-    this.signals = {
-      parametersChanged: new Signal(),
+    this.signals = Object.assign({
       visibilityChanged: new Signal(),
-      nameChanged: new Signal(),
-      disposed: new Signal()
-    }
-
-    this.stage = stage
-    this.parent = parent
+      parametersChanged: new Signal()
+    }, this.signals)
 
     this.setRepresentation(repr)
   }
+
+  get visible () { return this.parameters.visible }
 
   /**
    * Component type
@@ -64,15 +62,15 @@ class RepresentationElement {
     return this.repr.type
   }
 
-  setRepresentation (repr) {
-    this.disposeRepresentation()
+  setRepresentation (repr: Representation) {
+    this._disposeRepresentation()
     this.repr = repr
     // this.name = repr.type;
     this.stage.tasks.listen(this.repr.tasks)
     this.updateVisibility()
   }
 
-  disposeRepresentation () {
+  _disposeRepresentation () {
     if (this.repr) {
       this.stage.tasks.unlisten(this.repr.tasks)
       this.repr.dispose()
@@ -83,7 +81,7 @@ class RepresentationElement {
     if (this.parent && this.parent.hasRepresentation(this)) {
       this.parent.removeRepresentation(this)
     } else {
-      this.disposeRepresentation()
+      this._disposeRepresentation()
       this.signals.disposed.dispatch()
     }
   }
@@ -93,19 +91,19 @@ class RepresentationElement {
    * @param {Boolean} value - visibility flag
    * @return {RepresentationElement} this object
    */
-  setVisibility (value) {
-    this.visible = value
+  setVisibility (value: boolean) {
+    this.parameters.visible = value
     this.updateVisibility()
-    this.signals.visibilityChanged.dispatch(this.visible)
+    this.signals.visibilityChanged.dispatch(this.parameters.visible)
 
     return this
   }
 
   getVisibility () {
     if (this.parent) {
-      return this.parent.parameters.visible && this.visible
+      return this.parent.parameters.visible && this.parameters.visible
     } else {
-      return this.visible
+      return this.parameters.visible
     }
   }
 
@@ -114,7 +112,7 @@ class RepresentationElement {
    * @return {RepresentationElement} this object
    */
   toggleVisibility () {
-    return this.setVisibility(!this.visible)
+    return this.setVisibility(!this.parameters.visible)
   }
 
   updateVisibility () {
@@ -129,13 +127,13 @@ class RepresentationElement {
    * @param {Boolean} what.radius - update radius attribute
    * @return {RepresentationElement} this object
    */
-  update (what) {
-    this.repr.update(what)
+  update (what: any) {  // TODO
+    (this.repr as any).update(what)  // TODO
 
     return this
   }
 
-  build (params) {
+  build (params: any) {  // TODO
     this.repr.build(params)
 
     return this
@@ -146,8 +144,12 @@ class RepresentationElement {
    * @param {String} string - selection string
    * @return {RepresentationElement} this object
    */
-  setSelection (string) {
-    this.repr.setSelection(string)
+  setSelection (string: string) {
+    const repr: any = this.repr  // TODO
+
+    if (repr.setSelection) {
+      repr.setSelection(string)
+    }
 
     return this
   }
@@ -157,11 +159,11 @@ class RepresentationElement {
    * @param {RepresentationParameters} params - parameter object
    * @return {RepresentationElement} this object
    */
-  setParameters (params) {
+  setParameters (params: any) {  // TODO
     this.repr.setParameters(params)
     this.signals.parametersChanged.dispatch(
-            this.repr.getParameters()
-        )
+      this.repr.getParameters()
+    )
 
     return this
   }
@@ -179,15 +181,8 @@ class RepresentationElement {
    * @param {String|Color|Hex} value - color value
    * @return {RepresentationElement} this object
    */
-  setColor (value) {
+  setColor (value: string|number|Color) {
     this.repr.setColor(value)
-
-    return this
-  }
-
-  setName (value) {
-    this.name = value
-    this.signals.nameChanged.dispatch(value)
 
     return this
   }

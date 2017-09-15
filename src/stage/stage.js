@@ -28,10 +28,6 @@ import MouseBehavior from './mouse-behavior.js'
 import AnimationBehavior from './animation-behavior.js'
 import KeyBehavior from './key-behavior.js'
 
-import Component from '../component/component.js'
-// eslint-disable-next-line no-unused-vars
-import RepresentationComponent from '../component/representation-component.js'
-import Collection from '../component/collection.js'
 import ComponentCollection from '../component/component-collection.js'
 import RepresentationCollection from '../component/representation-collection.js'
 import { autoLoad, getFileInfo } from '../loader/loader-utils'
@@ -125,6 +121,7 @@ class Stage {
     this.tasks = new Counter()
     this.compList = []
     this.defaultFileParams = {}
+    this.logList = []
 
     //
 
@@ -332,6 +329,11 @@ class Stage {
     return this
   }
 
+  log (msg) {
+    console.log('STAGE LOG', msg)
+    this.logList.push(msg)
+  }
+
   /**
    * Get stage parameters
    * @return {StageParameters} parameter object
@@ -522,36 +524,25 @@ class Stage {
    */
   loadFile (path, params) {
     const p = Object.assign({}, this.defaultFileParams, params)
+    const name = getFileInfo(path).name
 
-    // placeholder component
-    let component = new Component(this, p)
-    component.setName(getFileInfo(path).name)
-    this.addComponent(component)
+    this.tasks.increment()
+    this.log(`loading file '${name}'`)
 
-    // tasks
-    const tasks = this.tasks
-    tasks.increment()
+    const onLoadFn = (object) => {
+      this.log(`loaded '${name}'`)
 
-    const onLoadFn = function (object) {
-      // remove placeholder component
-      this.removeComponent(component)
-
-      component = this.addComponentFromObject(object, p)
-
-      if (component.type === 'script') {
-        component.run()
-      } else if (p.defaultRepresentation) {
+      const component = this.addComponentFromObject(object, p)
+      if (p.defaultRepresentation) {
         this.defaultFileRepresentation(component)
       }
-
-      tasks.decrement()
+      this.tasks.decrement()
 
       return component
-    }.bind(this)
+    }
 
-    const onErrorFn = function (e) {
-      component.setStatus(e)
-      tasks.decrement()
+    const onErrorFn = (e) => {
+      this.tasks.decrement()
       throw e
     }
 
@@ -560,13 +551,35 @@ class Stage {
 
     if (ParserRegistry.isTrajectory(ext)) {
       promise = Promise.reject(
-        new Error('loadFile: ext "' + ext + '" is a trajectory and must be loaded into a structure component')
+        new Error(`loadFile: ext '${ext}' is a trajectory and must be loaded into a structure component`)
       )
     } else {
       promise = autoLoad(path, p)
     }
 
     return promise.then(onLoadFn, onErrorFn)
+  }
+
+  loadScript (path) {
+    const name = getFileInfo(path).name
+
+    this.log(`loading script '${name}'`)
+
+    return autoLoad(path).then(
+      (script) => {
+        this.tasks.increment()
+        this.log(`running script '${name}'`)
+        script.run(this).then(() => {
+          this.tasks.decrement()
+          this.log(`finished script '${name}'`)
+        })
+        this.log(`called script '${name}'`)
+      },
+      (error) => {
+        this.tasks.decrement()
+        this.log(`errored script '${name}' "${error}"`)
+      }
+    )
   }
 
   /**
@@ -587,7 +600,7 @@ class Stage {
 
   /**
    * Create a component from the given object and add to the stage
-   * @param {Script|Shape|Structure|Surface|Volume} object - the object to add
+   * @param {Shape|Structure|Surface|Volume} object - the object to add
    * @param {ComponentParameters} params - parameter object
    * @return {Component} the created component
    */
@@ -1011,18 +1024,6 @@ class Stage {
     }, type)
 
     return new RepresentationCollection(reprList)
-  }
-
-  /**
-   * Get collection of components and representations by name
-   * @param  {String|RegExp}   name - the component or representation name
-   * @return {Collection} collection of selected components and representations
-   */
-  getAnythingByName (name) {
-    const compList = this.getComponentsByName(name).list
-    const reprList = this.getRepresentationsByName(name).list
-
-    return new Collection(compList.concat(reprList))
   }
 
   /**

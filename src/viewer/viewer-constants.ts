@@ -6,14 +6,14 @@
 
 import { Debug } from '../globals'
 
-if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
-  const wrcp = window.WebGLRenderingContext.prototype
+if (typeof WebGLRenderingContext !== 'undefined') {
+  const wrcp = WebGLRenderingContext.prototype
 
   // wrap WebGL debug function used by three.js and
   // ignore calls to them when the debug flag is not set
 
   const _getShaderParameter = wrcp.getShaderParameter
-  wrcp.getShaderParameter = function getShaderParameter () {
+  wrcp.getShaderParameter = function getShaderParameter (this: WebGLRenderingContext) {
     if (Debug) {
       return _getShaderParameter.apply(this, arguments)
     } else {
@@ -22,7 +22,7 @@ if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
   }
 
   const _getShaderInfoLog = wrcp.getShaderInfoLog
-  wrcp.getShaderInfoLog = function getShaderInfoLog () {
+  wrcp.getShaderInfoLog = function getShaderInfoLog (this: WebGLRenderingContext) {
     if (Debug) {
       return _getShaderInfoLog.apply(this, arguments)
     } else {
@@ -31,7 +31,7 @@ if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
   }
 
   const _getProgramParameter = wrcp.getProgramParameter
-  wrcp.getProgramParameter = function getProgramParameter (program, pname) {
+  wrcp.getProgramParameter = function getProgramParameter (this: WebGLRenderingContext, program, pname) {
     if (Debug || pname !== wrcp.LINK_STATUS) {
       return _getProgramParameter.apply(this, arguments)
     } else {
@@ -40,7 +40,7 @@ if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
   }
 
   const _getProgramInfoLog = wrcp.getProgramInfoLog
-  wrcp.getProgramInfoLog = function getProgramInfoLog () {
+  wrcp.getProgramInfoLog = function getProgramInfoLog (this: WebGLRenderingContext) {
     if (Debug) {
       return _getProgramInfoLog.apply(this, arguments)
     } else {
@@ -49,7 +49,7 @@ if (typeof window !== 'undefined' && window.WebGLRenderingContext) {
   }
 }
 
-const JitterVectors = [
+export const JitterVectors = [
   [
     [ 0, 0 ]
   ],
@@ -88,7 +88,3 @@ JitterVectors.forEach(offsetList => {
     offset[ 1 ] *= 0.0625
   })
 })
-
-export {
-  JitterVectors
-}

@@ -74,24 +74,6 @@ class FramesTrajectory extends Trajectory {
       this._setFrameCount(this.frames.length)
     }
   }
-
-  getPath (index, callback) {
-    const n = this.frameCount
-    const k = index * 3
-
-    const path = new Float32Array(n * 3)
-
-    for (let i = 0; i < n; ++i) {
-      const j = 3 * i
-      const f = this.frames[ i ]
-
-      path[ j + 0 ] = f[ k + 0 ]
-      path[ j + 1 ] = f[ k + 1 ]
-      path[ j + 2 ] = f[ k + 2 ]
-    }
-
-    callback(path)
-  }
 }
 
 export default FramesTrajectory

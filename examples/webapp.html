@@ -22,9 +22,6 @@
   <script src="js/ui/ui.ngl.js"></script>
   <script src="js/gui.js"></script>
 
-  <!-- EXTRA -->
-  <script src="js/plugins.js"></script>
-
   <script>
     NGL.cssDirectory = "css/"
     NGL.documentationUrl = "../build/docs/"
@@ -40,9 +37,6 @@
       NGL.DatasourceRegistry.trajectory = NGL.DatasourceRegistry.get("file")
     }
 
-    // Plugins
-    NGL.PluginRegistry.add("apbs", "plugins/apbs.plugin")
-
     var stage
     document.addEventListener("DOMContentLoaded", function () {
       stage = new NGL.Stage()
@@ -52,9 +46,7 @@
       if (load) stage.loadFile(load, {defaultRepresentation: true})
 
       var script = NGL.getQuery("script")
-      if (script) stage.loadFile("./scripts/" + script + ".js")
-      var plugin = NGL.getQuery("plugin")
-      if (plugin) NGL.PluginRegistry.load(plugin, stage)
+      if (script) stage.loadScript("./scripts/" + script + ".js")
 
       var struc = NGL.getQuery("struc")
       var traj = NGL.getQuery("traj")

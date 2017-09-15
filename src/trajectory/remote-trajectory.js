@@ -95,44 +95,6 @@ class RemoteTrajectory extends Trajectory {
     }, false)
     request.send(null)
   }
-
-  getPath (index, callback) {
-    if (this.pathCache[ index ]) {
-      callback(this.pathCache[ index ])
-      return
-    }
-
-    Log.time('loadPath')
-
-    const request = new window.XMLHttpRequest()
-
-    const ds = DatasourceRegistry.trajectory
-    const url = ds.getPathUrl(this.trajPath, index)
-    const params = ''
-
-    request.open('POST', url, true)
-    request.responseType = 'arraybuffer'
-    request.setRequestHeader(
-      'Content-type', 'application/x-www-form-urlencoded'
-    )
-
-    request.addEventListener('load', () => {
-      Log.timeEnd('loadPath')
-
-      const arrayBuffer = request.response
-      if (!arrayBuffer) {
-        Log.error("empty arrayBuffer for '" + url + "'")
-        return
-      }
-
-      const path = new Float32Array(arrayBuffer)
-      // Log.log( path )
-      this.pathCache[ index ] = path
-      callback(path)
-    }, false)
-
-    request.send(params)
-  }
 }
 
 export default RemoteTrajectory

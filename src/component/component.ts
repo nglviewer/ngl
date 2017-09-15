@@ -22,6 +22,7 @@ const _v = new Vector3()
 
 export const ComponentDefaultParameters = {
   name: '',
+  status: '',
   visible: true
 }
 export type ComponentParameters = typeof ComponentDefaultParameters
@@ -41,7 +42,10 @@ export interface ComponentSignals {
  * Base class for components
  */
 abstract class Component {
-  signals: ComponentSignals = {
+  /**
+   * Events emitted by the component
+   */
+  readonly signals: ComponentSignals = {
     representationAdded: new Signal(),
     representationRemoved: new Signal(),
     visibilityChanged: new Signal(),
@@ -51,13 +55,11 @@ abstract class Component {
     disposed: new Signal()
   }
 
-  parameters: ComponentParameters
+  readonly parameters: ComponentParameters
   get defaultParameters () { return ComponentDefaultParameters }
 
-  uuid: string
-  status: string
-  stage: Stage
-  viewer: Viewer
+  readonly uuid: string
+  readonly viewer: Viewer
 
   reprList: RepresentationElement[] = []
   annotationList: Annotation[] = []
@@ -74,11 +76,9 @@ abstract class Component {
    * @param {Stage} stage - stage object the component belongs to
    * @param {ComponentParameters} params - parameter object
    */
-  constructor (stage: Stage, params: Partial<ComponentParameters> = {}) {
+  constructor (readonly stage: Stage, params: Partial<ComponentParameters> = {}) {
     this.parameters = createParams(params, this.defaultParameters)
     this.uuid = generateUUID()
-
-    this.stage = stage
     this.viewer = stage.viewer
 
     this.controls = new ComponentControls(this)
@@ -86,6 +86,7 @@ abstract class Component {
 
   get type () { return 'component' }
   get name () { return this.parameters.name }
+  get status () { return this.parameters.status }
   get visible () { return this.parameters.visible }
 
   /**
@@ -250,7 +251,7 @@ abstract class Component {
    * @return {RepresentationElement} the created representation wrapped into
    *                                   a representation element object
    */
-  addRepresentation (type: string, object: any, params: any) {  // TODO
+  protected _addRepresentation (type: string, object: any, params: any) {  // TODO
     const p = params || {}
     const sp = this.stage.getParameters() as any  // TODO
     p.matrix = this.matrix.clone()
@@ -269,11 +270,10 @@ abstract class Component {
     return reprElem
   }
 
+  abstract addRepresentation (type: any, params: any): any
+
   addBufferRepresentation (buffer: any, params: any) {  // TODO
-    // always use component base class method
-    return Component.prototype.addRepresentation.call(
-      this, 'buffer', buffer, params
-    )
+    return this._addRepresentation.call(this, 'buffer', buffer, params)
   }
 
   hasRepresentation (repr: RepresentationElement) {
@@ -343,7 +343,7 @@ abstract class Component {
   }
 
   setStatus (value: string) {
-    this.status = value
+    this.parameters.status = value
     this.signals.statusChanged.dispatch(value)
 
     return this
