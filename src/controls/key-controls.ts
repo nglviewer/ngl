@@ -4,34 +4,40 @@
  * @private
  */
 
-import { KeyActionPresets } from './key-actions.js'
+import { KeyActionPresets, KeyActionCallback } from './key-actions'
+import Stage from '../stage/stage'
+
+type KeyControlPreset = keyof typeof KeyActionPresets
+interface KeyControlsParams {
+  preset?: KeyControlPreset
+  disabled?: boolean
+}
+
+interface KeyAction {
+  keyCode: number,
+  callback: KeyActionCallback
+}
 
 /**
  * Mouse controls
  */
 class KeyControls {
+  actionList: KeyAction[] = []
+
+  disabled: boolean  // Flag to disable all actions
+
   /**
    * @param {Stage} stage - the stage object
    * @param {Object} [params] - the parameters
    * @param {String} params.preset - one of "default"
    * @param {String} params.disabled - flag to disable all actions
    */
-  constructor (stage, params) {
-    const p = params || {}
-
-    this.stage = stage
-    this.actionList = []
-
-    /**
-     * Flag to disable all actions
-     * @type {Boolean}
-     */
-    this.disabled = p.disabled || false
-
-    this.preset(p.preset || 'default')
+  constructor (readonly stage: Stage, params: KeyControlsParams = {}) {
+    this.disabled = params.disabled || false
+    this.preset(params.preset || 'default')
   }
 
-  run (keyCode) {
+  run (keyCode: number) {
     if (this.disabled) return
 
     this.actionList.forEach(a => {
@@ -54,7 +60,7 @@ class KeyControls {
    * @param {Function} callback - the callback function for the action
    * @return {undefined}
    */
-  add (char, callback) {
+  add (char: string, callback: KeyActionCallback) {
     const keyCode = char.charCodeAt(0)
 
     this.actionList.push({ keyCode, callback })
@@ -76,7 +82,7 @@ class KeyControls {
    * @param {Function} [callback] - the callback function for the action
    * @return {undefined}
    */
-  remove (char, callback) {
+  remove (char: string, callback: KeyActionCallback) {
     const keyCode = char.charCodeAt(0)
 
     const actionList = this.actionList.filter(function (a) {
@@ -94,12 +100,12 @@ class KeyControls {
    * @param  {String} name - one of "default"
    * @return {undefined}
    */
-  preset (name) {
+  preset (name: KeyControlPreset) {
     this.clear()
 
     const list = KeyActionPresets[ name ] || []
 
-    list.forEach(action => this.add(...action))
+    list.forEach(action => this.add(action[0], action[1]))
   }
 
   /**

@@ -442,22 +442,22 @@ function _ensureClassFromArray (array: any, constructor: { new (): any }) {
   return array
 }
 
-export function ensureVector2 (v: number[]|Vector2) {
+export function ensureVector2 (v?: number[]|Vector2) {
   return _ensureClassFromArray(v, Vector2)
 }
 
-export function ensureVector3 (v: number[]|Vector3) {
+export function ensureVector3 (v?: number[]|Vector3) {
   return _ensureClassFromArray(v, Vector3)
 }
 
-export function ensureMatrix4 (m: number[]|Matrix4) {
+export function ensureMatrix4 (m?: number[]|Matrix4) {
   return _ensureClassFromArray(m, Matrix4)
 }
 
-export function ensureQuaternion (q: number[]|Quaternion) {
+export function ensureQuaternion (q?: number[]|Quaternion) {
   return _ensureClassFromArray(q, Quaternion)
 }
 
-export function ensureFloat32Array (a: number[]|Float32Array) {
+export function ensureFloat32Array (a?: number[]|Float32Array) {
   return _ensureClassFromArg(a, Float32Array)
 }

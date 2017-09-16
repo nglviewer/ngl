@@ -8,6 +8,9 @@ import { Vector3, Matrix4, Quaternion } from 'three'
 import { Signal } from 'signals'
 
 import { ensureVector3 } from '../utils'
+import Component from '../component/component'
+import Stage from '../stage/stage'
+import Viewer from '../viewer/viewer'
 
 const tmpRotateMatrix = new Matrix4()
 const tmpRotateVector = new Vector3()
@@ -17,20 +20,19 @@ const tmpRotateQuaternion = new Quaternion()
  * Component controls
  */
 class ComponentControls {
+  signals = {
+    changed: new Signal()
+  }
+
+  stage: Stage
+  viewer: Viewer
+
   /**
    * @param  {Component} component - the component object
    */
-  constructor (component) {
-    this.component = component
+  constructor (readonly component: Component) {
     this.stage = component.stage
     this.viewer = component.stage.viewer
-
-    /**
-     * @type {{changed: Signal}}
-     */
-    this.signals = {
-      changed: new Signal()
-    }
   }
 
   /**
@@ -66,7 +68,7 @@ class ComponentControls {
    * @param  {Number} angle - amount to spin
    * @return {undefined}
    */
-  spin (axis, angle) {
+  spin (axis: Vector3, angle: number) {
     tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
     tmpRotateVector
       .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)

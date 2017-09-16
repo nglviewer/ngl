@@ -4,6 +4,10 @@
  * @private
  */
 
+import Stage from '../stage/stage'
+
+export type KeyActionCallback = (stage: Stage) => void
+
 /**
  * Key actions provided as static methods
  */
@@ -13,7 +17,7 @@ class KeyActions {
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static autoView (stage) {
+  static autoView (stage: Stage) {
     stage.autoView(1000)
   }
 
@@ -22,7 +26,7 @@ class KeyActions {
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static toggleAnimations (stage) {
+  static toggleAnimations (stage: Stage) {
     stage.animationControls.toggle()
   }
 
@@ -31,7 +35,7 @@ class KeyActions {
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static toggleRock (stage) {
+  static toggleRock (stage: Stage) {
     stage.toggleRock()
   }
 
@@ -40,22 +44,19 @@ class KeyActions {
    * @param {Stage} stage - the stage
    * @return {undefined}
    */
-  static toggleSpin (stage) {
+  static toggleSpin (stage: Stage) {
     stage.toggleSpin()
   }
 }
 
-const KeyActionPresets = {
+type KeyActionPreset = [ string, KeyActionCallback ][]
+export const KeyActionPresets = {
   default: [
     [ 'i', KeyActions.toggleSpin ],
     [ 'k', KeyActions.toggleRock ],
     [ 'p', KeyActions.toggleAnimations ],
     [ 'r', KeyActions.autoView ]
-  ]
+  ] as KeyActionPreset
 }
 
 export default KeyActions
-
-export {
-  KeyActionPresets
-}

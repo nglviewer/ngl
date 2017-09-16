@@ -4,10 +4,14 @@
  * @private
  */
 
-import { Vector3, Matrix4, Quaternion } from 'three'
+import { Vector3, Matrix4, Quaternion, OrthographicCamera } from 'three'
 
 import { defaults } from '../utils'
 import { degToRad } from '../math/math-utils'
+import Stage from '../stage/stage'
+import MouseObserver from '../stage/mouse-observer'
+import Viewer from '../viewer/viewer'
+import ViewerControls from './viewer-controls'
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
@@ -18,18 +22,29 @@ const tmpPanMatrix = new Matrix4()
 const tmpPanVector = new Vector3()
 const tmpAtomVector = new Vector3()
 
+interface TrackballControlsParams {
+  rotateSpeed?: number
+  zoomSpeed?: number
+  panSpeed?: number
+}
+
 /**
  * Trackball controls
  */
 class TrackballControls {
-  constructor (stage, params) {
-    const p = params || {}
+  viewer: Viewer
+  mouse: MouseObserver
+  controls: ViewerControls
 
-    this.rotateSpeed = defaults(p.rotateSpeed, 2.0)
-    this.zoomSpeed = defaults(p.zoomSpeed, 1.2)
-    this.panSpeed = defaults(p.panSpeed, 1.0)
+  rotateSpeed: number
+  zoomSpeed: number
+  panSpeed: number
 
-    this.stage = stage
+  constructor (readonly stage: Stage, params: TrackballControlsParams = {}) {
+    this.rotateSpeed = defaults(params.rotateSpeed, 2.0)
+    this.zoomSpeed = defaults(params.zoomSpeed, 1.2)
+    this.panSpeed = defaults(params.panSpeed, 1.0)
+
     this.viewer = stage.viewer
     this.mouse = stage.mouseObserver
     this.controls = stage.viewerControls
@@ -43,14 +58,14 @@ class TrackballControls {
     return this.stage.transformAtom
   }
 
-  _setPanVector (x, y, z) {
+  private _setPanVector (x: number, y: number, z = 0) {
     let scaleFactor
     const camera = this.viewer.camera
 
-    z = -z || 0
+    z = -z
     z += camera.position.z
 
-    if (camera.type === 'OrthographicCamera') {
+    if (camera instanceof OrthographicCamera) {
       scaleFactor = 1 / camera.zoom
     } else {
       const fov = degToRad(camera.fov)
@@ -62,25 +77,25 @@ class TrackballControls {
     tmpPanVector.multiplyScalar(this.panSpeed * scaleFactor)
   }
 
-  _getRotateXY (x, y) {
+  private _getRotateXY (x: number, y: number) {
     return [
       this.rotateSpeed * -x * 0.01,
       this.rotateSpeed * y * 0.01
     ]
   }
 
-  _transformPanVector () {
+  private _transformPanVector () {
     tmpPanMatrix.extractRotation(this.component.transform)
     tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
     tmpPanMatrix.getInverse(tmpPanMatrix)
     tmpPanVector.applyMatrix4(tmpPanMatrix)
   }
 
-  zoom (delta) {
+  zoom (delta: number) {
     this.controls.zoom(this.zoomSpeed * delta * 0.02)
   }
 
-  pan (x, y) {
+  pan (x: number, y: number) {
     this._setPanVector(x, y)
 
     tmpPanMatrix.getInverse(this.viewer.rotationGroup.matrix)
@@ -88,7 +103,7 @@ class TrackballControls {
     this.controls.translate(tmpPanVector)
   }
 
-  panComponent (x, y) {
+  panComponent (x: number, y: number) {
     if (!this.component) return
 
     this._setPanVector(x, y)
@@ -98,7 +113,7 @@ class TrackballControls {
     this.component.updateMatrix()
   }
 
-  panAtom (x, y) {
+  panAtom (x: number, y: number) {
     if (!this.atom || !this.component) return
 
     this.atom.positionToVector3(tmpAtomVector)
@@ -112,7 +127,7 @@ class TrackballControls {
     this.component.updateRepresentations({ 'position': true })
   }
 
-  rotate (x, y) {
+  rotate (x: number, y: number) {
     const [ dx, dy ] = this._getRotateXY(x, y)
 
     tmpRotateXMatrix.makeRotationX(dy)
@@ -121,7 +136,7 @@ class TrackballControls {
     this.controls.applyMatrix(tmpRotateXMatrix)
   }
 
-  rotateComponent (x, y) {
+  rotateComponent (x: number, y: number) {
     if (!this.component) return
 
     const [ dx, dy ] = this._getRotateXY(x, y)

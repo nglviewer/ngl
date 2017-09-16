@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3 } from 'three'
+import { Vector2, Vector3 } from 'three'
 
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
@@ -33,7 +33,7 @@ export default class Annotation {
   element: HTMLElement
 
   private _viewerPosition: Vector3
-  private _canvasPosition: Vector3
+  private _canvasPosition: Vector2
   private _cameraPosition: Vector3
   private _clientRect: ClientRect
 
@@ -60,7 +60,7 @@ export default class Annotation {
 
     this._viewerPosition = new Vector3()
     this._updateViewerPosition()
-    this._canvasPosition = new Vector3()
+    this._canvasPosition = new Vector2()
     this._cameraPosition = new Vector3()
 
     this.element = document.createElement('div')

@@ -123,6 +123,16 @@ class Stage {
     this.defaultFileParams = {}
     this.logList = []
 
+    /**
+     * @type {Component}
+     */
+    this.transformComponent = undefined
+
+    /**
+     * @type {AtomProxy}
+     */
+    this.transformAtom = undefined
+
     //
 
     this.viewer = new Viewer(idOrElement)
@@ -130,7 +140,7 @@ class Stage {
 
     /**
      * Tooltip element
-     * @type {Element}
+     * @type {HTMLElement}
      */
     this.tooltip = document.createElement('div')
     Object.assign(this.tooltip.style, {
@@ -286,8 +296,6 @@ class Stage {
 
   /**
    * Set stage parameters
-   * @param {StageParameters} params - stage parameters
-   * @return {Stage} this object
    */
   setParameters (params) {
     const p = Object.assign({}, params)

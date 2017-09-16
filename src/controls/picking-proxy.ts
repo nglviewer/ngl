@@ -156,8 +156,8 @@ class PickingProxy {
     const controls = this.controls
     const cp = this.canvasPosition
 
-    const acp1 = controls.getPositionOnCanvas(bond.atom1)
-    const acp2 = controls.getPositionOnCanvas(bond.atom2)
+    const acp1 = controls.getPositionOnCanvas(bond.atom1 as any)  // TODO
+    const acp2 = controls.getPositionOnCanvas(bond.atom2 as any)  // TODO
 
     return closer(cp as any, acp1, acp2) ? bond.atom1 : bond.atom2
   }

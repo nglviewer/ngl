@@ -4,14 +4,17 @@
  * @private
  */
 
-import PickingProxy from './picking-proxy.js'
+import PickingProxy from './picking-proxy'
+import Stage from '../stage/stage'
+import Viewer from '../viewer/viewer'
 
 /**
  * Picking controls
  */
 class PickingControls {
-  constructor (stage/*, params */) {
-    this.stage = stage
+  viewer: Viewer
+
+  constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
   }
 
@@ -21,7 +24,7 @@ class PickingControls {
    * @param {Number} y - canvas y coordinate
    * @return {PickingProxy|undefined} picking proxy
    */
-  pick (x, y) {
+  pick (x: number, y: number) {
     const pickingData = this.viewer.pick(x, y)
 
     if (pickingData.picker &&

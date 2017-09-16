@@ -4,7 +4,15 @@
  * @private
  */
 
+import PickingProxy from './picking-proxy'
 import { almostIdentity } from '../math/math-utils'
+import Stage from '../stage/stage'
+import RepresentationElement from '../component/representation-element'
+
+type ScrollCallback = (stage: Stage, delta: number) => void
+type DragCallback = (stage: Stage, dx: number, dy: number) => void
+type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
+export type MouseActionCallback = ScrollCallback | DragCallback | PickCallback
 
 /**
  * Mouse actions provided as static methods
@@ -16,7 +24,7 @@ class MouseActions {
    * @param {Number} delta - amount to zoom
    * @return {undefined}
    */
-  static zoomScroll (stage, delta) {
+  static zoomScroll (stage: Stage, delta: number) {
     stage.trackballControls.zoom(delta)
   }
 
@@ -26,7 +34,7 @@ class MouseActions {
    * @param {Number} delta - amount to move clipping plane
    * @return {undefined}
    */
-  static clipNearScroll (stage, delta) {
+  static clipNearScroll (stage: Stage, delta: number) {
     const sp = stage.getParameters()
     stage.setParameters({ clipNear: sp.clipNear + delta / 10 })
   }
@@ -37,7 +45,7 @@ class MouseActions {
    * @param {Number} delta - amount to move focus planes
    * @return {undefined}
    */
-  static focusScroll (stage, delta) {
+  static focusScroll (stage: Stage, delta: number) {
     const sp = stage.getParameters()
     const focus = sp.clipNear * 2
     const sign = Math.sign(delta)
@@ -51,12 +59,12 @@ class MouseActions {
    * @param {Number} delta - amount to change isolevel
    * @return {undefined}
    */
-  static isolevelScroll (stage, delta) {
+  static isolevelScroll (stage: Stage, delta: number) {
     const d = Math.sign(delta) / 5
-    stage.eachRepresentation(function (reprComp) {
-      if (reprComp.repr.type !== 'surface') return
-      const l = reprComp.getParameters().isolevel
-      reprComp.setParameters({ isolevel: l + d })
+    stage.eachRepresentation(function (reprElem: RepresentationElement) {
+      if (reprElem.repr.type !== 'surface') return
+      const l = (reprElem.getParameters() as any).isolevel  // TODO
+      reprElem.setParameters({ isolevel: l + d })
     }, 'volume')
   }
 
@@ -67,7 +75,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panDrag (stage, dx, dy) {
+  static panDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.pan(dx, dy)
   }
 
@@ -78,7 +86,7 @@ class MouseActions {
    * @param {Number} dy - amount to rotate in y direction
    * @return {undefined}
    */
-  static rotateDrag (stage, dx, dy) {
+  static rotateDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotate(dx, dy)
   }
 
@@ -89,7 +97,7 @@ class MouseActions {
    * @param {Number} dy - amount to zoom
    * @return {undefined}
    */
-  static zoomDrag (stage, dx, dy) {
+  static zoomDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.zoom((dx + dy) / -2)
   }
 
@@ -101,7 +109,7 @@ class MouseActions {
    * @param {Number} dy - amount to zoom
    * @return {undefined}
    */
-  static zoomFocusDrag (stage, dx, dy) {
+  static zoomFocusDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.zoom((dx + dy) / -2)
     const z = stage.viewer.camera.position.z
     stage.setFocus(100 - Math.abs(z / 8))
@@ -114,7 +122,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panComponentDrag (stage, dx, dy) {
+  static panComponentDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.panComponent(dx, dy)
   }
 
@@ -125,7 +133,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panAtomDrag (stage, dx, dy) {
+  static panAtomDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.panAtom(dx, dy)
   }
 
@@ -136,7 +144,7 @@ class MouseActions {
    * @param {Number} dy - amount to rotate in y direction
    * @return {undefined}
    */
-  static rotateComponentDrag (stage, dx, dy) {
+  static rotateComponentDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotateComponent(dx, dy)
   }
 
@@ -146,7 +154,7 @@ class MouseActions {
    * @param {PickingProxy} pickingProxy - the picking data object
    * @return {undefined}
    */
-  static movePick (stage, pickingProxy) {
+  static movePick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy) {
       stage.animationControls.move(pickingProxy.position.clone())
     }
@@ -158,9 +166,9 @@ class MouseActions {
    * @param {PickingProxy} pickingProxy - the picking data object
    * @return {undefined}
    */
-  static tooltipPick (stage, pickingProxy) {
+  static tooltipPick (stage: Stage, pickingProxy: PickingProxy) {
     const tt = stage.tooltip
-    const sp = stage.getParameters()
+    const sp = stage.getParameters() as any
     if (sp.tooltip && pickingProxy) {
       const mp = pickingProxy.mouse.position
       tt.innerText = pickingProxy.getLabel()
@@ -173,7 +181,8 @@ class MouseActions {
   }
 }
 
-const MouseActionPresets = {
+type MouseActionPreset = [ string, MouseActionCallback ][]
+export const MouseActionPresets = {
   default: [
     [ 'scroll', MouseActions.zoomScroll ],
     [ 'scroll-ctrl', MouseActions.clipNearScroll ],
@@ -191,7 +200,7 @@ const MouseActionPresets = {
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'clickPick-shift-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
-  ],
+  ] as MouseActionPreset,
   pymol: [
     [ 'drag-left', MouseActions.rotateDrag ],
     [ 'drag-middle', MouseActions.panDrag ],
@@ -200,7 +209,7 @@ const MouseActionPresets = {
 
     [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
-  ],
+  ] as MouseActionPreset,
   coot: [
     [ 'scroll', MouseActions.isolevelScroll ],
 
@@ -212,11 +221,7 @@ const MouseActionPresets = {
 
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
-  ]
+  ] as MouseActionPreset
 }
 
 export default MouseActions
-
-export {
-  MouseActionPresets
-}
