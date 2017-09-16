@@ -4,35 +4,37 @@
  * @private
  */
 
+import Structure from '../structure/structure'
+import Selection from '../selection/selection'
+
+import ModelStore from '../store/model-store'
+import ChainStore from '../store/chain-store'
+import ResidueStore from '../store/residue-store'
+
+import ChainProxy from '../proxy/chain-proxy'
+import Polymer from '../proxy/polymer'
+import ResidueProxy from '../proxy/residue-proxy'
+import AtomProxy from '../proxy/atom-proxy'
+
 /**
  * Model proxy
  */
 class ModelProxy {
+  index: number
+
+  modelStore: ModelStore
+  chainStore: ChainStore
+  residueStore: ResidueStore
+
   /**
    * @param {Structure} structure - the structure
    * @param {Integer} index - the index
    */
-  constructor (structure, index) {
-    /**
-     * @type {Structure}
-     */
-    this.structure = structure
-    /**
-     * @type {ModelStore}
-     */
-    this.modelStore = structure.modelStore
-    /**
-     * @type {ChainStore}
-     */
-    this.chainStore = structure.chainStore
-    /**
-     * @type {ResidueStore}
-     */
-    this.residueStore = structure.residueStore
-    /**
-     * @type {Number}
-     */
+  constructor (readonly structure: Structure, index = 0) {
     this.index = index
+    this.modelStore = structure.modelStore
+    this.chainStore = structure.chainStore
+    this.residueStore = structure.residueStore
   }
 
   get chainOffset () {
@@ -104,7 +106,7 @@ class ModelProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachAtom (callback, selection) {
+  eachAtom (callback: (ap: AtomProxy) => void, selection?: Selection) {
     this.eachChain(function (cp) {
       cp.eachAtom(callback, selection)
     }, selection)
@@ -116,7 +118,7 @@ class ModelProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachResidue (callback, selection) {
+  eachResidue (callback: (rp: ResidueProxy) => void, selection?: Selection) {
     this.eachChain(function (cp) {
       cp.eachResidue(callback, selection)
     }, selection)
@@ -128,9 +130,9 @@ class ModelProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachPolymer (callback, selection) {
+  eachPolymer (callback: (p: Polymer) => void, selection?: Selection) {
     if (selection && selection.chainOnlyTest) {
-      var chainOnlyTest = selection.chainOnlyTest
+      const chainOnlyTest = selection.chainOnlyTest
 
       this.eachChain(function (cp) {
         if (chainOnlyTest(cp)) {
@@ -150,30 +152,29 @@ class ModelProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachChain (callback, selection) {
-    var i
-    var count = this.chainCount
-    var offset = this.chainOffset
-    var cp = this.structure._cp
-    var end = offset + count
+  eachChain (callback: (cp: ChainProxy) => void, selection?: Selection) {
+    const count = this.chainCount
+    const offset = this.chainOffset
+    const cp = this.structure._cp
+    const end = offset + count
 
     if (selection && selection.test) {
-      var chainOnlyTest = selection.chainOnlyTest
+      const chainOnlyTest = selection.chainOnlyTest
       if (chainOnlyTest) {
-        for (i = offset; i < end; ++i) {
+        for (let i = offset; i < end; ++i) {
           cp.index = i
           if (chainOnlyTest(cp)) {
-            callback(cp, selection)
+            callback(cp)
           }
         }
       } else {
-        for (i = offset; i < end; ++i) {
+        for (let i = offset; i < end; ++i) {
           cp.index = i
-          callback(cp, selection)
+          callback(cp)
         }
       }
     } else {
-      for (i = offset; i < end; ++i) {
+      for (let i = offset; i < end; ++i) {
         cp.index = i
         callback(cp)
       }
@@ -183,7 +184,7 @@ class ModelProxy {
   //
 
   qualifiedName () {
-    var name = '/' + this.index
+    const name = '/' + this.index
     return name
   }
 
@@ -192,7 +193,7 @@ class ModelProxy {
    * @return {ModelProxy} cloned model
    */
   clone () {
-    return new this.constructor(this.structure, this.index)
+    return new ModelProxy(this.structure, this.index)
   }
 
   toObject () {

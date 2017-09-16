@@ -7,9 +7,10 @@
 import { Matrix4, Box3 } from 'three'
 
 import { uniqueArray } from '../utils'
-import Selection from '../selection/selection.js'
+import Selection from '../selection/selection'
+import Structure from '../structure/structure'
 
-function selectionFromChains (chainList) {
+function selectionFromChains (chainList: string[]) {
   let sele = ''
   if (chainList.length > 0) {
     sele = ':' + uniqueArray(chainList).join(' OR :')
@@ -21,13 +22,12 @@ function selectionFromChains (chainList) {
  * Assembly of transformed parts of a {@link Structure}
  */
 class Assembly {
+  partList: AssemblyPart[] = []
+
   /**
    * @param {String} name - assembly name
    */
-  constructor (name) {
-    this.name = name || ''
-    this.partList = []
-  }
+  constructor (readonly name = '') {}
 
   get type () { return 'Assembly' }
 
@@ -44,20 +44,10 @@ class Assembly {
    * @param {String[]} chainList - array of chain names
    * @return {AssemblyPart} the added assembly part
    */
-  addPart (matrixList, chainList) {
+  addPart (matrixList?: Matrix4[], chainList?: string[]) {
     const part = new AssemblyPart(matrixList, chainList)
     this.partList.push(part)
     return part
-  }
-
-  _getCount (structure, methodName) {
-    let count = 0
-
-    this.partList.forEach(function (part) {
-      count += part[ methodName ](structure)
-    })
-
-    return count
   }
 
   /**
@@ -65,8 +55,10 @@ class Assembly {
    * @param  {Structure} structure - the given structure
    * @return {Integer} number of atoms in the assembly
    */
-  getAtomCount (structure) {
-    return this._getCount(structure, 'getAtomCount')
+  getAtomCount (structure: Structure) {
+    return this.partList.reduce(
+      (count, part) => count + part.getAtomCount(structure), 0
+    )
   }
 
   /**
@@ -74,8 +66,10 @@ class Assembly {
    * @param  {Structure} structure - the given structure
    * @return {Integer} number of residues in the assembly
    */
-  getResidueCount (structure) {
-    return this._getCount(structure, 'getResidueCount')
+  getResidueCount (structure: Structure) {
+    return this.partList.reduce(
+      (count, part) => count + part.getResidueCount(structure), 0
+    )
   }
 
   /**
@@ -98,7 +92,7 @@ class Assembly {
    * @param  {Structure}  structure - the given structure
    * @return {Boolean} whether the assembly is identical to the structure
    */
-  isIdentity (structure) {
+  isIdentity (structure: Structure) {
     if (this.partList.length !== 1) return false
 
     const part = this.partList[ 0 ]
@@ -107,7 +101,7 @@ class Assembly {
     const identityMatrix = new Matrix4()
     if (!identityMatrix.equals(part.matrixList[ 0 ])) return false
 
-    let structureChainList = []
+    let structureChainList: string[] = []
     structure.eachChain(function (cp) {
       structureChainList.push(cp.chainname)
     })
@@ -117,7 +111,7 @@ class Assembly {
     return true
   }
 
-  getBoundingBox (structure) {
+  getBoundingBox (structure: Structure) {
     const boundingBox = new Box3()
 
     this.partList.forEach(function (part) {
@@ -129,12 +123,12 @@ class Assembly {
     return boundingBox
   }
 
-  getCenter (structure) {
+  getCenter (structure: Structure) {
     return this.getBoundingBox(structure).getCenter()
   }
 
   getSelection () {
-    let chainList = []
+    let chainList: string[] = []
     this.partList.forEach(function (part) {
       chainList = chainList.concat(part.chainList)
     })
@@ -143,19 +137,15 @@ class Assembly {
 }
 
 class AssemblyPart {
-  constructor (matrixList, chainList) {
-    this.matrixList = matrixList || []
-    this.chainList = chainList || []
-  }
+  constructor (readonly matrixList: Matrix4[] = [], readonly chainList: string[] = []) {}
 
   get type () { return 'AssemblyPart' }
 
-  _getCount (structure, propertyName) {
+  _getCount (structure: Structure, propertyName: 'atomCount'|'residueCount') {
     let count = 0
-    const chainList = this.chainList
 
-    structure.eachChain(function (cp) {
-      if (chainList.length === 0 || chainList.includes(cp.chainname)) {
+    structure.eachChain(cp => {
+      if (this.chainList.length === 0 || this.chainList.includes(cp.chainname)) {
         count += cp[ propertyName ]
       }
     })
@@ -163,15 +153,15 @@ class AssemblyPart {
     return this.matrixList.length * count
   }
 
-  getAtomCount (structure) {
+  getAtomCount (structure: Structure) {
     return this._getCount(structure, 'atomCount')
   }
 
-  getResidueCount (structure) {
+  getResidueCount (structure: Structure) {
     return this._getCount(structure, 'residueCount')
   }
 
-  getBoundingBox (structure) {
+  getBoundingBox (structure: Structure) {
     const partBox = new Box3()
     const instanceBox = new Box3()
 
@@ -191,7 +181,7 @@ class AssemblyPart {
     return selectionFromChains(this.chainList)
   }
 
-  getView (structure) {
+  getView (structure: Structure) {
     const selection = this.getSelection()
     if (selection) {
       return structure.getView(selection)

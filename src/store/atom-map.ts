@@ -4,22 +4,23 @@
  * @private
  */
 
-import AtomType from './atom-type.js'
-import { guessElement } from '../structure/structure-utils.js'
+import AtomType from './atom-type'
+import { guessElement } from '../structure/structure-utils'
+import Structure from '../structure/structure'
 
-function getHash (atomname, element) {
+function getHash (atomname: string, element: string) {
   return atomname + '|' + element
 }
 
 class AtomMap {
-  constructor (structure) {
-    this.structure = structure
+  dict: { [k: string]: number } = {}
+  list: AtomType[] = []
 
-    this.dict = {}
-    this.list = []
+  constructor (readonly structure: Structure) {
+    this.structure = structure
   }
 
-  add (atomname, element) {
+  add (atomname: string, element?: string) {
     atomname = atomname.toUpperCase()
     if (!element) {
       element = guessElement(atomname)
@@ -37,7 +38,7 @@ class AtomMap {
     return id
   }
 
-  get (id) {
+  get (id: number) {
     return this.list[ id ]
   }
 }

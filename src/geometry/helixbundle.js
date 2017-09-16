@@ -12,18 +12,15 @@ import RadiusFactory from '../utils/radius-factory.js'
 import Helixorient from './helixorient.js'
 import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils.js'
 
-function Helixbundle (polymer) {
-  this.polymer = polymer
+class Helixbundle {
+  constructor (polymer) {
+    this.polymer = polymer
 
-  this.helixorient = new Helixorient(polymer)
-  this.position = this.helixorient.getPosition()
-}
+    this.helixorient = new Helixorient(polymer)
+    this.position = this.helixorient.getPosition()
+  }
 
-Helixbundle.prototype = {
-
-  constructor: Helixbundle,
-
-  getAxis: function (localAngle, centerDist, ssBorder, colorParams, radius, scale) {
+  getAxis (localAngle, centerDist, ssBorder, colorParams, radius, scale) {
     localAngle = localAngle || 30
     centerDist = centerDist || 2.5
     ssBorder = ssBorder === undefined ? false : ssBorder
@@ -148,7 +145,6 @@ Helixbundle.prototype = {
       'residueCount': residueCount
     }
   }
-
 }
 
 export default Helixbundle

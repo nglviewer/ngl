@@ -5,9 +5,14 @@
  */
 
 import { Debug, Log } from '../globals'
+import BondStore from './bond-store'
 
 class BondHash {
-  constructor (bondStore, atomCount) {
+  countArray: Uint8Array
+  offsetArray: Int32Array
+  indexArray: Int32Array
+
+  constructor (bondStore: BondStore, atomCount: number) {
     if (Debug) Log.time('BondHash init')
 
     const bondCount = bondStore.count

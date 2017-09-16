@@ -69,8 +69,8 @@ function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) 
     rp.index = atomO.residueIndex
     const atomC = rp.getAtomIndexByName(cName)
 
-    v1.subVectors(atomC, atomO as any)
-    v2.subVectors(atomC, atomN as any)
+    v1.subVectors(atomC as any, atomO as any)
+    v2.subVectors(atomC as any, atomN as any)
 
     return radToDeg(v1.angleTo(v2)) < maxAngle
   }
@@ -97,8 +97,9 @@ function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) 
       }
 
       rp.index = atomN.residueIndex
-      atomCA.index = rp.getAtomIndexByName('CA')
-      if (atomCA.index === undefined) continue
+      const caIdx = rp.getAtomIndexByName('CA')
+      if (caIdx === undefined) continue
+      atomCA.index = caIdx
 
       var prevRes = rp.getPreviousConnectedResidue(rpPrev)
       if (prevRes === undefined) continue
@@ -172,8 +173,9 @@ function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngl
 
     rp.index = atomN.residueIndex
 
-    atomCA.index = rp.getAtomIndexByName('CA')
-    if (atomCA.index === undefined) continue
+    const caIdx = rp.getAtomIndexByName('CA')
+    if (caIdx === undefined) continue
+    atomCA.index = caIdx
 
     var prevRes = rp.getPreviousConnectedResidue(rpPrev)
     if (prevRes === undefined) continue

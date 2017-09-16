@@ -37,7 +37,7 @@ class DensityfitColormaker extends Colormaker {
   }
 
   atomColor (atom: AtomProxy) {
-    let sele = atom.resno
+    let sele = atom.resno + ''
     if (atom.inscode) sele += '^' + atom.inscode
     if (atom.chainname) sele += ':' + atom.chainname
     sele += '/' + atom.modelIndex

@@ -5,7 +5,8 @@
  * @private
  */
 
-import { calculateResidueBonds } from '../structure/structure-utils.js'
+import { defaults } from '../utils'
+import { calculateResidueBonds, ResidueBonds } from '../structure/structure-utils'
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
     ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
@@ -13,12 +14,49 @@ import {
     ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
     AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
     ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
-} from '../structure/structure-constants.js'
+} from '../structure/structure-constants'
+import Structure from '../structure/structure'
+import ResidueProxy from '../proxy/residue-proxy'
+
+export interface BondGraph {
+  [k: number]: number[]
+}
+
+export interface RingData {
+  flags: Int8Array
+  rings: number[][]
+}
 
 /**
  * Residue type
  */
 class ResidueType {
+  resname: string
+  atomTypeIdList: number[]
+  hetero: number
+  chemCompType: string
+  bonds?: ResidueBonds
+  rings?: RingData
+  bondGraph?: BondGraph
+
+  atomCount: number
+
+  moleculeType: number
+  backboneType: number
+  backboneEndType: number
+  backboneStartType: number
+  backboneIndexList: number[]
+
+  traceAtomIndex: number
+  direction1AtomIndex: number
+  direction2AtomIndex: number
+  backboneStartAtomIndex: number
+  backboneEndAtomIndex: number
+  rungEndAtomIndex: number
+
+  // Sparse array containing the reference atom index for each bond.
+  bondReferenceAtomIndices: number[] = []
+
   /**
    * @param {Structure} structure - the structure object
    * @param {String} resname - name of the residue
@@ -28,9 +66,7 @@ class ResidueType {
    * @param {String} chemCompType - chemical component type
    * @param {Object} [bonds] - TODO
    */
-  constructor (structure, resname, atomTypeIdList, hetero, chemCompType, bonds) {
-    this.structure = structure
-
+  constructor (readonly structure: Structure, resname: string, atomTypeIdList: number[], hetero: boolean, chemCompType: string, bonds?: ResidueBonds) {
     this.resname = resname
     this.atomTypeIdList = atomTypeIdList
     this.hetero = hetero ? 1 : 0
@@ -50,19 +86,19 @@ class ResidueType {
     const atomnamesEnd = ResidueTypeAtoms[ this.backboneEndType ]
 
     const traceIndex = this.getAtomIndexByName(atomnames.trace)
-    this.traceAtomIndex = traceIndex !== undefined ? traceIndex : -1
+    this.traceAtomIndex = defaults(traceIndex, -1)
 
     const dir1Index = this.getAtomIndexByName(atomnames.direction1)
-    this.direction1AtomIndex = dir1Index !== undefined ? dir1Index : -1
+    this.direction1AtomIndex = defaults(dir1Index, -1)
 
     const dir2Index = this.getAtomIndexByName(atomnames.direction2)
-    this.direction2AtomIndex = dir2Index !== undefined ? dir2Index : -1
+    this.direction2AtomIndex = defaults(dir2Index, -1)
 
     const bbStartIndex = this.getAtomIndexByName(atomnamesStart.backboneStart)
-    this.backboneStartAtomIndex = bbStartIndex !== undefined ? bbStartIndex : -1
+    this.backboneStartAtomIndex = defaults(bbStartIndex, -1)
 
     const bbEndIndex = this.getAtomIndexByName(atomnamesEnd.backboneEnd)
-    this.backboneEndAtomIndex = bbEndIndex !== undefined ? bbEndIndex : -1
+    this.backboneEndAtomIndex = defaults(bbEndIndex, -1)
 
     let rungEndIndex
     if (PurinBases.includes(resname)) {
@@ -70,14 +106,11 @@ class ResidueType {
     } else {
       rungEndIndex = this.getAtomIndexByName('N3')
     }
-    this.rungEndAtomIndex = rungEndIndex !== undefined ? rungEndIndex : -1
-
-    // Sparse array containing the reference atom index for each bond.
-    this.bondReferenceAtomIndices = []
+    this.rungEndAtomIndex = defaults(rungEndIndex, -1)
   }
 
   getBackboneIndexList () {
-    const backboneIndexList = []
+    const backboneIndexList: number[] = []
     let atomnameList
     switch (this.moleculeType) {
       case ProteinType:
@@ -119,7 +152,7 @@ class ResidueType {
     }
   }
 
-  getBackboneType (position) {
+  getBackboneType (position: number) {
     if (this.hasProteinBackbone(position)) {
       return ProteinBackboneType
     } else if (this.hasRnaBackbone(position)) {
@@ -207,7 +240,7 @@ class ResidueType {
     }
   }
 
-  hasBackboneAtoms (position, type) {
+  hasBackboneAtoms (position: number, type: number) {
     const atomnames = ResidueTypeAtoms[ type ]
     if (position === -1) {
       return this.hasAtomWithName(
@@ -240,28 +273,28 @@ class ResidueType {
     }
   }
 
-  hasProteinBackbone (position) {
+  hasProteinBackbone (position: number) {
     return (
       this.isProtein() &&
       this.hasBackboneAtoms(position, ProteinBackboneType)
     )
   }
 
-  hasRnaBackbone (position) {
+  hasRnaBackbone (position: number) {
     return (
       this.isRna() &&
       this.hasBackboneAtoms(position, RnaBackboneType)
     )
   }
 
-  hasDnaBackbone (position) {
+  hasDnaBackbone (position: number) {
     return (
       this.isDna() &&
       this.hasBackboneAtoms(position, DnaBackboneType)
     )
   }
 
-  hasCgProteinBackbone (position) {
+  hasCgProteinBackbone (position: number) {
     return (
       this.atomCount < 7 &&
       this.isProtein() &&
@@ -269,7 +302,7 @@ class ResidueType {
     )
   }
 
-  hasCgRnaBackbone (position) {
+  hasCgRnaBackbone (position: number) {
     return (
       this.atomCount < 11 &&
       this.isRna() &&
@@ -277,7 +310,7 @@ class ResidueType {
     )
   }
 
-  hasCgDnaBackbone (position) {
+  hasCgDnaBackbone (position: number) {
     return (
       this.atomCount < 11 &&
       this.isDna() &&
@@ -285,7 +318,7 @@ class ResidueType {
     )
   }
 
-  hasBackbone (position) {
+  hasBackbone (position: number) {
     return (
       this.hasProteinBackbone(position) ||
       this.hasRnaBackbone(position) ||
@@ -296,7 +329,7 @@ class ResidueType {
     )
   }
 
-  getAtomIndexByName (atomname) {
+  getAtomIndexByName (atomname: string|string[]) {
     const n = this.atomCount
     const atomMap = this.structure.atomMap
     const atomTypeIdList = this.atomTypeIdList
@@ -318,20 +351,20 @@ class ResidueType {
     return undefined
   }
 
-  hasAtomWithName (/* atomname */) {
-    const n = arguments.length
+  hasAtomWithName (...atomnames: (string|string[])[]) {
+    const n = atomnames.length
     for (let i = 0; i < n; ++i) {
-      if (arguments[ i ] === undefined) continue
-      if (this.getAtomIndexByName(arguments[ i ]) === undefined) {
+      if (atomnames[ i ] === undefined) continue
+      if (this.getAtomIndexByName(atomnames[ i ]) === undefined) {
         return false
       }
     }
     return true
   }
 
-  getBonds (r) {
+  getBonds (r?: ResidueProxy) {
     if (this.bonds === undefined) {
-      this.bonds = calculateResidueBonds(r)
+      this.bonds = calculateResidueBonds(r!)  // TODO
     }
     return this.bonds
   }
@@ -345,7 +378,7 @@ class ResidueType {
 
   getBondGraph () {
     if (this.bondGraph === undefined) {
-      this.calculateBondGraph()
+      return this.calculateBondGraph()
     }
     return this.bondGraph
   }
@@ -355,7 +388,7 @@ class ResidueType {
    *   residue: { ai1: [ ai2, ai3, ...], ...}
    */
   calculateBondGraph () {
-    const bondGraph = this.bondGraph = {}
+    const bondGraph: BondGraph = {}
     const bonds = this.getBonds()
     const nb = bonds.atomIndices1.length
     const atomIndices1 = bonds.atomIndices1
@@ -371,6 +404,7 @@ class ResidueType {
       const a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || []
       a2.push(ai1)
     }
+    this.bondGraph = bondGraph
   }
 
   /**
@@ -390,23 +424,23 @@ class ResidueType {
    * @return {undefined}
    */
   calculateRings () {
-    const bondGraph = this.getBondGraph()
+    const bondGraph = this.getBondGraph()!  // TODO
 
     const state = new Int8Array(this.atomCount)
     const flags = new Int8Array(this.atomCount)
-    const rings = []
-    const visited = []
+    const rings: number[][] = []
+    const visited: number[] = []
 
-    function DFS (i, connected, from) {
+    function DFS (i: number, connected: number[], from?: number) {
       // Sanity check
       if (state[ i ]) { throw new Error('DFS revisited atom') }
       state[ i ] = 1
       visited.push(i)
-      var nc = connected.length
+      const nc = connected.length
 
       // For each neighbour
-      for (var ci = 0; ci < nc; ++ci) {
-        var j = connected[ci]
+      for (let ci = 0; ci < nc; ++ci) {
+        const j = connected[ci]
 
         // If unvisited:
         if (state[ j ] === 0) {
@@ -422,11 +456,11 @@ class ResidueType {
         // Else unclosed ring:
         } else if (state[ j ] === 1) {
           if (from && from !== j) {
-            var ring = [ j ]
+            const ring = [ j ]
             flags[ j ] = 1
             rings.push(ring)
-            for (var ki = visited.length - 1; ki >= 0; --ki) {
-              var k = visited[ ki ]
+            for (let ki = visited.length - 1; ki >= 0; --ki) {
+              const k = visited[ ki ]
               if (k === j) {
                 break
               }
@@ -463,17 +497,18 @@ class ResidueType {
    * @return {undefined}
    */
   assignBondReferenceAtomIndices () {
-    const bondGraph = this.getBondGraph()
-    const rings = this.getRings()
+    const bondGraph = this.getBondGraph()!  // TODO
+    const rings = this.getRings()!  // TODO
     const ringFlags = rings.flags
     const ringData = rings.rings
 
-    const atomIndices1 = this.bonds.atomIndices1
-    const atomIndices2 = this.bonds.atomIndices2
-    const bondOrders = this.bonds.bondOrders
+    const bonds = this.bonds!  // TODO
+    const atomIndices1 = bonds.atomIndices1
+    const atomIndices2 = bonds.atomIndices2
+    const bondOrders = bonds.bondOrders
     const bondReferenceAtomIndices = this.bondReferenceAtomIndices
 
-    const nb = this.bonds.atomIndices1.length
+    const nb = bonds.atomIndices1.length
 
     bondReferenceAtomIndices.length = 0  // reset array
 
@@ -541,8 +576,8 @@ class ResidueType {
     }
   }
 
-  getBondIndex (atomIndex1, atomIndex2) {
-    const bonds = this.bonds
+  getBondIndex (atomIndex1: number, atomIndex2: number) {
+    const bonds = this.bonds!  // TODO
     const atomIndices1 = bonds.atomIndices1
     const atomIndices2 = bonds.atomIndices2
     let idx1 = atomIndices1.indexOf(atomIndex1)
@@ -559,7 +594,7 @@ class ResidueType {
     // returns undefined when no bond is found
   }
 
-  getBondReferenceAtomIndex (atomIndex1, atomIndex2) {
+  getBondReferenceAtomIndex (atomIndex1: number, atomIndex2: number) {
     const bondIndex = this.getBondIndex(atomIndex1, atomIndex2)
     if (bondIndex === undefined) return undefined
     if (this.bondReferenceAtomIndices.length === 0) {

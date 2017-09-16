@@ -99,7 +99,7 @@ function superpose (s1: Structure, s2: Structure, align = false, sele1 = '', sel
             r.traceAtomIndex !== r.getAtomIndexByName('CA')) return
 
       if (aliIdx1[ i ]) {
-        ap1.index = r.getAtomIndexByName('CA')
+        ap1.index = r.getAtomIndexByName('CA')!  // TODO
         _atoms1.push(ap1.x, ap1.y, ap1.z)
       }
       i += 1
@@ -111,7 +111,7 @@ function superpose (s1: Structure, s2: Structure, align = false, sele1 = '', sel
             r.traceAtomIndex !== r.getAtomIndexByName('CA')) return
 
       if (aliIdx2[ i ]) {
-        ap2.index = r.getAtomIndexByName('CA')
+        ap2.index = r.getAtomIndexByName('CA')!  // TODO
         _atoms2.push(ap2.x, ap2.y, ap2.z)
       }
       i += 1

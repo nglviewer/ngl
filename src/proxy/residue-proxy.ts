@@ -12,43 +12,42 @@ import {
     AA1
 } from '../structure/structure-constants.js'
 
+import Structure from '../structure/structure'
+import Selection from '../selection/selection'
+
+import ChainStore from '../store/chain-store'
+import ResidueStore from '../store/residue-store'
+import AtomStore from '../store/atom-store'
+
+import AtomMap from '../store/atom-map'
+import ResidueMap from '../store/residue-map'
+
+import AtomProxy from '../proxy/atom-proxy'
+
 /**
  * Residue proxy
  */
 class ResidueProxy {
+  index: number
+
+  chainStore: ChainStore
+  residueStore: ResidueStore
+  atomStore: AtomStore
+
+  residueMap: ResidueMap
+  atomMap: AtomMap
+
   /**
    * @param {Structure} structure - the structure
    * @param {Integer} index - the index
    */
-  constructor (structure, index) {
-    /**
-     * @type {Structure}
-     */
-    this.structure = structure
-    /**
-     * @type {ChainStore}
-     */
-    this.chainStore = structure.chainStore
-    /**
-     * @type {ResidueStore}
-     */
-    this.residueStore = structure.residueStore
-    /**
-     * @type {AtomStore}
-     */
-    this.atomStore = structure.atomStore
-    /**
-     * @type {ResidueMap}
-     */
-    this.residueMap = structure.residueMap
-    /**
-     * @type {AtomMap}
-     */
-    this.atomMap = structure.atomMap
-    /**
-     * @type {Integer}
-     */
+  constructor (readonly structure: Structure, index = 0) {
     this.index = index
+    this.chainStore = structure.chainStore
+    this.residueStore = structure.residueStore
+    this.atomStore = structure.atomStore
+    this.residueMap = structure.residueMap
+    this.atomMap = structure.atomMap
   }
 
   /**
@@ -150,7 +149,7 @@ class ResidueProxy {
     return this.residueStore.getInscode(this.index)
   }
   set inscode (value) {
-    this.residueStore.getInscode(this.index, value)
+    this.residueStore.setInscode(this.index, value)
   }
 
   //
@@ -212,21 +211,20 @@ class ResidueProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachAtom (callback, selection) {
-    var i
-    var count = this.atomCount
-    var offset = this.atomOffset
-    var ap = this.structure._ap
-    var end = offset + count
+  eachAtom (callback: (ap: AtomProxy) => void, selection?: Selection) {
+    const count = this.atomCount
+    const offset = this.atomOffset
+    const ap = this.structure._ap
+    const end = offset + count
 
     if (selection && selection.atomOnlyTest) {
-      var atomOnlyTest = selection.atomOnlyTest
-      for (i = offset; i < end; ++i) {
+      const atomOnlyTest = selection.atomOnlyTest
+      for (let i = offset; i < end; ++i) {
         ap.index = i
         if (atomOnlyTest(ap)) callback(ap)
       }
     } else {
-      for (i = offset; i < end; ++i) {
+      for (let i = offset; i < end; ++i) {
         ap.index = i
         callback(ap)
       }
@@ -248,11 +246,8 @@ class ResidueProxy {
    * @return {Boolean} flag
    */
   isNucleic () {
-    var moleculeType = this.residueType.moleculeType
-    return (
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-    )
+    const moleculeType = this.residueType.moleculeType
+    return moleculeType === RnaType || moleculeType === DnaType
   }
 
   /**
@@ -276,7 +271,7 @@ class ResidueProxy {
    * @return {Boolean} flag
    */
   isCg () {
-    var backboneType = this.residueType.backboneType
+    const backboneType = this.residueType.backboneType
     return (
       backboneType === CgProteinBackboneType ||
       backboneType === CgRnaBackboneType ||
@@ -292,7 +287,7 @@ class ResidueProxy {
     if (this.structure.entityList.length > 0) {
       return this.entity.isPolymer()
     } else {
-      var moleculeType = this.residueType.moleculeType
+      const moleculeType = this.residueType.moleculeType
       return (
         moleculeType === ProteinType ||
         moleculeType === RnaType ||
@@ -357,7 +352,7 @@ class ResidueProxy {
     return SecStrucTurn.includes(this.sstruc) && this.isProtein()
   }
 
-  getAtomType (index) {
+  getAtomType (index: number) {
     return this.atomMap.get(this.atomStore.atomTypeId[ index ])
   }
 
@@ -366,7 +361,7 @@ class ResidueProxy {
     return AA1[ this.resname.toUpperCase() ] || 'X'
   }
 
-  getBackboneType (position) {
+  getBackboneType (position: number) {
     switch (position) {
       case -1:
         return this.residueType.backboneStartType
@@ -377,29 +372,25 @@ class ResidueProxy {
     }
   }
 
-  getAtomIndexByName (atomname) {
-    var index = this.residueType.getAtomIndexByName(atomname)
+  getAtomIndexByName (atomname: string) {
+    let index = this.residueType.getAtomIndexByName(atomname)
     if (index !== undefined) {
       index += this.atomOffset
     }
     return index
   }
 
-  getAtomByName (atomname) {
-    return this.residueType.getAtomByName(atomname)
-  }
-
-  hasAtomWithName (atomname) {
+  hasAtomWithName (atomname: string) {
     return this.residueType.hasAtomWithName(atomname)
   }
 
   getAtomnameList () {
     console.warn('getAtomnameList - might be expensive')
 
-    var n = this.atomCount
-    var offset = this.atomOffset
-    var list = new Array(n)
-    for (var i = 0; i < n; ++i) {
+    const n = this.atomCount
+    const offset = this.atomOffset
+    const list = new Array(n)
+    for (let i = 0; i < n; ++i) {
       list[ i ] = this.getAtomType(offset + i).atomname
     }
     return list
@@ -410,9 +401,9 @@ class ResidueProxy {
    * @param  {ResidueProxy} rNext - the other residue
    * @return {Boolean} - flag
    */
-  connectedTo (rNext) {
-    var bbAtomEnd = this.structure.getAtomProxy(this.backboneEndAtomIndex)
-    var bbAtomStart = this.structure.getAtomProxy(rNext.backboneStartAtomIndex)
+  connectedTo (rNext: ResidueProxy) {
+    const bbAtomEnd = this.structure.getAtomProxy(this.backboneEndAtomIndex)
+    const bbAtomStart = this.structure.getAtomProxy(rNext.backboneStartAtomIndex)
     if (bbAtomEnd && bbAtomStart) {
       return bbAtomEnd.connectedTo(bbAtomStart)
     } else {
@@ -421,16 +412,16 @@ class ResidueProxy {
   }
 
   getNextConnectedResidue () {
-    var rOffset = this.chainStore.residueOffset[ this.chainIndex ]
-    var rCount = this.chainStore.residueCount[ this.chainIndex ]
-    var nextIndex = this.index + 1
+    const rOffset = this.chainStore.residueOffset[ this.chainIndex ]
+    const rCount = this.chainStore.residueCount[ this.chainIndex ]
+    const nextIndex = this.index + 1
     if (nextIndex < rOffset + rCount) {
-      var rpNext = this.structure.getResidueProxy(nextIndex)
+      const rpNext = this.structure.getResidueProxy(nextIndex)
       if (this.connectedTo(rpNext)) {
         return rpNext
       }
     } else if (nextIndex === rOffset + rCount) {  // cyclic
-      var rpFirst = this.structure.getResidueProxy(rOffset)
+      const rpFirst = this.structure.getResidueProxy(rOffset)
       if (this.connectedTo(rpFirst)) {
         return rpFirst
       }
@@ -438,7 +429,7 @@ class ResidueProxy {
     return undefined
   }
 
-  getPreviousConnectedResidue (residueProxy) {
+  getPreviousConnectedResidue (residueProxy?: ResidueProxy) {
     const rOffset = this.chainStore.residueOffset[ this.chainIndex ]
     const prevIndex = this.index - 1
     if (prevIndex >= rOffset) {
@@ -466,8 +457,8 @@ class ResidueProxy {
     return this.residueType.getRings()
   }
 
-  qualifiedName (noResname) {
-    var name = ''
+  qualifiedName (noResname = false) {
+    let name = ''
     if (this.resname && !noResname) name += '[' + this.resname + ']'
     if (this.resno !== undefined) name += this.resno
     if (this.inscode) name += '^' + this.inscode
@@ -481,7 +472,7 @@ class ResidueProxy {
    * @return {ResidueProxy} cloned residue
    */
   clone () {
-    return new this.constructor(this.structure, this.index)
+    return new ResidueProxy(this.structure, this.index)
   }
 
   toObject () {

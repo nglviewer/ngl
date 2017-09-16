@@ -4,34 +4,35 @@
  * @private
  */
 
-import { UnknownBackboneType } from '../structure/structure-constants.js'
-import Polymer from './polymer.js'
+import { UnknownBackboneType } from '../structure/structure-constants'
+
+import Structure from '../structure/structure'
+import Selection from '../selection/selection'
+
+import ChainStore from '../store/chain-store'
+import ResidueStore from '../store/residue-store'
+
+import Polymer from '../proxy/polymer'
+import ResidueProxy from '../proxy/residue-proxy'
+import AtomProxy from '../proxy/atom-proxy'
 
 /**
  * Chain proxy
  */
 class ChainProxy {
+  index: number
+
+  chainStore: ChainStore
+  residueStore: ResidueStore
+
   /**
    * @param {Structure} structure - the structure
    * @param {Integer} index - the index
    */
-  constructor (structure, index) {
-    /**
-     * @type {Structure}
-     */
-    this.structure = structure
-    /**
-     * @type {ChainStore}
-     */
-    this.chainStore = structure.chainStore
-    /**
-     * @type {ResidueStore}
-     */
-    this.residueStore = structure.residueStore
-    /**
-     * @type {Integer}
-     */
+  constructor (readonly structure: Structure, index = 0) {
     this.index = index
+    this.chainStore = structure.chainStore
+    this.residueStore = structure.residueStore
   }
 
   /**
@@ -138,7 +139,7 @@ class ChainProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachAtom (callback, selection) {
+  eachAtom (callback: (ap: AtomProxy) => void, selection?: Selection) {
     this.eachResidue(function (rp) {
       rp.eachAtom(callback, selection)
     }, selection)
@@ -150,30 +151,29 @@ class ChainProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachResidue (callback, selection) {
-    var i
-    var count = this.residueCount
-    var offset = this.residueOffset
-    var rp = this.structure._rp
-    var end = offset + count
+  eachResidue (callback: (rp: ResidueProxy) => void, selection?: Selection) {
+    const count = this.residueCount
+    const offset = this.residueOffset
+    const rp = this.structure._rp
+    const end = offset + count
 
     if (selection && selection.test) {
-      var residueOnlyTest = selection.residueOnlyTest
+      const residueOnlyTest = selection.residueOnlyTest
       if (residueOnlyTest) {
-        for (i = offset; i < end; ++i) {
+        for (let i = offset; i < end; ++i) {
           rp.index = i
           if (residueOnlyTest(rp)) {
-            callback(rp, selection)
+            callback(rp)
           }
         }
       } else {
-        for (i = offset; i < end; ++i) {
+        for (let i = offset; i < end; ++i) {
           rp.index = i
-          callback(rp, selection)
+          callback(rp)
         }
       }
     } else {
-      for (i = offset; i < end; ++i) {
+      for (let i = offset; i < end; ++i) {
         rp.index = i
         callback(rp)
       }
@@ -186,21 +186,20 @@ class ChainProxy {
    * @param  {function(residueList: ResidueProxy[])} callback - the callback
    * @return {undefined}
    */
-  eachResidueN (n, callback) {
-    var i
-    var count = this.residueCount
-    var offset = this.residueOffset
-    var end = offset + count
+  eachResidueN (n: number, callback: (...rpArray: ResidueProxy[]) => void) {
+    const count = this.residueCount
+    const offset = this.residueOffset
+    const end = offset + count
     if (count < n) return
-    var array = new Array(n)
+    const array: ResidueProxy[] = new Array(n)
 
-    for (i = 0; i < n; ++i) {
+    for (let i = 0; i < n; ++i) {
       array[ i ] = this.structure.getResidueProxy(offset + i)
     }
     callback.apply(this, array)
 
-    for (var j = offset + n; j < end; ++j) {
-      for (i = 0; i < n; ++i) {
+    for (let j = offset + n; j < end; ++j) {
+      for (let i = 0; i < n; ++i) {
         array[ i ].index += 1
       }
       callback.apply(this, array)
@@ -213,29 +212,30 @@ class ChainProxy {
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachPolymer (callback, selection) {
-    var rStartIndex, rNextIndex
-    var test = selection ? selection.residueOnlyTest : undefined
-    var structure = this.model.structure
+  eachPolymer (callback: (p: Polymer) => void, selection?: Selection) {
+    let rStartIndex = 0
+    let rNextIndex = 0
+    const test = selection ? selection.residueOnlyTest : undefined
+    const structure = this.model.structure
 
-    var count = this.residueCount
-    var offset = this.residueOffset
-    var end = offset + count
+    const count = this.residueCount
+    const offset = this.residueOffset
+    const end = offset + count
 
-    var rp1 = this.structure.getResidueProxy()
-    var rp2 = this.structure.getResidueProxy(offset)
+    const rp1 = this.structure.getResidueProxy()
+    const rp2 = this.structure.getResidueProxy(offset)
 
-    var ap1 = this.structure.getAtomProxy()
-    var ap2 = this.structure.getAtomProxy()
+    const ap1 = this.structure.getAtomProxy()
+    const ap2 = this.structure.getAtomProxy()
 
-    var first = true
+    let first = true
 
-    for (var i = offset + 1; i < end; ++i) {
+    for (let i = offset + 1; i < end; ++i) {
       rp1.index = rp2.index
       rp2.index = i
 
-      var bbType1 = first ? rp1.backboneEndType : rp1.backboneType
-      var bbType2 = rp2.backboneType
+      const bbType1 = first ? rp1.backboneEndType : rp1.backboneType
+      const bbType2 = rp2.backboneType
 
       if (first) {
         rStartIndex = rp1.index
@@ -289,7 +289,7 @@ class ChainProxy {
    * @return {ChainProxy} cloned chain
    */
   clone () {
-    return new this.constructor(this.structure, this.index)
+    return new ChainProxy(this.structure, this.index)
   }
 
   toObject () {

@@ -67,7 +67,7 @@ class RadiusFactory {
         break
 
       default:
-        r = type || 1.0
+        r = (type as any) || 1.0  // TODO
         break
     }
 

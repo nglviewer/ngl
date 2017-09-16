@@ -10,6 +10,7 @@ import { Debug, Log } from '../globals'
 import _Kdtree from '../utils/kdtree'
 import Structure from '../structure/structure'
 import AtomProxy from '../proxy/atom-proxy'
+import ResidueProxy from '../proxy/residue-proxy'
 
 function euclideanDistSq(a: number[], b: number[]) {
   const dx = a[0] - b[0]
@@ -29,7 +30,7 @@ class Kdtree {
   atomIndices: Uint32Array
   kdtree: _Kdtree
 
-  constructor(structure: Structure, useSquaredDist = false) {
+  constructor(structure: Structure|ResidueProxy, useSquaredDist = false) {
     if (Debug) Log.time('Kdtree build')
 
     const metric = useSquaredDist ? euclideanDistSq : euclideanDist

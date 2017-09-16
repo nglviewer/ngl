@@ -4,26 +4,26 @@
  * @private
  */
 
-import ResidueType from './residue-type.js'
+import Structure from '../structure/structure'
+import { ResidueBonds } from '../structure/structure-utils'
+import ResidueType from './residue-type'
 
-function getHash (resname, atomTypeIdList, hetero, chemCompType) {
+function getHash (resname: string, atomTypeIdList: number[], hetero: boolean, chemCompType = '') {
   return (
     resname + '|' +
     atomTypeIdList.join(',') + '|' +
     (hetero ? 1 : 0) + '|' +
-    (chemCompType || '')
+    chemCompType
   )
 }
 
 class ResidueMap {
-  constructor (structure) {
-    this.structure = structure
+  dict: { [k: string]: number } = {}
+  list: ResidueType[] = []
 
-    this.dict = {}
-    this.list = []
-  }
+  constructor (readonly structure: Structure) {}
 
-  add (resname, atomTypeIdList, hetero, chemCompType, bonds) {
+  add (resname: string, atomTypeIdList: number[], hetero: boolean, chemCompType: string, bonds: ResidueBonds) {
     resname = resname.toUpperCase()
     const hash = getHash(resname, atomTypeIdList, hetero, chemCompType)
     let id = this.dict[ hash ]
@@ -38,7 +38,7 @@ class ResidueMap {
     return id
   }
 
-  get (id) {
+  get (id: number) {
     return this.list[ id ]
   }
 }

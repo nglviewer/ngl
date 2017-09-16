@@ -4,12 +4,21 @@
  * @private
  */
 
-import Store from './store.js'
+import Store, { StoreField } from './store.js'
 
 /**
  * Residue store
  */
-class ResidueStore extends Store {
+export default class ResidueStore extends Store {
+  chainIndex: Uint32Array
+  atomOffset: Uint32Array
+  atomCount: Uint16Array
+  residueTypeId: Uint16Array
+
+  resno: Uint32Array
+  sstruc: Uint8Array
+  inscode: Uint8Array
+
   get _defaultFields () {
     return [
       [ 'chainIndex', 1, 'uint32' ],
@@ -20,26 +29,24 @@ class ResidueStore extends Store {
       [ 'resno', 1, 'int32' ],
       [ 'sstruc', 1, 'uint8' ],
       [ 'inscode', 1, 'uint8' ]
-    ]
+    ] as StoreField[]
   }
 
-  setSstruc (i, str) {
+  setSstruc (i: number, str: string) {
     this.sstruc[ i ] = str.charCodeAt(0)
   }
 
-  getSstruc (i) {
+  getSstruc (i: number) {
     const code = this.sstruc[ i ]
     return code ? String.fromCharCode(code) : ''
   }
 
-  setInscode (i, str) {
+  setInscode (i: number, str: string) {
     this.inscode[ i ] = str.charCodeAt(0)
   }
 
-  getInscode (i) {
+  getInscode (i: number) {
     const code = this.inscode[ i ]
     return code ? String.fromCharCode(code) : ''
   }
 }
-
-export default ResidueStore

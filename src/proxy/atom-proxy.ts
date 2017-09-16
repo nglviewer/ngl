@@ -6,54 +6,48 @@
 
 import { Vector3 } from 'three'
 
+import { NumberArray } from '../types'
 import {
     SecStrucHelix, SecStrucSheet, SecStrucTurn,
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
-} from '../structure/structure-constants.js'
+} from '../structure/structure-constants'
+
+import Structure from '../structure/structure'
+
+import ChainStore from '../store/chain-store'
+import ResidueStore from '../store/residue-store'
+import AtomStore from '../store/atom-store'
+
+import AtomMap from '../store/atom-map'
+import ResidueMap from '../store/residue-map'
+
+import BondProxy from '../proxy/bond-proxy'
 
 /**
  * Atom proxy
  */
 class AtomProxy {
+  index: number
+
+  chainStore: ChainStore
+  residueStore: ResidueStore
+  atomStore: AtomStore
+
+  residueMap: ResidueMap
+  atomMap: AtomMap
+
   /**
    * @param {Structure} structure - the structure
    * @param {Integer} index - the index
    */
-  constructor (structure, index) {
-    /**
-     * The structure the atom belongs to.
-     * @type {Structure}
-     */
-    this.structure = structure
-
-    /**
-     * @type {ChainStore}
-     */
-    this.chainStore = structure.chainStore
-    /**
-     * @type {ResidueStore}
-     */
-    this.residueStore = structure.residueStore
-    /**
-     * @type {AtomStore}
-     */
-    this.atomStore = structure.atomStore
-
-    /**
-     * @type {ResidueMap}
-     */
-    this.residueMap = structure.residueMap
-    /**
-     * @type {AtomMap}
-     */
-    this.atomMap = structure.atomMap
-
-    /**
-     * The index of the atom, pointing to the data in the corresponding {@link AtomStore}
-     * @type {Integer}
-     */
+  constructor (readonly structure: Structure, index = 0) {
     this.index = index
+    this.chainStore = structure.chainStore
+    this.residueStore = structure.residueStore
+    this.atomStore = structure.atomStore
+    this.residueMap = structure.residueMap
+    this.atomMap = structure.atomMap
   }
 
   /**
@@ -309,10 +303,10 @@ class AtomProxy {
    * @param  {BondProxy} [bp] - optional target bond proxy for use in the callback
    * @return {undefined}
    */
-  eachBond (callback, bp) {
+  eachBond (callback: (bp: BondProxy) => void, bp?: BondProxy) {
     bp = bp || this.structure._bp
     const idx = this.index
-    const bondHash = this.bondHash
+    const bondHash = this.bondHash!  // TODO
     const indexArray = bondHash.indexArray
     const n = bondHash.countArray[ idx ]
     const offset = bondHash.offsetArray[ idx ]
@@ -329,9 +323,9 @@ class AtomProxy {
    * @param  {AtomProxy} [ap] - optional target atom proxy for use in the callback
    * @return {undefined}
    */
-  eachBondedAtom (callback, ap) {
-    ap = ap || this.structure._ap
-    var idx = this.index
+  eachBondedAtom (callback: (ap: AtomProxy) => void, _ap?: AtomProxy) {
+    const ap = _ap ? _ap : this.structure._ap
+    const idx = this.index
 
     this.eachBond(function (bp) {
       if (idx !== bp.atomIndex1) {
@@ -349,7 +343,7 @@ class AtomProxy {
    * @param  {AtomProxy} ap - the given atom
    * @return {Boolean} whether a bond exists or not
    */
-  hasBondTo (ap) {
+  hasBondTo (ap: AtomProxy) {
     let hasBond = false
     this.eachBondedAtom(function (bap) {
       if (ap.index === bap.index) hasBond = true
@@ -364,9 +358,9 @@ class AtomProxy {
    * @return {Boolean} flag
    */
   isBackbone () {
-    var backboneIndexList = this.residueType.backboneIndexList
+    const backboneIndexList = this.residueType.backboneIndexList
     if (backboneIndexList.length > 0) {
-      var atomOffset = this.residueStore.atomOffset[ this.residueIndex ]
+      const atomOffset = this.residueStore.atomOffset[ this.residueIndex ]
       return backboneIndexList.includes(this.index - atomOffset)
     } else {
       return false
@@ -381,11 +375,11 @@ class AtomProxy {
     if (this.structure.entityList.length > 0) {
       return this.entity.isPolymer()
     } else {
-      var moleculeType = this.residueType.moleculeType
+      const moleculeType = this.residueType.moleculeType
       return (
-                moleculeType === ProteinType ||
-                moleculeType === RnaType ||
-                moleculeType === DnaType
+        moleculeType === ProteinType ||
+        moleculeType === RnaType ||
+        moleculeType === DnaType
       )
     }
   }
@@ -403,11 +397,11 @@ class AtomProxy {
    * @return {Boolean} flag
    */
   isCg () {
-    var backboneType = this.residueType.backboneType
+    const backboneType = this.residueType.backboneType
     return (
-            backboneType === CgProteinBackboneType ||
-            backboneType === CgRnaBackboneType ||
-            backboneType === CgDnaBackboneType
+      backboneType === CgProteinBackboneType ||
+      backboneType === CgRnaBackboneType ||
+      backboneType === CgDnaBackboneType
     )
   }
 
@@ -433,10 +427,7 @@ class AtomProxy {
    */
   isNucleic () {
     const moleculeType = this.residueType.moleculeType
-    return (
-            moleculeType === RnaType ||
-            moleculeType === DnaType
-    )
+    return moleculeType === RnaType || moleculeType === DnaType
   }
 
   /**
@@ -504,7 +495,7 @@ class AtomProxy {
   }
 
   isBonded () {
-    return this.bondHash.countArray[ this.index ] !== 0
+    return this.bondHash!.countArray[ this.index ] !== 0   // TODO
   }
 
   /**
@@ -512,7 +503,7 @@ class AtomProxy {
    * @return {Boolean} flag
    */
   isRing () {
-    var ringFlags = this.residueType.getRings().flags
+    const ringFlags = this.residueType.getRings()!.flags  // TODO
     return ringFlags[ this.index - this.residueAtomOffset ] === 1
   }
 
@@ -521,15 +512,15 @@ class AtomProxy {
    * @param  {AtomProxy} atom - the other atom
    * @return {Number} the distance
    */
-  distanceTo (atom) {
-    var taa = this.atomStore
-    var aaa = atom.atomStore
-    var ti = this.index
-    var ai = atom.index
-    var x = taa.x[ ti ] - aaa.x[ ai ]
-    var y = taa.y[ ti ] - aaa.y[ ai ]
-    var z = taa.z[ ti ] - aaa.z[ ai ]
-    var distSquared = x * x + y * y + z * z
+  distanceTo (atom: AtomProxy) {
+    const taa = this.atomStore
+    const aaa = atom.atomStore
+    const ti = this.index
+    const ai = atom.index
+    const x = taa.x[ ti ] - aaa.x[ ai ]
+    const y = taa.y[ ti ] - aaa.y[ ai ]
+    const z = taa.z[ ti ] - aaa.z[ ai ]
+    const distSquared = x * x + y * y + z * z
     return Math.sqrt(distSquared)
   }
 
@@ -538,33 +529,33 @@ class AtomProxy {
    * @param  {AtomProxy} atom - the other atom
    * @return {Boolean} flag
    */
-  connectedTo (atom) {
-    var taa = this.atomStore
-    var aaa = atom.atomStore
-    var ti = this.index
-    var ai = atom.index
+  connectedTo (atom: AtomProxy) {
+    const taa = this.atomStore
+    const aaa = atom.atomStore
+    const ti = this.index
+    const ai = atom.index
 
     if (taa.altloc && aaa.altloc) {
-      var ta = taa.altloc[ ti ]  // use Uint8 value to compare
-      var aa = aaa.altloc[ ai ]  // no need to convert to char
+      const ta = taa.altloc[ ti ]  // use Uint8 value to compare
+      const aa = aaa.altloc[ ai ]  // no need to convert to char
       // 0 is the Null character, 32 is the space character
       if (!(ta === 0 || aa === 0 || ta === 32 || aa === 32 || (ta === aa))) return false
     }
 
-    var x = taa.x[ ti ] - aaa.x[ ai ]
-    var y = taa.y[ ti ] - aaa.y[ ai ]
-    var z = taa.z[ ti ] - aaa.z[ ai ]
+    const x = taa.x[ ti ] - aaa.x[ ai ]
+    const y = taa.y[ ti ] - aaa.y[ ai ]
+    const z = taa.z[ ti ] - aaa.z[ ai ]
 
-    var distSquared = x * x + y * y + z * z
+    const distSquared = x * x + y * y + z * z
 
     // if( this.residue.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
     if (distSquared < 64.0 && this.isCg()) return true
 
     if (isNaN(distSquared)) return false
 
-    var d = this.covalent + atom.covalent
-    var d1 = d + 0.3
-    var d2 = d - 0.5
+    const d = this.covalent + atom.covalent
+    const d1 = d + 0.3
+    const d2 = d - 0.5
 
     return distSquared < (d1 * d1) && distSquared > (d2 * d2)
   }
@@ -575,9 +566,7 @@ class AtomProxy {
    * @param  {Integer} [offset] - the offset
    * @return {AtomProxy} this object
    */
-  positionFromArray (array, offset) {
-    if (offset === undefined) offset = 0
-
+  positionFromArray (array: NumberArray, offset = 0) {
     this.x = array[ offset + 0 ]
     this.y = array[ offset + 1 ]
     this.z = array[ offset + 2 ]
@@ -591,12 +580,9 @@ class AtomProxy {
    * @param  {Integer} [offset] - the offset
    * @return {Array|TypedArray} target array
    */
-  positionToArray (array, offset) {
-    if (array === undefined) array = []
-    if (offset === undefined) offset = 0
-
-    var index = this.index
-    var atomStore = this.atomStore
+  positionToArray (array: NumberArray = [], offset = 0) {
+    const index = this.index
+    const atomStore = this.atomStore
 
     array[ offset + 0 ] = atomStore.x[ index ]
     array[ offset + 1 ] = atomStore.y[ index ]
@@ -610,7 +596,7 @@ class AtomProxy {
    * @param  {Vector3} [v] - target vector
    * @return {Vector3} target vector
    */
-  positionToVector3 (v) {
+  positionToVector3 (v: Vector3) {
     if (v === undefined) v = new Vector3()
 
     v.x = this.x
@@ -625,7 +611,7 @@ class AtomProxy {
    * @param  {Vector3} v - input vector
    * @return {AtomProxy} this object
    */
-  positionFromVector3 (v) {
+  positionFromVector3 (v: Vector3) {
     this.x = v.x
     this.y = v.y
     this.z = v.z
@@ -638,7 +624,7 @@ class AtomProxy {
    * @param  {Vector3} v - input vector
    * @return {AtomProxy} this object
    */
-  positionAdd (v) {
+  positionAdd (v: Vector3|AtomProxy) {
     this.x += v.x
     this.y += v.y
     this.z += v.z
@@ -651,7 +637,7 @@ class AtomProxy {
    * @param  {Vector3} v - input vector
    * @return {AtomProxy} this object
    */
-  positionSub (v) {
+  positionSub (v: Vector3|AtomProxy) {
     this.x -= v.x
     this.y -= v.y
     this.z -= v.z
@@ -664,30 +650,37 @@ class AtomProxy {
    * @param  {Boolean} firstOnly - immediately return the first connected atomIndex
    * @return {Integer[]|Integer|undefined} connected atomIndices
    */
-  getResidueBonds (firstOnly) {
-    var residueAtomOffset = this.residueAtomOffset
-    var relativeIndex = this.index - this.residueAtomOffset
-    var bonds = this.residueType.getBonds()
-    var atomIndices1 = bonds.atomIndices1
-    var atomIndices2 = bonds.atomIndices2
-    var idx1, idx2, connectedAtomIndex, connectedAtomIndices
+  getResidueBonds (firstOnly = false) {
+    const residueAtomOffset = this.residueAtomOffset
+    const relativeIndex = this.index - this.residueAtomOffset
+    const bonds = this.residueType.getBonds()!  // TODO
+    const atomIndices1 = bonds.atomIndices1
+    const atomIndices2 = bonds.atomIndices2
+    let idx1, idx2, connectedAtomIndex
+    let connectedAtomIndices: number[]|undefined
 
     if (!firstOnly) connectedAtomIndices = []
 
     idx1 = atomIndices1.indexOf(relativeIndex)
     while (idx1 !== -1) {
       connectedAtomIndex = atomIndices2[ idx1 ] + residueAtomOffset
-      if (firstOnly) return connectedAtomIndex
-      connectedAtomIndices.push(connectedAtomIndex)
-      idx1 = atomIndices1.indexOf(relativeIndex, idx1 + 1)
+      if (connectedAtomIndices) {
+        connectedAtomIndices.push(connectedAtomIndex)
+        idx1 = atomIndices1.indexOf(relativeIndex, idx1 + 1)
+      } else {
+        return connectedAtomIndex
+      }
     }
 
     idx2 = atomIndices2.indexOf(relativeIndex)
     while (idx2 !== -1) {
       connectedAtomIndex = atomIndices1[ idx2 ] + residueAtomOffset
-      if (firstOnly) return connectedAtomIndex
-      connectedAtomIndices.push(connectedAtomIndex)
-      idx2 = atomIndices2.indexOf(relativeIndex, idx2 + 1)
+      if (connectedAtomIndices) {
+        connectedAtomIndices.push(connectedAtomIndex)
+        idx2 = atomIndices2.indexOf(relativeIndex, idx2 + 1)
+      } else {
+        return connectedAtomIndex
+      }
     }
 
     return connectedAtomIndices
@@ -695,7 +688,7 @@ class AtomProxy {
 
   //
 
-  qualifiedName (noResname) {
+  qualifiedName (noResname = false) {
     var name = ''
     if (this.resname && !noResname) name += '[' + this.resname + ']'
     if (this.resno !== undefined) name += this.resno
@@ -712,7 +705,7 @@ class AtomProxy {
    * @return {AtomProxy} cloned atom
    */
   clone () {
-    return new this.constructor(this.structure, this.index)
+    return new AtomProxy(this.structure, this.index)
   }
 
   toObject () {
@@ -720,7 +713,6 @@ class AtomProxy {
       index: this.index,
       residueIndex: this.residueIndex,
 
-      atomno: this.atomno,
       resname: this.resname,
       x: this.x,
       y: this.y,
@@ -735,7 +727,7 @@ class AtomProxy {
       bfactor: this.bfactor,
       altloc: this.altloc,
       atomname: this.atomname,
-      modelindex: this.modelindex
+      modelIndex: this.modelIndex
     }
   }
 }

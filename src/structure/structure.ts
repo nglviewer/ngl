@@ -447,7 +447,7 @@ class Structure implements Structure{
    * @param  {EntityType} type - entity type
    * @return {undefined}
    */
-  eachEntity (callback: (entity: Entity) => any, type: number) {
+  eachEntity (callback: (entity: Entity) => void, type: number) {
     this.entityList.forEach(function (entity) {
       if (type === undefined || entity.getEntityType() === type) {
         callback(entity)
@@ -461,7 +461,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachBond (callback: (entity: BondProxy) => any, selection?: Selection) {
+  eachBond (callback: (entity: BondProxy) => void, selection?: Selection) {
     const bp = this.getBondProxy()
     let bondSet
 
@@ -492,10 +492,10 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachAtom (callback: (entity: AtomProxy) => any, selection?: Selection) {
+  eachAtom (callback: (entity: AtomProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
-        mp.eachAtom(callback, selection as any)  // TODO
+        mp.eachAtom(callback, selection)
       }, selection)
     } else {
       const an = this.atomStore.count
@@ -513,7 +513,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachResidue (callback: (entity: ResidueProxy) => any, selection?: Selection) {
+  eachResidue (callback: (entity: ResidueProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       const mn = this.modelStore.count
       const mp = this.getModelProxy()
@@ -522,13 +522,13 @@ class Structure implements Structure{
         for (let i = 0; i < mn; ++i) {
           mp.index = i
           if (modelOnlyTest(mp)) {
-            mp.eachResidue(callback, selection as any)  // TODO
+            mp.eachResidue(callback, selection)
           }
         }
       } else {
         for (let i = 0; i < mn; ++i) {
           mp.index = i
-          mp.eachResidue(callback, selection as any)  // TODO
+          mp.eachResidue(callback, selection)
         }
       }
     } else {
@@ -547,10 +547,10 @@ class Structure implements Structure{
    * @param  {function(residueList: ResidueProxy[])} callback - the callback
    * @return {undefined}
    */
-  eachResidueN (n: number, callback: (entity: ResidueProxy) => any) {
+  eachResidueN (n: number, callback: (...entityArray: ResidueProxy[]) => void) {
     const rn = this.residueStore.count
     if (rn < n) return
-    const array = new Array(n)
+    const array: ResidueProxy[] = new Array(n)
 
     for (let i = 0; i < n; ++i) {
       array[ i ] = this.getResidueProxy(i)
@@ -571,18 +571,18 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachPolymer (callback: (entity: Polymer) => any, selection?: Selection) {
+  eachPolymer (callback: (entity: Polymer) => void, selection?: Selection) {
     if (selection && selection.modelOnlyTest) {
       const modelOnlyTest = selection.modelOnlyTest
 
       this.eachModel(function (mp) {
         if (modelOnlyTest(mp)) {
-          mp.eachPolymer(callback, selection as any)  // TODO
+          mp.eachPolymer(callback, selection)
         }
       })
     } else {
       this.eachModel(function (mp) {
-        mp.eachPolymer(callback, selection as any)  // TODO
+        mp.eachPolymer(callback, selection)
       })
     }
   }
@@ -593,10 +593,10 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachChain (callback: (entity: ChainProxy) => any, selection?: Selection) {
+  eachChain (callback: (entity: ChainProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
-        mp.eachChain(callback, selection as any)  // TODO
+        mp.eachChain(callback, selection)
       })
     } else {
       const cn = this.chainStore.count
@@ -614,7 +614,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachModel (callback: (entity: ModelProxy) => any, selection?: Selection) {
+  eachModel (callback: (entity: ModelProxy) => void, selection?: Selection) {
     const n = this.modelStore.count
     const mp = this.getModelProxy()
 

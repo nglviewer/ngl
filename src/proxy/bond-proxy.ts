@@ -6,27 +6,31 @@
 
 import { Vector3 } from 'three'
 
+import Structure from '../structure/structure'
+import BondStore from '../store/bond-store'
+import AtomProxy from '../proxy/atom-proxy'
+
 /**
  * Bond proxy
  */
 class BondProxy {
+  index: number
+
+  bondStore: BondStore
+
+  private _v12: Vector3
+  private _v13: Vector3
+  private _ap1: AtomProxy
+  private _ap2: AtomProxy
+  private _ap3: AtomProxy
+
   /**
    * @param {Structure} structure - the structure
    * @param {Integer} index - the index
    */
-  constructor (structure, index) {
-    /**
-     * @type {Structure}
-     */
-    this.structure = structure
-    /**
-     * @type {BondStore}
-     */
-    this.bondStore = structure.bondStore
-    /**
-     * @type {Integer}
-     */
+  constructor (readonly structure: Structure, index = 0) {
     this.index = index
+    this.bondStore = structure.bondStore
 
     this._v12 = new Vector3()
     this._v13 = new Vector3()
@@ -84,17 +88,17 @@ class BondProxy {
    * @return {Integer|undefined} atom index, or `undefined` if unavailable
    */
   getReferenceAtomIndex () {
-    var ap1 = this._ap1
-    var ap2 = this._ap2
+    const ap1 = this._ap1
+    const ap2 = this._ap2
     ap1.index = this.atomIndex1
     ap2.index = this.atomIndex2
     if (ap1.residueIndex !== ap2.residueIndex) {
       return undefined  // Bond between residues, for now ignore (could detect)
     }
-    var typeAtomIndex1 = ap1.index - ap1.residueAtomOffset
-    var typeAtomIndex2 = ap2.index - ap2.residueAtomOffset
-    var residueType = ap1.residueType
-    var ix = residueType.getBondReferenceAtomIndex(typeAtomIndex1, typeAtomIndex2)
+    const typeAtomIndex1 = ap1.index - ap1.residueAtomOffset
+    const typeAtomIndex2 = ap2.index - ap2.residueAtomOffset
+    const residueType = ap1.residueType
+    const ix = residueType.getBondReferenceAtomIndex(typeAtomIndex1, typeAtomIndex2)
     if (ix !== undefined) {
       return ix + ap1.residueAtomOffset
     } else {
@@ -107,30 +111,28 @@ class BondProxy {
    * @param  {Vector3} [v] pre-allocated output vector
    * @return {Vector3} the shift direction vector
    */
-  calculateShiftDir (v) {
-    if (!v) v = new Vector3()
-
-    var ap1 = this._ap1
-    var ap2 = this._ap2
-    var ap3 = this._ap3
-    var v12 = this._v12
-    var v13 = this._v13
+  calculateShiftDir (v = new Vector3()) {
+    const ap1 = this._ap1
+    const ap2 = this._ap2
+    const ap3 = this._ap3
+    const v12 = this._v12
+    const v13 = this._v13
 
     ap1.index = this.atomIndex1
     ap2.index = this.atomIndex2
-    var ai3 = this.getReferenceAtomIndex()
+    const ai3 = this.getReferenceAtomIndex()
 
-    v12.subVectors(ap1, ap2).normalize()
+    v12.subVectors(ap1 as any, ap2 as any).normalize()  // TODO
     if (ai3 !== undefined) {
       ap3.index = ai3
-      v13.subVectors(ap1, ap3)
+      v13.subVectors(ap1 as any, ap3 as any)  // TODO
     } else {
-      v13.copy(ap1)  // no reference point, use origin
+      v13.copy(ap1 as any)  // no reference point, use origin  // TODO
     }
     v13.normalize()
 
     // make sure v13 and v12 are not colinear
-    var dp = v12.dot(v13)
+    let dp = v12.dot(v13)
     if (1 - Math.abs(dp) < 1e-5) {
       v13.set(1, 0, 0)
       dp = v12.dot(v13)
@@ -152,7 +154,7 @@ class BondProxy {
    * @return {BondProxy} cloned bond
    */
   clone () {
-    return new this.constructor(this.structure, this.index)
+    return new BondProxy(this.structure, this.index)
   }
 
   toObject () {

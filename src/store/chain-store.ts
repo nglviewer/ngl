@@ -4,12 +4,20 @@
  * @private
  */
 
-import Store from './store.js'
+import Store, { StoreField } from './store'
 
 /**
  * Chain store
  */
-class ChainStore extends Store {
+export default class ChainStore extends Store {
+  entityIndex: Uint16Array
+  modelIndex: Uint16Array
+  residueOffset: Uint32Array
+  residueCount: Uint32Array
+
+  chainname: Uint8Array
+  chainid: Uint8Array
+
   get _defaultFields () {
     return [
       [ 'entityIndex', 1, 'uint16' ],
@@ -19,10 +27,10 @@ class ChainStore extends Store {
 
       [ 'chainname', 4, 'uint8' ],
       [ 'chainid', 4, 'uint8' ]
-    ]
+    ] as StoreField[]
   }
 
-  setChainname (i, str) {
+  setChainname (i: number, str: string) {
     const j = 4 * i
     this.chainname[ j ] = str.charCodeAt(0)
     this.chainname[ j + 1 ] = str.charCodeAt(1)
@@ -30,7 +38,7 @@ class ChainStore extends Store {
     this.chainname[ j + 3 ] = str.charCodeAt(3)
   }
 
-  getChainname (i) {
+  getChainname (i: number) {
     let chainname = ''
     for (let k = 0; k < 4; ++k) {
       const code = this.chainname[ 4 * i + k ]
@@ -43,7 +51,7 @@ class ChainStore extends Store {
     return chainname
   }
 
-  setChainid (i, str) {
+  setChainid (i: number, str: string) {
     const j = 4 * i
     this.chainid[ j ] = str.charCodeAt(0)
     this.chainid[ j + 1 ] = str.charCodeAt(1)
@@ -51,7 +59,7 @@ class ChainStore extends Store {
     this.chainid[ j + 3 ] = str.charCodeAt(3)
   }
 
-  getChainid (i) {
+  getChainid (i: number) {
     let chainid = ''
     for (let k = 0; k < 4; ++k) {
       const code = this.chainid[ 4 * i + k ]
@@ -64,5 +72,3 @@ class ChainStore extends Store {
     return chainid
   }
 }
-
-export default ChainStore

@@ -1288,7 +1288,7 @@ NGL.StructureComponentWidget = function (component, stage) {
   })
 
   signals.defaultAssemblyChanged.add(function () {
-    assembly.setValue(component.defaultAssembly)
+    assembly.setValue(component.parameters.defaultAssembly)
   })
 
     // Selection
@@ -1338,9 +1338,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       })
       return assemblyOptions
     })())
-    .setValue(
-        component.defaultAssembly
-    )
+    .setValue(component.parameters.defaultAssembly)
     .onChange(function () {
       component.setDefaultAssembly(assembly.getValue())
       componentPanel.setMenuDisplay('none')
