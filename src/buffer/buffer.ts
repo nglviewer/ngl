@@ -198,6 +198,10 @@ class Buffer {
       primitiveId: { type: 'f', value: data.primitiveId }
     })
 
+    if (params.matrix) {
+      this.matrix = params.matrix
+    }
+
     if (data.index) {
       this.initIndex(data.index)
     }
@@ -660,6 +664,10 @@ class Buffer {
 
       if (name === 'forceTransparent') {
         propertyData.transparent = this.transparent
+      }
+
+      if (name === 'matrix') {
+        this.matrix = value
       }
     }
 

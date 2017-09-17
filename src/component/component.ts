@@ -31,8 +31,8 @@ export type ComponentParameters = typeof ComponentDefaultParameters
 export interface ComponentSignals {
   representationAdded: Signal  // when a representation is added
   representationRemoved: Signal  // when a representation is removed
-  visibilityChanged: Signal  // on matrix change
-  matrixChanged: Signal  // on visibility change
+  visibilityChanged: Signal  // on visibility change
+  matrixChanged: Signal  // on matrix change
   statusChanged: Signal  // on status change
   nameChanged: Signal  // on name change
   disposed: Signal  // on dispose

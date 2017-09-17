@@ -318,9 +318,7 @@ class Representation {
   // get prepare(){ return false; }
 
   create () {
-
     // this.bufferList.length = 0;
-
   }
 
   update () {
@@ -353,7 +351,7 @@ class Representation {
   make (updateWhat, callback) {
     if (Debug) Log.time('Representation.make ' + this.type)
 
-    const _make = function () {
+    const _make = () => {
       if (updateWhat) {
         this.update(updateWhat)
         this.viewer.requestRender()
@@ -364,16 +362,16 @@ class Representation {
         this.create()
         if (!this.manualAttach && !this.disposed) {
           if (Debug) Log.time('Representation.attach ' + this.type)
-          this.attach(function () {
+          this.attach(() => {
             if (Debug) Log.timeEnd('Representation.attach ' + this.type)
             this.tasks.decrement()
             if (callback) callback()
-          }.bind(this))
+          })
         }
       }
 
       if (Debug) Log.timeEnd('Representation.make ' + this.type)
-    }.bind(this)
+    }
 
     if (this.prepare) {
       this.prepare(_make)
@@ -435,16 +433,12 @@ class Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {Representation} this object
    */
-  setParameters (params, what, rebuild) {
+  setParameters (params, what = {}, rebuild = false) {
     const p = params || {}
     const tp = this.parameters
+    const bufferParams = {}
 
     this.setColor(p.color, p)
-
-    what = what || {}
-    rebuild = rebuild || false
-
-    const bufferParams = {}
 
     for (let name in p) {
       if (p[ name ] === undefined) continue
@@ -459,7 +453,9 @@ class Representation {
         )
       ) continue
 
-      if (this[ name ] && this[ name ].set) {
+      if (this[ name ] && this[ name ].copy) {
+        this[ name ].copy(p[ name ])
+      } else if (this[ name ] && this[ name ].set) {
         this[ name ].set(p[ name ])
       } else {
         this[ name ] = p[ name ]

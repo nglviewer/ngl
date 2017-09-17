@@ -430,12 +430,13 @@ NGL.MenubarFileWidget = function (stage) {
   function fileInputOnChange (e) {
     var fn = function (file, callback) {
       var ext = file.name.split('.').pop().toLowerCase()
-      if (fileTypesOpen.includes(ext)) {
-        stage.loadFile(file, {
-          defaultRepresentation: true
-        }).then(function () { callback() })
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(file).then(callback)
+      } else if (fileTypesOpen.includes(ext)) {
+        stage.loadFile(file, { defaultRepresentation: true }).then(callback)
       } else {
         console.error('unknown filetype: ' + ext)
+        callback()
       }
     }
     var queue = new NGL.Queue(fn, e.target.files)
@@ -664,7 +665,7 @@ NGL.MenubarExamplesWidget = function (stage) {
     }
     response.sort().forEach(function (name) {
       var option = createOption(name, function () {
-        stage.loadFile(NGL.examplesScriptUrl + name + '.js')
+        stage.loadScript(NGL.examplesScriptUrl + name + '.js')
       })
       optionsPanel.add(option)
     })
@@ -1824,60 +1825,6 @@ NGL.ShapeComponentWidget = function (component, stage) {
   container
     .addStatic(componentPanel)
     .add(reprContainer)
-
-  return container
-}
-
-NGL.ScriptComponentWidget = function (component, stage) {
-  var signals = component.signals
-  var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
-
-  var panel = new UI.Panel().setMarginLeft('20px')
-
-  signals.nameChanged.add(function (value) {
-    name.setValue(value)
-  })
-
-  signals.statusChanged.add(function (value) {
-    if (value === 'finished') {
-      container.removeStatic(status)
-      container.addStatic(dispose)
-    }
-  })
-
-  component.script.signals.elementAdded.add(function (value) {
-    panel.add.apply(panel, value)
-  })
-
-  component.script.signals.elementRemoved.add(function (value) {
-    panel.remove.apply(panel, value)
-  })
-
-  // Actions
-
-  var dispose = new UI.DisposeIcon()
-    .setMarginLeft('10px')
-    .setDisposeFunction(function () {
-      stage.removeComponent(component)
-    })
-
-  // Name
-
-  var name = new UI.EllipsisText(component.name)
-    .setWidth('100px')
-
-  // Status
-
-  var status = new UI.Icon('spinner')
-    .addClass('spin')
-    .setMarginLeft('25px')
-
-  container
-    .addStatic(name)
-    .addStatic(status)
-
-  container
-    .add(panel)
 
   return container
 }

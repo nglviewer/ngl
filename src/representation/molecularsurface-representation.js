@@ -135,8 +135,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
         const maxDim = Math.max(bbSize.x, bbSize.y, bbSize.z)
         const asWithin = sview.getAtomSetWithinPoint(sviewFilter.center, (maxDim / 2) + 6.0)
         sview = sview.getView(
-                    new Selection(sview.getAtomSetWithinSelection(asWithin, 3).toSeleString())
-                )
+          new Selection(sview.getAtomSetWithinSelection(asWithin, 3).toSeleString())
+        )
       }
 
       info.sele = sview.selection.string
@@ -160,7 +160,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
   prepare (callback) {
     if (this.__forceNewMolsurf || this.__sele !== this.selection.string ||
-                this.__surfaceParams !== JSON.stringify(this.getSurfaceParams())) {
+          this.__surfaceParams !== JSON.stringify(this.getSurfaceParams())) {
       this.__infoList.forEach(info => {
         info.molsurf.dispose()
       })

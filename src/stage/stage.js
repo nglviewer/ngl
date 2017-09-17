@@ -551,7 +551,7 @@ class Stage {
 
     const onErrorFn = (e) => {
       this.tasks.decrement()
-      throw e
+      this.log(`error loading file: '${e}'`)
     }
 
     const ext = defaults(p.ext, getFileInfo(path).ext)

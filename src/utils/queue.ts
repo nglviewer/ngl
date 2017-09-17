@@ -35,7 +35,7 @@ class Queue<T> {
 
   push (arg: T) {
     this.queue.push(arg)
-    if (!pending) this.next()
+    if (!this.pending) this.next()
   }
 
   kill () {
