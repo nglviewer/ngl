@@ -10,13 +10,54 @@ import { defaults } from '../utils'
 import { degToRad } from '../math/math-utils'
 import {
   uniformArray, uniformArray3, centerArray3
-} from '../math/array-utils.js'
-import { UnitcellPicker } from '../utils/picker.js'
+} from '../math/array-utils'
+import { UnitcellPicker } from '../utils/picker'
+import Structure from '../structure/structure'
+
+interface UnitcellParams {
+  a: number
+  b: number
+  c: number
+  alpha: number
+  beta: number
+  gamma: number
+  spacegroup: string
+  cartToFrac?: Matrix4
+}
+
+const DefaultBoxParams = {
+  a: 1,
+  b: 1,
+  c: 1,
+  alpha: 90,
+  beta: 90,
+  gamma: 90,
+  spacegroup: 'P 1'
+}
+
+interface UnitcellDataParams {
+  colorValue?: string|number,
+  radius?: number
+}
 
 /**
  * Unitcell class
  */
 class Unitcell {
+  a: number
+  b: number
+  c: number
+  alpha: number
+  beta: number
+  gamma: number
+
+  spacegroup: string
+
+  cartToFrac: Matrix4
+  fracToCart = new Matrix4()
+
+  volume: number
+
   /**
    * @param  {Object} params - unitcell parameters
    * @param  {Number} params.a - length a
@@ -30,49 +71,14 @@ class Unitcell {
    *                                         cartesian to fractional coordinates
    * @param  {Matrix4} [params.scale] - alias for `params.cartToFrac`
    */
-  constructor (params) {
-    const p = params || {}
-
-    /**
-     * @type {Number}
-     */
-    this.a = p.a || 1
-    /**
-     * @type {Number}
-     */
-    this.b = p.b || 1
-    /**
-     * @type {Number}
-     */
-    this.c = p.c || 1
-
-    /**
-     * @type {Number}
-     */
-    this.alpha = p.alpha || 90
-    /**
-     * @type {Number}
-     */
-    this.beta = p.beta || 90
-    /**
-     * @type {Number}
-     */
-    this.gamma = p.gamma || 90
-
-    /**
-     * @type {String}
-     */
-    this.spacegroup = p.spacegroup || 'P 1'
-    /**
-     * @type {Matrix4}
-     */
-    this.cartToFrac = p.cartToFrac || p.scale
-    /**
-     * @type {Matrix4}
-     */
-    this.fracToCart = new Matrix4()
-
-    //
+  constructor (params: UnitcellParams = DefaultBoxParams) {
+    this.a = params.a
+    this.b = params.b
+    this.c = params.c
+    this.alpha = params.alpha
+    this.beta = params.beta
+    this.gamma = params.gamma
+    this.spacegroup = params.spacegroup
 
     const alphaRad = degToRad(this.alpha)
     const betaRad = degToRad(this.beta)
@@ -83,9 +89,6 @@ class Unitcell {
     const sinBeta = Math.sin(betaRad)
     const sinGamma = Math.sin(gammaRad)
 
-    /**
-     * @type {Number}
-     */
     this.volume = (
       this.a * this.b * this.c *
       Math.sqrt(
@@ -94,9 +97,7 @@ class Unitcell {
       )
     )
 
-    //
-
-    if (this.cartToFrac === undefined) {
+    if (params.cartToFrac === undefined) {
       // https://github.com/biojava/biojava/blob/master/biojava-structure/src/main/java/org/biojava/nbio/structure/xtal/CrystalCell.java
 
       const cStar = (this.a * this.b * sinGamma) / this.volume
@@ -112,47 +113,49 @@ class Unitcell {
       ).transpose()
       this.cartToFrac = new Matrix4().getInverse(this.fracToCart)
     } else {
+      this.cartToFrac = params.cartToFrac
       this.fracToCart.getInverse(this.cartToFrac)
     }
   }
 
-  getPosition (structure) {
+  getPosition (structure: Structure): Float32Array {
     const vertexPosition = new Float32Array(3 * 8)
 
-    const uc = structure.unitcell
-    const centerFrac = structure.center.clone()
-            .applyMatrix4(uc.cartToFrac)
-            .floor().multiplyScalar(2).addScalar(1)
-    const v = new Vector3()
+    if (structure.unitcell) {
+      const uc = structure.unitcell
+      const centerFrac = structure.center.clone()
+              .applyMatrix4(uc.cartToFrac)
+              .floor().multiplyScalar(2).addScalar(1)
+      const v = new Vector3()
 
-    let cornerOffset = 0
-    function addCorner (x, y, z) {
-      v.set(x, y, z)
-        .multiply(centerFrac)
-        .applyMatrix4(uc.fracToCart)
-        .toArray(vertexPosition, cornerOffset)
-      cornerOffset += 3
+      let cornerOffset = 0
+      const addCorner = function (x: number, y: number, z: number) {
+        v.set(x, y, z)
+          .multiply(centerFrac)
+          .applyMatrix4(uc.fracToCart)
+          .toArray(vertexPosition as any, cornerOffset)
+        cornerOffset += 3
+      }
+      addCorner(0, 0, 0)
+      addCorner(1, 0, 0)
+      addCorner(0, 1, 0)
+      addCorner(0, 0, 1)
+      addCorner(1, 1, 0)
+      addCorner(1, 0, 1)
+      addCorner(0, 1, 1)
+      addCorner(1, 1, 1)
     }
-    addCorner(0, 0, 0)
-    addCorner(1, 0, 0)
-    addCorner(0, 1, 0)
-    addCorner(0, 0, 1)
-    addCorner(1, 1, 0)
-    addCorner(1, 0, 1)
-    addCorner(0, 1, 1)
-    addCorner(1, 1, 1)
 
     return vertexPosition
   }
 
-  getCenter (structure) {
+  getCenter (structure: Structure) {
     return centerArray3(this.getPosition(structure))
   }
 
-  getData (structure, params) {
-    const p = params || {}
-    const colorValue = defaults(p.colorValue, 'orange')
-    const radius = defaults(p.radius, Math.cbrt(this.volume) / 200)
+  getData (structure: Structure, params: UnitcellDataParams = {}) {
+    const colorValue = defaults(params.colorValue, 'orange')
+    const radius = defaults(params.radius, Math.cbrt(this.volume) / 200)
 
     const c = new Color(colorValue)
     const v = new Vector3()
@@ -167,11 +170,11 @@ class Unitcell {
     const edgeRadius = uniformArray(12, radius)
 
     let edgeOffset = 0
-    function addEdge (a, b) {
-      v.fromArray(vertexPosition, a * 3)
-        .toArray(edgePosition1, edgeOffset)
-      v.fromArray(vertexPosition, b * 3)
-        .toArray(edgePosition2, edgeOffset)
+    function addEdge (a: number, b: number) {
+      v.fromArray(vertexPosition as any, a * 3)
+        .toArray(edgePosition1 as any, edgeOffset)
+      v.fromArray(vertexPosition as any, b * 3)
+        .toArray(edgePosition2 as any, edgeOffset)
       edgeOffset += 3
     }
     addEdge(0, 1)

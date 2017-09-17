@@ -4,7 +4,7 @@
  * @private
  */
 
-var SymOpCode = {
+export const SymOpCode: { [k: string]: string } = {
   ' ': 'X',
   '!': 'Y',
   '#': 'Z',
@@ -78,7 +78,7 @@ var SymOpCode = {
 }
 
 // encoded, originally from CCP4 symop.lib
-var EncodedSymOp = {
+export const EncodedSymOp: { [k: string]: string } = {
   'P 1': ' !#',
   'P -1': ' !#$%&',
   'P 1 2 1': ' !#$!&',
@@ -345,9 +345,4 @@ var EncodedSymOp = {
   'P 21/m 21/m 2/n a': " !#*,#$)&(%&$%&.'& ,#*!#",
   'P 42 21 2a': " !#*,#%.+'$+$'&.%&! -,*-",
   'I 2 3a': " !#*,#.%&$'&!# ,- '&$%/$# !-*!/$%&.%()+$%+ ,-*!-)+(%&(!-*,#*+()&$)#*,- ,"
-}
-
-export {
-  SymOpCode,
-  EncodedSymOp
 }

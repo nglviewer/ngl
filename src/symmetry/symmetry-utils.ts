@@ -7,54 +7,46 @@
 import { Matrix4 } from 'three'
 
 import { Log } from '../globals'
-import { EncodedSymOp, SymOpCode } from './symmetry-constants.js'
+import { EncodedSymOp, SymOpCode } from './symmetry-constants'
 
-function getSymmetryOperations (spacegroup) {
-  var encodedSymopList = EncodedSymOp[ spacegroup ]
-  var matrixDict = {}
+const reInteger = /^[1-9]$/
+
+export function getSymmetryOperations (spacegroup: string) {
+  const encodedSymopList = EncodedSymOp[ spacegroup ]
+  const matrixDict: { [k: string]: Matrix4 } = {}
 
   if (encodedSymopList === undefined) {
-    console.warn(
-      "getSymmetryOperations: spacegroup '" +
-      spacegroup + "' not found in symop library"
-    )
+    console.warn(`spacegroup '${spacegroup}' not found in symop library`)
     return matrixDict
   }
 
-  var symopList = []
-
-  for (var i = 0, il = encodedSymopList.length; i < il; i += 3) {
-    var symop = []
-    for (var j = 0; j < 3; ++j) {
+  const symopList = []
+  for (let i = 0, il = encodedSymopList.length; i < il; i += 3) {
+    const symop = []
+    for (let j = 0; j < 3; ++j) {
       symop.push(SymOpCode[ encodedSymopList[ i + j ] ])
     }
     symopList.push(symop)
   }
 
-  var reInteger = /^[1-9]$/
-
   symopList.forEach(function (symop) {
-    // console.log( "symop", symop );
-
-    var row = 0
-    var matrix = new Matrix4().set(
+    let row = 0
+    const matrix = new Matrix4().set(
       0, 0, 0, 0,
       0, 0, 0, 0,
       0, 0, 0, 0,
       0, 0, 0, 1
     )
-    var me = matrix.elements
+    const me = matrix.elements
 
-    matrixDict[ symop ] = matrix
+    matrixDict[ symop.toString() ] = matrix
 
     symop.forEach(function (elm) {
-      // console.log( "row", row );
+      let negate = false
+      let denominator = false
 
-      var negate = false
-      var denominator = false
-
-      for (var i = 0, n = elm.length; i < n; ++i) {
-        var c = elm[ i ]
+      for (let i = 0, n = elm.length; i < n; ++i) {
+        const c = elm[ i ]
 
         if (c === '-') {
           negate = true
@@ -69,27 +61,20 @@ function getSymmetryOperations (spacegroup) {
         } else if (c === 'Z') {
           me[ 8 + row ] = negate ? -1 : 1
         } else if (reInteger.test(c)) {
-          var integer = parseInt(c)
+          const integer = parseInt(c)
           if (denominator) {
             me[ 12 + row ] /= integer
           } else {
             me[ 12 + row ] = integer
           }
         } else {
-          Log.warn('getSymmetryOperations: unknown token "' + c + '"')
+          Log.warn(`getSymmetryOperations: unknown token '${c}'`)
         }
-        // console.log( "token", c )
       }
 
       row += 1
     })
-
-    // console.log( "matrix", me )
   })
 
   return matrixDict
-}
-
-export {
-    getSymmetryOperations
 }
