@@ -7,70 +7,61 @@
 import { DecompressorRegistry } from '../globals'
 import { uint8ToString, defaults } from '../utils'
 
-class Streamer {
-  constructor (src, params) {
-    const p = params || {}
+export interface StreamerParams {
+  compressed?: string|false
+  binary?: boolean
+  json?: boolean
+  xml?: boolean
+}
 
-    this.compressed = defaults(p.compressed, false)
-    this.binary = defaults(p.binary, false)
-    this.json = defaults(p.json, false)
-    this.xml = defaults(p.xml, false)
+abstract class Streamer {
+  src: any
+  data: any
+
+  compressed: string|false
+  binary: boolean
+  json: boolean
+  xml: boolean
+
+  chunkSize = 1024 * 1024 * 10
+  newline = '\n'
+
+  protected __pointer = 0
+  protected __partialLine = ''
+
+  constructor (src: any, params: StreamerParams = {}) {
+    this.compressed = defaults(params.compressed, false)
+    this.binary = defaults(params.binary, false)
+    this.json = defaults(params.json, false)
+    this.xml = defaults(params.xml, false)
 
     this.src = src
-    this.chunkSize = 1024 * 1024 * 10
-    this.newline = '\n'
-
-    this.__pointer = 0
-    this.__partialLine = ''
-
-    if (this.__srcName) {
-      this[ this.__srcName ] = src
-    }
   }
-
-  get type () { return '' }
-
-  get __srcName () { return undefined }
 
   isBinary () {
     return this.binary || this.compressed
   }
 
-  onload () {}
-
-  onprogress () {}
-
-  onerror () {}
-
   read () {
-    return new Promise((resolve, reject) => {
-      try {
-        this._read(data => {
-          const decompressFn = DecompressorRegistry.get(this.compressed)
+    return this._read().then(data => {
+      const decompressFn = this.compressed ? DecompressorRegistry.get(this.compressed) : undefined
 
-          if (this.compressed && decompressFn) {
-            this.data = decompressFn(data)
-          } else {
-            if ((this.binary || this.compressed) && data instanceof ArrayBuffer) {
-              data = new Uint8Array(data)
-            }
-            this.data = data
-          }
-
-          resolve(this.data)
-        })
-      } catch (e) {
-        reject(e)
+      if (this.compressed && decompressFn) {
+        this.data = decompressFn(data)
+      } else {
+        if ((this.binary || this.compressed) && data instanceof ArrayBuffer) {
+          data = new Uint8Array(data)
+        }
+        this.data = data
       }
+
+      return this.data
     })
   }
 
-  _read (callback) {
-    // overwrite this method when this.src does not contain the data
-    callback(this.src)
-  }
+  protected abstract _read (): Promise<any>
 
-  _chunk (start, end) {
+  protected _chunk (start: number, end: number) {
     end = Math.min(this.data.length, end)
 
     if (start === 0 && this.data.length === end) {
@@ -84,13 +75,13 @@ class Streamer {
     }
   }
 
-  chunk (start) {
+  chunk (start: number) {
     const end = start + this.chunkSize
 
     return this._chunk(start, end)
   }
 
-  peekLines (m) {
+  peekLines (m: number) {
     const data = this.data
     const n = data.length
 
@@ -118,18 +109,18 @@ class Streamer {
     return this.isBinary() ? uint8ToString(this.data) : this.data
   }
 
-  chunkToLines (chunk, partialLine, isLast) {
+  chunkToLines (chunk: string|Uint8Array, partialLine: string, isLast: boolean) {
     const newline = this.newline
 
     if (!this.isBinary() && chunk.length === this.data.length) {
       return {
-        lines: chunk.split(newline),
+        lines: (chunk as string).split(newline),
         partialLine: ''
       }
     }
 
-    let lines = []
-    const str = this.isBinary() ? uint8ToString(chunk) : chunk
+    let lines: string[] = []
+    const str = this.isBinary() ? uint8ToString(chunk as Uint8Array) : chunk
     const idx = str.lastIndexOf(newline)
 
     if (idx === -1) {
@@ -181,7 +172,7 @@ class Streamer {
     return d.lines
   }
 
-  eachChunk (callback) {
+  eachChunk (callback: (chunk: string|Uint8Array, chunkNo: number, chunkCount: number) => void) {
     const chunkSize = this.chunkSize
     const n = this.data.length
     const chunkCount = this.chunkCount()
@@ -194,7 +185,7 @@ class Streamer {
     }
   }
 
-  eachChunkOfLines (callback) {
+  eachChunkOfLines (callback: (chunk: string[], chunkNo: number, chunkCount: number) => void) {
     this.eachChunk((chunk, chunkNo, chunkCount) => {
       const isLast = chunkNo === chunkCount + 1
       const d = this.chunkToLines(chunk, this.__partialLine, isLast)
@@ -207,10 +198,6 @@ class Streamer {
 
   dispose () {
     delete this.src
-
-    if (this.__srcName) {
-      delete this[ this.__srcName ]
-    }
   }
 }
 

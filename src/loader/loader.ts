@@ -47,7 +47,7 @@ abstract class Loader {
     } as LoaderParameters)
 
     const streamerParams = {
-      compressed: this.parameters.compressed,
+      compressed: this.parameters.compressed as string|false,
       binary: this.parameters.binary,
       json: ParserRegistry.isJson(this.parameters.ext),
       xml: ParserRegistry.isXml(this.parameters.ext)

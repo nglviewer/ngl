@@ -14,7 +14,7 @@ import PluginLoader from './plugin-loader'
 
 export interface LoaderParameters {
  ext: string  // file extension, determines file type
- compressed: boolean  // flag data as compressed
+ compressed: string|false  // flag data as compressed
  binary: boolean  // flag data as binary
  name: string  // set data name
 
@@ -31,7 +31,7 @@ export function getFileInfo (file: LoaderInput) {
   const compressedExtList = DecompressorRegistry.names
 
   let path: string
-  let compressed: string|boolean
+  let compressed: string|false
   let protocol = ''
 
   if (file instanceof File) {
