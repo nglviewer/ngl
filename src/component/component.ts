@@ -76,7 +76,7 @@ abstract class Component {
    * @param {Stage} stage - stage object the component belongs to
    * @param {ComponentParameters} params - parameter object
    */
-  constructor (readonly stage: Stage, params: Partial<ComponentParameters> = {}) {
+  constructor (readonly stage: Stage, readonly object: any, params: Partial<ComponentParameters> = {}) {
     this.parameters = createParams(params, this.defaultParameters)
     this.uuid = generateUUID()
     this.viewer = stage.viewer
@@ -84,7 +84,6 @@ abstract class Component {
     this.controls = new ComponentControls(this)
   }
 
-  get type () { return 'component' }
   get name () { return this.parameters.name }
   get status () { return this.parameters.status }
   get visible () { return this.parameters.visible }

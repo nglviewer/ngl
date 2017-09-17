@@ -4,43 +4,76 @@
  * @private
  */
 
-import { Vector3 } from 'three'
+import { Vector3, Box3 } from 'three'
 import { Signal } from 'signals'
 
 import {
   Debug, Log, Mobile, ComponentRegistry, ParserRegistry
 } from '../globals'
-import { defaults } from '../utils'
+import { defaults, createParams, updateParams } from '../utils'
 import { degToRad, clamp, pclamp } from '../math/math-utils'
-import Counter from '../utils/counter.js'
-import Viewer from '../viewer/viewer.js'
-import MouseObserver from './mouse-observer.js'
+import Counter from '../utils/counter'
+import Viewer from '../viewer/viewer'
+import { ImageParameters } from '../viewer/viewer-utils'
+import MouseObserver from './mouse-observer'
 
-import TrackballControls from '../controls/trackball-controls.js'
-import PickingControls from '../controls/picking-controls.js'
-import ViewerControls from '../controls/viewer-controls.js'
-import AnimationControls from '../controls/animation-controls.js'
-import MouseControls from '../controls/mouse-controls.js'
-import KeyControls from '../controls/key-controls.js'
+import TrackballControls from '../controls/trackball-controls'
+import PickingControls from '../controls/picking-controls'
+import ViewerControls from '../controls/viewer-controls'
+import AnimationControls from '../controls/animation-controls'
+import MouseControls, { MouseControlPreset } from '../controls/mouse-controls'
+import KeyControls from '../controls/key-controls'
 
-import PickingBehavior from './picking-behavior.js'
-import MouseBehavior from './mouse-behavior.js'
-import AnimationBehavior from './animation-behavior.js'
-import KeyBehavior from './key-behavior.js'
+import PickingBehavior from './picking-behavior'
+import MouseBehavior from './mouse-behavior'
+import AnimationBehavior from './animation-behavior'
+import KeyBehavior from './key-behavior'
 
-import ComponentCollection from '../component/component-collection.js'
-import RepresentationCollection from '../component/representation-collection.js'
-import { autoLoad, getFileInfo } from '../loader/loader-utils'
+import Component, { ComponentParameters } from '../component/component'
+import RepresentationElement from '../component/representation-element'
+import StructureComponent from '../component/structure-component'
+import SurfaceComponent from '../component/surface-component'
+import VolumeComponent from '../component/volume-component'
+import ComponentCollection from '../component/component-collection'
+import RepresentationCollection from '../component/representation-collection'
+import { autoLoad, getFileInfo, LoaderParameters } from '../loader/loader-utils'
+import AtomProxy from '../proxy/atom-proxy'
+import Animation from '../animation/animation'
+import Selection from '../selection/selection'
 
-function matchName (name, comp) {
+import Structure from '../structure/structure'
+import Surface from '../surface/surface'
+import Volume from '../surface/volume'
+import Shape from '../geometry/shape'
+import Script from '../script'
+
+function matchName (name: string|RegExp, object: { name: string }) {
   if (name instanceof RegExp) {
-    return comp.name.match(name) !== null
+    return object.name.match(name) !== null
   } else {
-    return comp.name === name
+    return object.name === name
   }
 }
 
 const tmpZoomVector = new Vector3()
+
+declare global {
+  interface Document {
+    mozFullScreen: boolean
+    mozFullScreenEnabled: boolean
+    mozFullScreenElement: Element
+    mozCancelFullScreen(): void
+
+    msFullscreenEnabled: boolean
+    msFullscreenElement: Element
+    msExitFullscreen(): void
+  }
+
+  interface Element {
+    mozRequestFullScreen(): void
+    msRequestFullscreen(): void
+  }
+}
 
 /**
  * Stage parameter object.
@@ -70,18 +103,46 @@ const tmpZoomVector = new Vector3()
  * @property {Integer} hoverTimeout - timeout for hovering
  */
 
-/**
- * @example
- * stage.signals.componentAdded.add( function( component ){ ... } );
- *
- * @typedef {Object} StageSignals
- * @property {Signal<StageParameters>} parametersChanged - on parameters change
- * @property {Signal<Boolean>} fullscreenChanged - on fullscreen change
- * @property {Signal<Component>} componentAdded - when a component is added
- * @property {Signal<Component>} componentRemoved - when a component is removed
- * @property {Signal<PickingProxy|undefined>} clicked - on click
- * @property {Signal<PickingProxy|undefined>} hovered - on hover
- */
+interface StageSignals {
+  parametersChanged: Signal
+  fullscreenChanged: Signal
+  componentAdded: Signal
+  componentRemoved: Signal
+  clicked: Signal
+  hovered: Signal
+}
+
+type RenderQualityType = 'auto'|'low'|'medium'|'high'
+
+const StageDefaultParameters = {
+  impostor: true,
+  quality: 'medium' as RenderQualityType,
+  workerDefault: true,
+  sampleLevel: 0,
+  backgroundColor: 'black' as string|number,
+  rotateSpeed: 2.0,
+  zoomSpeed: 1.2,
+  panSpeed: 1.0,
+  clipNear: 0,
+  clipFar: 100,
+  clipDist: 10,
+  fogNear: 50,
+  fogFar: 100,
+  cameraFov: 40,
+  cameraType: 'perspective' as 'perspective'|'orthographic',
+  lightColor: 0xdddddd as string|number,
+  lightIntensity: 1.0,
+  ambientColor: 0xdddddd as string|number,
+  ambientIntensity: 0.2,
+  hoverTimeout: 0,
+  tooltip: true,
+  mousePreset: 'default' as MouseControlPreset
+}
+export type StageParameters = typeof StageDefaultParameters
+
+interface StageLoadFileParams extends LoaderParameters {
+  defaultRepresentation: boolean
+}
 
 /**
  * Stage class, central for creating molecular scenes with NGL.
@@ -90,63 +151,57 @@ const tmpZoomVector = new Vector3()
  * var stage = new Stage( "elementId", { backgroundColor: "white" } );
  */
 class Stage {
+  signals: StageSignals = {
+    parametersChanged: new Signal(),
+    fullscreenChanged: new Signal(),
+    componentAdded: new Signal(),
+    componentRemoved: new Signal(),
+    clicked: new Signal(),
+    hovered: new Signal()
+  }
+  parameters: StageParameters
+
   /**
-   * Create a Stage instance
-   * @param {String|Element} [idOrElement] - dom id or element
-   * @param {StageParameters} params - parameters object
+   * Counter that keeps track of various potentially long-running tasks,
+   * including file loading and surface calculation.
    */
-  constructor (idOrElement, params) {
-    /**
-     * Events emitted by the stage
-     * @type {StageSignals}
-     */
-    this.signals = {
-      parametersChanged: new Signal(),
-      fullscreenChanged: new Signal(),
+  tasks = new Counter()
+  compList: Component[] = []
+  defaultFileParams = {}
+  logList: string[] = []
 
-      componentAdded: new Signal(),
-      componentRemoved: new Signal(),
+  transformComponent?: Component
+  transformAtom?: AtomProxy
 
-      clicked: new Signal(),
-      hovered: new Signal()
-    }
+  viewer: Viewer
+  tooltip: HTMLElement
+  lastFullscreenElement: HTMLElement
 
-    //
+  mouseObserver: MouseObserver
+  viewerControls: ViewerControls
+  trackballControls: TrackballControls
+  pickingControls: PickingControls
+  animationControls: AnimationControls
+  mouseControls: MouseControls
+  keyControls: KeyControls
 
-    /**
-     * Counter that keeps track of various potentially long-running tasks,
-     * including file loading and surface calculation.
-     * @type {Counter}
-     */
-    this.tasks = new Counter()
-    this.compList = []
-    this.defaultFileParams = {}
-    this.logList = []
+  pickingBehavior: PickingBehavior
+  mouseBehavior: MouseBehavior
+  animationBehavior: AnimationBehavior
+  keyBehavior: KeyBehavior
 
-    /**
-     * @type {Component}
-     */
-    this.transformComponent = undefined
+  spinAnimation: Animation
+  rockAnimation: Animation
 
-    /**
-     * @type {AtomProxy}
-     */
-    this.transformAtom = undefined
-
-    //
-
+  constructor (idOrElement: string|HTMLElement, params: Partial<StageParameters> = {}) {
     this.viewer = new Viewer(idOrElement)
     if (!this.viewer.renderer) return
 
-    /**
-     * Tooltip element
-     * @type {HTMLElement}
-     */
     this.tooltip = document.createElement('div')
     Object.assign(this.tooltip.style, {
       display: 'none',
       position: 'fixed',
-      zIndex: 2 + (parseInt(this.viewer.container.style.zIndex) || 0),
+      zIndex: 2 + parseInt(this.viewer.container.style.zIndex || '0'),
       pointerEvents: 'none',
       backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
       color: 'lightgrey',
@@ -155,28 +210,12 @@ class Stage {
     })
     document.body.appendChild(this.tooltip)
 
-    /**
-     * @type {MouseObserver}
-     */
     this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement)
-
-    /**
-     * @type {ViewerControls}
-     */
     this.viewerControls = new ViewerControls(this)
     this.trackballControls = new TrackballControls(this)
     this.pickingControls = new PickingControls(this)
-    /**
-     * @type {AnimationControls}
-     */
     this.animationControls = new AnimationControls(this)
-    /**
-     * @type {MouseControls}
-     */
     this.mouseControls = new MouseControls(this)
-    /**
-     * @type {KeyControls}
-     */
     this.keyControls = new KeyControls(this)
 
     this.pickingBehavior = new PickingBehavior(this)
@@ -184,112 +223,14 @@ class Stage {
     this.animationBehavior = new AnimationBehavior(this)
     this.keyBehavior = new KeyBehavior(this)
 
-    /**
-     * @type {SpinAnimation}
-     */
     this.spinAnimation = this.animationControls.spin([ 0, 1, 0 ], 0.005)
     this.spinAnimation.pause(true)
-    /**
-     * @type {RockAnimation}
-     */
     this.rockAnimation = this.animationControls.rock([ 0, 1, 0 ], 0.005)
     this.rockAnimation.pause(true)
 
-    const p = Object.assign({
-      impostor: true,
-      quality: 'medium',
-      workerDefault: true,
-      sampleLevel: 0,
-      backgroundColor: 'black',
-      rotateSpeed: 2.0,
-      zoomSpeed: 1.2,
-      panSpeed: 1.0,
-      clipNear: 0,
-      clipFar: 100,
-      clipDist: 10,
-      fogNear: 50,
-      fogFar: 100,
-      cameraFov: 40,
-      cameraType: 'perspective',
-      lightColor: 0xdddddd,
-      lightIntensity: 1.0,
-      ambientColor: 0xdddddd,
-      ambientIntensity: 0.2,
-      hoverTimeout: 0,
-      tooltip: true,
-      mousePreset: 'default'
-    }, params)
-
-    this.parameters = {
-      backgroundColor: {
-        type: 'color'
-      },
-      quality: {
-        type: 'select', options: { auto: 'auto', low: 'low', medium: 'medium', high: 'high' }
-      },
-      sampleLevel: {
-        type: 'range', step: 1, max: 5, min: -1
-      },
-      impostor: {
-        type: 'boolean'
-      },
-      workerDefault: {
-        type: 'boolean'
-      },
-      rotateSpeed: {
-        type: 'number', precision: 1, max: 10, min: 0
-      },
-      zoomSpeed: {
-        type: 'number', precision: 1, max: 10, min: 0
-      },
-      panSpeed: {
-        type: 'number', precision: 1, max: 10, min: 0
-      },
-      clipNear: {
-        type: 'range', step: 1, max: 100, min: 0
-      },
-      clipFar: {
-        type: 'range', step: 1, max: 100, min: 0
-      },
-      clipDist: {
-        type: 'integer', max: 200, min: 0
-      },
-      fogNear: {
-        type: 'range', step: 1, max: 100, min: 0
-      },
-      fogFar: {
-        type: 'range', step: 1, max: 100, min: 0
-      },
-      cameraType: {
-        type: 'select', options: { perspective: 'perspective', orthographic: 'orthographic' }
-      },
-      cameraFov: {
-        type: 'range', step: 1, max: 120, min: 15
-      },
-      lightColor: {
-        type: 'color'
-      },
-      lightIntensity: {
-        type: 'number', precision: 2, max: 10, min: 0
-      },
-      ambientColor: {
-        type: 'color'
-      },
-      ambientIntensity: {
-        type: 'number', precision: 2, max: 10, min: 0
-      },
-      hoverTimeout: {
-        type: 'integer', max: 10000, min: -1
-      },
-      tooltip: {
-        type: 'boolean'
-      },
-      mousePreset: {
-        type: 'select', options: { default: 'default', pymol: 'pymol', coot: 'coot' }
-      }
-    }
-
-    this.setParameters(p)  // must come after the viewer has been instantiated
+    // must come after the viewer has been instantiated
+    this.parameters = createParams(params, StageDefaultParameters)
+    this.setParameters(this.parameters)
 
     this.viewer.animate()
   }
@@ -297,61 +238,45 @@ class Stage {
   /**
    * Set stage parameters
    */
-  setParameters (params) {
-    const p = Object.assign({}, params)
+  setParameters (params: Partial<StageParameters> = {}) {
+    updateParams(this.parameters, params)
+
+    const p = params
     const tp = this.parameters
+
     const viewer = this.viewer
     const controls = this.trackballControls
 
-    for (let name in p) {
-      if (p[ name ] === undefined) continue
-      if (!tp[ name ]) continue
-
-      if (tp[ name ].int) p[ name ] = parseInt(p[ name ])
-      if (tp[ name ].float) p[ name ] = parseFloat(p[ name ])
-
-      tp[ name ].value = p[ name ]
-    }
-
     // apply parameters
-    if (p.quality !== undefined) this.setQuality(p.quality)
-    if (p.impostor !== undefined) this.setImpostor(p.impostor)
-    if (p.rotateSpeed !== undefined) controls.rotateSpeed = p.rotateSpeed
-    if (p.zoomSpeed !== undefined) controls.zoomSpeed = p.zoomSpeed
-    if (p.panSpeed !== undefined) controls.panSpeed = p.panSpeed
-    if (p.mousePreset !== undefined) this.mouseControls.preset(p.mousePreset)
-    this.mouseObserver.setParameters({ hoverTimeout: p.hoverTimeout })
-    viewer.setClip(p.clipNear, p.clipFar, p.clipDist)
-    viewer.setFog(undefined, p.fogNear, p.fogFar)
-    viewer.setCamera(p.cameraType, p.cameraFov)
-    viewer.setSampling(p.sampleLevel)
-    viewer.setBackground(p.backgroundColor)
-    viewer.setLight(
-      p.lightColor, p.lightIntensity, p.ambientColor, p.ambientIntensity
-    )
+    if (p.quality !== undefined) this.setQuality(tp.quality)
+    if (p.impostor !== undefined) this.setImpostor(tp.impostor)
+    if (p.rotateSpeed !== undefined) controls.rotateSpeed = tp.rotateSpeed
+    if (p.zoomSpeed !== undefined) controls.zoomSpeed = tp.zoomSpeed
+    if (p.panSpeed !== undefined) controls.panSpeed = tp.panSpeed
+    if (p.mousePreset !== undefined) this.mouseControls.preset(tp.mousePreset)
+    this.mouseObserver.setParameters({ hoverTimeout: tp.hoverTimeout })
+    viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist)
+    viewer.setFog(undefined, tp.fogNear, tp.fogFar)
+    viewer.setCamera(tp.cameraType, tp.cameraFov)
+    viewer.setSampling(tp.sampleLevel)
+    viewer.setBackground(tp.backgroundColor)
+    viewer.setLight(tp.lightColor, tp.lightIntensity, tp.ambientColor, tp.ambientIntensity)
 
-    this.signals.parametersChanged.dispatch(
-      this.getParameters()
-    )
+    this.signals.parametersChanged.dispatch(this.getParameters())
 
     return this
   }
 
-  log (msg) {
+  log (msg: string) {
     console.log('STAGE LOG', msg)
     this.logList.push(msg)
   }
 
   /**
    * Get stage parameters
-   * @return {StageParameters} parameter object
    */
   getParameters () {
-    const params = {}
-    for (let name in this.parameters) {
-      params[ name ] = this.parameters[ name ].value
-    }
-    return params
+    return Object.assign({}, this.parameters)
   }
 
   /**
@@ -359,19 +284,19 @@ class Stage {
    * @param  {StructureComponent|SurfaceComponent} object - component to create the representations for
    * @return {undefined}
    */
-  defaultFileRepresentation (object) {
-    if (object.type === 'structure') {
-      object.setSelection('/0')
+  defaultFileRepresentation (component: Component) {
+    if (component instanceof StructureComponent) {
+      component.setSelection('/0')
 
       let atomCount, residueCount, instanceCount
-      const structure = object.structure
+      const structure = component.structure
 
       if (structure.biomolDict.BU1) {
         const assembly = structure.biomolDict.BU1
         atomCount = assembly.getAtomCount(structure)
         residueCount = assembly.getResidueCount(structure)
         instanceCount = assembly.getInstanceCount()
-        object.setDefaultAssembly('BU1')
+        component.setDefaultAssembly('BU1')
       } else {
         atomCount = structure.getModelProxy(0).atomCount
         residueCount = structure.getModelProxy(0).residueCount
@@ -392,7 +317,7 @@ class Stage {
       let colorScheme = 'chainname'
       let colorScale = 'RdYlBu'
       let colorReverse = false
-      if (structure.getChainnameCount('polymer and /0') === 1) {
+      if (structure.getChainnameCount(new Selection('polymer and /0')) === 1) {
         colorScheme = 'residueindex'
         colorScale = 'spectral'
         colorReverse = true
@@ -401,7 +326,7 @@ class Stage {
       if (Debug) console.log(sizeScore, atomCount, instanceCount, backboneOnly)
 
       if (residueCount / instanceCount < 4) {
-        object.addRepresentation('ball+stick', {
+        component.addRepresentation('ball+stick', {
           colorScheme: 'element',
           scale: 2.0,
           aspectRatio: 1.5,
@@ -409,10 +334,7 @@ class Stage {
           bondSpacing: 0.75,
           quality: 'auto'
         })
-      } else if (
-        (instanceCount > 5 && sizeScore > 15000) ||
-        sizeScore > 700000
-      ) {
+      } else if ((instanceCount > 5 && sizeScore > 15000) || sizeScore > 700000) {
         let scaleFactor = (
           Math.min(
             1.5,
@@ -424,57 +346,45 @@ class Stage {
         )
         if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.15)
 
-        object.addRepresentation('surface', {
+        component.addRepresentation('surface', {
+          colorScheme, colorScale, colorReverse,
           sele: 'polymer',
           surfaceType: 'sas',
           probeRadius: 1.4,
           scaleFactor: scaleFactor,
-          colorScheme: colorScheme,
-          colorScale: colorScale,
-          colorReverse: colorReverse,
           useWorker: false
         })
       } else if (sizeScore > 250000) {
-        object.addRepresentation('backbone', {
-          lineOnly: true,
-          colorScheme: colorScheme,
-          colorScale: colorScale,
-          colorReverse: colorReverse
+        component.addRepresentation('backbone', {
+          colorScheme, colorScale, colorReverse,
+          lineOnly: true
         })
       } else if (sizeScore > 100000) {
-        object.addRepresentation('backbone', {
+        component.addRepresentation('backbone', {
+          colorScheme, colorScale, colorReverse,
           quality: 'low',
           disableImpostor: true,
-          colorScheme: colorScheme,
-          colorScale: colorScale,
-          colorReverse: colorReverse,
           scale: 2.0
         })
       } else if (sizeScore > 80000) {
-        object.addRepresentation('backbone', {
-          colorScheme: colorScheme,
-          colorScale: colorScale,
-          colorReverse: colorReverse,
+        component.addRepresentation('backbone', {
+          colorScheme, colorScale, colorReverse,
           scale: 2.0
         })
       } else {
-        object.addRepresentation('cartoon', {
-          colorScheme: colorScheme,
-          colorScale: colorScale,
-          colorReverse: colorReverse,
+        component.addRepresentation('cartoon', {
+          colorScheme, colorScale, colorReverse,
           scale: 0.7,
           aspectRatio: 5,
           quality: 'auto'
         })
         if (sizeScore < 50000) {
-          object.addRepresentation('base', {
-            colorScheme: colorScheme,
-            colorScale: colorScale,
-            colorReverse: colorReverse,
+          component.addRepresentation('base', {
+            colorScheme, colorScale, colorReverse,
             quality: 'auto'
           })
         }
-        object.addRepresentation('ball+stick', {
+        component.addRepresentation('ball+stick', {
           sele: 'ligand',
           colorScheme: 'element',
           scale: 2.0,
@@ -486,11 +396,13 @@ class Stage {
       }
 
       // add frames as trajectory
-      if (object.structure.frames.length) {
-        object.addTrajectory()
+      if (component.structure.frames.length) {
+        component.addTrajectory()
       }
-    } else if (object.type === 'surface' || object.type === 'volume') {
-      object.addRepresentation('surface')
+    } else if (component instanceof SurfaceComponent) {
+      component.addRepresentation('surface')
+    } else if (component instanceof VolumeComponent) {
+      component.addRepresentation('surface')
     }
 
     this.tasks.onZeroOnce(this.autoView, this)
@@ -530,14 +442,14 @@ class Stage {
    *                   a {@link SurfaceComponent} or a {@link ScriptComponent} object,
    *                   depending on the type of the loaded file.
    */
-  loadFile (path, params) {
+  loadFile (path: string|File|Blob, params: Partial<StageLoadFileParams> = {}) {
     const p = Object.assign({}, this.defaultFileParams, params)
     const name = getFileInfo(path).name
 
     this.tasks.increment()
     this.log(`loading file '${name}'`)
 
-    const onLoadFn = (object) => {
+    const onLoadFn = (object: Structure|Surface|Volume) => {
       this.log(`loaded '${name}'`)
 
       const component = this.addComponentFromObject(object, p)
@@ -549,7 +461,7 @@ class Stage {
       return component
     }
 
-    const onErrorFn = (e) => {
+    const onErrorFn = (e: Error|string) => {
       this.tasks.decrement()
       this.log(`error loading file: '${e}'`)
     }
@@ -568,13 +480,13 @@ class Stage {
     return promise.then(onLoadFn, onErrorFn)
   }
 
-  loadScript (path) {
+  loadScript (path: string|File|Blob) {
     const name = getFileInfo(path).name
 
     this.log(`loading script '${name}'`)
 
     return autoLoad(path).then(
-      (script) => {
+      (script: Script) => {
         this.tasks.increment()
         this.log(`running script '${name}'`)
         script.run(this).then(() => {
@@ -583,7 +495,7 @@ class Stage {
         })
         this.log(`called script '${name}'`)
       },
-      (error) => {
+      (error: Error|string) => {
         this.tasks.decrement()
         this.log(`errored script '${name}' "${error}"`)
       }
@@ -595,24 +507,20 @@ class Stage {
    * @param {Component} component - the component to add
    * @return {undefined}
    */
-  addComponent (component) {
+  addComponent (component: Component) {
     if (!component) {
       Log.warn('Stage.addComponent: no component given')
       return
     }
 
     this.compList.push(component)
-
     this.signals.componentAdded.dispatch(component)
   }
 
   /**
    * Create a component from the given object and add to the stage
-   * @param {Shape|Structure|Surface|Volume} object - the object to add
-   * @param {ComponentParameters} params - parameter object
-   * @return {Component} the created component
    */
-  addComponentFromObject (object, params) {
+  addComponentFromObject (object: Structure|Surface|Volume|Shape, params: Partial<ComponentParameters> = {}) {
     const CompClass = ComponentRegistry.get(object.type)
 
     if (CompClass) {
@@ -629,7 +537,7 @@ class Stage {
    * @param  {Component} component - the component to remove
    * @return {undefined}
    */
-  removeComponent (component) {
+  removeComponent (component: Component) {
     const idx = this.compList.indexOf(component)
     if (idx !== -1) {
       this.compList.splice(idx, 1)
@@ -640,15 +548,9 @@ class Stage {
 
   /**
    * Remove all components from the stage
-   * @param  {String} [type] - component type to remove
-   * @return {undefined}
    */
-  removeAllComponents (type) {
-    this.compList.slice().forEach(function (o) {
-      if (!type || o.type === type) {
-        this.removeComponent(o)
-      }
-    }, this)
+  removeAllComponents () {
+    this.compList.slice().forEach(o => this.removeComponent(o))
   }
 
   /**
@@ -665,7 +567,7 @@ class Stage {
    * @param {String} height - CSS height value
    * @return {undefined}
    */
-  setSize (width, height) {
+  setSize (width: string, height: string) {
     const container = this.viewer.container
 
     if (container !== document.body) {
@@ -681,10 +583,10 @@ class Stage {
    *                               defaults to the viewer container
    * @return {undefined}
    */
-  toggleFullscreen (element) {
+  toggleFullscreen (element: HTMLElement) {
     if (!document.fullscreenEnabled && !document.mozFullScreenEnabled &&
-            !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
-        ) {
+        !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
+    ) {
       Log.log('fullscreen mode (currently) not possible')
       return
     }
@@ -703,8 +605,8 @@ class Stage {
     function resizeElement () {
       if (!getFullscreenElement() && self.lastFullscreenElement) {
         const element = self.lastFullscreenElement
-        element.style.width = element.dataset.normalWidth
-        element.style.height = element.dataset.normalHeight
+        element.style.width = element.dataset.normalWidth || ''
+        element.style.height = element.dataset.normalHeight || ''
 
         document.removeEventListener('fullscreenchange', resizeElement)
         document.removeEventListener('mozfullscreenchange', resizeElement)
@@ -719,8 +621,8 @@ class Stage {
     //
 
     if (!getFullscreenElement()) {
-      element.dataset.normalWidth = element.style.width
-      element.dataset.normalHeight = element.style.height
+      element.dataset.normalWidth = element.style.width || ''
+      element.dataset.normalHeight = element.style.height || ''
       element.style.width = window.screen.width + 'px'
       element.style.height = window.screen.height + 'px'
 
@@ -762,7 +664,7 @@ class Stage {
    * @param {Boolean} flag - if true start rocking and stop spinning
    * @return {undefined}
    */
-  setSpin (flag) {
+  setSpin (flag: boolean) {
     if (flag) {
       this.spinAnimation.resume(true)
       this.rockAnimation.pause(true)
@@ -776,7 +678,7 @@ class Stage {
    * @param {Boolean} flag - if true start rocking and stop spinning
    * @return {undefined}
    */
-  setRock (flag) {
+  setRock (flag: boolean) {
     if (flag) {
       this.rockAnimation.resume(true)
       this.spinAnimation.pause(true)
@@ -801,7 +703,7 @@ class Stage {
     this.setRock(this.rockAnimation.paused)
   }
 
-  setFocus (value) {
+  setFocus (value: number) {
     const clipNear = clamp(value / 2, 0, 49.9)
     const clipFar = 100 - clipNear
     const diffHalf = (clipFar - clipNear) / 2
@@ -814,7 +716,7 @@ class Stage {
     })
   }
 
-  getZoomForBox (boundingBox) {
+  getZoomForBox (boundingBox: Box3) {
     const bbSize = boundingBox.getSize(tmpZoomVector)
     const maxSize = Math.max(bbSize.x, bbSize.y, bbSize.z)
     const minSize = Math.min(bbSize.x, bbSize.y, bbSize.z)
@@ -829,7 +731,7 @@ class Stage {
     distance = Math.abs(
       ((distance * 0.5) / aspectFactor) / Math.sin(fov / 2)
     )
-    distance += this.parameters.clipDist.value
+    distance += this.parameters.clipDist
     return -distance
   }
 
@@ -841,7 +743,7 @@ class Stage {
     return this.getZoomForBox(this.getBox())
   }
 
-  getCenter (optionalTarget) {
+  getCenter (optionalTarget?: Vector3) {
     return this.getBox().getCenter(optionalTarget)
   }
 
@@ -850,7 +752,7 @@ class Stage {
    * @param  {Integer} duration - animation time in milliseconds
    * @return {undefined}
    */
-  autoView (duration) {
+  autoView (duration?: number) {
     this.animationControls.zoomMove(
       this.getCenter(),
       this.getZoom(),
@@ -860,31 +762,24 @@ class Stage {
 
   /**
    * Make image from what is shown in a viewer canvas
-   * @param  {ImageParameters} params - image generation parameters
-   * @return {Promise} A Promise object that resolves to an image {@link Blob}.
    */
-  makeImage (params) {
-    const viewer = this.viewer
-    const tasks = this.tasks
-
-    return new Promise(function (resolve, reject) {
-      function makeImage () {
-        tasks.increment()
-        viewer.makeImage(params).then(function (blob) {
-          tasks.decrement()
+  makeImage (params: Partial<ImageParameters> = {}) {
+    return new Promise<Blob>((resolve, reject) => {
+      this.tasks.onZeroOnce(() => {
+        this.tasks.increment()
+        this.viewer.makeImage(params).then(blob => {
+          this.tasks.decrement()
           resolve(blob)
-        }).catch(function (e) {
-          tasks.decrement()
+        }).catch(e => {
+          this.tasks.decrement()
           reject(e)
         })
-      }
-
-      tasks.onZeroOnce(makeImage)
+      })
     })
   }
 
-  setImpostor (value) {
-    this.parameters.impostor.value = value
+  setImpostor (value: boolean) {
+    this.parameters.impostor = value
 
     const types = [
       'spacefill', 'ball+stick', 'licorice', 'hyperball',
@@ -899,14 +794,14 @@ class Stage {
         return
       }
 
-      const p = repr.getParameters()
+      const p = repr.getParameters() as any  // TODO
       p.disableImpostor = !value
       repr.build(p)
     })
   }
 
-  setQuality (value) {
-    this.parameters.quality.value = value
+  setQuality (value: RenderQualityType) {
+    this.parameters.quality = value
 
     const types = [
       'tube', 'cartoon', 'ribbon', 'trace', 'rope'
@@ -921,7 +816,7 @@ class Stage {
     this.eachRepresentation(function (repr) {
       if (repr.type === 'script') return
 
-      const p = repr.getParameters()
+      const p = repr.getParameters() as any  // TODO
 
       if (!types.includes(repr.getType())) {
         if (!impostorTypes.includes(repr.getType())) {
@@ -929,7 +824,7 @@ class Stage {
         }
 
         if (!p.disableImpostor) {
-          repr.repr.quality = value
+          (repr.repr as any).quality = value  // TODO
           return
         }
       }
@@ -941,62 +836,41 @@ class Stage {
 
   /**
    * Iterator over each component and executing the callback
-   * @param  {Function} callback - function to execute
-   * @param  {String}   type - limit iteration to components of this type
-   * @return {undefined}
    */
-  eachComponent (callback, type) {
-    this.compList.slice().forEach(function (o, i) {
-      if (!type || o.type === type) {
-        callback(o, i)
-      }
-    })
+  eachComponent (callback: (component: Component) => void) {
+    this.compList.slice().forEach(o => callback(o))
   }
 
   /**
    * Iterator over each representation and executing the callback
-   * @param  {Function} callback - function to execute
-   * @param  {String}   type - limit iteration to components of this type
-   * @return {undefined}
    */
-  eachRepresentation (callback, type) {
-    this.eachComponent(function (comp) {
-      comp.reprList.slice().forEach(function (repr) {
-        callback(repr, comp)
-      })
-    }, type)
+  eachRepresentation (callback: (repr: RepresentationElement, comp: Component) => void) {
+    this.eachComponent(comp => {
+      comp.reprList.slice().forEach(repr => callback(repr, comp))
+    })
   }
 
   /**
    * Get collection of components by name
-   * @param  {String|RegExp}   name - the component name
-   * @param  {String} type - limit iteration to components of this type
-   * @return {ComponentCollection} collection of selected components
    */
-  getComponentsByName (name, type) {
-    const compList = []
+  getComponentsByName (name: string|RegExp) {
+    const compList: Component[] = []
 
-    this.eachComponent(function (comp) {
-      if (name === undefined || matchName(name, comp)) {
-        compList.push(comp)
-      }
-    }, type)
+    this.eachComponent(comp => {
+      if (name === undefined || matchName(name, comp)) compList.push(comp)
+    })
 
     return new ComponentCollection(compList)
   }
 
   /**
    * Get collection of components by object
-   * @param  {Object} object - the object to find
-   * @return {ComponentCollection} collection of selected components
    */
-  getComponentsByObject (object) {
-    const compList = []
+  getComponentsByObject (object: Structure|Surface|Volume|Shape) {
+    const compList: Component[] = []
 
-    this.eachComponent(function (comp) {
-      if (comp[ comp.type ] === object) {
-        compList.push(comp)
-      }
+    this.eachComponent(comp => {
+      if (comp.object === object) compList.push(comp)
     })
 
     return new ComponentCollection(compList)
@@ -1004,39 +878,19 @@ class Stage {
 
   /**
    * Get collection of representations by name
-   * @param  {String|RegExp}   name - the representation name
-   * @param  {String} type - limit iteration to components of this type
-   * @return {RepresentationCollection} collection of selected components
    */
-  getRepresentationsByName (name, type) {
-    let compName, reprName
+  getRepresentationsByName (name: string|RegExp) {
+    const reprList: RepresentationElement[] = []
 
-    if (typeof name !== 'object' || name instanceof RegExp) {
-      compName = undefined
-      reprName = name
-    } else {
-      compName = name.comp
-      reprName = name.repr
-    }
-
-    const reprList = []
-
-    this.eachRepresentation(function (repr, comp) {
-      if (compName !== undefined && !matchName(compName, comp)) {
-        return
-      }
-
-      if (reprName === undefined || matchName(reprName, repr)) {
-        reprList.push(repr)
-      }
-    }, type)
+    this.eachRepresentation((repr, comp) => {
+      if (name === undefined || matchName(name, repr)) reprList.push(repr)
+    })
 
     return new RepresentationCollection(reprList)
   }
 
   /**
    * Cleanup when disposing of a stage object
-   * @return {undefined}
    */
   dispose () {
     this.tasks.dispose()

@@ -85,6 +85,8 @@ class TrackballControls {
   }
 
   private _transformPanVector () {
+    if (!this.component) return
+
     tmpPanMatrix.extractRotation(this.component.transform)
     tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
     tmpPanMatrix.getInverse(tmpPanMatrix)

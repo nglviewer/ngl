@@ -101,7 +101,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {SpinAnimation} the animation
    */
-  spin (axis: Vector3, angle: number, duration?: number) {
+  spin (axis: Vector3|number[], angle?: number, duration?: number) {
     return this.add(
       new SpinAnimation(duration, this.controls, axis, angle)
     )
@@ -115,7 +115,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {SpinAnimation} the animation
    */
-  rock (axis: Vector3, angle: number, end: number, duration?: number) {
+  rock (axis: Vector3|number[], angle?: number, end?: number, duration?: number) {
     return this.add(
       new RockAnimation(duration, this.controls, axis, angle, end)
     )
@@ -127,7 +127,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {RotateAnimation} the animation
    */
-  rotate (rotateTo: Quaternion, duration?: number) {
+  rotate (rotateTo: Quaternion|number[], duration?: number) {
     const rotateFrom = this.viewer.rotationGroup.quaternion.clone()
 
     return this.add(
@@ -141,7 +141,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {MoveAnimation} the animation
    */
-  move (moveTo: Vector3, duration?: number) {
+  move (moveTo: Vector3|number[], duration?: number) {
     const moveFrom = this.controls.position.clone().negate()
 
     return this.add(
@@ -183,7 +183,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {Array} the animations
    */
-  orient (orientTo: number[]|Matrix4, duration?: number) {
+  orient (orientTo: Matrix4|number[], duration?: number) {
     const p = new Vector3()
     const q = new Quaternion()
     const s = new Vector3()
@@ -231,7 +231,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {SpinAnimation} the animation
    */
-  spinComponent (component: Component, axis: Vector3, angle: number, duration?: number) {
+  spinComponent (component: Component, axis?: Vector3|number[], angle?: number, duration?: number) {
     return this.add(
       // TODO
       new SpinAnimation(duration, component.controls as any, axis, angle)
@@ -247,7 +247,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {SpinAnimation} the animation
    */
-  rockComponent (component: Component, axis: Vector3, angle: number, end: number, duration?: number) {
+  rockComponent (component: Component, axis: Vector3|number[], angle?: number, end?: number, duration?: number) {
     return this.add(
        // TODO
       new RockAnimation(duration, component.controls as any, axis, angle, end)
@@ -261,7 +261,7 @@ class AnimationControls {
    * @param  {Number} duration - animation time in milliseconds
    * @return {MoveAnimation} the animation
    */
-  moveComponent (component: Component, moveTo: Vector3, duration?: number) {
+  moveComponent (component: Component, moveTo: Vector3|number[], duration?: number) {
     const moveFrom = component.controls.position.clone().negate()
 
     return this.add(

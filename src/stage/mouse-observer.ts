@@ -9,6 +9,8 @@ import { Signal } from 'signals'
 
 import { LeftMouseButton, RightMouseButton } from '../constants.js'
 import { defaults } from '../utils'
+import Viewer from '../viewer/viewer'
+import MouseControls from '../controls/mouse-controls'
 
 /**
  * @example
@@ -23,13 +25,13 @@ import { defaults } from '../utils'
  * @property {Signal} hovered - on hover
  */
 
-function getTouchDistance (event) {
+function getTouchDistance (event: TouchEvent) {
   const dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX
   const dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-function getMouseButtons (event) {
+function getMouseButtons (event: MouseEvent) {
   if (typeof event === 'object') {
     if ('buttons' in event) {
       return event.buttons
@@ -54,6 +56,22 @@ function getMouseButtons (event) {
     }
   }
   return 0
+}
+
+interface MouseSignals {
+  moved: Signal  // on move: deltaX, deltaY
+  scrolled: Signal  // on scroll: delta
+  dragged: Signal  // on drag: deltaX, deltaY
+  dropped: Signal  // on drop
+  clicked: Signal  // on click
+  hovered: Signal  // on hover
+  doubleClicked: Signal
+}
+
+interface MouseParams {
+  hoverTimeout?: number
+  handleScroll?:boolean
+  doubleClickSpeed?: number
 }
 
 /**
@@ -84,6 +102,47 @@ function getMouseButtons (event) {
  * mouseObserver.signals.hovered.add( function(){ ... } );
  */
 class MouseObserver {
+  signals: MouseSignals = {
+    moved: new Signal(),
+    scrolled: new Signal(),
+    dragged: new Signal(),
+    dropped: new Signal(),
+    clicked: new Signal(),
+    hovered: new Signal(),
+    doubleClicked: new Signal()
+  }
+
+  hoverTimeout: number
+  handleScroll:boolean
+  doubleClickSpeed: number
+
+  viewer: Viewer
+  mouse: MouseObserver
+  controls: MouseControls
+
+  position = new Vector2()  // Position on page
+  prevPosition = new Vector2()  // Previous position on page
+  down = new Vector2()  // Position on page when clicked
+  canvasPosition = new Vector2()  // Position on dom element
+  prevClickCP = new Vector2()
+
+  moving = false  // Flag indicating if the mouse is moving
+  hovering = true  // Flag indicating if the mouse is hovering
+  scrolled = false  // Flag indicating if there was a scolling event since the last mouse move
+  lastMoved = Infinity  // Timestamp of last mouse move
+  which? = 0  // 0: No button; 1: Left button; 2: Middle button; 3: Right button
+  buttons? = 0  // 0: No button; 1: Left button; 2: Right button; 4: Middle button
+  pressed? = false  // Flag indicating if the mouse is pressed down
+  altKey = false  // Flag indicating if the alt key is pressed
+  ctrlKey = false  // Flag indicating if the ctrl key is pressed
+  metaKey = false  // Flag indicating if the meta key is pressed
+  shiftKey = false  // Flag indicating if the shift key is pressed
+
+  doubleClickPending: boolean
+  lastClicked: number
+  overElement: boolean
+  lastTouchDistance: number
+
   /**
    * @param  {Element} domElement - the dom element to observe mouse events in
    * @param  {Object} params - parameters object
@@ -92,107 +151,10 @@ class MouseObserver {
    * @param  {Boolean} params.handleScroll - whether or not to handle scroll events
    * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
    */
-  constructor (domElement, params) {
-    /**
-     * Events emitted by the mouse observer
-     * @type {MouseSignals}
-     */
-    this.signals = {
-      moved: new Signal(),
-      scrolled: new Signal(),
-      dragged: new Signal(),
-      dropped: new Signal(),
-      clicked: new Signal(),
-      hovered: new Signal(),
-      doubleClicked: new Signal()
-    }
-
-    var p = Object.assign({}, params)
-
-    this.hoverTimeout = defaults(p.hoverTimeout, 50)
-    this.handleScroll = defaults(p.handleScroll, true)
-    this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500)
-
-    this.domElement = domElement
-
-    /**
-     * Position on page
-     * @type {Vector2}
-     */
-    this.position = new Vector2()
-    /**
-     * Previous position on page
-     * @type {Vector2}
-     */
-    this.prevPosition = new Vector2()
-    /**
-     * Position on page when clicked
-     * @type {Vector2}
-     */
-    this.down = new Vector2()
-    /**
-     * Position on dom element
-     * @type {Vector2}
-     */
-    this.canvasPosition = new Vector2()
-    /**
-     * Flag indicating if the mouse is moving
-     * @type {Boolean}
-     */
-    this.moving = false
-    /**
-     * Flag indicating if the mouse is hovering
-     * @type {Boolean}
-     */
-    this.hovering = true
-    /**
-     * Flag indicating if there was a scolling event
-     * since the last mouse move
-     * @type {Boolean}
-     */
-    this.scrolled = false
-    /**
-     * Timestamp of last mouse move
-     * @type {Number}
-     */
-    this.lastMoved = Infinity
-    /**
-     * Indicates which mouse button was pressed:
-     * 0: No button; 1: Left button; 2: Middle button; 3: Right button
-     * @type {Integer}
-     */
-    this.which = undefined
-    /**
-     * Indicates which mouse buttons were pressed:
-     * 0: No button; 1: Left button; 2: Right button; 4: Middle button
-     * @type {Integer}
-     */
-    this.buttons = undefined
-    /**
-     * Flag indicating if the mouse is pressed down
-     * @type {Boolean}
-     */
-    this.pressed = undefined
-    /**
-     * Flag indicating if the alt key is pressed
-     * @type {Boolean}
-     */
-    this.altKey = undefined
-    /**
-     * Flag indicating if the ctrl key is pressed
-     * @type {Boolean}
-     */
-    this.ctrlKey = undefined
-    /**
-     * Flag indicating if the meta key is pressed
-     * @type {Boolean}
-     */
-    this.metaKey = undefined
-    /**
-     * Flag indicating if the shift key is pressed
-     * @type {Boolean}
-     */
-    this.shiftKey = undefined
+  constructor (readonly domElement: HTMLCanvasElement, params: MouseParams = {}) {
+    this.hoverTimeout = defaults(params.hoverTimeout, 50)
+    this.handleScroll = defaults(params.handleScroll, true)
+    this.doubleClickSpeed = defaults(params.doubleClickSpeed, 500)
 
     this._listen = this._listen.bind(this)
     this._onMousewheel = this._onMousewheel.bind(this)
@@ -216,8 +178,6 @@ class MouseObserver {
     document.addEventListener('touchstart', this._onTouchstart)
     document.addEventListener('touchend', this._onTouchend)
     document.addEventListener('touchmove', this._onTouchmove)
-
-    this.prevClickCP = new Vector2()
   }
 
   get key () {
@@ -229,9 +189,8 @@ class MouseObserver {
     return key
   }
 
-  setParameters (params) {
-    var p = Object.assign({}, params)
-    this.hoverTimeout = defaults(p.hoverTimeout, this.hoverTimeout)
+  setParameters (params: MouseParams = {}) {
+    this.hoverTimeout = defaults(params.hoverTimeout, this.hoverTimeout)
   }
 
   /**
@@ -265,7 +224,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousewheel (event) {
+  _onMousewheel (event: MouseWheelEvent) {
     if (event.target !== this.domElement || !this.handleScroll) {
       return
     }
@@ -297,7 +256,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousemove (event) {
+  _onMousemove (event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
       this.overElement = true
@@ -319,7 +278,7 @@ class MouseObserver {
     }
   }
 
-  _onMousedown (event) {
+  _onMousedown (event: MouseEvent) {
     if (event.target !== this.domElement) {
       return
     }
@@ -342,7 +301,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMouseup (event) {
+  _onMouseup (event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
@@ -367,13 +326,13 @@ class MouseObserver {
     // }
   }
 
-  _onContextmenu (event) {
+  _onContextmenu (event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
   }
 
-  _onTouchstart (event) {
+  _onTouchstart (event: TouchEvent) {
     if (event.target !== this.domElement) {
       return
     }
@@ -409,7 +368,7 @@ class MouseObserver {
     }
   }
 
-  _onTouchend (event) {
+  _onTouchend (event: TouchEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
@@ -418,7 +377,7 @@ class MouseObserver {
     this.pressed = undefined
   }
 
-  _onTouchmove (event) {
+  _onTouchmove (event: TouchEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
       this.overElement = true
@@ -481,7 +440,7 @@ class MouseObserver {
     return this.position.distanceTo(this.down)
   }
 
-  _setCanvasPosition (event) {
+  _setCanvasPosition (event: any) {  // TODO
     const box = this.domElement.getBoundingClientRect()
     let offsetX, offsetY
     if ('offsetX' in event && 'offsetY' in event) {
@@ -494,7 +453,7 @@ class MouseObserver {
     this.canvasPosition.set(offsetX, box.height - offsetY)
   }
 
-  _setKeys (event) {
+  _setKeys (event: MouseEvent|TouchEvent) {
     this.altKey = event.altKey
     this.ctrlKey = event.ctrlKey
     this.metaKey = event.metaKey

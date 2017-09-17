@@ -4,8 +4,17 @@
  * @private
  */
 
+import Stage from './stage'
+import MouseObserver from './mouse-observer'
+import Viewer from '../viewer/viewer'
+import MouseControls from '../controls/mouse-controls'
+
 class PickingBehavior {
-  constructor (stage) {
+  viewer: Viewer
+  mouse: MouseObserver
+  controls: MouseControls
+
+  constructor (readonly stage: Stage) {
     this.stage = stage
     this.mouse = stage.mouseObserver
     this.controls = stage.mouseControls
@@ -14,13 +23,13 @@ class PickingBehavior {
     this.mouse.signals.hovered.add(this._onHover, this)
   }
 
-  _onClick (x, y) {
+  _onClick (x: number, y: number) {
     const pickingProxy = this.stage.pickingControls.pick(x, y)
     this.stage.signals.clicked.dispatch(pickingProxy)
     this.controls.run('clickPick', pickingProxy)
   }
 
-  _onHover (x, y) {
+  _onHover (x: number, y: number) {
     const pickingProxy = this.stage.pickingControls.pick(x, y)
     if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
       this.stage.transformComponent = pickingProxy.component

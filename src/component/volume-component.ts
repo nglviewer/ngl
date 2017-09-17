@@ -27,15 +27,9 @@ class VolumeComponent extends Component {
    * @param {Volume} volume - volume object to wrap
    * @param {ComponentParameters} params - component parameters
    */
-  constructor (stage: Stage, readonly volume: Volume, params: ComponentParameters) {
+  constructor (stage: Stage, readonly volume: Volume, params: Partial<ComponentParameters> = {}) {
     super(stage, Object.assign({ name: volume.name }, params))
   }
-
-  /**
-   * Component type
-   * @type {String}
-   */
-  get type () { return 'volume' }
 
   /**
    * Add a new volume representation to the component

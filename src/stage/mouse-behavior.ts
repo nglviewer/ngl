@@ -4,8 +4,18 @@
  * @private
  */
 
+import Stage from './stage'
+import MouseObserver from './mouse-observer'
+import Viewer from '../viewer/viewer'
+import MouseControls from '../controls/mouse-controls'
+
 class MouseBehavior {
-  constructor (stage/*, params */) {
+  viewer: Viewer
+  mouse: MouseObserver
+  controls: MouseControls
+  domElement: HTMLCanvasElement
+
+  constructor (readonly stage: Stage) {
     this.stage = stage
     this.mouse = stage.mouseObserver
     this.controls = stage.mouseControls
@@ -22,23 +32,23 @@ class MouseBehavior {
     this.stage.tooltip.style.display = 'none'
   }
 
-  _onScroll (delta) {
+  _onScroll (delta: number) {
     this.controls.run('scroll', delta)
   }
 
-  _onDrag (dx, dy) {
+  _onDrag (dx: number, dy: number) {
     this.controls.run('drag', dx, dy)
   }
 
-  _onClick (x, y) {
+  _onClick (x: number, y: number) {
     this.controls.run('click', x, y)
   }
 
-  _onDblclick (x, y) {
+  _onDblclick (x: number, y: number) {
     this.controls.run('doubleClick', x, y)
   }
 
-  _onHover (x, y) {
+  _onHover (x: number, y: number) {
     this.controls.run('hover', x, y)
   }
 

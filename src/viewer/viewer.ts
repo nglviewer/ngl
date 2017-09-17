@@ -29,11 +29,11 @@ import {
   setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from '../globals'
 import { degToRad } from '../math/math-utils'
-import Stats from './stats.js'
-import { getShader } from '../shader/shader-utils.js'
-import { JitterVectors } from './viewer-constants.js'
+import Stats from './stats'
+import { getShader } from '../shader/shader-utils'
+import { JitterVectors } from './viewer-constants'
 import {
-  makeImage as _makeImage, testTextureSupport,
+  makeImage, ImageParameters, testTextureSupport,
   sortProjectedPosition, updateMaterialUniforms
 } from './viewer-utils'
 
@@ -720,8 +720,8 @@ export default class Viewer {
     })
   }
 
-  makeImage (params: any) {  // TODO
-    return _makeImage(this, params)
+  makeImage (params: Partial<ImageParameters> = {}) {
+    return makeImage(this, params)
   }
 
   setLight (color: Color|number|string, intensity: number, ambientColor: Color|number|string, ambientIntensity: number) {

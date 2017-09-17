@@ -123,7 +123,7 @@ const ImageDefaultParameters = {
   transparent: false,
   onProgress: undefined as Function|undefined
 }
-type ImageParameters = typeof ImageDefaultParameters
+export type ImageParameters = typeof ImageDefaultParameters
 
 /**
  * Make image from what is shown in a viewer canvas
@@ -192,7 +192,7 @@ export function makeImage (viewer: Viewer, params: Partial<ImageParameters> = {}
     }
   }
 
-  return new Promise(function (resolve, reject) {
+  return new Promise<Blob>(function (resolve, reject) {
     const tiledRenderer = new TiledRenderer(
       renderer, camera, viewer,
       { factor, antialias, onProgress, onFinish }

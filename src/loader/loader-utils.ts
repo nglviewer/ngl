@@ -111,7 +111,7 @@ export function getDataInfo (src: LoaderInput) {
  * @param  {LoaderParameters} params - loading parameters
  * @return {Promise} Promise resolves to the loaded data
  */
-export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters>) {
+export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters> = {}) {
   const p = Object.assign(getDataInfo(file), params)
 
   let LoaderClass

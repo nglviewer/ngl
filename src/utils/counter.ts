@@ -98,14 +98,14 @@ class Counter {
    * @param  {Object}   context - the context for the callback function
    * @return {undefined}
    */
-  onZeroOnce (callback: (delta: number) => void, context: any) {
+  onZeroOnce (callback: () => void, context?: any) {
     if (this.count === 0) {
-      callback.call(context, 0, 0)
+      callback.call(context)
     } else {
       const fn = () => {
         if (this.count === 0) {
           this.signals.countChanged.remove(fn, this)
-          callback.apply(context, arguments)
+          callback.call(context)
         }
       }
       this.signals.countChanged.add(fn, this)

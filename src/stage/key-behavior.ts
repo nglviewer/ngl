@@ -4,11 +4,19 @@
  * @private
  */
 
+import Stage from './stage'
+import Viewer from '../viewer/viewer'
+import KeyControls from '../controls/key-controls'
+
 class KeyBehavior {
-    /**
-     * @param {Stage} stage - the stage object
-     */
-  constructor (stage) {
+  viewer: Viewer
+  controls: KeyControls
+  domElement: HTMLCanvasElement
+
+  /**
+   * @param {Stage} stage - the stage object
+   */
+  constructor (readonly stage: Stage) {
     this.stage = stage
     this.controls = stage.keyControls
     this.domElement = stage.viewer.renderer.domElement
@@ -16,7 +24,7 @@ class KeyBehavior {
     // ensure the domElement is focusable
     this.domElement.setAttribute('tabIndex', '-1')
     this.domElement.style.outline = 'none'
-    this.domElement.autofocus = true
+    // this.domElement.autofocus = true
     this.domElement.focus()
 
     this._focusDomElement = this._focusDomElement.bind(this)
@@ -54,7 +62,7 @@ class KeyBehavior {
    * @param  {Event} event - key event
    * @return {undefined}
    */
-  _onKeypress (event) {
+  _onKeypress (event: KeyboardEvent) {
     // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
     this.controls.run(event.keyCode)
   }

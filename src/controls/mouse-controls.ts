@@ -8,7 +8,7 @@ import { MouseActionPresets, MouseActionCallback } from './mouse-actions.js'
 import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 
-type MouseControlPreset = keyof typeof MouseActionPresets
+export type MouseControlPreset = keyof typeof MouseActionPresets
 interface MouseControlsParams {
   preset?: MouseControlPreset
   disabled?: boolean

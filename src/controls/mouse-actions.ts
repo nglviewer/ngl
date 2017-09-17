@@ -7,7 +7,7 @@
 import PickingProxy from './picking-proxy'
 import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
-import RepresentationElement from '../component/representation-element'
+import SurfaceRepresentation from '../representation/surface-representation'
 
 type ScrollCallback = (stage: Stage, delta: number) => void
 type DragCallback = (stage: Stage, dx: number, dy: number) => void
@@ -61,11 +61,12 @@ class MouseActions {
    */
   static isolevelScroll (stage: Stage, delta: number) {
     const d = Math.sign(delta) / 5
-    stage.eachRepresentation(function (reprElem: RepresentationElement) {
-      if (reprElem.repr.type !== 'surface') return
-      const l = (reprElem.getParameters() as any).isolevel  // TODO
-      reprElem.setParameters({ isolevel: l + d })
-    }, 'volume')
+    stage.eachRepresentation((reprElem, comp) => {
+      if (reprElem.repr instanceof SurfaceRepresentation) {
+        const l = (reprElem.getParameters() as any).isolevel  // TODO
+        reprElem.setParameters({ isolevel: l + d })
+      }
+    })
   }
 
   /**

@@ -14,13 +14,13 @@ import _Promise from 'promise-polyfill'
  * @module NGL
  */
 
-import {
+export {
   Debug, setDebug,
   ScriptExtensions, ColormakerRegistry,
   DatasourceRegistry, DecompressorRegistry,
   ParserRegistry, RepresentationRegistry
 } from './globals'
-import { autoLoad, getDataInfo, getFileInfo } from './loader/loader-utils'
+export { autoLoad, getDataInfo, getFileInfo } from './loader/loader-utils'
 import Selection from './selection/selection'
 import PdbWriter from './writer/pdb-writer'
 import SdfWriter from './writer/sdf-writer'
@@ -31,10 +31,10 @@ import ComponentCollection from './component/component-collection'
 import RepresentationCollection from './component/representation-collection'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
-import { superpose } from './align/align-utils'
-import { guessElement } from './structure/structure-utils'
+export { superpose } from './align/align-utils'
+export { guessElement } from './structure/structure-utils'
 
-import {
+export {
   flatten, throttle, download, getQuery, uniqueArray
 } from './utils'
 import Queue from './utils/queue'
@@ -174,7 +174,7 @@ import MdsrvDatasource from './datasource/mdsrv-datasource'
 
 //
 
-import {
+export {
   LeftMouseButton, MiddleMouseButton, RightMouseButton
 } from './constants'
 import MouseActions from './controls/mouse-actions'
@@ -182,18 +182,18 @@ import KeyActions from './controls/key-actions'
 
 //
 
-import { Signal } from 'signals'
-import {
+export { Signal } from 'signals'
+export {
   Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color
 } from 'three'
 
 //
 
-import Version from './version'
+export { UIStageParameters } from './ui/parameters'
 
-// interface Window {
-//     Promise: _Promise<any>
-// }
+//
+
+import Version from './version'
 
 if (!(window as any).Promise) {
   (window as any).Promise = _Promise
@@ -201,17 +201,8 @@ if (!(window as any).Promise) {
 
 export {
   Version,
-  Debug,
-  setDebug,
-  ScriptExtensions,
-  DatasourceRegistry,
-  DecompressorRegistry,
   StaticDatasource,
   MdsrvDatasource,
-  ParserRegistry,
-  autoLoad,
-  RepresentationRegistry,
-  ColormakerRegistry,
   Colormaker,
   Selection,
   PdbWriter,
@@ -225,19 +216,8 @@ export {
   Assembly,
   TrajectoryPlayer,
 
-  superpose,
-  guessElement,
-
-  flatten,
-
   Queue,
   Counter,
-  throttle,
-  download,
-  getQuery,
-  getDataInfo,
-  getFileInfo,
-  uniqueArray,
 
   BufferRepresentation,
   ArrowBuffer,
@@ -259,21 +239,6 @@ export {
   MolecularSurface,
   Volume,
 
-  LeftMouseButton,
-  MiddleMouseButton,
-  RightMouseButton,
   MouseActions,
-  KeyActions,
-
-  Signal,
-
-  Matrix3,
-  Matrix4,
-  Vector2,
-  Vector3,
-  Box3,
-  Quaternion,
-  Euler,
-  Plane,
-  Color
+  KeyActions
 }

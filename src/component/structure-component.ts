@@ -55,7 +55,7 @@ class StructureComponent extends Component {
   readonly trajList: TrajectoryElement[] = []
 
   constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
-    super(stage, Object.assign({ name: structure.name }, params))
+    super(stage, structure, Object.assign({ name: structure.name }, params))
 
     this.signals = Object.assign(this.signals, {
       trajectoryAdded: new Signal(),
@@ -66,12 +66,6 @@ class StructureComponent extends Component {
     this.initSelection(this.parameters.sele)
     this.setDefaultAssembly(this.parameters.defaultAssembly)
   }
-
-  /**
-   * Component type
-   * @type {String}
-   */
-  get type () { return 'structure' }
 
   /**
    * Initialize selection
@@ -158,7 +152,7 @@ class StructureComponent extends Component {
   /**
    * Add a new trajectory component to the structure
    */
-  addTrajectory (trajPath: string, params: { [k: string]: any } = {}) {
+  addTrajectory (trajPath = '', params: { [k: string]: any } = {}) {
     var traj = makeTrajectory(trajPath, this.structureView, params)
 
     traj.signals.frameChanged.add(() => {

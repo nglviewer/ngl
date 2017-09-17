@@ -126,7 +126,7 @@ class PickingProxy {
    * @type {Component}
    */
   get component () {
-    return this.stage.getComponentsByObject(this.picker.data).list[ 0 ]
+    return this.stage.getComponentsByObject(this.picker.data as any).list[ 0 ]  // TODO
   }
 
   /**

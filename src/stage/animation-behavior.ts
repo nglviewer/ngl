@@ -4,15 +4,23 @@
  * @private
  */
 
+import Stage from './stage'
+import Viewer from '../viewer/viewer'
+import Stats from '../viewer/stats'
+import AnimationControls from '../controls/animation-controls'
+
 class AnimationBehavior {
-  constructor (stage) {
+  viewer: Viewer
+  animationControls: AnimationControls
+
+  constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
     this.animationControls = stage.animationControls
 
     this.viewer.signals.ticked.add(this._onTick, this)
   }
 
-  _onTick (stats) {
+  _onTick (stats: Stats) {
     this.animationControls.run(stats)
   }
 

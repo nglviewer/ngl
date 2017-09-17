@@ -30,35 +30,36 @@ NGL.Widget.prototype = {
   constructor: NGL.Widget
 }
 
-NGL.createParameterInput = function (p) {
+NGL.createParameterInput = function (p, v) {
   if (!p) return
 
+  var value = v === undefined ? p.value : v
   var input
 
   if (p.type === 'number') {
-    input = new UI.Number(parseFloat(p.value))
+    input = new UI.Number(parseFloat(value))
       .setRange(p.min, p.max)
       .setPrecision(p.precision)
   } else if (p.type === 'integer') {
-    input = new UI.Integer(parseInt(p.value))
+    input = new UI.Integer(parseInt(value))
       .setRange(p.min, p.max)
   } else if (p.type === 'range') {
-    input = new UI.Range(p.min, p.max, p.value, p.step)
-      .setValue(parseFloat(p.value))
+    input = new UI.Range(p.min, p.max, value, p.step)
+      .setValue(parseFloat(value))
   } else if (p.type === 'boolean') {
-    input = new UI.Checkbox(p.value)
+    input = new UI.Checkbox(value)
   } else if (p.type === 'text') {
-    input = new UI.Input(p.value)
+    input = new UI.Input(value)
   } else if (p.type === 'select') {
     input = new UI.Select()
       .setWidth('')
       .setOptions(p.options)
-      .setValue(p.value)
+      .setValue(value)
   } else if (p.type === 'color') {
     input = new UI.ColorPopupMenu(p.label)
-      .setValue(p.value)
+      .setValue(value)
   } else if (p.type === 'vector3') {
-    input = new UI.Vector3(p.value)
+    input = new UI.Vector3(value)
       .setPrecision(p.precision)
   } else if (p.type === 'hidden') {
 
@@ -337,7 +338,7 @@ NGL.ViewportWidget = function (stage) {
   container.dom = viewer.container
   container.setPosition('absolute')
 
-    // event handlers
+  // event handlers
 
   container.dom.addEventListener('dragover', function (e) {
     e.stopPropagation()
@@ -960,10 +961,10 @@ NGL.PreferencesWidget = function (stage, preferences) {
 
     //
 
-  Object.keys(stage.parameters).forEach(function (name) {
-    var p = stage.parameters[ name ]
+  Object.keys(NGL.UIStageParameters).forEach(function (name) {
+    var p = NGL.UIStageParameters[ name ]
     if (p.label === undefined) p.label = name
-    var input = NGL.createParameterInput(p)
+    var input = NGL.createParameterInput(p, stage.parameters[ name ])
 
     if (!input) return
 
@@ -1223,9 +1224,9 @@ NGL.SidebarWidget = function (stage) {
   ]
 
   paramNames.forEach(function (name) {
-    var p = stage.parameters[ name ]
+    var p = NGL.UIStageParameters[ name ]
     if (p.label === undefined) p.label = name
-    var input = NGL.createParameterInput(p)
+    var input = NGL.createParameterInput(p, stage.parameters[ name ])
 
     if (!input) return
 
