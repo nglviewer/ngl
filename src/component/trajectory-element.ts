@@ -91,6 +91,12 @@ class TrajectoryElement extends Element {
   }
 
   /**
+   * Component type
+   * @type {String}
+   */
+  get type () { return 'trajectory' }
+
+  /**
    * Set the frame of the trajectory
    * @param {Integer} i - frame number
    * @return {undefined}

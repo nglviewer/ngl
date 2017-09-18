@@ -84,6 +84,8 @@ abstract class Component {
     this.controls = new ComponentControls(this)
   }
 
+  abstract get type (): string
+
   get name () { return this.parameters.name }
   get status () { return this.parameters.status }
   get visible () { return this.parameters.visible }

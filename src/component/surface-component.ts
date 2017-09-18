@@ -28,8 +28,14 @@ class SurfaceComponent extends Component {
    * @param {ComponentParameters} params - component parameters
    */
   constructor (stage: Stage, readonly surface: Surface, params: Partial<ComponentParameters> = {}) {
-    super(stage, Object.assign({ name: surface.name }, params))
+    super(stage, surface, Object.assign({ name: surface.name }, params))
   }
+
+  /**
+   * Component type
+   * @type {String}
+   */
+  get type () { return 'surface' }
 
   /**
    * Add a new surface representation to the component

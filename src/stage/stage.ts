@@ -787,16 +787,12 @@ class Stage {
       'dot'
     ]
 
-    this.eachRepresentation(function (repr) {
-      if (repr.type === 'script') return
+    this.eachRepresentation(function (reprElem) {
+      if (!types.includes(reprElem.getType())) return
 
-      if (!types.includes(repr.getType())) {
-        return
-      }
-
-      const p = repr.getParameters() as any  // TODO
+      const p = reprElem.getParameters() as any  // TODO
       p.disableImpostor = !value
-      repr.build(p)
+      reprElem.build(p)
     })
   }
 
@@ -814,14 +810,10 @@ class Stage {
     ]
 
     this.eachRepresentation(function (repr) {
-      if (repr.type === 'script') return
-
       const p = repr.getParameters() as any  // TODO
 
       if (!types.includes(repr.getType())) {
-        if (!impostorTypes.includes(repr.getType())) {
-          return
-        }
+        if (!impostorTypes.includes(repr.getType())) return
 
         if (!p.disableImpostor) {
           (repr.repr as any).quality = value  // TODO
@@ -837,16 +829,20 @@ class Stage {
   /**
    * Iterator over each component and executing the callback
    */
-  eachComponent (callback: (component: Component) => void) {
-    this.compList.slice().forEach(o => callback(o))
+  eachComponent (callback: (comp: Component) => void, type?: string) {
+    this.compList.slice().forEach(comp => {
+      if (type === undefined || type === comp.type) callback(comp)
+    })
   }
 
   /**
    * Iterator over each representation and executing the callback
    */
-  eachRepresentation (callback: (repr: RepresentationElement, comp: Component) => void) {
+  eachRepresentation (callback: (reprElem: RepresentationElement, comp: Component) => void, type?: string) {
     this.eachComponent(comp => {
-      comp.reprList.slice().forEach(repr => callback(repr, comp))
+      comp.reprList.slice().forEach(reprElem => {
+        if (type === undefined || type === reprElem.getType()) callback(reprElem, comp)
+      })
     })
   }
 

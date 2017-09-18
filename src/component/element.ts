@@ -48,6 +48,8 @@ abstract class Element {
     this.uuid = generateUUID()
   }
 
+  abstract get type (): string
+
   get name () { return this.parameters.name }
 
   setStatus (value: string) {

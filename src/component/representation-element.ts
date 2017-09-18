@@ -52,6 +52,12 @@ class RepresentationElement extends Element {
 
   get visible () { return this.parameters.visible }
 
+  /**
+   * Component type
+   * @type {String}
+   */
+  get type () { return 'representation' }
+
   getType () {
     return this.repr.type
   }

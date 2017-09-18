@@ -13,9 +13,9 @@ import Viewer from '../viewer/viewer'
 import Component from './component'
 
 export interface AnnotationParams {
-  offsetX: number
-  offsetY: number
-  visible: boolean
+  offsetX?: number
+  offsetY?: number
+  visible?: boolean
 }
 
 /**
@@ -26,10 +26,8 @@ export default class Annotation {
   offsetY: number
   visible: boolean
 
-  component: Component
   stage: Stage
   viewer: Viewer
-  position: Vector3
   element: HTMLElement
 
   private _viewerPosition: Vector3
@@ -46,17 +44,13 @@ export default class Annotation {
    * @param {Integer} params.offsetY - 2d offset in y direction
    * @param {Boolean} params.visible - visibility flag
    */
-  constructor (component: Component, position: Vector3, content: string|HTMLElement, params: AnnotationParams) {
-    const p = params || {}
+  constructor (readonly component: Component, readonly position: Vector3, content: string|HTMLElement, params: AnnotationParams = {}) {
+    this.offsetX = defaults(params.offsetX, 0)
+    this.offsetY = defaults(params.offsetY, 0)
+    this.visible = defaults(params.visible, true)
 
-    this.offsetX = defaults(p.offsetX, 0)
-    this.offsetY = defaults(p.offsetY, 0)
-    this.visible = defaults(p.visible, true)
-
-    this.component = component
     this.stage = component.stage
-    this.viewer = this.stage.viewer
-    this.position = position
+    this.viewer = component.stage.viewer
 
     this._viewerPosition = new Vector3()
     this._updateViewerPosition()
@@ -67,7 +61,7 @@ export default class Annotation {
     Object.assign(this.element.style, {
       display: 'block',
       position: 'fixed',
-      zIndex: 1 + (parseInt(this.viewer.container.style.zIndex || '0') || 0),
+      zIndex: 1 + parseInt(this.viewer.container.style.zIndex || '0'),
       pointerEvents: 'none',
       backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
       color: 'lightgrey',

@@ -51,17 +51,6 @@ class HyperballStickImpostorBuffer extends MappedBoxBuffer {
   vertexShader = 'HyperballStickImpostor.vert'
   fragmentShader = 'HyperballStickImpostor.frag'
 
-  /**
-   * @param  {Object} data - attribute object
-   * @param  {Float32Array} data.position1 - from positions
-   * @param  {Float32Array} data.position2 - to positions
-   * @param  {Float32Array} data.color - from colors
-   * @param  {Float32Array} data.color2 - to colors
-   * @param  {Float32Array} data.radius - from radii
-   * @param  {Float32Array} data.radius2 - to radii
-   * @param  {Picker} data.picking - picking ids
-   * @param  {BufferParameters} params - parameter object
-   */
   constructor (data: HyperballStickImpostorBufferData, params: Partial<HyperballStickImpostorBufferParameters> = {}) {
     super(data, params)
 

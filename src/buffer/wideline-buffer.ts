@@ -10,7 +10,7 @@ import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
 
 import MappedQuadBuffer from './mappedquad-buffer'
-import { BufferDefaultParameters, BufferData } from './buffer'
+import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
 interface WideLineBufferData extends BufferData {
   position1: Float32Array
@@ -22,6 +22,10 @@ const WideLineBufferDefaultParameters = Object.assign({
   linewidth: 2
 }, BufferDefaultParameters)
 type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
+
+const WideLineBufferParameterTypes = Object.assign({
+  linewidth: { uniform: true }
+}, BufferParameterTypes)
 
 /**
  * Wide Line buffer. Draws lines with a fixed width in pixels.
@@ -35,20 +39,13 @@ type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
  * });
  */
 class WideLineBuffer extends MappedQuadBuffer {
+  parameterTypes = WideLineBufferParameterTypes
   get defaultParameters() { return WideLineBufferDefaultParameters }
   parameters: WideLineBufferParameters
 
   vertexShader = 'WideLine.vert'
   fragmentShader ='WideLine.frag'
 
-  /**
-   * @param  {Object} data - attribute object
-   * @param  {Float32Array} data.position1 - from positions
-   * @param  {Float32Array} data.position2 - to positions
-   * @param  {Float32Array} data.color - from colors
-   * @param  {Float32Array} data.color2 - to colors
-   * @param  {BufferParameters} params - parameter object
-   */
   constructor (data: WideLineBufferData, params: Partial<WideLineBufferParameters> = {}) {
     super(data, params)
 

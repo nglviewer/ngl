@@ -453,7 +453,7 @@ class Representation {
         )
       ) continue
 
-      if (this[ name ] && this[ name ].copy) {
+      if (this[ name ] && this[ name ].copy && p[ name ].copy) {
         this[ name ].copy(p[ name ])
       } else if (this[ name ] && this[ name ].set) {
         this[ name ].set(p[ name ])

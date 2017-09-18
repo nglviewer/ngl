@@ -68,6 +68,12 @@ class StructureComponent extends Component {
   }
 
   /**
+   * Component type
+   * @type {String}
+   */
+  get type () { return 'structure' }
+
+  /**
    * Initialize selection
    * @private
    * @param {String} sele - selection string

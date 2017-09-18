@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3 } from 'three'
+import { Vector3, Color } from 'three'
 import * as chroma from 'chroma-js'
 
 import { createParams } from '../utils'
@@ -34,6 +34,8 @@ export type StuctureColormakerParams = { structure: Structure } & Partial<Colorm
 export type VolumeColormakerParams = { volume: Volume } & Partial<ColormakerParameters>
 export type ColormakerScale = (v: number) => number
 
+const tmpColor = new Color()
+
 /**
  * Class for making colors.
  * @interface
@@ -48,6 +50,10 @@ abstract class Colormaker {
    */
   constructor (params: Partial<ColormakerParameters> = {}) {
     this.parameters = createParams(params, ScaleDefaultParameters)
+
+    if (typeof this.parameters.value === 'string') {
+      this.parameters.value = tmpColor.set(this.parameters.value).getHex()
+    }
 
     if (this.parameters.structure) {
       this.atomProxy = this.parameters.structure.getAtomProxy()

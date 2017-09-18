@@ -23,8 +23,14 @@ type ShapeRepresentationType = 'buffer'
  */
 class ShapeComponent extends Component {
   constructor (stage: Stage, readonly shape: Shape, params: Partial<ComponentParameters> = {}) {
-    super(stage, Object.assign({ name: shape.name }, params))
+    super(stage, shape, Object.assign({ name: shape.name }, params))
   }
+
+  /**
+   * Component type
+   * @type {String}
+   */
+  get type () { return 'shape' }
 
   /**
    * Add a new shape representation to the component
