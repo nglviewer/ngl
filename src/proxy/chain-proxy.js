@@ -270,7 +270,7 @@ class ChainProxy {
     }
 
     if (rNextIndex - rStartIndex > 1) {
-      if (this.structure.getResidueProxy(rStartIndex).backboneStartType) {
+      if (this.structure.getResidueProxy(rStartIndex).backboneEndType) {
         // console.log("FOO3",rStartIndex, rNextIndex)
         callback(new Polymer(structure, rStartIndex, rNextIndex))
       }
