@@ -18,6 +18,21 @@ import _WorkerRegistry from './worker/worker-registry.js'
 const Browser = getBrowser()
 
 /**
+ * Flag indicating support for the 'passive' option for event handler
+ * @type {Boolean}
+ */
+let SupportsPassiveEventHandler = false
+try {
+  // Test via a getter in the options object to see if the passive property is accessed
+  const opts = Object.defineProperty({}, 'passive', {
+    get: function () {
+      SupportsPassiveEventHandler = true
+    }
+  })
+  window.addEventListener('test', null, opts)
+} catch (e) {}
+
+/**
  * Flag indicating a mobile browser
  * @type {Boolean}
  */
@@ -77,6 +92,7 @@ const PickerRegistry = new Registry('picker')
 export {
   Browser,
   Mobile,
+  SupportsPassiveEventHandler,
   SupportsReadPixelsFloat,
   setSupportsReadPixelsFloat,
   ExtensionFragDepth,

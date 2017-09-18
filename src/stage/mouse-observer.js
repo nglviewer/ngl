@@ -114,6 +114,7 @@ class MouseObserver {
     this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500)
 
     this.domElement = domElement
+    this.domElement.style.touchAction = 'none'
 
     /**
      * Position on page
