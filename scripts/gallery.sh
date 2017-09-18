@@ -9,4 +9,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 
 cd ${DIR};
 
-slimerjs js/slimer/gallery.js port:${PORT}
+../node_modules//slimerjs/src/slimerjs js/slimer/gallery.js port:${PORT}
