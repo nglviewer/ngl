@@ -40337,6 +40337,8 @@ Object.assign( AnimationMixer.prototype, EventDispatcher.prototype, {
 
 		remove_empty_map: {
 
+			for ( var _ in bindingByName ) { break remove_empty_map; }
+
 			delete bindingsByRoot[ rootUuid ];
 
 		}
@@ -62085,14 +62087,30 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
       if (atomindex) { this._atomindexBuffer = new ArrayBuffer(n * 4); }
     }
 
+    var filteredData = new Float32Array(this._dataBuffer);
+    var filteredPosition = new Float32Array(this._positionBuffer);
+    var filteredAtomindex;
+    if (atomindex) { filteredAtomindex = new Uint32Array(this._atomindexBuffer); }
+
     var j = 0;
 
     for (var i = 0; i < n; ++i) {
+      var i3 = i * 3;
       var v = data[ i ];
 
       if ((!outside && v >= minValue && v <= maxValue) ||
           (outside && (v < minValue || v > maxValue))
       ) {
+        var j3 = j * 3;
+
+        filteredData[ j ] = v;
+
+        filteredPosition[ j3 + 0 ] = position[ i3 + 0 ];
+        filteredPosition[ j3 + 1 ] = position[ i3 + 1 ];
+        filteredPosition[ j3 + 2 ] = position[ i3 + 2 ];
+
+        if (atomindex) { filteredAtomindex[ j ] = atomindex[ i ]; }
+
         j += 1;
       }
     }
@@ -93867,6 +93885,14 @@ var TrrParser = (function (TrajectoryParser$$1) {
             offset += 8;
           }
         } else {
+          var tmp = new Uint32Array(bin, offset, natoms3);
+          for (var i$3 = 0; i$3 < natoms3; ++i$3) {
+            var value = tmp[i$3];
+            tmp[i$3] = (
+              ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) |
+              ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
+            );
+          }
           frameCoords = new Float32Array(bin, offset, natoms3);
           for (var i$4 = 0; i$4 < natoms3; ++i$4) {
             frameCoords[i$4] *= 10;
@@ -100081,7 +100107,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "0.10.5-22";
+var version$1 = "1.0.0-beta.1";
 
 /**
  * @file Version
