@@ -152,6 +152,8 @@ class MouseObserver {
    * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
    */
   constructor (readonly domElement: HTMLCanvasElement, params: MouseParams = {}) {
+    this.domElement.style.touchAction = 'none'
+
     this.hoverTimeout = defaults(params.hoverTimeout, 50)
     this.handleScroll = defaults(params.handleScroll, true)
     this.doubleClickSpeed = defaults(params.doubleClickSpeed, 500)

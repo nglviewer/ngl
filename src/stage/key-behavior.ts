@@ -4,9 +4,12 @@
  * @private
  */
 
+import { SupportsPassiveEventHandler } from '../globals'
 import Stage from './stage'
 import Viewer from '../viewer/viewer'
 import KeyControls from '../controls/key-controls'
+
+const passive = SupportsPassiveEventHandler ? { passive: true } : false
 
 class KeyBehavior {
   viewer: Viewer
@@ -33,7 +36,7 @@ class KeyBehavior {
     this._onKeypress = this._onKeypress.bind(this)
 
     this.domElement.addEventListener('mousedown', this._focusDomElement)
-    this.domElement.addEventListener('touchstart', this._focusDomElement)
+    this.domElement.addEventListener('touchstart', this._focusDomElement, passive as any)  // TODO
     this.domElement.addEventListener('keydown', this._onKeydown)
     this.domElement.addEventListener('keyup', this._onKeyup)
     this.domElement.addEventListener('keypress', this._onKeypress)
@@ -73,7 +76,7 @@ class KeyBehavior {
 
   dispose () {
     this.domElement.removeEventListener('mousedown', this._focusDomElement)
-    this.domElement.removeEventListener('touchstart', this._focusDomElement)
+    this.domElement.removeEventListener('touchstart', this._focusDomElement, passive as any)  // TODO
     this.domElement.removeEventListener('keydown', this._onKeypress)
     this.domElement.removeEventListener('keyup', this._onKeypress)
     this.domElement.removeEventListener('keypress', this._onKeypress)
