@@ -146,14 +146,12 @@ class AtomProxy {
 
   /**
    * Residue name
-   * @type {String}
    */
   get resname () {
     return this.residueType.resname
   }
   /**
    * Hetero flag
-   * @type {Boolean}
    */
   get hetero () {
     return this.residueType.hetero
@@ -163,28 +161,24 @@ class AtomProxy {
 
   /**
    * Atom name
-   * @type {String}
    */
   get atomname () {
     return this.atomType.atomname
   }
   /**
    * Element
-   * @type {String}
    */
   get element () {
     return this.atomType.element
   }
   /**
    * Van-der-Waals radius
-   * @type {Float}
    */
   get vdw () {
     return this.atomType.vdw
   }
   /**
    * Covalent radius
-   * @type {Float}
    */
   get covalent () {
     return this.atomType.covalent
@@ -194,7 +188,6 @@ class AtomProxy {
 
   /**
    * X coordinate
-   * @type {Float}
    */
   get x () {
     return this.atomStore.x[ this.index ]
@@ -205,7 +198,6 @@ class AtomProxy {
 
   /**
    * Y coordinate
-   * @type {Float}
    */
   get y () {
     return this.atomStore.y[ this.index ]
@@ -216,7 +208,6 @@ class AtomProxy {
 
   /**
    * Z coordinate
-   * @type {Float}
    */
   get z () {
     return this.atomStore.z[ this.index ]
@@ -227,7 +218,6 @@ class AtomProxy {
 
   /**
    * Serial number
-   * @type {Integer}
    */
   get serial () {
     return this.atomStore.serial[ this.index ]
@@ -238,7 +228,6 @@ class AtomProxy {
 
   /**
    * B-factor value
-   * @type {Float}
    */
   get bfactor () {
     return this.atomStore.bfactor[ this.index ]
@@ -249,7 +238,6 @@ class AtomProxy {
 
   /**
    * Occupancy value
-   * @type {Float}
    */
   get occupancy () {
     return this.atomStore.occupancy[ this.index ]
@@ -260,7 +248,6 @@ class AtomProxy {
 
   /**
    * Alternate location identifier
-   * @type {String}
    */
   get altloc () {
     return this.atomStore.getAltloc(this.index)
@@ -271,27 +258,25 @@ class AtomProxy {
 
   /**
    * Partial charge
-   * @type {Float|null}
    */
   get partialCharge () {
     return this.atomStore.partialCharge ? this.atomStore.partialCharge[ this.index ] : null
   }
   set partialCharge (value) {
     if (this.atomStore.partialCharge) {
-      this.atomStore.partialCharge[ this.index ] = value
+      this.atomStore.partialCharge[ this.index ] = value as number
     }
   }
 
   /**
    * Formal charge
-   * @type {Integer|null}
    */
   get formalCharge () {
     return this.atomStore.formalCharge ? this.atomStore.formalCharge[ this.index ] : null
   }
   set formalCharge (value) {
     if (this.atomStore.formalCharge) {
-      this.atomStore.formalCharge[ this.index ] = value
+      this.atomStore.formalCharge[ this.index ] = value as number
     }
   }
 

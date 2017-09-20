@@ -44,7 +44,7 @@ class MmtfParser extends StructureParser {
     var s = this.structure
     var sd = decodeMmtf(decodeMsgpack(this.streamer.data))
 
-        // structure header
+    // structure header
     var headerFields = [
       'depositionDate', 'releaseDate', 'resolution',
       'rFree', 'rWork', 'experimentalMethods'
@@ -60,6 +60,8 @@ class MmtfParser extends StructureParser {
 
     s.id = sd.structureId
     s.title = sd.title
+
+    s.atomStore.addField('formalCharge', 1, 'uint8')
 
     if (this.firstModelOnly || this.asTrajectory) {
       numModels = 1
@@ -116,6 +118,7 @@ class MmtfParser extends StructureParser {
     var bBondOrder = new Uint8Array(numBonds)
 
     var aGroupIndex = new Uint32Array(numAtoms)
+    var aFormalCharge = new Uint8Array(numAtoms)
 
     var gChainIndex = new Uint32Array(numGroups)
     var gAtomOffset = new Uint32Array(numGroups)
@@ -162,6 +165,7 @@ class MmtfParser extends StructureParser {
     for (i = 0, il = numGroups; i < il; ++i) {
       groupData = sd.groupList[ sd.groupTypeList[ i ] ]
       var groupAtomCount = groupData.atomNameList.length
+      var groupFormalChargeList = groupData.formalChargeList
 
       var groupBondAtomList = groupData.bondAtomList
       var groupBondOrderList = groupData.bondOrderList
@@ -180,6 +184,7 @@ class MmtfParser extends StructureParser {
 
       for (j = 0; j < groupAtomCount; ++j) {
         aGroupIndex[ atomOffset ] = i
+        aFormalCharge[ atomOffset ] = groupFormalChargeList[ j ]
         atomOffset += 1
       }
     }
@@ -222,6 +227,7 @@ class MmtfParser extends StructureParser {
     s.atomStore.bfactor = sd.bFactorList.subarray(0, numAtoms)
     s.atomStore.altloc = sd.altLocList.subarray(0, numAtoms)
     s.atomStore.occupancy = sd.occupancyList.subarray(0, numAtoms)
+    s.atomStore.formalCharge = aFormalCharge
 
     s.residueStore.length = numGroups
     s.residueStore.count = numGroups
@@ -304,8 +310,8 @@ class MmtfParser extends StructureParser {
     if (sd.entityList) {
       sd.entityList.forEach(function (e, i) {
         s.entityList[ i ] = new Entity(
-                    s, i, e.description, e.type, e.chainIndexList
-                )
+          s, i, e.description, e.type, e.chainIndexList
+        )
       })
     }
 

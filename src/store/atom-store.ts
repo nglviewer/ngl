@@ -21,6 +21,9 @@ export default class AtomStore extends Store {
   altloc: Uint8Array
   occupancy: Float32Array
 
+  partialCharge?: Float32Array
+  formalCharge?: Uint8Array
+
   get _defaultFields () {
     return [
       [ 'residueIndex', 1, 'uint32' ],

@@ -38,7 +38,7 @@ class PartialchargeColormaker extends Colormaker {
   }
 
   atomColor (a: AtomProxy) {
-    return this.partialchargeScale(a.partialCharge)
+    return this.partialchargeScale(a.partialCharge || 0)
   }
 }
 
