@@ -7,16 +7,15 @@
 import { Vector3 } from 'three'
 
 import { radToDeg } from '../math/math-utils'
-import Contact from './contact'
+import { getContacts } from './contact'
 import Selection from '../selection/selection'
 import Structure from '../structure/structure'
 import AtomProxy from '../proxy/atom-proxy'
 
-function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
-
+export function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
   const donorSelection = new Selection(
     '( ARG and ( .NE or .NH1 or .NH2 ) ) or ' +
-    '( ASP and .ND2 ) or ' +
+    '( ASP and .ND2 ) or ' +  // ???
     '( GLN and .NE2 ) or ' +
     '( HIS and ( .ND1 or .NE2 ) ) or ' +
     '( LYS and .NZ ) or ' +
@@ -26,24 +25,19 @@ function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) 
     '( TYR and .OH ) or ' +
     '( PROTEIN and .N )'
   )
-
   const acceptorSelection = new Selection(
     '( ASN and .OD1 ) or ' +
     '( ASP and ( OD1 or .OD2 ) ) or ' +
     '( GLN and .OE1 ) or ' +
     '( GLU and ( .OE1 or .OE2 ) ) or ' +
     '( HIS and ( .ND1 or .NE2 ) ) or ' +
-    '( SER and .OG ) or ' +
-    '( THR and .OG1 ) or ' +
-    '( TYR and .OH ) or ' +
     '( PROTEIN and .O )'
   )
 
   const donorView = structure.getView(donorSelection)
   const acceptorView = structure.getView(acceptorSelection)
 
-  const contact = new Contact(donorView, acceptorView)
-  const data = contact.within(maxDistance)
+  const data = getContacts(donorView, acceptorView, maxDistance)
   const bondStore = data.bondStore
 
   const ap1 = structure.getAtomProxy()
@@ -79,22 +73,15 @@ function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) 
     ap1.index = bondStore.atomIndex1[ i ]
     ap2.index = bondStore.atomIndex2[ i ]
 
-    if ((ap1.atomname === 'O' && ap2.atomname === 'N') ||
-        (ap1.atomname === 'N' && ap2.atomname === 'O')
+    if (
+      (ap1.atomname === 'O' && ap2.atomname === 'N') ||
+      (ap1.atomname === 'N' && ap2.atomname === 'O')
     ) {
       // ignore backbone to backbone contacts
       data.bondSet.clear(i)
       continue
     } else if (ap1.atomname === 'N' || ap2.atomname === 'N') {
-      let atomN, atomX
-
-      if (ap1.atomname === 'N') {
-        atomN = ap1
-        atomX = ap2
-      } else {
-        atomN = ap2
-        atomX = ap1
-      }
+      const [atomN, atomX] = ap1.atomname === 'N' ? [ap1, ap2] : [ap2, ap1]
 
       rp.index = atomN.residueIndex
       const caIdx = rp.getAtomIndexByName('CA')
@@ -132,20 +119,14 @@ function polarContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) 
   }
 }
 
-function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
-  const donorSelection = new Selection(
-    '( PROTEIN and .N )'
-  )
-
-  const acceptorSelection = new Selection(
-    '( PROTEIN and .O )'
-  )
+export function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngle = 40) {
+  const donorSelection = new Selection('( PROTEIN and .N )')
+  const acceptorSelection = new Selection('( PROTEIN and .O )')
 
   const donorView = structure.getView(donorSelection)
   const acceptorView = structure.getView(acceptorSelection)
 
-  const contact = new Contact(donorView, acceptorView)
-  const data = contact.within(maxDistance)
+  const data = getContacts(donorView, acceptorView, maxDistance)
   const bondStore = data.bondStore
 
   const ap1 = structure.getAtomProxy()
@@ -161,15 +142,7 @@ function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngl
     ap1.index = bondStore.atomIndex1[ i ]
     ap2.index = bondStore.atomIndex2[ i ]
 
-    let atomN, atomO
-
-    if (ap1.atomname === 'N') {
-      atomN = ap1
-      atomO = ap2
-    } else {
-      atomN = ap2
-      atomO = ap1
-    }
+    const [atomN, atomO] = ap1.atomname === 'N' ? [ap1, ap2] : [ap2, ap1]
 
     rp.index = atomN.residueIndex
 
@@ -202,7 +175,3 @@ function polarBackboneContacts (structure: Structure, maxDistance = 3.5, maxAngl
   }
 }
 
-export {
-  polarContacts,
-  polarBackboneContacts
-}

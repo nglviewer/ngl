@@ -94,6 +94,14 @@ export default class SpatialHash {
   }
 
   within (x: number, y: number, z: number, r: number) {
+    const result: number[] = []
+
+    this.eachWithin(x, y, z, r, atomIndex => result.push(atomIndex))
+
+    return result
+  }
+
+  eachWithin (x: number, y: number, z: number, r: number, callback: (atomIndex: number) => void) {
     const rSq = r * r
 
     const loX = Math.max(0, (x - r - this.minX) >> this.exp)
@@ -103,8 +111,6 @@ export default class SpatialHash {
     const hiX = Math.min(this.boundX, (x + r - this.minX) >> this.exp)
     const hiY = Math.min(this.boundY, (y + r - this.minY) >> this.exp)
     const hiZ = Math.min(this.boundZ, (z + r - this.minZ) >> this.exp)
-
-    const result = []
 
     for (let ix = loX; ix <= hiX; ++ix) {
       for (let iy = loY; iy <= hiY; ++iy) {
@@ -125,14 +131,12 @@ export default class SpatialHash {
               const dz = this.zArray[ atomIndex ] - z
 
               if (dx * dx + dy * dy + dz * dz <= rSq) {
-                result.push(atomIndex)
+                callback(atomIndex)
               }
             }
           }
         }
       }
     }
-
-    return result
   }
 }
