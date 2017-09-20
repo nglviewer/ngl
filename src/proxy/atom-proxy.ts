@@ -498,6 +498,20 @@ class AtomProxy {
     return ringFlags[ this.index - this.residueAtomOffset ] === 1
   }
 
+  isMetal () { return this.atomType.isMetal() }
+  isNonmetal () { return this.atomType.isNonmetal() }
+  isMetalloid () { return this.atomType.isMetalloid() }
+  isHalogen () { return this.atomType.isHalogen() }
+  isDiatomicNonmetal () { return this.atomType.isDiatomicNonmetal() }
+  isPolyatomicNonmetal () { return this.atomType.isPolyatomicNonmetal() }
+  isAlkaliMetal () { return this.atomType.isAlkaliMetal() }
+  isAlkalineEarthMetal () { return this.atomType.isAlkalineEarthMetal() }
+  isNobleGas () { return this.atomType.isNobleGas() }
+  isTransitionMetal () { return this.atomType.isTransitionMetal() }
+  isPostTransitionMetal () { return this.atomType.isPostTransitionMetal() }
+  isLanthanide () { return this.atomType.isLanthanide() }
+  isActinide () { return this.atomType.isActinide() }
+
   getDefaultValence () { return this.atomType.getDefaultValence() }
   getValenceList () { return this.atomType.getValenceList() }
   getOuterShellElectronCount () { return this.atomType.getOuterShellElectronCount() }
