@@ -4,10 +4,7 @@
  * @private
  */
 
-import {
-    VdwRadii, DefaultVdwRadius, CovalentRadii, DefaultCovalentRadius,
-    NucleicBackboneAtoms
-} from '../structure/structure-constants'
+import { NucleicBackboneAtoms } from '../structure/structure-constants'
 import AtomProxy from '../proxy/atom-proxy'
 
 
@@ -36,11 +33,11 @@ class RadiusFactory {
 
     switch (type) {
       case 'vdw':
-        r = VdwRadii[ a.element ] || DefaultVdwRadius
+        r = a.vdw
         break
 
       case 'covalent':
-        r = CovalentRadii[ a.element ] || DefaultCovalentRadius
+        r = a.covalent
         break
 
       case 'bfactor':

@@ -166,6 +166,12 @@ class AtomProxy {
     return this.atomType.atomname
   }
   /**
+   * Atomic number
+   */
+  get number () {
+    return this.atomType.number
+  }
+  /**
    * Element
    */
   get element () {
@@ -491,6 +497,10 @@ class AtomProxy {
     const ringFlags = this.residueType.getRings()!.flags  // TODO
     return ringFlags[ this.index - this.residueAtomOffset ] === 1
   }
+
+  getDefaultValence () { return this.atomType.getDefaultValence() }
+  getValenceList () { return this.atomType.getValenceList() }
+  getOuterShellElectronCount () { return this.atomType.getOuterShellElectronCount() }
 
   /**
    * Distance to another atom

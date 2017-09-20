@@ -5,7 +5,13 @@
  */
 
 import { guessElement } from '../structure/structure-utils'
-import { VdwRadii, CovalentRadii } from '../structure/structure-constants'
+import {
+  AtomicNumbers, DefaultAtomicNumber,
+  VdwRadii, DefaultVdwRadius,
+  CovalentRadii, DefaultCovalentRadius,
+  Valences, DefaultValence,
+  OuterShellElectronCounts, DefaultOuterShellElectronCount
+} from '../structure/structure-constants'
 import Structure from '../structure/structure'
 
 /**
@@ -13,6 +19,7 @@ import Structure from '../structure/structure'
  */
 class AtomType {
   element: string
+  number: number
   vdw: number
   covalent: number
 
@@ -25,8 +32,22 @@ class AtomType {
     element = element || guessElement(atomname)
 
     this.element = element
-    this.vdw = VdwRadii[ element ]
-    this.covalent = CovalentRadii[ element ]
+    this.number = AtomicNumbers[ element ] || DefaultAtomicNumber
+    this.vdw = VdwRadii[ this.number ] || DefaultVdwRadius
+    this.covalent = CovalentRadii[ this.number ] || DefaultCovalentRadius
+  }
+
+  getDefaultValence() {
+    const vl = Valences[ this.number ]
+    return vl ? vl[ 0 ] : DefaultValence
+  }
+
+  getValenceList () {
+    return Valences[ this.number ] || []
+  }
+
+  getOuterShellElectronCount () {
+    return OuterShellElectronCounts[ this.number ] || DefaultOuterShellElectronCount
   }
 }
 

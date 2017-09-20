@@ -5,187 +5,82 @@
  */
 
 // entity types
-const UnknownEntity = 0
-const PolymerEntity = 1
-const NonPolymerEntity = 2
-const MacrolideEntity = 3
-const WaterEntity = 4
+export const UnknownEntity = 0
+export const PolymerEntity = 1
+export const NonPolymerEntity = 2
+export const MacrolideEntity = 3
+export const WaterEntity = 4
 
 // molecule types
-const UnknownType = 0
-const WaterType = 1
-const IonType = 2
-const ProteinType = 3
-const RnaType = 4
-const DnaType = 5
-const SaccharideType = 6
+export const UnknownType = 0
+export const WaterType = 1
+export const IonType = 2
+export const ProteinType = 3
+export const RnaType = 4
+export const DnaType = 5
+export const SaccharideType = 6
 
 // backbone types
-const UnknownBackboneType = 0
-const ProteinBackboneType = 1
-const RnaBackboneType = 2
-const DnaBackboneType = 3
-const CgProteinBackboneType = 4
-const CgRnaBackboneType = 5
-const CgDnaBackboneType = 6
+export const UnknownBackboneType = 0
+export const ProteinBackboneType = 1
+export const RnaBackboneType = 2
+export const DnaBackboneType = 3
+export const CgProteinBackboneType = 4
+export const CgRnaBackboneType = 5
+export const CgDnaBackboneType = 6
 
 // chemical component types
-const ChemCompProtein = [
+export const ChemCompProtein = [
   'D-BETA-PEPTIDE, C-GAMMA LINKING', 'D-GAMMA-PEPTIDE, C-DELTA LINKING',
   'D-PEPTIDE COOH CARBOXY TERMINUS', 'D-PEPTIDE NH3 AMINO TERMINUS', 'D-PEPTIDE LINKING',
   'L-BETA-PEPTIDE, C-GAMMA LINKING', 'L-GAMMA-PEPTIDE, C-DELTA LINKING',
   'L-PEPTIDE COOH CARBOXY TERMINUS', 'L-PEPTIDE NH3 AMINO TERMINUS', 'L-PEPTIDE LINKING',
   'PEPTIDE LINKING', 'PEPTIDE-LIKE'
 ]
-const ChemCompRna = [
+export const ChemCompRna = [
   'RNA OH 3 PRIME TERMINUS', 'RNA OH 5 PRIME TERMINUS', 'RNA LINKING'
 ]
-const ChemCompDna = [
+export const ChemCompDna = [
   'DNA OH 3 PRIME TERMINUS', 'DNA OH 5 PRIME TERMINUS', 'DNA LINKING',
   'L-DNA LINKING', 'L-RNA LINKING'
 ]
-const ChemCompSaccharide = [
+export const ChemCompSaccharide = [
   'D-SACCHARIDE', 'D-SACCHARIDE 1,4 AND 1,4 LINKING', 'D-SACCHARIDE 1,4 AND 1,6 LINKING',
   'L-SACCHARIDE', 'L-SACCHARIDE 1,4 AND 1,4 LINKING', 'L-SACCHARIDE 1,4 AND 1,6 LINKING',
   'SACCHARIDE'
 ]
-const ChemCompOther = [
+export const ChemCompOther = [
   'OTHER'
 ]
-const ChemCompNonPolymer = [
+export const ChemCompNonPolymer = [
   'NON-POLYMER'
 ]
-const ChemCompHetero = ChemCompNonPolymer.concat(ChemCompOther, ChemCompSaccharide)
+export const ChemCompHetero = ChemCompNonPolymer.concat(ChemCompOther, ChemCompSaccharide)
 
 // secondary structure
-const SecStrucHelix = [ 'h', 'g', 'i' ]
-const SecStrucSheet = [ 'e', 'b' ]
-const SecStrucTurn = [ 's', 't', 'l', '' ]
+export const SecStrucHelix = [ 'h', 'g', 'i' ]
+export const SecStrucSheet = [ 'e', 'b' ]
+export const SecStrucTurn = [ 's', 't', 'l', '' ]
+
+export const AtomicNumbers: { [e: string]: number | undefined } = {
+  'H': 1, 'D': 1, 'T': 1, 'HE': 2, 'LI': 3, 'BE': 4, 'B': 5, 'C': 6, 'N': 7, 'O': 8, 'F': 9, 'NE': 10, 'NA': 11, 'MG': 12, 'AL': 13, 'SI': 14, 'P': 15, 'S': 16, 'CL': 17, 'AR': 18, 'K': 19, 'CA': 20, 'SC': 21, 'TI': 22, 'V': 23, 'CR': 24, 'MN': 25, 'FE': 26, 'CO': 27, 'NI': 28, 'CU': 29, 'ZN': 30, 'GA': 31, 'GE': 32, 'AS': 33, 'SE': 34, 'BR': 35, 'KR': 36, 'RB': 37, 'SR': 38, 'Y': 39, 'ZR': 40, 'NB': 41, 'MO': 42, 'TC': 43, 'RU': 44, 'RH': 45, 'PD': 46, 'AG': 47, 'CD': 48, 'IN': 49, 'SN': 50, 'SB': 51, 'TE': 52, 'I': 53, 'XE': 54, 'CS': 55, 'BA': 56, 'LA': 57, 'CE': 58, 'PR': 59, 'ND': 60, 'PM': 61, 'SM': 62, 'EU': 63, 'GD': 64, 'TB': 65, 'DY': 66, 'HO': 67, 'ER': 68, 'TM': 69, 'YB': 70, 'LU': 71, 'HF': 72, 'TA': 73, 'W': 74, 'RE': 75, 'OS': 76, 'IR': 77, 'PT': 78, 'AU': 79, 'HG': 80, 'TL': 81, 'PB': 82, 'BI': 83, 'PO': 84, 'AT': 85, 'RN': 86, 'FR': 87, 'RA': 88, 'AC': 89, 'TH': 90, 'PA': 91, 'U': 92, 'NP': 93, 'PU': 94, 'AM': 95, 'CM': 96, 'BK': 97, 'CF': 98, 'ES': 99, 'FM': 100, 'MD': 101, 'NO': 102, 'LR': 103, 'RF': 104, 'DB': 105, 'SG': 106, 'BH': 107, 'HS': 108, 'MT': 109, 'DS': 110, 'RG': 111, 'CN': 112, 'NH': 113, 'FL': 114, 'MC': 115, 'LV': 116, 'TS': 117, 'OG': 118
+}
+export const DefaultAtomicNumber = 0
+
+// https://doi.org/10.1515/pac-2015-0305 (table 2, 3, and 4)
+export const AtomWeights: { [e: number]: number | undefined } = {
+  1: 1.008, 2: 4.0026, 3: 6.94, 4: 9.0122, 5: 10.81, 6: 10.81, 7: 14.007, 8: 15.999, 9: 18.998, 10: 20.180, 11: 22.990, 12: 24.305, 13: 26.982, 14: 28.085, 15: 30.974, 16: 32.06, 17: 35.45, 18: 39.948, 19: 39.098, 20: 40.078, 21: 44.956, 22: 47.867, 23: 50.942, 24: 51.996, 25: 54.938, 26: 55.845, 27: 58.933, 28: 58.693, 29: 63.546, 30: 65.38, 31: 69.723, 32: 72.630, 33: 74.922, 34: 78.971, 35: 79.904, 36: 83.798, 37: 85.468, 38: 87.62, 39: 88.906, 40: 91.224, 41: 92.906, 42: 95.95, 43: 96.906, 44: 101.07, 45: 102.91, 46: 106.42, 47: 107.87, 48: 112.41, 49: 114.82, 50: 118.71, 51: 121.76, 52: 127.60, 53: 127.60, 54: 131.29, 55: 132.91, 56: 137.33, 57: 138.91, 58: 140.12, 59: 140.91, 60: 144.24, 61: 144.912, 62: 150.36, 63: 151.96, 64: 157.25, 65: 158.93, 66: 162.50, 67: 164.93, 68: 167.26, 69: 168.93, 70: 173.05, 71: 174.97, 72: 178.49, 73: 180.95, 74: 183.84, 75: 186.21, 76: 190.23, 77: 192.22, 78: 195.08, 79: 196.97, 80: 200.59, 81: 204.38, 82: 207.2, 83: 208.98, 84: 1.97, 85: 2.02, 86: 2.2, 87: 3.48, 88: 2.83, 89: 2.0, 90: 232.04, 91: 231.04, 92: 238.03, 93: 237.048, 94: 244.064, 95: 243.061, 96: 247.070, 97: 247.070, 98: 251.079, 99: 252.083, 100: 257.095, 101: 258.098, 102: 259.101, 103: 262.110, 104: 267.122, 105: 270.131, 106: 271.134, 107: 270.133, 108: 270.134, 109: 278.156, 110: 281.165, 111: 281.166, 112: 285.177, 113: 286.182, 114: 289.190, 115: 289.194, 116: 293.204, 117: 293.208, 118: 294.214
+}
+export const DefaultAtomWeight = 10.81  // C
 
 // http://dx.doi.org/10.1021/jp8111556 (or 2.0)
-const VdwRadii: { [k: string]: number } = {
-  'H': 1.1,
-  'HE': 1.4,
-  'LI': 1.81,
-  'BE': 1.53,
-  'B': 1.92,
-  'C': 1.7,
-  'N': 1.55,
-  'O': 1.52,
-  'F': 1.47,
-  'NE': 1.54,
-  'NA': 2.27,
-  'MG': 1.73,
-  'AL': 1.84,
-  'SI': 2.1,
-  'P': 1.8,
-  'S': 1.8,
-  'CL': 1.75,
-  'AR': 1.88,
-  'K': 2.75,
-  'CA': 2.31,
-  'SC': 2.3,
-  'TI': 2.15,
-  'V': 2.05,
-  'CR': 2.05,
-  'MN': 2.05,
-  'FE': 2.05,
-  'CO': 2.0,
-  'NI': 2.0,
-  'CU': 2.0,
-  'ZN': 2.1,
-  'GA': 1.87,
-  'GE': 2.11,
-  'AS': 1.85,
-  'SE': 1.9,
-  'BR': 1.83,
-  'KR': 2.02,
-  'RB': 3.03,
-  'SR': 2.49,
-  'Y': 2.4,
-  'ZR': 2.3,
-  'NB': 2.15,
-  'MO': 2.1,
-  'TC': 2.05,
-  'RU': 2.05,
-  'RH': 2.0,
-  'PD': 2.05,
-  'AG': 2.1,
-  'CD': 2.2,
-  'IN': 2.2,
-  'SN': 1.93,
-  'SB': 2.17,
-  'TE': 2.06,
-  'I': 1.98,
-  'XE': 2.16,
-  'CS': 3.43,
-  'BA': 2.68,
-  'LA': 2.5,
-  'CE': 2.48,
-  'PR': 2.47,
-  'ND': 2.45,
-  'PM': 2.43,
-  'SM': 2.42,
-  'EU': 2.4,
-  'GD': 2.38,
-  'TB': 2.37,
-  'DY': 2.35,
-  'HO': 2.33,
-  'ER': 2.32,
-  'TM': 2.3,
-  'YB': 2.28,
-  'LU': 2.27,
-  'HF': 2.25,
-  'TA': 2.2,
-  'W': 2.1,
-  'RE': 2.05,
-  'OS': 2.0,
-  'IR': 2.0,
-  'PT': 2.05,
-  'AU': 2.1,
-  'HG': 2.05,
-  'TL': 1.96,
-  'PB': 2.02,
-  'BI': 2.07,
-  'PO': 1.97,
-  'AT': 2.02,
-  'RN': 2.2,
-  'FR': 3.48,
-  'RA': 2.83,
-  'AC': 2.0,
-  'TH': 2.4,
-  'PA': 2.0,
-  'U': 2.3,
-  'NP': 2.0,
-  'PU': 2.0,
-  'AM': 2.0,
-  'CM': 2.0,
-  'BK': 2.0,
-  'CF': 2.0,
-  'ES': 2.0,
-  'FM': 2.0,
-  'MD': 2.0,
-  'NO': 2.0,
-  'LR': 2.0,
-  'RF': 2.0,
-  'DB': 2.0,
-  'SG': 2.0,
-  'BH': 2.0,
-  'HS': 2.0,
-  'MT': 2.0,
-  'DS': 2.0,
-  'RG': 2.0,
-  'CN': 2.0,
-  'UUT': 2.0,
-  'FL': 2.0,
-  'UUP': 2.0,
-  'LV': 2.0,
-  'UUH': 2.0
+export const VdwRadii: { [e: number]: number | undefined } = {
+  1: 1.1, 2: 1.4, 3: 1.81, 4: 1.53, 5: 1.92, 6: 1.7, 7: 1.55, 8: 1.52, 9: 1.47, 10: 1.54, 11: 2.27, 12: 1.73, 13: 1.84, 14: 2.1, 15: 1.8, 16: 1.8, 17: 1.75, 18: 1.88, 19: 2.75, 20: 2.31, 21: 2.3, 22: 2.15, 23: 2.05, 24: 2.05, 25: 2.05, 26: 2.05, 27: 2.0, 28: 2.0, 29: 2.0, 30: 2.1, 31: 1.87, 32: 2.11, 33: 1.85, 34: 1.9, 35: 1.83, 36: 2.02, 37: 3.03, 38: 2.49, 39: 2.4, 40: 2.3, 41: 2.15, 42: 2.1, 43: 2.05, 44: 2.05, 45: 2.0, 46: 2.05, 47: 2.1, 48: 2.2, 49: 2.2, 50: 1.93, 51: 2.17, 52: 2.06, 53: 1.98, 54: 2.16, 55: 3.43, 56: 2.68, 57: 2.5, 58: 2.48, 59: 2.47, 60: 2.45, 61: 2.43, 62: 2.42, 63: 2.4, 64: 2.38, 65: 2.37, 66: 2.35, 67: 2.33, 68: 2.32, 69: 2.3, 70: 2.28, 71: 2.27, 72: 2.25, 73: 2.2, 74: 2.1, 75: 2.05, 76: 2.0, 77: 2.0, 78: 2.05, 79: 2.1, 80: 2.05, 81: 1.96, 82: 2.02, 83: 2.07, 84: 1.97, 85: 2.02, 86: 2.2, 87: 3.48, 88: 2.83, 89: 2.0, 90: 2.4, 91: 2.0, 92: 2.3, 93: 2.0, 94: 2.0, 95: 2.0, 96: 2.0, 97: 2.0, 98: 2.0, 99: 2.0, 100: 2.0, 101: 2.0, 102: 2.0, 103: 2.0, 104: 2.0, 105: 2.0, 106: 2.0, 107: 2.0, 108: 2.0, 109: 2.0, 110: 2.0, 111: 2.0, 112: 2.0, 113: 2.0, 114: 2.0, 115: 2.0, 116: 2.0, 117: 2.0, 118: 2.0
 }
-const DefaultVdwRadius = 2.0
+export const DefaultVdwRadius = 2.0  // C
 
 // Peter Rose (peter.rose@rcsb.org), private communication, average accross PDB
-const ResidueRadii: { [k: string]: number } = {
+export const ResidueRadii: { [k: string]: number } = {
   '2QY': 6.58,
   'CY0': 11.98,
   '2QZ': 2.52,
@@ -917,132 +812,72 @@ const ResidueRadii: { [k: string]: number } = {
   'HQA': 7.25,
   'SOY': 10.94
 }
-const DefaultResidueRadius = 5.0
+export const DefaultResidueRadius = 5.0
 
 // http://dx.doi.org/10.1039/b801115j (or 1.6)
-const CovalentRadii: { [k: string]: number } = {
-  'H': 0.31,
-  'HE': 0.28,
-  'LI': 1.28,
-  'BE': 0.96,
-  'B': 0.84,
-  'C': 0.76,
-  'N': 0.71,
-  'O': 0.66,
-  'F': 0.57,
-  'NE': 0.58,
-  'NA': 1.66,
-  'MG': 1.41,
-  'AL': 1.21,
-  'SI': 1.11,
-  'P': 1.07,
-  'S': 1.05,
-  'CL': 1.02,
-  'AR': 1.06,
-  'K': 2.03,
-  'CA': 1.76,
-  'SC': 1.7,
-  'TI': 1.6,
-  'V': 1.53,
-  'CR': 1.39,
-  'MN': 1.39,
-  'FE': 1.32,
-  'CO': 1.26,
-  'NI': 1.24,
-  'CU': 1.32,
-  'ZN': 1.22,
-  'GA': 1.22,
-  'GE': 1.2,
-  'AS': 1.19,
-  'SE': 1.2,
-  'BR': 1.2,
-  'KR': 1.16,
-  'RB': 2.2,
-  'SR': 1.95,
-  'Y': 1.9,
-  'ZR': 1.75,
-  'NB': 1.64,
-  'MO': 1.54,
-  'TC': 1.47,
-  'RU': 1.46,
-  'RH': 1.42,
-  'PD': 1.39,
-  'AG': 1.45,
-  'CD': 1.44,
-  'IN': 1.42,
-  'SN': 1.39,
-  'SB': 1.39,
-  'TE': 1.38,
-  'I': 1.39,
-  'XE': 1.4,
-  'CS': 2.44,
-  'BA': 2.15,
-  'LA': 2.07,
-  'CE': 2.04,
-  'PR': 2.03,
-  'ND': 2.01,
-  'PM': 1.99,
-  'SM': 1.98,
-  'EU': 1.98,
-  'GD': 1.96,
-  'TB': 1.94,
-  'DY': 1.92,
-  'HO': 1.92,
-  'ER': 1.89,
-  'TM': 1.9,
-  'YB': 1.87,
-  'LU': 1.87,
-  'HF': 1.75,
-  'TA': 1.7,
-  'W': 1.62,
-  'RE': 1.51,
-  'OS': 1.44,
-  'IR': 1.41,
-  'PT': 1.36,
-  'AU': 1.36,
-  'HG': 1.32,
-  'TL': 1.45,
-  'PB': 1.46,
-  'BI': 1.48,
-  'PO': 1.4,
-  'AT': 1.5,
-  'RN': 1.5,
-  'FR': 2.6,
-  'RA': 2.21,
-  'AC': 2.15,
-  'TH': 2.06,
-  'PA': 2.0,
-  'U': 1.96,
-  'NP': 1.9,
-  'PU': 1.87,
-  'AM': 1.8,
-  'CM': 1.69,
-  'BK': 1.6,
-  'CF': 1.6,
-  'ES': 1.6,
-  'FM': 1.6,
-  'MD': 1.6,
-  'NO': 1.6,
-  'LR': 1.6,
-  'RF': 1.6,
-  'DB': 1.6,
-  'SG': 1.6,
-  'BH': 1.6,
-  'HS': 1.6,
-  'MT': 1.6,
-  'DS': 1.6,
-  'RG': 1.6,
-  'CN': 1.6,
-  'UUT': 1.6,
-  'FL': 1.6,
-  'UUP': 1.6,
-  'LV': 1.6,
-  'UUH': 1.6
+export const CovalentRadii: { [e: number]: number | undefined } = {
+  1: 0.31, 2: 0.28, 3: 1.28, 4: 0.96, 5: 0.84, 6: 0.76, 7: 0.71, 8: 0.66, 9: 0.57, 10: 0.58, 11: 1.66, 12: 1.41, 13: 1.21, 14: 1.11, 15: 1.07, 16: 1.05, 17: 1.02, 18: 1.06, 19: 2.03, 20: 1.76, 21: 1.7, 22: 1.6, 23: 1.53, 24: 1.39, 25: 1.39, 26: 1.32, 27: 1.26, 28: 1.24, 29: 1.32, 30: 1.22, 31: 1.22, 32: 1.2, 33: 1.19, 34: 1.2, 35: 1.2, 36: 1.16, 37: 2.2, 38: 1.95, 39: 1.9, 40: 1.75, 41: 1.64, 42: 1.54, 43: 1.47, 44: 1.46, 45: 1.42, 46: 1.39, 47: 1.45, 48: 1.44, 49: 1.42, 50: 1.39, 51: 1.39, 52: 1.38, 53: 1.39, 54: 1.4, 55: 2.44, 56: 2.15, 57: 2.07, 58: 2.04, 59: 2.03, 60: 2.01, 61: 1.99, 62: 1.98, 63: 1.98, 64: 1.96, 65: 1.94, 66: 1.92, 67: 1.92, 68: 1.89, 69: 1.9, 70: 1.87, 71: 1.87, 72: 1.75, 73: 1.7, 74: 1.62, 75: 1.51, 76: 1.44, 77: 1.41, 78: 1.36, 79: 1.36, 80: 1.32, 81: 1.45, 82: 1.46, 83: 1.48, 84: 1.4, 85: 1.5, 86: 1.5, 87: 2.6, 88: 2.21, 89: 2.15, 90: 2.06, 91: 2.0, 92: 1.96, 93: 1.9, 94: 1.87, 95: 1.8, 96: 1.69, 97: 1.6, 98: 1.6, 99: 1.6, 100: 1.6, 101: 1.6, 102: 1.6, 103: 1.6, 104: 1.6, 105: 1.6, 106: 1.6, 107: 1.6, 108: 1.6, 109: 1.6, 110: 1.6, 111: 1.6, 112: 1.6, 113: 1.6, 114: 1.6, 115: 1.6, 116: 1.6, 117: 1.6, 118: 1.6
 }
-const DefaultCovalentRadius = 1.6
+export const DefaultCovalentRadius = 1.6
+
+export const Valences: { [e: number]: number[] | undefined } = {
+  1: [ 1 ],
+  2: [ 0 ],
+  3: [ 1 ],
+  4: [ 2 ],
+  5: [ 3 ],
+  6: [ 4 ],
+  7: [ 3 ],
+  8: [ 2 ],
+  9: [ 1 ],
+  10: [ 0 ],
+  11: [ 1 ],
+  12: [ 2 ],
+  13: [ 6 ],
+  14: [ 6 ],
+  15: [ 3, 5, 7 ],
+  16: [ 2, 4, 6 ],
+  17: [ 1 ],
+  18: [ 0 ],
+  19: [ 1 ],
+  20: [ 2 ],
+
+  31: [ 3 ],
+  32: [ 4 ],
+  33: [ 3, 5 ],
+  34: [ 2, 4, 6 ],
+  35: [ 1 ],
+  36: [ 0 ],
+  37: [ 1 ],
+  38: [ 2 ],
+
+  49: [ 3 ],
+  50: [ 4 ],
+  51: [ 3, 5 ],
+  52: [ 2 ],
+  53: [ 1, 2, 5 ],
+  54: [ 0, 2 ],
+  55: [ 1 ],
+  56: [ 2 ],
+
+  81: [ 3 ],
+  82: [ 4 ],
+  83: [ 3 ],
+  84: [ 2 ],
+  85: [ 1 ],
+  86: [ 0 ],
+  87: [ 1 ],
+  88: [ 2 ]
+}
+export const DefaultValence = -1
+
+export const OuterShellElectronCounts: { [e: number]: number | undefined } = {
+1: 1, 2: 2, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 7, 10: 8, 11: 1, 12: 2, 13: 3, 14: 4, 15: 5, 16: 6, 17: 7, 18: 8, 19: 1, 20: 2, 21: 3, 22: 4, 23: 5, 24: 6, 25: 7, 26: 8, 27: 9, 28: 10, 29: 11, 30: 2, 31: 3, 32: 4, 33: 5, 34: 6, 35: 7, 36: 8, 37: 1, 38: 2, 39: 3, 40: 4, 41: 5, 42: 6, 43: 7, 44: 8, 45: 9, 46: 10, 47: 11, 48: 2, 49: 3, 50: 4, 51: 5, 52: 6, 53: 7, 54: 8, 55: 1, 56: 2, 57: 3, 58: 4, 59: 3, 60: 4, 61: 5, 62: 6, 63: 7, 64: 8, 65: 9, 66: 10, 67: 11, 68: 12, 69: 13, 70: 14, 71: 15, 72: 4, 73: 5, 74: 6, 75: 7, 76: 8, 77: 9, 78: 10, 79: 11, 80: 2, 81: 3, 82: 4, 83: 5, 84: 6, 85: 7, 86: 8, 87: 1, 88: 2, 89: 3, 90: 4, 91: 3, 92: 4, 93: 5, 94: 6, 95: 7, 96: 8, 97: 9, 98: 10, 99: 11, 100: 12, 101: 13, 102: 14, 103: 15, 104: 2, 105: 2, 106: 2, 107: 2, 108: 2, 109: 2, 110: 2, 111: 2, 112: 2, 113: 3, 114: 4, 115: 5, 116: 6, 117: 7, 118: 8
+}
+export const DefaultOuterShellElectronCount = 2
 
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
-const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
+export const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
   // AA  DGwif   DGwoct  Oct-IF
   'ALA': [ 0.17, 0.50, 0.33 ],
   'ARG': [ 0.81, 1.81, 1.00 ],
@@ -1068,9 +903,9 @@ const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
   'TYR': [ -0.94, -0.71, 0.23 ],
   'VAL': [ 0.07, -0.46, -0.53 ]
 }
-const DefaultResidueHydrophobicity = [ 0.00, 0.00, 0.00 ]
+export const DefaultResidueHydrophobicity = [ 0.00, 0.00, 0.00 ]
 
-const AA1: { [k: string]: string } = {
+export const AA1: { [k: string]: string } = {
   'HIS': 'H',
   'ARG': 'R',
   'LYS': 'K',
@@ -1098,15 +933,15 @@ const AA1: { [k: string]: string } = {
   'UNK': ''
 }
 
-const AA3 = Object.keys(AA1)
+export const AA3 = Object.keys(AA1)
 
-const RnaBases = [ 'A', 'C', 'T', 'G', 'U' ]
+export const RnaBases = [ 'A', 'C', 'T', 'G', 'U' ]
 
-const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
+export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
 
-const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
+export const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
 
-const WaterNames = [
+export const WaterNames = [
   'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4', 'SPC'
 ]
 
@@ -1119,7 +954,7 @@ const WaterNames = [
 //     FROM pdb.chem_comp WHERE name LIKE "% ION%"
 //     GROUP BY id_
 // ) AS t1;
-const IonNames = [
+export const IonNames = [
   '118', '119', '1AL', '1CU', '2FK', '2HP', '2OF', '3CO',
   '3MT', '3NI', '3OF', '3P8', '4MO', '4PU', '543', '6MO', 'ACT', 'AG', 'AL',
   'ALF', 'AM', 'ATH', 'AU', 'AU3', 'AUC', 'AZI', 'BA', 'BCT', 'BEF', 'BF4', 'BO4',
@@ -1151,7 +986,7 @@ const IonNames = [
 //     FROM pdb.chem_comp WHERE type like "%SACCHARIDE%"
 //     GROUP BY id_
 // ) AS t1;
-const SaccharideNames = [
+export const SaccharideNames = [
   '045', '0AT', '0BD', '0MK', '0NZ', '0TS', '0V4', '0XY', '0YT', '10M',
   '147', '149', '14T', '15L', '16G', '18T', '18Y', '1AR', '1BW', '1GL', '1GN',
   '1JB', '1LL', '1NA', '1S3', '26M', '26Q', '26R', '26V', '26W', '26Y', '27C',
@@ -1203,19 +1038,19 @@ const SaccharideNames = [
   'XYP', 'XYS', 'YO5', 'Z3Q', 'Z6J', 'Z9M', 'ZDC', 'ZDM'
 ]
 
-const ProteinBackboneAtoms = [
+export const ProteinBackboneAtoms = [
   'CA', 'C', 'N', 'O',
   'O1', 'O2', 'OC1', 'OC2', 'OX1', 'OXT',
   'H', 'H1', 'H2', 'H3', 'HA', 'HN',
   'BB'
 ]
 
-const NucleicBackboneAtoms = [
+export const NucleicBackboneAtoms = [
   'P', "O3'", "O5'", "C5'", "C4'", "C3'", 'OP1', 'OP2',
   'O3*', 'O5*', 'C5*', 'C4*', 'C3*'
 ]
 
-const ResidueTypeAtoms: { [k: number]: { [k: string]: string|string[] } } = {}
+export const ResidueTypeAtoms: { [k: number]: { [k: string]: string|string[] } } = {}
 
 ResidueTypeAtoms[ ProteinBackboneType ] = {
   trace: 'CA',
@@ -1260,62 +1095,3 @@ ResidueTypeAtoms[ CgDnaBackboneType ] = {
 }
 
 ResidueTypeAtoms[ UnknownBackboneType ] = {}
-
-export {
-    UnknownEntity,
-    PolymerEntity,
-    NonPolymerEntity,
-    MacrolideEntity,
-    WaterEntity,
-
-    UnknownType,
-    WaterType,
-    IonType,
-    ProteinType,
-    RnaType,
-    DnaType,
-    SaccharideType,
-
-    UnknownBackboneType,
-    ProteinBackboneType,
-    RnaBackboneType,
-    DnaBackboneType,
-    CgProteinBackboneType,
-    CgRnaBackboneType,
-    CgDnaBackboneType,
-
-    ChemCompProtein,
-    ChemCompRna,
-    ChemCompDna,
-    ChemCompSaccharide,
-    ChemCompOther,
-    ChemCompNonPolymer,
-    ChemCompHetero,
-
-    SecStrucHelix,
-    SecStrucSheet,
-    SecStrucTurn,
-
-    VdwRadii,
-    DefaultVdwRadius,
-    ResidueRadii,
-    DefaultResidueRadius,
-    CovalentRadii,
-    DefaultCovalentRadius,
-    ResidueHydrophobicity,
-    DefaultResidueHydrophobicity,
-
-    AA1,
-    AA3,
-    RnaBases,
-    DnaBases,
-    PurinBases,
-    WaterNames,
-    IonNames,
-    SaccharideNames,
-
-    ProteinBackboneAtoms,
-    NucleicBackboneAtoms,
-
-    ResidueTypeAtoms
-}
