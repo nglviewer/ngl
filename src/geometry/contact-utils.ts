@@ -175,3 +175,45 @@ export function polarBackboneContacts (structure: Structure, maxDistance = 3.5, 
   }
 }
 
+/**
+ * All contacts between carbon atoms that are only bonded to carbon or hydrogen
+ */
+export function hydrophobicContacts (structure: Structure, maxDistance = 4.0) {
+  const carbonSelection = new Selection('_C')
+  const carbonView = structure.getView(carbonSelection)
+
+  const data = getContacts(carbonView, carbonView, maxDistance)
+  const bondStore = data.bondStore
+
+  const ap1 = structure.getAtomProxy()
+  const ap2 = structure.getAtomProxy()
+
+  for (let i = 0, il = bondStore.count; i < il; ++i) {
+    ap1.index = bondStore.atomIndex1[ i ]
+    ap2.index = bondStore.atomIndex2[ i ]
+
+    let remove = false
+
+    ap1.eachBondedAtom(ap => {
+      const e = ap.element
+      if (e !== 'C' && e!== 'H') remove = true
+    })
+
+    if (!remove) {
+      ap2.eachBondedAtom(ap => {
+        const e = ap.element
+        if (e !== 'C' && e!== 'H') remove = true
+      })
+    }
+
+    if (remove) {
+      data.bondSet.clear(i)
+    }
+  }
+
+  return {
+    atomSet: data.atomSet,
+    bondSet: data.bondSet,
+    bondStore: data.bondStore
+  }
+}

@@ -9,7 +9,9 @@ import { RepresentationRegistry } from '../globals'
 import { ContactPicker } from '../utils/picker.js'
 import { calculateCenterArray } from '../math/array-utils.js'
 import StructureRepresentation from './structure-representation.js'
-import { polarContacts, polarBackboneContacts } from '../geometry/contact-utils.js'
+import {
+  polarContacts, polarBackboneContacts, hydrophobicContacts
+} from '../geometry/contact-utils.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
 /**
@@ -28,7 +30,8 @@ class ContactRepresentation extends StructureRepresentation {
         rebuild: true,
         options: {
           'polar': 'polar',
-          'polarBackbone': 'polar backbone'
+          'polarBackbone': 'polar backbone',
+          'hydrophobic': 'hydrophobic'
         }
       },
       maxDistance: {
@@ -58,8 +61,9 @@ class ContactRepresentation extends StructureRepresentation {
 
   getContactData (sview) {
     var contactsFnDict = {
-      'polar': polarContacts,
-      'polarBackbone': polarBackboneContacts
+      polar: polarContacts,
+      polarBackbone: polarBackboneContacts,
+      hydrophobic: hydrophobicContacts
     }
 
     var contactData = contactsFnDict[ this.contactType ](
