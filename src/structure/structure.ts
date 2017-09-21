@@ -17,7 +17,7 @@ import { Matrix } from '../math/matrix-utils'
 import PrincipalAxes from '../math/principal-axes'
 import SpatialHash from '../geometry/spatial-hash'
 import FilteredVolume from '../surface/filtered-volume'
-import StructureView from './structure-view';
+import StructureView from './structure-view'
 import { AtomDataParams, AtomData, BondDataParams, BondData } from './structure-data'
 
 import Entity from './entity'

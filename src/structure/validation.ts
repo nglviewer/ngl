@@ -8,24 +8,26 @@ import { Vector3, Color } from 'three'
 
 import { Debug, Log } from '../globals'
 import { defaults } from '../utils'
-import { ClashPicker } from '../utils/picker.js'
-import { uniformArray3 } from '../math/array-utils.js'
-import { guessElement } from '../structure/structure-utils.js'
+import { ClashPicker } from '../utils/picker'
+import { uniformArray3 } from '../math/array-utils'
+import { guessElement } from '../structure/structure-utils'
+import AtomProxy from '../proxy/atom-proxy'
+import Structure from '../structure/structure'
 
-function getSele (a, atomname, useAltcode) {
-  const icode = a.icode.value
-  const chain = a.chain.value
-  const altcode = a.altcode.value
-  let sele = a.resnum.value
+function getSele (a: NamedNodeMap, atomname?: string, useAltcode = false) {
+  const icode = a.getNamedItem('icode').value
+  const chain = a.getNamedItem('chain').value
+  const altcode = a.getNamedItem('altcode').value
+  let sele = a.getNamedItem('resnum').value
   if (icode.trim()) sele += '^' + icode
   if (chain.trim()) sele += ':' + chain
   if (atomname) sele += '.' + atomname
   if (useAltcode && altcode.trim()) sele += '%' + altcode
-  sele += '/' + (parseInt(a.model.value) - 1)
+  sele += '/' + (parseInt(a.getNamedItem('model').value) - 1)
   return sele
 }
 
-function setBitDict (dict, key, bit) {
+function setBitDict (dict: { [k: string]: number }, key: string, bit: number) {
   if (dict[ key ] === undefined) {
     dict[ key ] = bit
   } else {
@@ -33,16 +35,16 @@ function setBitDict (dict, key, bit) {
   }
 }
 
-function hasAttrValue (attr, value) {
-  return attr !== undefined && attr.value === value
+function hasAttrValue (attr: Attr, value: string) {
+  return attr !== null && attr.value === value
 }
 
-function getAtomSele (ap) {
+function getAtomSele (ap: AtomProxy) {
   const icode = ap.inscode
   const chain = ap.chainname
   const atomname = ap.atomname
   const altcode = ap.altloc
-  let sele = ap.resno
+  let sele = ap.resno + ''
   if (icode) sele += '^' + icode
   if (chain) sele += ':' + chain
   if (atomname) sele += '.' + atomname
@@ -51,12 +53,12 @@ function getAtomSele (ap) {
   return sele
 }
 
-function getProblemCount (clashDict, g, ga) {
+function getProblemCount (clashDict: { [k: string]: { [k: string]: string } }, g: Element, ga: NamedNodeMap) {
   let geoProblemCount = 0
 
   const clashes = g.getElementsByTagName('clash')
   for (let j = 0, jl = clashes.length; j < jl; ++j) {
-    if (clashDict[ clashes[ j ].attributes.cid.value ]) {
+    if (clashDict[ clashes[ j ].attributes.getNamedItem('cid').value ]) {
       geoProblemCount += 1
       break
     }
@@ -77,15 +79,15 @@ function getProblemCount (clashDict, g, ga) {
     geoProblemCount += 1
   }
 
-  if (hasAttrValue(ga.rota, 'OUTLIER')) {
+  if (hasAttrValue(ga.getNamedItem('rota'), 'OUTLIER')) {
     geoProblemCount += 1
   }
 
-  if (hasAttrValue(ga.rama, 'OUTLIER')) {
+  if (hasAttrValue(ga.getNamedItem('rama'), 'OUTLIER')) {
     geoProblemCount += 1
   }
 
-  if (hasAttrValue(ga.RNApucker, 'outlier')) {
+  if (hasAttrValue(ga.getNamedItem('RNApucker'), 'outlier')) {
     geoProblemCount += 1
   }
 
@@ -93,23 +95,20 @@ function getProblemCount (clashDict, g, ga) {
 }
 
 class Validation {
-  constructor (name, path) {
-    this.name = name
-    this.path = path
+  rsrzDict: { [k: string]: number } = {}
+  rsccDict: { [k: string]: number } = {}
+  clashDict: { [k: string]: { [k: string]: string } } = {}
+  clashArray: { [k: string]: string }[] = []
+  geoDict: { [k: string]: number } = {}
+  geoAtomDict: { [k: string]: { [k: string]: number } } = {}
+  atomDict: { [k: string]: boolean|number } = {}
+  clashSele = 'NONE'
 
-    this.rsrzDict = {}
-    this.rsccDict = {}
-    this.clashDict = {}
-    this.clashArray = []
-    this.geoDict = {}
-    this.geoAtomDict = {}
-    this.atomDict = {}
-    this.clashSele = 'NONE'
-  }
+  constructor (readonly name: string, readonlypath: string) {}
 
   get type () { return 'validation' }
 
-  fromXml (xml) {
+  fromXml (xml: XMLDocument) {
     if (Debug) Log.time('Validation.fromXml')
 
     const rsrzDict = this.rsrzDict
@@ -122,8 +121,8 @@ class Validation {
 
     const groups = xml.getElementsByTagName('ModelledSubgroup')
 
-    const _clashDict = {}
-    const clashList = []
+    const _clashDict: { [k: string]: { [k: string]: string } } = {}
+    const clashList: string[] = []
 
     if (Debug) Log.time('Validation.fromXml#clashDict')
 
@@ -132,22 +131,24 @@ class Validation {
       const ga = g.attributes
 
       const sele = getSele(ga)
-      if (ga.rsrz !== undefined) {
-        rsrzDict[ sele ] = parseFloat(ga.rsrz.value)
+      if (ga.getNamedItem('rsrz') !== null) {
+        rsrzDict[ sele ] = parseFloat(ga.getNamedItem('rsrz').value)
       }
-      if (ga.rscc !== undefined) {
-        rsccDict[ sele ] = parseFloat(ga.rscc.value)
+      if (ga.getNamedItem('rscc') !== null) {
+        rsccDict[ sele ] = parseFloat(ga.getNamedItem('rscc').value)
       }
-      ga.sele = sele
+      const seleAttr = xml.createAttribute('sele')
+      seleAttr.value = sele
+      ga.setNamedItem(seleAttr)
 
       const clashes = g.getElementsByTagName('clash')
 
       for (let j = 0, jl = clashes.length; j < jl; ++j) {
         const ca = clashes[ j ].attributes
-        const atom = ca.atom.value
+        const atom = ca.getNamedItem('atom').value
 
         if (guessElement(atom) !== 'H') {
-          const cid = ca.cid.value
+          const cid = ca.getNamedItem('cid').value
           const atomSele = getSele(ga, atom, true)
           atomDict[ atomSele ] = true
 
@@ -176,8 +177,8 @@ class Validation {
       const g = groups[ i ]
       const ga = g.attributes
 
-      const sele = ga.sele
-      const isPolymer = ga.seq.value !== '.'
+      const sele = ga.getNamedItem('sele').value
+      const isPolymer = ga.getNamedItem('seq').value !== '.'
 
       if (isPolymer) {
         const geoProblemCount = getProblemCount(clashDict, g, ga)
@@ -195,21 +196,21 @@ class Validation {
 
           for (let j = 0, jl = clashes.length; j < jl; ++j) {
             const ca = clashes[ j ].attributes
-            if (clashDict[ ca.cid.value ]) {
-              setBitDict(atomDict, ca.atom.value, 1)
+            if (clashDict[ ca.getNamedItem('cid').value ]) {
+              setBitDict(atomDict, ca.getNamedItem('atom').value, 1)
             }
           }
 
           for (let j = 0, jl = mogBondOutliers.length; j < jl; ++j) {
             const mbo = mogBondOutliers[ j ].attributes
-            mbo.atoms.value.split(',').forEach(function (atomname) {
+            mbo.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 2)
             })
           }
 
           for (let j = 0, jl = mogAngleOutliers.length; j < jl; ++j) {
             const mao = mogAngleOutliers[ j ].attributes
-            mao.atoms.value.split(',').forEach(function (atomname) {
+            mao.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 4)
             })
           }
@@ -222,13 +223,13 @@ class Validation {
     if (Debug) Log.timeEnd('Validation.fromXml')
   }
 
-  getClashData (params) {
+  getClashData (params: { color: number|string|Color, structure: Structure }) {
     if (Debug) Log.time('Validation.getClashData')
 
     const p = params || {}
 
     const s = p.structure
-    const atomSet = s.atomSet
+    const atomSet = s.atomSet!  // TODO
     const c = new Color(defaults(p.color, '#f0027f'))
 
     const ap1 = s.getAtomProxy()
@@ -242,7 +243,7 @@ class Validation {
 
     const position1 = new Float32Array(n * 3)
     const position2 = new Float32Array(n * 3)
-    const color = uniformArray3(n, c.r, c.g, c.b)
+    const color = uniformArray3(n, c.r, c.g, c.b) as Float32Array
     const radius = new Float32Array(n)
     const picking = new Float32Array(n)
 
@@ -262,24 +263,24 @@ class Validation {
     let i = 0
 
     clashArray.forEach(function (c, idx) {
-      ap1.index = atomDict[ c.sele1 ]
-      ap2.index = atomDict[ c.sele2 ]
+      ap1.index = atomDict[ c.sele1 ] as number  // TODO
+      ap2.index = atomDict[ c.sele2 ] as number  // TODO
 
       if (ap1.index === undefined || ap2.index === undefined ||
-                !atomSet.isSet(ap1.index, ap2.index)) return
+          !atomSet.isSet(ap1.index, ap2.index)) return
 
-      vDir.subVectors(ap2, ap1).setLength(ap1.vdw)
-      vPos1.copy(ap1).add(vDir)
+      vDir.subVectors(ap2 as any, ap1 as any).setLength(ap1.vdw)  // TODO
+      vPos1.copy(ap1 as any).add(vDir)  // TODO
 
-      vDir.subVectors(ap1, ap2).setLength(ap2.vdw)
-      vPos2.copy(ap2).add(vDir)
+      vDir.subVectors(ap1 as any, ap2 as any).setLength(ap2.vdw)  // TODO
+      vPos2.copy(ap2 as any).add(vDir)  // TODO
 
       const dHalf = ap1.distanceTo(ap2) / 2
       const r1 = Math.sqrt(ap1.vdw * ap1.vdw - dHalf * dHalf)
       const r2 = Math.sqrt(ap2.vdw * ap2.vdw - dHalf * dHalf)
 
-      vPos1.toArray(position1, i * 3)
-      vPos2.toArray(position2, i * 3)
+      vPos1.toArray(position1 as any, i * 3)  // TODO
+      vPos2.toArray(position2 as any, i * 3)
       radius[ i ] = (r1 + r2) / 2
       picking[ i ] = idx
 

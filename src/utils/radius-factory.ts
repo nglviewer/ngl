@@ -16,7 +16,7 @@ const RadiusFactoryTypes = {
   'bfactor': 'by bfactor',
   'size': 'size'
 }
-type RadiusType = keyof typeof RadiusFactoryTypes
+export type RadiusType = keyof typeof RadiusFactoryTypes
 
 class RadiusFactory {
   max = 10

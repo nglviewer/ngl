@@ -303,8 +303,8 @@ export const calculateSecondaryStructure = (function () {
     const c2 = new Vector3()
 
     for (let i = 0, il = p.residueCount; i < il; ++i) {
-      c1.fromArray(pos.center, i * 3)
-      c2.fromArray(pos.center, i * 3 + 3)
+      c1.fromArray(pos.center as any, i * 3)  // TODO
+      c2.fromArray(pos.center as any, i * 3 + 3)  // TODO
       const d = c1.distanceTo(c2)
 
       if (d < centerDist && d > 1.0 && pos.bending[ i ] < localAngle) {
