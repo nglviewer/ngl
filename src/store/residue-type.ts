@@ -72,7 +72,6 @@ class ResidueType {
     this.hetero = hetero ? 1 : 0
     this.chemCompType = chemCompType
     this.bonds = bonds
-    this.rings = undefined
     this.atomCount = atomTypeIdList.length
 
     this.moleculeType = this.getMoleculeType()
@@ -378,7 +377,7 @@ class ResidueType {
 
   getBondGraph () {
     if (this.bondGraph === undefined) {
-      return this.calculateBondGraph()
+      this.calculateBondGraph()
     }
     return this.bondGraph
   }
@@ -388,7 +387,7 @@ class ResidueType {
    *   residue: { ai1: [ ai2, ai3, ...], ...}
    */
   calculateBondGraph () {
-    const bondGraph: BondGraph = {}
+    const bondGraph: BondGraph = this.bondGraph = {}
     const bonds = this.getBonds()
     const nb = bonds.atomIndices1.length
     const atomIndices1 = bonds.atomIndices1
@@ -404,7 +403,6 @@ class ResidueType {
       const a2 = bondGraph[ ai2 ] = bondGraph[ ai2 ] || []
       a2.push(ai1)
     }
-    this.bondGraph = bondGraph
   }
 
   /**
