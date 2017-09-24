@@ -4,11 +4,9 @@
  * @private
  */
 
-
-import { ExtensionFragDepth } from "../globals.js";
-import SphereGeometryBuffer from "./spheregeometry-buffer.js";
-import SphereImpostorBuffer from "./sphereimpostor-buffer.js";
-
+import { BufferRegistry, ExtensionFragDepth } from '../globals.js'
+import SphereGeometryBuffer from './spheregeometry-buffer.js'
+import SphereImpostorBuffer from './sphereimpostor-buffer.js'
 
 /**
  * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and
@@ -23,8 +21,7 @@ import SphereImpostorBuffer from "./sphereimpostor-buffer.js";
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class SphereBuffer{
-
+class SphereBuffer {
     /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position - positions
@@ -34,17 +31,15 @@ class SphereBuffer{
      * @param {BufferParameters} params - parameters object
      * @return {SphereGeometryBuffer|SphereImpostorBuffer} the buffer object
      */
-    constructor( data, params ){
-
-        if( !ExtensionFragDepth || ( params && params.disableImpostor ) ){
-            return new SphereGeometryBuffer( data, params );
-        }else{
-            return new SphereImpostorBuffer( data, params );
-        }
-
+  constructor (data, params) {
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+      return new SphereGeometryBuffer(data, params)
+    } else {
+      return new SphereImpostorBuffer(data, params)
     }
-
+  }
 }
 
+BufferRegistry.add('sphere', SphereBuffer)
 
-export default SphereBuffer;
+export default SphereBuffer

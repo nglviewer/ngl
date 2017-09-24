@@ -4,67 +4,53 @@
  * @private
  */
 
+import { IcosahedronBufferGeometry, Vector3 } from '../../lib/three.es6.js'
 
-import { IcosahedronBufferGeometry, Vector3 } from "../../lib/three.es6.js";
+import { defaults } from '../utils.js'
+import GeometryBuffer from './geometry-buffer.js'
 
-import { defaults } from "../utils.js";
-import GeometryBuffer from "./geometry-buffer.js";
-
-
-const scale = new Vector3();
-
+const scale = new Vector3()
 
 /**
  * Sphere geometry buffer.
  *
  * @example
- * var sphereGeometryBuffer = new SphereGeometryBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
+ * var sphereGeometryBuffer = new SphereGeometryBuffer({
+ *   position: new Float32Array([ 0, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
  */
-class SphereGeometryBuffer extends GeometryBuffer{
+class SphereGeometryBuffer extends GeometryBuffer {
+  /**
+   * @param {Object} data - attribute object
+   * @param {Float32Array} data.position - positions
+   * @param {Float32Array} data.color - colors
+   * @param {Float32Array} data.radius - radii
+   * @param {Picker} [data.picking] - picking ids
+   * @param {BufferParameters} params - parameter object
+   */
+  constructor (data, params) {
+    const p = params || {}
+    const detail = defaults(p.sphereDetail, 1)
+    const geo = new IcosahedronBufferGeometry(1, detail)
 
-    /**
-     * @param {Object} data - attribute object
-     * @param {Float32Array} data.position - positions
-     * @param {Float32Array} data.color - colors
-     * @param {Float32Array} data.radius - radii
-     * @param {Picker} [data.picking] - picking ids
-     * @param {BufferParameters} params - parameter object
-     */
-    constructor( data, params ){
+    super(data, p, geo)
 
-        const p = params || {};
-        const detail = defaults( p.sphereDetail, 1 );
-        const geo = new IcosahedronBufferGeometry( 1, detail );
+    this.setAttributes(data, true)
+  }
 
-        super( data, p, geo );
+  applyPositionTransform (matrix, i) {
+    const r = this._radius[ i ]
+    scale.set(r, r, r)
+    matrix.scale(scale)
+  }
 
-        this.setAttributes( data, true );
+  setAttributes (data, initNormals) {
+    if (data.radius) this._radius = data.radius
 
-    }
-
-    applyPositionTransform( matrix, i ){
-
-        const r = this._radius[ i ];
-        scale.set( r, r, r );
-        matrix.scale( scale );
-
-    }
-
-    setAttributes( data, initNormals ){
-
-        if( data.radius ){
-            this._radius = data.radius;
-        }
-
-        super.setAttributes( data, initNormals );
-
-    }
-
+    super.setAttributes(data, initNormals)
+  }
 }
 
-
-export default SphereGeometryBuffer;
+export default SphereGeometryBuffer

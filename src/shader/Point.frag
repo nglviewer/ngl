@@ -3,8 +3,6 @@ uniform float opacity;
 uniform float nearClip;
 uniform float clipRadius;
 
-varying vec3 vViewPosition;
-
 #if defined( RADIUS_CLIP )
     varying vec3 vClipCenter;
 #endif
@@ -20,6 +18,7 @@ varying vec3 vViewPosition;
     #include common
     #include color_pars_fragment
     #include fog_pars_fragment
+    varying vec3 vViewPosition;
 #endif
 
 void main(){

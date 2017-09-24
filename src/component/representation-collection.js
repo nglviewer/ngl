@@ -4,25 +4,16 @@
  * @private
  */
 
+import Collection from './collection.js'
 
-import Collection from "./collection.js";
+class RepresentationCollection extends Collection {
+  setParameters (params) {
+    return this._invoke('setParameters', [ params ])
+  }
 
-
-class RepresentationCollection extends Collection{
-
-    setParameters( params ){
-
-        return this._invoke( "setParameters", [ params ] );
-
-    }
-
-    setColor( color ){
-
-        return this._invoke( "setColor", [ color ] );
-
-    }
-
+  setColor (color) {
+    return this._invoke('setColor', [ color ])
+  }
 }
 
-
-export default RepresentationCollection;
+export default RepresentationCollection

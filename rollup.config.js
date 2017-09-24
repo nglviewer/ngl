@@ -1,5 +1,7 @@
 import buble from 'rollup-plugin-buble';
 import json from 'rollup-plugin-json';
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
 
 var path = require('path');
 var pkg = require('./package.json');
@@ -47,26 +49,32 @@ function text () {
 }
 
 export default {
-  entry: 'src/ngl.js',
+  input: 'src/ngl.js',
   plugins: [
+    resolve({
+      jsnext: true,
+      main: true
+    }),
+    commonjs(),
     glsl(),
     text(),
     json(),
     buble()
   ],
-  external: external,
-  targets: [
+  output: [
     {
-      dest: "build/js/ngl.dev.js",
+      file: "build/js/ngl.dev.js",
       format: 'umd',
-      moduleName: 'NGL',
-      sourceMap: true
+      name: 'NGL',
+      sourcemap: true
     },
     {
-      dest: "build/js/ngl.esm.js",
+      file: "build/js/ngl.esm.js",
       format: 'es',
-      moduleName: 'NGL',
-      sourceMap: true
+      name: 'NGL',
+      sourcemap: true
     }
-  ]
+  ],
+  external: external,
+  sourcemap: true
 };

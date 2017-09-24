@@ -4,27 +4,25 @@
  * @private
  */
 
+import { getFileInfo, getAbsolutePath } from '../utils.js'
+import Datasource from './datasource.js'
 
-import { getFileInfo, getAbsolutePath } from "../utils.js";
+const reProtocol = /^((http|https|ftp):)*\/\//
 
+class StaticDatasource extends Datasource {
+  constructor (baseUrl) {
+    super()
+    this.baseUrl = baseUrl || ''
+  }
 
-const reProtocol = /^((http|https|ftp):)*\/\//;
-
-
-function StaticDatasource( baseUrl ){
-
-    baseUrl = baseUrl || "";
-
-    this.getUrl = function( src ){
-        const info = getFileInfo( src );
-        let url = baseUrl + info.path;
-        if( !reProtocol.test( baseUrl ) ){
-            url = getAbsolutePath( url );
-        }
-        return url;
-    };
-
+  getUrl (src) {
+    const info = getFileInfo(src)
+    let url = this.baseUrl + info.path
+    if (!reProtocol.test(this.baseUrl)) {
+      url = getAbsolutePath(url)
+    }
+    return url
+  }
 }
 
-
-export default StaticDatasource;
+export default StaticDatasource

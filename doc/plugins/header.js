@@ -8,17 +8,17 @@ const pkgPath = "./package.json";
 const pkg = JSON.parse( fs.readFileSync( pkgPath, "utf8" ) );
 
 
-exports.onHandleHTML = function( ev ){
+exports.onHandleContent = function( ev ){
 
     if( path.extname( ev.data.fileName ) !== '.html' ) return;
 
-    const $ = cheerio.load( ev.data.html );
+    const $ = cheerio.load( ev.data.content );
 
     $( 'body > header' ).prepend(
         '<span>NGL@' + pkg.version + '</span>'
     );
 
-    $( 'body > header > a.repo-url-github' ).before(
+    $( 'body > header' ).append(
         '<a href="./../gallery/index.html">Gallery</a>'
     );
 
@@ -34,6 +34,6 @@ exports.onHandleHTML = function( ev ){
         "</script>"
     );
 
-    ev.data.html = $.html();
+    ev.data.content = $.html();
 
 };

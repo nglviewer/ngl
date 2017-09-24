@@ -4,19 +4,17 @@
  * @private
  */
 
+import { Color } from '../../lib/three.es6.js'
 
-import { Color } from "../../lib/three.es6.js";
+import { defaults } from '../utils.js'
+import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 
-import { defaults } from "../utils.js";
-import { uniformArray, uniformArray3 } from "../math/array-utils.js";
+import StructureRepresentation from './structure-representation.js'
 
-import StructureRepresentation from "./structure-representation.js";
-
-import SphereBuffer from "../buffer/sphere-buffer.js";
-import CylinderBuffer from "../buffer/cylinder-buffer.js";
-import PointBuffer from "../buffer/point-buffer.js";
-import LineBuffer from "../buffer/line-buffer.js";
-
+import SphereBuffer from '../buffer/sphere-buffer.js'
+import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import PointBuffer from '../buffer/point-buffer.js'
+import LineBuffer from '../buffer/line-buffer.js'
 
 /**
  * Trajectory representation parameter object.
@@ -32,197 +30,164 @@ import LineBuffer from "../buffer/line-buffer.js";
  * @property {Boolean} sort - sort flag for points
  */
 
-
 /**
  * Trajectory representation
  */
-class TrajectoryRepresentation extends StructureRepresentation{
+class TrajectoryRepresentation extends StructureRepresentation {
+  /**
+   * @param  {Trajectory} trajectory - the trajectory
+   * @param  {Viewer} viewer - viewer object
+   * @param  {TrajectoryRepresentationParameters} params - parameters
+   */
+  constructor (trajectory, viewer, params) {
+    super(trajectory.structure, viewer, params)
 
-    /**
-     * @param  {Trajectory} trajectory - the trajectory
-     * @param  {Viewer} viewer - viewer object
-     * @param  {TrajectoryRepresentationParameters} params - parameters
-     */
-    constructor( trajectory, viewer, params ){
+    this.type = 'trajectory'
 
-        super( trajectory.structure, viewer, params );
+    this.parameters = Object.assign({
+      drawLine: {
+        type: 'boolean', rebuild: true
+      },
+      drawCylinder: {
+        type: 'boolean', rebuild: true
+      },
+      drawPoint: {
+        type: 'boolean', rebuild: true
+      },
+      drawSphere: {
+        type: 'boolean', rebuild: true
+      },
 
-        this.type = "trajectory";
+      linewidth: {
+        type: 'integer', max: 20, min: 1, rebuild: true
+      },
+      pointSize: {
+        type: 'integer', max: 20, min: 1, rebuild: true
+      },
+      sizeAttenuation: {
+        type: 'boolean', rebuild: true
+      },
+      sort: {
+        type: 'boolean', rebuild: true
+      }
+    }, this.parameters)
 
-        this.parameters = Object.assign( {
+    this.manualAttach = true
+    this.trajectory = trajectory
 
-            drawLine: {
-                type: "boolean", rebuild: true
-            },
-            drawCylinder: {
-                type: "boolean", rebuild: true
-            },
-            drawPoint: {
-                type: "boolean", rebuild: true
-            },
-            drawSphere: {
-                type: "boolean", rebuild: true
-            },
+    this.init(params)
+  }
 
-            linewidth: {
-                type: "integer", max: 20, min: 1, rebuild: true
-            },
-            pointSize: {
-                type: "integer", max: 20, min: 1, rebuild: true
-            },
-            sizeAttenuation: {
-                type: "boolean", rebuild: true
-            },
-            sort: {
-                type: "boolean", rebuild: true
-            },
+  init (params) {
+    var p = params || {}
+    p.colorScheme = defaults(p.colorScheme, 'uniform')
+    p.colorValue = defaults(p.colorValue, 0xDDDDDD)
 
-        }, this.parameters );
+    this.drawLine = defaults(p.drawLine, true)
+    this.drawCylinder = defaults(p.drawCylinder, false)
+    this.drawPoint = defaults(p.drawPoint, false)
+    this.drawSphere = defaults(p.drawSphere, false)
 
-        this.manualAttach = true;
+    this.pointSize = defaults(p.pointSize, 1)
+    this.sizeAttenuation = defaults(p.sizeAttenuation, false)
+    this.sort = defaults(p.sort, true)
 
-        this.trajectory = trajectory;
+    super.init(p)
+  }
 
-        this.init( params );
+  attach () {
+    this.bufferList.forEach(buffer => this.viewer.add(buffer))
+    this.setVisibility(this.visible)
+    this.tasks.decrement()
+  }
 
-    }
+  // prepare (callback) {
+  //   // TODO
+  //   // - move loading of path here
+  //   // - get rid of manualAttach
+  //   callback()
+  // }
 
-    init( params ){
+  create () {
+    console.log('create', this.structureView.atomCount)
+    if (this.structureView.atomCount === 0) return
 
-        var p = params || {};
-        p.colorScheme = defaults( p.colorScheme, "uniform" );
-        p.colorValue = defaults( p.colorValue, 0xDDDDDD );
+    var index = this.structureView.getAtomIndices()[ 0 ]
 
-        this.drawLine = defaults( p.drawLine, true );
-        this.drawCylinder = defaults( p.drawCylinder, false );
-        this.drawPoint = defaults( p.drawPoint, false );
-        this.drawSphere = defaults( p.drawSphere, false );
+    this.trajectory.getPath(index, path => {
+      var n = path.length / 3
+      var tc = new Color(this.colorValue)
 
-        this.pointSize = defaults( p.pointSize, 1 );
-        this.sizeAttenuation = defaults( p.sizeAttenuation, false );
-        this.sort = defaults( p.sort, true );
+      if (this.drawSphere) {
+        var sphereBuffer = new SphereBuffer(
+          {
+            position: path,
+            color: uniformArray3(n, tc.r, tc.g, tc.b),
+            radius: uniformArray(n, 0.2)
+          },
+          this.getBufferParams({
+            sphereDetail: this.sphereDetail,
+            dullInterior: true,
+            disableImpostor: this.disableImpostor
+          })
+        )
 
-        super.init( p );
+        this.bufferList.push(sphereBuffer)
+      }
 
-    }
+      if (this.drawCylinder) {
+        var cylinderBuffer = new CylinderBuffer(
+          {
+            position1: path.subarray(0, -3),
+            position2: path.subarray(3),
+            color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
+            color2: uniformArray3(n - 1, tc.r, tc.g, tc.b),
+            radius: uniformArray(n, 0.05)
+          },
+          this.getBufferParams({
+            openEnded: false,
+            radialSegments: this.radialSegments,
+            disableImpostor: this.disableImpostor,
+            dullInterior: true
+          })
+        )
 
-    attach( callback ){
+        this.bufferList.push(cylinderBuffer)
+      }
 
-        this.bufferList.forEach( buffer => {
-            this.viewer.add( buffer );
-        } );
-        this.setVisibility( this.visible );
+      if (this.drawPoint) {
+        var pointBuffer = new PointBuffer(
+          {
+            position: path,
+            color: uniformArray3(n, tc.r, tc.g, tc.b)
+          },
+          this.getBufferParams({
+            pointSize: this.pointSize,
+            sizeAttenuation: this.sizeAttenuation,
+            sort: this.sort
+          })
+        )
 
-        callback();
+        this.bufferList.push(pointBuffer)
+      }
 
-    }
+      if (this.drawLine) {
+        var lineBuffer = new LineBuffer(
+          {
+            position1: path.subarray(0, -3),
+            position2: path.subarray(3),
+            color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
+            color2: uniformArray3(n - 1, tc.r, tc.g, tc.b)
+          },
+          this.getBufferParams()
+        )
 
-    prepare( callback ){
+        this.bufferList.push(lineBuffer)
+      }
 
-        // TODO
-        callback();
-
-    }
-
-    create(){
-
-        // Log.log( this.selection )
-        // Log.log( this.atomSet )
-
-        if( this.atomSet.atomCount === 0 ) return;
-
-        var scope = this;
-
-        var index = this.atomSet.atoms[ 0 ].index;
-
-        this.trajectory.getPath( index, function( path ){
-
-            var n = path.length / 3;
-            var tc = new Color( scope.colorValue );
-
-            if( scope.drawSphere ){
-
-                var sphereBuffer = new SphereBuffer(
-                    {
-                        position: path,
-                        color: uniformArray3( n, tc.r, tc.g, tc.b ),
-                        radius: uniformArray( n, 0.2 )
-                    },
-                    scope.getBufferParams( {
-                        sphereDetail: scope.sphereDetail,
-                        dullInterior: true,
-                        disableImpostor: scope.disableImpostor
-                    } )
-                );
-
-                scope.bufferList.push( sphereBuffer );
-
-            }
-
-            if( scope.drawCylinder ){
-
-                var cylinderBuffer = new CylinderBuffer(
-                    {
-                        position1: path.subarray( 0, -3 ),
-                        position2: path.subarray( 3 ),
-                        color: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                        color2: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                        radius: uniformArray( n, 0.05 )
-                    },
-                    scope.getBufferParams( {
-                        openEnded: false,
-                        radialSegments: scope.radialSegments,
-                        disableImpostor: scope.disableImpostor,
-                        dullInterior: true
-                    } )
-
-                );
-
-                scope.bufferList.push( cylinderBuffer );
-
-            }
-
-            if( scope.drawPoint ){
-
-                var pointBuffer = new PointBuffer(
-                    {
-                        position: path,
-                        color: uniformArray3( n, tc.r, tc.g, tc.b )
-                    },
-                    scope.getBufferParams( {
-                        pointSize: scope.pointSize,
-                        sizeAttenuation: scope.sizeAttenuation,
-                        sort: scope.sort,
-                    } )
-                );
-
-                scope.bufferList.push( pointBuffer );
-
-            }
-
-            if( scope.drawLine ){
-
-                var lineBuffer = new LineBuffer(
-                    {
-                        position1: path.subarray( 0, -3 ),
-                        position2: path.subarray( 3 ),
-                        color: uniformArray3( n - 1, tc.r, tc.g, tc.b ),
-                        color2: uniformArray3( n - 1, tc.r, tc.g, tc.b )
-                    },
-                    scope.getBufferParams()
-                );
-
-                scope.bufferList.push( lineBuffer );
-
-            }
-
-            scope.attach();
-
-        } );
-
-    }
-
+      this.attach()
+    })
+  }
 }
 
-
-export default TrajectoryRepresentation;
+export default TrajectoryRepresentation

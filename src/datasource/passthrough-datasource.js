@@ -4,22 +4,17 @@
  * @private
  */
 
+import { DatasourceRegistry } from '../globals.js'
+import Datasource from './datasource.js'
 
-import { DatasourceRegistry } from "../globals.js";
-
-
-function PassThroughDatasource(){
-
-    this.getUrl = function( path ){
-        return path;
-    };
-
+class PassThroughDatasource extends Datasource {
+  getUrl (path) {
+    return path
+  }
 }
 
+DatasourceRegistry.add('ftp', new PassThroughDatasource())
+DatasourceRegistry.add('http', new PassThroughDatasource())
+DatasourceRegistry.add('https', new PassThroughDatasource())
 
-DatasourceRegistry.add( "ftp", new PassThroughDatasource() );
-DatasourceRegistry.add( "http", new PassThroughDatasource() );
-DatasourceRegistry.add( "https", new PassThroughDatasource() );
-
-
-export default PassThroughDatasource;
+export default PassThroughDatasource

@@ -4,64 +4,55 @@
  * @private
  */
 
+import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import CartoonRepresentation from './cartoon-representation.js'
+import Helixorient from '../geometry/helixorient.js'
+import Spline from '../geometry/spline.js'
 
-import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import CartoonRepresentation from "./cartoon-representation.js";
-import Helixorient from "../geometry/helixorient.js";
-import Spline from "../geometry/spline.js";
+/**
+ * Rope Representation
+ */
+class RopeRepresentation extends CartoonRepresentation {
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
+    this.type = 'rope'
 
-class RopeRepresentation extends CartoonRepresentation{
+    this.parameters = Object.assign({
 
-    constructor( structure, viewer, params ){
+      smooth: {
+        type: 'integer', max: 15, min: 0, rebuild: true
+      }
 
-        super( structure, viewer, params );
+    }, this.parameters, {
+      aspectRatio: null,
+      smoothSheet: null
+    })
+  }
 
-        this.type = "rope";
+  init (params) {
+    var p = params || {}
+    p.aspectRatio = 1.0
+    p.tension = defaults(p.tension, 0.5)
+    p.scale = defaults(p.scale, 5.0)
+    p.smoothSheet = false
 
-        this.parameters = Object.assign( {
+    this.smooth = defaults(p.smooth, 2)
 
-            smooth: {
-                type: "integer", max: 15, min: 0, rebuild: true
-            }
+    super.init(p)
+  }
 
-        }, this.parameters, {
-            aspectRatio: null,
-            smoothSheet: null
-        } );
+  getSpline (polymer) {
+    var helixorient = new Helixorient(polymer)
 
-    }
-
-    init( params ){
-
-        var p = params || {};
-        p.aspectRatio = 1.0;
-        p.tension = defaults( p.tension, 0.5 );
-        p.scale = defaults( p.scale, 5.0 );
-        p.smoothSheet = false;
-
-        this.smooth = defaults( p.smooth, 2 );
-
-        super.init( p );
-
-    }
-
-    getSpline( polymer ){
-
-        var helixorient = new Helixorient( polymer );
-
-        return new Spline( polymer, this.getSplineParams( {
-            directional: false,
-            positionIterator: helixorient.getCenterIterator( this.smooth )
-        } ) );
-
-    }
-
+    return new Spline(polymer, this.getSplineParams({
+      directional: false,
+      positionIterator: helixorient.getCenterIterator(this.smooth)
+    }))
+  }
 }
 
+RepresentationRegistry.add('rope', RopeRepresentation)
 
-RepresentationRegistry.add( "rope", RopeRepresentation );
-
-
-export default RopeRepresentation;
+export default RopeRepresentation

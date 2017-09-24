@@ -4,51 +4,58 @@
  * @private
  */
 
+import { BoxBufferGeometry, Vector3 } from '../../lib/three.es6.js'
 
-import MappedBuffer from "./mapped-buffer.js";
+import { BufferRegistry } from '../globals.js'
+import GeometryBuffer from './geometry-buffer.js'
 
-
-const mapping = new Float32Array( [
-    -1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0, -1.0,  1.0,
-    -1.0, -1.0,  1.0,
-    -1.0,  1.0, -1.0,
-     1.0,  1.0, -1.0,
-     1.0,  1.0,  1.0,
-    -1.0,  1.0,  1.0
-] );
-
-const mappingIndices = new Uint16Array( [
-    0, 1, 2,
-    0, 2, 3,
-    1, 5, 6,
-    1, 6, 2,
-    4, 6, 5,
-    4, 7, 6,
-    0, 7, 4,
-    0, 3, 7,
-    0, 5, 1,
-    0, 4, 5,
-    3, 2, 6,
-    3, 6, 7
-] );
-
+const scale = new Vector3()
+const target = new Vector3()
+const up = new Vector3()
+const eye = new Vector3(0, 0, 0)
 
 /**
- * Box buffer. Draws boxes. Used to render general imposters.
- * @interface
+ * Box buffer. Draws boxes.
+ *
+ * @example
+ * var boxBuffer = new BoxBuffer({
+ *   position: new Float32Array([ 0, 3, 0, -2, 0, 0 ]),
+ *   color: new Float32Array([ 1, 0, 1, 0, 1, 0 ]),
+ *   size: new Float32Array([ 2, 1.5 ]),
+ *   heightAxis: new Float32Array([ 0, 1, 1, 0, 2, 0 ]),
+ *   depthAxis: new Float32Array([ 1, 0, 1, 0, 0, 2 ])
+ * })
  */
-class BoxBuffer extends MappedBuffer{
+class BoxBuffer extends GeometryBuffer {
+  constructor (data, params) {
+    const p = params || {}
+    const geo = new BoxBufferGeometry(1, 1, 1)
 
-    get mapping (){ return mapping; }
-    get mappingIndices (){ return mappingIndices; }
-    get mappingIndicesSize (){ return 36; }
-    get mappingType (){ return "v3"; }
-    get mappingSize (){ return 8; }
-    get mappingItemSize (){ return 3; }
+    super(data, p, geo)
 
+    this.setAttributes(data, true)
+  }
+
+  applyPositionTransform (matrix, i, i3) {
+    target.fromArray(this._heightAxis, i3)
+    up.fromArray(this._depthAxis, i3)
+    matrix.lookAt(eye, target, up)
+
+    scale.set(this._size[ i ], up.length(), target.length())
+    matrix.scale(scale)
+  }
+
+  setAttributes (data, initNormals) {
+    if (data.size) this._size = data.size
+    if (data.heightAxis) this._heightAxis = data.heightAxis
+    if (data.depthAxis) this._depthAxis = data.depthAxis
+
+    super.setAttributes(data, initNormals)
+  }
+
+  get updateNormals () { return true }
 }
 
+BufferRegistry.add('box', BoxBuffer)
 
-export default BoxBuffer;
+export default BoxBuffer

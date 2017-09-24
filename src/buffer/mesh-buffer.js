@@ -4,13 +4,11 @@
  * @private
  */
 
+import '../shader/Mesh.vert'
+import '../shader/Mesh.frag'
 
-import "../shader/Mesh.vert";
-import "../shader/Mesh.frag";
-
-import { serialArray } from "../math/array-utils.js";
-import Buffer from "./buffer.js";
-
+import { serialArray } from '../math/array-utils.js'
+import Buffer from './buffer.js'
 
 /**
  * Mesh buffer. Draws a triangle mesh.
@@ -25,8 +23,7 @@ import Buffer from "./buffer.js";
  *     )
  * } );
  */
-class MeshBuffer extends Buffer{
-
+class MeshBuffer extends Buffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position - positions
@@ -35,30 +32,26 @@ class MeshBuffer extends Buffer{
      * @param  {Float32Array} [data.normal] - radii
      * @param  {BufferParameters} params - parameter object
      */
-    constructor( data, params ){
+  constructor (data, params) {
+    var d = data || {}
 
-        var d = data || {};
-
-        if( !d.primitiveId && d.position ){
-            d.primitiveId = serialArray( d.position.length / 3 );
-        }
-
-        super( d, params );
-
-        this.addAttributes( {
-            "normal": { type: "v3", value: d.normal },
-        } );
-
-        if( d.normal === undefined ){
-            this.geometry.computeVertexNormals();
-        }
-
+    if (!d.primitiveId && d.position) {
+      d.primitiveId = serialArray(d.position.length / 3)
     }
 
-    get vertexShader (){ return "Mesh.vert"; }
-    get fragmentShader (){ return "Mesh.frag"; }
+    super(d, params)
 
+    this.addAttributes({
+      'normal': { type: 'v3', value: d.normal }
+    })
+
+    if (d.normal === undefined) {
+      this.geometry.computeVertexNormals()
+    }
+  }
+
+  get vertexShader () { return 'Mesh.vert' }
+  get fragmentShader () { return 'Mesh.frag' }
 }
 
-
-export default MeshBuffer;
+export default MeshBuffer
