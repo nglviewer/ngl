@@ -76,6 +76,7 @@ import './component/volume-component.js'
 
 //
 
+import './representation/angle-representation.js'
 import './representation/axes-representation.js'
 import './representation/backbone-representation.js'
 import './representation/ballandstick-representation.js'
