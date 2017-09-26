@@ -261,22 +261,6 @@ class DistanceRepresentation extends MeasurementRepresentation {
     this.textBuffer.setAttributes(textData)
     this.cylinderBuffer.setAttributes(cylinderData)
   }
-
-  setVisibility (value, noRenderRequest) {
-    super.setVisibility(value, true)
-
-    if (this.textBuffer) {
-      this.textBuffer.setVisibility(
-        this.labelVisible && this.visible
-      )
-    }
-
-    if (!noRenderRequest) this.viewer.requestRender()
-
-    return this
-  }
-
-  /* setParameters (params) {} */
 }
 
 RepresentationRegistry.add('distance', DistanceRepresentation)
