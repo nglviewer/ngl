@@ -36,17 +36,87 @@ class MeasurementRepresentation extends StructureRepresentation {
     this.n = 0 // Subclass create sets value
     this.parameters = Object.assign({
 
+      labelVisible: {
+        type: 'boolean'
+      },
       labelSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
       labelColor: {
         type: 'color'
       },
-      labelVisible: {
-        type: 'boolean'
+      labelFontFamily: {
+        type: 'select',
+        options: {
+          'sans-serif': 'sans-serif',
+          'monospace': 'monospace',
+          'serif': 'serif'
+        },
+        buffer: 'fontFamily'
+      },
+      labelFontStyle: {
+        type: 'select',
+        options: {
+          'normal': 'normal',
+          'italic': 'italic'
+        },
+        buffer: 'fontStyle'
+      },
+      labelFontWeight: {
+        type: 'select',
+        options: {
+          'normal': 'normal',
+          'bold': 'bold'
+        },
+        buffer: 'fontWeight'
+      },
+      labelsdf: {
+        type: 'boolean', buffer: 'sdf'
+      },
+      labelXOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'xOffset'
+      },
+      labelYOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'yOffset'
       },
       labelZOffset: {
         type: 'number', precision: 1, max: 20, min: -20, buffer: 'zOffset'
+      },
+      labelAttachment: {
+        type: 'select',
+        options: {
+          'bottom-left': 'bottom-left',
+          'bottom-center': 'bottom-center',
+          'bottom-right': 'bottom-right',
+          'middle-left': 'middle-left',
+          'middle-center': 'middle-center',
+          'middle-right': 'middle-right',
+          'top-left': 'top-left',
+          'top-center': 'top-center',
+          'top-right': 'top-right'
+        },
+        rebuild: true
+      },
+      labelBorder: {
+        type: 'boolean', buffer: 'showBorder'
+      },
+      labelBorderColor: {
+        type: 'color', buffer: 'borderColor'
+      },
+      labelBorderWidth: {
+        type: 'number', precision: 2, max: 0.3, min: 0, buffer: 'borderWidth'
+      },
+      labelBackground: {
+        type: 'boolean', rebuild: true
+      },
+      labelBackgroundColor: {
+        type: 'color', buffer: 'backgroundColor'
+      },
+      labelBackgroundMargin: {
+        type: 'number', precision: 2, max: 2, min: 0, rebuild: true
+      },
+      labelBackgroundOpacity: {
+        type: 'range', step: 0.01, max: 1, min: 0, buffer: 'backgroundOpacity'
       }
     }, this.parameters, {
       flatShaded: null,
@@ -56,14 +126,24 @@ class MeasurementRepresentation extends StructureRepresentation {
 
   init (params) {
     var p = params || {}
-    this.fontFamily = defaults(p.fontFamily, 'sans-serif')
-    this.fontStyle = defaults(p.fontStyle, 'normal')
-    this.fontWeight = defaults(p.fontWeight, 'bold')
-    this.sdf = defaults(p.sdf, Browser !== 'Firefox')  // FIXME
+    this.labelVisible = defaults(p.labelVisible, true)
     this.labelSize = defaults(p.labelSize, 2.0)
     this.labelColor = defaults(p.labelColor, 0xFFFFFF)
-    this.labelVisible = defaults(p.labelVisible, true)
+    this.labelFontFamily = defaults(p.labelFontFamily, 'sans-serif')
+    this.labelFontStyle = defaults(p.labelFontstyle, 'normal')
+    this.labelFontWeight = defaults(p.labelFontWeight, 'bold')
+    this.labelsdf = defaults(p.labelsdf, Browser === 'Chrome')
+    this.labelXOffset = defaults(p.labelXOffset, 0.0)
+    this.labelYOffset = defaults(p.labelYOffset, 0.0)
     this.labelZOffset = defaults(p.labelZOffset, 0.5)
+    this.labelAttachment = defaults(p.labelAttachment, 'bottom-left')
+    this.labelBorder = defaults(p.labelBorder, false)
+    this.labelBorderColor = defaults(p.labelBorderColor, 'lightgrey')
+    this.labelBorderWidth = defaults(p.labelBorderWidth, 0.15)
+    this.labelBackground = defaults(p.labelBackground, false)
+    this.labelBackgroundColor = defaults(p.labelBackgroundColor, 'lightgrey')
+    this.labelBackgroundMargin = defaults(p.labelBackgroundMargin, 0.5)
+    this.labelBackgroundOpacity = defaults(p.labelBackgroundOpacity, 1.0)
 
     super.init(p)
   }
@@ -127,11 +207,21 @@ class MeasurementRepresentation extends StructureRepresentation {
 
   getLabelBufferParams (params) {
     return super.getBufferParams(Object.assign({
-      fontFamily: this.fontFamily,
-      fontStyle: this.fontStyle,
-      fontWeight: this.fontWeight,
-      sdf: this.sdf,
+      fontFamily: this.labelFontFamily,
+      fontStyle: this.labelFontStyle,
+      fontWeight: this.labelFontWeight,
+      sdf: this.labelsdf,
+      xOffset: this.labelXOffset,
+      yOffset: this.labelYOffset,
       zOffset: this.labelZOffset,
+      attachment: this.labelAttachment,
+      showBorder: this.labelBorder,
+      borderColor: this.labelBorderColor,
+      borderWidth: this.labelBorderWidth,
+      showBackground: this.labelBackground,
+      backgroundColor: this.labelBackgroundColor,
+      backgroundMargin: this.labelBackgroundMargin,
+      backgroundOpacity: this.labelBackgroundOpacity,
       visible: this.labelVisible
     }, params))
   }

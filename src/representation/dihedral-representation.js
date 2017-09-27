@@ -27,6 +27,7 @@ import { RAD2DEG } from '../math/math-constants.js'
  * @property {String} atomQuad - list of quadruplets of selection strings
  *                               or atom indices
  * @property {Boolean} lineVisible - Display the line part of the representation
+ * @property {Number} linewidth - width for line part of representation
  * @property {Boolean} sectorVisible - Display the filled arc for each angle
  * @property {Number} sectorOpacity - Opacity for the sector part of the representation
  */
@@ -88,7 +89,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     const atomPosition = parseNestedAtoms(this.structureView, this.atomQuad)
     const dihedralData = getDihedralData(atomPosition)
 
-    const n = dihedralData.labelText.length
+    const n = this.n = dihedralData.labelText.length
 
     const labelColor = new Color(this.labelColor)
 
