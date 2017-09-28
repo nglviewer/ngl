@@ -6,7 +6,7 @@
   "module": "dist/ngl.esm.js",
   "scripts": {
     "lint": "npm run-script lint-src && npm run-script lint-test && npm run-script lint-script",
-    "lint-src": "standard \"src/**/*.js\"",
+    "lint-src": "standard \"src/**/*.js\" --fix",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
     "prebuild": "npm run-script lint",
