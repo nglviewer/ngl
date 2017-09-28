@@ -807,7 +807,7 @@ function Viewer (idOrElement) {
     x *= window.devicePixelRatio
     y *= window.devicePixelRatio
 
-    let pid, instance, picker, geomId
+    let pid, instance, picker
     const pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint
 
     render(true)
@@ -832,7 +832,6 @@ function Viewer (idOrElement) {
     if (object) {
       instance = object.userData.instance
       picker = object.userData.buffer.picking
-      geomId = object.userData.buffer.geometry.uuid // mjg
     }
 
     // if( Debug ){
@@ -853,8 +852,7 @@ function Viewer (idOrElement) {
     return {
       'pid': pid,
       'instance': instance,
-      'picker': picker,
-      'geom_id': geomId  // mjg
+      'picker': picker
     }
   }
 
