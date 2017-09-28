@@ -4,9 +4,7 @@
  * @private
  */
 
-
-import PickingProxy from "./picking-proxy.js";
-
+import PickingProxy from './picking-proxy.js';
 
 /**
  * Picking controls
@@ -42,8 +40,7 @@ class PickingControls{
             }
         }
     }
-
+  }
 }
 
-
-export default PickingControls;
+export default PickingControls

@@ -4,20 +4,18 @@
  * @private
  */
 
+import { Color } from '../../lib/three.es6.js'
 
-import { Color } from "../../lib/three.es6.js";
-
-import { Browser, RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import { DistancePicker } from "../utils/picker.js";
-import { uniformArray, uniformArray3 } from "../math/array-utils.js";
-import BitArray from "../utils/bitarray.js";
-import StructureRepresentation from "./structure-representation.js";
-import Selection from "../selection.js";
-import BondStore from "../store/bond-store.js";
-import TextBuffer from "../buffer/text-buffer.js";
-import CylinderBuffer from "../buffer/cylinder-buffer.js";
-
+import { Browser, RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import { DistancePicker } from '../utils/picker.js'
+import { uniformArray, uniformArray3 } from '../math/array-utils.js'
+import BitArray from '../utils/bitarray.js'
+import StructureRepresentation from './structure-representation.js'
+import Selection from '../selection/selection.js'
+import BondStore from '../store/bond-store.js'
+import TextBuffer from '../buffer/text-buffer.js'
+import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
 /**
  * Distance representation parameter object.
@@ -41,333 +39,299 @@ import CylinderBuffer from "../buffer/cylinder-buffer.js";
  * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  */
 
-
 /**
  * Distance representation
  */
-class DistanceRepresentation extends StructureRepresentation{
+class DistanceRepresentation extends StructureRepresentation {
+  /**
+   * Create Distance representation object
+   * @example
+   * stage.loadFile( "rcsb://1crn" ).then( function( o ){
+   *     o.addRepresentation( "cartoon" );
+   *     // either give selections (uses first selected atom) ...
+   *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
+   *     // or atom indices
+   *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
+   *     o.addRepresentation( "distance", { atomPair: atomPair } );
+   *     stage.autoView();
+   * } );
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {DistanceRepresentationParameters} params - distance representation parameters
+   */
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
-    /**
-     * Create Distance representation object
-     * @example
-     * stage.loadFile( "rcsb://1crn" ).then( function( o ){
-     *     o.addRepresentation( "cartoon" );
-     *     // either give selections (uses first selected atom) ...
-     *     var atomPair = [ [ "1.CA", "4.CA" ], [ "7.CA", "13.CA" ] ];
-     *     // or atom indices
-     *     var atomPair = [ [ 8, 28 ], [ 173, 121 ] ];
-     *     o.addRepresentation( "distance", { atomPair: atomPair } );
-     *     stage.autoView();
-     * } );
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {DistanceRepresentationParameters} params - distance representation parameters
-     */
-    constructor( structure, viewer, params ){
+    this.type = 'distance'
 
-        super( structure, viewer, params );
+    this.parameters = Object.assign({
 
-        this.type = "distance";
+      labelSize: {
+        type: 'number', precision: 3, max: 10.0, min: 0.001
+      },
+      labelColor: {
+        type: 'color'
+      },
+      labelVisible: {
+        type: 'boolean'
+      },
+      labelZOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'zOffset'
+      },
+      labelUnit: {
+        type: 'select',
+        rebuild: true,
+        options: { '': '', angstrom: 'angstrom', nm: 'nm' }
+      },
+      atomPair: {
+        type: 'hidden', rebuild: true
+      },
+      radialSegments: true,
+      disableImpostor: true
 
-        this.parameters = Object.assign( {
+    }, this.parameters, {
+      flatShaded: null,
+      assembly: null
+    })
 
-            labelSize: {
-                type: "number", precision: 3, max: 10.0, min: 0.001
-            },
-            labelColor: {
-                type: "color"
-            },
-            labelVisible: {
-                type: "boolean"
-            },
-            labelZOffset: {
-                type: "number", precision: 1, max: 20, min: -20, buffer: "zOffset"
-            },
-            labelUnit: {
-                type: "select", rebuild: true,
-                options: { "": "", angstrom: "angstrom", nm: "nm" },
-            },
-            atomPair: {
-                type: "hidden", rebuild: true
-            },
-            radialSegments: true,
-            disableImpostor: true
+    this.init(params)
+  }
 
-        }, this.parameters, {
-            flatShaded: null,
-            assembly: null
-        } );
+  init (params) {
+    var p = params || {}
+    p.radius = defaults(p.radius, 0.15)
 
-        this.init( params );
+    this.fontFamily = defaults(p.fontFamily, 'sans-serif')
+    this.fontStyle = defaults(p.fontStyle, 'normal')
+    this.fontWeight = defaults(p.fontWeight, 'bold')
+    this.sdf = defaults(p.sdf, Browser !== 'Firefox')  // FIXME
+    this.labelSize = defaults(p.labelSize, 2.0)
+    this.labelColor = defaults(p.labelColor, 0xFFFFFF)
+    this.labelVisible = defaults(p.labelVisible, true)
+    this.labelZOffset = defaults(p.labelZOffset, 0.5)
+    this.labelUnit = defaults(p.labelUnit, '')
+    this.atomPair = defaults(p.atomPair, [])
 
+    super.init(p)
+  }
+
+  getDistanceData (sview, atomPair) {
+    var n = atomPair.length
+    var text = new Array(n)
+    var position = new Float32Array(n * 3)
+    var sele1 = new Selection()
+    var sele2 = new Selection()
+
+    var bondStore = new BondStore()
+
+    var ap1 = sview.getAtomProxy()
+    var ap2 = sview.getAtomProxy()
+
+    var j = 0
+
+    atomPair.forEach(function (pair, i) {
+      var v1 = pair[ 0 ]
+      var v2 = pair[ 1 ]
+
+      if (Number.isInteger(v1) && Number.isInteger(v2)) {
+        ap1.index = v1
+        ap2.index = v2
+      } else {
+        sele1.setString(v1)
+        sele2.setString(v2)
+
+        var atomIndices1 = sview.getAtomIndices(sele1)
+        var atomIndices2 = sview.getAtomIndices(sele2)
+
+        if (atomIndices1.length && atomIndices2.length) {
+          ap1.index = atomIndices1[ 0 ]
+          ap2.index = atomIndices2[ 0 ]
+        } else {
+          j += 1
+          return
+        }
+      }
+
+      bondStore.addBond(ap1, ap2, 1)
+
+      i -= j
+      var d = ap1.distanceTo(ap2)
+      switch (this.labelUnit) {
+        case 'angstrom':
+          text[ i ] = d.toFixed(2) + ' ' + String.fromCharCode(0x212B)
+          break
+        case 'nm':
+          text[ i ] = (d / 10).toFixed(2) + ' nm'
+          break
+        default:
+          text[ i ] = d.toFixed(2)
+          break
+      }
+
+      var i3 = i * 3
+      position[ i3 + 0 ] = (ap1.x + ap2.x) / 2
+      position[ i3 + 1 ] = (ap1.y + ap2.y) / 2
+      position[ i3 + 2 ] = (ap1.z + ap2.z) / 2
+    }, this)
+
+    if (j > 0) {
+      n -= j
+      position = position.subarray(0, n * 3)
     }
 
-    init( params ){
+    var bondSet = new BitArray(bondStore.count, true)
 
-        var p = params || {};
-        p.radius = defaults( p.radius, 0.15 );
+    return {
+      text: text,
+      position: position,
+      bondSet: bondSet,
+      bondStore: bondStore
+    }
+  }
 
-        this.fontFamily = defaults( p.fontFamily, "sans-serif" );
-        this.fontStyle = defaults( p.fontStyle, "normal" );
-        this.fontWeight = defaults( p.fontWeight, "bold" );
-        this.sdf = defaults( p.sdf, Browser !== "Firefox" );  // FIXME
-        this.labelSize = defaults( p.labelSize, 2.0 );
-        this.labelColor = defaults( p.labelColor, 0xFFFFFF );
-        this.labelVisible = defaults( p.labelVisible, true );
-        this.labelZOffset = defaults( p.labelZOffset, 0.5 );
-        this.labelUnit = defaults( p.labelUnit, "" );
-        this.atomPair = defaults( p.atomPair, [] );
+  getBondData (sview, what, params) {
+    var bondData = sview.getBondData(this.getBondParams(what, params))
+    if (bondData.picking) {
+      bondData.picking = new DistancePicker(
+        bondData.picking.array,
+        bondData.picking.structure,
+        params.bondStore
+      )
+    }
+    return bondData
+  }
 
-        super.init( p );
+  create () {
+    if (this.structureView.atomCount === 0) return
 
+    var n = this.atomPair.length
+    if (n === 0) return
+
+    var distanceData = this.getDistanceData(this.structureView, this.atomPair)
+
+    var c = new Color(this.labelColor)
+
+    this.textBuffer = new TextBuffer(
+      {
+        position: distanceData.position,
+        size: uniformArray(n, this.labelSize),
+        color: uniformArray3(n, c.r, c.g, c.b),
+        text: distanceData.text
+      },
+      this.getBufferParams({
+        fontFamily: this.fontFamily,
+        fontStyle: this.fontStyle,
+        fontWeight: this.fontWeight,
+        sdf: this.sdf,
+        zOffset: this.labelZOffset,
+        opacity: 1.0,
+        visible: this.labelVisible
+      })
+    )
+
+    var bondParams = {
+      bondSet: distanceData.bondSet,
+      bondStore: distanceData.bondStore
     }
 
-    getDistanceData( sview, atomPair ){
+    var bondData = this.getBondData(this.structureView, undefined, bondParams)
 
-        var n = atomPair.length;
-        var text = new Array( n );
-        var position = new Float32Array( n * 3 );
-        var sele1 = new Selection();
-        var sele2 = new Selection();
+    this.cylinderBuffer = new CylinderBuffer(
+      bondData,
+      this.getBufferParams({
+        openEnded: false,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
-        var bondStore = new BondStore();
+    this.dataList.push({
+      sview: this.structureView,
+      bondSet: distanceData.bondSet,
+      bondStore: distanceData.bondStore,
+      position: distanceData.position,
+      bufferList: [ this.textBuffer, this.cylinderBuffer ]
+    })
+  }
 
-        var ap1 = sview.getAtomProxy();
-        var ap2 = sview.getAtomProxy();
+  update (what) {
+    if (what.position) {
+      this.build()
+    } else {
+      super.update(what)
+    }
+  }
 
-        var j = 0;
-
-        atomPair.forEach( function( pair, i ){
-
-            var v1 = pair[ 0 ];
-            var v2 = pair[ 1 ];
-
-
-            if( Number.isInteger( v1 ) && Number.isInteger( v2 ) ){
-
-                ap1.index = v1;
-                ap2.index = v2;
-
-            }else{
-
-                sele1.setString( v1 );
-                sele2.setString( v2 );
-
-                var atomIndices1 = sview.getAtomIndices( sele1 );
-                var atomIndices2 = sview.getAtomIndices( sele2 );
-
-                if( atomIndices1.length && atomIndices2.length ){
-
-                    ap1.index = atomIndices1[ 0 ];
-                    ap2.index = atomIndices2[ 0 ];
-
-                }else{
-
-                    j += 1;
-                    return;
-
-                }
-
-            }
-
-            bondStore.addBond( ap1, ap2, 1 );
-
-            i -= j;
-            var d = ap1.distanceTo( ap2 )
-            switch ( this.labelUnit ) {
-                case "angstrom":
-                    text[ i ] = d.toFixed( 2 ) + " " + String.fromCharCode( 0x212B );
-                    break;
-                case "nm":
-                    text[ i ] = ( d / 10 ).toFixed( 2 ) + " nm";
-                    break;
-                default:
-                    text[ i ] = d.toFixed( 2 );
-                    break;
-            }
-
-
-            var i3 = i * 3;
-            position[ i3 + 0 ] = ( ap1.x + ap2.x ) / 2;
-            position[ i3 + 1 ] = ( ap1.y + ap2.y ) / 2;
-            position[ i3 + 2 ] = ( ap1.z + ap2.z ) / 2;
-
-        }, this );
-
-        if( j > 0 ){
-            n -= j;
-            position = position.subarray( 0, n * 3 );
-        }
-
-        var bondSet = new BitArray( bondStore.count, true );
-
-        return {
-            text: text,
-            position: position,
-            bondSet: bondSet,
-            bondStore: bondStore
-        };
-
+  updateData (what, data) {
+    var bondParams = {
+      bondSet: data.bondSet,
+      bondStore: data.bondStore
     }
 
-    getBondData( sview, what, params ){
+    var bondData = this.getBondData(data.sview, what, bondParams)
+    var cylinderData = {}
+    var textData = {}
+    var n = this.atomPair.length
 
-        var bondData = sview.getBondData( this.getBondParams( what, params ) );
-        if( bondData.picking ){
-            bondData.picking = new DistancePicker(
-                bondData.picking.array,
-                bondData.picking.structure,
-                params.bondStore
-            );
-        }
-        return bondData;
-
+    if (what.labelSize) {
+      textData.size = uniformArray(n, this.labelSize)
     }
 
-    create(){
-
-        if( this.structureView.atomCount === 0 ) return;
-
-        var n = this.atomPair.length;
-        if( n === 0 ) return;
-
-        var distanceData = this.getDistanceData( this.structureView, this.atomPair );
-
-        var c = new Color( this.labelColor );
-
-        this.textBuffer = new TextBuffer(
-            {
-                position: distanceData.position,
-                size: uniformArray( n, this.labelSize ),
-                color: uniformArray3( n, c.r, c.g, c.b ),
-                text: distanceData.text
-            },
-            this.getBufferParams( {
-                fontFamily: this.fontFamily,
-                fontStyle: this.fontStyle,
-                fontWeight: this.fontWeight,
-                sdf: this.sdf,
-                zOffset: this.labelZOffset,
-                opacity: 1.0,
-                visible: this.labelVisible
-            } )
-        );
-
-        var bondParams = {
-            bondSet: distanceData.bondSet,
-            bondStore: distanceData.bondStore
-        };
-
-        var bondData = this.getBondData( this.structureView, undefined, bondParams );
-
-        this.cylinderBuffer = new CylinderBuffer(
-            bondData,
-            this.getBufferParams( {
-                openEnded: false,
-                radialSegments: this.radialSegments,
-                disableImpostor: this.disableImpostor,
-                dullInterior: true
-            } )
-        );
-
-        this.dataList.push( {
-            sview: this.structureView,
-            bondSet: distanceData.bondSet,
-            bondStore: distanceData.bondStore,
-            position: distanceData.position,
-            bufferList: [ this.textBuffer, this.cylinderBuffer ]
-        } );
-
+    if (what.labelColor) {
+      var c = new Color(this.labelColor)
+      textData.color = uniformArray3(n, c.r, c.g, c.b)
     }
 
-    update( what ){
-
-        if( what.position ){
-            this.build();
-        }else{
-            super.update( what );
-        }
-
+    if (what.color) {
+      cylinderData.color = bondData.color
+      cylinderData.color2 = bondData.color2
     }
 
-    updateData( what, data ){
-
-        var bondParams = {
-            bondSet: data.bondSet,
-            bondStore: data.bondStore
-        };
-
-        var bondData = this.getBondData( data.sview, what, bondParams );
-        var cylinderData = {};
-        var textData = {};
-        var n = this.atomPair.length;
-
-        if( what.labelSize ){
-            textData.size = uniformArray( n, this.labelSize );
-        }
-
-        if( what.labelColor ){
-            var c = new Color( this.labelColor );
-            textData.color = uniformArray3( n, c.r, c.g, c.b );
-        }
-
-        if( what.color ){
-            cylinderData.color = bondData.color;
-            cylinderData.color2 = bondData.color2;
-        }
-
-        if( what.radius || what.scale ){
-            cylinderData.radius = bondData.radius;
-        }
-
-        this.textBuffer.setAttributes( textData );
-        this.cylinderBuffer.setAttributes( cylinderData );
-
+    if (what.radius || what.scale) {
+      cylinderData.radius = bondData.radius
     }
 
-    setVisibility( value, noRenderRequest ){
+    this.textBuffer.setAttributes(textData)
+    this.cylinderBuffer.setAttributes(cylinderData)
+  }
 
-        super.setVisibility( value, true );
+  setVisibility (value, noRenderRequest) {
+    super.setVisibility(value, true)
 
-        if( this.textBuffer ){
-            this.textBuffer.setVisibility(
-                this.labelVisible && this.visible
-            );
-        }
-
-        if( !noRenderRequest ) this.viewer.requestRender();
-
-        return this;
-
+    if (this.textBuffer) {
+      this.textBuffer.setVisibility(
+        this.labelVisible && this.visible
+      )
     }
 
-    setParameters( params ){
+    if (!noRenderRequest) this.viewer.requestRender()
 
-        var rebuild = false;
-        var what = {};
+    return this
+  }
 
-        if( params && params.labelSize ){
-            what.labelSize = true;
-        }
+  setParameters (params) {
+    var rebuild = false
+    var what = {}
 
-        if( params && ( params.labelColor || params.labelColor === 0x000000 ) ){
-            what.labelColor = true;
-        }
-
-        super.setParameters( params, what, rebuild );
-
-        if( params && params.labelVisible !== undefined ){
-            this.setVisibility( this.visible );
-        }
-
-        return this;
-
+    if (params && params.labelSize) {
+      what.labelSize = true
     }
 
+    if (params && (params.labelColor || params.labelColor === 0x000000)) {
+      what.labelColor = true
+    }
+
+    super.setParameters(params, what, rebuild)
+
+    if (params && params.labelVisible !== undefined) {
+      this.setVisibility(this.visible)
+    }
+
+    return this
+  }
 }
 
+RepresentationRegistry.add('distance', DistanceRepresentation)
 
-RepresentationRegistry.add( "distance", DistanceRepresentation );
-
-
-export default DistanceRepresentation;
+export default DistanceRepresentation
