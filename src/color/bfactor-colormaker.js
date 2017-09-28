@@ -4,10 +4,9 @@
  * @private
  */
 
-
-import { ColormakerRegistry } from "../globals.js";
-import Colormaker from "./colormaker.js";
-
+import { ColormakerRegistry } from '../globals.js'
+import Colormaker from './colormaker.js'
+import Selection from '../selection/selection.js'
 
 /**
  * Color by b-factor. The {@link AtomProxy.bfactor} property is used for coloring.
@@ -21,48 +20,40 @@ import Colormaker from "./colormaker.js";
  *     o.autoView();
  * } );
  */
-class BfactorColormaker extends Colormaker{
+class BfactorColormaker extends Colormaker {
+  constructor (params) {
+    super(params)
 
-    constructor( params ){
-
-        super( params );
-
-        if( !params.scale ){
-            this.scale = "OrRd";
-        }
-
-        if( !params.domain ){
-
-            var selection;
-            var min = Infinity;
-            var max = -Infinity;
-
-            if( params.sele ){
-                selection = new Selection( params.sele );
-            }
-
-            this.structure.eachAtom( function( a ){
-                var bfactor = a.bfactor;
-                min = Math.min( min, bfactor );
-                max = Math.max( max, bfactor );
-            }, selection );
-
-            this.domain = [ min, max ];
-
-        }
-
-        this.bfactorScale = this.getScale();
-
+    if (!params.scale) {
+      this.scale = 'OrRd'
     }
 
-    atomColor( a ){
-        return this.bfactorScale( a.bfactor );
+    if (!params.domain) {
+      var selection
+      var min = Infinity
+      var max = -Infinity
+
+      if (params.sele) {
+        selection = new Selection(params.sele)
+      }
+
+      this.structure.eachAtom(function (a) {
+        var bfactor = a.bfactor
+        min = Math.min(min, bfactor)
+        max = Math.max(max, bfactor)
+      }, selection)
+
+      this.domain = [ min, max ]
     }
 
+    this.bfactorScale = this.getScale()
+  }
+
+  atomColor (a) {
+    return this.bfactorScale(a.bfactor)
+  }
 }
 
+ColormakerRegistry.add('bfactor', BfactorColormaker)
 
-ColormakerRegistry.add( "bfactor", BfactorColormaker );
-
-
-export default BfactorColormaker;
+export default BfactorColormaker

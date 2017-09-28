@@ -4,15 +4,12 @@
  * @private
  */
 
+import { Group } from '../../lib/three.es6.js'
 
-import { Group } from "../../lib/three.es6.js";
+import Buffer from './buffer.js'
 
-import Buffer from "./buffer.js";
-
-
-function setVisibilityTrue( m ){ m.visible = true; }
-function setVisibilityFalse( m ){ m.visible = false; }
-
+function setVisibilityTrue (m) { m.visible = true }
+function setVisibilityFalse (m) { m.visible = false }
 
 /**
  * A double-sided mesh buffer. Takes a buffer and renders the front and
@@ -29,162 +26,139 @@ function setVisibilityFalse( m ){ m.visible = false; }
  * } );
  * var doubleSidedBuffer = new DoubleSidedBuffer( sphereGeometryBuffer );
  */
-class DoubleSidedBuffer{
-
+class DoubleSidedBuffer {
     /**
      * Create a double sided buffer
      * @param  {Buffer} buffer - the buffer to be rendered double-sided
      */
-    constructor( buffer ){
+  constructor (buffer) {
+    this.size = buffer.size
+    this.side = buffer.side
+    this.wireframe = buffer.wireframe
+    this.visible = buffer.visible
+    this.geometry = buffer.geometry
+    this.picking = buffer.picking
+    this.background = buffer.background
+    this.disablePicking = buffer.disablePicking
 
-        this.size = buffer.size;
-        this.side = buffer.side;
-        this.wireframe = buffer.wireframe;
-        this.visible = buffer.visible;
-        this.geometry = buffer.geometry;
-        this.picking = buffer.picking;
-        this.background = buffer.background;
-        this.disablePicking = buffer.disablePicking;
-
-        this.group = new Group();
-        this.wireframeGroup = new Group();
-        this.pickingGroup = new Group();
+    this.group = new Group()
+    this.wireframeGroup = new Group()
+    this.pickingGroup = new Group()
 
         // requires Group objects to be present
-        this.matrix = buffer.matrix;
+    this.matrix = buffer.matrix
 
-        this.frontMeshes = [];
-        this.backMeshes = [];
+    this.frontMeshes = []
+    this.backMeshes = []
 
-        var frontBuffer = buffer;
-        var backBuffer = new buffer.constructor();
+    var frontBuffer = buffer
+    var backBuffer = new buffer.constructor()
 
-        frontBuffer.makeMaterial();
-        backBuffer.makeMaterial();
+    frontBuffer.makeMaterial()
+    backBuffer.makeMaterial()
 
-        backBuffer.picking = buffer.picking;
-        backBuffer.geometry = buffer.geometry;
-        backBuffer.wireframeGeometry = buffer.wireframeGeometry;
-        backBuffer.setParameters( buffer.getParameters() );
-        backBuffer.updateShader();
+    backBuffer.picking = buffer.picking
+    backBuffer.geometry = buffer.geometry
+    backBuffer.wireframeGeometry = buffer.wireframeGeometry
+    backBuffer.setParameters(buffer.getParameters())
+    backBuffer.updateShader()
 
-        frontBuffer.setParameters( {
-            side: "front"
-        } );
-        backBuffer.setParameters( {
-            side: "back",
-            opacity: backBuffer.opacity
-        } );
+    frontBuffer.setParameters({
+      side: 'front'
+    })
+    backBuffer.setParameters({
+      side: 'back',
+      opacity: backBuffer.opacity
+    })
 
-        this.buffer = buffer;
-        this.frontBuffer = frontBuffer;
-        this.backBuffer = backBuffer;
+    this.buffer = buffer
+    this.frontBuffer = frontBuffer
+    this.backBuffer = backBuffer
+  }
 
+  set matrix (m) {
+    Buffer.prototype.setMatrix.call(this, m)
+  }
+  get matrix () {
+    return this.group.matrix.clone()
+  }
+
+  get pickable () {
+    return !!this.picking && !this.disablePicking
+  }
+
+  getMesh (picking) {
+    var front, back
+
+    if (picking) {
+      back = this.backBuffer.getPickingMesh()
+      front = this.frontBuffer.getPickingMesh()
+    } else {
+      back = this.backBuffer.getMesh()
+      front = this.frontBuffer.getMesh()
     }
 
-    set matrix ( m ){
-        Buffer.prototype.setMatrix.call( this, m );
-    }
-    get matrix (){
-        return this.group.matrix.clone();
-    }
+    this.frontMeshes.push(front)
+    this.backMeshes.push(back)
 
-    get pickable (){
-        return !!this.picking && !this.disablePicking;
-    }
+    this.setParameters({ side: this.side })
 
-    getMesh( picking ){
+    return new Group().add(back, front)
+  }
 
-        var front, back;
+  getWireframeMesh () {
+    return this.buffer.getWireframeMesh()
+  }
 
-        if( picking ){
-            back = this.backBuffer.getPickingMesh();
-            front = this.frontBuffer.getPickingMesh();
-        }else{
-            back = this.backBuffer.getMesh();
-            front = this.frontBuffer.getMesh();
-        }
+  getPickingMesh () {
+    return this.getMesh(true)
+  }
 
-        this.frontMeshes.push( front );
-        this.backMeshes.push( back );
+  setAttributes (data) {
+    this.buffer.setAttributes(data)
+  }
 
-        this.setParameters( { side: this.side } );
+  setParameters (data) {
+    data = Object.assign({}, data)
 
-        return new Group().add( back, front );
-
-    }
-
-    getWireframeMesh(){
-
-        return this.buffer.getWireframeMesh();
-
+    if (data.side === 'front') {
+      this.frontMeshes.forEach(setVisibilityTrue)
+      this.backMeshes.forEach(setVisibilityFalse)
+    } else if (data.side === 'back') {
+      this.frontMeshes.forEach(setVisibilityFalse)
+      this.backMeshes.forEach(setVisibilityTrue)
+    } else if (data.side === 'double') {
+      this.frontMeshes.forEach(setVisibilityTrue)
+      this.backMeshes.forEach(setVisibilityTrue)
     }
 
-    getPickingMesh(){
-
-        return this.getMesh( true );
-
+    if (data.matrix !== undefined) {
+      this.matrix = data.matrix
     }
+    delete data.matrix
 
-    setAttributes( data ){
-
-        this.buffer.setAttributes( data );
-
+    if (data.side !== undefined) {
+      this.side = data.side
     }
+    delete data.side
 
-    setParameters( data ){
+    this.frontBuffer.setParameters(data)
 
-        data = Object.assign( {}, data );
-
-        if( data.side === "front" ){
-
-            this.frontMeshes.forEach( setVisibilityTrue );
-            this.backMeshes.forEach( setVisibilityFalse );
-
-        }else if( data.side === "back" ){
-
-            this.frontMeshes.forEach( setVisibilityFalse );
-            this.backMeshes.forEach( setVisibilityTrue );
-
-        }else if( data.side === "double" ){
-
-            this.frontMeshes.forEach( setVisibilityTrue );
-            this.backMeshes.forEach( setVisibilityTrue );
-
-        }
-
-        if( data.matrix !== undefined ){
-            this.matrix = data.matrix;
-        }
-        delete data.matrix;
-
-        if( data.side !== undefined ){
-            this.side = data.side;
-        }
-        delete data.side;
-
-        this.frontBuffer.setParameters( data );
-
-        if( data.wireframe !== undefined ){
-            this.wireframe = data.wireframe;
-            this.setVisibility( this.visible );
-        }
-        delete data.wireframe;
-
-        this.backBuffer.setParameters( data );
-
+    if (data.wireframe !== undefined) {
+      this.wireframe = data.wireframe
+      this.setVisibility(this.visible)
     }
+    delete data.wireframe
 
-    dispose(){
+    this.backBuffer.setParameters(data)
+  }
 
-        this.frontBuffer.dispose();
-        this.backBuffer.dispose();
-
-    }
-
+  dispose () {
+    this.frontBuffer.dispose()
+    this.backBuffer.dispose()
+  }
 }
 
-DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
+DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility
 
-
-export default DoubleSidedBuffer;
+export default DoubleSidedBuffer

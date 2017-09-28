@@ -4,167 +4,138 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { Debug, Log, ParserRegistry } from '../globals.js'
+import { degToRad } from '../math/math-utils.js'
+import VolumeParser from './volume-parser.js'
 
-import { Debug, Log, ParserRegistry } from "../globals.js";
-import { degToRad } from "../math/math-utils.js";
-import VolumeParser from "./volume-parser.js";
+const reWhitespace = /\s+/
 
+class DxParser extends VolumeParser {
+  get type () { return 'dx' }
 
-class DxParser extends VolumeParser{
+  _parse () {
+    // http://apbs-pdb2pqr.readthedocs.io/en/latest/formats/opendx.html
 
-    get type (){ return "dx"; }
+    if (Debug) Log.time('DxParser._parse ' + this.name)
 
-    _parse(){
+    const v = this.volume
+    const headerLines = this.streamer.peekLines(30)
+    const headerInfo = this.parseHeaderLines(headerLines)
+    const header = this.volume.header
+    const dataLineStart = headerInfo.dataLineStart
 
-        // http://www.poissonboltzmann.org/docs/file-format-info/
+    const size = header.nx * header.ny * header.nz
+    const data = new Float32Array(size)
+    let count = 0
+    let lineNo = 0
 
-        if( Debug ) Log.time( "DxParser._parse " + this.name );
+    function _parseChunkOfLines (_i, _n, lines) {
+      for (let i = _i; i < _n; ++i) {
+        if (count < size && lineNo > dataLineStart) {
+          const line = lines[ i ].trim()
 
-        var v = this.volume;
-        var headerLines = this.streamer.peekLines( 30 );
-        var headerInfo = this.parseHeaderLines( headerLines );
-        var header = this.volume.header;
-        var dataLineStart = headerInfo.dataLineStart;
+          if (line !== '') {
+            const ls = line.split(reWhitespace)
 
-        var reWhitespace = /\s+/;
-        var size = header.nx * header.ny * header.nz;
-        var data = new Float32Array( size );
-        var count = 0;
-        var lineNo = 0;
-
-        function _parseChunkOfLines( _i, _n, lines ){
-
-            for( var i = _i; i < _n; ++i ){
-
-                if( count < size && lineNo > dataLineStart ){
-
-                    var line = lines[ i ].trim();
-
-                    if( line !== "" ){
-
-                        var ls = line.split( reWhitespace );
-
-                        for( var j = 0, lj = ls.length; j < lj; ++j ){
-                            data[ count ] = parseFloat( ls[ j ] );
-                            ++count;
-                        }
-
-                    }
-
-                }
-
-                ++lineNo;
-
+            for (let j = 0, lj = ls.length; j < lj; ++j) {
+              data[ count ] = parseFloat(ls[ j ])
+              ++count
             }
-
+          }
         }
 
-        this.streamer.eachChunkOfLines( function( lines/*, chunkNo, chunkCount*/ ){
-            _parseChunkOfLines( 0, lines.length, lines );
-        } );
-
-        v.setData( data, header.nz, header.ny, header.nx );
-
-        if( Debug ) Log.timeEnd( "DxParser._parse " + this.name );
-
+        ++lineNo
+      }
     }
 
-    parseHeaderLines( headerLines ){
+    this.streamer.eachChunkOfLines(function (lines/*, chunkNo, chunkCount */) {
+      _parseChunkOfLines(0, lines.length, lines)
+    })
 
-        var header = {};
-        var reWhitespace = /\s+/;
-        var n = headerLines.length;
+    v.setData(data, header.nz, header.ny, header.nx)
 
-        var dataLineStart = 0;
-        var headerByteCount = 0;
-        var deltaLineCount = 0;
+    if (Debug) Log.timeEnd('DxParser._parse ' + this.name)
+  }
 
-        for( var i = 0; i < n; ++i ){
+  parseHeaderLines (headerLines) {
+    const header = {}
+    const n = headerLines.length
 
-            var ls;
-            var line = headerLines[ i ];
+    let dataLineStart = 0
+    let headerByteCount = 0
+    let deltaLineCount = 0
 
-            if( line.startsWith( "object 1" ) ){
+    for (let i = 0; i < n; ++i) {
+      let ls
+      const line = headerLines[ i ]
 
-                ls = line.split( reWhitespace );
+      if (line.startsWith('object 1')) {
+        ls = line.split(reWhitespace)
 
-                header.nx = parseInt( ls[ 5 ] );
-                header.ny = parseInt( ls[ 6 ] );
-                header.nz = parseInt( ls[ 7 ] );
+        header.nx = parseInt(ls[ 5 ])
+        header.ny = parseInt(ls[ 6 ])
+        header.nz = parseInt(ls[ 7 ])
+      } else if (line.startsWith('origin')) {
+        ls = line.split(reWhitespace)
 
-            }else if( line.startsWith( "origin" ) ){
+        header.xmin = parseFloat(ls[ 1 ])
+        header.ymin = parseFloat(ls[ 2 ])
+        header.zmin = parseFloat(ls[ 3 ])
+      } else if (line.startsWith('delta')) {
+        ls = line.split(reWhitespace)
 
-                ls = line.split( reWhitespace );
-
-                header.xmin = parseFloat( ls[ 1 ] );
-                header.ymin = parseFloat( ls[ 2 ] );
-                header.zmin = parseFloat( ls[ 3 ] );
-
-            }else if( line.startsWith( "delta" ) ){
-
-                ls = line.split( reWhitespace );
-
-                if( deltaLineCount === 0 ){
-                    header.hx = parseFloat( ls[ 1 ] ) * this.voxelSize;
-                }else if( deltaLineCount === 1 ){
-                    header.hy = parseFloat( ls[ 2 ] ) * this.voxelSize;
-                }else if( deltaLineCount === 2 ){
-                    header.hz = parseFloat( ls[ 3 ] ) * this.voxelSize;
-                }
-
-                deltaLineCount += 1;
-
-            }else if( line.startsWith( "object 3" ) ){
-
-                dataLineStart = i;
-                headerByteCount += line.length + 1;
-                break;
-
-            }
-
-            headerByteCount += line.length + 1;
-
+        if (deltaLineCount === 0) {
+          header.hx = parseFloat(ls[ 1 ]) * this.voxelSize
+        } else if (deltaLineCount === 1) {
+          header.hy = parseFloat(ls[ 2 ]) * this.voxelSize
+        } else if (deltaLineCount === 2) {
+          header.hz = parseFloat(ls[ 3 ]) * this.voxelSize
         }
 
-        this.volume.header = header;
+        deltaLineCount += 1
+      } else if (line.startsWith('object 3')) {
+        dataLineStart = i
+        headerByteCount += line.length + 1
+        break
+      }
 
-        return {
-            dataLineStart: dataLineStart,
-            headerByteCount: headerByteCount
-        };
-
+      headerByteCount += line.length + 1
     }
 
-    getMatrix(){
+    this.volume.header = header
 
-        var h = this.volume.header;
-        var matrix = new Matrix4();
-
-        matrix.multiply(
-            new Matrix4().makeRotationY( degToRad( 90 ) )
-        );
-
-        matrix.multiply(
-            new Matrix4().makeTranslation(
-                -h.zmin, h.ymin, h.xmin
-            )
-        );
-
-        matrix.multiply(
-            new Matrix4().makeScale(
-                -h.hz, h.hy, h.hx
-            )
-        );
-
-        return matrix;
-
+    return {
+      dataLineStart: dataLineStart,
+      headerByteCount: headerByteCount
     }
+  }
 
+  getMatrix () {
+    const h = this.volume.header
+    const matrix = new Matrix4()
+
+    matrix.multiply(
+      new Matrix4().makeRotationY(degToRad(90))
+    )
+
+    matrix.multiply(
+      new Matrix4().makeTranslation(
+        -h.zmin, h.ymin, h.xmin
+      )
+    )
+
+    matrix.multiply(
+      new Matrix4().makeScale(
+        -h.hz, h.hy, h.hx
+      )
+    )
+
+    return matrix
+  }
 }
 
-ParserRegistry.add( "dx", DxParser );
+ParserRegistry.add('dx', DxParser)
 
-
-export default DxParser;
+export default DxParser

@@ -4,35 +4,26 @@
  * @private
  */
 
+import { Box3 } from '../../lib/three.es6.js'
 
-import { Box3 } from "../../lib/three.es6.js";
+class GeometryGroup {
+  constructor (geometryList) {
+    this.geometryList = geometryList
+    this.boundingBox = null
+  }
 
-
-class GeometryGroup{
-
-    constructor( geometryList ){
-
-        this.geometryList = geometryList;
-        this.boundingBox = null;
-
+  computeBoundingBox () {
+    if (!this.boundingBox) {
+      this.boundingBox = new Box3()
+    } else {
+      this.boundingBox.empty()
     }
 
-    computeBoundingBox(){
-
-        if( !this.boundingBox ){
-            this.boundingBox = new Box3();
-        }else{
-            this.boundingBox.empty();
-        }
-
-        this.geometryList.forEach( geo => {
-            if( !geo.boundingBox ) geo.computeBoundingBox();
-            this.boundingBox.union( geo.boundingBox );
-        } );
-
-    }
-
+    this.geometryList.forEach(geo => {
+      if (!geo.boundingBox) geo.computeBoundingBox()
+      this.boundingBox.union(geo.boundingBox)
+    })
+  }
 }
 
-
-export default GeometryGroup;
+export default GeometryGroup

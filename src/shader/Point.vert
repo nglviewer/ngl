@@ -5,8 +5,6 @@ uniform float size;
 uniform float canvasHeight;
 uniform float pixelRatio;
 
-varying vec3 vViewPosition;
-
 #if defined( RADIUS_CLIP )
     varying vec3 vClipCenter;
 #endif
@@ -17,6 +15,7 @@ varying vec3 vViewPosition;
     varying vec3 vPickingColor;
 #else
     #include color_pars_vertex
+    varying vec3 vViewPosition;
 #endif
 
 #include common
@@ -38,7 +37,9 @@ void main(){
         gl_PointSize = size * pixelRatio;
     #endif
 
-    vViewPosition = -mvPosition.xyz;
+    #ifndef PICKING
+        vViewPosition = -mvPosition.xyz;
+    #endif
 
     #if defined( RADIUS_CLIP )
         vClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;

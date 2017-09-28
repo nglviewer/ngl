@@ -4,25 +4,18 @@
  * @private
  */
 
-
-import Store from "./store.js";
-
+import Store from './store.js'
 
 /**
  * Model store
  */
-class ModelStore extends Store{
-
-    get __fields(){
-
-        return [
-            [ "chainOffset", 1, "uint32" ],
-            [ "chainCount", 1, "uint32" ]
-        ];
-
-    }
-
+class ModelStore extends Store {
+  get _defaultFields () {
+    return [
+      [ 'chainOffset', 1, 'uint32' ],
+      [ 'chainCount', 1, 'uint32' ]
+    ]
+  }
 }
 
-
-export default ModelStore;
+export default ModelStore

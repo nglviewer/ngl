@@ -4,28 +4,24 @@
  * @private
  */
 
+import { ungzip } from '../../lib/pako_inflate.es6.js'
 
-import { DecompressorRegistry } from "../globals.js";
-import { ungzip } from "../../lib/pako_inflate.es6.js";
+import { DecompressorRegistry } from '../globals.js'
 
+function gzipDecompress (data) {
+  var decompressedData
 
-function gzipDecompress( data ){
+  if (data instanceof ArrayBuffer) {
+    data = new Uint8Array(data)
+  }
 
-    var decompressedData;
+  try {
+    decompressedData = ungzip(data)
+  } catch (e) {
+    decompressedData = data  // assume it is already uncompressed
+  }
 
-    if( data instanceof ArrayBuffer ){
-        data = new Uint8Array( data );
-    }
-
-    try{
-        decompressedData = ungzip( data );
-    }catch( e ){
-        decompressedData = data;  // assume it is already uncompressed
-    }
-
-    return decompressedData;
-
+  return decompressedData
 }
 
-
-DecompressorRegistry.add( "gz", gzipDecompress );
+DecompressorRegistry.add('gz', gzipDecompress)

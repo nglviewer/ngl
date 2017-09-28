@@ -4,40 +4,32 @@
  * @private
  */
 
-
-import { ColormakerRegistry } from "../globals.js";
-import Colormaker from "./colormaker.js";
-
+import { ColormakerRegistry } from '../globals.js'
+import Colormaker from './colormaker.js'
 
 /**
  * Color by occupancy
  */
-class OccupancyColormaker extends Colormaker{
+class OccupancyColormaker extends Colormaker {
+  constructor (params) {
+    super(params)
 
-    constructor( params ){
-
-        super( params );
-
-        if( !params.scale ){
-            this.scale = "PuBu";
-        }
-
-        if( !params.domain ){
-            this.domain = [ 0.0, 1.0 ];
-        }
-
-        var occupancyScale = this.getScale();
-
-        this.atomColor = function( a ){
-            return occupancyScale( a.occupancy );
-        };
-
+    if (!params.scale) {
+      this.scale = 'PuBu'
     }
 
+    if (!params.domain) {
+      this.domain = [ 0.0, 1.0 ]
+    }
+
+    var occupancyScale = this.getScale()
+
+    this.atomColor = function (a) {
+      return occupancyScale(a.occupancy)
+    }
+  }
 }
 
+ColormakerRegistry.add('occupancy', OccupancyColormaker)
 
-ColormakerRegistry.add( "occupancy", OccupancyColormaker );
-
-
-export default OccupancyColormaker;
+export default OccupancyColormaker

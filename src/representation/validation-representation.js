@@ -4,68 +4,56 @@
  * @private
  */
 
-
-import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import StructureRepresentation from "./structure-representation.js";
-import CylinderBuffer from "../buffer/cylinder-buffer.js";
-
+import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import StructureRepresentation from './structure-representation.js'
+import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
 /**
  * Validation representation
  */
-class ValidationRepresentation extends StructureRepresentation{
+class ValidationRepresentation extends StructureRepresentation {
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
-    constructor( structure, viewer, params ){
+    this.type = 'validation'
 
-        super( structure, viewer, params );
+    this.parameters = Object.assign({
 
-        this.type = "validation";
+    }, this.parameters, {
+      radiusType: null,
+      radius: null,
+      scale: null
+    })
 
-        this.parameters = Object.assign( {
+    this.init(params)
+  }
 
-        }, this.parameters, {
-            radiusType: null,
-            radius: null,
-            scale: null
-        } );
+  init (params) {
+    const p = params || {}
+    p.colorValue = defaults(p.colorValue, '#f0027f')
 
-        this.init( params );
+    super.init(p)
+  }
 
+  createData (sview) {
+    if (!sview.validation) return
+
+    const clashData = sview.validation.getClashData({
+      structure: sview,
+      color: this.colorValue
+    })
+
+    const cylinderBuffer = new CylinderBuffer(
+      clashData, this.getBufferParams({ openEnded: false })
+    )
+
+    return {
+      bufferList: [ cylinderBuffer ]
     }
-
-    init( params ){
-
-        const p = params || {};
-        p.colorValue = defaults( p.colorValue, "#f0027f" );
-
-        super.init( p );
-
-    }
-
-    createData( sview ){
-
-        if( !sview.validation ) return;
-
-        const clashData = sview.validation.getClashData( {
-            structure: sview,
-            color: this.colorValue
-        } );
-
-        const cylinderBuffer = new CylinderBuffer(
-            clashData, this.getBufferParams( { openEnded: false } )
-        );
-
-        return {
-            bufferList: [ cylinderBuffer ]
-        };
-
-    }
-
+  }
 }
 
+RepresentationRegistry.add('validation', ValidationRepresentation)
 
-RepresentationRegistry.add( "validation", ValidationRepresentation );
-
-
-export default ValidationRepresentation;
+export default ValidationRepresentation
