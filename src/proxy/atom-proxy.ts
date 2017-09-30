@@ -286,6 +286,16 @@ class AtomProxy {
     }
   }
 
+  get aromatic () {
+    return false  // TODO
+  }
+
+  //
+
+  get bondCount () {
+    return this.bondHash!.countArray[ this.index ]  // TODO
+  }
+
   //
 
   /**
@@ -331,11 +341,23 @@ class AtomProxy {
    * @return {Boolean} whether a bond exists or not
    */
   hasBondTo (ap: AtomProxy) {
-    let hasBond = false
+    let flag = false
     this.eachBondedAtom(function (bap) {
-      if (ap.index === bap.index) hasBond = true
+      if (ap.index === bap.index) flag = true
     })
-    return hasBond
+    return flag
+  }
+
+  bondToElementCount (element: string) {
+    let count = 0
+    this.eachBondedAtom(function (bap) {
+      if (bap.element === element) count += 1
+    })
+    return count
+  }
+
+  hasBondToElement (element: string) {
+    return this.bondToElementCount(element) > 0
   }
 
   //

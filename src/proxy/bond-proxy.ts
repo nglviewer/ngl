@@ -83,6 +83,14 @@ class BondProxy {
     this.bondStore.bondOrder[ this.index ] = value
   }
 
+  getOtherAtomIndex (atomIndex: number) {
+    return atomIndex === this.atomIndex1 ? this.atomIndex2 : this.atomIndex1
+  }
+
+  getOtherAtom (atom: AtomProxy) {
+    return this.structure.getAtomProxy(this.getOtherAtomIndex(atom.index))
+  }
+
   /**
    * Get reference atom index for the bond
    * @return {Integer|undefined} atom index, or `undefined` if unavailable
