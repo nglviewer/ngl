@@ -1892,7 +1892,7 @@ NGL.RepresentationElementWidget = function (element, stage) {
 
   var menu = new UI.PopupMenu('bars', 'Representation')
     .setMarginLeft('45px')
-    .setEntryLabelWidth('130px')
+    .setEntryLabelWidth('190px')
 
   menu.addEntry('type', new UI.Text(element.repr.type))
 
