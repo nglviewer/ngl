@@ -5,7 +5,26 @@
  */
 
 import { Box3 } from 'three'
-import AtomStore from '../store/atom-store'
+
+type Positions = { x: ArrayLike<number>, y: ArrayLike<number>, z: ArrayLike<number> }
+
+function createBoundingBox(positions: Positions) {
+    const { x, y, z } = positions
+    const boundingBox = new Box3()
+    const count = x.length
+    const { min, max } = boundingBox
+
+    for (let i = 0; i < count; i++) {
+        min.x = Math.min(x[i], min.x)
+        min.y = Math.min(y[i], min.y)
+        min.z = Math.min(z[i], min.z)
+        max.x = Math.max(x[i], max.x)
+        max.y = Math.max(y[i], max.y)
+        max.z = Math.max(z[i], max.z)
+    }
+
+    return boundingBox
+}
 
 export default class SpatialHash {
   exp = 3
@@ -23,12 +42,12 @@ export default class SpatialHash {
   bucketOffset: Uint32Array
   bucketArray: Int32Array
 
-  xArray: Float32Array
-  yArray: Float32Array
-  zArray: Float32Array
+  xArray: ArrayLike<number>
+  yArray: ArrayLike<number>
+  zArray: ArrayLike<number>
 
-  constructor(atomStore: AtomStore, boundingBox: Box3) {
-    const bb = boundingBox
+  constructor(positions: Positions, boundingBox?: Box3) {
+    const bb = boundingBox || createBoundingBox(positions)
     this.minX = bb.min.x
     this.minY = bb.min.y
     this.minZ = bb.min.z
@@ -37,11 +56,11 @@ export default class SpatialHash {
     this.boundZ = ((bb.max.z - this.minZ) >> this.exp) + 1
 
     const n = this.boundX * this.boundY * this.boundZ
-    const an = atomStore.count
+    const an = positions.x.length
 
-    const xArray = atomStore.x
-    const yArray = atomStore.y
-    const zArray = atomStore.z
+    const xArray = positions.x
+    const yArray = positions.y
+    const zArray = positions.z
 
     let count = 0
     const grid = new Uint32Array(n)
@@ -101,7 +120,7 @@ export default class SpatialHash {
     return result
   }
 
-  eachWithin (x: number, y: number, z: number, r: number, callback: (atomIndex: number) => void) {
+  eachWithin (x: number, y: number, z: number, r: number, callback: (atomIndex: number, dSq: number) => void) {
     const rSq = r * r
 
     const loX = Math.max(0, (x - r - this.minX) >> this.exp)
@@ -130,9 +149,8 @@ export default class SpatialHash {
               const dy = this.yArray[ atomIndex ] - y
               const dz = this.zArray[ atomIndex ] - z
 
-              if (dx * dx + dy * dy + dz * dz <= rSq) {
-                callback(atomIndex)
-              }
+              const dSq = dx * dx + dy * dy + dz * dz
+              if (dSq <= rSq) callback(atomIndex, dSq)
             }
           }
         }
