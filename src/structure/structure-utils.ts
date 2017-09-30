@@ -16,7 +16,7 @@ import Structure from '../structure/structure'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 
-import { UnknownBackboneType } from './structure-constants'
+import { UnknownBackboneType, AA3 } from './structure-constants'
 
 export function reorderAtoms (structure: Structure) {
   if (Debug) Log.time('reorderAtoms')
@@ -515,6 +515,32 @@ export interface ResidueBonds {
   bondOrders: number[]
 }
 
+
+const BondOrderTable: { [k: string]: number } = {
+  'HIS|CD2|CG': 2,
+  'HIS|CE1|ND1': 2,
+  'ARG|CZ|NH2': 2,
+  'PHE|CE1|CZ': 2,
+  'PHE|CD2|CE2': 2,
+  'PHE|CD1|CG': 2,
+  'TRP|CD1|CG': 2,
+  'TRP|CD2|CE2': 2,
+  'TRP|CE3|CZ3': 2,
+  'TRP|CH2|CZ2': 2,
+  'ASN|CG|OD1': 2,
+  'GLN|CD|OE1': 2,
+  'TYR|CD1|CG': 2,
+  'TYR|CD2|CE2': 2,
+  'TYR|CE1|CZ': 2,
+  'ASP|CD1|CG': 2,
+  'GLU|CD|OE1': 2
+}
+function getBondOrderFromTable (resname: string, atomname1: string, atomname2: string) {
+  [ atomname1, atomname2 ] = atomname1 < atomname2 ? [ atomname1, atomname2 ] : [ atomname2, atomname1 ]
+  if (AA3.includes(resname) && atomname1 === 'C' && atomname2 === 'O') return 2
+  return BondOrderTable[ `${resname}|${atomname1}|${atomname2}` ] || 1
+}
+
 export function calculateResidueBonds (r: ResidueProxy) {
   const structure = r.structure
   const a1 = structure.getAtomProxy()
@@ -547,7 +573,7 @@ export function calculateResidueBonds (r: ResidueProxy) {
             if (a1.connectedTo(a2)) {
               atomIndices1.push(a1.index - offset)
               atomIndices2.push(a2.index - offset)
-              bondOrders.push(1)
+              bondOrders.push(getBondOrderFromTable(a1.resname, a1.atomname, a2.atomname))
             }
           }
         }
@@ -560,7 +586,7 @@ export function calculateResidueBonds (r: ResidueProxy) {
           if (a1.connectedTo(a2)) {
             atomIndices1.push(i - offset)
             atomIndices2.push(j - offset)
-            bondOrders.push(1)
+            bondOrders.push(getBondOrderFromTable(a1.resname, a1.atomname, a2.atomname))
           }
         }
       }
