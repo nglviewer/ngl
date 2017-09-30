@@ -19,6 +19,7 @@ import SpatialHash from '../geometry/spatial-hash'
 import FilteredVolume from '../surface/filtered-volume'
 import StructureView from './structure-view'
 import { AtomDataParams, AtomData, BondDataParams, BondData } from './structure-data'
+import { Data, createData } from './data'
 
 import Entity from './entity'
 import Unitcell from '../symmetry/unitcell'
@@ -51,6 +52,8 @@ interface Structure {
   path: string
   title: string
   id: string
+
+  data: Data
 
   atomCount: number
   bondCount: number
@@ -142,6 +145,8 @@ class Structure implements Structure{
     this.path = path
     this.title = ''
     this.id = ''
+
+    this.data = createData(this)
 
     this.header = {}
     this.extraData = {}

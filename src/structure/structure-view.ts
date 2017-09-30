@@ -69,6 +69,7 @@ class StructureView extends Structure {
   get path () { return this.structure.path }
   get title () { return this.structure.title }
   get id () { return this.structure.id }
+  get data () { return this.structure.data }
   get atomSetDict () { return this.structure.atomSetDict }
   get biomolDict () { return this.structure.biomolDict }
   get entityList () { return this.structure.entityList }
