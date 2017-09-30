@@ -18,6 +18,8 @@ fi
 
 if [ "$LEVEL" = "prerelease" ]; then
 	cd ./arose.github.io/ngldev/;
+elif [ "$LEVEL" = "ts2" ]; then
+	cd ./arose.github.io/ts2/;
 else
 	cd ./arose.github.io/ngl/;
 fi
@@ -38,6 +40,8 @@ cd ../;
 git add -A;
 if [ "$LEVEL" = "prerelease" ]; then
 	git commit -m "ngldev update";
+elif [ "$LEVEL" = "ts2" ]; then
+	git commit -m "ts2 update";
 else
 	git commit -m "ngl update";
 fi
