@@ -935,9 +935,7 @@ export const AA1: { [k: string]: string } = {
   'THR': 'T',
 
   'ASH': 'D',
-  'GLH': 'E',
-
-  'UNK': ''
+  'GLH': 'E'
 }
 
 export const AA3 = Object.keys(AA1)
