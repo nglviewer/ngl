@@ -24,7 +24,7 @@ uniform vec3 emissive;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float shrink;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
@@ -53,7 +53,7 @@ varying float vRadius2;
 bool interior = false;
 
 float calcClip( vec4 cameraPos ){
-    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );
 }
 
 float calcClip( vec3 cameraPos ){
@@ -215,7 +215,7 @@ void main(){
             interior = true;
             gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
             if( gl_FragDepthEXT >= 0.0 ){
-                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / radius ) );
             }
         }else if( gl_FragDepthEXT <= 0.0 ){
             M = isect_surf2(ray, mat);

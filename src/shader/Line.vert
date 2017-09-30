@@ -1,4 +1,4 @@
-uniform float nearClip;
+uniform float clipNear;
 uniform vec3 clipCenter;
 
 varying vec3 vViewPosition;

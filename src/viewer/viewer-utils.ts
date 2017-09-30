@@ -334,13 +334,13 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
     const m = o.material
     if (!m) return
 
-    const u = o.material.uniforms
+    const u = m.uniforms
     if (!u) return
 
     if (m.clipNear) {
       const nearFactor = (50 - m.clipNear) / 50
       const nearClip = cDist - (bRadius * nearFactor)
-      u.nearClip.value = nearClip
+      u.clipNear.value = nearClip
     }
 
     if (u.canvasHeight) {

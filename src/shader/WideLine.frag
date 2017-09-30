@@ -1,6 +1,6 @@
 uniform vec3 diffuse;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 #if defined( RADIUS_CLIP )

@@ -5,7 +5,7 @@ uniform vec3 emissive;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )

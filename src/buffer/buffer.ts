@@ -82,7 +82,7 @@ export const BufferParameterTypes = {
   side: { updateShader: true, property: true },
   opacity: { uniform: true },
   depthWrite: { property: true },
-  clipNear: { updateShader: true },
+  clipNear: { updateShader: true, property: true },
   clipRadius: { updateShader: true, uniform: true },
   clipCenter: { uniform: true },
   flatShaded: { updateShader: true },
@@ -163,7 +163,7 @@ class Buffer {
         fogNear: { value: 0.0 },
         fogFar: { value: 0.0 },
         opacity: { value: this.parameters.opacity },
-        nearClip: { value: 0.0 },
+        clipNear: { value: 0.0 },
         clipRadius: { value: this.parameters.clipRadius },
         clipCenter: { value: this.parameters.clipCenter }
       },
@@ -178,7 +178,7 @@ class Buffer {
     this.uniforms.diffuse.value.set(this.parameters.diffuse)
 
     this.pickingUniforms = {
-      nearClip: { value: 0.0 },
+      clipNear: { value: 0.0 },
       objectId: { value: 0 },
       opacity: { value: this.parameters.opacity }
     }
@@ -291,6 +291,10 @@ class Buffer {
     })
     pm.vertexColors = VertexColors
     pm.extensions.fragDepth = this.isImpostor
+
+    ;(m as any).clipNear = this.parameters.clipNear
+    ;(wm as any).clipNear = this.parameters.clipNear
+    ;(pm as any).clipNear = this.parameters.clipNear
 
     this.material = m
     this.wireframeMaterial = wm
@@ -792,17 +796,9 @@ class Buffer {
         value = getThreeSide(value)
       }
 
-      if (m[ name ] !== undefined) {
-        m[ name ] = value
-      }
-
-      if (wm[ name ] !== undefined) {
-        wm[ name ] = value
-      }
-
-      if (pm[ name ] !== undefined) {
-        pm[ name ] = value
-      }
+      m[ name ] = value
+      wm[ name ] = value
+      pm[ name ] = value
     }
 
     m.needsUpdate = true

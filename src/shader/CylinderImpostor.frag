@@ -34,7 +34,7 @@ uniform vec3 emissive;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform mat4 projectionMatrix;
 uniform float ortho;
 
@@ -75,7 +75,7 @@ float calcDepth( in vec3 cameraPos ){
 }
 
 float calcClip( vec3 cameraPos ){
-    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+    return dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );
 }
 
 void main(){
@@ -211,7 +211,7 @@ void main(){
             interior = true;
             gl_FragDepthEXT = calcDepth( new_point );
             if( gl_FragDepthEXT >= 0.0 ){
-                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );
             }
         }else if( gl_FragDepthEXT <= 0.0 ){
             dist = (-a1 - sqrt(d)) / a2;

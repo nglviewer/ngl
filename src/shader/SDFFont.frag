@@ -5,7 +5,7 @@ uniform vec3 borderColor;
 uniform float borderWidth;
 uniform vec3 backgroundColor;
 uniform float backgroundOpacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 varying vec3 vViewPosition;
