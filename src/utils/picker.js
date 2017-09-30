@@ -14,6 +14,7 @@ import {
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
   TetrahedronPrimitive, TorusPrimitive
 } from '../geometry/primitive'
+import { contactTypeName } from '../chemistry/interactions/contact'
 
 /**
  * Picker class
@@ -183,8 +184,37 @@ class BondPicker extends Picker {
   }
 }
 
-class ContactPicker extends BondPicker {
+class ContactPicker extends Picker {
+  constructor (array, contacts, structure) {
+    super(array)
+    this.contacts = contacts
+    this.structure = structure
+  }
+
   get type () { return 'contact' }
+  get data () { return this.contacts }
+
+  getObject (pid) {
+    const idx = this.getIndex(pid)
+    const { features, contactStore } = this.contacts
+    const { centers, atomSets } = features
+    const { x, y, z } = centers
+    const { index1, index2, type } = contactStore
+    const k = index1[idx]
+    const l = index2[idx]
+    return {
+      center1: new Vector3(x[k], y[k], z[k]),
+      center2: new Vector3(x[l], y[l], z[l]),
+      atom1: this.structure.getAtomProxy(atomSets[k][0]),
+      atom2: this.structure.getAtomProxy(atomSets[l][0]),
+      type: contactTypeName(type[idx])
+    }
+  }
+
+  _getPosition (pid) {
+    const { center1, center2 } = this.getObject(pid)
+    return new Vector3().addVectors(center1, center2).multiplyScalar(0.5)
+  }
 }
 
 class ConePicker extends ShapePicker {

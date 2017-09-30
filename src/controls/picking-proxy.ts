@@ -193,7 +193,7 @@ class PickingProxy {
   /**
    * @type {BondProxy}
    */
-  get contact () { return this._objectIfType('contact') as BondProxy }
+  get contact () { return this._objectIfType('contact') as { type: string, atom1: AtomProxy, atom2: AtomProxy } }
   /**
    * @type {Object}
    */
@@ -272,9 +272,9 @@ class PickingProxy {
     } else if (this.clash) {
       msg = 'clash: ' + this.clash.clash.sele1 + ' - ' + this.clash.clash.sele2
     } else if (this.contact) {
-      msg = 'contact: ' +
+      msg = this.contact.type + ': ' +
               this.contact.atom1.qualifiedName() + ' - ' + this.contact.atom2.qualifiedName() +
-              ' (' + this.contact.structure.name + ')'
+              ' (' + this.contact.atom1.structure.name + ')'
     } else if (this.cylinder) {
       msg = 'cylinder: ' + (this.cylinder.name || this.pid) + ' (' + this.cylinder.shape.name + ')'
     } else if (this.distance) {
