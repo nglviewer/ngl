@@ -7,7 +7,7 @@
 import { Vector3 } from 'three'
 
 import { NumberArray } from '../types'
-import { EPS } from './math-constants.js'
+import { EPS } from './math-constants'
 
 /**
  * Calculate the two intersection points

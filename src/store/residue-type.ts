@@ -23,8 +23,8 @@ export interface BondGraph {
 }
 
 export interface RingData {
-  flags: Int8Array
-  rings: number[][]
+  flags: Int8Array  // 1 when belonging to any ring(s)
+  rings: number[][]  // rings as arrays of indices
 }
 
 /**

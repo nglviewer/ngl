@@ -2,8 +2,8 @@
 // stage.loadFile( "data://3pqr.pdb" ).then( function( o ){
 // stage.loadFile( "rcsb://4cup" ).then( function( o ){
 stage.loadFile('rcsb://4hhb').then(function (o) {
-    // var ligSele = "RET";
-    // var ligSele = "ZYB";
+  // var ligSele = "RET";
+  // var ligSele = "ZYB";
   var ligSele = 'HEM and :B'
   var sview = o.structure.getView(new NGL.Selection(ligSele))
   var filterSet = o.structure.getAtomSetWithinSelection(new NGL.Selection(ligSele), 7)
@@ -26,7 +26,7 @@ stage.loadFile('rcsb://4hhb').then(function (o) {
     useWorker: false,
     clipCenter: sview.center,
     filterSele: filterSet.toSeleString()
-        // filterSele: groupSet.toSeleString()
+    // filterSele: groupSet.toSeleString()
   })
 
   o.addRepresentation('surface', {

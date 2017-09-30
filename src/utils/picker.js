@@ -7,13 +7,13 @@
 import { Vector3 } from 'three'
 
 import { PickerRegistry } from '../globals'
-import { calculateMeanVector3 } from '../math/vector-utils.js'
-import Selection from '../selection/selection.js'
+import { calculateMeanVector3 } from '../math/vector-utils'
+import Selection from '../selection/selection'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
   TetrahedronPrimitive, TorusPrimitive
-} from '../geometry/primitive.js'
+} from '../geometry/primitive'
 
 /**
  * Picker class
@@ -177,9 +177,9 @@ class BondPicker extends Picker {
   _getPosition (pid) {
     const b = this.getObject(pid)
     return new Vector3()
-            .copy(b.atom1)
-            .add(b.atom2)
-            .multiplyScalar(0.5)
+      .copy(b.atom1)
+      .add(b.atom2)
+      .multiplyScalar(0.5)
   }
 }
 
