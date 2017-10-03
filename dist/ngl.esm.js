@@ -49559,6 +49559,21 @@ WorkerRegistry$1.prototype.get = function get (name) {
 var Browser = getBrowser();
 
 /**
+ * Flag indicating support for the 'passive' option for event handler
+ * @type {Boolean}
+ */
+var SupportsPassiveEventHandler = false;
+try {
+  // Test via a getter in the options object to see if the passive property is accessed
+  var opts = Object.defineProperty({}, 'passive', {
+    get: function () {
+      SupportsPassiveEventHandler = true;
+    }
+  });
+  window.addEventListener('test', null, opts);
+} catch (e) {}
+
+/**
  * Flag indicating a mobile browser
  * @type {Boolean}
  */
@@ -52879,10 +52894,12 @@ function Viewer (idOrElement) {
     renderer.extensions.get('OES_element_index_uint');
 
     setSupportsReadPixelsFloat(
-      (renderer.extensions.get('OES_texture_float') &&
-        renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (renderer.extensions.get('OES_texture_float') &&
-        testTextureSupport(gl, gl.FLOAT))
+      Browser !== 'Safari' && (
+        (renderer.extensions.get('OES_texture_float') &&
+          renderer.extensions.get('WEBGL_color_buffer_float')) ||
+        (renderer.extensions.get('OES_texture_float') &&
+          testTextureSupport(gl, gl.FLOAT))
+      )
     );
 
     container.appendChild(renderer.domElement);
@@ -53855,6 +53872,7 @@ var MouseObserver = function MouseObserver (domElement, params) {
   this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500);
 
   this.domElement = domElement;
+  this.domElement.style.touchAction = 'none';
 
   /**
    * Position on page
@@ -56316,6 +56334,8 @@ AnimationBehavior.prototype.dispose = function dispose () {
  * @private
  */
 
+var passive = SupportsPassiveEventHandler ? { passive: true } : false;
+
 var KeyBehavior = function KeyBehavior (stage) {
   this.stage = stage;
   this.controls = stage.keyControls;
@@ -56333,7 +56353,7 @@ var KeyBehavior = function KeyBehavior (stage) {
   this._onKeypress = this._onKeypress.bind(this);
 
   this.domElement.addEventListener('mousedown', this._focusDomElement);
-  this.domElement.addEventListener('touchstart', this._focusDomElement);
+  this.domElement.addEventListener('touchstart', this._focusDomElement, passive);
   this.domElement.addEventListener('keydown', this._onKeydown);
   this.domElement.addEventListener('keyup', this._onKeyup);
   this.domElement.addEventListener('keypress', this._onKeypress);
@@ -56373,7 +56393,7 @@ KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
 
 KeyBehavior.prototype.dispose = function dispose () {
   this.domElement.removeEventListener('mousedown', this._focusDomElement);
-  this.domElement.removeEventListener('touchstart', this._focusDomElement);
+  this.domElement.removeEventListener('touchstart', this._focusDomElement, passive);
   this.domElement.removeEventListener('keydown', this._onKeypress);
   this.domElement.removeEventListener('keyup', this._onKeypress);
   this.domElement.removeEventListener('keypress', this._onKeypress);
@@ -59755,9 +59775,15 @@ function SpatialHash (atomStore, boundingBox) {
     }
   }
 
-    //
-
   function within (x, y, z, r) {
+    var result = [];
+
+    eachWithin(x, y, z, r, function (atomIndex) { return result.push(atomIndex); });
+
+    return result
+  }
+
+  function eachWithin (x, y, z, r, callback) {
     var rSq = r * r;
 
     var loX = Math.max(0, (x - r - minX) >> exp);
@@ -59788,9 +59814,8 @@ function SpatialHash (atomStore, boundingBox) {
               var dy = yArray[ atomIndex ] - y;
               var dz = zArray[ atomIndex ] - z;
 
-              if (dx * dx + dy * dy + dz * dz <= rSq) {
-                result.push(atomIndex);
-              }
+              var dSq = dx * dx + dy * dy + dz * dz;
+              if (dSq <= rSq) { callback(atomIndex, dSq); }
             }
           }
         }
@@ -59800,9 +59825,10 @@ function SpatialHash (atomStore, boundingBox) {
     return result
   }
 
-    // API
+  // API
 
   this.within = within;
+  this.eachWithin = eachWithin;
 }
 
 /**
@@ -64997,6 +65023,24 @@ function calculateBondsBetween (structure, onlyAddBackbone, useExistingBonds) {
 
   structure.atomSetDict.backbone = backboneAtomSet;
 
+  if (!onlyAddBackbone) {
+    if (Debug) { Log.time('calculateBondsBetween inter'); }
+    var spatialHash = structure.spatialHash;
+    structure.eachResidue(function (rp) {
+      if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
+        rp.eachAtom(function (ap) {
+          spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
+            ap2.index = idx;
+            if (ap.residueIndex !== ap2.residueIndex) {
+              bondStore.addBondIfConnected(ap, ap2, 1);  // assume single bond
+            }
+          });
+        });
+      }
+    });
+    if (Debug) { Log.timeEnd('calculateBondsBetween inter'); }
+  }
+
   if (Debug) { Log.timeEnd('calculateBondsBetween'); }
 }
 
@@ -67759,7 +67803,7 @@ ChainProxy.prototype.eachPolymer = function eachPolymer (callback, selection) {
   }
 
   if (rNextIndex - rStartIndex > 1) {
-    if (this.structure.getResidueProxy(rStartIndex).backboneStartType) {
+    if (this.structure.getResidueProxy(rStartIndex).backboneEndType) {
       // console.log("FOO3",rStartIndex, rNextIndex)
       callback(new Polymer(structure, rStartIndex, rNextIndex));
     }
@@ -69037,12 +69081,21 @@ Object.defineProperties( Structure.prototype, prototypeAccessors$13 );
 var Superposition = function Superposition (atoms1, atoms2) {
   // allocate & init data structures
 
-  var n;
+  var n1;
   if (typeof atoms1.eachAtom === 'function') {
-    n = atoms1.atomCount;
+    n1 = atoms1.atomCount;
   } else if (atoms1 instanceof Float32Array) {
-    n = atoms1.length / 3;
+    n1 = atoms1.length / 3;
   }
+
+  var n2;
+  if (typeof atoms2.eachAtom === 'function') {
+    n2 = atoms2.atomCount;
+  } else if (atoms1 instanceof Float32Array) {
+    n2 = atoms2.length / 3;
+  }
+
+  var n = Math.min(n1, n2);
 
   var coords1 = new Matrix(3, n);
   var coords2 = new Matrix(3, n);
@@ -69063,8 +69116,8 @@ var Superposition = function Superposition (atoms1, atoms2) {
 
   // prep coords
 
-  this.prepCoords(atoms1, coords1);
-  this.prepCoords(atoms2, coords2);
+  this.prepCoords(atoms1, coords1, n);
+  this.prepCoords(atoms2, coords2, n);
 
   // superpose
 
@@ -69096,20 +69149,23 @@ Superposition.prototype._superpose = function _superpose (coords1, coords2) {
   }
 };
 
-Superposition.prototype.prepCoords = function prepCoords (atoms, coords) {
+Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
   var i = 0;
+  var n3 = n * 3;
   var cd = coords.data;
 
   if (typeof atoms.eachAtom === 'function') {
     atoms.eachAtom(function (a) {
-      cd[ i + 0 ] = a.x;
-      cd[ i + 1 ] = a.y;
-      cd[ i + 2 ] = a.z;
+      if (i < n3) {
+        cd[ i + 0 ] = a.x;
+        cd[ i + 1 ] = a.y;
+        cd[ i + 2 ] = a.z;
 
-      i += 3;
+        i += 3;
+      }
     });
   } else if (atoms instanceof Float32Array) {
-    cd.set(atoms);
+    cd.set(atoms.subarray(0, n3));
   } else {
     Log.warn('prepCoords: input type unknown');
   }
@@ -69130,7 +69186,7 @@ Superposition.prototype.transform = function transform (atoms) {
 
   // prep coords
 
-  this.prepCoords(atoms, coords);
+  this.prepCoords(atoms, coords, n);
 
   // do transform
 
@@ -81122,10 +81178,10 @@ function Spline$1 (polymer, params) {
   this.subdiv = p.subdiv || 1;
   this.smoothSheet = p.smoothSheet || false;
 
-  if (isNaN(p.tension)) {
+  if (!p.tension) {
     this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
   } else {
-    this.tension = p.tension || 0.5;
+    this.tension = p.tension;
   }
 
   this.interpolator = new Interpolator(this.subdiv, this.tension);
@@ -100107,7 +100163,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.1";
+var version$1 = "1.0.0-beta.2";
 
 /**
  * @file Version
@@ -100156,5 +100212,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, Superposition, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map
