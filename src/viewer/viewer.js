@@ -24,7 +24,7 @@ import '../shader/Quad.vert'
 import '../shader/Quad.frag'
 
 import {
-  Debug, Log, WebglErrorMessage,
+  Debug, Log, WebglErrorMessage, Browser,
   setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from '../globals.js'
 import { degToRad } from '../math/math-utils.js'
@@ -276,10 +276,12 @@ function Viewer (idOrElement) {
     renderer.extensions.get('OES_element_index_uint')
 
     setSupportsReadPixelsFloat(
-      (renderer.extensions.get('OES_texture_float') &&
-        renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (renderer.extensions.get('OES_texture_float') &&
-        testTextureSupport(gl, gl.FLOAT))
+      Browser !== 'Safari' && (
+        (renderer.extensions.get('OES_texture_float') &&
+          renderer.extensions.get('WEBGL_color_buffer_float')) ||
+        (renderer.extensions.get('OES_texture_float') &&
+          testTextureSupport(gl, gl.FLOAT))
+      )
     )
 
     container.appendChild(renderer.domElement)
