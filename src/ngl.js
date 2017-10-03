@@ -30,6 +30,7 @@ import RepresentationCollection from './component/representation-collection.js'
 import Assembly from './symmetry/assembly.js'
 import TrajectoryPlayer from './trajectory/trajectory-player.js'
 import { superpose } from './align/align-utils.js'
+import Superposition from './align/superposition.js'
 import { guessElement } from './structure/structure-utils.js'
 
 import {
@@ -220,6 +221,7 @@ export {
   TrajectoryPlayer,
 
   superpose,
+  Superposition,
   guessElement,
 
   flatten,
