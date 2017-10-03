@@ -687,6 +687,24 @@ function calculateBondsBetween (structure, onlyAddBackbone, useExistingBonds) {
 
   structure.atomSetDict.backbone = backboneAtomSet
 
+  if (!onlyAddBackbone) {
+    if (Debug) Log.time('calculateBondsBetween inter')
+    const spatialHash = structure.spatialHash
+    structure.eachResidue(function (rp) {
+      if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
+        rp.eachAtom(function (ap) {
+          spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
+            ap2.index = idx
+            if (ap.residueIndex !== ap2.residueIndex) {
+              bondStore.addBondIfConnected(ap, ap2, 1)  // assume single bond
+            }
+          })
+        })
+      }
+    })
+    if (Debug) Log.timeEnd('calculateBondsBetween inter')
+  }
+
   if (Debug) Log.timeEnd('calculateBondsBetween')
 }
 
