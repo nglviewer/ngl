@@ -44464,6 +44464,7 @@ function getFileInfo (file) {
     path = file;
   }
   var queryIndex = path.lastIndexOf('?');
+  var query = queryIndex !== -1 ? path.substring(queryIndex) : '';
   path = path.substring(0, queryIndex === -1 ? path.length : queryIndex);
 
   var name = path.replace(/^.*[\\/]/, '');
@@ -44498,7 +44499,8 @@ function getFileInfo (file) {
     'dir': dir,
     'compressed': compressed,
     'protocol': protocol,
-    'src': file
+    'src': file,
+    'query': query
   }
 }
 
@@ -100138,17 +100140,17 @@ var MdsrvDatasource = (function (Datasource$$1) {
 
   MdsrvDatasource.prototype.getUrl = function getUrl (src) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'file/' + info.path
+    return this.baseUrl + 'file/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getCountUrl = function getCountUrl (src) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/numframes/' + info.path
+    return this.baseUrl + 'traj/numframes/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getFrameUrl = function getFrameUrl (src, frameIndex) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path
+    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getFrameParams = function getFrameParams (src, atomIndices) {
@@ -100157,13 +100159,13 @@ var MdsrvDatasource = (function (Datasource$$1) {
 
   MdsrvDatasource.prototype.getPathUrl = function getPathUrl (src, atomIndex) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path
+    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path + info.query
   };
 
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.2";
+var version$1 = "1.0.0-beta.3";
 
 /**
  * @file Version
