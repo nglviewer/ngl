@@ -1,4 +1,6 @@
 
+var edmapUrl = 'https://edmaps.rcsb.org/maps/'
+
 stage.setParameters({
   cameraType: 'orthographic',
   mousePreset: 'coot'
@@ -348,6 +350,27 @@ var scrollSelect = createSelect([
   }
 }, { top: '306px', left: '12px' })
 addElement(scrollSelect)
+
+var loadEdmapText = createElement('span', {
+  innerText: 'load edmap for pdb id',
+  title: 'press enter to load'
+}, { top: '330px', left: '12px', color: 'lightgrey' })
+addElement(loadEdmapText)
+
+var loadEdmapInput = createElement('input', {
+  type: 'text',
+  title: 'press enter to load',
+  onkeypress: function (e) {
+    var value = e.target.value
+    if (e.keyCode === 13) {
+      e.preventDefault()
+      loadStructure('rcsb://' + value)
+      load2fofc(edmapUrl + value + '_2fofc.dsn6')
+      loadFofc(edmapUrl + value + '_fofc.dsn6')
+    }
+  }
+}, { top: '350px', left: '12px', width: '120px' })
+addElement(loadEdmapInput)
 
 var isolevel2fofcText = createElement(
     'span', {}, { bottom: '32px', left: '12px', color: 'lightgrey' }
