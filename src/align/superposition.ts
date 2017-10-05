@@ -31,14 +31,25 @@ class Superposition {
   constructor (atoms1: Structure|Float32Array, atoms2: Structure|Float32Array) {
     // allocate & init data structures
 
-    let n
+    let n1
     if (atoms1 instanceof Structure) {
-      n = atoms1.atomCount
+      n1 = atoms1.atomCount
     } else if (atoms1 instanceof Float32Array) {
-      n = atoms1.length / 3
+      n1 = atoms1.length / 3
     } else {
       return
     }
+
+    let n2
+    if (atoms2 instanceof Structure) {
+      n2 = atoms2.atomCount
+    } else if (atoms2 instanceof Float32Array) {
+      n2 = atoms2.length / 3
+    } else {
+      return
+    }
+
+    const n = Math.min(n1, n2)
 
     const coords1 = new Matrix(3, n)
     const coords2 = new Matrix(3, n)
@@ -50,8 +61,8 @@ class Superposition {
 
     // prep coords
 
-    this.prepCoords(atoms1, coords1)
-    this.prepCoords(atoms2, coords2)
+    this.prepCoords(atoms1, coords1, n)
+    this.prepCoords(atoms2, coords2, n)
 
     // superpose
 
@@ -83,20 +94,23 @@ class Superposition {
     }
   }
 
-  prepCoords (atoms: Structure|Float32Array, coords: Matrix) {
-    var i = 0
-    var cd = coords.data
+  prepCoords (atoms: Structure|Float32Array, coords: Matrix, n: number) {
+    let i = 0
+    const n3 = n * 3
+    const cd = coords.data
 
     if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {
-        cd[ i + 0 ] = a.x
-        cd[ i + 1 ] = a.y
-        cd[ i + 2 ] = a.z
+        if (i < n3) {
+          cd[ i + 0 ] = a.x
+          cd[ i + 1 ] = a.y
+          cd[ i + 2 ] = a.z
 
-        i += 3
+          i += 3
+        }
       })
     } else if (atoms instanceof Float32Array) {
-      cd.set(atoms)
+      cd.set(atoms.subarray(0, n3))
     } else {
       Log.warn('prepCoords: input type unknown')
     }
@@ -119,7 +133,7 @@ class Superposition {
 
     // prep coords
 
-    this.prepCoords(atoms, coords)
+    this.prepCoords(atoms, coords, n)
 
     // do transform
 

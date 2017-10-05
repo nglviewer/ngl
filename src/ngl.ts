@@ -32,6 +32,7 @@ import RepresentationCollection from './component/representation-collection'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
 export { superpose } from './align/align-utils'
+export Superposition from './align/superposition'
 export { guessElement } from './structure/structure-utils'
 
 export {
