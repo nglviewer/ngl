@@ -42,6 +42,7 @@ export function getFileInfo (file: LoaderInput) {
     path = file
   }
   const queryIndex = path.lastIndexOf('?')
+  var query = queryIndex !== -1 ? path.substring(queryIndex) : ''
   path = path.substring(0, queryIndex === -1 ? path.length : queryIndex)
 
   const name = path.replace(/^.*[\\/]/, '')
@@ -68,10 +69,7 @@ export function getFileInfo (file: LoaderInput) {
     compressed = false
   }
 
-  return {
-    path, name, ext, base, dir, compressed, protocol,
-    'src': file
-  }
+  return { path, name, ext, base, dir, compressed, protocol, query, 'src': file }
 }
 
 export function getDataInfo (src: LoaderInput) {

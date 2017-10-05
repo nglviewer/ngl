@@ -4,8 +4,8 @@
  * @private
  */
 
-import { autoLoad, getFileInfo } from '../loader/loader-utils.js'
-import Datasource from './datasource.js'
+import { autoLoad, getFileInfo } from '../loader/loader-utils'
+import Datasource from './datasource'
 
 class MdsrvDatasource extends Datasource {
   baseUrl: string
@@ -28,17 +28,17 @@ class MdsrvDatasource extends Datasource {
 
   getUrl (src: string) {
     const info = getFileInfo(src)
-    return this.baseUrl + 'file/' + info.path
+    return `${this.baseUrl}file/${info.path}${info.query}`
   }
 
   getCountUrl (src: string) {
     const info = getFileInfo(src)
-    return `${this.baseUrl}traj/numframes/${info.path}`
+    return `${this.baseUrl}traj/numframes/${info.path}${info.query}`
   }
 
   getFrameUrl (src: string, frameIndex: number|string) {
     const info = getFileInfo(src)
-    return `${this.baseUrl}traj/frame/${frameIndex}/${info.path}`
+    return `${this.baseUrl}traj/frame/${frameIndex}/${info.path}${info.query}`
   }
 
   getFrameParams (src: string, atomIndices: (number|string)[]) {
@@ -47,7 +47,7 @@ class MdsrvDatasource extends Datasource {
 
   getPathUrl (src: string, atomIndex: number|string) {
     const info = getFileInfo(src)
-    return `${this.baseUrl}traj/path/${atomIndex}/${info.path}`
+    return `${this.baseUrl}traj/path/${atomIndex}/${info.path}${info.query}`
   }
 
   getExt (src: string) {
