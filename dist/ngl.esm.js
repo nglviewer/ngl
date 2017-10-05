@@ -49934,6 +49934,7 @@ function getFileInfo(file) {
         path = file;
     }
     var queryIndex = path.lastIndexOf('?');
+    var query = queryIndex !== -1 ? path.substring(queryIndex) : '';
     path = path.substring(0, queryIndex === -1 ? path.length : queryIndex);
     var name = path.replace(/^.*[\\/]/, '');
     var base = name.substring(0, name.lastIndexOf('.'));
@@ -49955,10 +49956,7 @@ function getFileInfo(file) {
     else {
         compressed = false;
     }
-    return {
-        path: path, name: name, ext: ext, base: base, dir: dir, compressed: compressed, protocol: protocol,
-        'src': file
-    };
+    return { path: path, name: name, ext: ext, base: base, dir: dir, compressed: compressed, protocol: protocol, query: query, 'src': file };
 }
 function getDataInfo(src) {
     var info = getFileInfo(src);
@@ -52205,10 +52203,10 @@ Viewer.prototype._initRenderer = function _initRenderer () {
     // console.log(gl.getParameter(gl.SAMPLES))
     setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'));
     this.renderer.extensions.get('OES_element_index_uint');
-    setSupportsReadPixelsFloat((this.renderer.extensions.get('OES_texture_float') &&
+    setSupportsReadPixelsFloat(Browser !== 'Safari' && ((this.renderer.extensions.get('OES_texture_float') &&
         this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
         (this.renderer.extensions.get('OES_texture_float') &&
-            testTextureSupport(gl, gl.FLOAT)));
+            testTextureSupport(gl, gl.FLOAT))));
     this.container.appendChild(this.renderer.domElement);
     var dprWidth = width * dpr;
     var dprHeight = height * dpr;
@@ -62115,6 +62113,9 @@ var SurfaceRepresentation = (function (Representation$$1) {
             negateIsolevel: {
                 type: 'boolean'
             },
+            isolevelScroll: {
+                type: 'boolean'
+            },
             smooth: {
                 type: 'integer', precision: 1, max: 10, min: 0
             },
@@ -62173,6 +62174,7 @@ var SurfaceRepresentation = (function (Representation$$1) {
         this.isolevelType = defaults(p.isolevelType, 'sigma');
         this.isolevel = defaults(p.isolevel, 2.0);
         this.negateIsolevel = defaults(p.negateIsolevel, false);
+        this.isolevelScroll = defaults(p.isolevelScroll, false);
         this.smooth = defaults(p.smooth, 0);
         this.background = defaults(p.background, false);
         this.opaqueBack = defaults(p.opaqueBack, true);
@@ -62400,8 +62402,10 @@ MouseActions.isolevelScroll = function isolevelScroll (stage, delta) {
     var d = Math.sign(delta) / 5;
     stage.eachRepresentation(function (reprElem, comp) {
         if (reprElem.repr instanceof SurfaceRepresentation) {
-            var l = reprElem.getParameters().isolevel; // TODO
-            reprElem.setParameters({ isolevel: l + d });
+            var p = reprElem.getParameters(); // TODO
+            if (p.isolevelScroll) {
+                reprElem.setParameters({ isolevel: p.isolevel + d });
+            }
         }
     });
 };
@@ -66790,6 +66794,25 @@ function calculateBondsBetween(structure, onlyAddBackbone, useExistingBonds) {
         addBondIfConnected(rp2, rp1);
     });
     structure.atomSetDict.backbone = backboneAtomSet;
+    if (!onlyAddBackbone) {
+        if (Debug)
+            { Log.time('calculateBondsBetween inter'); }
+        var spatialHash = structure.spatialHash;
+        structure.eachResidue(function (rp) {
+            if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
+                rp.eachAtom(function (ap) {
+                    spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
+                        ap2.index = idx;
+                        if (ap.residueIndex !== ap2.residueIndex) {
+                            bondStore.addBondIfConnected(ap, ap2, 1); // assume single bond
+                        }
+                    });
+                });
+            }
+        });
+        if (Debug)
+            { Log.timeEnd('calculateBondsBetween inter'); }
+    }
     if (Debug)
         { Log.timeEnd('calculateBondsBetween'); }
 }
@@ -69713,24 +69736,35 @@ var Superposition = function Superposition(atoms1, atoms2) {
     this.R = new Matrix(3, 3);
     this.tmp = new Matrix(3, 3);
     this.c = new Matrix(3, 3);
-    var n;
+    var n1;
     if (atoms1 instanceof Structure) {
-        n = atoms1.atomCount;
+        n1 = atoms1.atomCount;
     }
     else if (atoms1 instanceof Float32Array) {
-        n = atoms1.length / 3;
+        n1 = atoms1.length / 3;
     }
     else {
         return;
     }
+    var n2;
+    if (atoms2 instanceof Structure) {
+        n2 = atoms2.atomCount;
+    }
+    else if (atoms2 instanceof Float32Array) {
+        n2 = atoms2.length / 3;
+    }
+    else {
+        return;
+    }
+    var n = Math.min(n1, n2);
     var coords1 = new Matrix(3, n);
     var coords2 = new Matrix(3, n);
     this.coords1t = new Matrix(n, 3);
     this.coords2t = new Matrix(n, 3);
     this.c.data.set([1, 0, 0, 0, 1, 0, 0, 0, -1]);
     // prep coords
-    this.prepCoords(atoms1, coords1);
-    this.prepCoords(atoms2, coords2);
+    this.prepCoords(atoms1, coords1, n);
+    this.prepCoords(atoms2, coords2, n);
     // superpose
     this._superpose(coords1, coords2);
 };
@@ -69752,19 +69786,22 @@ Superposition.prototype._superpose = function _superpose (coords1, coords2) {
         multiply3x3(this.R, this.U, this.tmp);
     }
 };
-Superposition.prototype.prepCoords = function prepCoords (atoms, coords) {
+Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
     var i = 0;
+    var n3 = n * 3;
     var cd = coords.data;
     if (atoms instanceof Structure) {
         atoms.eachAtom(function (a) {
-            cd[i + 0] = a.x;
-            cd[i + 1] = a.y;
-            cd[i + 2] = a.z;
-            i += 3;
+            if (i < n3) {
+                cd[i + 0] = a.x;
+                cd[i + 1] = a.y;
+                cd[i + 2] = a.z;
+                i += 3;
+            }
         });
     }
     else if (atoms instanceof Float32Array) {
-        cd.set(atoms);
+        cd.set(atoms.subarray(0, n3));
     }
     else {
         Log.warn('prepCoords: input type unknown');
@@ -69785,7 +69822,7 @@ Superposition.prototype.transform = function transform (atoms) {
     var coords = new Matrix(3, n);
     var tmp = new Matrix(n, 3);
     // prep coords
-    this.prepCoords(atoms, coords);
+    this.prepCoords(atoms, coords, n);
     // do transform
     subRows(coords, this.mean1);
     multiplyABt(tmp, this.R, coords);
@@ -78062,11 +78099,11 @@ function Spline$1(polymer, params) {
     this.positionIterator = p.positionIterator || false;
     this.subdiv = p.subdiv || 1;
     this.smoothSheet = p.smoothSheet || false;
-    if (isNaN(p.tension)) {
+    if (!p.tension) {
         this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
     }
     else {
-        this.tension = p.tension || 0.5;
+        this.tension = p.tension;
     }
     this.interpolator = new Interpolator(this.subdiv, this.tension);
 }
@@ -94178,22 +94215,22 @@ var MdsrvDatasource = (function (Datasource$$1) {
     };
     MdsrvDatasource.prototype.getUrl = function getUrl (src) {
         var info = getFileInfo(src);
-        return this.baseUrl + 'file/' + info.path;
+        return ((this.baseUrl) + "file/" + (info.path) + (info.query));
     };
     MdsrvDatasource.prototype.getCountUrl = function getCountUrl (src) {
         var info = getFileInfo(src);
-        return ((this.baseUrl) + "traj/numframes/" + (info.path));
+        return ((this.baseUrl) + "traj/numframes/" + (info.path) + (info.query));
     };
     MdsrvDatasource.prototype.getFrameUrl = function getFrameUrl (src, frameIndex) {
         var info = getFileInfo(src);
-        return ((this.baseUrl) + "traj/frame/" + frameIndex + "/" + (info.path));
+        return ((this.baseUrl) + "traj/frame/" + frameIndex + "/" + (info.path) + (info.query));
     };
     MdsrvDatasource.prototype.getFrameParams = function getFrameParams (src, atomIndices) {
         return ("atomIndices=" + (atomIndices.join(';')));
     };
     MdsrvDatasource.prototype.getPathUrl = function getPathUrl (src, atomIndex) {
         var info = getFileInfo(src);
-        return ((this.baseUrl) + "traj/path/" + atomIndex + "/" + (info.path));
+        return ((this.baseUrl) + "traj/path/" + atomIndex + "/" + (info.path) + (info.query));
     };
     MdsrvDatasource.prototype.getExt = function getExt (src) {
         return getFileInfo(src).ext;
@@ -94281,5 +94318,5 @@ if (!window.Promise) {
     window.Promise = promise;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
