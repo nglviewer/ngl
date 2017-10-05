@@ -63,8 +63,10 @@ class MouseActions {
     const d = Math.sign(delta) / 5
     stage.eachRepresentation((reprElem, comp) => {
       if (reprElem.repr instanceof SurfaceRepresentation) {
-        const l = (reprElem.getParameters() as any).isolevel  // TODO
-        reprElem.setParameters({ isolevel: l + d })
+        const p = reprElem.getParameters() as any  // TODO
+        if (p.isolevelScroll) {
+          reprElem.setParameters({ isolevel: p.isolevel + d })
+        }
       }
     })
   }

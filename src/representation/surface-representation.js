@@ -57,6 +57,9 @@ class SurfaceRepresentation extends Representation {
       negateIsolevel: {
         type: 'boolean'
       },
+      isolevelScroll: {
+        type: 'boolean'
+      },
       smooth: {
         type: 'integer', precision: 1, max: 10, min: 0
       },
@@ -118,6 +121,7 @@ class SurfaceRepresentation extends Representation {
     this.isolevelType = defaults(p.isolevelType, 'sigma')
     this.isolevel = defaults(p.isolevel, 2.0)
     this.negateIsolevel = defaults(p.negateIsolevel, false)
+    this.isolevelScroll = defaults(p.isolevelScroll, false)
     this.smooth = defaults(p.smooth, 0)
     this.background = defaults(p.background, false)
     this.opaqueBack = defaults(p.opaqueBack, true)

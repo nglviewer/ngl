@@ -80,10 +80,11 @@ function load2fofc (input) {
     file2fofcText.innerText = '2fofc file: ' + o.name
     isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
     boxSizeRange.value = 10
+    scrollSelect.value = '2fofc'
     if (surfFofc) {
       isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
-      surfFofc.setParameters({ isolevel: 3, boxSize: 10 })
-      surfFofcNeg.setParameters({ isolevel: 3, boxSize: 10 })
+      surfFofc.setParameters({ isolevel: 3, boxSize: 10, contour: true, isolevelScroll: false })
+      surfFofcNeg.setParameters({ isolevel: 3, boxSize: 10, contour: true, isolevelScroll: false })
     }
     surf2fofc = o.addRepresentation('surface', {
       color: 'skyblue',
@@ -91,7 +92,8 @@ function load2fofc (input) {
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: true
     })
   })
 }
@@ -102,9 +104,10 @@ function loadFofc (input) {
     fileFofcText.innerText = 'fofc file: ' + o.name
     isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
     boxSizeRange.value = 10
+    scrollSelect.value = '2fofc'
     if (surf2fofc) {
       isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
-      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10 })
+      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10, contour: true, isolevelScroll: true })
     }
     surfFofc = o.addRepresentation('surface', {
       color: 'lightgreen',
@@ -112,7 +115,8 @@ function loadFofc (input) {
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: false
     })
     surfFofcNeg = o.addRepresentation('surface', {
       color: 'tomato',
@@ -121,7 +125,8 @@ function loadFofc (input) {
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: false
     })
   })
 }
@@ -319,6 +324,30 @@ var screenshotButton = createElement('input', {
   }
 }, { top: '282px', left: '12px' })
 addElement(screenshotButton)
+
+var scrollSelect = createSelect([
+    [ '2fofc', 'scroll 2fofc' ],
+    [ 'fofc', 'scroll fofc' ],
+    [ 'both', 'scroll both' ]
+], {
+  onchange: function (e) {
+    var v = e.target.value
+    if (v === '2fofc') {
+      surf2fofc.setParameters({ isolevelScroll: true })
+      surfFofc.setParameters({ isolevelScroll: false })
+      surfFofcNeg.setParameters({ isolevelScroll: false })
+    } else if (v === 'fofc') {
+      surf2fofc.setParameters({ isolevelScroll: false })
+      surfFofc.setParameters({ isolevelScroll: true })
+      surfFofcNeg.setParameters({ isolevelScroll: true })
+    } else if (v === 'both') {
+      surf2fofc.setParameters({ isolevelScroll: true })
+      surfFofc.setParameters({ isolevelScroll: true })
+      surfFofcNeg.setParameters({ isolevelScroll: true })
+    }
+  }
+}, { top: '306px', left: '12px' })
+addElement(scrollSelect)
 
 var isolevel2fofcText = createElement(
     'span', {}, { bottom: '32px', left: '12px', color: 'lightgrey' }
