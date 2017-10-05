@@ -87,7 +87,7 @@ describe('parser/pdb-parser', function () {
       var pdbParser = new PdbParser(streamer)
       return pdbParser.parse().then(function (structure) {
         assert.strictEqual(structure.atomCount, 2904)
-        assert.strictEqual(structure.bondCount, 2968)
+        assert.strictEqual(structure.bondCount, 2978)
         assert.strictEqual(structure.residueStore.count, 373)
         assert.strictEqual(structure.chainStore.count, 17)
         assert.strictEqual(structure.modelStore.count, 1)

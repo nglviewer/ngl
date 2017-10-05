@@ -31,8 +31,8 @@ import ComponentCollection from './component/component-collection'
 import RepresentationCollection from './component/representation-collection'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
+import Superposition from './align/superposition'
 export { superpose } from './align/align-utils'
-export Superposition from './align/superposition'
 export { guessElement } from './structure/structure-utils'
 
 export {
@@ -216,6 +216,7 @@ export {
 
   Assembly,
   TrajectoryPlayer,
+  Superposition,
 
   Queue,
   Counter,
