@@ -422,6 +422,19 @@ export default class Viewer {
     )
     this.renderer.extensions.get('WEBGL_color_buffer_float')
 
+    if (Debug) {
+      console.log(JSON.stringify({
+        'Browser': Browser,
+        'OES_texture_float': !!this.renderer.extensions.get('OES_texture_float'),
+        'OES_texture_half_float': !!this.renderer.extensions.get('OES_texture_half_float'),
+        'WEBGL_color_buffer_float': !!this.renderer.extensions.get('WEBGL_color_buffer_float'),
+        'testTextureSupport Float': testTextureSupport(gl, gl.FLOAT),
+        'testTextureSupport HalfFloat': testTextureSupport(gl, 0x8D61),
+        'this.supportsHalfFloat': this.supportsHalfFloat,
+        'SupportsReadPixelsFloat': SupportsReadPixelsFloat
+      }, null, 2))
+    }
+
     this.pickingTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
       {
