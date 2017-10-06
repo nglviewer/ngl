@@ -32,14 +32,8 @@ class DoubleSidedBuffer {
    * @param  {Buffer} buffer - the buffer to be rendered double-sided
    */
   constructor (buffer) {
-    this.parameters = {
-      background: buffer.background,
-      disablePicking: buffer.disablePicking
-    }
-
     this.size = buffer.size
     this.side = buffer.side
-    this.wireframe = buffer.wireframe
     this.visible = buffer.visible
     this.geometry = buffer.geometry
     this.picking = buffer.picking
@@ -92,6 +86,16 @@ class DoubleSidedBuffer {
     return !!this.picking && !this.parameters.disablePicking
   }
 
+  get parameters () {
+    return this.buffer.parameters
+  }
+
+  getParameters () {
+    const p = Object.assign({}, this.buffer.parameters)
+    p.side = this.side
+    return p
+  }
+
   getMesh (picking) {
     var front, back
 
@@ -137,24 +141,17 @@ class DoubleSidedBuffer {
       this.backMeshes.forEach(setVisibilityTrue)
     }
 
-    if (data.matrix !== undefined) {
-      this.matrix = data.matrix
-    }
-    delete data.matrix
-
     if (data.side !== undefined) {
       this.side = data.side
     }
     delete data.side
 
-    this.frontBuffer.setParameters(data)
-
-    if (data.wireframe !== undefined) {
-      this.wireframe = data.wireframe
-      this.setVisibility(this.visible)
+    if (data.matrix !== undefined) {
+      this.matrix = data.matrix
     }
-    delete data.wireframe
+    delete data.matrix
 
+    this.frontBuffer.setParameters(data)
     this.backBuffer.setParameters(data)
   }
 
