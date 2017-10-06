@@ -1,4 +1,8 @@
 
+stage.setParameters({
+  backgroundColor: 'white'
+})
+
 function addElement (el) {
   Object.assign(el.style, {
     position: 'absolute',
@@ -37,9 +41,17 @@ function createSelect (options, properties, style) {
 //   return button
 // }
 
-var cartoonRepr, licoriceRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
+var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
+
+var pocketRadius = 0
+var pocketRadiusClipFactor = 1
+
+var cartoonRepr, backboneRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
 
 var struc
+var neighborSele
+var sidechainAttached = false
+
 function loadStructure (input) {
   struc = undefined
   stage.setFocus(0)
@@ -47,33 +59,50 @@ function loadStructure (input) {
   ligandSelect.innerHTML = ''
   clipNearRange.value = 0
   clipRadiusRange.value = 100
-  pocketOpacityRange.value = 90
-  cartoonCheckbox.checked = true
+  pocketOpacityRange.value = 0
+  cartoonCheckbox.checked = false
+  backboneCheckbox.checked = true
   hydrophobicCheckbox.checked = false
   return stage.loadFile(input).then(function (o) {
     struc = o
     setLigandOptions()
     o.autoView()
     cartoonRepr = o.addRepresentation('cartoon', {
+      visible: false
+    })
+    backboneRepr = o.addRepresentation('backbone', {
+      visible: true,
+      colorValue: 'lightgrey',
+      scale: 2
+    })
+    spacefillRepr = o.addRepresentation('spacefill', {
+      sele: ligandSele,
       visible: true
     })
-    licoriceRepr = o.addRepresentation('licorice', {
+    neighborRepr = o.addRepresentation('ball+stick', {
       sele: 'none',
+      aspectRatio: 1.1,
+      colorValue: 'white',
       multipleBond: 'symmetric'
     })
     ligandRepr = o.addRepresentation('ball+stick', {
       multipleBond: 'symmetric',
+      colorValue: 'grey',
       sele: 'none',
-      scale: 1.5
+      aspectRatio: 1.2,
+      scale: 2.5
     })
     contactRepr = o.addRepresentation('contact', {
-      sele: 'none'
+      sele: 'none',
+      radius: 0.07
     })
     pocketRepr = o.addRepresentation('surface', {
       sele: 'none',
+      lazy: true,
+      visibility: false,
       clipNear: 0,
       opaqueBack: false,
-      opacity: 0.9,
+      opacity: 0.0,
       color: 'hydrophobicity',
       roughness: 1.0,
       surfaceType: 'av'
@@ -94,7 +123,6 @@ function loadStructure (input) {
 function setLigandOptions () {
   ligandSelect.innerHTML = ''
   var options = [['', 'select ligand']]
-  var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
   struc.structure.eachResidue(function (rp) {
     if (rp.isWater()) return
     var sele = ''
@@ -111,12 +139,9 @@ function setLigandOptions () {
   })
 }
 
-var pocketRadius = 0
-var pocketRadiusClipFactor = 1
-
 var loadPdbidText = createElement('span', {
   innerText: 'load pdb id'
-}, { top: '70px', left: '12px', color: 'lightgrey' })
+}, { top: '40px', left: '12px', color: 'lightgrey' })
 addElement(loadPdbidText)
 
 var loadPdbidInput = createElement('input', {
@@ -128,33 +153,78 @@ var loadPdbidInput = createElement('input', {
       loadStructure('rcsb://' + e.target.value)
     }
   }
-}, { top: '90px', left: '12px', width: '120px' })
+}, { top: '60px', left: '12px', width: '120px' })
 addElement(loadPdbidInput)
+
+function showFull () {
+  ligandSelect.value = ''
+  backboneCheckbox.checked = true
+
+  backboneRepr.setParameters({ scale: 2 })
+  backboneRepr.setVisibility(true)
+  spacefillRepr.setVisibility(true)
+
+  ligandRepr.setVisibility(false)
+  neighborRepr.setVisibility(false)
+  contactRepr.setVisibility(false)
+  pocketRepr.setVisibility(false)
+  labelRepr.setVisibility(false)
+
+  struc.autoView(2000)
+}
+
+var fullButton = createElement('input', {
+  value: 'full structure',
+  type: 'button',
+  onclick: showFull
+}, { top: '104px', left: '12px' })
+addElement(fullButton)
+
+function showLigand (sele) {
+  var s = struc.structure
+
+  var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 5)
+  var withinGroup = s.getAtomSetWithinGroup(withinSele)
+  var expandedSele = withinGroup.toSeleString()
+  neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
+
+  var sview = s.getView(new NGL.Selection(sele))
+  pocketRadius = Math.max(sview.boundingBox.getSize().length() / 2, 2) + 5
+  var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
+  var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
+
+  backboneRepr.setParameters({ scale: 0.2 })
+  spacefillRepr.setVisibility(false)
+
+  ligandRepr.setVisibility(true)
+  neighborRepr.setVisibility(true)
+  contactRepr.setVisibility(true)
+  pocketRepr.setVisibility(pocketOpacityRange.value > 0)
+  labelRepr.setVisibility(labelCheckbox.checked)
+
+  ligandRepr.setSelection(sele)
+  neighborRepr.setSelection(
+    sidechainAttached ? '(' + neighborSele + ') and (sidechainAttached or not polymer)' : neighborSele
+  )
+  contactRepr.setSelection(expandedSele)
+  pocketRepr.setSelection(neighborSele2)
+  pocketRepr.setParameters({
+    clipRadius: pocketRadius * pocketRadiusClipFactor,
+    clipCenter: sview.center
+  })
+  labelRepr.setSelection('(' + neighborSele + ') and .CA')
+
+  struc.autoView(expandedSele, 2000)
+}
 
 var ligandSelect = createSelect([], {
   onchange: function (e) {
-    var s = struc.structure
     var sele = e.target.value
-
-    var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 6)
-    var withinGroup = s.getAtomSetWithinGroup(withinSele)
-    var expandedSele = withinGroup.toSeleString()
-
-    var sview = s.getView(new NGL.Selection(sele))
-    pocketRadius = Math.max(sview.boundingBox.getSize().length() / 2, 2) + 5
-    var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
-
-    ligandRepr.setSelection(sele)
-    licoriceRepr.setSelection(expandedSele)
-    contactRepr.setSelection(expandedSele)
-    pocketRepr.setSelection('(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer')
-    pocketRepr.setParameters({
-      clipRadius: pocketRadius * pocketRadiusClipFactor,
-      clipCenter: sview.center
-    })
-    labelRepr.setSelection('(' + expandedSele + ') and .CA and not (' + sele + ')')
-
-    struc.autoView(expandedSele, 2000)
+    if (!sele) {
+      showFull()
+    } else {
+      showLigand(sele)
+    }
   }
 }, { top: '134px', left: '12px' })
 addElement(ligandSelect)
@@ -189,13 +259,17 @@ var pocketOpacityRange = createElement('input', {
   type: 'range', value: 90, min: 0, max: 100, step: 1
 }, { top: '272px', left: '12px' })
 pocketOpacityRange.oninput = function (e) {
-  pocketRepr.setParameters({ opacity: parseFloat(e.target.value) / 100 })
+  var v = parseFloat(e.target.value)
+  pocketRepr.setVisibility(v > 0)
+  pocketRepr.setParameters({
+    opacity: v / 100
+  })
 }
 addElement(pocketOpacityRange)
 
 var cartoonCheckbox = createElement('input', {
   type: 'checkbox',
-  checked: true,
+  checked: false,
   onchange: function (e) {
     cartoonRepr.setVisibility(e.target.checked)
   }
@@ -205,16 +279,55 @@ addElement(createElement('span', {
   innerText: 'cartoon'
 }, { top: '302px', left: '32px', color: 'lightgrey' }))
 
+var backboneCheckbox = createElement('input', {
+  type: 'checkbox',
+  checked: true,
+  onchange: function (e) {
+    backboneRepr.setVisibility(e.target.checked)
+  }
+}, { top: '322px', left: '12px' })
+addElement(backboneCheckbox)
+addElement(createElement('span', {
+  innerText: 'backbone'
+}, { top: '322px', left: '32px', color: 'lightgrey' }))
+
+var sidechainAttachedCheckbox = createElement('input', {
+  type: 'checkbox',
+  checked: false,
+  onchange: function (e) {
+    sidechainAttached = e.target.checked
+    neighborRepr.setSelection(
+      sidechainAttached ? '(' + neighborSele + ') and (sidechainAttached or not polymer)' : neighborSele
+    )
+  }
+}, { top: '342px', left: '12px' })
+addElement(sidechainAttachedCheckbox)
+addElement(createElement('span', {
+  innerText: 'sidechainAttached'
+}, { top: '342px', left: '32px', color: 'lightgrey' }))
+
+var labelCheckbox = createElement('input', {
+  type: 'checkbox',
+  checked: true,
+  onchange: function (e) {
+    labelRepr.setVisibility(e.target.checked)
+  }
+}, { top: '362px', left: '12px' })
+addElement(labelCheckbox)
+addElement(createElement('span', {
+  innerText: 'label'
+}, { top: '362px', left: '32px', color: 'lightgrey' }))
+
 var hydrophobicCheckbox = createElement('input', {
   type: 'checkbox',
   checked: false,
   onchange: function (e) {
     contactRepr.setParameters({ hydrophobic: e.target.checked })
   }
-}, { top: '322px', left: '12px' })
+}, { top: '382px', left: '12px' })
 addElement(hydrophobicCheckbox)
 addElement(createElement('span', {
   innerText: 'hydrophobic'
-}, { top: '322px', left: '32px', color: 'lightgrey' }))
+}, { top: '382px', left: '32px', color: 'lightgrey' }))
 
 loadStructure('rcsb://3sn6')
