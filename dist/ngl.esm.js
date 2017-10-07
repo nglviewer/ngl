@@ -49395,12 +49395,10 @@ WorkerRegistry$1.prototype.get = function get (name) {
 /**
  * The browser name: "Opera", "Chrome", "Firefox", "Mobile Safari",
  * "Internet Explorer", "Safari" or false.
- * @type {String|false}
  */
 var Browser = getBrowser();
 /**
  * Flag indicating support for the 'passive' option for event handler
- * @type {Boolean}
  */
 var SupportsPassiveEventHandler = false;
 try {
@@ -49415,7 +49413,6 @@ try {
 catch (e) { }
 /**
  * Flag indicating a mobile browser
- * @type {Boolean}
  */
 var Mobile = typeof window !== 'undefined' ? typeof window.orientation !== 'undefined' : false;
 var SupportsReadPixelsFloat = false;
@@ -49424,7 +49421,6 @@ function setSupportsReadPixelsFloat(value) {
 }
 /**
  * Flag indicating support for the `EXT_frag_depth` WebGL extension
- * @type {Boolean}
  */
 var ExtensionFragDepth = false;
 function setExtensionFragDepth(value) {
@@ -49445,14 +49441,9 @@ function setDebug(value) {
 var WebglErrorMessage = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="padding:15px;text-align:center;">Your browser/graphics card does not seem to support <a target="_blank" href="https://en.wikipedia.org/wiki/WebGL">WebGL</a>.<br/><br/>Find out how to get it <a target="_blank" href="http://get.webgl.org/">here</a>.</p></div>';
 /**
  * List of file extensions to be recognized as scripts
- * @type {String[]}
  */
 var ScriptExtensions = ['ngl', 'js'];
 var WorkerRegistry = new WorkerRegistry$1();
-/**
- * Global instance of {@link src/color/colormaker-registry.js~ColormakerRegistry}
- * @type {src/color/colormaker-registry.js~ColormakerRegistry}
- */
 var ColormakerRegistry = new ColormakerRegistry$1();
 var DatasourceRegistry = new Registry('datasource');
 var RepresentationRegistry = new Registry('representatation');
@@ -49462,6 +49453,14 @@ var DecompressorRegistry = new Registry('decompressor');
 var ComponentRegistry = new Registry('component');
 var BufferRegistry = new Registry('buffer');
 var PickerRegistry = new Registry('picker');
+var ListingDatasource;
+function setListingDatasource(value) {
+    ListingDatasource = value;
+}
+var TrajectoryDatasource;
+function setTrajectoryDatasource(value) {
+    TrajectoryDatasource = value;
+}
 
 /**
  * @file Streamer
@@ -49742,8 +49741,7 @@ var Loader$1 = function Loader(src, params) {
         name: '',
         dir: '',
         path: '',
-        protocol: '',
-        parserParams: {}
+        protocol: ''
     });
     var streamerParams = {
         compressed: this.parameters.compressed,
@@ -49751,10 +49749,6 @@ var Loader$1 = function Loader(src, params) {
         json: ParserRegistry.isJson(this.parameters.ext),
         xml: ParserRegistry.isXml(this.parameters.ext)
     };
-    Object.assign(this.parameters.parserParams, {
-        name: this.parameters.name,
-        path: this.parameters.path
-    });
     if ((typeof File !== 'undefined' && src instanceof File) ||
         (typeof Blob !== 'undefined' && src instanceof Blob)) {
         this.streamer = new FileStreamer(src, streamerParams);
@@ -49774,17 +49768,31 @@ var Loader$1 = function Loader(src, params) {
  * @extends Loader
  */
 var ParserLoader = (function (Loader) {
-    function ParserLoader () {
-        Loader.apply(this, arguments);
+    function ParserLoader(src, params) {
+        if ( params === void 0 ) params = {};
+
+        Loader.call(this, src, params);
+        this.parserParams = {
+            voxelSize: params.voxelSize,
+            firstModelOnly: params.firstModelOnly,
+            asTrajectory: params.asTrajectory,
+            cAlphaOnly: params.cAlphaOnly,
+            name: this.parameters.name,
+            path: this.parameters.path
+        };
     }
 
     if ( Loader ) ParserLoader.__proto__ = Loader;
     ParserLoader.prototype = Object.create( Loader && Loader.prototype );
     ParserLoader.prototype.constructor = ParserLoader;
-
+    /**
+     * Load parsed object
+     * @return {Promise} resolves to the loaded & parsed {@link Structure},
+     *                   {@link Volume}, {@link Surface} or data object
+     */
     ParserLoader.prototype.load = function load () {
         var ParserClass = ParserRegistry.get(this.parameters.ext);
-        var parser = new ParserClass(this.streamer, this.parameters.parserParams);
+        var parser = new ParserClass(this.streamer, this.parserParams);
         return parser.parse();
     };
 
@@ -49865,53 +49873,6 @@ var ScriptLoader = (function (Loader) {
     };
 
     return ScriptLoader;
-}(Loader$1));
-
-/**
- * @file Plugin Loader
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Plugin loader class
- * @extends Loader
- */
-var PluginLoader = (function (Loader) {
-    function PluginLoader () {
-        Loader.apply(this, arguments);
-    }
-
-    if ( Loader ) PluginLoader.__proto__ = Loader;
-    PluginLoader.prototype = Object.create( Loader && Loader.prototype );
-    PluginLoader.prototype.constructor = PluginLoader;
-
-    PluginLoader.prototype.load = function load () {
-        var this$1 = this;
-
-        var basePath;
-        if (this.parameters.protocol) {
-            basePath = this.parameters.protocol + '://' + this.parameters.dir;
-        }
-        else {
-            basePath = this.parameters.dir;
-        }
-        return this.streamer.read().then(function () {
-            var manifest = JSON.parse(this$1.streamer.asText());
-            var promiseList = [];
-            manifest.files.map(function (name) {
-                promiseList.push(autoLoad(basePath + name, { ext: 'text' }));
-            });
-            return Promise.all(promiseList).then(function (dataList) {
-                var text = dataList.reduce(function (text, value) {
-                    return text + '\n\n' + value.data;
-                }, '');
-                text += manifest.source || '';
-                return new Script(text, this$1.parameters.name, this$1.parameters.path);
-            });
-        });
-    };
-
-    return PluginLoader;
 }(Loader$1));
 
 /**
@@ -49998,18 +49959,14 @@ function autoLoad(file, params) {
     if ( params === void 0 ) params = {};
 
     var p = Object.assign(getDataInfo(file), params);
-    var LoaderClass;
+    var loader;
     if (ParserRegistry.names.includes(p.ext)) {
-        LoaderClass = ParserLoader;
+        loader = new ParserLoader(p.src, p);
     }
     else if (ScriptExtensions.includes(p.ext)) {
-        LoaderClass = ScriptLoader;
+        loader = new ScriptLoader(p.src, p);
     }
-    else if (p.ext === 'plugin') {
-        LoaderClass = PluginLoader;
-    }
-    if (LoaderClass) {
-        var loader = new LoaderClass(p.src, p);
+    if (loader) {
         return loader.load();
     }
     else {
@@ -52215,6 +52172,18 @@ Viewer.prototype._initRenderer = function _initRenderer () {
     this.supportsHalfFloat = (this.renderer.extensions.get('OES_texture_half_float') &&
         testTextureSupport(gl, 0x8D61));
     this.renderer.extensions.get('WEBGL_color_buffer_float');
+    if (Debug) {
+        console.log(JSON.stringify({
+            'Browser': Browser,
+            'OES_texture_float': !!this.renderer.extensions.get('OES_texture_float'),
+            'OES_texture_half_float': !!this.renderer.extensions.get('OES_texture_half_float'),
+            'WEBGL_color_buffer_float': !!this.renderer.extensions.get('WEBGL_color_buffer_float'),
+            'testTextureSupport Float': testTextureSupport(gl, gl.FLOAT),
+            'testTextureSupport HalfFloat': testTextureSupport(gl, 0x8D61),
+            'this.supportsHalfFloat': this.supportsHalfFloat,
+            'SupportsReadPixelsFloat': SupportsReadPixelsFloat
+        }, null, 2));
+    }
     this.pickingTarget = new WebGLRenderTarget(dprWidth, dprHeight, {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
@@ -61935,13 +61904,13 @@ function setVisibilityFalse(m) { m.visible = false; }
  * var doubleSidedBuffer = new DoubleSidedBuffer(sphereGeometryBuffer);
  */
 var DoubleSidedBuffer = function DoubleSidedBuffer(buffer) {
-    this.parameters = {
-        background: buffer.background,
-        disablePicking: buffer.disablePicking
-    };
+    this.group = new Group();
+    this.wireframeGroup = new Group();
+    this.pickingGroup = new Group();
+    this.frontMeshes = [];
+    this.backMeshes = [];
     this.size = buffer.size;
-    this.side = buffer.side;
-    this.wireframe = buffer.wireframe;
+    this.side = buffer.parameters.side;
     this.visible = buffer.visible;
     this.geometry = buffer.geometry;
     this.picking = buffer.picking;
@@ -61950,8 +61919,6 @@ var DoubleSidedBuffer = function DoubleSidedBuffer(buffer) {
     this.pickingGroup = new Group();
     // requires Group objects to be present
     this.matrix = buffer.matrix;
-    this.frontMeshes = [];
-    this.backMeshes = [];
     var frontBuffer = buffer;
     var backBuffer = new buffer.constructor({
         position: new Float32Array(0)
@@ -61968,14 +61935,14 @@ var DoubleSidedBuffer = function DoubleSidedBuffer(buffer) {
     });
     backBuffer.setParameters({
         side: 'back',
-        opacity: backBuffer.opacity
+        opacity: backBuffer.parameters.opacity
     });
     this.buffer = buffer;
     this.frontBuffer = frontBuffer;
     this.backBuffer = backBuffer;
 };
 
-var prototypeAccessors$12 = { matrix: {},pickable: {} };
+var prototypeAccessors$12 = { matrix: {},pickable: {},parameters: {} };
 prototypeAccessors$12.matrix.set = function (m) {
     Buffer.prototype.setMatrix.call(this, m);
 };
@@ -61984,6 +61951,14 @@ prototypeAccessors$12.matrix.get = function () {
 };
 prototypeAccessors$12.pickable.get = function () {
     return !!this.picking && !this.parameters.disablePicking;
+};
+prototypeAccessors$12.parameters.get = function () {
+    return this.buffer.parameters;
+};
+DoubleSidedBuffer.prototype.getParameters = function getParameters () {
+    var p = Object.assign({}, this.buffer.parameters);
+    p.side = this.side;
+    return p;
 };
 DoubleSidedBuffer.prototype.getMesh = function getMesh (picking) {
     var front, back;
@@ -62023,14 +61998,14 @@ DoubleSidedBuffer.prototype.setParameters = function setParameters (data) {
         this.frontMeshes.forEach(setVisibilityTrue);
         this.backMeshes.forEach(setVisibilityTrue);
     }
-    if (data.matrix !== undefined) {
-        this.matrix = data.matrix;
-    }
-    delete data.matrix;
     if (data.side !== undefined) {
         this.side = data.side;
     }
     delete data.side;
+    if (data.matrix !== undefined) {
+        this.matrix = data.matrix;
+    }
+    delete data.matrix;
     this.frontBuffer.setParameters(data);
     if (data.wireframe !== undefined) {
         this.wireframe = data.wireframe;
@@ -62039,13 +62014,29 @@ DoubleSidedBuffer.prototype.setParameters = function setParameters (data) {
     delete data.wireframe;
     this.backBuffer.setParameters(data);
 };
+DoubleSidedBuffer.prototype.setVisibility = function setVisibility (value) {
+    this.visible = value;
+    if (this.parameters.wireframe) {
+        this.group.visible = false;
+        this.wireframeGroup.visible = value;
+        if (this.pickable) {
+            this.pickingGroup.visible = false;
+        }
+    }
+    else {
+        this.group.visible = value;
+        this.wireframeGroup.visible = false;
+        if (this.pickable) {
+            this.pickingGroup.visible = value;
+        }
+    }
+};
 DoubleSidedBuffer.prototype.dispose = function dispose () {
     this.frontBuffer.dispose();
     this.backBuffer.dispose();
 };
 
 Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$12 );
-DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility;
 
 ShaderRegistry.add('shader/Line.vert', "uniform float clipNear;\nuniform vec3 clipCenter;\nvarying vec3 vViewPosition;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#include color_pars_vertex\nvoid main(){\n#include color_vertex\n#include begin_vertex\n#include project_vertex\nvViewPosition = -mvPosition.xyz;\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
@@ -67641,6 +67632,8 @@ var ResidueMap = function ResidueMap(structure) {
     this.list = [];
 };
 ResidueMap.prototype.add = function add (resname, atomTypeIdList, hetero, chemCompType, bonds) {
+        if ( chemCompType === void 0 ) chemCompType = '';
+
     resname = resname.toUpperCase();
     var hash = getHash$1(resname, atomTypeIdList, hetero, chemCompType);
     var id = this.dict[hash];
@@ -73750,6 +73743,26 @@ var TrajectoryElement = (function (Element$$1) {
 }(Element));
 
 /**
+ * @file Frames
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var Frames = function Frames(name, path) {
+    this.name = name;
+    this.path = path;
+    this.coordinates = [];
+    this.boxes = [];
+    this.times = [];
+    this.timeOffset = 0;
+    this.deltaTime = 1;
+};
+
+var prototypeAccessors$28 = { type: {} };
+prototypeAccessors$28.type.get = function () { return 'Frames'; };
+
+Object.defineProperties( Frames.prototype, prototypeAccessors$28 );
+
+/**
  * @file Frames Trajectory
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -73781,7 +73794,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
             this.atomIndices = this.structure.getAtomIndices();
         }
         else {
-            this.atomIndices = null;
+            this.atomIndices = undefined;
         }
     };
     FramesTrajectory.prototype._loadFrame = function _loadFrame (i, callback) {
@@ -73841,11 +73854,11 @@ var StructureTrajectory = (function (Trajectory$$1) {
     var prototypeAccessors = { type: {} };
     prototypeAccessors.type.get = function () { return 'structure'; };
     StructureTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
-        if (this.structure.atomSet.getSize() < this.structure.atomStore.count) {
+        if (this.structure.atomSet && this.structure.atomSet.getSize() < this.structure.atomStore.count) {
             this.atomIndices = this.structure.getAtomIndices();
         }
         else {
-            this.atomIndices = null;
+            this.atomIndices = undefined;
         }
     };
     StructureTrajectory.prototype._loadFrame = function _loadFrame (i, callback) {
@@ -73906,7 +73919,7 @@ var RemoteTrajectory = (function (Trajectory$$1) {
     RemoteTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
         var atomIndices = [];
         if (this.structure.type === 'StructureView') {
-            var indices = this.structure.getAtomIndices();
+            var indices = this.structure.getAtomIndices(); // TODO
             var n = indices.length;
             var p = indices[0];
             var q = indices[0];
@@ -73929,10 +73942,9 @@ var RemoteTrajectory = (function (Trajectory$$1) {
         var this$1 = this;
 
         // TODO implement max frameCache size, re-use arrays
-        var request = new window.XMLHttpRequest();
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getFrameUrl(this.trajPath, i);
-        var params = ds.getFrameParams(this.trajPath, this.atomIndices);
+        var request = new XMLHttpRequest();
+        var url = TrajectoryDatasource.getFrameUrl(this.trajPath, i);
+        var params = TrajectoryDatasource.getFrameParams(this.trajPath, this.atomIndices);
         request.open('POST', url, true);
         request.responseType = 'arraybuffer';
         request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -73956,9 +73968,8 @@ var RemoteTrajectory = (function (Trajectory$$1) {
     RemoteTrajectory.prototype._loadFrameCount = function _loadFrameCount () {
         var this$1 = this;
 
-        var request = new window.XMLHttpRequest();
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getCountUrl(this.trajPath);
+        var request = new XMLHttpRequest();
+        var url = TrajectoryDatasource.getCountUrl(this.trajPath);
         request.open('GET', url, true);
         request.addEventListener('load', function () {
             this$1._setFrameCount(parseInt(request.response));
@@ -73978,7 +73989,7 @@ var RemoteTrajectory = (function (Trajectory$$1) {
  */
 function makeTrajectory(trajSrc, structure, params) {
     var traj;
-    if (trajSrc && trajSrc.type === 'Frames') {
+    if (trajSrc && trajSrc instanceof Frames) {
         traj = new FramesTrajectory(trajSrc, structure, params);
     }
     else if (!trajSrc && structure.frames) {
@@ -74918,14 +74929,14 @@ var Collection = function Collection(list) {
     }
 };
 
-var prototypeAccessors$28 = { first: {} };
+var prototypeAccessors$29 = { first: {} };
 Collection.prototype._remove = function _remove (elm) {
     var idx = this.list.indexOf(elm);
     if (idx !== -1) {
         this.list.splice(idx, 1);
     }
 };
-prototypeAccessors$28.first.get = function () {
+prototypeAccessors$29.first.get = function () {
     return this.list.length > 0 ? this.list[0] : undefined;
 };
 Collection.prototype.forEach = function forEach (fn) {
@@ -74936,7 +74947,7 @@ Collection.prototype.dispose = function dispose () {
     return this.forEach(function (elm) { return elm.dispose(); });
 };
 
-Object.defineProperties( Collection.prototype, prototypeAccessors$28 );
+Object.defineProperties( Collection.prototype, prototypeAccessors$29 );
 
 /**
  * @file Component Collection
@@ -83336,15 +83347,15 @@ var ArrowBuffer = function ArrowBuffer(data, params) {
     this.picking = data.picking;
 };
 
-var prototypeAccessors$29 = { defaultParameters: {},matrix: {},pickable: {} };
-prototypeAccessors$29.defaultParameters.get = function () { return ArrowBufferDefaultParameters; };
-prototypeAccessors$29.matrix.set = function (m) {
+var prototypeAccessors$30 = { defaultParameters: {},matrix: {},pickable: {} };
+prototypeAccessors$30.defaultParameters.get = function () { return ArrowBufferDefaultParameters; };
+prototypeAccessors$30.matrix.set = function (m) {
     Buffer.prototype.setMatrix.call(this, m);
 };
-prototypeAccessors$29.matrix.get = function () {
+prototypeAccessors$30.matrix.get = function () {
     return this.group.matrix.clone();
 };
-prototypeAccessors$29.pickable.get = function () {
+prototypeAccessors$30.pickable.get = function () {
     return !!this.picking;
 };
 ArrowBuffer.prototype.makeAttributes = function makeAttributes (data) {
@@ -83438,7 +83449,7 @@ ArrowBuffer.prototype.dispose = function dispose () {
     this.coneBuffer.dispose();
 };
 
-Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$29 );
+Object.defineProperties( ArrowBuffer.prototype, prototypeAccessors$30 );
 BufferRegistry.add('arrow', ArrowBuffer);
 
 /**
@@ -83752,12 +83763,12 @@ var Parser = function Parser(streamer, params) {
     this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$30 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
-prototypeAccessors$30.type.get = function () { return ''; };
-prototypeAccessors$30.__objName.get = function () { return ''; };
-prototypeAccessors$30.isBinary.get = function () { return false; };
-prototypeAccessors$30.isJson.get = function () { return false; };
-prototypeAccessors$30.isXml.get = function () { return false; };
+var prototypeAccessors$31 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
+prototypeAccessors$31.type.get = function () { return ''; };
+prototypeAccessors$31.__objName.get = function () { return ''; };
+prototypeAccessors$31.isBinary.get = function () { return false; };
+prototypeAccessors$31.isJson.get = function () { return false; };
+prototypeAccessors$31.isXml.get = function () { return false; };
 Parser.prototype.parse = function parse () {
         var this$1 = this;
 
@@ -83775,117 +83786,121 @@ Parser.prototype._afterParse = function _afterParse () {
         { Log.log(this[this.__objName]); }
 };
 
-Object.defineProperties( Parser.prototype, prototypeAccessors$30 );
+Object.defineProperties( Parser.prototype, prototypeAccessors$31 );
 
 /**
  * @file Structure Builder
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-function StructureBuilder(structure) {
-    var currentModelindex = null;
-    var currentChainid = null;
-    var currentResname = null;
-    var currentResno = null;
-    var currentInscode = null;
-    var currentHetero = null;
-    var previousResname;
-    var previousHetero;
-    var atomStore = structure.atomStore;
-    var residueStore = structure.residueStore;
-    var chainStore = structure.chainStore;
-    var modelStore = structure.modelStore;
-    var residueMap = structure.residueMap;
-    var ai = -1;
-    var ri = -1;
-    var ci = -1;
-    var mi = -1;
-    function addResidueType(ri) {
-        var count = residueStore.atomCount[ri];
-        var offset = residueStore.atomOffset[ri];
-        var atomTypeIdList = new Array(count);
-        for (var i = 0; i < count; ++i) {
-            atomTypeIdList[i] = atomStore.atomTypeId[offset + i];
-        }
-        residueStore.residueTypeId[ri] = residueMap.add(previousResname, atomTypeIdList, previousHetero);
+var StructureBuilder = function StructureBuilder(structure) {
+    this.structure = structure;
+    this.currentModelindex = null;
+    this.currentChainid = null;
+    this.currentResname = null;
+    this.currentResno = null;
+    this.currentInscode = null;
+    this.currentHetero = null;
+    this.previousResname = '';
+    this.previousHetero = null;
+    this.ai = -1;
+    this.ri = -1;
+    this.ci = -1;
+    this.mi = -1;
+};
+StructureBuilder.prototype.addResidueType = function addResidueType (ri) {
+    var atomStore = this.structure.atomStore;
+    var residueStore = this.structure.residueStore;
+    var residueMap = this.structure.residueMap;
+    var count = residueStore.atomCount[ri];
+    var offset = residueStore.atomOffset[ri];
+    var atomTypeIdList = new Array(count);
+    for (var i = 0; i < count; ++i) {
+        atomTypeIdList[i] = atomStore.atomTypeId[offset + i];
     }
-    this.addAtom = function (modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode) {
-        var addModel = false;
-        var addChain = false;
-        var addResidue = false;
-        if (currentModelindex !== modelindex) {
-            addModel = true;
-            addChain = true;
-            addResidue = true;
-            mi += 1;
-            ci += 1;
-            ri += 1;
+    residueStore.residueTypeId[ri] = residueMap.add(this.previousResname, atomTypeIdList, this.previousHetero // TODO
+    );
+};
+StructureBuilder.prototype.addAtom = function addAtom (modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode) {
+    var atomStore = this.structure.atomStore;
+    var residueStore = this.structure.residueStore;
+    var chainStore = this.structure.chainStore;
+    var modelStore = this.structure.modelStore;
+    var addModel = false;
+    var addChain = false;
+    var addResidue = false;
+    if (this.currentModelindex !== modelindex) {
+        addModel = true;
+        addChain = true;
+        addResidue = true;
+        this.mi += 1;
+        this.ci += 1;
+        this.ri += 1;
+    }
+    else if (this.currentChainid !== chainid) {
+        addChain = true;
+        addResidue = true;
+        this.ci += 1;
+        this.ri += 1;
+    }
+    else if (this.currentResno !== resno || this.currentResname !== resname || this.currentInscode !== inscode) {
+        addResidue = true;
+        this.ri += 1;
+    }
+    this.ai += 1;
+    if (addModel) {
+        modelStore.growIfFull();
+        modelStore.chainOffset[this.mi] = this.ci;
+        modelStore.chainCount[this.mi] = 0;
+        modelStore.count += 1;
+        chainStore.modelIndex[this.ci] = this.mi;
+    }
+    if (addChain) {
+        chainStore.growIfFull();
+        chainStore.setChainname(this.ci, chainname);
+        chainStore.setChainid(this.ci, chainid);
+        chainStore.residueOffset[this.ci] = this.ri;
+        chainStore.residueCount[this.ci] = 0;
+        chainStore.count += 1;
+        chainStore.modelIndex[this.ci] = this.mi;
+        modelStore.chainCount[this.mi] += 1;
+        residueStore.chainIndex[this.ri] = this.ci;
+    }
+    if (addResidue) {
+        this.previousResname = this.currentResname;
+        this.previousHetero = this.currentHetero;
+        if (this.ri > 0)
+            { this.addResidueType(this.ri - 1); }
+        residueStore.growIfFull();
+        residueStore.resno[this.ri] = resno;
+        if (sstruc !== undefined) {
+            residueStore.sstruc[this.ri] = sstruc.charCodeAt(0);
         }
-        else if (currentChainid !== chainid) {
-            addChain = true;
-            addResidue = true;
-            ci += 1;
-            ri += 1;
+        if (inscode !== undefined) {
+            residueStore.inscode[this.ri] = inscode.charCodeAt(0);
         }
-        else if (currentResno !== resno || currentResname !== resname || currentInscode !== inscode) {
-            addResidue = true;
-            ri += 1;
-        }
-        ai += 1;
-        if (addModel) {
-            modelStore.growIfFull();
-            modelStore.chainOffset[mi] = ci;
-            modelStore.chainCount[mi] = 0;
-            modelStore.count += 1;
-            chainStore.modelIndex[ci] = mi;
-        }
-        if (addChain) {
-            chainStore.growIfFull();
-            chainStore.setChainname(ci, chainname);
-            chainStore.setChainid(ci, chainid);
-            chainStore.residueOffset[ci] = ri;
-            chainStore.residueCount[ci] = 0;
-            chainStore.count += 1;
-            chainStore.modelIndex[ci] = mi;
-            modelStore.chainCount[mi] += 1;
-            residueStore.chainIndex[ri] = ci;
-        }
-        if (addResidue) {
-            previousResname = currentResname;
-            previousHetero = currentHetero;
-            if (ri > 0)
-                { addResidueType(ri - 1); }
-            residueStore.growIfFull();
-            residueStore.resno[ri] = resno;
-            if (sstruc !== undefined) {
-                residueStore.sstruc[ri] = sstruc.charCodeAt(0);
-            }
-            if (inscode !== undefined) {
-                residueStore.inscode[ri] = inscode.charCodeAt(0);
-            }
-            residueStore.atomOffset[ri] = ai;
-            residueStore.atomCount[ri] = 0;
-            residueStore.count += 1;
-            residueStore.chainIndex[ri] = ci;
-            chainStore.residueCount[ci] += 1;
-        }
-        atomStore.count += 1;
-        atomStore.residueIndex[ai] = ri;
-        residueStore.atomCount[ri] += 1;
-        currentModelindex = modelindex;
-        currentChainid = chainid;
-        currentResname = resname;
-        currentResno = resno;
-        currentInscode = inscode;
-        currentHetero = hetero;
-    };
-    this.finalize = function () {
-        previousResname = currentResname;
-        previousHetero = currentHetero;
-        if (ri > -1)
-            { addResidueType(ri); }
-    };
-}
+        residueStore.atomOffset[this.ri] = this.ai;
+        residueStore.atomCount[this.ri] = 0;
+        residueStore.count += 1;
+        residueStore.chainIndex[this.ri] = this.ci;
+        chainStore.residueCount[this.ci] += 1;
+    }
+    atomStore.count += 1;
+    atomStore.residueIndex[this.ai] = this.ri;
+    residueStore.atomCount[this.ri] += 1;
+    this.currentModelindex = modelindex;
+    this.currentChainid = chainid;
+    this.currentResname = resname;
+    this.currentResno = resno;
+    this.currentInscode = inscode;
+    this.currentHetero = hetero;
+};
+StructureBuilder.prototype.finalize = function finalize () {
+    this.previousResname = this.currentResname;
+    this.previousHetero = this.currentHetero;
+    if (this.ri > -1)
+        { this.addResidueType(this.ri); }
+};
 
 /**
  * @file Structure Parser
@@ -83953,8 +83968,8 @@ var Entity = function Entity(structure, index, description, type, chainIndexList
     });
 };
 
-var prototypeAccessors$31 = { type: {} };
-prototypeAccessors$31.type.get = function () { return 'Entity'; };
+var prototypeAccessors$32 = { type: {} };
+prototypeAccessors$32.type.get = function () { return 'Entity'; };
 Entity.prototype.getEntityType = function getEntityType () {
     return this.entityType;
 };
@@ -83978,7 +83993,7 @@ Entity.prototype.eachChain = function eachChain (callback) {
     });
 };
 
-Object.defineProperties( Entity.prototype, prototypeAccessors$31 );
+Object.defineProperties( Entity.prototype, prototypeAccessors$32 );
 
 /**
  * @file Unitcell
@@ -87798,26 +87813,6 @@ var TopParser = (function (StructureParser$$1) {
     return TopParser;
 }(StructureParser));
 ParserRegistry.add('top', TopParser);
-
-/**
- * @file Frames
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var Frames = function Frames(name, path) {
-    this.name = name;
-    this.path = path;
-    this.coordinates = [];
-    this.boxes = [];
-    this.times = [];
-    this.timeOffset = 0;
-    this.deltaTime = 1;
-};
-
-var prototypeAccessors$32 = { type: {} };
-prototypeAccessors$32.type.get = function () { return 'Frames'; };
-
-Object.defineProperties( Frames.prototype, prototypeAccessors$32 );
 
 /**
  * @file Trajectory Parser
@@ -94318,5 +94313,5 @@ if (!window.Promise) {
     window.Promise = promise;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
