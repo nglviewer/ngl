@@ -461,12 +461,11 @@ NGL.MenubarFileWidget = function (stage) {
   }
 
   function onImportOptionClick () {
-    var datasource = NGL.DatasourceRegistry.listing
     var dirWidget
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
       if (fileTypesOpen.includes(ext)) {
-        stage.loadFile(datasource.getUrl(info.path), {
+        stage.loadFile(NGL.ListingDatasource.getUrl(info.path), {
           defaultRepresentation: true
         })
         dirWidget.dispose()
@@ -476,7 +475,7 @@ NGL.MenubarFileWidget = function (stage) {
     }
 
     dirWidget = new NGL.DirectoryListingWidget(
-      datasource, stage, 'Import file',
+      NGL.ListingDatasource, stage, 'Import file',
       fileTypesOpen, onListingClick
     )
 
@@ -545,7 +544,7 @@ NGL.MenubarFileWidget = function (stage) {
     createOption('Export image...', onExportImageOptionClick)
   ]
 
-  if (NGL.DatasourceRegistry.listing) {
+  if (NGL.ListingDatasource) {
     menuConfig.splice(
       1, 0, createOption('Import...', onImportOptionClick)
     )
@@ -1379,13 +1378,12 @@ NGL.StructureComponentWidget = function (component, stage) {
   var remoteTraj = new UI.Button('import').onClick(function () {
     componentPanel.setMenuDisplay('none')
 
-    // TODO factor list of extensions out
+    // TODO list of extensions should be provided by trajectory datasource
     var remoteTrajExt = [
-        'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
-        'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
-        'arc', 'tng', 'trj', 'trz'
-        ]
-    var datasource = NGL.DatasourceRegistry.listing
+      'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
+      'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
+      'arc', 'tng', 'trj', 'trz'
+      ]
     var dirWidget
 
     function onListingClick (info) {
@@ -1399,7 +1397,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     }
 
     dirWidget = new NGL.DirectoryListingWidget(
-      datasource, stage, 'Import trajectory',
+      NGL.ListingDatasource, stage, 'Import trajectory',
       remoteTrajExt, onListingClick
     )
 
@@ -1548,9 +1546,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     .addMenuEntry('Rotation', rotation)
     .addMenuEntry('Scale', scale)
 
-  if (NGL.DatasourceRegistry.listing &&
-        NGL.DatasourceRegistry.trajectory
-    ) {
+  if (NGL.ListingDatasource && NGL.TrajectoryDatasource) {
     componentPanel.addMenuEntry('Remote trajectory', remoteTraj)
   }
 

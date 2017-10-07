@@ -18,7 +18,9 @@ export {
   Debug, setDebug,
   ScriptExtensions, ColormakerRegistry,
   DatasourceRegistry, DecompressorRegistry,
-  ParserRegistry, RepresentationRegistry
+  ParserRegistry, RepresentationRegistry,
+  setListingDatasource, setTrajectoryDatasource,
+  ListingDatasource, TrajectoryDatasource
 } from './globals'
 export { autoLoad, getDataInfo, getFileInfo } from './loader/loader-utils'
 import Selection from './selection/selection'

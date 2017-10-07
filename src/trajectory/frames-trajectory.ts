@@ -5,13 +5,22 @@
  */
 
 import { defaults } from '../utils'
-import Trajectory from './trajectory.js'
+import Structure from '../structure/structure'
+import Frames from './frames'
+import Trajectory, { TrajectoryParameters } from './trajectory'
 
 /**
  * Frames trajectory class. Gets data from a frames object.
  */
 class FramesTrajectory extends Trajectory {
-  constructor (frames, structure, params) {
+  path: string
+
+  frames: ArrayLike<number>[]
+  boxes: ArrayLike<number>[]
+
+  atomIndices?: ArrayLike<number>
+
+  constructor (frames: Frames, structure: Structure, params: TrajectoryParameters) {
     const p = params || {}
     p.timeOffset = defaults(p.timeOffset, frames.timeOffset)
     p.deltaTime = defaults(p.deltaTime, frames.deltaTime)
@@ -33,11 +42,11 @@ class FramesTrajectory extends Trajectory {
     if (this.structure.type === 'StructureView') {
       this.atomIndices = this.structure.getAtomIndices()
     } else {
-      this.atomIndices = null
+      this.atomIndices = undefined
     }
   }
 
-  _loadFrame (i, callback) {
+  _loadFrame (i: number, callback?: Function) {
     let coords
     const frame = this.frames[ i ]
 

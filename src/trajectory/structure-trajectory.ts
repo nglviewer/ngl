@@ -4,13 +4,16 @@
  * @private
  */
 
-import Trajectory from './trajectory.js'
+import Structure from '../structure/structure'
+import Trajectory, { TrajectoryParameters } from './trajectory'
 
 /**
  * Structure trajectory class. Gets data from a structure object.
  */
 class StructureTrajectory extends Trajectory {
-  constructor (trajPath, structure, params) {
+  atomIndices?: ArrayLike<number>
+
+  constructor (trajPath: string, structure: Structure, params: TrajectoryParameters) {
     super('', structure, params)
     this._init(structure)
   }
@@ -18,14 +21,14 @@ class StructureTrajectory extends Trajectory {
   get type () { return 'structure' }
 
   _makeAtomIndices () {
-    if (this.structure.atomSet.getSize() < this.structure.atomStore.count) {
+    if (this.structure.atomSet && this.structure.atomSet.getSize() < this.structure.atomStore.count) {
       this.atomIndices = this.structure.getAtomIndices()
     } else {
-      this.atomIndices = null
+      this.atomIndices = undefined
     }
   }
 
-  _loadFrame (i, callback) {
+  _loadFrame (i: number, callback?: Function) {
     let coords
     const structure = this.structure
     const frame = structure.frames[ i ]

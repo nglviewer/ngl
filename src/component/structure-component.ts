@@ -11,6 +11,7 @@ import { defaults } from '../utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
 import TrajectoryElement from './trajectory-element'
 import { makeTrajectory } from '../trajectory/trajectory-utils'
+import { TrajectoryParameters } from '../trajectory/trajectory'
 import Selection from '../selection/selection'
 import Structure from '../structure/structure'
 import StructureView from '../structure/structure-view'
@@ -159,7 +160,7 @@ class StructureComponent extends Component {
    * Add a new trajectory component to the structure
    */
   addTrajectory (trajPath = '', params: { [k: string]: any } = {}) {
-    var traj = makeTrajectory(trajPath, this.structureView, params)
+    var traj = makeTrajectory(trajPath, this.structureView, params as TrajectoryParameters)
 
     traj.signals.frameChanged.add(() => {
       this.updateRepresentations({ 'position': true })

@@ -18,7 +18,7 @@ import AtomProxy from '../proxy/atom-proxy'
 import TrajectoryPlayer, { TrajectoryPlayerInterpolateType } from './trajectory-player'
 
 
-function centerPbc (coords: NumberArray, mean: number[], box: number[]) {
+function centerPbc (coords: NumberArray, mean: number[], box: ArrayLike<number>) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -43,7 +43,7 @@ function centerPbc (coords: NumberArray, mean: number[], box: number[]) {
   }
 }
 
-function removePbc (x: NumberArray, box: number[]) {
+function removePbc (x: NumberArray, box: ArrayLike<number>) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -74,7 +74,7 @@ function removePbc (x: NumberArray, box: number[]) {
   return x
 }
 
-function removePeriodicity (x: NumberArray, box: number[], mean: number[]) {
+function removePeriodicity (x: NumberArray, box: ArrayLike<number>, mean: number[]) {
   if (box[ 0 ] === 0 || box[ 8 ] === 0 || box[ 4 ] === 0) {
     return
   }
@@ -92,7 +92,7 @@ function removePeriodicity (x: NumberArray, box: number[], mean: number[]) {
   return x
 }
 
-function circularMean3 (indices: NumberArray, coords: NumberArray, box: number[]) {
+function circularMean3 (indices: NumberArray, coords: NumberArray, box: ArrayLike<number>) {
   return [
     circularMean(coords, box[ 0 ], 3, 0, indices),
     circularMean(coords, box[ 1 ], 3, 1, indices),
@@ -210,7 +210,7 @@ class Trajectory {
 
   frameCache: { [k: number]: Float32Array } = {}
   loadQueue: { [k: number]: boolean } = {}
-  boxCache: { [k: number]: number[] } = {}
+  boxCache: { [k: number]: ArrayLike<number> } = {}
   pathCache = {}
   frameCacheSize = 0
 
@@ -557,7 +557,7 @@ class Trajectory {
     sp.transform(x)
   }
 
-  _process (i: number, box: number[], coords: Float32Array, frameCount: number) {
+  _process (i: number, box: ArrayLike<number>, coords: Float32Array, frameCount: number) {
     this._setFrameCount(frameCount)
 
     if (box) {

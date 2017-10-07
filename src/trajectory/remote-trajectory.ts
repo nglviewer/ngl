@@ -4,14 +4,17 @@
  * @private
  */
 
-import { Log, DatasourceRegistry } from '../globals'
-import Trajectory from './trajectory.js'
+import { Log, TrajectoryDatasource } from '../globals'
+import Structure from '../structure/structure'
+import Trajectory, { TrajectoryParameters } from './trajectory'
 
 /**
  * Remote trajectory class. Gets data from an MDsrv instance.
  */
 class RemoteTrajectory extends Trajectory {
-  constructor (trajPath, structure, params) {
+  atomIndices: number[][]
+
+  constructor (trajPath: string, structure: Structure, params: TrajectoryParameters) {
     super(trajPath, structure, params)
     this._init(structure)
   }
@@ -22,7 +25,7 @@ class RemoteTrajectory extends Trajectory {
     const atomIndices = []
 
     if (this.structure.type === 'StructureView') {
-      const indices = this.structure.getAtomIndices()
+      const indices = this.structure.getAtomIndices()!  // TODO
       const n = indices.length
 
       let p = indices[ 0 ]
@@ -47,14 +50,13 @@ class RemoteTrajectory extends Trajectory {
     this.atomIndices = atomIndices
   }
 
-  _loadFrame (i, callback) {
+  _loadFrame (i: number, callback?: Function) {
     // TODO implement max frameCache size, re-use arrays
 
-    const request = new window.XMLHttpRequest()
+    const request = new XMLHttpRequest()
 
-    const ds = DatasourceRegistry.trajectory
-    const url = ds.getFrameUrl(this.trajPath, i)
-    const params = ds.getFrameParams(this.trajPath, this.atomIndices)
+    const url = TrajectoryDatasource.getFrameUrl(this.trajPath, i)
+    const params = TrajectoryDatasource.getFrameParams(this.trajPath, this.atomIndices)
 
     request.open('POST', url, true)
     request.responseType = 'arraybuffer'
@@ -84,10 +86,9 @@ class RemoteTrajectory extends Trajectory {
   }
 
   _loadFrameCount () {
-    const request = new window.XMLHttpRequest()
+    const request = new XMLHttpRequest()
 
-    const ds = DatasourceRegistry.trajectory
-    const url = ds.getCountUrl(this.trajPath)
+    const url = TrajectoryDatasource.getCountUrl(this.trajPath)
 
     request.open('GET', url, true)
     request.addEventListener('load', () => {
