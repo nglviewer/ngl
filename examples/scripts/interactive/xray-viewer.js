@@ -64,12 +64,14 @@ function loadStructure (input) {
     o.autoView()
     o.addRepresentation('line', {
       colorValue: 'yellow',
-      linewidth: 7
+      multipleBond: 'offset',
+      bondSpacing: 1.1,
+      linewidth: 6
     })
     o.addRepresentation('point', {
       colorValue: 'yellow',
       sizeAttenuation: false,
-      pointSize: 7,
+      pointSize: 6,
       alphaTest: 1,
       useTexture: true
     })
