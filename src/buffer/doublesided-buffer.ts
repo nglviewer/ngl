@@ -4,12 +4,13 @@
  * @private
  */
 
-import { Group } from 'three'
+import { Group, BufferGeometry, Object3D, Mesh, LineSegments } from 'three'
 
-import Buffer from './buffer.js'
+import Buffer, { BufferSide } from './buffer'
+import { Picker } from '../utils/picker'
 
-function setVisibilityTrue (m) { m.visible = true }
-function setVisibilityFalse (m) { m.visible = false }
+function setVisibilityTrue (m: Object3D) { m.visible = true }
+function setVisibilityFalse (m: Object3D) { m.visible = false }
 
 /**
  * A double-sided mesh buffer. Takes a buffer and renders the front and
@@ -27,13 +28,32 @@ function setVisibilityFalse (m) { m.visible = false }
  * var doubleSidedBuffer = new DoubleSidedBuffer(sphereGeometryBuffer);
  */
 class DoubleSidedBuffer {
+  size: number
+  side: BufferSide
+  visible: boolean
+  wireframe: boolean
+  geometry: BufferGeometry
+
+  picking?: Picker
+
+  group = new Group()
+  wireframeGroup = new Group()
+  pickingGroup = new Group()
+
+  frontMeshes: (Mesh|LineSegments)[] = []
+  backMeshes: (Mesh|LineSegments)[] = []
+
+  buffer: Buffer
+  frontBuffer: Buffer
+  backBuffer: Buffer
+
   /**
    * Create a double sided buffer
    * @param  {Buffer} buffer - the buffer to be rendered double-sided
    */
-  constructor (buffer) {
+  constructor (buffer: Buffer) {
     this.size = buffer.size
-    this.side = buffer.side
+    this.side = buffer.parameters.side
     this.visible = buffer.visible
     this.geometry = buffer.geometry
     this.picking = buffer.picking
@@ -45,13 +65,10 @@ class DoubleSidedBuffer {
     // requires Group objects to be present
     this.matrix = buffer.matrix
 
-    this.frontMeshes = []
-    this.backMeshes = []
-
-    var frontBuffer = buffer
-    var backBuffer = new buffer.constructor({
+    const frontBuffer = buffer
+    const backBuffer = new (buffer as any).constructor({  // TODO
       position: new Float32Array(0)
-    })
+    }) as Buffer
 
     frontBuffer.makeMaterial()
     backBuffer.makeMaterial()
@@ -67,7 +84,7 @@ class DoubleSidedBuffer {
     })
     backBuffer.setParameters({
       side: 'back',
-      opacity: backBuffer.opacity
+      opacity: backBuffer.parameters.opacity
     })
 
     this.buffer = buffer
@@ -96,8 +113,8 @@ class DoubleSidedBuffer {
     return p
   }
 
-  getMesh (picking) {
-    var front, back
+  getMesh (picking: boolean) {
+    let front, back
 
     if (picking) {
       back = this.backBuffer.getPickingMesh()
@@ -123,11 +140,11 @@ class DoubleSidedBuffer {
     return this.getMesh(true)
   }
 
-  setAttributes (data) {
+  setAttributes (data: any) {  // TODO
     this.buffer.setAttributes(data)
   }
 
-  setParameters (data) {
+  setParameters (data: any) {  // TODO
     data = Object.assign({}, data)
 
     if (data.side === 'front') {
@@ -152,7 +169,32 @@ class DoubleSidedBuffer {
     delete data.matrix
 
     this.frontBuffer.setParameters(data)
+
+    if (data.wireframe !== undefined) {
+      this.wireframe = data.wireframe
+      this.setVisibility(this.visible)
+    }
+    delete data.wireframe
+
     this.backBuffer.setParameters(data)
+  }
+
+  setVisibility (value: boolean) {
+    this.visible = value
+
+    if (this.parameters.wireframe) {
+      this.group.visible = false
+      this.wireframeGroup.visible = value
+      if (this.pickable) {
+        this.pickingGroup.visible = false
+      }
+    } else {
+      this.group.visible = value
+      this.wireframeGroup.visible = false
+      if (this.pickable) {
+        this.pickingGroup.visible = value
+      }
+    }
   }
 
   dispose () {
@@ -160,7 +202,5 @@ class DoubleSidedBuffer {
     this.backBuffer.dispose()
   }
 }
-
-DoubleSidedBuffer.prototype.setVisibility = Buffer.prototype.setVisibility
 
 export default DoubleSidedBuffer

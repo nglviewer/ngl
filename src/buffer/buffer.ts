@@ -20,7 +20,7 @@ import { getShader, ShaderDefines } from '../shader/shader-utils.js'
 import { serialArray } from '../math/array-utils'
 import { Picker } from '../utils/picker'
 
-type BufferSide = 'front'|'back'|'double'
+export type BufferSide = 'front'|'back'|'double'
 
 function getThreeSide (side: BufferSide) {
   if (side === 'front') {
