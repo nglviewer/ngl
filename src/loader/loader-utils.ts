@@ -10,7 +10,6 @@ import {
 import { Partial } from '../types'
 import ParserLoader from './parser-loader'
 import ScriptLoader from './script-loader'
-import PluginLoader from './plugin-loader'
 
 export interface LoaderParameters {
  ext: string  // file extension, determines file type
@@ -112,17 +111,14 @@ export function getDataInfo (src: LoaderInput) {
 export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters> = {}) {
   const p = Object.assign(getDataInfo(file), params)
 
-  let LoaderClass
+  let loader
   if (ParserRegistry.names.includes(p.ext)) {
-    LoaderClass = ParserLoader
+    loader = new ParserLoader(p.src, p)
   } else if (ScriptExtensions.includes(p.ext)) {
-    LoaderClass = ScriptLoader
-  } else if (p.ext === 'plugin') {
-    LoaderClass = PluginLoader
+    loader = new ScriptLoader(p.src, p)
   }
 
-  if (LoaderClass) {
-    const loader = new LoaderClass(p.src, p)
+  if (loader) {
     return loader.load()
   } else {
     return Promise.reject(new Error(`autoLoad: ext '${p.ext}' unknown`))
