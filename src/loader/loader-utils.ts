@@ -20,8 +20,6 @@ export interface LoaderParameters {
  dir: string
  path: string
  protocol: string
-
- parserParams: { [k: string]: any }
 }
 
 export type LoaderInput = File|Blob|string

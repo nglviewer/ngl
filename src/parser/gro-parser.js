@@ -7,14 +7,14 @@
 import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser.js'
 import {
-    calculateBonds, calculateChainnames, calculateSecondaryStructure
+  calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from '../structure/structure-utils.js'
 
 class GroParser extends StructureParser {
   get type () { return 'gro' }
 
   _parse () {
-        // http://manual.gromacs.org/current/online/gro.html
+    // http://manual.gromacs.org/current/online/gro.html
 
     if (Debug) Log.time('GroParser._parse ' + this.name)
 
@@ -33,14 +33,14 @@ class GroParser extends StructureParser {
 
     s.title = firstLines[ 0 ].trim()
 
-        // determine number of decimal places
+    // determine number of decimal places
     var ndec = firstLines[ 2 ].length - firstLines[ 2 ].lastIndexOf('.') - 1
     var lpos = 5 + ndec
     var xpos = 20
     var ypos = 20 + lpos
     var zpos = 20 + 2 * lpos
 
-        //
+    //
 
     var atomname, resname, resno, serial
 
@@ -65,7 +65,7 @@ class GroParser extends StructureParser {
         if (!line) continue
 
         if (l % modelLineCount === 0) {
-                    // Log.log( "title", line )
+          // Log.log( "title", line )
 
           if (asTrajectory) {
             currentFrame = new Float32Array(atomCount * 3)
@@ -74,7 +74,7 @@ class GroParser extends StructureParser {
           }
         } else if (l % modelLineCount === 1) {
 
-                    // Log.log( "atomCount", line )
+          // Log.log( "atomCount", line )
 
         } else if (l % modelLineCount === modelLineCount - 1) {
           var str = line.trim().split(/\s+/)

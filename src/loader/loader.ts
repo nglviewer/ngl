@@ -41,9 +41,7 @@ abstract class Loader {
 
       dir: '',
       path: '',
-      protocol: '',
-
-      parserParams: {}
+      protocol: ''
     } as LoaderParameters)
 
     const streamerParams = {
@@ -52,11 +50,6 @@ abstract class Loader {
       json: ParserRegistry.isJson(this.parameters.ext),
       xml: ParserRegistry.isXml(this.parameters.ext)
     }
-
-    Object.assign(this.parameters.parserParams, {
-      name: this.parameters.name,
-      path: this.parameters.path
-    })
 
     if ((typeof File !== 'undefined' && src instanceof File) ||
         (typeof Blob !== 'undefined' && src instanceof Blob)
