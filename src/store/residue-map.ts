@@ -23,7 +23,7 @@ class ResidueMap {
 
   constructor (readonly structure: Structure) {}
 
-  add (resname: string, atomTypeIdList: number[], hetero: boolean, chemCompType: string, bonds: ResidueBonds) {
+  add (resname: string, atomTypeIdList: number[], hetero: boolean, chemCompType = '', bonds?: ResidueBonds) {
     resname = resname.toUpperCase()
     const hash = getHash(resname, atomTypeIdList, hetero, chemCompType)
     let id = this.dict[ hash ]
