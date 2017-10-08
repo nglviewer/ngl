@@ -33,9 +33,10 @@ import Stats from './stats'
 import { getShader } from '../shader/shader-utils'
 import { JitterVectors } from './viewer-constants'
 import {
-  makeImage, ImageParameters, testTextureSupport,
+  makeImage, ImageParameters,
   sortProjectedPosition, updateMaterialUniforms
 } from './viewer-utils'
+import { testTextureSupport } from './gl-utils'
 
 import Buffer from '../buffer/buffer'
 
@@ -400,12 +401,10 @@ export default class Viewer {
     this.renderer.extensions.get('OES_element_index_uint')
 
     setSupportsReadPixelsFloat(
-      Browser !== 'Safari' && (
-        (this.renderer.extensions.get('OES_texture_float') &&
-          this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
-        (this.renderer.extensions.get('OES_texture_float') &&
-          testTextureSupport(gl, gl.FLOAT))
-      )
+      (this.renderer.extensions.get('OES_texture_float') &&
+        this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
+      (this.renderer.extensions.get('OES_texture_float') &&
+        testTextureSupport(gl.FLOAT))
     )
 
     this.container.appendChild(this.renderer.domElement)
@@ -418,7 +417,7 @@ export default class Viewer {
     this.renderer.extensions.get('OES_texture_float')
     this.supportsHalfFloat = (
       this.renderer.extensions.get('OES_texture_half_float') &&
-      testTextureSupport(gl, 0x8D61)
+      testTextureSupport(0x8D61)
     )
     this.renderer.extensions.get('WEBGL_color_buffer_float')
 
@@ -428,8 +427,8 @@ export default class Viewer {
         'OES_texture_float': !!this.renderer.extensions.get('OES_texture_float'),
         'OES_texture_half_float': !!this.renderer.extensions.get('OES_texture_half_float'),
         'WEBGL_color_buffer_float': !!this.renderer.extensions.get('WEBGL_color_buffer_float'),
-        'testTextureSupport Float': testTextureSupport(gl, gl.FLOAT),
-        'testTextureSupport HalfFloat': testTextureSupport(gl, 0x8D61),
+        'testTextureSupport Float': testTextureSupport(gl.FLOAT),
+        'testTextureSupport HalfFloat': testTextureSupport(0x8D61),
         'this.supportsHalfFloat': this.supportsHalfFloat,
         'SupportsReadPixelsFloat': SupportsReadPixelsFloat
       }, null, 2))

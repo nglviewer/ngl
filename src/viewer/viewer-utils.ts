@@ -368,18 +368,3 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
     }
   })
 }
-
-export function testTextureSupport (gl: WebGLRenderingContext, type: number) {
-  // https://stackoverflow.com/questions/28827511/webgl-ios-render-to-floating-point-texture
-  const tex = gl.createTexture()
-  gl.bindTexture(gl.TEXTURE_2D, tex)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, type, null)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
-  const fb = gl.createFramebuffer()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0)
-  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
-  return status === gl.FRAMEBUFFER_COMPLETE
-}
