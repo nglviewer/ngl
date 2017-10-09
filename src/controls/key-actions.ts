@@ -14,8 +14,6 @@ export type KeyActionCallback = (stage: Stage) => void
 class KeyActions {
   /**
    * Stage auto view
-   * @param {Stage} stage - the stage
-   * @return {undefined}
    */
   static autoView (stage: Stage) {
     stage.autoView(1000)
@@ -23,8 +21,6 @@ class KeyActions {
 
   /**
    * Toggle stage animations
-   * @param {Stage} stage - the stage
-   * @return {undefined}
    */
   static toggleAnimations (stage: Stage) {
     stage.animationControls.toggle()
@@ -32,8 +28,6 @@ class KeyActions {
 
   /**
    * Toggle stage rocking
-   * @param {Stage} stage - the stage
-   * @return {undefined}
    */
   static toggleRock (stage: Stage) {
     stage.toggleRock()
@@ -41,11 +35,17 @@ class KeyActions {
 
   /**
    * Toggle stage spinning
-   * @param {Stage} stage - the stage
-   * @return {undefined}
    */
   static toggleSpin (stage: Stage) {
     stage.toggleSpin()
+  }
+
+  /**
+   * Toggle anti-aliasing
+   */
+  static toggleAntialiasing (stage: Stage) {
+    const p = stage.getParameters()
+    stage.setParameters({ sampleLevel: p.sampleLevel === -1 ? 0 : -1 })
   }
 }
 
@@ -55,6 +55,7 @@ export const KeyActionPresets = {
     [ 'i', KeyActions.toggleSpin ],
     [ 'k', KeyActions.toggleRock ],
     [ 'p', KeyActions.toggleAnimations ],
+    [ 'a', KeyActions.toggleAntialiasing ],
     [ 'r', KeyActions.autoView ]
   ] as KeyActionPreset
 }
