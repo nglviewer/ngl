@@ -6,21 +6,22 @@
 
 import { Debug, Log, RepresentationRegistry } from '../globals'
 
-import Structure from '../structure/structure.js'
-import Surface from '../surface/surface.js'
-import Volume from '../surface/volume.js'
-import Shape from '../geometry/shape.js'
+import Viewer from '../viewer/viewer'
+import Structure from '../structure/structure'
+import Surface from '../surface/surface'
+import Volume from '../surface/volume'
+import Shape from '../geometry/shape'
 
-import BufferRepresentation from './buffer-representation.js'
-import SurfaceRepresentation from './surface-representation.js'
-import DotRepresentation from './dot-representation.js'
-import SliceRepresentation from './slice-representation.js'
+import BufferRepresentation from './buffer-representation'
+import SurfaceRepresentation from './surface-representation'
+import DotRepresentation from './dot-representation'
+import SliceRepresentation from './slice-representation'
 
-function logReprUnknown (type) {
-  Log.error('makeRepresentation: representation type ' + type + ' unknown')
+function logReprUnknown (type: string) {
+  Log.error(`makeRepresentation: representation type ${type} unknown`)
 }
 
-function makeRepresentation (type, object, viewer, params) {
+export function makeRepresentation (type: string, object: any, viewer: Viewer, params: any) {  // TODO
   if (Debug) Log.time('makeRepresentation ' + type)
 
   var ReprClass
@@ -67,8 +68,4 @@ function makeRepresentation (type, object, viewer, params) {
   if (Debug) Log.timeEnd('makeRepresentation ' + type)
 
   return repr
-}
-
-export {
-  makeRepresentation
 }
