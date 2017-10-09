@@ -73,7 +73,6 @@ import './color/volume-colormaker'
 
 //
 
-import './component/script-component'
 import './component/shape-component'
 import './component/structure-component'
 import './component/surface-component'

@@ -9,14 +9,12 @@ import { Debug, Log, RepresentationRegistry } from '../globals'
 import Structure from '../structure/structure.js'
 import Surface from '../surface/surface.js'
 import Volume from '../surface/volume.js'
-import Trajectory from '../trajectory/trajectory.js'
 import Shape from '../geometry/shape.js'
 
 import BufferRepresentation from './buffer-representation.js'
 import SurfaceRepresentation from './surface-representation.js'
 import DotRepresentation from './dot-representation.js'
 import SliceRepresentation from './slice-representation.js'
-import TrajectoryRepresentation from './trajectory-representation.js'
 
 function logReprUnknown (type) {
   Log.error('makeRepresentation: representation type ' + type + ' unknown')
@@ -54,8 +52,6 @@ function makeRepresentation (type, object, viewer, params) {
       logReprUnknown(type)
       return
     }
-  } else if (object instanceof Trajectory) {
-    ReprClass = TrajectoryRepresentation
   } else if (object instanceof Shape) {
     ReprClass = BufferRepresentation
     object = object.getBufferList()
