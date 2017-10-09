@@ -150,6 +150,22 @@ export function randomColorArray (n: number) {
   return array
 }
 
+export function replicateArrayEntries (array: NumberArray, m: number) {
+  const n = array.length
+  const repArr = new Float32Array(n * m)
+
+  for (let i = 0; i < n; ++i) {
+    const k = i * m
+    const a = array[ i ]
+
+    for (let j = 0; j < m; ++j) {
+      repArr[ k + j ] = a
+    }
+  }
+
+  return repArr
+}
+
 export function replicateArray3Entries (array: NumberArray, m: number) {
   const n = array.length / 3
   const repArr = new Float32Array(n * m * 3)
@@ -163,7 +179,7 @@ export function replicateArray3Entries (array: NumberArray, m: number) {
     const c = array[ v + 2 ]
 
     for (let j = 0; j < m; ++j) {
-      var l = k + j * 3
+      const l = k + j * 3
 
       repArr[ l + 0 ] = a
       repArr[ l + 1 ] = b
