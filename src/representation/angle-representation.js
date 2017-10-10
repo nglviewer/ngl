@@ -301,7 +301,7 @@ function getAngleData (position, params) {
     const dot = v3dot(v21, v23)
 
     const angle = angles[i] = Math.atan2(crossLength, dot)
-    labelText[i] = (RAD2DEG * angle).toFixed(1)
+    labelText[i] = (RAD2DEG * angle).toFixed(1) + String.fromCharCode(0x00B0)
 
     if (v3length(cross) === 0.0) {
       // Angle exactly 0/180, pick an arbitrary direction

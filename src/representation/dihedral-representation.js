@@ -269,7 +269,7 @@ function getDihedralData (position, params) {
 
     // Can use acos as normalized and non-zero
     const angle = angles[ i ] = Math.acos(v3dot(inPlane1, inPlane2))
-    labelText[ i ] = (RAD2DEG * angle).toFixed(1)
+    labelText[ i ] = (RAD2DEG * angle).toFixed(1) + String.fromCharCode(0x00B0)
 
     v3cross(cross, inPlane1, v23)
     v3normalize(cross, cross)
