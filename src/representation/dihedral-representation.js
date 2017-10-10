@@ -2,6 +2,13 @@
  * @fileOverview  Dihedral Representation
  * @private
  */
+
+// TODO:
+//  * Make planes own buffer (avoid rebuilds)
+//  * Make Expose lineOpacity
+//  * Planes/sectors controlled by overall opacity
+//  * Ensure consistent with angle repr opacity behaviour
+
 import { Color } from '../../lib/three.es6.js'
 
 import { RepresentationRegistry } from '../globals.js'
@@ -60,6 +67,9 @@ class DihedralRepresentation extends MeasurementRepresentation {
       linewidth: {
         type: 'number', precision: 2, max: 10.0, min: 0.5
       },
+      planesVisible: {
+        type: 'boolean', default: true
+      },
       sectorVisible: {
         type: 'boolean', default: true
       },
@@ -78,6 +88,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.atomQuad = defaults(p.atomQuad, [])
     this.lineVisible = defaults(p.lineVisible, true)
     this.linewidth = defaults(p.linewidth, 2.0)
+    this.planesVisible = defaults(p.planesVisible, true)
     this.sectorVisible = defaults(p.sectorVisible, true)
     this.sectorOpacity = defaults(p.sectorOpacity, 0.5)
 
@@ -87,7 +98,10 @@ class DihedralRepresentation extends MeasurementRepresentation {
   create () {
     if (this.structureView.atomCount === 0) return
     const atomPosition = parseNestedAtoms(this.structureView, this.atomQuad)
-    const dihedralData = getDihedralData(atomPosition)
+    const dihedralData = getDihedralData(
+      atomPosition,
+      {planesVisible: this.planesVisible}
+    )
 
     const n = this.n = dihedralData.labelText.length
 
@@ -157,6 +171,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
   setParameters (params) {
     var rebuild = false
     var what = {}
+
     super.setParameters(params, what, rebuild)
 
     if (params && (
@@ -212,7 +227,7 @@ function getDihedralData (position, params) {
 
   // Eventual sizes of output arrays
   let totalLines = 0
-  let totalSegments = 0
+  let totalTriangles = 0
 
   const p1 = v3new()
   const p2 = v3new()
@@ -227,6 +242,8 @@ function getDihedralData (position, params) {
   const mid = v3new()
   const inPlane1 = v3new()
   const inPlane2 = v3new()
+  const start = v3new()
+  const end = v3new()
 
   const cross = v3new()
   const arcPoint = v3new()
@@ -254,6 +271,13 @@ function getDihedralData (position, params) {
     v3normalize(v23, v23)
     v3normalize(v34, v34)
 
+    // Which side of plane are p1, p4?
+    v3sub(tmp, p1, mid)
+    const improperStart = v3dot(tmp, v23) > 0.0
+    v3sub(tmp, p4, mid)
+    const improperEnd = v3dot(tmp, v23) < 0.0
+
+    // Calculate vectors perp to v23 (lying in plane (1,2,3) and (2,3,4))
     v3multiplyScalar(tmp, v23, v3dot(v23, v21))
     v3sub(inPlane1, v21, tmp)
 
@@ -282,24 +306,52 @@ function getDihedralData (position, params) {
 
     const nSegments = Math.ceil(angle / angleStep)
     const nLines = nSegments + 2
+    let nTriangles = nSegments
+    if (params.planesVisible) nTriangles += 4
+    const planeOffset = nSegments * 9
+
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
-    const sector = new Float32Array(nSegments * 9)
+    const sector = new Float32Array(nTriangles * 9)
 
     lineTmp1[ i ] = line1
     lineTmp2[ i ] = line2
     sectorTmp[ i ] = sector
 
-    // Scale v21, v34 to intersect with end of inPlane1/2
-    v3multiplyScalar(v21, v21, 1.0 / v3dot(inPlane1, v21))
-    v3multiplyScalar(v34, v34, 1.0 / v3dot(inPlane2, v34))
+    // Start points for lines depend on whether improper:
+    if (improperStart) { // We'll start on the v3->1 line (tmp)
+      v3sub(tmp, p1, p3)
+      v3normalize(tmp, tmp)
+      v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp))
+      v3add(start, start, p3)
+    } else { // start on the 2->1 line
+      v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21))
+      v3add(start, start, p2)
+    }
+
+    if (improperEnd) { // Finish on 2->4 line
+      v3sub(tmp, p4, p2)
+      v3normalize(tmp, tmp)
+      v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp))
+      v3add(end, end, p2)
+    } else { // end on the 3->4 line
+      v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34))
+      v3add(end, end, p3)
+    }
 
     v3add(arcPoint, mid, inPlane1)
 
-    // Add the first line:
-    v3add(tmp, p2, v21)
-    v3toArray(tmp, line1, 0)
+    v3toArray(start, line1, 0)
     v3toArray(arcPoint, line2, 0)
+
+    if (params.planesVisible) {
+      v3toArray(start, sector, planeOffset)
+      v3toArray(arcPoint, sector, planeOffset + 3)
+      v3toArray(improperStart ? p3 : p2, sector, planeOffset + 6)
+      v3toArray(improperStart ? p3 : p2, sector, planeOffset + 9)
+      v3toArray(arcPoint, sector, planeOffset + 12)
+      v3toArray(mid, sector, planeOffset + 15)
+    }
 
     const appendArcSection = function (a, j) {
       const si = j * 9
@@ -314,21 +366,34 @@ function getDihedralData (position, params) {
       v3toArray(arcPoint, line2, ai)
     }
 
-    let j = 1
+    let j = 0
     for (let a = angleStep; a < angle; a += angleStep) {
-      appendArcSection(a, j)
-      j++
+      appendArcSection(a, j++)
     }
-    appendArcSection(angle, j)
-    j++
+    appendArcSection(angle, j++)
 
-    // Add final line:
-    v3add(tmp, p3, v34)
+    // Add final line: tmp vector holds the end point:
+    if (improperEnd) {
+      v3sub(tmp, p4, p2)
+      v3normalize(tmp, tmp)
+      v3add(tmp, tmp, p2)
+    } else {
+      v3add(tmp, p3, v34)
+    }
     v3toArray(arcPoint, line1, j * 3)
     v3toArray(tmp, line2, j * 3)
 
+    if (params.planesVisible) {
+      v3toArray(end, sector, planeOffset + 18)
+      v3toArray(arcPoint, sector, planeOffset + 21)
+      v3toArray(improperEnd ? p2 : p3, sector, planeOffset + 24)
+      v3toArray(improperEnd ? p2 : p3, sector, planeOffset + 27)
+      v3toArray(arcPoint, sector, planeOffset + 30)
+      v3toArray(mid, sector, planeOffset + 33)
+    }
+
     totalLines += nLines
-    totalSegments += nSegments
+    totalTriangles += nTriangles
 
     i += 1
   }
@@ -337,7 +402,7 @@ function getDihedralData (position, params) {
 
   const linePosition1 = new Float32Array(totalLines * 3)
   const linePosition2 = new Float32Array(totalLines * 3)
-  const sectorPosition = new Float32Array(totalSegments * 9)
+  const sectorPosition = new Float32Array(totalTriangles * 9)
 
   let lineOffset = 0
   let sectorOffset = 0

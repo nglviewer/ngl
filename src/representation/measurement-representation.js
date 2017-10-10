@@ -223,7 +223,9 @@ class MeasurementRepresentation extends StructureRepresentation {
       backgroundMargin: this.labelBackgroundMargin,
       backgroundOpacity: this.labelBackgroundOpacity,
       visible: this.labelVisible
-    }, params))
+    }, params, {
+      opacity: 1.0 // Force labels at 100% opacity
+    }))
   }
 }
 

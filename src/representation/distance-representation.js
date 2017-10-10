@@ -192,9 +192,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
         color: uniformArray3(n, c.r, c.g, c.b),
         text: distanceData.text
       },
-      this.getLabelBufferParams({
-        opacity: 1.0
-      })
+      this.getLabelBufferParams()
     )
 
     var bondParams = {

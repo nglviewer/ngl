@@ -2,10 +2,12 @@
 stage.loadFile('data://1blu.pdb').then(function (o) {
   var atomQuad = [
     ['1.C', '2.N', '2.CA', '2.CB'],
-    ['1.C', '1.N', '1.CA', '1.CB']
+    ['1.C', '1.N', '1.CA', '1.CB'],
+    ['3.CB', '3.CA', '3.N', '3.C']
+    // ['1.N', '1.C', '1.CB', '1.CA']
   ]
 
-  o.addRepresentation('ball+stick', {sele: '1-2'})
+  o.addRepresentation('ball+stick', {sele: '1-3'})
   o.addRepresentation('dihedral', {
     atomQuad: atomQuad,
     sdf: false,
