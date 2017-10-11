@@ -6,12 +6,12 @@
 
 import { Color } from '../../lib/three.es6.js'
 
-import { Browser, RepresentationRegistry } from '../globals.js'
+import { RepresentationRegistry } from '../globals.js'
 import { defaults } from '../utils.js'
 import { DistancePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 import BitArray from '../utils/bitarray.js'
-import StructureRepresentation from './structure-representation.js'
+import MeasurementRepresentation from './measurement-representation.js'
 import Selection from '../selection/selection.js'
 import BondStore from '../store/bond-store.js'
 import TextBuffer from '../buffer/text-buffer.js'
@@ -22,11 +22,8 @@ import CylinderBuffer from '../buffer/cylinder-buffer.js'
  * @typedef {Object} DistanceRepresentationParameters - distance representation parameters
  * @mixes RepresentationParameters
  * @mixes StructureRepresentationParameters
+ * @mixes MeasurementRepresentationParameters
  *
- * @property {Float} labelSize - size of the distance label
- * @property {Color} labelColor - color of the distance label
- * @property {Boolean} labelVisible - visibility of the distance label
- * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
  * @property {String} labelUnit - distance unit (e.g. "angstrom" or "nm"). If set, a distance
  *                                symbol is appended to the label (i.e. 'nm' or '\u00C5'). In case of 'nm', the
  *                                distance value is computed in nanometers instead of Angstroms.
@@ -42,7 +39,7 @@ import CylinderBuffer from '../buffer/cylinder-buffer.js'
 /**
  * Distance representation
  */
-class DistanceRepresentation extends StructureRepresentation {
+class DistanceRepresentation extends MeasurementRepresentation {
   /**
    * Create Distance representation object
    * @example
@@ -66,18 +63,6 @@ class DistanceRepresentation extends StructureRepresentation {
 
     this.parameters = Object.assign({
 
-      labelSize: {
-        type: 'number', precision: 3, max: 10.0, min: 0.001
-      },
-      labelColor: {
-        type: 'color'
-      },
-      labelVisible: {
-        type: 'boolean'
-      },
-      labelZOffset: {
-        type: 'number', precision: 1, max: 20, min: -20, buffer: 'zOffset'
-      },
       labelUnit: {
         type: 'select',
         rebuild: true,
@@ -89,10 +74,7 @@ class DistanceRepresentation extends StructureRepresentation {
       radialSegments: true,
       disableImpostor: true
 
-    }, this.parameters, {
-      flatShaded: null,
-      assembly: null
-    })
+    }, this.parameters)
 
     this.init(params)
   }
@@ -101,14 +83,6 @@ class DistanceRepresentation extends StructureRepresentation {
     var p = params || {}
     p.radius = defaults(p.radius, 0.15)
 
-    this.fontFamily = defaults(p.fontFamily, 'sans-serif')
-    this.fontStyle = defaults(p.fontStyle, 'normal')
-    this.fontWeight = defaults(p.fontWeight, 'bold')
-    this.sdf = defaults(p.sdf, Browser !== 'Firefox')  // FIXME
-    this.labelSize = defaults(p.labelSize, 2.0)
-    this.labelColor = defaults(p.labelColor, 0xFFFFFF)
-    this.labelVisible = defaults(p.labelVisible, true)
-    this.labelZOffset = defaults(p.labelZOffset, 0.5)
     this.labelUnit = defaults(p.labelUnit, '')
     this.atomPair = defaults(p.atomPair, [])
 
@@ -218,15 +192,7 @@ class DistanceRepresentation extends StructureRepresentation {
         color: uniformArray3(n, c.r, c.g, c.b),
         text: distanceData.text
       },
-      this.getBufferParams({
-        fontFamily: this.fontFamily,
-        fontStyle: this.fontStyle,
-        fontWeight: this.fontWeight,
-        sdf: this.sdf,
-        zOffset: this.labelZOffset,
-        opacity: 1.0,
-        visible: this.labelVisible
-      })
+      this.getLabelBufferParams()
     )
 
     var bondParams = {
@@ -253,14 +219,6 @@ class DistanceRepresentation extends StructureRepresentation {
       position: distanceData.position,
       bufferList: [ this.textBuffer, this.cylinderBuffer ]
     })
-  }
-
-  update (what) {
-    if (what.position) {
-      this.build()
-    } else {
-      super.update(what)
-    }
   }
 
   updateData (what, data) {
@@ -294,41 +252,6 @@ class DistanceRepresentation extends StructureRepresentation {
 
     this.textBuffer.setAttributes(textData)
     this.cylinderBuffer.setAttributes(cylinderData)
-  }
-
-  setVisibility (value, noRenderRequest) {
-    super.setVisibility(value, true)
-
-    if (this.textBuffer) {
-      this.textBuffer.setVisibility(
-        this.labelVisible && this.visible
-      )
-    }
-
-    if (!noRenderRequest) this.viewer.requestRender()
-
-    return this
-  }
-
-  setParameters (params) {
-    var rebuild = false
-    var what = {}
-
-    if (params && params.labelSize) {
-      what.labelSize = true
-    }
-
-    if (params && (params.labelColor || params.labelColor === 0x000000)) {
-      what.labelColor = true
-    }
-
-    super.setParameters(params, what, rebuild)
-
-    if (params && params.labelVisible !== undefined) {
-      this.setVisibility(this.visible)
-    }
-
-    return this
   }
 }
 

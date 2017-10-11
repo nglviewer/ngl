@@ -77,12 +77,14 @@ import './component/volume-component.js'
 
 //
 
+import './representation/angle-representation.js'
 import './representation/axes-representation.js'
 import './representation/backbone-representation.js'
 import './representation/ballandstick-representation.js'
 import './representation/base-representation.js'
 import './representation/cartoon-representation.js'
 import './representation/contact-representation.js'
+import './representation/dihedral-representation.js'
 import './representation/distance-representation.js'
 import './representation/helixorient-representation.js'
 import './representation/hyperball-representation.js'
