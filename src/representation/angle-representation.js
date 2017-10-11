@@ -28,9 +28,9 @@ import { RAD2DEG } from '../math/math-constants.js'
  *                                 or atom indices
  * @property {Boolean} vectorVisible - Indicate the 3 points for each angle by drawing lines 1-2-3
  * @property {Boolean} arcVisible - Show the arc outline for each angle
+ * @property {Number}  lineOpacity - opacity for the line part of the representation
  * @property {Number} linewidth - width for line part of representation
  * @property {Boolean} sectorVisible - Show the filled arc for each angle
- * @property {Number} sectorOpacity - Opacity for the sector part of the representation
  */
 
 /**
@@ -62,14 +62,14 @@ class AngleRepresentation extends MeasurementRepresentation {
       arcVisible: {
         type: 'boolean', default: true
       },
+      lineOpacity: {
+        type: 'range', min: 0.0, max: 1.0, step: 0.01
+      },
       linewidth: {
         type: 'number', precision: 2, max: 10.0, min: 0.5
       },
       sectorVisible: {
         type: 'boolean', default: true
-      },
-      sectorOpacity: {
-        type: 'range', min: 0.0, max: 1.0, step: 0.01
       }
     }, this.parameters)
 
@@ -79,13 +79,14 @@ class AngleRepresentation extends MeasurementRepresentation {
   init (params) {
     const p = params || {}
     p.side = defaults(p.side, 'double')
+    p.opacity = defaults(p.opacity, 0.5)
 
     this.atomTriple = defaults(p.atomTriple, [])
-    this.vectorVisible = defaults(p.vectorVisible, true)
     this.arcVisible = defaults(p.arcVisible, true)
+    this.lineOpacity = defaults(p.lineOpacity, 1.0)
     this.linewidth = defaults(p.linewidth, 2.0)
     this.sectorVisible = defaults(p.sectorVisible, true)
-    this.sectorOpacity = defaults(p.sectorOpacity, 0.5)
+    this.vectorVisible = defaults(p.vectorVisible, true)
 
     super.init(p)
   }
@@ -187,10 +188,18 @@ class AngleRepresentation extends MeasurementRepresentation {
       this.setVisibility(this.visible)
     }
 
-    if (params && params.sectorOpacity) {
-      this.sectorDoubleSidedBuffer.setParameters(
-        {opacity: params.sectorOpacity}
-      )
+    if (params && params.lineOpacity) {
+      this.vectorBuffer.setParameters(
+        {opacity: params.lineOpacity})
+      this.arcBuffer.setParameters(
+        {opacity: params.lineOpacity})
+    }
+
+    if (params && params.opacity !== undefined) {
+      this.vectorBuffer.setParameters(
+        {opacity: this.lineOpacity})
+      this.arcBuffer.setParameters(
+        {opacity: this.lineOpacity})
     }
 
     if (params && params.linewidth) {
