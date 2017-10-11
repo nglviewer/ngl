@@ -7,6 +7,7 @@
 import PickingProxy from './picking-proxy'
 import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
+import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
 type ScrollCallback = (stage: Stage, delta: number) => void
@@ -182,6 +183,38 @@ class MouseActions {
       tt.style.display = 'none'
     }
   }
+
+  static measurePick (stage: Stage, pickingProxy: PickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+      const atom = pickingProxy.atom || pickingProxy.closestBondAtom
+      const sc = pickingProxy.component as StructureComponent
+
+      if (sc.lastPick === atom.index && sc.pickBuffer.count >= 2) {
+        const atomPair = sc.pickBuffer.data.sort()
+        if (sc.pickPairs.has(atomPair)) {
+          sc.pickPairs.del(atomPair)
+        } else {
+          sc.pickPairs.add(atomPair)
+        }
+        sc.distanceRepresentation.setParameters({ atomPair: sc.pickPairs.list })
+        sc.pickBuffer.clear()
+        sc.lastPick = undefined
+      } else {
+        if (!sc.pickBuffer.has(atom.index)) {
+          sc.pickBuffer.push(atom.index)
+        }
+        sc.lastPick = atom.index
+      }
+      sc.spacefillRepresentation.setSelection('@' + sc.pickBuffer.data.join(','))
+      return
+    } else {
+      stage.eachComponent((sc: StructureComponent) => {
+        sc.pickBuffer.clear()
+        sc.lastPick = undefined
+        sc.spacefillRepresentation.setSelection('none')
+      }, 'structure')
+    }
+  }
 }
 
 type MouseActionPreset = [ string, MouseActionCallback ][]
@@ -200,6 +233,7 @@ export const MouseActionPresets = {
     [ 'drag-ctrl-right', MouseActions.panComponentDrag ],
     [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
 
+    [ 'clickPick-alt-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'clickPick-shift-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]

@@ -252,7 +252,7 @@ abstract class Component {
    * @return {RepresentationElement} the created representation wrapped into
    *                                   a representation element object
    */
-  protected _addRepresentation (type: string, object: any, params: any) {  // TODO
+  protected _addRepresentation (type: string, object: any, params: any, hidden = false) {  // TODO
     const p = params || {}
     const sp = this.stage.getParameters() as any  // TODO
     p.matrix = this.matrix.clone()
@@ -265,9 +265,10 @@ abstract class Component {
     const repr = makeRepresentation(type, object, this.viewer, p2)
     const reprElem = new RepresentationElement(this.stage, repr, p, this)
 
-    this.reprList.push(reprElem)
-    this.signals.representationAdded.dispatch(reprElem)
-
+    if (!hidden) {
+      this.reprList.push(reprElem)
+      this.signals.representationAdded.dispatch(reprElem)
+    }
     return reprElem
   }
 

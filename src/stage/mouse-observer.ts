@@ -314,10 +314,9 @@ class MouseObserver {
       if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {
         this.signals.doubleClicked.dispatch(cp.x, cp.y)
         this.doubleClickPending = false
-      } else {
-        this.signals.clicked.dispatch(cp.x, cp.y)
-        this.doubleClickPending = true
       }
+      this.signals.clicked.dispatch(cp.x, cp.y)
+      this.doubleClickPending = true
       this.prevClickCP.copy(cp)
     }
     this.which = undefined

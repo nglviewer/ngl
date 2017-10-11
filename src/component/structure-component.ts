@@ -7,9 +7,10 @@
 import { Signal } from 'signals'
 
 import { ComponentRegistry } from '../globals'
-import { defaults } from '../utils'
+import { defaults, createRingBuffer, RingBuffer, createSimpleSet, SimpleSet } from '../utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
 import TrajectoryElement from './trajectory-element'
+import RepresentationElement from './representation-element'
 import { makeTrajectory } from '../trajectory/trajectory-utils'
 import { TrajectoryParameters } from '../trajectory/trajectory'
 import Selection from '../selection/selection'
@@ -55,6 +56,13 @@ class StructureComponent extends Component {
   structureView: StructureView
   readonly trajList: TrajectoryElement[] = []
 
+  pickBuffer: RingBuffer<number>
+  pickPairs: SimpleSet<number[]>
+  lastPick?: number
+
+  spacefillRepresentation: RepresentationElement
+  distanceRepresentation: RepresentationElement
+
   constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, structure, Object.assign({ name: structure.name }, params))
 
@@ -66,6 +74,26 @@ class StructureComponent extends Component {
 
     this.initSelection(this.parameters.sele)
     this.setDefaultAssembly(this.parameters.defaultAssembly)
+
+    //
+
+    this.pickBuffer = createRingBuffer(2)
+    this.pickPairs = createSimpleSet()
+
+    this.spacefillRepresentation = this.addRepresentation('spacefill', {
+      sele: 'none',
+      opacity: 0.6,
+      color: 'green',
+      disablePicking: true,
+      scale: 0.3
+    }, true)
+    this.distanceRepresentation = this.addRepresentation('distance', {
+      color: 'green',
+      labelColor: 'grey',
+      labelSize: 1,
+      radius: 0.04,
+      scale: 1
+    }, true)
   }
 
   /**
@@ -138,6 +166,9 @@ class StructureComponent extends Component {
     this.reprList.forEach((repr: any) => {  // TODO
       repr.build()
     })
+
+    this.spacefillRepresentation.build(undefined)
+    this.distanceRepresentation.build(undefined)
   }
 
   /**
@@ -150,7 +181,7 @@ class StructureComponent extends Component {
     })
   }
 
-  addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}) {
+  addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
     return this._addRepresentation(type, this.structureView, params)
@@ -192,6 +223,9 @@ class StructureComponent extends Component {
 
     this.trajList.length = 0
     this.structure.dispose()
+
+    this.spacefillRepresentation.dispose()
+    this.distanceRepresentation.dispose()
 
     super.dispose()
   }

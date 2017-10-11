@@ -461,3 +461,53 @@ export function ensureQuaternion (q?: number[]|Quaternion) {
 export function ensureFloat32Array (a?: number[]|Float32Array) {
   return _ensureClassFromArg(a, Float32Array)
 }
+
+export interface RingBuffer<T> {
+  has: (value: T) => boolean
+  get: (value: number) => T
+  push: (value: T) => void
+  count: number
+  data: T[]
+  clear: () => void
+}
+
+export function createRingBuffer<T> (length: number): RingBuffer<T> {
+  let pointer = 0
+  let count = 0
+  const buffer: T[] = []
+
+  return {
+    has: function (value: any) { return buffer.indexOf(value) !== -1 },
+    get: function (idx: number) { return buffer[idx] },
+    push: function (item: any) {
+      buffer[pointer] = item
+      pointer = (length + pointer + 1) % length
+      ++count
+    },
+    get count () { return count },
+    get data () { return buffer.slice(0, Math.min(count, length)) },
+    clear: function () {
+      count = 0
+      pointer = 0
+      buffer.length = 0
+    }
+  }
+}
+
+export interface SimpleSet<T> {
+  has: (value: T) => boolean
+  add: (value: T) => void
+  del: (value: T) => void
+  list: T[]
+}
+
+export function createSimpleSet<T> (): SimpleSet<T> {
+  const set: { [k: string]: T } = {}
+
+  return {
+    has: function (v: T) { return set[JSON.stringify(v)] !== undefined },
+    add: function (v: T) { set[JSON.stringify(v)] = v },
+    del: function (v: T) { delete set[JSON.stringify(v)] },
+    get list () { return Object.keys(set).map(function (k) { return set[k] }) },
+  }
+}

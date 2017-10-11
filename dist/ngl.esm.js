@@ -44665,6 +44665,36 @@ function ensureQuaternion(q) {
 function ensureFloat32Array(a) {
     return _ensureClassFromArg(a, Float32Array);
 }
+function createRingBuffer(length) {
+    var pointer = 0;
+    var count = 0;
+    var buffer = [];
+    return {
+        has: function (value) { return buffer.indexOf(value) !== -1; },
+        get: function (idx) { return buffer[idx]; },
+        push: function (item) {
+            buffer[pointer] = item;
+            pointer = (length + pointer + 1) % length;
+            ++count;
+        },
+        get count() { return count; },
+        get data() { return buffer.slice(0, Math.min(count, length)); },
+        clear: function () {
+            count = 0;
+            pointer = 0;
+            buffer.length = 0;
+        }
+    };
+}
+function createSimpleSet() {
+    var set = {};
+    return {
+        has: function (v) { return set[JSON.stringify(v)] !== undefined; },
+        add: function (v) { set[JSON.stringify(v)] = v; },
+        del: function (v) { delete set[JSON.stringify(v)]; },
+        get list() { return Object.keys(set).map(function (k) { return set[k]; }); },
+    };
+}
 
 /**
  * @file Registry
@@ -51399,7 +51429,16 @@ function calculateCenterArray(array1, array2, center, offset) {
     }
     return center;
 }
-
+function calculateDirectionArray(array1, array2) {
+    var n = array1.length;
+    var direction = new Float32Array(n);
+    for (var i = 0; i < n; i += 3) {
+        direction[i + 0] = array2[i + 0] - array1[i + 0];
+        direction[i + 1] = array2[i + 1] - array1[i + 1];
+        direction[i + 2] = array2[i + 2] - array1[i + 2];
+    }
+    return direction;
+}
 function uniformArray(n, a, optionalTarget) {
     var array = optionalTarget || new Float32Array(n);
     for (var i = 0; i < n; ++i) {
@@ -51449,7 +51488,36 @@ function serialBlockArray(n, b, offset, optionalTarget) {
     return array;
 }
 
-
+function replicateArrayEntries(array, m) {
+    var n = array.length;
+    var repArr = new Float32Array(n * m);
+    for (var i = 0; i < n; ++i) {
+        var k = i * m;
+        var a = array[i];
+        for (var j = 0; j < m; ++j) {
+            repArr[k + j] = a;
+        }
+    }
+    return repArr;
+}
+function replicateArray3Entries(array, m) {
+    var n = array.length / 3;
+    var repArr = new Float32Array(n * m * 3);
+    for (var i = 0; i < n; ++i) {
+        var v = i * 3;
+        var k = i * m * 3;
+        var a = array[v + 0];
+        var b = array[v + 1];
+        var c = array[v + 2];
+        for (var j = 0; j < m; ++j) {
+            var l = k + j * 3;
+            repArr[l + 0] = a;
+            repArr[l + 1] = b;
+            repArr[l + 2] = c;
+        }
+    }
+    return repArr;
+}
 
 function calculateMinArray(array1, array2) {
     var n = array1.length;
@@ -51921,8 +51989,111 @@ function updateMaterialUniforms(group, camera, renderer, cDist, bRadius) {
         }
     });
 }
-function testTextureSupport(gl, type) {
+
+/**
+ * @file Viewer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+// adapted from https://webglfundamentals.org/webgl/resources/webgl-utils.js
+// Copyright 2012, Gregg Tavares. Modified BSD License
+function createProgram(gl, shaders, attribs, locations) {
+    var program = gl.createProgram();
+    shaders.forEach(function (shader) { return gl.attachShader(program, shader); });
+    if (attribs) {
+        attribs.forEach(function (attrib, i) {
+            gl.bindAttribLocation(program, locations ? locations[i] : i, attrib);
+        });
+    }
+    gl.linkProgram(program);
+    // Check the link status
+    var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (!linked) {
+        console.log(("error linking program: " + (gl.getProgramInfoLog(program))));
+        gl.deleteProgram(program);
+        return null;
+    }
+    return program;
+}
+function loadShader(gl, shaderSource, shaderType) {
+    var shader = gl.createShader(shaderType);
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+    // Check the compile status
+    var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (!compiled) {
+        console.log(("error compiling shader " + shader + ": " + (gl.getShaderInfoLog(shader))));
+        gl.deleteShader(shader);
+        return null;
+    }
+    return shader;
+}
+//
+function getErrorDescription(gl, error) {
+    switch (error) {
+        case gl.NO_ERROR: return 'no error';
+        case gl.INVALID_ENUM: return 'invalid enum';
+        case gl.INVALID_VALUE: return 'invalid value';
+        case gl.INVALID_OPERATION: return 'invalid operation';
+        case gl.INVALID_FRAMEBUFFER_OPERATION: return 'invalid framebuffer operation';
+        case gl.OUT_OF_MEMORY: return 'out of memory';
+        case gl.CONTEXT_LOST_WEBGL: return 'context lost';
+    }
+    return 'unknown error';
+}
+function getExtension(gl, name) {
+    var ext = gl.getExtension(name);
+    if (!ext)
+        { console.log(("extension '" + name + "' not available")); }
+    return ext;
+}
+var TextureTestVertShader = "\nattribute vec4 a_position;\n\nvoid main() {\n  gl_Position = a_position;\n}";
+var TextureTestFragShader = "\nprecision mediump float;\nuniform vec4 u_color;\nuniform sampler2D u_texture;\n\nvoid main() {\n  gl_FragColor = texture2D(u_texture, vec2(0.5, 0.5)) * u_color;\n}";
+var TextureTestTexCoords = new Float32Array([
+    -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0
+]);
+function testTextureSupport(type) {
+    // adapted from
     // https://stackoverflow.com/questions/28827511/webgl-ios-render-to-floating-point-texture
+    // Get A WebGL context
+    var canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    canvas.style.width = 16 + 'px';
+    canvas.style.height = 16 + 'px';
+    var gl = canvas.getContext("webgl");
+    if (!gl) {
+        console.log(("error creating webgl context for " + type));
+        return false;
+    }
+    getExtension(gl, 'OES_texture_float');
+    getExtension(gl, 'OES_texture_half_float');
+    getExtension(gl, 'WEBGL_color_buffer_float');
+    // setup shaders
+    var vertShader = loadShader(gl, TextureTestVertShader, gl.VERTEX_SHADER);
+    var fragShader = loadShader(gl, TextureTestFragShader, gl.FRAGMENT_SHADER);
+    if (!vertShader || !fragShader)
+        { return false; }
+    // setup program
+    var program = createProgram(gl, [vertShader, fragShader]);
+    gl.useProgram(program);
+    // look up where the vertex data needs to go.
+    var positionLocation = gl.getAttribLocation(program, "a_position");
+    var colorLoc = gl.getUniformLocation(program, "u_color");
+    if (!colorLoc) {
+        console.log("error getting 'u_color' uniform location");
+        return false;
+    }
+    // provide texture coordinates for the rectangle.
+    var positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, TextureTestTexCoords, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    var whiteTex = gl.createTexture();
+    var whiteData = new Uint8Array([255, 255, 255, 255]);
+    gl.bindTexture(gl.TEXTURE_2D, whiteTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whiteData);
     var tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, type, null);
@@ -51932,7 +52103,39 @@ function testTextureSupport(gl, type) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-    return status === gl.FRAMEBUFFER_COMPLETE;
+    if (status !== gl.FRAMEBUFFER_COMPLETE) {
+        console.log(("error creating framebuffer for " + type));
+        return false;
+    }
+    // Draw the rectangle.
+    gl.bindTexture(gl.TEXTURE_2D, whiteTex);
+    gl.uniform4fv(colorLoc, [0, 10, 20, 1]);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(1, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform4fv(colorLoc, [0, 1 / 10, 1 / 20, 1]);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    // Check if rendered correctly
+    var pixel = new Uint8Array(4);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    if (pixel[0] !== 0 || pixel[1] < 248 || pixel[2] < 248 || pixel[3] < 254) {
+        console.log(("not able to actually render to " + type + " texture"));
+        return false;
+    }
+    // Check reading from float texture
+    if (type === gl.FLOAT) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        var floatPixel = new Float32Array(4);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, floatPixel);
+        var error = gl.getError();
+        if (error) {
+            console.log(("error reading pixels as float: '" + (getErrorDescription(gl, error)) + "'"));
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -52160,17 +52363,17 @@ Viewer.prototype._initRenderer = function _initRenderer () {
     // console.log(gl.getParameter(gl.SAMPLES))
     setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'));
     this.renderer.extensions.get('OES_element_index_uint');
-    setSupportsReadPixelsFloat(Browser !== 'Safari' && ((this.renderer.extensions.get('OES_texture_float') &&
+    setSupportsReadPixelsFloat((this.renderer.extensions.get('OES_texture_float') &&
         this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
         (this.renderer.extensions.get('OES_texture_float') &&
-            testTextureSupport(gl, gl.FLOAT))));
+            testTextureSupport(gl.FLOAT)));
     this.container.appendChild(this.renderer.domElement);
     var dprWidth = width * dpr;
     var dprHeight = height * dpr;
     // picking texture
     this.renderer.extensions.get('OES_texture_float');
     this.supportsHalfFloat = (this.renderer.extensions.get('OES_texture_half_float') &&
-        testTextureSupport(gl, 0x8D61));
+        testTextureSupport(0x8D61));
     this.renderer.extensions.get('WEBGL_color_buffer_float');
     if (Debug) {
         console.log(JSON.stringify({
@@ -52178,8 +52381,8 @@ Viewer.prototype._initRenderer = function _initRenderer () {
             'OES_texture_float': !!this.renderer.extensions.get('OES_texture_float'),
             'OES_texture_half_float': !!this.renderer.extensions.get('OES_texture_half_float'),
             'WEBGL_color_buffer_float': !!this.renderer.extensions.get('WEBGL_color_buffer_float'),
-            'testTextureSupport Float': testTextureSupport(gl, gl.FLOAT),
-            'testTextureSupport HalfFloat': testTextureSupport(gl, 0x8D61),
+            'testTextureSupport Float': testTextureSupport(gl.FLOAT),
+            'testTextureSupport HalfFloat': testTextureSupport(0x8D61),
             'this.supportsHalfFloat': this.supportsHalfFloat,
             'SupportsReadPixelsFloat': SupportsReadPixelsFloat
         }, null, 2));
@@ -53123,10 +53326,8 @@ MouseObserver.prototype._onMouseup = function _onMouseup (event) {
             this.signals.doubleClicked.dispatch(cp.x, cp.y);
             this.doubleClickPending = false;
         }
-        else {
-            this.signals.clicked.dispatch(cp.x, cp.y);
-            this.doubleClickPending = true;
-        }
+        this.signals.clicked.dispatch(cp.x, cp.y);
+        this.doubleClickPending = true;
         this.prevClickCP.copy(cp);
     }
     this.which = undefined;
@@ -62504,6 +62705,39 @@ MouseActions.tooltipPick = function tooltipPick (stage, pickingProxy) {
         tt.style.display = 'none';
     }
 };
+MouseActions.measurePick = function measurePick (stage, pickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+        var atom = pickingProxy.atom || pickingProxy.closestBondAtom;
+        var sc = pickingProxy.component;
+        if (sc.lastPick === atom.index && sc.pickBuffer.count >= 2) {
+            var atomPair = sc.pickBuffer.data.sort();
+            if (sc.pickPairs.has(atomPair)) {
+                sc.pickPairs.del(atomPair);
+            }
+            else {
+                sc.pickPairs.add(atomPair);
+            }
+            sc.distanceRepresentation.setParameters({ atomPair: sc.pickPairs.list });
+            sc.pickBuffer.clear();
+            sc.lastPick = undefined;
+        }
+        else {
+            if (!sc.pickBuffer.has(atom.index)) {
+                sc.pickBuffer.push(atom.index);
+            }
+            sc.lastPick = atom.index;
+        }
+        sc.spacefillRepresentation.setSelection('@' + sc.pickBuffer.data.join(','));
+        return;
+    }
+    else {
+        stage.eachComponent(function (sc) {
+            sc.pickBuffer.clear();
+            sc.lastPick = undefined;
+            sc.spacefillRepresentation.setSelection('none');
+        }, 'structure');
+    }
+};
 var MouseActionPresets = {
     default: [
         ['scroll', MouseActions.zoomScroll],
@@ -62517,6 +62751,7 @@ var MouseActionPresets = {
         ['drag-left+right', MouseActions.zoomDrag],
         ['drag-ctrl-right', MouseActions.panComponentDrag],
         ['drag-ctrl-left', MouseActions.rotateComponentDrag],
+        ['clickPick-alt-left', MouseActions.measurePick],
         ['clickPick-middle', MouseActions.movePick],
         ['clickPick-shift-left', MouseActions.movePick],
         ['hoverPick', MouseActions.tooltipPick]
@@ -62742,33 +62977,35 @@ KeyActions.autoView = function autoView (stage) {
 };
 /**
  * Toggle stage animations
- * @param {Stage} stage - the stage
- * @return {undefined}
  */
 KeyActions.toggleAnimations = function toggleAnimations (stage) {
     stage.animationControls.toggle();
 };
 /**
  * Toggle stage rocking
- * @param {Stage} stage - the stage
- * @return {undefined}
  */
 KeyActions.toggleRock = function toggleRock (stage) {
     stage.toggleRock();
 };
 /**
  * Toggle stage spinning
- * @param {Stage} stage - the stage
- * @return {undefined}
  */
 KeyActions.toggleSpin = function toggleSpin (stage) {
     stage.toggleSpin();
+};
+/**
+ * Toggle anti-aliasing
+ */
+KeyActions.toggleAntialiasing = function toggleAntialiasing (stage) {
+    var p = stage.getParameters();
+    stage.setParameters({ sampleLevel: p.sampleLevel === -1 ? 0 : -1 });
 };
 var KeyActionPresets = {
     default: [
         ['i', KeyActions.toggleSpin],
         ['k', KeyActions.toggleRock],
         ['p', KeyActions.toggleAnimations],
+        ['a', KeyActions.toggleAntialiasing],
         ['r', KeyActions.autoView]
     ]
 };
@@ -69715,854 +69952,6 @@ Structure.prototype.dispose = function dispose () {
 Object.defineProperties( Structure.prototype, prototypeAccessors$15 );
 
 /**
- * @file Superposition
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var Superposition = function Superposition(atoms1, atoms2) {
-    // allocate & init data structures
-    this.A = new Matrix(3, 3);
-    this.W = new Matrix(1, 3);
-    this.U = new Matrix(3, 3);
-    this.V = new Matrix(3, 3);
-    this.VH = new Matrix(3, 3);
-    this.R = new Matrix(3, 3);
-    this.tmp = new Matrix(3, 3);
-    this.c = new Matrix(3, 3);
-    var n1;
-    if (atoms1 instanceof Structure) {
-        n1 = atoms1.atomCount;
-    }
-    else if (atoms1 instanceof Float32Array) {
-        n1 = atoms1.length / 3;
-    }
-    else {
-        return;
-    }
-    var n2;
-    if (atoms2 instanceof Structure) {
-        n2 = atoms2.atomCount;
-    }
-    else if (atoms2 instanceof Float32Array) {
-        n2 = atoms2.length / 3;
-    }
-    else {
-        return;
-    }
-    var n = Math.min(n1, n2);
-    var coords1 = new Matrix(3, n);
-    var coords2 = new Matrix(3, n);
-    this.coords1t = new Matrix(n, 3);
-    this.coords2t = new Matrix(n, 3);
-    this.c.data.set([1, 0, 0, 0, 1, 0, 0, 0, -1]);
-    // prep coords
-    this.prepCoords(atoms1, coords1, n);
-    this.prepCoords(atoms2, coords2, n);
-    // superpose
-    this._superpose(coords1, coords2);
-};
-Superposition.prototype._superpose = function _superpose (coords1, coords2) {
-    this.mean1 = meanRows(coords1);
-    this.mean2 = meanRows(coords2);
-    subRows(coords1, this.mean1);
-    subRows(coords2, this.mean2);
-    transpose(this.coords1t, coords1);
-    transpose(this.coords2t, coords2);
-    multiplyABt(this.A, this.coords2t, this.coords1t);
-    svd(this.A, this.W, this.U, this.V);
-    invert3x3(this.V, this.VH);
-    multiply3x3(this.R, this.U, this.VH);
-    if (mat3x3determinant(this.R) < 0.0) {
-        if (Debug)
-            { Log.log('R not a right handed system'); }
-        multiply3x3(this.tmp, this.c, this.VH);
-        multiply3x3(this.R, this.U, this.tmp);
-    }
-};
-Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
-    var i = 0;
-    var n3 = n * 3;
-    var cd = coords.data;
-    if (atoms instanceof Structure) {
-        atoms.eachAtom(function (a) {
-            if (i < n3) {
-                cd[i + 0] = a.x;
-                cd[i + 1] = a.y;
-                cd[i + 2] = a.z;
-                i += 3;
-            }
-        });
-    }
-    else if (atoms instanceof Float32Array) {
-        cd.set(atoms.subarray(0, n3));
-    }
-    else {
-        Log.warn('prepCoords: input type unknown');
-    }
-};
-Superposition.prototype.transform = function transform (atoms) {
-    // allocate data structures
-    var n;
-    if (atoms instanceof Structure) {
-        n = atoms.atomCount;
-    }
-    else if (atoms instanceof Float32Array) {
-        n = atoms.length / 3;
-    }
-    else {
-        return;
-    }
-    var coords = new Matrix(3, n);
-    var tmp = new Matrix(n, 3);
-    // prep coords
-    this.prepCoords(atoms, coords, n);
-    // do transform
-    subRows(coords, this.mean1);
-    multiplyABt(tmp, this.R, coords);
-    transpose(coords, tmp);
-    addRows(coords, this.mean2);
-    var i = 0;
-    var cd = coords.data;
-    if (atoms instanceof Structure) {
-        atoms.eachAtom(function (a) {
-            a.x = cd[i + 0];
-            a.y = cd[i + 1];
-            a.z = cd[i + 2];
-            i += 3;
-        });
-    }
-    else if (atoms instanceof Float32Array) {
-        atoms.set(cd.subarray(0, n * 3));
-    }
-    else {
-        Log.warn('transform: input type unknown');
-    }
-};
-
-/**
- * @file Trajectory Player
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var TrajectoryPlayerDefaultParameters = {
-    step: 1,
-    timeout: 50,
-    start: 0,
-    end: 0,
-    interpolateType: '',
-    interpolateStep: 5,
-    mode: 'loop',
-    direction: 'forward'
-};
-/**
- * Trajectory player for animating coordinate frames
- * @example
- * var player = new TrajectoryPlayer(trajectory, {step: 1, timeout: 50});
- * player.play();
- */
-var TrajectoryPlayer = function TrajectoryPlayer(traj, params) {
-    var this$1 = this;
-    if ( params === void 0 ) params = {};
-
-    this.signals = {
-        startedRunning: new signals_1(),
-        haltedRunning: new signals_1()
-    };
-    this._run = false;
-    this._previousTime = 0;
-    this._currentTime = 0;
-    this._currentStep = 1;
-    traj.signals.playerChanged.add(function (player) {
-        if (player !== this$1) {
-            this$1.pause();
-        }
-    }, this);
-    var n = defaults(traj.frameCount, 1);
-    this.traj = traj;
-    this.parameters = createParams(params, TrajectoryPlayerDefaultParameters);
-    this.parameters.end = Math.min(defaults(params.end, n - 1), n - 1);
-    this.parameters.step = defaults(params.step, Math.ceil((n + 1) / 100));
-    this._currentFrame = this.parameters.start;
-    this._direction = this.parameters.direction === 'bounce' ? 'forward' : this.parameters.direction;
-    traj.signals.countChanged.add(function (n) {
-        this$1.parameters.end = Math.min(defaults(this$1.parameters.end, n - 1), n - 1);
-    }, this);
-    this._animate = this._animate.bind(this);
-};
-
-var prototypeAccessors$25 = { isRunning: {} };
-prototypeAccessors$25.isRunning.get = function () { return this._run; };
-/**
- * set player parameters
- * @param {TrajectoryPlayerParameters} [params] - parameter object
- */
-TrajectoryPlayer.prototype.setParameters = function setParameters (params) {
-        if ( params === void 0 ) params = {};
-
-    updateParams(this.parameters, params);
-    if (params.direction !== undefined && this.parameters.direction !== 'bounce') {
-        this._direction = this.parameters.direction;
-    }
-};
-TrajectoryPlayer.prototype._animate = function _animate () {
-    if (!this._run)
-        { return; }
-    this._currentTime = window.performance.now();
-    var dt = this._currentTime - this._previousTime;
-    var step = this.parameters.interpolateType ? this.parameters.interpolateStep : 1;
-    var timeout = this.parameters.timeout / step;
-    var traj = this.traj;
-    if (traj && traj.frameCount && !traj.inProgress && dt >= timeout) {
-        if (this.parameters.interpolateType) {
-            if (this._currentStep > this.parameters.interpolateStep) {
-                this._currentStep = 1;
-            }
-            if (this._currentStep === 1) {
-                this._currentFrame = this._nextInterpolated();
-            }
-            if (traj.hasFrame(this._currentFrame)) {
-                this._currentStep += 1;
-                var t = this._currentStep / (this.parameters.interpolateStep + 1);
-                var ref = this._currentFrame;
-                    var i = ref[0];
-                    var ip = ref[1];
-                    var ipp = ref[2];
-                    var ippp = ref[3];
-                traj.setFrameInterpolated(i, ip, ipp, ippp, t, this.parameters.interpolateType);
-                this._previousTime = this._currentTime;
-            }
-            else {
-                traj.loadFrame(this._currentFrame);
-            }
-        }
-        else {
-            var i$1 = this._next();
-            if (traj.hasFrame(i$1)) {
-                traj.setFrame(i$1);
-                this._previousTime = this._currentTime;
-            }
-            else {
-                traj.loadFrame(i$1);
-            }
-        }
-    }
-    window.requestAnimationFrame(this._animate);
-};
-TrajectoryPlayer.prototype._next = function _next () {
-    var p = this.parameters;
-    var i;
-    if (this._direction === 'forward') {
-        i = this.traj.currentFrame + p.step;
-    }
-    else {
-        i = this.traj.currentFrame - p.step;
-    }
-    if (i > p.end || i < p.start) {
-        if (p.direction === 'bounce') {
-            if (this._direction === 'forward') {
-                this._direction = 'backward';
-            }
-            else {
-                this._direction = 'forward';
-            }
-        }
-        if (p.mode === 'once') {
-            this.pause();
-            if (p.direction === 'forward') {
-                i = p.end;
-            }
-            else if (p.direction === 'backward') {
-                i = p.start;
-            }
-            else {
-                if (this._direction === 'forward') {
-                    i = p.start;
-                }
-                else {
-                    i = p.end;
-                }
-            }
-        }
-        else {
-            if (this._direction === 'forward') {
-                i = p.start;
-                if (p.interpolateType) {
-                    i = Math.min(p.end, i + p.step);
-                }
-            }
-            else {
-                i = p.end;
-                if (p.interpolateType) {
-                    i = Math.max(p.start, i - p.step);
-                }
-            }
-        }
-    }
-    return i;
-};
-TrajectoryPlayer.prototype._nextInterpolated = function _nextInterpolated () {
-    var p = this.parameters;
-    var i = this._next();
-    var ip, ipp, ippp;
-    if (this._direction === 'forward') {
-        ip = Math.max(p.start, i - p.step);
-        ipp = Math.max(p.start, i - 2 * p.step);
-        ippp = Math.max(p.start, i - 3 * p.step);
-    }
-    else {
-        ip = Math.min(p.end, i + p.step);
-        ipp = Math.min(p.end, i + 2 * p.step);
-        ippp = Math.min(p.end, i + 3 * p.step);
-    }
-    return [i, ip, ipp, ippp];
-};
-/**
- * toggle between playing and pausing the animation
- * @return {undefined}
- */
-TrajectoryPlayer.prototype.toggle = function toggle () {
-    if (this._run) {
-        this.pause();
-    }
-    else {
-        this.play();
-    }
-};
-/**
- * start the animation
- * @return {undefined}
- */
-TrajectoryPlayer.prototype.play = function play () {
-    if (!this._run) {
-        if (this.traj.player !== this) {
-            this.traj.setPlayer(this);
-        }
-        this._currentStep = 1;
-        var p = this.parameters;
-        var frame = this.traj.currentFrame;
-        // snap to the grid implied by this.step division and multiplication
-        // thus minimizing cache misses
-        var i = Math.ceil(frame / p.step) * p.step;
-        // wrap when restarting from the limit (i.e. end or start)
-        if (p.direction === 'forward' && frame >= p.end) {
-            i = p.start;
-        }
-        else if (p.direction === 'backward' && frame <= p.start) {
-            i = p.end;
-        }
-        this.traj.setFrame(i);
-        this._run = true;
-        this._animate();
-        this.signals.startedRunning.dispatch();
-    }
-};
-/**
- * pause the animation
- * @return {undefined}
- */
-TrajectoryPlayer.prototype.pause = function pause () {
-    this._run = false;
-    this.signals.haltedRunning.dispatch();
-};
-/**
- * stop the animation (pause and go to start-frame)
- * @return {undefined}
- */
-TrajectoryPlayer.prototype.stop = function stop () {
-    this.pause();
-    this.traj.setFrame(this.parameters.start);
-};
-
-Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$25 );
-
-/**
- * @file Trajectory
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-function centerPbc(coords, mean, box) {
-    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
-        return;
-    }
-    var n = coords.length;
-    var bx = box[0];
-    var by = box[1];
-    var bz = box[2];
-    var mx = mean[0];
-    var my = mean[1];
-    var mz = mean[2];
-    var fx = -mx + bx + bx / 2;
-    var fy = -my + by + by / 2;
-    var fz = -mz + bz + bz / 2;
-    for (var i = 0; i < n; i += 3) {
-        coords[i + 0] = (coords[i + 0] + fx) % bx;
-        coords[i + 1] = (coords[i + 1] + fy) % by;
-        coords[i + 2] = (coords[i + 2] + fz) % bz;
-    }
-}
-function removePbc(x, box) {
-    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
-        return;
-    }
-    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
-    // in-place
-    var n = x.length;
-    for (var i = 3; i < n; i += 3) {
-        for (var j = 0; j < 3; ++j) {
-            var dist = x[i + j] - x[i - 3 + j];
-            if (Math.abs(dist) > 0.9 * box[j * 3 + j]) {
-                if (dist > 0) {
-                    for (var d = 0; d < 3; ++d) {
-                        x[i + d] -= box[j * 3 + d];
-                    }
-                }
-                else {
-                    for (var d$1 = 0; d$1 < 3; ++d$1) {
-                        x[i + d$1] += box[j * 3 + d$1];
-                    }
-                }
-            }
-        }
-    }
-    return x;
-}
-function removePeriodicity(x, box, mean) {
-    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
-        return;
-    }
-    var n = x.length;
-    for (var i = 3; i < n; i += 3) {
-        for (var j = 0; j < 3; ++j) {
-            var f = (x[i + j] - mean[j]) / box[j * 3 + j];
-            if (Math.abs(f) > 0.5) {
-                x[i + j] -= box[j * 3 + j] * Math.round(f);
-            }
-        }
-    }
-    return x;
-}
-function circularMean3(indices, coords, box) {
-    return [
-        circularMean(coords, box[0], 3, 0, indices),
-        circularMean(coords, box[1], 3, 1, indices),
-        circularMean(coords, box[2], 3, 2, indices)
-    ];
-}
-function arrayMean3(coords) {
-    return [
-        arrayMean(coords, 3, 0),
-        arrayMean(coords, 3, 1),
-        arrayMean(coords, 3, 2)
-    ];
-}
-function interpolateSpline(c, cp, cpp, cppp, t) {
-    var m = c.length;
-    var coords = new Float32Array(m);
-    for (var j0 = 0; j0 < m; j0 += 3) {
-        var j1 = j0 + 1;
-        var j2 = j0 + 2;
-        coords[j0] = spline(cppp[j0], cpp[j0], cp[j0], c[j0], t, 1);
-        coords[j1] = spline(cppp[j1], cpp[j1], cp[j1], c[j1], t, 1);
-        coords[j2] = spline(cppp[j2], cpp[j2], cp[j2], c[j2], t, 1);
-    }
-    return coords;
-}
-function interpolateLerp(c, cp, t) {
-    var m = c.length;
-    var coords = new Float32Array(m);
-    for (var j0 = 0; j0 < m; j0 += 3) {
-        var j1 = j0 + 1;
-        var j2 = j0 + 2;
-        coords[j0] = lerp(cp[j0], c[j0], t);
-        coords[j1] = lerp(cp[j1], c[j1], t);
-        coords[j2] = lerp(cp[j2], c[j2], t);
-    }
-    return coords;
-}
-/**
- * Base class for trajectories, tying structures and coordinates together
- * @interface
- */
-var Trajectory = function Trajectory(trajPath, structure, params) {
-    var this$1 = this;
-    if ( params === void 0 ) params = {};
-
-    this.signals = {
-        countChanged: new signals_1(),
-        frameChanged: new signals_1(),
-        playerChanged: new signals_1()
-    };
-    this.frameCache = {};
-    this.loadQueue = {};
-    this.boxCache = {};
-    this.pathCache = {};
-    this.frameCacheSize = 0;
-    this._frameCount = 0;
-    this._currentFrame = -1;
-    this._disposed = false;
-    this.deltaTime = defaults(params.deltaTime, 0);
-    this.timeOffset = defaults(params.timeOffset, 0);
-    this.centerPbc = defaults(params.centerPbc, false);
-    this.removePbc = defaults(params.removePbc, false);
-    this.removePeriodicity = defaults(params.removePeriodicity, false);
-    this.superpose = defaults(params.superpose, false);
-    this.name = trajPath.replace(/^.*[\\/]/, '');
-    this.trajPath = trajPath;
-    this.selection = new Selection(defaults(params.sele, 'backbone and not hydrogen'));
-    this.selection.signals.stringChanged.add(function () {
-        this$1.selectionIndices = this$1.structure.getAtomIndices(this$1.selection);
-        this$1._resetCache();
-        this$1._saveInitialCoords();
-        this$1.setFrame(this$1._currentFrame);
-    });
-};
-
-var prototypeAccessors$24 = { frameCount: {},currentFrame: {} };
-/**
- * Number of frames in the trajectory
- */
-prototypeAccessors$24.frameCount.get = function () {
-    return this._frameCount;
-};
-/**
- * Currently set frame of the trajectory
- */
-prototypeAccessors$24.currentFrame.get = function () {
-    return this._currentFrame;
-};
-Trajectory.prototype._init = function _init (structure) {
-    this.setStructure(structure);
-    this._loadFrameCount();
-    this.setPlayer(new TrajectoryPlayer(this));
-};
-Trajectory.prototype._loadFrameCount = function _loadFrameCount () { };
-Trajectory.prototype.setStructure = function setStructure (structure) {
-    this.structure = structure;
-    this.atomCount = structure.atomCount;
-    this.backboneIndices = this._getIndices(new Selection('backbone and not hydrogen'));
-    this._makeAtomIndices();
-    this._saveStructureCoords();
-    this.selectionIndices = this._getIndices(this.selection);
-    this._resetCache();
-    this._saveInitialCoords();
-    this.setFrame(this._currentFrame);
-};
-Trajectory.prototype._saveInitialCoords = function _saveInitialCoords () {
-        var this$1 = this;
-
-    if (this.structure.hasCoords()) {
-        this.initialCoords = new Float32Array(this.structureCoords);
-        this._makeSuperposeCoords();
-    }
-    else if (this.frameCache[0]) {
-        this.initialCoords = new Float32Array(this.frameCache[0]);
-        this._makeSuperposeCoords();
-    }
-    else {
-        this.loadFrame(0, function () { return this$1._saveInitialCoords(); });
-    }
-};
-Trajectory.prototype._saveStructureCoords = function _saveStructureCoords () {
-    var p = { what: { position: true } };
-    this.structureCoords = this.structure.getAtomData(p).position;
-};
-Trajectory.prototype.setSelection = function setSelection (string) {
-    this.selection.setString(string);
-    return this;
-};
-Trajectory.prototype._getIndices = function _getIndices (selection) {
-    var i = 0;
-    var test = selection.test;
-    var indices = [];
-    if (test) {
-        this.structure.eachAtom(function (ap) {
-            if (test(ap))
-                { indices.push(i); }
-            i += 1;
-        });
-    }
-    return indices;
-};
-Trajectory.prototype._makeSuperposeCoords = function _makeSuperposeCoords () {
-        var this$1 = this;
-
-    var n = this.selectionIndices.length * 3;
-    this.coords1 = new Float32Array(n);
-    this.coords2 = new Float32Array(n);
-    var y = this.initialCoords;
-    var coords2 = this.coords2;
-    for (var i = 0; i < n; i += 3) {
-        var j = this$1.selectionIndices[i / 3] * 3;
-        coords2[i + 0] = y[j + 0];
-        coords2[i + 1] = y[j + 1];
-        coords2[i + 2] = y[j + 2];
-    }
-};
-Trajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
-    Log.error('Trajectory._makeAtomIndices not implemented');
-};
-Trajectory.prototype._resetCache = function _resetCache () {
-    this.frameCache = {};
-    this.loadQueue = {};
-    this.boxCache = {};
-    this.pathCache = {};
-    this.frameCacheSize = 0;
-    this.initialCoords = new Float32Array(0);
-};
-Trajectory.prototype.setParameters = function setParameters (params) {
-        if ( params === void 0 ) params = {};
-
-    var resetCache = false;
-    if (params.centerPbc !== undefined && params.centerPbc !== this.centerPbc) {
-        this.centerPbc = params.centerPbc;
-        resetCache = true;
-    }
-    if (params.removePeriodicity !== undefined && params.removePeriodicity !== this.removePeriodicity) {
-        this.removePeriodicity = params.removePeriodicity;
-        resetCache = true;
-    }
-    if (params.removePbc !== undefined && params.removePbc !== this.removePbc) {
-        this.removePbc = params.removePbc;
-        resetCache = true;
-    }
-    if (params.superpose !== undefined && params.superpose !== this.superpose) {
-        this.superpose = params.superpose;
-        resetCache = true;
-    }
-    this.deltaTime = defaults(params.deltaTime, this.deltaTime);
-    this.timeOffset = defaults(params.timeOffset, this.timeOffset);
-    if (resetCache) {
-        this._resetCache();
-        this.setFrame(this._currentFrame);
-    }
-};
-/**
- * Check if a frame is available
- * @param  {Integer|Integer[]} i - the frame index
- * @return {Boolean} frame availability
- */
-Trajectory.prototype.hasFrame = function hasFrame (i) {
-        var this$1 = this;
-
-    if (Array.isArray(i)) {
-        return i.every(function (j) { return !!this$1.frameCache[j]; });
-    }
-    else {
-        return !!this.frameCache[i];
-    }
-};
-/**
- * Set trajectory to a frame index
- * @param {Integer} i - the frame index
- * @param {Function} [callback] - fired when the frame has been set
- */
-Trajectory.prototype.setFrame = function setFrame (i, callback) {
-        var this$1 = this;
-
-    if (i === undefined)
-        { return this; }
-    this.inProgress = true;
-    // i = parseInt(i)  // TODO
-    if (i === -1 || this.frameCache[i]) {
-        this._updateStructure(i);
-        if (callback)
-            { callback(); }
-    }
-    else {
-        this.loadFrame(i, function () {
-            this$1._updateStructure(i);
-            if (callback)
-                { callback(); }
-        });
-    }
-    return this;
-};
-Trajectory.prototype._interpolate = function _interpolate (i, ip, ipp, ippp, t, type) {
-    var fc = this.frameCache;
-    var coords;
-    if (type === 'spline') {
-        coords = interpolateSpline(fc[i], fc[ip], fc[ipp], fc[ippp], t);
-    }
-    else {
-        coords = interpolateLerp(fc[i], fc[ip], t);
-    }
-    this.structure.updatePosition(coords);
-    this._currentFrame = i;
-    this.signals.frameChanged.dispatch(i);
-};
-/**
- * Interpolated and set trajectory to frame indices
- * @param {Integer} i - the frame index
- * @param {Integer} ip - one before frame index
- * @param {Integer} ipp - two before frame index
- * @param {Integer} ippp - three before frame index
- * @param {Number} t - interpolation step [0,1]
- * @param {String} type - interpolation type, '', 'spline' or 'linear'
- * @param {Function} callback - fired when the frame has been set
- */
-Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
-        var this$1 = this;
-
-    if (i === undefined)
-        { return this; }
-    var fc = this.frameCache;
-    var iList = [];
-    if (!fc[ippp])
-        { iList.push(ippp); }
-    if (!fc[ipp])
-        { iList.push(ipp); }
-    if (!fc[ip])
-        { iList.push(ip); }
-    if (!fc[i])
-        { iList.push(i); }
-    if (iList.length) {
-        this.loadFrame(iList, function () {
-            this$1._interpolate(i, ip, ipp, ippp, t, type);
-            if (callback)
-                { callback(); }
-        });
-    }
-    else {
-        this._interpolate(i, ip, ipp, ippp, t, type);
-        if (callback)
-            { callback(); }
-    }
-    return this;
-};
-/**
- * Load frame index
- * @param {Integer|Integer[]} i - the frame index
- * @param {Function} callback - fired when the frame has been loaded
- */
-Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
-        var this$1 = this;
-
-    if (Array.isArray(i)) {
-        i.forEach(function (j) {
-            if (!this$1.loadQueue[j] && !this$1.frameCache[j]) {
-                this$1.loadQueue[j] = true;
-                this$1._loadFrame(j, function () {
-                    delete this$1.loadQueue[j];
-                });
-            }
-        });
-    }
-    else {
-        if (!this.loadQueue[i] && !this.frameCache[i]) {
-            this.loadQueue[i] = true;
-            this._loadFrame(i, function () {
-                delete this$1.loadQueue[i];
-                if (callback)
-                    { callback(); }
-            });
-        }
-    }
-};
-/**
- * Load frame index
- * @abstract
- * @param {Integer} i - the frame index
- * @param {Function} callback - fired when the frame has been loaded
- */
-Trajectory.prototype._loadFrame = function _loadFrame (i, callback) {
-    Log.error('Trajectory._loadFrame not implemented', i, callback);
-};
-Trajectory.prototype._updateStructure = function _updateStructure (i) {
-    if (this._disposed) {
-        console.error('updateStructure: traj disposed');
-        return;
-    }
-    if (i === -1) {
-        if (this.structureCoords) {
-            this.structure.updatePosition(this.structureCoords);
-        }
-    }
-    else {
-        this.structure.updatePosition(this.frameCache[i]);
-    }
-    this.structure.trajectory = {
-        name: this.trajPath,
-        frame: i
-    };
-    this._currentFrame = i;
-    this.inProgress = false;
-    this.signals.frameChanged.dispatch(i);
-};
-Trajectory.prototype._doSuperpose = function _doSuperpose (x) {
-        var this$1 = this;
-
-    var n = this.selectionIndices.length * 3;
-    var coords1 = this.coords1;
-    var coords2 = this.coords2;
-    for (var i = 0; i < n; i += 3) {
-        var j = this$1.selectionIndices[i / 3] * 3;
-        coords1[i + 0] = x[j + 0];
-        coords1[i + 1] = x[j + 1];
-        coords1[i + 2] = x[j + 2];
-    }
-    // TODO re-use superposition object
-    var sp = new Superposition(coords1, coords2);
-    sp.transform(x);
-};
-Trajectory.prototype._process = function _process (i, box, coords, frameCount) {
-    this._setFrameCount(frameCount);
-    if (box) {
-        if (this.backboneIndices.length > 0 && this.centerPbc) {
-            var box2 = [box[0], box[4], box[8]];
-            var circMean = circularMean3(this.backboneIndices, coords, box2);
-            centerPbc(coords, circMean, box2);
-        }
-        if (this.removePeriodicity) {
-            var mean = arrayMean3(coords);
-            removePeriodicity(coords, box, mean);
-        }
-        if (this.removePbc) {
-            removePbc(coords, box);
-        }
-    }
-    if (this.selectionIndices.length > 0 && this.coords1 && this.superpose) {
-        this._doSuperpose(coords);
-    }
-    this.frameCache[i] = coords;
-    this.boxCache[i] = box;
-    this.frameCacheSize += 1;
-};
-Trajectory.prototype._setFrameCount = function _setFrameCount (n) {
-    if (n !== this._frameCount) {
-        this._frameCount = n;
-        this.signals.countChanged.dispatch(n);
-    }
-};
-/**
- * Dispose of the trajectory object
- * @return {undefined}
- */
-Trajectory.prototype.dispose = function dispose () {
-    this._resetCache(); // aid GC
-    this._disposed = true;
-    if (this.player)
-        { this.player.stop(); }
-};
-/**
- * Set player for this trajectory
- * @param {TrajectoryPlayer} player - the player
- */
-Trajectory.prototype.setPlayer = function setPlayer (player) {
-    this.player = player;
-    this.signals.playerChanged.dispatch(player);
-};
-/**
- * Get time for frame
- * @param  {Integer} i - frame index
- * @return {Number} time in picoseconds
- */
-Trajectory.prototype.getFrameTime = function getFrameTime (i) {
-    return this.timeOffset + i * this.deltaTime;
-};
-
-Object.defineProperties( Trajectory.prototype, prototypeAccessors$24 );
-
-/**
  * @file Shape
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -70614,7 +70003,7 @@ var Shape$1 = function Shape$$1(name, params) {
     });
 };
 
-var prototypeAccessors$26 = { center: {},type: {} };
+var prototypeAccessors$24 = { center: {},type: {} };
 /**
  * Add a buffer
  * @param {Buffer} buffer - buffer object
@@ -70857,15 +70246,15 @@ Shape$1.prototype.dispose = function dispose () {
         this$1._primitiveData[P.getShapeKey('name')].length = 0;
     });
 };
-prototypeAccessors$26.center.get = function () {
+prototypeAccessors$24.center.get = function () {
     if (!this._center) {
         this._center = this.boundingBox.getCenter();
     }
     return this._center;
 };
-prototypeAccessors$26.type.get = function () { return 'Shape'; };
+prototypeAccessors$24.type.get = function () { return 'Shape'; };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$26 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$24 );
 
 /**
  * @file Buffer Representation
@@ -72223,834 +71612,12 @@ var SliceRepresentation = (function (Representation$$1) {
 }(Representation));
 
 /**
- * @file Structure Representation
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Structure representation parameter object.
- * @typedef {Object} StructureRepresentationParameters - structure representation parameters
- * @mixes RepresentationParameters
- *
- * @property {String} radiusType - A list of possible sources of the radius used for rendering the representation. The radius can be based on the *vdW radius*, the *covalent radius* or the *B-factor* value of the corresponding atom. Additionally the radius can be based on the *secondary structure*. Alternatively, when set to *size*, the value from the *radius* parameter is used for all atoms.
- * @property {Float} radius - A number providing a fixed radius used for rendering the representation.
- * @property {Float} scale - A number that scales the value defined by the *radius* or the *radiusType* parameter.
- * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
- */
-/**
- * Structure representation
- * @interface
- */
-var StructureRepresentation = (function (Representation$$1) {
-    function StructureRepresentation(structure, viewer, params) {
-        var p = params || {};
-        Representation$$1.call(this, structure, viewer, p);
-        this.type = 'structure';
-        this.parameters = Object.assign({
-            radiusType: {
-                type: 'select', options: RadiusFactory.types
-            },
-            radius: {
-                type: 'number', precision: 3, max: 10.0, min: 0.001
-            },
-            scale: {
-                type: 'number', precision: 3, max: 10.0, min: 0.001
-            },
-            assembly: null,
-            defaultAssembly: {
-                type: 'hidden'
-            }
-        }, this.parameters);
-        /**
-         * @type {Selection}
-         * @private
-         */
-        this.selection = new Selection(p.sele);
-        /**
-         * @type {Array}
-         * @private
-         */
-        this.dataList = [];
-        /**
-         * @type {Structure}
-         */
-        this.structure = structure;
-        /**
-         * @type {StructureView}
-         */
-        this.structureView = this.structure.getView(this.selection);
-        if (structure.biomolDict) {
-            var biomolOptions = {
-                'default': 'default',
-                '': (structure.unitcell ? 'AU' : 'FULL')
-            };
-            Object.keys(structure.biomolDict).forEach(function (k) {
-                biomolOptions[k] = k;
-            });
-            this.parameters.assembly = {
-                type: 'select',
-                options: biomolOptions,
-                rebuild: true
-            };
-        }
-        else {
-            this.parameters.assembly = null;
-        }
-    }
-
-    if ( Representation$$1 ) StructureRepresentation.__proto__ = Representation$$1;
-    StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
-    StructureRepresentation.prototype.constructor = StructureRepresentation;
-
-    var prototypeAccessors = { defaultScale: {} };
-    prototypeAccessors.defaultScale.get = function () {
-        return {
-            'vdw': 1.0,
-            'covalent': 1.0,
-            'bfactor': 0.01,
-            'sstruc': 1.0
-        };
-    };
-    StructureRepresentation.prototype.init = function init (params) {
-        var p = params || {};
-        p.colorScheme = defaults(p.colorScheme, 'element');
-        this.radius = defaults(p.radius, 'vdw');
-        this.scale = defaults(p.scale, 1.0);
-        this.assembly = defaults(p.assembly, 'default');
-        this.defaultAssembly = defaults(p.defaultAssembly, '');
-        if (p.quality === 'auto') {
-            p.quality = this.getQuality();
-        }
-        Representation$$1.prototype.init.call(this, p);
-        this.selection.signals.stringChanged.add(function () {
-            this.build();
-        }, this);
-        this.build();
-    };
-    StructureRepresentation.prototype.getAssembly = function getAssembly () {
-        var name = this.assembly === 'default' ? this.defaultAssembly : this.assembly;
-        return this.structure.biomolDict[name];
-    };
-    StructureRepresentation.prototype.getQuality = function getQuality () {
-        var atomCount;
-        var s = this.structureView;
-        var assembly = this.getAssembly();
-        if (assembly) {
-            atomCount = assembly.getAtomCount(s);
-        }
-        else {
-            atomCount = s.atomCount;
-        }
-        if (Mobile) {
-            atomCount *= 4;
-        }
-        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
-        if (backboneOnly) {
-            atomCount *= 10;
-        }
-        if (atomCount < 15000) {
-            return 'high';
-        }
-        else if (atomCount < 80000) {
-            return 'medium';
-        }
-        else {
-            return 'low';
-        }
-    };
-    StructureRepresentation.prototype.create = function create () {
-        if (this.structureView.atomCount === 0)
-            { return; }
-        if (!this.structureView.hasCoords()) {
-            this.needsBuild = true;
-            return;
-        }
-        else {
-            this.needsBuild = false;
-        }
-        var assembly = this.getAssembly();
-        if (assembly) {
-            assembly.partList.forEach(function (part, i) {
-                var sview = part.getView(this.structureView);
-                if (sview.atomCount === 0)
-                    { return; }
-                var data = this.createData(sview, i);
-                if (data) {
-                    data.sview = sview;
-                    data.instanceList = part.getInstanceList();
-                    this.dataList.push(data);
-                }
-            }, this);
-        }
-        else {
-            var data = this.createData(this.structureView, 0);
-            if (data) {
-                data.sview = this.structureView;
-                this.dataList.push(data);
-            }
-        }
-    };
-    StructureRepresentation.prototype.createData = function createData () {
-        console.error('createData not implemented');
-    };
-    StructureRepresentation.prototype.update = function update (what) {
-        if (this.lazy && !this.visible) {
-            Object.assign(this.lazyProps.what, what);
-            return;
-        }
-        if (this.needsBuild) {
-            this.build();
-            return;
-        }
-        this.dataList.forEach(function (data) {
-            if (data.bufferList.length > 0) {
-                this.updateData(what, data);
-            }
-        }, this);
-    };
-    StructureRepresentation.prototype.updateData = function updateData () {
-        this.build();
-    };
-    StructureRepresentation.prototype.getColorParams = function getColorParams () {
-        var p = Representation$$1.prototype.getColorParams.call(this);
-        p.structure = this.structure;
-        return p;
-    };
-    StructureRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
-        return Object.assign({
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { 'radius': this.radius, 'scale': this.scale }
-        }, params);
-    };
-    StructureRepresentation.prototype.getBondParams = function getBondParams (what, params) {
-        return Object.assign({
-            what: what,
-            colorParams: this.getColorParams(),
-            radiusParams: { 'radius': this.radius, 'scale': this.scale }
-        }, params);
-    };
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setSelection
-     * @param {String} string - selection string, see {@tutorial selection-language}
-     * @param {Boolean} [silent] - don't trigger a change event in the selection
-     * @return {StructureRepresentation} this object
-     */
-    StructureRepresentation.prototype.setSelection = function setSelection (string, silent) {
-        this.selection.setString(string, silent);
-        return this;
-    };
-    /**
-     * Set representation parameters
-     * @alias StructureRepresentation#setParameters
-     * @param {StructureRepresentationParameters} params - structure parameter object
-     * @param {Object} [what] - buffer data attributes to be updated,
-     *                        note that this needs to be implemented in the
-     *                        derived classes. Generally it allows more
-     *                        fine-grained control over updating than
-     *                        forcing a rebuild.
-     * @param {Boolean} what.position - update position data
-     * @param {Boolean} what.color - update color data
-     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
-     * @return {StructureRepresentation} this object
-     */
-    StructureRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
-        what = what || {};
-        if (params && params.radiusType !== undefined) {
-            if (params.radiusType === 'size') {
-                this.radius = 1.0;
-            }
-            else {
-                this.radius = params.radiusType;
-            }
-            delete params.radiusType;
-            what.radius = true;
-            if (!ExtensionFragDepth || this.disableImpostor) {
-                rebuild = true;
-            }
-        }
-        if (params && params.radius !== undefined) {
-            what.radius = true;
-            if (!ExtensionFragDepth || this.disableImpostor) {
-                rebuild = true;
-            }
-        }
-        if (params && params.scale !== undefined) {
-            what.radius = true;
-            if (!ExtensionFragDepth || this.disableImpostor) {
-                rebuild = true;
-            }
-        }
-        if (params && params.defaultAssembly !== undefined) {
-            rebuild = true;
-        }
-        Representation$$1.prototype.setParameters.call(this, params, what, rebuild);
-        return this;
-    };
-    StructureRepresentation.prototype.getParameters = function getParameters () {
-        var params = Object.assign(Representation$$1.prototype.getParameters.call(this), {
-            sele: this.selection ? this.selection.string : undefined,
-            defaultAssembly: this.defaultAssembly
-        });
-        return params;
-    };
-    StructureRepresentation.prototype.attach = function attach (callback) {
-        var viewer = this.viewer;
-        var bufferList = this.bufferList;
-        this.dataList.forEach(function (data) {
-            data.bufferList.forEach(function (buffer) {
-                bufferList.push(buffer);
-                viewer.add(buffer, data.instanceList);
-            });
-        });
-        this.setVisibility(this.visible);
-        callback();
-    };
-    StructureRepresentation.prototype.clear = function clear () {
-        this.dataList.length = 0;
-        Representation$$1.prototype.clear.call(this);
-    };
-    StructureRepresentation.prototype.dispose = function dispose () {
-        this.structureView.dispose();
-        delete this.structure;
-        delete this.structureView;
-        Representation$$1.prototype.dispose.call(this);
-    };
-
-    Object.defineProperties( StructureRepresentation.prototype, prototypeAccessors );
-
-    return StructureRepresentation;
-}(Representation));
-
-/**
- * @file Cylinder Geometry Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var scale$1 = new Vector3();
-var eye = new Vector3();
-var target = new Vector3();
-var up = new Vector3(0, 1, 0);
-var CylinderGeometryBufferDefaultParameters = Object.assign({
-    radialSegments: 1,
-    openEnded: true
-}, BufferDefaultParameters);
-function getData$1(data, params) {
-    if ( params === void 0 ) params = {};
-
-    var geo = getGeo(params);
-    var n = data.position1.length;
-    var geoLength = geo.attributes.position.array.length / 3;
-    var count = n / 3;
-    var primitiveId = new Float32Array(count * 2 * geoLength);
-    serialBlockArray(count, geoLength, 0, primitiveId);
-    serialBlockArray(count, geoLength, count * geoLength, primitiveId);
-    var position = new Float32Array(n * 2);
-    var color = new Float32Array(n * 2);
-    return {
-        position: position, color: color, primitiveId: primitiveId, picking: data.picking
-    };
-}
-function getGeo(params) {
-    if ( params === void 0 ) params = {};
-
-    var radialSegments = defaults(params.radialSegments, 10);
-    var openEnded = defaults(params.openEnded, true);
-    var matrix = new Matrix4().makeRotationX(Math.PI / 2);
-    var geo = new CylinderBufferGeometry(1, // radiusTop,
-    1, // radiusBottom,
-    1, // height,
-    radialSegments, // radialSegments,
-    1, // heightSegments,
-    openEnded // openEnded
-    );
-    geo.applyMatrix(matrix);
-    return geo;
-}
-/**
- * Cylinder geometry buffer.
- *
- * @example
- * var cylinderGeometryBuffer = new CylinderGeometryBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ]),
- *   radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
-    function CylinderGeometryBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        GeometryBuffer$$1.call(this, getData$1(data, params), params, getGeo(params));
-        this.updateNormals = true;
-        var n = data.position1.length;
-        var m = data.radius.length;
-        this.__center = new Float32Array(n);
-        this._position = new Float32Array(n * 2);
-        this._color = new Float32Array(n * 2);
-        this._from = new Float32Array(n * 2);
-        this._to = new Float32Array(n * 2);
-        this._radius = new Float32Array(m * 2);
-        this.setAttributes(data, true);
-    }
-
-    if ( GeometryBuffer$$1 ) CylinderGeometryBuffer.__proto__ = GeometryBuffer$$1;
-    CylinderGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
-    CylinderGeometryBuffer.prototype.constructor = CylinderGeometryBuffer;
-
-    var prototypeAccessors = { defaultParameters: {} };
-    prototypeAccessors.defaultParameters.get = function () { return CylinderGeometryBufferDefaultParameters; };
-    CylinderGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
-        eye.fromArray(this._from, i3);
-        target.fromArray(this._to, i3);
-        matrix.lookAt(eye, target, up);
-        var r = this._radius[i];
-        scale$1.set(r, r, eye.distanceTo(target));
-        matrix.scale(scale$1);
-    };
-    CylinderGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
-        if ( data === void 0 ) data = {};
-
-        var meshData = {};
-        if (data.position1 && data.position2) {
-            calculateCenterArray(data.position1, data.position2, this.__center);
-            calculateCenterArray(data.position1, this.__center, this._position);
-            calculateCenterArray(this.__center, data.position2, this._position, data.position1.length);
-            this._from.set(data.position1);
-            this._from.set(this.__center, data.position1.length);
-            this._to.set(this.__center);
-            this._to.set(data.position2, this.__center.length);
-            meshData.position = this._position;
-        }
-        if (data.color && data.color2) {
-            this._color.set(data.color);
-            this._color.set(data.color2, data.color.length);
-            meshData.color = this._color;
-        }
-        if (data.radius) {
-            this._radius.set(data.radius);
-            this._radius.set(data.radius, data.radius.length);
-            meshData.radius = this._radius;
-        }
-        GeometryBuffer$$1.prototype.setAttributes.call(this, meshData, initNormals);
-    };
-
-    Object.defineProperties( CylinderGeometryBuffer.prototype, prototypeAccessors );
-
-    return CylinderGeometryBuffer;
-}(GeometryBuffer));
-
-ShaderRegistry.add('shader/CylinderImpostor.vert', "\nattribute vec3 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\nattribute float radius;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n#ifdef PICKING\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\nattribute vec3 color2;\nvarying vec3 vColor1;\nvarying vec3 vColor2;\n#endif\nuniform mat4 modelViewMatrixInverse;\nuniform float ortho;\n#include matrix_scale\nvoid main(){\n#ifdef PICKING\nvPickingColor = unpackColor( primitiveId );\n#else\nvColor1 = color;\nvColor2 = color2;\n#endif\nbase_radius.w = radius * matrixScale( modelViewMatrix );\nvec3 center = position;\nvec3 dir = normalize( position2 - position1 );\nfloat ext = length( position2 - position1 ) / 2.0;\nvec3 cam_dir;\nif( ortho == 0.0 ){\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\n}else{\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\n}\ncam_dir = normalize( cam_dir );\nvec3 ldir;\nfloat b = dot( cam_dir, dir );\nend_b.w = b;\nif( b < 0.0 )\nldir = -ext * dir;\nelse\nldir = ext * dir;\nvec3 left = normalize( cross( cam_dir, ldir ) );\nleft = radius * left;\nvec3 up = radius * normalize( cross( left, ldir ) );\naxis = normalize( normalMatrix * ldir );\nU = normalize( normalMatrix * up );\nV = normalize( normalMatrix * left );\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\nbase_radius.xyz = base4.xyz / base4.w;\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\nvec4 end4 = top_position;\nend_b.xyz = end4.xyz / end4.w;\nw = modelViewMatrix * vec4(\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\n);\ngl_Position = projectionMatrix * w;\ngl_Position.z = 0.99;\n}");
-
-ShaderRegistry.add('shader/CylinderImpostor.frag', "#define STANDARD\n#define IMPOSTOR\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float clipNear;\nuniform mat4 projectionMatrix;\nuniform float ortho;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n#ifdef PICKING\nuniform float objectId;\nvarying vec3 vPickingColor;\n#else\nvarying vec3 vColor1;\nvarying vec3 vColor2;\n#include common\n#include fog_pars_fragment\n#include bsdfs\n#include lights_pars\n#include lights_physical_pars_fragment\n#endif\nbool interior = false;\nfloat distSq3( vec3 v3a, vec3 v3b ){\nreturn (\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n);\n}\nfloat calcDepth( in vec3 cameraPos ){\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\nfloat calcClip( vec3 cameraPos ){\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );\n}\nvoid main(){\nvec3 point = w.xyz / w.w;\nvec3 base = base_radius.xyz;\nfloat vRadius = base_radius.w;\nvec3 end = end_b.xyz;\nfloat b = end_b.w;\nvec3 end_cyl = end;\nvec3 surface_point = point;\nvec3 ray_target = surface_point;\nvec3 ray_origin = vec3(0.0);\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\nmat3 basis = mat3( U, V, axis );\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\nvec3 P = diff * basis;\nfloat dz = dot( axis, ray_direction );\nfloat radius2 = vRadius*vRadius;\nvec3 D = vec3(dot(U, ray_direction),\ndot(V, ray_direction),\ndz);\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\nfloat a1 = P.x*D.x + P.y*D.y;\nfloat a2 = D.x*D.x + D.y*D.y;\nfloat d = a1*a1 - a0*a2;\nif (d < 0.0)\ndiscard;\nfloat dist = (-a1 + sqrt(d)) / a2;\nvec3 new_point = ray_target + dist * ray_direction;\nvec3 tmp_point = new_point - base;\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\nray_origin = mix( ray_origin, surface_point, ortho );\nfloat front_cap_test = dot( tmp_point, axis );\nfloat end_cap_test = dot((new_point - end_cyl), axis);\n#ifndef CAP\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\nvec3 tmp_point2 = new_point2 - base;\n#endif\nif (front_cap_test < 0.0)\n{\nfloat dNV = dot(-axis, ray_direction);\nif (dNV < 0.0)\ndiscard;\nfloat near = dot(-axis, (base)) / dNV;\nvec3 front_point = ray_direction * near + ray_origin;\nif (dot(front_point - base, front_point-base) > radius2)\ndiscard;\n#ifdef CAP\nnew_point = front_point;\n_normal = axis;\n#else\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\ndNV = dot(-axis, ray_direction);\nnear = dot(axis, end_cyl) / dNV;\nnew_point2 = ray_direction * near + ray_origin;\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\ndiscard;\ninterior = true;\n#endif\n}\nif( end_cap_test > 0.0 )\n{\nfloat dNV = dot(axis, ray_direction);\nif (dNV < 0.0)\ndiscard;\nfloat near = dot(axis, end_cyl) / dNV;\nvec3 end_point = ray_direction * near + ray_origin;\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\ndiscard;\n#ifdef CAP\nnew_point = end_point;\n_normal = axis;\n#else\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\ndNV = dot(-axis, ray_direction);\nnear = dot(-axis, (base)) / dNV;\nnew_point2 = ray_direction * near + ray_origin;\nif (dot(new_point2 - base, new_point2-base) < radius2)\ndiscard;\ninterior = true;\n#endif\n}\ngl_FragDepthEXT = calcDepth( new_point );\n#ifdef NEAR_CLIP\nif( calcClip( new_point ) > 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\nif( calcClip( new_point ) > 0.0 )\ndiscard;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n}\n}else if( gl_FragDepthEXT <= 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n}\n}\n#else\nif( gl_FragDepthEXT <= 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n}\n}\n#endif\nif (gl_FragDepthEXT < 0.0)\ndiscard;\nif (gl_FragDepthEXT > 1.0)\ndiscard;\n#ifdef PICKING\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\nvec3 vViewPosition = -new_point;\nvec3 vNormal = _normal;\nvec3 vColor;\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\nif( b < 0.0 ){\nvColor = vColor1;\n}else{\nvColor = vColor2;\n}\n}else{\nif( b > 0.0 ){\nvColor = vColor1;\n}else{\nvColor = vColor2;\n}\n}\nvec4 diffuseColor = vec4( diffuse, opacity );\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\nvec3 totalEmissiveLight = emissive;\n#include color_fragment\n#include roughnessmap_fragment\n#include metalnessmap_fragment\nvec3 normal = normalize( vNormal );\nif( interior ){\nnormal = vec3( 0.0, 0.0, 0.4 );\n}\n#include lights_physical_fragment\n#include lights_template\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
-
-/**
- * @file Mapped Aligned Box Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var mapping$1 = new Float32Array([
-    -1.0, 1.0, -1.0,
-    -1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, -1.0,
-    1.0, -1.0, 1.0
-]);
-var mappingIndices$1 = new Uint16Array([
-    0, 1, 2,
-    1, 4, 2,
-    2, 4, 3,
-    4, 5, 3
-]);
-/**
- * Mapped Aligned box buffer. Draws boxes where one side is always screen-space aligned.
- * Used to render cylinder imposters.
- * @interface
- */
-var MappedAlignedBoxBuffer = (function (MappedBuffer$$1) {
-    function MappedAlignedBoxBuffer () {
-        MappedBuffer$$1.apply(this, arguments);
-    }
-
-    if ( MappedBuffer$$1 ) MappedAlignedBoxBuffer.__proto__ = MappedBuffer$$1;
-    MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
-    MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
-
-    var prototypeAccessors = { mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
-
-    prototypeAccessors.mapping.get = function () { return mapping$1; };
-    prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1; };
-    prototypeAccessors.mappingIndicesSize.get = function () { return 12; };
-    prototypeAccessors.mappingType.get = function () { return 'v3'; };
-    prototypeAccessors.mappingSize.get = function () { return 6; };
-    prototypeAccessors.mappingItemSize.get = function () { return 3; };
-
-    Object.defineProperties( MappedAlignedBoxBuffer.prototype, prototypeAccessors );
-
-    return MappedAlignedBoxBuffer;
-}(MappedBuffer));
-
-/**
- * @file Cylinder Impostor Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var CylinderImpostorBufferDefaultParameters = Object.assign({
-    openEnded: false
-}, BufferDefaultParameters);
-var CylinderImpostorBufferParameterTypes = Object.assign({
-    openEnded: { updateShader: true }
-}, BufferParameterTypes);
-/**
- * Cylinder impostor buffer.
- *
- * @example
- * var cylinderimpostorBuffer = new CylinderImpostorBuffer({
- *     position1: new Float32Array([ 0, 0, 0 ]),
- *     position2: new Float32Array([ 1, 1, 1 ]),
- *     color: new Float32Array([ 1, 0, 0 ]),
- *     color2: new Float32Array([ 0, 1, 0 ]),
- *     radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderImpostorBuffer = (function (MappedAlignedBoxBuffer$$1) {
-    function CylinderImpostorBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        MappedAlignedBoxBuffer$$1.call(this, data, params);
-        this.parameterTypes = CylinderImpostorBufferParameterTypes;
-        this.isImpostor = true;
-        this.vertexShader = 'CylinderImpostor.vert';
-        this.fragmentShader = 'CylinderImpostor.frag';
-        this.addUniforms({
-            'modelViewMatrixInverse': { value: new Matrix4() },
-            'ortho': { value: 0.0 }
-        });
-        this.addAttributes({
-            'position1': { type: 'v3', value: null },
-            'position2': { type: 'v3', value: null },
-            'color2': { type: 'c', value: null },
-            'radius': { type: 'f', value: null }
-        });
-        this.setAttributes(data);
-        this.makeMapping();
-    }
-
-    if ( MappedAlignedBoxBuffer$$1 ) CylinderImpostorBuffer.__proto__ = MappedAlignedBoxBuffer$$1;
-    CylinderImpostorBuffer.prototype = Object.create( MappedAlignedBoxBuffer$$1 && MappedAlignedBoxBuffer$$1.prototype );
-    CylinderImpostorBuffer.prototype.constructor = CylinderImpostorBuffer;
-
-    var prototypeAccessors = { defaultParameters: {} };
-    prototypeAccessors.defaultParameters.get = function () { return CylinderImpostorBufferDefaultParameters; };
-    CylinderImpostorBuffer.prototype.getDefines = function getDefines (type) {
-        var defines = MappedAlignedBoxBuffer$$1.prototype.getDefines.call(this, type);
-        if (!this.parameters.openEnded) {
-            defines.CAP = 1;
-        }
-        return defines;
-    };
-
-    Object.defineProperties( CylinderImpostorBuffer.prototype, prototypeAccessors );
-
-    return CylinderImpostorBuffer;
-}(MappedAlignedBoxBuffer));
-
-/**
- * @file Cylinder Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var CylinderBufferDefaultParameters = Object.assign({
-    disableImpostor: false
-}, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters);
-/**
- * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
- * `params.disableImpostor` the constructor returns either a
- * {@link CylinderGeometryBuffer} or a {@link CylinderImpostorBuffer}
- * @implements {Buffer}
- *
- * @example
- * var cylinderBuffer = new CylinderBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ]),
- *   radius: new Float32Array([ 1 ])
- * });
- */
-var CylinderBuffer = function CylinderBuffer(data, params) {
-    if ( params === void 0 ) params = {};
-
-    if (!data.color2 && data.color)
-        { data.color2 = data.color; }
-    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
-        return new CylinderGeometryBuffer(data, params);
-    }
-    else {
-        return new CylinderImpostorBuffer(data, params);
-    }
-};
-BufferRegistry.add('cylinder', CylinderBuffer);
-
-/**
- * @file Line Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-function getSize(data) {
-    var size = data.position1.length / 3;
-    var attrSize = size * 4;
-    return attrSize * 3;
-}
-/**
- * Line buffer. Draws lines with a fixed width in pixels.
- *
- * @example
- * var lineBuffer = new LineBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ])
- * });
- */
-var LineBuffer = (function (Buffer$$1) {
-    function LineBuffer(data, params) {
-        if ( params === void 0 ) params = {};
-
-        Buffer$$1.call(this, {
-            position: new Float32Array(getSize(data)),
-            color: new Float32Array(getSize(data))
-        }, params);
-        this.isLine = true;
-        this.vertexShader = 'Line.vert';
-        this.fragmentShader = 'Line.frag';
-        this.setAttributes(data);
-    }
-
-    if ( Buffer$$1 ) LineBuffer.__proto__ = Buffer$$1;
-    LineBuffer.prototype = Object.create( Buffer$$1 && Buffer$$1.prototype );
-    LineBuffer.prototype.constructor = LineBuffer;
-    LineBuffer.prototype.setAttributes = function setAttributes (data) {
-        if ( data === void 0 ) data = {};
-
-        var position1, position2, color, color2;
-        var aPosition, aColor;
-        var attributes = this.geometry.attributes; // TODO
-        if (data.position1 && data.position2) {
-            position1 = data.position1;
-            position2 = data.position2;
-            aPosition = attributes.position.array;
-            attributes.position.needsUpdate = true;
-        }
-        if (data.color && data.color2) {
-            color = data.color;
-            color2 = data.color2;
-            aColor = attributes.color.array;
-            attributes.color.needsUpdate = true;
-        }
-        var n = this.size;
-        var i, j;
-        var x, y, z, x1, y1, z1, x2, y2, z2;
-        for (var v = 0; v < n; v++) {
-            j = v * 3;
-            i = v * 4 * 3;
-            if (position1 && position2) {
-                x1 = position1[j];
-                y1 = position1[j + 1];
-                z1 = position1[j + 2];
-                x2 = position2[j];
-                y2 = position2[j + 1];
-                z2 = position2[j + 2];
-                x = (x1 + x2) / 2.0;
-                y = (y1 + y2) / 2.0;
-                z = (z1 + z2) / 2.0;
-                aPosition[i] = x1;
-                aPosition[i + 1] = y1;
-                aPosition[i + 2] = z1;
-                aPosition[i + 3] = x;
-                aPosition[i + 4] = y;
-                aPosition[i + 5] = z;
-                aPosition[i + 6] = x;
-                aPosition[i + 7] = y;
-                aPosition[i + 8] = z;
-                aPosition[i + 9] = x2;
-                aPosition[i + 10] = y2;
-                aPosition[i + 11] = z2;
-            }
-            if (color && color2) {
-                aColor[i] = aColor[i + 3] = color[j];
-                aColor[i + 1] = aColor[i + 4] = color[j + 1];
-                aColor[i + 2] = aColor[i + 5] = color[j + 2];
-                aColor[i + 6] = aColor[i + 9] = color2[j];
-                aColor[i + 7] = aColor[i + 10] = color2[j + 1];
-                aColor[i + 8] = aColor[i + 11] = color2[j + 2];
-            }
-        }
-    };
-
-    return LineBuffer;
-}(Buffer));
-
-/**
- * @file Trajectory Representation
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Trajectory representation parameter object.
- * @typedef {Object} TrajectoryRepresentationParameters - parameters
- *
- * @property {Boolean} drawLine - draw lines
- * @property {Boolean} drawCylinder - draw cylinders
- * @property {Boolean} drawPoint - draw points
- * @property {Boolean} drawSphere - draw sphere
- * @property {Integer} linewidth - line width
- * @property {Integer} pointSize - point size
- * @property {Boolean} sizeAttenuation - size attenuation
- * @property {Boolean} sort - sort flag for points
- */
-/**
- * Trajectory representation
- */
-var TrajectoryRepresentation = (function (StructureRepresentation$$1) {
-    function TrajectoryRepresentation(trajectory, viewer, params) {
-        StructureRepresentation$$1.call(this, trajectory.structure, viewer, params);
-        this.type = 'trajectory';
-        this.parameters = Object.assign({
-            drawLine: {
-                type: 'boolean', rebuild: true
-            },
-            drawCylinder: {
-                type: 'boolean', rebuild: true
-            },
-            drawPoint: {
-                type: 'boolean', rebuild: true
-            },
-            drawSphere: {
-                type: 'boolean', rebuild: true
-            },
-            linewidth: {
-                type: 'integer', max: 20, min: 1, rebuild: true
-            },
-            pointSize: {
-                type: 'integer', max: 20, min: 1, rebuild: true
-            },
-            sizeAttenuation: {
-                type: 'boolean', rebuild: true
-            },
-            sort: {
-                type: 'boolean', rebuild: true
-            }
-        }, this.parameters);
-        this.manualAttach = true;
-        this.trajectory = trajectory;
-        this.init(params);
-    }
-
-    if ( StructureRepresentation$$1 ) TrajectoryRepresentation.__proto__ = StructureRepresentation$$1;
-    TrajectoryRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
-    TrajectoryRepresentation.prototype.constructor = TrajectoryRepresentation;
-    TrajectoryRepresentation.prototype.init = function init (params) {
-        var p = params || {};
-        p.colorScheme = defaults(p.colorScheme, 'uniform');
-        p.colorValue = defaults(p.colorValue, 0xDDDDDD);
-        this.drawLine = defaults(p.drawLine, true);
-        this.drawCylinder = defaults(p.drawCylinder, false);
-        this.drawPoint = defaults(p.drawPoint, false);
-        this.drawSphere = defaults(p.drawSphere, false);
-        this.pointSize = defaults(p.pointSize, 1);
-        this.sizeAttenuation = defaults(p.sizeAttenuation, false);
-        this.sort = defaults(p.sort, true);
-        StructureRepresentation$$1.prototype.init.call(this, p);
-    };
-    TrajectoryRepresentation.prototype.attach = function attach () {
-        var this$1 = this;
-
-        this.bufferList.forEach(function (buffer) { return this$1.viewer.add(buffer); });
-        this.setVisibility(this.visible);
-        this.tasks.decrement();
-    };
-    // prepare (callback) {
-    //   // TODO
-    //   // - move loading of path here
-    //   // - get rid of manualAttach
-    //   callback()
-    // }
-    TrajectoryRepresentation.prototype.create = function create () {
-        var this$1 = this;
-
-        console.log('create', this.structureView.atomCount);
-        if (this.structureView.atomCount === 0)
-            { return; }
-        var index = this.structureView.getAtomIndices()[0];
-        this.trajectory.getPath(index, function (path) {
-            var n = path.length / 3;
-            var tc = new Color(this$1.colorValue);
-            if (this$1.drawSphere) {
-                var sphereBuffer = new SphereBuffer({
-                    position: path,
-                    color: uniformArray3(n, tc.r, tc.g, tc.b),
-                    radius: uniformArray(n, 0.2)
-                }, this$1.getBufferParams({
-                    sphereDetail: this$1.sphereDetail,
-                    dullInterior: true,
-                    disableImpostor: this$1.disableImpostor
-                }));
-                this$1.bufferList.push(sphereBuffer);
-            }
-            if (this$1.drawCylinder) {
-                var cylinderBuffer = new CylinderBuffer({
-                    position1: path.subarray(0, -3),
-                    position2: path.subarray(3),
-                    color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
-                    color2: uniformArray3(n - 1, tc.r, tc.g, tc.b),
-                    radius: uniformArray(n, 0.05)
-                }, this$1.getBufferParams({
-                    openEnded: false,
-                    radialSegments: this$1.radialSegments,
-                    disableImpostor: this$1.disableImpostor,
-                    dullInterior: true
-                }));
-                this$1.bufferList.push(cylinderBuffer);
-            }
-            if (this$1.drawPoint) {
-                var pointBuffer = new PointBuffer({
-                    position: path,
-                    color: uniformArray3(n, tc.r, tc.g, tc.b)
-                }, this$1.getBufferParams({
-                    pointSize: this$1.pointSize,
-                    sizeAttenuation: this$1.sizeAttenuation,
-                    sort: this$1.sort
-                }));
-                this$1.bufferList.push(pointBuffer);
-            }
-            if (this$1.drawLine) {
-                var lineBuffer = new LineBuffer({
-                    position1: path.subarray(0, -3),
-                    position2: path.subarray(3),
-                    color: uniformArray3(n - 1, tc.r, tc.g, tc.b),
-                    color2: uniformArray3(n - 1, tc.r, tc.g, tc.b)
-                }, this$1.getBufferParams());
-                this$1.bufferList.push(lineBuffer);
-            }
-            this$1.attach();
-        });
-    };
-
-    return TrajectoryRepresentation;
-}(StructureRepresentation));
-
-/**
  * @file Representation Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
 function logReprUnknown(type) {
-    Log.error('makeRepresentation: representation type ' + type + ' unknown');
+    Log.error(("makeRepresentation: representation type " + type + " unknown"));
 }
 function makeRepresentation(type, object, viewer, params) {
     if (Debug)
@@ -73089,9 +71656,6 @@ function makeRepresentation(type, object, viewer, params) {
             logReprUnknown(type);
             return;
         }
-    }
-    else if (object instanceof Trajectory) {
-        ReprClass = TrajectoryRepresentation;
     }
     else if (object instanceof Shape$1) {
         ReprClass = BufferRepresentation;
@@ -73138,9 +71702,9 @@ var Element = function Element(stage, params) {
     this.uuid = generateUUID();
 };
 
-var prototypeAccessors$27 = { defaultParameters: {},name: {} };
-prototypeAccessors$27.defaultParameters.get = function () { return ElementDefaultParameters; };
-prototypeAccessors$27.name.get = function () { return this.parameters.name; };
+var prototypeAccessors$25 = { defaultParameters: {},name: {} };
+prototypeAccessors$25.defaultParameters.get = function () { return ElementDefaultParameters; };
+prototypeAccessors$25.name.get = function () { return this.parameters.name; };
 Element.prototype.setStatus = function setStatus (value) {
     this.parameters.status = value;
     this.signals.statusChanged.dispatch(value);
@@ -73155,7 +71719,7 @@ Element.prototype.dispose = function dispose () {
     this.signals.disposed.dispatch();
 };
 
-Object.defineProperties( Element.prototype, prototypeAccessors$27 );
+Object.defineProperties( Element.prototype, prototypeAccessors$25 );
 
 /**
  * @file Representation Element
@@ -73505,7 +72069,9 @@ Component.prototype.removeAllAnnotations = function removeAllAnnotations () {
  * @return {RepresentationElement} the created representation wrapped into
  *                               a representation element object
  */
-Component.prototype._addRepresentation = function _addRepresentation (type, object, params) {
+Component.prototype._addRepresentation = function _addRepresentation (type, object, params, hidden) {
+        if ( hidden === void 0 ) hidden = false;
+
     var p = params || {};
     var sp = this.stage.getParameters(); // TODO
     p.matrix = this.matrix.clone();
@@ -73516,8 +72082,10 @@ Component.prototype._addRepresentation = function _addRepresentation (type, obje
     var p2 = Object.assign({}, p, { visible: this.parameters.visible && p.visible });
     var repr = makeRepresentation(type, object, this.viewer, p2);
     var reprElem = new RepresentationElement(this.stage, repr, p, this);
-    this.reprList.push(reprElem);
-    this.signals.representationAdded.dispatch(reprElem);
+    if (!hidden) {
+        this.reprList.push(reprElem);
+        this.signals.representationAdded.dispatch(reprElem);
+    }
     return reprElem;
 };
 Component.prototype.addBufferRepresentation = function addBufferRepresentation (buffer, params) {
@@ -73757,10 +72325,858 @@ var Frames = function Frames(name, path) {
     this.deltaTime = 1;
 };
 
-var prototypeAccessors$28 = { type: {} };
-prototypeAccessors$28.type.get = function () { return 'Frames'; };
+var prototypeAccessors$26 = { type: {} };
+prototypeAccessors$26.type.get = function () { return 'Frames'; };
 
-Object.defineProperties( Frames.prototype, prototypeAccessors$28 );
+Object.defineProperties( Frames.prototype, prototypeAccessors$26 );
+
+/**
+ * @file Superposition
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var Superposition = function Superposition(atoms1, atoms2) {
+    // allocate & init data structures
+    this.A = new Matrix(3, 3);
+    this.W = new Matrix(1, 3);
+    this.U = new Matrix(3, 3);
+    this.V = new Matrix(3, 3);
+    this.VH = new Matrix(3, 3);
+    this.R = new Matrix(3, 3);
+    this.tmp = new Matrix(3, 3);
+    this.c = new Matrix(3, 3);
+    var n1;
+    if (atoms1 instanceof Structure) {
+        n1 = atoms1.atomCount;
+    }
+    else if (atoms1 instanceof Float32Array) {
+        n1 = atoms1.length / 3;
+    }
+    else {
+        return;
+    }
+    var n2;
+    if (atoms2 instanceof Structure) {
+        n2 = atoms2.atomCount;
+    }
+    else if (atoms2 instanceof Float32Array) {
+        n2 = atoms2.length / 3;
+    }
+    else {
+        return;
+    }
+    var n = Math.min(n1, n2);
+    var coords1 = new Matrix(3, n);
+    var coords2 = new Matrix(3, n);
+    this.coords1t = new Matrix(n, 3);
+    this.coords2t = new Matrix(n, 3);
+    this.c.data.set([1, 0, 0, 0, 1, 0, 0, 0, -1]);
+    // prep coords
+    this.prepCoords(atoms1, coords1, n);
+    this.prepCoords(atoms2, coords2, n);
+    // superpose
+    this._superpose(coords1, coords2);
+};
+Superposition.prototype._superpose = function _superpose (coords1, coords2) {
+    this.mean1 = meanRows(coords1);
+    this.mean2 = meanRows(coords2);
+    subRows(coords1, this.mean1);
+    subRows(coords2, this.mean2);
+    transpose(this.coords1t, coords1);
+    transpose(this.coords2t, coords2);
+    multiplyABt(this.A, this.coords2t, this.coords1t);
+    svd(this.A, this.W, this.U, this.V);
+    invert3x3(this.V, this.VH);
+    multiply3x3(this.R, this.U, this.VH);
+    if (mat3x3determinant(this.R) < 0.0) {
+        if (Debug)
+            { Log.log('R not a right handed system'); }
+        multiply3x3(this.tmp, this.c, this.VH);
+        multiply3x3(this.R, this.U, this.tmp);
+    }
+};
+Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
+    var i = 0;
+    var n3 = n * 3;
+    var cd = coords.data;
+    if (atoms instanceof Structure) {
+        atoms.eachAtom(function (a) {
+            if (i < n3) {
+                cd[i + 0] = a.x;
+                cd[i + 1] = a.y;
+                cd[i + 2] = a.z;
+                i += 3;
+            }
+        });
+    }
+    else if (atoms instanceof Float32Array) {
+        cd.set(atoms.subarray(0, n3));
+    }
+    else {
+        Log.warn('prepCoords: input type unknown');
+    }
+};
+Superposition.prototype.transform = function transform (atoms) {
+    // allocate data structures
+    var n;
+    if (atoms instanceof Structure) {
+        n = atoms.atomCount;
+    }
+    else if (atoms instanceof Float32Array) {
+        n = atoms.length / 3;
+    }
+    else {
+        return;
+    }
+    var coords = new Matrix(3, n);
+    var tmp = new Matrix(n, 3);
+    // prep coords
+    this.prepCoords(atoms, coords, n);
+    // do transform
+    subRows(coords, this.mean1);
+    multiplyABt(tmp, this.R, coords);
+    transpose(coords, tmp);
+    addRows(coords, this.mean2);
+    var i = 0;
+    var cd = coords.data;
+    if (atoms instanceof Structure) {
+        atoms.eachAtom(function (a) {
+            a.x = cd[i + 0];
+            a.y = cd[i + 1];
+            a.z = cd[i + 2];
+            i += 3;
+        });
+    }
+    else if (atoms instanceof Float32Array) {
+        atoms.set(cd.subarray(0, n * 3));
+    }
+    else {
+        Log.warn('transform: input type unknown');
+    }
+};
+
+/**
+ * @file Trajectory Player
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var TrajectoryPlayerDefaultParameters = {
+    step: 1,
+    timeout: 50,
+    start: 0,
+    end: 0,
+    interpolateType: '',
+    interpolateStep: 5,
+    mode: 'loop',
+    direction: 'forward'
+};
+/**
+ * Trajectory player for animating coordinate frames
+ * @example
+ * var player = new TrajectoryPlayer(trajectory, {step: 1, timeout: 50});
+ * player.play();
+ */
+var TrajectoryPlayer = function TrajectoryPlayer(traj, params) {
+    var this$1 = this;
+    if ( params === void 0 ) params = {};
+
+    this.signals = {
+        startedRunning: new signals_1(),
+        haltedRunning: new signals_1()
+    };
+    this._run = false;
+    this._previousTime = 0;
+    this._currentTime = 0;
+    this._currentStep = 1;
+    traj.signals.playerChanged.add(function (player) {
+        if (player !== this$1) {
+            this$1.pause();
+        }
+    }, this);
+    var n = defaults(traj.frameCount, 1);
+    this.traj = traj;
+    this.parameters = createParams(params, TrajectoryPlayerDefaultParameters);
+    this.parameters.end = Math.min(defaults(params.end, n - 1), n - 1);
+    this.parameters.step = defaults(params.step, Math.ceil((n + 1) / 100));
+    this._currentFrame = this.parameters.start;
+    this._direction = this.parameters.direction === 'bounce' ? 'forward' : this.parameters.direction;
+    traj.signals.countChanged.add(function (n) {
+        this$1.parameters.end = Math.min(defaults(this$1.parameters.end, n - 1), n - 1);
+    }, this);
+    this._animate = this._animate.bind(this);
+};
+
+var prototypeAccessors$28 = { isRunning: {} };
+prototypeAccessors$28.isRunning.get = function () { return this._run; };
+/**
+ * set player parameters
+ * @param {TrajectoryPlayerParameters} [params] - parameter object
+ */
+TrajectoryPlayer.prototype.setParameters = function setParameters (params) {
+        if ( params === void 0 ) params = {};
+
+    updateParams(this.parameters, params);
+    if (params.direction !== undefined && this.parameters.direction !== 'bounce') {
+        this._direction = this.parameters.direction;
+    }
+};
+TrajectoryPlayer.prototype._animate = function _animate () {
+    if (!this._run)
+        { return; }
+    this._currentTime = window.performance.now();
+    var dt = this._currentTime - this._previousTime;
+    var step = this.parameters.interpolateType ? this.parameters.interpolateStep : 1;
+    var timeout = this.parameters.timeout / step;
+    var traj = this.traj;
+    if (traj && traj.frameCount && !traj.inProgress && dt >= timeout) {
+        if (this.parameters.interpolateType) {
+            if (this._currentStep > this.parameters.interpolateStep) {
+                this._currentStep = 1;
+            }
+            if (this._currentStep === 1) {
+                this._currentFrame = this._nextInterpolated();
+            }
+            if (traj.hasFrame(this._currentFrame)) {
+                this._currentStep += 1;
+                var t = this._currentStep / (this.parameters.interpolateStep + 1);
+                var ref = this._currentFrame;
+                    var i = ref[0];
+                    var ip = ref[1];
+                    var ipp = ref[2];
+                    var ippp = ref[3];
+                traj.setFrameInterpolated(i, ip, ipp, ippp, t, this.parameters.interpolateType);
+                this._previousTime = this._currentTime;
+            }
+            else {
+                traj.loadFrame(this._currentFrame);
+            }
+        }
+        else {
+            var i$1 = this._next();
+            if (traj.hasFrame(i$1)) {
+                traj.setFrame(i$1);
+                this._previousTime = this._currentTime;
+            }
+            else {
+                traj.loadFrame(i$1);
+            }
+        }
+    }
+    window.requestAnimationFrame(this._animate);
+};
+TrajectoryPlayer.prototype._next = function _next () {
+    var p = this.parameters;
+    var i;
+    if (this._direction === 'forward') {
+        i = this.traj.currentFrame + p.step;
+    }
+    else {
+        i = this.traj.currentFrame - p.step;
+    }
+    if (i > p.end || i < p.start) {
+        if (p.direction === 'bounce') {
+            if (this._direction === 'forward') {
+                this._direction = 'backward';
+            }
+            else {
+                this._direction = 'forward';
+            }
+        }
+        if (p.mode === 'once') {
+            this.pause();
+            if (p.direction === 'forward') {
+                i = p.end;
+            }
+            else if (p.direction === 'backward') {
+                i = p.start;
+            }
+            else {
+                if (this._direction === 'forward') {
+                    i = p.start;
+                }
+                else {
+                    i = p.end;
+                }
+            }
+        }
+        else {
+            if (this._direction === 'forward') {
+                i = p.start;
+                if (p.interpolateType) {
+                    i = Math.min(p.end, i + p.step);
+                }
+            }
+            else {
+                i = p.end;
+                if (p.interpolateType) {
+                    i = Math.max(p.start, i - p.step);
+                }
+            }
+        }
+    }
+    return i;
+};
+TrajectoryPlayer.prototype._nextInterpolated = function _nextInterpolated () {
+    var p = this.parameters;
+    var i = this._next();
+    var ip, ipp, ippp;
+    if (this._direction === 'forward') {
+        ip = Math.max(p.start, i - p.step);
+        ipp = Math.max(p.start, i - 2 * p.step);
+        ippp = Math.max(p.start, i - 3 * p.step);
+    }
+    else {
+        ip = Math.min(p.end, i + p.step);
+        ipp = Math.min(p.end, i + 2 * p.step);
+        ippp = Math.min(p.end, i + 3 * p.step);
+    }
+    return [i, ip, ipp, ippp];
+};
+/**
+ * toggle between playing and pausing the animation
+ * @return {undefined}
+ */
+TrajectoryPlayer.prototype.toggle = function toggle () {
+    if (this._run) {
+        this.pause();
+    }
+    else {
+        this.play();
+    }
+};
+/**
+ * start the animation
+ * @return {undefined}
+ */
+TrajectoryPlayer.prototype.play = function play () {
+    if (!this._run) {
+        if (this.traj.player !== this) {
+            this.traj.setPlayer(this);
+        }
+        this._currentStep = 1;
+        var p = this.parameters;
+        var frame = this.traj.currentFrame;
+        // snap to the grid implied by this.step division and multiplication
+        // thus minimizing cache misses
+        var i = Math.ceil(frame / p.step) * p.step;
+        // wrap when restarting from the limit (i.e. end or start)
+        if (p.direction === 'forward' && frame >= p.end) {
+            i = p.start;
+        }
+        else if (p.direction === 'backward' && frame <= p.start) {
+            i = p.end;
+        }
+        this.traj.setFrame(i);
+        this._run = true;
+        this._animate();
+        this.signals.startedRunning.dispatch();
+    }
+};
+/**
+ * pause the animation
+ * @return {undefined}
+ */
+TrajectoryPlayer.prototype.pause = function pause () {
+    this._run = false;
+    this.signals.haltedRunning.dispatch();
+};
+/**
+ * stop the animation (pause and go to start-frame)
+ * @return {undefined}
+ */
+TrajectoryPlayer.prototype.stop = function stop () {
+    this.pause();
+    this.traj.setFrame(this.parameters.start);
+};
+
+Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$28 );
+
+/**
+ * @file Trajectory
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+function centerPbc(coords, mean, box) {
+    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
+        return;
+    }
+    var n = coords.length;
+    var bx = box[0];
+    var by = box[1];
+    var bz = box[2];
+    var mx = mean[0];
+    var my = mean[1];
+    var mz = mean[2];
+    var fx = -mx + bx + bx / 2;
+    var fy = -my + by + by / 2;
+    var fz = -mz + bz + bz / 2;
+    for (var i = 0; i < n; i += 3) {
+        coords[i + 0] = (coords[i + 0] + fx) % bx;
+        coords[i + 1] = (coords[i + 1] + fy) % by;
+        coords[i + 2] = (coords[i + 2] + fz) % bz;
+    }
+}
+function removePbc(x, box) {
+    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
+        return;
+    }
+    // ported from GROMACS src/gmxlib/rmpbc.c:rm_gropbc()
+    // in-place
+    var n = x.length;
+    for (var i = 3; i < n; i += 3) {
+        for (var j = 0; j < 3; ++j) {
+            var dist = x[i + j] - x[i - 3 + j];
+            if (Math.abs(dist) > 0.9 * box[j * 3 + j]) {
+                if (dist > 0) {
+                    for (var d = 0; d < 3; ++d) {
+                        x[i + d] -= box[j * 3 + d];
+                    }
+                }
+                else {
+                    for (var d$1 = 0; d$1 < 3; ++d$1) {
+                        x[i + d$1] += box[j * 3 + d$1];
+                    }
+                }
+            }
+        }
+    }
+    return x;
+}
+function removePeriodicity(x, box, mean) {
+    if (box[0] === 0 || box[8] === 0 || box[4] === 0) {
+        return;
+    }
+    var n = x.length;
+    for (var i = 3; i < n; i += 3) {
+        for (var j = 0; j < 3; ++j) {
+            var f = (x[i + j] - mean[j]) / box[j * 3 + j];
+            if (Math.abs(f) > 0.5) {
+                x[i + j] -= box[j * 3 + j] * Math.round(f);
+            }
+        }
+    }
+    return x;
+}
+function circularMean3(indices, coords, box) {
+    return [
+        circularMean(coords, box[0], 3, 0, indices),
+        circularMean(coords, box[1], 3, 1, indices),
+        circularMean(coords, box[2], 3, 2, indices)
+    ];
+}
+function arrayMean3(coords) {
+    return [
+        arrayMean(coords, 3, 0),
+        arrayMean(coords, 3, 1),
+        arrayMean(coords, 3, 2)
+    ];
+}
+function interpolateSpline(c, cp, cpp, cppp, t) {
+    var m = c.length;
+    var coords = new Float32Array(m);
+    for (var j0 = 0; j0 < m; j0 += 3) {
+        var j1 = j0 + 1;
+        var j2 = j0 + 2;
+        coords[j0] = spline(cppp[j0], cpp[j0], cp[j0], c[j0], t, 1);
+        coords[j1] = spline(cppp[j1], cpp[j1], cp[j1], c[j1], t, 1);
+        coords[j2] = spline(cppp[j2], cpp[j2], cp[j2], c[j2], t, 1);
+    }
+    return coords;
+}
+function interpolateLerp(c, cp, t) {
+    var m = c.length;
+    var coords = new Float32Array(m);
+    for (var j0 = 0; j0 < m; j0 += 3) {
+        var j1 = j0 + 1;
+        var j2 = j0 + 2;
+        coords[j0] = lerp(cp[j0], c[j0], t);
+        coords[j1] = lerp(cp[j1], c[j1], t);
+        coords[j2] = lerp(cp[j2], c[j2], t);
+    }
+    return coords;
+}
+/**
+ * Base class for trajectories, tying structures and coordinates together
+ * @interface
+ */
+var Trajectory = function Trajectory(trajPath, structure, params) {
+    var this$1 = this;
+    if ( params === void 0 ) params = {};
+
+    this.signals = {
+        countChanged: new signals_1(),
+        frameChanged: new signals_1(),
+        playerChanged: new signals_1()
+    };
+    this.frameCache = {};
+    this.loadQueue = {};
+    this.boxCache = {};
+    this.pathCache = {};
+    this.frameCacheSize = 0;
+    this._frameCount = 0;
+    this._currentFrame = -1;
+    this._disposed = false;
+    this.deltaTime = defaults(params.deltaTime, 0);
+    this.timeOffset = defaults(params.timeOffset, 0);
+    this.centerPbc = defaults(params.centerPbc, false);
+    this.removePbc = defaults(params.removePbc, false);
+    this.removePeriodicity = defaults(params.removePeriodicity, false);
+    this.superpose = defaults(params.superpose, false);
+    this.name = trajPath.replace(/^.*[\\/]/, '');
+    this.trajPath = trajPath;
+    this.selection = new Selection(defaults(params.sele, 'backbone and not hydrogen'));
+    this.selection.signals.stringChanged.add(function () {
+        this$1.selectionIndices = this$1.structure.getAtomIndices(this$1.selection);
+        this$1._resetCache();
+        this$1._saveInitialCoords();
+        this$1.setFrame(this$1._currentFrame);
+    });
+};
+
+var prototypeAccessors$27 = { frameCount: {},currentFrame: {} };
+/**
+ * Number of frames in the trajectory
+ */
+prototypeAccessors$27.frameCount.get = function () {
+    return this._frameCount;
+};
+/**
+ * Currently set frame of the trajectory
+ */
+prototypeAccessors$27.currentFrame.get = function () {
+    return this._currentFrame;
+};
+Trajectory.prototype._init = function _init (structure) {
+    this.setStructure(structure);
+    this._loadFrameCount();
+    this.setPlayer(new TrajectoryPlayer(this));
+};
+Trajectory.prototype._loadFrameCount = function _loadFrameCount () { };
+Trajectory.prototype.setStructure = function setStructure (structure) {
+    this.structure = structure;
+    this.atomCount = structure.atomCount;
+    this.backboneIndices = this._getIndices(new Selection('backbone and not hydrogen'));
+    this._makeAtomIndices();
+    this._saveStructureCoords();
+    this.selectionIndices = this._getIndices(this.selection);
+    this._resetCache();
+    this._saveInitialCoords();
+    this.setFrame(this._currentFrame);
+};
+Trajectory.prototype._saveInitialCoords = function _saveInitialCoords () {
+        var this$1 = this;
+
+    if (this.structure.hasCoords()) {
+        this.initialCoords = new Float32Array(this.structureCoords);
+        this._makeSuperposeCoords();
+    }
+    else if (this.frameCache[0]) {
+        this.initialCoords = new Float32Array(this.frameCache[0]);
+        this._makeSuperposeCoords();
+    }
+    else {
+        this.loadFrame(0, function () { return this$1._saveInitialCoords(); });
+    }
+};
+Trajectory.prototype._saveStructureCoords = function _saveStructureCoords () {
+    var p = { what: { position: true } };
+    this.structureCoords = this.structure.getAtomData(p).position;
+};
+Trajectory.prototype.setSelection = function setSelection (string) {
+    this.selection.setString(string);
+    return this;
+};
+Trajectory.prototype._getIndices = function _getIndices (selection) {
+    var i = 0;
+    var test = selection.test;
+    var indices = [];
+    if (test) {
+        this.structure.eachAtom(function (ap) {
+            if (test(ap))
+                { indices.push(i); }
+            i += 1;
+        });
+    }
+    return indices;
+};
+Trajectory.prototype._makeSuperposeCoords = function _makeSuperposeCoords () {
+        var this$1 = this;
+
+    var n = this.selectionIndices.length * 3;
+    this.coords1 = new Float32Array(n);
+    this.coords2 = new Float32Array(n);
+    var y = this.initialCoords;
+    var coords2 = this.coords2;
+    for (var i = 0; i < n; i += 3) {
+        var j = this$1.selectionIndices[i / 3] * 3;
+        coords2[i + 0] = y[j + 0];
+        coords2[i + 1] = y[j + 1];
+        coords2[i + 2] = y[j + 2];
+    }
+};
+Trajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
+    Log.error('Trajectory._makeAtomIndices not implemented');
+};
+Trajectory.prototype._resetCache = function _resetCache () {
+    this.frameCache = {};
+    this.loadQueue = {};
+    this.boxCache = {};
+    this.pathCache = {};
+    this.frameCacheSize = 0;
+    this.initialCoords = new Float32Array(0);
+};
+Trajectory.prototype.setParameters = function setParameters (params) {
+        if ( params === void 0 ) params = {};
+
+    var resetCache = false;
+    if (params.centerPbc !== undefined && params.centerPbc !== this.centerPbc) {
+        this.centerPbc = params.centerPbc;
+        resetCache = true;
+    }
+    if (params.removePeriodicity !== undefined && params.removePeriodicity !== this.removePeriodicity) {
+        this.removePeriodicity = params.removePeriodicity;
+        resetCache = true;
+    }
+    if (params.removePbc !== undefined && params.removePbc !== this.removePbc) {
+        this.removePbc = params.removePbc;
+        resetCache = true;
+    }
+    if (params.superpose !== undefined && params.superpose !== this.superpose) {
+        this.superpose = params.superpose;
+        resetCache = true;
+    }
+    this.deltaTime = defaults(params.deltaTime, this.deltaTime);
+    this.timeOffset = defaults(params.timeOffset, this.timeOffset);
+    if (resetCache) {
+        this._resetCache();
+        this.setFrame(this._currentFrame);
+    }
+};
+/**
+ * Check if a frame is available
+ * @param  {Integer|Integer[]} i - the frame index
+ * @return {Boolean} frame availability
+ */
+Trajectory.prototype.hasFrame = function hasFrame (i) {
+        var this$1 = this;
+
+    if (Array.isArray(i)) {
+        return i.every(function (j) { return !!this$1.frameCache[j]; });
+    }
+    else {
+        return !!this.frameCache[i];
+    }
+};
+/**
+ * Set trajectory to a frame index
+ * @param {Integer} i - the frame index
+ * @param {Function} [callback] - fired when the frame has been set
+ */
+Trajectory.prototype.setFrame = function setFrame (i, callback) {
+        var this$1 = this;
+
+    if (i === undefined)
+        { return this; }
+    this.inProgress = true;
+    // i = parseInt(i)  // TODO
+    if (i === -1 || this.frameCache[i]) {
+        this._updateStructure(i);
+        if (callback)
+            { callback(); }
+    }
+    else {
+        this.loadFrame(i, function () {
+            this$1._updateStructure(i);
+            if (callback)
+                { callback(); }
+        });
+    }
+    return this;
+};
+Trajectory.prototype._interpolate = function _interpolate (i, ip, ipp, ippp, t, type) {
+    var fc = this.frameCache;
+    var coords;
+    if (type === 'spline') {
+        coords = interpolateSpline(fc[i], fc[ip], fc[ipp], fc[ippp], t);
+    }
+    else {
+        coords = interpolateLerp(fc[i], fc[ip], t);
+    }
+    this.structure.updatePosition(coords);
+    this._currentFrame = i;
+    this.signals.frameChanged.dispatch(i);
+};
+/**
+ * Interpolated and set trajectory to frame indices
+ * @param {Integer} i - the frame index
+ * @param {Integer} ip - one before frame index
+ * @param {Integer} ipp - two before frame index
+ * @param {Integer} ippp - three before frame index
+ * @param {Number} t - interpolation step [0,1]
+ * @param {String} type - interpolation type, '', 'spline' or 'linear'
+ * @param {Function} callback - fired when the frame has been set
+ */
+Trajectory.prototype.setFrameInterpolated = function setFrameInterpolated (i, ip, ipp, ippp, t, type, callback) {
+        var this$1 = this;
+
+    if (i === undefined)
+        { return this; }
+    var fc = this.frameCache;
+    var iList = [];
+    if (!fc[ippp])
+        { iList.push(ippp); }
+    if (!fc[ipp])
+        { iList.push(ipp); }
+    if (!fc[ip])
+        { iList.push(ip); }
+    if (!fc[i])
+        { iList.push(i); }
+    if (iList.length) {
+        this.loadFrame(iList, function () {
+            this$1._interpolate(i, ip, ipp, ippp, t, type);
+            if (callback)
+                { callback(); }
+        });
+    }
+    else {
+        this._interpolate(i, ip, ipp, ippp, t, type);
+        if (callback)
+            { callback(); }
+    }
+    return this;
+};
+/**
+ * Load frame index
+ * @param {Integer|Integer[]} i - the frame index
+ * @param {Function} callback - fired when the frame has been loaded
+ */
+Trajectory.prototype.loadFrame = function loadFrame (i, callback) {
+        var this$1 = this;
+
+    if (Array.isArray(i)) {
+        i.forEach(function (j) {
+            if (!this$1.loadQueue[j] && !this$1.frameCache[j]) {
+                this$1.loadQueue[j] = true;
+                this$1._loadFrame(j, function () {
+                    delete this$1.loadQueue[j];
+                });
+            }
+        });
+    }
+    else {
+        if (!this.loadQueue[i] && !this.frameCache[i]) {
+            this.loadQueue[i] = true;
+            this._loadFrame(i, function () {
+                delete this$1.loadQueue[i];
+                if (callback)
+                    { callback(); }
+            });
+        }
+    }
+};
+/**
+ * Load frame index
+ * @abstract
+ * @param {Integer} i - the frame index
+ * @param {Function} callback - fired when the frame has been loaded
+ */
+Trajectory.prototype._loadFrame = function _loadFrame (i, callback) {
+    Log.error('Trajectory._loadFrame not implemented', i, callback);
+};
+Trajectory.prototype._updateStructure = function _updateStructure (i) {
+    if (this._disposed) {
+        console.error('updateStructure: traj disposed');
+        return;
+    }
+    if (i === -1) {
+        if (this.structureCoords) {
+            this.structure.updatePosition(this.structureCoords);
+        }
+    }
+    else {
+        this.structure.updatePosition(this.frameCache[i]);
+    }
+    this.structure.trajectory = {
+        name: this.trajPath,
+        frame: i
+    };
+    this._currentFrame = i;
+    this.inProgress = false;
+    this.signals.frameChanged.dispatch(i);
+};
+Trajectory.prototype._doSuperpose = function _doSuperpose (x) {
+        var this$1 = this;
+
+    var n = this.selectionIndices.length * 3;
+    var coords1 = this.coords1;
+    var coords2 = this.coords2;
+    for (var i = 0; i < n; i += 3) {
+        var j = this$1.selectionIndices[i / 3] * 3;
+        coords1[i + 0] = x[j + 0];
+        coords1[i + 1] = x[j + 1];
+        coords1[i + 2] = x[j + 2];
+    }
+    // TODO re-use superposition object
+    var sp = new Superposition(coords1, coords2);
+    sp.transform(x);
+};
+Trajectory.prototype._process = function _process (i, box, coords, frameCount) {
+    this._setFrameCount(frameCount);
+    if (box) {
+        if (this.backboneIndices.length > 0 && this.centerPbc) {
+            var box2 = [box[0], box[4], box[8]];
+            var circMean = circularMean3(this.backboneIndices, coords, box2);
+            centerPbc(coords, circMean, box2);
+        }
+        if (this.removePeriodicity) {
+            var mean = arrayMean3(coords);
+            removePeriodicity(coords, box, mean);
+        }
+        if (this.removePbc) {
+            removePbc(coords, box);
+        }
+    }
+    if (this.selectionIndices.length > 0 && this.coords1 && this.superpose) {
+        this._doSuperpose(coords);
+    }
+    this.frameCache[i] = coords;
+    this.boxCache[i] = box;
+    this.frameCacheSize += 1;
+};
+Trajectory.prototype._setFrameCount = function _setFrameCount (n) {
+    if (n !== this._frameCount) {
+        this._frameCount = n;
+        this.signals.countChanged.dispatch(n);
+    }
+};
+/**
+ * Dispose of the trajectory object
+ * @return {undefined}
+ */
+Trajectory.prototype.dispose = function dispose () {
+    this._resetCache(); // aid GC
+    this._disposed = true;
+    if (this.player)
+        { this.player.stop(); }
+};
+/**
+ * Set player for this trajectory
+ * @param {TrajectoryPlayer} player - the player
+ */
+Trajectory.prototype.setPlayer = function setPlayer (player) {
+    this.player = player;
+    this.signals.playerChanged.dispatch(player);
+};
+/**
+ * Get time for frame
+ * @param  {Integer} i - frame index
+ * @return {Number} time in picoseconds
+ */
+Trajectory.prototype.getFrameTime = function getFrameTime (i) {
+    return this.timeOffset + i * this.deltaTime;
+};
+
+Object.defineProperties( Trajectory.prototype, prototypeAccessors$27 );
 
 /**
  * @file Frames Trajectory
@@ -74628,6 +74044,23 @@ var StructureComponent = (function (Component$$1) {
         });
         this.initSelection(this.parameters.sele);
         this.setDefaultAssembly(this.parameters.defaultAssembly);
+        //
+        this.pickBuffer = createRingBuffer(2);
+        this.pickPairs = createSimpleSet();
+        this.spacefillRepresentation = this.addRepresentation('spacefill', {
+            sele: 'none',
+            opacity: 0.6,
+            color: 'green',
+            disablePicking: true,
+            scale: 0.3
+        }, true);
+        this.distanceRepresentation = this.addRepresentation('distance', {
+            color: 'green',
+            labelColor: 'grey',
+            labelSize: 1,
+            radius: 0.04,
+            scale: 1
+        }, true);
     }
 
     if ( Component$$1 ) StructureComponent.__proto__ = Component$$1;
@@ -74700,6 +74133,8 @@ var StructureComponent = (function (Component$$1) {
         this.reprList.forEach(function (repr) {
             repr.build();
         });
+        this.spacefillRepresentation.build(undefined);
+        this.distanceRepresentation.build(undefined);
     };
     /**
      * Rebuild all trajectories
@@ -74712,8 +74147,9 @@ var StructureComponent = (function (Component$$1) {
             trajComp.trajectory.setStructure(this$1.structureView);
         });
     };
-    StructureComponent.prototype.addRepresentation = function addRepresentation (type, params) {
+    StructureComponent.prototype.addRepresentation = function addRepresentation (type, params, hidden) {
         if ( params === void 0 ) params = {};
+        if ( hidden === void 0 ) hidden = false;
 
         params.defaultAssembly = this.parameters.defaultAssembly;
         return this._addRepresentation(type, this.structureView, params);
@@ -74750,6 +74186,8 @@ var StructureComponent = (function (Component$$1) {
         });
         this.trajList.length = 0;
         this.structure.dispose();
+        this.spacefillRepresentation.dispose();
+        this.distanceRepresentation.dispose();
         Component$$1.prototype.dispose.call(this);
     };
     StructureComponent.prototype.autoView = function autoView (sele, duration) {
@@ -77077,60 +76515,6 @@ var VolumeColormaker = (function (Colormaker$$1) {
 ColormakerRegistry.add('volume', VolumeColormaker);
 
 /**
- * @file Script Component
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-/**
- * Component wrapping a {@link Script} object
- */
-var ScriptComponent = (function (Component$$1) {
-    function ScriptComponent(stage, script, params) {
-        var this$1 = this;
-
-        var p = params || {};
-        p.name = defaults(p.name, script.name);
-        Component$$1.call(this, stage, p);
-        this.script = script;
-        this.status = 'loaded';
-        this.script.signals.nameChanged.add(function (value) {
-            this$1.setName(value);
-        });
-    }
-
-    if ( Component$$1 ) ScriptComponent.__proto__ = Component$$1;
-    ScriptComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
-    ScriptComponent.prototype.constructor = ScriptComponent;
-
-    var prototypeAccessors = { type: {} };
-    prototypeAccessors.type.get = function () { return 'script'; };
-    ScriptComponent.prototype.addRepresentation = function addRepresentation () { };
-    ScriptComponent.prototype.removeRepresentation = function removeRepresentation () { };
-    ScriptComponent.prototype.run = function run () {
-        var this$1 = this;
-
-        this.setStatus('running');
-        this.script.call(this.stage).then(function () {
-            this$1.setStatus('finished');
-        });
-        this.setStatus('called');
-    };
-    ScriptComponent.prototype.dispose = function dispose () {
-        // TODO dispose script
-        this.signals.disposed.dispatch();
-    };
-    ScriptComponent.prototype.setVisibility = function setVisibility () { };
-    ScriptComponent.prototype.getCenter = function getCenter () { };
-    ScriptComponent.prototype.getZoom = function getZoom () { };
-    ScriptComponent.prototype.getBox = function getBox () { };
-
-    Object.defineProperties( ScriptComponent.prototype, prototypeAccessors );
-
-    return ScriptComponent;
-}(Component));
-ComponentRegistry.add('script', ScriptComponent);
-
-/**
  * @file Shape Component
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -77192,6 +76576,580 @@ var ShapeComponent = (function (Component$$1) {
     return ShapeComponent;
 }(Component));
 ComponentRegistry.add('shape', ShapeComponent);
+
+/**
+ * @file Structure Representation
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+/**
+ * Structure representation parameter object.
+ * @typedef {Object} StructureRepresentationParameters - structure representation parameters
+ * @mixes RepresentationParameters
+ *
+ * @property {String} radiusType - A list of possible sources of the radius used for rendering the representation. The radius can be based on the *vdW radius*, the *covalent radius* or the *B-factor* value of the corresponding atom. Additionally the radius can be based on the *secondary structure*. Alternatively, when set to *size*, the value from the *radius* parameter is used for all atoms.
+ * @property {Float} radius - A number providing a fixed radius used for rendering the representation.
+ * @property {Float} scale - A number that scales the value defined by the *radius* or the *radiusType* parameter.
+ * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
+ */
+/**
+ * Structure representation
+ * @interface
+ */
+var StructureRepresentation = (function (Representation$$1) {
+    function StructureRepresentation(structure, viewer, params) {
+        var p = params || {};
+        Representation$$1.call(this, structure, viewer, p);
+        this.type = 'structure';
+        this.parameters = Object.assign({
+            radiusType: {
+                type: 'select', options: RadiusFactory.types
+            },
+            radius: {
+                type: 'number', precision: 3, max: 10.0, min: 0.001
+            },
+            scale: {
+                type: 'number', precision: 3, max: 10.0, min: 0.001
+            },
+            assembly: null,
+            defaultAssembly: {
+                type: 'hidden'
+            }
+        }, this.parameters);
+        /**
+         * @type {Selection}
+         * @private
+         */
+        this.selection = new Selection(p.sele);
+        /**
+         * @type {Array}
+         * @private
+         */
+        this.dataList = [];
+        /**
+         * @type {Structure}
+         */
+        this.structure = structure;
+        /**
+         * @type {StructureView}
+         */
+        this.structureView = this.structure.getView(this.selection);
+        if (structure.biomolDict) {
+            var biomolOptions = {
+                'default': 'default',
+                '': (structure.unitcell ? 'AU' : 'FULL')
+            };
+            Object.keys(structure.biomolDict).forEach(function (k) {
+                biomolOptions[k] = k;
+            });
+            this.parameters.assembly = {
+                type: 'select',
+                options: biomolOptions,
+                rebuild: true
+            };
+        }
+        else {
+            this.parameters.assembly = null;
+        }
+    }
+
+    if ( Representation$$1 ) StructureRepresentation.__proto__ = Representation$$1;
+    StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
+    StructureRepresentation.prototype.constructor = StructureRepresentation;
+
+    var prototypeAccessors = { defaultScale: {} };
+    prototypeAccessors.defaultScale.get = function () {
+        return {
+            'vdw': 1.0,
+            'covalent': 1.0,
+            'bfactor': 0.01,
+            'sstruc': 1.0
+        };
+    };
+    StructureRepresentation.prototype.init = function init (params) {
+        var p = params || {};
+        p.colorScheme = defaults(p.colorScheme, 'element');
+        this.radius = defaults(p.radius, 'vdw');
+        this.scale = defaults(p.scale, 1.0);
+        this.assembly = defaults(p.assembly, 'default');
+        this.defaultAssembly = defaults(p.defaultAssembly, '');
+        if (p.quality === 'auto') {
+            p.quality = this.getQuality();
+        }
+        Representation$$1.prototype.init.call(this, p);
+        this.selection.signals.stringChanged.add(function () {
+            this.build();
+        }, this);
+        this.build();
+    };
+    StructureRepresentation.prototype.getAssembly = function getAssembly () {
+        var name = this.assembly === 'default' ? this.defaultAssembly : this.assembly;
+        return this.structure.biomolDict[name];
+    };
+    StructureRepresentation.prototype.getQuality = function getQuality () {
+        var atomCount;
+        var s = this.structureView;
+        var assembly = this.getAssembly();
+        if (assembly) {
+            atomCount = assembly.getAtomCount(s);
+        }
+        else {
+            atomCount = s.atomCount;
+        }
+        if (Mobile) {
+            atomCount *= 4;
+        }
+        var backboneOnly = s.atomStore.count / s.residueStore.count < 2;
+        if (backboneOnly) {
+            atomCount *= 10;
+        }
+        if (atomCount < 15000) {
+            return 'high';
+        }
+        else if (atomCount < 80000) {
+            return 'medium';
+        }
+        else {
+            return 'low';
+        }
+    };
+    StructureRepresentation.prototype.create = function create () {
+        if (this.structureView.atomCount === 0)
+            { return; }
+        if (!this.structureView.hasCoords()) {
+            this.needsBuild = true;
+            return;
+        }
+        else {
+            this.needsBuild = false;
+        }
+        var assembly = this.getAssembly();
+        if (assembly) {
+            assembly.partList.forEach(function (part, i) {
+                var sview = part.getView(this.structureView);
+                if (sview.atomCount === 0)
+                    { return; }
+                var data = this.createData(sview, i);
+                if (data) {
+                    data.sview = sview;
+                    data.instanceList = part.getInstanceList();
+                    this.dataList.push(data);
+                }
+            }, this);
+        }
+        else {
+            var data = this.createData(this.structureView, 0);
+            if (data) {
+                data.sview = this.structureView;
+                this.dataList.push(data);
+            }
+        }
+    };
+    StructureRepresentation.prototype.createData = function createData () {
+        console.error('createData not implemented');
+    };
+    StructureRepresentation.prototype.update = function update (what) {
+        if (this.lazy && !this.visible) {
+            Object.assign(this.lazyProps.what, what);
+            return;
+        }
+        if (this.needsBuild) {
+            this.build();
+            return;
+        }
+        this.dataList.forEach(function (data) {
+            if (data.bufferList.length > 0) {
+                this.updateData(what, data);
+            }
+        }, this);
+    };
+    StructureRepresentation.prototype.updateData = function updateData () {
+        this.build();
+    };
+    StructureRepresentation.prototype.getColorParams = function getColorParams () {
+        var p = Representation$$1.prototype.getColorParams.call(this);
+        p.structure = this.structure;
+        return p;
+    };
+    StructureRepresentation.prototype.getAtomParams = function getAtomParams (what, params) {
+        return Object.assign({
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { 'radius': this.radius, 'scale': this.scale }
+        }, params);
+    };
+    StructureRepresentation.prototype.getBondParams = function getBondParams (what, params) {
+        return Object.assign({
+            what: what,
+            colorParams: this.getColorParams(),
+            radiusParams: { 'radius': this.radius, 'scale': this.scale }
+        }, params);
+    };
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setSelection
+     * @param {String} string - selection string, see {@tutorial selection-language}
+     * @param {Boolean} [silent] - don't trigger a change event in the selection
+     * @return {StructureRepresentation} this object
+     */
+    StructureRepresentation.prototype.setSelection = function setSelection (string, silent) {
+        this.selection.setString(string, silent);
+        return this;
+    };
+    /**
+     * Set representation parameters
+     * @alias StructureRepresentation#setParameters
+     * @param {StructureRepresentationParameters} params - structure parameter object
+     * @param {Object} [what] - buffer data attributes to be updated,
+     *                        note that this needs to be implemented in the
+     *                        derived classes. Generally it allows more
+     *                        fine-grained control over updating than
+     *                        forcing a rebuild.
+     * @param {Boolean} what.position - update position data
+     * @param {Boolean} what.color - update color data
+     * @param {Boolean} [rebuild] - whether or not to rebuild the representation
+     * @return {StructureRepresentation} this object
+     */
+    StructureRepresentation.prototype.setParameters = function setParameters (params, what, rebuild) {
+        what = what || {};
+        if (params && params.radiusType !== undefined) {
+            if (params.radiusType === 'size') {
+                this.radius = 1.0;
+            }
+            else {
+                this.radius = params.radiusType;
+            }
+            delete params.radiusType;
+            what.radius = true;
+            if (!ExtensionFragDepth || this.disableImpostor) {
+                rebuild = true;
+            }
+        }
+        if (params && params.radius !== undefined) {
+            what.radius = true;
+            if (!ExtensionFragDepth || this.disableImpostor) {
+                rebuild = true;
+            }
+        }
+        if (params && params.scale !== undefined) {
+            what.radius = true;
+            if (!ExtensionFragDepth || this.disableImpostor) {
+                rebuild = true;
+            }
+        }
+        if (params && params.defaultAssembly !== undefined) {
+            rebuild = true;
+        }
+        Representation$$1.prototype.setParameters.call(this, params, what, rebuild);
+        return this;
+    };
+    StructureRepresentation.prototype.getParameters = function getParameters () {
+        var params = Object.assign(Representation$$1.prototype.getParameters.call(this), {
+            sele: this.selection ? this.selection.string : undefined,
+            defaultAssembly: this.defaultAssembly
+        });
+        return params;
+    };
+    StructureRepresentation.prototype.attach = function attach (callback) {
+        var viewer = this.viewer;
+        var bufferList = this.bufferList;
+        this.dataList.forEach(function (data) {
+            data.bufferList.forEach(function (buffer) {
+                bufferList.push(buffer);
+                viewer.add(buffer, data.instanceList);
+            });
+        });
+        this.setVisibility(this.visible);
+        callback();
+    };
+    StructureRepresentation.prototype.clear = function clear () {
+        this.dataList.length = 0;
+        Representation$$1.prototype.clear.call(this);
+    };
+    StructureRepresentation.prototype.dispose = function dispose () {
+        this.structureView.dispose();
+        delete this.structure;
+        delete this.structureView;
+        Representation$$1.prototype.dispose.call(this);
+    };
+
+    Object.defineProperties( StructureRepresentation.prototype, prototypeAccessors );
+
+    return StructureRepresentation;
+}(Representation));
+
+/**
+ * @file Cylinder Geometry Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var scale$1 = new Vector3();
+var eye = new Vector3();
+var target = new Vector3();
+var up = new Vector3(0, 1, 0);
+var CylinderGeometryBufferDefaultParameters = Object.assign({
+    radialSegments: 1,
+    openEnded: true
+}, BufferDefaultParameters);
+function getData$1(data, params) {
+    if ( params === void 0 ) params = {};
+
+    var geo = getGeo(params);
+    var n = data.position1.length;
+    var geoLength = geo.attributes.position.array.length / 3;
+    var count = n / 3;
+    var primitiveId = new Float32Array(count * 2 * geoLength);
+    serialBlockArray(count, geoLength, 0, primitiveId);
+    serialBlockArray(count, geoLength, count * geoLength, primitiveId);
+    var position = new Float32Array(n * 2);
+    var color = new Float32Array(n * 2);
+    return {
+        position: position, color: color, primitiveId: primitiveId, picking: data.picking
+    };
+}
+function getGeo(params) {
+    if ( params === void 0 ) params = {};
+
+    var radialSegments = defaults(params.radialSegments, 10);
+    var openEnded = defaults(params.openEnded, true);
+    var matrix = new Matrix4().makeRotationX(Math.PI / 2);
+    var geo = new CylinderBufferGeometry(1, // radiusTop,
+    1, // radiusBottom,
+    1, // height,
+    radialSegments, // radialSegments,
+    1, // heightSegments,
+    openEnded // openEnded
+    );
+    geo.applyMatrix(matrix);
+    return geo;
+}
+/**
+ * Cylinder geometry buffer.
+ *
+ * @example
+ * var cylinderGeometryBuffer = new CylinderGeometryBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
+    function CylinderGeometryBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        GeometryBuffer$$1.call(this, getData$1(data, params), params, getGeo(params));
+        this.updateNormals = true;
+        var n = data.position1.length;
+        var m = data.radius.length;
+        this.__center = new Float32Array(n);
+        this._position = new Float32Array(n * 2);
+        this._color = new Float32Array(n * 2);
+        this._from = new Float32Array(n * 2);
+        this._to = new Float32Array(n * 2);
+        this._radius = new Float32Array(m * 2);
+        this.setAttributes(data, true);
+    }
+
+    if ( GeometryBuffer$$1 ) CylinderGeometryBuffer.__proto__ = GeometryBuffer$$1;
+    CylinderGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
+    CylinderGeometryBuffer.prototype.constructor = CylinderGeometryBuffer;
+
+    var prototypeAccessors = { defaultParameters: {} };
+    prototypeAccessors.defaultParameters.get = function () { return CylinderGeometryBufferDefaultParameters; };
+    CylinderGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
+        eye.fromArray(this._from, i3);
+        target.fromArray(this._to, i3);
+        matrix.lookAt(eye, target, up);
+        var r = this._radius[i];
+        scale$1.set(r, r, eye.distanceTo(target));
+        matrix.scale(scale$1);
+    };
+    CylinderGeometryBuffer.prototype.setAttributes = function setAttributes (data, initNormals) {
+        if ( data === void 0 ) data = {};
+
+        var meshData = {};
+        if (data.position1 && data.position2) {
+            calculateCenterArray(data.position1, data.position2, this.__center);
+            calculateCenterArray(data.position1, this.__center, this._position);
+            calculateCenterArray(this.__center, data.position2, this._position, data.position1.length);
+            this._from.set(data.position1);
+            this._from.set(this.__center, data.position1.length);
+            this._to.set(this.__center);
+            this._to.set(data.position2, this.__center.length);
+            meshData.position = this._position;
+        }
+        if (data.color && data.color2) {
+            this._color.set(data.color);
+            this._color.set(data.color2, data.color.length);
+            meshData.color = this._color;
+        }
+        if (data.radius) {
+            this._radius.set(data.radius);
+            this._radius.set(data.radius, data.radius.length);
+            meshData.radius = this._radius;
+        }
+        GeometryBuffer$$1.prototype.setAttributes.call(this, meshData, initNormals);
+    };
+
+    Object.defineProperties( CylinderGeometryBuffer.prototype, prototypeAccessors );
+
+    return CylinderGeometryBuffer;
+}(GeometryBuffer));
+
+ShaderRegistry.add('shader/CylinderImpostor.vert', "\nattribute vec3 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\nattribute float radius;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n#ifdef PICKING\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\nattribute vec3 color2;\nvarying vec3 vColor1;\nvarying vec3 vColor2;\n#endif\nuniform mat4 modelViewMatrixInverse;\nuniform float ortho;\n#include matrix_scale\nvoid main(){\n#ifdef PICKING\nvPickingColor = unpackColor( primitiveId );\n#else\nvColor1 = color;\nvColor2 = color2;\n#endif\nbase_radius.w = radius * matrixScale( modelViewMatrix );\nvec3 center = position;\nvec3 dir = normalize( position2 - position1 );\nfloat ext = length( position2 - position1 ) / 2.0;\nvec3 cam_dir;\nif( ortho == 0.0 ){\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 0, 1 ) ).xyz - center;\n}else{\ncam_dir = ( modelViewMatrixInverse * vec4( 0, 0, 1, 0 ) ).xyz;\n}\ncam_dir = normalize( cam_dir );\nvec3 ldir;\nfloat b = dot( cam_dir, dir );\nend_b.w = b;\nif( b < 0.0 )\nldir = -ext * dir;\nelse\nldir = ext * dir;\nvec3 left = normalize( cross( cam_dir, ldir ) );\nleft = radius * left;\nvec3 up = radius * normalize( cross( left, ldir ) );\naxis = normalize( normalMatrix * ldir );\nU = normalize( normalMatrix * up );\nV = normalize( normalMatrix * left );\nvec4 base4 = modelViewMatrix * vec4( center - ldir, 1.0 );\nbase_radius.xyz = base4.xyz / base4.w;\nvec4 top_position = modelViewMatrix * vec4( center + ldir, 1.0 );\nvec4 end4 = top_position;\nend_b.xyz = end4.xyz / end4.w;\nw = modelViewMatrix * vec4(\ncenter + mapping.x*ldir + mapping.y*left + mapping.z*up, 1.0\n);\ngl_Position = projectionMatrix * w;\ngl_Position.z = 0.99;\n}");
+
+ShaderRegistry.add('shader/CylinderImpostor.frag', "#define STANDARD\n#define IMPOSTOR\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform float roughness;\nuniform float metalness;\nuniform float opacity;\nuniform float clipNear;\nuniform mat4 projectionMatrix;\nuniform float ortho;\nvarying vec3 axis;\nvarying vec4 base_radius;\nvarying vec4 end_b;\nvarying vec3 U;\nvarying vec3 V;\nvarying vec4 w;\n#ifdef PICKING\nuniform float objectId;\nvarying vec3 vPickingColor;\n#else\nvarying vec3 vColor1;\nvarying vec3 vColor2;\n#include common\n#include fog_pars_fragment\n#include bsdfs\n#include lights_pars\n#include lights_physical_pars_fragment\n#endif\nbool interior = false;\nfloat distSq3( vec3 v3a, vec3 v3b ){\nreturn (\n( v3a.x - v3b.x ) * ( v3a.x - v3b.x ) +\n( v3a.y - v3b.y ) * ( v3a.y - v3b.y ) +\n( v3a.z - v3b.z ) * ( v3a.z - v3b.z )\n);\n}\nfloat calcDepth( in vec3 cameraPos ){\nvec2 clipZW = cameraPos.z * projectionMatrix[2].zw + projectionMatrix[3].zw;\nreturn 0.5 + 0.5 * clipZW.x / clipZW.y;\n}\nfloat calcClip( vec3 cameraPos ){\nreturn dot( vec4( cameraPos, 1.0 ), vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );\n}\nvoid main(){\nvec3 point = w.xyz / w.w;\nvec3 base = base_radius.xyz;\nfloat vRadius = base_radius.w;\nvec3 end = end_b.xyz;\nfloat b = end_b.w;\nvec3 end_cyl = end;\nvec3 surface_point = point;\nvec3 ray_target = surface_point;\nvec3 ray_origin = vec3(0.0);\nvec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);\nmat3 basis = mat3( U, V, axis );\nvec3 diff = ray_target - 0.5 * (base + end_cyl);\nvec3 P = diff * basis;\nfloat dz = dot( axis, ray_direction );\nfloat radius2 = vRadius*vRadius;\nvec3 D = vec3(dot(U, ray_direction),\ndot(V, ray_direction),\ndz);\nfloat a0 = P.x*P.x + P.y*P.y - radius2;\nfloat a1 = P.x*D.x + P.y*D.y;\nfloat a2 = D.x*D.x + D.y*D.y;\nfloat d = a1*a1 - a0*a2;\nif (d < 0.0)\ndiscard;\nfloat dist = (-a1 + sqrt(d)) / a2;\nvec3 new_point = ray_target + dist * ray_direction;\nvec3 tmp_point = new_point - base;\nvec3 _normal = normalize( tmp_point - axis * dot(tmp_point, axis) );\nray_origin = mix( ray_origin, surface_point, ortho );\nfloat front_cap_test = dot( tmp_point, axis );\nfloat end_cap_test = dot((new_point - end_cyl), axis);\n#ifndef CAP\nvec3 new_point2 = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\nvec3 tmp_point2 = new_point2 - base;\n#endif\nif (front_cap_test < 0.0)\n{\nfloat dNV = dot(-axis, ray_direction);\nif (dNV < 0.0)\ndiscard;\nfloat near = dot(-axis, (base)) / dNV;\nvec3 front_point = ray_direction * near + ray_origin;\nif (dot(front_point - base, front_point-base) > radius2)\ndiscard;\n#ifdef CAP\nnew_point = front_point;\n_normal = axis;\n#else\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\ndNV = dot(-axis, ray_direction);\nnear = dot(axis, end_cyl) / dNV;\nnew_point2 = ray_direction * near + ray_origin;\nif (dot(new_point2 - end_cyl, new_point2-base) < radius2)\ndiscard;\ninterior = true;\n#endif\n}\nif( end_cap_test > 0.0 )\n{\nfloat dNV = dot(axis, ray_direction);\nif (dNV < 0.0)\ndiscard;\nfloat near = dot(axis, end_cyl) / dNV;\nvec3 end_point = ray_direction * near + ray_origin;\nif( dot(end_point - end_cyl, end_point-base) > radius2 )\ndiscard;\n#ifdef CAP\nnew_point = end_point;\n_normal = axis;\n#else\nnew_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;\ndNV = dot(-axis, ray_direction);\nnear = dot(-axis, (base)) / dNV;\nnew_point2 = ray_direction * near + ray_origin;\nif (dot(new_point2 - base, new_point2-base) < radius2)\ndiscard;\ninterior = true;\n#endif\n}\ngl_FragDepthEXT = calcDepth( new_point );\n#ifdef NEAR_CLIP\nif( calcClip( new_point ) > 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\nif( calcClip( new_point ) > 0.0 )\ndiscard;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / vRadius ) );\n}\n}else if( gl_FragDepthEXT <= 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n}\n}\n#else\nif( gl_FragDepthEXT <= 0.0 ){\ndist = (-a1 - sqrt(d)) / a2;\nnew_point = ray_target + dist * ray_direction;\ninterior = true;\ngl_FragDepthEXT = calcDepth( new_point );\nif( gl_FragDepthEXT >= 0.0 ){\ngl_FragDepthEXT = 0.0 + ( 0.0000001 / vRadius );\n}\n}\n#endif\nif (gl_FragDepthEXT < 0.0)\ndiscard;\nif (gl_FragDepthEXT > 1.0)\ndiscard;\n#ifdef PICKING\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\nvec3 vViewPosition = -new_point;\nvec3 vNormal = _normal;\nvec3 vColor;\nif( distSq3( new_point, end_cyl ) < distSq3( new_point, base ) ){\nif( b < 0.0 ){\nvColor = vColor1;\n}else{\nvColor = vColor2;\n}\n}else{\nif( b > 0.0 ){\nvColor = vColor1;\n}else{\nvColor = vColor2;\n}\n}\nvec4 diffuseColor = vec4( diffuse, opacity );\nReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\nvec3 totalEmissiveLight = emissive;\n#include color_fragment\n#include roughnessmap_fragment\n#include metalnessmap_fragment\nvec3 normal = normalize( vNormal );\nif( interior ){\nnormal = vec3( 0.0, 0.0, 0.4 );\n}\n#include lights_physical_fragment\n#include lights_template\nvec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
+
+/**
+ * @file Mapped Aligned Box Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var mapping$1 = new Float32Array([
+    -1.0, 1.0, -1.0,
+    -1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, -1.0,
+    1.0, -1.0, 1.0
+]);
+var mappingIndices$1 = new Uint16Array([
+    0, 1, 2,
+    1, 4, 2,
+    2, 4, 3,
+    4, 5, 3
+]);
+/**
+ * Mapped Aligned box buffer. Draws boxes where one side is always screen-space aligned.
+ * Used to render cylinder imposters.
+ * @interface
+ */
+var MappedAlignedBoxBuffer = (function (MappedBuffer$$1) {
+    function MappedAlignedBoxBuffer () {
+        MappedBuffer$$1.apply(this, arguments);
+    }
+
+    if ( MappedBuffer$$1 ) MappedAlignedBoxBuffer.__proto__ = MappedBuffer$$1;
+    MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
+    MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
+
+    var prototypeAccessors = { mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
+
+    prototypeAccessors.mapping.get = function () { return mapping$1; };
+    prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1; };
+    prototypeAccessors.mappingIndicesSize.get = function () { return 12; };
+    prototypeAccessors.mappingType.get = function () { return 'v3'; };
+    prototypeAccessors.mappingSize.get = function () { return 6; };
+    prototypeAccessors.mappingItemSize.get = function () { return 3; };
+
+    Object.defineProperties( MappedAlignedBoxBuffer.prototype, prototypeAccessors );
+
+    return MappedAlignedBoxBuffer;
+}(MappedBuffer));
+
+/**
+ * @file Cylinder Impostor Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var CylinderImpostorBufferDefaultParameters = Object.assign({
+    openEnded: false
+}, BufferDefaultParameters);
+var CylinderImpostorBufferParameterTypes = Object.assign({
+    openEnded: { updateShader: true }
+}, BufferParameterTypes);
+/**
+ * Cylinder impostor buffer.
+ *
+ * @example
+ * var cylinderimpostorBuffer = new CylinderImpostorBuffer({
+ *     position1: new Float32Array([ 0, 0, 0 ]),
+ *     position2: new Float32Array([ 1, 1, 1 ]),
+ *     color: new Float32Array([ 1, 0, 0 ]),
+ *     color2: new Float32Array([ 0, 1, 0 ]),
+ *     radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderImpostorBuffer = (function (MappedAlignedBoxBuffer$$1) {
+    function CylinderImpostorBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedAlignedBoxBuffer$$1.call(this, data, params);
+        this.parameterTypes = CylinderImpostorBufferParameterTypes;
+        this.isImpostor = true;
+        this.vertexShader = 'CylinderImpostor.vert';
+        this.fragmentShader = 'CylinderImpostor.frag';
+        this.addUniforms({
+            'modelViewMatrixInverse': { value: new Matrix4() },
+            'ortho': { value: 0.0 }
+        });
+        this.addAttributes({
+            'position1': { type: 'v3', value: null },
+            'position2': { type: 'v3', value: null },
+            'color2': { type: 'c', value: null },
+            'radius': { type: 'f', value: null }
+        });
+        this.setAttributes(data);
+        this.makeMapping();
+    }
+
+    if ( MappedAlignedBoxBuffer$$1 ) CylinderImpostorBuffer.__proto__ = MappedAlignedBoxBuffer$$1;
+    CylinderImpostorBuffer.prototype = Object.create( MappedAlignedBoxBuffer$$1 && MappedAlignedBoxBuffer$$1.prototype );
+    CylinderImpostorBuffer.prototype.constructor = CylinderImpostorBuffer;
+
+    var prototypeAccessors = { defaultParameters: {} };
+    prototypeAccessors.defaultParameters.get = function () { return CylinderImpostorBufferDefaultParameters; };
+    CylinderImpostorBuffer.prototype.getDefines = function getDefines (type) {
+        var defines = MappedAlignedBoxBuffer$$1.prototype.getDefines.call(this, type);
+        if (!this.parameters.openEnded) {
+            defines.CAP = 1;
+        }
+        return defines;
+    };
+
+    Object.defineProperties( CylinderImpostorBuffer.prototype, prototypeAccessors );
+
+    return CylinderImpostorBuffer;
+}(MappedAlignedBoxBuffer));
+
+/**
+ * @file Cylinder Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var CylinderBufferDefaultParameters = Object.assign({
+    disableImpostor: false
+}, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters);
+/**
+ * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
+ * `params.disableImpostor` the constructor returns either a
+ * {@link CylinderGeometryBuffer} or a {@link CylinderImpostorBuffer}
+ * @implements {Buffer}
+ *
+ * @example
+ * var cylinderBuffer = new CylinderBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ])
+ * });
+ */
+var CylinderBuffer = function CylinderBuffer(data, params) {
+    if ( params === void 0 ) params = {};
+
+    if (!data.color2 && data.color)
+        { data.color2 = data.color; }
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+        return new CylinderGeometryBuffer(data, params);
+    }
+    else {
+        return new CylinderImpostorBuffer(data, params);
+    }
+};
+BufferRegistry.add('cylinder', CylinderBuffer);
 
 /**
  * @file Axes Representation
@@ -78742,6 +78700,58 @@ var CartoonRepresentation = (function (StructureRepresentation$$1) {
 RepresentationRegistry.add('cartoon', CartoonRepresentation);
 
 /**
+ * @file Dash
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+function getDashData(data, params) {
+    if ( params === void 0 ) params = {};
+
+    console.log(data);
+    var segmentCount = defaults(params.segmentCount, 9);
+    var s = Math.floor(segmentCount / 2);
+    var n = data.position1.length / 3;
+    var sn = s * n;
+    var sn3 = sn * 3;
+    var step = 1 / segmentCount;
+    var direction = calculateDirectionArray(data.position1, data.position2);
+    var position1 = new Float32Array(sn3);
+    var position2 = new Float32Array(sn3);
+    var v = new Vector3();
+    for (var i = 0; i < n; ++i) {
+        var i3 = i * 3;
+        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
+        var x = data.position1[i3];
+        var y = data.position1[i3 + 1];
+        var z = data.position1[i3 + 2];
+        for (var j = 0; j < s; ++j) {
+            var j3 = s * i3 + j * 3;
+            var f1 = step * (j * 2 + 1);
+            var f2 = step * (j * 2 + 2);
+            position1[j3] = x + v.x * f1;
+            position1[j3 + 1] = y + v.y * f1;
+            position1[j3 + 2] = z + v.z * f1;
+            position2[j3] = x + v.x * f2;
+            position2[j3 + 1] = y + v.y * f2;
+            position2[j3 + 2] = z + v.z * f2;
+        }
+    }
+    var position = calculateCenterArray(position1, position2);
+    var color = replicateArray3Entries(data.color, s); // TODO
+    var color2 = data.color2 ? replicateArray3Entries(data.color2, s) : color;
+    var radius = replicateArrayEntries(data.radius, s);
+    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2, radius: radius };
+    if (data.picking) {
+        data.picking.array = replicateArrayEntries(data.picking.array, s);
+        d.picking = data.picking;
+    }
+    if (data.primitiveId) {
+        d.primitiveId = replicateArrayEntries(data.primitiveId, s);
+    }
+    return d;
+}
+
+/**
  * @file Contact Representation
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -78828,7 +78838,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
     ContactRepresentation.prototype.constructor = ContactRepresentation;
     ContactRepresentation.prototype.init = function init (params) {
         var p = params || {};
-        p.radius = defaults(p.radius, 0.25);
+        p.radius = defaults(p.radius, 0.05);
         this.hydrogenBond = defaults(p.hydrogenBond, true);
         this.hydrophobic = defaults(p.hydrophobic, false);
         this.halogenBond = defaults(p.halogenBond, true);
@@ -78877,11 +78887,11 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             metalComplex: this.metalComplex,
             cationPi: this.cationPi,
             piStacking: this.piStacking,
-            radius: this.radius
+            radius: this.radius * this.scale
         };
         var contacts = calculateContacts(sview, params);
         var contactData = getContactData(contacts, sview, dataParams);
-        return contactData;
+        return getDashData(contactData);
     };
     ContactRepresentation.prototype.createData = function createData (sview) {
         var bufferList = [
@@ -79657,7 +79667,7 @@ RepresentationRegistry.add('distance', DistanceRepresentation);
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-function getSize$1(data) {
+function getSize(data) {
     var n = data.position.length / 3;
     return n * 2 * 3;
 }
@@ -79673,15 +79683,15 @@ var VectorBuffer = (function (Buffer$$1) {
         if ( params === void 0 ) params = {};
 
         Buffer$$1.call(this, {
-            position: new Float32Array(getSize$1(data)),
-            color: new Float32Array(getSize$1(data))
+            position: new Float32Array(getSize(data)),
+            color: new Float32Array(getSize(data))
         }, params);
         this.isLine = true;
         this.vertexShader = 'Line.vert';
         this.fragmentShader = 'Line.frag';
         var color = new Color(this.parameters.color);
         var attributes = this.geometry.attributes; // TODO
-        uniformArray3(getSize$1(data) / 3, color.r, color.g, color.b, attributes.color.array);
+        uniformArray3(getSize(data) / 3, color.r, color.g, color.b, attributes.color.array);
         this.setAttributes(data);
     }
 
@@ -82299,7 +82309,7 @@ var quadIndices$1 = new Uint16Array([
     0, 1, 2,
     1, 3, 2
 ]);
-function getSize$2(data) {
+function getSize$1(data) {
     var n = (data.position.length / 3) - 1;
     var n4 = n * 4;
     var x = n4 * 3;
@@ -82313,10 +82323,10 @@ var RibbonBuffer = (function (MeshBuffer$$1) {
         if ( params === void 0 ) params = {};
 
         MeshBuffer$$1.call(this, {
-            position: new Float32Array(getSize$2(data)),
-            color: new Float32Array(getSize$2(data)),
-            index: getUintArray(getSize$2(data), getSize$2(data) / 3),
-            normal: new Float32Array(getSize$2(data)),
+            position: new Float32Array(getSize$1(data)),
+            color: new Float32Array(getSize$1(data)),
+            index: getUintArray(getSize$1(data), getSize$1(data) / 3),
+            normal: new Float32Array(getSize$1(data)),
             picking: data.picking
         }, params);
         this.vertexShader = 'Ribbon.vert';
@@ -82830,7 +82840,7 @@ RepresentationRegistry.add('spacefill', SpacefillRepresentation);
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-function getSize$3(data) {
+function getSize$2(data) {
     var n = data.position.length / 3;
     var n1 = n - 1;
     return n1 * 3 * 2;
@@ -82843,8 +82853,8 @@ var TraceBuffer = (function (Buffer$$1) {
         if ( params === void 0 ) params = {};
 
         Buffer$$1.call(this, {
-            position: new Float32Array(getSize$3(data)),
-            color: new Float32Array(getSize$3(data))
+            position: new Float32Array(getSize$2(data)),
+            color: new Float32Array(getSize$2(data))
         }, params);
         this.isLine = true;
         this.vertexShader = 'Line.vert';
