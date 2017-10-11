@@ -80,12 +80,14 @@ import './component/volume-component'
 
 //
 
+import './representation/angle-representation'
 import './representation/axes-representation'
 import './representation/backbone-representation'
 import './representation/ballandstick-representation'
 import './representation/base-representation'
 import './representation/cartoon-representation'
 import './representation/contact-representation'
+import './representation/dihedral-representation'
 import './representation/distance-representation'
 import './representation/helixorient-representation'
 import './representation/hyperball-representation'
