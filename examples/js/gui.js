@@ -1473,7 +1473,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
       if (remoteTrajExt.indexOf(ext) !== -1) {
-        component.addTrajectory(info.path)
+        component.addTrajectory(info.path + '?struc=' + component.structure.path)
         dirWidget.dispose()
       } else {
         NGL.log('unknown trajectory type: ' + ext)
