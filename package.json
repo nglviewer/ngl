@@ -9,7 +9,7 @@
     "lint-src": "standard \"src/**/*.js\"",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
-    "ts": "tsc && cp src/shader/{*.vert,*.frag} build/js/src/shader/ && mkdir -p build/js/src/shader/chunk && cp src/shader/chunk/*.glsl build/js/src/shader/chunk/ && cp package.json build/js/",
+    "ts": "tsc && cp src/shader/*.vert src/shader/*.frag build/js/src/shader/ && mkdir -p build/js/src/shader/chunk && cp src/shader/chunk/*.glsl build/js/src/shader/chunk/ && cp package.json build/js/",
     "prebuild": "npm run-script lint",
     "build": "rollup -c",
     "postbuild": "node ./scripts/makeScriptsList.js",
