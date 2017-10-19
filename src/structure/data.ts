@@ -26,7 +26,7 @@ export function spatialLookup(data: Data): SpatialHash {
 
 export function valenceModel(data: Data): ValenceModel {
   if (data['@valenceModel']) return data['@valenceModel']!
-  const valenceModel = ValenceModel(data)
+  const valenceModel = ValenceModel(data, {assignCharge: 'auto', assignH: 'auto'})
   data['@valenceModel'] = valenceModel
   return valenceModel
 }

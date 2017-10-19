@@ -1,30 +1,29 @@
 /**
- * @file Valence Model
- * @author Fred Ludlow <Fred.Ludlow@astx.com>
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * Reworked ValenceModel
  */
-
 import { Data } from '../structure/data'
 import AtomProxy from '../proxy/atom-proxy'
-import { hasPolarNeighbour } from './functional-groups'
+import ResidueProxy from '../proxy/residue-proxy'
 
+// Changed numbering so they're mostly inline with coordination number
+// from VSEPR
 export const enum AtomGeometry {
-  Unknown = 0,
-  Spherical = 1,
-  Terminal = 2,
-  Linear = 3,
-  Trigonal = 4,
-  Tetrahedral = 5,
-  SquarePlanar = 6
+  Spherical = 0,
+  Terminal = 1,
+  Linear = 2,
+  Trigonal = 3,
+  Tetrahedral = 4,
+  TrigonalBiPyramidal = 5,
+  Octahedral = 6,
+  SquarePlanar = 7, // Okay, it breaks down somewhere!
+  Unknown = 8
 }
 
-/**
- * Probably over-simplisitic VSEPR style geometry, limited to tetrahedral or lower
- */
-function octetGeometry (degree: number, valence: number, ideal: number, lonepairs: number) {
-  const degreePlusLP = degree + Math.max(ideal - valence, 0) + lonepairs;
 
-  switch (degreePlusLP) {
+function assignGeometry(totalCoordination: number): AtomGeometry {
+  switch(totalCoordination){
+    case 0:
+      return AtomGeometry.Spherical
     case 1:
       return AtomGeometry.Terminal
     case 2:
@@ -40,15 +39,18 @@ function octetGeometry (degree: number, valence: number, ideal: number, lonepair
 
 /**
  * Are we involved in some kind of pi system. Either explicitly forming
- * double bond or a hetero next to a double bond
+ * double bond or N, O next to a double bond.
  *
- * This will return true for some non-conjugated systems (N of sulfonamide)
- * so a TODO is to work out some special cases, or rules for detecting these
- * oddities
+ * N,O with degree 4 cannot be conjugated
+ *
  */
 function isConjugated(a: AtomProxy) {
   const atomicNumber = a.number
   const hetero = atomicNumber === 7 || atomicNumber === 8  // O, N
+
+  if (hetero && a.bondCount === 4) {
+    return false
+  }
 
   let flag = false
 
@@ -77,116 +79,20 @@ function isConjugated(a: AtomProxy) {
   return flag
 }
 
-/**
- * Based on the OpenEye Charge model, with some modifications Default charge
- * is 0, unless our rules match some other situation. This doesn't require
- * full protonation to have taken place
- *
- * https://docs.eyesopen.com/toolkits/python/oechemtk/valence.html
- * */
-export function calculateImplicitCharge (a: AtomProxy) {
-  const degree = a.bondCount
-  const valence = explicitValence(a)
+function hasExplicitCharge(r: ResidueProxy) {
+  let flag = false
+  r.eachAtom(a => {
+    if (a.formalCharge != null && a.formalCharge !== 0) flag = true
+  })
+  return flag
+}
 
-  let charge = 0
-
-  switch (a.number) {
-    case 1:  // H
-      if (valence == 0) {
-        charge = 1
-      }
-      break
-
-    case 5:  // B
-      if (valence == 4) {
-        charge = -1;
-      }
-      break;
-
-    case 6:  // C
-      if (valence === 3) {
-        if (degree === 1) {
-          if (a.bondToElementCount('N') === 1) {
-            charge = -1
-          }
-        } else if (hasPolarNeighbour(a)) {
-          charge = 1
-        } else {
-          charge = -1
-        }
-      }
-      break;
-    case 7:  // N
-      if (valence === 2) {
-        charge = -1
-      } else if (valence === 4) {
-        charge = 1
-      }
-      break
-
-    case 8:  // O
-      if (valence === 1) {
-        charge = -1
-        break
-      } else if (valence === 3) {
-        charge = 1
-      }
-      break
-
-    case 15:  // P
-      if (valence === 4) {
-        charge = 1
-        break
-      }
-
-    case 16:  // S
-      // Thiol
-      if (valence === 1) {
-        charge = -1
-        break
-      } else if (valence === 3) {
-        charge = 1
-        break
-      } else if (valence === 5) {
-        charge = -1
-      } else if (valence === 4 && degree === 4) {
-        // Special case for sulphonyls/ sulphates drawn as [S+2][O-][O-]
-        charge = 2
-      }
-      break
-
-    // F, Cl, Br, I, At
-    case 9:
-    case 17:
-    case 35:
-    case 53:
-    case 85:
-      if (valence === 0) {
-        charge = -1
-      }
-      break
-
-    // Mg, Ca, Zn
-    case 12:
-    case 20:
-    case 30:
-      if (valence == 0) {
-        charge = 2
-      }
-      break
-
-    // Li, Na, K
-    case 3:
-    case 11:
-    case 19:
-      if (valence == 0) {
-        charge = 1
-      }
-      break
-
-  }
-
-  return charge
+function hasExplicitHydrogen(r: ResidueProxy) {
+  let flag = false
+  r.eachAtom(a => {
+    if (a.number === 1) flag = true
+  })
+  return flag
 }
 
 export function explicitValence (a: AtomProxy) {
@@ -195,135 +101,151 @@ export function explicitValence (a: AtomProxy) {
   return v
 }
 
+export interface assignChargeHParams {
+  assignCharge: boolean,
+  assignH: boolean
+}
+
+
+
 /**
- * Determine the "ideal" (according to this model) valence for an atom.
+ * Attempts to produce a consistent charge and implicit
+ * H-count for an atom.
  *
- * We assume that: - Where atomic charge is non-zero, it's been
- * intentionally set as such that way, and we should respect that with our
- * number of hydrogens
+ * If both params.assignCharge and params.assignH, this
+ * approximately followsthe rules described in
+ * https://docs.eyesopen.com/toolkits/python/oechemtk/valence.html#openeye-hydrogen-count-model
  *
- * Where atomic charge is not set, for CNOS we use some simple rules to
- * deduce ideal number of hydrogens and geometry assuming addition of those
- * hydrogens
+ * If only charge or hydrogens are to be assigned it takes
+ * a much simpler view and deduces one from the other
+ *
+ * @param {AtomProxy}           a      Atom to analyze
+ * @param {assignChargeHParams} params What to assign
  */
-export function calculateIdealValenceAndGeometry (a: AtomProxy) {
+export function calculateHydrogensCharge(a: AtomProxy,
+  params: assignChargeHParams) {
+
+  const { assignCharge, assignH } = params
   const hydrogenCount = a.bondToElementCount('H')
   const degree = a.bondCount
   const valence = explicitValence(a)
-  const heavyDegree = degree - hydrogenCount
-  const heavyValence = valence - hydrogenCount
-  const explicitCharge = a.formalCharge || 0
 
-  // Initial assumption is that we already have the ideal valence
-  let ideal = valence
-  let geom = 0
+  const conjugated = isConjugated(a)
+  const multiBond = (valence - degree > 0)
+
+  let charge = a.formalCharge || 0
+  let implicitHCount = 0
+  let geom = AtomGeometry.Unknown
 
   switch (a.number) {
     // H
     case 1:
-      if (degree === 0) {
-        geom = AtomGeometry.Spherical
-        ideal = 0;
-
-      } else if (degree === 1) {
-        geom = AtomGeometry.Terminal
-        ideal = 1
+      if (assignCharge){
+        if (degree === 0){
+          charge = 1
+          geom = AtomGeometry.Spherical
+        } else if (degree === 1) {
+          charge = 0
+          geom = AtomGeometry.Terminal
+        }
       }
       break
-
     // C
     case 6:
-      // Special cases, I think really only isocyanide:
-      if (heavyValence === 3 && heavyDegree === 1 && explicitCharge === 0) {
-        a.eachBond(b => {
-          if (b.bondOrder === 3 && b.getOtherAtom(a).element === 'N') {
-            ideal = 3
-            geom = AtomGeometry.Linear
-          }
-        })
+      // TODO: Isocyanide?
+      if (assignCharge) {
+        charge = 0 // Assume carbon always neutral
       }
-      // ideal valence tops out at 4, reduces for every absolute charge
-      ideal = 4 - Math.abs(explicitCharge)
-      // Fairly simple - basically if explicit charge is positive, we have
-      // no lone pairs otherwise we have 1, 2, 3 lone pairs for -1, -2, -3
-      geom = octetGeometry(degree, valence, ideal, Math.max(0, -explicitCharge))
+      if (assignH) {
+        // Carbocation/carbanion are 3-valent
+        implicitHCount = Math.max(0, 4 - valence - Math.abs(charge))
+      }
+      // Carbocation is planar, carbanion is tetrahedral
+      geom = assignGeometry(degree + implicitHCount + Math.max(0, -charge))
       break
 
     // N
     case 7:
-      if (explicitCharge !== 0) {
-        // We've got charge specified
-        ideal = Math.min(3 + explicitCharge, 4)
-        // Cap valence at 4
-        geom = octetGeometry(degree, valence, ideal, Math.max(0, 1 - explicitCharge))
-      } else {
-        // We've not got a specified charge, assume 4 valent (ammonium)
-        // unless conjugated (pyridine, amide etc)
-        // if (isConjugated(a)) {
-        //   ideal = 3
-        // } else {
-        //   ideal = 4
-        // }
-        ideal = 3
-
-        if (isConjugated(a)) {
-          geom = AtomGeometry.Trigonal;
-        } else {
-          geom = AtomGeometry.Tetrahedral;
+      if (assignCharge) {
+        if (!assignH) { // Trust input H explicitly:
+          charge = valence - 3
+        } else if (conjugated && valence < 4) {
+           charge = 0
         }
+        else {
+          charge = 1
+        }
+      }
 
+      if (assignH) {
+        // NH4+ -> 4, 1' amide -> 2, nitro N/N+ depiction -> 0
+        implicitHCount = Math.max(0, 3 - valence + charge)
+      }
+
+      if (conjugated && !multiBond) {
+        // Amide, anilinic N etc. cannot consider lone-pair for geometry purposes
+        // Anilinic N geometry is depenent on ring electronics, for our purposes we
+        // assume it's trigonal!
+        geom = assignGeometry(degree + implicitHCount - charge)
+      } else {
+        // Everything else, pyridine, amine, nitrile, lp plays normal role:
+        geom = assignGeometry(degree + implicitHCount + 1 - charge)
       }
       break
+
 
     // O
     case 8:
-      if (explicitCharge !== 0) {
-        ideal = 2 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, 2 - explicitCharge)
-      } else {
-        // Probably 2, but check we're not a carboxylate Oxygen
-        ideal = 2
-        if (valence === 1 && degree === 1) {
+      if (assignCharge) {
+        if (!assignH) {
+          charge = valence - 2 //
+        }
+        if (valence === 1) {
           a.eachBondedAtom(ba => {
-            if (ba.element === 'C' && ba.bondToElementCount('O') === 2) {
-              ideal = 1
-            }
+            ba.eachBond(b => {
+              const oa = b.getOtherAtom(ba)
+              if (oa.index !== a.index && oa.number === 8 && b.bondOrder === 2){
+                charge = -1
+              }
+            })
           })
         }
-        geom = octetGeometry(degree, valence, ideal, 4 - ideal)
       }
-      break
-
-    // P
-    case 15:
-      if (valence - explicitCharge <= 3) {
-        ideal = 3 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, 1 - explicitCharge)
+      if (assignH) {
+        // ethanol -> 1, carboxylate -> -1
+        implicitHCount = Math.max(0, 2 - valence + charge)
+      }
+      if (conjugated && !multiBond){
+        // carboxylate OH, phenol OH, one lone-pair taken up with conjugation
+        geom = assignGeometry(degree + implicitHCount - charge + 1)
       } else {
-        ideal = 5 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, explicitCharge)
+        // Carbonyl (trigonal)
+        geom = assignGeometry(degree + implicitHCount - charge + 2)
       }
       break
 
-    // S
+    // S - currently only treats S(II) (as only S-state considered
+    // for interactions)
     case 16:
-      // Find the lowest state compatible with our current valence
-      // Might need to add a polar atom check..?
-      if (valence - explicitCharge <= 2) {
-        ideal = 2 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, 2 - explicitCharge)
-      } else if (valence - explicitCharge <= 4) {
-        ideal = 4 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, 1 - explicitCharge)
-      } else if (valence - explicitCharge <= 6) {
-        ideal = 6 + explicitCharge
-        geom = octetGeometry(degree, valence, ideal, explicitCharge)
+      if (assignCharge) {
+        if (!assignH) {
+          if (valence < 2) {
+            charge = valence - 2 // e.g. explicitly deprotonated thiol
+          } else {
+            charge = 0
+          }
+        }
       }
-      // Specical case for [S++][O-][O-]-like
-      if (degree === 4 && valence === 4) {
-        ideal = 4
-        geom = AtomGeometry.Tetrahedral
+      if (assignH){
+        if (valence < 2){
+          implicitHCount = Math.max(0, 2 - valence + charge)
+        }
       }
+      if (valence <= 2){
+        // Thiol, thiolate, tioether -> tetrahedral
+        geom = assignGeometry(degree + implicitHCount - charge + 2)
+      }
+
       break
 
     // F, Cl, Br, I, At
@@ -332,12 +254,11 @@ export function calculateIdealValenceAndGeometry (a: AtomProxy) {
     case 35:
     case 53:
     case 85:
-      ideal = 1 + explicitCharge
-      geom = octetGeometry(degree, valence, ideal, 3 - explicitCharge)
+      // Never implicitly protonate halides
+      if (assignCharge) {
+        charge = valence - 1
+      }
       break
-
-    // rules below are following OpenBabel
-    // https://github.com/openbabel/openbabel/blob/master/data/atomtyp.txt
 
     // Li, Na, K, Rb, Cs Fr
     case 3:
@@ -346,9 +267,10 @@ export function calculateIdealValenceAndGeometry (a: AtomProxy) {
     case 37:
     case 55:
     case 87:
-      // Alkali metals
-      ideal = 1
-      // geom = ??? TODO
+      if (assignCharge) {
+        charge = 1 - valence
+      }
+      break
 
     // Be, Mg, Ca, Sr, Ba, Ra
     case 4:
@@ -357,53 +279,66 @@ export function calculateIdealValenceAndGeometry (a: AtomProxy) {
     case 38:
     case 56:
     case 88:
-      // Alkaline earth, like sp hybrids
-      geom = AtomGeometry.Linear
-      ideal = 2
-
-    // Cu, Pd, Ag, Pt, Au
-    case 29:
-    case 46:
-    case 47:
-    case 78:
-    case 79:
-    case 88:
-      // normally square planar
-      geom = AtomGeometry.SquarePlanar
-      // ideal = ??? TODO
+      if (assignCharge) {
+        charge = 2 - valence
+      }
+      break
 
     default:
-      // Need a sensible default, which requires knowing the number of
-      // valence shell electrons for the element
-      console.warn('Requested valence geometry for an unhandled element!', a.element)
+
+      console.warn('Requested charge, protonation for an unhandled element', a.element)
+
+
   }
 
-  return [ ideal, geom ]
+
+  return [ charge, implicitHCount, implicitHCount + hydrogenCount, geom ]
 }
 
 
 export interface ValenceModel {
-  implicitCharge: Int8Array
-  idealValence: Int8Array
+  charge: Int8Array,
+  implicitH: Int8Array,
+  totalH: Int8Array,
   idealGeometry: Int8Array
 }
 
-export function ValenceModel (data: Data) {
+export interface ValenceModelParams {
+  assignCharge: string,
+  assignH: string
+}
+
+export function ValenceModel (data: Data, params: ValenceModelParams) {
   const structure = data.structure
   const n = structure.atomCount
+  const { assignCharge, assignH } = params
 
-  const implicitCharge = new Int8Array(n)
-  const idealValence = new Int8Array(n)
+  const charge = new Int8Array(n)
+  const implicitH = new Int8Array(n)
+  const totalH = new Int8Array(n)
   const idealGeometry = new Int8Array(n)
 
-  let i = 0
-  structure.eachAtom(a => {
-    implicitCharge[ i ] = calculateImplicitCharge(a)
-    const [ idealVal, idealGeo ] = calculateIdealValenceAndGeometry(a)
-    idealValence[ i ] = idealVal
-    idealGeometry[ i ] = idealGeo
-    ++i
+  structure.eachResidue(r => {
+
+    const residueCharge = (assignCharge === 'always' ||
+      assignCharge === 'auto' && !hasExplicitCharge(r))
+    const residueH = (assignH === 'always' ||
+      assignH === 'auto' && !hasExplicitHydrogen(r))
+
+    r.eachAtom(a => {
+      const i = a.index
+      const [ chg, implH, totH, geom ] = calculateHydrogensCharge(a, {
+        assignCharge: residueCharge,
+        assignH: residueH
+      })
+      charge[ i ] = chg
+      implicitH[ i ] = implH
+      totalH[ i ] = totH
+      idealGeometry[ i ] = geom
+    })
+
   })
 
-  return { implicitCharge, idealValence, idealGeometry }
+  return { charge, implicitH, totalH, idealGeometry }
+
 }

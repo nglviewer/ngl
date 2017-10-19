@@ -10,7 +10,7 @@ import { radToDeg, degToRad } from '../../math/math-utils'
 import Structure from '../../structure/structure'
 import AtomProxy from '../../proxy/atom-proxy'
 import { valenceModel } from '../../structure/data'
-import { explicitValence, AtomGeometry } from '../valence-model'
+import { AtomGeometry } from '../valence-model'
 import {
   Features, FeatureType,
   addAtom, addFeature, createFeatureState,
@@ -28,7 +28,7 @@ import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from 
  * Potential hydrogen donor
  */
 export function addHydrogenDonors (structure: Structure, features: Features) {
-  const { implicitCharge } = valenceModel(structure.data)
+  const { totalH } = valenceModel(structure.data)
 
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.HydrogenDonor)
@@ -68,7 +68,7 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
         addFeature(features, state)
         return
       }
-      if (implicitCharge[ a.index ] < 0 || a.hasBondToElement('H')) {
+      if (totalH[ a.index ] > 0) {
         addAtom(state, a)
         addFeature(features, state)
         return
@@ -90,9 +90,11 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
  */
 export function addWeakHydrogenDonors (structure: Structure, features: Features) {
   structure.eachAtom(a => {
-    const state = createFeatureState(FeatureType.HydrogenAcceptor)
+    const state = createFeatureState(FeatureType.HydrogenAcceptor) // Acceptor?
     let flag = false
     if (a.number === 6) {
+      // Depends on choice of definition but would usually say
+      // aromatic C adjacent to N for a weak donor
       flag = true
       a.eachBondedAtom(ap => {
         const e = ap.element
@@ -110,7 +112,7 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
  * Potential hydrogen acceptor
  */
 export function addHydrogenAcceptors (structure: Structure, features: Features) {
-  const { idealValence } = valenceModel(structure.data)
+  const { charge, implicitH } = valenceModel(structure.data)
 
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.HydrogenAcceptor)
@@ -167,14 +169,22 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         addFeature(features, state)
         return
       }
-      const valence = explicitValence(a)
+      if (charge[ a.index ] < 1){
+        // pyridine is an acceptor (2 bonds), amide N is not (3 bonds)
+        if (a.bondCount + implicitH[ a.index ] < 3){
+          addAtom(state, a)
+          addFeature(features, state)
+          return
+        }
+      }
+      /*const valence = explicitValence(a)
       const hybridization = idealValence[ a.index ]
       // N+ ions and sp2 hybrid N with 3 valences should not be hdrogen bond acceptors
       if (!(valence === 4 && hybridization === 3) && !(valence === 3 && hybridization === 2)) {
         addAtom(state, a)
         addFeature(features, state)
         return
-      }
+      }*/
     }else if (an === 16) {
       if (
         (resname === 'CYS' && atomname === 'SG') ||

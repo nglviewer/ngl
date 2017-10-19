@@ -26,9 +26,9 @@ stage.signals.hovered.add(function (pickingProxy) {
         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
         <hr/>
         Atom: ${atom.qualifiedName()}<br/>
-        ideal valence: ${vm.idealValence[atom.index]}<br/>
-        ideal geometry: ${vm.idealGeometry[atom.index]}<br/>
-        implicit charge: ${vm.implicitCharge[atom.index]}<br/>
+        vm charge: ${vm.charge[atom.index]}<br/>
+        vm implicitH: ${vm.implicitH[atom.index]}<br/>
+        vm totalH: ${vm.totalH[atom.index]}<br/>
         formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
         `
       } else {

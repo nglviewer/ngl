@@ -17,7 +17,7 @@ import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from 
  * Potential metal binding
  */
 export function addMetalBinding (structure: Structure, features: Features) {
-  const { implicitCharge } = valenceModel(structure.data)
+  const { charge } = valenceModel(structure.data)
 
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.MetalBinding)
@@ -68,7 +68,7 @@ export function addMetalBinding (structure: Structure, features: Features) {
       // nitrogen from imidazole; sulfur from thiolate
       if (element === 'O') {
         // Oxygen in alcohol (R-[O]-H)
-        if (a.bondCount === 2 && implicitCharge[ a.index] || a.hasBondToElement('H')) {
+        if (a.bondCount === 2 && charge[ a.index] || a.hasBondToElement('H')) {
           addAtom(state, a)
           addFeature(features, state)
           return

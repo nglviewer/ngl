@@ -10,8 +10,8 @@ import { radToDeg } from '../../math/math-utils'
 import Structure from '../../structure/structure'
 import { valenceModel } from '../../structure/data'
 import {
-  isQuaternaryAmine, isTertiaryAmine, isSulfonium, isGuanidine,
-  isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
+  /* isQuaternaryAmine, isTertiaryAmine, isSulfonium, isGuanidine, */
+  //isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
 } from '../functional-groups'
 import {
   Features, FeatureType, FeatureGroup,
@@ -24,7 +24,7 @@ const NegativelyCharged = [ 'GLU', 'ASP' ]
 const AromaticRings = [ 'TYR', 'TRP', 'HIS', 'PHE' ]
 
 export function addPositiveCharges (structure: Structure, features: Features) {
-  const { idealValence } = valenceModel(structure.data)
+  const { charge } = valenceModel(structure.data)
 
   structure.eachResidue(r => {
     if (PositvelyCharged.includes(r.resname)) {
@@ -38,10 +38,14 @@ export function addPositiveCharges (structure: Structure, features: Features) {
     } else if(!r.isProtein() && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.PositiveCharge)
-        if (isQuaternaryAmine(a)) {
+        if (charge[ a.index ] > 0) {
+          state.group = FeatureGroup.Unknown
+          addAtom(state, a)
+        }
+        /*if (isQuaternaryAmine(a)) {
           state.group = FeatureGroup.QuaternaryAmine
           addAtom(state, a)
-        } else if (isTertiaryAmine(a, idealValence[ a.index ])) {
+        } else if (isTertiaryAmine(a, )) {
           state.group = FeatureGroup.TertiaryAmine
           addAtom(state, a)
         } else if (isSulfonium(a)) {
@@ -50,7 +54,7 @@ export function addPositiveCharges (structure: Structure, features: Features) {
         } else if (isGuanidine(a)) {
           state.group = FeatureGroup.Guanidine
           addAtom(state, a)
-        }
+        }*/
         addFeature(features, state)
       })
     }
@@ -58,6 +62,8 @@ export function addPositiveCharges (structure: Structure, features: Features) {
 }
 
 export function addNegativeCharges (structure: Structure, features: Features) {
+  const { charge } = valenceModel(structure.data)
+
   structure.eachResidue(r => {
     if (NegativelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.NegativeCharge)
@@ -70,7 +76,10 @@ export function addNegativeCharges (structure: Structure, features: Features) {
     } else if(!r.isProtein() && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.NegativeCharge)
-        if (isSulfonicAcid(a)) {
+        if (charge[a.index] < 0) {
+          addAtom(state, a)
+        }
+        /*if (isSulfonicAcid(a)) {
           state.group = FeatureGroup.SulfonicAcid
           addAtom(state, a)
         } else if (isPhosphate(a)) {
@@ -82,7 +91,7 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         } else if (isCarboxylate(a)) {
           state.group = FeatureGroup.Carboxylate
           addAtom(state, a)
-        }
+        }*/
         addFeature(features, state)
       })
     }
