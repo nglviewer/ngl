@@ -348,11 +348,11 @@ class AtomProxy {
     return flag
   }
 
-  bondToElementCount (element: string) {
+  bondToElementCount (element: string, _ap?: AtomProxy) {
     let count = 0
     this.eachBondedAtom(function (bap) {
       if (bap.element === element) count += 1
-    })
+    }, _ap)
     return count
   }
 

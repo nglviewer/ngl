@@ -45,6 +45,7 @@ function assignGeometry(totalCoordination: number): AtomGeometry {
  *
  */
 function isConjugated(a: AtomProxy) {
+  const _bp = a.structure.getBondProxy()
   const atomicNumber = a.number
   const hetero = atomicNumber === 7 || atomicNumber === 8  // O, N
 
@@ -72,7 +73,7 @@ function isConjugated(a: AtomProxy) {
           }
           flag = true
         }
-      })
+      }, _bp) // Avoid reuse of structure._bp
     }
   })
 
@@ -124,9 +125,9 @@ export interface assignChargeHParams {
  */
 export function calculateHydrogensCharge(a: AtomProxy,
   params: assignChargeHParams) {
-
+  const _ap = a.structure.getAtomProxy() // Avoid reuse of structure._ap
   const { assignCharge, assignH } = params
-  const hydrogenCount = a.bondToElementCount('H')
+  const hydrogenCount = a.bondToElementCount('H', _ap)
   const degree = a.bondCount
   const valence = explicitValence(a)
 
