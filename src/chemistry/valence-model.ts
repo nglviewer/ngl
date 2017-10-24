@@ -65,7 +65,8 @@ function isConjugated(a: AtomProxy) {
 
   a.eachBond(b => {
     if (b.bondOrder > 1) {
-      return true
+      flag = true
+      return
     }
     if (hetero) {
       const a2 = b.getOtherAtom(a)
