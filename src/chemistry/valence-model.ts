@@ -1,9 +1,17 @@
 /**
  * Reworked ValenceModel
+ *
+ * TODO:
+ *   Ensure proper treatment of disorder/models. e.g. V257 N in 5vim
+ *   Formal charge of 255 for SO4 anion (e.g. 5ghl)
+ *   Have removed a lot of explicit features (as I think they're more
+ *   generally captured by better VM).
+ *     Could we instead have a "delocalised negative/positive" charge
+ *     feature and flag these up?
+ *
  */
 import { Data } from '../structure/data'
 import AtomProxy from '../proxy/atom-proxy'
-import ResidueProxy from '../proxy/residue-proxy'
 
 // Changed numbering so they're mostly inline with coordination number
 // from VSEPR
@@ -39,10 +47,10 @@ function assignGeometry(totalCoordination: number): AtomGeometry {
 
 /**
  * Are we involved in some kind of pi system. Either explicitly forming
- * double bond or N, O next to a double bond.
+ * double bond or N, O next to a double bond, except:
  *
- * N,O with degree 4 cannot be conjugated
- *
+ *   N,O with degree 4 cannot be conjugated.
+ *   N,O adjacent to P=O or S=O do not qualify
  */
 function isConjugated(a: AtomProxy) {
   const _bp = a.structure.getBondProxy()
@@ -80,7 +88,7 @@ function isConjugated(a: AtomProxy) {
   return flag
 }
 
-function hasExplicitCharge(r: ResidueProxy) {
+/* function hasExplicitCharge(r: ResidueProxy) {
   let flag = false
   r.eachAtom(a => {
     if (a.formalCharge != null && a.formalCharge !== 0) flag = true
@@ -94,17 +102,12 @@ function hasExplicitHydrogen(r: ResidueProxy) {
     if (a.number === 1) flag = true
   })
   return flag
-}
+} */
 
 export function explicitValence (a: AtomProxy) {
   let v = 0
   a.eachBond(b => v += b.bondOrder)
   return v
-}
-
-export interface assignChargeHParams {
-  assignCharge: boolean,
-  assignH: boolean
 }
 
 
@@ -124,17 +127,25 @@ export interface assignChargeHParams {
  * @param {assignChargeHParams} params What to assign
  */
 export function calculateHydrogensCharge(a: AtomProxy,
-  params: assignChargeHParams) {
+  params: ValenceModelParams) {
   const _ap = a.structure.getAtomProxy() // Avoid reuse of structure._ap
-  const { assignCharge, assignH } = params
+  // const { assignCharge, assignH } = params
+
   const hydrogenCount = a.bondToElementCount('H', _ap)
+  let charge = a.formalCharge || 0
+
+  const assignCharge = (params.assignCharge === 'always' ||
+    (params.assignCharge === 'auto' && charge === 0))
+  const assignH = (params.assignH === 'always' ||
+    (params.assignH === 'auto' && hydrogenCount === 0))
+
   const degree = a.bondCount
   const valence = explicitValence(a)
 
   const conjugated = isConjugated(a)
   const multiBond = (valence - degree > 0)
 
-  let charge = a.formalCharge || 0
+
   let implicitHCount = 0
   let geom = AtomGeometry.Unknown
 
@@ -225,12 +236,12 @@ export function calculateHydrogensCharge(a: AtomProxy,
       }
       break
 
-    // S - currently only treats S(II) (as only S-state considered
-    // for interactions)
+    // Only handles thiols/thiolates/thioether/sulfonium. Sulfoxides and higher
+    // oxidiation states are assumed neutral S (charge carried on O if required)
     case 16:
       if (assignCharge) {
         if (!assignH) {
-          if (valence < 2) {
+          if (valence <= 3 && !a.bondToElementCount('O', _ap)) {
             charge = valence - 2 // e.g. explicitly deprotonated thiol
           } else {
             charge = 0
@@ -242,7 +253,7 @@ export function calculateHydrogensCharge(a: AtomProxy,
           implicitHCount = Math.max(0, 2 - valence + charge)
         }
       }
-      if (valence <= 2){
+      if (valence <= 3){
         // Thiol, thiolate, tioether -> tetrahedral
         geom = assignGeometry(degree + implicitHCount - charge + 2)
       }
@@ -312,31 +323,20 @@ export interface ValenceModelParams {
 export function ValenceModel (data: Data, params: ValenceModelParams) {
   const structure = data.structure
   const n = structure.atomCount
-  const { assignCharge, assignH } = params
 
   const charge = new Int8Array(n)
   const implicitH = new Int8Array(n)
   const totalH = new Int8Array(n)
   const idealGeometry = new Int8Array(n)
 
-  structure.eachResidue(r => {
+  structure.eachAtom(a => {
 
-    const residueCharge = (assignCharge === 'always' ||
-      assignCharge === 'auto' && !hasExplicitCharge(r))
-    const residueH = (assignH === 'always' ||
-      assignH === 'auto' && !hasExplicitHydrogen(r))
-
-    r.eachAtom(a => {
-      const i = a.index
-      const [ chg, implH, totH, geom ] = calculateHydrogensCharge(a, {
-        assignCharge: residueCharge,
-        assignH: residueH
-      })
-      charge[ i ] = chg
-      implicitH[ i ] = implH
-      totalH[ i ] = totH
-      idealGeometry[ i ] = geom
-    })
+    const i = a.index
+    const [ chg, implH, totH, geom ] = calculateHydrogensCharge(a, params)
+    charge[ i ] = chg
+    implicitH[ i ] = implH
+    totalH[ i ] = totH
+    idealGeometry[ i ] = geom
 
   })
 
