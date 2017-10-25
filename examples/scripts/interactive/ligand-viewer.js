@@ -236,7 +236,15 @@ var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: '180px', left: '12px' })
 clipNearRange.oninput = function (e) {
-  pocketRepr.setParameters({ clipNear: parseFloat(e.target.value) / 100 })
+  var sceneRadius = stage.viewer.boundingBox.getSize().length() / 2
+
+  var f = pocketRadius / sceneRadius
+  var v = parseFloat(e.target.value) / 10000  // must be between 0 and 1
+  var c = 0.5 - f / 2 + v * f
+
+  pocketRepr.setParameters({
+    clipNear: c * 100  // must be between 0 and 100
+  })
 }
 addElement(clipNearRange)
 
@@ -330,4 +338,6 @@ addElement(createElement('span', {
   innerText: 'hydrophobic'
 }, { top: '382px', left: '32px', color: 'lightgrey' }))
 
-loadStructure('rcsb://3sn6')
+loadStructure('rcsb://4cup').then(function(){
+  showLigand('ZYB')
+})
