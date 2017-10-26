@@ -129,10 +129,8 @@ export function explicitValence (a: AtomProxy) {
  */
 export function calculateHydrogensCharge(a: AtomProxy,
   params: ValenceModelParams) {
-  const _ap = a.structure.getAtomProxy() // Avoid reuse of structure._ap
-  // const { assignCharge, assignH } = params
 
-  const hydrogenCount = a.bondToElementCount('H', _ap)
+  const hydrogenCount = a.bondToElementCount('H')
   let charge = a.formalCharge || 0
 
   const assignCharge = (params.assignCharge === 'always' ||
@@ -183,11 +181,17 @@ export function calculateHydrogensCharge(a: AtomProxy,
         if (!assignH) { // Trust input H explicitly:
           charge = valence - 3
         } else if (conjugated && valence < 4) {
-           charge = 0
-        }
-        else {
+          // Neutral unless amidine/guanidine double-bonded N:
+          if (degree - hydrogenCount === 1 && valence - hydrogenCount === 2) {
+            charge = 1
+          } else {
+            charge = 0
+          }
+        } else {
           charge = 1
+          // TODO: Planarity sanity check?
         }
+
       }
 
       if (assignH) {
@@ -242,7 +246,7 @@ export function calculateHydrogensCharge(a: AtomProxy,
     case 16:
       if (assignCharge) {
         if (!assignH) {
-          if (valence <= 3 && !a.bondToElementCount('O', _ap)) {
+          if (valence <= 3 && !a.bondToElementCount('O')) {
             charge = valence - 2 // e.g. explicitly deprotonated thiol
           } else {
             charge = 0

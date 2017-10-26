@@ -8,10 +8,11 @@ import { Vector3 } from 'three'
 import { defaults } from '../../utils'
 import { radToDeg } from '../../math/math-utils'
 import Structure from '../../structure/structure'
+import { AA3 } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
-  /* isQuaternaryAmine, isTertiaryAmine, isSulfonium, */ isGuanidine
-  //isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
+  /* isQuaternaryAmine, isTertiaryAmine, isSulfonium, */ isGuanidine,
+  isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
 } from '../functional-groups'
 import {
   Features, FeatureType, FeatureGroup,
@@ -35,10 +36,10 @@ export function addPositiveCharges (structure: Structure, features: Features) {
         }
       })
       addFeature(features, state)
-    } else if(!r.isProtein() && !r.isNucleic()) {
+    } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.PositiveCharge)
-        if (charge[ a.index ] > 0) {
+        if (charge[ a.index   ] > 0) {
           state.group = FeatureGroup.Unknown
           addAtom(state, a)
         }
@@ -56,8 +57,8 @@ export function addPositiveCharges (structure: Structure, features: Features) {
           addAtom(state, a)
         */
         else if (isGuanidine(a)) {
-          // New ValenceModel assigns charge to N - not quite optimal
-          // See Ligand 00Q in 1TBZ
+          // Guanidines don't get assigned positive charge by valence
+          // model, for now fix here:
           state.group = FeatureGroup.Guanidine
           addAtom(state, a)
         }
@@ -79,16 +80,10 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         }
       })
       addFeature(features, state)
-    } else if(!r.isProtein() && !r.isNucleic()) {
+    } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.NegativeCharge)
-        if (charge[a.index] < 0) {
-          addAtom(state, a)
-        }
-        // New VM identifies formal negative charge on
-        // the oxygens of these groups. Should we include
-        // a 'delocalised' charge feature?
-        /*if (isSulfonicAcid(a)) {
+        if (isSulfonicAcid(a)) {
           state.group = FeatureGroup.SulfonicAcid
           addAtom(state, a)
         } else if (isPhosphate(a)) {
@@ -100,7 +95,13 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         } else if (isCarboxylate(a)) {
           state.group = FeatureGroup.Carboxylate
           addAtom(state, a)
-        }*/
+        } else if (charge[a.index] < 0) {
+          // TODO: This ends up adding both O- and
+          // the C/S/P at the centre of one of the above types
+          // as negative charge centres. Need to delocalize negative
+          // charges better
+          addAtom(state, a)
+        }
         addFeature(features, state)
       })
     }

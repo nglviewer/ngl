@@ -36,7 +36,7 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
     const an = a.number
     const resname = a.resname
     const atomname = a.atomname
-    if (an === 7 || an === 8 || an === 9) {  // N, O, F
+    if (an === 7 || an === 8 || an === 9) {  // N, O, F, S
       if (
         (resname === 'ARG' && ['NE', 'NH1', 'NH2'].includes(atomname)) ||
         (resname === 'ASN' && atomname === 'ND2') ||
@@ -75,7 +75,8 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
       }
     } else if (an === 16) {  // S
       if (
-        (resname === 'CYS' && atomname === 'SG')
+        (resname === 'CYS' && atomname === 'SG') ||
+        (totalH[ a.index] > 0) // Ligand SH
       ) {
         addAtom(state, a)
         addFeature(features, state)
@@ -86,22 +87,21 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
 }
 
 /**
- * Weak hydrogen donor
+ * Weak hydrogen donor.
  */
 export function addWeakHydrogenDonors (structure: Structure, features: Features) {
+  // TODO: Previous version assigned HydrogenAcceptors to any C bound only
+  // to C and H? Check if this was intended?
+  const { totalH, idealGeometry } = valenceModel(structure.data)
+
   structure.eachAtom(a => {
-    const state = createFeatureState(FeatureType.HydrogenAcceptor) // Acceptor?
-    let flag = false
-    if (a.number === 6) {
-      // Depends on choice of definition but would usually say
-      // aromatic C adjacent to N for a weak donor
-      flag = true
-      a.eachBondedAtom(ap => {
-        const e = ap.element
-        if (e !== 'C' && e !== 'H') flag = false
-      })
-    }
-    if (flag) {
+    if (
+      a.number === 6 &&
+      totalH[ a.index ] > 0 &&
+      idealGeometry[ a.index] === AtomGeometry.Trigonal &&
+      a.bondToElementCount('N') > 0
+    ) {
+      const state = createFeatureState(FeatureType.WeakHydrogenDonor)
       addAtom(state, a)
       addFeature(features, state)
     }
@@ -112,7 +112,7 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
  * Potential hydrogen acceptor
  */
 export function addHydrogenAcceptors (structure: Structure, features: Features) {
-  const { charge, implicitH } = valenceModel(structure.data)
+  const { charge, implicitH, idealGeometry } = valenceModel(structure.data)
 
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.HydrogenAcceptor)
@@ -161,7 +161,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         addFeature(features, state)
         return
       }
-      if (
+      else if (
         (['C', 'DC'].includes(resname) && ['N3'].includes(atomname)) ||
         (['A', 'DA'].includes(resname) && ['N1'].includes(atomname))
       ) {
@@ -169,22 +169,23 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         addFeature(features, state)
         return
       }
-      if (charge[ a.index ] < 1){
-        // pyridine is an acceptor (2 bonds), amide N is not (3 bonds)
-        if (a.bondCount + implicitH[ a.index ] < 3){
+      else if (charge[ a.index ] < 1){
+        // Neutral nitrogen might be an acceptor
+        // It must have at least one lone pair:
+        const totalBonds = a.bondCount + implicitH[ a.index ]
+        if (
+          (idealGeometry[ a.index ] === AtomGeometry.Tetrahedral
+          && totalBonds < 4) ||
+          (idealGeometry[ a.index ] === AtomGeometry.Trigonal
+          && totalBonds < 3) ||
+          (idealGeometry[ a.index ] === AtomGeometry.Linear
+          && totalBonds < 2)
+        ) {
           addAtom(state, a)
           addFeature(features, state)
           return
         }
       }
-      /*const valence = explicitValence(a)
-      const hybridization = idealValence[ a.index ]
-      // N+ ions and sp2 hybrid N with 3 valences should not be hdrogen bond acceptors
-      if (!(valence === 4 && hybridization === 3) && !(valence === 3 && hybridization === 2)) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      }*/
     }else if (an === 16) {
       if (
         (resname === 'CYS' && atomname === 'SG') ||
@@ -221,6 +222,13 @@ function isHydrogenBond (ti: FeatureType, tj: FeatureType) {
     (ti === FeatureType.HydrogenDonor && tj === FeatureType.HydrogenAcceptor)
   )
 }
+
+/* function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
+  return (
+    (ti === FeatureType.WeakHydrogenDonor && tj === FeatureType.HydrogenAcceptor) ||
+    (ti === FeatureType.HydrogenAcceptor && tj === FeatureType.WeakHydrogenDonor)
+  )
+} */
 
 // const HydrogenCovalentBondLength: { [k: string]: number } = {
 //   C: 1.09,

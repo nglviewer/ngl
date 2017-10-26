@@ -94,8 +94,9 @@ stage.signals.hovered.add(function (pickingProxy) {
 // stage.loadFile('rcsb://4CUT').then(function (o) {  // standard BRD fragment
 // stage.loadFile('rcsb://5PBF').then(function (o) {  // [8HJ] get the donor and acceptor
 // stage.loadFile('rcsb://3MXF').then(function (o) {  // [JQ1] would have acceptor and then pi-pi
-stage.loadFile('rcsb://5PH0').then(function (o) {  // OGA - charges and metal chelation
+// stage.loadFile('rcsb://5PH0').then(function (o) {  // OGA - charges and metal chelation
 // stage.loadFile('rcsb://1XBB').then(function (o) {  // kinase inhibitor, important to get the hinge
+stage.loadFile('rcsb://1tbz').then(function (o) {
   /* o.addRepresentation('cartoon', {
     colorScheme: 'sstruc'
   }) */
