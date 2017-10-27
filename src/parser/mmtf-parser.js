@@ -61,7 +61,7 @@ class MmtfParser extends StructureParser {
     s.id = sd.structureId
     s.title = sd.title
 
-    s.atomStore.addField('formalCharge', 1, 'uint8')
+    s.atomStore.addField('formalCharge', 1, 'int8')
 
     if (this.firstModelOnly || this.asTrajectory) {
       numModels = 1
@@ -118,7 +118,7 @@ class MmtfParser extends StructureParser {
     var bBondOrder = new Uint8Array(numBonds)
 
     var aGroupIndex = new Uint32Array(numAtoms)
-    var aFormalCharge = new Uint8Array(numAtoms)
+    var aFormalCharge = new Int8Array(numAtoms)
 
     var gChainIndex = new Uint32Array(numGroups)
     var gAtomOffset = new Uint32Array(numGroups)
