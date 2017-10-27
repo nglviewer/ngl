@@ -9,7 +9,7 @@ import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import { calculateContacts, getContactData } from '../chemistry/interactions/contact'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
-import { getDashData } from '../geometry/dash'
+import { getFixedCountDashData } from '../geometry/dash'
 
 /**
  * Contact representation.
@@ -155,7 +155,7 @@ class ContactRepresentation extends StructureRepresentation {
     const contacts = calculateContacts(sview, params)
     const contactData = getContactData(contacts, sview, dataParams)
 
-    return getDashData(contactData)
+    return getFixedCountDashData(contactData)
   }
 
   createData (sview) {

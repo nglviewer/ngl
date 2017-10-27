@@ -12,7 +12,7 @@ import '../shader/WideLine.frag'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
-interface WideLineBufferData extends BufferData {
+export interface WideLineBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array
   color2: Float32Array
