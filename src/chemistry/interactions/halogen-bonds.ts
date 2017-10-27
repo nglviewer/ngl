@@ -11,13 +11,15 @@ import {
 } from './features'
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
 
+const halBondElements = [17, 35, 53, 85]
+
 /**
- * Halogen bond donors (X-C, with X one of F, Cl, Br, I or At)
+ * Halogen bond donors (X-C, with X one of Cl, Br, I or At) not F!
  */
 export function addHalogenDonors (structure: Structure, features: Features) {
   structure.eachAtom(a => {
-    if (a.isHalogen() && a.bondToElementCount('C') === 1) {
-      const state = createFeatureState(FeatureType.HydrogenAcceptor)
+    if (halBondElements.includes(a.number) && a.bondToElementCount('C') === 1) {
+      const state = createFeatureState(FeatureType.HalogenDonor)
       addAtom(state, a)
       addFeature(features, state)
     }
@@ -83,6 +85,8 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       if (invalidAtomContact(ap1, ap2)) return
 
       if (isHalogenBond(types[ i ], types[ j ])) {
+        // TODO: Requires geometry check (lone-pair of acceptor cf. H-bond TODO)
+        // C-X---O angle should be near 180
         featureSet.setBits(i, j)
         contactStore.addContact(i, j, ContactType.HalogenBond)
       }

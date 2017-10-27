@@ -96,7 +96,8 @@ stage.signals.hovered.add(function (pickingProxy) {
 // stage.loadFile('rcsb://3MXF').then(function (o) {  // [JQ1] would have acceptor and then pi-pi
 // stage.loadFile('rcsb://5PH0').then(function (o) {  // OGA - charges and metal chelation
 // stage.loadFile('rcsb://1XBB').then(function (o) {  // kinase inhibitor, important to get the hinge
-stage.loadFile('rcsb://1tbz').then(function (o) {
+// stage.loadFile('rcsb://1H82').then(function (o) {  // Example which requires ba.index !== ap1.index check in hydrogen-bond.ts
+stage.loadFile('rcsb://1p5e').then(function (o) {
   /* o.addRepresentation('cartoon', {
     colorScheme: 'sstruc'
   }) */
