@@ -358,6 +358,12 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       ) {
 
         if (ap1.bondCount === 1) {
+          // TODO: Logic here isn't quite right
+          // bondCount === 1 implies terminal.
+          // Need to sample positions
+
+          // For bondCount 2, 3 it's easier
+
           // one implicit hydrogen to add
           //    \
           //   --X--H
