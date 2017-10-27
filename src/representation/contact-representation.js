@@ -24,6 +24,9 @@ class ContactRepresentation extends StructureRepresentation {
       hydrogenBond: {
         type: 'boolean', rebuild: true
       },
+      weakHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
       hydrophobic: {
         type: 'boolean', rebuild: true
       },
@@ -98,6 +101,7 @@ class ContactRepresentation extends StructureRepresentation {
     p.radius = defaults(p.radius, 0.05)
 
     this.hydrogenBond = defaults(p.hydrogenBond, true)
+    this.weakHydrogenBond = defaults(p.weakHydrogenBond, true)
     this.hydrophobic = defaults(p.hydrophobic, false)
     this.halogenBond = defaults(p.halogenBond, true)
     this.saltBridge = defaults(p.saltBridge, true)
@@ -143,6 +147,7 @@ class ContactRepresentation extends StructureRepresentation {
 
     const dataParams = {
       hydrogenBond: this.hydrogenBond,
+      weakHydrogenBond: this.weakHydrogenBond,
       hydrophobic: this.hydrophobic,
       halogenBond: this.halogenBond,
       saltBridge: this.saltBridge,

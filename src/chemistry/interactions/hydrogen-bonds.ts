@@ -100,6 +100,8 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
       totalH[ a.index ] > 0 &&
       idealGeometry[ a.index] === AtomGeometry.Trigonal &&
       a.bondToElementCount('N') > 0
+      // Better check would be "is there a nitrogen in an aromatic ring?"
+      // e.g. CH para to N in pyridine
     ) {
       const state = createFeatureState(FeatureType.WeakHydrogenDonor)
       addAtom(state, a)
@@ -120,39 +122,14 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
     const an = a.number
     const resname = a.resname
     const atomname = a.atomname
-    if (an === 9) {  // F
-      // organic fluorine
-      a.hasBondToElement('C')
-    }else if (an === 8) {  // O
-      if (
-        (resname === 'ASN' && atomname === 'OD1') ||
-        (resname === 'ASP' && ['OD1', 'OD2'].includes(atomname)) ||
-        (resname === 'GLN' && atomname === 'OE1') ||
-        (resname === 'GLU' && ['OE1', 'OE2'].includes(atomname)) ||
-        (resname === 'SER' && atomname === 'OG') ||
-        (resname === 'THR' && atomname === 'OG1') ||
-        (resname === 'TYR' && atomname === 'OH')
-      ) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      }
-      if (
-        (['C', 'DC'].includes(resname) && ['O2'].includes(atomname)) ||
-        (['T', 'DT'].includes(resname) && ['O2', 'O4'].includes(atomname)) ||
-        (['U', 'DU'].includes(resname) && ['O2', 'O4'].includes(atomname)) ||
-        (['G', 'DG'].includes(resname) && ['O6'].includes(atomname))
-      ) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      }
+    if (an === 8) {  // O
+      // Basically assume all O are acceptors!
       // TODO https://github.com/openbabel/openbabel/blob/master/src/atom.cpp#L1792
-      if (!a.aromatic) {
+      // if (!a.aromatic) {
         addAtom(state, a)
         addFeature(features, state)
         return
-      }
+      // }
     }else if (an === 7) {  // N
       if (
         (resname === 'HIS' && ['ND1', 'NE2'].includes(atomname))
@@ -171,7 +148,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
       }
       else if (charge[ a.index ] < 1){
         // Neutral nitrogen might be an acceptor
-        // It must have at least one lone pair:
+        // It must have at least one lone pair not conjugated
         const totalBonds = a.bondCount + implicitH[ a.index ]
         if (
           (idealGeometry[ a.index ] === AtomGeometry.Tetrahedral
@@ -223,12 +200,12 @@ function isHydrogenBond (ti: FeatureType, tj: FeatureType) {
   )
 }
 
-/* function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
+function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
   return (
     (ti === FeatureType.WeakHydrogenDonor && tj === FeatureType.HydrogenAcceptor) ||
     (ti === FeatureType.HydrogenAcceptor && tj === FeatureType.WeakHydrogenDonor)
   )
-} */
+}
 
 // const HydrogenCovalentBondLength: { [k: string]: number } = {
 //   C: 1.09,
@@ -245,6 +222,7 @@ export interface HydrogenBondParams {
   maxHydrogenBondAngle?: number
   backboneHydrogenBond?: boolean
   waterHydrogenBond?: boolean
+  weakHydrogenBond?: boolean
 }
 
 /**
@@ -255,6 +233,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const maxHydrogenBondAngle = defaults(params.maxHydrogenBondAngle, ContactDefaultParams.maxHydrogenBondAngle)
   const backboneHydrogenBond = defaults(params.backboneHydrogenBond, ContactDefaultParams.backboneHydrogenBond)
   const waterHydrogenBond = defaults(params.waterHydrogenBond, ContactDefaultParams.waterHydrogenBond)
+  const weakHydrogenBond = defaults(params.weakHydrogenBond, ContactDefaultParams.weakHydrogenBond)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -291,10 +270,11 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       const ti = types[ i ]
       const tj = types[ j ]
 
-      if (!isHydrogenBond(ti, tj)) return
+      const isWeak = isWeakHydrogenBond(ti, tj)
+      if (!isHydrogenBond(ti, tj) && !isWeak) return
 
       // TODO handle edge case
-      const [ l, k ] = types[ i ] === FeatureType.HydrogenDonor ? [ i, j ] : [ j, i ]
+      const [ l, k ] = types[ j ] === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
 
       ap1.index = atomSets[ l ][ 0 ]
       ap2.index = atomSets[ k ][ 0 ]
@@ -303,10 +283,12 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (!backboneHydrogenBond && isBackboneHydrogenBond(ap1, ap2)) return
       if (!waterHydrogenBond && isWaterHydrogenBond(ap1, ap2)) return
+      if (!weakHydrogenBond && isWeak) return
 
       let vn = 0
       let hn = 0
 
+      // Set explicit hydrogen positions
       ap1.eachBondedAtom(ba => {
         vp[ vn ].set(ba.x, ba.y, ba.z)
         ++vn
@@ -315,6 +297,8 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
           ++hn
         }
       })
+
+      // Set implicit hydrogen positions
 
       // tetrahedral geometry but constraint to ring plane
       const isTyr = ap1.resname === 'TYR' && ap1.atomname === 'OH'
@@ -333,7 +317,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
           if (flag) {
             flag = false
             ap3.eachBondedAtom(ba => {
-            if (!flag && ba.element !== 'H') {
+            if (!flag && ba.index !== ap1.index && ba.element !== 'H') {
                 ap4.index = ba.index
                 flag = true
               }
@@ -399,7 +383,8 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
         const angle = radToDeg(d1.angleTo(d2))
         if (angle <= maxHydrogenBondAngle) {
           featureSet.setBits(l, k)
-          contactStore.addContact(l, k, ContactType.HydrogenBond)
+          const bondType = isWeak ? ContactType.WeakHydrogenBond : ContactType.HydrogenBond
+          contactStore.addContact(l, k, bondType)
           break
         }
       }

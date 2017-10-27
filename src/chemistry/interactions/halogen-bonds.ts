@@ -40,7 +40,7 @@ export function addHalogenAcceptors (structure: Structure, features: Features) {
         }
       })
       if (flag) {
-        const state = createFeatureState(FeatureType.HydrogenAcceptor)
+        const state = createFeatureState(FeatureType.HalogenAcceptor)
         addAtom(state, a)
         addFeature(features, state)
       }
