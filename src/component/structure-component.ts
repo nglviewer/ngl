@@ -7,7 +7,7 @@
 import { Signal } from 'signals'
 
 import { ComponentRegistry } from '../globals'
-import { defaults, createRingBuffer, RingBuffer, createSimpleSet, SimpleSet } from '../utils'
+import { defaults, createRingBuffer, RingBuffer, createSimpleDict, SimpleDict } from '../utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
 import TrajectoryElement from './trajectory-element'
 import RepresentationElement from './representation-element'
@@ -20,9 +20,9 @@ import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
 
 type StructureRepresentationType = (
-  'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'distance'|
-  'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|'ribbon'|
-  'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
+  'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
+  'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
+  'ribbon'|'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
 )
 
 export const StructureComponentDefaultParameters = Object.assign({
@@ -57,11 +57,13 @@ class StructureComponent extends Component {
   readonly trajList: TrajectoryElement[] = []
 
   pickBuffer: RingBuffer<number>
-  pickPairs: SimpleSet<number[]>
+  pickDict: SimpleDict<number[], number[]>
   lastPick?: number
 
   spacefillRepresentation: RepresentationElement
   distanceRepresentation: RepresentationElement
+  angleRepresentation: RepresentationElement
+  dihedralRepresentation: RepresentationElement
 
   constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, structure, Object.assign({ name: structure.name }, params))
@@ -77,8 +79,8 @@ class StructureComponent extends Component {
 
     //
 
-    this.pickBuffer = createRingBuffer(2)
-    this.pickPairs = createSimpleSet()
+    this.pickBuffer = createRingBuffer(4)
+    this.pickDict = createSimpleDict()
 
     this.spacefillRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
@@ -87,13 +89,30 @@ class StructureComponent extends Component {
       disablePicking: true,
       scale: 0.3
     }, true)
-    this.distanceRepresentation = this.addRepresentation('distance', {
+
+    const measurementParams = {
       color: 'green',
       labelColor: 'grey',
-      labelSize: 1,
-      radius: 0.04,
-      scale: 1
-    }, true)
+      labelAttachment: 'bottom-center',
+      labelSize: 0.7,
+      labelZOffset: 0.5,
+      labelYOffset: 0.1,
+      labelBorder: true,
+      labelBorderColor: 'lightgrey',
+      labelBorderWidth: 0.25,
+      lineOpacity: 0.8,
+      linewidth: 5.0,
+      opacity: 0.6
+    }
+    this.distanceRepresentation = this.addRepresentation(
+      'distance', Object.assign({ labelUnit: 'angstrom' }, measurementParams), true
+    )
+    this.angleRepresentation = this.addRepresentation(
+      'angle', Object.assign({ arcVisible: false }, measurementParams), true
+    )
+    this.dihedralRepresentation = this.addRepresentation(
+      'dihedral', Object.assign({ planeVisible: false }, measurementParams), true
+    )
   }
 
   /**

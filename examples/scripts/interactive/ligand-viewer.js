@@ -112,9 +112,10 @@ function loadStructure (input) {
       color: '#333333',
       zOffset: 2.0,
       attachment: 'middle-center',
-      showBackground: true,
-      backgroundColor: 'white',
-      backgroundOpacity: 0.5,
+      showBorder: true,
+      borderColor: 'lightgrey',
+      borderWidth: 0.25,
+      disablePicking: true,
       scale: 0.6
     })
   })
@@ -338,6 +339,6 @@ addElement(createElement('span', {
   innerText: 'hydrophobic'
 }, { top: '382px', left: '32px', color: 'lightgrey' }))
 
-loadStructure('rcsb://4cup').then(function(){
+loadStructure('rcsb://4cup').then(function () {
   showLigand('ZYB')
 })

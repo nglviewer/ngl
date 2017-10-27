@@ -188,15 +188,29 @@ class MouseActions {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
       const sc = pickingProxy.component as StructureComponent
+      const pickCount = sc.pickBuffer.count
 
-      if (sc.lastPick === atom.index && sc.pickBuffer.count >= 2) {
-        const atomPair = sc.pickBuffer.data.sort()
-        if (sc.pickPairs.has(atomPair)) {
-          sc.pickPairs.del(atomPair)
+      if (sc.lastPick === atom.index && pickCount >= 2) {
+        const atomList = sc.pickBuffer.data
+        const atomListSorted = sc.pickBuffer.data.sort()
+        if (sc.pickDict.has(atomListSorted)) {
+          sc.pickDict.del(atomListSorted)
         } else {
-          sc.pickPairs.add(atomPair)
+          sc.pickDict.add(atomListSorted, atomList)
         }
-        sc.distanceRepresentation.setParameters({ atomPair: sc.pickPairs.list })
+        if (pickCount === 2) {
+          sc.distanceRepresentation.setParameters({
+            atomPair: sc.pickDict.values.filter(l => l.length === 2)
+          })
+        } else if (pickCount === 3) {
+          sc.angleRepresentation.setParameters({
+            atomTriple: sc.pickDict.values.filter(l => l.length === 3)
+          })
+        } else if (pickCount === 4) {
+          sc.dihedralRepresentation.setParameters({
+            atomQuad: sc.pickDict.values.filter(l => l.length === 4)
+          })
+        }
         sc.pickBuffer.clear()
         sc.lastPick = undefined
       } else {
