@@ -16,7 +16,8 @@ import MeasurementRepresentation from './measurement-representation.js'
 import Selection from '../selection/selection.js'
 import BondStore from '../store/bond-store.js'
 import TextBuffer from '../buffer/text-buffer.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import WideLineBuffer from '../buffer/wideline-buffer.js'
+import { getFixedLengthDashData } from '../geometry/dash'
 
 /**
  * Distance representation parameter object.
@@ -33,8 +34,6 @@ import CylinderBuffer from '../buffer/cylinder-buffer.js'
  *                                when the representation is updated often, e.g. by
  *                                changing the selection or the atom positions, as their
  *                                are no selection strings to be evaluated.
- * @property {Integer} radialSegments - cylinder quality (number of segments)
- * @property {Boolean} disableImpostor - disable use of raycasted impostors for rendering
  */
 
 /**
@@ -63,7 +62,6 @@ class DistanceRepresentation extends MeasurementRepresentation {
     this.type = 'distance'
 
     this.parameters = Object.assign({
-
       labelUnit: {
         type: 'select',
         rebuild: true,
@@ -71,10 +69,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       },
       atomPair: {
         type: 'hidden', rebuild: true
-      },
-      radialSegments: true,
-      disableImpostor: true
-
+      }
     }, this.parameters)
 
     this.init(params)
@@ -82,7 +77,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
   init (params) {
     var p = params || {}
-    p.radius = defaults(p.radius, 0.15)
+    p.linewidth = defaults(p.linewidth, 5.0)
 
     this.labelUnit = defaults(p.labelUnit, '')
     this.atomPair = defaults(p.atomPair, [])
@@ -186,30 +181,30 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
     var c = new Color(this.labelColor)
 
-    this.textBuffer = new TextBuffer(
-      {
-        position: distanceData.position,
-        size: uniformArray(n, this.labelSize),
-        color: uniformArray3(n, c.r, c.g, c.b),
-        text: distanceData.text
-      },
-      this.getLabelBufferParams()
-    )
+    this.textBuffer = new TextBuffer({
+      position: distanceData.position,
+      size: uniformArray(n, this.labelSize),
+      color: uniformArray3(n, c.r, c.g, c.b),
+      text: distanceData.text
+    }, this.getLabelBufferParams())
 
     var bondParams = {
       bondSet: distanceData.bondSet,
       bondStore: distanceData.bondStore
     }
 
-    var bondData = this.getBondData(this.structureView, undefined, bondParams)
+    var bondData = this.getBondData(
+      this.structureView,
+      { position: true, color: true, picking: true },
+      bondParams
+    )
 
-    this.cylinderBuffer = new CylinderBuffer(
-      bondData,
+    this.lineBuffer = new WideLineBuffer(
+      getFixedLengthDashData(bondData),
       this.getBufferParams({
-        openEnded: false,
-        radialSegments: this.radialSegments,
-        disableImpostor: this.disableImpostor,
-        dullInterior: true
+        linewidth: this.linewidth,
+        visible: this.lineVisible,
+        opacity: this.lineOpacity
       })
     )
 
@@ -218,7 +213,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       bondSet: distanceData.bondSet,
       bondStore: distanceData.bondStore,
       position: distanceData.position,
-      bufferList: [ this.textBuffer, this.cylinderBuffer ]
+      bufferList: [ this.textBuffer, this.lineBuffer ]
     })
   }
 
@@ -229,7 +224,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
 
     var bondData = this.getBondData(data.sview, what, bondParams)
-    var cylinderData = {}
+    var lineData = {}
     var textData = {}
     var n = this.atomPair.length
 
@@ -243,16 +238,37 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
 
     if (what.color) {
-      cylinderData.color = bondData.color
-      cylinderData.color2 = bondData.color2
+      lineData.color = bondData.color
+      lineData.color2 = bondData.color2
     }
 
     if (what.radius || what.scale) {
-      cylinderData.radius = bondData.radius
+      lineData.radius = bondData.radius
     }
 
     this.textBuffer.setAttributes(textData)
-    this.cylinderBuffer.setAttributes(cylinderData)
+    this.lineBuffer.setAttributes(lineData)
+  }
+
+  setParameters (params) {
+    var rebuild = false
+    var what = {}
+
+    super.setParameters(params, what, rebuild)
+
+    if (params && params.lineOpacity) {
+      this.lineBuffer.setParameters({ opacity: params.lineOpacity })
+    }
+
+    if (params && params.opacity !== undefined) {
+      this.lineBuffer.setParameters({ opacity: this.lineOpacity })
+    }
+
+    if (params && params.linewidth) {
+      this.lineBuffer.setParameters({ linewidth: params.linewidth })
+    }
+
+    return this
   }
 }
 

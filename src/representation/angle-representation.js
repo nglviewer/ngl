@@ -9,7 +9,6 @@ import { RepresentationRegistry } from '../globals.js'
 import MeasurementRepresentation, { parseNestedAtoms, calcArcPoint } from './measurement-representation.js'
 import { defaults } from '../utils.js'
 
-import DoubleSidedBuffer from '../buffer/doublesided-buffer.js'
 import MeshBuffer from '../buffer/mesh-buffer.js'
 import TextBuffer from '../buffer/text-buffer.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
@@ -18,6 +17,7 @@ import { v3add, v3cross, v3dot, v3fromArray, v3length, v3new,
   v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
 import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
 import { RAD2DEG } from '../math/math-constants.js'
+import { getFixedLengthDashData } from '../geometry/dash'
 
 /**
  * @typedef {Object} AngleRepresentationParameters - angle representation parameters
@@ -63,12 +63,6 @@ class AngleRepresentation extends MeasurementRepresentation {
       arcVisible: {
         type: 'boolean', default: true
       },
-      lineOpacity: {
-        type: 'range', min: 0.0, max: 1.0, step: 0.01
-      },
-      linewidth: {
-        type: 'number', precision: 2, max: 10.0, min: 0.5
-      },
       sectorVisible: {
         type: 'boolean', default: true
       }
@@ -84,8 +78,6 @@ class AngleRepresentation extends MeasurementRepresentation {
 
     this.atomTriple = defaults(p.atomTriple, [])
     this.arcVisible = defaults(p.arcVisible, true)
-    this.lineOpacity = defaults(p.lineOpacity, 1.0)
-    this.linewidth = defaults(p.linewidth, 2.0)
     this.sectorVisible = defaults(p.sectorVisible, true)
     this.vectorVisible = defaults(p.vectorVisible, true)
 
@@ -110,15 +102,19 @@ class AngleRepresentation extends MeasurementRepresentation {
 
     const c = new Color(this.colorValue)
 
-    this.vectorBuffer = new WideLineBuffer({
-      position1: angleData.vectorPosition1,
-      position2: angleData.vectorPosition2,
-      color: uniformArray3(2 * n, c.r, c.g, c.b),
-      color2: uniformArray3(2 * n, c.r, c.g, c.b)
-    }, this.getBufferParams({
-      linewidth: this.linewidth,
-      visible: this.vectorVisible // TODO: Expose as param
-    }))
+    this.vectorBuffer = new WideLineBuffer(
+      getFixedLengthDashData({
+        position1: angleData.vectorPosition1,
+        position2: angleData.vectorPosition2,
+        color: uniformArray3(2 * n, c.r, c.g, c.b),
+        color2: uniformArray3(2 * n, c.r, c.g, c.b)
+      }),
+      this.getBufferParams({
+        linewidth: this.linewidth,
+        visible: this.vectorVisible,
+        opacity: this.lineOpacity
+      })
+    )
 
     this.arcLength = angleData.arcPosition1.length / 3
 
@@ -128,21 +124,19 @@ class AngleRepresentation extends MeasurementRepresentation {
       color: uniformArray3(this.arcLength, c.r, c.g, c.b),
       color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
     }, this.getBufferParams({
-      linewidth: 2.0,
-      visible: this.arcVisible
+      linewidth: this.linewidth,
+      visible: this.arcVisible,
+      opacity: this.lineOpacity
     }))
 
     this.sectorLength = angleData.sectorPosition.length / 3
 
-    this.sectorMeshBuffer = new MeshBuffer({
+    this.sectorBuffer = new MeshBuffer({
       position: angleData.sectorPosition,
       color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
     }, this.getBufferParams({
-      visible: this.sectorVisible,
-      opacity: this.sectorOpacity
+      visible: this.sectorVisible
     }))
-
-    this.sectorDoubleSidedBuffer = new DoubleSidedBuffer(this.sectorMeshBuffer)
 
     this.dataList.push({
       sview: this.structureView,
@@ -150,7 +144,8 @@ class AngleRepresentation extends MeasurementRepresentation {
         this.textBuffer,
         this.vectorBuffer,
         this.arcBuffer,
-        this.sectorDoubleSidedBuffer ]
+        this.sectorBuffer
+      ]
     })
   }
 
@@ -168,12 +163,12 @@ class AngleRepresentation extends MeasurementRepresentation {
     }
 
     // if (what.sectorOpacity) {
-    //   this.sectorMeshBuffer.opacity = what.sectorOpacity
+    //   this.sectorBuffer.opacity = what.sectorOpacity
     // }
 
     this.vectorBuffer.setAttributes(vectorData)
     this.arcBuffer.setAttributes(arcData)
-    this.sectorMeshBuffer.setAttributes(sectorData)
+    this.sectorBuffer.setAttributes(sectorData)
   }
 
   setParameters (params) {
@@ -190,17 +185,13 @@ class AngleRepresentation extends MeasurementRepresentation {
     }
 
     if (params && params.lineOpacity) {
-      this.vectorBuffer.setParameters(
-        {opacity: params.lineOpacity})
-      this.arcBuffer.setParameters(
-        {opacity: params.lineOpacity})
+      this.vectorBuffer.setParameters({ opacity: params.lineOpacity })
+      this.arcBuffer.setParameters({ opacity: params.lineOpacity })
     }
 
     if (params && params.opacity !== undefined) {
-      this.vectorBuffer.setParameters(
-        {opacity: this.lineOpacity})
-      this.arcBuffer.setParameters(
-        {opacity: this.lineOpacity})
+      this.vectorBuffer.setParameters({ opacity: this.lineOpacity })
+      this.arcBuffer.setParameters({ opacity: this.lineOpacity })
     }
 
     if (params && params.linewidth) {
@@ -216,7 +207,7 @@ class AngleRepresentation extends MeasurementRepresentation {
 
     this.vectorBuffer.setVisibility(this.vectorVisible && this.visible)
     this.arcBuffer.setVisibility(this.arcVisible && this.visible)
-    this.sectorDoubleSidedBuffer.setVisibility(this.sectorVisible && this.visible)
+    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
 
     if (!noRenderRequest) this.viewer.requestRender()
 
