@@ -50,7 +50,7 @@ class AxesRepresentation extends StructureRepresentation {
 
     this.parameters = Object.assign({
 
-      radius: {
+      radiusSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
       sphereDetail: true,
@@ -73,7 +73,7 @@ class AxesRepresentation extends StructureRepresentation {
   init (params) {
     var p = params || {}
 
-    p.radius = defaults(p.radius, 0.5)
+    p.radiusSize = defaults(p.radiusSize, 0.5)
     p.colorValue = defaults(p.colorValue, 'lightgreen')
 
     this.showAxes = defaults(p.showAxes, true)
@@ -112,12 +112,12 @@ class AxesRepresentation extends StructureRepresentation {
 
     var vertexPosition = new Float32Array(3 * vn)
     var vertexColor = uniformArray3(vn, c.r, c.g, c.b)
-    var vertexRadius = uniformArray(vn, this.radius)
+    var vertexRadius = uniformArray(vn, this.radiusSize)
 
     var edgePosition1 = new Float32Array(3 * en)
     var edgePosition2 = new Float32Array(3 * en)
     var edgeColor = uniformArray3(en, c.r, c.g, c.b)
-    var edgeRadius = uniformArray(en, this.radius)
+    var edgeRadius = uniformArray(en, this.radiusSize)
 
     var offset = 0
 

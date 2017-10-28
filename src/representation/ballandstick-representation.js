@@ -94,7 +94,8 @@ class BallAndStickRepresentation extends StructureRepresentation {
 
   init (params) {
     var p = params || {}
-    p.radius = defaults(p.radius, 0.15)
+    p.radiusType = defaults(p.radiusType, 'size')
+    p.radiusSize = defaults(p.radiusSize, 0.15)
 
     this.aspectRatio = defaults(p.aspectRatio, 2.0)
     this.lineOnly = defaults(p.lineOnly, false)
@@ -108,11 +109,10 @@ class BallAndStickRepresentation extends StructureRepresentation {
   }
 
   getAtomParams (what, params) {
-    params = Object.assign({
-      radiusParams: { 'radius': this.radius, 'scale': this.scale * this.aspectRatio }
-    }, params)
+    var p = super.getAtomParams(what, params)
+    p.radiusParams.scale *= this.aspectRatio
 
-    return super.getAtomParams(what, params)
+    return p
   }
 
   getAtomData (sview, what, params) {
@@ -237,11 +237,11 @@ class BallAndStickRepresentation extends StructureRepresentation {
     }
   }
 
-  setParameters (params) {
+  setParameters (params = {}) {
     var rebuild = false
     var what = {}
 
-    if (params && (params.aspectRatio || params.bondSpacing || params.bondScale)) {
+    if (params.aspectRatio || params.bondSpacing || params.bondScale) {
       what.radius = true
       if (!ExtensionFragDepth || this.disableImpostor) {
         rebuild = true

@@ -9,7 +9,7 @@ import { Vector3 } from 'three'
 import { ColormakerRegistry } from '../globals'
 import { ColormakerParameters } from '../color/colormaker'
 import { AtomPicker } from '../utils/picker'
-import RadiusFactory, { RadiusType } from '../utils/radius-factory'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory'
 import { copyArray } from '../math/array-utils'
 import { projectPointOnVector } from '../math/vector-utils'
 import Polymer from '../proxy/polymer'
@@ -130,14 +130,14 @@ class Helixorient {
     }
   }
 
-  getSize (type: RadiusType, scale?: number) {
+  getSize (params: RadiusParams) {
     const polymer = this.polymer
     const structure = polymer.structure
     const n = polymer.residueCount
     const residueIndexStart = polymer.residueIndexStart
 
     const size = new Float32Array(n)
-    const radiusFactory = new RadiusFactory(type, scale)
+    const radiusFactory = new RadiusFactory(params)
 
     const rp = structure.getResidueProxy()
     const ap = structure.getAtomProxy()

@@ -534,7 +534,7 @@ Spline.prototype = {
     }
   },
 
-  getSubdividedSize: function (type, scale) {
+  getSubdividedSize: function (params) {
     var m = this.subdiv
     var polymer = this.polymer
     var n = polymer.residueCount
@@ -545,7 +545,7 @@ Spline.prototype = {
     var size = new Float32Array(nSize)
     var iterator = this.getAtomIterator('trace')
 
-    var radiusFactory = new RadiusFactory(type, scale)
+    var radiusFactory = new RadiusFactory(params)
 
     function sizeFn (item) {
       return radiusFactory.atomRadius(item)

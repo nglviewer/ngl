@@ -22,8 +22,8 @@ class ValidationRepresentation extends StructureRepresentation {
 
     }, this.parameters, {
       radiusType: null,
-      radius: null,
-      scale: null
+      radiusSize: null,
+      radiusScale: null
     })
 
     this.init(params)

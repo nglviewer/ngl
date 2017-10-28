@@ -31,8 +31,8 @@ class HelixorientRepresentation extends StructureRepresentation {
   init (params) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'sstruc')
-    p.radius = defaults(p.radius, 0.15)
-    p.scale = defaults(p.scale, 1.0)
+    p.radiusSize = defaults(p.radiusSize, 0.15)
+    p.radiusScale = defaults(p.radiusScale, 1.0)
 
     super.init(p)
   }
@@ -48,7 +48,7 @@ class HelixorientRepresentation extends StructureRepresentation {
       var helixorient = new Helixorient(polymer)
       var position = helixorient.getPosition()
       var color = helixorient.getColor(this.getColorParams())
-      var size = helixorient.getSize(this.radius, this.scale)
+      var size = helixorient.getSize(this.getRadiusParams())
       var picking = helixorient.getPicking()
 
       bufferList.push(

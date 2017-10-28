@@ -8,7 +8,7 @@ import { ExtensionFragDepth, Mobile } from '../globals'
 import { defaults } from '../utils'
 import Representation from './representation.js'
 import Selection from '../selection/selection.js'
-import RadiusFactory from '../utils/radius-factory.js'
+import RadiusFactory, { RadiusFactoryTypes } from '../utils/radius-factory.js'
 
 /**
  * Structure representation parameter object.
@@ -43,10 +43,13 @@ class StructureRepresentation extends Representation {
       radiusType: {
         type: 'select', options: RadiusFactory.types
       },
-      radius: {
+      radiusData: {
+        type: 'hidden', rebuild: true
+      },
+      radiusSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
-      scale: {
+      radiusScale: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
       assembly: null,
@@ -108,8 +111,12 @@ class StructureRepresentation extends Representation {
     const p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'element')
 
-    this.radius = defaults(p.radius, 'vdw')
-    this.scale = defaults(p.scale, 1.0)
+    this.setRadius(p.radius, p)
+
+    this.radiusType = defaults(p.radiusType, 'vdw')
+    this.radiusData = defaults(p.radiusData, {})
+    this.radiusSize = defaults(p.radiusSize, 1.0)
+    this.radiusScale = defaults(p.radiusScale, 1.0)
     this.assembly = defaults(p.assembly, 'default')
     this.defaultAssembly = defaults(p.defaultAssembly, '')
 
@@ -124,6 +131,19 @@ class StructureRepresentation extends Representation {
     }, this)
 
     this.build()
+  }
+
+  setRadius (value, p) {
+    const types = Object.keys(RadiusFactoryTypes)
+
+    if (typeof value === 'string' && types.includes(value.toLowerCase())) {
+      p.radiusType = value
+    } else if (value !== undefined) {
+      p.radiusType = 'size'
+      p.radiusSize = value
+    }
+
+    return this
   }
 
   getAssembly () {
@@ -222,11 +242,20 @@ class StructureRepresentation extends Representation {
     return p
   }
 
+  getRadiusParams (aspectRatio = 1) {
+    return {
+      type: this.radiusType,
+      scale: this.radiusScale * aspectRatio,
+      size: this.radiusSize,
+      data: this.radiusData
+    }
+  }
+
   getAtomParams (what, params) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
-      radiusParams: { 'radius': this.radius, 'scale': this.scale }
+      radiusParams: this.getRadiusParams()
     }, params)
   }
 
@@ -234,7 +263,7 @@ class StructureRepresentation extends Representation {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
-      radiusParams: { 'radius': this.radius, 'scale': this.scale }
+      radiusParams: this.getRadiusParams()
     }, params)
   }
 
@@ -265,41 +294,23 @@ class StructureRepresentation extends Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {StructureRepresentation} this object
    */
-  setParameters (params, what, rebuild) {
-    what = what || {}
+  setParameters (params, what = {}, rebuild = false) {
+    const p = params || {}
 
-    if (params && params.radiusType !== undefined) {
-      if (params.radiusType === 'size') {
-        this.radius = 1.0
-      } else {
-        this.radius = params.radiusType
-      }
-      delete params.radiusType
+    this.setRadius(p.radius, p)
+
+    if (p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
       what.radius = true
       if (!ExtensionFragDepth || this.disableImpostor) {
         rebuild = true
       }
     }
 
-    if (params && params.radius !== undefined) {
-      what.radius = true
-      if (!ExtensionFragDepth || this.disableImpostor) {
-        rebuild = true
-      }
-    }
-
-    if (params && params.scale !== undefined) {
-      what.radius = true
-      if (!ExtensionFragDepth || this.disableImpostor) {
-        rebuild = true
-      }
-    }
-
-    if (params && params.defaultAssembly !== undefined) {
+    if (p.defaultAssembly !== undefined) {
       rebuild = true
     }
 
-    super.setParameters(params, what, rebuild)
+    super.setParameters(p, what, rebuild)
 
     return this
   }

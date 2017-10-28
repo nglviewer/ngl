@@ -64,8 +64,8 @@ class CartoonRepresentation extends StructureRepresentation {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
-    p.radius = defaults(p.radius, 'sstruc')
-    p.scale = defaults(p.scale, 0.7)
+    p.radiusType = defaults(p.radiusType, 'sstruc')
+    p.radiusScale = defaults(p.radiusScale, 0.7)
 
     this.aspectRatio = defaults(p.aspectRatio, 5.0)
     this.tension = defaults(p.tension, NaN)
@@ -99,10 +99,6 @@ class CartoonRepresentation extends StructureRepresentation {
     return new Spline(polymer, this.getSplineParams())
   }
 
-  getScale (polymer) {
-    return polymer.isCg() ? this.scale * this.aspectRatio : this.scale
-  }
-
   getAspectRatio (polymer) {
     return polymer.isCg() ? 1.0 : this.aspectRatio
   }
@@ -116,19 +112,20 @@ class CartoonRepresentation extends StructureRepresentation {
       polymerList.push(polymer)
 
       var spline = this.getSpline(polymer)
+      var aspectRatio = this.getAspectRatio(polymer)
 
       var subPos = spline.getSubdividedPosition()
       var subOri = spline.getSubdividedOrientation()
       var subCol = spline.getSubdividedColor(this.getColorParams())
       var subPick = spline.getSubdividedPicking()
-      var subSize = spline.getSubdividedSize(this.radius, this.getScale(polymer))
+      var subSize = spline.getSubdividedSize(this.getRadiusParams(aspectRatio))
 
       bufferList.push(
         new TubeMeshBuffer(
           Object.assign({}, subPos, subOri, subCol, subPick, subSize),
           this.getBufferParams({
             radialSegments: this.radialSegments,
-            aspectRatio: this.getAspectRatio(polymer),
+            aspectRatio: aspectRatio,
             capped: this.capped,
             dullInterior: true
           })
@@ -151,13 +148,14 @@ class CartoonRepresentation extends StructureRepresentation {
       var bufferData = {}
       var polymer = data.polymerList[ i ]
       var spline = this.getSpline(polymer)
+      var aspectRatio = this.getAspectRatio(polymer)
 
-      data.bufferList[ i ].aspectRatio = this.getAspectRatio(polymer)
+      data.bufferList[ i ].aspectRatio = aspectRatio
 
       if (what.position || what.radius) {
         var subPos = spline.getSubdividedPosition()
         var subOri = spline.getSubdividedOrientation()
-        var subSize = spline.getSubdividedSize(this.radius, this.getScale(polymer))
+        var subSize = spline.getSubdividedSize(this.getRadiusParams(aspectRatio))
 
         bufferData.position = subPos.position
         bufferData.normal = subOri.normal

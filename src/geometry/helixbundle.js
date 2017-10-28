@@ -20,7 +20,7 @@ class Helixbundle {
     this.position = this.helixorient.getPosition()
   }
 
-  getAxis (localAngle, centerDist, ssBorder, colorParams, radius, scale) {
+  getAxis (localAngle, centerDist, ssBorder, colorParams, radiusParams) {
     localAngle = localAngle || 30
     centerDist = centerDist || 2.5
     ssBorder = ssBorder === undefined ? false : ssBorder
@@ -37,7 +37,7 @@ class Helixbundle {
 
     var colormaker = ColormakerRegistry.getScheme(cp)
 
-    var radiusFactory = new RadiusFactory(radius, scale)
+    var radiusFactory = new RadiusFactory(radiusParams)
 
     var j = 0
     var k = 0
@@ -134,15 +134,15 @@ class Helixbundle {
     var picking = new Float32Array(pick)
 
     return {
-      'axis': new Float32Array(axis),
-      'center': new Float32Array(center),
-      'begin': new Float32Array(beg),
-      'end': new Float32Array(end),
-      'color': new Float32Array(col),
-      'picking': new AtomPicker(picking, structure),
-      'size': new Float32Array(size),
-      'residueOffset': residueOffset,
-      'residueCount': residueCount
+      axis: new Float32Array(axis),
+      center: new Float32Array(center),
+      begin: new Float32Array(beg),
+      end: new Float32Array(end),
+      color: new Float32Array(col),
+      picking: new AtomPicker(picking, structure),
+      size: new Float32Array(size),
+      residueOffset: residueOffset,
+      residueCount: residueCount
     }
   }
 }
