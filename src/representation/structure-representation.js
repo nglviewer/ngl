@@ -242,10 +242,10 @@ class StructureRepresentation extends Representation {
     return p
   }
 
-  getRadiusParams (aspectRatio = 1) {
+  getRadiusParams () {
     return {
       type: this.radiusType,
-      scale: this.radiusScale * aspectRatio,
+      scale: this.radiusScale,
       size: this.radiusSize,
       data: this.radiusData
     }

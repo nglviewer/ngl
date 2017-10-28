@@ -118,7 +118,7 @@ class CartoonRepresentation extends StructureRepresentation {
       var subOri = spline.getSubdividedOrientation()
       var subCol = spline.getSubdividedColor(this.getColorParams())
       var subPick = spline.getSubdividedPicking()
-      var subSize = spline.getSubdividedSize(this.getRadiusParams(aspectRatio))
+      var subSize = spline.getSubdividedSize(this.getRadiusParams())
 
       bufferList.push(
         new TubeMeshBuffer(

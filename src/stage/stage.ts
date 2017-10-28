@@ -328,7 +328,7 @@ class Stage {
       if (residueCount / instanceCount < 4) {
         component.addRepresentation('ball+stick', {
           colorScheme: 'element',
-          scale: 2.0,
+          radiusScale: 2.0,
           aspectRatio: 1.5,
           bondScale: 0.3,
           bondSpacing: 0.75,
@@ -364,17 +364,17 @@ class Stage {
           colorScheme, colorScale, colorReverse,
           quality: 'low',
           disableImpostor: true,
-          scale: 2.0
+          radiusScale: 2.0
         })
       } else if (sizeScore > 80000) {
         component.addRepresentation('backbone', {
           colorScheme, colorScale, colorReverse,
-          scale: 2.0
+          radiusScale: 2.0
         })
       } else {
         component.addRepresentation('cartoon', {
           colorScheme, colorScale, colorReverse,
-          scale: 0.7,
+          radiusScale: 0.7,
           aspectRatio: 5,
           quality: 'auto'
         })
@@ -387,7 +387,7 @@ class Stage {
         component.addRepresentation('ball+stick', {
           sele: 'ligand',
           colorScheme: 'element',
-          scale: 2.0,
+          radiusScale: 2.0,
           aspectRatio: 1.5,
           bondScale: 0.3,
           bondSpacing: 0.75,

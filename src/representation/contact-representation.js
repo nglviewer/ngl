@@ -149,7 +149,7 @@ class ContactRepresentation extends StructureRepresentation {
       metalComplex: this.metalComplex,
       cationPi: this.cationPi,
       piStacking: this.piStacking,
-      radius: this.radius * this.scale
+      radius: this.radiusSize * this.radiusScale
     }
 
     const contacts = calculateContacts(sview, params)
