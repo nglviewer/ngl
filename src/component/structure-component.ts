@@ -87,7 +87,8 @@ class StructureComponent extends Component {
       opacity: 0.6,
       color: 'green',
       disablePicking: true,
-      scale: 0.3
+      radiusType: 'data',
+      radiusScale: 1.5
     }, true)
 
     const measurementParams = {
@@ -203,7 +204,7 @@ class StructureComponent extends Component {
   addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
-    return this._addRepresentation(type, this.structureView, params)
+    return this._addRepresentation(type, this.structureView, params, hidden)
   }
 
   /**

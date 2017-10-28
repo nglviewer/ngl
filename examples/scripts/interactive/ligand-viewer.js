@@ -73,7 +73,7 @@ function loadStructure (input) {
     backboneRepr = o.addRepresentation('backbone', {
       visible: true,
       colorValue: 'lightgrey',
-      scale: 2
+      radiusScale: 2
     })
     spacefillRepr = o.addRepresentation('spacefill', {
       sele: ligandSele,
@@ -90,11 +90,11 @@ function loadStructure (input) {
       colorValue: 'grey',
       sele: 'none',
       aspectRatio: 1.2,
-      scale: 2.5
+      radiusScale: 2.5
     })
     contactRepr = o.addRepresentation('contact', {
       sele: 'none',
-      radius: 0.07
+      radiusSize: 0.07
     })
     pocketRepr = o.addRepresentation('surface', {
       sele: 'none',
@@ -116,7 +116,7 @@ function loadStructure (input) {
       borderColor: 'lightgrey',
       borderWidth: 0.25,
       disablePicking: true,
-      scale: 0.6
+      radiusScale: 0.6
     })
   })
 }
@@ -161,7 +161,7 @@ function showFull () {
   ligandSelect.value = ''
   backboneCheckbox.checked = true
 
-  backboneRepr.setParameters({ scale: 2 })
+  backboneRepr.setParameters({ radiusScale: 2 })
   backboneRepr.setVisibility(true)
   spacefillRepr.setVisibility(true)
 
@@ -194,7 +194,7 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  backboneRepr.setParameters({ scale: 0.2 })
+  backboneRepr.setParameters({ radiusScale: 0.2 })
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
