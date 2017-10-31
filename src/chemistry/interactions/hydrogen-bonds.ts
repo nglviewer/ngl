@@ -6,7 +6,7 @@
 import { Vector3 } from 'three'
 
 import { defaults } from '../../utils'
-import { radToDeg, degToRad } from '../../math/math-utils'
+import { degToRad } from '../../math/math-utils'
 import Structure from '../../structure/structure'
 import AtomProxy from '../../proxy/atom-proxy'
 import { valenceModel } from '../../structure/data'
@@ -214,8 +214,74 @@ function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
 // }
 // const DefaultHydrogenCovalentBondLength = 1.0
 
-const TrigonalAngleFactor = Math.tan(degToRad(60.0))
+/* const TrigonalAngleFactor = Math.tan(degToRad(60.0))
 const TetrahedralAngleFactor = Math.tan(degToRad(180.0 - 109.471))
+*/
+
+const Angles = new Map<AtomGeometry, number>([
+  [ AtomGeometry.Linear, degToRad(180) ],
+  [ AtomGeometry.Trigonal, degToRad(120) ],
+  [ AtomGeometry.Tetrahedral, degToRad(109.4721) ],
+  [ AtomGeometry.Octahedral, degToRad(90) ]
+])
+
+/**
+ * Calculate the minimum angle x-1-2 where x is a heavy atom bonded to ap1.
+ * @param  {AtomProxy} ap1 First atom (angle centre)
+ * @param  {AtomProxy} ap2 Second atom
+ * @return {Number}        Angle in radians
+ */
+export function calcMinAngle (ap1: AtomProxy, ap2: AtomProxy): number {
+  let angle = degToRad(120) // Reasonable default if we can't find any neighbours
+  const d1 = new Vector3()
+  const d2 = new Vector3()
+  d1.subVectors(ap2 as any, ap1 as any)
+  ap1.eachBondedAtom( x => {
+    if (x.element !== 'H') {
+      d2.subVectors(x as any, ap1 as any)
+      angle = Math.min(angle, d1.angleTo(d2))
+    }
+   })
+  return angle
+}
+
+/**
+ * Find two neighbours of ap1 to define a plane (if possible) and
+ * measure angle out of plane to ap2
+ * @param  {AtomProxy} ap1 First atom (angle centre)
+ * @param  {AtomProxy} ap2 Second atom (out-of-plane)
+ * @return {number}        Angle from plane to second atom
+ */
+export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number {
+  const x1 = ap1.clone()
+
+  const v12 = new Vector3()
+  v12.subVectors(ap2 as any, ap1 as any)
+
+  const neighbours = [new Vector3(), new Vector3()]
+  let ni = 0
+  ap1.eachBondedAtom( x => {
+    if (ni > 1) { return }
+    if (x.element !== 'H') {
+      x1.index = x.index
+      neighbours[ni++].subVectors(x as any, ap1 as any)
+    }
+  })
+  if (ni === 1) {
+    x1.eachBondedAtom( x => {
+      if (ni > 1) { return }
+      if (x.element !== 'H' && x.index !== ap1.index){
+        neighbours[ni++].subVectors(x as any, ap1 as any)
+      }
+    })
+  }
+  if (ni !== 2) {
+    return 0.0
+  }
+
+  const cp = neighbours[0].cross(neighbours[1])
+  return Math.abs((Math.PI / 2) - cp.angleTo(v12))
+}
 
 export interface HydrogenBondParams {
   maxHydrogenBondDistance?: number
@@ -230,7 +296,7 @@ export interface HydrogenBondParams {
  */
 export function addHydrogenBonds (structure: Structure, contacts: Contacts, params: HydrogenBondParams = {}) {
   const maxHydrogenBondDistance = defaults(params.maxHydrogenBondDistance, ContactDefaultParams.maxHydrogenBondDistance)
-  const maxHydrogenBondAngle = defaults(params.maxHydrogenBondAngle, ContactDefaultParams.maxHydrogenBondAngle)
+  const maxHydrogenBondAngle = degToRad(defaults(params.maxHydrogenBondAngle, ContactDefaultParams.maxHydrogenBondAngle))
   const backboneHydrogenBond = defaults(params.backboneHydrogenBond, ContactDefaultParams.backboneHydrogenBond)
   const waterHydrogenBond = defaults(params.waterHydrogenBond, ContactDefaultParams.waterHydrogenBond)
   const weakHydrogenBond = defaults(params.weakHydrogenBond, ContactDefaultParams.weakHydrogenBond)
@@ -242,26 +308,8 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
   const { idealGeometry } = valenceModel(structure.data)
 
-  const ap1 = structure.getAtomProxy()
-  const ap2 = structure.getAtomProxy()
-  const ap3 = structure.getAtomProxy()
-  const ap4 = structure.getAtomProxy()
-
-  const d1 = new Vector3()
-  const d2 = new Vector3()
-  const cr1 = new Vector3()
-  const cr2 = new Vector3()
-
-  const v1 = new Vector3()
-  const v2 = new Vector3()
-  const v3 = new Vector3()
-  const v4 = new Vector3()
-  const vp = [ v1, v2, v3, v4 ]
-
-  const h1 = new Vector3()
-  const h2 = new Vector3()
-  const h3 = new Vector3()
-  const hp = [ h1, h2, h3 ]
+  const donor = structure.getAtomProxy()
+  const acceptor = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
     spatialHash.eachWithin(x[i], y[i], z[i], maxHydrogenBondDistance, (j, dSq) => {
@@ -276,127 +324,47 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       // TODO handle edge case
       const [ l, k ] = types[ j ] === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
 
-      ap1.index = atomSets[ l ][ 0 ]
-      ap2.index = atomSets[ k ][ 0 ]
+      donor.index = atomSets[ l ][ 0 ]
+      acceptor.index = atomSets[ k ][ 0 ]
 
-      if (invalidAtomContact(ap1, ap2)) return
+      if (invalidAtomContact(donor, acceptor)) return
 
-      if (!backboneHydrogenBond && isBackboneHydrogenBond(ap1, ap2)) return
-      if (!waterHydrogenBond && isWaterHydrogenBond(ap1, ap2)) return
+      if (!backboneHydrogenBond && isBackboneHydrogenBond(donor, acceptor)) return
+      if (!waterHydrogenBond && isWaterHydrogenBond(donor, acceptor)) return
       if (!weakHydrogenBond && isWeak) return
 
-      let vn = 0
-      let hn = 0
+      const donorAngle = calcMinAngle(donor, acceptor)
+      const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
 
-      // Set explicit hydrogen positions
-      ap1.eachBondedAtom(ba => {
-        vp[ vn ].set(ba.x, ba.y, ba.z)
-        ++vn
-        if (ba.element === 'H') {
-          hp[ hn ].set(ba.x, ba.y, ba.z)
-          ++hn
-        }
-      })
-
-      // Set implicit hydrogen positions
-
-      // tetrahedral geometry but constraint to ring plane
-      const isTyr = ap1.resname === 'TYR' && ap1.atomname === 'OH'
-
-      if (idealGeometry[ ap1.index ] === AtomGeometry.Trigonal || isTyr) {
-
-        if (ap1.bondCount === 1) {
-          // two implicit hydrogens to add
-          let flag = false
-          ap1.eachBondedAtom(ba => {
-            if (!flag && ba.element !== 'H') {
-              ap3.index = ba.index
-              flag = true
-            }
-          })
-          if (flag) {
-            flag = false
-            ap3.eachBondedAtom(ba => {
-            if (!flag && ba.index !== ap1.index && ba.element !== 'H') {
-                ap4.index = ba.index
-                flag = true
-              }
-            })
-            if (flag) {
-              d1.subVectors(ap1 as any, ap3 as any)
-              d2.subVectors(ap3 as any, ap4 as any)
-              cr1.crossVectors(d1, d2)
-              cr2.crossVectors(d1, cr1).normalize()
-
-              d2.subVectors(d1, cr2.multiplyScalar(isTyr ? TetrahedralAngleFactor : TrigonalAngleFactor))
-              d2.normalize()
-              hp[hn].addVectors(ap1 as any, d2)
-              ++hn
-
-              d2.subVectors(ap1 as any, hp[hn-1])
-              d1.add(d2).normalize()
-              hp[hn].addVectors(ap1 as any, d1)
-              ++hn
-            }
-          }
-        } else if (ap1.bondCount === 2) {
-          // one implicit hydrogen to add
-          //    \
-          //     X--H
-          //    /
-          d1.subVectors(ap1 as any, vp[0])
-          d2.subVectors(ap1 as any, vp[1])
-          d1.add(d2).normalize()
-          hp[ hn ].addVectors(ap1 as any, d1)
-          ++hn
-        } else if (ap1.bondCount === 3) {
-          // no implicit hydrogens to add
-        }
-
-      } else if (
-        idealGeometry[ ap1.index ] === AtomGeometry.Tetrahedral
-      ) {
-
-        if (ap1.bondCount === 1) {
-          // TODO: Logic here isn't quite right
-          // bondCount === 1 implies terminal.
-          // Need to sample positions
-
-          // For bondCount 2, 3 it's easier
-
-          // one implicit hydrogen to add
-          //    \
-          //   --X--H
-          //    /
-          d1.subVectors(ap1 as any, vp[0])
-          d2.subVectors(ap2 as any, ap1 as any)
-          cr1.crossVectors(d1, d2)
-          cr2.crossVectors(d1, cr1).normalize()
-
-          d2.subVectors(d1, cr2.multiplyScalar(TetrahedralAngleFactor))
-          d2.normalize()
-          hp[hn].addVectors(ap1 as any, d2)
-          ++hn
-        }
-
-      } else {
-        console.log('TODO checking angle', ap1.qualifiedName(), ap2.qualifiedName())
+      if (Math.abs(idealDonorAngle - donorAngle) > maxHydrogenBondAngle) {
+        return
       }
 
-      for (let j = 0; j < hn; ++j) {
-        d1.subVectors(hp[j], ap2 as any)
-        d2.subVectors(ap1 as any, hp[j])
-        const angle = radToDeg(d1.angleTo(d2))
-        if (angle <= maxHydrogenBondAngle) {
-          featureSet.setBits(l, k)
-          const bondType = isWeak ? ContactType.WeakHydrogenBond : ContactType.HydrogenBond
-          contactStore.addContact(l, k, bondType)
-          break
+      if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
+        const outOfPlane = calcPlaneAngle(donor, acceptor)
+        if (outOfPlane > maxHydrogenBondAngle){
+          return
         }
       }
 
-      // TODO
-      // D-A-AA: sp2 acceptors 135 (90-180) and sp3 acceptors 109.5 (60-180)
+      const acceptorAngle = calcMinAngle(acceptor, donor)
+      const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
+      if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHydrogenBondAngle) {
+        // Acceptor
+        return
+      }
+
+      if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
+        const outOfPlane = calcPlaneAngle(acceptor, donor)
+        if (outOfPlane > maxHydrogenBondAngle){
+          return
+        }
+      }
+
+      featureSet.setBits(l, k)
+      const bondType = isWeak ? ContactType.WeakHydrogenBond : ContactType.HydrogenBond
+      contactStore.addContact(l, k, bondType)
+
     })
   }
 }
