@@ -12,38 +12,7 @@
  */
 import { Data } from '../structure/data'
 import AtomProxy from '../proxy/atom-proxy'
-
-// Changed numbering so they're mostly inline with coordination number
-// from VSEPR
-export const enum AtomGeometry {
-  Spherical = 0,
-  Terminal = 1,
-  Linear = 2,
-  Trigonal = 3,
-  Tetrahedral = 4,
-  TrigonalBiPyramidal = 5,
-  Octahedral = 6,
-  SquarePlanar = 7, // Okay, it breaks down somewhere!
-  Unknown = 8
-}
-
-
-function assignGeometry(totalCoordination: number): AtomGeometry {
-  switch(totalCoordination){
-    case 0:
-      return AtomGeometry.Spherical
-    case 1:
-      return AtomGeometry.Terminal
-    case 2:
-      return AtomGeometry.Linear
-    case 3:
-      return AtomGeometry.Trigonal
-    case 4:
-      return AtomGeometry.Tetrahedral
-    default:
-      return AtomGeometry.Unknown
-  }
-}
+import { AtomGeometry, assignGeometry } from './geometry'
 
 /**
  * Are we involved in some kind of pi system. Either explicitly forming
