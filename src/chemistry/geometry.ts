@@ -47,17 +47,18 @@ export const Angles = new Map<AtomGeometry, number>([
  * Calculate the minimum angle x-1-2 where x is a heavy atom bonded to ap1.
  * @param  {AtomProxy} ap1 First atom (angle centre)
  * @param  {AtomProxy} ap2 Second atom
- * @return {Number}        Angle in radians
+ * @return {number|undefined}        Angle in radians, if it can be determined
  */
-export function calcMinAngle (ap1: AtomProxy, ap2: AtomProxy): number {
-  let angle = degToRad(120) // Reasonable default if we can't find any neighbours
+export function calcMinAngle (ap1: AtomProxy, ap2: AtomProxy): number | undefined {
+  let angle: number | undefined
   const d1 = new Vector3()
   const d2 = new Vector3()
   d1.subVectors(ap2 as any, ap1 as any)
   ap1.eachBondedAtom( x => {
     if (x.element !== 'H') {
       d2.subVectors(x as any, ap1 as any)
-      angle = Math.min(angle, d1.angleTo(d2))
+      const a = d1.angleTo(d2)
+      angle = angle ? Math.min(angle, a) : a
     }
    })
   return angle
@@ -70,7 +71,7 @@ export function calcMinAngle (ap1: AtomProxy, ap2: AtomProxy): number {
  * @param  {AtomProxy} ap2 Second atom (out-of-plane)
  * @return {number}        Angle from plane to second atom
  */
-export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number {
+export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number | undefined {
   const x1 = ap1.clone()
 
   const v12 = new Vector3()
@@ -94,7 +95,7 @@ export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number {
     })
   }
   if (ni !== 2) {
-    return 0.0
+    return
   }
 
   const cp = neighbours[0].cross(neighbours[1])

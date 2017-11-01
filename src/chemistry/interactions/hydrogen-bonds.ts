@@ -257,29 +257,31 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       if (!weakHydrogenBond && isWeak) return
 
       const donorAngle = calcMinAngle(donor, acceptor)
-      const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
-
-      if (Math.abs(idealDonorAngle - donorAngle) > maxHydrogenBondAngle) {
-        return
+      if (donorAngle !== undefined) {
+        const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
+        if (Math.abs(idealDonorAngle - donorAngle) > maxHydrogenBondAngle) {
+          return
+        }
       }
 
       if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(donor, acceptor)
-        if (outOfPlane > maxHydrogenBondAngle){
+        if (outOfPlane !== undefined && outOfPlane > maxHydrogenBondAngle){
           return
         }
       }
 
       const acceptorAngle = calcMinAngle(acceptor, donor)
-      const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
-      if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHydrogenBondAngle) {
-        // Acceptor
-        return
+      if (acceptorAngle !== undefined) {
+        const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
+        if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHydrogenBondAngle) {
+          return
+        }
       }
 
       if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(acceptor, donor)
-        if (outOfPlane > maxHydrogenBondAngle){
+        if (outOfPlane !== undefined && outOfPlane > maxHydrogenBondAngle){
           return
         }
       }

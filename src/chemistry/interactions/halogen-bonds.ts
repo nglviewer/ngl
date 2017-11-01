@@ -5,11 +5,13 @@
 
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
+import { degToRad } from '../../math/math-utils'
 import {
   Features, FeatureType,
   addAtom, addFeature, createFeatureState,
 } from './features'
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
+import { calcMinAngle } from '../geometry'
 
 const halBondElements = [17, 35, 53, 85]
 
@@ -58,7 +60,8 @@ function isHalogenBond (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface HalogenBondsParams {
-  maxHalogenBondDistance?: number
+  maxHalogenBondDistance?: number,
+  maxHalogenBondAngle?: number
 }
 
 /**
@@ -66,6 +69,7 @@ export interface HalogenBondsParams {
  */
 export function addHalogenBonds (structure: Structure, contacts: Contacts, params: HalogenBondsParams = {}) {
   const maxHalogenBondDistance = defaults(params.maxHalogenBondDistance, ContactDefaultParams.maxHalogenBondDistance)
+  const maxHalogenBondAngle = degToRad(defaults(params.maxHalogenBondAngle, ContactDefaultParams.maxHalogenBondAngle))
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -84,12 +88,17 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
 
       if (invalidAtomContact(ap1, ap2)) return
 
-      if (isHalogenBond(types[ i ], types[ j ])) {
-        // TODO: Requires geometry check (lone-pair of acceptor cf. H-bond TODO)
-        // C-X---O angle should be near 180
-        featureSet.setBits(i, j)
-        contactStore.addContact(i, j, ContactType.HalogenBond)
-      }
+      if (!isHalogenBond(types[ i ], types[ j ])) return
+
+      const [ halogen, oxygen ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
+      const angle = calcMinAngle(halogen, oxygen)
+      // Angle must be defined
+      if (angle === undefined) return
+      if (Math.PI - angle > maxHalogenBondAngle) return
+
+      featureSet.setBits(i, j)
+      contactStore.addContact(i, j, ContactType.HalogenBond)
+
     })
   }
 }
