@@ -301,6 +301,13 @@ export const MouseActionPresets = {
 
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
+  ] as MouseActionPreset,
+  astexviewer: [
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-shift-left', MouseActions.zoomDrag ],
+    [ 'scroll', MouseActions.focusScroll ],
+    [ 'clickPick-middle', MouseActions.movePick ]
   ] as MouseActionPreset
 }
 
