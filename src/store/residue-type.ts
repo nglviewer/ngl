@@ -30,7 +30,7 @@ export interface RingData {
 /**
  * Residue type
  */
-class ResidueType {
+export default class ResidueType {
   resname: string
   atomTypeIdList: number[]
   hetero: number
@@ -406,88 +406,18 @@ class ResidueType {
   }
 
   /**
-   * Calculates ring atoms within a residue
-   * Adaptation of RDKit's fastFindRings method by G. Landrum:
-   * https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/FindRings.cpp
-   *
-   * @param {ResidueProxy} r   - The residue for which we are to find rings
-   * @return {Object} ringData - contains ringFlags (1/0) and rings
-   *                             (nested array)
-   *
-   * Note this method finds all ring atoms, but in cases of fused or
-   * connected rings will not detect all rings.
-   * The resulting rings object will provide 'a ring' for each ring atom
-   * but which ring depends on atom order and connectivity
-   *
-   * @return {undefined}
+   * Find all rings up to 2 * RingFinderMaxDepth
    */
   calculateRings () {
     const bondGraph = this.getBondGraph()!  // TODO
+    const state = RingFinderState(bondGraph, this.atomCount)
 
-    const state = new Int8Array(this.atomCount)
-    const flags = new Int8Array(this.atomCount)
-    const rings: number[][] = []
-    const visited: number[] = []
-
-    function DFS (i: number, connected: number[], from?: number) {
-      // Sanity check
-      if (state[ i ]) { throw new Error('DFS revisited atom') }
-      state[ i ] = 1
-      visited.push(i)
-      const nc = connected.length
-
-      // For each neighbour
-      for (let ci = 0; ci < nc; ++ci) {
-        const j = connected[ci]
-
-        // If unvisited:
-        if (state[ j ] === 0) {
-          // And has >= 2 neighbours:
-          if (bondGraph[ j ] && bondGraph[ j ].length >= 2) {
-            // Recurse
-            DFS(j, bondGraph[ j ], i)
-          } else {
-            // Not interesting
-            state[ j ] = 2
-          }
-
-        // Else unclosed ring:
-        } else if (state[ j ] === 1) {
-          if (from && from !== j) {
-            const ring = [ j ]
-            flags[ j ] = 1
-            rings.push(ring)
-            for (let ki = visited.length - 1; ki >= 0; --ki) {
-              const k = visited[ ki ]
-              if (k === j) {
-                break
-              }
-              ring.push(k)
-              flags[ k ] = 1
-            }
-          }
-        }
-      }
-      state[ i ] = 2 // Completed processing for this atom
-
-      visited.pop()
+    for (let i = 0; i < state.count; i++) {
+      if (state.visited[i] >= 0) continue
+      findRings(state, i)
     }
 
-    for (let i = 0; i < this.atomCount; ++i) {
-      if (state[ i ]) { continue } // Already processed
-
-      const connected = bondGraph[ i ]
-      if (!connected || connected.length < 2) {
-        // Finished
-        state[ i ] = 2
-        continue
-      }
-
-      visited.length = 0
-      DFS(i, connected)
-    }
-
-    this.rings = { flags, rings }
+    this.rings = { flags: state.flags, rings: state.rings }
   }
 
   /**
@@ -602,4 +532,144 @@ class ResidueType {
   }
 }
 
-export default ResidueType
+//
+
+/**
+ * Ring finding code below adapted from MolQL
+ * Copyright (c) 2017 MolQL contributors, licensed under MIT
+ * @author David Sehnal <david.sehnal@gmail.com>
+ */
+
+function addRing(state: RingFinderState, a: number, b: number) {
+  // only "monotonous" rings
+  if (b < a) return
+
+  const { pred, color, left, right } = state
+  const nc = ++state.currentColor
+
+  let current = a
+
+  for (let t = 0; t < RingFinderMaxDepth; t++) {
+    color[current] = nc
+    current = pred[current]
+    if (current < 0) break
+  }
+
+  let leftOffset = 0
+  let rightOffset = 0
+
+  let found = false
+  let target = 0
+  current = b
+  for (let t = 0; t < RingFinderMaxDepth; t++) {
+    if (color[current] === nc) {
+      target = current
+      found = true
+      break
+    }
+    right[rightOffset++] = current
+    current = pred[current]
+    if (current < 0) break
+  }
+  if (!found) return
+
+  current = a
+  for (let t = 0; t < RingFinderMaxDepth; t++) {
+    left[leftOffset++] = current
+    if (target === current) break
+    current = pred[current]
+    if (current < 0) break
+  }
+
+  const rn = leftOffset + rightOffset
+  const ring = new Int32Array(rn)
+  let ringOffset = 0;
+  for (let t = 0; t < leftOffset; t++) {
+    ring[ringOffset++] = left[t]
+  }
+  for (let t = rightOffset - 1; t >= 0; t--) {
+    ring[ringOffset++] = right[t]
+  }
+
+  // set atom-in-ring flags
+  for (let i = 0; i < rn; ++i) {
+    state.flags[ring[i]] = 1
+  }
+
+  state.rings.push(ring as any as number[])
+}
+
+function findRings(state: RingFinderState, from: number) {
+  const { bonds, visited, queue, pred } = state
+
+  visited[from] = 1
+  queue[0] = from
+
+  let head = 0
+  let size = 1
+
+  while (head < size) {
+    const top = queue[head++]
+    const start = 0
+    if (bonds[top] === undefined) {
+      continue
+    }
+    const end = bonds[top].length
+
+    for (let i = start; i < end; i++) {
+      const other = bonds[top][i]
+
+      if (visited[other] > 0) {
+        if (pred[other] !== top && pred[top] !== other) {
+          addRing(state, top, other)
+        }
+        continue
+      }
+
+      visited[other] = 1
+      queue[size++] = other
+      pred[other] = top
+    }
+  }
+}
+
+const RingFinderMaxDepth = 4
+
+interface RingFinderState {
+  count: number,
+  visited: Int32Array,
+  queue: Int32Array,
+  color: Int32Array,
+  pred: Int32Array,
+
+  left: Int32Array,
+  right: Int32Array,
+
+  currentColor: number,
+
+  rings: number[][],
+  flags: Int8Array,
+
+  bonds: BondGraph
+}
+
+function RingFinderState(bonds: BondGraph, capacity: number): RingFinderState {
+  const state = {
+    count: capacity,
+    visited: new Int32Array(capacity),
+    queue: new Int32Array(capacity),
+    pred: new Int32Array(capacity),
+    left: new Int32Array(RingFinderMaxDepth),
+    right: new Int32Array(RingFinderMaxDepth),
+    color: new Int32Array(capacity),
+    currentColor: 0,
+    rings: [],
+    flags: new Int8Array(capacity),
+    bonds
+  }
+  for (let i = 0; i < capacity; i++) {
+    state.visited[i] = -1
+    state.pred[i] = -1
+  }
+  return state
+}
