@@ -64,11 +64,17 @@ export function addMetalBinding (structure: Structure, features: Features) {
       }
       // TODO non-standard bases
     } else if (!a.isPolymer()) {
-      // water oxygen, as well as oxygen from carboxylate, phophoryl, phenolate, alcohol;
+      // water oxygen, as well as oxygen from carboxylate, phosphoryl, phenolate, alcohol;
       // nitrogen from imidazole; sulfur from thiolate
       if (element === 'O') {
+        // Water oxygen
+        if (a.bondCount === 0 || a.isWater()) {
+          addAtom(state, a)
+          addFeature(features, state)
+          return
+        }
         // Oxygen in alcohol (R-[O]-H)
-        if (a.bondCount === 2 && charge[ a.index] || a.hasBondToElement('H')) {
+        if (a.bondCount === 2 && charge[ a.index ] || a.hasBondToElement('H')) {
           addAtom(state, a)
           addFeature(features, state)
           return

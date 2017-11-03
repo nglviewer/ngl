@@ -44,7 +44,7 @@ class BaseRepresentation extends BallAndStickRepresentation {
   init (params) {
     var p = params || {}
     p.aspectRatio = defaults(p.aspectRatio, 1.0)
-    p.radius = defaults(p.radius, 0.3)
+    p.radiusSize = defaults(p.radiusSize, 0.3)
 
     super.init(p)
   }

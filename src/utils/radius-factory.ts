@@ -4,34 +4,49 @@
  * @private
  */
 
+import { defaults } from '../utils'
 import { NucleicBackboneAtoms } from '../structure/structure-constants'
 import AtomProxy from '../proxy/atom-proxy'
 
-
-const RadiusFactoryTypes = {
+export const RadiusFactoryTypes = {
   '': '',
   'vdw': 'by vdW radius',
   'covalent': 'by covalent radius',
   'sstruc': 'by secondary structure',
   'bfactor': 'by bfactor',
-  'size': 'size'
+  'size': 'size',
+  'data': 'data'
 }
 export type RadiusType = keyof typeof RadiusFactoryTypes
+
+export interface RadiusParams {
+  type?: RadiusType
+  scale?: number
+  size?: number
+  data?: { [k: number]: number }
+}
 
 class RadiusFactory {
   max = 10
 
   static types = RadiusFactoryTypes
 
-  constructor (readonly type: RadiusType, readonly scale = 1.0) {}
+  readonly type: RadiusType
+  readonly scale: number
+  readonly size: number
+  readonly data: { [k: number]: number }
+
+  constructor (params: RadiusParams = {}) {
+    this.type = defaults(params.type, 'size')
+    this.scale = defaults(params.scale, 1)
+    this.size = defaults(params.size, 1)
+    this.data = defaults(params.data, {})
+  }
 
   atomRadius (a: AtomProxy) {
-    const type = this.type
-    const scale = this.scale
-
     let r
 
-    switch (type) {
+    switch (this.type) {
       case 'vdw':
         r = a.vdw
         break
@@ -63,12 +78,16 @@ class RadiusFactory {
         }
         break
 
+      case 'data':
+        r = defaults(this.data[ a.index ], 1.0)
+        break
+
       default:
-        r = (type as any) || 1.0  // TODO
+        r = this.size
         break
     }
 
-    return Math.min(r * scale, this.max)
+    return Math.min(r * this.scale, this.max)
   }
 
 }

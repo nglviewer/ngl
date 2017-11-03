@@ -9,7 +9,6 @@ import { RepresentationRegistry } from '../globals.js'
 import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation.js'
 import { defaults } from '../utils.js'
 
-import DoubleSidedBuffer from '../buffer/doublesided-buffer.js'
 import MeshBuffer from '../buffer/mesh-buffer.js'
 import TextBuffer from '../buffer/text-buffer.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
@@ -18,6 +17,7 @@ import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
 import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
   v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
 import { RAD2DEG } from '../math/math-constants.js'
+import { getFixedLengthDashData } from '../geometry/dash'
 
 /**
  * @typedef {Object} DihedralRepresentationParameters - dihedral representation parameters
@@ -56,14 +56,8 @@ class DihedralRepresentation extends MeasurementRepresentation {
       atomQuad: {
         type: 'hidden', rebuild: true
       },
-      lineOpacity: {
-        type: 'range', min: 0.0, max: 1.0, step: 0.01
-      },
       lineVisible: {
         type: 'boolean', default: true
-      },
-      linewidth: {
-        type: 'number', precision: 2, max: 10.0, min: 0.5
       },
       planeVisible: {
         type: 'boolean', default: true
@@ -82,9 +76,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     p.opacity = defaults(p.opacity, 0.5)
 
     this.atomQuad = defaults(p.atomQuad, [])
-    this.lineOpacity = defaults(p.lineOpacity, 1.0)
     this.lineVisible = defaults(p.lineVisible, true)
-    this.linewidth = defaults(p.linewidth, 2.0)
     this.planeVisible = defaults(p.planeVisible, true)
     this.sectorVisible = defaults(p.sectorVisible, true)
 
@@ -114,44 +106,43 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.lineLength = dihedralData.linePosition1.length / 3
     const lineColor = uniformArray3(this.lineLength, c.r, c.g, c.b)
 
-    this.lineBuffer = new WideLineBuffer({
-      position1: dihedralData.linePosition1,
-      position2: dihedralData.linePosition2,
-      color: lineColor,
-      color2: lineColor
-    }, this.getBufferParams({
-      linewidth: this.linewidth,
-      visible: this.lineVisible,
-      opacity: this.lineOpacity
-    }))
+    this.lineBuffer = new WideLineBuffer(
+      getFixedLengthDashData({
+        position1: dihedralData.linePosition1,
+        position2: dihedralData.linePosition2,
+        color: lineColor,
+        color2: lineColor
+      }),
+      this.getBufferParams({
+        linewidth: this.linewidth,
+        visible: this.lineVisible,
+        opacity: this.lineOpacity
+      })
+    )
 
     this.planeLength = dihedralData.planePosition.length / 3
-    this.planeMeshBuffer = new MeshBuffer({
+    this.planeBuffer = new MeshBuffer({
       position: dihedralData.planePosition,
       color: uniformArray3(this.planeLength, c.r, c.g, c.b)
     }, this.getBufferParams({
-      visible: this.planeVisible
+      visible: false // this.planeVisible
     }))
 
-    this.planeDoubleSidedBuffer = new DoubleSidedBuffer(this.planeMeshBuffer)
-
     this.sectorLength = dihedralData.sectorPosition.length / 3
-    this.sectorMeshBuffer = new MeshBuffer({
+    this.sectorBuffer = new MeshBuffer({
       position: dihedralData.sectorPosition,
       color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
     }, this.getBufferParams({
       visible: this.sectorVisible
     }))
 
-    this.sectorDoubleSidedBuffer = new DoubleSidedBuffer(this.sectorMeshBuffer)
-
     this.dataList.push({
       sview: this.structureView,
       bufferList: [
         this.textBuffer,
         this.lineBuffer,
-        this.planeDoubleSidedBuffer,
-        this.sectorDoubleSidedBuffer
+        this.planeBuffer,
+        this.sectorBuffer
       ]
     })
   }
@@ -169,13 +160,9 @@ class DihedralRepresentation extends MeasurementRepresentation {
       sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b)
     }
 
-    // if (what.sectorOpacity) {
-    //   this.sectorMeshBuffer.opacity = what.sectorOpacity
-    // }
-
     this.lineBuffer.setAttributes(lineData)
-    this.planeMeshBuffer.setAttributes(planeData)
-    this.sectorMeshBuffer.setAttributes(sectorData)
+    this.planeBuffer.setAttributes(planeData)
+    this.sectorBuffer.setAttributes(sectorData)
   }
 
   setParameters (params) {
@@ -191,13 +178,11 @@ class DihedralRepresentation extends MeasurementRepresentation {
     }
 
     if (params && params.lineOpacity) {
-      this.lineBuffer.setParameters(
-        {opacity: params.lineOpacity})
+      this.lineBuffer.setParameters({ opacity: params.lineOpacity })
     }
 
     if (params && params.opacity !== undefined) {
-      this.lineBuffer.setParameters(
-        {opacity: this.lineOpacity})
+      this.lineBuffer.setParameters({ opacity: this.lineOpacity })
     }
 
     if (params && params.linewidth) {
@@ -211,7 +196,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     super.setVisibility(value, true)
 
     this.lineBuffer.setVisibility(this.lineVisible && this.visible)
-    this.sectorDoubleSidedBuffer.setVisibility(this.sectorVisible && this.visible)
+    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
 
     if (!noRenderRequest) this.viewer.requestRender()
 

@@ -45,8 +45,8 @@ class RocketRepresentation extends StructureRepresentation {
   init (params) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'sstruc')
-    p.radius = defaults(p.radius, 1.5)
-    p.scale = defaults(p.scale, 1.0)
+    p.radiusSize = defaults(p.radiusSize, 1.5)
+    p.radiusScale = defaults(p.radiusScale, 1.0)
     p.openEnded = defaults(p.openEnded, false)
 
     this.localAngle = defaults(p.localAngle, 30)
@@ -67,7 +67,7 @@ class RocketRepresentation extends StructureRepresentation {
       var helixbundle = new Helixbundle(polymer)
       var axis = helixbundle.getAxis(
         this.localAngle, this.centerDist, this.ssBorder,
-        this.getColorParams(), this.radius, this.scale
+        this.getColorParams(), this.getRadiusParams()
       )
 
       length += axis.size.length
@@ -141,7 +141,7 @@ class RocketRepresentation extends StructureRepresentation {
       data.helixbundleList.forEach(helixbundle => {
         var axis = helixbundle.getAxis(
           this.localAngle, this.centerDist, this.ssBorder,
-          this.getColorParams(), this.radius, this.scale
+          this.getColorParams(), this.getRadiusParams()
         )
         if (what.color) {
           data.axisData.color.set(axis.color, offset * 3)

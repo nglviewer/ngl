@@ -9,7 +9,7 @@ import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import { calculateContacts, getContactData } from '../chemistry/interactions/contact'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
-import { getDashData } from '../geometry/dash'
+import { getFixedCountDashData } from '../geometry/dash'
 
 /**
  * Contact representation.
@@ -98,7 +98,7 @@ class ContactRepresentation extends StructureRepresentation {
 
   init (params) {
     var p = params || {}
-    p.radius = defaults(p.radius, 0.05)
+    p.radiusSize = defaults(p.radiusSize, 0.05)
 
     this.hydrogenBond = defaults(p.hydrogenBond, true)
     this.weakHydrogenBond = defaults(p.weakHydrogenBond, true)
@@ -154,13 +154,13 @@ class ContactRepresentation extends StructureRepresentation {
       metalComplex: this.metalComplex,
       cationPi: this.cationPi,
       piStacking: this.piStacking,
-      radius: this.radius * this.scale
+      radius: this.radiusSize * this.radiusScale
     }
 
     const contacts = calculateContacts(sview, params)
     const contactData = getContactData(contacts, sview, dataParams)
 
-    return getDashData(contactData)
+    return getFixedCountDashData(contactData)
   }
 
   createData (sview) {

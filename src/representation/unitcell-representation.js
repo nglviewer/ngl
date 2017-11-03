@@ -21,7 +21,7 @@ class UnitcellRepresentation extends StructureRepresentation {
 
     this.parameters = Object.assign({
 
-      radius: {
+      radiusSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
       sphereDetail: true,
@@ -43,7 +43,7 @@ class UnitcellRepresentation extends StructureRepresentation {
       defaultRadius = Math.cbrt(this.structure.unitcell.volume) / 200
     }
 
-    p.radius = defaults(p.radius, defaultRadius)
+    p.radiusSize = defaults(p.radiusSize, defaultRadius)
     p.colorValue = defaults(p.colorValue, 'orange')
 
     super.init(p)

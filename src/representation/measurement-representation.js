@@ -37,7 +37,6 @@ class MeasurementRepresentation extends StructureRepresentation {
 
     this.n = 0 // Subclass create sets value
     this.parameters = Object.assign({
-
       labelVisible: {
         type: 'boolean'
       },
@@ -119,6 +118,12 @@ class MeasurementRepresentation extends StructureRepresentation {
       },
       labelBackgroundOpacity: {
         type: 'range', step: 0.01, max: 1, min: 0, buffer: 'backgroundOpacity'
+      },
+      lineOpacity: {
+        type: 'range', min: 0.0, max: 1.0, step: 0.01
+      },
+      linewidth: {
+        type: 'integer', max: 50, min: 1, buffer: true
       }
     }, this.parameters, {
       flatShaded: null,
@@ -146,6 +151,8 @@ class MeasurementRepresentation extends StructureRepresentation {
     this.labelBackgroundColor = defaults(p.labelBackgroundColor, 'lightgrey')
     this.labelBackgroundMargin = defaults(p.labelBackgroundMargin, 0.5)
     this.labelBackgroundOpacity = defaults(p.labelBackgroundOpacity, 1.0)
+    this.lineOpacity = defaults(p.lineOpacity, 1.0)
+    this.linewidth = defaults(p.linewidth, 2)
 
     super.init(p)
   }
@@ -188,8 +195,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     super.setParameters(params, what, rebuild)
 
     if (params && params.opacity !== undefined) {
-      this.textBuffer.setParameters(
-        {opacity: 1.0}) // Don't allow opaque labels?
+      this.textBuffer.setParameters({ opacity: 1.0 })  // only opaque labels
     }
 
     if (params && params.labelVisible !== undefined) {
@@ -229,9 +235,10 @@ class MeasurementRepresentation extends StructureRepresentation {
       backgroundColor: this.labelBackgroundColor,
       backgroundMargin: this.labelBackgroundMargin,
       backgroundOpacity: this.labelBackgroundOpacity,
+      disablePicking: true,
       visible: this.labelVisible
     }, params, {
-      opacity: 1.0 // Force labels at 100% opacity
+      opacity: 1.0  // only opaque labels
     }))
   }
 }

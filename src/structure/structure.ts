@@ -674,11 +674,7 @@ class Structure implements Structure{
     }
     if (!what || what.radius) {
       atomData.radius = new Float32Array(atomCount)
-      if (p.radiusParams) {
-        radiusFactory = new (RadiusFactory as any)(p.radiusParams.radius, p.radiusParams.scale)
-      } else {
-        radiusFactory = new (RadiusFactory as any)(1, 1)
-      }
+      radiusFactory = new RadiusFactory(p.radiusParams)
     }
     if (!what || what.index) {
       atomData.index = new Uint32Array(atomCount)
@@ -753,11 +749,7 @@ class Structure implements Structure{
       bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore)
     }
     if (!what || what.radius || (isMulti && what.position)) {
-      if (p.radiusParams) {
-        radiusFactory = new (RadiusFactory as any)(p.radiusParams.radius, p.radiusParams.scale)
-      } else {
-        radiusFactory = new (RadiusFactory as any)(1, 1)
-      }
+      radiusFactory = new RadiusFactory(p.radiusParams)
     }
     if (!what || what.radius) {
       bondData.radius = new Float32Array(bondCount)

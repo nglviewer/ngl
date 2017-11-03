@@ -73,7 +73,7 @@ function loadStructure (input) {
     backboneRepr = o.addRepresentation('backbone', {
       visible: true,
       colorValue: 'lightgrey',
-      scale: 2
+      radiusScale: 2
     })
     spacefillRepr = o.addRepresentation('spacefill', {
       sele: ligandSele,
@@ -90,11 +90,11 @@ function loadStructure (input) {
       colorValue: 'grey',
       sele: 'none',
       aspectRatio: 1.2,
-      scale: 2.5
+      radiusScale: 2.5
     })
     contactRepr = o.addRepresentation('contact', {
       sele: 'none',
-      radius: 0.07
+      radiusSize: 0.07
     })
     pocketRepr = o.addRepresentation('surface', {
       sele: 'none',
@@ -112,10 +112,11 @@ function loadStructure (input) {
       color: '#333333',
       zOffset: 2.0,
       attachment: 'middle-center',
-      showBackground: true,
-      backgroundColor: 'white',
-      backgroundOpacity: 0.5,
-      scale: 0.6
+      showBorder: true,
+      borderColor: 'lightgrey',
+      borderWidth: 0.25,
+      disablePicking: true,
+      radiusScale: 0.6
     })
   })
 }
@@ -160,7 +161,7 @@ function showFull () {
   ligandSelect.value = ''
   backboneCheckbox.checked = true
 
-  backboneRepr.setParameters({ scale: 2 })
+  backboneRepr.setParameters({ radiusScale: 2 })
   backboneRepr.setVisibility(true)
   spacefillRepr.setVisibility(true)
 
@@ -193,7 +194,7 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  backboneRepr.setParameters({ scale: 0.2 })
+  backboneRepr.setParameters({ radiusScale: 0.2 })
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
@@ -236,7 +237,15 @@ var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: '180px', left: '12px' })
 clipNearRange.oninput = function (e) {
-  pocketRepr.setParameters({ clipNear: parseFloat(e.target.value) / 100 })
+  var sceneRadius = stage.viewer.boundingBox.getSize().length() / 2
+
+  var f = pocketRadius / sceneRadius
+  var v = parseFloat(e.target.value) / 10000  // must be between 0 and 1
+  var c = 0.5 - f / 2 + v * f
+
+  pocketRepr.setParameters({
+    clipNear: c * 100  // must be between 0 and 100
+  })
 }
 addElement(clipNearRange)
 
@@ -330,4 +339,6 @@ addElement(createElement('span', {
   innerText: 'hydrophobic'
 }, { top: '382px', left: '32px', color: 'lightgrey' }))
 
-loadStructure('rcsb://3sn6')
+loadStructure('rcsb://4cup').then(function () {
+  showLigand('ZYB')
+})

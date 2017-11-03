@@ -36,8 +36,8 @@ class HyperballRepresentation extends LicoriceRepresentation {
 
   init (params) {
     var p = params || {}
-    p.scale = defaults(p.scale, 0.2)
-    p.radius = defaults(p.radius, 'vdw')
+    p.radiusScale = defaults(p.radiusScale, 0.2)
+    p.radiusType = defaults(p.radiusType, 'vdw')
 
     this.shrink = defaults(p.shrink, 0.12)
 

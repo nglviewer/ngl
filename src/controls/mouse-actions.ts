@@ -9,6 +9,8 @@ import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
+import RadiusFactory from '../utils/radius-factory'
+import StructureRepresentation from '../representation/structure-representation'
 
 type ScrollCallback = (stage: Stage, delta: number) => void
 type DragCallback = (stage: Stage, dx: number, dy: number) => void
@@ -188,15 +190,29 @@ class MouseActions {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
       const sc = pickingProxy.component as StructureComponent
+      const pickCount = sc.pickBuffer.count
 
-      if (sc.lastPick === atom.index && sc.pickBuffer.count >= 2) {
-        const atomPair = sc.pickBuffer.data.sort()
-        if (sc.pickPairs.has(atomPair)) {
-          sc.pickPairs.del(atomPair)
+      if (sc.lastPick === atom.index && pickCount >= 2) {
+        const atomList = sc.pickBuffer.data
+        const atomListSorted = sc.pickBuffer.data.sort()
+        if (sc.pickDict.has(atomListSorted)) {
+          sc.pickDict.del(atomListSorted)
         } else {
-          sc.pickPairs.add(atomPair)
+          sc.pickDict.add(atomListSorted, atomList)
         }
-        sc.distanceRepresentation.setParameters({ atomPair: sc.pickPairs.list })
+        if (pickCount === 2) {
+          sc.distanceRepresentation.setParameters({
+            atomPair: sc.pickDict.values.filter(l => l.length === 2)
+          })
+        } else if (pickCount === 3) {
+          sc.angleRepresentation.setParameters({
+            atomTriple: sc.pickDict.values.filter(l => l.length === 3)
+          })
+        } else if (pickCount === 4) {
+          sc.dihedralRepresentation.setParameters({
+            atomQuad: sc.pickDict.values.filter(l => l.length === 4)
+          })
+        }
         sc.pickBuffer.clear()
         sc.lastPick = undefined
       } else {
@@ -205,7 +221,15 @@ class MouseActions {
         }
         sc.lastPick = atom.index
       }
+      const radiusData: { [k: number]: number } = {}
+      sc.pickBuffer.data.forEach(ai => {
+        const r = getMaxRepresentationRadius(sc, ai)
+        console.log(ai, r)
+        radiusData[ ai ] = Math.max(r, 0.1)
+      })
+      console.log(radiusData)
       sc.spacefillRepresentation.setSelection('@' + sc.pickBuffer.data.join(','))
+      sc.spacefillRepresentation.setParameters({ radiusData })
       return
     } else {
       stage.eachComponent((sc: StructureComponent) => {
@@ -215,6 +239,25 @@ class MouseActions {
       }, 'structure')
     }
   }
+}
+
+const ignoreReprType = [ 'contact', 'angle', 'distance', 'dihedral' ]
+
+export function getMaxRepresentationRadius(structureComponent: StructureComponent, atomIndex: number) {
+  const reprRadii: number[] = []
+  const atom = structureComponent.structure.getAtomProxy(atomIndex)
+  structureComponent.eachRepresentation(reprElem => {
+    if (reprElem.getVisibility()) {
+      const repr: StructureRepresentation = reprElem.repr as any  // TODO
+      if (!ignoreReprType.includes(repr.type) && repr.structureView.atomSet.isSet(atomIndex)) {
+        const radiusFactory = new RadiusFactory(repr.getRadiusParams())
+        const radius = radiusFactory.atomRadius(atom)
+        console.log(repr.type, atom.qualifiedName(), repr.getRadiusParams(), radius)
+        reprRadii.push(radius)
+      }
+    }
+  })
+  return Math.max(0, ...reprRadii)
 }
 
 type MouseActionPreset = [ string, MouseActionCallback ][]

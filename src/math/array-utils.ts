@@ -7,7 +7,7 @@
 import { Vector3 } from 'three'
 
 import { NumberArray } from '../types'
-import { TwoPI } from './math-constants.js'
+import { TwoPI } from './math-constants'
 
 export function circularMean (array: NumberArray, max: number, stride = 1, offset = 0, indices?: NumberArray) {
   // http://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions

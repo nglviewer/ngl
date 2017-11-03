@@ -494,6 +494,24 @@ export function createRingBuffer<T> (length: number): RingBuffer<T> {
   }
 }
 
+export interface SimpleDict<K, V> {
+  has: (k: K) => boolean
+  add: (k: K, v: V) => void
+  del: (k: K) => void
+  values: V[]
+}
+
+export function createSimpleDict<K, V> (): SimpleDict<K, V> {
+  const set: { [k: string]: V } = {}
+
+  return {
+    has: function (k: K) { return set[JSON.stringify(k)] !== undefined },
+    add: function (k: K, v: V) { set[JSON.stringify(k)] = v },
+    del: function (k: K) { delete set[JSON.stringify(k)] },
+    get values () { return Object.keys(set).map(k => set[k]) }
+  }
+}
+
 export interface SimpleSet<T> {
   has: (value: T) => boolean
   add: (value: T) => void
@@ -508,6 +526,6 @@ export function createSimpleSet<T> (): SimpleSet<T> {
     has: function (v: T) { return set[JSON.stringify(v)] !== undefined },
     add: function (v: T) { set[JSON.stringify(v)] = v },
     del: function (v: T) { delete set[JSON.stringify(v)] },
-    get list () { return Object.keys(set).map(function (k) { return set[k] }) },
+    get list () { return Object.keys(set).map(k => set[k]) },
   }
 }
