@@ -1,6 +1,7 @@
 /**
  * @file Halogen Bonds
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
  */
 
 import { defaults } from '../../utils'
@@ -87,7 +88,6 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       ap2.index = atomSets[ j ][ 0 ]
 
       if (invalidAtomContact(ap1, ap2)) return
-
       if (!isHalogenBond(types[ i ], types[ j ])) return
 
       const [ halogen, oxygen ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]

@@ -1,6 +1,7 @@
 /**
  * @file Hydrogen Bonds
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
  */
 import { defaults } from '../../utils'
 import { degToRad } from '../../math/math-utils'
@@ -149,12 +150,9 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         // It must have at least one lone pair not conjugated
         const totalBonds = a.bondCount + implicitH[ a.index ]
         if (
-          (idealGeometry[ a.index ] === AtomGeometry.Tetrahedral
-          && totalBonds < 4) ||
-          (idealGeometry[ a.index ] === AtomGeometry.Trigonal
-          && totalBonds < 3) ||
-          (idealGeometry[ a.index ] === AtomGeometry.Linear
-          && totalBonds < 2)
+          (idealGeometry[ a.index ] === AtomGeometry.Tetrahedral && totalBonds < 4) ||
+          (idealGeometry[ a.index ] === AtomGeometry.Trigonal && totalBonds < 3) ||
+          (idealGeometry[ a.index ] === AtomGeometry.Linear && totalBonds < 2)
         ) {
           addAtom(state, a)
           addFeature(features, state)
@@ -204,7 +202,6 @@ function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
     (ti === FeatureType.HydrogenAcceptor && tj === FeatureType.WeakHydrogenDonor)
   )
 }
-
 
 export interface HydrogenBondParams {
   maxHydrogenBondDistance?: number
@@ -289,7 +286,6 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       featureSet.setBits(l, k)
       const bondType = isWeak ? ContactType.WeakHydrogenBond : ContactType.HydrogenBond
       contactStore.addContact(l, k, bondType)
-
     })
   }
 }

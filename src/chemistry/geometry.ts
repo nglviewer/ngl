@@ -1,3 +1,9 @@
+/**
+ * @file Geometry
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
 import { Vector3 } from 'three'
 
 import { degToRad } from '../math/math-utils'
@@ -17,8 +23,7 @@ export const enum AtomGeometry {
   Unknown = 8
 }
 
-
-export function assignGeometry(totalCoordination: number): AtomGeometry {
+export function assignGeometry (totalCoordination: number): AtomGeometry {
   switch(totalCoordination){
     case 0:
       return AtomGeometry.Spherical
@@ -34,7 +39,6 @@ export function assignGeometry(totalCoordination: number): AtomGeometry {
       return AtomGeometry.Unknown
   }
 }
-
 
 export const Angles = new Map<AtomGeometry, number>([
   [ AtomGeometry.Linear, degToRad(180) ],

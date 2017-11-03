@@ -1,3 +1,7 @@
+/**
+ * @file Contact
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
 
 import { Color } from 'three'
 
@@ -119,7 +123,6 @@ function calculateFeatures (structure: Structure) {
 
   return features
 }
-
 
 export function calculateContacts (structure: Structure, params = ContactDefaultParams) {
   const features = calculateFeatures(structure)

@@ -1,6 +1,7 @@
 /**
  * @file Charged
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
  */
 
 import { Vector3 } from 'three'

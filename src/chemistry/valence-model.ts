@@ -1,4 +1,10 @@
 /**
+ * @file Valence Model
+ * @author Fred Ludlow <Fred.Ludlow@astx.com>
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ */
+
+/**
  * Reworked ValenceModel
  *
  * TODO:
@@ -21,7 +27,7 @@ import { AtomGeometry, assignGeometry } from './geometry'
  *   N,O with degree 4 cannot be conjugated.
  *   N,O adjacent to P=O or S=O do not qualify
  */
-function isConjugated(a: AtomProxy) {
+function isConjugated (a: AtomProxy) {
   const _bp = a.structure.getBondProxy()
   const atomicNumber = a.number
   const hetero = atomicNumber === 7 || atomicNumber === 8  // O, N
@@ -80,8 +86,6 @@ export function explicitValence (a: AtomProxy) {
   return v
 }
 
-
-
 /**
  * Attempts to produce a consistent charge and implicit
  * H-count for an atom.
@@ -96,9 +100,7 @@ export function explicitValence (a: AtomProxy) {
  * @param {AtomProxy}           a      Atom to analyze
  * @param {assignChargeHParams} params What to assign
  */
-export function calculateHydrogensCharge(a: AtomProxy,
-  params: ValenceModelParams) {
-
+export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelParams) {
   const hydrogenCount = a.bondToElementCount('H')
   let charge = a.formalCharge || 0
 
@@ -271,12 +273,8 @@ export function calculateHydrogensCharge(a: AtomProxy,
       break
 
     default:
-
       console.warn('Requested charge, protonation for an unhandled element', a.element)
-
-
   }
-
 
   return [ charge, implicitHCount, implicitHCount + hydrogenCount, geom ]
 }
@@ -304,16 +302,13 @@ export function ValenceModel (data: Data, params: ValenceModelParams) {
   const idealGeometry = new Int8Array(n)
 
   structure.eachAtom(a => {
-
     const i = a.index
     const [ chg, implH, totH, geom ] = calculateHydrogensCharge(a, params)
     charge[ i ] = chg
     implicitH[ i ] = implH
     totalH[ i ] = totH
     idealGeometry[ i ] = geom
-
   })
 
   return { charge, implicitH, totalH, idealGeometry }
-
 }
