@@ -425,6 +425,10 @@ class AtomProxy {
     )
   }
 
+  isTrace () {
+    return this.index === (this.residueType.traceAtomIndex + this.residueAtomOffset)
+  }
+
   /**
    * If atom is part of a hetero group
    * @return {Boolean} flag

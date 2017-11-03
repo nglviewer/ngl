@@ -18,6 +18,7 @@ import Structure from '../structure/structure'
 import StructureView from '../structure/structure-view'
 import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
+import StructureRepresentation from '../representation/structure-representation'
 
 type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
@@ -87,8 +88,7 @@ class StructureComponent extends Component {
       opacity: 0.6,
       color: 'green',
       disablePicking: true,
-      radiusType: 'data',
-      radiusScale: 1.5
+      radiusType: 'data'
     }, true)
 
     const measurementParams = {
@@ -298,6 +298,18 @@ class StructureComponent extends Component {
     this.updateRepresentations({ 'position': true })
 
     return this
+  }
+
+  getMaxRepresentationRadius (atomIndex: number) {
+    let maxRadius = 0
+    const atom = this.structure.getAtomProxy(atomIndex)
+    this.eachRepresentation(reprElem => {
+      if (reprElem.getVisibility()) {
+        const repr: StructureRepresentation = reprElem.repr as any  // TODO
+        maxRadius = Math.max(repr.getAtomRadius(atom), maxRadius)
+      }
+    })
+    return maxRadius
   }
 }
 

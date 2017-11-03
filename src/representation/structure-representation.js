@@ -267,6 +267,14 @@ class StructureRepresentation extends Representation {
     }, params)
   }
 
+  getAtomRadius (atom) {
+    if (this.structureView.atomSet.isSet(atom.index)) {
+      const radiusFactory = new RadiusFactory(this.getRadiusParams())
+      return radiusFactory.atomRadius(atom)
+    }
+    return 0
+  }
+
   /**
    * Set representation parameters
    * @alias StructureRepresentation#setSelection

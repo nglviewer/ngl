@@ -74,6 +74,10 @@ class RibbonRepresentation extends StructureRepresentation {
     }, params)
   }
 
+  getAtomRadius (atom) {
+    return atom.isTrace() ? super.getAtomRadius(atom) : 0
+  }
+
   createData (sview) {
     var bufferList = []
     var polymerList = []

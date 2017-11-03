@@ -103,6 +103,10 @@ class CartoonRepresentation extends StructureRepresentation {
     return polymer.isCg() ? 1.0 : this.aspectRatio
   }
 
+  getAtomRadius (atom) {
+    return atom.isTrace() ? super.getAtomRadius(atom) : 0
+  }
+
   createData (sview) {
     var bufferList = []
     var polymerList = []

@@ -51,6 +51,10 @@ class BackboneRepresentation extends BallAndStickRepresentation {
     super.init(p)
   }
 
+  getAtomRadius (atom) {
+    return atom.isTrace() ? super.getAtomRadius(atom) : 0
+  }
+
   getAtomData (sview, what, params) {
     return sview.getBackboneAtomData(this.getAtomParams(what, params))
   }

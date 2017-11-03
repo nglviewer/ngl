@@ -241,6 +241,10 @@ class MeasurementRepresentation extends StructureRepresentation {
       opacity: 1.0  // only opaque labels
     }))
   }
+
+  getAtomRadius () {
+    return 0
+  }
 }
 
 /**

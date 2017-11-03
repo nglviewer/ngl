@@ -123,6 +123,10 @@ class ContactRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
+  getAtomRadius () {
+    return 0
+  }
+
   getContactData (sview) {
     const params = {
       maxHydrophobicDistance: this.maxHydrophobicDistance,
