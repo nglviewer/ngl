@@ -5,19 +5,23 @@
 
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
+import { degToRad } from '../../math/math-utils'
 import {
   Features, FeatureType,
   addAtom, addFeature, createFeatureState,
 } from './features'
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
+import { calcMinAngle } from '../geometry'
+
+const halBondElements = [17, 35, 53, 85]
 
 /**
- * Halogen bond donors (X-C, with X one of F, Cl, Br, I or At)
+ * Halogen bond donors (X-C, with X one of Cl, Br, I or At) not F!
  */
 export function addHalogenDonors (structure: Structure, features: Features) {
   structure.eachAtom(a => {
-    if (a.isHalogen() && a.bondToElementCount('C') === 1) {
-      const state = createFeatureState(FeatureType.HydrogenAcceptor)
+    if (halBondElements.includes(a.number) && a.bondToElementCount('C') === 1) {
+      const state = createFeatureState(FeatureType.HalogenDonor)
       addAtom(state, a)
       addFeature(features, state)
     }
@@ -40,7 +44,7 @@ export function addHalogenAcceptors (structure: Structure, features: Features) {
         }
       })
       if (flag) {
-        const state = createFeatureState(FeatureType.HydrogenAcceptor)
+        const state = createFeatureState(FeatureType.HalogenAcceptor)
         addAtom(state, a)
         addFeature(features, state)
       }
@@ -56,7 +60,8 @@ function isHalogenBond (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface HalogenBondsParams {
-  maxHalogenBondDistance?: number
+  maxHalogenBondDistance?: number,
+  maxHalogenBondAngle?: number
 }
 
 /**
@@ -64,6 +69,7 @@ export interface HalogenBondsParams {
  */
 export function addHalogenBonds (structure: Structure, contacts: Contacts, params: HalogenBondsParams = {}) {
   const maxHalogenBondDistance = defaults(params.maxHalogenBondDistance, ContactDefaultParams.maxHalogenBondDistance)
+  const maxHalogenBondAngle = degToRad(defaults(params.maxHalogenBondAngle, ContactDefaultParams.maxHalogenBondAngle))
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -82,10 +88,17 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
 
       if (invalidAtomContact(ap1, ap2)) return
 
-      if (isHalogenBond(types[ i ], types[ j ])) {
-        featureSet.setBits(i, j)
-        contactStore.addContact(i, j, ContactType.HalogenBond)
-      }
+      if (!isHalogenBond(types[ i ], types[ j ])) return
+
+      const [ halogen, oxygen ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
+      const angle = calcMinAngle(halogen, oxygen)
+      // Angle must be defined
+      if (angle === undefined) return
+      if (Math.PI - angle > maxHalogenBondAngle) return
+
+      featureSet.setBits(i, j)
+      contactStore.addContact(i, j, ContactType.HalogenBond)
+
     })
   }
 }

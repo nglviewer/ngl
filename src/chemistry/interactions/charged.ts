@@ -8,9 +8,10 @@ import { Vector3 } from 'three'
 import { defaults } from '../../utils'
 import { radToDeg } from '../../math/math-utils'
 import Structure from '../../structure/structure'
+import { AA3 } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
-  isQuaternaryAmine, isTertiaryAmine, isSulfonium, isGuanidine,
+  /* isQuaternaryAmine, isTertiaryAmine, isSulfonium, */ isGuanidine,
   isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
 } from '../functional-groups'
 import {
@@ -24,7 +25,7 @@ const NegativelyCharged = [ 'GLU', 'ASP' ]
 const AromaticRings = [ 'TYR', 'TRP', 'HIS', 'PHE' ]
 
 export function addPositiveCharges (structure: Structure, features: Features) {
-  const { idealValence } = valenceModel(structure.data)
+  const { charge } = valenceModel(structure.data)
 
   structure.eachResidue(r => {
     if (PositvelyCharged.includes(r.resname)) {
@@ -35,19 +36,29 @@ export function addPositiveCharges (structure: Structure, features: Features) {
         }
       })
       addFeature(features, state)
-    } else if(!r.isProtein() && !r.isNucleic()) {
+    } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.PositiveCharge)
-        if (isQuaternaryAmine(a)) {
+        if (charge[ a.index   ] > 0) {
+          state.group = FeatureGroup.Unknown
+          addAtom(state, a)
+        }
+        /*if (isQuaternaryAmine(a)) {
+          // VM should now assign correctly, e.g 449 in 4cwd
           state.group = FeatureGroup.QuaternaryAmine
           addAtom(state, a)
-        } else if (isTertiaryAmine(a, idealValence[ a.index ])) {
+        } else if (isTertiaryAmine(a, )) {
+          e.g. NAD in 1eny?
           state.group = FeatureGroup.TertiaryAmine
           addAtom(state, a)
         } else if (isSulfonium(a)) {
+          // VM should assign correctly e.g. ligand SAM in 5v1s
           state.group = FeatureGroup.Sulfonium
           addAtom(state, a)
-        } else if (isGuanidine(a)) {
+        */
+        else if (isGuanidine(a)) {
+          // Guanidines don't get assigned positive charge by valence
+          // model, for now fix here:
           state.group = FeatureGroup.Guanidine
           addAtom(state, a)
         }
@@ -58,6 +69,8 @@ export function addPositiveCharges (structure: Structure, features: Features) {
 }
 
 export function addNegativeCharges (structure: Structure, features: Features) {
+  const { charge } = valenceModel(structure.data)
+
   structure.eachResidue(r => {
     if (NegativelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.NegativeCharge)
@@ -67,7 +80,7 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         }
       })
       addFeature(features, state)
-    } else if(!r.isProtein() && !r.isNucleic()) {
+    } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.NegativeCharge)
         if (isSulfonicAcid(a)) {
@@ -81,6 +94,12 @@ export function addNegativeCharges (structure: Structure, features: Features) {
           addAtom(state, a)
         } else if (isCarboxylate(a)) {
           state.group = FeatureGroup.Carboxylate
+          addAtom(state, a)
+        } else if (charge[a.index] < 0) {
+          // TODO: This ends up adding both O- and
+          // the C/S/P at the centre of one of the above types
+          // as negative charge centres. Need to delocalize negative
+          // charges better
           addAtom(state, a)
         }
         addFeature(features, state)

@@ -12,7 +12,7 @@ import { ContactPicker } from '../../utils/picker'
 import { createAdjacencyList, AdjacencyList } from '../../utils/adjacency-list'
 import { createFeatures, Features } from './features'
 import { addAromaticRings, addNegativeCharges, addPositiveCharges, addChargedContacts } from './charged'
-import { addHydrogenAcceptors, addHydrogenDonors, addHydrogenBonds } from './hydrogen-bonds'
+import { addHydrogenAcceptors, addHydrogenDonors, addHydrogenBonds, addWeakHydrogenDonors } from './hydrogen-bonds'
 import { addMetalBinding, addMetals, addMetalComplexation } from './metal-binding'
 import { addHydrophobic, addHydrophobicContacts } from './hydrophobic'
 import { addHalogenAcceptors, addHalogenDonors, addHalogenBonds } from './halogen-bonds'
@@ -41,6 +41,7 @@ export const enum ContactType {
   HalogenBond = 5,
   Hydrophobic = 6,
   MetalComplex = 7,
+  WeakHydrogenBond = 8
 }
 
 export const ContactDefaultParams = {
@@ -49,6 +50,7 @@ export const ContactDefaultParams = {
   maxHydrogenBondAngle: 40,
   backboneHydrogenBond: true,
   waterHydrogenBond: true,
+  weakHydrogenBond: true,
   maxPiStackingDistance: 5.5,
   maxPiStackingOffset: 2.0,
   maxPiStackingAngle: 30,
@@ -103,6 +105,7 @@ function calculateFeatures (structure: Structure) {
 
   addHydrogenAcceptors(structure, features)
   addHydrogenDonors(structure, features)
+  addWeakHydrogenDonors(structure, features)
 
   addMetalBinding(structure, features)
   addMetals(structure, features)
@@ -169,6 +172,8 @@ export function contactTypeName (type: ContactType) {
       return 'cation-pi interaction'
     case ContactType.PiStacking:
       return 'pi-pi stacking'
+    case ContactType.WeakHydrogenBond:
+      return 'weak hydrogen bond'
     default:
       return 'unknown contact'
   }
@@ -182,6 +187,7 @@ export const ContactDataDefaultParams = {
   metalComplex: true,
   cationPi: true,
   piStacking: true,
+  weakHydrogenBond: true,
   radius: 1
 }
 export type ContactDataParams = typeof ContactDataDefaultParams
@@ -203,6 +209,8 @@ function contactColor (type: ContactType) {
       return tmpColor.setHex(0xFF8000).toArray()
     case ContactType.PiStacking:
       return tmpColor.setHex(0x8CB366).toArray()
+    case ContactType.WeakHydrogenBond:
+      return tmpColor.setHex(0xC5DDEC).toArray()
     default:
       return tmpColor.setHex(0xCCCCCC).toArray()
   }
@@ -218,6 +226,7 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   if (p.metalComplex) types.push(ContactType.MetalComplex)
   if (p.cationPi) types.push(ContactType.CationPi)
   if (p.piStacking) types.push(ContactType.PiStacking)
+  if (p.weakHydrogenBond) types.push(ContactType.WeakHydrogenBond)
 
   const { features, contactSet, contactStore } = contacts
   const { centers } = features

@@ -1,3 +1,17 @@
+// Based on contact.js with some custom camera and repr options
+
+stage.setParameters({
+  cameraType: 'orthographic',
+  sampleLevel: -1,
+  zoomSpeed: 1.2,
+  rotateSpeed: 1.0,
+  panSpeed: 1,
+  clipDist: 0.0,
+  fogNear: 40,
+  fogFar: 70,
+  clipNear: 40,
+  clipFar: 70
+})
 
 // create tooltip element and add to document body
 var tooltip = document.createElement('div')
@@ -22,13 +36,23 @@ stage.signals.hovered.add(function (pickingProxy) {
     if (pickingProxy.atom || pickingProxy.bond) {
       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
       var vm = atom.structure.data['@valenceModel']
-      if (vm) {
+      if (vm && vm.idealValence) {
+        tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
+        <hr/>
+        Atom: ${atom.qualifiedName()}<br/>
+        ideal valence: ${vm.idealValence[atom.index]}<br/>
+        ideal geometry: ${vm.idealGeometry[atom.index]}<br/>
+        implicit charge: ${vm.implicitCharge[atom.index]}<br/>
+        formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
+        `
+      } else if (vm && vm.charge) {
         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
         <hr/>
         Atom: ${atom.qualifiedName()}<br/>
         vm charge: ${vm.charge[atom.index]}<br/>
         vm implicitH: ${vm.implicitH[atom.index]}<br/>
         vm totalH: ${vm.totalH[atom.index]}<br/>
+        vm geom: ${vm.idealGeometry[atom.index]}</br>
         formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
         `
       } else {
@@ -52,10 +76,11 @@ stage.signals.hovered.add(function (pickingProxy) {
 // stage.loadFile('data://1blu.pdb').then(function (o) {
 // stage.loadFile('data://3pqr.pdb').then(function (o) {
 // stage.loadFile('data://1crn.pdb').then(function (o) {
+
 // stage.loadFile('rcsb://3EQA').then(function (o) {  // cation pi
 // stage.loadFile('rcsb://1u19').then(function (o) {
 // stage.loadFile('rcsb://3pqr').then(function (o) {
-stage.loadFile('rcsb://1d66').then(function (o) {  // dna
+// stage.loadFile('rcsb://1d66').then(function (o) {  // dna
 // stage.loadFile('rcsb://1crn').then(function (o) {
 // stage.loadFile('rcsb://1blu').then(function (o) {  // iron sulfur cluster
 // stage.loadFile('rcsb://1us0', { sele: '% or %A' }).then(function (o) {  // halogen bond
@@ -71,16 +96,27 @@ stage.loadFile('rcsb://1d66').then(function (o) {  // dna
 // stage.loadFile('rcsb://3MXF').then(function (o) {  // [JQ1] would have acceptor and then pi-pi
 // stage.loadFile('rcsb://5PH0').then(function (o) {  // OGA - charges and metal chelation
 // stage.loadFile('rcsb://1XBB').then(function (o) {  // kinase inhibitor, important to get the hinge
-  o.addRepresentation('cartoon', {
+// stage.loadFile('rcsb://1H82').then(function (o) {  // Example which requires ba.index !== ap1.index check in hydrogen-bond.ts
+stage.loadFile('rcsb://1p5e').then(function (o) {
+  /* o.addRepresentation('cartoon', {
     colorScheme: 'sstruc'
-  })
+  }) */
   o.addRepresentation('contact', {
 
   })
-  o.addRepresentation('licorice', {
+  /* o.addRepresentation('licorice', {
     radius: 0.1,
     multipleBond: 'symmetric',
     sele: 'not water'
+  }) */
+  o.addRepresentation('line', {
+    linewidth: 2,
+    multipleBond: 'symmetric'
+  })
+  o.addRepresentation('ball+stick', {
+    selection: 'hetero',
+    multipleBond: 'symmetric',
+    sele: 'hetero and not water'
   })
   stage.autoView()
 })

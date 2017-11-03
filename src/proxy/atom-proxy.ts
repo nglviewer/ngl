@@ -344,6 +344,7 @@ class AtomProxy {
       ap.index = idx !== bp.atomIndex1 ? bp.atomIndex1 : bp.atomIndex2
       callback(ap)
     })
+    this.index = idx
   }
 
   /**
@@ -362,9 +363,11 @@ class AtomProxy {
 
   bondToElementCount (element: string) {
     let count = 0
+    const idx = this.index // Avoid reentrancy problems
     this.eachBondedAtom(function (bap) {
       if (bap.element === element) count += 1
     })
+    this.index = idx
     return count
   }
 
