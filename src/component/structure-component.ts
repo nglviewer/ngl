@@ -8,6 +8,7 @@ import { Signal } from 'signals'
 
 import { ComponentRegistry } from '../globals'
 import { defaults, createRingBuffer, RingBuffer, createSimpleDict, SimpleDict } from '../utils'
+import { smoothstep } from '../math/math-utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
 import TrajectoryElement from './trajectory-element'
 import RepresentationElement from './representation-element'
@@ -19,6 +20,7 @@ import StructureView from '../structure/structure-view'
 import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
 import StructureRepresentation from '../representation/structure-representation'
+import AtomProxy from '../proxy/atom-proxy'
 
 type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
@@ -189,6 +191,8 @@ class StructureComponent extends Component {
 
     this.spacefillRepresentation.build(undefined)
     this.distanceRepresentation.build(undefined)
+    this.angleRepresentation.build(undefined)
+    this.dihedralRepresentation.build(undefined)
   }
 
   /**
@@ -204,7 +208,11 @@ class StructureComponent extends Component {
   addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
-    return this._addRepresentation(type, this.structureView, params, hidden)
+    const reprComp = this._addRepresentation(type, this.structureView, params, hidden)
+    if (!hidden) {
+      reprComp.signals.parametersChanged.add(() => this.measureUpdate())
+    }
+    return reprComp
   }
 
   /**
@@ -246,6 +254,8 @@ class StructureComponent extends Component {
 
     this.spacefillRepresentation.dispose()
     this.distanceRepresentation.dispose()
+    this.angleRepresentation.dispose()
+    this.dihedralRepresentation.dispose()
 
     super.dispose()
   }
@@ -310,6 +320,58 @@ class StructureComponent extends Component {
       }
     })
     return maxRadius
+  }
+
+  measurePick (atom: AtomProxy) {
+    const pickCount = this.pickBuffer.count
+
+    if (this.lastPick === atom.index && pickCount >= 2) {
+      const atomList = this.pickBuffer.data
+      const atomListSorted = this.pickBuffer.data.sort()
+      if (this.pickDict.has(atomListSorted)) {
+        this.pickDict.del(atomListSorted)
+      } else {
+        this.pickDict.add(atomListSorted, atomList)
+      }
+      if (pickCount === 2) {
+        this.distanceRepresentation.setParameters({
+          atomPair: this.pickDict.values.filter(l => l.length === 2)
+        })
+      } else if (pickCount === 3) {
+        this.angleRepresentation.setParameters({
+          atomTriple: this.pickDict.values.filter(l => l.length === 3)
+        })
+      } else if (pickCount === 4) {
+        this.dihedralRepresentation.setParameters({
+          atomQuad: this.pickDict.values.filter(l => l.length === 4)
+        })
+      }
+      this.pickBuffer.clear()
+      this.lastPick = undefined
+    } else {
+      if (!this.pickBuffer.has(atom.index)) {
+        this.pickBuffer.push(atom.index)
+      }
+      this.lastPick = atom.index
+    }
+
+    this.measureUpdate()
+  }
+
+  measureClear () {
+    this.pickBuffer.clear()
+    this.lastPick = undefined
+    this.spacefillRepresentation.setSelection('none')
+  }
+
+  measureUpdate () {
+    const radiusData: { [k: number]: number } = {}
+    this.pickBuffer.data.forEach(ai => {
+      const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
+      radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
+    })
+    this.spacefillRepresentation.setSelection('@' + this.pickBuffer.data.join(','))
+    this.spacefillRepresentation.setParameters({ radiusData })
   }
 }
 

@@ -885,6 +885,14 @@ class Stage {
     return new RepresentationCollection(reprList)
   }
 
+  measureClear () {
+    this.eachComponent((sc: StructureComponent) => sc.measureClear(), 'structure')
+  }
+
+  measureUpdate () {
+    this.eachComponent((sc: StructureComponent) => sc.measureUpdate(), 'structure')
+  }
+
   /**
    * Cleanup when disposing of a stage object
    */

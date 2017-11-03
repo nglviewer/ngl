@@ -5,7 +5,7 @@
  */
 
 import PickingProxy from './picking-proxy'
-import { almostIdentity, smoothstep } from '../math/math-utils'
+import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
@@ -188,51 +188,9 @@ class MouseActions {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
       const sc = pickingProxy.component as StructureComponent
-      const pickCount = sc.pickBuffer.count
-
-      if (sc.lastPick === atom.index && pickCount >= 2) {
-        const atomList = sc.pickBuffer.data
-        const atomListSorted = sc.pickBuffer.data.sort()
-        if (sc.pickDict.has(atomListSorted)) {
-          sc.pickDict.del(atomListSorted)
-        } else {
-          sc.pickDict.add(atomListSorted, atomList)
-        }
-        if (pickCount === 2) {
-          sc.distanceRepresentation.setParameters({
-            atomPair: sc.pickDict.values.filter(l => l.length === 2)
-          })
-        } else if (pickCount === 3) {
-          sc.angleRepresentation.setParameters({
-            atomTriple: sc.pickDict.values.filter(l => l.length === 3)
-          })
-        } else if (pickCount === 4) {
-          sc.dihedralRepresentation.setParameters({
-            atomQuad: sc.pickDict.values.filter(l => l.length === 4)
-          })
-        }
-        sc.pickBuffer.clear()
-        sc.lastPick = undefined
-      } else {
-        if (!sc.pickBuffer.has(atom.index)) {
-          sc.pickBuffer.push(atom.index)
-        }
-        sc.lastPick = atom.index
-      }
-      const radiusData: { [k: number]: number } = {}
-      sc.pickBuffer.data.forEach(ai => {
-        const r = Math.max(0.1, sc.getMaxRepresentationRadius(ai))
-        radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
-      })
-      sc.spacefillRepresentation.setSelection('@' + sc.pickBuffer.data.join(','))
-      sc.spacefillRepresentation.setParameters({ radiusData })
-      return
+      sc.measurePick(atom)
     } else {
-      stage.eachComponent((sc: StructureComponent) => {
-        sc.pickBuffer.clear()
-        sc.lastPick = undefined
-        sc.spacefillRepresentation.setSelection('none')
-      }, 'structure')
+      stage.measureClear()
     }
   }
 }
