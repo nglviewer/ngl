@@ -930,7 +930,7 @@ class Structure implements Structure{
     let maxY = -Infinity
     let maxZ = -Infinity
 
-    this.eachAtom(function (ap: AtomProxy) {
+    this.eachAtom(ap => {
       const x = ap.x
       const y = ap.y
       const z = ap.z
@@ -961,10 +961,10 @@ class Structure implements Structure{
     if (Debug) Log.time('getPrincipalAxes')
 
     let i = 0
-    const coords = new (Matrix as any)(3, this.atomCount)  // TODO
+    const coords = new Matrix(3, this.atomCount)
     const cd = coords.data
 
-    this.eachAtom(function (a: AtomProxy) {
+    this.eachAtom(a => {
       cd[ i + 0 ] = a.x
       cd[ i + 1 ] = a.y
       cd[ i + 2 ] = a.z

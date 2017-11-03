@@ -286,8 +286,20 @@ class AtomProxy {
     }
   }
 
+  /**
+   * Aromaticity flag
+   */
   get aromatic () {
-    return false  // TODO
+    if (this.atomStore.aromatic) {
+      return this.atomStore.aromatic[ this.index ]
+    } else {
+      return this.residueType.isAromatic(this)
+    }
+  }
+  set aromatic (value) {
+    if (this.atomStore.aromatic) {
+      this.atomStore.aromatic[ this.index ] = value as number
+    }
   }
 
   //
@@ -369,8 +381,7 @@ class AtomProxy {
   isBackbone () {
     const backboneIndexList = this.residueType.backboneIndexList
     if (backboneIndexList.length > 0) {
-      const atomOffset = this.residueStore.atomOffset[ this.residueIndex ]
-      return backboneIndexList.includes(this.index - atomOffset)
+      return backboneIndexList.includes(this.index - this.residueAtomOffset)
     } else {
       return false
     }
@@ -514,6 +525,10 @@ class AtomProxy {
   isRing () {
     const ringFlags = this.residueType.getRings()!.flags  // TODO
     return ringFlags[ this.index - this.residueAtomOffset ] === 1
+  }
+
+  isAromatic () {
+    return this.aromatic
   }
 
   isMetal () { return this.atomType.isMetal() }

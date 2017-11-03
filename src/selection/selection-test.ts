@@ -52,6 +52,7 @@ function atomTestFn (a: AtomProxy, s: SelectionRule) {
     if (s.keyword === kwd.SIDECHAIN && !a.isSidechain()) return false
     if (s.keyword === kwd.BONDED && !a.isBonded()) return false
     if (s.keyword === kwd.RING && !a.isRing()) return false
+    if (s.keyword === kwd.AROMATICRING && !a.isAromatic()) return false
 
     if (s.keyword === kwd.HETERO && !a.isHetero()) return false
     if (s.keyword === kwd.PROTEIN && !a.isProtein()) return false

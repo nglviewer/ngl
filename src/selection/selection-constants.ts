@@ -22,13 +22,14 @@ export const kwd: { [k: string]: number } = {
   SACCHARIDE: 15,
   SUGAR: 15,
   BONDED: 16,
-  RING: 17
+  RING: 17,
+  AROMATICRING: 18
 }
 
 export const SelectAllKeyword = [ '*', '', 'ALL' ]
 
 export const AtomOnlyKeywords = [
-  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING
+  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING
 ]
 
 export const ChainKeywords = [

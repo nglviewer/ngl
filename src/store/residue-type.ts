@@ -6,6 +6,8 @@
  */
 
 import { defaults } from '../utils'
+import PrincipalAxes from '../math/principal-axes'
+import { Matrix } from '../math/matrix-utils.js'
 import { calculateResidueBonds, ResidueBonds } from '../structure/structure-utils'
 import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
@@ -17,6 +19,7 @@ import {
 } from '../structure/structure-constants'
 import Structure from '../structure/structure'
 import ResidueProxy from '../proxy/residue-proxy'
+import AtomProxy from '../proxy/atom-proxy'
 
 export interface BondGraph {
   [k: number]: number[]
@@ -38,6 +41,7 @@ export default class ResidueType {
   bonds?: ResidueBonds
   rings?: RingData
   bondGraph?: BondGraph
+  aromaticAtoms?: Uint8Array
 
   atomCount: number
 
@@ -382,6 +386,13 @@ export default class ResidueType {
     return this.bondGraph
   }
 
+  getAromatic (a?: AtomProxy) {
+    if (this.aromaticAtoms === undefined) {
+      this.calculateAromatic(this.structure.getResidueProxy((a!).residueIndex))  // TODO
+    }
+    return this.aromaticAtoms
+  }
+
   /**
    * @return {Object} bondGraph - represents the bonding in this
    *   residue: { ai1: [ ai2, ai3, ...], ...}
@@ -418,6 +429,28 @@ export default class ResidueType {
     }
 
     this.rings = { flags: state.flags, rings: state.rings }
+  }
+
+  isAromatic (atom: AtomProxy) {
+    this.aromaticAtoms = this.getAromatic(atom)!  // TODO
+    return this.aromaticAtoms[atom.index - atom.residueAtomOffset] === 1
+  }
+
+  calculateAromatic (r: ResidueProxy) {
+    const aromaticAtoms = this.aromaticAtoms = new Uint8Array(this.atomCount)
+    const rings = this.getRings()!.rings
+
+    const aromaticRings = rings.map(ring => {
+      return isRingAromatic(ring.map(idx => {
+        return this.structure.getAtomProxy(idx + r.atomOffset)
+      }))
+    })
+
+    rings.forEach((ring, i) => {
+      if (aromaticRings[i]) {
+        ring.forEach(idx => aromaticAtoms[idx] = 1)
+      }
+    })
   }
 
   /**
@@ -534,6 +567,27 @@ export default class ResidueType {
 
 //
 
+const AromaticRingPlanarityThreshold = 0.05
+
+function isRingAromatic (ring: AtomProxy[]) {
+  let i = 0
+  const coords = new Matrix(3, ring.length)
+  const cd = coords.data
+
+  ring.forEach(a => {
+    cd[ i + 0 ] = a.x
+    cd[ i + 1 ] = a.y
+    cd[ i + 2 ] = a.z
+    i += 3
+  })
+
+  const pa = new PrincipalAxes(coords)
+
+  return pa.vecC.length() < AromaticRingPlanarityThreshold
+}
+
+//
+
 /**
  * Ring finding code below adapted from MolQL
  * Copyright (c) 2017 MolQL contributors, licensed under MIT
@@ -582,7 +636,7 @@ function addRing(state: RingFinderState, a: number, b: number) {
   }
 
   const rn = leftOffset + rightOffset
-  const ring = new Int32Array(rn)
+  const ring: number[] = new Array(rn)
   let ringOffset = 0;
   for (let t = 0; t < leftOffset; t++) {
     ring[ringOffset++] = left[t]
@@ -596,7 +650,7 @@ function addRing(state: RingFinderState, a: number, b: number) {
     state.flags[ring[i]] = 1
   }
 
-  state.rings.push(ring as any as number[])
+  state.rings.push(ring)
 }
 
 function findRings(state: RingFinderState, from: number) {
