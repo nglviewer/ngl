@@ -291,9 +291,9 @@ class AtomProxy {
    */
   get aromatic () {
     if (this.atomStore.aromatic) {
-      return this.atomStore.aromatic[ this.index ]
+      return this.atomStore.aromatic[ this.index ] as number
     } else {
-      return this.residueType.isAromatic(this)
+      return this.residueType.isAromatic(this) ? 1 : 0
     }
   }
   set aromatic (value) {
@@ -535,7 +535,7 @@ class AtomProxy {
   }
 
   isAromatic () {
-    return this.aromatic
+    return this.aromatic === 1
   }
 
   isMetal () { return this.atomType.isMetal() }

@@ -49,21 +49,23 @@ export const enum ContactType {
 }
 
 export const ContactDefaultParams = {
-  maxHydrophobicDistance: 4.0,
-  maxHydrogenBondDistance: 3.5,
-  maxHydrogenBondAngle: 40,
-  backboneHydrogenBond: true,
-  waterHydrogenBond: true,
-  weakHydrogenBond: true,
-  maxPiStackingDistance: 5.5,
+  maxHydrophobicDist: 4.0,
+  maxHbondDist: 3.5,
+  maxHbondAccAngle: 45,
+  maxHbondDonAngle: 45,
+  maxHbondAccDihedral: 60,
+  maxHbondDonDihedral: 60,
+  backboneHbond: true,
+  waterHbond: true,
+  maxPiStackingDist: 5.5,
   maxPiStackingOffset: 2.0,
   maxPiStackingAngle: 30,
-  maxCationPiDistance: 6.0,
+  maxCationPiDist: 6.0,
   maxCationPiOffset: 1.5,
-  maxSaltbridgeDistance: 4.0,
-  maxHalogenBondDistance: 3.5,
+  maxSaltbridgeDist: 4.0,
+  maxHalogenBondDist: 3.5,
   maxHalogenBondAngle: 30,
-  maxMetalDistance: 3.0
+  maxMetalDist: 3.0
 }
 
 export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy) {
@@ -88,11 +90,11 @@ export function createFrozenContacts (contacts: Contacts): FrozenContacts {
   const { index1, index2, count } = contacts.contactStore
 
   const adjacencyList = createAdjacencyList({
-      nodeArray1: index1,
-      nodeArray2: index2,
-      edgeCount: count,
-      nodeCount: contacts.featureSet.length
-    })
+    nodeArray1: index1,
+    nodeArray2: index2,
+    edgeCount: count,
+    nodeCount: contacts.featureSet.length
+  })
   const contactSet = new BitArray(contacts.contactStore.count, true)
 
   return Object.assign({ adjacencyList, contactSet }, contacts)

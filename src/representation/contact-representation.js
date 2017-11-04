@@ -46,22 +46,31 @@ class ContactRepresentation extends StructureRepresentation {
         type: 'boolean', rebuild: true
       },
 
-      maxHydrophobicDistance: {
+      maxHydrophobicDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxHydrogenBondDistance: {
+      maxHbondDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxHydrogenBondAngle: {
+      maxHbondAccAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
-      backboneHydrogenBond: {
+      maxHbondDonAngle: {
+        type: 'integer', max: 180, min: 0, rebuild: true
+      },
+      maxHbondAccDihedral: {
+        type: 'integer', max: 90, min: 0, rebuild: true
+      },
+      maxHbondDonDihedral: {
+        type: 'integer', max: 90, min: 0, rebuild: true
+      },
+      backboneHbond: {
         type: 'boolean', rebuild: true
       },
-      waterHydrogenBond: {
+      waterHbond: {
         type: 'boolean', rebuild: true
       },
-      maxPiStackingDistance: {
+      maxPiStackingDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
       maxPiStackingOffset: {
@@ -70,22 +79,22 @@ class ContactRepresentation extends StructureRepresentation {
       maxPiStackingAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
-      maxCationPiDistance: {
+      maxCationPiDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
       maxCationPiOffset: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxSaltbridgeDistance: {
+      maxSaltbridgeDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxHalogenBondDistance: {
+      maxHalogenBondDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
       maxHalogenBondAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
-      maxMetalDistance: {
+      maxMetalDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
 
@@ -101,7 +110,7 @@ class ContactRepresentation extends StructureRepresentation {
     p.radiusSize = defaults(p.radiusSize, 0.05)
 
     this.hydrogenBond = defaults(p.hydrogenBond, true)
-    this.weakHydrogenBond = defaults(p.weakHydrogenBond, true)
+    this.weakHydrogenBond = defaults(p.weakHydrogenBond, false)
     this.hydrophobic = defaults(p.hydrophobic, false)
     this.halogenBond = defaults(p.halogenBond, true)
     this.saltBridge = defaults(p.saltBridge, true)
@@ -109,20 +118,23 @@ class ContactRepresentation extends StructureRepresentation {
     this.cationPi = defaults(p.cationPi, true)
     this.piStacking = defaults(p.piStacking, true)
 
-    this.maxHydrophobicDistance = defaults(p.maxHydrophobicDistance, 4.0)
-    this.maxHydrogenBondDistance = defaults(p.maxHydrogenBondDistance, 3.5)
-    this.maxHydrogenBondAngle = defaults(p.maxHydrogenBondAngle, 40)
-    this.backboneHydrogenBond = defaults(p.backboneHydrogenBond, false)
-    this.waterHydrogenBond = defaults(p.waterHydrogenBond, false)
-    this.maxPiStackingDistance = defaults(p.maxPiStackingDistance, 5.5)
+    this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
+    this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
+    this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 45)
+    this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
+    this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 60)
+    this.maxHbondDonDihedral = defaults(p.maxHbondDonDihedral, 60)
+    this.backboneHbond = defaults(p.backboneHbond, false)
+    this.waterHbond = defaults(p.waterHbond, false)
+    this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5)
     this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0)
     this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
-    this.maxCationPiDistance = defaults(p.maxCationPiDistance, 6.0)
+    this.maxCationPiDist = defaults(p.maxCationPiDist, 6.0)
     this.maxCationPiOffset = defaults(p.maxCationPiOffset, 1.5)
-    this.maxSaltbridgeDistance = defaults(p.maxSaltbridgeDistance, 4.0)
-    this.maxHalogenBondDistance = defaults(p.maxHalogenBondDistance, 3.5)
+    this.maxSaltbridgeDist = defaults(p.maxSaltbridgeDist, 4.0)
+    this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5)
     this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
-    this.maxMetalDistance = defaults(p.maxMetalDistance, 3.0)
+    this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
 
     super.init(p)
   }
@@ -133,20 +145,23 @@ class ContactRepresentation extends StructureRepresentation {
 
   getContactData (sview) {
     const params = {
-      maxHydrophobicDistance: this.maxHydrophobicDistance,
-      maxHydrogenBondDistance: this.maxHydrogenBondDistance,
-      maxHydrogenBondAngle: this.maxHydrogenBondAngle,
-      backboneHydrogenBond: this.backboneHydrogenBond,
-      waterHydrogenBond: this.waterHydrogenBond,
-      maxPiStackingDistance: this.maxPiStackingDistance,
+      maxHydrophobicDist: this.maxHydrophobicDist,
+      maxHbondDist: this.maxHbondDist,
+      maxHbondAccAngle: this.maxHbondAccAngle,
+      maxHbondDonAngle: this.maxHbondDonAngle,
+      maxHbondAccDihedral: this.maxHbondAccDihedral,
+      maxHbondDonDihedral: this.maxHbondDonDihedral,
+      backboneHbond: this.backboneHbond,
+      waterHbond: this.waterHbond,
+      maxPiStackingDist: this.maxPiStackingDist,
       maxPiStackingOffset: this.maxPiStackingOffset,
       maxPiStackingAngle: this.maxPiStackingAngle,
-      maxCationPiDistance: this.maxCationPiDistance,
+      maxCationPiDist: this.maxCationPiDist,
       maxCationPiOffset: this.maxCationPiOffset,
-      maxSaltbridgeDistance: this.maxSaltbridgeDistance,
-      maxHalogenBondDistance: this.maxHalogenBondDistance,
+      maxSaltbridgeDist: this.maxSaltbridgeDist,
+      maxHalogenBondDist: this.maxHalogenBondDist,
       maxHalogenBondAngle: this.maxHalogenBondAngle,
-      maxMetalDistance: this.maxMetalDistance
+      maxMetalDist: this.maxMetalDist
     }
 
     const dataParams = {

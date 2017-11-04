@@ -61,7 +61,7 @@ function isHalogenBond (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface HalogenBondsParams {
-  maxHalogenBondDistance?: number,
+  maxHalogenBondDist?: number,
   maxHalogenBondAngle?: number
 }
 
@@ -69,7 +69,7 @@ export interface HalogenBondsParams {
  * All pairs of halogen donor and acceptor atoms
  */
 export function addHalogenBonds (structure: Structure, contacts: Contacts, params: HalogenBondsParams = {}) {
-  const maxHalogenBondDistance = defaults(params.maxHalogenBondDistance, ContactDefaultParams.maxHalogenBondDistance)
+  const maxHalogenBondDist = defaults(params.maxHalogenBondDist, ContactDefaultParams.maxHalogenBondDist)
   const maxHalogenBondAngle = degToRad(defaults(params.maxHalogenBondAngle, ContactDefaultParams.maxHalogenBondAngle))
 
   const { features, spatialHash, contactStore, featureSet } = contacts
@@ -81,7 +81,7 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
   const ap2 = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
-    spatialHash.eachWithin(x[i], y[i], z[i], maxHalogenBondDistance, (j, dSq) => {
+    spatialHash.eachWithin(x[i], y[i], z[i], maxHalogenBondDist, (j, dSq) => {
       if (j <= i) return
 
       ap1.index = atomSets[ i ][ 0 ]

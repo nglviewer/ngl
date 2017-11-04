@@ -35,7 +35,7 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
     const an = a.number
     const resname = a.resname
     const atomname = a.atomname
-    if (an === 7 || an === 8 || an === 9) {  // N, O, F, S
+    if (an === 7 || an === 8 || an === 9) {  // N, O, F
       if (
         (resname === 'ARG' && ['NE', 'NH1', 'NH2'].includes(atomname)) ||
         (resname === 'ASN' && atomname === 'ND2') ||
@@ -89,18 +89,10 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
  * Weak hydrogen donor.
  */
 export function addWeakHydrogenDonors (structure: Structure, features: Features) {
-  // TODO: Previous version assigned HydrogenAcceptors to any C bound only
-  // to C and H? Check if this was intended?
-  const { totalH, idealGeometry } = valenceModel(structure.data)
-
   structure.eachAtom(a => {
     if (
-      a.number === 6 &&
-      totalH[ a.index ] > 0 &&
-      idealGeometry[ a.index] === AtomGeometry.Trigonal &&
-      a.bondToElementCount('N') > 0
-      // Better check would be "is there a nitrogen in an aromatic ring?"
-      // e.g. CH para to N in pyridine
+      a.number === 6 &&  // C
+      a.bondToElementCount('N') > 0 && a.isAromatic()
     ) {
       const state = createFeatureState(FeatureType.WeakHydrogenDonor)
       addAtom(state, a)
@@ -159,7 +151,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
           return
         }
       }
-    }else if (an === 16) {
+    }else if (an === 16) {  // S
       if (
         (resname === 'CYS' && atomname === 'SG') ||
         (resname === 'MET' && atomname === 'SD')
@@ -168,7 +160,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         addFeature(features, state)
         return
       }
-      if (a.formalCharge === -1) {  // S
+      if (a.formalCharge === -1) {
         // Allow sulfur hdrogen bond
         addAtom(state, a)
         addFeature(features, state)
@@ -177,6 +169,18 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
     }
   })
 }
+
+/**
+ * Atom that is only bound to carbon or hydrogen
+ */
+// function isHydrocarbon (atom: AtomProxy) {
+//   let flag = true
+//   atom.eachBondedAtom(ap => {
+//     const e = ap.element
+//     if (e !== 'C' && e !== 'H') flag = false
+//   })
+//   return flag
+// }
 
 function isBackboneHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {
   return (
@@ -204,22 +208,26 @@ function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
 }
 
 export interface HydrogenBondParams {
-  maxHydrogenBondDistance?: number
-  maxHydrogenBondAngle?: number
-  backboneHydrogenBond?: boolean
-  waterHydrogenBond?: boolean
-  weakHydrogenBond?: boolean
+  maxHbondDist?: number
+  maxHbondAccAngle?: number
+  maxHbondDonAngle?: number
+  maxHbondAccDihedral?: number
+  maxHbondDonDihedral?: number
+  backboneHbond?: boolean
+  waterHbond?: boolean
 }
 
 /**
  * All pairs of hydrogen donor and acceptor atoms
  */
 export function addHydrogenBonds (structure: Structure, contacts: Contacts, params: HydrogenBondParams = {}) {
-  const maxHydrogenBondDistance = defaults(params.maxHydrogenBondDistance, ContactDefaultParams.maxHydrogenBondDistance)
-  const maxHydrogenBondAngle = degToRad(defaults(params.maxHydrogenBondAngle, ContactDefaultParams.maxHydrogenBondAngle))
-  const backboneHydrogenBond = defaults(params.backboneHydrogenBond, ContactDefaultParams.backboneHydrogenBond)
-  const waterHydrogenBond = defaults(params.waterHydrogenBond, ContactDefaultParams.waterHydrogenBond)
-  const weakHydrogenBond = defaults(params.weakHydrogenBond, ContactDefaultParams.weakHydrogenBond)
+  const maxHbondDist = defaults(params.maxHbondDist, ContactDefaultParams.maxHbondDist)
+  const maxHbondAccAngle = degToRad(defaults(params.maxHbondAccAngle, ContactDefaultParams.maxHbondAccAngle))
+  const maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle))
+  const maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral))
+  const maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral))
+  const backboneHbond = defaults(params.backboneHbond, ContactDefaultParams.backboneHbond)
+  const waterHbond = defaults(params.waterHbond, ContactDefaultParams.waterHbond)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -232,16 +240,15 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const acceptor = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
-    spatialHash.eachWithin(x[i], y[i], z[i], maxHydrogenBondDistance, (j, dSq) => {
+    spatialHash.eachWithin(x[i], y[i], z[i], maxHbondDist, (j, dSq) => {
       if (j <= i) return
 
       const ti = types[ i ]
       const tj = types[ j ]
 
       const isWeak = isWeakHydrogenBond(ti, tj)
-      if (!isHydrogenBond(ti, tj) && !isWeak) return
+      if (!isHydrogenBond(ti, tj) && !isWeakHydrogenBond(ti, tj)) return
 
-      // TODO handle edge case
       const [ l, k ] = types[ j ] === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
 
       donor.index = atomSets[ l ][ 0 ]
@@ -249,38 +256,29 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (invalidAtomContact(donor, acceptor)) return
 
-      if (!backboneHydrogenBond && isBackboneHydrogenBond(donor, acceptor)) return
-      if (!waterHydrogenBond && isWaterHydrogenBond(donor, acceptor)) return
-      if (!weakHydrogenBond && isWeak) return
+      if (!backboneHbond && isBackboneHydrogenBond(donor, acceptor)) return
+      if (!waterHbond && isWaterHydrogenBond(donor, acceptor)) return
 
       const donorAngle = calcMinAngle(donor, acceptor)
       if (donorAngle !== undefined) {
         const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
-        if (Math.abs(idealDonorAngle - donorAngle) > maxHydrogenBondAngle) {
-          return
-        }
+        if (Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle) return
       }
 
       if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(donor, acceptor)
-        if (outOfPlane !== undefined && outOfPlane > maxHydrogenBondAngle){
-          return
-        }
+        if (outOfPlane !== undefined && outOfPlane > maxHbondDonDihedral) return
       }
 
       const acceptorAngle = calcMinAngle(acceptor, donor)
       if (acceptorAngle !== undefined) {
         const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
-        if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHydrogenBondAngle) {
-          return
-        }
+        if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHbondAccAngle) return
       }
 
       if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(acceptor, donor)
-        if (outOfPlane !== undefined && outOfPlane > maxHydrogenBondAngle){
-          return
-        }
+        if (outOfPlane !== undefined && outOfPlane > maxHbondAccDihedral) return
       }
 
       featureSet.setBits(l, k)

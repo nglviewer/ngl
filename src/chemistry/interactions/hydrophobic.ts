@@ -37,14 +37,14 @@ function isHydrophobicContact (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface HydrophobicContactsParams {
-  maxHydrophobicDistance?: number
+  maxHydrophobicDist?: number
 }
 
 /**
  * All contacts between carbon atoms that are only bonded to carbon or hydrogen
  */
 export function addHydrophobicContacts (structure: Structure, contacts: Contacts, params: HydrophobicContactsParams = {}) {
-  const maxHydrophobicDistance = defaults(params.maxHydrophobicDistance, ContactDefaultParams.maxHydrophobicDistance)
+  const maxHydrophobicDist = defaults(params.maxHydrophobicDist, ContactDefaultParams.maxHydrophobicDist)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -55,7 +55,7 @@ export function addHydrophobicContacts (structure: Structure, contacts: Contacts
   const ap2 = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
-    spatialHash.eachWithin(x[i], y[i], z[i], maxHydrophobicDistance, (j, dSq) => {
+    spatialHash.eachWithin(x[i], y[i], z[i], maxHydrophobicDist, (j, dSq) => {
       if (j <= i) return
 
       ap1.index = atomSets[ i ][ 0 ]

@@ -157,14 +157,14 @@ function isMetalComplex (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface MetalComplexationParams {
-  maxMetalDistance?: number
+  maxMetalDist?: number
 }
 
 /**
  * Metal complexes of metals and appropriate groups in protein and ligand, including water
  */
 export function addMetalComplexation (structure: Structure, contacts: Contacts, params: MetalComplexationParams = {}) {
-  const maxMetalDistance = defaults(params.maxMetalDistance, ContactDefaultParams.maxMetalDistance)
+  const maxMetalDist = defaults(params.maxMetalDist, ContactDefaultParams.maxMetalDist)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -175,7 +175,7 @@ export function addMetalComplexation (structure: Structure, contacts: Contacts, 
   const ap2 = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
-    spatialHash.eachWithin(x[i], y[i], z[i], maxMetalDistance, (j, dSq) => {
+    spatialHash.eachWithin(x[i], y[i], z[i], maxMetalDist, (j, dSq) => {
       if (j <= i) return
 
       ap1.index = atomSets[ i ][ 0 ]
