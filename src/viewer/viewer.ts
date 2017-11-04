@@ -10,7 +10,7 @@ import {
   Box3, Vector3, Matrix4, Color,
   WebGLRenderer, WebGLRenderTarget,
   NearestFilter, LinearFilter, AdditiveBlending,
-  RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
+  RGBAFormat, FloatType, /*HalfFloatType, */UnsignedByteType,
   ShaderMaterial,
   PlaneGeometry, Geometry,
   Scene, Mesh, Group, Object3D, Uniform,
@@ -469,9 +469,11 @@ export default class Viewer {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: this.supportsHalfFloat ? HalfFloatType : (
-          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        )
+        type: UnsignedByteType
+        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
+        // type: this.supportsHalfFloat ? HalfFloatType : (
+        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        // )
       }
     )
 
