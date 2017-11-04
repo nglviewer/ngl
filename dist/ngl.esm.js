@@ -52787,7 +52787,7 @@ function Viewer (idOrElement) {
   var rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
   initScene();
 
-  var renderer, supportsHalfFloat;
+  var renderer;  // , supportsHalfFloat
   var pickingTarget, sampleTarget, holdTarget;
   var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
   if (initRenderer() === false) {
@@ -52914,10 +52914,10 @@ function Viewer (idOrElement) {
     // picking texture
 
     renderer.extensions.get('OES_texture_float');
-    supportsHalfFloat = (
-      renderer.extensions.get('OES_texture_half_float') &&
-      testTextureSupport(gl, 0x8D61)
-    );
+    // supportsHalfFloat = (
+    //   renderer.extensions.get('OES_texture_half_float') &&
+    //   testTextureSupport(gl, 0x8D61)
+    // )
     renderer.extensions.get('WEBGL_color_buffer_float');
 
     pickingTarget = new WebGLRenderTarget(
@@ -52955,9 +52955,11 @@ function Viewer (idOrElement) {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: supportsHalfFloat ? HalfFloatType : (
-          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        )
+        type: UnsignedByteType
+        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
+        // type: supportsHalfFloat ? HalfFloatType : (
+        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        // )
       }
     );
 
@@ -101229,7 +101231,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.4";
+var version$1 = "1.0.0-beta.5";
 
 /**
  * @file Version
