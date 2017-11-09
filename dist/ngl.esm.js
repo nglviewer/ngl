@@ -90086,7 +90086,7 @@ var PdbParser = (function (StructureParser$$1) {
             }
             hetero = (line[ 0 ] === 'H') ? 1 : 0;
             chainname = line[ 21 ].trim();
-            resno = parseInt(line.substr(22, 4), resnoRadix) || 1;
+            resno = parseInt(line.substr(22, 4), resnoRadix);
             if (hex && resno === 9999) {
               resnoRadix = 16;
             }
@@ -101231,7 +101231,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.5";
+var version$1 = "1.0.0-beta.6";
 
 /**
  * @file Version
