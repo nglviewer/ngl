@@ -51,7 +51,7 @@ class MolecularSurface {
   _getAtomData () {
     return this.structure.getAtomData({
       what: { position: true, radius: true, index: true },
-      radiusParams: { radius: 'vdw', scale: 1 }
+      radiusParams: { type: 'vdw', scale: 1 }
     })
   }
 
