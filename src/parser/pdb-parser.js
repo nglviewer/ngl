@@ -272,7 +272,7 @@ class PdbParser extends StructureParser {
             }
             hetero = (line[ 0 ] === 'H') ? 1 : 0
             chainname = line[ 21 ].trim()
-            resno = parseInt(line.substr(22, 4), resnoRadix) || 1
+            resno = parseInt(line.substr(22, 4), resnoRadix)
             if (hex && resno === 9999) {
               resnoRadix = 16
             }
