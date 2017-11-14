@@ -90,10 +90,9 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       if (invalidAtomContact(ap1, ap2)) return
       if (!isHalogenBond(types[ i ], types[ j ])) return
 
-      const [ halogen, oxygen ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
-      const angle = calcMinAngle(halogen, oxygen)
-      // Angle must be defined
-      if (angle === undefined) return
+      const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
+      const angle = calcMinAngle(halogen, acceptor)
+      if (angle === undefined) return  // Angle must be defined
       if (Math.PI - angle > maxHalogenBondAngle) return
 
       featureSet.setBits(i, j)

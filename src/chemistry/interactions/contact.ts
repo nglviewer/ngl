@@ -62,8 +62,8 @@ export const ContactDefaultParams = {
   maxPiStackingAngle: 30,
   maxCationPiDist: 6.0,
   maxCationPiOffset: 1.5,
-  maxSaltbridgeDist: 4.0,
-  maxHalogenBondDist: 3.5,
+  maxSaltbridgeDist: 6.0,
+  maxHalogenBondDist: 4.0,
   maxHalogenBondAngle: 30,
   maxMetalDist: 3.0
 }
