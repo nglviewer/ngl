@@ -457,6 +457,10 @@ class ResidueProxy {
     return this.residueType.getRings()
   }
 
+  getAromaticRings () {
+    return this.residueType.getAromaticRings(this)
+  }
+
   qualifiedName (noResname = false) {
     let name = ''
     if (this.resname && !noResname) name += '[' + this.resname + ']'

@@ -23,7 +23,6 @@ import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from 
 
 const PositvelyCharged = [ 'ARG', 'HIS', 'LYS' ]
 const NegativelyCharged = [ 'GLU', 'ASP' ]
-const AromaticRings = [ 'TYR', 'TRP', 'HIS', 'PHE' ]
 
 export function addPositiveCharges (structure: Structure, features: Features) {
   const { charge } = valenceModel(structure.data)
@@ -110,31 +109,9 @@ export function addNegativeCharges (structure: Structure, features: Features) {
 }
 
 export function addAromaticRings (structure: Structure, features: Features) {
-  // aromatic rings per residueType
-  const aromaticRings: { [k: number]: number[][] } = {}
-  structure.residueMap.list.forEach((rt, i) => {
-    const rings = rt.getRings()
-    if (rings) {
-      if (AromaticRings.includes(rt.resname)) {
-        aromaticRings[i] = rings.rings
-      } else if (rt.isNucleic()) {
-        const ars: number[][] = []
-        rings.rings.forEach(r => {
-          if (!rt.backboneIndexList.includes(r[0])) {
-            ars.push(r)
-          }
-        })
-        if (ars.length > 0) {
-          aromaticRings[i] = ars
-        }
-      }
-    }
-  })
-
   const a = structure.getAtomProxy()
-
   structure.eachResidue(r => {
-    const rings = aromaticRings[r.residueStore.residueTypeId[r.index]]
+    const rings = r.getAromaticRings()
     if (rings) {
       const offset = r.atomOffset
       rings.forEach(ring => {

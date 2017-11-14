@@ -7,15 +7,15 @@
 
 import { defaults } from '../utils'
 import PrincipalAxes from '../math/principal-axes'
-import { Matrix } from '../math/matrix-utils.js'
+import { Matrix } from '../math/matrix-utils'
 import { calculateResidueBonds, ResidueBonds } from '../structure/structure-utils'
 import {
-    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
-    ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
-    CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
-    ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-    AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
-    ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
+  ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
+  ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
+  CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
+  ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
+  AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
+  ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from '../structure/structure-constants'
 import Structure from '../structure/structure'
 import ResidueProxy from '../proxy/residue-proxy'
@@ -42,6 +42,7 @@ export default class ResidueType {
   rings?: RingData
   bondGraph?: BondGraph
   aromaticAtoms?: Uint8Array
+  aromaticRings?: number[][]
 
   atomCount: number
 
@@ -393,6 +394,13 @@ export default class ResidueType {
     return this.aromaticAtoms
   }
 
+  getAromaticRings (r?: ResidueProxy) {
+    if (this.aromaticRings === undefined) {
+      this.calculateAromatic(r!)  // TODO
+    }
+    return this.aromaticRings
+  }
+
   /**
    * @return {Object} bondGraph - represents the bonding in this
    *   residue: { ai1: [ ai2, ai3, ...], ...}
@@ -440,14 +448,16 @@ export default class ResidueType {
     const aromaticAtoms = this.aromaticAtoms = new Uint8Array(this.atomCount)
     const rings = this.getRings()!.rings
 
-    const aromaticRings = rings.map(ring => {
+    const aromaticRingFlags = rings.map(ring => {
       return isRingAromatic(ring.map(idx => {
         return this.structure.getAtomProxy(idx + r.atomOffset)
       }))
     })
 
+    const aromaticRings: number[][] = this.aromaticRings = []
     rings.forEach((ring, i) => {
-      if (aromaticRings[i]) {
+      if (aromaticRingFlags[i]) {
+        aromaticRings.push(ring)
         ring.forEach(idx => aromaticAtoms[idx] = 1)
       }
     })
