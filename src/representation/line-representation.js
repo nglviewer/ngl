@@ -122,7 +122,7 @@ class LineRepresentation extends StructureRepresentation {
     params = Object.assign({
       multipleBond: this.multipleBond,
       bondSpacing: this.bondSpacing,
-      radiusParams: { 'radius': 0.1, 'scale': 1 }
+      radiusParams: { 'type': 'size', 'size': 0.1, 'scale': 1 }
     }, params)
 
     return super.getBondParams(what, params)
