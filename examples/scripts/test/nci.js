@@ -30,12 +30,15 @@ function loadStructure (input) {
     var sele = '(' + input.sele1 + ') or (' + input.sele2 + ')'
     var groupSele = o.structure.getAtomSetWithinGroup(new NGL.Selection(sele)).toSeleString()
     o.autoView(sele)
-    o.addRepresentation('backbone')
+    o.addRepresentation('ribbon', {
+      visible: false
+    })
     o.addRepresentation('ball+stick', {
       multipleBond: 'symmetric',
       sele: sele
     })
     o.addRepresentation('licorice', {
+      radiusScale: 0.5,
       multipleBond: 'symmetric',
       sele: groupSele
     })
@@ -44,9 +47,10 @@ function loadStructure (input) {
       linewidth: 3
     })
     o.addRepresentation('contact', {
-      weakHydrogenBond: true
+      weakHydrogenBond: false,
+      saltBridge: false
     })
-    stage.setFocus(97)
+    stage.setFocus(95)
   })
 }
 
@@ -125,16 +129,17 @@ var testSelect = createSelect([], {
     testInfo.innerHTML = '' +
       input.type + '<br/>' +
       input.info + '<br/>' +
+      (input.desc ? (input.desc + '<br/>') : '') +
       input.sele1 + '<br/>' +
       input.sele2 + ''
     loadStructure(input)
   }
-}, { top: '114px', left: '12px' })
+}, { top: '14px', left: '12px' })
 addElement(testSelect)
 
 var testInfo = createElement('div', {
   innerText: ''
-}, { top: '134px', left: '12px', color: 'lightgrey' })
+}, { top: '34px', left: '12px', color: 'grey' })
 addElement(testInfo)
 
 var nciTests = JSON.parse(`
@@ -169,10 +174,39 @@ var nciTests = JSON.parse(`
   },
   {
     "pdbid": "3sn6",
-    "sele1": "ARG and 131:R.NE",
-    "sele2": "TYR and 391:A and ring",
+    "sele1": "ARG and 131:R and (.NE or .NH1 or. NH2)",
+    "sele2": "TYR and 391:A and aromaticRing",
     "type": "cation-pi",
     "info": "receptor G protein interface"
+  },
+  {
+    "pdbid": "1g54",
+    "sele1": "FFB and 555:A and (.C15 or .C16 or .C17 or .C18 or .C19 or .C20)",
+    "sele2": "PHE and 131:A and aromaticRing",
+    "type": "pi-stacking",
+    "info": "ligand protein, t-shaped"
+  },
+  {
+    "pdbid": "4cwd",
+    "sele1": "[449] and 1385:A.NAK",
+    "sele2": "TYR and 177:A and aromaticRing",
+    "type": "cation-pi",
+    "info": "ligand quaternary amine, tyrosine ring"
+  },
+  {
+    "pdbid": "3apv",
+    "sele1": "TP0 and 190:A.C22",
+    "sele2": "TYR and 37:A and aromaticRing",
+    "type": "cation-pi",
+    "info": "ligand tertiary amine, tyrosin ring",
+    "desc": "TODO: cleanup saltbridges to ACY"
+  },
+  {
+    "pdbid": "3e5c",
+    "sele1": "SAM and 216:A.SD",
+    "sele2": "G and 36:A and (.C4 or .C5 or .N7 or .C8 or .N9)",
+    "type": "cation-pi",
+    "info": "ligand sulfonium, guanidine ring"
   }
 ]
 `)
