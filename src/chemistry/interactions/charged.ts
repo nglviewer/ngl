@@ -12,8 +12,7 @@ import Structure from '../../structure/structure'
 import { AA3 } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
-  /* isQuaternaryAmine, isTertiaryAmine, isSulfonium, */ isGuanidine,
-  isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
+  isGuanidine, isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
 } from '../functional-groups'
 import {
   Features, FeatureType, FeatureGroup,
@@ -42,21 +41,7 @@ export function addPositiveCharges (structure: Structure, features: Features) {
         if (charge[ a.index   ] > 0) {
           state.group = FeatureGroup.Unknown
           addAtom(state, a)
-        }
-        /*if (isQuaternaryAmine(a)) {
-          // VM should now assign correctly, e.g 449 in 4cwd
-          state.group = FeatureGroup.QuaternaryAmine
-          addAtom(state, a)
-        } else if (isTertiaryAmine(a, )) {
-          e.g. NAD in 1eny?
-          state.group = FeatureGroup.TertiaryAmine
-          addAtom(state, a)
-        } else if (isSulfonium(a)) {
-          // VM should assign correctly e.g. ligand SAM in 5v1s
-          state.group = FeatureGroup.Sulfonium
-          addAtom(state, a)
-        */
-        else if (isGuanidine(a)) {
+        } else if (isGuanidine(a)) {
           // Guanidines don't get assigned positive charge by valence
           // model, for now fix here:
           state.group = FeatureGroup.Guanidine

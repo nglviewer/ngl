@@ -33,53 +33,20 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
     const state = createFeatureState(FeatureType.HydrogenDonor)
 
     const an = a.number
-    const resname = a.resname
-    const atomname = a.atomname
     if (an === 7 || an === 8 || an === 9) {  // N, O, F
-      if (
-        (resname === 'ARG' && ['NE', 'NH1', 'NH2'].includes(atomname)) ||
-        (resname === 'ASN' && atomname === 'ND2') ||
-        (resname === 'GLN' && atomname === 'NE2') ||
-        (resname === 'HIS' && ['ND1', 'NE2'].includes(atomname)) ||
-        (resname === 'LYS' && atomname === 'NZ') ||
-        (resname === 'SER' && atomname === 'OG') ||
-        (resname === 'THR' && atomname === 'OG1') ||
-        (resname === 'TRP' && atomname === 'NE1') ||
-        (resname === 'TYR' && atomname === 'OH')
-      ) {
+      if (isHistidineNitrogen(a)) {
+        // include both nitrogen atoms in histidine due to
+        // their often ambiguous protonation assignment
         addAtom(state, a)
         addFeature(features, state)
-        return
-      }
-      if (
-        (['C', 'DC'].includes(resname) && ['N4'].includes(atomname)) ||
-        (['T', 'DT'].includes(resname) && ['N3'].includes(atomname)) ||
-        (['U', 'DU'].includes(resname) && ['N3'].includes(atomname)) ||
-        (['G', 'DG'].includes(resname) && ['N1', 'N2'].includes(atomname)) ||
-        (['A', 'DA'].includes(resname) && ['N6'].includes(atomname))
-      ) {
+      } else if (totalH[ a.index ] > 0) {
         addAtom(state, a)
         addFeature(features, state)
-        return
       }
-      if (atomname === 'N' && a.isProtein()) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      }
+    } else if (an === 16) {  // S
       if (totalH[ a.index ] > 0) {
         addAtom(state, a)
         addFeature(features, state)
-        return
-      }
-    } else if (an === 16) {  // S
-      if (
-        (resname === 'CYS' && atomname === 'SG') ||
-        (totalH[ a.index] > 0) // Ligand SH
-      ) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
       }
     }
   })
@@ -89,10 +56,13 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
  * Weak hydrogen donor.
  */
 export function addWeakHydrogenDonors (structure: Structure, features: Features) {
+  const { totalH } = valenceModel(structure.data)
+
   structure.eachAtom(a => {
     if (
       a.number === 6 &&  // C
-      a.bondToElementCount('N') > 0 && a.isAromatic()
+      totalH[ a.index ] > 0 &&
+      a.bondToElementCount('N') > 0  // TODO && a.isAromatic()
     ) {
       const state = createFeatureState(FeatureType.WeakHydrogenDonor)
       addAtom(state, a)
@@ -111,50 +81,34 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
     const state = createFeatureState(FeatureType.HydrogenAcceptor)
 
     const an = a.number
-    const resname = a.resname
-    const atomname = a.atomname
     if (an === 8) {  // O
       // Basically assume all O are acceptors!
-      // TODO https://github.com/openbabel/openbabel/blob/master/src/atom.cpp#L1792
-      // if (!a.aromatic) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      // }
+      addAtom(state, a)
+      addFeature(features, state)
     }else if (an === 7) {  // N
-      if (
-        (resname === 'HIS' && ['ND1', 'NE2'].includes(atomname))
-      ) {
+      if (isHistidineNitrogen(a)) {
+        // include both nitrogen atoms in histidine due to
+        // their often ambiguous protonation assignment
         addAtom(state, a)
         addFeature(features, state)
-        return
-      }
-      else if (
-        (['C', 'DC'].includes(resname) && ['N3'].includes(atomname)) ||
-        (['A', 'DA'].includes(resname) && ['N1'].includes(atomname))
-      ) {
-        addAtom(state, a)
-        addFeature(features, state)
-        return
-      }
-      else if (charge[ a.index ] < 1){
+      } else if (charge[ a.index ] < 1){
         // Neutral nitrogen might be an acceptor
         // It must have at least one lone pair not conjugated
         const totalBonds = a.bondCount + implicitH[ a.index ]
+        const ig = idealGeometry[ a.index ]
         if (
-          (idealGeometry[ a.index ] === AtomGeometry.Tetrahedral && totalBonds < 4) ||
-          (idealGeometry[ a.index ] === AtomGeometry.Trigonal && totalBonds < 3) ||
-          (idealGeometry[ a.index ] === AtomGeometry.Linear && totalBonds < 2)
+          (ig === AtomGeometry.Tetrahedral && totalBonds < 4) ||
+          (ig === AtomGeometry.Trigonal && totalBonds < 3) ||
+          (ig === AtomGeometry.Linear && totalBonds < 2)
         ) {
           addAtom(state, a)
           addFeature(features, state)
-          return
         }
       }
     }else if (an === 16) {  // S
       if (
-        (resname === 'CYS' && atomname === 'SG') ||
-        (resname === 'MET' && atomname === 'SD')
+        (a.resname === 'CYS' && a.atomname === 'SG') ||
+        (a.resname === 'MET' && a.atomname === 'SD')
       ) {
         addAtom(state, a)
         addFeature(features, state)
@@ -181,6 +135,10 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
 //   })
 //   return flag
 // }
+
+function isHistidineNitrogen (ap: AtomProxy) {
+  return ap.resname === 'HIS' && ['ND1', 'NE2'].includes(ap.atomname)
+}
 
 function isBackboneHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {
   return (
