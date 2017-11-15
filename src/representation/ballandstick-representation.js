@@ -108,6 +108,10 @@ class BallAndStickRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
+  getAtomRadius (atom) {
+    return this.aspectRatio * super.getAtomRadius(atom)
+  }
+
   getAtomParams (what, params) {
     var p = super.getAtomParams(what, params)
     p.radiusParams.scale *= this.aspectRatio

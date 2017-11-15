@@ -73,7 +73,7 @@ class TraceRepresentation extends StructureRepresentation {
   }
 
   getAtomRadius (atom) {
-    return atom.isTrace() ? super.getAtomRadius(atom) : 0
+    return atom.isTrace() ? 0.1 : 0
   }
 
   createData (sview) {

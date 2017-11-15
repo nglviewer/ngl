@@ -118,6 +118,10 @@ class LineRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
+  getAtomRadius (atom) {
+    return 0.1
+  }
+
   getBondParams (what, params) {
     params = Object.assign({
       multipleBond: this.multipleBond,
