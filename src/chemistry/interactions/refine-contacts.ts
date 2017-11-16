@@ -9,9 +9,8 @@ import { FrozenContacts, ContactType } from './contact'
 import { FeatureType } from './features'
 
 /**
- * No extra hydrophobic contacts for rings interacting via stacking, needs
- * global handling of contacts. For atoms interacting with several atoms in
- * the same residue, only the one with the closest distance is kept.
+ * For atoms interacting with several atoms in the same residue
+ * only the one with the closest distance is kept.
  */
 export function refineHydrophobicContacts (structure: Structure, contacts: FrozenContacts) {
   const { contactSet, contactStore, features } = contacts
@@ -123,3 +122,44 @@ export function refineSaltBridges (structure: Structure, contacts: FrozenContact
     }
   })
 }
+
+/**
+ * Remove hydrophobic contacts between groups that also form
+ * a pi-stacking interaction between each other
+ */
+export function refinePiStacking (structure: Structure, contacts: FrozenContacts) {
+  const { contactSet, contactStore, features } = contacts
+  const { type, index1, index2 } = contactStore
+  const { atomSets } = features
+
+  const piStackingDict: { [atomIndex: number]: number[] } = {}
+
+  const add = function(idx: number, i: number) {
+    if (!piStackingDict[ idx ]) piStackingDict[ idx ] = []
+    piStackingDict[ idx ].push(i)
+  }
+
+  contactSet.forEach(i => {
+    if (type[ i ] !== ContactType.PiStacking) return
+    atomSets[ index1[ i ] ].forEach(idx => add(idx, i))
+    atomSets[ index2[ i ] ].forEach(idx => add(idx, i))
+  })
+
+  contactSet.forEach(i => {
+    if (type[ i ] !== ContactType.Hydrophobic) return
+
+    const pil1 = piStackingDict[ atomSets[ index1[ i ] ][ 0 ] ]
+    const pil2 = piStackingDict[ atomSets[ index2[ i ] ][ 0 ] ]
+    if (!pil1 || !pil2) return
+
+    const n = pil1.length
+    for (let j = 0; j < n; ++j) {
+      if (pil2.includes(pil1[j])) {
+        contactSet.clear(i)
+        return
+      }
+    }
+  })
+}
+
+// TODO: refactor refineSaltBridges and refinePiStacking to be DRY

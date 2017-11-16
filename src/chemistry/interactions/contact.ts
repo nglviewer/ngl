@@ -21,7 +21,7 @@ import { addMetalBinding, addMetals, addMetalComplexation } from './metal-bindin
 import { addHydrophobic, addHydrophobicContacts } from './hydrophobic'
 import { addHalogenAcceptors, addHalogenDonors, addHalogenBonds } from './halogen-bonds'
 import {
-  refineHydrophobicContacts, refineWeakHydrogenBonds, refineSaltBridges
+  refineHydrophobicContacts, refineWeakHydrogenBonds, refineSaltBridges, refinePiStacking
 } from './refine-contacts'
 
 export interface Contacts {
@@ -159,6 +159,9 @@ export function calculateContacts (structure: Structure, params = ContactDefault
   if (Debug) Log.time('refineSaltBridges')
   refineSaltBridges(structure, frozenContacts)
   if (Debug) Log.timeEnd('refineSaltBridges')
+  if (Debug) Log.time('refinePiStacking')
+  refinePiStacking(structure, frozenContacts)
+  if (Debug) Log.timeEnd('refinePiStacking')
 
   if (Debug) Log.timeEnd('calculateContacts')
 
