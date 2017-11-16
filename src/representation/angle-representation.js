@@ -205,9 +205,17 @@ class AngleRepresentation extends MeasurementRepresentation {
   setVisibility (value, noRenderRequest) {
     super.setVisibility(value, true)
 
-    this.vectorBuffer.setVisibility(this.vectorVisible && this.visible)
-    this.arcBuffer.setVisibility(this.arcVisible && this.visible)
-    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    if (this.vectorBuffer) {
+      this.vectorBuffer.setVisibility(this.vectorVisible && this.visible)
+    }
+
+    if (this.arcBuffer) {
+      this.arcBuffer.setVisibility(this.arcVisible && this.visible)
+    }
+
+    if (this.sectorBuffer) {
+      this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    }
 
     if (!noRenderRequest) this.viewer.requestRender()
 

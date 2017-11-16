@@ -195,8 +195,13 @@ class DihedralRepresentation extends MeasurementRepresentation {
   setVisibility (value, noRenderRequest) {
     super.setVisibility(value, true)
 
-    this.lineBuffer.setVisibility(this.lineVisible && this.visible)
-    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    if (this.lineBuffer) {
+      this.lineBuffer.setVisibility(this.lineVisible && this.visible)
+    }
+
+    if (this.sectorBuffer) {
+      this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    }
 
     if (!noRenderRequest) this.viewer.requestRender()
 
