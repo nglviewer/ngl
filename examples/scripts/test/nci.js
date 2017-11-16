@@ -47,8 +47,8 @@ function loadStructure (input) {
       linewidth: 3
     })
     o.addRepresentation('contact', {
-      weakHydrogenBond: false,
-      saltBridge: false
+      weakHydrogenBond: true,
+      saltBridge: true
     })
     stage.setFocus(95)
   })
@@ -152,6 +152,13 @@ var nciTests = JSON.parse(`
     "info": "common in kinase ligands"
   },
   {
+    "pdbid": "2vts",
+    "sele1": "ARG and 274:A and (.NH1 or .CZ or .NH2)",
+    "sele2": "GLU and 172:A and (.OE1 or .CD or .OE2)",
+    "type": "salt-bridge",
+    "info": "between ARG and GLU, hbonds hidden"
+  },
+  {
     "pdbid": "5pbf",
     "sele1": "[8HJ] and 2003:A.N1",
     "sele2": "ASN and 1944:A.OD1",
@@ -174,7 +181,7 @@ var nciTests = JSON.parse(`
   },
   {
     "pdbid": "3sn6",
-    "sele1": "ARG and 131:R and (.NE or .NH1 or. NH2)",
+    "sele1": "ARG and 131:R and (.NE or .NH1 or .NH2)",
     "sele2": "TYR and 391:A and aromaticRing",
     "type": "cation-pi",
     "info": "receptor G protein interface"
@@ -195,11 +202,17 @@ var nciTests = JSON.parse(`
   },
   {
     "pdbid": "3apv",
-    "sele1": "TP0 and 190:A.C22",
+    "sele1": "TP0 and 190:A.N1",
     "sele2": "TYR and 37:A and aromaticRing",
     "type": "cation-pi",
-    "info": "ligand tertiary amine, tyrosin ring",
-    "desc": "TODO: cleanup saltbridges to ACY"
+    "info": "ligand tertiary amine, tyrosin ring"
+  },
+  {
+    "pdbid": "3apv",
+    "sele1": "TP0 and 190:A.N1",
+    "sele2": "ACY and 191:A and (.C or .OXT or .O)",
+    "type": "salt-bridge",
+    "info": "between ligands, TP0 and ACY"
   },
   {
     "pdbid": "3e5c",

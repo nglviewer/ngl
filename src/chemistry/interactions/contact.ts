@@ -21,7 +21,7 @@ import { addMetalBinding, addMetals, addMetalComplexation } from './metal-bindin
 import { addHydrophobic, addHydrophobicContacts } from './hydrophobic'
 import { addHalogenAcceptors, addHalogenDonors, addHalogenBonds } from './halogen-bonds'
 import {
-  refineHydrophobicContacts
+  refineHydrophobicContacts, refineWeakHydrogenBonds, refineSaltBridges
 } from './refine-contacts'
 
 export interface Contacts {
@@ -45,7 +45,9 @@ export const enum ContactType {
   HalogenBond = 5,
   Hydrophobic = 6,
   MetalComplex = 7,
-  WeakHydrogenBond = 8
+  WeakHydrogenBond = 8,
+  WaterHydrogenBond = 9,
+  BackboneHydrogenBond = 10
 }
 
 export const ContactDefaultParams = {
@@ -55,8 +57,6 @@ export const ContactDefaultParams = {
   maxHbondDonAngle: 45,
   maxHbondAccDihedral: 60,
   maxHbondDonDihedral: 60,
-  backboneHbond: true,
-  waterHbond: true,
   maxPiStackingDist: 5.5,
   maxPiStackingOffset: 2.0,
   maxPiStackingAngle: 30,
@@ -153,6 +153,12 @@ export function calculateContacts (structure: Structure, params = ContactDefault
   if (Debug) Log.time('refineHydrophobicContacts')
   refineHydrophobicContacts(structure, frozenContacts)
   if (Debug) Log.timeEnd('refineHydrophobicContacts')
+  if (Debug) Log.time('refineWeakHydrogenBonds')
+  refineWeakHydrogenBonds(structure, frozenContacts)
+  if (Debug) Log.timeEnd('refineWeakHydrogenBonds')
+  if (Debug) Log.time('refineSaltBridges')
+  refineSaltBridges(structure, frozenContacts)
+  if (Debug) Log.timeEnd('refineSaltBridges')
 
   if (Debug) Log.timeEnd('calculateContacts')
 
@@ -164,6 +170,8 @@ export function calculateContacts (structure: Structure, params = ContactDefault
 export function contactTypeName (type: ContactType) {
   switch (type) {
     case ContactType.HydrogenBond:
+    case ContactType.WaterHydrogenBond:
+    case ContactType.BackboneHydrogenBond:
       return 'hydrogen bond'
     case ContactType.Hydrophobic:
       return 'hydrophobic contact'
@@ -193,6 +201,8 @@ export const ContactDataDefaultParams = {
   cationPi: true,
   piStacking: true,
   weakHydrogenBond: true,
+  waterHydrogenBond: true,
+  backboneHydrogenBond: true,
   radius: 1
 }
 export type ContactDataParams = typeof ContactDataDefaultParams
@@ -201,6 +211,8 @@ const tmpColor = new Color()
 function contactColor (type: ContactType) {
   switch (type) {
     case ContactType.HydrogenBond:
+    case ContactType.WaterHydrogenBond:
+    case ContactType.BackboneHydrogenBond:
       return tmpColor.setHex(0x2B83BA).toArray()
     case ContactType.Hydrophobic:
       return tmpColor.setHex(0x808080).toArray()
@@ -232,6 +244,8 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   if (p.cationPi) types.push(ContactType.CationPi)
   if (p.piStacking) types.push(ContactType.PiStacking)
   if (p.weakHydrogenBond) types.push(ContactType.WeakHydrogenBond)
+  if (p.waterHydrogenBond) types.push(ContactType.WaterHydrogenBond)
+  if (p.backboneHydrogenBond) types.push(ContactType.BackboneHydrogenBond)
 
   const { features, contactSet, contactStore } = contacts
   const { centers } = features

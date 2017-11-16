@@ -27,6 +27,12 @@ class ContactRepresentation extends StructureRepresentation {
       weakHydrogenBond: {
         type: 'boolean', rebuild: true
       },
+      waterHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
+      backboneHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
       hydrophobic: {
         type: 'boolean', rebuild: true
       },
@@ -63,12 +69,6 @@ class ContactRepresentation extends StructureRepresentation {
       },
       maxHbondDonDihedral: {
         type: 'integer', max: 90, min: 0, rebuild: true
-      },
-      backboneHbond: {
-        type: 'boolean', rebuild: true
-      },
-      waterHbond: {
-        type: 'boolean', rebuild: true
       },
       maxPiStackingDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
@@ -111,6 +111,8 @@ class ContactRepresentation extends StructureRepresentation {
 
     this.hydrogenBond = defaults(p.hydrogenBond, true)
     this.weakHydrogenBond = defaults(p.weakHydrogenBond, false)
+    this.waterHydrogenBond = defaults(p.waterHydrogenBond, false)
+    this.backboneHydrogenBond = defaults(p.backboneHydrogenBond, false)
     this.hydrophobic = defaults(p.hydrophobic, false)
     this.halogenBond = defaults(p.halogenBond, true)
     this.saltBridge = defaults(p.saltBridge, true)
@@ -124,8 +126,6 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
     this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 60)
     this.maxHbondDonDihedral = defaults(p.maxHbondDonDihedral, 60)
-    this.backboneHbond = defaults(p.backboneHbond, false)
-    this.waterHbond = defaults(p.waterHbond, false)
     this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5)
     this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0)
     this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
@@ -151,8 +151,6 @@ class ContactRepresentation extends StructureRepresentation {
       maxHbondDonAngle: this.maxHbondDonAngle,
       maxHbondAccDihedral: this.maxHbondAccDihedral,
       maxHbondDonDihedral: this.maxHbondDonDihedral,
-      backboneHbond: this.backboneHbond,
-      waterHbond: this.waterHbond,
       maxPiStackingDist: this.maxPiStackingDist,
       maxPiStackingOffset: this.maxPiStackingOffset,
       maxPiStackingAngle: this.maxPiStackingAngle,
@@ -167,6 +165,8 @@ class ContactRepresentation extends StructureRepresentation {
     const dataParams = {
       hydrogenBond: this.hydrogenBond,
       weakHydrogenBond: this.weakHydrogenBond,
+      waterHydrogenBond: this.waterHydrogenBond,
+      backboneHydrogenBond: this.backboneHydrogenBond,
       hydrophobic: this.hydrophobic,
       halogenBond: this.halogenBond,
       saltBridge: this.saltBridge,

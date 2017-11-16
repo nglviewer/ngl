@@ -56,6 +56,11 @@ export function addPositiveCharges (structure: Structure, features: Features) {
 export function addNegativeCharges (structure: Structure, features: Features) {
   const { charge } = valenceModel(structure.data)
 
+  // TODO: Only used for Carboxylate
+  //   need to check if needed for other groups as well
+  //   to avoid adding charged atoms that are part of a charged group
+  const ignoreAtomsDict: { [atomIndex: number]: true } = {}
+
   structure.eachResidue(r => {
     if (NegativelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.NegativeCharge)
@@ -79,15 +84,23 @@ export function addNegativeCharges (structure: Structure, features: Features) {
           addAtom(state, a)
         } else if (isCarboxylate(a)) {
           state.group = FeatureGroup.Carboxylate
-          addAtom(state, a)
-        } else if (charge[a.index] < 0) {
-          // TODO: This ends up adding both O- and
-          // the C/S/P at the centre of one of the above types
-          // as negative charge centres. Need to delocalize negative
-          // charges better
-          addAtom(state, a)
+          a.eachBondedAtom(a => {
+            if (a.number === 8) {
+              ignoreAtomsDict[a.index] = true
+              addAtom(state, a)
+            }
+          })
         }
         addFeature(features, state)
+      })
+      r.eachAtom(a => {
+        const state = createFeatureState(FeatureType.NegativeCharge)
+        if (charge[a.index] < 0) {
+          if (!ignoreAtomsDict[a.index]) {
+            addAtom(state, a)
+            addFeature(features, state)
+          }
+        }
       })
     }
   })

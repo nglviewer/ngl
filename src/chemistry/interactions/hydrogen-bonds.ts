@@ -165,6 +165,16 @@ function isWeakHydrogenBond (ti: FeatureType, tj: FeatureType){
   )
 }
 
+function getHydrogenBondType (ap1: AtomProxy, ap2: AtomProxy) {
+  if (isWaterHydrogenBond(ap1, ap2)) {
+    return ContactType.WaterHydrogenBond
+  } else if (isBackboneHydrogenBond(ap1, ap2)) {
+    return ContactType.BackboneHydrogenBond
+  } else {
+    return ContactType.HydrogenBond
+  }
+}
+
 export interface HydrogenBondParams {
   maxHbondDist?: number
   maxHbondAccAngle?: number
@@ -184,8 +194,6 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle))
   const maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral))
   const maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral))
-  const backboneHbond = defaults(params.backboneHbond, ContactDefaultParams.backboneHbond)
-  const waterHbond = defaults(params.waterHbond, ContactDefaultParams.waterHbond)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -214,9 +222,6 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (invalidAtomContact(donor, acceptor)) return
 
-      if (!backboneHbond && isBackboneHydrogenBond(donor, acceptor)) return
-      if (!waterHbond && isWaterHydrogenBond(donor, acceptor)) return
-
       const donorAngle = calcMinAngle(donor, acceptor)
       if (donorAngle !== undefined) {
         const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
@@ -240,7 +245,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       }
 
       featureSet.setBits(l, k)
-      const bondType = isWeak ? ContactType.WeakHydrogenBond : ContactType.HydrogenBond
+      const bondType = isWeak ? ContactType.WeakHydrogenBond : getHydrogenBondType(donor, acceptor)
       contactStore.addContact(l, k, bondType)
     })
   }
