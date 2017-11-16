@@ -24,7 +24,26 @@ function createSelect (options, properties, style) {
   return select
 }
 
-function loadStructure (input) {
+function loadStructure (pdbid) {
+  stage.removeAllComponents()
+  return stage.loadFile('rcsb://' + pdbid).then(function (o) {
+    o.addRepresentation('ribbon')
+    o.addRepresentation('licorice', {
+      multipleBond: 'symmetric'
+    })
+    o.addRepresentation('contact', {
+      weakHydrogenBond: true,
+      waterHydrogenBond: true,
+      backboneHydrogenBond: true,
+      hydrophobic: true,
+      saltBridge: true
+    })
+    stage.setFocus(0)
+    stage.autoView()
+  })
+}
+
+function loadExample (input) {
   stage.removeAllComponents()
   return stage.loadFile('rcsb://' + input.pdbid).then(function (o) {
     var sele = '(' + input.sele1 + ') or (' + input.sele2 + ')'
@@ -48,6 +67,9 @@ function loadStructure (input) {
     })
     o.addRepresentation('contact', {
       weakHydrogenBond: true,
+      waterHydrogenBond: true,
+      backboneHydrogenBond: true,
+      hydrophobic: true,
       saltBridge: true
     })
     stage.setFocus(95)
@@ -123,8 +145,33 @@ function setTestOptions () {
   })
 }
 
+var loadPdbidText = createElement('span', {
+  innerText: 'load pdb id'
+}, { top: '14px', left: '12px', color: 'grey' })
+addElement(loadPdbidText)
+
+var loadPdbidInput = createElement('input', {
+  type: 'text',
+  title: 'press enter to load pdbid',
+  onkeypress: function (e) {
+    if (e.keyCode === 13) {
+      e.preventDefault()
+      testSelect.value = ''
+      testInfo.innerText = ''
+      loadStructure(e.target.value)
+    }
+  }
+}, { top: '34px', left: '12px', width: '120px' })
+addElement(loadPdbidInput)
+
+var testText = createElement('span', {
+  innerText: 'load example'
+}, { top: '70px', left: '12px', color: 'grey' })
+addElement(testText)
+
 var testSelect = createSelect([], {
   onchange: function (e) {
+    loadPdbidInput.value = ''
     var input = nciTests[ e.target.value ]
     testInfo.innerHTML = '' +
       input.type + '<br/>' +
@@ -132,14 +179,14 @@ var testSelect = createSelect([], {
       (input.desc ? (input.desc + '<br/>') : '') +
       input.sele1 + '<br/>' +
       input.sele2 + ''
-    loadStructure(input)
+    loadExample(input)
   }
-}, { top: '14px', left: '12px' })
+}, { top: '90px', left: '12px' })
 addElement(testSelect)
 
 var testInfo = createElement('div', {
   innerText: ''
-}, { top: '34px', left: '12px', color: 'grey' })
+}, { top: '110px', left: '12px', color: 'grey' })
 addElement(testInfo)
 
 var nciTests = JSON.parse(`
@@ -148,7 +195,7 @@ var nciTests = JSON.parse(`
     "pdbid": "2vts",
     "sele1": "LZC and 1299:A.C21",
     "sele2": "GLU and 81:A.O",
-    "type": "weak-hbond",
+    "type": "weak-hydrogen-bond",
     "info": "common in kinase ligands"
   },
   {
@@ -162,21 +209,21 @@ var nciTests = JSON.parse(`
     "pdbid": "5pbf",
     "sele1": "[8HJ] and 2003:A.N1",
     "sele2": "ASN and 1944:A.OD1",
-    "type": "hbond",
+    "type": "hydrogen-bond",
     "info": "standard bromodomain fragment, acceptor"
   },
   {
     "pdbid": "5pbf",
     "sele1": "[8HJ] and 2003:A.O1",
     "sele2": "(ASN and 1944:A.ND2) or (HOH and 2115:A.O)",
-    "type": "hbond",
+    "type": "hydrogen-bond",
     "info": "standard bromodomain fragment, donor 1"
   },
   {
     "pdbid": "5pbf",
     "sele1": "[8HJ] and 2003:A.O2",
     "sele2": "HOH and 2217:A.O",
-    "type": "hbond",
+    "type": "hydrogen-bond",
     "info": "standard bromodomain fragment, donor 2"
   },
   {
@@ -220,6 +267,27 @@ var nciTests = JSON.parse(`
     "sele2": "G and 36:A and (.C4 or .C5 or .N7 or .C8 or .N9)",
     "type": "cation-pi",
     "info": "ligand sulfonium, guanidine ring"
+  },
+  {
+    "pdbid": "4x21",
+    "sele1": "[3WH] and 501:A.I17",
+    "sele2": "MET and 146:A.SD",
+    "type": "halogen-bond",
+    "info": "ligand iodine, methionine sulfur"
+  },
+  {
+    "pdbid": "4lau",
+    "sele1": "W8X and 402:A.BR7",
+    "sele2": "THR and 113:A.OG1",
+    "type": "halogen-bond",
+    "info": "ligand bromine, threonine oxygen"
+  },
+  {
+    "pdbid": "4x0x",
+    "sele1": "CYS and 45:B.SG",
+    "sele2": "(LEU and 39:B.O) or (ARG and 116:B and (.NH1 or .NH2))",
+    "type": "hydrogen-bond",
+    "info": "cystein donor/acceptor"
   }
 ]
 `)
