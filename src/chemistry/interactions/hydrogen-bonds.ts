@@ -33,21 +33,14 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
     const state = createFeatureState(FeatureType.HydrogenDonor)
 
     const an = a.number
-    if (an === 7 || an === 8 || an === 9) {  // N, O, F
-      if (isHistidineNitrogen(a)) {
-        // include both nitrogen atoms in histidine due to
-        // their often ambiguous protonation assignment
-        addAtom(state, a)
-        addFeature(features, state)
-      } else if (totalH[ a.index ] > 0) {
-        addAtom(state, a)
-        addFeature(features, state)
-      }
-    } else if (an === 16) {  // S
-      if (totalH[ a.index ] > 0) {
-        addAtom(state, a)
-        addFeature(features, state)
-      }
+    if (isHistidineNitrogen(a)) {
+      // include both nitrogen atoms in histidine due to
+      // their often ambiguous protonation assignment
+      addAtom(state, a)
+      addFeature(features, state)
+    } else if (totalH[ a.index ] > 0 && (an === 7 || an === 8 || an === 16)) {  // N, O, S
+      addAtom(state, a)
+      addFeature(features, state)
     }
   })
 }
@@ -82,7 +75,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
 
     const an = a.number
     if (an === 8) {  // O
-      // Basically assume all O are acceptors!
+      // Basically assume all oxygen atoms are acceptors!
       addAtom(state, a)
       addFeature(features, state)
     }else if (an === 7) {  // N
@@ -106,19 +99,9 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
         }
       }
     }else if (an === 16) {  // S
-      if (
-        (a.resname === 'CYS' && a.atomname === 'SG') ||
-        (a.resname === 'MET' && a.atomname === 'SD')
-      ) {
+      if (a.resname === 'CYS' || a.resname === 'MET' || a.formalCharge === -1) {
         addAtom(state, a)
         addFeature(features, state)
-        return
-      }
-      if (a.formalCharge === -1) {
-        // Allow sulfur hdrogen bond
-        addAtom(state, a)
-        addFeature(features, state)
-        return
       }
     }
   })
@@ -137,7 +120,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
 // }
 
 function isHistidineNitrogen (ap: AtomProxy) {
-  return ap.resname === 'HIS' && ['ND1', 'NE2'].includes(ap.atomname)
+  return ap.resname === 'HIS' && ap.number == 7 && ap.isRing()
 }
 
 function isBackboneHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {
