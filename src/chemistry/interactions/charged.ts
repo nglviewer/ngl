@@ -250,7 +250,7 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
           const angle = radToDeg(n1.angleTo(n2))
           const offset = Math.min(getOffset(i, j, n2), getOffset(j, i, n1))
           if (offset <= maxPiStackingOffset) {
-            if (angle <= maxPiStackingAngle) {
+            if (angle <= maxPiStackingAngle || angle >= 180 - maxPiStackingAngle) {
               add(i, j, ContactType.PiStacking)  // parallel
             } else if (angle <= maxPiStackingAngle + 90 && angle >= 90 - maxPiStackingAngle) {
               add(i, j, ContactType.PiStacking)  // t-shaped
