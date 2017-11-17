@@ -94,20 +94,39 @@ export function isCarboxylate (a: AtomProxy) {
  * Carbon in a guanidine group
  */
 export function isGuanidine (a: AtomProxy) {
-  let flag = false
+  let terminalNitrogenCount = 0
   if (
     a.number === 6 &&
     a.bondCount === 3 &&
     a.bondToElementCount('N') === 3
   ) {
     a.eachBondedAtom(ba => {
-      const bc = ba.bondCount
-      if (bc === 1 || (bc === 2 && ba.bondToElementCount('H') === 1)) {
-        flag = true
+      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+        ++terminalNitrogenCount
       }
     })
   }
-  return flag
+  return terminalNitrogenCount === 2
+}
+
+/**
+ * Carbon in a acetamidine group
+ */
+export function isAcetamidine (a: AtomProxy) {
+  let terminalNitrogenCount = 0
+  if (
+    a.number === 6 &&
+    a.bondCount === 3 &&
+    a.bondToElementCount('N') === 2 &&
+    a.bondToElementCount('C') === 1
+  ) {
+    a.eachBondedAtom(ba => {
+      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+        ++terminalNitrogenCount
+      }
+    })
+  }
+  return terminalNitrogenCount === 2
 }
 
 const PolarElements = [ 'N', 'O', 'S', 'F', 'CL', 'Br', 'I' ]

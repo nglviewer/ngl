@@ -12,7 +12,7 @@ import Structure from '../../structure/structure'
 import { AA3 } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
-  isGuanidine, isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
+  isGuanidine, isAcetamidine, isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
 } from '../functional-groups'
 import {
   Features, FeatureType, FeatureGroup,
@@ -26,6 +26,11 @@ const NegativelyCharged = [ 'GLU', 'ASP' ]
 export function addPositiveCharges (structure: Structure, features: Features) {
   const { charge } = valenceModel(structure.data)
 
+  // TODO: Only used for Guanidine
+  //   need to check if needed for other groups as well
+  //   to avoid adding charged atoms that are part of a charged group
+  const ignoreAtomsDict: { [atomIndex: number]: true } = {}
+
   structure.eachResidue(r => {
     if (PositvelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.PositiveCharge)
@@ -38,16 +43,33 @@ export function addPositiveCharges (structure: Structure, features: Features) {
     } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.PositiveCharge)
-        if (charge[ a.index   ] > 0) {
-          state.group = FeatureGroup.Unknown
-          addAtom(state, a)
-        } else if (isGuanidine(a)) {
-          // Guanidines don't get assigned positive charge by valence
-          // model, for now fix here:
+        if (isGuanidine(a)) {
           state.group = FeatureGroup.Guanidine
-          addAtom(state, a)
+          a.eachBondedAtom(a => {
+            if (a.number === 7) {
+              ignoreAtomsDict[a.index] = true
+              addAtom(state, a)
+            }
+          })
+        } else if (isAcetamidine(a)) {
+          state.group = FeatureGroup.Acetamidine
+          a.eachBondedAtom(a => {
+            if (a.number === 7) {
+              ignoreAtomsDict[a.index] = true
+              addAtom(state, a)
+            }
+          })
         }
         addFeature(features, state)
+      })
+      r.eachAtom(a => {
+        const state = createFeatureState(FeatureType.PositiveCharge)
+        if (charge[a.index] > 0) {
+          if (!ignoreAtomsDict[a.index]) {
+            addAtom(state, a)
+            addFeature(features, state)
+          }
+        }
       })
     }
   })

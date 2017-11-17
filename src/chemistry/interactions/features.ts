@@ -37,7 +37,8 @@ export const enum FeatureGroup {
   Phosphate = 6,
   Halocarbon = 7,
   Guanidine = 8,
-  Carboxylate = 9
+  Acetamidine = 9,
+  Carboxylate = 10
 }
 
 export function createFeatures (): Features {

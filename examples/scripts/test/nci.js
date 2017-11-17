@@ -266,7 +266,7 @@ var nciTests = JSON.parse(`
     "sele1": "SAM and 216:A.SD",
     "sele2": "G and 36:A and (.C4 or .C5 or .N7 or .C8 or .N9)",
     "type": "cation-pi",
-    "info": "ligand sulfonium, guanidine ring"
+    "info": "ligand sulfonium, guanosine ring"
   },
   {
     "pdbid": "4x21",
@@ -288,6 +288,20 @@ var nciTests = JSON.parse(`
     "sele2": "(LEU and 39:B.O) or (ARG and 116:B and (.NH1 or .NH2))",
     "type": "hydrogen-bond",
     "info": "cystein donor/acceptor"
+  },
+  {
+    "pdbid": "1tbz",
+    "sele1": "[00Q] and 343:H (.NH1 or .NH2 or .NEY)",
+    "sele2": "ASP and 189:H and (.OD1 or .OD2)",
+    "type": "salt-bridge",
+    "info": "ligand guainidine group, aspartate sidechain"
+  },
+  {
+    "pdbid": "3nkk",
+    "sele1": "JLZ and 1:A (.N12 or .N14)",
+    "sele2": "ASP and 189:A and (.OD1 or .OD2)",
+    "type": "salt-bridge",
+    "info": "ligand acetamidine group, aspartate sidechain"
   }
 ]
 `)
