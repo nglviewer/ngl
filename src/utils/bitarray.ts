@@ -76,7 +76,7 @@ export default class BitArray {
   }
 
   _assignRange (start: number, end: number, value: boolean) {
-    if (end <= start) return
+    if (end < start) return
     const words = this._words
     const wordValue = value === true ? 0xFFFFFFFF : 0
     const wordStart = start >>> 5
@@ -200,7 +200,7 @@ export default class BitArray {
   }
 
   _isRangeValue (start: number, end: number, value: boolean) {
-    if (end <= start) return
+    if (end < start) return
     const words = this._words
     const wordValue = value === true ? 0xFFFFFFFF : 0
     const wordStart = start >>> 5
