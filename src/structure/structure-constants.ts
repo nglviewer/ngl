@@ -946,6 +946,8 @@ export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
 
 export const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
 
+export const Bases = RnaBases.concat(DnaBases)
+
 export const WaterNames = [
   'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4', 'SPC'
 ]

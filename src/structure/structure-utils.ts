@@ -16,7 +16,7 @@ import Structure from '../structure/structure'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 
-import { UnknownBackboneType, AA3 } from './structure-constants'
+import { UnknownBackboneType, AA3, Bases } from './structure-constants'
 
 export function reorderAtoms (structure: Structure) {
   if (Debug) Log.time('reorderAtoms')
@@ -533,11 +533,42 @@ const BondOrderTable: { [k: string]: number } = {
   'TYR|CD2|CE2': 2,
   'TYR|CE1|CZ': 2,
   'ASP|CD1|CG': 2,
-  'GLU|CD|OE1': 2
+  'GLU|CD|OE1': 2,
+
+  'G|C8|N7': 2,
+  'G|C4|C5': 2,
+  'G|C2|N3': 2,
+  'G|C6|O6': 2,
+  'C|C4|N3': 2,
+  'C|C5|C6': 2,
+  'C|C2|O2': 2,
+  'A|C2|N3': 2,
+  'A|C6|N1': 2,
+  'A|C4|C5': 2,
+  'A|C8|N7': 2,
+  'U|C5|C6': 2,
+  'U|C2|O2': 2,
+  'U|C4|O4': 2,
+
+  'DG|C8|N7': 2,
+  'DG|C4|C5': 2,
+  'DG|C2|N3': 2,
+  'DG|C6|O6': 2,
+  'DC|C4|N3': 2,
+  'DC|C5|C6': 2,
+  'DC|C2|O2': 2,
+  'DA|C2|N3': 2,
+  'DA|C6|N1': 2,
+  'DA|C4|C5': 2,
+  'DA|C8|N7': 2,
+  'DT|C5|C6': 2,
+  'DT|C2|O2': 2,
+  'DT|C4|O4': 2
 }
 function getBondOrderFromTable (resname: string, atomname1: string, atomname2: string) {
   [ atomname1, atomname2 ] = atomname1 < atomname2 ? [ atomname1, atomname2 ] : [ atomname2, atomname1 ]
   if (AA3.includes(resname) && atomname1 === 'C' && atomname2 === 'O') return 2
+  if (Bases.includes(resname) && atomname1 === 'OP1' && atomname2 === 'P') return 2
   return BondOrderTable[ `${resname}|${atomname1}|${atomname2}` ] || 1
 }
 
