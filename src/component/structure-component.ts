@@ -111,7 +111,7 @@ class StructureComponent extends Component {
       'distance', Object.assign({ labelUnit: 'angstrom' }, measurementParams), true
     )
     this.angleRepresentation = this.addRepresentation(
-      'angle', Object.assign({ arcVisible: false }, measurementParams), true
+      'angle', Object.assign({ arcVisible: true }, measurementParams), true
     )
     this.dihedralRepresentation = this.addRepresentation(
       'dihedral', Object.assign({ planeVisible: false }, measurementParams), true
