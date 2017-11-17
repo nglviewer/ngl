@@ -17,7 +17,7 @@ import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
 import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
   v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
 import { RAD2DEG } from '../math/math-constants.js'
-import { getFixedLengthDashData } from '../geometry/dash'
+import { getFixedLengthWrappedDashData } from '../geometry/dash'
 
 /**
  * @typedef {Object} DihedralRepresentationParameters - dihedral representation parameters
@@ -107,7 +107,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     const lineColor = uniformArray3(this.lineLength, c.r, c.g, c.b)
 
     this.lineBuffer = new WideLineBuffer(
-      getFixedLengthDashData({
+      getFixedLengthWrappedDashData({
         position1: dihedralData.linePosition1,
         position2: dihedralData.linePosition2,
         color: lineColor,
@@ -195,8 +195,17 @@ class DihedralRepresentation extends MeasurementRepresentation {
   setVisibility (value, noRenderRequest) {
     super.setVisibility(value, true)
 
-    this.lineBuffer.setVisibility(this.lineVisible && this.visible)
-    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    if (this.lineBuffer) {
+      this.lineBuffer.setVisibility(this.lineVisible && this.visible)
+    }
+
+    if (this.planeBuffer) {
+      this.planeBuffer.setVisibility(this.planeVisible && this.visible)
+    }
+
+    if (this.sectorBuffer) {
+      this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    }
 
     if (!noRenderRequest) this.viewer.requestRender()
 
@@ -353,7 +362,7 @@ function getDihedralData (position, params) {
 
     const appendArcSection = function (a, j) {
       const si = j * 9
-      const ai = j * 3
+      const ai = (j + 1) * 3 // Lines offset by 1 due to first leg
       v3toArray(mid, sector, si)
       v3toArray(arcPoint, sector, si + 3)
       v3toArray(arcPoint, line1, ai)
@@ -370,18 +379,10 @@ function getDihedralData (position, params) {
     }
     appendArcSection(angle, j++)
 
-    // Add final line: tmp vector holds the end point:
-    if (improperEnd) {
-      v3sub(tmp, p4, p2)
-      v3normalize(tmp, tmp)
-      v3add(tmp, tmp, p2)
-    } else {
-      v3add(tmp, p3, v34)
-    }
-    v3toArray(arcPoint, line1, j * 3)
-    v3toArray(tmp, line2, j * 3)
+    v3toArray(arcPoint, line1, (nLines - 1) * 3)
+    v3toArray(end, line2, (nLines - 1) * 3)
 
-    // Construc plane at end
+    // Construct plane at end
     v3toArray(end, plane, 18)
     v3toArray(arcPoint, plane, 21)
     v3toArray(improperEnd ? p2 : p3, plane, 24)

@@ -17,7 +17,7 @@ import { v3add, v3cross, v3dot, v3fromArray, v3length, v3new,
   v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
 import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
 import { RAD2DEG } from '../math/math-constants.js'
-import { getFixedLengthDashData } from '../geometry/dash'
+import { getFixedLengthWrappedDashData } from '../geometry/dash'
 
 /**
  * @typedef {Object} AngleRepresentationParameters - angle representation parameters
@@ -103,7 +103,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     const c = new Color(this.colorValue)
 
     this.vectorBuffer = new WideLineBuffer(
-      getFixedLengthDashData({
+      getFixedLengthWrappedDashData({
         position1: angleData.vectorPosition1,
         position2: angleData.vectorPosition2,
         color: uniformArray3(2 * n, c.r, c.g, c.b),
@@ -118,16 +118,17 @@ class AngleRepresentation extends MeasurementRepresentation {
 
     this.arcLength = angleData.arcPosition1.length / 3
 
-    this.arcBuffer = new WideLineBuffer({
-      position1: angleData.arcPosition1,
-      position2: angleData.arcPosition2,
-      color: uniformArray3(this.arcLength, c.r, c.g, c.b),
-      color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
-    }, this.getBufferParams({
-      linewidth: this.linewidth,
-      visible: this.arcVisible,
-      opacity: this.lineOpacity
-    }))
+    this.arcBuffer = new WideLineBuffer(
+      getFixedLengthWrappedDashData({
+        position1: angleData.arcPosition1,
+        position2: angleData.arcPosition2,
+        color: uniformArray3(this.arcLength, c.r, c.g, c.b),
+        color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
+      }), this.getBufferParams({
+        linewidth: this.linewidth,
+        visible: this.arcVisible,
+        opacity: this.lineOpacity
+      }))
 
     this.sectorLength = angleData.sectorPosition.length / 3
 
@@ -205,9 +206,17 @@ class AngleRepresentation extends MeasurementRepresentation {
   setVisibility (value, noRenderRequest) {
     super.setVisibility(value, true)
 
-    this.vectorBuffer.setVisibility(this.vectorVisible && this.visible)
-    this.arcBuffer.setVisibility(this.arcVisible && this.visible)
-    this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    if (this.vectorBuffer) {
+      this.vectorBuffer.setVisibility(this.vectorVisible && this.visible)
+    }
+
+    if (this.arcBuffer) {
+      this.arcBuffer.setVisibility(this.arcVisible && this.visible)
+    }
+
+    if (this.sectorBuffer) {
+      this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    }
 
     if (!noRenderRequest) this.viewer.requestRender()
 
