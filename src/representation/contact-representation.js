@@ -97,6 +97,9 @@ class ContactRepresentation extends StructureRepresentation {
       maxMetalDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
+      refineSaltBridges: {
+        type: 'boolean', rebuild: true
+      },
 
       radialSegments: true,
       disableImpostor: true
@@ -135,6 +138,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5)
     this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
+    this.refineSaltBridges = defaults(p.refineSaltBridges, true)
 
     super.init(p)
   }
@@ -156,10 +160,11 @@ class ContactRepresentation extends StructureRepresentation {
       maxPiStackingAngle: this.maxPiStackingAngle,
       maxCationPiDist: this.maxCationPiDist,
       maxCationPiOffset: this.maxCationPiOffset,
-      maxSaltbridgeDist: this.maxSaltbridgeDist,
+      maxSaltBridgeDist: this.maxSaltbridgeDist,
       maxHalogenBondDist: this.maxHalogenBondDist,
       maxHalogenBondAngle: this.maxHalogenBondAngle,
-      maxMetalDist: this.maxMetalDist
+      maxMetalDist: this.maxMetalDist,
+      refineSaltBridges: this.refineSaltBridges
     }
 
     const dataParams = {

@@ -62,10 +62,11 @@ export const ContactDefaultParams = {
   maxPiStackingAngle: 30,
   maxCationPiDist: 6.0,
   maxCationPiOffset: 1.5,
-  maxSaltbridgeDist: 6.0,
+  maxSaltBridgeDist: 6.0,
   maxHalogenBondDist: 4.0,
   maxHalogenBondAngle: 30,
-  maxMetalDist: 3.0
+  maxMetalDist: 3.0,
+  refineSaltBridges: true
 }
 
 export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy) {
@@ -132,40 +133,20 @@ export function calculateContacts (structure: Structure, params = ContactDefault
 
   if (Debug) Log.time('calculateContacts')
 
-  if (Debug) Log.time('addChargedContacts')
   addChargedContacts(structure, contacts, params)
-  if (Debug) Log.timeEnd('addChargedContacts')
-  if (Debug) Log.time('addHydrogenBonds')
   addHydrogenBonds(structure, contacts, params)
-  if (Debug) Log.timeEnd('addHydrogenBonds')
-  if (Debug) Log.time('addMetalComplexation')
   addMetalComplexation(structure, contacts, params)
-  if (Debug) Log.timeEnd('addMetalComplexation')
-  if (Debug) Log.time('addHydrophobicContacts')
   addHydrophobicContacts(structure, contacts, params)
-  if (Debug) Log.timeEnd('addHydrophobicContacts')
-  if (Debug) Log.time('addHalogenBonds')
   addHalogenBonds(structure, contacts, params)
-  if (Debug) Log.timeEnd('addHalogenBonds')
 
   const frozenContacts = createFrozenContacts(contacts)
 
-  if (Debug) Log.time('refineHydrophobicContacts')
   refineHydrophobicContacts(structure, frozenContacts)
-  if (Debug) Log.timeEnd('refineHydrophobicContacts')
-  if (Debug) Log.time('refineWeakHydrogenBonds')
   refineWeakHydrogenBonds(structure, frozenContacts)
-  if (Debug) Log.timeEnd('refineWeakHydrogenBonds')
-  if (Debug) Log.time('refineSaltBridges')
-  refineSaltBridges(structure, frozenContacts)
-  if (Debug) Log.timeEnd('refineSaltBridges')
-  if (Debug) Log.time('refinePiStacking')
+  if (params.refineSaltBridges) refineSaltBridges(structure, frozenContacts)
   refinePiStacking(structure, frozenContacts)
-  if (Debug) Log.timeEnd('refinePiStacking')
 
   if (Debug) Log.timeEnd('calculateContacts')
-
-  console.log(frozenContacts)
 
   return frozenContacts
 }

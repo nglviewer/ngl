@@ -165,7 +165,7 @@ function isCationPi (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface ChargedContactsParams {
-  maxSaltbridgeDist?: number
+  maxSaltBridgeDist?: number
   maxPiStackingDist?: number
   maxPiStackingOffset?: number
   maxPiStackingAngle?: number
@@ -174,15 +174,15 @@ export interface ChargedContactsParams {
 }
 
 export function addChargedContacts (structure: Structure, contacts: Contacts, params: ChargedContactsParams = {}) {
-  const maxSaltbridgeDist = defaults(params.maxSaltbridgeDist, ContactDefaultParams.maxSaltbridgeDist)
+  const maxSaltBridgeDist = defaults(params.maxSaltBridgeDist, ContactDefaultParams.maxSaltBridgeDist)
   const maxPiStackingDist = defaults(params.maxPiStackingDist, ContactDefaultParams.maxPiStackingDist)
   const maxPiStackingOffset = defaults(params.maxPiStackingOffset, ContactDefaultParams.maxPiStackingOffset)
   const maxPiStackingAngle = defaults(params.maxPiStackingAngle, ContactDefaultParams.maxPiStackingAngle)
   const maxCationPiDist = defaults(params.maxCationPiDist, ContactDefaultParams.maxCationPiDist)
   const maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset)
 
-  const maxDistance = Math.max(maxSaltbridgeDist, maxPiStackingDist, maxCationPiDist)
-  const maxSaltbridgeDistSq = maxSaltbridgeDist * maxSaltbridgeDist
+  const maxDistance = Math.max(maxSaltBridgeDist, maxPiStackingDist, maxCationPiDist)
+  const maxSaltbridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
   const maxPiStackingDistSq = maxPiStackingDist * maxPiStackingDist
   const maxCationPiDistSq = maxCationPiDist * maxCationPiDist
 
