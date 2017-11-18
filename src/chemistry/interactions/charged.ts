@@ -9,7 +9,7 @@ import { Vector3 } from 'three'
 import { defaults } from '../../utils'
 import { radToDeg } from '../../math/math-utils'
 import Structure from '../../structure/structure'
-import { AA3 } from '../../structure/structure-constants'
+import { AA3, Bases } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
   isGuanidine, isAcetamidine, isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
@@ -25,11 +25,7 @@ const NegativelyCharged = [ 'GLU', 'ASP' ]
 
 export function addPositiveCharges (structure: Structure, features: Features) {
   const { charge } = valenceModel(structure.data)
-
-  // TODO: Only used for Guanidine
-  //   need to check if needed for other groups as well
-  //   to avoid adding charged atoms that are part of a charged group
-  const ignoreAtomsDict: { [atomIndex: number]: true } = {}
+  const atomInGroupDict: { [atomIndex: number]: true } = {}
 
   structure.eachResidue(r => {
     if (PositvelyCharged.includes(r.resname)) {
@@ -42,30 +38,29 @@ export function addPositiveCharges (structure: Structure, features: Features) {
       addFeature(features, state)
     } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
       r.eachAtom(a => {
+        let addGroup = false
         const state = createFeatureState(FeatureType.PositiveCharge)
         if (isGuanidine(a)) {
           state.group = FeatureGroup.Guanidine
-          a.eachBondedAtom(a => {
-            if (a.number === 7) {
-              ignoreAtomsDict[a.index] = true
-              addAtom(state, a)
-            }
-          })
+          addGroup = true
         } else if (isAcetamidine(a)) {
           state.group = FeatureGroup.Acetamidine
+          addGroup = true
+        }
+        if (addGroup) {
           a.eachBondedAtom(a => {
             if (a.number === 7) {
-              ignoreAtomsDict[a.index] = true
+              atomInGroupDict[a.index] = true
               addAtom(state, a)
             }
           })
+          addFeature(features, state)
         }
-        addFeature(features, state)
       })
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.PositiveCharge)
         if (charge[a.index] > 0) {
-          if (!ignoreAtomsDict[a.index]) {
+          if (!atomInGroupDict[a.index]) {
             addAtom(state, a)
             addFeature(features, state)
           }
@@ -77,11 +72,7 @@ export function addPositiveCharges (structure: Structure, features: Features) {
 
 export function addNegativeCharges (structure: Structure, features: Features) {
   const { charge } = valenceModel(structure.data)
-
-  // TODO: Only used for Carboxylate
-  //   need to check if needed for other groups as well
-  //   to avoid adding charged atoms that are part of a charged group
-  const ignoreAtomsDict: { [atomIndex: number]: true } = {}
+  const atomInGroupDict: { [atomIndex: number]: true } = {}
 
   structure.eachResidue(r => {
     if (NegativelyCharged.includes(r.resname)) {
@@ -92,33 +83,48 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         }
       })
       addFeature(features, state)
-    } else if(!AA3.includes(r.resname) && !r.isNucleic()) {
+    } else if (Bases.includes(r.resname)) {
+      const state = createFeatureState(FeatureType.NegativeCharge)
       r.eachAtom(a => {
+        if (isPhosphate(a)) {
+          state.group = FeatureGroup.Phosphate
+          a.eachBondedAtom(a => {
+            if (a.number === 8) addAtom(state, a)
+          })
+          addFeature(features, state)
+        }
+      })
+    } else if(!AA3.includes(r.resname) && !Bases.includes(r.resname)) {
+      r.eachAtom(a => {
+        let addGroup = false
         const state = createFeatureState(FeatureType.NegativeCharge)
         if (isSulfonicAcid(a)) {
           state.group = FeatureGroup.SulfonicAcid
-          addAtom(state, a)
+          addGroup = true
         } else if (isPhosphate(a)) {
           state.group = FeatureGroup.Phosphate
-          addAtom(state, a)
+          addGroup = true
         } else if (isSulfate(a)) {
           state.group = FeatureGroup.Sulfate
-          addAtom(state, a)
+          addGroup = true
         } else if (isCarboxylate(a)) {
           state.group = FeatureGroup.Carboxylate
+          addGroup = true
+        }
+        if (addGroup) {
           a.eachBondedAtom(a => {
             if (a.number === 8) {
-              ignoreAtomsDict[a.index] = true
+              atomInGroupDict[a.index] = true
               addAtom(state, a)
             }
           })
+          addFeature(features, state)
         }
-        addFeature(features, state)
       })
       r.eachAtom(a => {
         const state = createFeatureState(FeatureType.NegativeCharge)
         if (charge[a.index] < 0) {
-          if (!ignoreAtomsDict[a.index]) {
+          if (!atomInGroupDict[a.index]) {
             addAtom(state, a)
             addFeature(features, state)
           }
@@ -181,8 +187,8 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
   const maxCationPiDist = defaults(params.maxCationPiDist, ContactDefaultParams.maxCationPiDist)
   const maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset)
 
-  const maxDistance = Math.max(maxSaltBridgeDist, maxPiStackingDist, maxCationPiDist)
-  const maxSaltbridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
+  const maxDistance = Math.max(maxSaltBridgeDist + 2, maxPiStackingDist, maxCationPiDist)
+  // const maxSaltBridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
   const maxPiStackingDistSq = maxPiStackingDist * maxPiStackingDist
   const maxCationPiDistSq = maxCationPiDist * maxCationPiDist
 
@@ -197,6 +203,21 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
 
   const ap1 = structure.getAtomProxy()
   const ap2 = structure.getAtomProxy()
+
+  const areAtomSetsWithinDist = function (atomSet1: number[], atomSet2: number[], maxDist: number) {
+    const sn = atomSet1.length
+    const sm = atomSet2.length
+    for (let si = 0; si < sn; ++si) {
+      ap1.index = atomSet1[ si ]
+      for (let sj = 0; sj < sm; ++sj) {
+        ap2.index = atomSet2[ sj ]
+        if (ap1.distanceTo(ap2) <= maxDist) {
+          return true
+        }
+      }
+    }
+    return false
+  }
 
   const v1 = new Vector3()
   const v2 = new Vector3()
@@ -239,7 +260,7 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
       const tj = types[ j ]
 
       if (isSaltBridge(ti, tj)) {
-        if (dSq <= maxSaltbridgeDistSq) {
+        if (areAtomSetsWithinDist(atomSets[ i ], atomSets[ j ], maxSaltBridgeDist)) {
           add(i, j, ContactType.SaltBridge)
         }
       } else if (isPiStacking(ti, tj)) {

@@ -135,6 +135,12 @@ stage.signals.hovered.add(function (pickingProxy) {
   }
 })
 
+stage.signals.clicked.add(function (pickingProxy) {
+  if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+    console.log(pickingProxy.atom || pickingProxy.closestBondAtom)
+  }
+})
+
 function setTestOptions () {
   testSelect.innerHTML = ''
   testSelect.add(createElement('option', { value: '', text: '' }))
@@ -192,20 +198,6 @@ addElement(testInfo)
 var nciTests = JSON.parse(`
 [
   {
-    "pdbid": "2vts",
-    "sele1": "LZC and 1299:A.C21",
-    "sele2": "GLU and 81:A.O",
-    "type": "weak-hydrogen-bond",
-    "info": "common in kinase ligands"
-  },
-  {
-    "pdbid": "2vts",
-    "sele1": "ARG and 274:A and (.NH1 or .CZ or .NH2)",
-    "sele2": "GLU and 172:A and (.OE1 or .CD or .OE2)",
-    "type": "salt-bridge",
-    "info": "between ARG and GLU, hbonds hidden"
-  },
-  {
     "pdbid": "5pbf",
     "sele1": "[8HJ] and 2003:A.N1",
     "sele2": "ASN and 1944:A.OD1",
@@ -227,18 +219,25 @@ var nciTests = JSON.parse(`
     "info": "standard bromodomain fragment, donor 2"
   },
   {
+    "pdbid": "4x0x",
+    "sele1": "CYS and 45:B.SG",
+    "sele2": "(LEU and 39:B.O) or (ARG and 116:B and (.NH1 or .NH2))",
+    "type": "hydrogen-bond",
+    "info": "cystein donor/acceptor"
+  },
+  {
+    "pdbid": "2vts",
+    "sele1": "LZC and 1299:A.C21",
+    "sele2": "GLU and 81:A.O",
+    "type": "weak-hydrogen-bond",
+    "info": "common in kinase ligands"
+  },
+  {
     "pdbid": "3sn6",
     "sele1": "ARG and 131:R and (.NE or .NH1 or .NH2)",
     "sele2": "TYR and 391:A and aromaticRing",
     "type": "cation-pi",
     "info": "receptor G protein interface"
-  },
-  {
-    "pdbid": "1g54",
-    "sele1": "FFB and 555:A and (.C15 or .C16 or .C17 or .C18 or .C19 or .C20)",
-    "sele2": "PHE and 131:A and aromaticRing",
-    "type": "pi-stacking",
-    "info": "ligand protein, t-shaped"
   },
   {
     "pdbid": "4cwd",
@@ -255,18 +254,18 @@ var nciTests = JSON.parse(`
     "info": "ligand tertiary amine, tyrosin ring"
   },
   {
-    "pdbid": "3apv",
-    "sele1": "TP0 and 190:A.N1",
-    "sele2": "ACY and 191:A and (.C or .OXT or .O)",
-    "type": "salt-bridge",
-    "info": "between ligands, TP0 and ACY"
-  },
-  {
     "pdbid": "3e5c",
     "sele1": "SAM and 216:A.SD",
     "sele2": "G and 36:A and (.C4 or .C5 or .N7 or .C8 or .N9)",
     "type": "cation-pi",
     "info": "ligand sulfonium, guanosine ring"
+  },
+  {
+    "pdbid": "1g54",
+    "sele1": "FFB and 555:A and (.C15 or .C16 or .C17 or .C18 or .C19 or .C20)",
+    "sele2": "PHE and 131:A and aromaticRing",
+    "type": "pi-stacking",
+    "info": "ligand protein, t-shaped"
   },
   {
     "pdbid": "4x21",
@@ -283,11 +282,18 @@ var nciTests = JSON.parse(`
     "info": "ligand bromine, threonine oxygen"
   },
   {
-    "pdbid": "4x0x",
-    "sele1": "CYS and 45:B.SG",
-    "sele2": "(LEU and 39:B.O) or (ARG and 116:B and (.NH1 or .NH2))",
-    "type": "hydrogen-bond",
-    "info": "cystein donor/acceptor"
+    "pdbid": "2vts",
+    "sele1": "ARG and 274:A and (.NH1 or .CZ or .NH2)",
+    "sele2": "GLU and 172:A and (.OE1 or .CD or .OE2)",
+    "type": "salt-bridge",
+    "info": "between ARG and GLU, hbonds hidden"
+  },
+  {
+    "pdbid": "3apv",
+    "sele1": "TP0 and 190:A.N1",
+    "sele2": "ACY and 191:A and (.C or .OXT or .O)",
+    "type": "salt-bridge",
+    "info": "ligand tertiary amine, ligand carboxyl group"
   },
   {
     "pdbid": "1tbz",
@@ -302,6 +308,34 @@ var nciTests = JSON.parse(`
     "sele2": "ASP and 189:A and (.OD1 or .OD2)",
     "type": "salt-bridge",
     "info": "ligand acetamidine group, aspartate sidechain"
+  },
+  {
+    "pdbid": "3cup",
+    "sele1": "EPE and 302:A (.O1S or .O2S or .O3S)",
+    "sele2": "ARG and 389:B and (.NE or .NH1 or .NH2)",
+    "type": "salt-bridge",
+    "info": "ligand sulfonic-acid group, arginine sidechain"
+  },
+  {
+    "pdbid": "1vkj",
+    "sele1": "A3P and 602:A (.O4P or .O5P or .O6P or .O5')",
+    "sele2": "LYS and 274:A.NZ",
+    "type": "salt-bridge",
+    "info": "ligand phospate group, lysine sidechain"
+  },
+  {
+    "pdbid": "2bxh",
+    "sele1": "IOS and 1001:A (.O1 or .O2 or .O3 or .O4)",
+    "sele2": "ARG and 410:A and (.NE or .NH1 or .NH2)",
+    "type": "salt-bridge",
+    "info": "ligand sulfate group, arginine sidechain"
+  },
+  {
+    "pdbid": "1d66",
+    "sele1": "(DC and 13:D (.OP1 or .OP2 or .O5')) or (DT and 12:D.O3')",
+    "sele2": "ARG and 410:A and (.NE or .NH1 or .NH2)",
+    "type": "salt-bridge",
+    "info": "DNA phospate group, arginine sidechain"
   }
 ]
 `)
