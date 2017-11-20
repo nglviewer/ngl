@@ -24,9 +24,22 @@ function createSelect (options, properties, style) {
   return select
 }
 
-function loadStructure (pdbid) {
+function createFileButton (label, properties, style) {
+  var input = createElement('input', Object.assign({
+    type: 'file'
+  }, properties), { display: 'none' })
+  addElement(input)
+  var button = createElement('input', {
+    value: label,
+    type: 'button',
+    onclick: function () { input.click() }
+  }, style)
+  return button
+}
+
+function loadStructure (input) {
   stage.removeAllComponents()
-  return stage.loadFile('rcsb://' + pdbid).then(function (o) {
+  return stage.loadFile(input).then(function (o) {
     o.addRepresentation('ribbon')
     o.addRepresentation('licorice', {
       multipleBond: 'symmetric'
@@ -151,9 +164,21 @@ function setTestOptions () {
   })
 }
 
+var loadStructureButton = createFileButton('load structure', {
+  accept: '.pdb,.cif,.ent,.gz,.mol2',
+  onchange: function (e) {
+    if (e.target.files[ 0 ]) {
+      testSelect.value = ''
+      testInfo.innerText = ''
+      loadStructure(e.target.files[ 0 ])
+    }
+  }
+}, { top: '12px', left: '12px' })
+addElement(loadStructureButton)
+
 var loadPdbidText = createElement('span', {
   innerText: 'load pdb id'
-}, { top: '14px', left: '12px', color: 'grey' })
+}, { top: '50px', left: '12px', color: 'grey' })
 addElement(loadPdbidText)
 
 var loadPdbidInput = createElement('input', {
@@ -164,15 +189,15 @@ var loadPdbidInput = createElement('input', {
       e.preventDefault()
       testSelect.value = ''
       testInfo.innerText = ''
-      loadStructure(e.target.value)
+      loadStructure('rcsb://' + e.target.value)
     }
   }
-}, { top: '34px', left: '12px', width: '120px' })
+}, { top: '70px', left: '12px', width: '120px' })
 addElement(loadPdbidInput)
 
 var testText = createElement('span', {
   innerText: 'load example'
-}, { top: '70px', left: '12px', color: 'grey' })
+}, { top: '110px', left: '12px', color: 'grey' })
 addElement(testText)
 
 var testSelect = createSelect([], {
@@ -187,12 +212,12 @@ var testSelect = createSelect([], {
       input.sele2 + ''
     loadExample(input)
   }
-}, { top: '90px', left: '12px' })
+}, { top: '130px', left: '12px' })
 addElement(testSelect)
 
 var testInfo = createElement('div', {
   innerText: ''
-}, { top: '110px', left: '12px', color: 'grey' })
+}, { top: '150px', left: '12px', color: 'grey' })
 addElement(testInfo)
 
 var nciTests = JSON.parse(`

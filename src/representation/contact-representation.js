@@ -126,7 +126,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
     this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
     this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 60)
-    this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 30)
+    this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
     this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 45)
     this.maxHbondDonDihedral = defaults(p.maxHbondDonDihedral, 45)
     this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5)

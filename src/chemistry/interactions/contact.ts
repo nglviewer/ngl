@@ -54,7 +54,7 @@ export const ContactDefaultParams = {
   maxHydrophobicDist: 4.0,
   maxHbondDist: 3.5,
   maxHbondAccAngle: 60,
-  maxHbondDonAngle: 30,
+  maxHbondDonAngle: 45,
   maxHbondAccDihedral: 45,
   maxHbondDonDihedral: 45,
   maxPiStackingDist: 5.5,
