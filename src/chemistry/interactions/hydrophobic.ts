@@ -12,17 +12,17 @@ import {
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
 
 /**
- * Weak hydrogen donor
+ * Hydrophobic carbon
  */
 export function addHydrophobic (structure: Structure, features: Features) {
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.Hydrophobic)
     let flag = false
-    if (a.number === 6) {
+    if (a.number === 6) {  // C
       flag = true
       a.eachBondedAtom(ap => {
-        const e = ap.element
-        if (e !== 'C' && e !== 'H') flag = false
+        const an = ap.number
+        if (an !== 6 && an !== 1) flag = false  // C, H
       })
     }
     if (flag) {
