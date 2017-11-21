@@ -124,7 +124,7 @@ export function refineSaltBridges (structure: Structure, contacts: FrozenContact
 }
 
 /**
- * Remove hydrophobic contacts between groups that also form
+ * Remove hydrophobic and cation-pi interactions between groups that also form
  * a pi-stacking interaction between each other
  */
 export function refinePiStacking (structure: Structure, contacts: FrozenContacts) {
@@ -146,7 +146,10 @@ export function refinePiStacking (structure: Structure, contacts: FrozenContacts
   })
 
   contactSet.forEach(i => {
-    if (type[ i ] !== ContactType.Hydrophobic) return
+    if (
+      type[ i ] !== ContactType.Hydrophobic &&
+      type[ i ] !== ContactType.CationPi
+    ) return
 
     const pil1 = piStackingDict[ atomSets[ index1[ i ] ][ 0 ] ]
     const pil2 = piStackingDict[ atomSets[ index2[ i ] ][ 0 ] ]

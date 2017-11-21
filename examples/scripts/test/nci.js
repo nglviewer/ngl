@@ -212,7 +212,7 @@ var testSelect = createSelect([], {
       input.sele2 + ''
     loadExample(input)
   }
-}, { top: '130px', left: '12px' })
+}, { top: '130px', left: '12px', width: '130px' })
 addElement(testSelect)
 
 var testInfo = createElement('div', {
