@@ -55,13 +55,39 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
     if (
       a.number === 6 &&  // C
       totalH[ a.index ] > 0 &&
-      a.bondToElementCount('N') > 0  // TODO && a.isAromatic()
+      (
+        a.bondToElementCount('N') > 0 ||
+        a.bondToElementCount('O') > 0 ||
+        inAromaticRingWithElectronNegativeElement(a)
+      )
     ) {
       const state = createFeatureState(FeatureType.WeakHydrogenDonor)
       addAtom(state, a)
       addFeature(features, state)
     }
   })
+}
+
+function inAromaticRingWithElectronNegativeElement (a: AtomProxy) {
+  if (!a.isAromatic()) return false
+
+  const ringData = a.residueType.getRings()
+  if (!ringData) return false
+
+  let hasElement = false
+  const rings = ringData.rings
+  rings.forEach(ring => {
+    if (hasElement) return  // already found one
+    if (ring.some(idx => (a.index - a.residueAtomOffset) === idx)) {  // in ring
+      hasElement = ring.some(idx => {
+        const atomTypeId = a.residueType.atomTypeIdList[ idx ]
+        const number = a.atomMap.get(atomTypeId).number
+        return number === 7 || number === 8  // N, O
+      })
+    }
+  })
+
+  return hasElement
 }
 
 /**
