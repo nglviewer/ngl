@@ -258,6 +258,34 @@ var nciTests = JSON.parse(`
     "info": "common in kinase ligands"
   },
   {
+    "pdbid": "1ac4",
+    "sele1": "TMT and 296:A.C5",
+    "sele2": "ASP and 235:A.OD2",
+    "type": "weak-hydrogen-bond",
+    "info": "ligand C donor, aspartate oxygen acceptor"
+  },
+  {
+    "pdbid": "1gqu",
+    "sele1": "DA and 1:A.C8",
+    "sele2": "DT and 12:B.O2",
+    "type": "weak-hydrogen-bond",
+    "info": "hoogsteen base pairing"
+  },
+  {
+    "pdbid": "1crn",
+    "sele1": "THR and 2:A.CA",
+    "sele2": "ILE and 33:A.O",
+    "type": "weak-hydrogen-bond",
+    "info": "beta sheet backbone contact"
+  },
+  {
+    "pdbid": "191d",
+    "sele1": "DC and 6:B.C4'",
+    "sele2": "DC and 11:C.O4'",
+    "type": "weak-hydrogen-bond",
+    "info": "DNA backbone contact"
+  },
+  {
     "pdbid": "3sn6",
     "sele1": "ARG and 131:R and (.NE or .NH1 or .NH2)",
     "sele2": "TYR and 391:A and aromaticRing",
@@ -322,45 +350,52 @@ var nciTests = JSON.parse(`
   },
   {
     "pdbid": "1tbz",
-    "sele1": "[00Q] and 343:H (.NH1 or .NH2 or .NEY)",
+    "sele1": "[00Q] and 343:H and (.NH1 or .NH2 or .NEY)",
     "sele2": "ASP and 189:H and (.OD1 or .OD2)",
     "type": "salt-bridge",
     "info": "ligand guainidine group, aspartate sidechain"
   },
   {
     "pdbid": "3nkk",
-    "sele1": "JLZ and 1:A (.N12 or .N14)",
+    "sele1": "JLZ and 1:A and (.N12 or .N14)",
     "sele2": "ASP and 189:A and (.OD1 or .OD2)",
     "type": "salt-bridge",
     "info": "ligand acetamidine group, aspartate sidechain"
   },
   {
     "pdbid": "3cup",
-    "sele1": "EPE and 302:A (.O1S or .O2S or .O3S)",
+    "sele1": "EPE and 302:A and (.O1S or .O2S or .O3S)",
     "sele2": "ARG and 389:B and (.NE or .NH1 or .NH2)",
     "type": "salt-bridge",
     "info": "ligand sulfonic-acid group, arginine sidechain"
   },
   {
     "pdbid": "1vkj",
-    "sele1": "A3P and 602:A (.O4P or .O5P or .O6P or .O5')",
+    "sele1": "A3P and 602:A and (.O4P or .O5P or .O6P or .O5')",
     "sele2": "LYS and 274:A.NZ",
     "type": "salt-bridge",
     "info": "ligand phospate group, lysine sidechain"
   },
   {
     "pdbid": "2bxh",
-    "sele1": "IOS and 1001:A (.O1 or .O2 or .O3 or .O4)",
+    "sele1": "IOS and 1001:A and (.O1 or .O2 or .O3 or .O4)",
     "sele2": "ARG and 410:A and (.NE or .NH1 or .NH2)",
     "type": "salt-bridge",
     "info": "ligand sulfate group, arginine sidechain"
   },
   {
     "pdbid": "1d66",
-    "sele1": "(DC and 13:D (.OP1 or .OP2 or .O5')) or (DT and 12:D.O3')",
-    "sele2": "ARG and 410:A and (.NE or .NH1 or .NH2)",
+    "sele1": "(DC and 13:D and (.OP1 or .OP2 or .O5')) or (DT and 12:D.O3')",
+    "sele2": "ARG and 46:B and (.NE or .NH1 or .NH2)",
     "type": "salt-bridge",
     "info": "DNA phospate group, arginine sidechain"
+  },
+  {
+    "pdbid": "1ac8",
+    "sele1": "TMZ and 296:A.N3",
+    "sele2": "ASP and 235:A and (.OD1 or .OD2)",
+    "type": "salt-bridge",
+    "info": "ligand tertiary amine & weak hbonds, aspartate sidechain"
   }
 ]
 `)

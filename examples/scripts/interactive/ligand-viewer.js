@@ -28,18 +28,18 @@ function createSelect (options, properties, style) {
   return select
 }
 
-// function createFileButton (label, properties, style) {
-//   var input = createElement('input', Object.assign({
-//     type: 'file'
-//   }, properties), { display: 'none' })
-//   addElement(input)
-//   var button = createElement('input', {
-//     value: label,
-//     type: 'button',
-//     onclick: function () { input.click() }
-//   }, style)
-//   return button
-// }
+function createFileButton (label, properties, style) {
+  var input = createElement('input', Object.assign({
+    type: 'file'
+  }, properties), { display: 'none' })
+  addElement(input)
+  var button = createElement('input', {
+    value: label,
+    type: 'button',
+    onclick: function () { input.click() }
+  }, style)
+  return button
+}
 
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
@@ -139,6 +139,16 @@ function setLigandOptions () {
     }))
   })
 }
+
+var loadStructureButton = createFileButton('load structure', {
+  accept: '.pdb,.cif,.ent,.gz,.mol2',
+  onchange: function (e) {
+    if (e.target.files[ 0 ]) {
+      loadStructure(e.target.files[ 0 ])
+    }
+  }
+}, { top: '12px', left: '12px' })
+addElement(loadStructureButton)
 
 var loadPdbidText = createElement('span', {
   innerText: 'load pdb id'
