@@ -150,10 +150,7 @@ function isHistidineNitrogen (ap: AtomProxy) {
 }
 
 function isBackboneHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {
-  return (
-    (ap1.atomname === 'O' && ap2.atomname === 'N') ||
-    (ap1.atomname === 'N' && ap2.atomname === 'O')
-  )
+  return ap1.isBackbone() && ap2.isBackbone()
 }
 
 function isWaterHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {
@@ -222,7 +219,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       const tj = types[ j ]
 
       const isWeak = isWeakHydrogenBond(ti, tj)
-      if (!isHydrogenBond(ti, tj) && !isWeakHydrogenBond(ti, tj)) return
+      if (!isWeak && !isHydrogenBond(ti, tj)) return
 
       const [ l, k ] = types[ j ] === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
 
