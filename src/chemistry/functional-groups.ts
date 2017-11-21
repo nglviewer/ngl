@@ -83,11 +83,19 @@ export function isHalocarbon (a: AtomProxy) {
  * Carbon in a carboxylate group
  */
 export function isCarboxylate (a: AtomProxy) {
-  return (
+  let terminalOxygenCount = 0
+  if (
     a.number === 6 &&
     a.bondToElementCount('O') === 2 &&
     a.bondToElementCount('C') === 1
-  )
+  ) {
+    a.eachBondedAtom(ba => {
+      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+        ++terminalOxygenCount
+      }
+    })
+  }
+  return terminalOxygenCount === 2
 }
 
 /**
