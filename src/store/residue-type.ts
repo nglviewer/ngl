@@ -577,9 +577,18 @@ export default class ResidueType {
 
 //
 
+const AromaticRingElements = [
+  5, 6, 7, 8,  // B, C, N, O
+  14, 15, 16,  // Si, P, S
+  32, 33,      // Ge, As
+  50, 51,      // Sn, Sb,
+  83           // Bi
+]
 const AromaticRingPlanarityThreshold = 0.05
 
 function isRingAromatic (ring: AtomProxy[]) {
+  if (ring.some(a => !AromaticRingElements.includes(a.number))) return false
+
   let i = 0
   const coords = new Matrix(3, ring.length)
   const cd = coords.data
