@@ -314,7 +314,7 @@ function getDihedralData (position, params) {
     v3toArray(tmp, labelPosition, 3 * i)
 
     const nSegments = Math.ceil(angle / angleStep)
-    const nLines = nSegments + 2
+    const nLines = nSegments + 4 // 4 straight lines plus segment edge
 
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
@@ -349,8 +349,10 @@ function getDihedralData (position, params) {
 
     v3add(arcPoint, mid, inPlane1)
 
-    v3toArray(start, line1, 0)
-    v3toArray(arcPoint, line2, 0)
+    v3toArray(p1, line1, 0)
+    v3toArray(start, line2, 0)
+    v3toArray(start, line1, 3)
+    v3toArray(arcPoint, line2, 3)
 
     // Construct plane at start
     v3toArray(start, plane, 0)
@@ -362,7 +364,7 @@ function getDihedralData (position, params) {
 
     const appendArcSection = function (a, j) {
       const si = j * 9
-      const ai = (j + 1) * 3 // Lines offset by 1 due to first leg
+      const ai = (j + 2) * 3 // Lines offset by 1 due to first two straight sections
       v3toArray(mid, sector, si)
       v3toArray(arcPoint, sector, si + 3)
       v3toArray(arcPoint, line1, ai)
@@ -379,8 +381,10 @@ function getDihedralData (position, params) {
     }
     appendArcSection(angle, j++)
 
-    v3toArray(arcPoint, line1, (nLines - 1) * 3)
-    v3toArray(end, line2, (nLines - 1) * 3)
+    v3toArray(arcPoint, line1, (nLines - 2) * 3)
+    v3toArray(end, line2, (nLines - 2) * 3)
+    v3toArray(end, line1, (nLines - 1) * 3)
+    v3toArray(p4, line2, (nLines - 1) * 3)
 
     // Construct plane at end
     v3toArray(end, plane, 18)
