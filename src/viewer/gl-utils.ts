@@ -94,7 +94,7 @@ export function testTextureSupport (type: number) {
   canvas.height = 16
   canvas.style.width = 16 + 'px'
   canvas.style.height = 16 + 'px'
-  const gl = canvas.getContext("webgl");
+  const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
   if (!gl) {
     console.log(`error creating webgl context for ${type}`)
     return false
